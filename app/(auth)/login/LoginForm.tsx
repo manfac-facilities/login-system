@@ -15,9 +15,14 @@ interface LoginFormProps {
 export default function LoginForm({ urlError, defaultEmail }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(loginAction, {})
 
-  const errorMessage =
-    state?.error ??
-    (urlError === 'unauthorized' ? 'Acesso não autorizado' : undefined)
+  const urlErrorMessage =
+    urlError === 'unauthorized'
+      ? 'Acesso não autorizado'
+      : urlError === 'callback_error'
+      ? 'Link inválido ou expirado. Solicite um novo link.'
+      : undefined
+
+  const errorMessage = state?.error ?? urlErrorMessage
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
