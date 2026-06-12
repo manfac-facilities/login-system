@@ -21,7 +21,7 @@ npm run build
 
 echo "=== Reiniciando aplicação com PM2 ==="
 pm2 describe manfac-portal > /dev/null 2>&1 \
-  && pm2 reload ecosystem.config.js \
+  && pm2 reload deploy/ecosystem.config.js \
   || pm2 start deploy/ecosystem.config.js
 
 echo "=== Salvando configuração PM2 (auto-start no boot) ==="
