@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# brand source assets (logos already copied to public/)
+material manfac/
+
+# local tooling
+.claude/
+.superpowers/
