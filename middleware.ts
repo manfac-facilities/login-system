@@ -36,7 +36,8 @@ export async function middleware(request: NextRequest) {
   const isAuthPage =
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
-    pathname.startsWith('/forgot-password')
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password')
 
   if (isDashboard) {
     if (!user) {
@@ -59,6 +60,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/dashboard/:path*',
+    '/login',
+    '/signup',
+    '/signup/verify',
+    '/forgot-password',
+    '/reset-password',
+    '/auth/callback',
   ],
 }

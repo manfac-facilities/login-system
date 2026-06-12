@@ -6,7 +6,7 @@ export default function VerifyPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md text-center">
         <div className="flex justify-center mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" priority />
         </div>
 
         <div className="bg-[#0d2050] rounded-2xl p-8 border border-[#1e3a5f]">

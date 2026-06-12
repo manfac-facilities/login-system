@@ -39,19 +39,21 @@ export async function loginAction(
   const fullName = data.user.user_metadata?.full_name as string | undefined
   if (fullName) {
     cookieStore.set('manfac_user_name', getFirstName(fullName), {
-      maxAge: 60 * 60 * 24 * 365,
+      maxAge: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year)
       path: '/',
       sameSite: 'lax',
       httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
     })
   }
 
   // Also store email for pre-filling the login field on next visit
   cookieStore.set('manfac_user_email', email, {
-    maxAge: 60 * 60 * 24 * 365,
+    maxAge: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year)
     path: '/',
     sameSite: 'lax',
     httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
   })
 
   redirect('/dashboard')

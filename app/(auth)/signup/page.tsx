@@ -6,7 +6,7 @@ export default function SignupPage() {
     <main className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center gap-8 mb-8">
-          <Logo size="lg" />
+          <Logo size="lg" priority />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white">Criar conta</h1>
             <p className="text-[#94a3b8] mt-1 text-sm">
