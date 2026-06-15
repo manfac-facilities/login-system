@@ -37,8 +37,9 @@ export async function signupAction(
   })
 
   if (error) {
+    // Não revelar se o e-mail já existe — evitar enumeração de contas
     if (error.message.toLowerCase().includes('already registered')) {
-      return { error: 'Este e-mail já está cadastrado. Faça login.' }
+      redirect('/signup/verify')
     }
     return { error: 'Erro ao criar conta. Tente novamente.' }
   }
