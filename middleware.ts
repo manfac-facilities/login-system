@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-
-const ALLOWED_DOMAIN = '@manfac.com.br'
+import { isManfacEmail } from '@/lib/auth/domain'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -33,25 +32,31 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isDashboard = pathname.startsWith('/dashboard')
+  // /reset-password não entra em isAuthPage: usuários autenticados precisam
+  // acessá-la durante o fluxo de redefinição de senha via link de e-mail.
   const isAuthPage =
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
-    pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password')
+    pathname.startsWith('/forgot-password')
 
   if (isDashboard) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    if (!user.email?.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+    if (!isManfacEmail(user.email ?? '')) {
       await supabase.auth.signOut()
       const url = new URL('/login', request.url)
       url.searchParams.set('error', 'unauthorized')
-      return NextResponse.redirect(url)
+      // Copiar os Set-Cookie do signOut para a response de redirect
+      const redirectResponse = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+      })
+      return redirectResponse
     }
   }
 
-  if (isAuthPage && user?.email?.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+  if (isAuthPage && user && isManfacEmail(user.email ?? '')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
