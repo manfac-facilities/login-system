@@ -24,6 +24,10 @@ describe('isManfacEmail', () => {
   it('rejects empty string', () => {
     expect(isManfacEmail('')).toBe(false)
   })
+
+  it('rejects double-at email bypass', () => {
+    expect(isManfacEmail('atacante@evil.com@manfac.com.br')).toBe(false)
+  })
 })
 
 describe('getFirstName', () => {
