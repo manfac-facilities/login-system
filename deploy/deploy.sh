@@ -5,13 +5,13 @@
 
 set -e
 
-APP_DIR="/var/www/manfac-portal"
+APP_DIR="/var/www/login-system"
 
 echo "=== Entrando no diretório da aplicação ==="
 cd "$APP_DIR"
 
 echo "=== Puxando últimas alterações ==="
-git pull origin main
+git pull origin master
 
 echo "=== Instalando dependências ==="
 npm ci --production=false

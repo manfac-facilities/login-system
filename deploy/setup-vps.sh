@@ -18,7 +18,7 @@ echo "=== Instalando Nginx ==="
 apt install -y nginx
 
 echo "=== Criando diretório da aplicação ==="
-mkdir -p /var/www/manfac-portal
+mkdir -p /var/www/login-system
 
 echo "=== Node version: $(node -v) ==="
 echo "=== NPM version: $(npm -v) ==="
