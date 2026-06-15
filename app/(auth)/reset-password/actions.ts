@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 type ResetState = { error?: string }
@@ -19,6 +20,18 @@ export async function resetPasswordAction(
   if (password !== confirmPassword) {
     return { error: 'As senhas não coincidem' }
   }
+
+  const cookieStore = await cookies()
+  const resetPending = cookieStore.get('manfac_reset_pending')
+
+  if (!resetPending?.value) {
+    return {
+      error: 'Link de redefinição inválido ou expirado. Solicite um novo link.',
+    }
+  }
+
+  // Consumir o cookie antes de atualizar — impede reuso da mesma sessão
+  cookieStore.delete('manfac_reset_pending')
 
   const supabase = await createClient()
   const { error } = await supabase.auth.updateUser({ password })
