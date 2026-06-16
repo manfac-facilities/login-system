@@ -1,0 +1,36 @@
+'use server'
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+type State = { error?: string; success?: boolean }
+
+export async function criarVeiculoAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const placa = (formData.get('placa') as string).trim().toUpperCase()
+  const modelo = (formData.get('modelo') as string).trim()
+  const ano = formData.get('ano') ? Number(formData.get('ano')) : null
+  const km_atual = Number(formData.get('km_atual') ?? 0)
+  const km_contratual_mensal = formData.get('km_contratual_mensal')
+    ? Number(formData.get('km_contratual_mensal'))
+    : null
+  const equipe_id = (formData.get('equipe_id') as string) || null
+
+  if (!placa || !modelo) return { error: 'Placa e modelo são obrigatórios' }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('veiculos')
+    .insert({ placa, modelo, ano, km_atual, km_contratual_mensal, equipe_id })
+
+  if (error) {
+    if (error.code === '23505')
+      return { error: `Veículo com placa ${placa} já existe` }
+    return { error: 'Erro ao criar veículo' }
+  }
+
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/equipes')
+  return { success: true }
+}

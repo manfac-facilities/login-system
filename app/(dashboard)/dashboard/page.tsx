@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { logoutAction } from './actions'
 import Logo from '@/components/ui/Logo'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -33,15 +34,37 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-        <h1 className="text-3xl font-bold text-white mb-3">
-          Olá, {firstName}! 👋
-        </h1>
-        <p className="text-[#94a3b8] text-lg mb-8">
-          Bem-vindo ao painel de operações da Manfac Facilities.
-        </p>
-        <div className="inline-block px-6 py-3 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-[#4a6080] text-sm">
-          Dashboard operacional — em desenvolvimento
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-white mb-3">
+            Olá, {firstName}!
+          </h1>
+          <p className="text-[#94a3b8] text-lg">
+            Bem-vindo ao Hub Manfac Facilities.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <Link
+            href="/sofia"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">🚐</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Sistema Sofia
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Operação de frota — KM, checklist, multas
+              </p>
+            </div>
+          </Link>
+          <div className="flex items-start gap-4 p-6 rounded-xl border border-dashed border-[#1e3a5f] opacity-40 cursor-not-allowed">
+            <span className="text-3xl">📋</span>
+            <div>
+              <p className="text-white font-semibold">Em breve</p>
+              <p className="text-[#4a6080] text-sm mt-1">Próximos módulos</p>
+            </div>
+          </div>
         </div>
       </div>
     </main>

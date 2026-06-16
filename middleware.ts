@@ -36,7 +36,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isDashboard = pathname.startsWith('/dashboard')
+  const isProtected =
+    pathname.startsWith('/dashboard') || pathname.startsWith('/sofia')
   // /reset-password não entra em isAuthPage: usuários autenticados precisam
   // acessá-la durante o fluxo de redefinição de senha via link de e-mail.
   const isAuthPage =
@@ -44,7 +45,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password')
 
-  if (isDashboard) {
+  if (isProtected) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -52,7 +53,6 @@ export async function middleware(request: NextRequest) {
       await supabase.auth.signOut()
       const url = new URL('/login', request.url)
       url.searchParams.set('error', 'unauthorized')
-      // Copiar os Set-Cookie do signOut para a response de redirect
       const redirectResponse = NextResponse.redirect(url)
       supabaseResponse.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
@@ -71,6 +71,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/sofia/:path*',
     '/login',
     '/signup',
     '/signup/verify',
