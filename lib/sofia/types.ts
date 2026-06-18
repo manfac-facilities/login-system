@@ -55,6 +55,18 @@ export interface KmDiario {
   created_at: string
 }
 
+/**
+ * Shape returned by `getKmHoje()`, whose `.select()` joins `equipes(codigo)`,
+ * `veiculos(placa)` and `motoristas(nome)` as nested objects. These joined
+ * fields are not part of the base `km_diario` row (`KmDiario`), so a separate
+ * type is needed to describe what the query actually returns.
+ */
+export interface KmDiarioComRelacoes extends KmDiario {
+  equipes: { codigo: string } | null
+  veiculos: { placa: string } | null
+  motoristas: { nome: string } | null
+}
+
 export interface Checklist {
   id: string
   tipo: ChecklistTipo

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type {
-  Equipe, Veiculo, Motorista, KmDiario, Multa,
+  Equipe, Veiculo, Motorista, KmDiarioComRelacoes, Multa,
   Sinistro, Revisao, DocumentoVeiculo, Abastecimento,
   MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia,
 } from './types'
@@ -39,7 +39,7 @@ export async function getMotoristasComCnhVencendo(): Promise<Motorista[]> {
   return data ?? []
 }
 
-export async function getKmHoje(): Promise<KmDiario[]> {
+export async function getKmHoje(): Promise<KmDiarioComRelacoes[]> {
   const supabase = await createClient()
   const hoje = new Date().toISOString().split('T')[0]
   const { data } = await supabase

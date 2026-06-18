@@ -54,7 +54,7 @@ export default async function VeiculosPage() {
                   <td className="px-4 py-3 text-white font-medium font-mono">{v.placa}</td>
                   <td className="px-4 py-3 text-[#94a3b8]">
                     {v.modelo}
-                    {v.ano ? ` · ${v.ano}` : ''}
+                    {v.ano != null ? ` · ${v.ano}` : ''}
                   </td>
                   <td className="px-4 py-3 text-[#94a3b8]">
                     {v.km_atual.toLocaleString('pt-BR')} km

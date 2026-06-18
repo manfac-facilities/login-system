@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { validateKmInput } from './_validation'
 
 type State = { error?: string; success?: boolean }
 
@@ -18,9 +19,8 @@ export async function lancarKmAction(
   const observacoes = (formData.get('observacoes') as string).trim() || null
 
   if (!equipe_id || !veiculo_id) return { error: 'Selecione equipe e veículo' }
-  if (!km_inicial) return { error: 'KM inicial é obrigatório' }
-  if (km_final && km_final < km_inicial)
-    return { error: 'KM final não pode ser menor que o KM inicial' }
+  const validationError = validateKmInput({ km_inicial, km_final })
+  if (validationError) return { error: validationError }
 
   const supabase = await createClient()
   const { error } = await supabase.from('km_diario').upsert(
@@ -38,7 +38,7 @@ export async function lancarKmAction(
 
   if (error) return { error: 'Erro ao registrar KM' }
 
-  if (km_final) {
+  if (km_final !== null && km_final !== undefined) {
     await supabase.from('veiculos').update({ km_atual: km_final }).eq('id', veiculo_id)
   }
 

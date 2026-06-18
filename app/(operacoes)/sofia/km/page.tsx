@@ -33,7 +33,7 @@ export default async function KmPage() {
             <p className="text-[#4a6080] text-sm">Nenhum lançamento hoje ainda.</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {(kmHoje as any[]).map((k) => (
+              {kmHoje.map((k) => (
                 <div
                   key={k.id}
                   className="flex items-center justify-between px-4 py-3 rounded-lg border border-[#1e3a5f] bg-[#0d2050]"
