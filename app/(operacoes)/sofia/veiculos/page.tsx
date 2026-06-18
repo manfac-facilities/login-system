@@ -51,7 +51,11 @@ export default async function VeiculosPage() {
                   key={v.id}
                   className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors"
                 >
-                  <td className="px-4 py-3 text-white font-medium font-mono">{v.placa}</td>
+                  <td className="px-4 py-3 text-white font-medium font-mono">
+                    <Link href={`/sofia/veiculos/${v.id}`} className="hover:text-[#f05a28] transition-colors">
+                      {v.placa}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-[#94a3b8]">
                     {v.modelo}
                     {v.ano != null ? ` · ${v.ano}` : ''}
