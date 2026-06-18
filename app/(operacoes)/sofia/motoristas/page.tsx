@@ -54,7 +54,11 @@ export default async function MotoristasPage() {
                   key={m.id}
                   className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors"
                 >
-                  <td className="px-4 py-3 text-white font-medium">{m.nome}</td>
+                  <td className="px-4 py-3 text-white font-medium">
+                    <Link href={`/sofia/motoristas/${m.id}`} className="hover:text-[#f05a28] transition-colors">
+                      {m.nome}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-[#94a3b8] font-mono">{m.cnh ?? '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${cnh.style}`}>
