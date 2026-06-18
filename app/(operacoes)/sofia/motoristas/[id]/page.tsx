@@ -6,11 +6,12 @@ import { marcarTermoAssinadoAction } from './_actions'
 export default async function MotoristaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const [{ data: motorista }, documentos] = await Promise.all([
+  const [{ data: motorista, error }, documentos] = await Promise.all([
     supabase.from('motoristas').select('*, equipes(codigo)').eq('id', id).single(),
     getMotoristaDocumentos(id),
   ])
 
+  if (error) throw error
   if (!motorista) notFound()
 
   const termo = documentos.find(d => d.tipo === 'termo_uso')

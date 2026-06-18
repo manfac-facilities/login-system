@@ -13,9 +13,11 @@ export async function marcarTermoAssinadoAction(motoristaId: string, assinado: b
 
   const hoje = new Date().toISOString().split('T')[0]
   if (existing) {
-    await supabase.from('motorista_documentos').update({ assinado, data_assinatura: assinado ? hoje : null }).eq('id', existing.id)
+    const { error } = await supabase.from('motorista_documentos').update({ assinado, data_assinatura: assinado ? hoje : null }).eq('id', existing.id)
+    if (error) throw error
   } else {
-    await supabase.from('motorista_documentos').insert({ motorista_id: motoristaId, tipo: 'termo_uso', assinado, data_assinatura: assinado ? hoje : null })
+    const { error } = await supabase.from('motorista_documentos').insert({ motorista_id: motoristaId, tipo: 'termo_uso', assinado, data_assinatura: assinado ? hoje : null })
+    if (error) throw error
   }
   revalidatePath(`/sofia/motoristas/${motoristaId}`)
 }
