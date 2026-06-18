@@ -7,16 +7,24 @@ import {
   getMotoristas,
   getMotoristasComCnhVencendo,
   getMultasPendentes,
+  getSinistrosAbertos,
+  getDocumentosVencendo,
+  getRevisoesAtrasadas,
+  getPendenciasManuais,
 } from '@/lib/sofia/queries'
 
 export default async function SofiaPage() {
-  const [equipes, veiculos, motoristas, cnhVencendo, multasPendentes] =
+  const [equipes, veiculos, motoristas, cnhVencendo, multasPendentes, sinistrosAbertos, documentosVencendo, revisoesAtrasadas, pendencias] =
     await Promise.all([
       getEquipes(),
       getVeiculos(),
       getMotoristas(),
       getMotoristasComCnhVencendo(),
       getMultasPendentes(),
+      getSinistrosAbertos(),
+      getDocumentosVencendo(),
+      getRevisoesAtrasadas(),
+      getPendenciasManuais(),
     ])
 
   const veiculosAtivos = veiculos.filter((v) => v.status === 'ativo').length
@@ -24,6 +32,8 @@ export default async function SofiaPage() {
     (sum, m) => sum + m.valor,
     0
   )
+  const disponibilidadePct = veiculos.length ? Math.round((veiculosAtivos / veiculos.length) * 100) : 0
+  const pendenciasCriticas = pendencias.filter((p) => p.status !== 'concluida').length
 
   return (
     <div className="p-8">
@@ -51,6 +61,12 @@ export default async function SofiaPage() {
         </div>
       )}
 
+      {revisoesAtrasadas.length > 0 && (
+        <div className="mb-6">
+          <AlertBanner type="error" message={`${revisoesAtrasadas.length} manutenção(ões) atrasada(s) — veja em Revisões`} />
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatCard
           label="Equipes ativas"
@@ -71,6 +87,27 @@ export default async function SofiaPage() {
           value={`R$ ${multasPendentesTotal.toFixed(2)}`}
           sub={`${multasPendentes.length} multa${multasPendentes.length !== 1 ? 's' : ''}`}
           accent={multasPendentes.length > 0}
+        />
+        <StatCard
+          label="Disponibilidade"
+          value={`${disponibilidadePct}%`}
+          sub={`${veiculosAtivos} de ${veiculos.length} disponíveis`}
+        />
+        <StatCard
+          label="Sinistros abertos"
+          value={sinistrosAbertos.length}
+          accent={sinistrosAbertos.length > 0}
+        />
+        <StatCard
+          label="Documentos vencendo"
+          value={documentosVencendo.length}
+          sub="próximos 30 dias"
+          accent={documentosVencendo.length > 0}
+        />
+        <StatCard
+          label="Pendências críticas"
+          value={pendenciasCriticas}
+          accent={pendenciasCriticas > 0}
         />
       </div>
 
@@ -111,6 +148,18 @@ export default async function SofiaPage() {
             label: 'Revisões',
             desc: 'Controle de manutenção preventiva',
             icon: '🔧',
+          },
+          {
+            href: '/sofia/sinistros/novo',
+            label: 'Registrar Sinistro',
+            desc: 'Batida, furto ou avaria',
+            icon: '💥',
+          },
+          {
+            href: '/sofia/pendencias',
+            label: 'Pendências & Plano de Ação',
+            desc: 'O que está aberto e quem é o dono',
+            icon: '📋',
           },
         ].map((item) => (
           <Link
