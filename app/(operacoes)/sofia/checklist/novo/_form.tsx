@@ -35,9 +35,20 @@ interface Props {
 export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) {
   const [state, action, isPending] = useActionState(criarChecklistAction, {})
   const router = useRouter()
+  const [tipo, setTipo] = useState('')
   const [itens, setItens] = useState<Record<string, boolean>>({})
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
   const [uploading, setUploading] = useState(false)
+  const [failedFotos, setFailedFotos] = useState<string[]>([])
+  // True the instant the form is submitted, before isPending (set by
+  // useActionState) or uploading (set by the effect below) flip on. Without
+  // this, there's a window after the create-checklist action resolves and
+  // before the upload effect runs where a fast double-click could submit a
+  // second, duplicate checklist row. Cleared as soon as the action reports an
+  // error (computed at render time, not in an effect) so the user can retry.
+  const [submitting, setSubmitting] = useState(false)
+  if (submitting && state.error) setSubmitting(false)
+  const formInFlight = submitting || isPending || uploading
 
   const handleCapture = useCallback(
     (blob: Blob, posicao: string, lat: number | null, lng: number | null) => {
@@ -60,13 +71,29 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
     Promise.all(
       fotos.map(async (foto) => {
         const path = `${state.checklistId}/${foto.posicao.replace(/\s/g, '-')}-${Date.now()}.jpg`
-        await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('checklist-fotos')
           .upload(path, foto.blob, { contentType: 'image/jpeg' })
-        await uploadFotoAction(state.checklistId!, path, foto.posicao, foto.lat, foto.lng)
+        if (uploadError) return { posicao: foto.posicao, ok: false as const }
+
+        const result = await uploadFotoAction(
+          state.checklistId!,
+          path,
+          foto.posicao,
+          foto.lat,
+          foto.lng
+        )
+        if ('error' in result) return { posicao: foto.posicao, ok: false as const }
+        return { posicao: foto.posicao, ok: true as const }
       })
-    ).then(() => {
+    ).then((results) => {
       setUploading(false)
+      const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
+      if (failed.length > 0) {
+        setFailedFotos(failed)
+        setSubmitting(false)
+        return
+      }
       router.push('/sofia/checklist')
     })
   }, [state.success, state.checklistId, fotos, router])
@@ -78,10 +105,22 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
         Registre a condição do veículo com fotos
       </p>
 
-      <form action={action} className="flex flex-col gap-6">
+      <form
+        action={action}
+        onSubmit={() => setSubmitting(true)}
+        className="flex flex-col gap-6"
+      >
         {state.error && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
             {state.error}
+          </div>
+        )}
+
+        {failedFotos.length > 0 && (
+          <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
+            Checklist salvo, mas {failedFotos.length} foto
+            {failedFotos.length > 1 ? 's' : ''} não {failedFotos.length > 1 ? 'foram salvas' : 'foi salva'}:{' '}
+            {failedFotos.join(', ')}. Tente novamente ou contate o suporte.
           </div>
         )}
 
@@ -91,11 +130,14 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
             <select
               name="tipo"
               required
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
             >
               <option value="">Selecione</option>
               <option value="saida">Saída</option>
               <option value="retorno">Retorno</option>
+              <option value="troca">Troca de Responsável</option>
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -153,6 +195,44 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </div>
         </div>
 
+        {tipo === 'troca' && (
+          <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#f05a28]/40 bg-[#0f1f3d]">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-[#94a3b8]">Equipe de destino *</label>
+              <select
+                name="equipe_destino_id"
+                required
+                className="px-3 py-2.5 rounded-lg bg-[#0a1628] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+              >
+                <option value="">Selecione</option>
+                {equipes
+                  .filter((e) => e.ativo)
+                  .map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.codigo}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-[#94a3b8]">Motorista de destino</label>
+              <select
+                name="motorista_destino_id"
+                className="px-3 py-2.5 rounded-lg bg-[#0a1628] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+              >
+                <option value="">Selecione</option>
+                {motoristas
+                  .filter((m) => m.ativo)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nome}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         <div>
           <p className="text-sm text-[#94a3b8] mb-3">Itens de Verificação</p>
           <div className="grid grid-cols-2 gap-2">
@@ -203,6 +283,38 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           )}
         </div>
 
+        <div className="flex items-center gap-2">
+          <input type="checkbox" name="chave_entregue" value="true" id="chave" className="accent-[#f05a28]" />
+          <label htmlFor="chave" className="text-sm text-[#94a3b8]">Chave entregue</label>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" name="cartao_combustivel_entregue" value="true" id="cartao" className="accent-[#f05a28]" />
+          <label htmlFor="cartao" className="text-sm text-[#94a3b8]">Cartão combustível entregue</label>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-[#94a3b8]">Avaria identificada?</label>
+          <select
+            name="avaria_identificada"
+            defaultValue="false"
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+          >
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </select>
+          <textarea
+            name="avaria_descricao"
+            rows={2}
+            placeholder="Descreva a avaria (se houver)"
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm resize-none"
+          />
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#1e3a5f]">
+          <input type="checkbox" name="assinatura_motorista" value="true" id="assinatura" required className="accent-[#f05a28]" />
+          <label htmlFor="assinatura" className="text-sm text-[#94a3b8]">
+            Motorista confirma recebimento/devolução nas condições descritas *
+          </label>
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-[#94a3b8]">Observações</label>
           <textarea
@@ -223,12 +335,12 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </button>
           <button
             type="submit"
-            disabled={isPending || uploading}
+            disabled={formInFlight}
             className="flex-1 py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors"
           >
             {uploading
               ? 'Enviando fotos...'
-              : isPending
+              : formInFlight
               ? 'Salvando...'
               : 'Finalizar Checklist'}
           </button>

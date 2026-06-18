@@ -60,7 +60,11 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
         )
         lat = pos.coords.latitude
         lng = pos.coords.longitude
-      } catch {}
+      } catch (geoError) {
+        // A photo is still useful evidence without GPS, so we don't block
+        // capture on this — but don't swallow it silently either.
+        console.warn('Não foi possível obter localização para a foto:', geoError)
+      }
 
       onCapture(blob, posicao, lat, lng)
     }, 'image/jpeg', 0.85)
