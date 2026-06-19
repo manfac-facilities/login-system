@@ -60,7 +60,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-64 shrink-0 bg-[#0d2050] border-r border-[#1e3a5f] min-h-screen p-4">
+    <aside className="no-print w-64 shrink-0 bg-[#0d2050] border-r border-[#1e3a5f] min-h-screen p-4">
       <div className="text-white font-bold text-lg mb-6 px-2">Sofia</div>
       {navSections.map((section) => (
         <div key={section.title} className="mb-6">

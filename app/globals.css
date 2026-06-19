@@ -21,3 +21,9 @@ body {
 * {
   box-sizing: border-box;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

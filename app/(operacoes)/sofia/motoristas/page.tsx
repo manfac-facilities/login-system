@@ -1,31 +1,60 @@
 import { getMotoristas, getEquipes } from '@/lib/sofia/queries'
+import { classificarCnh, cnhStatus, type ClasseCnh } from '@/lib/sofia/motoristas'
 import Link from 'next/link'
+import StatCard from '@/components/sofia/StatCard'
 
-function cnhStatus(vencimento: string | null): { label: string; style: string } {
-  if (!vencimento) return { label: 'Sem CNH', style: 'bg-[#1e3a5f] text-[#4a6080]' }
-  const diff = new Date(vencimento).getTime() - Date.now()
-  const dias = Math.ceil(diff / 86400000)
-  if (dias < 0) return { label: 'VENCIDA', style: 'bg-red-900 text-red-300' }
-  if (dias <= 30) return { label: `Vence em ${dias}d`, style: 'bg-red-900 text-red-300' }
-  if (dias <= 60) return { label: `Vence em ${dias}d`, style: 'bg-amber-900 text-amber-300' }
-  return {
-    label: new Date(vencimento).toLocaleDateString('pt-BR'),
-    style: 'bg-green-900 text-green-300',
-  }
+const PAGE_SIZE = 10
+
+const filtroPills: { value: ClasseCnh | undefined; label: string }[] = [
+  { value: undefined, label: 'Todos' },
+  { value: 'vencidas', label: 'Vencidas' },
+  { value: 'atencao', label: 'Atenção' },
+  { value: 'regulares', label: 'Regulares' },
+]
+
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/)
+  return ((partes[0]?.[0] ?? '') + (partes[1]?.[0] ?? '')).toUpperCase()
 }
 
-export default async function MotoristasPage() {
+export default async function MotoristasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; cnh?: string; page?: string }>
+}) {
+  const { q, cnh, page } = await searchParams
   const [motoristas, equipes] = await Promise.all([getMotoristas(), getEquipes()])
+
+  const ativos = motoristas.filter((m) => m.ativo)
+  const vencidas = ativos.filter((m) => classificarCnh(m.cnh_vencimento) === 'vencidas')
+  const atencao = ativos.filter((m) => classificarCnh(m.cnh_vencimento) === 'atencao')
+
+  let filtrados = motoristas
+  if (q) {
+    const termo = q.toLowerCase()
+    filtrados = filtrados.filter((m) => m.nome.toLowerCase().includes(termo) || m.cnh?.toLowerCase().includes(termo))
+  }
+  if (cnh) {
+    filtrados = filtrados.filter((m) => classificarCnh(m.cnh_vencimento) === cnh)
+  }
+
+  const paginaAtual = Math.max(1, Number(page) || 1)
+  const inicio = (paginaAtual - 1) * PAGE_SIZE
+  const pagina = filtrados.slice(inicio, inicio + PAGE_SIZE)
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
+
+  function hrefCom(params: Record<string, string | undefined>) {
+    const merged = { q, cnh, page: undefined, ...params }
+    const usp = new URLSearchParams()
+    for (const [k, v] of Object.entries(merged)) if (v) usp.set(k, v)
+    const query = usp.toString()
+    return query ? `/sofia/motoristas?${query}` : '/sofia/motoristas'
+  }
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Motoristas</h1>
-          <p className="text-[#4a6080] text-sm mt-1">
-            {motoristas.filter((m) => m.ativo).length} ativos
-          </p>
-        </div>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-bold text-white">Motoristas</h1>
         <Link
           href="/sofia/motoristas/novo"
           className="px-4 py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors"
@@ -33,56 +62,109 @@ export default async function MotoristasPage() {
           + Novo Motorista
         </Link>
       </div>
+      <p className="text-[#4a6080] text-sm mb-6">Monitore as credenciais e status operacional da equipe.</p>
 
-      <div className="rounded-xl border border-[#1e3a5f] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Nome</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">CNH</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Vencimento</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Equipe</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Contato</th>
-            </tr>
-          </thead>
-          <tbody>
-            {motoristas.map((m) => {
-              const equipe = equipes.find((e) => e.id === m.equipe_id)
-              const cnh = cnhStatus(m.cnh_vencimento)
-              return (
-                <tr
-                  key={m.id}
-                  className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors"
-                >
-                  <td className="px-4 py-3 text-white font-medium">
-                    <Link href={`/sofia/motoristas/${m.id}`} className="hover:text-[#f05a28] transition-colors">
-                      {m.nome}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-[#94a3b8] font-mono">{m.cnh ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${cnh.style}`}>
-                      {cnh.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[#94a3b8]">{equipe?.codigo ?? '—'}</td>
-                  <td className="px-4 py-3 text-[#94a3b8]">{m.contato ?? '—'}</td>
-                </tr>
-              )
-            })}
-            {motoristas.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-[#4a6080]">
-                  Nenhum motorista cadastrado.{' '}
-                  <Link href="/sofia/motoristas/novo" className="text-[#f05a28] hover:underline">
-                    Cadastrar →
-                  </Link>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <form action="/sofia/motoristas" className="mb-6">
+        {cnh && <input type="hidden" name="cnh" value={cnh} />}
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Buscar motorista ou CNH..."
+          className="w-full px-4 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm"
+        />
+      </form>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard label="Total Ativos" value={ativos.length} accent />
+        <StatCard label="CNHs Vencidas" value={vencidas.length} sub="Ação imediata necessária" />
+        <StatCard label="Vencem em 30 dias" value={atencao.length} sub="Agendar renovações" />
       </div>
+
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xs text-[#4a6080] uppercase tracking-wider font-medium">Filtrar por status:</span>
+        {filtroPills.map((opt) => (
+          <Link
+            key={opt.label}
+            href={hrefCom({ cnh: opt.value })}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              cnh === opt.value ? 'border-[#f05a28] text-[#f05a28]' : 'border-[#1e3a5f] text-[#94a3b8] hover:border-[#94a3b8]'
+            }`}
+          >
+            {opt.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {pagina.map((m) => {
+          const equipe = equipes.find((e) => e.id === m.equipe_id)
+          const status = cnhStatus(m.cnh_vencimento)
+          return (
+            <Link
+              key={m.id}
+              href={`/sofia/motoristas/${m.id}`}
+              className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#94a3b8] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#1e3a5f] text-white text-sm font-semibold flex items-center justify-center shrink-0">
+                  {iniciais(m.nome)}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-medium">{m.nome}</p>
+                  <p className="text-[#4a6080] text-xs font-mono">{m.cnh ?? '—'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-[#4a6080] text-xs uppercase tracking-wider">Status CNH</p>
+                  <span className={`inline-block mt-0.5 px-2 py-0.5 rounded text-xs font-medium ${status.style}`}>{status.label}</span>
+                </div>
+                <div className="text-right hidden sm:block">
+                  <p className="text-[#4a6080] text-xs uppercase tracking-wider">Equipe</p>
+                  <p className="text-[#94a3b8] text-sm mt-0.5">{equipe?.codigo ?? '—'}</p>
+                </div>
+              </div>
+            </Link>
+          )
+        })}
+        {pagina.length === 0 && (
+          <p className="px-4 py-12 text-center text-[#4a6080] rounded-xl border border-[#1e3a5f]">
+            Nenhum motorista encontrado.{' '}
+            <Link href="/sofia/motoristas/novo" className="text-[#f05a28] hover:underline">
+              Cadastrar →
+            </Link>
+          </p>
+        )}
+      </div>
+
+      {filtrados.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-[#4a6080]">
+            Mostrando {inicio + 1}-{Math.min(inicio + PAGE_SIZE, filtrados.length)} de {filtrados.length}
+          </p>
+          <div className="flex gap-2">
+            <Link
+              href={hrefCom({ page: String(Math.max(1, paginaAtual - 1)) })}
+              aria-disabled={paginaAtual <= 1}
+              className={`px-3 py-1.5 rounded-lg text-xs border border-[#1e3a5f] text-[#94a3b8] hover:border-[#94a3b8] transition-colors ${
+                paginaAtual <= 1 ? 'pointer-events-none opacity-40' : ''
+              }`}
+            >
+              ←
+            </Link>
+            <Link
+              href={hrefCom({ page: String(Math.min(totalPaginas, paginaAtual + 1)) })}
+              aria-disabled={paginaAtual >= totalPaginas}
+              className={`px-3 py-1.5 rounded-lg text-xs border border-[#1e3a5f] text-[#94a3b8] hover:border-[#94a3b8] transition-colors ${
+                paginaAtual >= totalPaginas ? 'pointer-events-none opacity-40' : ''
+              }`}
+            >
+              →
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

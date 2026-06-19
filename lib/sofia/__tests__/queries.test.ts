@@ -2,7 +2,7 @@ type TableResult = { data?: unknown; error?: unknown }
 
 function makeChainable(result: TableResult) {
   const chain: Record<string, unknown> = {}
-  const methods = ['select', 'eq', 'neq', 'order', 'lte', 'gte', 'single']
+  const methods = ['select', 'eq', 'neq', 'order', 'lte', 'gte', 'single', 'is']
   for (const m of methods) {
     chain[m] = jest.fn(() => chain)
   }
@@ -18,7 +18,7 @@ jest.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-import { getMultasPendentes, getRevisoesAtrasadas } from '../queries'
+import { getMultasPendentes, getRevisoesAtrasadas, getResponsabilidadesAtuais, getChecklistsRecentes } from '../queries'
 
 describe('getMultasPendentes', () => {
   it('counts multas as pending while validada, not only while pendente', async () => {
@@ -67,5 +67,27 @@ describe('getRevisoesAtrasadas', () => {
     const result = await getRevisoesAtrasadas()
 
     expect(result).toEqual([])
+  })
+})
+
+describe('getResponsabilidadesAtuais', () => {
+  it('filters to rows whose fim is still null', async () => {
+    const chain = makeChainable({ data: [] })
+    fromMock = jest.fn(() => chain)
+
+    await getResponsabilidadesAtuais()
+
+    expect(chain.is).toHaveBeenCalledWith('fim', null)
+  })
+})
+
+describe('getChecklistsRecentes', () => {
+  it('orders by created_at descending so the first row per vehicle is the most recent', async () => {
+    const chain = makeChainable({ data: [] })
+    fromMock = jest.fn(() => chain)
+
+    await getChecklistsRecentes()
+
+    expect(chain.order).toHaveBeenCalledWith('created_at', { ascending: false })
   })
 })

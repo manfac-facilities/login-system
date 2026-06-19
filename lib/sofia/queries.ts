@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type {
   Equipe, Veiculo, Motorista, KmDiarioComRelacoes, Multa,
   Sinistro, Revisao, DocumentoVeiculo, Abastecimento,
-  MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia,
+  MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia, Checklist,
 } from './types'
 
 export async function getEquipes(): Promise<Equipe[]> {
@@ -108,7 +108,7 @@ export async function getRevisoesAtrasadas(): Promise<Revisao[]> {
 
 export async function getDocumentosVeiculo(veiculoId?: string): Promise<DocumentoVeiculo[]> {
   const supabase = await createClient()
-  let query = supabase.from('documentos_veiculo').select('*, veiculos(placa)').order('vencimento')
+  let query = supabase.from('documentos_veiculo').select('*, veiculos(placa, modelo)').order('vencimento')
   if (veiculoId) query = query.eq('veiculo_id', veiculoId)
   const { data } = await query
   return data ?? []
@@ -169,5 +169,23 @@ export async function getPendenciasManuais(): Promise<Pendencia[]> {
     .from('pendencias')
     .select('*')
     .order('prazo', { ascending: true })
+  return data ?? []
+}
+
+export async function getResponsabilidadesAtuais(): Promise<VeiculoResponsabilidadeHistorico[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('veiculo_responsabilidade_historico')
+    .select('*')
+    .is('fim', null)
+  return data ?? []
+}
+
+export async function getChecklistsRecentes(): Promise<Checklist[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('checklist')
+    .select('*')
+    .order('created_at', { ascending: false })
   return data ?? []
 }
