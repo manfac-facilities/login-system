@@ -42,7 +42,7 @@ export default async function RevisoesPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-[#1e3a5f] overflow-hidden">
+      <div className="rounded-xl border border-[#1e3a5f] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">

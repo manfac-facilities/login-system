@@ -14,9 +14,9 @@ export default async function OperacoesLayout({
   if (!user) redirect('/login')
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+    <div className="flex flex-col md:flex-row min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto min-w-0">{children}</main>
     </div>
   )
 }

@@ -66,7 +66,7 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
 
         <div>
           <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Custo acumulado</h2>
-          <div className="rounded-xl border border-[#1e3a5f] overflow-hidden">
+          <div className="rounded-xl border border-[#1e3a5f] overflow-x-auto">
             {[
               ['Locação (mensal)', locacao],
               ['Manutenção', somaRevisoes],
