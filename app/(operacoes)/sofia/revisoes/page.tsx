@@ -1,94 +1,89 @@
-import { createClient } from '@/lib/supabase/server'
-import { getVeiculos } from '@/lib/sofia/queries'
-import RevisoesForm from './_form'
+import { getRevisoes, getRevisoesAtrasadas } from '@/lib/sofia/queries'
+import Link from 'next/link'
+
+const statusStyle: Record<string, string> = {
+  em_dia: 'bg-green-900 text-green-300',
+  agendada: 'bg-blue-900 text-blue-300',
+  atrasada: 'bg-red-900 text-red-300',
+}
+
+const statusLabel: Record<string, string> = {
+  em_dia: 'Em dia',
+  agendada: 'Agendada',
+  atrasada: 'Atrasada',
+}
+
+const tipoLabel: Record<string, string> = {
+  preventiva: 'Preventiva',
+  corretiva: 'Corretiva',
+}
 
 export default async function RevisoesPage() {
-  const supabase = await createClient()
-  const [veiculos, { data: revisoes }] = await Promise.all([
-    getVeiculos(),
-    supabase
-      .from('revisoes')
-      .select('*, veiculos(placa, modelo, km_atual)')
-      .order('km_ultima_revisao'),
-  ])
+  const [revisoes, atrasadas] = await Promise.all([getRevisoes(), getRevisoesAtrasadas()])
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Revisões</h1>
-        <p className="text-[#4a6080] text-sm mt-1">
-          Manutenção preventiva — revisão a cada 10.000 km
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Revisões</h1>
+          <p className="text-[#4a6080] text-sm mt-1">
+            {atrasadas.length} manutenção{atrasadas.length !== 1 ? 'ões' : ''} atrasada{atrasadas.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <Link
+          href="/sofia/revisoes/nova"
+          className="px-4 py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors"
+        >
+          + Registrar Revisão
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div>
-          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">
-            Status da Frota
-          </h2>
-          {(revisoes ?? []).length === 0 ? (
-            <p className="text-[#4a6080] text-sm">
-              Nenhum veículo com revisão cadastrada.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {(revisoes ?? []).map((r: any) => {
-                const kmAtual = r.veiculos?.km_atual ?? 0
-                const kmProximo = (r.km_ultima_revisao ?? 0) + 10000
-                const kmFaltando = kmProximo - kmAtual
-                const urgente = kmFaltando <= 1000
-                const atencao = kmFaltando <= 2000
-                return (
-                  <div
-                    key={r.id}
-                    className={`px-4 py-3 rounded-lg border ${
-                      urgente
-                        ? 'border-red-600 bg-red-950'
-                        : atencao
-                        ? 'border-amber-600 bg-amber-950'
-                        : 'border-[#1e3a5f] bg-[#0d2050]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-medium">
-                          {r.veiculos?.placa} · {r.veiculos?.modelo}
-                        </p>
-                        <p className="text-[#4a6080] text-xs">
-                          Última revisão:{' '}
-                          {r.km_ultima_revisao?.toLocaleString('pt-BR')} km
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-bold ${
-                            urgente
-                              ? 'text-red-300'
-                              : atencao
-                              ? 'text-amber-300'
-                              : 'text-green-300'
-                          }`}
-                        >
-                          {kmFaltando > 0
-                            ? `${kmFaltando.toLocaleString('pt-BR')} km`
-                            : 'VENCIDA'}
-                        </p>
-                        <p className="text-[#4a6080] text-xs">para próxima revisão</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">
-            Registrar Revisão
-          </h2>
-          <RevisoesForm veiculos={veiculos} />
-        </div>
+      <div className="rounded-xl border border-[#1e3a5f] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Veículo</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Tipo</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Fornecedor</th>
+              <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Realizada em</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Próxima prevista</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(revisoes as any[]).map((r) => (
+              <tr key={r.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
+                <td className="px-4 py-3 text-white font-medium font-mono">{r.veiculos?.placa ?? '—'}</td>
+                <td className="px-4 py-3 text-[#94a3b8]">{tipoLabel[r.tipo]}</td>
+                <td className="px-4 py-3 text-[#94a3b8]">{r.fornecedor ?? '—'}</td>
+                <td className="px-4 py-3 text-white text-right font-medium">
+                  {r.valor != null ? `R$ ${Number(r.valor).toFixed(2)}` : '—'}
+                </td>
+                <td className="px-4 py-3 text-[#94a3b8]">
+                  {r.data_realizada ? new Date(r.data_realizada).toLocaleDateString('pt-BR') : '—'}
+                </td>
+                <td className="px-4 py-3 text-[#94a3b8]">
+                  {r.proxima_data
+                    ? new Date(r.proxima_data).toLocaleDateString('pt-BR')
+                    : r.proxima_km != null ? `${r.proxima_km.toLocaleString('pt-BR')} km` : '—'}
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[r.status]}`}>
+                    {statusLabel[r.status]}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {(revisoes as any[]).length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
+                  Nenhuma revisão registrada.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )
