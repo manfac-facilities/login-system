@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { atualizarStatusMultaAction, registrarDescontoMultaAction } from './_actions'
+import type { Multa } from '@/lib/sofia/types'
+
+type MultaComRelacoes = Multa & {
+  veiculos: { placa: string } | null
+  motoristas: { nome: string } | null
+}
 
 const statusStyle: Record<string, string> = {
   pendente: 'bg-amber-900 text-amber-300',
@@ -21,12 +27,12 @@ export default async function MultasPage() {
     .order('data', { ascending: false })
 
   const totalPendente = (multas ?? [])
-    .filter((m: any) => m.status === 'pendente')
-    .reduce((sum: number, m: any) => sum + Number(m.valor), 0)
+    .filter((m: MultaComRelacoes) => m.status === 'pendente')
+    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
 
   const totalValidada = (multas ?? [])
-    .filter((m: any) => m.status === 'validada')
-    .reduce((sum: number, m: any) => sum + Number(m.valor), 0)
+    .filter((m: MultaComRelacoes) => m.status === 'validada')
+    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
 
   return (
     <div className="p-8">
@@ -65,7 +71,7 @@ export default async function MultasPage() {
             </tr>
           </thead>
           <tbody>
-            {(multas ?? []).map((m: any) => (
+            {(multas ?? []).map((m: MultaComRelacoes) => (
               <tr
                 key={m.id}
                 className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors"

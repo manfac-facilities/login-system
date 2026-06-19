@@ -4,8 +4,6 @@ import { useRouter } from 'next/navigation'
 import { criarMultaAction } from '../_actions'
 import type { Veiculo, Motorista } from '@/lib/sofia/types'
 
-type State = { error?: string; success?: boolean }
-
 export default function NovaMultaForm({
   veiculos,
   motoristas,

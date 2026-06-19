@@ -38,10 +38,11 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   const [tipo, setTipo] = useState('')
   const [itens, setItens] = useState<Record<string, boolean>>({})
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
-  const [uploading, setUploading] = useState(false)
+  const [uploadFinished, setUploadFinished] = useState(false)
   const [failedFotos, setFailedFotos] = useState<string[]>([])
+  const uploading = !!state.success && fotos.length > 0 && !uploadFinished
   // True the instant the form is submitted, before isPending (set by
-  // useActionState) or uploading (set by the effect below) flip on. Without
+  // useActionState) or uploading (derived below) flip on. Without
   // this, there's a window after the create-checklist action resolves and
   // before the upload effect runs where a fast double-click could submit a
   // second, duplicate checklist row. Cleared as soon as the action reports an
@@ -66,7 +67,6 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
       router.push('/sofia/checklist')
       return
     }
-    setUploading(true)
     const supabase = createClient()
     Promise.all(
       fotos.map(async (foto) => {
@@ -87,7 +87,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
         return { posicao: foto.posicao, ok: true as const }
       })
     ).then((results) => {
-      setUploading(false)
+      setUploadFinished(true)
       const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
       if (failed.length > 0) {
         setFailedFotos(failed)

@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
+interface ChecklistRow {
+  id: string
+  tipo: string
+  created_at: string
+  equipes: { codigo: string } | null
+  veiculos: { placa: string } | null
+  motoristas: { nome: string } | null
+}
+
 export default async function ChecklistPage() {
   const supabase = await createClient()
   const { data: checklists } = await supabase
@@ -25,7 +34,7 @@ export default async function ChecklistPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {(checklists ?? []).map((c: any) => (
+        {(checklists ?? []).map((c: ChecklistRow) => (
           <div
             key={c.id}
             className="flex items-center gap-4 px-4 py-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]"

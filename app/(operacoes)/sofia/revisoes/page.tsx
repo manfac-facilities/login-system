@@ -1,5 +1,8 @@
 import { getRevisoes, getRevisoesAtrasadas } from '@/lib/sofia/queries'
+import type { Revisao } from '@/lib/sofia/types'
 import Link from 'next/link'
+
+type RevisaoComVeiculo = Revisao & { veiculos: { placa: string } | null }
 
 const statusStyle: Record<string, string> = {
   em_dia: 'bg-green-900 text-green-300',
@@ -52,7 +55,7 @@ export default async function RevisoesPage() {
             </tr>
           </thead>
           <tbody>
-            {(revisoes as any[]).map((r) => (
+            {(revisoes as RevisaoComVeiculo[]).map((r) => (
               <tr key={r.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                 <td className="px-4 py-3 text-white font-medium font-mono">{r.veiculos?.placa ?? '—'}</td>
                 <td className="px-4 py-3 text-[#94a3b8]">{tipoLabel[r.tipo]}</td>
@@ -75,7 +78,7 @@ export default async function RevisoesPage() {
                 </td>
               </tr>
             ))}
-            {(revisoes as any[]).length === 0 && (
+            {revisoes.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma revisão registrada.

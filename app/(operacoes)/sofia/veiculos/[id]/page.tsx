@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { getResponsabilidadeHistorico, getCentroCustoHistorico } from '@/lib/sofia/queries'
+import type { VeiculoResponsabilidadeHistorico } from '@/lib/sofia/types'
 import { notFound } from 'next/navigation'
+
+type HistoricoComRelacoes = VeiculoResponsabilidadeHistorico & {
+  equipes: { codigo: string } | null
+  motoristas: { nome: string } | null
+}
 
 export default async function VeiculoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -46,7 +52,7 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
           <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Histórico de responsabilidade</h2>
           <div className="flex flex-col gap-3 border-l-2 border-[#1e3a5f] pl-4">
             {historico.length === 0 && <p className="text-[#4a6080] text-sm">Sem histórico de troca ainda.</p>}
-            {historico.map((h: any) => (
+            {(historico as HistoricoComRelacoes[]).map((h) => (
               <div key={h.id} className="relative">
                 <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#f05a28]" />
                 <p className="text-white text-sm">{h.equipes?.codigo ?? '—'} {h.motoristas?.nome ? `· ${h.motoristas.nome}` : ''}</p>

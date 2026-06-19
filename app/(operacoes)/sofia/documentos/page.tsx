@@ -1,5 +1,11 @@
 import { getDocumentosVeiculo } from '@/lib/sofia/queries'
+import type { DocumentoVeiculo } from '@/lib/sofia/types'
 import Link from 'next/link'
+
+type DocumentoComVeiculo = DocumentoVeiculo & {
+  statusCalc: 'valido' | 'vence_30d' | 'vencido'
+  veiculos: { placa: string } | null
+}
 
 const statusStyle: Record<string, string> = {
   valido: 'bg-green-900 text-green-300',
@@ -35,7 +41,7 @@ export default async function DocumentosPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const { status } = await searchParams
-  const documentos = await getDocumentosVeiculo()
+  const documentos = (await getDocumentosVeiculo()) as (DocumentoVeiculo & { veiculos: { placa: string } | null })[]
   const comStatus = documentos.map((d) => ({ ...d, statusCalc: computeStatus(d.vencimento) }))
   const filtrados = status ? comStatus.filter((d) => d.statusCalc === status) : comStatus
 
@@ -85,7 +91,7 @@ export default async function DocumentosPage({
             </tr>
           </thead>
           <tbody>
-            {filtrados.map((d: any) => (
+            {filtrados.map((d: DocumentoComVeiculo) => (
               <tr key={d.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                 <td className="px-4 py-3 text-white font-medium font-mono">{d.veiculos?.placa ?? '—'}</td>
                 <td className="px-4 py-3 text-[#94a3b8]">{tipoLabel[d.tipo]}</td>

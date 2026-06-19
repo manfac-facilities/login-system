@@ -21,8 +21,9 @@ export default function NovoSinistroForm({
   const [state, action, isPending] = useActionState(criarSinistroAction, {})
   const router = useRouter()
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
-  const [uploading, setUploading] = useState(false)
+  const [uploadFinished, setUploadFinished] = useState(false)
   const [failedFotos, setFailedFotos] = useState<string[]>([])
+  const uploading = !!state.success && fotos.length > 0 && !uploadFinished
 
   const handleCapture = useCallback((blob: Blob, posicao: string) => {
     setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao }])
@@ -34,7 +35,6 @@ export default function NovoSinistroForm({
       router.push('/sofia/sinistros')
       return
     }
-    setUploading(true)
     const supabase = createClient()
     Promise.all(
       fotos.map(async (foto, i) => {
@@ -52,7 +52,7 @@ export default function NovoSinistroForm({
         return { posicao: foto.posicao, ok: true as const }
       })
     ).then((results) => {
-      setUploading(false)
+      setUploadFinished(true)
       const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
       if (failed.length > 0) {
         setFailedFotos(failed)

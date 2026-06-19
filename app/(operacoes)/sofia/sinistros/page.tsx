@@ -1,5 +1,11 @@
 import { getSinistros } from '@/lib/sofia/queries'
+import type { Sinistro } from '@/lib/sofia/types'
 import Link from 'next/link'
+
+type SinistroComRelacoes = Sinistro & {
+  veiculos: { placa: string } | null
+  motoristas: { nome: string } | null
+}
 
 const statusStyle: Record<string, string> = {
   aberto: 'bg-red-900 text-red-300',
@@ -23,9 +29,9 @@ const tipoLabel: Record<string, string> = {
 export default async function SinistrosPage() {
   const sinistros = await getSinistros()
 
-  const totalAberto = sinistros
-    .filter((s: any) => s.status !== 'encerrado')
-    .reduce((sum: number, s: any) => sum + Number(s.valor_dano ?? 0), 0)
+  const totalAberto = (sinistros as SinistroComRelacoes[])
+    .filter((s) => s.status !== 'encerrado')
+    .reduce((sum, s) => sum + Number(s.valor_dano ?? 0), 0)
 
   return (
     <div className="p-8">
@@ -58,7 +64,7 @@ export default async function SinistrosPage() {
             </tr>
           </thead>
           <tbody>
-            {sinistros.map((s: any) => (
+            {(sinistros as SinistroComRelacoes[]).map((s) => (
               <tr key={s.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                 <td className="px-4 py-3 text-[#94a3b8]">{new Date(s.data).toLocaleDateString('pt-BR')}</td>
                 <td className="px-4 py-3 text-[#94a3b8] font-mono">{s.veiculos?.placa ?? '—'}</td>

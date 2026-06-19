@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { getVeiculos, getAbastecimentos } from '@/lib/sofia/queries'
+import type { Abastecimento } from '@/lib/sofia/types'
 import AbastecimentoForm from './_form'
+
+type AbastecimentoComVeiculo = Abastecimento & { veiculos: { placa: string } | null }
 
 export default async function AbastecimentoPage() {
   const [veiculos, abastecimentos] = await Promise.all([getVeiculos(), getAbastecimentos()])
@@ -20,7 +23,7 @@ export default async function AbastecimentoPage() {
     kmPorVeiculo.set(k.veiculo_id, (kmPorVeiculo.get(k.veiculo_id) ?? 0) + (k.km_final - k.km_inicial))
   }
 
-  const doMes = (abastecimentos as any[]).filter((a) => a.data >= inicioMes)
+  const doMes = (abastecimentos as AbastecimentoComVeiculo[]).filter((a) => a.data >= inicioMes)
   const porVeiculo = new Map<string, { placa: string; litros: number; valor: number }>()
   for (const a of doMes) {
     const atual = porVeiculo.get(a.veiculo_id) ?? { placa: a.veiculos?.placa ?? '—', litros: 0, valor: 0 }
