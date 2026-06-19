@@ -1,0 +1,55 @@
+'use server'
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+type State = { error?: string; success?: boolean; sinistroId?: string }
+
+export async function criarSinistroAction(_prev: State, formData: FormData): Promise<State> {
+  const veiculo_id = (formData.get('veiculo_id') as string) || null
+  const motorista_id = (formData.get('motorista_id') as string) || null
+  const data = formData.get('data') as string
+  const tipo = formData.get('tipo') as string
+  const descricao = (formData.get('descricao') as string).trim()
+  const valor_dano = formData.get('valor_dano') ? Number(formData.get('valor_dano')) : null
+  const observacoes = (formData.get('observacoes') as string).trim() || null
+
+  if (!data || !tipo || !descricao) return { error: 'Data, tipo e descrição são obrigatórios' }
+
+  const supabase = await createClient()
+  const { data: row, error } = await supabase
+    .from('sinistros')
+    .insert({ veiculo_id, motorista_id, data, tipo, descricao, valor_dano, observacoes })
+    .select('id')
+    .single()
+
+  if (error) return { error: 'Erro ao registrar sinistro' }
+  revalidatePath('/sofia/sinistros')
+  return { success: true, sinistroId: row.id }
+}
+
+export async function uploadFotoSinistroAction(sinistroId: string, storagePath: string) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('sinistro_fotos')
+    .insert({ sinistro_id: sinistroId, storage_path: storagePath })
+  if (error) throw error
+  revalidatePath('/sofia/sinistros')
+}
+
+export async function atualizarTratativaSinistroAction(_prev: State, formData: FormData): Promise<State> {
+  const id = formData.get('id') as string
+  const valor_descontado = formData.get('valor_descontado') ? Number(formData.get('valor_descontado')) : null
+  const tipo_desconto = formData.get('tipo_desconto') as string
+  const autorizacao_assinada = formData.get('autorizacao_assinada') === 'true'
+  const status = formData.get('status') as string
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('sinistros')
+    .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status })
+    .eq('id', id)
+
+  if (error) return { error: 'Erro ao atualizar tratativa' }
+  revalidatePath('/sofia/sinistros')
+  return { success: true }
+}
