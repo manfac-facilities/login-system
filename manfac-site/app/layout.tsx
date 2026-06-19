@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { SITE_URL } from '@/lib/site'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
-const siteUrl = 'https://manfac.com.br'
+const siteUrl = SITE_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -28,12 +29,21 @@ export const metadata: Metadata = {
     siteName: 'Manfac Engenharia',
     locale: 'pt_BR',
     type: 'website',
+    images: [
+      {
+        url: `${siteUrl}/logo.png`,
+        width: 835,
+        height: 228,
+        alt: 'Manfac Engenharia',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Manfac Engenharia',
     description:
       'Gestão e execução de obras, reformas e manutenção predial para grandes operações.',
+    images: [`${siteUrl}/logo.png`],
   },
   alternates: {
     canonical: siteUrl,

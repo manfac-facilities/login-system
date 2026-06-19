@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-[var(--border)]">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-[var(--muted)] md:flex-row">
-        <Image src="/logo-white.png" alt="Manfac Engenharia" width={110} height={33} />
+        <Image src="/logo-white.png" alt="Manfac Engenharia" width={121} height={33} />
         <p>© {new Date().getFullYear()} Manfac Engenharia. Todos os direitos reservados.</p>
       </div>
     </footer>
