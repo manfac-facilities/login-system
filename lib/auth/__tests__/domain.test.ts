@@ -28,6 +28,10 @@ describe('isManfacEmail', () => {
   it('rejects double-at email bypass', () => {
     expect(isManfacEmail('atacante@evil.com@manfac.com.br')).toBe(false)
   })
+
+  it('allows the explicit owner exception email', () => {
+    expect(isManfacEmail('jvictorco28@gmail.com')).toBe(true)
+  })
 })
 
 describe('getFirstName', () => {
