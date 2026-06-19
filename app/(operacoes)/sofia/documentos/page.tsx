@@ -21,7 +21,9 @@ const tipoLabel: Record<string, string> = {
 }
 
 function computeStatus(vencimento: string): 'valido' | 'vence_30d' | 'vencido' {
-  const diffDias = (new Date(vencimento).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  const hoje = new Date()
+  const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
+  const diffDias = (new Date(vencimento).getTime() - hojeUTC) / (1000 * 60 * 60 * 24)
   if (diffDias < 0) return 'vencido'
   if (diffDias <= 30) return 'vence_30d'
   return 'valido'
