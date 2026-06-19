@@ -24,6 +24,15 @@ export default function NovoSinistroForm({
   const [uploadFinished, setUploadFinished] = useState(false)
   const [failedFotos, setFailedFotos] = useState<string[]>([])
   const uploading = !!state.success && fotos.length > 0 && !uploadFinished
+  // True the instant the form is submitted, before isPending (set by
+  // useActionState) or uploading (derived below) flip on. Without this,
+  // there's a window after the create-sinistro action resolves and before
+  // the upload effect/redirect runs where a fast double-click could submit
+  // a second, duplicate sinistro row. Cleared as soon as the action reports
+  // an error (computed at render time, not in an effect) so the user can retry.
+  const [submitting, setSubmitting] = useState(false)
+  if (submitting && state.error) setSubmitting(false)
+  const formInFlight = submitting || isPending || uploading
 
   const handleCapture = useCallback((blob: Blob, posicao: string) => {
     setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao }])
@@ -56,6 +65,7 @@ export default function NovoSinistroForm({
       const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
       if (failed.length > 0) {
         setFailedFotos(failed)
+        setSubmitting(false)
         return
       }
       router.push('/sofia/sinistros')
@@ -67,7 +77,7 @@ export default function NovoSinistroForm({
       <h1 className="text-2xl font-bold text-white mb-2">Registrar Sinistro</h1>
       <p className="text-[#4a6080] text-sm mb-8">Batida, furto ou avaria — com fotos do dano</p>
 
-      <form action={action} className="flex flex-col gap-4">
+      <form action={action} onSubmit={() => setSubmitting(true)} className="flex flex-col gap-4">
         {state.error && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
             {state.error}
@@ -149,8 +159,8 @@ export default function NovoSinistroForm({
           <button type="button" onClick={() => router.back()} className="flex-1 py-2.5 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] transition-colors">
             Cancelar
           </button>
-          <button type="submit" disabled={isPending || uploading} className="flex-1 py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors">
-            {uploading ? 'Enviando fotos...' : isPending ? 'Salvando...' : 'Registrar Sinistro'}
+          <button type="submit" disabled={formInFlight} className="flex-1 py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors">
+            {uploading ? 'Enviando fotos...' : formInFlight ? 'Salvando...' : 'Registrar Sinistro'}
           </button>
         </div>
       </form>

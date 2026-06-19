@@ -10,6 +10,12 @@ interface ChecklistRow {
   motoristas: { nome: string } | null
 }
 
+const tipoBadge: Record<string, { label: string; style: string }> = {
+  saida: { label: '↑ SAÍDA', style: 'bg-green-900 text-green-300' },
+  retorno: { label: '↓ RETORNO', style: 'bg-blue-900 text-blue-300' },
+  troca: { label: '⇄ TROCA', style: 'bg-amber-900 text-amber-300' },
+}
+
 export default async function ChecklistPage() {
   const supabase = await createClient()
   const { data: checklists } = await supabase
@@ -41,12 +47,10 @@ export default async function ChecklistPage() {
           >
             <span
               className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${
-                c.tipo === 'saida'
-                  ? 'bg-green-900 text-green-300'
-                  : 'bg-blue-900 text-blue-300'
+                (tipoBadge[c.tipo] ?? tipoBadge.retorno).style
               }`}
             >
-              {c.tipo === 'saida' ? '↑ SAÍDA' : '↓ RETORNO'}
+              {(tipoBadge[c.tipo] ?? tipoBadge.retorno).label}
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium">

@@ -45,9 +45,9 @@ export default async function KmPage() {
                   <div className="text-right">
                     <p className="text-white text-sm">
                       {k.km_inicial.toLocaleString('pt-BR')} →{' '}
-                      {k.km_final ? k.km_final.toLocaleString('pt-BR') : '—'}
+                      {k.km_final != null ? k.km_final.toLocaleString('pt-BR') : '—'}
                     </p>
-                    {k.km_final && (
+                    {k.km_final != null && (
                       <p className="text-[#4a6080] text-xs">
                         {(k.km_final - k.km_inicial).toLocaleString('pt-BR')} km rodados
                       </p>

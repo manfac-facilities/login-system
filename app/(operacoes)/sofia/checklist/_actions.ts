@@ -63,13 +63,13 @@ export async function criarChecklistAction(
 
   if (tipo === 'troca') {
     const hoje = new Date().toISOString().split('T')[0]
-    await supabase
+    const { error: fechaError } = await supabase
       .from('veiculo_responsabilidade_historico')
       .update({ fim: hoje })
       .eq('veiculo_id', veiculo_id)
       .is('fim', null)
 
-    await supabase.from('veiculo_responsabilidade_historico').insert({
+    const { error: insereError } = await supabase.from('veiculo_responsabilidade_historico').insert({
       veiculo_id,
       equipe_id: equipe_destino_id,
       motorista_id: motorista_destino_id,
@@ -77,7 +77,17 @@ export async function criarChecklistAction(
       origem_checklist_id: data.id,
     })
 
-    await supabase.from('veiculos').update({ equipe_id: equipe_destino_id }).eq('id', veiculo_id)
+    const { error: veiculoError } = await supabase
+      .from('veiculos')
+      .update({ equipe_id: equipe_destino_id })
+      .eq('id', veiculo_id)
+
+    if (fechaError || insereError || veiculoError) {
+      return {
+        error: 'Checklist salvo, mas a troca de responsável não foi totalmente registrada. Contate o suporte.',
+        checklistId: data.id,
+      }
+    }
   }
 
   revalidatePath('/sofia/checklist')

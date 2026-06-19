@@ -12,10 +12,11 @@ export async function criarMultaAction(
   const motorista_id = (formData.get('motorista_id') as string) || null
   const data = formData.get('data') as string
   const descricao = (formData.get('descricao') as string).trim()
-  const valor = Number(formData.get('valor'))
+  const valorRaw = formData.get('valor') as string
+  const valor = Number(valorRaw)
   const observacoes = (formData.get('observacoes') as string).trim() || null
 
-  if (!data || !descricao || !valor)
+  if (!data || !descricao || valorRaw === '' || Number.isNaN(valor))
     return { error: 'Data, descrição e valor são obrigatórios' }
 
   const supabase = await createClient()
