@@ -31,6 +31,23 @@ export async function criarMultaAction(
 
 export async function atualizarStatusMultaAction(id: string, status: string) {
   const supabase = await createClient()
-  await supabase.from('multas').update({ status }).eq('id', id)
+  const { error } = await supabase.from('multas').update({ status }).eq('id', id)
+  if (error) throw error
+  revalidatePath('/sofia/multas')
+}
+
+export async function registrarDescontoMultaAction(formData: FormData): Promise<void> {
+  const id = formData.get('id') as string
+  const valor_descontado = Number(formData.get('valor_descontado'))
+  const tipo_desconto = formData.get('tipo_desconto') as string
+  const autorizacao_assinada = formData.get('autorizacao_assinada') === 'true'
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('multas')
+    .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status: 'descontada' })
+    .eq('id', id)
+
+  if (error) throw error
   revalidatePath('/sofia/multas')
 }

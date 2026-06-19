@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { atualizarStatusMultaAction } from './_actions'
+import { atualizarStatusMultaAction, registrarDescontoMultaAction } from './_actions'
 
 const statusStyle: Record<string, string> = {
   pendente: 'bg-amber-900 text-amber-300',
@@ -24,14 +24,23 @@ export default async function MultasPage() {
     .filter((m: any) => m.status === 'pendente')
     .reduce((sum: number, m: any) => sum + Number(m.valor), 0)
 
+  const totalValidada = (multas ?? [])
+    .filter((m: any) => m.status === 'validada')
+    .reduce((sum: number, m: any) => sum + Number(m.valor), 0)
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Multas</h1>
-          <p className="text-[#4a6080] text-sm mt-1">
-            R$ {totalPendente.toFixed(2)} pendente de desconto
-          </p>
+          <div className="flex gap-6 mt-2">
+            <p className="text-[#4a6080] text-sm">
+              R$ {totalPendente.toFixed(2)} pendente de validação
+            </p>
+            <p className="text-[#4a6080] text-sm">
+              R$ {totalValidada.toFixed(2)} validada, não descontada
+            </p>
+          </div>
         </div>
         <Link
           href="/sofia/multas/nova"
@@ -50,6 +59,7 @@ export default async function MultasPage() {
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Motorista</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Descrição</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -70,6 +80,9 @@ export default async function MultasPage() {
                 <td className="px-4 py-3 text-white">{m.descricao}</td>
                 <td className="px-4 py-3 text-white text-right font-medium">
                   R$ {Number(m.valor).toFixed(2)}
+                </td>
+                <td className="px-4 py-3 text-[#94a3b8] text-sm">
+                  {m.tipo_desconto === 'nenhum' ? '—' : `${m.tipo_desconto === 'total' ? 'Total' : 'Parcial'} · R$ ${Number(m.valor_descontado ?? 0).toFixed(2)}`}
                 </td>
                 <td className="px-4 py-3">
                   <span
@@ -95,12 +108,38 @@ export default async function MultasPage() {
                       </button>
                     </form>
                   )}
+                  <details className="mt-1">
+                    <summary className="text-xs text-[#f05a28] cursor-pointer hover:underline">desconto</summary>
+                    <form action={registrarDescontoMultaAction} className="flex flex-col gap-2 mt-2 p-3 rounded-lg border border-[#1e3a5f] bg-[#0a1628] text-left w-56">
+                      <input type="hidden" name="id" value={m.id} />
+                      <input
+                        name="valor_descontado"
+                        type="number"
+                        step="0.01"
+                        placeholder="Valor descontado"
+                        defaultValue={m.valor_descontado ?? ''}
+                        className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs"
+                      />
+                      <select name="tipo_desconto" defaultValue={m.tipo_desconto} className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs">
+                        <option value="nenhum">Nenhum</option>
+                        <option value="parcial">Parcial</option>
+                        <option value="total">Total</option>
+                      </select>
+                      <label className="flex items-center gap-2 text-xs text-[#94a3b8]">
+                        <input type="checkbox" name="autorizacao_assinada" value="true" defaultChecked={m.autorizacao_assinada} className="accent-[#f05a28]" />
+                        Autorização assinada
+                      </label>
+                      <button type="submit" className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] transition-colors">
+                        Salvar
+                      </button>
+                    </form>
+                  </details>
                 </td>
               </tr>
             ))}
             {(multas ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma multa registrada.
                 </td>
               </tr>
