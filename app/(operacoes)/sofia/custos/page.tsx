@@ -12,15 +12,15 @@ export default async function CustosPage() {
   const linhas = await Promise.all(
     veiculos.map(async (v) => {
       const [{ data: multas }, { data: sinistros }, { data: revisoes }, { data: abastecimentos }, centroCusto] = await Promise.all([
-        supabase.from('multas').select('valor').eq('veiculo_id', v.id).gte('data', inicioMes),
-        supabase.from('sinistros').select('valor_dano').eq('veiculo_id', v.id).gte('data', inicioMes),
+        supabase.from('multas').select('valor, valor_descontado').eq('veiculo_id', v.id).gte('data', inicioMes),
+        supabase.from('sinistros').select('valor_dano, valor_descontado').eq('veiculo_id', v.id).gte('data', inicioMes),
         supabase.from('revisoes').select('valor').eq('veiculo_id', v.id).gte('data_realizada', inicioMes),
         supabase.from('abastecimentos').select('valor').eq('veiculo_id', v.id).gte('data', inicioMes),
         getCentroCustoHistorico(v.id),
       ])
 
-      const somaMultas = (multas ?? []).reduce((s, m) => s + Number(m.valor ?? 0), 0)
-      const somaSinistros = (sinistros ?? []).reduce((s, x) => s + Number(x.valor_dano ?? 0), 0)
+      const somaMultas = (multas ?? []).reduce((s, m) => s + Number(m.valor ?? 0) - Number(m.valor_descontado ?? 0), 0)
+      const somaSinistros = (sinistros ?? []).reduce((s, x) => s + Number(x.valor_dano ?? 0) - Number(x.valor_descontado ?? 0), 0)
       const somaRevisoes = (revisoes ?? []).reduce((s, r) => s + Number(r.valor ?? 0), 0)
       const somaAbastecimento = (abastecimentos ?? []).reduce((s, a) => s + Number(a.valor ?? 0), 0)
       const locacao = v.valor_locacao_mensal ?? 0

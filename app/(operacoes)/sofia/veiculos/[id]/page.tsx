@@ -22,13 +22,13 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
 
   const [{ data: multas }, { data: sinistros }, { data: revisoes }, { data: abastecimentos }] = await Promise.all([
     supabase.from('multas').select('valor, valor_descontado').eq('veiculo_id', id),
-    supabase.from('sinistros').select('valor_dano').eq('veiculo_id', id),
+    supabase.from('sinistros').select('valor_dano, valor_descontado').eq('veiculo_id', id),
     supabase.from('revisoes').select('valor').eq('veiculo_id', id),
     supabase.from('abastecimentos').select('valor').eq('veiculo_id', id),
   ])
 
-  const somaMultas = (multas ?? []).reduce((s, m) => s + (m.valor ?? 0), 0)
-  const somaSinistros = (sinistros ?? []).reduce((s, sn) => s + (sn.valor_dano ?? 0), 0)
+  const somaMultas = (multas ?? []).reduce((s, m) => s + (m.valor ?? 0) - (m.valor_descontado ?? 0), 0)
+  const somaSinistros = (sinistros ?? []).reduce((s, sn) => s + (sn.valor_dano ?? 0) - (sn.valor_descontado ?? 0), 0)
   const somaRevisoes = (revisoes ?? []).reduce((s, r) => s + (r.valor ?? 0), 0)
   const somaAbastecimento = (abastecimentos ?? []).reduce((s, a) => s + (a.valor ?? 0), 0)
   const locacao = veiculo.valor_locacao_mensal ?? 0

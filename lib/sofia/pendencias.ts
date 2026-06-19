@@ -16,7 +16,7 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
   const result: PendenciaAutomatica[] = []
 
   for (const m of inputs.multas) {
-    if (m.status !== 'descontada' && !m.autorizacao_assinada) {
+    if (m.status !== 'descontada') {
       result.push({ descricao: `Multa sem tratativa: ${m.descricao}`, origem: 'multa', prazo: m.data })
     }
   }

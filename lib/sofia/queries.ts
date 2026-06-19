@@ -91,8 +91,18 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
 
 export async function getRevisoesAtrasadas(): Promise<Revisao[]> {
   const supabase = await createClient()
-  const { data } = await supabase.from('revisoes').select('*').eq('status', 'atrasada')
-  return data ?? []
+  const { data } = await supabase
+    .from('revisoes')
+    .select('*')
+    .order('created_at', { ascending: false })
+  const hoje = new Date().toISOString().split('T')[0]
+  const maisRecentePorVeiculo = new Map<string, Revisao>()
+  for (const r of data ?? []) {
+    if (!maisRecentePorVeiculo.has(r.veiculo_id)) maisRecentePorVeiculo.set(r.veiculo_id, r)
+  }
+  return Array.from(maisRecentePorVeiculo.values()).filter(
+    (r) => r.proxima_data != null && r.proxima_data < hoje
+  )
 }
 
 export async function getDocumentosVeiculo(veiculoId?: string): Promise<DocumentoVeiculo[]> {
