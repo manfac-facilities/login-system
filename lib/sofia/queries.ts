@@ -55,7 +55,7 @@ export async function getMultasPendentes(): Promise<Multa[]> {
   const { data } = await supabase
     .from('multas')
     .select('*')
-    .eq('status', 'pendente')
+    .neq('status', 'descontada')
     .order('data', { ascending: false })
   return data ?? []
 }
@@ -96,11 +96,12 @@ export async function getRevisoesAtrasadas(): Promise<Revisao[]> {
     .select('*')
     .order('created_at', { ascending: false })
   const hoje = new Date().toISOString().split('T')[0]
-  const maisRecentePorVeiculo = new Map<string, Revisao>()
+  const maisRecentePorVeiculoETipo = new Map<string, Revisao>()
   for (const r of data ?? []) {
-    if (!maisRecentePorVeiculo.has(r.veiculo_id)) maisRecentePorVeiculo.set(r.veiculo_id, r)
+    const chave = `${r.veiculo_id}::${r.tipo}`
+    if (!maisRecentePorVeiculoETipo.has(chave)) maisRecentePorVeiculoETipo.set(chave, r)
   }
-  return Array.from(maisRecentePorVeiculo.values()).filter(
+  return Array.from(maisRecentePorVeiculoETipo.values()).filter(
     (r) => r.proxima_data != null && r.proxima_data < hoje
   )
 }
