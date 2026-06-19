@@ -8,14 +8,14 @@ const resultados = [
 export default function Case() {
   return (
     <section id="case" className="mx-auto max-w-6xl px-6 py-20">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
+      <p className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
         Resultados
-      </h2>
-      <p className="mt-4 max-w-3xl text-2xl font-semibold leading-snug md:text-3xl">
+      </p>
+      <h2 className="mt-4 max-w-3xl text-2xl font-semibold leading-snug md:text-3xl">
         Um dos maiores varejistas do setor farmacêutico do Brasil — faturamento de mais de
         R$16 bilhões/ano e 1.600+ unidades no país — colocou a Manfac na gestão de 400+ unidades
         no Rio de Janeiro.
-      </p>
+      </h2>
       <p className="mt-4 max-w-2xl text-[var(--muted)]">
         Depois de 7 anos com fornecedores de baixa qualidade, sem padrão e com comunicação
         ineficiente, a Manfac estruturou gestão ativa, rotinas de acompanhamento e transparência

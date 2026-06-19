@@ -11,14 +11,14 @@ const banners = ['Simples na execução', 'Forte na gestão', 'Consistente no re
 export default function Abordagem() {
   return (
     <section id="abordagem" className="mx-auto max-w-6xl px-6 py-20">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
+      <p className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
         Nossa abordagem
-      </h2>
-      <p className="mt-4 max-w-3xl text-2xl font-semibold leading-snug md:text-3xl">
+      </p>
+      <h2 className="mt-4 max-w-3xl text-2xl font-semibold leading-snug md:text-3xl">
         Estruturamos a operação como um sistema integrado, conectando pessoas, processos e
         informações. Executamos com excelência técnica e gerenciamos com inteligência,
         transparência e foco em resultado.
-      </p>
+      </h2>
 
       <h3 className="mt-14 text-lg font-semibold text-white">Como atuamos</h3>
       <div className="mt-6 grid gap-6 md:grid-cols-5">

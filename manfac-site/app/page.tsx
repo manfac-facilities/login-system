@@ -1,5 +1,6 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
+import Stats from '@/components/Stats'
 import QuemSomos from '@/components/QuemSomos'
 import Problema from '@/components/Problema'
 import Abordagem from '@/components/Abordagem'
@@ -16,6 +17,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <Stats />
         <QuemSomos />
         <Problema />
         <Abordagem />
