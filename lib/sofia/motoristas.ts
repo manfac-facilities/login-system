@@ -1,9 +1,10 @@
-export type ClasseCnh = 'sem_cnh' | 'vencidas' | 'atencao' | 'regulares'
+export type ClasseCnh = 'sem_cnh' | 'vencidas' | 'urgente' | 'atencao' | 'regulares'
 
 export function classificarCnh(vencimento: string | null, hoje: Date = new Date()): ClasseCnh {
   if (!vencimento) return 'sem_cnh'
   const dias = Math.ceil((new Date(vencimento).getTime() - hoje.getTime()) / 86400000)
-  if (dias <= 30) return 'vencidas'
+  if (dias < 0) return 'vencidas'
+  if (dias <= 30) return 'urgente'
   if (dias <= 60) return 'atencao'
   return 'regulares'
 }
