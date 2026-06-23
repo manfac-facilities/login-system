@@ -8,6 +8,7 @@ const PAGE_SIZE = 10
 const filtroPills: { value: ClasseCnh | undefined; label: string }[] = [
   { value: undefined, label: 'Todos' },
   { value: 'vencidas', label: 'Vencidas' },
+  { value: 'urgente', label: 'Vence em 30 dias' },
   { value: 'atencao', label: 'Atenção' },
   { value: 'regulares', label: 'Regulares' },
 ]
@@ -27,7 +28,7 @@ export default async function MotoristasPage({
 
   const ativos = motoristas.filter((m) => m.ativo)
   const vencidas = ativos.filter((m) => classificarCnh(m.cnh_vencimento) === 'vencidas')
-  const atencao = ativos.filter((m) => classificarCnh(m.cnh_vencimento) === 'atencao')
+  const urgente = ativos.filter((m) => classificarCnh(m.cnh_vencimento) === 'urgente')
 
   let filtrados = motoristas
   if (q) {
@@ -78,7 +79,7 @@ export default async function MotoristasPage({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard label="Total Ativos" value={ativos.length} accent />
         <StatCard label="CNHs Vencidas" value={vencidas.length} sub="Ação imediata necessária" />
-        <StatCard label="Vencem em 30 dias" value={atencao.length} sub="Agendar renovações" />
+        <StatCard label="Vencem em 30 dias" value={urgente.length} sub="Agendar renovações" />
       </div>
 
       <div className="flex items-center gap-2 mb-4">
