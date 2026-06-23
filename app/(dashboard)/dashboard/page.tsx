@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <header className="border-b border-[#1e3a5f] bg-[#0d2050]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Logo size="sm" />
+          <Logo size="sm" variant="white" />
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#94a3b8]">{user.email}</span>
             <form action={logoutAction}>
