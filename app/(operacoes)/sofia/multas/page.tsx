@@ -61,8 +61,10 @@ export default async function MultasPage() {
           <thead>
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data de recebimento</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Veículo</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Motorista</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Tipo de infração</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Descrição</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
@@ -79,11 +81,15 @@ export default async function MultasPage() {
                 <td className="px-4 py-3 text-[#94a3b8]">
                   {new Date(m.data).toLocaleDateString('pt-BR')}
                 </td>
+                <td className="px-4 py-3 text-[#94a3b8]">
+                  {m.data_recebimento ? new Date(m.data_recebimento).toLocaleDateString('pt-BR') : '—'}
+                </td>
                 <td className="px-4 py-3 text-[#94a3b8] font-mono">
                   {m.veiculos?.placa ?? '—'}
                 </td>
                 <td className="px-4 py-3 text-[#94a3b8]">{m.motoristas?.nome ?? '—'}</td>
-                <td className="px-4 py-3 text-white">{m.descricao}</td>
+                <td className="px-4 py-3 text-white">{m.tipo_infracao ?? '—'}</td>
+                <td className="px-4 py-3 text-white">{m.descricao ?? '—'}</td>
                 <td className="px-4 py-3 text-white text-right font-medium">
                   R$ {Number(m.valor).toFixed(2)}
                 </td>
@@ -145,7 +151,7 @@ export default async function MultasPage() {
             ))}
             {(multas ?? []).length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={10} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma multa registrada.
                 </td>
               </tr>
