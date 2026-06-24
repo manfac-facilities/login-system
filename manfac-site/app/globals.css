@@ -1,21 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a1628;
-  --navy: #0d2050;
-  --orange: #f05a28;
-  --orange-hover: #d94e22;
-  --muted: #94a3b8;
-  --border: #1e3a5f;
+  --background: #ffffff;
+  --surface: #f6f6f5;
+  --ink: #00345e;
+  --body-text: #333336;
+  --orange: #f85e0b;
+  --orange-hover: #d6520a;
+  --yellow: #f7cb15;
+  --muted: #6e8894;
+  --border: #dadad8;
+  --grid-line: rgba(110, 136, 148, 0.18);
 }
 
 html,
 body {
   background-color: var(--background);
-  color: #ffffff;
+  color: var(--body-text);
   scroll-behavior: smooth;
 }
 
 * {
   box-sizing: border-box;
+}
+
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
