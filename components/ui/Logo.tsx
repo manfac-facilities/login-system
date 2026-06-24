@@ -2,7 +2,6 @@ import Image from 'next/image'
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'navy' | 'white'
   priority?: boolean
 }
 
@@ -12,16 +11,11 @@ const sizes = {
   lg: { width: 200, height: 60 },
 }
 
-const sources = {
-  navy: '/logo.png',
-  white: '/logo-white.png',
-}
-
-export default function Logo({ size = 'md', variant = 'navy', priority = false }: LogoProps) {
+export default function Logo({ size = 'md', priority = false }: LogoProps) {
   const { width, height } = sizes[size]
   return (
     <Image
-      src={sources[variant]}
+      src="/logo-white.png"
       alt="Manfac Facilities"
       width={width}
       height={height}
