@@ -1,8 +1,8 @@
 export default function Contato() {
   return (
-    <section id="contato" className="border-t border-[var(--border)] bg-[var(--navy)]/30">
+    <section className="border-t border-[var(--border)] bg-[var(--surface)]">
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h2 className="text-2xl font-bold md:text-3xl">
+        <h2 className="text-2xl font-bold text-[var(--ink)] md:text-3xl">
           Se a sua operação exige controle, visibilidade e resultado,
           <br />a Manfac é o parceiro certo para construir isso com você.
         </h2>
