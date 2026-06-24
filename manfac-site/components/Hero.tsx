@@ -8,12 +8,12 @@ const Hero3D = dynamic(() => import('./Hero3D'), { ssr: false })
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null)
   const [ready, setReady] = useState(false)
-  const [simplified, setSimplified] = useState(false)
+  const [simplified] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    setSimplified(window.innerWidth < 768)
-
     const idle = (cb: () => void) =>
       typeof window.requestIdleCallback === 'function'
         ? window.requestIdleCallback(cb)
