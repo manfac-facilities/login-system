@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registrarAuditoria } from '@/lib/sofia/auditLog'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 type State = { error?: string; success?: boolean }
 
@@ -44,4 +45,65 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
   revalidatePath('/sofia/multas')
   return { success: true }
+}
+
+export async function enviarParaDescontoEmMassaAction(ids: string[]) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('multas')
+    .update({ status: 'validada' })
+    .in('id', ids)
+    .eq('status', 'pendente')
+  if (error) throw error
+  revalidatePath('/sofia/multas')
+  revalidatePath('/sofia/descontos')
+}
+
+export async function excluirMultaAction(id: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    throw new Error('Apenas administradores podem excluir multas')
+
+  const { data: multa } = await supabase.from('multas').select('*').eq('id', id).single()
+  if (!multa) throw new Error('Multa não encontrada')
+
+  await registrarAuditoria(supabase, {
+    tabela: 'multas',
+    registro_id: id,
+    acao: 'exclusao',
+    dados: multa,
+    usuario_email: user.email,
+  })
+
+  const { error } = await supabase.from('multas').delete().eq('id', id)
+  if (error) throw error
+  revalidatePath('/sofia/multas')
+}
+
+export async function excluirMultasEmMassaAction(ids: string[]) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    throw new Error('Apenas administradores podem excluir multas')
+
+  const { data: multas } = await supabase.from('multas').select('*').in('id', ids)
+
+  for (const multa of multas ?? []) {
+    await registrarAuditoria(supabase, {
+      tabela: 'multas',
+      registro_id: multa.id,
+      acao: 'exclusao',
+      dados: multa,
+      usuario_email: user.email,
+    })
+  }
+
+  const { error } = await supabase.from('multas').delete().in('id', ids)
+  if (error) throw error
+  revalidatePath('/sofia/multas')
 }
