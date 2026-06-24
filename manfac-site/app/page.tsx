@@ -1,13 +1,10 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import Stats from '@/components/Stats'
-import QuemSomos from '@/components/QuemSomos'
 import Problema from '@/components/Problema'
-import Abordagem from '@/components/Abordagem'
-import Servicos from '@/components/Servicos'
-import Case from '@/components/Case'
-import Diferencial from '@/components/Diferencial'
-import Time from '@/components/Time'
+import QuemSomosTeaser from '@/components/home/QuemSomosTeaser'
+import ServicosTeaser from '@/components/home/ServicosTeaser'
+import CaseTeaser from '@/components/home/CaseTeaser'
 import Contato from '@/components/Contato'
 import Footer from '@/components/Footer'
 
@@ -18,13 +15,10 @@ export default function Home() {
       <main>
         <Hero />
         <Stats />
-        <QuemSomos />
         <Problema />
-        <Abordagem />
-        <Servicos />
-        <Case />
-        <Diferencial />
-        <Time />
+        <QuemSomosTeaser />
+        <ServicosTeaser />
+        <CaseTeaser />
         <Contato />
       </main>
       <Footer />
