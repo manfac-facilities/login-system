@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { atualizarStatusMultaAction, registrarDescontoMultaAction } from './_actions'
 import type { Multa } from '@/lib/sofia/types'
 
 type MultaComRelacoes = Multa & {
@@ -103,50 +102,7 @@ export default async function MultasPage() {
                     {m.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  {proximoStatus[m.status] && (
-                    <form
-                      action={atualizarStatusMultaAction.bind(
-                        null,
-                        m.id,
-                        proximoStatus[m.status]
-                      )}
-                    >
-                      <button
-                        type="submit"
-                        className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors"
-                      >
-                        → {proximoStatus[m.status]}
-                      </button>
-                    </form>
-                  )}
-                  <details className="mt-1">
-                    <summary className="text-xs text-[#f05a28] cursor-pointer hover:underline">desconto</summary>
-                    <form action={registrarDescontoMultaAction} className="flex flex-col gap-2 mt-2 p-3 rounded-lg border border-[#1e3a5f] bg-[#0a1628] text-left w-56">
-                      <input type="hidden" name="id" value={m.id} />
-                      <input
-                        name="valor_descontado"
-                        type="number"
-                        step="0.01"
-                        placeholder="Valor descontado"
-                        defaultValue={m.valor_descontado ?? ''}
-                        className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs"
-                      />
-                      <select name="tipo_desconto" defaultValue={m.tipo_desconto} className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs">
-                        <option value="nenhum">Nenhum</option>
-                        <option value="parcial">Parcial</option>
-                        <option value="total">Total</option>
-                      </select>
-                      <label className="flex items-center gap-2 text-xs text-[#94a3b8]">
-                        <input type="checkbox" name="autorizacao_assinada" value="true" defaultChecked={m.autorizacao_assinada} className="accent-[#f05a28]" />
-                        Autorização assinada
-                      </label>
-                      <button type="submit" className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] transition-colors">
-                        Salvar
-                      </button>
-                    </form>
-                  </details>
-                </td>
+                <td className="px-4 py-3"></td>
               </tr>
             ))}
             {(multas ?? []).length === 0 && (

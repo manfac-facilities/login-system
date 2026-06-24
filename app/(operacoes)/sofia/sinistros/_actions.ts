@@ -38,16 +38,10 @@ export async function uploadFotoSinistroAction(sinistroId: string, storagePath: 
 
 export async function atualizarTratativaSinistroAction(_prev: State, formData: FormData): Promise<State> {
   const id = formData.get('id') as string
-  const valor_descontado = formData.get('valor_descontado') ? Number(formData.get('valor_descontado')) : null
-  const tipo_desconto = formData.get('tipo_desconto') as string
-  const autorizacao_assinada = formData.get('autorizacao_assinada') === 'true'
   const status = formData.get('status') as string
 
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('sinistros')
-    .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status })
-    .eq('id', id)
+  const { error } = await supabase.from('sinistros').update({ status }).eq('id', id)
 
   if (error) return { error: 'Erro ao atualizar tratativa' }
   revalidatePath('/sofia/sinistros')

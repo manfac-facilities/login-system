@@ -31,6 +31,7 @@ export const navSections: NavSection[] = [
     items: [
       { label: 'Multas', href: '/sofia/multas' },
       { label: 'Sinistros', href: '/sofia/sinistros' },
+      { label: 'Descontos', href: '/sofia/descontos' },
     ],
   },
   {
