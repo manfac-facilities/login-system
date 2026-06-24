@@ -1,15 +1,15 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 
-const LAST_CONTENT_UPDATE = new Date('2026-06-17')
+const LAST_CONTENT_UPDATE = new Date('2026-06-23')
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: SITE_URL,
-      lastModified: LAST_CONTENT_UPDATE,
-      changeFrequency: 'monthly',
-      priority: 1,
-    },
-  ]
+  const routes = ['', '/quem-somos', '/servicos', '/resultados', '/contato']
+
+  return routes.map((route) => ({
+    url: `${SITE_URL}${route}`,
+    lastModified: LAST_CONTENT_UPDATE,
+    changeFrequency: 'monthly',
+    priority: route === '' ? 1 : 0.8,
+  }))
 }
