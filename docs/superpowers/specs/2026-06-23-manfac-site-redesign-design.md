@@ -27,7 +27,7 @@ Converter de página única para rotas reais no App Router:
 
 | Rota | Conteúdo |
 |---|---|
-| `/` (Home) | Hero (3D) + Stats + versões resumidas de Quem Somos / Como atuamos / Serviços (cada uma com link "saiba mais" pra página própria) + teaser do Case + CTA de contato |
+| `/` (Home) | Hero (3D) + Stats + Problema (na íntegra, é uma seção curta) + versões resumidas de Quem Somos / Serviços (cada uma com link "saiba mais" pra página própria) + teaser do Case + CTA de contato |
 | `/quem-somos` | QuemSomos (expandido) + Abordagem (5 passos) + Diferencial + Time |
 | `/servicos` | Os 4 serviços, cada um com mais detalhe |
 | `/resultados` | Case completo + Stats |
