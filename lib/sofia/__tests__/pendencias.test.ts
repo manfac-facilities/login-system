@@ -19,6 +19,16 @@ describe('mapAutomaticPendencias', () => {
     expect(result[0]).toMatchObject({ origem: 'multa', descricao: expect.stringContaining('Excesso de velocidade') })
   })
 
+  it('falls back to a sensible default and never renders the literal "null" when descricao is null', () => {
+    const result = mapAutomaticPendencias({
+      multas: [{ id: '1', status: 'pendente', autorizacao_assinada: false, data: '2026-06-01', descricao: null }],
+      sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].descricao).not.toMatch(/\bnull\b/)
+    expect(result[0]).toMatchObject({ origem: 'multa', descricao: 'Multa sem tratativa: sem detalhes adicionais' })
+  })
+
   it('does not flag a multa once it is descontada', () => {
     const result = mapAutomaticPendencias({
       multas: [{ id: '1', status: 'descontada', autorizacao_assinada: true, data: '2026-06-01', descricao: 'Excesso de velocidade' }],

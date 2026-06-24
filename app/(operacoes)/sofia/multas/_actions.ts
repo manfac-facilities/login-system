@@ -67,7 +67,8 @@ export async function excluirMultaAction(id: string) {
   if (!user?.email || !isAdminEmail(user.email))
     throw new Error('Apenas administradores podem excluir multas')
 
-  const { data: multa } = await supabase.from('multas').select('*').eq('id', id).single()
+  const { data: multa, error } = await supabase.from('multas').delete().eq('id', id).select().single()
+  if (error) throw error
   if (!multa) throw new Error('Multa não encontrada')
 
   await registrarAuditoria(supabase, {
@@ -78,8 +79,6 @@ export async function excluirMultaAction(id: string) {
     usuario_email: user.email,
   })
 
-  const { error } = await supabase.from('multas').delete().eq('id', id)
-  if (error) throw error
   revalidatePath('/sofia/multas')
 }
 
@@ -91,7 +90,8 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   if (!user?.email || !isAdminEmail(user.email))
     throw new Error('Apenas administradores podem excluir multas')
 
-  const { data: multas } = await supabase.from('multas').select('*').in('id', ids)
+  const { data: multas, error } = await supabase.from('multas').delete().in('id', ids).select()
+  if (error) throw error
 
   for (const multa of multas ?? []) {
     await registrarAuditoria(supabase, {
@@ -103,7 +103,5 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
     })
   }
 
-  const { error } = await supabase.from('multas').delete().in('id', ids)
-  if (error) throw error
   revalidatePath('/sofia/multas')
 }

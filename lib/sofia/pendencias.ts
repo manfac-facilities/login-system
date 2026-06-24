@@ -1,5 +1,5 @@
 interface AutomaticInputs {
-  multas: { id: string; status: string; autorizacao_assinada: boolean; data: string; descricao: string }[]
+  multas: { id: string; status: string; autorizacao_assinada: boolean; data: string; descricao: string | null }[]
   sinistros: { id: string; status: string; data: string; descricao: string }[]
   revisoesAtrasadas: { id: string; proxima_data: string | null }[]
   documentosVencendo: { id: string; tipo: string; vencimento: string }[]
@@ -17,7 +17,11 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
 
   for (const m of inputs.multas) {
     if (m.status !== 'descontada') {
-      result.push({ descricao: `Multa sem tratativa: ${m.descricao}`, origem: 'multa', prazo: m.data })
+      result.push({
+        descricao: `Multa sem tratativa: ${m.descricao ?? 'sem detalhes adicionais'}`,
+        origem: 'multa',
+        prazo: m.data,
+      })
     }
   }
   for (const s of inputs.sinistros) {

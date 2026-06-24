@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import {
   enviarParaDescontoEmMassaAction,
   excluirMultaAction,
@@ -22,6 +22,8 @@ export default function MultasTable({
   isAdmin: boolean
 }) {
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set())
+  const [isPending, startTransition] = useTransition()
+  const [erro, setErro] = useState<string | null>(null)
 
   function toggleUma(id: string) {
     setSelecionadas((prev) => {
@@ -36,21 +38,43 @@ export default function MultasTable({
     setSelecionadas((prev) => (prev.size === multas.length ? new Set() : new Set(multas.map((m) => m.id))))
   }
 
-  async function handleEnviarParaDesconto() {
-    await enviarParaDescontoEmMassaAction(Array.from(selecionadas))
-    setSelecionadas(new Set())
+  function handleEnviarParaDesconto() {
+    setErro(null)
+    startTransition(async () => {
+      try {
+        await enviarParaDescontoEmMassaAction(Array.from(selecionadas))
+        setSelecionadas(new Set())
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
+      }
+    })
   }
 
-  async function handleExcluirSelecionadas() {
+  function handleExcluirSelecionadas() {
     if (!window.confirm(`Excluir ${selecionadas.size} multa(s) selecionada(s)? Essa ação não pode ser desfeita.`))
       return
-    await excluirMultasEmMassaAction(Array.from(selecionadas))
-    setSelecionadas(new Set())
+    setErro(null)
+    startTransition(async () => {
+      try {
+        await excluirMultasEmMassaAction(Array.from(selecionadas))
+        setSelecionadas(new Set())
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
+      }
+    })
   }
 
-  async function handleExcluirUma(id: string) {
+  function handleExcluirUma(id: string) {
     if (!window.confirm('Excluir esta multa? Essa ação não pode ser desfeita.')) return
-    await excluirMultaAction(id)
+    setErro(null)
+    startTransition(async () => {
+      try {
+        await excluirMultaAction(id)
+        setSelecionadas(new Set())
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
+      }
+    })
   }
 
   return (
@@ -60,17 +84,24 @@ export default function MultasTable({
           <span className="text-sm text-[#94a3b8]">{selecionadas.size} selecionada(s)</span>
           <button
             onClick={handleEnviarParaDesconto}
-            className="text-sm text-[#f05a28] hover:underline"
+            disabled={isPending}
+            className="text-sm text-[#f05a28] hover:underline disabled:opacity-50 disabled:no-underline"
           >
             Enviar para desconto
           </button>
           {isAdmin && (
-            <button onClick={handleExcluirSelecionadas} className="text-sm text-red-400 hover:underline">
+            <button
+              onClick={handleExcluirSelecionadas}
+              disabled={isPending}
+              className="text-sm text-red-400 hover:underline disabled:opacity-50 disabled:no-underline"
+            >
               Excluir selecionadas
             </button>
           )}
         </div>
       )}
+
+      {erro && <p className="text-sm text-red-400 mb-3">{erro}</p>}
 
       <div className="rounded-xl border border-[#1e3a5f] overflow-x-auto">
         <table className="w-full text-sm">
@@ -130,7 +161,8 @@ export default function MultasTable({
                   {isAdmin && (
                     <button
                       onClick={() => handleExcluirUma(m.id)}
-                      className="text-xs text-red-400 hover:underline"
+                      disabled={isPending}
+                      className="text-xs text-red-400 hover:underline disabled:opacity-50 disabled:no-underline"
                     >
                       Excluir
                     </button>
