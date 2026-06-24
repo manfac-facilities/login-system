@@ -112,7 +112,9 @@ export interface Multa {
   veiculo_id: string | null
   motorista_id: string | null
   data: string
-  descricao: string
+  data_recebimento: string | null
+  tipo_infracao: string | null
+  descricao: string | null
   valor: number
   valor_descontado: number | null
   tipo_desconto: TipoDesconto
@@ -137,6 +139,7 @@ export interface Sinistro {
   autorizacao_assinada: boolean
   autorizacao_storage_path: string | null
   status: SinistroStatus
+  status_desconto: MultaStatus
   observacoes: string | null
   created_at: string
 }
@@ -227,4 +230,16 @@ export interface Pendencia {
   status: PendenciaStatus
   created_at: string
   updated_at: string
+}
+
+export type AuditAcao = 'criacao' | 'exclusao'
+
+export interface AuditLog {
+  id: string
+  tabela: string
+  registro_id: string
+  acao: AuditAcao
+  dados: Record<string, unknown>
+  usuario_email: string | null
+  created_at: string
 }

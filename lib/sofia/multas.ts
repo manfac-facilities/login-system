@@ -1,0 +1,15 @@
+export const TIPOS_INFRACAO = [
+  'Excesso de velocidade',
+  'Avanço de sinal vermelho',
+  'Estacionamento irregular',
+  'Uso de celular ao dirigir',
+  'Não uso de cinto de segurança',
+  'Ultrapassagem proibida',
+  'Embriaguez ao volante',
+  'Trafegar na contramão',
+  'Não respeitar faixa de pedestre',
+  'Estacionamento em vaga reservada sem credencial',
+  'CNH vencida ou ausente',
+  'Documento do veículo vencido',
+  'Falta de pagamento de pedágio/tag',
+] as const
