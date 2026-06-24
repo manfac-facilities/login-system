@@ -64,7 +64,7 @@ export function Sidebar() {
   return (
     <>
       <div className="no-print md:hidden w-full flex items-center justify-between bg-[#0d2050] border-b border-[#1e3a5f] px-4 py-3 sticky top-0 z-30">
-        <span className="text-white font-bold text-lg">Sofia</span>
+        <span className="text-white font-bold text-lg">GF</span>
         <button
           onClick={() => setOpen(true)}
           aria-label="Abrir menu"
@@ -89,7 +89,7 @@ export function Sidebar() {
         } md:translate-x-0`}
       >
         <div className="flex items-center justify-between mb-6 px-2">
-          <span className="text-white font-bold text-lg">Sofia</span>
+          <span className="text-white font-bold text-lg">Gestão de Frotas</span>
           <button
             onClick={() => setOpen(false)}
             aria-label="Fechar menu"
