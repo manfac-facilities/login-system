@@ -17,7 +17,7 @@ export default function ResultadosPage() {
       <Header />
       <main>
         <Case />
-        <Stats />
+        <Stats index="01" />
       </main>
       <Footer />
     </>

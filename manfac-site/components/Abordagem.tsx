@@ -3,7 +3,7 @@ import { PASSOS, BANNERS } from '@/lib/content'
 
 export default function Abordagem() {
   return (
-    <BlueprintSection index="03" label="Nossa abordagem" tone="alt">
+    <BlueprintSection index="01" label="Nossa abordagem" tone="alt">
       <h2 className="max-w-3xl text-2xl font-semibold leading-snug text-[var(--ink)] md:text-3xl">
         Estruturamos a operação como um sistema integrado, conectando pessoas, processos e
         informações. Executamos com excelência técnica e gerenciamos com inteligência,

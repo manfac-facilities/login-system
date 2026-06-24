@@ -3,7 +3,7 @@ import { PILARES } from '@/lib/content'
 
 export default function QuemSomos() {
   return (
-    <BlueprintSection index="02" label="Quem somos">
+    <BlueprintSection index="00" label="Quem somos">
       <div className="grid gap-12 md:grid-cols-2 md:items-start">
         <div>
           <h2 className="text-2xl font-semibold leading-snug text-[var(--ink)] md:text-3xl">

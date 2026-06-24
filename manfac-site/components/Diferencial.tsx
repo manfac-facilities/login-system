@@ -3,7 +3,7 @@ import { DIFERENCIAIS } from '@/lib/content'
 
 export default function Diferencial() {
   return (
-    <BlueprintSection index="04" label="Diferencial">
+    <BlueprintSection index="02" label="Diferencial">
       <div className="flex flex-wrap gap-3">
         {DIFERENCIAIS.map((d) => (
           <span

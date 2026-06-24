@@ -3,7 +3,7 @@ import { SERVICOS } from '@/lib/content'
 
 export default function Servicos() {
   return (
-    <BlueprintSection index="06" label="Serviços">
+    <BlueprintSection index="00" label="Serviços">
       <div className="grid gap-6 sm:grid-cols-2">
         {SERVICOS.map((servico) => (
           <div key={servico.title} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">

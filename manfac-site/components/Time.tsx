@@ -3,7 +3,7 @@ import { IMPACTO } from '@/lib/content'
 
 export default function Time() {
   return (
-    <BlueprintSection index="05" label="Nosso time" tone="alt">
+    <BlueprintSection index="03" label="Nosso time" tone="alt">
       <div className="grid gap-12 md:grid-cols-2">
         <div>
           <p className="text-xl font-semibold leading-snug text-[var(--ink)]">

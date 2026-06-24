@@ -3,7 +3,7 @@ import { RESULTADOS } from '@/lib/content'
 
 export default function Case() {
   return (
-    <BlueprintSection index="07" label="Resultados" tone="alt">
+    <BlueprintSection index="00" label="Resultados" tone="alt">
       <h2 className="max-w-3xl text-2xl font-semibold leading-snug text-[var(--ink)] md:text-3xl">
         Um dos maiores varejistas do setor farmacêutico do Brasil — faturamento de mais de
         R$16 bilhões/ano e 1.600+ unidades no país — colocou a Manfac na gestão de 400+ unidades

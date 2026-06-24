@@ -1,9 +1,9 @@
 import BlueprintSection from './BlueprintSection'
 import { STATS } from '@/lib/content'
 
-export default function Stats() {
+export default function Stats({ index = '00' }: { index?: string }) {
   return (
-    <BlueprintSection index="00" label="Em números" tone="alt">
+    <BlueprintSection index={index} label="Em números" tone="alt">
       <div className="grid grid-cols-2 gap-6 text-center md:grid-cols-4">
         {STATS.map((s) => (
           <div key={s.label}>
