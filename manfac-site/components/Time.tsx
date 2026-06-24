@@ -1,20 +1,12 @@
-const impacto = [
-  'Mais previsibilidade',
-  'Mais controle',
-  'Mais eficiência',
-  'Menos retrabalho',
-  'Melhor tomada de decisão',
-]
+import BlueprintSection from './BlueprintSection'
+import { IMPACTO } from '@/lib/content'
 
 export default function Time() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-20">
+    <BlueprintSection index="05" label="Nosso time" tone="alt">
       <div className="grid gap-12 md:grid-cols-2">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
-            Nosso time
-          </h2>
-          <p className="mt-4 text-xl font-semibold leading-snug">
+          <p className="text-xl font-semibold leading-snug text-[var(--ink)]">
             Senso de urgência, responsabilidade e foco em resultado.
           </p>
           <p className="mt-4 text-[var(--muted)]">
@@ -22,11 +14,11 @@ export default function Time() {
           </p>
         </div>
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
+          <h3 className="font-mono text-xs uppercase tracking-wide text-[var(--orange)]">
             Impacto desejado
-          </h2>
+          </h3>
           <ul className="mt-4 space-y-2">
-            {impacto.map((i) => (
+            {IMPACTO.map((i) => (
               <li key={i} className="flex items-center gap-3 text-[var(--muted)]">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--orange)]" />
                 {i}
@@ -38,6 +30,6 @@ export default function Time() {
           </p>
         </div>
       </div>
-    </section>
+    </BlueprintSection>
   )
 }
