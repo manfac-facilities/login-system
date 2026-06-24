@@ -64,7 +64,12 @@ export function Sidebar() {
   return (
     <>
       <div className="no-print md:hidden w-full flex items-center justify-between bg-[#0d2050] border-b border-[#1e3a5f] px-4 py-3 sticky top-0 z-30">
-        <span className="text-white font-bold text-lg">Sofia</span>
+        <div className="flex flex-col">
+          <span className="text-white font-bold text-lg leading-tight">GF</span>
+          <Link href="/dashboard" className="text-[#94a3b8] text-xs hover:text-white transition-colors">
+            ← Voltar ao Hub
+          </Link>
+        </div>
         <button
           onClick={() => setOpen(true)}
           aria-label="Abrir menu"
@@ -89,7 +94,16 @@ export function Sidebar() {
         } md:translate-x-0`}
       >
         <div className="flex items-center justify-between mb-6 px-2">
-          <span className="text-white font-bold text-lg">Sofia</span>
+          <div className="flex flex-col">
+            <span className="text-white font-bold text-lg leading-tight">Gestão de Frotas</span>
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="text-[#94a3b8] text-xs hover:text-white transition-colors"
+            >
+              ← Voltar ao Hub
+            </Link>
+          </div>
           <button
             onClick={() => setOpen(false)}
             aria-label="Fechar menu"

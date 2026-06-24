@@ -15,7 +15,7 @@ export default function Logo({ size = 'md', priority = false }: LogoProps) {
   const { width, height } = sizes[size]
   return (
     <Image
-      src="/logo.png"
+      src="/logo-white.png"
       alt="Manfac Facilities"
       width={width}
       height={height}

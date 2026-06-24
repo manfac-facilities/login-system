@@ -11,8 +11,16 @@ describe('classificarCnh', () => {
     expect(classificarCnh('2026-01-01', hoje)).toBe('vencidas')
   })
 
-  it('classifies a date within 30 days as vencidas (urgent)', () => {
-    expect(classificarCnh('2026-06-25', hoje)).toBe('vencidas')
+  it('classifies a date within 30 days as urgente', () => {
+    expect(classificarCnh('2026-06-25', hoje)).toBe('urgente')
+  })
+
+  it('classifies a date exactly 30 days out as urgente', () => {
+    expect(classificarCnh('2026-07-17', hoje)).toBe('urgente')
+  })
+
+  it('classifies a date exactly 31 days out as atencao', () => {
+    expect(classificarCnh('2026-07-18', hoje)).toBe('atencao')
   })
 
   it('classifies a date between 31 and 60 days out as atencao', () => {

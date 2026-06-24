@@ -51,7 +51,7 @@ export default async function DashboardPage() {
             <span className="text-3xl">🚐</span>
             <div>
               <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
-                Sistema Sofia
+                Gestão de Frotas
               </p>
               <p className="text-[#4a6080] text-sm mt-1">
                 Operação de frota — KM, checklist, multas
