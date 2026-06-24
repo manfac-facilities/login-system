@@ -1,33 +1,24 @@
-const problemas = [
-  'Falta de visibilidade sobre o andamento das demandas',
-  'Dificuldade de controle de prazos e custos',
-  'Comunicação descentralizada',
-  'Atuação reativa e sem padronização',
-]
+import BlueprintSection from './BlueprintSection'
+import { PROBLEMAS } from '@/lib/content'
 
 export default function Problema() {
   return (
-    <section className="border-y border-[var(--border)] bg-[var(--navy)]/20">
-      <div className="mx-auto max-w-6xl px-6 py-20">
-        <p className="text-sm font-semibold uppercase tracking-widest text-[var(--orange)]">
-          O problema
-        </p>
-        <h2 className="mt-4 max-w-2xl text-2xl font-semibold leading-snug md:text-3xl">
-          Sem gestão estruturada, obras e manutenção predial geram mais custo do que deveriam.
-        </h2>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {problemas.map((problema) => (
-            <div key={problema} className="flex items-start gap-3 rounded-lg border border-[var(--border)] p-4">
-              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--orange)]" />
-              <p className="text-[var(--muted)]">{problema}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-8 text-[var(--muted)]">
-          Com o tempo, isso gera perda de eficiência, aumento de custos e desgaste com as
-          unidades operacionais.
-        </p>
+    <BlueprintSection index="01" label="O problema" tone="alt">
+      <h2 className="max-w-2xl text-2xl font-semibold leading-snug text-[var(--ink)] md:text-3xl">
+        Sem gestão estruturada, obras e manutenção predial geram mais custo do que deveriam.
+      </h2>
+      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        {PROBLEMAS.map((problema) => (
+          <div key={problema} className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-4">
+            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--orange)]" />
+            <p className="text-[var(--muted)]">{problema}</p>
+          </div>
+        ))}
       </div>
-    </section>
+      <p className="mt-8 text-[var(--muted)]">
+        Com o tempo, isso gera perda de eficiência, aumento de custos e desgaste com as
+        unidades operacionais.
+      </p>
+    </BlueprintSection>
   )
 }
