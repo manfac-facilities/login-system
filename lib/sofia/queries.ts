@@ -189,3 +189,71 @@ export async function getChecklistsRecentes(): Promise<Checklist[]> {
     .order('created_at', { ascending: false })
   return data ?? []
 }
+
+export async function getKmDiarioHistorico(): Promise<KmDiarioComRelacoes[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('km_diario')
+    .select('*, equipes(codigo), veiculos(placa), motoristas(nome)')
+    .order('data', { ascending: false })
+  return data ?? []
+}
+
+export async function getAbastecimentoHistorico(): Promise<
+  (Abastecimento & { veiculos: { placa: string } | null })[]
+> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('abastecimentos')
+    .select('*, veiculos(placa)')
+    .order('data', { ascending: false })
+  return (data ?? []) as (Abastecimento & { veiculos: { placa: string } | null })[]
+}
+
+export interface KmResumoMensal {
+  mes: string          // "2026-06"
+  equipe_codigo: string
+  veiculo_placa: string
+  km_inicio: number    // km_atual da 1ª entrada do mês
+  km_fim: number       // km_atual da última entrada do mês
+  km_rodados: number   // km_fim - km_inicio
+}
+
+export async function getKmResumoMensal(): Promise<KmResumoMensal[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('km_diario')
+    .select('data, km_atual, equipes(codigo), veiculos(placa)')
+    .order('data', { ascending: true })
+
+  if (!data) return []
+
+  type Row = { data: string; km_atual: number; equipes: { codigo: string } | null; veiculos: { placa: string } | null }
+  const rows = data as Row[]
+
+  // Group by (veiculo_placa, mes)
+  const groups = new Map<string, { km_inicio: number; km_fim: number; equipe_codigo: string; veiculo_placa: string; mes: string }>()
+
+  for (const row of rows) {
+    const mes = row.data.slice(0, 7) // "YYYY-MM"
+    const placa = row.veiculos?.placa ?? '—'
+    const key = `${placa}::${mes}`
+    const existing = groups.get(key)
+    if (!existing) {
+      groups.set(key, {
+        mes,
+        equipe_codigo: row.equipes?.codigo ?? '—',
+        veiculo_placa: placa,
+        km_inicio: row.km_atual,
+        km_fim: row.km_atual,
+      })
+    } else {
+      // rows are ordered ascending: last update = km_fim
+      existing.km_fim = row.km_atual
+    }
+  }
+
+  return Array.from(groups.values())
+    .map((g) => ({ ...g, km_rodados: g.km_fim - g.km_inicio }))
+    .sort((a, b) => b.mes.localeCompare(a.mes)) // mais recente primeiro
+}
