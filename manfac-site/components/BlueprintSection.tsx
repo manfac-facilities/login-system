@@ -30,8 +30,8 @@ export default function BlueprintSection({
               {index} — {label}
             </p>
           </div>
-          {children}
         </Reveal>
+        {children}
       </div>
     </section>
   )
