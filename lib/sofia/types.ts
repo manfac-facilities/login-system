@@ -49,8 +49,7 @@ export interface KmDiario {
   equipe_id: string
   veiculo_id: string
   motorista_id: string | null
-  km_inicial: number
-  km_final: number | null
+  km_atual: number
   observacoes: string | null
   created_at: string
 }
@@ -182,7 +181,7 @@ export interface Abastecimento {
   id: string
   veiculo_id: string
   data: string
-  litros: number
+  litros: number | null
   valor: number
   km: number | null
   posto: string | null
