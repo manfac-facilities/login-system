@@ -23,42 +23,54 @@ const VOLUMES_SIMPLIFIED: Volume[] = [
 
 function BlueprintStructure({ progress, simplified }: { progress: number; simplified: boolean }) {
   const groupRef = useRef<THREE.Group>(null)
-  const targetRotation = useRef({ x: 0, y: 0 })
+  const autoRotation = useRef(0)
+  const targetRotation = useRef({ x: 0.15, y: -0.3 })
   const { pointer } = useThree()
   const volumes = simplified ? VOLUMES_SIMPLIFIED : VOLUMES_FULL
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!groupRef.current) return
 
+    autoRotation.current += delta * (simplified ? 0.15 : 0.1)
+
     if (!simplified) {
-      targetRotation.current.y = pointer.x * 0.35
-      targetRotation.current.x = -pointer.y * 0.2
+      targetRotation.current.y = autoRotation.current + pointer.x * 0.25
+      targetRotation.current.x = 0.15 - pointer.y * 0.15
     } else {
-      targetRotation.current.y += delta * 0.15
+      targetRotation.current.y = autoRotation.current
     }
 
-    groupRef.current.rotation.y += (targetRotation.current.y - groupRef.current.rotation.y) * 0.05
-    groupRef.current.rotation.x += (targetRotation.current.x - groupRef.current.rotation.x) * 0.05
+    groupRef.current.rotation.y += (targetRotation.current.y - groupRef.current.rotation.y) * 0.06
+    groupRef.current.rotation.x += (targetRotation.current.x - groupRef.current.rotation.x) * 0.06
+    groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.08
   })
 
   const solidOpacity = THREE.MathUtils.clamp(progress, 0, 1)
 
   return (
-    <group ref={groupRef} rotation={[0.15, -0.3, 0]}>
-      {volumes.map((volume, i) => (
-        <mesh key={i} position={volume.position}>
-          <boxGeometry args={volume.size} />
-          <meshStandardMaterial
-            color="#00345e"
-            transparent
-            opacity={solidOpacity * 0.92}
-            roughness={0.45}
-            metalness={0.1}
-          />
-          <Edges color={i % 2 === 0 ? '#f85e0b' : '#00345e'} linewidth={1.25} />
-        </mesh>
-      ))}
-    </group>
+    <>
+      <group ref={groupRef}>
+        {volumes.map((volume, i) => (
+          <mesh key={i} position={volume.position}>
+            <boxGeometry args={volume.size} />
+            <meshStandardMaterial
+              color="#00345e"
+              transparent
+              opacity={solidOpacity * 0.92}
+              roughness={0.35}
+              metalness={0.25}
+            />
+            <Edges color={i % 2 === 0 ? '#f85e0b' : '#00345e'} linewidth={1.25} />
+          </mesh>
+        ))}
+      </group>
+      <gridHelper
+        args={[12, 24, '#f85e0b', '#00345e']}
+        position={[0, -1.4, 0]}
+        material-transparent
+        material-opacity={0.18}
+      />
+    </>
   )
 }
 
@@ -71,8 +83,10 @@ export default function Hero3D({ progress, simplified = false }: { progress: num
       gl={{ antialias: true, alpha: true }}
       camera={{ position: [0, 0.4, 6], fov: 38 }}
     >
+      <fog attach="fog" args={['#ffffff', 6, 13]} />
       <ambientLight intensity={0.7} />
       <directionalLight position={[3, 4, 5]} intensity={1.1} />
+      <pointLight position={[-3, 1, 3]} intensity={1.4} color="#f85e0b" />
       <Suspense fallback={null}>
         <BlueprintStructure progress={progress} simplified={simplified} />
       </Suspense>
