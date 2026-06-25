@@ -40,7 +40,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="blueprint-grid relative overflow-hidden border-b border-[var(--border)]"
+      className="blueprint-grid relative isolate overflow-hidden border-b border-[var(--border)]"
     >
       <div className="absolute inset-0 -z-10">
         {ready && <Hero3D progress={progress} simplified={simplified} />}
