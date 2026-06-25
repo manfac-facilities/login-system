@@ -8,13 +8,13 @@ export default function QuemSomosTeaser() {
     <BlueprintSection index="02" label="Quem somos">
       <div className="grid items-center gap-10 md:grid-cols-2">
         <Reveal delay={0}>
-          <div className="overflow-hidden rounded-lg">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
             <Image
               src="/media/equipe-1.jpg"
               alt="Equipe Manfac realizando manutenção predial em campo"
-              width={1600}
-              height={900}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </Reveal>
