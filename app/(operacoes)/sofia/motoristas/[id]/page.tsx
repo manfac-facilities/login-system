@@ -8,8 +8,8 @@ type HistoricoVeiculo = {
   inicio: string
   fim: string | null
   created_at: string
-  veiculos: { placa: string; modelo: string }[] | null
-  equipes: { codigo: string }[] | null
+  veiculos: { placa: string; modelo: string } | null
+  equipes: { codigo: string } | null
 }
 
 export default async function MotoristaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +31,14 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
 
   const termo = documentos.find((d) => d.tipo === 'termo_uso')
   const autorizacoes = documentos.filter((d) => d.tipo === 'autorizacao_desconto')
-  const historico = (historicoVeiculos ?? []) as HistoricoVeiculo[]
+  const historico = ((historicoVeiculos ?? []) as any[]).map((h) => ({
+    id: h.id,
+    inicio: h.inicio,
+    fim: h.fim,
+    created_at: h.created_at,
+    veiculos: h.veiculos ? (Array.isArray(h.veiculos) ? h.veiculos[0] : h.veiculos) : null,
+    equipes: h.equipes ? (Array.isArray(h.equipes) ? h.equipes[0] : h.equipes) : null,
+  })) as HistoricoVeiculo[]
 
   return (
     <div className="p-8 max-w-2xl">
@@ -113,9 +120,9 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
           {historico.map((h) => (
             <div key={h.id} className="relative">
               <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#f05a28]" />
-              <p className="text-white text-sm font-mono">{h.veiculos?.[0]?.placa ?? '—'}</p>
-              <p className="text-[#94a3b8] text-xs">{h.veiculos?.[0]?.modelo ?? ''}</p>
-              <p className="text-[#4a6080] text-xs">{h.equipes?.[0]?.codigo ?? '—'}</p>
+              <p className="text-white text-sm font-mono">{h.veiculos?.placa ?? '—'}</p>
+              <p className="text-[#94a3b8] text-xs">{h.veiculos?.modelo ?? ''}</p>
+              <p className="text-[#4a6080] text-xs">{h.equipes?.codigo ?? '—'}</p>
               <p className="text-[#4a6080] text-xs">
                 {new Date(h.inicio).toLocaleDateString('pt-BR')} →{' '}
                 {h.fim ? new Date(h.fim).toLocaleDateString('pt-BR') : 'atual'}

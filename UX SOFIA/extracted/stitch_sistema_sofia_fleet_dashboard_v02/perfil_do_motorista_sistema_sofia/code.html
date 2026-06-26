@@ -1,0 +1,270 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Perfil do Motorista</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#ffb693",
+                        "surface-container-highest": "#273647",
+                        "on-secondary-fixed-variant": "#384667",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-error": "#690005",
+                        "surface": "#051424",
+                        "secondary-container": "#384667",
+                        "on-secondary": "#21304f",
+                        "background": "#051424",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-surface": "#d4e4fa",
+                        "inverse-on-surface": "#233143",
+                        "surface-container-high": "#1c2b3c",
+                        "on-tertiary": "#1f3052",
+                        "on-primary-container": "#572000",
+                        "on-tertiary-fixed-variant": "#36466a",
+                        "on-primary-fixed": "#351000",
+                        "inverse-surface": "#d4e4fa",
+                        "inverse-primary": "#a04100",
+                        "surface-container": "#122131",
+                        "primary-fixed": "#ffdbcc",
+                        "on-surface-variant": "#e2bfb0",
+                        "outline": "#a98a7d",
+                        "tertiary-fixed": "#d8e2ff",
+                        "surface-container-low": "#0d1c2d",
+                        "on-secondary-fixed": "#0a1b39",
+                        "primary": "#ffb693",
+                        "surface-bright": "#2c3a4c",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#8999c1",
+                        "primary-container": "#ff6b00",
+                        "tertiary": "#b6c6f1",
+                        "surface-dim": "#051424",
+                        "on-tertiary-container": "#203153",
+                        "surface-tint": "#ffb693",
+                        "on-primary": "#561f00",
+                        "surface-container-lowest": "#010f1f",
+                        "secondary": "#b7c6ed",
+                        "tertiary-fixed-dim": "#b6c6f1",
+                        "on-tertiary-fixed": "#071a3c",
+                        "outline-variant": "#5a4136",
+                        "on-secondary-container": "#a6b5db",
+                        "surface-variant": "#273647",
+                        "secondary-fixed-dim": "#b7c6ed",
+                        "error-container": "#93000a",
+                        "on-background": "#d4e4fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "margin": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Geist"],
+                        "title-md": ["Inter"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Geist"],
+                        "data-tabular": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-tabular": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0F1F3D; /* Base Level 0 */
+            color: #d4e4fa; /* on-surface */
+        }
+        .card-surface {
+            background-color: #1A2B4D; /* Level 1 */
+            border: 1px solid #2D3D5E;
+        }
+        .interactive-hover:hover {
+            background-color: #24345A; /* Level 2 */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md antialiased min-h-screen flex flex-col pt-16 pb-20 md:pb-0 md:pl-80">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant flat no shadows transition-colors duration-200 flex justify-between items-center px-margin h-16 md:hidden">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary dark:text-primary hover:bg-surface-container-high p-2 rounded-full cursor-pointer">menu</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Perfil do Motorista</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary dark:text-primary hover:bg-surface-container-high p-2 rounded-full cursor-pointer">notifications</span>
+</div>
+</header>
+<!-- SideNav (Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-6 w-80 bg-surface-container dark:bg-surface-container fixed left-0 top-0 z-40 border-r border-surface-container-high">
+<div class="px-6 mb-8 flex items-center gap-4">
+<img alt="Manager Avatar" class="w-12 h-12 rounded-full object-cover border border-outline-variant" data-alt="A professional corporate headshot of a logistics director. He is a middle-aged man with short, neat hair, wearing a dark navy blazer over a crisp white shirt. The lighting is bright and modern studio lighting, casting soft shadows. The background is a slightly blurred, high-tech control room with digital screens displaying logistics data, conveying a sense of authority and control in an industrial modernism style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjBY4Lz8nqcyNBhPRpPkYsZJJiUvpEJSVsyspAaM0ng2ti9IosRY-2RfRo6-QujcZLDSBtzvtJ3E-V9xqGO5N6c5GDalQkhpxZrH0uzm5VNIeck9Q-i0ipIc326xqpm57vZruWtiVpSeCT3ylKUWKGvjzy4UKqsYMor-Qv1AVAvQ8h31-CcKOW63o9vGB0NHAMHnthviMiEWyWZyy1SlTseS6gAici8zjMZWFYoh2Ljy-9Ac2LqmOGm5d-kUGr3nw0kr74_WrDmZGa">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Manfac Fleet</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Logistics Director - Online</p>
+</div>
+</div>
+<ul class="flex flex-col flex-1 gap-1">
+<li class="">
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_22}}">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary">local_shipping</span>
+<span class="font-body-md text-body-md">OPERAÇÃO</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_24}}">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary">report_problem</span>
+<span class="font-body-md text-body-md">OCORRÊNCIAS</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_38}}">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary">build_circle</span>
+<span class="font-body-md text-body-md">MANUTENÇÃO &amp; DOCUMENTOS</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-6 py-3 border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_34}}">
+<span class="material-symbols-outlined mr-4 text-primary">bar_chart</span>
+<span class="font-body-md text-body-md">GESTÃO</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 p-gutter md:p-margin flex flex-col gap-6 max-w-container-max mx-auto w-full">
+<!-- Profile Card -->
+<section class="card-surface rounded-xl p-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+<img alt="João Silva Profile Photo" class="w-32 h-32 rounded-lg object-cover border border-outline-variant" data-alt="A professional headshot portrait of a friendly young male truck driver. He has short brown hair and a neat beard, wearing a light blue denim shirt. The background is a clean, neutral studio white, creating a high-contrast, professional corporate look suitable for a modern fleet management dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvVcHo6DS-boo3xl8LCyt3tyaIcDoFhomcWFOoTyIVyeyTOK-sc4WRZdCZbPgb4GVHkatdIlc5kKuw9bU0ePkFPchypeg4vmhuxIjNtlwIqfj2-JAyj1cS1lLP4DbqaRwZOwX57yhhvgbNNHYdGy59AYs3EK3qB0UuVDOLBD3YKiDdJ-NJK5EY7YoCZTVtwTX7EykqLnlIDVUBk59qJUGTIdxuj-BFikjbV77TmnIrJXRggd4rASBdLNuGjIIDOatGGLQGtiIdjsCL">
+<div class="flex flex-col gap-2 flex-1">
+<h2 class="font-title-md text-title-md text-on-surface">João Silva</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 mt-2">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">CNH</span>
+<span class="font-data-tabular text-data-tabular">1234567890</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Validade</span>
+<span class="font-data-tabular text-data-tabular">25/10/2025</span>
+</div>
+<div class="flex items-center gap-2 sm:col-span-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Equipe</span>
+<span class="font-body-md text-body-md">Logistics Team A</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Signed Documents -->
+<section class="flex flex-col gap-4">
+<h3 class="font-title-md text-title-md text-on-surface px-2">Documentos Assinados</h3>
+<div class="card-surface rounded-xl p-6 flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h4 class="font-body-md text-body-md text-on-surface font-semibold">Termo de Uso do Veículo</h4>
+<span class="px-3 py-1 bg-green-900/50 text-green-400 border border-green-800 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span>
+                        Assinado
+                    </span>
+</div>
+<button class="w-full py-3 rounded border border-primary text-primary font-label-sm text-label-sm uppercase tracking-wider hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">upload</span>
+                    Fazer Upload
+                </button>
+</div>
+</section>
+<!-- Signed Discount Authorizations -->
+<section class="flex flex-col gap-4">
+<h3 class="font-title-md text-title-md text-on-surface px-2">Autorizações de Desconto Assinadas</h3>
+<div class="card-surface rounded-xl overflow-hidden flex flex-col">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-4 border-b border-[#2D3D5E] interactive-hover transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<span class="font-data-tabular text-data-tabular text-on-surface-variant w-24">11/05/2024</span>
+<span class="font-data-tabular text-data-tabular text-on-surface font-semibold">R$ 150.00</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-colors hidden sm:block" href="#">Ver Origem</a>
+<span class="px-3 py-1 bg-green-900/50 text-green-400 border border-green-800 rounded-full font-label-sm text-label-sm">Assinado</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-4 border-b border-[#2D3D5E] interactive-hover transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<span class="font-data-tabular text-data-tabular text-on-surface-variant w-24">10/12/2024</span>
+<span class="font-data-tabular text-data-tabular text-on-surface font-semibold">R$ 80.00</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-colors hidden sm:block" href="#">Ver Origem</a>
+<span class="px-3 py-1 bg-red-900/50 text-red-400 border border-red-800 rounded-full font-label-sm text-label-sm">Pendente</span>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-4 interactive-hover transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<span class="font-data-tabular text-data-tabular text-on-surface-variant w-24">10/12/2024</span>
+<span class="font-data-tabular text-data-tabular text-on-surface font-semibold">R$ 80.00</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-colors hidden sm:block" href="#">Ver Origem</a>
+<span class="px-3 py-1 bg-green-900/50 text-green-400 border border-green-800 rounded-full font-label-sm text-label-sm">Assinado</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-low dark:bg-surface-container-low border-t border-outline-variant flat no shadows md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_14}}">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span class="font-label-sm text-label-sm">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_25}}">
+<span class="material-symbols-outlined mb-1">warning</span>
+<span class="font-label-sm text-label-sm">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_15}}">
+<span class="material-symbols-outlined mb-1">settings_suggest</span>
+<span class="font-label-sm text-label-sm">Manutenção</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_44}}">
+<span class="material-symbols-outlined mb-1">payments</span>
+<span class="font-label-sm text-label-sm">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_29}}">
+<span class="material-symbols-outlined mb-1">menu</span>
+<span class="font-label-sm text-label-sm">Mais</span>
+</a>
+</nav>
+
+
+
+
+</body></html>

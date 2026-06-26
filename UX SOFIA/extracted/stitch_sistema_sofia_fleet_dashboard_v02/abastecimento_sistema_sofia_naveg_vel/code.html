@@ -1,0 +1,363 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Gestão de Abastecimento - Manfac Fleet</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#ffb693",
+                    "surface-container-highest": "#273647",
+                    "on-secondary-fixed-variant": "#384667",
+                    "on-primary-fixed-variant": "#7a3000",
+                    "on-error": "#690005",
+                    "surface": "#051424",
+                    "secondary-container": "#384667",
+                    "on-secondary": "#21304f",
+                    "background": "#051424",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-surface": "#d4e4fa",
+                    "inverse-on-surface": "#233143",
+                    "surface-container-high": "#1c2b3c",
+                    "on-tertiary": "#1f3052",
+                    "on-primary-container": "#572000",
+                    "on-tertiary-fixed-variant": "#36466a",
+                    "on-primary-fixed": "#351000",
+                    "inverse-surface": "#d4e4fa",
+                    "inverse-primary": "#a04100",
+                    "surface-container": "#122131",
+                    "primary-fixed": "#ffdbcc",
+                    "on-surface-variant": "#e2bfb0",
+                    "outline": "#a98a7d",
+                    "tertiary-fixed": "#d8e2ff",
+                    "surface-container-low": "#0d1c2d",
+                    "on-secondary-fixed": "#0a1b39",
+                    "primary": "#ffb693",
+                    "surface-bright": "#2c3a4c",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "tertiary-container": "#8999c1",
+                    "primary-container": "#ff6b00",
+                    "tertiary": "#b6c6f1",
+                    "surface-dim": "#051424",
+                    "on-tertiary-container": "#203153",
+                    "surface-tint": "#ffb693",
+                    "on-primary": "#561f00",
+                    "surface-container-lowest": "#010f1f",
+                    "secondary": "#b7c6ed",
+                    "tertiary-fixed-dim": "#b6c6f1",
+                    "on-tertiary-fixed": "#071a3c",
+                    "outline-variant": "#5a4136",
+                    "on-secondary-container": "#a6b5db",
+                    "surface-variant": "#273647",
+                    "secondary-fixed-dim": "#b7c6ed",
+                    "error-container": "#93000a",
+                    "on-background": "#d4e4fa"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "margin": "24px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Geist"],
+                    "title-md": ["Inter"],
+                    "headline-lg-mobile": ["Geist"],
+                    "label-sm": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Geist"],
+                    "data-tabular": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom Input Styling matching Technical-Industrial Modernism */
+        .form-input {
+            background-color: #0F1F3D; /* Level 0 per spec */
+            border: 1px solid #2D3D5E; /* UI Container border per spec */
+            color: #d4e4fa; /* text-on-surface */
+        }
+        .form-input:focus {
+            border-color: #FF6B00; /* Primary Orange */
+            box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.2);
+            outline: none;
+        }
+        
+        /* Sidebar active bar */
+        .nav-item-active {
+            border-left: 4px solid #FF6B00;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-full flex overflow-hidden font-body-md antialiased">
+<!-- Desktop NavigationDrawer (hidden on mobile) -->
+<nav class="hidden md:flex flex-col bg-surface-container dark:bg-surface-container h-full w-80 flat no shadows pt-16 z-40 border-r border-outline-variant flex-shrink-0">
+<div class="px-6 py-8 flex flex-col items-start border-b border-surface-container-high">
+<img class="w-16 h-16 rounded-full mb-4 object-cover" data-alt="A professional corporate headshot of a logistics director wearing a dark navy blazer, set against a blurred control room background. The lighting is crisp and modern, conveying authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi15_5qqCODb3sKkDedSmYAQ5xu9-g8JDfZyH4yuHhV8tOLO5l8QtoH5SF3q7zbiUH1nVKRteqXUPFWARe6VG-90uMKN22b-i0P8LSGhlxWaO3mSNKZzjLJb-VpcY03M5wvWOipr_N7eN4U87sQb0DEMXet-LrkDv31ONQArpPvzVouR0dzz9aRegmJlM2WcG6pAw6tgRJwM8QCK8R_7mb-M7M7Q2-ZiZii744fYtrDHvqZ2siH_5vDGRRgNWX-601WujsS0_bllC_">
+<h2 class="font-headline-lg text-headline-lg text-primary">Logistics Director</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manfac Facilities</p>
+<span class="inline-flex items-center gap-2 mt-2 font-label-sm text-label-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span> Online
+            </span>
+</div>
+<div class="flex flex-col flex-1 py-6 overflow-y-auto">
+<!-- Inactive -->
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="{{DATA:SCREEN:SCREEN_6}}">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="">OPERAÇÃO</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="{{DATA:SCREEN:SCREEN_30}}">
+<span class="material-symbols-outlined" data-icon="report_problem">report_problem</span>
+<span class="">OCORRÊNCIAS</span>
+</a>
+<!-- Active -->
+<a class="flex items-center gap-4 px-6 py-4 border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest hover:bg-surface-container-highest transition-all nav-item-active" href="{{DATA:SCREEN:SCREEN_17}}">
+<span class="material-symbols-outlined" data-icon="build_circle">build_circle</span>
+<span class="">MANUTENÇÃO &amp; DOCUMENTOS</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="{{DATA:SCREEN:SCREEN_15}}">
+<span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+<span class="">GESTÃO</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-full relative w-full">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim text-primary dark:text-primary fixed top-0 w-full z-50 border-b border-outline-variant flat no shadows flex justify-between items-center px-margin h-16 transition-colors duration-200">
+<div class="flex items-center gap-4">
+<!-- Mobile menu toggle (optional functionality) -->
+<button class="md:hidden text-on-surface hover:bg-surface-container-high p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Manfac Fleet</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface hover:bg-surface-container-high p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<img class="w-8 h-8 rounded-full md:hidden" data-alt="A small circular avatar placeholder for a user profile photo, showing a stylized silhouette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAk2ZPwQBs6aDtACIpZRxMhfxwUzzGwnMHtDbo3eh1BVbmjxfN2HHDGRegfURQgv_YHotCyuD-BDfEehQwjshljHsTq-98PsKnIR6KimU9QvGLGntDmXvaLR9kADHFiEyz6O9xYilu2OAIQhofBItPEM_KREAt2gCTQifkrKFQcJCZC1za79HNo0MHPfJvlLo_WSxih8_C_khgVKnyEnTDvVW1Ve_AvZSp_UetKfQzkJz5Oi6tXy8vi2k57f-TFXCzhBA-AkQg8ZMv">
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto pt-20 pb-24 md:pb-8 px-4 md:px-margin bg-background">
+<!-- Page Header -->
+<div class="flex items-center gap-2 mb-8 mt-4 md:mt-0">
+<a class="text-on-surface-variant hover:text-primary transition-colors md:hidden" href="{{DATA:SCREEN:SCREEN_50}}">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</a>
+<h1 class="font-headline-lg text-headline-lg md:text-[32px] text-on-surface">Gestão de Abastecimento</h1>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-container-max mx-auto">
+<!-- Left Column: Form Card (Abastecimento Manual) -->
+<div class="lg:col-span-4 bg-[#1A2B4D] rounded-xl border border-[#2D3D5E] p-6 flex flex-col gap-6 h-fit">
+<h2 class="font-title-md text-title-md text-on-surface border-b border-[#2D3D5E] pb-4">Abastecimento Manual</h2>
+<form class="flex flex-col gap-4">
+<!-- Date -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Data:</label>
+<div class="relative">
+<input class="form-input w-full rounded-lg px-3 py-2.5 font-data-tabular text-data-tabular" type="date" value="2024-10-26">
+</div>
+</div>
+<!-- Vehicle -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Veículo:</label>
+<select class="form-input w-full rounded-lg px-3 py-2.5 font-body-md appearance-none">
+<option>SF-01 (Sedan)</option>
+<option>SF-02 (Van)</option>
+<option>SF-03 (Truck)</option>
+</select>
+<span class="material-symbols-outlined absolute right-9 mt-9 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<!-- Liters & Value Row -->
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Litros:</label>
+<input class="form-input w-full rounded-lg px-3 py-2.5 font-data-tabular text-data-tabular" step="0.1" type="number" value="50.0">
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Valor R$:</label>
+<input class="form-input w-full rounded-lg px-3 py-2.5 font-data-tabular text-data-tabular" step="0.01" type="number" value="280.00">
+</div>
+</div>
+<!-- KM -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">KM:</label>
+<input class="form-input w-full rounded-lg px-3 py-2.5 font-data-tabular text-data-tabular" type="number" value="45120">
+</div>
+<!-- Gas Station -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Posto:</label>
+<input class="form-input w-full rounded-lg px-3 py-2.5 font-body-md text-body-md" type="text" value="Posto Central">
+</div>
+<!-- Action Button -->
+<button class="mt-4 bg-primary-container text-on-primary-container font-title-md text-title-md rounded-[4px] py-3 px-4 hover:bg-primary transition-colors flex justify-center items-center gap-2" onclick="window.location.href='{{DATA:SCREEN:SCREEN_14}}'" type="button">
+                            Salvar Abastecimento
+                        </button>
+</form>
+</div>
+<!-- Right Column: Report Card (Relatório Mensal) -->
+<div class="lg:col-span-8 bg-[#1A2B4D] rounded-xl border border-[#2D3D5E] flex flex-col overflow-hidden h-fit">
+<!-- Card Header -->
+<div class="p-6 border-b border-[#2D3D5E] flex justify-between items-center bg-[#1A2B4D]">
+<h2 class="font-title-md text-title-md text-on-surface">Relatório Mensal</h2>
+<!-- Month Selector -->
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-body-md text-body-md bg-surface-container-high px-3 py-1.5 rounded-lg border border-outline-variant">
+                            Mês: Outubro 2024
+                            <span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider border-b border-[#2D3D5E]">
+<th class="px-6 py-4 font-medium">Veículo</th>
+<th class="px-6 py-4 font-medium text-right">Total Litros</th>
+<th class="px-6 py-4 font-medium text-right">Total Valor</th>
+<th class="px-6 py-4 font-medium text-right">R$/KM</th>
+<th class="px-6 py-4 font-medium text-right">KM/Liter</th>
+</tr>
+</thead>
+<tbody class="font-data-tabular text-data-tabular divide-y divide-[#2D3D5E]">
+<!-- Row 1 -->
+<tr class="hover:bg-[#24345A] transition-colors group">
+<td class="px-6 py-4 flex flex-col gap-1">
+<span class="text-on-surface font-medium">SF-01</span>
+<span class="text-on-surface-variant text-xs">(Sedan)</span>
+</td>
+<td class="px-6 py-4 text-right text-on-surface">220.0 L</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 1,232.00</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 0.55</td>
+<td class="px-6 py-4 text-right">
+<div class="flex flex-col items-end gap-1">
+<span class="text-on-surface">10.5 km/L</span>
+<span class="flex items-center gap-1 text-secondary text-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                                2.1%
+                                            </span>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-[#24345A] transition-colors group">
+<td class="px-6 py-4 flex flex-col gap-1">
+<span class="text-on-surface font-medium">SF-02</span>
+<span class="text-on-surface-variant text-xs">(Van)</span>
+</td>
+<td class="px-6 py-4 text-right text-on-surface">350.0 L</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 1,960.00</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 0.65</td>
+<td class="px-6 py-4 text-right">
+<div class="flex flex-col items-end gap-1">
+<span class="text-on-surface">9.2 km/L</span>
+<span class="flex items-center gap-1 text-error text-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_downward">arrow_downward</span>
+                                                -1.5%
+                                            </span>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-[#24345A] transition-colors group">
+<td class="px-6 py-4 flex flex-col gap-1">
+<span class="text-on-surface font-medium">SF-03</span>
+<span class="text-on-surface-variant text-xs">(Truck)</span>
+</td>
+<td class="px-6 py-4 text-right text-on-surface">600.0 L</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 3,360.00</td>
+<td class="px-6 py-4 text-right text-on-surface">R$ 0.80</td>
+<td class="px-6 py-4 text-right">
+<div class="flex flex-col items-end gap-1">
+<span class="text-on-surface">7.0 km/L</span>
+<span class="flex items-center gap-1 text-secondary text-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                                0.5%
+                                            </span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile BottomNavBar (hidden on desktop) -->
+<nav class="md:hidden bg-surface-container-low dark:bg-surface-container-low text-primary fixed bottom-0 w-full z-50 flat no shadows fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_6}}">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm mt-1">Visão Geral</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_30}}">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-label-sm text-label-sm mt-1">Ocorrências</span>
+</a>
+<!-- Active -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_17}}">
+<span class="material-symbols-outlined" data-icon="settings_suggest" data-weight="fill">settings_suggest</span>
+<span class="font-label-sm text-label-sm mt-1">Manutenção</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_15}}">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Gestão</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+<span class="font-label-sm text-label-sm mt-1">Mais</span>
+</a>
+</nav>
+
+
+</body></html>

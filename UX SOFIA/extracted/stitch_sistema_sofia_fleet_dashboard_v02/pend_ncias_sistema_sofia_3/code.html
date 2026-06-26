@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manfac Fleet - Pendências &amp; Plano de Ação</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Geist:wght@600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(26, 43, 77, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #2D3D5E;
+        }
+        .urgent-gradient {
+            background: linear-gradient(90deg, rgba(147, 0, 10, 0.2) 0%, rgba(147, 0, 10, 0) 100%);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #051424;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2D3D5E;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF6B00;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#e2bfb0",
+                        "on-primary-container": "#572000",
+                        "primary-fixed-dim": "#ffb693",
+                        "primary-fixed": "#ffdbcc",
+                        "tertiary": "#b6c6f1",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#d8e2ff",
+                        "on-tertiary": "#1f3052",
+                        "primary": "#ffb693",
+                        "inverse-on-surface": "#233143",
+                        "on-tertiary-fixed": "#071a3c",
+                        "surface-container-lowest": "#010f1f",
+                        "inverse-primary": "#a04100",
+                        "surface-bright": "#2c3a4c",
+                        "on-tertiary-container": "#203153",
+                        "surface": "#051424",
+                        "surface-tint": "#ffb693",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#273647",
+                        "on-surface": "#d4e4fa",
+                        "surface-dim": "#051424",
+                        "on-secondary-container": "#a6b5db",
+                        "secondary": "#b7c6ed",
+                        "secondary-fixed-dim": "#b7c6ed",
+                        "tertiary-container": "#8999c1",
+                        "primary-container": "#ff6b00",
+                        "on-error": "#690005",
+                        "on-primary-fixed": "#351000",
+                        "secondary-container": "#384667",
+                        "on-secondary-fixed-variant": "#384667",
+                        "on-tertiary-fixed-variant": "#36466a",
+                        "on-secondary-fixed": "#0a1b39",
+                        "outline": "#a98a7d",
+                        "on-secondary": "#21304f",
+                        "surface-container-high": "#1c2b3c",
+                        "outline-variant": "#5a4136",
+                        "on-primary": "#561f00",
+                        "on-background": "#d4e4fa",
+                        "surface-container": "#122131",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "surface-variant": "#273647",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-low": "#0d1c2d",
+                        "tertiary-fixed-dim": "#b6c6f1",
+                        "background": "#051424",
+                        "inverse-surface": "#d4e4fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin": "24px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "title-md": ["Inter"],
+                        "headline-lg": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-sm": ["JetBrains Mono"],
+                        "data-tabular": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row overflow-hidden">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex flex-col h-full w-80 bg-surface-container border-r border-outline-variant shrink-0 z-50">
+<div class="px-6 py-8">
+<h1 class="font-headline-lg text-headline-lg text-primary font-bold">Manfac Fleet</h1>
+</div>
+<div class="px-6 flex items-center gap-4 mb-8">
+<img class="w-12 h-12 rounded-full border border-primary object-cover" data-alt="A professional headshot of a logistics executive, aged 45-50, with a determined expression, wearing a high-visibility tactical vest over a crisp professional shirt. The background shows a high-tech fleet control center with glowing screens and dark blue metallic surfaces, lit by sharp orange accent lights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSZ5e7F9o9EgyicQ7vF64O3KXPidavP37CopGsaLKca4wHbfNC7ZWxF0J_9ugTl4ZfigLTLH2Vq3T9dYvcqeoWOOOjrqrBjzQDA-UbyMccKclNaCCSREJfz_bhijZIyPIUdd2QRf4cLd8kuCqg5tqGgEUa1_ulKNUonMA052iIylbPw5o7T9-Z_soSdkidyoKgI0tdDnFIX9y3tBwMh4NULBzHmAWgXbUfeEJvyFW6cG73Uqi42VTkLaaxDpGajyI7YKDb3pzPh8eK"/>
+<div>
+<p class="font-title-md text-title-md text-on-surface">Diretor de Logística</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Manfac Facilities</p>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-label-sm text-green-500">Online</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- GESTÃO - Active Parent -->
+<div class="px-6 py-2 text-primary font-label-sm tracking-widest uppercase opacity-60">GESTÃO</div>
+<a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span>Custos</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span>Disponibilidade</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-3 border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest" href="#">
+<span class="material-symbols-outlined" data-icon="pending_actions">pending_actions</span>
+<span>Pendências</span>
+</a>
+<div class="px-6 py-2 mt-4 text-primary font-label-sm tracking-widest uppercase opacity-60">OPERAÇÃO</div>
+<a class="flex items-center gap-4 px-6 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span>Veículos</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col relative min-h-screen overflow-y-auto pb-20 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-40 md:relative bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-margin h-16 shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Pendências &amp; Plano de Ação</h2>
+<p class="hidden md:block font-label-sm text-label-sm text-on-surface-variant">Acompanhamento de resoluções e conformidade de frota</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-high transition-colors text-primary relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="bg-primary-container text-on-primary-container px-4 py-2 rounded shadow-lg flex items-center gap-2 hover:brightness-110 transition-all font-title-md">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="hidden sm:inline">Adicionar Item</span>
+</button>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-4 md:p-8 mt-16 md:mt-0 space-y-6 max-w-container-max mx-auto w-full">
+<!-- Quick Stats Bento -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-low p-4 border border-outline-variant rounded-lg flex flex-col gap-1">
+<span class="text-on-surface-variant font-label-sm uppercase">Total Pendente</span>
+<span class="text-display-lg font-display-lg text-primary">42</span>
+<span class="text-error text-label-sm flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span> +12% vs semana passada</span>
+</div>
+<div class="bg-surface-container-low p-4 border border-error/30 rounded-lg flex flex-col gap-1 urgent-gradient">
+<span class="text-error font-label-sm uppercase">Urgência Alta</span>
+<span class="text-display-lg font-display-lg text-error">08</span>
+<span class="text-on-surface-variant text-label-sm">Vencimento &lt; 24h</span>
+</div>
+<div class="bg-surface-container-low p-4 border border-outline-variant rounded-lg flex flex-col gap-1">
+<span class="text-on-surface-variant font-label-sm uppercase">Aguardando Terceiros</span>
+<span class="text-display-lg font-display-lg text-secondary">15</span>
+<span class="text-on-surface-variant text-label-sm">Sinistros &amp; Oficinas</span>
+</div>
+<div class="bg-surface-container-low p-4 border border-outline-variant rounded-lg flex flex-col gap-1">
+<span class="text-on-surface-variant font-label-sm uppercase">Resolvidos (Hoje)</span>
+<span class="text-display-lg font-display-lg text-on-surface">24</span>
+<span class="text-green-500 text-label-sm flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> Eficiência 92%</span>
+</div>
+</div>
+<!-- Main Unified List Table -->
+<div class="bg-surface-container border border-outline-variant rounded overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high border-b border-outline-variant">
+<tr>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Descrição</th>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Origem</th>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Responsável</th>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Prazo</th>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Próxima Ação</th>
+<th class="px-4 py-4 font-label-sm text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-4 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- URGENTE SECTION -->
+<tr class="urgent-gradient hover:bg-surface-container-highest transition-colors border-l-4 border-error">
+<td class="px-4 py-4">
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">Licenciamento Vencido - Placa ABC-1234</span>
+<span class="text-label-sm text-error font-bold mt-1">BLOQUEIO IMINENTE</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-label-sm text-primary uppercase">Documentos</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container text-[10px] flex items-center justify-center font-bold">RL</div>
+<span class="text-data-tabular">Ricardo Lima</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-tabular text-error font-bold">Hoje, 17:00</td>
+<td class="px-4 py-4 text-data-tabular">Pagamento via GRU</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-[18px]" data-icon="priority_high">priority_high</span>
+                                        Vencido
+                                    </span>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="urgent-gradient hover:bg-surface-container-highest transition-colors border-l-4 border-error">
+<td class="px-4 py-4">
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">Sinistro #8821 - Rod. Bandeirantes</span>
+<span class="text-label-sm text-on-surface-variant mt-1">Avaria Grave - Guincho Acionado</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-label-sm text-primary uppercase">Sinistros</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container text-[10px] flex items-center justify-center font-bold">AS</div>
+<span class="text-data-tabular">Ana Souza</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-tabular text-error">Em 2 horas</td>
+<td class="px-4 py-4 text-data-tabular">Check-in na oficina credenciada</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-[18px]" data-icon="local_shipping">local_shipping</span>
+                                        Em trânsito
+                                    </span>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- NORMAL SECTION -->
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-4 py-4">
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">Revisão Preventiva - 60.000km</span>
+<span class="text-label-sm text-on-surface-variant mt-1">Caminhão Scania 440</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-label-sm text-primary uppercase">Revisões</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container text-[10px] flex items-center justify-center font-bold">MA</div>
+<span class="text-data-tabular">Oficina Master</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-tabular">24 Abr, 2024</td>
+<td class="px-4 py-4 text-data-tabular">Confirmar agendamento</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+                                        Agendado
+                                    </span>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-4 py-4">
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">Termo de Responsabilidade - Mot. Carlos</span>
+<span class="text-label-sm text-on-surface-variant mt-1">Assinatura digital pendente</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-label-sm text-primary uppercase">Termos</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-[10px] flex items-center justify-center font-bold">CM</div>
+<span class="text-data-tabular">Carlos Mendes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-tabular">26 Abr, 2024</td>
+<td class="px-4 py-4 text-data-tabular">Cobrar via WhatsApp Fleet</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="history_edu">history_edu</span>
+                                        Aguardando
+                                    </span>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-4 py-4">
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">Multa Gravíssima - Excesso de Velocidade</span>
+<span class="text-label-sm text-on-surface-variant mt-1">Placa DEF-5678 (DER-SP)</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-label-sm text-primary uppercase">Multas</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container text-[10px] flex items-center justify-center font-bold">JD</div>
+<span class="text-data-tabular">Jurídico</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-tabular">02 Mai, 2024</td>
+<td class="px-4 py-4 text-data-tabular">Recurso de primeira instância</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="gavel">gavel</span>
+                                        Em Análise
+                                    </span>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Footer -->
+<div class="px-4 py-4 bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Exibindo 5 de 42 pendências</span>
+<div class="flex gap-2">
+<button class="px-3 py-1 bg-surface-container-highest rounded hover:bg-primary hover:text-on-primary transition-all font-label-sm">Anterior</button>
+<button class="px-3 py-1 bg-surface-container-highest rounded hover:bg-primary hover:text-on-primary transition-all font-label-sm">Próxima</button>
+</div>
+</div>
+</div>
+<!-- Visualization / Insight Area -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-surface-container p-6 rounded-lg border border-outline-variant">
+<h3 class="font-title-md text-title-md text-on-surface mb-4">Gargalos por Categoria</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between font-label-sm mb-1">
+<span>SINISTROS</span>
+<span>38%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-error h-full w-[38%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm mb-1">
+<span>DOCUMENTAÇÃO</span>
+<span>25%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[25%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm mb-1">
+<span>REVISÕES</span>
+<span>22%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[22%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container p-6 rounded-lg border border-outline-variant relative overflow-hidden group">
+<div class="relative z-10">
+<h3 class="font-title-md text-title-md text-on-surface mb-2">Relatório Consolidado</h3>
+<p class="text-on-surface-variant font-body-md mb-6">Gere um PDF executivo com todos os planos de ação vigentes e prazos de resolução.</p>
+<button class="w-full border border-primary text-primary py-3 rounded-xl font-title-md flex items-center justify-center gap-3 hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                            Exportar para Auditoria
+                        </button>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -right-12 -bottom-12 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[120px]" data-icon="analytics">analytics</span>
+</div>
+</div>
+</div>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-low border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-label-sm text-label-sm">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-110" href="#">
+<span class="material-symbols-outlined" data-icon="pending_actions">pending_actions</span>
+<span class="font-label-sm text-label-sm">Pendências</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+<span class="font-label-sm text-label-sm">Mais</span>
+</a>
+</nav>
+</main>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.add('scale-[0.99]');
+                setTimeout(() => row.classList.remove('scale-[0.99]'), 100);
+            });
+        });
+
+        // Simple filter logic simulation
+        console.log("Pendências dashboard loaded. Ready for real-time fleet synchronization.");
+    </script>
+</body></html>

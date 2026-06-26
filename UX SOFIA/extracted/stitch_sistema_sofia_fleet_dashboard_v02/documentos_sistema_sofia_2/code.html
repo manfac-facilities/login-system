@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manfac Fleet - Documentos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Geist:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #051424;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2D3D5E;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF6B00;
+        }
+        .glass-panel {
+            background: rgba(26, 43, 77, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #2D3D5E;
+        }
+        .active-nav-indicator {
+            box-shadow: -4px 0 0 0 #FF6B00;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#e2bfb0",
+                        "on-primary-container": "#572000",
+                        "primary-fixed-dim": "#ffb693",
+                        "primary-fixed": "#ffdbcc",
+                        "tertiary": "#b6c6f1",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#d8e2ff",
+                        "on-tertiary": "#1f3052",
+                        "primary": "#ffb693",
+                        "inverse-on-surface": "#233143",
+                        "on-tertiary-fixed": "#071a3c",
+                        "surface-container-lowest": "#010f1f",
+                        "inverse-primary": "#a04100",
+                        "surface-bright": "#2c3a4c",
+                        "on-tertiary-container": "#203153",
+                        "surface": "#051424",
+                        "surface-tint": "#ffb693",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#273647",
+                        "on-surface": "#d4e4fa",
+                        "surface-dim": "#051424",
+                        "on-secondary-container": "#a6b5db",
+                        "secondary": "#b7c6ed",
+                        "secondary-fixed-dim": "#b7c6ed",
+                        "tertiary-container": "#8999c1",
+                        "primary-container": "#ff6b00",
+                        "on-error": "#690005",
+                        "on-primary-fixed": "#351000",
+                        "secondary-container": "#384667",
+                        "on-secondary-fixed-variant": "#384667",
+                        "on-tertiary-fixed-variant": "#36466a",
+                        "on-secondary-fixed": "#0a1b39",
+                        "outline": "#a98a7d",
+                        "on-secondary": "#21304f",
+                        "surface-container-high": "#1c2b3c",
+                        "outline-variant": "#5a4136",
+                        "on-primary": "#561f00",
+                        "on-background": "#d4e4fa",
+                        "surface-container": "#122131",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "surface-variant": "#273647",
+                        "secondary-fixed": "#d8e2ff",
+                        "surface-container-low": "#0d1c2d",
+                        "tertiary-fixed-dim": "#b6c6f1",
+                        "background": "#051424",
+                        "inverse-surface": "#d4e4fa"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "2px",
+                        "lg": "4px",
+                        "xl": "8px",
+                        "full": "12px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin": "24px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "title-md": ["Inter"],
+                        "headline-lg": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-sm": ["JetBrains Mono"],
+                        "data-tabular": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- TopAppBar (Mobile & Shared Logic) -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center px-margin h-16 md:hidden">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a logistics director in his 40s, looking confident and experienced, with a clean industrial office background. The lighting is crisp and modern, matching a dark-themed UI palette with subtle orange accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmi3jHUQPVVlg-rm8sqJSU03z9_XBcfXdBh6zMhd7C4vKlGvgZZ8FDYl09QTZsc4e8-aTOl0R4_je4IXqNVwHU1OIXlKif-TeE0q6RyMJD9DJAFM3dEii4QlN71qqmBhifiANsViT9KERntaazo1jnrWKEsPLV_75vCnCdQhultzGoB25mmTAqFefmGCWvSULdgBK0v6NAlruVDW6QfRMUHvkDhq8ps1VDR0yTzNo4M24j1eIcaxO6uiaRFTUBT7_4tfdEgZ7f8ymj"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Manfac Fleet</h1>
+</div>
+<button class="text-on-surface hover:bg-surface-container-high p-2 rounded-xl transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<div class="flex min-h-screen">
+<!-- NavigationDrawer (Desktop) -->
+<aside class="hidden md:flex flex-col h-screen w-80 fixed left-0 top-0 bg-surface-container dark:bg-surface-container py-6 border-r border-outline-variant z-40">
+<div class="px-6 mb-8">
+<h2 class="font-headline-lg text-headline-lg text-primary font-bold">Manfac Fleet</h2>
+</div>
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A professional logistics manager portrait, high contrast dark theme, industrial aesthetic, cinematic lighting with orange highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzhJpz1OG0x4kuvEpVInH5cVyR_83O_teyXOSRTbTFhFX6waD7rEtTn6Ev0FnYzYhikjvcNyfjeVvYrDeI3L440RDDLnMUVDlxnNQR1o5WTXlh8nhMtEIciYfkJFCejWV9C0n1rMzp2kXqW5V1ySJMbGuUAeVMcD-D4YKK4x9ieMmU3KH3E_JUNdV2Dgh0-GxwG65-RymH8TQM2tJW6PtoNekTSlDel-qAZLyPqmjGlMP3uKbricPOTpFWpEh69Mo2i6f9ZSbqSiaj"/>
+</div>
+<div>
+<p class="font-title-md text-on-surface text-sm">Logistics Director</p>
+<p class="text-xs text-on-surface-variant">Manfac Facilities</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Online</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="px-6 py-2">
+<p class="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] mb-2 uppercase">Geral</p>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-body-md text-body-md uppercase">OPERAÇÃO</span>
+</a>
+</div>
+<div class="px-6 py-2">
+<p class="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] mb-2 uppercase">Alertas</p>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="report_problem">report_problem</span>
+<span class="font-body-md text-body-md uppercase">OCORRÊNCIAS</span>
+</a>
+</div>
+<div class="px-6 py-2">
+<p class="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] mb-2 uppercase">Ativos</p>
+<a class="flex items-center gap-4 px-4 py-3 border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="build_circle">build_circle</span>
+<span class="font-body-md text-body-md uppercase">MANUTENÇÃO & DOCUMENTOS</span>
+</a>
+</div>
+<div class="px-6 py-2">
+<p class="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] mb-2 uppercase">Relatórios</p>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+<span class="font-body-md text-body-md uppercase">GESTÃO</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-80 pt-20 md:pt-8 pb-24 md:pb-8 px-4 md:px-margin max-w-7xl mx-auto w-full">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Documentos</h2>
+<p class="text-on-surface-variant font-body-md">Controle de prazos e licenças da frota ativa.</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-95">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                    ANEXAR DOCUMENTO
+                </button>
+</div>
+<!-- Dashboard Stats / Filters Bar -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-8">
+<!-- Quick Filters -->
+<div class="lg:col-span-8 glass-panel p-6 rounded-xl flex flex-wrap gap-4 items-end">
+<div class="flex-1 min-w-[200px]">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase">BUSCAR VEÍCULO</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-dim border border-outline-variant rounded-lg pl-10 pr-4 py-2 focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none" placeholder="Placa ou modelo..." type="text"/>
+</div>
+</div>
+<div class="w-full md:w-auto">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase">TIPO</label>
+<select class="w-full md:w-48 bg-surface-dim border border-outline-variant rounded-lg px-4 py-2 focus:border-primary-container outline-none">
+<option>Todos</option>
+<option>Seguro</option>
+<option>CRLV</option>
+<option>IPVA</option>
+</select>
+</div>
+<div class="w-full md:w-auto">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase">STATUS</label>
+<select class="w-full md:w-48 bg-surface-dim border border-outline-variant rounded-lg px-4 py-2 focus:border-primary-container outline-none">
+<option>Todos</option>
+<option class="text-green-400">Válido</option>
+<option class="text-yellow-400">Vencendo (30d)</option>
+<option class="text-red-400">Vencido</option>
+</select>
+</div>
+</div>
+<!-- Simple Stats -->
+<div class="lg:col-span-4 grid grid-cols-2 gap-4">
+<div class="glass-panel p-4 rounded-xl flex flex-col justify-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">VENCIDOS</p>
+<p class="font-display-lg text-[32px] text-red-400 leading-tight">12</p>
+</div>
+<div class="glass-panel p-4 rounded-xl flex flex-col justify-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">CRÍTICOS</p>
+<p class="font-display-lg text-[32px] text-yellow-400 leading-tight">05</p>
+</div>
+</div>
+</div>
+<!-- Documents Table / Grid -->
+<div class="glass-panel rounded-xl overflow-hidden mb-12">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant">
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">Placa / Veículo</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">Tipo</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">Número/Apólice</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">Vencimento</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">Status</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1: Vencido -->
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-6 py-4">
+<p class="font-data-tabular font-bold text-on-surface">ABC-1234</p>
+<p class="text-xs text-on-surface-variant">Volvo FH 540</p>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="policy">policy</span> SEGURO
+                                    </span>
+</td>
+<td class="px-6 py-4 font-data-tabular text-sm">POL-98231-A</td>
+<td class="px-6 py-4 font-data-tabular text-sm">12/05/2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+<span class="text-xs font-bold text-red-400 uppercase">Vencido</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Vencendo 30d -->
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-6 py-4">
+<p class="font-data-tabular font-bold text-on-surface">XYZ-9876</p>
+<p class="text-xs text-on-surface-variant">Scania R450</p>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="description">description</span> CRLV
+                                    </span>
+</td>
+<td class="px-6 py-4 font-data-tabular text-sm">992.112.001-2</td>
+<td class="px-6 py-4 font-data-tabular text-sm">28/06/2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+<span class="text-xs font-bold text-yellow-400 uppercase">Vence em 22d</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Válido -->
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-6 py-4">
+<p class="font-data-tabular font-bold text-on-surface">MOT-5590</p>
+<p class="text-xs text-on-surface-variant">Mercedes-Benz Actros</p>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="receipt_long">receipt_long</span> IPVA
+                                    </span>
+</td>
+<td class="px-6 py-4 font-data-tabular text-sm">2024.11.09</td>
+<td class="px-6 py-4 font-data-tabular text-sm">15/12/2024</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-bold text-green-400 uppercase">Válido</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Válido -->
+<tr class="hover:bg-surface-container-highest transition-colors">
+<td class="px-6 py-4">
+<p class="font-data-tabular font-bold text-on-surface">FLT-0012</p>
+<p class="text-xs text-on-surface-variant">Iveco Stralis</p>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="policy">policy</span> SEGURO
+                                    </span>
+</td>
+<td class="px-6 py-4 font-data-tabular text-sm">POL-10022-C</td>
+<td class="px-6 py-4 font-data-tabular text-sm">10/01/2025</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-bold text-green-400 uppercase">Válido</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Table Footer -->
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between bg-surface-container">
+<p class="text-xs text-on-surface-variant">Exibindo 4 de 142 registros</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center bg-primary-container text-on-primary-container rounded-lg font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors text-xs">3</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Help / Info Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="bg-surface-container-high p-6 rounded-xl border-l-4 border-primary">
+<h4 class="font-title-md text-on-surface mb-2">Renovação Automática</h4>
+<p class="text-sm text-on-surface-variant mb-4">Ative o alerta para que nossa central cuide do agendamento das vistorias e renovações de seguros 45 dias antes do vencimento.</p>
+<a class="text-primary font-bold text-sm uppercase tracking-widest hover:underline inline-flex items-center gap-1" href="#">CONFIGURAR ALERTAS <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl border-l-4 border-tertiary">
+<h4 class="font-title-md text-on-surface mb-2">Exportação de Relatórios</h4>
+<p class="text-sm text-on-surface-variant mb-4">Gere um PDF consolidado com todos os comprovantes de IPVA e CRLV da frota para fiscalizações ou auditorias externas.</p>
+<a class="text-tertiary font-bold text-sm uppercase tracking-widest hover:underline inline-flex items-center gap-1" href="#">GERAR PDF <span class="material-symbols-outlined text-sm">picture_as_pdf</span></a>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-container-low dark:bg-surface-container-low flex justify-around items-center px-4 py-2 border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-label-sm text-label-sm">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-label-sm text-label-sm">Manutenção</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+<span class="font-label-sm text-label-sm">Mais</span>
+</a>
+</nav>
+<script>
+        // Simple search interactivity
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        // Hover effects and micro-interactions
+        const actionButtons = document.querySelectorAll('button');
+        actionButtons.forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('scale-95'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('scale-95'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('scale-95'));
+        });
+    </script>
+</body></html>

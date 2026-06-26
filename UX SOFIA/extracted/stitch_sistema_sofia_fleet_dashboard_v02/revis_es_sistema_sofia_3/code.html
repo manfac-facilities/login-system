@@ -1,0 +1,417 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Histórico de Revisões</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-container-highest": "#273647",
+                      "on-secondary-fixed-variant": "#384667",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "on-error": "#690005",
+                      "surface": "#051424",
+                      "secondary-container": "#384667",
+                      "on-secondary": "#21304f",
+                      "background": "#051424",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-surface": "#d4e4fa",
+                      "inverse-on-surface": "#233143",
+                      "surface-container-high": "#1c2b3c",
+                      "on-tertiary": "#1f3052",
+                      "on-primary-container": "#572000",
+                      "on-tertiary-fixed-variant": "#36466a",
+                      "on-primary-fixed": "#351000",
+                      "inverse-surface": "#d4e4fa",
+                      "inverse-primary": "#a04100",
+                      "surface-container": "#122131",
+                      "primary-fixed": "#ffdbcc",
+                      "on-surface-variant": "#e2bfb0",
+                      "outline": "#a98a7d",
+                      "tertiary-fixed": "#d8e2ff",
+                      "surface-container-low": "#0d1c2d",
+                      "on-secondary-fixed": "#0a1b39",
+                      "primary": "#ffb693",
+                      "surface-bright": "#2c3a4c",
+                      "on-error-container": "#ffdad6",
+                      "error": "#ffb4ab",
+                      "tertiary-container": "#8999c1",
+                      "primary-container": "#ff6b00",
+                      "tertiary": "#b6c6f1",
+                      "surface-dim": "#051424",
+                      "on-tertiary-container": "#203153",
+                      "surface-tint": "#ffb693",
+                      "on-primary": "#561f00",
+                      "surface-container-lowest": "#010f1f",
+                      "secondary": "#b7c6ed",
+                      "tertiary-fixed-dim": "#b6c6f1",
+                      "on-tertiary-fixed": "#071a3c",
+                      "outline-variant": "#5a4136",
+                      "on-secondary-container": "#a6b5db",
+                      "surface-variant": "#273647",
+                      "secondary-fixed-dim": "#b7c6ed",
+                      "error-container": "#93000a",
+                      "on-background": "#d4e4fa"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "margin": "24px",
+                      "container-max": "1440px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Geist", "sans-serif"
+                      ],
+                      "title-md": [
+                              "Inter", "sans-serif"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist", "sans-serif"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono", "monospace"
+                      ],
+                      "body-md": [
+                              "Inter", "sans-serif"
+                      ],
+                      "display-lg": [
+                              "Geist", "sans-serif"
+                      ],
+                      "data-tabular": [
+                              "JetBrains Mono", "monospace"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-tabular": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/gh/vercel/geist-font/packages/next/font/local/GeistVF.woff2') format('woff2');
+            font-weight: 100 900;
+            font-display: swap;
+        }
+        body {
+            background-color: #051424; /* surface-dim */
+            color: #d4e4fa; /* on-surface */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md antialiased pb-20 md:pb-0 md:pl-80">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim text-primary dark:text-primary fixed top-0 w-full z-50 border-b border-outline-variant transition-colors duration-200 flex justify-between items-center px-margin h-16 md:hidden">
+<div class="flex items-center gap-4">
+<button class="text-on-surface hover:bg-surface-container-high p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold">Histórico de Revisões</h1>
+</div>
+<button class="text-on-surface hover:bg-surface-container-high p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">filter_alt</span>
+</button>
+</header>
+<!-- NavigationDrawer (Desktop) -->
+<aside class="hidden md:flex flex-col h-full py-6 w-80 bg-surface-container dark:bg-surface-container text-primary fixed left-0 top-0 z-40 border-r border-surface-container-high">
+<div class="px-6 mb-8 flex items-center gap-4">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="A detailed, realistic portrait of a professional logistics director in a modern corporate setting. They are wearing a sharp navy blue blazer over a crisp white shirt. The background is a slightly blurred, high-tech control room with soft, cool lighting. The overall mood is authoritative and focused, reflecting a high-performance fleet intelligence environment. The image is cropped to a perfect circle for an avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXJKTj_7qCP3HyucXovBXKqTKlQbIyn1izgHsSbovUmyqTSntNgm7g4dS0rvkjUsP35YBnEXz3fnQjH898hoPZ2uy76zCuFaFE8r04if5M_yXQ7c6D7iqd7jQdNeJ7tccdjoZuMSajUyGeOS6g0DyfYWGdDMHUUcwmV9kjlxPIq-29M5mqlMr7b4CG6muvHO7qfROznCCCpsubRBqbdCRyqsRByyA7HFQvNh4TTFQRZG27uV4e98sjqJKnQ_i_7-y7tSHC7LL9A0Y3">
+<div>
+<h2 class="font-title-md text-title-md text-on-surface">Logistics Director</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Manfac Facilities</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Online</span>
+</div>
+</div>
+</div>
+<div class="px-6 mb-4">
+<h3 class="font-headline-lg text-headline-lg text-primary font-bold">Manfac Fleet</h3>
+</div>
+<nav class="flex-1 space-y-2 px-2"><a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_14}}">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="">DASHBOARD</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_22}}">
+<span class="material-symbols-outlined group-hover:text-primary">local_shipping</span>
+<span class="">OPERAÇÃO</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_24}}">
+<span class="material-symbols-outlined group-hover:text-primary">report_problem</span>
+<span class="">OCORRÊNCIAS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest transition-all" href="{{DATA:SCREEN:SCREEN_38}}">
+<span class="material-symbols-outlined text-primary">build_circle</span>
+<span class="">MANUTENÇÃO</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_34}}">
+<span class="material-symbols-outlined group-hover:text-primary">bar_chart</span>
+<span class="">GESTÃO</span>
+</a></nav>
+</aside>
+<!-- Main Content -->
+<main class="pt-20 px-4 md:px-margin md:pt-margin max-w-container-max mx-auto space-y-6">
+<!-- Desktop Header -->
+<div class="hidden md:flex justify-between items-center mb-8">
+<h1 class="font-display-lg text-display-lg text-on-surface">Histórico de Revisões</h1>
+<button class="bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-outline-variant px-4 py-2 rounded-lg font-title-md text-title-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined">filter_alt</span>
+                Filtrar
+            </button>
+</div>
+<!-- KPI Card -->
+<div class="bg-surface-container-high rounded-xl p-6 border border-outline-variant flex flex-col items-center justify-center text-center">
+<span class="font-display-lg text-display-lg text-on-surface mb-2">3</span>
+<div class="flex items-center gap-2 text-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">build</span>
+<span class="font-title-md text-title-md text-on-surface-variant">Manutenções Atrasadas</span>
+</div>
+</div>
+<!-- Filters Horizontal Scroll -->
+<div class="flex overflow-x-auto pb-4 gap-3 hide-scrollbar">
+<button class="bg-primary-container text-on-primary-container font-title-md text-title-md px-6 py-2 rounded-full whitespace-nowrap transition-colors">
+                ABC-1234
+            </button>
+<button class="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant font-title-md text-title-md px-6 py-2 rounded-full whitespace-nowrap transition-colors">
+                XYZ-5678
+            </button>
+<button class="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant font-title-md text-title-md px-6 py-2 rounded-full whitespace-nowrap transition-colors">
+                DEF-9012
+            </button>
+<button class="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant font-title-md text-title-md px-6 py-2 rounded-full whitespace-nowrap transition-colors">
+                GHI-3456
+            </button>
+</div>
+<!-- List -->
+<div class="space-y-4">
+<!-- Item 1: Overdue -->
+<div class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden hover:bg-surface-container-high transition-colors">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-title-md text-title-md text-on-surface">ABC-1234</span>
+<span class="bg-error text-on-error font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                        Atrasado
+                    </span>
+</div>
+<div class="p-4 space-y-2 font-data-tabular text-data-tabular text-on-surface-variant">
+<div class="flex justify-between">
+<span class="">Tipo:</span>
+<span class="text-on-surface">Manutenção Corretiva</span>
+</div>
+<div class="flex justify-between">
+<span class="">Fornecedor:</span>
+<span class="text-on-surface">AutoFix Garage</span>
+</div>
+<div class="flex justify-between">
+<span class="">Valor:</span>
+<span class="text-on-surface">R$ 1.250,00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="">Nota Fiscal:</span>
+<a class="text-primary hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">description</span>
+                            Enviada (NF-99887)
+                        </a>
+</div>
+<div class="flex justify-between">
+<span class="">Data Realizada:</span>
+<span class="text-on-surface">25 Out 2023</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant">
+<div class="flex justify-between items-center font-title-md text-title-md">
+<span class="text-on-surface">Próxima Prevista:</span>
+<span class="text-error">10.000 KM / 25 Nov 2023</span>
+</div>
+</div>
+</div>
+<!-- Item 2: Scheduled -->
+<div class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden hover:bg-surface-container-high transition-colors">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-title-md text-title-md text-on-surface">XYZ-5678</span>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                        Agendado
+                    </span>
+</div>
+<div class="p-4 space-y-2 font-data-tabular text-data-tabular text-on-surface-variant">
+<div class="flex justify-between">
+<span class="">Tipo:</span>
+<span class="text-on-surface">Manutenção Preventiva</span>
+</div>
+<div class="flex justify-between">
+<span class="">Fornecedor:</span>
+<span class="text-on-surface">Fleet Services Pro</span>
+</div>
+<div class="flex justify-between">
+<span class="">Valor:</span>
+<span class="text-on-surface">R$ 450,00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="">Nota Fiscal:</span>
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">pending</span>
+                            Pendente Envio
+                        </span>
+</div>
+<div class="flex justify-between">
+<span class="">Data Realizada:</span>
+<span class="text-on-surface">-</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant">
+<div class="flex justify-between items-center font-title-md text-title-md">
+<span class="text-on-surface">Próxima Prevista:</span>
+<span class="text-secondary">15.000 KM / 15 Nov 2023</span>
+</div>
+</div>
+</div>
+<!-- Item 3: On Time -->
+<div class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden hover:bg-surface-container-high transition-colors">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-title-md text-title-md text-on-surface">DEF-9012</span>
+<span class="bg-surface-bright text-on-surface font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1 border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+                        No Prazo
+                    </span>
+</div>
+<div class="p-4 space-y-2 font-data-tabular text-data-tabular text-on-surface-variant">
+<div class="flex justify-between">
+<span class="">Tipo:</span>
+<span class="text-on-surface">Manutenção Preventiva</span>
+</div>
+<div class="flex justify-between">
+<span class="">Fornecedor:</span>
+<span class="text-on-surface">QuickLane Motors</span>
+</div>
+<div class="flex justify-between">
+<span class="">Valor:</span>
+<span class="text-on-surface">R$ 300,00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="">Nota Fiscal:</span>
+<a class="text-primary hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">description</span>
+                            Enviada (NF-10112)
+                        </a>
+</div>
+<div class="flex justify-between">
+<span class="">Data Realizada:</span>
+<span class="text-on-surface">10 Out 2023</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant">
+<div class="flex justify-between items-center font-title-md text-title-md">
+<span class="text-on-surface">Próxima Prevista:</span>
+<span class="text-primary">20.000 KM / 10 Jan 2024</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-low dark:bg-surface-container-low text-primary border-t border-outline-variant md:hidden"><a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_22}}">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-sm text-label-sm mt-1">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_24}}">
+<span class="material-symbols-outlined">report_problem</span>
+<span class="font-label-sm text-label-sm mt-1">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_38}}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">build_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Manutenção</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 active:scale-90 transition-transform" href="{{DATA:SCREEN:SCREEN_34}}">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="font-label-sm text-label-sm mt-1">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-label-sm text-label-sm mt-1">Mais</span>
+</a></nav>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+
+
+
+</body></html>
