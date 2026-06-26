@@ -211,49 +211,60 @@ export async function getAbastecimentoHistorico(): Promise<
 }
 
 export interface KmResumoMensal {
-  mes: string          // "2026-06"
+  mes: string
   equipe_codigo: string
   veiculo_placa: string
-  km_inicio: number    // km_atual da 1ª entrada do mês
-  km_fim: number       // km_atual da última entrada do mês
-  km_rodados: number   // km_fim - km_inicio
+  veiculo_id: string
+  km_contratual_mensal: number | null
+  km_inicio: number
+  km_fim: number
+  km_rodados: number
 }
 
 export async function getKmResumoMensal(): Promise<KmResumoMensal[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('km_diario')
-    .select('data, km_atual, equipes(codigo), veiculos(placa)')
+    .select('data, km_atual, veiculo_id, equipes(codigo), veiculos(placa, km_contratual_mensal)')
     .order('data', { ascending: true })
 
   if (!data) return []
 
-  type Row = { data: string; km_atual: number; equipes: { codigo: string } | null; veiculos: { placa: string } | null }
+  type Row = {
+    data: string
+    km_atual: number
+    veiculo_id: string
+    equipes: { codigo: string } | null
+    veiculos: { placa: string; km_contratual_mensal: number | null } | null
+  }
   const rows = data as unknown as Row[]
 
-  // Group by (veiculo_placa, mes)
-  const groups = new Map<string, { km_inicio: number; km_fim: number; equipe_codigo: string; veiculo_placa: string; mes: string }>()
+  // Group by (veiculo_id, mes)
+  const groups = new Map<string, {
+    km_inicio: number; km_fim: number; equipe_codigo: string
+    veiculo_placa: string; veiculo_id: string; km_contratual_mensal: number | null; mes: string
+  }>()
 
   for (const row of rows) {
-    const mes = row.data.slice(0, 7) // "YYYY-MM"
-    const placa = row.veiculos?.placa ?? '—'
-    const key = `${placa}::${mes}`
+    const mes = row.data.slice(0, 7)
+    const key = `${row.veiculo_id}::${mes}`
     const existing = groups.get(key)
     if (!existing) {
       groups.set(key, {
         mes,
         equipe_codigo: row.equipes?.codigo ?? '—',
-        veiculo_placa: placa,
+        veiculo_placa: row.veiculos?.placa ?? '—',
+        veiculo_id: row.veiculo_id,
+        km_contratual_mensal: row.veiculos?.km_contratual_mensal ?? null,
         km_inicio: row.km_atual,
         km_fim: row.km_atual,
       })
     } else {
-      // rows are ordered ascending: last update = km_fim
       existing.km_fim = row.km_atual
     }
   }
 
   return Array.from(groups.values())
     .map((g) => ({ ...g, km_rodados: g.km_fim - g.km_inicio }))
-    .sort((a, b) => b.mes.localeCompare(a.mes)) // mais recente primeiro
+    .sort((a, b) => b.mes.localeCompare(a.mes))
 }

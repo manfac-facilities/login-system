@@ -5,7 +5,14 @@ import {
   enviarParaDescontoEmMassaAction,
   excluirMultaAction,
   excluirMultasEmMassaAction,
+  atualizarAutorizacaoMultaAction,
 } from './_actions'
+
+function diasText(solicitadoEm: string | null): string | null {
+  if (!solicitadoEm) return null
+  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
+  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
+}
 import type { MultaComRelacoes } from './page'
 
 const statusStyle: Record<string, string> = {
@@ -123,6 +130,7 @@ export default function MultasTable({
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Descrição</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Autorização</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -153,6 +161,41 @@ export default function MultasTable({
                     : `${m.tipo_desconto === 'total' ? 'Total' : 'Parcial'} · R$ ${Number(m.valor_descontado ?? 0).toFixed(2)}`}
                 </td>
                 <td className="px-4 py-3">
+                  {(() => {
+                    const st = m.autorizacao_status ?? 'sem_solicitacao'
+                    const dias = st === 'solicitado' ? diasText(m.autorizacao_solicitado_em ?? null) : null
+                    const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
+                    const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>
+                        <div className="flex gap-2">
+                          {st === 'sem_solicitacao' && (
+                            <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                            </form>
+                          )}
+                          {st === 'solicitado' && (
+                            <>
+                              <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
+                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                              </form>
+                              <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
+                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                              </form>
+                            </>
+                          )}
+                          {st === 'autorizado' && (
+                            <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                            </form>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </td>
+                <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[m.status]}`}>
                     {m.status}
                   </span>
@@ -172,7 +215,7 @@ export default function MultasTable({
             ))}
             {multas.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={12} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma multa registrada.
                 </td>
               </tr>

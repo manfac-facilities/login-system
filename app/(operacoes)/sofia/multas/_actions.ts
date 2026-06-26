@@ -105,3 +105,19 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
 
   revalidatePath('/sofia/multas')
 }
+
+export async function atualizarAutorizacaoMultaAction(id: string, formData: FormData): Promise<void> {
+  const status = formData.get('status') as string
+  if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+
+  const supabase = await createClient()
+  const update: Record<string, unknown> = { autorizacao_status: status }
+  if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
+  if (status === 'sem_solicitacao') update.autorizacao_solicitado_em = null
+
+  await supabase.from('multas').update(update).eq('id', id)
+  revalidatePath('/sofia/multas')
+  revalidatePath('/sofia/descontos')
+  revalidatePath('/sofia/pendencias')
+  revalidatePath('/sofia/motoristas')
+}

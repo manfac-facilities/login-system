@@ -119,6 +119,8 @@ export interface Multa {
   tipo_desconto: TipoDesconto
   status: MultaStatus
   autorizacao_assinada: boolean
+  autorizacao_status: AutorizacaoStatus
+  autorizacao_solicitado_em: string | null
   autorizacao_storage_path: string | null
   ziv_task_id: string | null
   observacoes: string | null
@@ -136,9 +138,24 @@ export interface Sinistro {
   valor_descontado: number | null
   tipo_desconto: TipoDesconto
   autorizacao_assinada: boolean
+  autorizacao_status: AutorizacaoStatus
+  autorizacao_solicitado_em: string | null
   autorizacao_storage_path: string | null
   status: SinistroStatus
   status_desconto: MultaStatus
+  observacoes: string | null
+  created_at: string
+}
+
+export interface KmExcedidoDesconto {
+  id: string
+  veiculo_id: string
+  motorista_id: string | null
+  mes: string
+  km_contratual: number
+  km_realizado: number
+  autorizacao_status: AutorizacaoStatus
+  autorizacao_solicitado_em: string | null
   observacoes: string | null
   created_at: string
 }
@@ -230,6 +247,8 @@ export interface Pendencia {
   created_at: string
   updated_at: string
 }
+
+export type AutorizacaoStatus = 'sem_solicitacao' | 'solicitado' | 'autorizado'
 
 export type AuditAcao = 'criacao' | 'exclusao'
 

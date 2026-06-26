@@ -67,3 +67,32 @@ export async function deletarKmAction(
   await logAudit('km_diario', 'excluiu', id, 'Lançamento de KM excluído')
   return { success: true }
 }
+
+export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<void> {
+  const veiculo_id = formData.get('veiculo_id') as string
+  const mes = formData.get('mes') as string
+  const km_contratual = Number(formData.get('km_contratual'))
+  const km_realizado = Number(formData.get('km_realizado'))
+  const status = formData.get('status') as string
+
+  if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+
+  const supabase = await createClient()
+  const update: Record<string, unknown> = {
+    veiculo_id,
+    mes,
+    km_contratual,
+    km_realizado,
+    autorizacao_status: status,
+  }
+  if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
+  if (status === 'sem_solicitacao') update.autorizacao_solicitado_em = null
+
+  await supabase
+    .from('km_excedido_desconto')
+    .upsert(update, { onConflict: 'veiculo_id,mes' })
+
+  revalidatePath('/sofia/km')
+  revalidatePath('/sofia/motoristas')
+  revalidatePath('/sofia/pendencias')
+}

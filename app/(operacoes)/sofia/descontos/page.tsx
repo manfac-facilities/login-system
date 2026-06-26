@@ -9,6 +9,12 @@ import {
   desfazerDescontoSinistroAction,
 } from './_actions'
 
+function diasText(solicitadoEm: string | null): string | null {
+  if (!solicitadoEm) return null
+  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
+  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
+}
+
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro'
   id: string
@@ -20,6 +26,8 @@ type LinhaDesconto = {
   valor_descontado: number | null
   tipo_desconto: string
   autorizacao_assinada: boolean
+  autorizacao_status: string
+  autorizacao_solicitado_em: string | null
 }
 
 const statusStyle: Record<string, string> = {
@@ -53,6 +61,8 @@ export default async function DescontosPage() {
       valor_descontado: m.valor_descontado,
       tipo_desconto: m.tipo_desconto,
       autorizacao_assinada: m.autorizacao_assinada,
+      autorizacao_status: (m as unknown as { autorizacao_status?: string }).autorizacao_status ?? 'sem_solicitacao',
+      autorizacao_solicitado_em: (m as unknown as { autorizacao_solicitado_em?: string | null }).autorizacao_solicitado_em ?? null,
     })
   )
 
@@ -68,6 +78,8 @@ export default async function DescontosPage() {
       valor_descontado: s.valor_descontado,
       tipo_desconto: s.tipo_desconto,
       autorizacao_assinada: s.autorizacao_assinada,
+      autorizacao_status: (s as unknown as { autorizacao_status?: string }).autorizacao_status ?? 'sem_solicitacao',
+      autorizacao_solicitado_em: (s as unknown as { autorizacao_solicitado_em?: string | null }).autorizacao_solicitado_em ?? null,
     })
   )
 
@@ -88,6 +100,7 @@ export default async function DescontosPage() {
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Veículo</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Motorista</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Autorização</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -112,6 +125,15 @@ export default async function DescontosPage() {
                   <td className="px-4 py-3 text-[#94a3b8] font-mono">{l.veiculoPlaca ?? '—'}</td>
                   <td className="px-4 py-3 text-[#94a3b8]">{l.motoristaNome ?? '—'}</td>
                   <td className="px-4 py-3 text-white text-right font-medium">R$ {Number(l.valor).toFixed(2)}</td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const st = l.autorizacao_status
+                      const dias = st === 'solicitado' ? diasText(l.autorizacao_solicitado_em) : null
+                      const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
+                      const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
+                      return <span className={`px-2 py-0.5 rounded text-xs font-medium ${badgeClass}`}>{label}</span>
+                    })()}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[l.status]}`}>
                       {l.status}
@@ -182,7 +204,7 @@ export default async function DescontosPage() {
             })}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhum lançamento de multa ou sinistro.
                 </td>
               </tr>

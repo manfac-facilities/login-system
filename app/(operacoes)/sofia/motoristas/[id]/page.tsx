@@ -9,7 +9,7 @@ type HistoricoVeiculo = {
   fim: string | null
   created_at: string
   veiculo_id: string
-  veiculos: { placa: string; modelo: string } | null
+  veiculos: { placa: string; modelo: string; km_contratual_mensal: number | null } | null
   equipes: { codigo: string } | null
 }
 
@@ -20,6 +20,8 @@ type Multa = {
   valor: number
   status: string
   tipo_desconto: string
+  autorizacao_status: string | null
+  autorizacao_solicitado_em: string | null
 }
 
 type Sinistro = {
@@ -30,6 +32,8 @@ type Sinistro = {
   valor_dano: number | null
   status: string
   tipo_desconto: string
+  autorizacao_status: string | null
+  autorizacao_solicitado_em: string | null
 }
 
 type Abastecimento = {
@@ -41,24 +45,34 @@ type Abastecimento = {
   veiculos: { placa: string } | null
 }
 
-function descontoStatus(itemId: string, isMulta: boolean, autorizacoes: ReturnType<typeof Array.prototype.filter>) {
-  const auth = autorizacoes.find((a: { multa_id: string | null; sinistro_id: string | null; assinado: boolean }) =>
-    isMulta ? a.multa_id === itemId : a.sinistro_id === itemId
-  )
-  if (!auth) return 'sem_solicitacao' as const
-  return auth.assinado ? ('autorizado' as const) : ('aguardando' as const)
+type KmExcedido = {
+  veiculo_id: string
+  mes: string
+  km_contratual: number
+  km_realizado: number
+  autorizacao_status: string
+  autorizacao_solicitado_em: string | null
 }
 
-const STATUS_BADGE = {
+function diasText(solicitadoEm: string | null): string | null {
+  if (!solicitadoEm) return null
+  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
+  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
+}
+
+const STATUS_BADGE: Record<string, string> = {
   autorizado: 'bg-green-900 text-green-300',
-  aguardando: 'bg-amber-900 text-amber-300',
+  solicitado: 'bg-amber-900 text-amber-300',
   sem_solicitacao: 'bg-[#1e3a5f] text-[#94a3b8]',
 }
 
-const STATUS_LABEL = {
-  autorizado: 'Autorizado',
-  aguardando: 'Aguardando assinatura',
-  sem_solicitacao: 'Sem solicitação',
+function authLabel(st: string, solicitadoEm: string | null): string {
+  if (st === 'autorizado') return 'Autorizado'
+  if (st === 'solicitado') {
+    const dias = diasText(solicitadoEm)
+    return dias ? `Solicitado · ${dias}` : 'Solicitado'
+  }
+  return 'Sem solicitação'
 }
 
 export default async function MotoristaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -76,17 +90,17 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
     getMotoristaDocumentos(id),
     supabase
       .from('veiculo_responsabilidade_historico')
-      .select('id, inicio, fim, created_at, veiculo_id, veiculos(placa, modelo), equipes(codigo)')
+      .select('id, inicio, fim, created_at, veiculo_id, veiculos(placa, modelo, km_contratual_mensal), equipes(codigo)')
       .eq('motorista_id', id)
       .order('inicio', { ascending: false }),
     supabase
       .from('multas')
-      .select('id, data, descricao, valor, status, tipo_desconto')
+      .select('id, data, descricao, valor, status, tipo_desconto, autorizacao_status, autorizacao_solicitado_em')
       .eq('motorista_id', id)
       .order('data', { ascending: false }),
     supabase
       .from('sinistros')
-      .select('id, data, tipo, descricao, valor_dano, status, tipo_desconto')
+      .select('id, data, tipo, descricao, valor_dano, status, tipo_desconto, autorizacao_status, autorizacao_solicitado_em')
       .eq('motorista_id', id)
       .order('data', { ascending: false }),
   ])
@@ -94,27 +108,56 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
   if (error) throw error
   if (!motorista) notFound()
 
-  const veiculoIds = [...new Set(
-    (historicoVeiculos ?? [])
-      .map((h) => (h as unknown as HistoricoVeiculo).veiculo_id)
-      .filter(Boolean)
-  )]
+  const historico = (historicoVeiculos ?? []) as unknown as HistoricoVeiculo[]
+  const veiculoIds = [...new Set(historico.map((h) => h.veiculo_id).filter(Boolean))]
 
-  const { data: abastecimentos } = veiculoIds.length > 0
-    ? await supabase
-        .from('abastecimentos')
-        .select('id, data, valor, litros, posto, veiculos(placa)')
-        .in('veiculo_id', veiculoIds)
-        .order('data', { ascending: false })
-        .limit(30)
-    : { data: [] as Abastecimento[] }
+  const veiculoAtual = historico.find((h) => h.fim === null)
+
+  // Parallel: abastecimentos + KM data para o veículo atual
+  const mesAtual = new Date().toISOString().slice(0, 7) + '-01'
+  const [{ data: abastecimentos }, { data: kmDiario }, { data: kmExcedidosData }] = await Promise.all([
+    veiculoIds.length > 0
+      ? supabase
+          .from('abastecimentos')
+          .select('id, data, valor, litros, posto, veiculos(placa)')
+          .in('veiculo_id', veiculoIds)
+          .order('data', { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] as Abastecimento[] }),
+    veiculoAtual?.veiculo_id
+      ? supabase
+          .from('km_diario')
+          .select('km_atual, data')
+          .eq('veiculo_id', veiculoAtual.veiculo_id)
+          .gte('data', mesAtual.slice(0, 7) + '-01')
+          .lt('data', new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().slice(0, 10))
+          .order('data', { ascending: true })
+      : Promise.resolve({ data: [] as { km_atual: number; data: string }[] }),
+    veiculoAtual?.veiculo_id
+      ? supabase
+          .from('km_excedido_desconto')
+          .select('*')
+          .eq('veiculo_id', veiculoAtual.veiculo_id)
+      : Promise.resolve({ data: [] as KmExcedido[] }),
+  ])
 
   const termo = documentos.find((d) => d.tipo === 'termo_uso')
-  const autorizacoes = documentos.filter((d) => d.tipo === 'autorizacao_desconto')
-  const historico = (historicoVeiculos ?? []) as unknown as HistoricoVeiculo[]
   const multasList = (multas ?? []) as unknown as Multa[]
   const sinistrosList = (sinistros ?? []) as unknown as Sinistro[]
   const abastecimentosList = (abastecimentos ?? []) as unknown as Abastecimento[]
+  const kmExcedidos = (kmExcedidosData ?? []) as unknown as KmExcedido[]
+
+  // KM diário do mês atual
+  const kmDiarioMes = (kmDiario ?? []) as { km_atual: number; data: string }[]
+  const kmInicio = kmDiarioMes.length > 0 ? kmDiarioMes[0].km_atual : null
+  const kmFim = kmDiarioMes.length > 0 ? kmDiarioMes[kmDiarioMes.length - 1].km_atual : null
+  const kmRodados = kmInicio != null && kmFim != null ? kmFim - kmInicio : null
+  const kmContratual = veiculoAtual?.veiculos?.km_contratual_mensal ?? null
+  const kmDisponivel = kmContratual != null && kmRodados != null ? kmContratual - kmRodados : null
+
+  const kmExcedidoMesAtual = kmExcedidos.find(
+    (e) => e.mes === mesAtual || e.mes.startsWith(mesAtual.slice(0, 7))
+  )
 
   return (
     <div className="p-8 max-w-2xl">
@@ -155,6 +198,44 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
         </div>
       </div>
 
+      {/* KM do mês */}
+      {veiculoAtual && (
+        <>
+          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">
+            KM do mês — {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+          </h2>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="p-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] text-center">
+              <p className="text-[#4a6080] text-xs mb-1">Contratado</p>
+              <p className="text-white font-mono font-medium">
+                {kmContratual != null ? `${kmContratual.toLocaleString('pt-BR')} km` : '—'}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] text-center">
+              <p className="text-[#4a6080] text-xs mb-1">Utilizado</p>
+              <p className={`font-mono font-medium ${kmRodados != null && kmContratual != null && kmRodados > kmContratual ? 'text-red-400' : 'text-white'}`}>
+                {kmRodados != null ? `${kmRodados.toLocaleString('pt-BR')} km` : '—'}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] text-center">
+              <p className="text-[#4a6080] text-xs mb-1">Disponível</p>
+              <p className={`font-mono font-medium ${kmDisponivel != null && kmDisponivel < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                {kmDisponivel != null ? `${kmDisponivel.toLocaleString('pt-BR')} km` : '—'}
+              </p>
+            </div>
+          </div>
+          {kmExcedidoMesAtual && (
+            <div className="p-3 rounded-xl border border-red-900 bg-red-950/20 mb-8">
+              <p className="text-red-400 text-xs font-medium mb-1">KM excedido neste mês</p>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_BADGE[kmExcedidoMesAtual.autorizacao_status] ?? STATUS_BADGE.sem_solicitacao}`}>
+                {authLabel(kmExcedidoMesAtual.autorizacao_status, kmExcedidoMesAtual.autorizacao_solicitado_em)}
+              </span>
+            </div>
+          )}
+          {!kmExcedidoMesAtual && <div className="mb-8" />}
+        </>
+      )}
+
       {/* Multas e descontos */}
       <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">
         Multas e descontos
@@ -164,7 +245,7 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
       ) : (
         <div className="flex flex-col gap-2 mb-8">
           {multasList.map((m) => {
-            const st = descontoStatus(m.id, true, autorizacoes)
+            const st = m.autorizacao_status ?? 'sem_solicitacao'
             return (
               <div
                 key={m.id}
@@ -175,8 +256,8 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
                   <p className="text-[#94a3b8] text-xs">{m.descricao ?? '—'}</p>
                   <p className="text-[#4a6080] text-xs">{new Date(m.data).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st]}`}>
-                  {STATUS_LABEL[st]}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st] ?? STATUS_BADGE.sem_solicitacao}`}>
+                  {authLabel(st, m.autorizacao_solicitado_em)}
                 </span>
               </div>
             )
@@ -193,7 +274,7 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
       ) : (
         <div className="flex flex-col gap-2 mb-8">
           {sinistrosList.map((s) => {
-            const st = descontoStatus(s.id, false, autorizacoes)
+            const st = s.autorizacao_status ?? 'sem_solicitacao'
             return (
               <div
                 key={s.id}
@@ -204,8 +285,8 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
                   <p className="text-[#94a3b8] text-xs">{s.descricao}</p>
                   <p className="text-[#4a6080] text-xs">{new Date(s.data).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st]}`}>
-                  {STATUS_LABEL[st]}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st] ?? STATUS_BADGE.sem_solicitacao}`}>
+                  {authLabel(st, s.autorizacao_solicitado_em)}
                 </span>
               </div>
             )

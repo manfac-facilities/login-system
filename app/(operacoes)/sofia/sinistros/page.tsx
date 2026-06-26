@@ -1,6 +1,13 @@
 import { getSinistros } from '@/lib/sofia/queries'
 import type { Sinistro } from '@/lib/sofia/types'
 import Link from 'next/link'
+import { atualizarAutorizacaoSinistroAction } from './_actions'
+
+function diasText(solicitadoEm: string | null): string | null {
+  if (!solicitadoEm) return null
+  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
+  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
+}
 
 type SinistroComRelacoes = Sinistro & {
   veiculos: { placa: string } | null
@@ -60,6 +67,7 @@ export default async function SinistrosPage() {
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Tipo</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor do dano</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Autorização</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
             </tr>
           </thead>
@@ -77,6 +85,42 @@ export default async function SinistrosPage() {
                   {s.tipo_desconto === 'nenhum' ? '—' : `${s.tipo_desconto === 'total' ? 'Total' : 'Parcial'} · R$ ${Number(s.valor_descontado ?? 0).toFixed(2)}`}
                 </td>
                 <td className="px-4 py-3">
+                  {(() => {
+                    const sinistroTyped = s as SinistroComRelacoes & { autorizacao_status?: string; autorizacao_solicitado_em?: string | null }
+                    const st = sinistroTyped.autorizacao_status ?? 'sem_solicitacao'
+                    const dias = st === 'solicitado' ? diasText(sinistroTyped.autorizacao_solicitado_em ?? null) : null
+                    const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
+                    const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>
+                        <div className="flex gap-2">
+                          {st === 'sem_solicitacao' && (
+                            <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                            </form>
+                          )}
+                          {st === 'solicitado' && (
+                            <>
+                              <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
+                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                              </form>
+                              <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
+                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                              </form>
+                            </>
+                          )}
+                          {st === 'autorizado' && (
+                            <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                            </form>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </td>
+                <td className="px-4 py-3">
                   <Link
                     href={`/sofia/sinistros/${s.id}`}
                     className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[s.status]} hover:opacity-80 transition-opacity`}
@@ -88,7 +132,7 @@ export default async function SinistrosPage() {
             ))}
             {sinistros.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhum sinistro registrado.
                 </td>
               </tr>
