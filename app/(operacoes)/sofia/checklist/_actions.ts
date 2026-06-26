@@ -82,9 +82,19 @@ export async function criarChecklistAction(
       .update({ equipe_id: equipe_destino_id })
       .eq('id', veiculo_id)
 
-    if (fechaError || insereError || veiculoError) {
+    const motoristaError = motorista_destino_id
+      ? (
+          await supabase
+            .from('motoristas')
+            .update({ equipe_id: equipe_destino_id })
+            .eq('id', motorista_destino_id)
+        ).error
+      : null
+
+    if (fechaError || insereError || veiculoError || motoristaError) {
       return {
-        error: 'Checklist salvo, mas a troca de responsável não foi totalmente registrada. Contate o suporte.',
+        error:
+          'Checklist salvo, mas a troca de responsável não foi totalmente registrada. Contate o suporte.',
         checklistId: data.id,
       }
     }

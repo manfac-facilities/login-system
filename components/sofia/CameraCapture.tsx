@@ -14,6 +14,7 @@ interface Props {
 export default function CameraCapture({ posicao, onCapture }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [streaming, setStreaming] = useState(false)
   const [captured, setCaptured] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -61,8 +62,6 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
         lat = pos.coords.latitude
         lng = pos.coords.longitude
       } catch (geoError) {
-        // A photo is still useful evidence without GPS, so we don't block
-        // capture on this — but don't swallow it silently either.
         console.warn('Não foi possível obter localização para a foto:', geoError)
       }
 
@@ -70,8 +69,21 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
     }, 'image/jpeg', 0.85)
   }, [posicao, onCapture])
 
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => setCaptured(ev.target?.result as string)
+      reader.readAsDataURL(file)
+      onCapture(file, posicao, null, null)
+    },
+    [posicao, onCapture]
+  )
+
   const retake = useCallback(() => {
     setCaptured(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     startCamera()
   }, [startCamera])
 
@@ -93,7 +105,7 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           onClick={retake}
           className="text-xs text-[#f05a28] hover:underline text-center"
         >
-          Tirar novamente
+          Alterar foto
         </button>
       </div>
     )
@@ -124,13 +136,25 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           </button>
         </>
       ) : (
-        <button
-          type="button"
-          onClick={startCamera}
-          className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] transition-colors"
-        >
-          📷 {posicao}
-        </button>
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={startCamera}
+            className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] transition-colors"
+          >
+            📷 {posicao}
+          </button>
+          <label className="text-center text-xs text-[#4a6080] hover:text-[#f05a28] cursor-pointer transition-colors">
+            ou escolher da galeria
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
       )}
       <canvas ref={canvasRef} className="hidden" />
     </div>

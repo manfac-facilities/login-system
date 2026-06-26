@@ -36,6 +36,9 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   const [state, action, isPending] = useActionState(criarChecklistAction, {})
   const router = useRouter()
   const [tipo, setTipo] = useState('')
+  const [equipeId, setEquipeId] = useState('')
+  const veiculoDaEquipe = veiculos.find((v) => v.equipe_id === equipeId && v.status === 'ativo')
+  const motoristaDaEquipe = motoristas.find((m) => m.equipe_id === equipeId && m.ativo)
   const [itens, setItens] = useState<Record<string, boolean>>({})
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
   const [uploadFinished, setUploadFinished] = useState(false)
@@ -145,6 +148,8 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
             <select
               name="equipe_id"
               required
+              value={equipeId}
+              onChange={(e) => setEquipeId(e.target.value)}
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
             >
               <option value="">Selecione</option>
@@ -159,41 +164,33 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-[#94a3b8]">Veículo *</label>
-            <select
-              name="veiculo_id"
-              required
-              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
-            >
-              <option value="">Selecione</option>
-              {veiculos
-                .filter((v) => v.status === 'ativo')
-                .map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.placa}
-                  </option>
-                ))}
-            </select>
+        {/* Hidden inputs preenchidos pela equipe selecionada */}
+        <input type="hidden" name="veiculo_id" value={veiculoDaEquipe?.id ?? ''} />
+        <input type="hidden" name="motorista_id" value={motoristaDaEquipe?.id ?? ''} />
+
+        {/* Card informativo com veículo e motorista da equipe */}
+        {equipeId && (
+          <div className="px-3 py-2.5 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-sm">
+            {veiculoDaEquipe ? (
+              <>
+                <p className="text-[#94a3b8]">
+                  Veículo: <span className="text-white font-mono">{veiculoDaEquipe.placa}</span>
+                  {' · '}{veiculoDaEquipe.modelo}
+                </p>
+                <p className="text-[#4a6080] text-xs mt-0.5">
+                  Última KM: <span className="text-amber-400 font-mono">{veiculoDaEquipe.km_atual.toLocaleString('pt-BR')} km</span>
+                </p>
+              </>
+            ) : (
+              <p className="text-amber-400 text-xs">Nenhum veículo ativo vinculado a esta equipe</p>
+            )}
+            {motoristaDaEquipe && (
+              <p className="text-[#94a3b8] text-xs mt-1">
+                Motorista: <span className="text-white">{motoristaDaEquipe.nome}</span>
+              </p>
+            )}
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-[#94a3b8]">Motorista</label>
-            <select
-              name="motorista_id"
-              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
-            >
-              <option value="">Selecione</option>
-              {motoristas
-                .filter((m) => m.ativo)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nome}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {tipo === 'troca' && (
           <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#f05a28]/40 bg-[#0f1f3d]">
@@ -267,8 +264,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
 
         <div>
           <p className="text-sm text-[#94a3b8] mb-3">
-            Fotos do Veículo{' '}
-            <span className="text-[#4a6080]">(câmera ao vivo — sem galeria)</span>
+            Fotos do Veículo
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {POSICOES_FOTO.map((posicao) => (
