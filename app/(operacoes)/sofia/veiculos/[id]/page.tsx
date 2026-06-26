@@ -91,14 +91,18 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
 
       {veiculo.status !== 'inativo' && (
         <div className="mt-8 pt-6 border-t border-[#1e3a5f]">
-          <p className="text-[#4a6080] text-xs mb-3">
-            Desativar remove o veículo dos formulários. O histórico é preservado.
-          </p>
-          <DeleteConfirmButton
-            action={softDeleteVeiculoAction}
-            id={veiculo.id}
-            label="Desativar veículo"
-          />
+          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Zona de perigo</h2>
+          <div className="p-4 rounded-xl border border-red-900 bg-red-950/20">
+            <p className="text-[#94a3b8] text-sm mb-1">Desativar veículo</p>
+            <p className="text-[#4a6080] text-xs mb-4">
+              Remove o veículo dos formulários de lançamento. O histórico é preservado.
+            </p>
+            <DeleteConfirmButton
+              action={softDeleteVeiculoAction}
+              id={veiculo.id}
+              label="Desativar veículo"
+            />
+          </div>
         </div>
       )}
     </div>

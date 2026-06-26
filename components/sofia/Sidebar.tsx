@@ -48,6 +48,7 @@ export const navSections: NavSection[] = [
       { label: 'Custos', href: '/sofia/custos' },
       { label: 'Disponibilidade', href: '/sofia/disponibilidade' },
       { label: 'Pendências', href: '/sofia/pendencias' },
+      { label: 'Auditoria', href: '/sofia/audit' },
     ],
   },
 ]
