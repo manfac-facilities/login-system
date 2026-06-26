@@ -229,7 +229,7 @@ export async function getKmResumoMensal(): Promise<KmResumoMensal[]> {
   if (!data) return []
 
   type Row = { data: string; km_atual: number; equipes: { codigo: string } | null; veiculos: { placa: string } | null }
-  const rows = data as Row[]
+  const rows = data as unknown as Row[]
 
   // Group by (veiculo_placa, mes)
   const groups = new Map<string, { km_inicio: number; km_fim: number; equipe_codigo: string; veiculo_placa: string; mes: string }>()

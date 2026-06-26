@@ -1,5 +1,5 @@
 'use client'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { lancarKmAction } from './_actions'
 import type { Equipe, Veiculo, Motorista } from '@/lib/sofia/types'
 
@@ -11,7 +11,11 @@ interface Props {
 
 export default function KmForm({ equipes, veiculos, motoristas }: Props) {
   const [state, action, isPending] = useActionState(lancarKmAction, {})
+  const [equipeId, setEquipeId] = useState('')
   const hoje = new Date().toISOString().split('T')[0]
+
+  const veiculoDaEquipe = veiculos.find((v) => v.equipe_id === equipeId && v.status === 'ativo')
+  const motoristaDaEquipe = motoristas.find((m) => m.equipe_id === equipeId && m.ativo)
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -41,6 +45,8 @@ export default function KmForm({ equipes, veiculos, motoristas }: Props) {
         <select
           name="equipe_id"
           required
+          value={equipeId}
+          onChange={(e) => setEquipeId(e.target.value)}
           className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
         >
           <option value="">Selecione a equipe</option>
@@ -54,61 +60,45 @@ export default function KmForm({ equipes, veiculos, motoristas }: Props) {
         </select>
       </div>
 
+      <input type="hidden" name="veiculo_id" value={veiculoDaEquipe?.id ?? ''} />
+      <input type="hidden" name="motorista_id" value={motoristaDaEquipe?.id ?? ''} />
+
+      {equipeId && (
+        <div className="px-3 py-2.5 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-sm">
+          {veiculoDaEquipe ? (
+            <>
+              <p className="text-[#94a3b8]">
+                Veículo: <span className="text-white font-mono">{veiculoDaEquipe.placa}</span>
+                {' · '}{veiculoDaEquipe.modelo}
+              </p>
+              <p className="text-[#4a6080] text-xs mt-0.5">
+                Última KM: <span className="text-amber-400 font-mono">{veiculoDaEquipe.km_atual.toLocaleString('pt-BR')} km</span>
+              </p>
+            </>
+          ) : (
+            <p className="text-amber-400 text-xs">Nenhum veículo ativo vinculado a esta equipe</p>
+          )}
+          {motoristaDaEquipe && (
+            <p className="text-[#94a3b8] text-xs mt-1">
+              Motorista: <span className="text-white">{motoristaDaEquipe.nome}</span>
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm text-[#94a3b8]">Veículo *</label>
-        <select
-          name="veiculo_id"
+        <label className="text-sm text-[#94a3b8]">KM Atual *</label>
+        <input
+          name="km_atual"
+          type="number"
           required
-          className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
-        >
-          <option value="">Selecione o veículo</option>
-          {veiculos
-            .filter((v) => v.status === 'ativo')
-            .map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.placa} · {v.modelo}
-              </option>
-            ))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm text-[#94a3b8]">Motorista</label>
-        <select
-          name="motorista_id"
-          className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
-        >
-          <option value="">Selecione o motorista</option>
-          {motoristas
-            .filter((m) => m.ativo)
-            .map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-[#94a3b8]">KM Inicial *</label>
-          <input
-            name="km_inicial"
-            type="number"
-            required
-            placeholder="Ex: 45000"
-            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-[#94a3b8]">KM Final</label>
-          <input
-            name="km_final"
-            type="number"
-            placeholder="Ex: 45280"
-            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm"
-          />
-        </div>
+          placeholder={
+            veiculoDaEquipe
+              ? `Última: ${veiculoDaEquipe.km_atual.toLocaleString('pt-BR')}`
+              : 'Ex: 29216'
+          }
+          className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -123,7 +113,7 @@ export default function KmForm({ equipes, veiculos, motoristas }: Props) {
 
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || !veiculoDaEquipe}
         className="py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors"
       >
         {isPending ? 'Salvando...' : 'Registrar KM'}
