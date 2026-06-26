@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validateKmAtual } from './_validation'
+import { logAudit } from '@/lib/sofia/auditLog'
 
 type State = { error?: string; success?: boolean }
 
@@ -46,6 +47,7 @@ export async function lancarKmAction(
 
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/veiculos')
+  await logAudit('km_diario', 'criou', null, `KM ${km_atual} km lançado — equipe ${equipe_id} (${data})`)
   return { success: true }
 }
 
@@ -62,5 +64,6 @@ export async function deletarKmAction(
   if (error) return { error: 'Erro ao excluir lançamento' }
 
   revalidatePath('/sofia/km')
+  await logAudit('km_diario', 'excluiu', id, 'Lançamento de KM excluído')
   return { success: true }
 }

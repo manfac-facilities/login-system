@@ -18,3 +18,34 @@ export async function registrarAuditoria(
   const { error } = await supabase.from('audit_log').insert(params)
   if (error) throw error
 }
+
+// ---------------------------------------------------------------------------
+// logAudit — lightweight helper for Task 10 Server Action instrumentation.
+// Never throws: audit failures are silently swallowed so main operations
+// are never interrupted.
+// ---------------------------------------------------------------------------
+
+type Operacao = 'criou' | 'atualizou' | 'excluiu' | 'desativou'
+
+export async function logAudit(
+  tabela: string,
+  operacao: Operacao,
+  registroId: string | null,
+  descricao: string
+): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    await supabase.from('audit_log').insert({
+      tabela,
+      operacao,
+      registro_id: registroId,
+      descricao,
+      usuario_id: user?.id ?? null,
+    })
+  } catch {
+    // falha no audit não deve quebrar a operação principal
+  }
+}

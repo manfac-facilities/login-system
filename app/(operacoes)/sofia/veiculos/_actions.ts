@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { logAudit } from '@/lib/sofia/auditLog'
 
 type State = { error?: string; success?: boolean }
 
@@ -52,5 +53,6 @@ export async function softDeleteVeiculoAction(
   if (error) return { error: 'Erro ao desativar veículo' }
 
   revalidatePath('/sofia/veiculos')
+  await logAudit('veiculos', 'desativou', id, 'Veículo desativado (soft-delete)')
   redirect('/sofia/veiculos')
 }

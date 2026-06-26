@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { parseChecklistFormData, validateChecklistInput } from './_validation'
+import { logAudit } from '@/lib/sofia/auditLog'
 
 type State = { error?: string; success?: boolean; checklistId?: string }
 
@@ -61,6 +62,8 @@ export async function criarChecklistAction(
 
   if (error) return { error: 'Erro ao salvar checklist' }
 
+  await logAudit('checklists', 'criou', data.id, `Checklist tipo '${tipo}' criado — veículo ${veiculo_id}`)
+
   if (tipo === 'troca') {
     const hoje = new Date().toISOString().split('T')[0]
     const { error: fechaError } = await supabase
@@ -98,6 +101,8 @@ export async function criarChecklistAction(
         checklistId: data.id,
       }
     }
+
+    await logAudit('veiculo_responsabilidade_historico', 'criou', null, `Troca de responsável: veículo ${veiculo_id} → equipe ${equipe_destino_id}`)
   }
 
   revalidatePath('/sofia/checklist')

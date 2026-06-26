@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logAudit } from '@/lib/sofia/auditLog'
 
 type State = { error?: string; success?: boolean }
 
@@ -33,6 +34,7 @@ export async function lancarAbastecimentoAction(
   if (error) return { error: 'Erro ao registrar abastecimento' }
 
   revalidatePath('/sofia/abastecimento')
+  await logAudit('abastecimentos', 'criou', null, `Abastecimento R$ ${valor.toFixed(2)} — veículo ${veiculo_id} (${data})`)
   return { success: true }
 }
 
@@ -49,5 +51,6 @@ export async function deletarAbastecimentoAction(
   if (error) return { error: 'Erro ao excluir abastecimento' }
 
   revalidatePath('/sofia/abastecimento')
+  await logAudit('abastecimentos', 'excluiu', id, 'Abastecimento excluído')
   return { success: true }
 }
