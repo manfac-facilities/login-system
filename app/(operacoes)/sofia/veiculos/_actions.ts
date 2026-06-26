@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 type State = { error?: string; success?: boolean }
 
@@ -33,4 +34,23 @@ export async function criarVeiculoAction(
   revalidatePath('/sofia/veiculos')
   revalidatePath('/sofia/equipes')
   return { success: true }
+}
+
+export async function softDeleteVeiculoAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('veiculos')
+    .update({ status: 'inativo' })
+    .eq('id', id)
+
+  if (error) return { error: 'Erro ao desativar veículo' }
+
+  revalidatePath('/sofia/veiculos')
+  redirect('/sofia/veiculos')
 }

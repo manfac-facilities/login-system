@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getResponsabilidadeHistorico, getCentroCustoHistorico } from '@/lib/sofia/queries'
 import type { VeiculoResponsabilidadeHistorico } from '@/lib/sofia/types'
 import { notFound } from 'next/navigation'
+import { softDeleteVeiculoAction } from '../_actions'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type HistoricoComRelacoes = VeiculoResponsabilidadeHistorico & {
   equipes: { codigo: string } | null
@@ -86,6 +88,19 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
           </div>
         </div>
       </div>
+
+      {veiculo.status !== 'inativo' && (
+        <div className="mt-8 pt-6 border-t border-[#1e3a5f]">
+          <p className="text-[#4a6080] text-xs mb-3">
+            Desativar remove o veículo dos formulários. O histórico é preservado.
+          </p>
+          <DeleteConfirmButton
+            action={softDeleteVeiculoAction}
+            id={veiculo.id}
+            label="Desativar veículo"
+          />
+        </div>
+      )}
     </div>
   )
 }
