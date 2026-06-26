@@ -31,14 +31,7 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
 
   const termo = documentos.find((d) => d.tipo === 'termo_uso')
   const autorizacoes = documentos.filter((d) => d.tipo === 'autorizacao_desconto')
-  const historico = ((historicoVeiculos ?? []) as any[]).map((h) => ({
-    id: h.id,
-    inicio: h.inicio,
-    fim: h.fim,
-    created_at: h.created_at,
-    veiculos: h.veiculos ? (Array.isArray(h.veiculos) ? h.veiculos[0] : h.veiculos) : null,
-    equipes: h.equipes ? (Array.isArray(h.equipes) ? h.equipes[0] : h.equipes) : null,
-  })) as HistoricoVeiculo[]
+  const historico = (historicoVeiculos ?? []) as unknown as HistoricoVeiculo[]
 
   return (
     <div className="p-8 max-w-2xl">
