@@ -8,11 +8,7 @@ import {
   atualizarAutorizacaoMultaAction,
 } from './_actions'
 
-function diasText(solicitadoEm: string | null): string | null {
-  if (!solicitadoEm) return null
-  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
-  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
-}
+import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
 import type { MultaComRelacoes } from './page'
 
 const statusStyle: Record<string, string> = {
@@ -163,9 +159,8 @@ export default function MultasTable({
                 <td className="px-4 py-3">
                   {(() => {
                     const st = m.autorizacao_status ?? 'sem_solicitacao'
-                    const dias = st === 'solicitado' ? diasText(m.autorizacao_solicitado_em ?? null) : null
-                    const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
-                    const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
+                    const badgeClass = autorizacaoBadgeClass(st)
+                    const label = formatAutorizacaoLabel(st, m.autorizacao_solicitado_em ?? null)
                     return (
                       <div className="flex flex-col gap-1">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>

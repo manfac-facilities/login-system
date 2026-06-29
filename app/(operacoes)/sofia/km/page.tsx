@@ -3,13 +3,8 @@ import KmForm from './_form'
 import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { createClient } from '@/lib/supabase/server'
-import type { KmExcedidoDesconto } from '@/lib/sofia/types'
-
-function diasText(solicitadoEm: string | null): string | null {
-  if (!solicitadoEm) return null
-  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
-  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
-}
+import type { KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
+import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
 
 export default async function KmPage() {
   const supabase = await createClient()
@@ -103,8 +98,7 @@ export default async function KmPage() {
                     const excedido = contratado != null && r.km_rodados > contratado
                     const saldo = contratado != null ? r.km_rodados - contratado : null
                     const excEntry = excedidoMap.get(`${r.veiculo_id}::${r.mes + '-01'}`)
-                    const authSt = excEntry?.autorizacao_status ?? (excedido ? 'sem_solicitacao' : null)
-                    const dias = authSt === 'solicitado' ? diasText(excEntry?.autorizacao_solicitado_em ?? null) : null
+                    const authSt = (excEntry?.autorizacao_status ?? (excedido ? 'sem_solicitacao' : null)) as AutorizacaoStatus | null
                     return (
                       <tr
                         key={`${r.veiculo_id}::${r.mes}`}
@@ -127,8 +121,8 @@ export default async function KmPage() {
                         <td className="px-4 py-3">
                           {authSt != null && (
                             <div className="flex flex-col gap-1">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${authSt === 'autorizado' ? 'bg-green-900 text-green-300' : authSt === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-red-900 text-red-300'}`}>
-                                {authSt === 'autorizado' ? 'Autorizado' : authSt === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'}
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${autorizacaoBadgeClass(authSt)}`}>
+                                {formatAutorizacaoLabel(authSt, excEntry?.autorizacao_solicitado_em ?? null)}
                               </span>
                               {excedido && (
                                 <div className="flex gap-2">

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { Multa, Sinistro } from '@/lib/sofia/types'
+import type { Multa, Sinistro, AutorizacaoStatus } from '@/lib/sofia/types'
 import {
   atualizarStatusMultaAction,
   registrarDescontoMultaAction,
@@ -8,12 +8,7 @@ import {
   registrarDescontoSinistroAction,
   desfazerDescontoSinistroAction,
 } from './_actions'
-
-function diasText(solicitadoEm: string | null): string | null {
-  if (!solicitadoEm) return null
-  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
-  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
-}
+import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
 
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro'
@@ -127,11 +122,8 @@ export default async function DescontosPage() {
                   <td className="px-4 py-3 text-white text-right font-medium">R$ {Number(l.valor).toFixed(2)}</td>
                   <td className="px-4 py-3">
                     {(() => {
-                      const st = l.autorizacao_status
-                      const dias = st === 'solicitado' ? diasText(l.autorizacao_solicitado_em) : null
-                      const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
-                      const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
-                      return <span className={`px-2 py-0.5 rounded text-xs font-medium ${badgeClass}`}>{label}</span>
+                      const st = l.autorizacao_status as AutorizacaoStatus
+                      return <span className={`px-2 py-0.5 rounded text-xs font-medium ${autorizacaoBadgeClass(st)}`}>{formatAutorizacaoLabel(st, l.autorizacao_solicitado_em)}</span>
                     })()}
                   </td>
                   <td className="px-4 py-3">

@@ -1,13 +1,8 @@
 import { getSinistros } from '@/lib/sofia/queries'
-import type { Sinistro } from '@/lib/sofia/types'
+import type { Sinistro, AutorizacaoStatus } from '@/lib/sofia/types'
 import Link from 'next/link'
 import { atualizarAutorizacaoSinistroAction } from './_actions'
-
-function diasText(solicitadoEm: string | null): string | null {
-  if (!solicitadoEm) return null
-  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
-  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
-}
+import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
 
 type SinistroComRelacoes = Sinistro & {
   veiculos: { placa: string } | null
@@ -87,10 +82,9 @@ export default async function SinistrosPage() {
                 <td className="px-4 py-3">
                   {(() => {
                     const sinistroTyped = s as SinistroComRelacoes & { autorizacao_status?: string; autorizacao_solicitado_em?: string | null }
-                    const st = sinistroTyped.autorizacao_status ?? 'sem_solicitacao'
-                    const dias = st === 'solicitado' ? diasText(sinistroTyped.autorizacao_solicitado_em ?? null) : null
-                    const badgeClass = st === 'autorizado' ? 'bg-green-900 text-green-300' : st === 'solicitado' ? 'bg-amber-900 text-amber-300' : 'bg-[#1e3a5f] text-[#94a3b8]'
-                    const label = st === 'autorizado' ? 'Autorizado' : st === 'solicitado' ? `Solicitado${dias ? ` · ${dias}` : ''}` : 'Não solicitado'
+                    const st = (sinistroTyped.autorizacao_status ?? 'sem_solicitacao') as AutorizacaoStatus
+                    const badgeClass = autorizacaoBadgeClass(st)
+                    const label = formatAutorizacaoLabel(st, sinistroTyped.autorizacao_solicitado_em ?? null)
                     return (
                       <div className="flex flex-col gap-1">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>
