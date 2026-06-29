@@ -8,7 +8,7 @@ export type RevisaoTipo = 'preventiva' | 'corretiva'
 export type RevisaoStatus = 'em_dia' | 'agendada' | 'atrasada'
 export type DocumentoVeiculoTipo = 'seguro' | 'licenciamento' | 'ipva' | 'outro'
 export type MotoristaDocumentoTipo = 'termo_uso' | 'autorizacao_desconto'
-export type PendenciaOrigem = 'manual' | 'multa' | 'sinistro' | 'manutencao' | 'documento' | 'termo'
+export type PendenciaOrigem = 'manual' | 'multa' | 'sinistro' | 'manutencao' | 'documento' | 'termo' | 'km_excedido'
 export type PendenciaStatus = 'aberta' | 'em_andamento' | 'concluida'
 
 export interface Equipe {
@@ -170,6 +170,7 @@ export interface SinistroFoto {
 export interface Revisao {
   id: string
   veiculo_id: string
+  motorista_id: string | null
   tipo: RevisaoTipo
   fornecedor: string | null
   valor: number | null
