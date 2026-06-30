@@ -1,0 +1,422 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Status de Disponibilidade da Frota</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-container-highest": "#273647",
+                      "on-secondary-fixed-variant": "#384667",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "on-error": "#690005",
+                      "surface": "#051424",
+                      "secondary-container": "#384667",
+                      "on-secondary": "#21304f",
+                      "background": "#051424",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-surface": "#d4e4fa",
+                      "inverse-on-surface": "#233143",
+                      "surface-container-high": "#1c2b3c",
+                      "on-tertiary": "#1f3052",
+                      "on-primary-container": "#572000",
+                      "on-tertiary-fixed-variant": "#36466a",
+                      "on-primary-fixed": "#351000",
+                      "inverse-surface": "#d4e4fa",
+                      "inverse-primary": "#a04100",
+                      "surface-container": "#122131",
+                      "primary-fixed": "#ffdbcc",
+                      "on-surface-variant": "#e2bfb0",
+                      "outline": "#a98a7d",
+                      "tertiary-fixed": "#d8e2ff",
+                      "surface-container-low": "#0d1c2d",
+                      "on-secondary-fixed": "#0a1b39",
+                      "primary": "#ffb693",
+                      "surface-bright": "#2c3a4c",
+                      "on-error-container": "#ffdad6",
+                      "error": "#ffb4ab",
+                      "tertiary-container": "#8999c1",
+                      "primary-container": "#ff6b00",
+                      "tertiary": "#b6c6f1",
+                      "surface-dim": "#051424",
+                      "on-tertiary-container": "#203153",
+                      "surface-tint": "#ffb693",
+                      "on-primary": "#561f00",
+                      "surface-container-lowest": "#010f1f",
+                      "secondary": "#b7c6ed",
+                      "tertiary-fixed-dim": "#b6c6f1",
+                      "on-tertiary-fixed": "#071a3c",
+                      "outline-variant": "#5a4136",
+                      "on-secondary-container": "#a6b5db",
+                      "surface-variant": "#273647",
+                      "secondary-fixed-dim": "#b7c6ed",
+                      "error-container": "#93000a",
+                      "on-background": "#d4e4fa"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "margin": "24px",
+                      "container-max": "1440px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "title-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "data-tabular": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-tabular": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #0F1F3D; /* Level 0 Background */
+            color: theme('colors.on-surface');
+        }
+        .card-surface {
+            background-color: #1A2B4D; /* Level 1 Background */
+            border: 1px solid #2D3D5E;
+        }
+        .text-orange {
+            color: #FF6B00;
+        }
+        .bg-orange {
+            background-color: #FF6B00;
+        }
+        
+        /* Donut Chart CSS */
+        .donut-ring {
+            stroke: #1A2B4D;
+        }
+        .donut-segment-available {
+            stroke: #FF6B00;
+            stroke-dasharray: 87 13;
+        }
+        .donut-segment-down {
+            stroke: #051424; /* Darker navy for down */
+            stroke-dasharray: 13 87;
+            stroke-dashoffset: -87;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col h-screen overflow-hidden text-body-md font-body-md pb-20">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim fixed top-0 w-full z-50 border-b border-outline-variant transition-colors duration-200 flex justify-between items-center px-margin h-16">
+<div class="flex items-center gap-4">
+<button class="text-primary dark:text-primary hover:bg-surface-container-high p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back_ios">arrow_back_ios</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Disponibilidade</h1>
+</div>
+<button class="text-primary dark:text-primary hover:bg-surface-container-high p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto mt-16 px-gutter md:px-margin pt-6 pb-24 md:flex md:gap-gutter">
+<!-- Desktop Sidebar Navigation (Hidden on Mobile) -->
+<nav class="hidden md:flex flex-col h-[calc(100vh-80px)] w-80 bg-surface-container dark:bg-surface-container py-6 rounded-lg sticky top-20 border border-outline-variant shrink-0">
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-3xl text-on-surface-variant">person</span>
+</div>
+<div>
+<div class="font-headline-lg text-headline-lg text-primary text-sm leading-tight">Logistics Director</div>
+<div class="font-body-md text-body-md text-on-surface-variant text-xs">Manfac Facilities</div>
+<div class="text-xs text-primary-container font-medium mt-1 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> Online</div>
+</div>
+</div>
+<div class="flex flex-col gap-2 px-4">
+<!-- Tabs based on Shared Components -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_22}}">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="local_shipping">local_shipping</span>
+                    OPERAÇÃO
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_24}}">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="report_problem">report_problem</span>
+                    OCORRÊNCIAS
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest transition-all" href="{{DATA:SCREEN:SCREEN_38}}">
+<span class="material-symbols-outlined text-primary" data-icon="build_circle">build_circle</span>
+                    MANUTENÇÃO &amp; DOCUMENTOS
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="{{DATA:SCREEN:SCREEN_34}}">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="bar_chart">bar_chart</span>
+                    GESTÃO
+                </a>
+</div>
+</nav>
+<!-- Main Dashboard Canvas -->
+<div class="flex-1 max-w-container-max mx-auto space-y-6">
+<!-- Donut Chart & Status Header -->
+<section class="card-surface rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+<!-- Subtle background accent -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+<div class="relative w-64 h-64 flex-shrink-0 flex items-center justify-center">
+<svg class="donut" height="100%" viewBox="0 0 42 42" width="100%">
+<circle class="donut-ring" cx="21" cy="21" fill="transparent" r="15.91549430918954" stroke-width="6"></circle>
+<circle class="donut-segment-available" cx="21" cy="21" fill="transparent" r="15.91549430918954" stroke-width="6"></circle>
+<circle class="donut-segment-down" cx="21" cy="21" fill="transparent" r="15.91549430918954" stroke-width="6"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-on-surface-variant text-sm font-medium">Status da Frota</span>
+<span class="text-on-surface font-title-md text-title-md">Bom</span>
+</div>
+</div>
+<div class="flex flex-row md:flex-col gap-6 md:w-48 justify-center">
+<div class="flex flex-col items-center md:items-start relative z-10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-orange" data-icon="directions_car">directions_car</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold">87%</span>
+</div>
+<span class="text-on-surface-variant text-sm">Disponível</span>
+<div class="h-1 w-full bg-orange mt-2 rounded-full"></div>
+</div>
+<div class="flex flex-col items-center md:items-start relative z-10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="error">error</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold">13%</span>
+</div>
+<span class="text-on-surface-variant text-sm">Parados</span>
+<div class="h-1 w-full bg-[#051424] mt-2 rounded-full border border-outline-variant"></div>
+</div>
+</div>
+</section>
+<!-- Historical KPI Area -->
+<section class="card-surface rounded-xl p-6 relative overflow-hidden">
+<h2 class="font-title-md text-title-md text-on-surface mb-4">KPI Histórico</h2>
+<div class="flex justify-between items-end">
+<div>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="text-on-surface-variant text-sm">Disponibilidade Mensal:</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold">92%</span>
+</div>
+<div class="flex items-center gap-1 text-emerald-400 font-medium text-sm">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+<span class="">(vs 89% Mês Ant.)</span>
+</div>
+</div>
+<!-- Micro-chart mockup -->
+<div class="w-32 h-12 relative flex items-end">
+<svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 40">
+<path d="M0,35 L20,25 L40,30 L60,15 L80,20 L100,5 L100,40 L0,40 Z" fill="rgba(255, 107, 0, 0.1)"></path>
+<path d="M0,35 L20,25 L40,30 L60,15 L80,20 L100,5" fill="none" stroke="#FF6B00" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</section>
+<!-- Vehicle List Tab Bar -->
+<div class="flex bg-surface-container-high rounded-lg p-1 border border-outline-variant">
+<button class="flex-1 py-2 text-center rounded-md bg-surface text-on-surface font-medium border border-outline-variant shadow-sm text-sm">Parados (4)</button>
+<button class="flex-1 py-2 text-center rounded-md text-on-surface-variant hover:text-on-surface transition-colors font-medium text-sm">Todos os Veículos (32)</button>
+</div>
+<!-- Vehicle List -->
+<div class="card-surface rounded-xl border border-outline-variant overflow-hidden flex flex-col">
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-orange"></div>
+<div class="flex items-center gap-4 pl-2">
+<div class="p-2 rounded-lg bg-surface-container-highest">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="directions_car">directions_car</span>
+</div>
+<div>
+<div class="font-medium text-on-surface">Veh. ID 4052</div>
+<div class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="build">build</span> Em Manutenção
+                            </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="text-xs text-on-surface-variant">Desde</div>
+<div class="text-sm font-data-tabular text-on-surface font-medium">2d 4h</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-orange"></div>
+<div class="flex items-center gap-4 pl-2">
+<div class="p-2 rounded-lg bg-surface-container-highest">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="directions_car">directions_car</span>
+</div>
+<div>
+<div class="font-medium text-on-surface">Veh. ID 5011</div>
+<div class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="person_off">person_off</span> Sem Motorista
+                            </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="text-xs text-on-surface-variant">Desde</div>
+<div class="text-sm font-data-tabular text-on-surface font-medium">5h</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-orange"></div>
+<div class="flex items-center gap-4 pl-2">
+<div class="p-2 rounded-lg bg-surface-container-highest">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="directions_car">directions_car</span>
+</div>
+<div>
+<div class="font-medium text-on-surface">Veh. ID 4098</div>
+<div class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="more_horiz">more_horiz</span> Outro
+                            </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="text-xs text-on-surface-variant">Desde</div>
+<div class="text-sm font-data-tabular text-on-surface font-medium">18h</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-orange"></div>
+<div class="flex items-center gap-4 pl-2">
+<div class="p-2 rounded-lg bg-surface-container-highest">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="directions_car">directions_car</span>
+</div>
+<div>
+<div class="font-medium text-on-surface">Veh. ID 5030</div>
+<div class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="build">build</span> Em Manutenção
+                            </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<div class="text-xs text-on-surface-variant">Desde</div>
+<div class="text-sm font-data-tabular text-on-surface font-medium">1d 2h</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface-container-low dark:bg-surface-container-low fixed bottom-0 w-full z-50 border-t border-outline-variant flex justify-around items-center px-4 py-2">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_14}}">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_25}}">
+<span class="material-symbols-outlined mb-1" data-icon="warning">warning</span>
+<span class="font-label-sm text-label-sm">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-95 active:scale-90 transition-transform shadow-lg shadow-primary-container/20 border border-orange" href="{{DATA:SCREEN:SCREEN_15}}">
+<span class="material-symbols-outlined mb-1" data-icon="settings_suggest" data-weight="fill" style="font-variation-settings: 'FILL' 1;">settings_suggest</span>
+<span class="font-label-sm text-label-sm font-bold">Manutenção</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_34}}">
+<span class="material-symbols-outlined mb-1" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high scale-95 active:scale-90 transition-transform rounded-xl" href="{{DATA:SCREEN:SCREEN_29}}">
+<span class="material-symbols-outlined mb-1" data-icon="menu">menu</span>
+<span class="font-label-sm text-label-sm">Mais</span>
+</a>
+</nav>
+
+
+
+
+</body></html>

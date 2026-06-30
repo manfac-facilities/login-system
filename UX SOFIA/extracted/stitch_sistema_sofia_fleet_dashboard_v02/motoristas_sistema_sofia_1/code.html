@@ -1,0 +1,600 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Motoristas - Sistema Sofia</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#852400",
+                      "surface-container-high": "#1c2b3c",
+                      "primary": "#bbc7df",
+                      "tertiary": "#adc8f5",
+                      "surface-container-low": "#0d1c2d",
+                      "error": "#ffb4ab",
+                      "on-primary-container": "#758096",
+                      "background": "#051424",
+                      "surface-container": "#122131",
+                      "primary-container": "#0a1628",
+                      "on-surface": "#d4e4fa",
+                      "primary-fixed-dim": "#bbc7df",
+                      "secondary-fixed": "#ffdbd0",
+                      "on-secondary-container": "#ffe2da",
+                      "on-tertiary-container": "#6781aa",
+                      "surface-container-lowest": "#010f1f",
+                      "secondary-fixed-dim": "#ffb59f",
+                      "surface-container-highest": "#273647",
+                      "outline-variant": "#45474c",
+                      "on-primary-fixed-variant": "#3c475b",
+                      "surface": "#051424",
+                      "tertiary-fixed": "#d5e3ff",
+                      "on-primary-fixed": "#101c2e",
+                      "on-secondary": "#5e1700",
+                      "surface-tint": "#bbc7df",
+                      "inverse-primary": "#535f74",
+                      "on-tertiary": "#133155",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#001c3b",
+                      "surface-variant": "#273647",
+                      "inverse-surface": "#d4e4fa",
+                      "tertiary-fixed-dim": "#adc8f5",
+                      "on-background": "#d4e4fa",
+                      "surface-dim": "#051424",
+                      "on-secondary-fixed": "#3a0a00",
+                      "secondary-container": "#bf3801",
+                      "on-error": "#690005",
+                      "surface-bright": "#2c3a4c",
+                      "secondary": "#ffb59f",
+                      "error-container": "#93000a",
+                      "on-primary": "#253144",
+                      "tertiary-container": "#001631",
+                      "outline": "#8f9097",
+                      "inverse-on-surface": "#233143",
+                      "on-tertiary-fixed-variant": "#2d486d",
+                      "primary-fixed": "#d7e3fc",
+                      "on-surface-variant": "#c5c6cd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-gap": "12px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "32px",
+                      "sidebar-width": "220px"
+              },
+              "fontFamily": {
+                      "nav-item": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "kpi-display": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "nav-item": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "kpi-display": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for data tables to match aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #051424; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #273647; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #45474c; 
+        }
+        
+        /* Subtle glow effects for cards */
+        .card-glow:hover {
+            box-shadow: 0 0 15px rgba(255, 181, 159, 0.1);
+            border-color: rgba(255, 181, 159, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen font-body-sm selection:bg-secondary-container selection:text-on-secondary-container flex flex-col md:flex-row">
+<!-- TopAppBar (Mobile) -->
+<header class="flex md:hidden justify-between items-center px-margin-mobile h-16 w-full z-50 bg-background dark:bg-background border-b border-outline-variant docked full-width top-0">
+<div class="flex items-center gap-4">
+<button class="text-secondary dark:text-secondary scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile font-bold text-secondary dark:text-secondary">Motoristas</h1>
+</div>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high p-2 rounded-full transition-colors scale-95 active:scale-90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<!-- NavigationDrawer (Desktop) -->
+<nav class="hidden md:flex flex-col justify-between py-6 fixed left-0 top-0 h-full w-[220px] bg-surface-container-lowest dark:bg-surface-container-lowest border-r border-outline-variant z-40">
+<div>
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface dark:text-on-surface">Sistema Sofia</h1>
+</div>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="text-nav-item font-nav-item">Visão Geral</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+<span class="text-nav-item font-nav-item">Equipes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">local_shipping</span>
+<span class="text-nav-item font-nav-item">Veículos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface dark:text-on-surface border-l-2 border-secondary bg-surface-container-high transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-nav-item font-nav-item">Motoristas</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">route</span>
+<span class="text-nav-item font-nav-item">KM Diário</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">fact_check</span>
+<span class="text-nav-item font-nav-item">Checklist</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">gavel</span>
+<span class="text-nav-item font-nav-item">Multas</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container hover:text-on-surface transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">build</span>
+<span class="text-nav-item font-nav-item">Revisões</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="px-4">
+<button class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="text-nav-item font-nav-item">Sair</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-[220px] p-margin-mobile md:p-margin-desktop mb-20 md:mb-0 max-w-[1600px] mx-auto w-full">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h2 class="hidden md:block text-headline-lg font-headline-lg text-on-surface mb-1">Gestão de Motoristas</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Monitore as credenciais e status operacional da equipe.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+<div class="relative w-full sm:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-12 pl-10 pr-4 bg-surface-container rounded border border-outline-variant text-on-surface placeholder:text-on-surface-variant focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors outline-none text-body-sm font-body-sm" placeholder="Buscar motorista ou CNH..." type="text">
+</div>
+<button class="h-12 px-6 bg-secondary text-on-secondary rounded font-nav-item text-nav-item font-semibold hover:bg-secondary-fixed transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+                    Novo Motorista
+                </button>
+</div>
+</div>
+<!-- KPI Summary Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-gutter card-glow transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Total Ativos</span>
+<div class="p-2 bg-surface-container rounded-lg">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+</div>
+<div class="text-kpi-display font-kpi-display text-on-surface">142</div>
+<div class="flex items-center gap-1 mt-2 text-primary">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="text-body-sm font-body-sm">+3 na última semana</span>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-gutter card-glow transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">CNHs Vencidas</span>
+<div class="p-2 bg-error-container/20 rounded-lg">
+<span class="material-symbols-outlined text-error">warning</span>
+</div>
+</div>
+<div class="text-kpi-display font-kpi-display text-error">3</div>
+<div class="flex items-center gap-1 mt-2 text-on-surface-variant text-body-sm font-body-sm">
+                    Ação imediata necessária
+                </div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-gutter card-glow transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Vencem em 30 Dias</span>
+<div class="p-2 bg-secondary-container/20 rounded-lg">
+<span class="material-symbols-outlined text-secondary">schedule</span>
+</div>
+</div>
+<div class="text-kpi-display font-kpi-display text-secondary">8</div>
+<div class="flex items-center gap-1 mt-2 text-on-surface-variant text-body-sm font-body-sm">
+                    Agendar renovações
+                </div>
+</div>
+</div>
+<!-- Data List Container -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden shadow-lg">
+<!-- Filters & Controls -->
+<div class="p-4 border-b border-outline-variant flex flex-wrap gap-3 items-center bg-surface-container-lowest">
+<span class="text-label-caps font-label-caps text-on-surface-variant mr-2">FILTRAR POR STATUS:</span>
+<button class="px-3 py-1.5 rounded-full text-label-caps font-label-caps bg-surface-container text-on-surface border border-outline-variant hover:bg-surface-container-high transition-colors">Todos</button>
+<button class="px-3 py-1.5 rounded-full text-label-caps font-label-caps bg-error-container/10 text-error border border-error/30 hover:bg-error-container/20 transition-colors">Vencidas (3)</button>
+<button class="px-3 py-1.5 rounded-full text-label-caps font-label-caps bg-secondary-container/10 text-secondary border border-secondary/30 hover:bg-secondary-container/20 transition-colors">Atenção (8)</button>
+<button class="px-3 py-1.5 rounded-full text-label-caps font-label-caps bg-primary-container/10 text-primary border border-primary/30 hover:bg-primary-container/20 transition-colors">Regulares</button>
+</div>
+<!-- Desktop Table View -->
+<div class="hidden md:block overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant">
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium">Motorista</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium">CNH</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium">Vencimento</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium">Equipe</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium">Contato</th>
+<th class="p-4 text-label-caps font-label-caps text-on-surface-variant font-medium text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/50">
+<!-- Row 1: Vencida (Critical) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a mature male truck driver wearing a high-visibility vest over a dark shirt. The lighting is bright and modern, set against a dark navy blue background to match a high-end dashboard UI. The mood is serious and focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3u5P1woyVn0GpzL1EPoTjS3Y7rdtWdkzn-MYIHVXTRYjuF3VZxWbZA9y4AnX7o2_xWFl53CpwoeFMBJXhbyUIvsUDL2MhsNMKg8Xurb8iq-Mlz5UsprAj6KDOm0qbWn69GEXGeGbXkurwY0TE9PlbR_NxcHvMnPx2o_j5qyo8Mf3jvbVbzugEPBLQ5GL_H4-P0x7rClzEpv0-FpHrXChvjKKL2JNK_XlJYQUJGjJe49b_d3RjIdVzkZzWpeeZUOEXuuwJGqIAwDzt">
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Carlos Eduardo Silva</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant">ID: MOT-0842</div>
+</div>
+</div>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant font-mono">12345678900 - D</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error/10 text-error text-label-caps font-label-caps border border-error/20">
+<span class="material-symbols-outlined text-[14px]">cancel</span>
+                                    VENCIDA (12/10/2023)
+                                </span>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface">Logística SP - Norte</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">(11) 98765-4321</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-secondary transition-colors p-1 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Vence em X dias (Warning) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a female logistics driver looking confident and wearing a dark uniform shirt. The lighting is studio quality, high-key on the face, set against a dark, minimalist digital background. The aesthetic is clean, modern, and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcUH5V8qXmgQGbTXmVLoIN8OlRBZnh5FlQaUXFaNas1Jk2pyYKl3gOBXBCF3muncPLiQj_g1wY8HKfzqfPpndFf87tZeyx0lZJ46sRja6OWQsIF_3xrAsgSq4NCjQjYWNAPD5qfOrn9bmO9oSGbfTVEG1MEwOEMOJJmW61gQyOnXj-7ipouuocBcoNWdT6fvggQotQKVNdV7St9qglD7jq87WliSCoseswX0IA311MwqFLAroXMvSsQP_jcEMUBp9E9mtdNLhpu7P1">
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Ana Júlia Costa</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant">ID: MOT-1105</div>
+</div>
+</div>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant font-mono">98765432100 - E</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-secondary text-label-caps font-label-caps border border-secondary/20">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                    VENCE EM 12D (15/11/2023)
+                                </span>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface">Distribuição Nacional</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">(11) 91234-5678</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-secondary transition-colors p-1 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Regular (Good) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Roberto Oliveira</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant">ID: MOT-0522</div>
+</div>
+</div>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant font-mono">45612378900 - D</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-label-caps font-label-caps border border-primary/20">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    24/08/2025
+                                </span>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface">Logística SP - Sul</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">(11) 99887-6655</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-secondary transition-colors p-1 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Regular (Good) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a younger male delivery driver smiling slightly. He wears a dark polo shirt. The scene is lit with a subtle cool blue rim light, complementing a deep navy blue background. The aesthetic is crisp, high-end, and corporate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4VOc0P4otQKfwGF63xooLU9H7NKOwbhremxF2dq8XqBjmiZj_SMYMjEhKzLWPcIZyK5jSaZ1on2Ogw_D28-eFU0x1xNuPgU9djHkldv4oCRLKvKZEk4TFLWUssrxJ9MWFYzlE-cY2GzCp_wi_C8Pt0S-IV5ZeFlcH7V-T9vJk2BQTTsVMcY7eYhJDI8hiTF12qasotO9Lb5L7fQR_URRuaAu-Jrzz3PnFc7ooVs8pvblb39YRyprm8__7cD5LrjMTtuJP8D40dZ_r">
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Marcos Pereira</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant">ID: MOT-2210</div>
+</div>
+</div>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant font-mono">78945612300 - C</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-label-caps font-label-caps border border-primary/20">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    10/02/2026
+                                </span>
+</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface">Urbano Cargas</td>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">(11) 97766-5544</td>
+<td class="p-4 text-right">
+<button class="text-on-surface-variant hover:text-secondary transition-colors p-1 opacity-0 group-hover:opacity-100 focus:opacity-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Mobile List View (Stacked Cards) -->
+<div class="md:hidden divide-y divide-outline-variant/50">
+<!-- Mobile Item 1: Vencida -->
+<div class="p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGoHSM8bc1KbQNiO6a8HWfrKwPsO54UIOiS5rWRLsZi993fwd3J3Bw_ODK6cNRRWSHGmyJ_BqMYW2VjQDMJdLqYW47N82pnSXjEKRQTd8BSkGJIPnh8ohof5bFXITfefvJQYYnBBaWJCHwezkA4b7bE-GGasS0Pq0qLh1hO42fqvdlBBUMsUYPRfRkUrFhLk6KJzFuTVHPTdSvXOGq60Hp1FLUIxjP6pDHIQ772yPxADHvv3REwLd4aJ4TkpsZ4Rp2GOmDhgy6wbf5">
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Carlos Eduardo Silva</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant font-mono">12345678900 - D</div>
+</div>
+</div>
+<button class="text-on-surface-variant p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-3 bg-surface-container-low p-3 rounded-lg border border-outline-variant/30">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Status CNH</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-error/10 text-error border border-error/20">
+<span class="material-symbols-outlined text-[12px]">cancel</span>
+                                VENCIDA
+                            </span>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Equipe</div>
+<div class="text-body-sm font-body-sm text-on-surface truncate">Logística SP - Norte</div>
+</div>
+</div>
+</div>
+<!-- Mobile Item 2: Warning -->
+<div class="p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFUoCl2BRnIYL9PR09cvTRcEGIwN6m8Eey52nSy4WpTM6tR0W-AiP9FD5r9Gku1UnuxGCJojsOIDGmybwonoZxr9kI-gQaywzklxa0WXo-D1jsIdbsM6tkc428Q3oocUON0-NFOotH9rXXGU_SbF7V7U8UFmZyTPkfknf-i_A_AeHi7FUNTMmwowyNlAxLneTcTCq_c4_ZJOCAXY161qccHwNIT5GMD3RSfYJy1qkRsOiWYc5zsrfU_4IkPwiIeQOfsVxHPJxqq4bq">
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Ana Júlia Costa</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant font-mono">98765432100 - E</div>
+</div>
+</div>
+<button class="text-on-surface-variant p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-3 bg-surface-container-low p-3 rounded-lg border border-outline-variant/30">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Status CNH</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary/10 text-secondary border border-secondary/20">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+                                VENCE 12D
+                            </span>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Equipe</div>
+<div class="text-body-sm font-body-sm text-on-surface truncate">Distribuição Nac.</div>
+</div>
+</div>
+</div>
+<!-- Mobile Item 3: Regular -->
+<div class="p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant overflow-hidden text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<div class="text-body-sm font-body-sm font-semibold text-on-surface">Roberto Oliveira</div>
+<div class="text-label-caps font-label-caps text-on-surface-variant font-mono">45612378900 - D</div>
+</div>
+</div>
+<button class="text-on-surface-variant p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-3 bg-surface-container-low p-3 rounded-lg border border-outline-variant/30">
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Status CNH</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                24/08/2025
+                            </span>
+</div>
+<div>
+<div class="text-label-caps font-label-caps text-on-surface-variant mb-1">Equipe</div>
+<div class="text-body-sm font-body-sm text-on-surface truncate">Logística SP - Sul</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination Footer -->
+<div class="p-4 border-t border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Mostrando 1-10 de 142</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed md:hidden bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-high dark:bg-surface-container-high shadow-[0_-4px_12px_rgba(0,0,0,0.5)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="text-label-caps font-label-caps mt-1 hidden">Visão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">local_shipping</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary bg-secondary-container/10 rounded-full p-2 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">fact_check</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</a>
+</nav>
+</body></html>

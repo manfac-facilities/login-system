@@ -180,5 +180,5 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   await supabase.from('km_excedido_desconto').update(update).eq('id', id)
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/descontos')
-  revalidatePath('/sofia/motoristas')
+  revalidatePath('/sofia/pendencias')
 }

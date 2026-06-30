@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manfac Fleet - Visão Geral</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Geist:wght@600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#e2bfb0",
+                    "on-primary-container": "#572000",
+                    "primary-fixed-dim": "#ffb693",
+                    "primary-fixed": "#ffdbcc",
+                    "tertiary": "#b6c6f1",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed": "#d8e2ff",
+                    "on-tertiary": "#1f3052",
+                    "primary": "#ffb693",
+                    "inverse-on-surface": "#233143",
+                    "on-tertiary-fixed": "#071a3c",
+                    "surface-container-lowest": "#010f1f",
+                    "inverse-primary": "#a04100",
+                    "surface-bright": "#2c3a4c",
+                    "on-tertiary-container": "#203153",
+                    "surface": "#051424",
+                    "surface-tint": "#ffb693",
+                    "error-container": "#93000a",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#273647",
+                    "on-surface": "#d4e4fa",
+                    "surface-dim": "#051424",
+                    "on-secondary-container": "#a6b5db",
+                    "secondary": "#b7c6ed",
+                    "secondary-fixed-dim": "#b7c6ed",
+                    "tertiary-container": "#8999c1",
+                    "primary-container": "#ff6b00",
+                    "on-error": "#690005",
+                    "on-primary-fixed": "#351000",
+                    "secondary-container": "#384667",
+                    "on-secondary-fixed-variant": "#384667",
+                    "on-tertiary-fixed-variant": "#36466a",
+                    "on-secondary-fixed": "#0a1b39",
+                    "outline": "#a98a7d",
+                    "on-secondary": "#21304f",
+                    "surface-container-high": "#1c2b3c",
+                    "outline-variant": "#5a4136",
+                    "on-primary": "#561f00",
+                    "on-background": "#d4e4fa",
+                    "surface-container": "#122131",
+                    "on-primary-fixed-variant": "#7a3000",
+                    "surface-variant": "#273647",
+                    "secondary-fixed": "#d8e2ff",
+                    "surface-container-low": "#0d1c2d",
+                    "tertiary-fixed-dim": "#b6c6f1",
+                    "background": "#051424",
+                    "inverse-surface": "#d4e4fa"
+            },
+            "borderRadius": {
+                    "DEFAULT": "2px",
+                    "lg": "4px",
+                    "xl": "8px",
+                    "full": "12px"
+            },
+            "spacing": {
+                    "container-max": "1440px",
+                    "margin": "24px",
+                    "gutter": "16px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "title-md": ["Inter"],
+                    "headline-lg": ["Geist"],
+                    "display-lg": ["Geist"],
+                    "headline-lg-mobile": ["Geist"],
+                    "label-sm": ["JetBrains Mono"],
+                    "data-tabular": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #051424;
+            color: #d4e4fa;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-active-indicator {
+            box-shadow: 2px 0 10px rgba(255, 107, 0, 0.4);
+        }
+        .bento-card {
+            background: #122131;
+            border: 1px solid #2D3D5E;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bento-card:hover {
+            border-color: #ff6b00;
+            background: #1c2b3c;
+        }
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #051424; }
+        ::-webkit-scrollbar-thumb { background: #2D3D5E; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff6b00; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex min-h-screen">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex flex-col h-full w-80 bg-surface-container fixed left-0 top-0 z-40 border-r border-outline-variant py-6">
+<div class="px-6 mb-8">
+<h1 class="font-headline-lg text-headline-lg text-primary font-bold">Manfac Fleet</h1>
+</div>
+<div class="flex items-center px-6 py-4 mb-6 bg-surface-container-high mx-4 rounded-xl">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold mr-3">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-title-md text-on-surface truncate">Logistics Director</span>
+<span class="font-label-sm text-on-surface-variant truncate">Manfac Facilities</span>
+<span class="font-label-sm text-primary flex items-center mt-1">
+<span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+                    Online
+                </span>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<!-- Section: OPÉRAÇÃO -->
+<div class="mb-6">
+<p class="px-4 mb-2 font-label-sm text-outline text-[10px] uppercase tracking-widest">Operação</p>
+<a class="flex items-center px-4 py-3 border-l-4 border-primary text-on-surface font-bold bg-surface-container-highest transition-all group" href="#">
+<span class="material-symbols-outlined mr-4 group-hover:scale-110 transition-transform">local_shipping</span>
+<span class="font-body-md">OPERAÇÃO</span>
+</a>
+</div>
+<!-- Section: OCORRÊNCIAS -->
+<div class="mb-6">
+<p class="px-4 mb-2 font-label-sm text-outline text-[10px] uppercase tracking-widest">Alertas</p>
+<a class="flex items-center px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="#">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">report_problem</span>
+<span class="font-body-md">OCORRÊNCIAS</span>
+</a>
+</div>
+<!-- Section: MANUTENÇÃO -->
+<div class="mb-6">
+<p class="px-4 mb-2 font-label-sm text-outline text-[10px] uppercase tracking-widest">Suporte</p>
+<a class="flex items-center px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="#">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">build_circle</span>
+<span class="font-body-md">MANUTENÇÃO</span>
+</a>
+</div>
+<!-- Section: GESTÃO -->
+<div class="mb-6">
+<p class="px-4 mb-2 font-label-sm text-outline text-[10px] uppercase tracking-widest">Business</p>
+<a class="flex items-center px-4 py-3 text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all group" href="#">
+<span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">bar_chart</span>
+<span class="font-body-md">GESTÃO</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-80 pb-24 md:pb-8">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-0 md:left-80 z-50 h-16 flex justify-between items-center px-margin bg-surface dark:bg-surface-dim border-b border-outline-variant">
+<div class="flex items-center">
+<button class="md:hidden mr-4 text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Visão Geral</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined text-on-surface">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<div class="hidden sm:flex flex-col items-end mr-2">
+<span class="font-label-sm text-on-surface">12 Mai 2024</span>
+<span class="font-label-sm text-outline">14:32</span>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="pt-24 px-margin max-w-container-max mx-auto">
+<!-- Hero Header -->
+<div class="mb-8">
+<h1 class="font-headline-lg text-on-surface">Visão Geral</h1>
+<p class="font-body-md text-on-surface-variant">Status operacional da frota em tempo real.</p>
+</div>
+<!-- KPI Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-8">
+<!-- KPI: Disponibilidade da Frota (High Priority Large) -->
+<div class="bento-card lg:col-span-2 p-6 rounded-xl flex flex-col justify-between h-48 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-outline uppercase tracking-wider">Disponibilidade da Frota</span>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+<div class="flex items-baseline gap-4">
+<h3 class="text-[56px] font-bold text-primary kpi-value">87%</h3>
+<div class="flex flex-col">
+<span class="font-title-md text-on-surface">21 de 24</span>
+<span class="font-label-sm text-on-surface-variant">veículos prontos</span>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden mt-4">
+<div class="bg-primary h-full w-[87%] transition-all duration-1000 ease-out"></div>
+</div>
+</div>
+<!-- KPI: Custo do Mês -->
+<div class="bento-card p-6 rounded-xl flex flex-col justify-between h-48">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-outline uppercase tracking-wider">Custo do Mês</span>
+<span class="material-symbols-outlined text-secondary">payments</span>
+</div>
+<h3 class="font-display-lg text-on-surface kpi-value">R$ 142k</h3>
+</div>
+<div class="flex items-center text-red-400 font-label-sm">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span>
+<span>+12% vs anterior</span>
+</div>
+</div>
+<!-- KPI: Sinistros Abertos (Alert State) -->
+<div class="bento-card p-6 rounded-xl flex flex-col justify-between h-48 border-l-4 border-l-red-500 bg-red-950/10">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-red-400 uppercase tracking-wider">Sinistros Abertos</span>
+<span class="material-symbols-outlined text-red-500" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<h3 class="font-display-lg text-red-500 kpi-value">02</h3>
+</div>
+<div class="text-on-surface-variant font-label-sm">
+                        Ação crítica requerida
+                    </div>
+</div>
+<!-- Standard KPIs Row -->
+<div class="bento-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+<div>
+<p class="font-label-sm text-outline">Equipes Ativas</p>
+<p class="font-title-md text-on-surface kpi-value">12</p>
+</div>
+</div>
+<div class="bento-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">local_shipping</span>
+</div>
+<div>
+<p class="font-label-sm text-outline">Veículos Ativos</p>
+<p class="font-title-md text-on-surface kpi-value">18</p>
+</div>
+</div>
+<div class="bento-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">badge</span>
+</div>
+<div>
+<p class="font-label-sm text-outline">Motoristas</p>
+<p class="font-title-md text-on-surface kpi-value">32</p>
+</div>
+</div>
+<div class="bento-card p-4 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-red-500">receipt_long</span>
+</div>
+<div>
+<p class="font-label-sm text-outline">Multas Pendentes</p>
+<p class="font-title-md text-red-500 kpi-value">R$ 4.250</p>
+</div>
+</div>
+</div>
+<!-- Content Split: Alerts & Map -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start">
+<!-- Document Alerts Column -->
+<div class="lg:col-span-1 space-y-4">
+<div class="flex items-center justify-between px-2">
+<h4 class="font-title-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">notification_important</span>
+                            Pendências Críticas
+                        </h4>
+<span class="px-2 py-1 bg-red-950/30 text-red-400 rounded-full text-[10px] font-bold border border-red-500/30">04 ATIVAS</span>
+</div>
+<!-- Alert Card 1 -->
+<div class="bg-surface-container-high border border-outline-variant p-4 rounded-xl hover:border-primary transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary/20 text-primary px-2 py-1 rounded text-[10px] font-bold uppercase">Expira em 30 dias</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary">arrow_forward_ios</span>
+</div>
+<p class="font-title-md text-on-surface mb-1">Licenciamento - ABC-1234</p>
+<p class="font-label-sm text-on-surface-variant">Scania R450 • Caminhão Pesado</p>
+<div class="mt-3 flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[25%]"></div>
+</div>
+<span class="font-label-sm text-outline">12 Jun</span>
+</div>
+</div>
+<!-- Alert Card 2 -->
+<div class="bg-surface-container-high border border-outline-variant p-4 rounded-xl hover:border-primary transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary/20 text-primary px-2 py-1 rounded text-[10px] font-bold uppercase">Expira em 18 dias</span>
+</div>
+<p class="font-title-md text-on-surface mb-1">CNH Motorista: Roberto Silva</p>
+<p class="font-label-sm text-on-surface-variant">Categoria E • Vigência Anual</p>
+<div class="mt-3 flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-red-500 h-full w-[65%]"></div>
+</div>
+<span class="font-label-sm text-red-400">30 Mai</span>
+</div>
+</div>
+<!-- Alert Card 3 -->
+<div class="bg-surface-container-high border border-outline-variant p-4 rounded-xl hover:border-primary transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary/20 text-primary px-2 py-1 rounded text-[10px] font-bold uppercase">Expira em 30 dias</span>
+</div>
+<p class="font-title-md text-on-surface mb-1">Seguro Frota - Apólice 4921</p>
+<p class="font-label-sm text-on-surface-variant">Allianz • Cobertura Nacional</p>
+</div>
+</div>
+<!-- Map / Fleet Tracking Visualization -->
+<div class="lg:col-span-2">
+<div class="bento-card rounded-xl overflow-hidden h-[450px] relative">
+<div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+<div class="bg-surface/80 backdrop-blur-md p-3 rounded-lg border border-outline-variant">
+<p class="font-label-sm text-outline mb-1 uppercase tracking-tighter">Localização da Frota</p>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-label-sm text-on-surface">15 em rota</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+<span class="font-label-sm text-on-surface">3 em espera</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Placeholder -->
+<div class="w-full h-full grayscale-[0.8] contrast-[1.2] opacity-60" data-alt="A high-tech digital satellite map of a metropolitan city at night, with glowing orange streaks representing fleet vehicle paths. The map is rendered in dark navy and charcoal tones with sharp technical overlays and grid lines, mirroring a high-end logistics control center interface. Soft glowing markers pulse at various points to indicate vehicle positions." data-location="São Paulo" style="background-image: url('https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg')">
+</div>
+<!-- Data Overlay Bottom -->
+<div class="absolute bottom-4 right-4 z-10 flex gap-2">
+<button class="bg-primary text-on-primary-container px-4 py-2 rounded-lg font-title-md flex items-center gap-2 shadow-lg">
+<span class="material-symbols-outlined text-sm">open_in_full</span>
+                                Mapa Expandido
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-container-low border-t border-outline-variant flex justify-around items-center px-4 py-2">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-[10px]">Operação</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-sm text-[10px]">Ocorrências</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">settings_suggest</span>
+<span class="font-label-sm text-[10px]">Manutenção</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-sm text-[10px]">Gestão</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-label-sm text-[10px]">Mais</span>
+</a>
+</nav>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-14 h-14 bg-primary text-on-primary-container rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<script>
+        // Micro-interactions and real-time feel
+        document.querySelectorAll('.bento-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // Simple counter animation logic simulation
+        const counters = document.querySelectorAll('.kpi-value');
+        counters.forEach(counter => {
+            const originalText = counter.innerText;
+            if (originalText.includes('%')) {
+                let count = 0;
+                const target = 87;
+                const interval = setInterval(() => {
+                    count++;
+                    counter.innerText = count + '%';
+                    if (count >= target) clearInterval(interval);
+                }, 15);
+            }
+        });
+    </script>
+</body></html>
