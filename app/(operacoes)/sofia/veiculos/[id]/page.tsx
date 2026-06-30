@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getResponsabilidadeHistorico, getCentroCustoHistorico } from '@/lib/sofia/queries'
 import type { VeiculoResponsabilidadeHistorico } from '@/lib/sofia/types'
 import { notFound } from 'next/navigation'
-import { softDeleteVeiculoAction } from '../_actions'
+import { softDeleteVeiculoAction, atualizarLocacaoVeiculoAction } from '../_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type HistoricoComRelacoes = VeiculoResponsabilidadeHistorico & {
@@ -86,6 +86,32 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
               <span className="text-[#f05a28] text-sm font-bold">R$ {totalAcumulado.toFixed(2)}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Locação mensal</h2>
+        <div className="p-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]">
+          <form action={atualizarLocacaoVeiculoAction} className="flex gap-2 items-end">
+            <input type="hidden" name="id" value={veiculo.id} />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-[#94a3b8]">Valor locação/mês (R$)</label>
+              <input
+                name="valor_locacao_mensal"
+                type="number"
+                step="0.01"
+                defaultValue={veiculo.valor_locacao_mensal ?? ''}
+                placeholder="0.00"
+                className="px-3 py-2 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white text-sm focus:outline-none focus:border-[#f05a28] w-36"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-3 py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors active:scale-95"
+            >
+              Salvar
+            </button>
+          </form>
         </div>
       </div>
 

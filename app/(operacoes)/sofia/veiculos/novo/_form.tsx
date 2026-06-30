@@ -30,6 +30,7 @@ export default function NovoVeiculoForm({ equipes }: { equipes: Equipe[] }) {
           { name: 'ano', label: 'Ano', placeholder: '2022', type: 'number', required: false },
           { name: 'km_atual', label: 'KM atual', placeholder: '0', type: 'number', required: false },
           { name: 'km_contratual_mensal', label: 'KM contratual/mês', placeholder: '3000', type: 'number', required: false },
+          { name: 'valor_locacao_mensal', label: 'Valor locação/mês (R$)', placeholder: '2500.00', type: 'number', required: false },
         ].map((f) => (
           <div key={f.name} className="flex flex-col gap-1.5">
             <label className="text-sm text-[#94a3b8]">{f.label}</label>

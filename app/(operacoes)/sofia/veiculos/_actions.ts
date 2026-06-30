@@ -17,6 +17,9 @@ export async function criarVeiculoAction(
   const km_contratual_mensal = formData.get('km_contratual_mensal')
     ? Number(formData.get('km_contratual_mensal'))
     : null
+  const valor_locacao_mensal = formData.get('valor_locacao_mensal')
+    ? Number(formData.get('valor_locacao_mensal'))
+    : null
   const equipe_id = (formData.get('equipe_id') as string) || null
 
   if (!placa || !modelo) return { error: 'Placa e modelo são obrigatórios' }
@@ -24,7 +27,7 @@ export async function criarVeiculoAction(
   const supabase = await createClient()
   const { error } = await supabase
     .from('veiculos')
-    .insert({ placa, modelo, ano, km_atual, km_contratual_mensal, equipe_id })
+    .insert({ placa, modelo, ano, km_atual, km_contratual_mensal, equipe_id, valor_locacao_mensal })
 
   if (error) {
     if (error.code === '23505')
@@ -55,4 +58,20 @@ export async function softDeleteVeiculoAction(
   revalidatePath('/sofia/veiculos')
   await logAudit('veiculos', 'desativou', id, 'Veículo desativado (soft-delete)')
   redirect('/sofia/veiculos')
+}
+
+export async function atualizarLocacaoVeiculoAction(formData: FormData): Promise<void> {
+  const id = formData.get('id') as string
+  const valor_locacao_mensal = formData.get('valor_locacao_mensal')
+    ? Number(formData.get('valor_locacao_mensal'))
+    : null
+
+  const supabase = await createClient()
+  await supabase
+    .from('veiculos')
+    .update({ valor_locacao_mensal })
+    .eq('id', id)
+
+  revalidatePath(`/sofia/veiculos/${id}`)
+  revalidatePath('/sofia/custos')
 }
