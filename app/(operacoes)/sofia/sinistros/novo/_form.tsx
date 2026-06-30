@@ -23,6 +23,8 @@ export default function NovoSinistroForm({
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
   const [uploadFinished, setUploadFinished] = useState(false)
   const [failedFotos, setFailedFotos] = useState<string[]>([])
+  const [veiculoId, setVeiculoId] = useState('')
+  const [motoristaId, setMotoristaId] = useState('')
   const uploading = !!state.success && fotos.length > 0 && !uploadFinished
   // True the instant the form is submitted, before isPending (set by
   // useActionState) or uploading (derived below) flip on. Without this,
@@ -37,6 +39,22 @@ export default function NovoSinistroForm({
   const handleCapture = useCallback((blob: Blob, posicao: string) => {
     setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao }])
   }, [])
+
+  async function handleVeiculoChange(id: string) {
+    setVeiculoId(id)
+    if (!id) { setMotoristaId(''); return }
+    const res = await fetch(`/api/sofia/veiculo-motorista?veiculo_id=${id}`)
+    const data = await res.json()
+    if (data?.motoristas?.id) setMotoristaId(data.motoristas.id)
+  }
+
+  async function handleMotoristaChange(id: string) {
+    setMotoristaId(id)
+    if (!id) return
+    const res = await fetch(`/api/sofia/veiculo-motorista?motorista_id=${id}`)
+    const data = await res.json()
+    if (data?.veiculo?.id) setVeiculoId(data.veiculo.id)
+  }
 
   useEffect(() => {
     if (!state.success || !state.sinistroId) return
@@ -95,7 +113,12 @@ export default function NovoSinistroForm({
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-[#94a3b8]">Veículo</label>
-            <select name="veiculo_id" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm">
+            <select
+              name="veiculo_id"
+              value={veiculoId}
+              onChange={(e) => handleVeiculoChange(e.target.value)}
+              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+            >
               <option value="">Selecione</option>
               {veiculos.map((v) => (
                 <option key={v.id} value={v.id}>{v.placa} · {v.modelo}</option>
@@ -104,7 +127,12 @@ export default function NovoSinistroForm({
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-[#94a3b8]">Motorista</label>
-            <select name="motorista_id" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm">
+            <select
+              name="motorista_id"
+              value={motoristaId}
+              onChange={(e) => handleMotoristaChange(e.target.value)}
+              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+            >
               <option value="">Selecione</option>
               {motoristas.map((m) => (
                 <option key={m.id} value={m.id}>{m.nome}</option>

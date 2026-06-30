@@ -15,11 +15,29 @@ export default function NovaMultaForm({
 }) {
   const [state, action, isPending] = useActionState(criarMultaAction, {})
   const [tipoInfracao, setTipoInfracao] = useState('')
+  const [veiculoId, setVeiculoId] = useState('')
+  const [motoristaId, setMotoristaId] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     if (state.success) router.push('/sofia/multas')
   }, [state.success, router])
+
+  async function handleVeiculoChange(id: string) {
+    setVeiculoId(id)
+    if (!id) { setMotoristaId(''); return }
+    const res = await fetch(`/api/sofia/veiculo-motorista?veiculo_id=${id}`)
+    const data = await res.json()
+    if (data?.motoristas?.id) setMotoristaId(data.motoristas.id)
+  }
+
+  async function handleMotoristaChange(id: string) {
+    setMotoristaId(id)
+    if (!id) return
+    const res = await fetch(`/api/sofia/veiculo-motorista?motorista_id=${id}`)
+    const data = await res.json()
+    if (data?.veiculo?.id) setVeiculoId(data.veiculo.id)
+  }
 
   return (
     <div className="p-8 max-w-md">
@@ -60,6 +78,8 @@ export default function NovaMultaForm({
           <label className="text-sm text-[#94a3b8]">Veículo</label>
           <select
             name="veiculo_id"
+            value={veiculoId}
+            onChange={(e) => handleVeiculoChange(e.target.value)}
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
           >
             <option value="">Selecione</option>
@@ -75,6 +95,8 @@ export default function NovaMultaForm({
           <label className="text-sm text-[#94a3b8]">Motorista responsável</label>
           <select
             name="motorista_id"
+            value={motoristaId}
+            onChange={(e) => handleMotoristaChange(e.target.value)}
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
           >
             <option value="">Selecione</option>
