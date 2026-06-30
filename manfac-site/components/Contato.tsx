@@ -2,18 +2,36 @@ import Reveal from './Reveal'
 
 export default function Contato() {
   return (
-    <section className="border-t border-[var(--border)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+    <section className="border-t border-[var(--border)] bg-[var(--background)]">
+      <div className="mx-auto max-w-3xl px-6 py-28 text-center">
         <Reveal>
-          <h2 className="text-2xl font-bold text-[var(--ink)] md:text-3xl">
-            Se a sua operação exige controle, visibilidade e resultado,
-            <br />a Manfac é o parceiro certo para construir isso com você.
+          <span className="inline-block rounded-full border border-[var(--border)] px-4 py-1.5 font-mono text-xs tracking-widest text-[var(--muted)]">
+            ENTRE EM CONTATO
+          </span>
+        </Reveal>
+        <Reveal delay={120}>
+          <h2 className="mt-6 text-3xl font-bold leading-tight text-[var(--ink)] md:text-4xl">
+            Pronto para ter sua operação
+            <br />
+            <span className="text-[var(--orange)]">sob controle?</span>
           </h2>
+        </Reveal>
+        <Reveal delay={240}>
+          <p className="mx-auto mt-4 max-w-xl text-[var(--muted)]">
+            Fale com a gente e descubra como a Manfac transforma sua gestão predial em vantagem
+            competitiva.
+          </p>
+        </Reveal>
+        <Reveal delay={360}>
           <a
-            href="mailto:contato@manfac.com.br"
-            className="mt-8 inline-block rounded-md bg-[var(--orange)] px-8 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
+            href="/contato"
+            className="mt-8 inline-flex items-center gap-3 rounded-full bg-[var(--orange)] px-8 py-4 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            contato@manfac.com.br
+            FALE COM A GENTE
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="9" stroke="white" strokeWidth="1.5" opacity="0.5"/>
+              <path d="M7.5 10h5M10 7.5l2.5 2.5-2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </a>
         </Reveal>
       </div>

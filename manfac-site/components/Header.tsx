@@ -6,9 +6,17 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { NAV_ITEMS } from '@/lib/content'
 
+const SERVICOS_DROPDOWN = [
+  { href: '/servicos#obras-reformas', label: 'Obras e Reformas Corporativas' },
+  { href: '/servicos#novas-construcoes', label: 'Novas Construções' },
+  { href: '/servicos#manutencao-predial', label: 'Manutenção Predial' },
+  { href: '/servicos#hvac', label: 'Sistemas de Climatização (HVAC)' },
+]
+
 export default function Header() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [servOpen, setServOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur">
@@ -19,7 +27,62 @@ export default function Header() {
 
         <nav className="hidden gap-8 text-sm text-[var(--muted)] md:flex">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href
+            const active = pathname === item.href || pathname.startsWith(item.href + '/')
+
+            if (item.href === '/servicos') {
+              return (
+                <div
+                  key={item.href}
+                  className="group relative"
+                  onMouseEnter={() => setServOpen(true)}
+                  onMouseLeave={() => setServOpen(false)}
+                >
+                  <Link
+                    href={item.href}
+                    className={`relative flex items-center gap-1 pb-1 transition-colors hover:text-[var(--ink)] ${
+                      active ? 'text-[var(--ink)]' : ''
+                    }`}
+                  >
+                    {item.label}
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className={`transition-transform duration-200 ${servOpen ? 'rotate-180' : ''}`}
+                    >
+                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {active && (
+                      <span className="absolute -bottom-1 left-0 h-px w-full bg-[var(--orange)]" />
+                    )}
+                  </Link>
+
+                  {/* Dropdown */}
+                  <div
+                    className={`absolute left-1/2 top-full -translate-x-1/2 pt-3 transition-all duration-200 ${
+                      servOpen ? 'pointer-events-auto opacity-100 translate-y-0' : 'pointer-events-none opacity-0 -translate-y-1'
+                    }`}
+                  >
+                    <div className="min-w-56 rounded-xl border border-[var(--border)] bg-[var(--background)] shadow-lg">
+                      <div className="p-1">
+                        {SERVICOS_DROPDOWN.map((sub) => (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => setServOpen(false)}
+                            className="block rounded-lg px-4 py-2.5 text-sm text-[var(--muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--ink)]"
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
@@ -61,17 +124,33 @@ export default function Header() {
         </button>
       </div>
 
+      {/* Mobile menu */}
       {open && (
         <nav className="flex flex-col gap-1 border-t border-[var(--border)] px-6 py-4 text-sm md:hidden">
           {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded px-2 py-2 text-[var(--ink)] hover:bg-[var(--surface)]"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                className="block rounded px-2 py-2 text-[var(--ink)] hover:bg-[var(--surface)]"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+              {item.href === '/servicos' && (
+                <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-[var(--border)] pl-3">
+                  {SERVICOS_DROPDOWN.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      onClick={() => setOpen(false)}
+                      className="block rounded px-2 py-1.5 text-xs text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
       )}

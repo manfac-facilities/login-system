@@ -23,16 +23,16 @@ export default function Hero() {
           className="mx-auto max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-6xl animate-fade-up"
           style={{ animationDelay: '130ms' }}
         >
-          Mais do que executar obras.
+          Mais que obras.
           <br />
-          Estruturamos e damos visibilidade à sua operação.
+          Estrutura e visibilidade para sua operação.
         </h1>
         <p
           className="mx-auto mt-6 max-w-2xl text-lg text-white/85 animate-fade-up"
           style={{ animationDelay: '260ms' }}
         >
-          Gestão e execução de obras, reformas e manutenção predial para grandes operações —
-          com controle, transparência e resultado.
+          A Manfac assume obras, reformas e manutenção predial com equipe própria,
+          cronograma real e visibilidade diária — do início ao fim.
         </p>
         <div
           className="mt-10 flex flex-wrap justify-center gap-4 animate-fade-up"
@@ -42,13 +42,13 @@ export default function Hero() {
             href="/contato"
             className="rounded-md bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            Fale com a gente
+            Falar com um especialista
           </a>
           <a
             href="/resultados"
             className="rounded-md border border-white/50 px-6 py-3 font-medium text-white transition-colors hover:bg-white/10"
           >
-            Ver resultados
+            Ver case de sucesso
           </a>
         </div>
       </div>

@@ -23,14 +23,14 @@ export const PROBLEMAS = [
 
 export const PILARES = [
   {
-    title: 'Gestão ativa e estruturada da operação',
+    title: 'Gestão ativa, não reativa',
     description:
-      'Não tratamos obras e manutenção como demandas isoladas — estruturamos a operação como um sistema integrado.',
+      'Cada obra e chamado fazem parte de um plano maior. Acompanhamos de perto, ajustamos quando necessário e respondemos por tudo.',
   },
   {
-    title: 'Visibilidade e controle em tempo real',
+    title: 'Você sabe o que acontece antes de precisar perguntar',
     description:
-      'Comunicação clara e recorrente, com transparência total sobre prazos, custos e andamento de cada demanda.',
+      'Relatórios claros, cronogramas atualizados e comunicação direta — sem ruído, sem surpresas no final do mês.',
   },
 ]
 
@@ -83,9 +83,9 @@ export const DIFERENCIAIS = [
 ]
 
 export const IMPACTO = [
-  'Mais previsibilidade',
-  'Mais controle',
-  'Mais eficiência',
-  'Menos retrabalho',
-  'Melhor tomada de decisão',
+  'Prazo e custo sob controle, sem surpresas',
+  'Zero chamado sem resposta',
+  'Visibilidade sem precisar pedir',
+  'Menos emergências, mais planejamento',
+  'Decisões baseadas em dados reais',
 ]

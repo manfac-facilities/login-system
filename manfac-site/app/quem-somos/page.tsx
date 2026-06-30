@@ -5,6 +5,7 @@ import QuemSomos from '@/components/QuemSomos'
 import Abordagem from '@/components/Abordagem'
 import Diferencial from '@/components/Diferencial'
 import Time from '@/components/Time'
+import Contato from '@/components/Contato'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function QuemSomosPage() {
         <Abordagem />
         <Diferencial />
         <Time />
+        <Contato />
       </main>
       <Footer />
     </>

@@ -26,9 +26,7 @@ export default function BlueprintSection({
         <Reveal>
           <div className="mb-6 flex items-center gap-2">
             <span className="h-px w-4 bg-[var(--orange)]" />
-            <p className="font-mono text-xs tracking-wide text-[var(--orange)]">
-              {index} — {label}
-            </p>
+            <p className="font-mono text-xs tracking-wide text-[var(--orange)]">{label}</p>
           </div>
         </Reveal>
         {children}

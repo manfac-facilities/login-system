@@ -58,6 +58,15 @@ body {
   transform: translateY(0);
 }
 
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+.icon-float {
+  animation: icon-float 2.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up { animation: none; }
   .reveal {
@@ -65,6 +74,7 @@ body {
     transform: none;
     transition: none;
   }
+  .icon-float { animation: none; }
 }
 
 @theme inline {

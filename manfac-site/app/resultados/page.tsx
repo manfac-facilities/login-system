@@ -1,14 +1,13 @@
-// manfac-site/app/resultados/page.tsx
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
-import Case from '@/components/Case'
-import Stats from '@/components/Stats'
+import Resultados from '@/components/Resultados'
+import Contato from '@/components/Contato'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'Resultados — Manfac Engenharia',
   description:
-    'Como a Manfac estruturou a gestão de 400+ unidades no Rio de Janeiro para um dos maiores varejistas farmacêuticos do Brasil.',
+    'Como a Manfac estruturou a gestão de 400+ unidades no Rio de Janeiro para um dos maiores varejistas farmacêuticos do Brasil — transformando 7 anos de operação fragmentada em referência de excelência.',
 }
 
 export default function ResultadosPage() {
@@ -16,8 +15,8 @@ export default function ResultadosPage() {
     <>
       <Header />
       <main>
-        <Case />
-        <Stats index="01" />
+        <Resultados />
+        <Contato />
       </main>
       <Footer />
     </>
