@@ -1,5 +1,6 @@
+import Link from 'next/link'
+import { getVeiculos, getCentroCustoHistorico, getKmResumoMensal } from '@/lib/sofia/queries'
 import { createClient } from '@/lib/supabase/server'
-import { getVeiculos, getCentroCustoHistorico } from '@/lib/sofia/queries'
 import CentroCustoForm from './_form'
 
 export default async function CustosPage() {
@@ -8,6 +9,12 @@ export default async function CustosPage() {
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
 
   const supabase = await createClient()
+
+  const mesAtual = hoje.toISOString().slice(0, 7)
+  const kmResumo = await getKmResumoMensal()
+  const kmMesAtual = new Map(
+    kmResumo.filter((r) => r.mes === mesAtual).map((r) => [r.veiculo_id, r])
+  )
 
   const linhas = await Promise.all(
     veiculos.map(async (v) => {
@@ -66,6 +73,7 @@ export default async function CustosPage() {
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Placa</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Centro de custo</th>
+              <th className="text-right px-4 py-3 text-[#4a6080] font-medium">KM mês</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Locação</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Manutenção</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Multas</th>
@@ -78,8 +86,27 @@ export default async function CustosPage() {
           <tbody>
             {linhas.map((l) => (
               <tr key={l.veiculo.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
-                <td className="px-4 py-3 text-white font-medium font-mono">{l.veiculo.placa}</td>
+                <td className="px-4 py-3 font-medium font-mono">
+                  <Link
+                    href={`/sofia/veiculos/${l.veiculo.id}`}
+                    className="text-white hover:text-[#f05a28] transition-colors hover:underline"
+                  >
+                    {l.veiculo.placa}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-[#94a3b8]">{l.centroCusto || '—'}</td>
+                {(() => {
+                  const km = kmMesAtual.get(l.veiculo.id)
+                  if (!km) return <td className="px-4 py-3 text-[#4a6080] text-right text-sm">—</td>
+                  const excedido = km.km_rodados > (km.km_contratual_mensal ?? Infinity)
+                  return (
+                    <td className={`px-4 py-3 text-right text-sm font-mono ${excedido ? 'text-red-400' : 'text-[#94a3b8]'}`}>
+                      {km.km_contratual_mensal != null
+                        ? `${km.km_contratual_mensal.toLocaleString('pt-BR')} / ${km.km_rodados.toLocaleString('pt-BR')} km${excedido ? ' ⚠' : ''}`
+                        : `${km.km_rodados.toLocaleString('pt-BR')} km`}
+                    </td>
+                  )
+                })()}
                 <td className="px-4 py-3 text-[#94a3b8] text-right">R$ {l.locacao.toFixed(2)}</td>
                 <td className="px-4 py-3 text-[#94a3b8] text-right">R$ {l.manutencao.toFixed(2)}</td>
                 <td className="px-4 py-3 text-[#94a3b8] text-right">R$ {l.multas.toFixed(2)}</td>
@@ -95,6 +122,7 @@ export default async function CustosPage() {
           <tfoot>
             <tr className="bg-[#0d2050] font-medium">
               <td className="px-4 py-3 text-white" colSpan={2}>Total geral</td>
+              <td className="px-4 py-3"></td>
               <td className="px-4 py-3 text-white text-right">R$ {totalGeral.locacao.toFixed(2)}</td>
               <td className="px-4 py-3 text-white text-right">R$ {totalGeral.manutencao.toFixed(2)}</td>
               <td className="px-4 py-3 text-white text-right">R$ {totalGeral.multas.toFixed(2)}</td>
