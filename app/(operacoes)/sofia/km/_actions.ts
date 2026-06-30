@@ -6,6 +6,71 @@ import { logAudit } from '@/lib/sofia/auditLog'
 
 type State = { error?: string; success?: boolean }
 
+async function verificarERegistrarExcedencia(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  veiculoId: string,
+  data: string
+) {
+  const mes = data.slice(0, 7) // '2026-06'
+  const mesInicio = `${mes}-01`
+  const [ano, mesNum] = mes.split('-').map(Number)
+  const proximoMes = mesNum === 12
+    ? `${ano + 1}-01-01`
+    : `${ano}-${String(mesNum + 1).padStart(2, '0')}-01`
+
+  const [{ data: veiculo }, { data: lancamentos }] = await Promise.all([
+    supabase.from('veiculos').select('km_contratual_mensal, placa').eq('id', veiculoId).single(),
+    supabase.from('km_diario').select('km_atual').eq('veiculo_id', veiculoId)
+      .gte('data', mesInicio).lt('data', proximoMes).order('data', { ascending: true }),
+  ])
+
+  if (!veiculo?.km_contratual_mensal || !lancamentos || lancamentos.length < 2) return
+
+  const kmRodados = lancamentos[lancamentos.length - 1].km_atual - lancamentos[0].km_atual
+  if (kmRodados <= veiculo.km_contratual_mensal) return
+
+  // Upsert km_excedido_desconto
+  const { data: existing } = await supabase
+    .from('km_excedido_desconto')
+    .select('id')
+    .eq('veiculo_id', veiculoId)
+    .eq('mes', mesInicio)
+    .maybeSingle()
+
+  if (existing) {
+    await supabase
+      .from('km_excedido_desconto')
+      .update({ km_realizado: kmRodados, km_contratual: veiculo.km_contratual_mensal })
+      .eq('id', existing.id)
+  } else {
+    await supabase.from('km_excedido_desconto').insert({
+      veiculo_id: veiculoId,
+      mes: mesInicio,
+      km_contratual: veiculo.km_contratual_mensal,
+      km_realizado: kmRodados,
+      autorizacao_status: 'sem_solicitacao',
+    })
+
+    // Criar pendência apenas se não existir uma aberta com a mesma descrição
+    const dataFormatada = new Date(`${mesInicio}T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    const descricao = `KM excedido — ${veiculo.placa} ${dataFormatada}`
+    const { data: pendenciaExistente } = await supabase
+      .from('pendencias')
+      .select('id')
+      .eq('descricao', descricao)
+      .eq('status', 'aberta')
+      .maybeSingle()
+
+    if (!pendenciaExistente) {
+      await supabase.from('pendencias').insert({
+        descricao,
+        origem: 'km_excedido',
+        status: 'aberta',
+      })
+    }
+  }
+}
+
 export async function lancarKmAction(
   _prev: State,
   formData: FormData
@@ -48,6 +113,12 @@ export async function lancarKmAction(
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/veiculos')
   await logAudit('km_diario', 'criou', null, `KM ${km_atual} km lançado — equipe ${equipe_id} (${data})`)
+
+  // Verificar excedência e criar pendência/desconto automaticamente
+  await verificarERegistrarExcedencia(supabase, veiculo_id, data)
+  revalidatePath('/sofia/descontos')
+  revalidatePath('/sofia/pendencias')
+
   return { success: true }
 }
 
@@ -95,4 +166,19 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/motoristas')
   revalidatePath('/sofia/pendencias')
+}
+
+export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData: FormData): Promise<void> {
+  const status = formData.get('status') as string
+  if (!id || !['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+
+  const supabase = await createClient()
+  const update: Record<string, unknown> = { autorizacao_status: status }
+  if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
+  if (status === 'sem_solicitacao' || status === 'autorizado') update.autorizacao_solicitado_em = null
+
+  await supabase.from('km_excedido_desconto').update(update).eq('id', id)
+  revalidatePath('/sofia/km')
+  revalidatePath('/sofia/descontos')
+  revalidatePath('/sofia/motoristas')
 }
