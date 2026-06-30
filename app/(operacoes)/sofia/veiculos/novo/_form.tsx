@@ -30,7 +30,7 @@ export default function NovoVeiculoForm({ equipes }: { equipes: Equipe[] }) {
           { name: 'ano', label: 'Ano', placeholder: '2022', type: 'number', required: false },
           { name: 'km_atual', label: 'KM atual', placeholder: '0', type: 'number', required: false },
           { name: 'km_contratual_mensal', label: 'KM contratual/mês', placeholder: '3000', type: 'number', required: false },
-          { name: 'valor_locacao_mensal', label: 'Valor locação/mês (R$)', placeholder: '2500.00', type: 'number', required: false },
+          { name: 'valor_locacao_mensal', label: 'Valor locação/mês (R$)', placeholder: '2500.00', type: 'number', required: false, step: '0.01' },
         ].map((f) => (
           <div key={f.name} className="flex flex-col gap-1.5">
             <label className="text-sm text-[#94a3b8]">{f.label}</label>
@@ -39,6 +39,7 @@ export default function NovoVeiculoForm({ equipes }: { equipes: Equipe[] }) {
               placeholder={f.placeholder}
               required={f.required}
               type={f.type}
+              step={f.step}
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm"
             />
           </div>

@@ -67,10 +67,15 @@ export async function atualizarLocacaoVeiculoAction(formData: FormData): Promise
     : null
 
   const supabase = await createClient()
-  await supabase
+  const { error } = await supabase
     .from('veiculos')
     .update({ valor_locacao_mensal })
     .eq('id', id)
+
+  if (error) {
+    console.error('atualizarLocacaoVeiculoAction:', error.message)
+    throw new Error('Erro ao atualizar valor de locação')
+  }
 
   revalidatePath(`/sofia/veiculos/${id}`)
   revalidatePath('/sofia/custos')
