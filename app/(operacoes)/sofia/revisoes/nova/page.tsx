@@ -1,7 +1,7 @@
-import { getVeiculos } from '@/lib/sofia/queries'
+import { getVeiculos, getMotoristas } from '@/lib/sofia/queries'
 import NovaRevisaoForm from './_form'
 
 export default async function NovaRevisaoPage() {
-  const veiculos = await getVeiculos()
-  return <NovaRevisaoForm veiculos={veiculos} />
+  const [veiculos, motoristas] = await Promise.all([getVeiculos(), getMotoristas()])
+  return <NovaRevisaoForm veiculos={veiculos} motoristas={motoristas} />
 }

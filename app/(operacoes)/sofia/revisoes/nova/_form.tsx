@@ -1,16 +1,35 @@
 'use client'
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarRevisaoAction } from '../_actions'
-import type { Veiculo } from '@/lib/sofia/types'
+import type { Veiculo, Motorista } from '@/lib/sofia/types'
 
-export default function NovaRevisaoForm({ veiculos }: { veiculos: Veiculo[] }) {
+export default function NovaRevisaoForm({
+  veiculos,
+  motoristas,
+}: {
+  veiculos: Veiculo[]
+  motoristas: Motorista[]
+}) {
   const [state, action, isPending] = useActionState(criarRevisaoAction, {})
   const router = useRouter()
+  const [motoristaId, setMotoristaId] = useState('')
 
   useEffect(() => {
     if (state.success) router.push('/sofia/revisoes')
   }, [state.success, router])
+
+  async function handleVeiculoChange(veiculoId: string) {
+    if (!veiculoId) { setMotoristaId(''); return }
+    try {
+      const res = await fetch(`/api/sofia/veiculo-motorista?veiculo_id=${veiculoId}`)
+      const data = await res.json()
+      if (data?.motoristas?.id) setMotoristaId(data.motoristas.id)
+      else setMotoristaId('')
+    } catch {
+      setMotoristaId('')
+    }
+  }
 
   return (
     <div className="p-8 max-w-md">
@@ -26,10 +45,30 @@ export default function NovaRevisaoForm({ veiculos }: { veiculos: Veiculo[] }) {
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-[#94a3b8]">Veículo *</label>
-          <select name="veiculo_id" required className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm">
+          <select
+            name="veiculo_id"
+            required
+            onChange={(e) => handleVeiculoChange(e.target.value)}
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+          >
             <option value="">Selecione</option>
             {veiculos.map((v) => (
               <option key={v.id} value={v.id}>{v.placa} · {v.modelo}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-[#94a3b8]">Motorista responsável</label>
+          <select
+            name="motorista_id"
+            value={motoristaId}
+            onChange={(e) => setMotoristaId(e.target.value)}
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+          >
+            <option value="">Selecione ou auto-preenchido</option>
+            {motoristas.map((m) => (
+              <option key={m.id} value={m.id}>{m.nome}</option>
             ))}
           </select>
         </div>

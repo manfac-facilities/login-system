@@ -6,6 +6,7 @@ type State = { error?: string; success?: boolean }
 
 export async function criarRevisaoAction(_prev: State, formData: FormData): Promise<State> {
   const veiculo_id = formData.get('veiculo_id') as string
+  const motorista_id = (formData.get('motorista_id') as string) || null
   const tipo = formData.get('tipo') as string
   const fornecedor = (formData.get('fornecedor') as string).trim() || null
   const valor = formData.get('valor') ? Number(formData.get('valor')) : null
@@ -21,7 +22,7 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
 
   const supabase = await createClient()
   const { error } = await supabase.from('revisoes').insert({
-    veiculo_id, tipo, fornecedor, valor, data_realizada, km_realizada, proxima_data, proxima_km, status, observacoes,
+    veiculo_id, motorista_id, tipo, fornecedor, valor, data_realizada, km_realizada, proxima_data, proxima_km, status, observacoes,
   })
 
   if (error) return { error: 'Erro ao registrar revisão' }

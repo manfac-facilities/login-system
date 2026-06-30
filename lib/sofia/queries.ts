@@ -82,7 +82,7 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
   const supabase = await createClient()
   let query = supabase
     .from('revisoes')
-    .select('*, veiculos(placa, modelo)')
+    .select('*, veiculos(placa, modelo), motoristas(nome)')
     .order('data_realizada', { ascending: false })
   if (veiculoId) query = query.eq('veiculo_id', veiculoId)
   const { data } = await query

@@ -2,7 +2,10 @@ import { getRevisoes, getRevisoesAtrasadas } from '@/lib/sofia/queries'
 import type { Revisao } from '@/lib/sofia/types'
 import Link from 'next/link'
 
-type RevisaoComVeiculo = Revisao & { veiculos: { placa: string } | null }
+type RevisaoComVeiculo = Revisao & {
+  veiculos: { placa: string } | null
+  motoristas: { nome: string } | null
+}
 
 const statusStyle: Record<string, string> = {
   em_dia: 'bg-green-900 text-green-300',
@@ -47,6 +50,7 @@ export default async function RevisoesPage() {
           <thead>
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Veículo</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Motorista</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Tipo</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Fornecedor</th>
               <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
@@ -61,6 +65,7 @@ export default async function RevisoesPage() {
               return (
                 <tr key={r.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                   <td className="px-4 py-3 text-white font-medium font-mono">{r.veiculos?.placa ?? '—'}</td>
+                  <td className="px-4 py-3 text-[#94a3b8]">{r.motoristas?.nome ?? '—'}</td>
                   <td className="px-4 py-3 text-[#94a3b8]">{tipoLabel[r.tipo]}</td>
                   <td className="px-4 py-3 text-[#94a3b8]">{r.fornecedor ?? '—'}</td>
                   <td className="px-4 py-3 text-white text-right font-medium">
@@ -84,7 +89,7 @@ export default async function RevisoesPage() {
             })}
             {revisoes.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma revisão registrada.
                 </td>
               </tr>
