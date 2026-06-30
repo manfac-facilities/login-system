@@ -99,7 +99,7 @@ export default async function EquipesPage({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {visiveis.map(({ equipe, veiculo, motorista, status: st }) => (
-          <div key={equipe.id} className="rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-5">
+          <div key={equipe.id} className="rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-5 hover:border-[#f05a28] transition-colors">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-[#4a6080] uppercase tracking-wider font-medium">Equipe</p>
@@ -121,7 +121,7 @@ export default async function EquipesPage({
             </div>
             <div className="mt-3 flex items-center justify-end gap-3">
               <form action={toggleEquipeAction.bind(null, equipe.id, !equipe.ativo)}>
-                <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors">
+                <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
                   {equipe.ativo ? 'Desativar' : 'Ativar'}
                 </button>
               </form>

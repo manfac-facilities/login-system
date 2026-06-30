@@ -76,7 +76,7 @@ export default function MultasTable({
           <button
             onClick={handleEnviarParaDesconto}
             disabled={isPending}
-            className="text-sm text-[#f05a28] hover:underline disabled:opacity-50 disabled:no-underline"
+            className="text-sm text-[#f05a28] hover:underline disabled:opacity-50 disabled:no-underline active:scale-95 transition-transform"
           >
             Enviar para desconto
           </button>
@@ -84,7 +84,7 @@ export default function MultasTable({
             <button
               onClick={handleExcluirSelecionadas}
               disabled={isPending}
-              className="text-sm text-red-400 hover:underline disabled:opacity-50 disabled:no-underline"
+              className="text-sm text-red-400 hover:underline disabled:opacity-50 disabled:no-underline active:scale-95 transition-transform"
             >
               Excluir selecionadas
             </button>
@@ -155,22 +155,22 @@ export default function MultasTable({
                         <div className="flex gap-2">
                           {st === 'sem_solicitacao' && (
                             <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
                             </form>
                           )}
                           {st === 'solicitado' && (
                             <>
                               <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
                               </form>
                               <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
                               </form>
                             </>
                           )}
                           {st === 'autorizado' && (
                             <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
                             </form>
                           )}
                         </div>

@@ -103,7 +103,7 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
         <button
           type="button"
           onClick={retake}
-          className="text-xs text-[#f05a28] hover:underline text-center"
+          className="text-xs text-[#f05a28] hover:underline text-center active:scale-95 transition-transform"
         >
           Alterar foto
         </button>
@@ -130,7 +130,7 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           <button
             type="button"
             onClick={capture}
-            className="py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors"
+            className="py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors active:scale-95"
           >
             Tirar Foto
           </button>
@@ -140,7 +140,7 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           <button
             type="button"
             onClick={startCamera}
-            className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] transition-colors"
+            className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] transition-colors active:scale-95 transition-transform"
           >
             📷 {posicao}
           </button>

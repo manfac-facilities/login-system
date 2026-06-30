@@ -132,7 +132,7 @@ export default async function KmPage() {
                                       <input type="hidden" name="mes" value={r.mes + '-01'} />
                                       <input type="hidden" name="km_contratual" value={contratado ?? 0} />
                                       <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                                      <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
                                     </form>
                                   )}
                                   {authSt === 'solicitado' && (
@@ -142,14 +142,14 @@ export default async function KmPage() {
                                         <input type="hidden" name="mes" value={r.mes + '-01'} />
                                         <input type="hidden" name="km_contratual" value={contratado ?? 0} />
                                         <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                                        <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
                                       </form>
                                       <form action={upsertKmExcedidoStatusAction}>
                                         <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
                                         <input type="hidden" name="mes" value={r.mes + '-01'} />
                                         <input type="hidden" name="km_contratual" value={contratado ?? 0} />
                                         <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                                        <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
                                       </form>
                                     </>
                                   )}
@@ -159,7 +159,7 @@ export default async function KmPage() {
                                       <input type="hidden" name="mes" value={r.mes + '-01'} />
                                       <input type="hidden" name="km_contratual" value={contratado ?? 0} />
                                       <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                                      <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
                                     </form>
                                   )}
                                 </div>

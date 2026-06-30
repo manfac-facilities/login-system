@@ -114,7 +114,7 @@ export default function KmForm({ equipes, veiculos, motoristas }: Props) {
       <button
         type="submit"
         disabled={isPending || !veiculoDaEquipe}
-        className="py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors"
+        className="py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95"
       >
         {isPending ? 'Salvando...' : 'Registrar KM'}
       </button>

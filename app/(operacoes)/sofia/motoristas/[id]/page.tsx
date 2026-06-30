@@ -198,7 +198,7 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
             {termo?.assinado ? 'Assinado' : 'Pendente'}
           </span>
           <form action={marcarTermoAssinadoAction.bind(null, id, !termo?.assinado)}>
-            <button type="submit" className="text-xs text-[#f05a28] hover:underline">
+            <button type="submit" className="text-xs text-[#f05a28] hover:underline active:scale-95 transition-transform">
               {termo?.assinado ? 'Marcar como pendente' : 'Marcar como assinado'}
             </button>
           </form>

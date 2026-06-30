@@ -5,7 +5,7 @@ export default function PrintExportButton({ label }: { label: string }) {
     <button
       type="button"
       onClick={() => window.print()}
-      className="no-print px-4 py-2 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm font-medium hover:border-[#94a3b8] transition-colors"
+      className="no-print px-4 py-2 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm font-medium hover:border-[#94a3b8] transition-colors active:scale-95 transition-transform"
     >
       {label}
     </button>

@@ -39,7 +39,7 @@ export default function TratativaForm({ sinistro }: { sinistro: Sinistro }) {
       <button
         type="submit"
         disabled={isPending}
-        className="py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors w-fit px-6"
+        className="py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95 w-fit px-6"
       >
         {isPending ? 'Salvando...' : 'Salvar tratativa'}
       </button>

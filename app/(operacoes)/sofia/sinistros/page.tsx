@@ -93,22 +93,22 @@ export default async function SinistrosPage() {
                         <div className="flex gap-2">
                           {st === 'sem_solicitacao' && (
                             <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
                             </form>
                           )}
                           {st === 'solicitado' && (
                             <>
                               <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
                               </form>
                               <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
                               </form>
                             </>
                           )}
                           {st === 'autorizado' && (
                             <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
                             </form>
                           )}
                         </div>

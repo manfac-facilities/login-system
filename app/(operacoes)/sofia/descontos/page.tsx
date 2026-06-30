@@ -176,22 +176,22 @@ export default async function DescontosPage() {
                           <div className="flex gap-2">
                             {st === 'sem_solicitacao' && (
                               <form action={autorizacaoAction.bind(null, l.id)}>
-                                <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline">Solicitar</button>
+                                <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
                               </form>
                             )}
                             {st === 'solicitado' && (
                               <>
                                 <form action={autorizacaoAction.bind(null, l.id)}>
-                                  <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline">Autorizar</button>
+                                  <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
                                 </form>
                                 <form action={autorizacaoAction.bind(null, l.id)}>
-                                  <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline">← Cancelar</button>
+                                  <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
                                 </form>
                               </>
                             )}
                             {st === 'autorizado' && (
                               <form action={autorizacaoAction.bind(null, l.id)}>
-                                <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline">← Revogar</button>
+                                <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
                               </form>
                             )}
                           </div>
@@ -211,14 +211,14 @@ export default async function DescontosPage() {
                   <td className="px-4 py-3 text-right">
                     {l.origem !== 'km_excedido' && proximoStatus[l.status] && (
                       <form action={avancarAction.bind(null, l.id, proximoStatus[l.status])}>
-                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors">
+                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
                           → {proximoStatus[l.status]}
                         </button>
                       </form>
                     )}
                     {l.origem !== 'km_excedido' && l.status === 'descontada' && (
                       <form action={desfazerAction.bind(null, l.id)} className="mt-1">
-                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors">
+                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
                           desfazer desconto
                         </button>
                       </form>
@@ -260,7 +260,7 @@ export default async function DescontosPage() {
                           </label>
                           <button
                             type="submit"
-                            className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] transition-colors"
+                            className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] transition-colors active:scale-95"
                           >
                             Salvar
                           </button>

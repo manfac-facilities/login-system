@@ -129,7 +129,7 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className={`block px-2 py-2 rounded text-sm mb-1 ${
+                  className={`block px-2 py-2 rounded text-sm mb-1 active:scale-95 transition-transform ${
                     isActive
                       ? 'bg-[#f05a28] text-white'
                       : 'text-[#94a3b8] hover:bg-[#1e3a5f] hover:text-white'

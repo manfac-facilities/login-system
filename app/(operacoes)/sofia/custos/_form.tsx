@@ -25,7 +25,7 @@ export default function CentroCustoForm({ veiculoId, atual }: { veiculoId: strin
           defaultValue={hoje}
           className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs [color-scheme:dark]"
         />
-        <button type="submit" disabled={isPending} className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors">
+        <button type="submit" disabled={isPending} className="py-1.5 rounded bg-[#f05a28] text-white text-xs font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95">
           {isPending ? 'Salvando...' : 'Salvar'}
         </button>
       </form>

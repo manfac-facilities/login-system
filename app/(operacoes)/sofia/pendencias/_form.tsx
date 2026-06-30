@@ -38,7 +38,7 @@ export default function PendenciaForm() {
         <input name="proxima_acao" className="px-3 py-2 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white text-sm focus:outline-none focus:border-[#f05a28]" />
       </div>
 
-      <button type="submit" disabled={isPending} className="py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors">
+      <button type="submit" disabled={isPending} className="py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95">
         {isPending ? 'Salvando...' : '+ Adicionar item'}
       </button>
     </form>
