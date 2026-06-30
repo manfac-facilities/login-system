@@ -110,6 +110,16 @@ export async function criarChecklistAction(
   return { success: true, checklistId: data.id }
 }
 
+export async function excluirChecklistAction(_prev: State, formData: FormData): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('checklist').delete().eq('id', id)
+  if (error) return { error: 'Erro ao excluir checklist' }
+  revalidatePath('/sofia/checklist')
+  return { success: true }
+}
+
 export type UploadFotoResult = { error: string } | { success: true }
 
 export async function uploadFotoAction(

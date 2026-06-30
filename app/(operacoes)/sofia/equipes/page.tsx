@@ -1,8 +1,9 @@
 import { getEquipes, getVeiculos, getMotoristas, getChecklistsRecentes } from '@/lib/sofia/queries'
 import { ultimoTipoPorVeiculo, statusEquipe, type StatusEquipe } from '@/lib/sofia/equipes'
 import Link from 'next/link'
-import { toggleEquipeAction } from './_actions'
+import { toggleEquipeAction, desativarEquipeAction } from './_actions'
 import FilterSelect from '@/components/sofia/FilterSelect'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 const PAGE_SIZE = 6
 
@@ -118,11 +119,16 @@ export default async function EquipesPage({
                 </span>
               </div>
             </div>
-            <form action={toggleEquipeAction.bind(null, equipe.id, !equipe.ativo)} className="mt-3 text-right">
-              <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors">
-                {equipe.ativo ? 'Desativar' : 'Ativar'}
-              </button>
-            </form>
+            <div className="mt-3 flex items-center justify-end gap-3">
+              <form action={toggleEquipeAction.bind(null, equipe.id, !equipe.ativo)}>
+                <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors">
+                  {equipe.ativo ? 'Desativar' : 'Ativar'}
+                </button>
+              </form>
+              {equipe.ativo && (
+                <DeleteConfirmButton action={desativarEquipeAction} id={equipe.id} label="Desativar" />
+              )}
+            </div>
           </div>
         ))}
       </div>

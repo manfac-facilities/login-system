@@ -53,6 +53,12 @@ function buildFormData(overrides: Record<string, string> = {}): FormData {
   return fd
 }
 
+function buildExclusaoFormData(id = 'multa-1'): FormData {
+  const fd = new FormData()
+  fd.set('id', id)
+  return fd
+}
+
 const ADMIN_EMAIL = 'jvictorco28@gmail.com'
 const NON_ADMIN_EMAIL = 'outro.usuario@manfac.com.br'
 
@@ -129,30 +135,34 @@ describe('excluirMultaAction', () => {
 
   it('blocks a non-admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
-    await expect(excluirMultaAction('multa-1')).rejects.toThrow()
+    const result = await excluirMultaAction({}, buildExclusaoFormData())
+    expect(result.error).toBeTruthy()
     expect(multaDeleteEqSelectSingleMock).not.toHaveBeenCalled()
   })
 
   it('logs the deleted row to audit_log after deleting, for an admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
-    await excluirMultaAction('multa-1')
+    const result = await excluirMultaAction({}, buildExclusaoFormData())
+    expect(result).toEqual({ success: true })
     expect(multaDeleteEqSelectSingleMock).toHaveBeenCalled()
     expect(auditInsertMock).toHaveBeenCalledWith(
       expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', acao: 'exclusao' })
     )
   })
 
-  it('propagates the error and does not log to audit_log when the delete fails', async () => {
+  it('returns an error and does not log to audit_log when the delete fails', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
     multaDeleteEqSelectSingleMock.mockResolvedValue({ data: null, error: new Error('delete failed') })
-    await expect(excluirMultaAction('multa-1')).rejects.toThrow('delete failed')
+    const result = await excluirMultaAction({}, buildExclusaoFormData())
+    expect(result.error).toBeTruthy()
     expect(auditInsertMock).not.toHaveBeenCalled()
   })
 
-  it('throws when no row comes back from the delete', async () => {
+  it('returns an error when no row comes back from the delete', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
     multaDeleteEqSelectSingleMock.mockResolvedValue({ data: null, error: null })
-    await expect(excluirMultaAction('multa-1')).rejects.toThrow('Multa não encontrada')
+    const result = await excluirMultaAction({}, buildExclusaoFormData())
+    expect(result.error).toBe('Multa não encontrada')
     expect(auditInsertMock).not.toHaveBeenCalled()
   })
 })

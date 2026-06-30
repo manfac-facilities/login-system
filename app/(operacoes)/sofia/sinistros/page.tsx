@@ -1,8 +1,9 @@
 import { getSinistros } from '@/lib/sofia/queries'
 import type { Sinistro, AutorizacaoStatus } from '@/lib/sofia/types'
 import Link from 'next/link'
-import { atualizarAutorizacaoSinistroAction } from './_actions'
+import { atualizarAutorizacaoSinistroAction, excluirSinistroAction } from './_actions'
 import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type SinistroComRelacoes = Sinistro & {
   veiculos: { placa: string } | null
@@ -64,6 +65,7 @@ export default async function SinistrosPage() {
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Autorização</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -122,11 +124,14 @@ export default async function SinistrosPage() {
                     {statusLabel[s.status]}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <DeleteConfirmButton action={excluirSinistroAction} id={s.id} />
+                </td>
               </tr>
             ))}
             {sinistros.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={9} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhum sinistro registrado.
                 </td>
               </tr>

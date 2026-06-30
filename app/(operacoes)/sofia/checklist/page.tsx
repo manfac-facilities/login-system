@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { excluirChecklistAction } from './_actions'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 interface ChecklistRow {
   id: string
@@ -68,6 +70,9 @@ export default async function ChecklistPage() {
                 minute: '2-digit',
               })}
             </p>
+            <div className="shrink-0">
+              <DeleteConfirmButton action={excluirChecklistAction} id={c.id} />
+            </div>
           </div>
         ))}
         {(checklists ?? []).length === 0 && (

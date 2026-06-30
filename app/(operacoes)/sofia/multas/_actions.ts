@@ -59,17 +59,20 @@ export async function enviarParaDescontoEmMassaAction(ids: string[]) {
   revalidatePath('/sofia/descontos')
 }
 
-export async function excluirMultaAction(id: string) {
+export async function excluirMultaAction(_prev: State, formData: FormData): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user?.email || !isAdminEmail(user.email))
-    throw new Error('Apenas administradores podem excluir multas')
+    return { error: 'Apenas administradores podem excluir multas' }
 
   const { data: multa, error } = await supabase.from('multas').delete().eq('id', id).select().single()
-  if (error) throw error
-  if (!multa) throw new Error('Multa não encontrada')
+  if (error) return { error: 'Erro ao excluir multa' }
+  if (!multa) return { error: 'Multa não encontrada' }
 
   await registrarAuditoria(supabase, {
     tabela: 'multas',
@@ -80,6 +83,7 @@ export async function excluirMultaAction(id: string) {
   })
 
   revalidatePath('/sofia/multas')
+  return { success: true }
 }
 
 export async function excluirMultasEmMassaAction(ids: string[]) {

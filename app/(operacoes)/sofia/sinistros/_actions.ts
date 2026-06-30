@@ -63,3 +63,14 @@ export async function atualizarTratativaSinistroAction(_prev: State, formData: F
   revalidatePath('/sofia/sinistros')
   return { success: true }
 }
+
+export async function excluirSinistroAction(_prev: State, formData: FormData): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('sinistros').delete().eq('id', id)
+  if (error) return { error: 'Erro ao excluir sinistro' }
+  revalidatePath('/sofia/sinistros')
+  revalidatePath('/sofia/descontos')
+  return { success: true }
+}

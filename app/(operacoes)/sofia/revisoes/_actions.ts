@@ -29,3 +29,13 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
   revalidatePath('/sofia/revisoes')
   return { success: true }
 }
+
+export async function excluirRevisaoAction(_prev: State, formData: FormData): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('revisoes').delete().eq('id', id)
+  if (error) return { error: 'Erro ao excluir revisão' }
+  revalidatePath('/sofia/revisoes')
+  return { success: true }
+}

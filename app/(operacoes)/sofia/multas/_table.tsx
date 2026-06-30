@@ -9,6 +9,7 @@ import {
 } from './_actions'
 
 import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import type { MultaComRelacoes } from './page'
 
 const statusStyle: Record<string, string> = {
@@ -60,19 +61,6 @@ export default function MultasTable({
     startTransition(async () => {
       try {
         await excluirMultasEmMassaAction(Array.from(selecionadas))
-        setSelecionadas(new Set())
-      } catch (e) {
-        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
-      }
-    })
-  }
-
-  function handleExcluirUma(id: string) {
-    if (!window.confirm('Excluir esta multa? Essa ação não pode ser desfeita.')) return
-    setErro(null)
-    startTransition(async () => {
-      try {
-        await excluirMultaAction(id)
         setSelecionadas(new Set())
       } catch (e) {
         setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
@@ -197,13 +185,7 @@ export default function MultasTable({
                 </td>
                 <td className="px-4 py-3 text-right">
                   {isAdmin && (
-                    <button
-                      onClick={() => handleExcluirUma(m.id)}
-                      disabled={isPending}
-                      className="text-xs text-red-400 hover:underline disabled:opacity-50 disabled:no-underline"
-                    >
-                      Excluir
-                    </button>
+                    <DeleteConfirmButton action={excluirMultaAction} id={m.id} label="Excluir" />
                   )}
                 </td>
               </tr>

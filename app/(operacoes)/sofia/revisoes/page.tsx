@@ -1,6 +1,8 @@
 import { getRevisoes, getRevisoesAtrasadas } from '@/lib/sofia/queries'
 import type { Revisao } from '@/lib/sofia/types'
 import Link from 'next/link'
+import { excluirRevisaoAction } from './_actions'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type RevisaoComVeiculo = Revisao & {
   veiculos: { placa: string } | null
@@ -57,6 +59,7 @@ export default async function RevisoesPage() {
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Realizada em</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Próxima prevista</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -84,12 +87,15 @@ export default async function RevisoesPage() {
                       {statusLabel[status]}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <DeleteConfirmButton action={excluirRevisaoAction} id={r.id} />
+                  </td>
                 </tr>
               )
             })}
             {revisoes.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={9} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhuma revisão registrada.
                 </td>
               </tr>

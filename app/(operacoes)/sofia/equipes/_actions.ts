@@ -32,3 +32,16 @@ export async function toggleEquipeAction(id: string, ativo: boolean) {
   await supabase.from('equipes').update({ ativo }).eq('id', id)
   revalidatePath('/sofia/equipes')
 }
+
+export async function desativarEquipeAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+  const supabase = await createClient()
+  const { error } = await supabase.from('equipes').update({ ativo: false }).eq('id', id)
+  if (error) return { error: 'Erro ao desativar equipe' }
+  revalidatePath('/sofia/equipes')
+  return { success: true }
+}
