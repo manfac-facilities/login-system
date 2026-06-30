@@ -26,3 +26,23 @@ export async function criarMotoristaAction(
   revalidatePath('/sofia/motoristas')
   return { success: true }
 }
+
+export async function desativarMotoristaAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('motoristas')
+    .update({ ativo: false })
+    .eq('id', id)
+
+  if (error) return { error: 'Erro ao desativar motorista' }
+
+  revalidatePath('/sofia/motoristas')
+  revalidatePath(`/sofia/motoristas/${id}`)
+  return { success: true }
+}

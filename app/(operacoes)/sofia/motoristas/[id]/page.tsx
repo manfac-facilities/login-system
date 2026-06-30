@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getMotoristaDocumentos } from '@/lib/sofia/queries'
 import { notFound } from 'next/navigation'
 import { marcarTermoAssinadoAction } from './_actions'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
+import { desativarMotoristaAction } from '../_actions'
 
 type HistoricoVeiculo = {
   id: string
@@ -162,7 +164,12 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">{motorista.nome}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-white">{motorista.nome}</h1>
+          {!motorista.ativo && (
+            <span className="px-2 py-0.5 rounded text-xs bg-[#1e3a5f] text-[#4a6080]">Inativo</span>
+          )}
+        </div>
         <p className="text-[#4a6080] text-sm mt-1">
           CNH {motorista.cnh ?? '—'} · {motorista.equipes?.codigo ?? 'sem equipe'}
           {motorista.contato ? ` · ${motorista.contato}` : ''}
@@ -350,6 +357,17 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
               </p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Zona de perigo */}
+      {motorista.ativo && (
+        <div className="mt-10 p-4 rounded-xl border border-red-800 bg-red-950/20">
+          <h2 className="text-sm font-medium text-red-400 uppercase tracking-wider mb-3">Zona de Perigo</h2>
+          <p className="text-[#94a3b8] text-sm mb-3">
+            Desativar este motorista remove-o das listagens ativas. O histórico de multas, sinistros e checklists é preservado.
+          </p>
+          <DeleteConfirmButton action={desativarMotoristaAction} id={motorista.id} label="Desativar Motorista" />
         </div>
       )}
     </div>

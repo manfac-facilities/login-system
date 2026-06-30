@@ -2,6 +2,8 @@ import { getMotoristas, getEquipes } from '@/lib/sofia/queries'
 import { classificarCnh, cnhStatus, type ClasseCnh } from '@/lib/sofia/motoristas'
 import Link from 'next/link'
 import StatCard from '@/components/sofia/StatCard'
+import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
+import { desativarMotoristaAction } from './_actions'
 
 const PAGE_SIZE = 10
 
@@ -38,6 +40,12 @@ export default async function MotoristasPage({
   if (cnh) {
     filtrados = filtrados.filter((m) => classificarCnh(m.cnh_vencimento) === cnh)
   }
+
+  // Sort: ativos first, inativos last (preserving alphabetical order within each group)
+  filtrados = [...filtrados].sort((a, b) => {
+    if (a.ativo === b.ativo) return 0
+    return a.ativo ? -1 : 1
+  })
 
   const paginaAtual = Math.max(1, Number(page) || 1)
   const inicio = (paginaAtual - 1) * PAGE_SIZE
@@ -102,21 +110,25 @@ export default async function MotoristasPage({
           const equipe = equipes.find((e) => e.id === m.equipe_id)
           const status = cnhStatus(m.cnh_vencimento)
           return (
-            <Link
+            <div
               key={m.id}
-              href={`/sofia/motoristas/${m.id}`}
               className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#94a3b8] transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <Link href={`/sofia/motoristas/${m.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-[#1e3a5f] text-white text-sm font-semibold flex items-center justify-center shrink-0">
                   {iniciais(m.nome)}
                 </div>
                 <div>
-                  <p className="text-white text-sm font-medium">{m.nome}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white text-sm font-medium">{m.nome}</p>
+                    {!m.ativo && (
+                      <span className="px-1.5 py-0.5 rounded text-xs bg-[#1e3a5f] text-[#4a6080]">Inativo</span>
+                    )}
+                  </div>
                   <p className="text-[#4a6080] text-xs font-mono">{m.cnh ?? '—'}</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-6">
+              </Link>
+              <div className="flex items-center gap-6 shrink-0">
                 <div className="text-right">
                   <p className="text-[#4a6080] text-xs uppercase tracking-wider">Status CNH</p>
                   <span className={`inline-block mt-0.5 px-2 py-0.5 rounded text-xs font-medium ${status.style}`}>{status.label}</span>
@@ -125,8 +137,11 @@ export default async function MotoristasPage({
                   <p className="text-[#4a6080] text-xs uppercase tracking-wider">Equipe</p>
                   <p className="text-[#94a3b8] text-sm mt-0.5">{equipe?.codigo ?? '—'}</p>
                 </div>
+                {m.ativo && (
+                  <DeleteConfirmButton action={desativarMotoristaAction} id={m.id} label="Desativar" />
+                )}
               </div>
-            </Link>
+            </div>
           )
         })}
         {pagina.length === 0 && (
