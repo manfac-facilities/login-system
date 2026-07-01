@@ -72,7 +72,7 @@ export default function AcessosTable({
                         onClick={() => handleToggle(usuario.email, sistema.slug)}
                         disabled={salvando === chave}
                         className={`w-11 h-6 rounded-full transition-colors relative disabled:opacity-50 ${
-                          ligado ? 'bg-[#f05a28]' : 'bg-[#1e3a5f]'
+                          ligado ? 'bg-[#22c55e]' : 'bg-[#0d2050]'
                         }`}
                       >
                         <span
