@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { listarUsuariosAction } from '../_actions'
 import AcessosTable from './_table'
 
-const SISTEMAS = [{ slug: 'conversor-os', label: 'Conversor OS' }]
+const SISTEMAS = [
+  { slug: 'sofia', label: 'Gestão de Frotas' },
+  { slug: 'conversor-os', label: 'Conversor OS' },
+]
 
 export default async function AcessosPage() {
   const usuarios = await listarUsuariosAction()

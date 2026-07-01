@@ -48,6 +48,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isConversorOsApi = pathname.startsWith('/api/conversor-os')
   const isConversorOsPage = pathname.startsWith('/conversor-os')
+  const isSofiaPage = pathname.startsWith('/sofia')
   const isAdminPage = pathname.startsWith('/admin')
   const isProtected =
     pathname.startsWith('/dashboard') ||
@@ -82,6 +83,12 @@ export async function middleware(request: NextRequest) {
       const acesso = await hasSystemAccess(supabase, user.email ?? '', 'conversor-os')
       if (!acesso) {
         if (isConversorOsApi) return jsonComCookies({ error: 'Sem acesso ao Conversor OS' }, 403)
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
+    if (isSofiaPage) {
+      const acessoSofia = await hasSystemAccess(supabase, user.email ?? '', 'sofia')
+      if (!acessoSofia) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
