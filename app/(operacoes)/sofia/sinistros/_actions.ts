@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 export async function atualizarAutorizacaoSinistroAction(id: string, formData: FormData): Promise<void> {
   const status = formData.get('status') as string
@@ -67,7 +68,14 @@ export async function atualizarTratativaSinistroAction(_prev: State, formData: F
 export async function excluirSinistroAction(_prev: State, formData: FormData): Promise<State> {
   const id = formData.get('id') as string
   if (!id) return { error: 'ID inválido' }
+
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem excluir sinistros' }
+
   const { error } = await supabase.from('sinistros').delete().eq('id', id)
   if (error) return { error: 'Erro ao excluir sinistro' }
   revalidatePath('/sofia/sinistros')

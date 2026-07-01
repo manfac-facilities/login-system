@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 type State = { error?: string; success?: boolean }
 
@@ -35,6 +36,12 @@ export async function desativarMotoristaAction(
   if (!id) return { error: 'ID inválido' }
 
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem desativar motoristas' }
+
   const { error } = await supabase
     .from('motoristas')
     .update({ ativo: false })

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { parseChecklistFormData, validateChecklistInput } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 type State = { error?: string; success?: boolean; checklistId?: string }
 
@@ -113,7 +114,14 @@ export async function criarChecklistAction(
 export async function excluirChecklistAction(_prev: State, formData: FormData): Promise<State> {
   const id = formData.get('id') as string
   if (!id) return { error: 'ID inválido' }
+
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem excluir checklists' }
+
   const { error } = await supabase.from('checklist').delete().eq('id', id)
   if (error) return { error: 'Erro ao excluir checklist' }
   revalidatePath('/sofia/checklist')

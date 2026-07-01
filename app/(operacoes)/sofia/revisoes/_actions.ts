@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 type State = { error?: string; success?: boolean }
 
@@ -33,7 +34,14 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
 export async function excluirRevisaoAction(_prev: State, formData: FormData): Promise<State> {
   const id = formData.get('id') as string
   if (!id) return { error: 'ID inválido' }
+
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem excluir revisões' }
+
   const { error } = await supabase.from('revisoes').delete().eq('id', id)
   if (error) return { error: 'Erro ao excluir revisão' }
   revalidatePath('/sofia/revisoes')
