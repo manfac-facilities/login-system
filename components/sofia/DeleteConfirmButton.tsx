@@ -22,7 +22,7 @@ export default function DeleteConfirmButton({ action, id, label = '✕' }: Props
         type="button"
         onClick={() => setConfirming(true)}
         disabled={isPending}
-        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors active:scale-95 transition-transform"
+        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 active:scale-95 transition-[color,transform]"
         title="Excluir"
       >
         {isPending ? '...' : label}
@@ -60,7 +60,7 @@ export default function DeleteConfirmButton({ action, id, label = '✕' }: Props
         <button
           type="button"
           onClick={() => { setConfirming(false); setTyped('') }}
-          className="px-3 py-1 rounded border border-[#1e3a5f] text-[#94a3b8] text-xs hover:border-[#94a3b8] transition-colors active:scale-95 transition-transform"
+          className="px-3 py-1 rounded border border-[#1e3a5f] text-[#94a3b8] text-xs hover:border-[#94a3b8] active:scale-95 transition-[border-color,transform]"
         >
           Cancelar
         </button>

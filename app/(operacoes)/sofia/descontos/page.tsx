@@ -211,14 +211,14 @@ export default async function DescontosPage() {
                   <td className="px-4 py-3 text-right">
                     {l.origem !== 'km_excedido' && proximoStatus[l.status] && (
                       <form action={avancarAction.bind(null, l.id, proximoStatus[l.status])}>
-                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
+                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           → {proximoStatus[l.status]}
                         </button>
                       </form>
                     )}
                     {l.origem !== 'km_excedido' && l.status === 'descontada' && (
                       <form action={desfazerAction.bind(null, l.id)} className="mt-1">
-                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
+                        <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           desfazer desconto
                         </button>
                       </form>

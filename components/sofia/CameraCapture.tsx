@@ -140,7 +140,7 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           <button
             type="button"
             onClick={startCamera}
-            className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] transition-colors active:scale-95 transition-transform"
+            className="py-3 rounded-lg border-2 border-dashed border-[#1e3a5f] text-[#4a6080] text-sm hover:border-[#f05a28] hover:text-[#f05a28] active:scale-95 transition-[color,border-color,transform]"
           >
             📷 {posicao}
           </button>

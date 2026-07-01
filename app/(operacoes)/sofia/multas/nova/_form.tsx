@@ -174,7 +174,7 @@ export default function NovaMultaForm({
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 py-2.5 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] transition-colors active:scale-95 transition-transform"
+            className="flex-1 py-2.5 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] active:scale-95 transition-[border-color,transform]"
           >
             Cancelar
           </button>

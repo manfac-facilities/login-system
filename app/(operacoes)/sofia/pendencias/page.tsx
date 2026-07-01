@@ -174,7 +174,7 @@ export default async function PendenciasPage({
                       <td className="px-4 py-3 text-right">
                         {p.id && proximoStatus[p.status] && (
                           <form action={atualizarStatusPendenciaAction.bind(null, p.id, proximoStatus[p.status])}>
-                            <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] transition-colors active:scale-95 transition-transform">
+                            <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                               → {statusLabel[proximoStatus[p.status]]}
                             </button>
                           </form>

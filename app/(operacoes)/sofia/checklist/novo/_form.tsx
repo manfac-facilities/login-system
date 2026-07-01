@@ -248,7 +248,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
                   onClick={() =>
                     setItens((prev) => ({ ...prev, [item.key]: !prev[item.key] }))
                   }
-                  className={`w-5 h-5 rounded border flex items-center justify-center text-xs transition-colors active:scale-95 transition-transform shrink-0 ${
+                  className={`w-5 h-5 rounded border flex items-center justify-center text-xs active:scale-95 transition-[color,background-color,border-color,transform] shrink-0 ${
                     itens[item.key]
                       ? 'bg-green-600 border-green-600 text-white'
                       : 'border-[#1e3a5f] text-transparent'
@@ -325,7 +325,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 py-3 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] transition-colors active:scale-95 transition-transform"
+            className="flex-1 py-3 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] active:scale-95 transition-[border-color,transform]"
           >
             Cancelar
           </button>
