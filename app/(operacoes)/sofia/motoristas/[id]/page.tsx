@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { marcarTermoAssinadoAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { desativarMotoristaAction } from '../_actions'
+import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import type { AutorizacaoStatus } from '@/lib/sofia/types'
 
 type HistoricoVeiculo = {
   id: string
@@ -22,7 +24,7 @@ type Multa = {
   valor: number
   status: string
   tipo_desconto: string
-  autorizacao_status: string | null
+  autorizacao_status: AutorizacaoStatus | null
   autorizacao_solicitado_em: string | null
 }
 
@@ -34,7 +36,7 @@ type Sinistro = {
   valor_dano: number | null
   status: string
   tipo_desconto: string
-  autorizacao_status: string | null
+  autorizacao_status: AutorizacaoStatus | null
   autorizacao_solicitado_em: string | null
 }
 
@@ -52,29 +54,8 @@ type KmExcedido = {
   mes: string
   km_contratual: number
   km_realizado: number
-  autorizacao_status: string
+  autorizacao_status: AutorizacaoStatus
   autorizacao_solicitado_em: string | null
-}
-
-function diasText(solicitadoEm: string | null): string | null {
-  if (!solicitadoEm) return null
-  const d = Math.floor((Date.now() - new Date(solicitadoEm).getTime()) / 86400000)
-  return d === 0 ? 'hoje' : `há ${d} dia${d !== 1 ? 's' : ''}`
-}
-
-const STATUS_BADGE: Record<string, string> = {
-  autorizado: 'bg-green-900 text-green-300',
-  solicitado: 'bg-amber-900 text-amber-300',
-  sem_solicitacao: 'bg-[#1e3a5f] text-[#94a3b8]',
-}
-
-function authLabel(st: string, solicitadoEm: string | null): string {
-  if (st === 'autorizado') return 'Autorizado'
-  if (st === 'solicitado') {
-    const dias = diasText(solicitadoEm)
-    return dias ? `Solicitado · ${dias}` : 'Solicitado'
-  }
-  return 'Sem solicitação'
 }
 
 export default async function MotoristaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -234,8 +215,8 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
           {kmExcedidoMesAtual && (
             <div className="p-3 rounded-xl border border-red-900 bg-red-950/20 mb-8">
               <p className="text-red-400 text-xs font-medium mb-1">KM excedido neste mês</p>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_BADGE[kmExcedidoMesAtual.autorizacao_status] ?? STATUS_BADGE.sem_solicitacao}`}>
-                {authLabel(kmExcedidoMesAtual.autorizacao_status, kmExcedidoMesAtual.autorizacao_solicitado_em)}
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${autorizacaoBadgeClass(kmExcedidoMesAtual.autorizacao_status)}`}>
+                {formatAutorizacaoLabel(kmExcedidoMesAtual.autorizacao_status, kmExcedidoMesAtual.autorizacao_solicitado_em)}
               </span>
             </div>
           )}
@@ -263,8 +244,8 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
                   <p className="text-[#94a3b8] text-xs">{m.descricao ?? '—'}</p>
                   <p className="text-[#4a6080] text-xs">{new Date(m.data).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st] ?? STATUS_BADGE.sem_solicitacao}`}>
-                  {authLabel(st, m.autorizacao_solicitado_em)}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${autorizacaoBadgeClass(st)}`}>
+                  {formatAutorizacaoLabel(st, m.autorizacao_solicitado_em)}
                 </span>
               </div>
             )
@@ -292,8 +273,8 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
                   <p className="text-[#94a3b8] text-xs">{s.descricao}</p>
                   <p className="text-[#4a6080] text-xs">{new Date(s.data).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${STATUS_BADGE[st] ?? STATUS_BADGE.sem_solicitacao}`}>
-                  {authLabel(st, s.autorizacao_solicitado_em)}
+                <span className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${autorizacaoBadgeClass(st)}`}>
+                  {formatAutorizacaoLabel(st, s.autorizacao_solicitado_em)}
                 </span>
               </div>
             )
