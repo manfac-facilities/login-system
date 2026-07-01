@@ -142,7 +142,7 @@ export default function ConversorForm() {
               type="file"
               accept=".xlsx"
               onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-              className="text-sm text-[#94a3b8]"
+              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-sm text-[#94a3b8] max-w-xs file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-[#f05a28] file:text-white file:text-sm file:font-medium file:cursor-pointer hover:file:bg-[#d94e22] cursor-pointer"
             />
           </div>
 
