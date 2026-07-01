@@ -49,7 +49,13 @@ export async function POST(request: Request) {
   const buffer = Buffer.from(await arquivo.arrayBuffer())
   const workbook = new ExcelJS.Workbook()
   try {
-    await workbook.xlsx.load(buffer)
+    // exceljs/index.d.ts declares `interface Buffer extends ArrayBuffer {}`,
+    // which merges into the global Buffer type and adds ES2024
+    // resizable-ArrayBuffer members (resizable, maxByteLength, resize, ...)
+    // that @types/node's real Buffer.from() result doesn't type as having,
+    // even though a real Buffer satisfies exceljs at runtime.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any)
   } catch {
     return NextResponse.json({ error: 'Não foi possível ler o arquivo .xlsx' }, { status: 422 })
   }
