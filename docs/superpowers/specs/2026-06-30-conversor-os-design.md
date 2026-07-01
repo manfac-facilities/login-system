@@ -137,6 +137,7 @@ Ordem de execução:
 
 ### Tela `/admin/acessos`
 - Tabela com todos os usuários do hub, um toggle por sistema (Conversor OS, Sofia, futuros)
+- Lista de usuários vem da Supabase Admin API (`supabase.auth.admin.listUsers()`), chamada só em Server Action admin-only usando a `SUPABASE_SERVICE_ROLE_KEY` (variável de ambiente nova, nunca exposta ao cliente). Não há tabela de perfis própria — a fonte da verdade continua sendo o Supabase Auth.
 - Mudança no toggle grava em `hub_system_access`
 
 ---
