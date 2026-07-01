@@ -1,11 +1,17 @@
 const getUserMock = jest.fn()
 const insertMock = jest.fn()
 const createSignedUrlMock = jest.fn()
+const maybeSingleMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
-    from: jest.fn(() => ({ insert: insertMock })),
+    from: jest.fn(() => ({
+      insert: insertMock,
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: maybeSingleMock,
+    })),
     storage: { from: jest.fn(() => ({ createSignedUrl: createSignedUrlMock })) },
   })),
 }))
@@ -71,11 +77,29 @@ describe('obterUrlDownloadAction', () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'u1', email: 'usuario@manfac.com.br' } } })
   })
 
-  it('returns a signed url when access is granted and storage succeeds', async () => {
+  it('returns a signed url when the file belongs to the requesting user', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
+    maybeSingleMock.mockResolvedValue({ data: { id: 'import-1' } })
     createSignedUrlMock.mockResolvedValue({ data: { signedUrl: 'https://signed.example/file.xlsx' }, error: null })
     const result = await obterUrlDownloadAction('DPSP/foo.xlsx')
     expect(result).toEqual({ url: 'https://signed.example/file.xlsx' })
+  })
+
+  it('rejects when the file does not belong to the requesting user', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
+    maybeSingleMock.mockResolvedValue({ data: null })
+    const result = await obterUrlDownloadAction('DPSP/outro-usuario.xlsx')
+    expect(result).toEqual({ error: 'Arquivo não encontrado' })
+    expect(createSignedUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('allows an admin to download any file without an ownership match', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'u2', email: 'jvictorco28@gmail.com' } } })
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
+    createSignedUrlMock.mockResolvedValue({ data: { signedUrl: 'https://signed.example/file.xlsx' }, error: null })
+    const result = await obterUrlDownloadAction('DPSP/outro-usuario.xlsx')
+    expect(result).toEqual({ url: 'https://signed.example/file.xlsx' })
+    expect(maybeSingleMock).not.toHaveBeenCalled()
   })
 
   it('rejects when the user has no system access', async () => {

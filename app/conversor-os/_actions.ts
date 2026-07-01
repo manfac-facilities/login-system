@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { isAdminEmail } from '@/lib/auth/admins'
 import type { Cliente, LinhaErro } from '@/lib/conversor-os/types'
 
 type State = { error?: string; success?: boolean }
@@ -53,6 +54,16 @@ export async function obterUrlDownloadAction(
   if (!user?.email) return { error: 'Não autenticado' }
   if (!(await hasSystemAccess(supabase, user.email, 'conversor-os')))
     return { error: 'Sem acesso ao Conversor OS' }
+
+  if (!isAdminEmail(user.email)) {
+    const { data: importacao } = await supabase
+      .from('conversor_os_imports')
+      .select('id')
+      .eq('storage_path', storagePath)
+      .eq('user_email', user.email)
+      .maybeSingle()
+    if (!importacao) return { error: 'Arquivo não encontrado' }
+  }
 
   const { data, error } = await supabase.storage
     .from('conversor-os-arquivos')
