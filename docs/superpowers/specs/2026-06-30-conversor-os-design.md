@@ -28,7 +28,7 @@ Hoje esse processo é manual. O PCM filtra a planilha do cliente e o sistema dev
 
 ### Proteção de acesso
 - Middleware verifica `hub_system_access` antes de entrar em `/conversor-os`
-- `/admin/acessos` requer `user_metadata.is_admin = true`
+- `/admin/acessos` requer `isAdminEmail(user.email)` — allowlist já existente em `lib/auth/admins.ts`, mesmo mecanismo usado hoje no módulo Sofia. Não há conceito de admin gerenciável via `hub_system_access`; essa tabela controla apenas acesso por sistema para usuários não-admin.
 
 ### API
 - `POST /api/conversor-os/processar` — recebe `multipart/form-data` (arquivo + cliente selecionado no dropdown)
