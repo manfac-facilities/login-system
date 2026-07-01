@@ -37,6 +37,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  function jsonComCookies(body: Record<string, string>, status: number) {
+    const response = NextResponse.json(body, { status })
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return response
+  }
+
   const { pathname } = request.nextUrl
   const isConversorOsApi = pathname.startsWith('/api/conversor-os')
   const isConversorOsPage = pathname.startsWith('/conversor-os')
@@ -56,12 +64,12 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected) {
     if (!user) {
-      if (isConversorOsApi) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+      if (isConversorOsApi) return jsonComCookies({ error: 'Não autenticado' }, 401)
       return NextResponse.redirect(new URL('/login', request.url))
     }
     if (!isManfacEmail(user.email ?? '')) {
       await supabase.auth.signOut()
-      if (isConversorOsApi) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+      if (isConversorOsApi) return jsonComCookies({ error: 'Não autorizado' }, 403)
       const url = new URL('/login', request.url)
       url.searchParams.set('error', 'unauthorized')
       const redirectResponse = NextResponse.redirect(url)
@@ -73,7 +81,7 @@ export async function middleware(request: NextRequest) {
     if (isConversorOsPage || isConversorOsApi) {
       const acesso = await hasSystemAccess(supabase, user.email ?? '', 'conversor-os')
       if (!acesso) {
-        if (isConversorOsApi) return NextResponse.json({ error: 'Sem acesso ao Conversor OS' }, { status: 403 })
+        if (isConversorOsApi) return jsonComCookies({ error: 'Sem acesso ao Conversor OS' }, 403)
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
