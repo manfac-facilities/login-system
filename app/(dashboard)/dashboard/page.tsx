@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { logoutAction } from './actions'
 import Logo from '@/components/ui/Logo'
 import Link from 'next/link'
+import { isAdminEmail } from '@/lib/auth/admins'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -14,6 +15,7 @@ export default async function DashboardPage() {
 
   const fullName = user.user_metadata?.full_name as string | undefined
   const firstName = fullName?.trim().split(/\s+/)[0] ?? 'Colaborador'
+  const admin = isAdminEmail(user.email ?? '')
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -58,13 +60,36 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
-          <div className="flex items-start gap-4 p-6 rounded-xl border border-dashed border-[#1e3a5f] opacity-40 cursor-not-allowed">
+          <Link
+            href="/conversor-os"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
             <span className="text-3xl">📋</span>
             <div>
-              <p className="text-white font-semibold">Em breve</p>
-              <p className="text-[#4a6080] text-sm mt-1">Próximos módulos</p>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Conversor OS
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Converte planilhas de OS para o Field Control
+              </p>
             </div>
-          </div>
+          </Link>
+          {admin && (
+            <Link
+              href="/admin/acessos"
+              className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+            >
+              <span className="text-3xl">🔑</span>
+              <div>
+                <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                  Admin
+                </p>
+                <p className="text-[#4a6080] text-sm mt-1">
+                  Gestão de acessos aos sistemas do hub
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </main>
