@@ -11,15 +11,15 @@ export default function Contato({ standalone = false }: { standalone?: boolean }
         </Reveal>
         <Reveal delay={120}>
           <h2 className="mt-6 text-3xl font-bold leading-tight text-[var(--ink)] md:text-4xl">
-            Pronto para ter sua operação
+            Vamos entender
             <br />
-            <span className="text-[var(--orange)]">sob controle?</span>
+            <span className="text-[var(--orange)]">sua operação?</span>
           </h2>
         </Reveal>
         <Reveal delay={240}>
           <p className="mx-auto mt-4 max-w-xl text-[var(--muted)]">
-            Fale com a gente e descubra como a Manfac transforma sua gestão predial em vantagem
-            competitiva.
+            Conte como funciona sua operação hoje — unidades, volume de demandas e principais
+            dores. Retornamos com uma leitura técnica.
           </p>
         </Reveal>
         <Reveal delay={360}>
@@ -27,7 +27,7 @@ export default function Contato({ standalone = false }: { standalone?: boolean }
             href={standalone ? 'mailto:contato@manfac.com.br' : '/contato'}
             className="mt-8 inline-flex items-center gap-3 rounded-full bg-[var(--orange)] px-8 py-4 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            {standalone ? 'contato@manfac.com.br' : 'FALE COM A GENTE'}
+            {standalone ? 'contato@manfac.com.br' : 'AGENDAR CONVERSA TÉCNICA'}
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="9" stroke="white" strokeWidth="1.5" opacity="0.5"/>
               <path d="M7.5 10h5M10 7.5l2.5 2.5-2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
