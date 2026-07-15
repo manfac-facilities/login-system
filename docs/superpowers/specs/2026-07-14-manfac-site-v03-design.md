@@ -39,8 +39,9 @@ Correção (inverter a lógica):
 6. **Case teaser** — título "400+ unidades de um dos maiores varejistas farmacêuticos do Brasil, sob gestão Manfac." + foto + CTA "Ver como estruturamos essa operação" (→ /resultados).
 7. **Diferenciais** — pills: equipe própria treinada / gestão ativa com responsável técnico / relatórios e evidências em campo / ponto focal único / capacidade de escala comprovada. **Cada pill/item com ícone animado** (pedido do usuário).
 
-**Ícones animados (pedido do usuário):** seguir o padrão que o site já tem — SVGs customizados nas cores da marca com a animação `icon-float` (ou animação SVG sutil equivalente, ex. engrenagem girando devagar, linha de pulso), sempre desligados sob `prefers-reduced-motion` (regra já existe em `globals.css`). Nada de biblioteca externa de ícones/Lottie; tudo SVG inline como hoje.
 8. **CTA final** — "Vamos entender sua operação?" + botão "Agendar conversa técnica" (→ /contato).
+
+**Ícones animados (pedido do usuário):** seguir o padrão que o site já tem — SVGs customizados nas cores da marca com a animação `icon-float` (ou animação SVG sutil equivalente, ex. engrenagem girando devagar, linha de pulso), sempre desligados sob `prefers-reduced-motion` (regra já existe em `globals.css`). Nada de biblioteca externa de ícones/Lottie; tudo SVG inline como hoje.
 
 Componentes atuais da home (QuemSomosTeaser etc.) que não têm lugar nessa ordem saem da home (arquivos podem permanecer para uso futuro; nada de código morto importado).
 
