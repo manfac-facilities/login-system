@@ -18,10 +18,10 @@ export default function Dores() {
           <table className="w-full border-collapse text-sm md:text-[15px]">
             <thead>
               <tr>
-                <th className="border-b-2 border-[var(--ink)] px-4 py-3 text-left font-mono text-xs uppercase tracking-widest text-[var(--muted)]">
+                <th scope="col" className="border-b-2 border-[var(--ink)] px-4 py-3 text-left font-mono text-xs uppercase tracking-widest text-[var(--muted)]">
                   Sua dor hoje
                 </th>
-                <th className="border-b-2 border-[var(--ink)] px-4 py-3 text-left font-mono text-xs uppercase tracking-widest text-[var(--muted)]">
+                <th scope="col" className="border-b-2 border-[var(--ink)] px-4 py-3 text-left font-mono text-xs uppercase tracking-widest text-[var(--muted)]">
                   Como a Manfac responde
                 </th>
               </tr>
