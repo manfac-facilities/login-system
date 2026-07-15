@@ -22,6 +22,55 @@ export const PROBLEMAS = [
   'Atuação reativa e sem padronização',
 ]
 
+// Home v03 — seção "O problema que resolvemos" (tabela 2.2-B do relatório)
+export const DORES = [
+  { dor: 'Muitos fornecedores', resposta: 'Ponto único de responsabilidade e comunicação.' },
+  { dor: 'Falta de padrão', resposta: 'Equipe própria treinada, rotina técnica e supervisão operacional.' },
+  { dor: 'Baixa visibilidade', resposta: 'Relatórios, cronogramas, status recorrente e evidências em campo.' },
+  { dor: 'Chamados recorrentes', resposta: 'Análise de causa, priorização e plano de redução de reincidência.' },
+  { dor: 'Dificuldade de cobrança', resposta: 'Gestão ativa com responsável técnico e acompanhamento de ponta a ponta.' },
+]
+
+// Home v03 — seção "Como funciona na prática" (seção 3.2-D do relatório)
+export const COMO_FUNCIONA = [
+  { n: '01', title: 'Mapeamento inicial', description: 'Unidades, histórico, volume, SLA, criticidade e prioridades.' },
+  { n: '02', title: 'Plano operacional', description: 'Equipe, rotina, fluxo de chamados, relatórios e indicadores.' },
+  { n: '03', title: 'Execução em campo', description: 'Técnicos, supervisão, materiais, fotos, evidências e qualidade.' },
+  { n: '04', title: 'Gestão e comunicação', description: 'Status recorrente, cronograma, dashboard, reuniões e pendências.' },
+  { n: '05', title: 'Melhoria contínua', description: 'Recorrências, redução de emergências e plano de evolução.' },
+]
+
+// Home v03 — contrato recorrente vs. demandas spot (seção 4.3 do relatório)
+export const RECORRENTE_SPOT = {
+  recorrente: {
+    tagline: 'Contrato recorrente',
+    title: 'Sua operação, sob gestão contínua',
+    items: [
+      'Manutenção preventiva, corretiva e emergencial',
+      'SLA, equipe dedicada, rotina de chamados e relatórios',
+      'Gestão mensal, redução de emergências e padronização',
+    ],
+  },
+  spot: {
+    tagline: 'Demandas spot',
+    title: 'Projetos pontuais, entrega técnica',
+    items: [
+      'Reformas, adequações e obras pontuais',
+      'Escopo fechado, cronograma e orçamento definidos',
+      'Expansões, retrofit, obras em loja e melhorias estruturais',
+    ],
+  },
+}
+
+// Home v03 — seção "Por que a Manfac"
+export const DIFERENCIAIS_HOME = [
+  'Equipe própria treinada',
+  'Gestão ativa com responsável técnico',
+  'Relatórios e evidências em campo',
+  'Ponto focal único',
+  'Capacidade de escala comprovada',
+]
+
 export const PILARES = [
   {
     title: 'Gestão ativa, não reativa',
@@ -31,7 +80,7 @@ export const PILARES = [
   {
     title: 'Você sabe o que acontece antes de precisar perguntar',
     description:
-      'Relatórios claros, cronogramas atualizados e comunicação direta — sem ruído, sem surpresas no final do mês.',
+      'Relatórios claros, cronogramas atualizados e comunicação recorrente — para reduzir desvios e antecipar decisões.',
   },
 ]
 
@@ -84,8 +133,8 @@ export const DIFERENCIAIS = [
 ]
 
 export const IMPACTO = [
-  'Prazo e custo sob controle, sem surpresas',
-  'Zero chamado sem resposta',
+  'Prazo e custo sob controle, com comunicação recorrente',
+  'Todo chamado com registro, prazo e responsável definidos',
   'Visibilidade sem precisar pedir',
   'Menos emergências, mais planejamento',
   'Decisões baseadas em dados reais',
