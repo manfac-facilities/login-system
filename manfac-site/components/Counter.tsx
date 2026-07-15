@@ -16,38 +16,38 @@ function easeOut(t: number) {
 
 export default function Counter({ value, duration = 1800 }: { value: string; duration?: number }) {
   const { prefix, target, suffix, ptbr } = parseValue(value)
-  const [count, setCount] = useState(0)
-  const [started, setStarted] = useState(false)
+  // O valor final é o estado inicial: SSR, JS lento, JS desabilitado e
+  // reduced-motion sempre veem o número real. A contagem é só enfeite.
+  const [count, setCount] = useState(target)
   const ref = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    if (typeof IntersectionObserver === 'undefined') return
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let raf = 0
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setStarted(true)
-          observer.disconnect()
+        if (!entry.isIntersecting) return
+        observer.disconnect()
+        const start = performance.now()
+        const tick = (now: number) => {
+          const t = Math.min((now - start) / duration, 1)
+          setCount(Math.round(easeOut(t) * target))
+          if (t < 1) raf = requestAnimationFrame(tick)
         }
+        raf = requestAnimationFrame(tick)
       },
       { threshold: 0.3 }
     )
     observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!started) return
-    const start = performance.now()
-    let raf: number
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1)
-      setCount(Math.round(easeOut(t) * target))
-      if (t < 1) raf = requestAnimationFrame(tick)
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(raf)
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [started, target, duration])
+  }, [target, duration])
 
   const display = ptbr ? count.toLocaleString('pt-BR') : count.toString()
 
