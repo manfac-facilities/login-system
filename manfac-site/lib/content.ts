@@ -1,6 +1,7 @@
 // manfac-site/lib/content.ts
 
 export const NAV_ITEMS = [
+  { href: '/', label: 'Início' },
   { href: '/quem-somos', label: 'Quem somos' },
   { href: '/servicos', label: 'Serviços' },
   { href: '/resultados', label: 'Resultados' },
