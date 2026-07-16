@@ -83,7 +83,7 @@ export default function Resultados() {
                   { value: 'R$16 bi', label: 'em faturamento anual' },
                   { value: '1.600+', label: 'unidades no Brasil' },
                   { value: '400+', label: 'unidades no RJ sob gestão Manfac' },
-                  { value: '7 anos', label: 'de histórico com fornecedores sem padrão' },
+                  { value: '7 anos', label: 'de operação fragmentada antes da Manfac' },
                 ].map((item, i) => (
                   <div
                     key={item.label}
@@ -108,11 +108,11 @@ export default function Resultados() {
                 O Desafio
               </p>
               <h2 className="mt-3 text-2xl font-bold leading-snug text-[var(--ink)] md:text-3xl">
-                7 anos com fornecedores sem padrão. Isso tinha que mudar.
+                Uma operação fragmentada que precisava de estrutura — e ganhou.
               </h2>
               <p className="mt-4 text-[var(--body-text)]">
                 Quando a Manfac assumiu, a operação estava fragmentada entre múltiplos fornecedores
-                sem padronização, sem comunicação e sem rastreabilidade. O cliente não sabia o que
+                sem padronização de processos, comunicação centralizada ou rastreabilidade. O cliente não sabia o que
                 estava acontecendo nas suas unidades — e o custo disso aparecia toda semana em forma
                 de emergência, retrabalho e insatisfação.
               </p>

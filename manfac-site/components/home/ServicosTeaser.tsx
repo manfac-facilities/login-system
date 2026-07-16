@@ -120,17 +120,17 @@ function HvacIcon() {
 const SERVICOS_HOME = [
   {
     Icon: ObrasIcon,
-    slug: 'obras-reformas',
+    slug: 'obras-e-reformas',
     title: 'Obras e Reformas Corporativas',
     description:
-      'Reforma, adequação ou expansão — executamos com equipe própria, no prazo combinado, sem paralisar o dia a dia dos seus colaboradores.',
+      'Reformas corporativas de diferentes portes, com planejamento, equipe técnica e gestão próxima — sem paralisar sua operação.',
   },
   {
     Icon: ConstrucaoIcon,
     slug: 'novas-construcoes',
     title: 'Novas Construções',
     description:
-      'Do projeto à entrega das chaves com cronograma real e custo sob controle. Sem surpresas no meio do caminho.',
+      'Do projeto à entrega das chaves com cronograma real, custo sob controle e comunicação recorrente em cada etapa.',
   },
   {
     Icon: ManutencaoIcon,
@@ -150,7 +150,7 @@ const SERVICOS_HOME = [
 
 export default function ServicosTeaser() {
   return (
-    <section className="border-y border-[var(--border)] bg-[var(--surface)]">
+    <section className="border-t border-[var(--border)] bg-[var(--surface)]">
       <div className="mx-auto max-w-6xl px-6 py-20">
         <Reveal>
           <div className="mb-2 flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function ServicosTeaser() {
             <p className="font-mono text-xs tracking-wide text-[var(--orange)]">Serviços</p>
           </div>
           <h2 className="mt-4 text-center text-2xl font-bold text-[var(--ink)] md:text-3xl">
-            Tudo que sua infraestrutura precisa. Um único ponto de responsabilidade.
+            Da manutenção recorrente às obras spot. Um único ponto de responsabilidade.
           </h2>
         </Reveal>
 
@@ -178,7 +178,7 @@ export default function ServicosTeaser() {
                   {servico.description}
                 </p>
                 <Link
-                  href={`/servicos#${servico.slug}`}
+                  href={`/servicos/${servico.slug}`}
                   className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[var(--orange)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--orange)] transition-colors hover:bg-[var(--orange)] hover:text-white"
                 >
                   Saiba mais

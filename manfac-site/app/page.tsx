@@ -1,10 +1,22 @@
+import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
-import QuemSomosTeaser from '@/components/home/QuemSomosTeaser'
+import Stats from '@/components/Stats'
+import Dores from '@/components/home/Dores'
+import ComoFunciona from '@/components/home/ComoFunciona'
 import ServicosTeaser from '@/components/home/ServicosTeaser'
+import RecorrenteSpot from '@/components/home/RecorrenteSpot'
 import CaseTeaser from '@/components/home/CaseTeaser'
+import Diferenciais from '@/components/home/Diferenciais'
 import Contato from '@/components/Contato'
 import Footer from '@/components/Footer'
+import { SITE_URL } from '@/lib/site'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: SITE_URL,
+  },
+}
 
 export default function Home() {
   return (
@@ -12,9 +24,15 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <QuemSomosTeaser />
+        <Stats />
+        <Dores />
+        <ComoFunciona />
         <ServicosTeaser />
+        <section className="border-b border-[var(--border)] bg-[var(--surface)]">
+          <RecorrenteSpot />
+        </section>
         <CaseTeaser />
+        <Diferenciais />
         <Contato />
       </main>
       <Footer />

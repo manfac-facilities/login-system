@@ -7,11 +7,15 @@ import Diferencial from '@/components/Diferencial'
 import Time from '@/components/Time'
 import Contato from '@/components/Contato'
 import Footer from '@/components/Footer'
+import { SITE_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Quem somos — Manfac Engenharia',
   description:
     'A Manfac é uma empresa de Engenharia especializada na gestão e execução de obras, reformas e manutenção predial para grandes operações.',
+  alternates: {
+    canonical: `${SITE_URL}/quem-somos`,
+  },
 }
 
 export default function QuemSomosPage() {

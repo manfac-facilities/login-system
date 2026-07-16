@@ -17,22 +17,21 @@ export default function Hero() {
           className="mb-4 text-sm font-semibold uppercase tracking-widest text-[var(--orange)] animate-fade-up"
           style={{ animationDelay: '0ms' }}
         >
-          Engenharia para grandes operações
+          Engenharia · Manutenção · Obras corporativas
         </p>
         <h1
           className="mx-auto max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-6xl animate-fade-up"
           style={{ animationDelay: '130ms' }}
         >
-          Mais que obras.
+          Engenharia, manutenção predial e obras corporativas
           <br />
-          Estrutura e visibilidade para sua operação.
+          para operações que não podem parar.
         </h1>
         <p
           className="mx-auto mt-6 max-w-2xl text-lg text-white/85 animate-fade-up"
           style={{ animationDelay: '260ms' }}
         >
-          A Manfac assume obras, reformas e manutenção predial com equipe própria,
-          cronograma real e visibilidade diária — do início ao fim.
+          A Manfac atende empresas com múltiplas unidades, alto volume de demandas e necessidade de controle, padronização e visibilidade em campo — da manutenção recorrente às obras e reformas spot.
         </p>
         <div
           className="mt-10 flex flex-wrap justify-center gap-4 animate-fade-up"
@@ -42,13 +41,13 @@ export default function Hero() {
             href="/contato"
             className="rounded-md bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            Falar com um especialista
+            Falar com especialista
           </a>
           <a
             href="/resultados"
             className="rounded-md border border-white/50 px-6 py-3 font-medium text-white transition-colors hover:bg-white/10"
           >
-            Ver case de sucesso
+            Ver case de 400+ unidades
           </a>
         </div>
       </div>

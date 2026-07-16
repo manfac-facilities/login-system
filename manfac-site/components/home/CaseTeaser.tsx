@@ -64,7 +64,7 @@ export default function CaseTeaser() {
             </Reveal>
             <Reveal delay={120}>
               <h2 className="mt-6 text-3xl font-bold leading-tight text-[var(--orange)] md:text-4xl">
-                De Ponto Crítico à Operação Referência
+                400+ unidades de um dos maiores varejistas farmacêuticos do Brasil, sob gestão Manfac.
               </h2>
             </Reveal>
             <Reveal delay={240}>
@@ -77,8 +77,8 @@ export default function CaseTeaser() {
             </Reveal>
             <Reveal delay={340}>
               <p className="mt-3 text-white/60 text-sm">
-                Após 7 anos com fornecedores sem padrão, a Manfac assumiu a operação do Rio de
-                Janeiro e virou referência reconhecida no estado.
+                Uma operação fragmentada transformada em referência: +1.000 OS/mês com 100% das
+                demandas concluídas mensalmente.
               </p>
             </Reveal>
           </div>
@@ -117,7 +117,7 @@ export default function CaseTeaser() {
               href="/resultados"
               className="inline-flex items-center gap-2 text-sm font-medium text-[var(--orange)] hover:text-orange-400"
             >
-              Ver o case completo →
+              Ver como estruturamos essa operação →
             </Link>
           </div>
         </Reveal>

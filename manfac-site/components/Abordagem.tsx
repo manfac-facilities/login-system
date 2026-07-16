@@ -28,7 +28,7 @@ export default function Abordagem() {
             </h2>
             <p className="mt-4 text-[var(--body-text)]">
               Cada etapa tem dono, prazo e responsável. Você acompanha tudo do início ao fim,
-              com comunicação direta e sem surpresas no final do mês.
+              com controle de cronograma, custos e comunicação recorrente.
             </p>
           </Reveal>
 

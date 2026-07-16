@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { NAV_ITEMS } from '@/lib/content'
+import { isNavActive } from '@/lib/nav'
 
 const SERVICOS_DROPDOWN = [
-  { href: '/servicos#obras-reformas', label: 'Obras e Reformas Corporativas' },
-  { href: '/servicos#novas-construcoes', label: 'Novas Construções' },
-  { href: '/servicos#manutencao-predial', label: 'Manutenção Predial' },
-  { href: '/servicos#hvac', label: 'Sistemas de Climatização (HVAC)' },
+  { href: '/servicos/obras-e-reformas', label: 'Obras e Reformas Corporativas' },
+  { href: '/servicos/novas-construcoes', label: 'Novas Construções' },
+  { href: '/servicos/manutencao-predial', label: 'Manutenção Predial' },
+  { href: '/servicos/hvac', label: 'Sistemas de Climatização (HVAC)' },
 ]
 
 export default function Header() {
@@ -27,7 +28,7 @@ export default function Header() {
 
         <nav className="hidden gap-8 text-sm text-[var(--muted)] md:flex">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + '/')
+            const active = isNavActive(pathname, item.href)
 
             if (item.href === '/servicos') {
               return (
@@ -104,7 +105,7 @@ export default function Header() {
           href="/contato"
           className="hidden rounded-md bg-[var(--orange)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--orange-hover)] md:inline-block"
         >
-          Fale com a gente
+          Falar com especialista
         </Link>
 
         <button
