@@ -70,9 +70,9 @@ export default function CaseTeaser() {
             <Reveal delay={240}>
               <p className="mt-4 text-white/70">
                 Como a Manfac reestruturou a engenharia de manutenção de mais de{' '}
-                <strong className="text-white">400 unidades</strong> de um dos maiores varejistas
+                <strong className="text-white">400 unidades</strong>{' '}de um dos maiores varejistas
                 farmacêuticos do Brasil — R$&nbsp;16&nbsp;bi/ano,{' '}
-                <strong className="text-white">1.600+ lojas</strong> no país.
+                <strong className="text-white">1.600+ lojas</strong>{' '}no país.
               </p>
             </Reveal>
             <Reveal delay={340}>
