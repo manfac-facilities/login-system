@@ -78,19 +78,19 @@ export default function ContactForm() {
         {path && (
           <form onSubmit={handleSubmit} className="mt-8 grid gap-4 text-left md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ct-nome" className={labelCls}>Nome</label>
+              <label htmlFor="ct-nome" className={labelCls}>Nome <span className="text-[var(--orange)]">*</span></label>
               <input id="ct-nome" name="nome" required placeholder="Seu nome" className={inputCls} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ct-empresa" className={labelCls}>Empresa</label>
+              <label htmlFor="ct-empresa" className={labelCls}>Empresa <span className="text-[var(--orange)]">*</span></label>
               <input id="ct-empresa" name="empresa" required placeholder="Nome da empresa" className={inputCls} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ct-email" className={labelCls}>E-mail corporativo</label>
+              <label htmlFor="ct-email" className={labelCls}>E-mail corporativo <span className="text-[var(--orange)]">*</span></label>
               <input id="ct-email" name="email" type="email" required placeholder="nome@empresa.com.br" className={inputCls} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ct-telefone" className={labelCls}>Telefone / WhatsApp</label>
+              <label htmlFor="ct-telefone" className={labelCls}>Telefone / WhatsApp <span className="text-[var(--orange)]">*</span></label>
               <input id="ct-telefone" name="telefone" type="tel" required placeholder="(21) 9 9999-9999" className={inputCls} />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -100,7 +100,7 @@ export default function ContactForm() {
               <input id="ct-cargo" name="cargo" placeholder="Ex.: Gerente de Facilities" className={inputCls} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ct-localidade" className={labelCls}>Localidade das unidades</label>
+              <label htmlFor="ct-localidade" className={labelCls}>Localidade das unidades <span className="text-[var(--orange)]">*</span></label>
               <input id="ct-localidade" name="localidade" required placeholder="Ex.: RJ capital e Baixada" className={inputCls} />
             </div>
             {path === 'Manutenção recorrente' && (
@@ -135,7 +135,7 @@ export default function ContactForm() {
                 Agendar conversa técnica
               </button>
               <p className="text-xs leading-relaxed text-[var(--muted)]">
-                Abre no seu WhatsApp · Resposta em até 1 dia útil
+                <span className="text-[var(--orange)]">*</span> Campos obrigatórios · Abre no seu WhatsApp · Resposta em até 1 dia útil
                 <br />
                 Prefere e-mail?{' '}
                 <a href="mailto:contato@manfac.com.br" className="underline">contato@manfac.com.br</a>

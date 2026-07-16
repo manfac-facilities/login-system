@@ -128,31 +128,38 @@ export default function Header() {
       {/* Mobile menu */}
       {open && (
         <nav className="flex flex-col gap-1 border-t border-[var(--border)] px-6 py-4 text-sm md:hidden">
-          {NAV_ITEMS.map((item) => (
-            <div key={item.href}>
-              <Link
-                href={item.href}
-                className="block rounded px-2 py-2 text-[var(--ink)] hover:bg-[var(--surface)]"
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-              {item.href === '/servicos' && (
-                <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-[var(--border)] pl-3">
-                  {SERVICOS_DROPDOWN.map((sub) => (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      onClick={() => setOpen(false)}
-                      className="block rounded px-2 py-1.5 text-xs text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = isNavActive(pathname, item.href)
+            return (
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`block rounded px-2 py-2 hover:bg-[var(--surface)] ${
+                    active ? 'font-semibold text-[var(--orange)]' : 'text-[var(--ink)]'
+                  }`}
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+                {item.href === '/servicos' && (
+                  <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-[var(--border)] pl-3">
+                    {SERVICOS_DROPDOWN.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        onClick={() => setOpen(false)}
+                        className={`block rounded px-2 py-1.5 text-xs hover:bg-[var(--surface)] hover:text-[var(--ink)] ${
+                          pathname === sub.href ? 'font-semibold text-[var(--orange)]' : 'text-[var(--muted)]'
+                        }`}
+                      >
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
       )}
     </header>

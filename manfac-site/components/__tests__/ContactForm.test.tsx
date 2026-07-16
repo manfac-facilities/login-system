@@ -15,7 +15,7 @@ describe('ContactForm', () => {
     const user = userEvent.setup()
     render(<ContactForm />)
     await user.click(screen.getByRole('button', { name: /obra ou reforma/i }))
-    expect(screen.getByLabelText(/^nome$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^nome/i)).toBeInTheDocument()
     expect(screen.queryByLabelText(/nº de unidades/i)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /manutenção recorrente/i }))
     expect(screen.getByLabelText(/nº de unidades/i)).toBeInTheDocument()

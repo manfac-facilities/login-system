@@ -1,6 +1,6 @@
 import Reveal from './Reveal'
 
-export default function Contato({ standalone = false }: { standalone?: boolean }) {
+export default function Contato() {
   return (
     <section className="border-t border-[var(--border)] bg-[var(--background)]">
       <div className="mx-auto max-w-3xl px-6 py-28 text-center">
@@ -24,10 +24,10 @@ export default function Contato({ standalone = false }: { standalone?: boolean }
         </Reveal>
         <Reveal delay={360}>
           <a
-            href={standalone ? 'mailto:contato@manfac.com.br' : '/contato'}
+            href="/contato"
             className="mt-8 inline-flex items-center gap-3 rounded-full bg-[var(--orange)] px-8 py-4 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            {standalone ? 'contato@manfac.com.br' : 'AGENDAR CONVERSA TÉCNICA'}
+            AGENDAR CONVERSA TÉCNICA
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="9" stroke="white" strokeWidth="1.5" opacity="0.5"/>
               <path d="M7.5 10h5M10 7.5l2.5 2.5-2.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
