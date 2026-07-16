@@ -48,9 +48,15 @@ export default function QuemSomos() {
               grandes operações.
             </h2>
             <p className="mt-5 text-[var(--body-text)]">
+              A Manfac é uma empresa de engenharia especializada em manutenção predial, obras e
+              reformas corporativas para grandes operações. Atuamos com equipe própria, gestão
+              ativa e visibilidade em campo para empresas que precisam de previsibilidade, padrão
+              técnico e resposta rápida em múltiplas unidades.
+            </p>
+            <p className="mt-4 text-[var(--body-text)]">
               Enquanto o mercado divide engenharia em contratos isolados, a Manfac entrega um modelo
-              único: do diagnóstico à conclusão, com equipe técnica própria que conhece cada detalhe
-              da sua demanda.
+              único: do diagnóstico à conclusão, com um time que conhece cada detalhe da sua
+              demanda.
             </p>
             <p className="mt-4 text-[var(--body-text)]">
               Nosso compromisso é que cada cliente tenha mais controle, mais clareza e mais confiança

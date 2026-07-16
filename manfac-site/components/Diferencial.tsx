@@ -43,7 +43,7 @@ const ICONS = [
 const DESCRICOES = [
   'Não deixamos a operação rodar sozinha. Acompanhamos, ajustamos e garantimos o resultado.',
   'Nada fica escondido. Prazos, custos e andamento são reportados com clareza e recorrência.',
-  'Canal direto com o responsável técnico em cada etapa — sem ruído e sem surpresas.',
+  'Canal direto com o responsável técnico em cada etapa — sem ruído, com comunicação recorrente sobre cronograma e custos.',
   'Dados e sistemas para tomar decisões mais rápidas e com menos erros no campo.',
   'Antecipamos problemas antes que virem crise. Agimos, não reagimos.',
 ]
