@@ -93,8 +93,8 @@ export default function ServicePage({ servico }: { servico: ServicoData }) {
             <Reveal delay={140}>
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
                 <Image
-                  src={servico.foto}
-                  alt={servico.fotoAlt}
+                  src={servico.fotoSecundaria ?? servico.foto}
+                  alt={servico.fotoSecundariaAlt ?? servico.fotoAlt}
                   fill
                   className="object-cover object-center"
                   sizes="(max-width: 768px) 100vw, 50vw"

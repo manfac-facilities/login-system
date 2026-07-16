@@ -12,6 +12,8 @@ export type ServicoData = {
   spot: string
   foto: string
   fotoAlt: string
+  fotoSecundaria?: string
+  fotoSecundariaAlt?: string
   metaTitle: string
   metaDescription: string
 }
@@ -66,6 +68,8 @@ export const SERVICOS_DATA: ServicoData[] = [
     spot: 'A construção em si é sempre um projeto spot: escopo fechado, cronograma, orçamento e entrega técnica documentada.',
     foto: '/media/v03-equipe-obra.jpg',
     fotoAlt: 'Equipe de construção trabalhando em estrutura de edifício',
+    fotoSecundaria: '/media/v03-fachada-comercial.jpg',
+    fotoSecundariaAlt: 'Fachada de edifício comercial moderno entregue',
     metaTitle: 'Novas Construções — Manfac Engenharia',
     metaDescription: 'Gestão e execução de novas construções do planejamento à entrega das chaves, com equipe própria, cronograma real e custo sob controle.',
   },

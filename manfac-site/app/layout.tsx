@@ -50,9 +50,6 @@ export const metadata: Metadata = {
       'Gestão e execução de obras, reformas e manutenção predial para grandes operações.',
     images: [`${siteUrl}/logo.png`],
   },
-  alternates: {
-    canonical: siteUrl,
-  },
 }
 
 const jsonLd = {
