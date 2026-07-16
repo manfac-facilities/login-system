@@ -8,10 +8,10 @@ import { NAV_ITEMS } from '@/lib/content'
 import { isNavActive } from '@/lib/nav'
 
 const SERVICOS_DROPDOWN = [
-  { href: '/servicos#obras-reformas', label: 'Obras e Reformas Corporativas' },
-  { href: '/servicos#novas-construcoes', label: 'Novas Construções' },
-  { href: '/servicos#manutencao-predial', label: 'Manutenção Predial' },
-  { href: '/servicos#hvac', label: 'Sistemas de Climatização (HVAC)' },
+  { href: '/servicos/obras-e-reformas', label: 'Obras e Reformas Corporativas' },
+  { href: '/servicos/novas-construcoes', label: 'Novas Construções' },
+  { href: '/servicos/manutencao-predial', label: 'Manutenção Predial' },
+  { href: '/servicos/hvac', label: 'Sistemas de Climatização (HVAC)' },
 ]
 
 export default function Header() {
