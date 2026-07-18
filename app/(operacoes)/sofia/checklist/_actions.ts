@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { parseChecklistFormData, validateChecklistInput } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
 type State = { error?: string; success?: boolean; checklistId?: string }
 
@@ -68,6 +69,11 @@ export async function criarChecklistAction(
   const atribuiEquipe = tipo === 'troca' || (tipo === 'recebimento' && !!equipe_destino_id)
 
   if (atribuiEquipe) {
+    const conflito = await validarVinculoEquipeUnico(supabase, equipe_destino_id as string, veiculo_id)
+    if (conflito) {
+      return { error: conflito, checklistId: data.id }
+    }
+
     const hoje = new Date().toISOString().split('T')[0]
     const { error: fechaError } = await supabase
       .from('veiculo_responsabilidade_historico')
@@ -152,6 +158,8 @@ export async function criarChecklistAction(
 
   revalidatePath('/sofia/checklist')
   revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/equipes')
+  revalidatePath('/sofia/disponibilidade')
   return { success: true, checklistId: data.id }
 }
 

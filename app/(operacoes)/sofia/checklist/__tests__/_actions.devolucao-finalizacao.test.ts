@@ -2,7 +2,7 @@ type TableResult = { data?: unknown; error?: unknown }
 
 function makeChainable(result: TableResult) {
   const chain: Record<string, unknown> = {}
-  const methods = ['update', 'insert', 'select', 'eq', 'is', 'single']
+  const methods = ['update', 'insert', 'select', 'eq', 'is', 'single', 'neq', 'limit']
   for (const m of methods) {
     chain[m] = jest.fn(() => chain)
   }
