@@ -120,11 +120,13 @@ export default async function EquipesPage({
               </div>
             </div>
             <div className="mt-3 flex items-center justify-end gap-3">
-              <form action={toggleEquipeAction.bind(null, equipe.id, !equipe.ativo)}>
-                <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
-                  {equipe.ativo ? 'Desativar' : 'Ativar'}
-                </button>
-              </form>
+              {!equipe.ativo && (
+                <form action={toggleEquipeAction.bind(null, equipe.id, true)}>
+                  <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
+                    Ativar
+                  </button>
+                </form>
+              )}
               {equipe.ativo && (
                 <DeleteConfirmButton action={desativarEquipeAction} id={equipe.id} label="Desativar" />
               )}

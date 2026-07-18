@@ -24,6 +24,7 @@ export default function DeleteConfirmButton({ action, id, label = '✕' }: Props
         disabled={isPending}
         className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 active:scale-95 transition-[color,transform]"
         title="Excluir"
+        aria-label={label === '✕' ? 'Excluir' : label}
       >
         {isPending ? '...' : label}
       </button>

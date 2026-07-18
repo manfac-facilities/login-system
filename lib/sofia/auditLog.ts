@@ -45,7 +45,8 @@ export async function logAudit(
       descricao,
       usuario_id: user?.id ?? null,
     })
-  } catch {
-    // falha no audit não deve quebrar a operação principal
+  } catch (error) {
+    // falha no audit não deve quebrar a operação principal, mas precisa ficar visível
+    console.error('logAudit falhou:', error)
   }
 }

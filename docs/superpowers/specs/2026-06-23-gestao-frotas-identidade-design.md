@@ -30,6 +30,8 @@ O logo atual (`/logo.png`) é navy sobre fundo navy no header do Hub — ilegív
 - `components/ui/Logo.tsx`: nova prop `variant?: 'navy' | 'white'`, default `'navy'` (comportamento atual preservado em todas as telas de auth, que têm fundo claro)
 - `app/(dashboard)/dashboard/page.tsx`: passa a usar `<Logo size="sm" variant="white" />` — único local com fundo navy que renderiza `<Logo>`
 
+**Atualização (achado U-20 da auditoria de 2026-07-17):** a prop `variant` nunca foi implementada — `Logo.tsx` sempre renderiza `/logo-white.png`. Na prática isso não é um bug: `globals.css` fixa fundo escuro (`#0a1628`) em `html, body` em todo o app, então **todas** as telas que renderizam `<Logo>` (auth incluído) têm fundo escuro, não claro como esta spec presumia. Decisão: manter um único logo (branco), sem a prop `variant` — adicioná-la hoje seria código morto, já que não existe nenhuma tela clara no sistema. Se um modo claro for introduzido no futuro (ver achado U-17), a prop volta a fazer sentido e pode ser implementada then.
+
 ## 3. Navegação "Voltar ao Hub"
 
 Hoje, dentro do módulo de frotas não existe forma de voltar ao Hub sem usar o botão "voltar" do navegador.

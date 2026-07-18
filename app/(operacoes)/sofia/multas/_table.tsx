@@ -43,6 +43,8 @@ export default function MultasTable({
   }
 
   function handleEnviarParaDesconto() {
+    if (!window.confirm(`Enviar ${selecionadas.size} multa(s) selecionada(s) para desconto?`))
+      return
     setErro(null)
     startTransition(async () => {
       try {

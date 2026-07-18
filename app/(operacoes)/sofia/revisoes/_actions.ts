@@ -19,7 +19,8 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
 
   if (!veiculo_id || !tipo) return { error: 'Veículo e tipo são obrigatórios' }
 
-  const status = proxima_data && new Date(proxima_data) < new Date() ? 'atrasada' : proxima_data ? 'agendada' : 'em_dia'
+  const hoje = new Date().toISOString().split('T')[0]
+  const status = proxima_data && proxima_data < hoje ? 'atrasada' : proxima_data ? 'agendada' : 'em_dia'
 
   const supabase = await createClient()
   const { error } = await supabase.from('revisoes').insert({
