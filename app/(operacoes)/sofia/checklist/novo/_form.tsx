@@ -37,6 +37,9 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   const router = useRouter()
   const [tipo, setTipo] = useState('')
   const [equipeId, setEquipeId] = useState('')
+  const [veiculoIdManual, setVeiculoIdManual] = useState('')
+  const veiculoExplicito = tipo === 'troca' || tipo === 'recebimento' || tipo === 'finalizacao_contrato'
+  const exigeEquipe = tipo === 'saida' || tipo === 'retorno' || tipo === 'devolucao'
   const veiculoDaEquipe = veiculos.find((v) => v.equipe_id === equipeId && v.status === 'ativo')
   const motoristaDaEquipe = motoristas.find((m) => m.equipe_id === equipeId && m.ativo)
   const [itens, setItens] = useState<Record<string, boolean>>({})
@@ -138,16 +141,19 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
             >
               <option value="">Selecione</option>
+              <option value="recebimento">Recebimento (retirada da locadora)</option>
               <option value="saida">Saída</option>
               <option value="retorno">Retorno</option>
+              <option value="devolucao">Devolução (fica na empresa)</option>
               <option value="troca">Troca de Responsável</option>
+              <option value="finalizacao_contrato">Finalização de Contrato</option>
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-[#94a3b8]">Equipe *</label>
+            <label className="text-sm text-[#94a3b8]">{exigeEquipe ? 'Equipe *' : 'Equipe (opcional)'}</label>
             <select
               name="equipe_id"
-              required
+              required={exigeEquipe}
               value={equipeId}
               onChange={(e) => setEquipeId(e.target.value)}
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
@@ -164,12 +170,33 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </div>
         </div>
 
-        {/* Hidden inputs preenchidos pela equipe selecionada */}
-        <input type="hidden" name="veiculo_id" value={veiculoDaEquipe?.id ?? ''} />
+        {veiculoExplicito ? (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-[#94a3b8]">Veículo *</label>
+            <select
+              name="veiculo_id"
+              required
+              value={veiculoIdManual}
+              onChange={(e) => setVeiculoIdManual(e.target.value)}
+              className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+            >
+              <option value="">Selecione</option>
+              {veiculos
+                .filter((v) => v.status !== 'inativo')
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.placa} · {v.modelo}
+                  </option>
+                ))}
+            </select>
+          </div>
+        ) : (
+          <input type="hidden" name="veiculo_id" value={veiculoDaEquipe?.id ?? ''} />
+        )}
         <input type="hidden" name="motorista_id" value={motoristaDaEquipe?.id ?? ''} />
 
-        {/* Card informativo com veículo e motorista da equipe */}
-        {equipeId && (
+        {/* Card informativo com veículo e motorista da equipe (fluxo equipe-first) */}
+        {!veiculoExplicito && equipeId && (
           <div className="px-3 py-2.5 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-sm">
             {veiculoDaEquipe ? (
               <>
@@ -192,13 +219,31 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </div>
         )}
 
-        {tipo === 'troca' && (
+        {/* Card informativo com o veículo selecionado manualmente (fluxo veículo explícito) */}
+        {veiculoExplicito && veiculoIdManual && (() => {
+          const v = veiculos.find((vv) => vv.id === veiculoIdManual)
+          if (!v) return null
+          return (
+            <div className="px-3 py-2.5 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-sm">
+              <p className="text-[#94a3b8]">
+                Veículo: <span className="text-white font-mono">{v.placa}</span>{' · '}{v.modelo}
+              </p>
+              <p className="text-[#4a6080] text-xs mt-0.5">
+                Última KM: <span className="text-amber-400 font-mono">{v.km_atual.toLocaleString('pt-BR')} km</span>
+              </p>
+            </div>
+          )
+        })()}
+
+        {(tipo === 'troca' || tipo === 'recebimento') && (
           <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-[#f05a28]/40 bg-[#0f1f3d]">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-[#94a3b8]">Equipe de destino *</label>
+              <label className="text-sm text-[#94a3b8]">
+                {tipo === 'troca' ? 'Equipe de destino *' : 'Equipe de destino (opcional)'}
+              </label>
               <select
                 name="equipe_destino_id"
-                required
+                required={tipo === 'troca'}
                 className="px-3 py-2.5 rounded-lg bg-[#0a1628] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
               >
                 <option value="">Selecione</option>
