@@ -1,5 +1,5 @@
 export type VeiculoStatus = 'ativo' | 'inativo' | 'manutencao'
-export type ChecklistTipo = 'saida' | 'retorno' | 'troca'
+export type ChecklistTipo = 'recebimento' | 'saida' | 'retorno' | 'devolucao' | 'troca' | 'finalizacao_contrato'
 export type MultaStatus = 'pendente' | 'validada' | 'descontada'
 export type TipoDesconto = 'nenhum' | 'parcial' | 'total'
 export type SinistroTipo = 'colisao' | 'furto' | 'avaria' | 'outro'
@@ -29,6 +29,8 @@ export interface Veiculo {
   valor_locacao_mensal: number | null
   status: VeiculoStatus
   equipe_id: string | null
+  previsao_retorno_oficina: string | null
+  substituto_id: string | null
   created_at: string
 }
 
