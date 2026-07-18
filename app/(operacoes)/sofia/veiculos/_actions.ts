@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { logAudit } from '@/lib/sofia/auditLog'
+import { isAdminEmail } from '@/lib/auth/admins'
+import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
 type State = { error?: string; success?: boolean }
 
@@ -25,6 +27,12 @@ export async function criarVeiculoAction(
   if (!placa || !modelo) return { error: 'Placa e modelo são obrigatórios' }
 
   const supabase = await createClient()
+
+  if (equipe_id) {
+    const conflito = await validarVinculoEquipeUnico(supabase, equipe_id)
+    if (conflito) return { error: conflito }
+  }
+
   const { error } = await supabase
     .from('veiculos')
     .insert({ placa, modelo, ano, km_atual, km_contratual_mensal, equipe_id, valor_locacao_mensal })
@@ -79,4 +87,122 @@ export async function atualizarLocacaoVeiculoAction(formData: FormData): Promise
 
   revalidatePath(`/sofia/veiculos/${id}`)
   revalidatePath('/sofia/custos')
+}
+
+export async function atualizarEquipeVeiculoAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  const equipe_id = (formData.get('equipe_id') as string) || null
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem editar a equipe do veículo' }
+
+  if (equipe_id) {
+    const conflito = await validarVinculoEquipeUnico(supabase, equipe_id, id)
+    if (conflito) return { error: conflito }
+  }
+
+  const { error } = await supabase.from('veiculos').update({ equipe_id }).eq('id', id)
+  if (error) return { error: 'Erro ao atualizar equipe do veículo' }
+
+  revalidatePath(`/sofia/veiculos/${id}`)
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/equipes')
+  await logAudit('veiculos', 'atualizou', id, 'Equipe do veículo atualizada')
+  return { success: true }
+}
+
+export async function enviarParaOficinaAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  const previsao_retorno_oficina = (formData.get('previsao_retorno_oficina') as string) || null
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem enviar veículo para oficina' }
+
+  const hoje = new Date().toISOString().split('T')[0]
+  await supabase
+    .from('veiculo_responsabilidade_historico')
+    .update({ fim: hoje })
+    .eq('veiculo_id', id)
+    .is('fim', null)
+
+  const { error } = await supabase
+    .from('veiculos')
+    .update({ status: 'manutencao', equipe_id: null, previsao_retorno_oficina })
+    .eq('id', id)
+
+  if (error) return { error: 'Erro ao enviar veículo para oficina' }
+
+  revalidatePath(`/sofia/veiculos/${id}`)
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/disponibilidade')
+  await logAudit('veiculos', 'atualizou', id, 'Veículo enviado para oficina')
+  return { success: true }
+}
+
+export async function retornarDaOficinaAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem registrar retorno da oficina' }
+
+  const { error } = await supabase
+    .from('veiculos')
+    .update({ status: 'ativo', previsao_retorno_oficina: null, substituto_id: null })
+    .eq('id', id)
+
+  if (error) return { error: 'Erro ao registrar retorno da oficina' }
+
+  revalidatePath(`/sofia/veiculos/${id}`)
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/disponibilidade')
+  await logAudit('veiculos', 'atualizou', id, 'Veículo retornou da oficina')
+  return { success: true }
+}
+
+export async function definirSubstitutoAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  const substituto_id = (formData.get('substituto_id') as string) || null
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !isAdminEmail(user.email))
+    return { error: 'Apenas administradores podem definir o veículo substituto' }
+
+  const { error } = await supabase.from('veiculos').update({ substituto_id }).eq('id', id)
+  if (error) return { error: 'Erro ao definir veículo substituto' }
+
+  revalidatePath(`/sofia/veiculos/${id}`)
+  revalidatePath('/sofia/veiculos')
+  await logAudit('veiculos', 'atualizou', id, 'Veículo substituto definido')
+  return { success: true }
 }
