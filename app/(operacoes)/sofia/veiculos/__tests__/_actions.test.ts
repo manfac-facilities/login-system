@@ -79,6 +79,12 @@ describe('actions de veículo — v04', () => {
       const result = await enviarParaOficinaAction({}, fd({ id: 'v1', previsao_retorno_oficina: '2026-08-01' }))
       expect(result).toEqual({ success: true })
     })
+
+    it('retorna erro quando falha ao fechar o histórico de responsabilidade', async () => {
+      tableResults.veiculo_responsabilidade_historico = { error: { message: 'falhou' } }
+      const result = await enviarParaOficinaAction({}, fd({ id: 'v1', previsao_retorno_oficina: '2026-08-01' }))
+      expect(result).toEqual({ error: 'Erro ao enviar veículo para oficina' })
+    })
   })
 
   describe('retornarDaOficinaAction', () => {

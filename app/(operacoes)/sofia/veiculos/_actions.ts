@@ -135,11 +135,13 @@ export async function enviarParaOficinaAction(
     return { error: 'Apenas administradores podem enviar veículo para oficina' }
 
   const hoje = new Date().toISOString().split('T')[0]
-  await supabase
+  const { error: fechaError } = await supabase
     .from('veiculo_responsabilidade_historico')
     .update({ fim: hoje })
     .eq('veiculo_id', id)
     .is('fim', null)
+
+  if (fechaError) return { error: 'Erro ao enviar veículo para oficina' }
 
   const { error } = await supabase
     .from('veiculos')
@@ -150,6 +152,7 @@ export async function enviarParaOficinaAction(
 
   revalidatePath(`/sofia/veiculos/${id}`)
   revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/equipes')
   revalidatePath('/sofia/disponibilidade')
   await logAudit('veiculos', 'atualizou', id, 'Veículo enviado para oficina')
   return { success: true }
