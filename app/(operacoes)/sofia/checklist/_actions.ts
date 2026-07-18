@@ -65,7 +65,9 @@ export async function criarChecklistAction(
 
   await logAudit('checklists', 'criou', data.id, `Checklist tipo '${tipo}' criado — veículo ${veiculo_id}`)
 
-  if (tipo === 'troca') {
+  const atribuiEquipe = tipo === 'troca' || (tipo === 'recebimento' && !!equipe_destino_id)
+
+  if (atribuiEquipe) {
     const hoje = new Date().toISOString().split('T')[0]
     const { error: fechaError } = await supabase
       .from('veiculo_responsabilidade_historico')
@@ -98,12 +100,54 @@ export async function criarChecklistAction(
     if (fechaError || insereError || veiculoError || motoristaError) {
       return {
         error:
-          'Checklist salvo, mas a troca de responsável não foi totalmente registrada. Contate o suporte.',
+          'Checklist salvo, mas a atribuição de equipe não foi totalmente registrada. Contate o suporte.',
         checklistId: data.id,
       }
     }
 
-    await logAudit('veiculo_responsabilidade_historico', 'criou', null, `Troca de responsável: veículo ${veiculo_id} → equipe ${equipe_destino_id}`)
+    await logAudit('veiculo_responsabilidade_historico', 'criou', null, `Atribuição de equipe: veículo ${veiculo_id} → equipe ${equipe_destino_id}`)
+  } else if (tipo === 'devolucao') {
+    const hoje = new Date().toISOString().split('T')[0]
+    const { error: fechaError } = await supabase
+      .from('veiculo_responsabilidade_historico')
+      .update({ fim: hoje })
+      .eq('veiculo_id', veiculo_id)
+      .is('fim', null)
+
+    const { error: veiculoError } = await supabase
+      .from('veiculos')
+      .update({ equipe_id: null })
+      .eq('id', veiculo_id)
+
+    if (fechaError || veiculoError) {
+      return {
+        error: 'Checklist salvo, mas a devolução não foi totalmente registrada. Contate o suporte.',
+        checklistId: data.id,
+      }
+    }
+
+    await logAudit('veiculos', 'atualizou', veiculo_id, `Devolução registrada — veículo ${veiculo_id} sem equipe`)
+  } else if (tipo === 'finalizacao_contrato') {
+    const hoje = new Date().toISOString().split('T')[0]
+    const { error: fechaError } = await supabase
+      .from('veiculo_responsabilidade_historico')
+      .update({ fim: hoje })
+      .eq('veiculo_id', veiculo_id)
+      .is('fim', null)
+
+    const { error: veiculoError } = await supabase
+      .from('veiculos')
+      .update({ status: 'inativo', equipe_id: null })
+      .eq('id', veiculo_id)
+
+    if (fechaError || veiculoError) {
+      return {
+        error: 'Checklist salvo, mas a finalização de contrato não foi totalmente registrada. Contate o suporte.',
+        checklistId: data.id,
+      }
+    }
+
+    await logAudit('veiculos', 'desativou', veiculo_id, `Finalização de contrato registrada via checklist — veículo ${veiculo_id}`)
   }
 
   revalidatePath('/sofia/checklist')
