@@ -1,4 +1,5 @@
 import { parseChecklistFormData, validateChecklistInput } from '../_validation'
+import type { ParsedChecklistInput } from '../_validation'
 
 function buildFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -102,70 +103,98 @@ describe('parseChecklistFormData', () => {
 })
 
 describe('validateChecklistInput', () => {
-  const base = {
-    tipo: 'saida',
-    equipe_id: 'e1',
-    veiculo_id: 'v1',
-    motorista_id: null,
-    equipe_destino_id: null,
-    motorista_destino_id: null,
-    observacoes: null,
-    latitude: null,
-    longitude: null,
-    avaria_identificada: false,
-    avaria_descricao: null,
-    chave_entregue: false,
-    cartao_combustivel_entregue: false,
-    assinatura_motorista: true,
-    itens: {
-      lataria_ok: false,
-      vidros_ok: false,
-      pneus_ok: false,
-      combustivel_ok: false,
-      itens_internos_ok: false,
-      estepe_ok: false,
-      macaco_ok: false,
-      triangulo_ok: false,
-    },
+  function baseInput(overrides: Partial<ParsedChecklistInput> = {}): ParsedChecklistInput {
+    return {
+      tipo: 'saida',
+      equipe_id: 'e1',
+      veiculo_id: 'v1',
+      motorista_id: null,
+      equipe_destino_id: null,
+      motorista_destino_id: null,
+      observacoes: null,
+      latitude: null,
+      longitude: null,
+      avaria_identificada: false,
+      avaria_descricao: null,
+      chave_entregue: false,
+      cartao_combustivel_entregue: false,
+      assinatura_motorista: true,
+      itens: {
+        lataria_ok: false,
+        vidros_ok: false,
+        pneus_ok: false,
+        combustivel_ok: false,
+        itens_internos_ok: false,
+        estepe_ok: false,
+        macaco_ok: false,
+        triangulo_ok: false,
+      },
+      ...overrides,
+    }
   }
 
   it('passes for a valid saida checklist', () => {
-    expect(validateChecklistInput(base)).toBeNull()
+    expect(validateChecklistInput(baseInput())).toBeNull()
   })
 
   it('requires tipo', () => {
-    expect(validateChecklistInput({ ...base, tipo: '' })).toBe(
-      'Tipo, equipe e veículo são obrigatórios'
+    expect(validateChecklistInput(baseInput({ tipo: '' }))).toBe(
+      'Tipo e veículo são obrigatórios'
     )
   })
 
   it('requires equipe_id', () => {
-    expect(validateChecklistInput({ ...base, equipe_id: '' })).toBe(
-      'Tipo, equipe e veículo são obrigatórios'
+    expect(validateChecklistInput(baseInput({ equipe_id: null }))).toBe(
+      'Equipe é obrigatória para este tipo de checklist'
     )
   })
 
   it('requires veiculo_id', () => {
-    expect(validateChecklistInput({ ...base, veiculo_id: '' })).toBe(
-      'Tipo, equipe e veículo são obrigatórios'
+    expect(validateChecklistInput(baseInput({ veiculo_id: '' }))).toBe(
+      'Tipo e veículo são obrigatórios'
     )
   })
 
   it('requires equipe_destino_id when tipo is troca', () => {
     expect(
-      validateChecklistInput({ ...base, tipo: 'troca', equipe_destino_id: null })
+      validateChecklistInput(baseInput({ tipo: 'troca', equipe_destino_id: null }))
     ).toBe('Equipe de destino é obrigatória numa troca')
   })
 
   it('passes for troca when equipe_destino_id is present', () => {
     expect(
-      validateChecklistInput({ ...base, tipo: 'troca', equipe_destino_id: 'e2' })
+      validateChecklistInput(baseInput({ tipo: 'troca', equipe_destino_id: 'e2' }))
     ).toBeNull()
   })
 
   it('requires assinatura_motorista', () => {
-    expect(validateChecklistInput({ ...base, assinatura_motorista: false })).toBe(
+    expect(validateChecklistInput(baseInput({ assinatura_motorista: false }))).toBe(
       'Confirmação do motorista é obrigatória'
     )
+  })
+
+  it('não exige equipe para recebimento', () => {
+    const input = baseInput({ tipo: 'recebimento', equipe_id: null, assinatura_motorista: true })
+    expect(validateChecklistInput(input)).toBeNull()
+  })
+
+  it('não exige equipe para finalizacao_contrato', () => {
+    const input = baseInput({ tipo: 'finalizacao_contrato', equipe_id: null, assinatura_motorista: true })
+    expect(validateChecklistInput(input)).toBeNull()
+  })
+
+  it('exige equipe para devolucao', () => {
+    const input = baseInput({ tipo: 'devolucao', equipe_id: null, assinatura_motorista: true })
+    expect(validateChecklistInput(input)).toBe('Equipe é obrigatória para este tipo de checklist')
+  })
+
+  it('aceita devolucao com equipe preenchida', () => {
+    const input = baseInput({ tipo: 'devolucao', equipe_id: 'equipe-1', assinatura_motorista: true })
+    expect(validateChecklistInput(input)).toBeNull()
+  })
+
+  it('não exige equipe de origem para troca (só equipe_destino_id)', () => {
+    const input = baseInput({ tipo: 'troca', equipe_id: null, equipe_destino_id: 'equipe-2', assinatura_motorista: true })
+    expect(validateChecklistInput(input)).toBeNull()
   })
 })

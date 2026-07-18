@@ -11,7 +11,7 @@ export interface ChecklistItens {
 
 export interface ParsedChecklistInput {
   tipo: string
-  equipe_id: string
+  equipe_id: string | null
   veiculo_id: string
   motorista_id: string | null
   equipe_destino_id: string | null
@@ -36,7 +36,7 @@ export interface ParsedChecklistInput {
  */
 export function parseChecklistFormData(formData: FormData): ParsedChecklistInput {
   const tipo = (formData.get('tipo') as string | null) ?? ''
-  const equipe_id = (formData.get('equipe_id') as string | null) ?? ''
+  const equipe_id = (formData.get('equipe_id') as string | null) || null
   const veiculo_id = (formData.get('veiculo_id') as string | null) ?? ''
   const motorista_id = (formData.get('motorista_id') as string | null) || null
   const equipe_destino_id = (formData.get('equipe_destino_id') as string | null) || null
@@ -85,8 +85,12 @@ export function parseChecklistFormData(formData: FormData): ParsedChecklistInput
  * surfaced directly to the user) or `null` when the input is valid.
  */
 export function validateChecklistInput(input: ParsedChecklistInput): string | null {
-  if (!input.tipo || !input.equipe_id || !input.veiculo_id) {
-    return 'Tipo, equipe e veículo são obrigatórios'
+  if (!input.tipo || !input.veiculo_id) {
+    return 'Tipo e veículo são obrigatórios'
+  }
+  const exigeEquipe = ['saida', 'retorno', 'devolucao'].includes(input.tipo)
+  if (exigeEquipe && !input.equipe_id) {
+    return 'Equipe é obrigatória para este tipo de checklist'
   }
   if (input.tipo === 'troca' && !input.equipe_destino_id) {
     return 'Equipe de destino é obrigatória numa troca'
