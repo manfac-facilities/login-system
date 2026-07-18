@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { getResponsabilidadeHistorico, getCentroCustoHistorico } from '@/lib/sofia/queries'
+import { getResponsabilidadeHistorico, getCentroCustoHistorico, getEquipes, getVeiculos } from '@/lib/sofia/queries'
 import type { VeiculoResponsabilidadeHistorico } from '@/lib/sofia/types'
 import { notFound } from 'next/navigation'
 import { softDeleteVeiculoAction, atualizarLocacaoVeiculoAction } from '../_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
+import EditarEquipeVeiculoForm from '@/components/sofia/EditarEquipeVeiculoForm'
+import OficinaForm from '@/components/sofia/OficinaForm'
 
 type HistoricoComRelacoes = VeiculoResponsabilidadeHistorico & {
   equipes: { codigo: string } | null
@@ -14,13 +16,23 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: veiculo }, historico, centroCusto] = await Promise.all([
+  const [{ data: veiculo }, historico, centroCusto, equipes, todosVeiculos] = await Promise.all([
     supabase.from('veiculos').select('*, equipes(codigo)').eq('id', id).single(),
     getResponsabilidadeHistorico(id),
     getCentroCustoHistorico(id),
+    getEquipes(),
+    getVeiculos(),
   ])
 
   if (!veiculo) notFound()
+
+  const cobrindoEste = todosVeiculos.find((v) => v.substituto_id === veiculo.id)
+  const cobertoPor = veiculo.substituto_id
+    ? todosVeiculos.find((v) => v.id === veiculo.substituto_id)
+    : null
+  const veiculosParaSubstituir = todosVeiculos.filter(
+    (v) => v.id !== veiculo.id && v.status === 'ativo' && !v.equipe_id
+  )
 
   const [{ data: multas }, { data: sinistros }, { data: revisoes }, { data: abastecimentos }] = await Promise.all([
     supabase.from('multas').select('valor, valor_descontado').eq('veiculo_id', id),
@@ -51,7 +63,11 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
             <p className="text-[#4a6080] text-xs mt-1">Centro de custo vigente: {centroCusto[0]?.centro_custo ?? '—'}</p>
           </div>
 
-          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Histórico de responsabilidade</h2>
+          <div className="mb-6">
+            <EditarEquipeVeiculoForm veiculoId={veiculo.id} equipes={equipes} equipeAtualId={veiculo.equipe_id} />
+          </div>
+
+          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">📋 Histórico de responsabilidade (uso completo deste veículo)</h2>
           <div className="flex flex-col gap-3 border-l-2 border-[#1e3a5f] pl-4">
             {historico.length === 0 && <p className="text-[#4a6080] text-sm">Sem histórico de troca ainda.</p>}
             {(historico as HistoricoComRelacoes[]).map((h) => (
@@ -86,6 +102,19 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
               <span className="text-[#f05a28] text-sm font-bold">R$ {totalAcumulado.toFixed(2)}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Oficina</h2>
+        <div className="p-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]">
+          <OficinaForm veiculo={veiculo} veiculosDisponiveis={veiculosParaSubstituir} />
+          {cobertoPor && (
+            <p className="text-[#4a6080] text-xs mt-3">Coberto atualmente por: <span className="text-white font-mono">{cobertoPor.placa}</span></p>
+          )}
+          {cobrindoEste && (
+            <p className="text-[#4a6080] text-xs mt-3">Este veículo está cobrindo: <span className="text-white font-mono">{cobrindoEste.placa}</span></p>
+          )}
         </div>
       </div>
 
