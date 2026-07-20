@@ -103,7 +103,7 @@ export async function lancarKmAction(
 
   const { error } = await supabase.from('km_diario').upsert(
     { equipe_id, veiculo_id, motorista_id, km_atual, data, observacoes },
-    { onConflict: 'data,equipe_id' }
+    { onConflict: 'data,veiculo_id' }
   )
 
   if (error) return { error: 'Erro ao registrar KM' }
