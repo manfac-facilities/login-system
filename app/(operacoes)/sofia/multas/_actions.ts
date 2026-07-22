@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registrarAuditoria } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -115,6 +116,9 @@ export async function atualizarAutorizacaoMultaAction(id: string, formData: Form
   if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
+
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
   if (status === 'sem_solicitacao') update.autorizacao_solicitado_em = null

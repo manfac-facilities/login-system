@@ -2,12 +2,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 export async function atualizarAutorizacaoSinistroAction(id: string, formData: FormData): Promise<void> {
   const status = formData.get('status') as string
   if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
+
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
   if (status === 'sem_solicitacao') update.autorizacao_solicitado_em = null

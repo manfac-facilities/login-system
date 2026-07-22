@@ -2,6 +2,7 @@ const getUserMock = jest.fn()
 const auditInsertMock = jest.fn()
 const multaInsertMock = jest.fn()
 const multaUpdateInEqMock = jest.fn()
+const multaUpdateEqMock = jest.fn()
 const multaDeleteEqSelectSingleMock = jest.fn()
 const multaDeleteInSelectMock = jest.fn()
 
@@ -14,6 +15,7 @@ jest.mock('@/lib/supabase/server', () => ({
         insert: jest.fn(() => ({ select: jest.fn(() => ({ single: multaInsertMock })) })),
         update: jest.fn(() => ({
           in: jest.fn(() => ({ eq: multaUpdateInEqMock })),
+          eq: multaUpdateEqMock,
         })),
         delete: jest.fn(() => ({
           eq: jest.fn(() => ({ select: jest.fn(() => ({ single: multaDeleteEqSelectSingleMock })) })),
@@ -33,6 +35,7 @@ import {
   enviarParaDescontoEmMassaAction,
   excluirMultaAction,
   excluirMultasEmMassaAction,
+  atualizarAutorizacaoMultaAction,
 } from '../_actions'
 
 function buildFormData(overrides: Record<string, string> = {}): FormData {
@@ -164,6 +167,22 @@ describe('excluirMultaAction', () => {
     const result = await excluirMultaAction({}, buildExclusaoFormData())
     expect(result.error).toBe('Multa não encontrada')
     expect(auditInsertMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('atualizarAutorizacaoMultaAction', () => {
+  beforeEach(() => {
+    getUserMock.mockReset()
+    multaUpdateEqMock.mockReset()
+    multaUpdateEqMock.mockResolvedValue({ error: null })
+  })
+
+  it('não atualiza quando o usuário não é admin', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    const fd = new FormData()
+    fd.set('status', 'autorizado')
+    await atualizarAutorizacaoMultaAction('multa-1', fd)
+    expect(multaUpdateEqMock).not.toHaveBeenCalled()
   })
 })
 

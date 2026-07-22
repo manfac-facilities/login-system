@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validateKmAtual } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -149,6 +150,9 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
   if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
+
   const update: Record<string, unknown> = {
     veiculo_id,
     mes,
@@ -173,6 +177,9 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   if (!id || !['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
+
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
   if (status === 'sem_solicitacao' || status === 'autorizado') update.autorizacao_solicitado_em = null
