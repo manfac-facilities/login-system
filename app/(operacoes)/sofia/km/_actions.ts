@@ -131,6 +131,9 @@ export async function deletarKmAction(
   if (!id) return { error: 'ID inválido' }
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return { error: erroAdmin }
+
   const { error } = await supabase.from('km_diario').delete().eq('id', id)
 
   if (error) return { error: 'Erro ao excluir lançamento' }

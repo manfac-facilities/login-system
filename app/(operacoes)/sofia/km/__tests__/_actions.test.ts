@@ -2,7 +2,7 @@ type TableResult = { data?: unknown; error?: unknown }
 
 function makeChainable(result: TableResult) {
   const chain: Record<string, unknown> = {}
-  const methods = ['select', 'insert', 'update', 'upsert', 'eq', 'gte', 'lt', 'order', 'single', 'maybeSingle']
+  const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'gte', 'lt', 'order', 'single', 'maybeSingle']
   for (const m of methods) {
     chain[m] = jest.fn((...args: unknown[]) => {
       if (m === 'upsert') lastUpsertArgs = args
@@ -35,7 +35,7 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/sofia/auditLog', () => ({ logAudit: jest.fn() }))
 
-import { lancarKmAction, upsertKmExcedidoStatusAction, atualizarAutorizacaoKmExcedidoAction } from '../_actions'
+import { lancarKmAction, deletarKmAction, upsertKmExcedidoStatusAction, atualizarAutorizacaoKmExcedidoAction } from '../_actions'
 
 function buildFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -82,6 +82,23 @@ describe('upsertKmExcedidoStatusAction', () => {
     })
     await upsertKmExcedidoStatusAction(fd)
     expect(chains.km_excedido_desconto.upsert).not.toHaveBeenCalled()
+  })
+})
+
+describe('deletarKmAction', () => {
+  beforeEach(() => {
+    tableResults = { km_diario: { error: null } }
+    chains = { km_diario: makeChainable(tableResults.km_diario) }
+    currentUserEmail = NON_ADMIN_EMAIL
+  })
+
+  it('não exclui quando o usuário não é admin', async () => {
+    const fd = buildFormData({ id: 'km-1' })
+
+    const result = await deletarKmAction({}, fd)
+
+    expect(result).toEqual({ error: 'Apenas administradores podem executar esta ação' })
+    expect(chains.km_diario.delete).not.toHaveBeenCalled()
   })
 })
 

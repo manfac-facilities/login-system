@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -12,6 +13,9 @@ export async function atualizarCentroCustoAction(_prev: State, formData: FormDat
   if (!veiculo_id || !centro_custo) return { error: 'Veículo e centro de custo são obrigatórios' }
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return { error: erroAdmin }
+
   const { error } = await supabase.from('centro_custo_historico').insert({ veiculo_id, centro_custo, vigente_desde })
 
   if (error) return { error: 'Erro ao atualizar centro de custo' }

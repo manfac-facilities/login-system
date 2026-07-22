@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/sofia/auditLog'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -46,6 +47,9 @@ export async function deletarAbastecimentoAction(
   if (!id) return { error: 'ID inválido' }
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return { error: erroAdmin }
+
   const { error } = await supabase.from('abastecimentos').delete().eq('id', id)
 
   if (error) return { error: 'Erro ao excluir abastecimento' }

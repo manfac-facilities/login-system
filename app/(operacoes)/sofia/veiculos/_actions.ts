@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
 type State = { error?: string; success?: boolean }
@@ -75,6 +76,9 @@ export async function atualizarLocacaoVeiculoAction(formData: FormData): Promise
     : null
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
   const { error } = await supabase
     .from('veiculos')
     .update({ valor_locacao_mensal })
