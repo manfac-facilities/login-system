@@ -49,13 +49,15 @@ export async function middleware(request: NextRequest) {
   const isConversorOsApi = pathname.startsWith('/api/conversor-os')
   const isConversorOsPage = pathname.startsWith('/conversor-os')
   const isSofiaPage = pathname.startsWith('/sofia')
+  const isSofiaApi = pathname.startsWith('/api/sofia')
   const isAdminPage = pathname.startsWith('/admin')
   const isProtected =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/sofia') ||
     isConversorOsPage ||
     isAdminPage ||
-    isConversorOsApi
+    isConversorOsApi ||
+    isSofiaApi
   // /reset-password não entra em isAuthPage: usuários autenticados precisam
   // acessá-la durante o fluxo de redefinição de senha via link de e-mail.
   const isAuthPage =
@@ -65,12 +67,12 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected) {
     if (!user) {
-      if (isConversorOsApi) return jsonComCookies({ error: 'Não autenticado' }, 401)
+      if (isConversorOsApi || isSofiaApi) return jsonComCookies({ error: 'Não autenticado' }, 401)
       return NextResponse.redirect(new URL('/login', request.url))
     }
     if (!isManfacEmail(user.email ?? '')) {
       await supabase.auth.signOut()
-      if (isConversorOsApi) return jsonComCookies({ error: 'Não autorizado' }, 403)
+      if (isConversorOsApi || isSofiaApi) return jsonComCookies({ error: 'Não autorizado' }, 403)
       const url = new URL('/login', request.url)
       url.searchParams.set('error', 'unauthorized')
       const redirectResponse = NextResponse.redirect(url)
@@ -86,9 +88,10 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
-    if (isSofiaPage) {
+    if (isSofiaPage || isSofiaApi) {
       const acessoSofia = await hasSystemAccess(supabase, user.email ?? '', 'sofia')
       if (!acessoSofia) {
+        if (isSofiaApi) return jsonComCookies({ error: 'Sem acesso ao Sofia' }, 403)
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
