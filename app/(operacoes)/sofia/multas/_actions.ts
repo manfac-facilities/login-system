@@ -1,7 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { registrarAuditoria } from '@/lib/sofia/auditLog'
+import { logAudit } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 
@@ -32,17 +32,7 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
   if (error) return { error: 'Erro ao registrar multa' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  await registrarAuditoria(supabase, {
-    tabela: 'multas',
-    registro_id: row.id,
-    acao: 'criacao',
-    dados: row,
-    usuario_email: user?.email ?? null,
-  })
+  await logAudit('multas', 'criou', row.id, `Multa registrada — ${tipo_infracao} (${data})`)
 
   revalidatePath('/sofia/multas')
   return { success: true }
@@ -77,13 +67,7 @@ export async function excluirMultaAction(_prev: State, formData: FormData): Prom
   if (error) return { error: 'Erro ao excluir multa' }
   if (!multa) return { error: 'Multa não encontrada' }
 
-  await registrarAuditoria(supabase, {
-    tabela: 'multas',
-    registro_id: id,
-    acao: 'exclusao',
-    dados: multa,
-    usuario_email: user.email,
-  })
+  await logAudit('multas', 'excluiu', id, `Multa excluída — ${multa.tipo_infracao ?? multa.descricao ?? id}`)
 
   revalidatePath('/sofia/multas')
   return { success: true }
@@ -101,13 +85,7 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   if (error) throw error
 
   for (const multa of multas ?? []) {
-    await registrarAuditoria(supabase, {
-      tabela: 'multas',
-      registro_id: multa.id,
-      acao: 'exclusao',
-      dados: multa,
-      usuario_email: user.email,
-    })
+    await logAudit('multas', 'excluiu', multa.id, `Multa excluída em massa — ${multa.tipo_infracao ?? multa.descricao ?? multa.id}`)
   }
 
   revalidatePath('/sofia/multas')

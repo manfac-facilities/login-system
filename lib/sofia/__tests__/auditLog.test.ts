@@ -1,44 +1,60 @@
-import { registrarAuditoria } from '../auditLog'
+let currentUserId: string | null = 'user-1'
+let insertMock: jest.Mock
 
-describe('registrarAuditoria', () => {
-  it('inserts a row with the given fields', async () => {
-    const insertMock = jest.fn().mockResolvedValue({ error: null })
-    const supabase = { from: jest.fn(() => ({ insert: insertMock })) } as unknown as Parameters<
-      typeof registrarAuditoria
-    >[0]
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(async () => ({
+    auth: {
+      getUser: jest.fn(async () => ({
+        data: { user: currentUserId ? { id: currentUserId } : null },
+      })),
+    },
+    from: jest.fn(() => ({ insert: insertMock })),
+  })),
+}))
 
-    await registrarAuditoria(supabase, {
-      tabela: 'multas',
-      registro_id: 'multa-1',
-      acao: 'criacao',
-      dados: { id: 'multa-1', valor: 100 },
-      usuario_email: 'joao@manfac.com.br',
-    })
+import { logAudit } from '../auditLog'
 
-    expect(supabase.from).toHaveBeenCalledWith('audit_log')
+describe('logAudit', () => {
+  beforeEach(() => {
+    currentUserId = 'user-1'
+    insertMock = jest.fn().mockResolvedValue({ error: null })
+  })
+
+  it('grava no audit_log com o formato { tabela, operacao, registro_id, descricao, usuario_id }', async () => {
+    await logAudit('multas', 'criou', 'multa-1', 'Multa registrada — excesso de velocidade (2026-07-01)')
+
     expect(insertMock).toHaveBeenCalledWith({
       tabela: 'multas',
+      operacao: 'criou',
       registro_id: 'multa-1',
-      acao: 'criacao',
-      dados: { id: 'multa-1', valor: 100 },
-      usuario_email: 'joao@manfac.com.br',
+      descricao: 'Multa registrada — excesso de velocidade (2026-07-01)',
+      usuario_id: 'user-1',
     })
   })
 
-  it('throws when the insert fails', async () => {
-    const insertMock = jest.fn().mockResolvedValue({ error: new Error('db error') })
-    const supabase = { from: jest.fn(() => ({ insert: insertMock })) } as unknown as Parameters<
-      typeof registrarAuditoria
-    >[0]
+  it('usa usuario_id null quando não há usuário autenticado', async () => {
+    currentUserId = null
+
+    await logAudit('multas', 'excluiu', 'multa-1', 'Multa excluída — excesso de velocidade')
+
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ usuario_id: null })
+    )
+  })
+
+  it('não lança quando o insert retorna erro', async () => {
+    insertMock = jest.fn().mockResolvedValue({ error: new Error('db error') })
 
     await expect(
-      registrarAuditoria(supabase, {
-        tabela: 'multas',
-        registro_id: 'multa-1',
-        acao: 'exclusao',
-        dados: {},
-        usuario_email: null,
-      })
-    ).rejects.toThrow()
+      logAudit('multas', 'excluiu', 'multa-1', 'Multa excluída — excesso de velocidade')
+    ).resolves.toBeUndefined()
+  })
+
+  it('não lança quando o cliente supabase lança uma exceção', async () => {
+    insertMock = jest.fn().mockRejectedValue(new Error('boom'))
+
+    await expect(
+      logAudit('multas', 'atualizou', 'multa-1', 'Multa atualizada')
+    ).resolves.toBeUndefined()
   })
 })

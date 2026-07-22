@@ -110,7 +110,7 @@ describe('criarMultaAction', () => {
     const result = await criarMultaAction({}, buildFormData())
     expect(result).toEqual({ success: true })
     expect(auditInsertMock).toHaveBeenCalledWith(
-      expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', acao: 'criacao' })
+      expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', operacao: 'criou' })
     )
   })
 })
@@ -159,7 +159,7 @@ describe('excluirMultaAction', () => {
     expect(result).toEqual({ success: true })
     expect(multaDeleteEqSelectSingleMock).toHaveBeenCalled()
     expect(auditInsertMock).toHaveBeenCalledWith(
-      expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', acao: 'exclusao' })
+      expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', operacao: 'excluiu' })
     )
   })
 

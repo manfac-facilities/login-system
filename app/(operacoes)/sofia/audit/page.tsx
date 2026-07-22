@@ -21,7 +21,6 @@ export default async function AuditPage() {
   const { data } = await supabase
     .from('audit_log')
     .select('id, tabela, operacao, registro_id, descricao, created_at')
-    .not('operacao', 'is', null)
     .order('created_at', { ascending: false })
     .limit(200)
 
