@@ -117,11 +117,21 @@ describe('criarMultaAction', () => {
 
 describe('enviarParaDescontoEmMassaAction', () => {
   beforeEach(() => {
+    getUserMock.mockReset()
     multaUpdateInEqMock.mockReset()
     multaUpdateInEqMock.mockResolvedValue({ error: null })
   })
 
+  it('rejects a non-admin user by throwing', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    await expect(enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow(
+      'Apenas administradores podem executar esta ação'
+    )
+    expect(multaUpdateInEqMock).not.toHaveBeenCalled()
+  })
+
   it('moves only pending multas to validada', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
     await enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])
     expect(multaUpdateInEqMock).toHaveBeenCalledWith('status', 'pendente')
   })

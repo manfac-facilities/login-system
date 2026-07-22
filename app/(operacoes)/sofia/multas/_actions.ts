@@ -50,6 +50,8 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
 export async function enviarParaDescontoEmMassaAction(ids: string[]) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
   const { error } = await supabase
     .from('multas')
     .update({ status: 'validada' })
