@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { hasSystemAccess } from '@/lib/auth/systemAccess'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -8,6 +9,14 @@ export async function GET(request: Request) {
   const motorista_id = searchParams.get('motorista_id')
 
   const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const acesso = await hasSystemAccess(supabase, user.email, 'sofia')
+  if (!acesso) return NextResponse.json({ error: 'Sem acesso ao sistema' }, { status: 403 })
 
   if (veiculo_id) {
     const { data } = await supabase

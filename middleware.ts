@@ -111,6 +111,7 @@ export const config = {
     '/conversor-os/:path*',
     '/admin/:path*',
     '/api/conversor-os/:path*',
+    '/api/sofia/:path*',
     '/login',
     '/signup',
     '/signup/verify',
