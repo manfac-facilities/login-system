@@ -3,10 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { isAdminEmail } from '@/lib/auth/admins'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { AUTORIZACAO_STATUS, SINISTRO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 export async function atualizarAutorizacaoSinistroAction(id: string, formData: FormData): Promise<void> {
   const status = formData.get('status') as string
-  if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+  if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)
@@ -60,6 +61,8 @@ export async function uploadFotoSinistroAction(sinistroId: string, storagePath: 
 export async function atualizarTratativaSinistroAction(_prev: State, formData: FormData): Promise<State> {
   const id = formData.get('id') as string
   const status = formData.get('status') as string
+
+  if (!isValidEnum(SINISTRO_STATUS, status)) return { error: 'Status de sinistro inválido' }
 
   const supabase = await createClient()
   const { error } = await supabase.from('sinistros').update({ status }).eq('id', id)
