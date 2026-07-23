@@ -1,7 +1,12 @@
 -- ============================================================
--- Gestão de Frotas — Pacote de Segurança — 2026-07-20
+-- Gestão de Frotas — Pacote de Segurança — 2026-07-20 (atualizado 2026-07-23)
 -- Achados da auditoria: B-01 (RLS aberta), B-02 (audit log
 -- quebrado), B-03 (desconto sem gate), B-07 (gates inconsistentes)
+-- + achados do /security-review no diff final: RLS/triggers cobrindo
+-- os demais admin-only gates (equipes.ativo, veiculos.valor_locacao_mensal,
+-- centro_custo_historico, delete de abastecimentos/km_diario) e delete
+-- de multas/sinistros/km_excedido_desconto, que antes só eram bloqueados
+-- na camada da aplicação e ficavam contornáveis via Supabase direto.
 -- ============================================================
 -- IMPORTANTE: as funções abaixo replicam ADMIN_EMAILS
 -- (lib/auth/admins.ts) e a lógica de hasSystemAccess()
@@ -174,7 +179,18 @@ begin
       ) then
         raise exception 'Apenas administradores podem inserir KM excedido com autorização já definida';
       end if;
+    elsif TG_OP = 'DELETE' then
+      -- Achado da security review (Vuln 2): sem isto, RLS sozinha permitia
+      -- que um usuário não-admin apagasse multa/sinistro/km_excedido via
+      -- chamada direta ao Supabase, contornando excluirMultaAction/
+      -- excluirSinistroAction (ambas admin-gated na app).
+      if TG_TABLE_NAME in ('multas', 'sinistros', 'km_excedido_desconto') then
+        raise exception 'Apenas administradores podem excluir este registro';
+      end if;
     end if;
+  end if;
+  if TG_OP = 'DELETE' then
+    return old;
   end if;
   return new;
 end;
@@ -182,20 +198,87 @@ $$;
 
 drop trigger if exists trg_bloquear_autorizacao_multas on public.multas;
 create trigger trg_bloquear_autorizacao_multas
-  before insert or update on public.multas
+  before insert or update or delete on public.multas
   for each row execute function public.sofia_bloquear_autorizacao_nao_admin();
 
 drop trigger if exists trg_bloquear_autorizacao_sinistros on public.sinistros;
 create trigger trg_bloquear_autorizacao_sinistros
-  before insert or update on public.sinistros
+  before insert or update or delete on public.sinistros
   for each row execute function public.sofia_bloquear_autorizacao_nao_admin();
 
 drop trigger if exists trg_bloquear_autorizacao_km_excedido on public.km_excedido_desconto;
 create trigger trg_bloquear_autorizacao_km_excedido
-  before insert or update on public.km_excedido_desconto
+  before insert or update or delete on public.km_excedido_desconto
   for each row execute function public.sofia_bloquear_autorizacao_nao_admin();
 
--- 6. audit_log: colunas do formato antigo (registrarAuditoria) deixam de
+-- 6. Trigger de defesa em profundidade — demais escritas admin-only sem
+--    tabela de autorização dedicada (achado da security review: Vuln 1).
+--    Sem isto, RLS (sofia_has_access()) sozinha permitia que qualquer
+--    usuário com acesso ao sofia (não só admin) fizesse via Supabase direto
+--    o que toggleEquipeAction/atualizarLocacaoVeiculoAction/
+--    atualizarCentroCustoAction/deletarAbastecimentoAction/deletarKmAction
+--    já bloqueiam na camada da aplicação.
+create or replace function public.sofia_bloquear_escrita_nao_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_catalog
+as $$
+begin
+  if not public.sofia_is_admin() then
+    if TG_OP = 'UPDATE' then
+      if TG_TABLE_NAME = 'equipes' and new.ativo is distinct from old.ativo then
+        raise exception 'Apenas administradores podem ativar/desativar equipes';
+      end if;
+      if TG_TABLE_NAME = 'veiculos' and new.valor_locacao_mensal is distinct from old.valor_locacao_mensal then
+        raise exception 'Apenas administradores podem alterar o valor de locação do veículo';
+      end if;
+    elsif TG_OP = 'INSERT' then
+      if TG_TABLE_NAME = 'centro_custo_historico' then
+        raise exception 'Apenas administradores podem atualizar o centro de custo';
+      end if;
+    elsif TG_OP = 'DELETE' then
+      if TG_TABLE_NAME = 'abastecimentos' then
+        raise exception 'Apenas administradores podem excluir abastecimentos';
+      end if;
+      if TG_TABLE_NAME = 'km_diario' then
+        raise exception 'Apenas administradores podem excluir lançamentos de KM';
+      end if;
+    end if;
+  end if;
+  if TG_OP = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_bloquear_escrita_equipes on public.equipes;
+create trigger trg_bloquear_escrita_equipes
+  before update on public.equipes
+  for each row execute function public.sofia_bloquear_escrita_nao_admin();
+
+drop trigger if exists trg_bloquear_escrita_veiculos on public.veiculos;
+create trigger trg_bloquear_escrita_veiculos
+  before update on public.veiculos
+  for each row execute function public.sofia_bloquear_escrita_nao_admin();
+
+drop trigger if exists trg_bloquear_escrita_centro_custo on public.centro_custo_historico;
+create trigger trg_bloquear_escrita_centro_custo
+  before insert on public.centro_custo_historico
+  for each row execute function public.sofia_bloquear_escrita_nao_admin();
+
+drop trigger if exists trg_bloquear_escrita_abastecimentos on public.abastecimentos;
+create trigger trg_bloquear_escrita_abastecimentos
+  before delete on public.abastecimentos
+  for each row execute function public.sofia_bloquear_escrita_nao_admin();
+
+drop trigger if exists trg_bloquear_escrita_km_diario on public.km_diario;
+create trigger trg_bloquear_escrita_km_diario
+  before delete on public.km_diario
+  for each row execute function public.sofia_bloquear_escrita_nao_admin();
+
+-- 7. audit_log: colunas do formato antigo (registrarAuditoria) deixam de
 --    ser obrigatórias — a partir de agora só o formato de logAudit é usado
 alter table public.audit_log alter column acao drop not null;
 alter table public.audit_log alter column dados drop not null;
