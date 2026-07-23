@@ -348,7 +348,7 @@ export default async function MotoristaDetalhePage({ params }: { params: Promise
           <p className="text-[#94a3b8] text-sm mb-3">
             Desativar este motorista remove-o das listagens ativas. O histórico de multas, sinistros e checklists é preservado.
           </p>
-          <DeleteConfirmButton action={desativarMotoristaAction} id={motorista.id} label="Desativar Motorista" />
+          <DeleteConfirmButton action={desativarMotoristaAction} id={motorista.id} label="Desativar Motorista" itemLabel={`o motorista ${motorista.nome}`} />
         </div>
       )}
     </div>

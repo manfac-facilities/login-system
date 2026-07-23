@@ -128,7 +128,7 @@ export default async function EquipesPage({
                 </form>
               )}
               {equipe.ativo && (
-                <DeleteConfirmButton action={desativarEquipeAction} id={equipe.id} label="Desativar" />
+                <DeleteConfirmButton action={desativarEquipeAction} id={equipe.id} label="Desativar" itemLabel={`a equipe ${equipe.codigo}`} />
               )}
             </div>
           </div>

@@ -66,7 +66,7 @@ export default async function KmPage() {
                         <p className="text-[#4a6080] text-xs">{k.motoristas.nome}</p>
                       )}
                     </div>
-                    <DeleteConfirmButton action={deletarKmAction} id={k.id} />
+                    <DeleteConfirmButton action={deletarKmAction} id={k.id} itemLabel={`lançamento de KM de ${new Date(k.data + 'T00:00:00').toLocaleDateString('pt-BR')} — ${k.km_atual.toLocaleString('pt-BR')} km`} />
                   </div>
                 </div>
               ))}

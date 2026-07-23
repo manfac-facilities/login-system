@@ -139,7 +139,7 @@ export default async function AbastecimentoPage() {
                     </td>
                     <td className="px-4 py-3 text-[#94a3b8] text-right">{a.posto ?? '—'}</td>
                     <td className="px-4 py-3 text-right">
-                      <DeleteConfirmButton action={deletarAbastecimentoAction} id={a.id} />
+                      <DeleteConfirmButton action={deletarAbastecimentoAction} id={a.id} itemLabel={`abastecimento de ${a.veiculos?.placa ?? 'veículo sem placa'} — R$ ${Number(a.valor).toFixed(2)}`} />
                     </td>
                   </tr>
                 ))}

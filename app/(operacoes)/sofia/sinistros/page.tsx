@@ -125,7 +125,7 @@ export default async function SinistrosPage() {
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <DeleteConfirmButton action={excluirSinistroAction} id={s.id} />
+                  <DeleteConfirmButton action={excluirSinistroAction} id={s.id} itemLabel={`sinistro de ${s.veiculos?.placa ?? 'veículo sem placa'}`} />
                 </td>
               </tr>
             ))}

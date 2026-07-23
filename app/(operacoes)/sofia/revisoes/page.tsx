@@ -88,7 +88,7 @@ export default async function RevisoesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <DeleteConfirmButton action={excluirRevisaoAction} id={r.id} />
+                    <DeleteConfirmButton action={excluirRevisaoAction} id={r.id} itemLabel={`revisão de ${r.veiculos?.placa ?? 'veículo sem placa'}`} />
                   </td>
                 </tr>
               )

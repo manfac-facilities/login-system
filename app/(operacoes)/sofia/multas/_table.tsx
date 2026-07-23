@@ -187,7 +187,7 @@ export default function MultasTable({
                 </td>
                 <td className="px-4 py-3 text-right">
                   {isAdmin && (
-                    <DeleteConfirmButton action={excluirMultaAction} id={m.id} label="Excluir" />
+                    <DeleteConfirmButton action={excluirMultaAction} id={m.id} label="Excluir" itemLabel={`multa de ${m.veiculos?.placa ?? 'veículo sem placa'} — R$ ${Number(m.valor).toFixed(2)}`} />
                   )}
                 </td>
               </tr>
