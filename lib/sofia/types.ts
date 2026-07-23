@@ -252,15 +252,3 @@ export interface Pendencia {
 }
 
 export type AutorizacaoStatus = 'sem_solicitacao' | 'solicitado' | 'autorizado'
-
-export type AuditAcao = 'criacao' | 'exclusao'
-
-export interface AuditLog {
-  id: string
-  tabela: string
-  registro_id: string
-  acao: AuditAcao
-  dados: Record<string, unknown>
-  usuario_email: string | null
-  created_at: string
-}
