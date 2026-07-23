@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -30,6 +31,8 @@ export async function criarEquipeAction(
 
 export async function toggleEquipeAction(id: string, ativo: boolean) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
   await supabase.from('equipes').update({ ativo }).eq('id', id)
   revalidatePath('/sofia/equipes')
 }

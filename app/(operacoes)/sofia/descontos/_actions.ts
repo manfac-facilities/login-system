@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 function parseDescontoFormData(formData: FormData) {
   const id = formData.get('id') as string
@@ -13,6 +14,9 @@ function parseDescontoFormData(formData: FormData) {
 
 export async function atualizarStatusMultaAction(id: string, status: string) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
   const { error } = await supabase.from('multas').update({ status }).eq('id', id)
   if (error) throw error
   revalidatePath('/sofia/multas')
@@ -23,6 +27,18 @@ export async function registrarDescontoMultaAction(formData: FormData): Promise<
   const { id, valor_descontado, tipo_desconto, autorizacao_assinada } = parseDescontoFormData(formData)
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
+  if (Number.isNaN(valor_descontado) || valor_descontado < 0) {
+    throw new Error('Valor do desconto inválido')
+  }
+
+  const { data: multa } = await supabase.from('multas').select('valor').eq('id', id).single()
+  if (multa && valor_descontado > (multa as { valor: number }).valor) {
+    throw new Error('Valor do desconto não pode ser maior que o valor original')
+  }
+
   const { error } = await supabase
     .from('multas')
     .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status: 'descontada' })
@@ -35,6 +51,9 @@ export async function registrarDescontoMultaAction(formData: FormData): Promise<
 
 export async function desfazerDescontoMultaAction(id: string) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
   const { error } = await supabase.from('multas').update({ status: 'validada' }).eq('id', id)
   if (error) throw error
   revalidatePath('/sofia/multas')
@@ -43,6 +62,9 @@ export async function desfazerDescontoMultaAction(id: string) {
 
 export async function atualizarStatusDescontoSinistroAction(id: string, status: string) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
   const { error } = await supabase.from('sinistros').update({ status_desconto: status }).eq('id', id)
   if (error) throw error
   revalidatePath('/sofia/sinistros')
@@ -53,6 +75,18 @@ export async function registrarDescontoSinistroAction(formData: FormData): Promi
   const { id, valor_descontado, tipo_desconto, autorizacao_assinada } = parseDescontoFormData(formData)
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
+  if (Number.isNaN(valor_descontado) || valor_descontado < 0) {
+    throw new Error('Valor do desconto inválido')
+  }
+
+  const { data: sinistro } = await supabase.from('sinistros').select('valor_dano').eq('id', id).single()
+  if (sinistro && (sinistro as { valor_dano: number | null }).valor_dano != null && valor_descontado > (sinistro as { valor_dano: number }).valor_dano) {
+    throw new Error('Valor do desconto não pode ser maior que o valor original')
+  }
+
   const { error } = await supabase
     .from('sinistros')
     .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status_desconto: 'descontada' })
@@ -65,6 +99,9 @@ export async function registrarDescontoSinistroAction(formData: FormData): Promi
 
 export async function desfazerDescontoSinistroAction(id: string) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
+
   const { error } = await supabase.from('sinistros').update({ status_desconto: 'validada' }).eq('id', id)
   if (error) throw error
   revalidatePath('/sofia/sinistros')

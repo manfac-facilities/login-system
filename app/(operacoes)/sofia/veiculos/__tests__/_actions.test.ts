@@ -12,10 +12,14 @@ function makeChainable(result: TableResult) {
 
 let tableResults: Record<string, TableResult>
 let currentUserEmail: string | null
+let chains: Record<string, ReturnType<typeof makeChainable>> = {}
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
-    from: jest.fn((table: string) => makeChainable(tableResults[table])),
+    from: jest.fn((table: string) => {
+      if (!chains[table]) chains[table] = makeChainable(tableResults[table])
+      return chains[table]
+    }),
     auth: { getUser: jest.fn(async () => ({ data: { user: currentUserEmail ? { email: currentUserEmail } : null } })) },
   })),
 }))
@@ -24,6 +28,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
 import {
   atualizarEquipeVeiculoAction,
+  atualizarLocacaoVeiculoAction,
   enviarParaOficinaAction,
   retornarDaOficinaAction,
   definirSubstitutoAction,
@@ -42,6 +47,7 @@ describe('actions de veículo — v04', () => {
       veiculos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
     }
+    chains = {}
   })
 
   describe('atualizarEquipeVeiculoAction', () => {
@@ -65,6 +71,21 @@ describe('actions de veículo — v04', () => {
     it('permite desvincular (equipe_id vazio)', async () => {
       const result = await atualizarEquipeVeiculoAction({}, fd({ id: 'v1', equipe_id: '' }))
       expect(result).toEqual({ success: true })
+    })
+  })
+
+  describe('atualizarLocacaoVeiculoAction', () => {
+    beforeEach(() => {
+      chains.veiculos = makeChainable(tableResults.veiculos)
+    })
+
+    it('lança erro quando o usuário não é admin', async () => {
+      currentUserEmail = 'operador@manfac.com.br'
+
+      await expect(
+        atualizarLocacaoVeiculoAction(fd({ id: 'v1', valor_locacao_mensal: '1500' }))
+      ).rejects.toThrow('Apenas administradores podem executar esta ação')
+      expect(chains.veiculos.update).not.toHaveBeenCalled()
     })
   })
 

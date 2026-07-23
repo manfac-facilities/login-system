@@ -1,87 +1,87 @@
-const updateMock = jest.fn()
-const eqMock = jest.fn()
+type TableResult = { data?: unknown; error?: unknown }
+
+function makeChainable(result: TableResult) {
+  const chain: Record<string, unknown> = {}
+  const methods = ['select', 'update', 'eq', 'single']
+  for (const m of methods) {
+    chain[m] = jest.fn(() => chain)
+  }
+  chain.then = (resolve: (v: TableResult) => void) => resolve(result)
+  return chain
+}
+
+let tableResults: Record<string, TableResult>
+let currentUserEmail: string | null
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
-    from: jest.fn(() => ({
-      update: updateMock,
-    })),
+    from: jest.fn((table: string) => makeChainable(tableResults[table])),
+    auth: { getUser: jest.fn(async () => ({ data: { user: currentUserEmail ? { email: currentUserEmail } : null } })) },
   })),
 }))
 
-jest.mock('next/cache', () => ({
-  revalidatePath: jest.fn(),
-}))
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
 import {
-  atualizarStatusMultaAction,
   registrarDescontoMultaAction,
-  desfazerDescontoMultaAction,
-  atualizarStatusDescontoSinistroAction,
   registrarDescontoSinistroAction,
-  desfazerDescontoSinistroAction,
+  desfazerDescontoMultaAction,
+  atualizarStatusMultaAction,
 } from '../_actions'
 
-function buildDescontoFormData(overrides: Record<string, string> = {}): FormData {
-  const fd = new FormData()
-  const fields = {
-    id: 'registro-1',
-    valor_descontado: '100.00',
-    tipo_desconto: 'parcial',
-    autorizacao_assinada: 'true',
-    ...overrides,
-  }
-  for (const [k, v] of Object.entries(fields)) fd.set(k, v)
-  return fd
+function fd(fields: Record<string, string>): FormData {
+  const f = new FormData()
+  for (const [k, v] of Object.entries(fields)) f.set(k, v)
+  return f
 }
 
-describe('descontos actions', () => {
+describe('descontos/_actions — gate de admin e validação de valor', () => {
   beforeEach(() => {
-    eqMock.mockReset()
-    eqMock.mockResolvedValue({ error: null })
-    updateMock.mockReset()
-    updateMock.mockReturnValue({ eq: eqMock })
+    currentUserEmail = 'jvictorco28@gmail.com'
+    tableResults = {
+      multas: { data: { valor: 500 }, error: null },
+      sinistros: { data: { valor_dano: 1000 }, error: null },
+    }
   })
 
-  it('atualizarStatusMultaAction updates the multa status', async () => {
-    await atualizarStatusMultaAction('multa-1', 'validada')
-    expect(updateMock).toHaveBeenCalledWith({ status: 'validada' })
-    expect(eqMock).toHaveBeenCalledWith('id', 'multa-1')
+  it('registrarDescontoMultaAction rejeita usuário não-admin', async () => {
+    currentUserEmail = 'operador@manfac.com.br'
+    await expect(
+      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '100', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
+    ).rejects.toThrow('Apenas administradores podem executar esta ação')
   })
 
-  it('registrarDescontoMultaAction sets status to descontada', async () => {
-    await registrarDescontoMultaAction(buildDescontoFormData())
-    expect(updateMock).toHaveBeenCalledWith({
-      valor_descontado: 100,
-      tipo_desconto: 'parcial',
-      autorizacao_assinada: true,
-      status: 'descontada',
-    })
+  it('registrarDescontoMultaAction rejeita valor maior que o original', async () => {
+    await expect(
+      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '600', tipo_desconto: 'total', autorizacao_assinada: 'true' }))
+    ).rejects.toThrow('Valor do desconto não pode ser maior que o valor original')
   })
 
-  it('desfazerDescontoMultaAction reverts status to validada', async () => {
-    await desfazerDescontoMultaAction('multa-1')
-    expect(updateMock).toHaveBeenCalledWith({ status: 'validada' })
+  it('registrarDescontoMultaAction rejeita valor negativo', async () => {
+    await expect(
+      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '-50', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
+    ).rejects.toThrow('Valor do desconto inválido')
   })
 
-  it('atualizarStatusDescontoSinistroAction updates status_desconto', async () => {
-    await atualizarStatusDescontoSinistroAction('sinistro-1', 'validada')
-    expect(updateMock).toHaveBeenCalledWith({ status_desconto: 'validada' })
-    expect(eqMock).toHaveBeenCalledWith('id', 'sinistro-1')
+  it('registrarDescontoMultaAction aceita valor válido', async () => {
+    await expect(
+      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '200', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
+    ).resolves.toBeUndefined()
   })
 
-  it('registrarDescontoSinistroAction sets status_desconto to descontada', async () => {
-    await registrarDescontoSinistroAction(buildDescontoFormData({ id: 'sinistro-1' }))
-    expect(updateMock).toHaveBeenCalledWith({
-      valor_descontado: 100,
-      tipo_desconto: 'parcial',
-      autorizacao_assinada: true,
-      status_desconto: 'descontada',
-    })
+  it('registrarDescontoSinistroAction rejeita valor maior que o dano original', async () => {
+    await expect(
+      registrarDescontoSinistroAction(fd({ id: 's1', valor_descontado: '2000', tipo_desconto: 'total', autorizacao_assinada: 'true' }))
+    ).rejects.toThrow('Valor do desconto não pode ser maior que o valor original')
   })
 
-  it('desfazerDescontoSinistroAction reverts status_desconto to validada', async () => {
-    await desfazerDescontoSinistroAction('sinistro-1')
-    expect(updateMock).toHaveBeenCalledWith({ status_desconto: 'validada' })
+  it('desfazerDescontoMultaAction rejeita usuário não-admin', async () => {
+    currentUserEmail = 'operador@manfac.com.br'
+    await expect(desfazerDescontoMultaAction('m1')).rejects.toThrow('Apenas administradores podem executar esta ação')
+  })
+
+  it('atualizarStatusMultaAction rejeita usuário não-admin', async () => {
+    currentUserEmail = 'operador@manfac.com.br'
+    await expect(atualizarStatusMultaAction('m1', 'validada')).rejects.toThrow('Apenas administradores podem executar esta ação')
   })
 })

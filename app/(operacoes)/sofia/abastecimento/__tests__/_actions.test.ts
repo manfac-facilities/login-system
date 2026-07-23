@@ -1,9 +1,13 @@
 const insertMock = jest.fn()
+const deleteEqMock = jest.fn()
+const getUserMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
+    auth: { getUser: getUserMock },
     from: jest.fn(() => ({
       insert: insertMock,
+      delete: jest.fn(() => ({ eq: deleteEqMock })),
     })),
   })),
 }))
@@ -12,7 +16,7 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
-import { lancarAbastecimentoAction } from '../_actions'
+import { lancarAbastecimentoAction, deletarAbastecimentoAction } from '../_actions'
 
 function buildFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData()
@@ -33,6 +37,8 @@ describe('lancarAbastecimentoAction', () => {
   beforeEach(() => {
     insertMock.mockReset()
     insertMock.mockResolvedValue({ error: null })
+    getUserMock.mockReset()
+    getUserMock.mockResolvedValue({ data: { user: { email: 'jvictorco28@gmail.com' } } })
   })
 
   it('accepts an abastecimento with valor 0 (e.g. a free fuel voucher)', async () => {
@@ -68,5 +74,24 @@ describe('lancarAbastecimentoAction', () => {
 
     expect(result.error).toBeTruthy()
     expect(insertMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('deletarAbastecimentoAction', () => {
+  beforeEach(() => {
+    deleteEqMock.mockReset()
+    deleteEqMock.mockResolvedValue({ error: null })
+    getUserMock.mockReset()
+  })
+
+  it('rejeita usuário não-admin', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: 'operador@manfac.com.br' } } })
+    const fd = new FormData()
+    fd.set('id', 'abast-1')
+
+    const result = await deletarAbastecimentoAction({}, fd)
+
+    expect(result).toEqual({ error: 'Apenas administradores podem executar esta ação' })
+    expect(deleteEqMock).not.toHaveBeenCalled()
   })
 })

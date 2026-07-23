@@ -1,8 +1,9 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { registrarAuditoria } from '@/lib/sofia/auditLog'
+import { logAudit } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 type State = { error?: string; success?: boolean }
 
@@ -31,17 +32,7 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
   if (error) return { error: 'Erro ao registrar multa' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  await registrarAuditoria(supabase, {
-    tabela: 'multas',
-    registro_id: row.id,
-    acao: 'criacao',
-    dados: row,
-    usuario_email: user?.email ?? null,
-  })
+  await logAudit('multas', 'criou', row.id, `Multa registrada — ${tipo_infracao} (${data})`)
 
   revalidatePath('/sofia/multas')
   return { success: true }
@@ -49,6 +40,8 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
 export async function enviarParaDescontoEmMassaAction(ids: string[]) {
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) throw new Error(erroAdmin)
   const { error } = await supabase
     .from('multas')
     .update({ status: 'validada' })
@@ -74,13 +67,7 @@ export async function excluirMultaAction(_prev: State, formData: FormData): Prom
   if (error) return { error: 'Erro ao excluir multa' }
   if (!multa) return { error: 'Multa não encontrada' }
 
-  await registrarAuditoria(supabase, {
-    tabela: 'multas',
-    registro_id: id,
-    acao: 'exclusao',
-    dados: multa,
-    usuario_email: user.email,
-  })
+  await logAudit('multas', 'excluiu', id, `Multa excluída — ${multa.tipo_infracao ?? multa.descricao ?? id}`)
 
   revalidatePath('/sofia/multas')
   return { success: true }
@@ -98,13 +85,7 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   if (error) throw error
 
   for (const multa of multas ?? []) {
-    await registrarAuditoria(supabase, {
-      tabela: 'multas',
-      registro_id: multa.id,
-      acao: 'exclusao',
-      dados: multa,
-      usuario_email: user.email,
-    })
+    await logAudit('multas', 'excluiu', multa.id, `Multa excluída em massa — ${multa.tipo_infracao ?? multa.descricao ?? multa.id}`)
   }
 
   revalidatePath('/sofia/multas')
@@ -115,6 +96,9 @@ export async function atualizarAutorizacaoMultaAction(id: string, formData: Form
   if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
 
   const supabase = await createClient()
+  const erroAdmin = await requireAdmin(supabase)
+  if (erroAdmin) return
+
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
   if (status === 'sem_solicitacao') update.autorizacao_solicitado_em = null
