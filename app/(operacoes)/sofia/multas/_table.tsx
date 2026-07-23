@@ -8,7 +8,7 @@ import {
   atualizarAutorizacaoMultaAction,
 } from './_actions'
 
-import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import type { MultaComRelacoes } from './page'
 
@@ -147,38 +147,11 @@ export default function MultasTable({
                     : `${m.tipo_desconto === 'total' ? 'Total' : 'Parcial'} · R$ ${Number(m.valor_descontado ?? 0).toFixed(2)}`}
                 </td>
                 <td className="px-4 py-3">
-                  {(() => {
-                    const st = m.autorizacao_status ?? 'sem_solicitacao'
-                    const badgeClass = autorizacaoBadgeClass(st)
-                    const label = formatAutorizacaoLabel(st, m.autorizacao_solicitado_em ?? null)
-                    return (
-                      <div className="flex flex-col gap-1">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>
-                        <div className="flex gap-2">
-                          {st === 'sem_solicitacao' && (
-                            <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
-                            </form>
-                          )}
-                          {st === 'solicitado' && (
-                            <>
-                              <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
-                              </form>
-                              <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
-                              </form>
-                            </>
-                          )}
-                          {st === 'autorizado' && (
-                            <form action={atualizarAutorizacaoMultaAction.bind(null, m.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
-                            </form>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })()}
+                  <AutorizacaoActions
+                    status={m.autorizacao_status ?? 'sem_solicitacao'}
+                    solicitadoEm={m.autorizacao_solicitado_em ?? null}
+                    action={atualizarAutorizacaoMultaAction.bind(null, m.id)}
+                  />
                 </td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[m.status]}`}>

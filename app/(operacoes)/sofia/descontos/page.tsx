@@ -11,7 +11,7 @@ import {
 import { atualizarAutorizacaoMultaAction } from '../multas/_actions'
 import { atualizarAutorizacaoSinistroAction } from '../sinistros/_actions'
 import { atualizarAutorizacaoKmExcedidoAction } from '../km/_actions'
-import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro' | 'km_excedido'
@@ -166,38 +166,11 @@ export default async function DescontosPage() {
                       : `R$ ${Number(l.valor).toFixed(2)}`}
                   </td>
                   <td className="px-4 py-3">
-                    {(() => {
-                      const st = l.autorizacao_status
-                      return (
-                        <div className="flex flex-col gap-1">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${autorizacaoBadgeClass(st)}`}>
-                            {formatAutorizacaoLabel(st, l.autorizacao_solicitado_em)}
-                          </span>
-                          <div className="flex gap-2">
-                            {st === 'sem_solicitacao' && (
-                              <form action={autorizacaoAction.bind(null, l.id)}>
-                                <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
-                              </form>
-                            )}
-                            {st === 'solicitado' && (
-                              <>
-                                <form action={autorizacaoAction.bind(null, l.id)}>
-                                  <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
-                                </form>
-                                <form action={autorizacaoAction.bind(null, l.id)}>
-                                  <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
-                                </form>
-                              </>
-                            )}
-                            {st === 'autorizado' && (
-                              <form action={autorizacaoAction.bind(null, l.id)}>
-                                <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
-                              </form>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })()}
+                    <AutorizacaoActions
+                      status={l.autorizacao_status}
+                      solicitadoEm={l.autorizacao_solicitado_em}
+                      action={autorizacaoAction.bind(null, l.id)}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     {l.origem === 'km_excedido' ? (

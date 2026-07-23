@@ -4,7 +4,7 @@ import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { createClient } from '@/lib/supabase/server'
 import type { KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
-import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 
 export default async function KmPage() {
   const supabase = await createClient()
@@ -120,51 +120,18 @@ export default async function KmPage() {
                         </td>
                         <td className="px-4 py-3">
                           {authSt != null && (
-                            <div className="flex flex-col gap-1">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${autorizacaoBadgeClass(authSt)}`}>
-                                {formatAutorizacaoLabel(authSt, excEntry?.autorizacao_solicitado_em ?? null)}
-                              </span>
-                              {excedido && (
-                                <div className="flex gap-2">
-                                  {authSt === 'sem_solicitacao' && (
-                                    <form action={upsertKmExcedidoStatusAction}>
-                                      <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                      <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                      <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                      <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
-                                    </form>
-                                  )}
-                                  {authSt === 'solicitado' && (
-                                    <>
-                                      <form action={upsertKmExcedidoStatusAction}>
-                                        <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                        <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                        <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                        <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
-                                      </form>
-                                      <form action={upsertKmExcedidoStatusAction}>
-                                        <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                        <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                        <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                        <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
-                                      </form>
-                                    </>
-                                  )}
-                                  {authSt === 'autorizado' && (
-                                    <form action={upsertKmExcedidoStatusAction}>
-                                      <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                      <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                      <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                      <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
-                                    </form>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+                            <AutorizacaoActions
+                              status={authSt}
+                              solicitadoEm={excEntry?.autorizacao_solicitado_em ?? null}
+                              action={upsertKmExcedidoStatusAction}
+                              showActions={excedido}
+                              hiddenFields={{
+                                veiculo_id: r.veiculo_id,
+                                mes: r.mes + '-01',
+                                km_contratual: contratado ?? 0,
+                                km_realizado: r.km_rodados,
+                              }}
+                            />
                           )}
                         </td>
                       </tr>
