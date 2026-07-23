@@ -18,7 +18,44 @@ jest.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-import { getMultasPendentes, getRevisoesAtrasadas, getResponsabilidadesAtuais, getChecklistsRecentes } from '../queries'
+import { getMultasPendentes, getRevisoesAtrasadas, getResponsabilidadesAtuais, getChecklistsRecentes, getVeiculos, getKmResumoMensal } from '../queries'
+
+describe('propagação de erro (achado B-08)', () => {
+  let consoleErrorSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('propaga (lança) quando a query simples retorna erro, em vez de devolver lista vazia', async () => {
+    fromMock = jest.fn(() => makeChainable({ data: null, error: { message: 'RLS negou' } }))
+
+    await expect(getVeiculos()).rejects.toThrow(/carregar/i)
+    expect(consoleErrorSpy).toHaveBeenCalled()
+  })
+
+  it('propaga também nas queries com pós-processamento (getRevisoesAtrasadas)', async () => {
+    fromMock = jest.fn(() => makeChainable({ data: null, error: { message: 'timeout' } }))
+
+    await expect(getRevisoesAtrasadas()).rejects.toThrow(/carregar/i)
+  })
+
+  it('propaga na agregação de KM (getKmResumoMensal)', async () => {
+    fromMock = jest.fn(() => makeChainable({ data: null, error: { message: 'timeout' } }))
+
+    await expect(getKmResumoMensal()).rejects.toThrow(/carregar/i)
+  })
+
+  it('não lança quando não há erro, mesmo com data vazio', async () => {
+    fromMock = jest.fn(() => makeChainable({ data: [], error: null }))
+
+    await expect(getVeiculos()).resolves.toEqual([])
+  })
+})
 
 describe('getMultasPendentes', () => {
   it('counts multas as pending while validada, not only while pendente', async () => {
