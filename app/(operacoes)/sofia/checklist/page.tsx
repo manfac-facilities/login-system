@@ -71,7 +71,7 @@ export default async function ChecklistPage() {
               })}
             </p>
             <div className="shrink-0">
-              <DeleteConfirmButton action={excluirChecklistAction} id={c.id} />
+              <DeleteConfirmButton action={excluirChecklistAction} id={c.id} itemLabel={`checklist de ${c.motoristas?.nome ?? 'motorista não informado'} (${new Date(c.created_at).toLocaleDateString('pt-BR')})`} />
             </div>
           </div>
         ))}

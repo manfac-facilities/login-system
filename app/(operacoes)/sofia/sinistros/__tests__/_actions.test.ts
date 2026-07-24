@@ -44,6 +44,13 @@ describe('atualizarTratativaSinistroAction', () => {
     expect(result).toEqual({ success: true })
     expect(updateMock).toHaveBeenCalledWith({ status: 'em_tratativa' })
   })
+
+  it('rejeita status fora do enum sem gravar (achado B-17)', async () => {
+    const result = await atualizarTratativaSinistroAction({}, buildFormData({ status: 'hackeado' }))
+
+    expect(result.error).toBeTruthy()
+    expect(updateMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('atualizarAutorizacaoSinistroAction', () => {

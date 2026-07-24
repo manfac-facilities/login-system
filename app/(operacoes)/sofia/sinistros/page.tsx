@@ -2,7 +2,7 @@ import { getSinistros } from '@/lib/sofia/queries'
 import type { Sinistro, AutorizacaoStatus } from '@/lib/sofia/types'
 import Link from 'next/link'
 import { atualizarAutorizacaoSinistroAction, excluirSinistroAction } from './_actions'
-import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type SinistroComRelacoes = Sinistro & {
@@ -85,34 +85,12 @@ export default async function SinistrosPage() {
                   {(() => {
                     const sinistroTyped = s as SinistroComRelacoes & { autorizacao_status?: string; autorizacao_solicitado_em?: string | null }
                     const st = (sinistroTyped.autorizacao_status ?? 'sem_solicitacao') as AutorizacaoStatus
-                    const badgeClass = autorizacaoBadgeClass(st)
-                    const label = formatAutorizacaoLabel(st, sinistroTyped.autorizacao_solicitado_em ?? null)
                     return (
-                      <div className="flex flex-col gap-1">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${badgeClass}`}>{label}</span>
-                        <div className="flex gap-2">
-                          {st === 'sem_solicitacao' && (
-                            <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
-                            </form>
-                          )}
-                          {st === 'solicitado' && (
-                            <>
-                              <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                                <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
-                              </form>
-                              <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                                <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
-                              </form>
-                            </>
-                          )}
-                          {st === 'autorizado' && (
-                            <form action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}>
-                              <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
-                            </form>
-                          )}
-                        </div>
-                      </div>
+                      <AutorizacaoActions
+                        status={st}
+                        solicitadoEm={sinistroTyped.autorizacao_solicitado_em ?? null}
+                        action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}
+                      />
                     )
                   })()}
                 </td>
@@ -125,7 +103,7 @@ export default async function SinistrosPage() {
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <DeleteConfirmButton action={excluirSinistroAction} id={s.id} />
+                  <DeleteConfirmButton action={excluirSinistroAction} id={s.id} itemLabel={`sinistro de ${s.veiculos?.placa ?? 'veículo sem placa'}`} />
                 </td>
               </tr>
             ))}

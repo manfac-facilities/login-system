@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { PENDENCIA_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 type State = { error?: string; success?: boolean }
 
@@ -21,6 +22,8 @@ export async function criarPendenciaAction(_prev: State, formData: FormData): Pr
 }
 
 export async function atualizarStatusPendenciaAction(id: string, status: string) {
+  if (!isValidEnum(PENDENCIA_STATUS, status)) throw new Error('Status de pendência inválido')
+
   const supabase = await createClient()
   const { error } = await supabase.from('pendencias').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error

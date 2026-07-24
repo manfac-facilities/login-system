@@ -5,11 +5,14 @@ interface Props {
   action: (prev: { error?: string; success?: boolean }, formData: FormData) => Promise<{ error?: string; success?: boolean }>
   id: string
   label?: string
+  /** Identificador do item sendo excluído (placa, código, nome…). Mostrado na
+   *  caixa de confirmação pra o usuário ver exatamente o que vai excluir (U-19). */
+  itemLabel?: string
 }
 
 const CONFIRMATION_PHRASE = 'gestão de frotas'
 
-export default function DeleteConfirmButton({ action, id, label = '✕' }: Props) {
+export default function DeleteConfirmButton({ action, id, label = '✕', itemLabel }: Props) {
   const [state, formAction, isPending] = useActionState(action, {})
   const [confirming, setConfirming] = useState(false)
   const [typed, setTyped] = useState('')
@@ -35,6 +38,11 @@ export default function DeleteConfirmButton({ action, id, label = '✕' }: Props
     <div className="flex flex-col gap-1.5 p-3 rounded-lg border border-red-800 bg-red-950/40 min-w-[220px]">
       {state.error && (
         <p className="text-red-300 text-xs">{state.error}</p>
+      )}
+      {itemLabel && (
+        <p className="text-red-200 text-xs">
+          Você está excluindo <span className="font-bold">{itemLabel}</span>.
+        </p>
       )}
       <p className="text-red-300 text-xs">
         Digite <span className="font-mono font-bold">gestão de frotas</span> para confirmar:

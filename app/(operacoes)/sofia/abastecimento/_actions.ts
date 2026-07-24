@@ -11,16 +11,24 @@ export async function lancarAbastecimentoAction(
   formData: FormData
 ): Promise<State> {
   const veiculo_id = formData.get('veiculo_id') as string
-  const valor = Number(formData.get('valor'))
-  const litrosRaw = formData.get('litros') as string
-  const litros = litrosRaw ? Number(litrosRaw) : null
+  const valorRaw = (formData.get('valor') as string | null) ?? ''
+  const litrosRaw = (formData.get('litros') as string | null) ?? ''
   const km = formData.get('km') ? Number(formData.get('km')) : null
   const posto = ((formData.get('posto') as string) ?? '').trim() || null
   const data =
     (formData.get('data') as string) || new Date().toISOString().split('T')[0]
 
   if (!veiculo_id) return { error: 'Selecione a equipe para identificar o veículo' }
-  if (!valor || Number.isNaN(valor) || valor <= 0) return { error: 'Informe o valor do abastecimento' }
+
+  // valor: obrigatório e >= 0 (0 é válido — ex: voucher de combustível grátis)
+  if (valorRaw.trim() === '') return { error: 'Informe o valor do abastecimento' }
+  const valor = Number(valorRaw)
+  if (Number.isNaN(valor) || valor < 0) return { error: 'Valor do abastecimento inválido' }
+
+  // litros: obrigatório e >= 0 (0 é válido — ex: ajuste manual)
+  if (litrosRaw.trim() === '') return { error: 'Informe os litros abastecidos' }
+  const litros = Number(litrosRaw)
+  if (Number.isNaN(litros) || litros < 0) return { error: 'Litros inválidos' }
 
   const supabase = await createClient()
   const { error } = await supabase.from('abastecimentos').insert({

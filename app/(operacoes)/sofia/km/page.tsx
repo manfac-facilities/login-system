@@ -1,23 +1,20 @@
-import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal } from '@/lib/sofia/queries'
+import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal, getKmExcedidoDescontos } from '@/lib/sofia/queries'
 import KmForm from './_form'
 import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
-import { createClient } from '@/lib/supabase/server'
-import type { KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
-import { formatAutorizacaoLabel, autorizacaoBadgeClass } from '@/lib/sofia/autorizacao'
+import type { AutorizacaoStatus } from '@/lib/sofia/types'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 
 export default async function KmPage() {
-  const supabase = await createClient()
-  const [equipes, veiculos, motoristas, historico, resumoMensal, { data: excedidosData }] = await Promise.all([
+  const [equipes, veiculos, motoristas, historico, resumoMensal, excedidos] = await Promise.all([
     getEquipes(),
     getVeiculos(),
     getMotoristas(),
     getKmDiarioHistorico(),
     getKmResumoMensal(),
-    supabase.from('km_excedido_desconto').select('*'),
+    getKmExcedidoDescontos(),
   ])
 
-  const excedidos = (excedidosData ?? []) as KmExcedidoDesconto[]
   const excedidoMap = new Map(excedidos.map(e => (`${e.veiculo_id}::${e.mes}`))
     .map((k, i) => [k, excedidos[i]]))
 
@@ -66,7 +63,7 @@ export default async function KmPage() {
                         <p className="text-[#4a6080] text-xs">{k.motoristas.nome}</p>
                       )}
                     </div>
-                    <DeleteConfirmButton action={deletarKmAction} id={k.id} />
+                    <DeleteConfirmButton action={deletarKmAction} id={k.id} itemLabel={`lançamento de KM de ${new Date(k.data + 'T00:00:00').toLocaleDateString('pt-BR')} — ${k.km_atual.toLocaleString('pt-BR')} km`} />
                   </div>
                 </div>
               ))}
@@ -120,51 +117,18 @@ export default async function KmPage() {
                         </td>
                         <td className="px-4 py-3">
                           {authSt != null && (
-                            <div className="flex flex-col gap-1">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium w-fit ${autorizacaoBadgeClass(authSt)}`}>
-                                {formatAutorizacaoLabel(authSt, excEntry?.autorizacao_solicitado_em ?? null)}
-                              </span>
-                              {excedido && (
-                                <div className="flex gap-2">
-                                  {authSt === 'sem_solicitacao' && (
-                                    <form action={upsertKmExcedidoStatusAction}>
-                                      <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                      <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                      <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                      <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-amber-400 hover:underline active:scale-95 transition-transform">Solicitar</button>
-                                    </form>
-                                  )}
-                                  {authSt === 'solicitado' && (
-                                    <>
-                                      <form action={upsertKmExcedidoStatusAction}>
-                                        <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                        <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                        <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                        <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="autorizado" type="submit" className="text-xs text-green-400 hover:underline active:scale-95 transition-transform">Autorizar</button>
-                                      </form>
-                                      <form action={upsertKmExcedidoStatusAction}>
-                                        <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                        <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                        <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                        <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                        <button name="status" value="sem_solicitacao" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Cancelar</button>
-                                      </form>
-                                    </>
-                                  )}
-                                  {authSt === 'autorizado' && (
-                                    <form action={upsertKmExcedidoStatusAction}>
-                                      <input type="hidden" name="veiculo_id" value={r.veiculo_id} />
-                                      <input type="hidden" name="mes" value={r.mes + '-01'} />
-                                      <input type="hidden" name="km_contratual" value={contratado ?? 0} />
-                                      <input type="hidden" name="km_realizado" value={r.km_rodados} />
-                                      <button name="status" value="solicitado" type="submit" className="text-xs text-[#4a6080] hover:underline active:scale-95 transition-transform">← Revogar</button>
-                                    </form>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+                            <AutorizacaoActions
+                              status={authSt}
+                              solicitadoEm={excEntry?.autorizacao_solicitado_em ?? null}
+                              action={upsertKmExcedidoStatusAction}
+                              showActions={excedido}
+                              hiddenFields={{
+                                veiculo_id: r.veiculo_id,
+                                mes: r.mes + '-01',
+                                km_contratual: contratado ?? 0,
+                                km_realizado: r.km_rodados,
+                              }}
+                            />
                           )}
                         </td>
                       </tr>

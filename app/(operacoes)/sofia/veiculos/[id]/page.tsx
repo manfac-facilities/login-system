@@ -156,6 +156,7 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
               action={softDeleteVeiculoAction}
               id={veiculo.id}
               label="Desativar veículo"
+              itemLabel={`o veículo ${veiculo.placa}`}
             />
           </div>
         </div>

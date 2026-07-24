@@ -1,7 +1,8 @@
 'use client'
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarRevisaoAction } from '../_actions'
+import { useVeiculoMotoristaCascade } from '@/lib/sofia/useVeiculoMotoristaCascade'
 import type { Veiculo, Motorista } from '@/lib/sofia/types'
 
 export default function NovaRevisaoForm({
@@ -13,23 +14,11 @@ export default function NovaRevisaoForm({
 }) {
   const [state, action, isPending] = useActionState(criarRevisaoAction, {})
   const router = useRouter()
-  const [motoristaId, setMotoristaId] = useState('')
+  const { motoristaId, setMotoristaId, onVeiculoChange } = useVeiculoMotoristaCascade()
 
   useEffect(() => {
     if (state.success) router.push('/sofia/revisoes')
   }, [state.success, router])
-
-  async function handleVeiculoChange(veiculoId: string) {
-    if (!veiculoId) { setMotoristaId(''); return }
-    try {
-      const res = await fetch(`/api/sofia/veiculo-motorista?veiculo_id=${veiculoId}`)
-      const data = await res.json()
-      if (data?.motoristas?.id) setMotoristaId(data.motoristas.id)
-      else setMotoristaId('')
-    } catch {
-      setMotoristaId('')
-    }
-  }
 
   return (
     <div className="p-8 max-w-md">
@@ -48,7 +37,7 @@ export default function NovaRevisaoForm({
           <select
             name="veiculo_id"
             required
-            onChange={(e) => handleVeiculoChange(e.target.value)}
+            onChange={(e) => onVeiculoChange(e.target.value)}
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
           >
             <option value="">Selecione</option>

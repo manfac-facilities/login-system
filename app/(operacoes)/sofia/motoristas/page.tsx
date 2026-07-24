@@ -138,7 +138,7 @@ export default async function MotoristasPage({
                   <p className="text-[#94a3b8] text-sm mt-0.5">{equipe?.codigo ?? '—'}</p>
                 </div>
                 {m.ativo && (
-                  <DeleteConfirmButton action={desativarMotoristaAction} id={m.id} label="Desativar" />
+                  <DeleteConfirmButton action={desativarMotoristaAction} id={m.id} label="Desativar" itemLabel={`o motorista ${m.nome}`} />
                 )}
               </div>
             </div>

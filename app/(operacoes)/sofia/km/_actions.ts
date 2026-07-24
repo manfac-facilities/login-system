@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { validateKmAtual } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 type State = { error?: string; success?: boolean }
 
@@ -150,7 +151,7 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
   const km_realizado = Number(formData.get('km_realizado'))
   const status = formData.get('status') as string
 
-  if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+  if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)
@@ -177,7 +178,7 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
 
 export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData: FormData): Promise<void> {
   const status = formData.get('status') as string
-  if (!id || !['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+  if (!id || !isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)

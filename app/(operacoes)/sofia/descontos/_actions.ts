@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { MULTA_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 function parseDescontoFormData(formData: FormData) {
   const id = formData.get('id') as string
@@ -13,6 +14,8 @@ function parseDescontoFormData(formData: FormData) {
 }
 
 export async function atualizarStatusMultaAction(id: string, status: string) {
+  if (!isValidEnum(MULTA_STATUS, status)) throw new Error('Status de multa inválido')
+
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)
   if (erroAdmin) throw new Error(erroAdmin)
@@ -61,6 +64,8 @@ export async function desfazerDescontoMultaAction(id: string) {
 }
 
 export async function atualizarStatusDescontoSinistroAction(id: string, status: string) {
+  if (!isValidEnum(MULTA_STATUS, status)) throw new Error('Status de desconto inválido')
+
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)
   if (erroAdmin) throw new Error(erroAdmin)
