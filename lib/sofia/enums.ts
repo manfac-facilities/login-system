@@ -4,6 +4,7 @@ import type {
   SinistroStatus,
   PendenciaStatus,
   AutorizacaoStatus,
+  ChecklistTipo,
 } from './types'
 
 /**
@@ -19,6 +20,14 @@ export const MULTA_STATUS = ['pendente', 'validada', 'descontada'] as const sati
 export const SINISTRO_STATUS = ['aberto', 'em_tratativa', 'encerrado'] as const satisfies readonly SinistroStatus[]
 export const PENDENCIA_STATUS = ['aberta', 'em_andamento', 'concluida'] as const satisfies readonly PendenciaStatus[]
 export const AUTORIZACAO_STATUS = ['sem_solicitacao', 'solicitado', 'autorizado'] as const satisfies readonly AutorizacaoStatus[]
+export const CHECKLIST_TIPOS = [
+  'recebimento',
+  'saida',
+  'retorno',
+  'devolucao',
+  'troca',
+  'finalizacao_contrato',
+] as const satisfies readonly ChecklistTipo[]
 
 /** Retorna true (com narrowing) se `value` for um dos valores permitidos. */
 export function isValidEnum<T extends string>(allowed: readonly T[], value: string): value is T {

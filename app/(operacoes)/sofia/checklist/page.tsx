@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { excluirChecklistAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
+import { badgeChecklist } from '@/lib/sofia/checklistBadge'
 
 interface ChecklistRow {
   id: string
@@ -10,12 +11,6 @@ interface ChecklistRow {
   equipes: { codigo: string } | null
   veiculos: { placa: string } | null
   motoristas: { nome: string } | null
-}
-
-const tipoBadge: Record<string, { label: string; style: string }> = {
-  saida: { label: '↑ SAÍDA', style: 'bg-green-900 text-green-300' },
-  retorno: { label: '↓ RETORNO', style: 'bg-blue-900 text-blue-300' },
-  troca: { label: '⇄ TROCA', style: 'bg-amber-900 text-amber-300' },
 }
 
 export default async function ChecklistPage() {
@@ -42,17 +37,15 @@ export default async function ChecklistPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {(checklists ?? []).map((c: ChecklistRow) => (
+        {(checklists ?? []).map((c: ChecklistRow) => {
+          const badge = badgeChecklist(c.tipo)
+          return (
           <div
             key={c.id}
             className="flex items-center gap-4 px-4 py-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]"
           >
-            <span
-              className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${
-                (tipoBadge[c.tipo] ?? tipoBadge.retorno).style
-              }`}
-            >
-              {(tipoBadge[c.tipo] ?? tipoBadge.retorno).label}
+            <span className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${badge.style}`}>
+              {badge.label}
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium">
@@ -74,7 +67,8 @@ export default async function ChecklistPage() {
               <DeleteConfirmButton action={excluirChecklistAction} id={c.id} itemLabel={`checklist de ${c.motoristas?.nome ?? 'motorista não informado'} (${new Date(c.created_at).toLocaleDateString('pt-BR')})`} />
             </div>
           </div>
-        ))}
+          )
+        })}
         {(checklists ?? []).length === 0 && (
           <p className="text-center text-[#4a6080] py-12">
             Nenhum checklist ainda.{' '}
