@@ -40,11 +40,13 @@ Componente `GaleriaFotos` (client), reutilizado em `sinistros/[id]/page.tsx` no 
 
 Cada linha da listagem `/sofia/checklist` vira link para o detalhe; o botão de exclusão permanece fora da área do link.
 
-### U-05 — Documentos exige o arquivo
+### U-05 — Documentos ganha upload, opcional
 
-Formulário de novo documento ganha campo de arquivo (PDF ou imagem), obrigatório para novos cadastros. Sobe para o bucket `sofia-anexos` (já existe, com policy já aplicada) e grava em `documentos_veiculo.storage_path` (coluna já existe, nullable — nenhuma migração SQL necessária). Mesma inversão de ordem do checklist: sobe o arquivo antes, cria o registro depois.
+Formulário de novo documento ganha campo de arquivo (PDF ou imagem), **opcional** — o cadastro continua salvando só com data de vencimento, como hoje. Decisão revista durante o brainstorming: o módulo Documentos tem baixo uso, então não vale introduzir atrito no cadastro por causa dele. O achado original (botão "Anexar" que não anexa nada) fica resolvido porque a opção passa a existir de verdade; só deixa de ser obrigatória.
 
-Documentos já cadastrados sem arquivo continuam válidos; a listagem marca essas linhas como "sem arquivo" para indicar o que falta regularizar. Cada linha com arquivo ganha "Ver arquivo" via link assinado.
+Quando um arquivo é enviado, sobe para o bucket `sofia-anexos` (já existe, com policy já aplicada) e grava em `documentos_veiculo.storage_path` (coluna já existe, nullable — nenhuma migração SQL necessária). Sem obrigatoriedade, a inversão de ordem do checklist não se aplica aqui: como salvar sem arquivo é uma opção válida, não há "registro incompleto" a evitar — o formulário sobe o arquivo (se houver) e cria o registro numa submissão só, na ordem natural do formulário atual.
+
+Documentos sem arquivo — os já cadastrados e os novos que optarem por não anexar — ficam marcados como "sem arquivo" na listagem, só como indicação, sem cobrança. Cada linha com arquivo ganha "Ver arquivo" via link assinado.
 
 **Tipos de documento:** adiciona `"Contrato de locação"` aos 4 existentes (Seguro, Licenciamento/CRLV, IPVA, Outro). A coluna `tipo` é texto livre, sem constraint — adição é só código. Ao mesmo tempo, o mapa de rótulos hoje está duplicado e já divergente entre `documentos/novo/_form.tsx` e `documentos/page.tsx`; esta spec centraliza os 5 valores em `lib/sofia/enums.ts`, no mesmo padrão de `CHECKLIST_TIPOS`.
 
