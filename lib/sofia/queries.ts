@@ -3,6 +3,7 @@ import type {
   Equipe, Veiculo, Motorista, KmDiarioComRelacoes, Multa,
   Sinistro, Revisao, DocumentoVeiculo, Abastecimento,
   MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia, Checklist,
+  KmExcedidoDesconto,
 } from './types'
 
 /**
@@ -220,6 +221,13 @@ export async function getChecklistsRecentes(): Promise<Checklist[]> {
     .order('created_at', { ascending: false })
   if (error) throwQueryError('getChecklistsRecentes', error)
   return data ?? []
+}
+
+export async function getKmExcedidoDescontos(): Promise<KmExcedidoDesconto[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('km_excedido_desconto').select('*')
+  if (error) throwQueryError('getKmExcedidoDescontos', error)
+  return (data ?? []) as KmExcedidoDesconto[]
 }
 
 export async function getKmDiarioHistorico(): Promise<KmDiarioComRelacoes[]> {

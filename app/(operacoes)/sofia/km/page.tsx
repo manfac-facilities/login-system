@@ -1,23 +1,20 @@
-import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal } from '@/lib/sofia/queries'
+import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal, getKmExcedidoDescontos } from '@/lib/sofia/queries'
 import KmForm from './_form'
 import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
-import { createClient } from '@/lib/supabase/server'
-import type { KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
+import type { AutorizacaoStatus } from '@/lib/sofia/types'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 
 export default async function KmPage() {
-  const supabase = await createClient()
-  const [equipes, veiculos, motoristas, historico, resumoMensal, { data: excedidosData }] = await Promise.all([
+  const [equipes, veiculos, motoristas, historico, resumoMensal, excedidos] = await Promise.all([
     getEquipes(),
     getVeiculos(),
     getMotoristas(),
     getKmDiarioHistorico(),
     getKmResumoMensal(),
-    supabase.from('km_excedido_desconto').select('*'),
+    getKmExcedidoDescontos(),
   ])
 
-  const excedidos = (excedidosData ?? []) as KmExcedidoDesconto[]
   const excedidoMap = new Map(excedidos.map(e => (`${e.veiculo_id}::${e.mes}`))
     .map((k, i) => [k, excedidos[i]]))
 

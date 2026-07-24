@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { isAdminEmail } from '@/lib/auth/admins'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 type State = { error?: string; success?: boolean }
 
@@ -93,7 +94,7 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
 
 export async function atualizarAutorizacaoMultaAction(id: string, formData: FormData): Promise<void> {
   const status = formData.get('status') as string
-  if (!['sem_solicitacao', 'solicitado', 'autorizado'].includes(status)) return
+  if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
   const erroAdmin = await requireAdmin(supabase)
