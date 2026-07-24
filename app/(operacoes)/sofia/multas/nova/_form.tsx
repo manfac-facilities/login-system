@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarMultaAction } from '../_actions'
 import { TIPOS_INFRACAO } from '@/lib/sofia/multas'
+import { useVeiculoMotoristaCascade } from '@/lib/sofia/useVeiculoMotoristaCascade'
 import type { Veiculo, Motorista } from '@/lib/sofia/types'
 
 export default function NovaMultaForm({
@@ -15,29 +16,12 @@ export default function NovaMultaForm({
 }) {
   const [state, action, isPending] = useActionState(criarMultaAction, {})
   const [tipoInfracao, setTipoInfracao] = useState('')
-  const [veiculoId, setVeiculoId] = useState('')
-  const [motoristaId, setMotoristaId] = useState('')
+  const { veiculoId, motoristaId, onVeiculoChange, onMotoristaChange } = useVeiculoMotoristaCascade()
   const router = useRouter()
 
   useEffect(() => {
     if (state.success) router.push('/sofia/multas')
   }, [state.success, router])
-
-  async function handleVeiculoChange(id: string) {
-    setVeiculoId(id)
-    if (!id) { setMotoristaId(''); return }
-    const res = await fetch(`/api/sofia/veiculo-motorista?veiculo_id=${id}`)
-    const data = await res.json()
-    if (data?.motoristas?.id) setMotoristaId(data.motoristas.id)
-  }
-
-  async function handleMotoristaChange(id: string) {
-    setMotoristaId(id)
-    if (!id) return
-    const res = await fetch(`/api/sofia/veiculo-motorista?motorista_id=${id}`)
-    const data = await res.json()
-    if (data?.veiculo?.id) setVeiculoId(data.veiculo.id)
-  }
 
   return (
     <div className="p-8 max-w-md">
@@ -79,7 +63,7 @@ export default function NovaMultaForm({
           <select
             name="veiculo_id"
             value={veiculoId}
-            onChange={(e) => handleVeiculoChange(e.target.value)}
+            onChange={(e) => onVeiculoChange(e.target.value)}
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
           >
             <option value="">Selecione</option>
@@ -96,7 +80,7 @@ export default function NovaMultaForm({
           <select
             name="motorista_id"
             value={motoristaId}
-            onChange={(e) => handleMotoristaChange(e.target.value)}
+            onChange={(e) => onMotoristaChange(e.target.value)}
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
           >
             <option value="">Selecione</option>
