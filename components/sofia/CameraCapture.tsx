@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState, useCallback } from 'react'
+import { comprimirImagem } from '@/lib/sofia/comprimirImagem'
 
 interface Props {
   posicao: string
@@ -65,18 +66,20 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
         console.warn('Não foi possível obter localização para a foto:', geoError)
       }
 
-      onCapture(blob, posicao, lat, lng)
+      const comprimido = await comprimirImagem(blob)
+      onCapture(comprimido, posicao, lat, lng)
     }, 'image/jpeg', 0.85)
   }, [posicao, onCapture])
 
   const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (!file) return
       const reader = new FileReader()
       reader.onload = (ev) => setCaptured(ev.target?.result as string)
       reader.readAsDataURL(file)
-      onCapture(file, posicao, null, null)
+      const comprimido = await comprimirImagem(file)
+      onCapture(comprimido, posicao, null, null)
     },
     [posicao, onCapture]
   )
