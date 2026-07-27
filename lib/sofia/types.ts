@@ -85,6 +85,7 @@ export interface Checklist {
   estepe_ok: boolean | null
   macaco_ok: boolean | null
   triangulo_ok: boolean | null
+  itens_problemas: Record<string, string>
   avaria_identificada: boolean
   avaria_descricao: string | null
   chave_entregue: boolean | null
