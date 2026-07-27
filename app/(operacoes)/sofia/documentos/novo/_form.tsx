@@ -2,6 +2,7 @@
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarDocumentoAction } from '../_actions'
+import { DOCUMENTO_TIPOS, DOCUMENTO_TIPO_LABELS } from '@/lib/sofia/enums'
 import type { Veiculo } from '@/lib/sofia/types'
 
 export default function NovoDocumentoForm({ veiculos }: { veiculos: Veiculo[] }) {
@@ -37,10 +38,9 @@ export default function NovoDocumentoForm({ veiculos }: { veiculos: Veiculo[] })
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-[#94a3b8]">Tipo *</label>
           <select name="tipo" required defaultValue="seguro" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm">
-            <option value="seguro">Seguro</option>
-            <option value="licenciamento">Licenciamento (CRLV)</option>
-            <option value="ipva">IPVA</option>
-            <option value="outro">Outro</option>
+            {DOCUMENTO_TIPOS.map((t) => (
+              <option key={t} value={t}>{DOCUMENTO_TIPO_LABELS[t]}</option>
+            ))}
           </select>
         </div>
 

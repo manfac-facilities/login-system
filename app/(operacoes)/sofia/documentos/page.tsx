@@ -1,5 +1,6 @@
 import { getDocumentosVeiculo } from '@/lib/sofia/queries'
 import type { DocumentoVeiculo } from '@/lib/sofia/types'
+import { DOCUMENTO_TIPO_LABELS as tipoLabel } from '@/lib/sofia/enums'
 import Link from 'next/link'
 import StatCard from '@/components/sofia/StatCard'
 import FilterSelect from '@/components/sofia/FilterSelect'
@@ -22,13 +23,6 @@ const statusLabel: Record<string, string> = {
   valido: 'Válido',
   vence_30d: 'Vence em 30d',
   vencido: 'Vencido',
-}
-
-const tipoLabel: Record<string, string> = {
-  seguro: 'Seguro',
-  licenciamento: 'CRLV',
-  ipva: 'IPVA',
-  outro: 'Outro',
 }
 
 const tipoOptions = Object.entries(tipoLabel).map(([value, label]) => ({ value, label }))

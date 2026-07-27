@@ -5,6 +5,8 @@ import {
   PENDENCIA_STATUS,
   AUTORIZACAO_STATUS,
   VEICULO_STATUS,
+  DOCUMENTO_TIPOS,
+  DOCUMENTO_TIPO_LABELS,
 } from '../enums'
 
 describe('isValidEnum (achado B-17)', () => {
@@ -21,5 +23,16 @@ describe('isValidEnum (achado B-17)', () => {
     expect(isValidEnum(SINISTRO_STATUS, '')).toBe(false)
     expect(isValidEnum(PENDENCIA_STATUS, 'aberto')).toBe(false) // 'aberta', não 'aberto'
     expect(isValidEnum(AUTORIZACAO_STATUS, 'autorizado ')).toBe(false) // com espaço
+  })
+})
+
+describe('DOCUMENTO_TIPOS', () => {
+  it('inclui os 5 tipos, incluindo o novo Contrato de locação', () => {
+    expect(DOCUMENTO_TIPOS).toEqual(['seguro', 'licenciamento', 'ipva', 'contrato_locacao', 'outro'])
+  })
+
+  it('tem rótulo para todo tipo (typecheck garante isso, teste garante o texto)', () => {
+    expect(DOCUMENTO_TIPO_LABELS.contrato_locacao).toBe('Contrato de locação')
+    expect(Object.keys(DOCUMENTO_TIPO_LABELS)).toHaveLength(DOCUMENTO_TIPOS.length)
   })
 })

@@ -5,6 +5,7 @@ import type {
   PendenciaStatus,
   AutorizacaoStatus,
   ChecklistTipo,
+  DocumentoVeiculoTipo,
 } from './types'
 
 /**
@@ -28,6 +29,22 @@ export const CHECKLIST_TIPOS = [
   'troca',
   'finalizacao_contrato',
 ] as const satisfies readonly ChecklistTipo[]
+
+export const DOCUMENTO_TIPOS = [
+  'seguro',
+  'licenciamento',
+  'ipva',
+  'contrato_locacao',
+  'outro',
+] as const satisfies readonly DocumentoVeiculoTipo[]
+
+export const DOCUMENTO_TIPO_LABELS: Record<DocumentoVeiculoTipo, string> = {
+  seguro: 'Seguro',
+  licenciamento: 'Licenciamento (CRLV)',
+  ipva: 'IPVA',
+  contrato_locacao: 'Contrato de locação',
+  outro: 'Outro',
+}
 
 /** Retorna true (com narrowing) se `value` for um dos valores permitidos. */
 export function isValidEnum<T extends string>(allowed: readonly T[], value: string): value is T {
