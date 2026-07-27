@@ -66,7 +66,12 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
         console.warn('Não foi possível obter localização para a foto:', geoError)
       }
 
-      const comprimido = await comprimirImagem(blob)
+      let comprimido: Blob = blob
+      try {
+        comprimido = await comprimirImagem(blob)
+      } catch (compressError) {
+        console.warn('Não foi possível comprimir a foto, usando original:', compressError)
+      }
       onCapture(comprimido, posicao, lat, lng)
     }, 'image/jpeg', 0.85)
   }, [posicao, onCapture])
@@ -78,7 +83,12 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
       const reader = new FileReader()
       reader.onload = (ev) => setCaptured(ev.target?.result as string)
       reader.readAsDataURL(file)
-      const comprimido = await comprimirImagem(file)
+      let comprimido: Blob = file
+      try {
+        comprimido = await comprimirImagem(file)
+      } catch (compressError) {
+        console.warn('Não foi possível comprimir a foto, usando original:', compressError)
+      }
       onCapture(comprimido, posicao, null, null)
     },
     [posicao, onCapture]
