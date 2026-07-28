@@ -44,25 +44,27 @@ export default async function ChecklistPage() {
             key={c.id}
             className="flex items-center gap-4 px-4 py-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]"
           >
-            <span className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${badge.style}`}>
-              {badge.label}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium">
-                {c.equipes?.codigo} · {c.veiculos?.placa}
+            <Link href={`/sofia/checklist/${c.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+              <span className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${badge.style}`}>
+                {badge.label}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium">
+                  {c.equipes?.codigo} · {c.veiculos?.placa}
+                </p>
+                <p className="text-[#4a6080] text-xs truncate">
+                  {c.motoristas?.nome ?? 'Motorista não informado'}
+                </p>
+              </div>
+              <p className="text-[#4a6080] text-xs shrink-0">
+                {new Date(c.created_at).toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </p>
-              <p className="text-[#4a6080] text-xs truncate">
-                {c.motoristas?.nome ?? 'Motorista não informado'}
-              </p>
-            </div>
-            <p className="text-[#4a6080] text-xs shrink-0">
-              {new Date(c.created_at).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
+            </Link>
             <div className="shrink-0">
               <DeleteConfirmButton action={excluirChecklistAction} id={c.id} itemLabel={`checklist de ${c.motoristas?.nome ?? 'motorista não informado'} (${new Date(c.created_at).toLocaleDateString('pt-BR')})`} />
             </div>
