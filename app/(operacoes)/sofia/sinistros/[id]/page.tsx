@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import TratativaForm from './_form'
+import GaleriaFotos, { type FotoItem } from '@/components/sofia/GaleriaFotos'
 
 export default async function SinistroDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,6 +12,19 @@ export default async function SinistroDetalhePage({ params }: { params: Promise<
   ])
 
   if (!sinistro) notFound()
+
+  const paths = (fotos ?? []).map((f) => f.storage_path)
+  const { data: signed } =
+    paths.length > 0
+      ? await supabase.storage.from('sofia-anexos').createSignedUrls(paths, 60)
+      : { data: [] }
+
+  const fotoItems: FotoItem[] = (fotos ?? [])
+    .map((f) => {
+      const s = (signed ?? []).find((s) => s.path === f.storage_path)
+      return { id: f.id as string, url: s?.signedUrl ?? '' }
+    })
+    .filter((f) => f.url)
 
   return (
     <div className="p-8 max-w-2xl">
@@ -23,12 +37,10 @@ export default async function SinistroDetalhePage({ params }: { params: Promise<
 
       <p className="text-white text-sm mb-6">{sinistro.descricao}</p>
 
-      {(fotos ?? []).length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Fotos</h2>
-          <p className="text-[#4a6080] text-xs">{(fotos ?? []).length} foto(s) anexada(s)</p>
-        </div>
-      )}
+      <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Fotos</h2>
+      <div className="mb-8">
+        <GaleriaFotos fotos={fotoItems} />
+      </div>
 
       <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Tratativa</h2>
       <TratativaForm sinistro={sinistro} />
