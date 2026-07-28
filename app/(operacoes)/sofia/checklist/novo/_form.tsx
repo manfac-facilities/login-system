@@ -1,9 +1,11 @@
 'use client'
-import { useActionState, useEffect, useState, useCallback } from 'react'
+import { useActionState, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { criarChecklistAction, uploadFotoAction } from '../_actions'
+import { criarChecklistAction } from '../_actions'
+import { FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL } from '../_validation'
 import CameraCapture from '@/components/sofia/CameraCapture'
 import { createClient } from '@/lib/supabase/client'
+import { uploadFotos, type CapturedPhoto } from '@/lib/sofia/uploadFotos'
 import type { Equipe, Veiculo, Motorista } from '@/lib/sofia/types'
 
 const ITENS_CHECKLIST = [
@@ -17,14 +19,7 @@ const ITENS_CHECKLIST = [
   { key: 'triangulo_ok', label: 'Triângulo' },
 ]
 
-const POSICOES_FOTO = ['Frente', 'Traseira', 'Lateral Esq.', 'Lateral Dir.', 'Interna']
-
-interface CapturedPhoto {
-  blob: Blob
-  posicao: string
-  lat: number | null
-  lng: number | null
-}
+const POSICOES_FOTO = [...FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL]
 
 interface Props {
   equipes: Equipe[]
@@ -33,8 +28,10 @@ interface Props {
 }
 
 export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) {
-  const [state, action, isPending] = useActionState(criarChecklistAction, {})
+  const [state, formAction, isPending] = useActionState(criarChecklistAction, {})
+  const [, startTransition] = useTransition()
   const router = useRouter()
+  const [checklistId] = useState(() => crypto.randomUUID())
   const [tipo, setTipo] = useState('')
   const [equipeId, setEquipeId] = useState('')
   const [veiculoIdManual, setVeiculoIdManual] = useState('')
@@ -42,67 +39,60 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   const exigeEquipe = tipo === 'saida' || tipo === 'retorno' || tipo === 'devolucao'
   const veiculoDaEquipe = veiculos.find((v) => v.equipe_id === equipeId && v.status === 'ativo')
   const motoristaDaEquipe = motoristas.find((m) => m.equipe_id === equipeId && m.ativo)
-  const [itens, setItens] = useState<Record<string, boolean>>({})
+
+  const [itens, setItens] = useState<Record<string, boolean | null>>({})
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
-  const [uploadFinished, setUploadFinished] = useState(false)
-  const [failedFotos, setFailedFotos] = useState<string[]>([])
-  const uploading = !!state.success && fotos.length > 0 && !uploadFinished
-  // True the instant the form is submitted, before isPending (set by
-  // useActionState) or uploading (derived below) flip on. Without
-  // this, there's a window after the create-checklist action resolves and
-  // before the upload effect runs where a fast double-click could submit a
-  // second, duplicate checklist row. Cleared as soon as the action reports an
-  // error (computed at render time, not in an effect) so the user can retry.
+  const [uploadingFotos, setUploadingFotos] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  if (submitting && state.error) setSubmitting(false)
-  const formInFlight = submitting || isPending || uploading
+  if (submitting && (state.error || uploadError)) setSubmitting(false)
+  const formInFlight = submitting || isPending || uploadingFotos
 
-  const handleCapture = useCallback(
-    (blob: Blob, posicao: string, lat: number | null, lng: number | null) => {
-      setFotos((prev) => [
-        ...prev.filter((f) => f.posicao !== posicao),
-        { blob, posicao, lat, lng },
-      ])
-    },
-    []
-  )
+  const itensRespondidos = ITENS_CHECKLIST.filter((i) => itens[i.key] !== undefined && itens[i.key] !== null).length
+  const fotosObrigatoriasCapturadas = FOTO_POSICOES_OBRIGATORIAS.filter((p) =>
+    fotos.some((f) => f.posicao === p)
+  ).length
+  const anyProblema = Object.values(itens).some((v) => v === false)
 
-  useEffect(() => {
-    if (!state.success || !state.checklistId) return
-    if (fotos.length === 0) {
-      router.push('/sofia/checklist')
+  const handleCapture = (blob: Blob, posicao: string, lat: number | null, lng: number | null) => {
+    setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao, lat, lng }])
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setUploadError(null)
+    setSubmitting(true)
+
+    const fd = new FormData(e.currentTarget)
+
+    setUploadingFotos(true)
+    const supabase = createClient()
+    const resultado = await uploadFotos(supabase, 'checklist-fotos', checklistId, fotos)
+    setUploadingFotos(false)
+
+    if (!resultado.ok) {
+      setUploadError(resultado.error)
+      setSubmitting(false)
       return
     }
-    const supabase = createClient()
-    Promise.all(
-      fotos.map(async (foto) => {
-        const path = `${state.checklistId}/${foto.posicao.replace(/\s/g, '-')}-${Date.now()}.jpg`
-        const { error: uploadError } = await supabase.storage
-          .from('checklist-fotos')
-          .upload(path, foto.blob, { contentType: 'image/jpeg' })
-        if (uploadError) return { posicao: foto.posicao, ok: false as const }
 
-        const result = await uploadFotoAction(
-          state.checklistId!,
-          path,
-          foto.posicao,
-          foto.lat,
-          foto.lng
-        )
-        if ('error' in result) return { posicao: foto.posicao, ok: false as const }
-        return { posicao: foto.posicao, ok: true as const }
-      })
-    ).then((results) => {
-      setUploadFinished(true)
-      const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
-      if (failed.length > 0) {
-        setFailedFotos(failed)
-        setSubmitting(false)
-        return
+    fd.set('id', checklistId)
+    fd.set('fotos', JSON.stringify(resultado.fotos))
+    fd.set('avaria_identificada', String(anyProblema || fd.get('avaria_identificada') === 'true'))
+
+    const itensProblemas: Record<string, string> = {}
+    for (const item of ITENS_CHECKLIST) {
+      if (itens[item.key] === false) {
+        itensProblemas[item.key] = ((fd.get(`desc_${item.key}`) as string) || '').trim()
       }
+    }
+    fd.set('itens_problemas', JSON.stringify(itensProblemas))
+
+    startTransition(() => {
+      formAction(fd)
       router.push('/sofia/checklist')
     })
-  }, [state.success, state.checklistId, fotos, router])
+  }
 
   return (
     <div className="p-8 max-w-2xl">
@@ -111,22 +101,15 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
         Registre a condição do veículo com fotos
       </p>
 
-      <form
-        action={action}
-        onSubmit={() => setSubmitting(true)}
-        className="flex flex-col gap-6"
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {state.error && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
             {state.error}
           </div>
         )}
-
-        {failedFotos.length > 0 && (
+        {uploadError && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
-            Checklist salvo, mas {failedFotos.length} foto
-            {failedFotos.length > 1 ? 's' : ''} não {failedFotos.length > 1 ? 'foram salvas' : 'foi salva'}:{' '}
-            {failedFotos.join(', ')}. Tente novamente ou contate o suporte.
+            {uploadError}
           </div>
         )}
 
@@ -195,7 +178,6 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
         )}
         <input type="hidden" name="motorista_id" value={motoristaDaEquipe?.id ?? ''} />
 
-        {/* Card informativo com veículo e motorista da equipe (fluxo equipe-first) */}
         {!veiculoExplicito && equipeId && (
           <div className="px-3 py-2.5 rounded-lg bg-[#0d2050] border border-[#1e3a5f] text-sm">
             {veiculoDaEquipe ? (
@@ -219,7 +201,6 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </div>
         )}
 
-        {/* Card informativo com o veículo selecionado manualmente (fluxo veículo explícito) */}
         {veiculoExplicito && veiculoIdManual && (() => {
           const v = veiculos.find((vv) => vv.id === veiculoIdManual)
           if (!v) return null
@@ -276,52 +257,63 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
         )}
 
         <div>
-          <p className="text-sm text-[#94a3b8] mb-3">Itens de Verificação</p>
-          <div className="grid grid-cols-2 gap-2">
+          <p className="text-sm text-[#94a3b8] mb-3">
+            Itens de Verificação <span className="text-[#4a6080]">({itensRespondidos} de {ITENS_CHECKLIST.length})</span>
+          </p>
+          <div className="flex flex-col gap-2">
             {ITENS_CHECKLIST.map((item) => (
-              <label
-                key={item.key}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[#1e3a5f] cursor-pointer hover:border-[#f05a28] transition-colors"
-              >
-                <input
-                  type="hidden"
-                  name={item.key}
-                  value={itens[item.key] ? 'true' : 'false'}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setItens((prev) => ({ ...prev, [item.key]: !prev[item.key] }))
-                  }
-                  className={`w-5 h-5 rounded border flex items-center justify-center text-xs active:scale-95 transition-[color,background-color,border-color,transform] shrink-0 ${
-                    itens[item.key]
-                      ? 'bg-green-600 border-green-600 text-white'
-                      : 'border-[#1e3a5f] text-transparent'
-                  }`}
-                >
-                  ✓
-                </button>
-                <span className="text-sm text-[#94a3b8]">{item.label}</span>
-              </label>
+              <div key={item.key} className="rounded-lg border border-[#1e3a5f] px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-[#94a3b8]">{item.label}</span>
+                  <div className="flex gap-2 shrink-0">
+                    <input type="hidden" name={item.key} value={itens[item.key] === true ? 'true' : itens[item.key] === false ? 'false' : ''} />
+                    <button
+                      type="button"
+                      onClick={() => setItens((prev) => ({ ...prev, [item.key]: true }))}
+                      className={`px-3 py-1.5 rounded text-xs font-medium border active:scale-95 transition-[color,background-color,border-color,transform] ${
+                        itens[item.key] === true
+                          ? 'bg-green-600 border-green-600 text-white'
+                          : 'border-[#1e3a5f] text-[#4a6080] hover:border-green-600 hover:text-green-400'
+                      }`}
+                    >
+                      ✓ OK
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setItens((prev) => ({ ...prev, [item.key]: false }))}
+                      className={`px-3 py-1.5 rounded text-xs font-medium border active:scale-95 transition-[color,background-color,border-color,transform] ${
+                        itens[item.key] === false
+                          ? 'bg-amber-600 border-amber-600 text-white'
+                          : 'border-[#1e3a5f] text-[#4a6080] hover:border-amber-600 hover:text-amber-400'
+                      }`}
+                    >
+                      ⚠ Problema
+                    </button>
+                  </div>
+                </div>
+                {itens[item.key] === false && (
+                  <textarea
+                    name={`desc_${item.key}`}
+                    rows={2}
+                    required
+                    placeholder={`Descreva o problema em ${item.label.toLowerCase()}`}
+                    className="mt-2 w-full px-3 py-2 rounded-lg bg-[#0f1f3d] border border-amber-800 text-white placeholder-[#4a6080] focus:outline-none focus:border-amber-500 text-sm resize-none"
+                  />
+                )}
+              </div>
             ))}
           </div>
         </div>
 
         <div>
           <p className="text-sm text-[#94a3b8] mb-3">
-            Fotos do Veículo
+            Fotos do Veículo <span className="text-[#4a6080]">({fotosObrigatoriasCapturadas} de {FOTO_POSICOES_OBRIGATORIAS.length} obrigatórias)</span>
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {POSICOES_FOTO.map((posicao) => (
               <CameraCapture key={posicao} posicao={posicao} onCapture={handleCapture} />
             ))}
           </div>
-          {fotos.length > 0 && (
-            <p className="text-xs text-green-400 mt-2">
-              {fotos.length} foto{fotos.length > 1 ? 's' : ''} capturada
-              {fotos.length > 1 ? 's' : ''}
-            </p>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -333,19 +325,23 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           <label htmlFor="cartao" className="text-sm text-[#94a3b8]">Cartão combustível entregue</label>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-[#94a3b8]">Avaria identificada?</label>
+          <label className="text-sm text-[#94a3b8]">Avaria identificada (fora dos itens acima)?</label>
           <select
             name="avaria_identificada"
             defaultValue="false"
-            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
+            disabled={anyProblema}
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm disabled:opacity-60"
           >
             <option value="false">Não</option>
             <option value="true">Sim</option>
           </select>
+          {anyProblema && (
+            <p className="text-amber-400 text-xs">Marcado automaticamente — pelo menos um item foi sinalizado como Problema acima.</p>
+          )}
           <textarea
             name="avaria_descricao"
             rows={2}
-            placeholder="Descreva a avaria (se houver)"
+            placeholder="Descreva avaria fora dos itens de verificação (se houver)"
             className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm resize-none"
           />
         </div>
@@ -376,10 +372,10 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </button>
           <button
             type="submit"
-            disabled={formInFlight}
+            disabled={formInFlight || itensRespondidos < ITENS_CHECKLIST.length || fotosObrigatoriasCapturadas < FOTO_POSICOES_OBRIGATORIAS.length}
             className="flex-1 py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95"
           >
-            {uploading
+            {uploadingFotos
               ? 'Enviando fotos...'
               : formInFlight
               ? 'Salvando...'
