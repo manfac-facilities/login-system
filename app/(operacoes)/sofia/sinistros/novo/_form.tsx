@@ -1,16 +1,12 @@
 'use client'
-import { useActionState, useEffect, useState, useCallback } from 'react'
+import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { criarSinistroAction, uploadFotoSinistroAction } from '../_actions'
+import { criarSinistroAction } from '../_actions'
 import CameraCapture from '@/components/sofia/CameraCapture'
 import { createClient } from '@/lib/supabase/client'
+import { uploadFotos, type CapturedPhoto } from '@/lib/sofia/uploadFotos'
 import { useVeiculoMotoristaCascade } from '@/lib/sofia/useVeiculoMotoristaCascade'
 import type { Veiculo, Motorista } from '@/lib/sofia/types'
-
-interface CapturedPhoto {
-  blob: Blob
-  posicao: string
-}
 
 export default function NovoSinistroForm({
   veiculos,
@@ -19,78 +15,73 @@ export default function NovoSinistroForm({
   veiculos: Veiculo[]
   motoristas: Motorista[]
 }) {
-  const [state, action, isPending] = useActionState(criarSinistroAction, {})
+  const [state, formAction, isPending] = useActionState(criarSinistroAction, {})
+  const [, startTransition] = useTransition()
   const router = useRouter()
+  const [sinistroId] = useState(() => crypto.randomUUID())
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
-  const [uploadFinished, setUploadFinished] = useState(false)
-  const [failedFotos, setFailedFotos] = useState<string[]>([])
+  const [uploadingFotos, setUploadingFotos] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const { veiculoId, motoristaId, onVeiculoChange, onMotoristaChange } = useVeiculoMotoristaCascade()
-  const uploading = !!state.success && fotos.length > 0 && !uploadFinished
-  // True the instant the form is submitted, before isPending (set by
-  // useActionState) or uploading (derived below) flip on. Without this,
-  // there's a window after the create-sinistro action resolves and before
-  // the upload effect/redirect runs where a fast double-click could submit
-  // a second, duplicate sinistro row. Cleared as soon as the action reports
-  // an error (computed at render time, not in an effect) so the user can retry.
   const [submitting, setSubmitting] = useState(false)
-  if (submitting && state.error) setSubmitting(false)
-  const formInFlight = submitting || isPending || uploading
-
-  const handleCapture = useCallback((blob: Blob, posicao: string) => {
-    setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao }])
-  }, [])
+  if (submitting && (state.error || uploadError)) setSubmitting(false)
+  const formInFlight = submitting || isPending || uploadingFotos
 
   useEffect(() => {
-    if (!state.success || !state.sinistroId) return
-    if (fotos.length === 0) {
+    if (state.success && state.sinistroId) {
       router.push('/sofia/sinistros')
-      return
     }
-    const supabase = createClient()
-    Promise.all(
-      fotos.map(async (foto, i) => {
-        const path = `sinistros/${state.sinistroId}/${i}-${Date.now()}.jpg`
-        const { error: uploadError } = await supabase.storage
-          .from('sofia-anexos')
-          .upload(path, foto.blob, { contentType: 'image/jpeg' })
-        if (uploadError) return { posicao: foto.posicao, ok: false as const }
+  }, [state.success, state.sinistroId, router])
 
-        try {
-          await uploadFotoSinistroAction(state.sinistroId!, path)
-        } catch {
-          return { posicao: foto.posicao, ok: false as const }
-        }
-        return { posicao: foto.posicao, ok: true as const }
-      })
-    ).then((results) => {
-      setUploadFinished(true)
-      const failed = results.filter((r) => !r.ok).map((r) => r.posicao)
-      if (failed.length > 0) {
-        setFailedFotos(failed)
+  const handleCapture = (blob: Blob, posicao: string) => {
+    setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao, lat: null, lng: null }])
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setUploadError(null)
+    setSubmitting(true)
+
+    const fd = new FormData(e.currentTarget)
+    fd.set('id', sinistroId)
+
+    if (fotos.length > 0) {
+      setUploadingFotos(true)
+      const supabase = createClient()
+      const resultado = await uploadFotos(supabase, 'sofia-anexos', `sinistros/${sinistroId}`, fotos)
+      setUploadingFotos(false)
+
+      if (!resultado.ok) {
+        setUploadError(resultado.error)
         setSubmitting(false)
         return
       }
-      router.push('/sofia/sinistros')
+      const paths: Record<string, string> = {}
+      for (const [posicao, info] of Object.entries(resultado.fotos)) paths[posicao] = info.path
+      fd.set('fotos', JSON.stringify(paths))
+    } else {
+      fd.set('fotos', '{}')
+    }
+
+    startTransition(() => {
+      formAction(fd)
     })
-  }, [state.success, state.sinistroId, fotos, router])
+  }
 
   return (
     <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-bold text-white mb-2">Registrar Sinistro</h1>
       <p className="text-[#4a6080] text-sm mb-8">Batida, furto ou avaria — com fotos do dano</p>
 
-      <form action={action} onSubmit={() => setSubmitting(true)} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {state.error && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
             {state.error}
           </div>
         )}
-
-        {failedFotos.length > 0 && (
+        {uploadError && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
-            Sinistro salvo, mas {failedFotos.length} foto
-            {failedFotos.length > 1 ? 's' : ''} não {failedFotos.length > 1 ? 'foram salvas' : 'foi salva'}.
-            Tente novamente ou contate o suporte.
+            {uploadError}
           </div>
         )}
 
@@ -172,7 +163,7 @@ export default function NovoSinistroForm({
             Cancelar
           </button>
           <button type="submit" disabled={formInFlight} className="flex-1 py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95">
-            {uploading ? 'Enviando fotos...' : formInFlight ? 'Salvando...' : 'Registrar Sinistro'}
+            {uploadingFotos ? 'Enviando fotos...' : formInFlight ? 'Salvando...' : 'Registrar Sinistro'}
           </button>
         </div>
       </form>
