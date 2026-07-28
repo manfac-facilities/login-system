@@ -30,7 +30,7 @@ export default function NovoDocumentoForm({ veiculos }: { veiculos: Veiculo[] })
       const paraEnviar = arquivo.type.startsWith('image/') ? await comprimirImagem(arquivo) : arquivo
       const path = `documentos/${crypto.randomUUID()}-${arquivo.name}`
       const { error } = await supabase.storage.from('sofia-anexos').upload(path, paraEnviar, {
-        contentType: arquivo.type,
+        contentType: paraEnviar.type,
       })
       setUploading(false)
       if (error) {
