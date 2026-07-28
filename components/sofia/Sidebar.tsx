@@ -57,6 +57,7 @@ export const detailRoutes = [
   '/sofia/veiculos/[id]',
   '/sofia/motoristas/[id]',
   '/sofia/sinistros/[id]',
+  '/sofia/checklist/[id]',
 ]
 
 export function Sidebar() {

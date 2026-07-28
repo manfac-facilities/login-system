@@ -27,6 +27,7 @@ export async function atualizarAutorizacaoSinistroAction(id: string, formData: F
 type State = { error?: string; success?: boolean; sinistroId?: string }
 
 export async function criarSinistroAction(_prev: State, formData: FormData): Promise<State> {
+  const id = (formData.get('id') as string) || ''
   const veiculo_id = (formData.get('veiculo_id') as string) || null
   const motorista_id = (formData.get('motorista_id') as string) || null
   const data = formData.get('data') as string
@@ -35,27 +36,34 @@ export async function criarSinistroAction(_prev: State, formData: FormData): Pro
   const valor_dano = formData.get('valor_dano') ? Number(formData.get('valor_dano')) : null
   const observacoes = (formData.get('observacoes') as string).trim() || null
 
+  let fotos: Record<string, string> = {}
+  try {
+    fotos = JSON.parse((formData.get('fotos') as string | null) || '{}')
+  } catch {
+    fotos = {}
+  }
+
   if (!data || !tipo || !descricao) return { error: 'Data, tipo e descrição são obrigatórios' }
+  if (!id) return { error: 'Erro interno: identificador do sinistro ausente' }
 
-  const supabase = await createClient()
-  const { data: row, error } = await supabase
-    .from('sinistros')
-    .insert({ veiculo_id, motorista_id, data, tipo, descricao, valor_dano, observacoes })
-    .select('id')
-    .single()
-
-  if (error) return { error: 'Erro ao registrar sinistro' }
-  revalidatePath('/sofia/sinistros')
-  return { success: true, sinistroId: row.id }
-}
-
-export async function uploadFotoSinistroAction(sinistroId: string, storagePath: string) {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('sinistro_fotos')
-    .insert({ sinistro_id: sinistroId, storage_path: storagePath })
-  if (error) throw error
+    .from('sinistros')
+    .insert({ id, veiculo_id, motorista_id, data, tipo, descricao, valor_dano, observacoes })
+
+  if (error) return { error: 'Erro ao registrar sinistro' }
+
+  const fotoRows = Object.values(fotos).map((storage_path) => ({ sinistro_id: id, storage_path }))
+  if (fotoRows.length > 0) {
+    const { error: fotosError } = await supabase.from('sinistro_fotos').insert(fotoRows)
+    if (fotosError) {
+      revalidatePath('/sofia/sinistros')
+      return { error: 'Sinistro salvo, mas as fotos não foram registradas. Contate o suporte.', sinistroId: id }
+    }
+  }
+
   revalidatePath('/sofia/sinistros')
+  return { success: true, sinistroId: id }
 }
 
 export async function atualizarTratativaSinistroAction(_prev: State, formData: FormData): Promise<State> {

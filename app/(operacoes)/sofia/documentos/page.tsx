@@ -1,9 +1,11 @@
 import { getDocumentosVeiculo } from '@/lib/sofia/queries'
 import type { DocumentoVeiculo } from '@/lib/sofia/types'
+import { DOCUMENTO_TIPO_LABELS as tipoLabel } from '@/lib/sofia/enums'
 import Link from 'next/link'
 import StatCard from '@/components/sofia/StatCard'
 import FilterSelect from '@/components/sofia/FilterSelect'
 import PrintExportButton from '@/components/sofia/PrintExportButton'
+import VerArquivoButton from '@/components/sofia/VerArquivoButton'
 
 const PAGE_SIZE = 10
 
@@ -22,13 +24,6 @@ const statusLabel: Record<string, string> = {
   valido: 'Válido',
   vence_30d: 'Vence em 30d',
   vencido: 'Vencido',
-}
-
-const tipoLabel: Record<string, string> = {
-  seguro: 'Seguro',
-  licenciamento: 'CRLV',
-  ipva: 'IPVA',
-  outro: 'Outro',
 }
 
 const tipoOptions = Object.entries(tipoLabel).map(([value, label]) => ({ value, label }))
@@ -138,6 +133,7 @@ export default async function DocumentosPage({
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Número/Apólice</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Vencimento</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
+              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Arquivo</th>
             </tr>
           </thead>
           <tbody>
@@ -155,11 +151,18 @@ export default async function DocumentosPage({
                     {statusLabel[d.statusCalc]}
                   </span>
                 </td>
+                <td className="px-4 py-3">
+                  {d.storage_path ? (
+                    <VerArquivoButton storagePath={d.storage_path} />
+                  ) : (
+                    <span className="text-[#4a6080] text-xs">sem arquivo</span>
+                  )}
+                </td>
               </tr>
             ))}
             {pagina.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-[#4a6080]">
+                <td colSpan={6} className="px-4 py-12 text-center text-[#4a6080]">
                   Nenhum documento encontrado.
                 </td>
               </tr>

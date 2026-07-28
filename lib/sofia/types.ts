@@ -6,7 +6,7 @@ export type SinistroTipo = 'colisao' | 'furto' | 'avaria' | 'outro'
 export type SinistroStatus = 'aberto' | 'em_tratativa' | 'encerrado'
 export type RevisaoTipo = 'preventiva' | 'corretiva'
 export type RevisaoStatus = 'em_dia' | 'agendada' | 'atrasada'
-export type DocumentoVeiculoTipo = 'seguro' | 'licenciamento' | 'ipva' | 'outro'
+export type DocumentoVeiculoTipo = 'seguro' | 'licenciamento' | 'ipva' | 'contrato_locacao' | 'outro'
 export type MotoristaDocumentoTipo = 'termo_uso' | 'autorizacao_desconto'
 export type PendenciaOrigem = 'manual' | 'multa' | 'sinistro' | 'manutencao' | 'documento' | 'termo' | 'km_excedido'
 export type PendenciaStatus = 'aberta' | 'em_andamento' | 'concluida'
@@ -85,6 +85,7 @@ export interface Checklist {
   estepe_ok: boolean | null
   macaco_ok: boolean | null
   triangulo_ok: boolean | null
+  itens_problemas: Record<string, string>
   avaria_identificada: boolean
   avaria_descricao: string | null
   chave_entregue: boolean | null

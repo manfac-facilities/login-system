@@ -38,6 +38,7 @@ import { criarChecklistAction } from '../_actions'
 function buildTrocaFormData(): FormData {
   const fd = new FormData()
   const fields: Record<string, string> = {
+    id: 'checklist-1',
     tipo: 'troca',
     equipe_id: 'equipe-origem',
     veiculo_id: 'veiculo-1',
@@ -46,6 +47,20 @@ function buildTrocaFormData(): FormData {
     motorista_id: '',
     observacoes: '',
     assinatura_motorista: 'true',
+    lataria_ok: 'true',
+    vidros_ok: 'true',
+    pneus_ok: 'true',
+    combustivel_ok: 'true',
+    itens_internos_ok: 'true',
+    estepe_ok: 'true',
+    macaco_ok: 'true',
+    triangulo_ok: 'true',
+    fotos: JSON.stringify({
+      Frente: { path: 'checklist-1/Frente-1.jpg', lat: null, lng: null },
+      Traseira: { path: 'checklist-1/Traseira-1.jpg', lat: null, lng: null },
+      'Lateral Esq.': { path: 'checklist-1/Lateral-Esq.-1.jpg', lat: null, lng: null },
+      'Lateral Dir.': { path: 'checklist-1/Lateral-Dir.-1.jpg', lat: null, lng: null },
+    }),
   }
   for (const [k, v] of Object.entries(fields)) fd.set(k, v)
   return fd
@@ -55,7 +70,8 @@ describe('criarChecklistAction — troca de responsável', () => {
   beforeEach(() => {
     callLog = []
     tableResults = {
-      checklist: { data: { id: 'checklist-1' }, error: null },
+      checklist: { error: null },
+      checklist_fotos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
       veiculos: { error: null },
     }
@@ -103,5 +119,24 @@ describe('criarChecklistAction — troca de responsável', () => {
     expect(callLog).not.toContain('veiculo_responsabilidade_historico.update')
     expect(callLog).not.toContain('veiculo_responsabilidade_historico.insert')
     expect(callLog).toContain('veiculos.select')
+  })
+
+  it('surfaces the fotos-registration error and keeps the checklist id when checklist_fotos insert fails after the checklist row was already saved', async () => {
+    tableResults.checklist_fotos = { error: { message: 'RLS denied' } }
+
+    const result = await criarChecklistAction({}, buildTrocaFormData())
+
+    expect(result.error).toBeTruthy()
+    expect(result.error).toBe(
+      'Checklist salvo, mas as fotos não foram registradas. Contate o suporte.'
+    )
+    expect(result.checklistId).toBe('checklist-1')
+    // The mock's `makeChainable` only ever registers update/insert/select/eq/
+    // is/single/neq/limit — there is no delete method to call, mirroring
+    // production: there's no compensating-transaction mechanism, so the
+    // already-inserted checklist row is intentionally left in place.
+    expect(callLog).not.toContain('checklist.delete')
+    expect(callLog).toContain('checklist.insert')
+    expect(callLog).toContain('checklist_fotos.insert')
   })
 })
