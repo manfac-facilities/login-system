@@ -120,4 +120,23 @@ describe('criarChecklistAction — troca de responsável', () => {
     expect(callLog).not.toContain('veiculo_responsabilidade_historico.insert')
     expect(callLog).toContain('veiculos.select')
   })
+
+  it('surfaces the fotos-registration error and keeps the checklist id when checklist_fotos insert fails after the checklist row was already saved', async () => {
+    tableResults.checklist_fotos = { error: { message: 'RLS denied' } }
+
+    const result = await criarChecklistAction({}, buildTrocaFormData())
+
+    expect(result.error).toBeTruthy()
+    expect(result.error).toBe(
+      'Checklist salvo, mas as fotos não foram registradas. Contate o suporte.'
+    )
+    expect(result.checklistId).toBe('checklist-1')
+    // The mock's `makeChainable` only ever registers update/insert/select/eq/
+    // is/single/neq/limit — there is no delete method to call, mirroring
+    // production: there's no compensating-transaction mechanism, so the
+    // already-inserted checklist row is intentionally left in place.
+    expect(callLog).not.toContain('checklist.delete')
+    expect(callLog).toContain('checklist.insert')
+    expect(callLog).toContain('checklist_fotos.insert')
+  })
 })
