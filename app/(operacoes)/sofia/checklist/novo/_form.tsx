@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useState, useTransition } from 'react'
+import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarChecklistAction } from '../_actions'
 import { FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL } from '../_validation'
@@ -48,6 +48,12 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   if (submitting && (state.error || uploadError)) setSubmitting(false)
   const formInFlight = submitting || isPending || uploadingFotos
 
+  useEffect(() => {
+    if (state.success && state.checklistId) {
+      router.push('/sofia/checklist')
+    }
+  }, [state.success, state.checklistId, router])
+
   const itensRespondidos = ITENS_CHECKLIST.filter((i) => itens[i.key] !== undefined && itens[i.key] !== null).length
   const fotosObrigatoriasCapturadas = FOTO_POSICOES_OBRIGATORIAS.filter((p) =>
     fotos.some((f) => f.posicao === p)
@@ -90,7 +96,6 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
 
     startTransition(() => {
       formAction(fd)
-      router.push('/sofia/checklist')
     })
   }
 
