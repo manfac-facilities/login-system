@@ -16,7 +16,7 @@ export default async function SinistroDetalhePage({ params }: { params: Promise<
   const paths = (fotos ?? []).map((f) => f.storage_path)
   const { data: signed } =
     paths.length > 0
-      ? await supabase.storage.from('sofia-anexos').createSignedUrls(paths, 60)
+      ? await supabase.storage.from('sofia-anexos').createSignedUrls(paths, 3600)
       : { data: [] }
 
   const fotoItems: FotoItem[] = (fotos ?? [])

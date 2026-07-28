@@ -24,24 +24,38 @@ export default function NovoDocumentoForm({ veiculos }: { veiculos: Veiculo[] })
     const fd = new FormData(e.currentTarget)
     const arquivo = fd.get('arquivo') as File | null
 
-    if (arquivo && arquivo.size > 0) {
-      setUploading(true)
-      const supabase = createClient()
-      const paraEnviar = arquivo.type.startsWith('image/') ? await comprimirImagem(arquivo) : arquivo
-      const path = `documentos/${crypto.randomUUID()}-${arquivo.name}`
-      const { error } = await supabase.storage.from('sofia-anexos').upload(path, paraEnviar, {
-        contentType: paraEnviar.type,
-      })
-      setUploading(false)
-      if (error) {
-        setUploadError('Falha ao enviar o arquivo. Tente novamente.')
-        return
+    try {
+      if (arquivo && arquivo.size > 0) {
+        setUploading(true)
+        const supabase = createClient()
+        let paraEnviar: Blob = arquivo
+        if (arquivo.type.startsWith('image/')) {
+          try {
+            paraEnviar = await comprimirImagem(arquivo)
+          } catch (compressError) {
+            console.warn('Não foi possível comprimir o arquivo, usando original:', compressError)
+            paraEnviar = arquivo
+          }
+        }
+        const path = `documentos/${crypto.randomUUID()}-${arquivo.name}`
+        const { error } = await supabase.storage.from('sofia-anexos').upload(path, paraEnviar, {
+          contentType: paraEnviar.type,
+        })
+        if (error) {
+          setUploadError('Falha ao enviar o arquivo. Tente novamente.')
+          return
+        }
+        fd.set('storage_path', path)
       }
-      fd.set('storage_path', path)
-    }
-    fd.delete('arquivo')
+      fd.delete('arquivo')
 
-    startTransition(() => { formAction(fd) })
+      startTransition(() => { formAction(fd) })
+    } catch (e) {
+      console.warn('Falha inesperada ao enviar o arquivo:', e)
+      setUploadError('Falha ao enviar o arquivo. Tente novamente.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (

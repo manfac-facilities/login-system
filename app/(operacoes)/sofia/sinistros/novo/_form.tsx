@@ -1,6 +1,7 @@
 'use client'
 import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { criarSinistroAction } from '../_actions'
 import CameraCapture from '@/components/sofia/CameraCapture'
 import { createClient } from '@/lib/supabase/client'
@@ -26,6 +27,7 @@ export default function NovoSinistroForm({
   const [submitting, setSubmitting] = useState(false)
   if (submitting && (state.error || uploadError)) setSubmitting(false)
   const formInFlight = submitting || isPending || uploadingFotos
+  const jaSalvou = !!state.error && !!state.sinistroId
 
   useEffect(() => {
     if (state.success && state.sinistroId) {
@@ -74,10 +76,20 @@ export default function NovoSinistroForm({
       <p className="text-[#4a6080] text-sm mb-8">Batida, furto ou avaria — com fotos do dano</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {state.error && (
-          <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
-            {state.error}
+        {jaSalvou ? (
+          <div className="px-4 py-3 rounded-lg border border-amber-600 bg-amber-950 text-amber-300 text-sm">
+            O sinistro já foi registrado, mas houve um erro em uma etapa seguinte: {state.error} Não reenvie este
+            formulário — o registro já existe.{' '}
+            <Link href="/sofia/sinistros" className="underline font-medium">
+              Ver sinistros
+            </Link>
           </div>
+        ) : (
+          state.error && (
+            <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
+              {state.error}
+            </div>
+          )
         )}
         {uploadError && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
@@ -162,7 +174,7 @@ export default function NovoSinistroForm({
           <button type="button" onClick={() => router.back()} className="flex-1 py-2.5 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] active:scale-95 transition-[border-color,transform]">
             Cancelar
           </button>
-          <button type="submit" disabled={formInFlight} className="flex-1 py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95">
+          <button type="submit" disabled={jaSalvou || formInFlight} className="flex-1 py-2.5 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95">
             {uploadingFotos ? 'Enviando fotos...' : formInFlight ? 'Salvando...' : 'Registrar Sinistro'}
           </button>
         </div>

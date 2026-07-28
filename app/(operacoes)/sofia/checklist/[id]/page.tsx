@@ -28,7 +28,7 @@ export default async function ChecklistDetalhePage({ params }: { params: Promise
   const paths = (fotos ?? []).map((f) => f.storage_path)
   const { data: signed } =
     paths.length > 0
-      ? await supabase.storage.from('checklist-fotos').createSignedUrls(paths, 60)
+      ? await supabase.storage.from('checklist-fotos').createSignedUrls(paths, 3600)
       : { data: [] }
 
   const fotoItems: FotoItem[] = (fotos ?? [])

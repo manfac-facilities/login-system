@@ -1,6 +1,7 @@
 'use client'
 import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { criarChecklistAction } from '../_actions'
 import { FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL } from '../_validation'
 import CameraCapture from '@/components/sofia/CameraCapture'
@@ -47,6 +48,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
   const [submitting, setSubmitting] = useState(false)
   if (submitting && (state.error || uploadError)) setSubmitting(false)
   const formInFlight = submitting || isPending || uploadingFotos
+  const jaSalvou = !!state.error && !!state.checklistId
 
   useEffect(() => {
     if (state.success && state.checklistId) {
@@ -107,10 +109,20 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {state.error && (
-          <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
-            {state.error}
+        {jaSalvou ? (
+          <div className="px-4 py-3 rounded-lg border border-amber-600 bg-amber-950 text-amber-300 text-sm">
+            O checklist já foi salvo, mas houve um erro em uma etapa seguinte: {state.error} Não reenvie este
+            formulário — o registro já existe.{' '}
+            <Link href="/sofia/checklist" className="underline font-medium">
+              Ver checklists
+            </Link>
           </div>
+        ) : (
+          state.error && (
+            <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
+              {state.error}
+            </div>
+          )
         )}
         {uploadError && (
           <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
@@ -377,7 +389,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
           </button>
           <button
             type="submit"
-            disabled={formInFlight || itensRespondidos < ITENS_CHECKLIST.length || fotosObrigatoriasCapturadas < FOTO_POSICOES_OBRIGATORIAS.length}
+            disabled={jaSalvou || formInFlight || itensRespondidos < ITENS_CHECKLIST.length || fotosObrigatoriasCapturadas < FOTO_POSICOES_OBRIGATORIAS.length}
             className="flex-1 py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95"
           >
             {uploadingFotos
