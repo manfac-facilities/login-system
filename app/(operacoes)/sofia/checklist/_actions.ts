@@ -14,6 +14,7 @@ export async function criarChecklistAction(
 ): Promise<State> {
   const input = parseChecklistFormData(formData)
   const {
+    id,
     tipo,
     equipe_id,
     veiculo_id,
@@ -29,6 +30,8 @@ export async function criarChecklistAction(
     cartao_combustivel_entregue,
     assinatura_motorista,
     itens,
+    itens_problemas,
+    fotos,
   } = input
 
   const validationError = validateChecklistInput(input)
@@ -39,39 +42,55 @@ export async function criarChecklistAction(
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data, error } = await supabase
-    .from('checklist')
-    .insert({
-      tipo,
-      equipe_id,
-      veiculo_id,
-      motorista_id,
-      equipe_destino_id,
-      motorista_destino_id,
-      observacoes,
-      latitude,
-      longitude,
-      created_by: user?.id,
-      avaria_identificada,
-      avaria_descricao,
-      chave_entregue,
-      cartao_combustivel_entregue,
-      assinatura_motorista,
-      ...itens,
-    })
-    .select('id')
-    .single()
+  const { error } = await supabase.from('checklist').insert({
+    id,
+    tipo,
+    equipe_id,
+    veiculo_id,
+    motorista_id,
+    equipe_destino_id,
+    motorista_destino_id,
+    observacoes,
+    latitude,
+    longitude,
+    created_by: user?.id,
+    avaria_identificada,
+    avaria_descricao,
+    chave_entregue,
+    cartao_combustivel_entregue,
+    assinatura_motorista,
+    itens_problemas,
+    ...itens,
+  })
 
   if (error) return { error: 'Erro ao salvar checklist' }
 
-  await logAudit('checklists', 'criou', data.id, `Checklist tipo '${tipo}' criado — veículo ${veiculo_id}`)
+  const fotoRows = Object.entries(fotos).map(([posicao, foto]) => ({
+    checklist_id: id,
+    storage_path: foto.path,
+    posicao,
+    latitude: foto.lat,
+    longitude: foto.lng,
+    tirada_em: new Date().toISOString(),
+  }))
+  if (fotoRows.length > 0) {
+    const { error: fotosError } = await supabase.from('checklist_fotos').insert(fotoRows)
+    if (fotosError) {
+      return {
+        error: 'Checklist salvo, mas as fotos não foram registradas. Contate o suporte.',
+        checklistId: id,
+      }
+    }
+  }
+
+  await logAudit('checklists', 'criou', id, `Checklist tipo '${tipo}' criado — veículo ${veiculo_id}`)
 
   const atribuiEquipe = tipo === 'troca' || (tipo === 'recebimento' && !!equipe_destino_id)
 
   if (atribuiEquipe) {
     const conflito = await validarVinculoEquipeUnico(supabase, equipe_destino_id as string, veiculo_id)
     if (conflito) {
-      return { error: conflito, checklistId: data.id }
+      return { error: conflito, checklistId: id }
     }
 
     const hoje = new Date().toISOString().split('T')[0]
@@ -86,7 +105,7 @@ export async function criarChecklistAction(
       equipe_id: equipe_destino_id,
       motorista_id: motorista_destino_id,
       inicio: hoje,
-      origem_checklist_id: data.id,
+      origem_checklist_id: id,
     })
 
     const { error: veiculoError } = await supabase
@@ -107,7 +126,7 @@ export async function criarChecklistAction(
       return {
         error:
           'Checklist salvo, mas a atribuição de equipe não foi totalmente registrada. Contate o suporte.',
-        checklistId: data.id,
+        checklistId: id,
       }
     }
 
@@ -128,7 +147,7 @@ export async function criarChecklistAction(
     if (fechaError || veiculoError) {
       return {
         error: 'Checklist salvo, mas a devolução não foi totalmente registrada. Contate o suporte.',
-        checklistId: data.id,
+        checklistId: id,
       }
     }
 
@@ -149,7 +168,7 @@ export async function criarChecklistAction(
     if (fechaError || veiculoError) {
       return {
         error: 'Checklist salvo, mas a finalização de contrato não foi totalmente registrada. Contate o suporte.',
-        checklistId: data.id,
+        checklistId: id,
       }
     }
 
@@ -160,7 +179,7 @@ export async function criarChecklistAction(
   revalidatePath('/sofia/veiculos')
   revalidatePath('/sofia/equipes')
   revalidatePath('/sofia/disponibilidade')
-  return { success: true, checklistId: data.id }
+  return { success: true, checklistId: id }
 }
 
 export async function excluirChecklistAction(_prev: State, formData: FormData): Promise<State> {
@@ -176,31 +195,6 @@ export async function excluirChecklistAction(_prev: State, formData: FormData): 
 
   const { error } = await supabase.from('checklist').delete().eq('id', id)
   if (error) return { error: 'Erro ao excluir checklist' }
-  revalidatePath('/sofia/checklist')
-  return { success: true }
-}
-
-export type UploadFotoResult = { error: string } | { success: true }
-
-export async function uploadFotoAction(
-  checklistId: string,
-  storagePath: string,
-  posicao: string,
-  lat: number | null,
-  lng: number | null
-): Promise<UploadFotoResult> {
-  const supabase = await createClient()
-  const { error } = await supabase.from('checklist_fotos').insert({
-    checklist_id: checklistId,
-    storage_path: storagePath,
-    posicao,
-    latitude: lat,
-    longitude: lng,
-    tirada_em: new Date().toISOString(),
-  })
-
-  if (error) return { error: 'Erro ao salvar registro da foto' }
-
   revalidatePath('/sofia/checklist')
   return { success: true }
 }

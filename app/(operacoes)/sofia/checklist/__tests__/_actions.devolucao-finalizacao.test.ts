@@ -26,6 +26,7 @@ import { criarChecklistAction } from '../_actions'
 function buildFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
   const defaults: Record<string, string> = {
+    id: 'checklist-1',
     veiculo_id: 'veiculo-1',
     equipe_id: '',
     equipe_destino_id: '',
@@ -33,6 +34,20 @@ function buildFormData(fields: Record<string, string>): FormData {
     motorista_id: '',
     observacoes: '',
     assinatura_motorista: 'true',
+    lataria_ok: 'true',
+    vidros_ok: 'true',
+    pneus_ok: 'true',
+    combustivel_ok: 'true',
+    itens_internos_ok: 'true',
+    estepe_ok: 'true',
+    macaco_ok: 'true',
+    triangulo_ok: 'true',
+    fotos: JSON.stringify({
+      Frente: { path: 'checklist-1/Frente-1.jpg', lat: null, lng: null },
+      Traseira: { path: 'checklist-1/Traseira-1.jpg', lat: null, lng: null },
+      'Lateral Esq.': { path: 'checklist-1/Lateral-Esq.-1.jpg', lat: null, lng: null },
+      'Lateral Dir.': { path: 'checklist-1/Lateral-Dir.-1.jpg', lat: null, lng: null },
+    }),
   }
   for (const [k, v] of Object.entries({ ...defaults, ...fields })) fd.set(k, v)
   return fd
@@ -41,20 +56,21 @@ function buildFormData(fields: Record<string, string>): FormData {
 describe('criarChecklistAction — devolucao', () => {
   beforeEach(() => {
     tableResults = {
-      checklist: { data: { id: 'checklist-1' }, error: null },
+      checklist: { error: null },
+      checklist_fotos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
       veiculos: { error: null },
     }
   })
 
   it('zera a equipe do veículo e fecha o histórico ao devolver', async () => {
-    const result = await criarChecklistAction({}, buildFormData({ tipo: 'devolucao', equipe_id: 'equipe-1' }))
+    const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-1', tipo: 'devolucao', equipe_id: 'equipe-1' }))
     expect(result).toEqual({ success: true, checklistId: 'checklist-1' })
   })
 
   it('surfaces erro se falhar ao zerar a equipe do veículo', async () => {
     tableResults.veiculos = { error: { message: 'falhou' } }
-    const result = await criarChecklistAction({}, buildFormData({ tipo: 'devolucao', equipe_id: 'equipe-1' }))
+    const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-1', tipo: 'devolucao', equipe_id: 'equipe-1' }))
     expect(result.error).toBeTruthy()
   })
 })
@@ -62,14 +78,15 @@ describe('criarChecklistAction — devolucao', () => {
 describe('criarChecklistAction — finalizacao_contrato', () => {
   beforeEach(() => {
     tableResults = {
-      checklist: { data: { id: 'checklist-2' }, error: null },
+      checklist: { error: null },
+      checklist_fotos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
       veiculos: { error: null },
     }
   })
 
   it('inativa o veículo ao finalizar contrato', async () => {
-    const result = await criarChecklistAction({}, buildFormData({ tipo: 'finalizacao_contrato' }))
+    const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-2', tipo: 'finalizacao_contrato' }))
     expect(result).toEqual({ success: true, checklistId: 'checklist-2' })
   })
 })
@@ -77,7 +94,8 @@ describe('criarChecklistAction — finalizacao_contrato', () => {
 describe('criarChecklistAction — recebimento com atribuição de equipe', () => {
   beforeEach(() => {
     tableResults = {
-      checklist: { data: { id: 'checklist-3' }, error: null },
+      checklist: { error: null },
+      checklist_fotos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
       veiculos: { error: null },
     }
@@ -86,13 +104,13 @@ describe('criarChecklistAction — recebimento com atribuição de equipe', () =
   it('atribui a equipe quando equipe_destino_id vem preenchido', async () => {
     const result = await criarChecklistAction(
       {},
-      buildFormData({ tipo: 'recebimento', equipe_destino_id: 'equipe-2' })
+      buildFormData({ id: 'checklist-3', tipo: 'recebimento', equipe_destino_id: 'equipe-2' })
     )
     expect(result).toEqual({ success: true, checklistId: 'checklist-3' })
   })
 
   it('não mexe em equipe/histórico quando equipe_destino_id vem vazio', async () => {
-    const result = await criarChecklistAction({}, buildFormData({ tipo: 'recebimento' }))
+    const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-3', tipo: 'recebimento' }))
     expect(result).toEqual({ success: true, checklistId: 'checklist-3' })
   })
 })

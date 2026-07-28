@@ -38,6 +38,7 @@ import { criarChecklistAction } from '../_actions'
 function buildTrocaFormData(): FormData {
   const fd = new FormData()
   const fields: Record<string, string> = {
+    id: 'checklist-1',
     tipo: 'troca',
     equipe_id: 'equipe-origem',
     veiculo_id: 'veiculo-1',
@@ -46,6 +47,20 @@ function buildTrocaFormData(): FormData {
     motorista_id: '',
     observacoes: '',
     assinatura_motorista: 'true',
+    lataria_ok: 'true',
+    vidros_ok: 'true',
+    pneus_ok: 'true',
+    combustivel_ok: 'true',
+    itens_internos_ok: 'true',
+    estepe_ok: 'true',
+    macaco_ok: 'true',
+    triangulo_ok: 'true',
+    fotos: JSON.stringify({
+      Frente: { path: 'checklist-1/Frente-1.jpg', lat: null, lng: null },
+      Traseira: { path: 'checklist-1/Traseira-1.jpg', lat: null, lng: null },
+      'Lateral Esq.': { path: 'checklist-1/Lateral-Esq.-1.jpg', lat: null, lng: null },
+      'Lateral Dir.': { path: 'checklist-1/Lateral-Dir.-1.jpg', lat: null, lng: null },
+    }),
   }
   for (const [k, v] of Object.entries(fields)) fd.set(k, v)
   return fd
@@ -55,7 +70,8 @@ describe('criarChecklistAction — troca de responsável', () => {
   beforeEach(() => {
     callLog = []
     tableResults = {
-      checklist: { data: { id: 'checklist-1' }, error: null },
+      checklist: { error: null },
+      checklist_fotos: { error: null },
       veiculo_responsabilidade_historico: { error: null },
       veiculos: { error: null },
     }
