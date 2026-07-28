@@ -10,14 +10,23 @@ export default function VerArquivoButton({ storagePath }: { storagePath: string 
     setErro(null)
     // Abre a aba em branco de forma síncrona, ainda dentro do gesto do usuário —
     // no iOS Safari, window.open após um await é bloqueado como popup.
-    const janela = window.open('', '_blank', 'noopener,noreferrer')
+    // IMPORTANTE: não usar 'noopener'/'noreferrer' aqui — por spec, isso força
+    // window.open a retornar null (mesmo criando e navegando a aba), o que
+    // deixaria a aba presa em about:blank. Como a aba começa em branco e só é
+    // navegada por este código para uma signed URL confiável do Supabase
+    // (nunca conteúdo arbitrário), o risco que noopener mitiga não se aplica.
+    const janela = window.open('', '_blank')
+    if (!janela) {
+      setErro('Não foi possível abrir o arquivo. Verifique o bloqueador de pop-ups.')
+      return
+    }
     setLoading(true)
     const result = await obterUrlDocumentoAction(storagePath)
     setLoading(false)
     if ('url' in result) {
-      if (janela) janela.location.href = result.url
+      janela.location.href = result.url
     } else {
-      janela?.close()
+      janela.close()
       setErro(result.error)
     }
   }
