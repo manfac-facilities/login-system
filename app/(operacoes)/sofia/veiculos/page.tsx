@@ -113,8 +113,12 @@ export default async function VeiculosPage({
                   className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors"
                 >
                   <td className="px-4 py-3 text-white font-medium font-mono">
-                    <Link href={`/sofia/veiculos/${v.id}`} className="hover:text-[#f05a28] transition-colors">
+                    <Link
+                      href={`/sofia/veiculos/${v.id}`}
+                      className="inline-flex items-center gap-1.5 hover:text-[#f05a28] transition-colors"
+                    >
                       {v.placa}
+                      <span className="text-[#4a6080] text-xs" aria-hidden="true">→</span>
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-[#94a3b8]">
