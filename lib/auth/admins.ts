@@ -1,5 +1,4 @@
 const ADMIN_EMAILS = [
-  'ewerton.silva@manfac.com.br',
   'jose.guilherme@manfac.com.br',
   'jvictorco28@gmail.com',
 ]
