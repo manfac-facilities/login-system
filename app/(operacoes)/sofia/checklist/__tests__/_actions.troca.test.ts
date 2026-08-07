@@ -21,11 +21,13 @@ function makeChainable(table: string, result: TableResult) {
 }
 
 let tableResults: Record<string, TableResult>
+const rpcMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     from: jest.fn((table: string) => makeChainable(table, tableResults[table])),
     auth: { getUser: jest.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+    rpc: rpcMock,
   })),
 }))
 
@@ -69,34 +71,47 @@ function buildTrocaFormData(): FormData {
 describe('criarChecklistAction — troca de responsável', () => {
   beforeEach(() => {
     callLog = []
+    rpcMock.mockReset()
+    rpcMock.mockResolvedValue({ data: null, error: null })
     tableResults = {
       checklist: { error: null },
       checklist_fotos: { error: null },
-      veiculo_responsabilidade_historico: { error: null },
+      // usado só pela leitura de validarVinculoEquipeUnico
       veiculos: { error: null },
     }
   })
 
-  it('reports success when all three handoff writes succeed', async () => {
+  it('reports success and calls atribuir_responsabilidade_veiculo with the right params', async () => {
     const result = await criarChecklistAction({}, buildTrocaFormData())
 
     expect(result).toEqual({ success: true, checklistId: 'checklist-1' })
+    expect(rpcMock).toHaveBeenCalledWith('atribuir_responsabilidade_veiculo', {
+      p_veiculo_id: 'veiculo-1',
+      p_equipe_id: 'equipe-destino',
+      p_motorista_id: null,
+      p_tipo: 'troca',
+      p_checklist_id: 'checklist-1',
+    })
   })
 
-  it('surfaces an error instead of silently succeeding when closing the old responsibility record fails', async () => {
-    tableResults.veiculo_responsabilidade_historico = { error: { message: 'RLS denied' } }
+  it('surfaces an error instead of silently succeeding when the RPC fails', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'lock timeout' } })
 
     const result = await criarChecklistAction({}, buildTrocaFormData())
 
-    expect(result.error).toBeTruthy()
+    expect(result).toEqual({
+      error: 'Erro ao processar a troca de responsável. O checklist não foi afetado.',
+      checklistId: 'checklist-1',
+    })
   })
 
-  it('surfaces an error instead of silently succeeding when updating the vehicle\'s current team fails', async () => {
-    tableResults.veiculos = { error: { message: 'constraint violation' } }
+  it('não faz mais as escritas de reatribuição direto nas tabelas', async () => {
+    await criarChecklistAction({}, buildTrocaFormData())
 
-    const result = await criarChecklistAction({}, buildTrocaFormData())
-
-    expect(result.error).toBeTruthy()
+    expect(callLog).not.toContain('veiculos.update')
+    expect(callLog).not.toContain('veiculo_responsabilidade_historico.update')
+    expect(callLog).not.toContain('veiculo_responsabilidade_historico.insert')
+    expect(callLog).not.toContain('motoristas.update')
   })
 
   it('blocks the team handoff when the destination team is already linked to another active vehicle', async () => {
@@ -111,13 +126,9 @@ describe('criarChecklistAction — troca de responsável', () => {
       error: 'Equipe já vinculada ao veículo XYZ-9999',
       checklistId: 'checklist-1',
     })
-    // validarVinculoEquipeUnico only ever calls select/eq/neq/limit on
-    // `veiculos` — no `.update(...)` should have been attempted there, and
-    // none of the veiculo_responsabilidade_historico writes should have run
-    // either, since the validation short-circuits before all of them.
-    expect(callLog).not.toContain('veiculos.update')
-    expect(callLog).not.toContain('veiculo_responsabilidade_historico.update')
-    expect(callLog).not.toContain('veiculo_responsabilidade_historico.insert')
+    // A validação short-circuita antes da chamada rpc — a reatribuição nunca
+    // chega a ser tentada.
+    expect(rpcMock).not.toHaveBeenCalled()
     expect(callLog).toContain('veiculos.select')
   })
 
@@ -131,6 +142,9 @@ describe('criarChecklistAction — troca de responsável', () => {
       'Checklist salvo, mas as fotos não foram registradas. Contate o suporte.'
     )
     expect(result.checklistId).toBe('checklist-1')
+    // A falha acontece antes de chegar na reatribuição de equipe — rpc nunca
+    // é chamado.
+    expect(rpcMock).not.toHaveBeenCalled()
     // The mock's `makeChainable` only ever registers update/insert/select/eq/
     // is/single/neq/limit — there is no delete method to call, mirroring
     // production: there's no compensating-transaction mechanism, so the
