@@ -95,7 +95,10 @@ begin
   end if;
 
   if p_km_atual < v_km_atual_veiculo then
-    raise exception 'KM não pode ser menor que a última KM registrada (% km)', v_km_atual_veiculo
+    -- Formata em pt-BR (1.000) pra mensagem ficar idêntica à que a action
+    -- montava em JS com toLocaleString('pt-BR').
+    raise exception 'KM não pode ser menor que a última KM registrada (% km)',
+      replace(trim(to_char(v_km_atual_veiculo, '999G999G999')), ',', '.')
       using errcode = 'SOF01';
   end if;
 

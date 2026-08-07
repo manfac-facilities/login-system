@@ -91,26 +91,25 @@ export async function lancarKmAction(
 
   const supabase = await createClient()
 
-  const { data: veiculo } = await supabase
-    .from('veiculos')
-    .select('km_atual')
-    .eq('id', veiculo_id)
-    .single()
+  // Leitura da KM anterior, upsert do lançamento e atualização de
+  // veiculos.km_atual acontecem dentro de uma transação só, com lock na linha
+  // do veículo — sem isso, dois lançamentos simultâneos se atropelam e o
+  // veiculos.km_atual final pode ficar menor que o real (B-13).
+  const { error } = await supabase.rpc('lancar_km_atomico', {
+    p_equipe_id: equipe_id,
+    p_veiculo_id: veiculo_id,
+    p_motorista_id: motorista_id,
+    p_km_atual: km_atual,
+    p_data: data,
+    p_observacoes: observacoes,
+  })
 
-  if (veiculo && km_atual < veiculo.km_atual) {
-    return {
-      error: `KM não pode ser menor que a última KM registrada (${veiculo.km_atual.toLocaleString('pt-BR')} km)`,
-    }
+  if (error) {
+    // Só as regras de negócio da function (errcode 'SOF01') têm mensagem
+    // segura de exibir. Qualquer outro erro do Postgres (constraint, permissão,
+    // timeout) vira a mensagem genérica que a action já mostrava antes.
+    return { error: error.code === 'SOF01' ? error.message : 'Erro ao registrar KM' }
   }
-
-  const { error } = await supabase.from('km_diario').upsert(
-    { equipe_id, veiculo_id, motorista_id, km_atual, data, observacoes },
-    { onConflict: 'data,veiculo_id' }
-  )
-
-  if (error) return { error: 'Erro ao registrar KM' }
-
-  await supabase.from('veiculos').update({ km_atual }).eq('id', veiculo_id)
 
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/veiculos')
