@@ -37,6 +37,30 @@
 -- Postgres. Rodar manualmente no Supabase Dashboard (projeto
 -- iyytcavcgukfjnjjrerx) ANTES do deploy do código desta spec — as
 -- Server Actions passam a chamar essas functions via supabase.rpc().
+--
+-- ORDEM OBRIGATÓRIA — este arquivo é o ÚLTIMO da fila. Depende de:
+--   1. sdd-sql-v04.sql            → cria a constraint unique (data, veiculo_id)
+--                                   usada pelo "on conflict" de lancar_km_atomico
+--   2. sdd-sql-v04-seguranca.sql  → cria sofia_has_access()/sofia_is_admin(),
+--                                   usadas nas guardas abaixo, e derruba o
+--                                   NOT NULL de audit_log.acao/dados, sem o
+--                                   qual excluir_multas_em_massa falha
+--   3. sdd-sql-track-b.sql        → (independente destas functions, mas também
+--                                   pendente; rodar antes do deploy)
+--   4. este arquivo
+-- Idempotente: são 3 "create or replace function", pode rodar quantas vezes
+-- precisar.
+--
+-- SEGURANÇA: as 3 functions são "security definer", ou seja, ignoram RLS.
+-- O PostgREST expõe toda function do schema public como endpoint /rpc/, e o
+-- Postgres concede EXECUTE a PUBLIC por padrão — sem as guardas e o
+-- revoke/grant do fim deste arquivo, qualquer usuário autenticado do Hub
+-- (mesmo sem acesso liberado ao sofia) chamaria estas functions direto do
+-- navegador, reabrindo os achados B-01/B-04 fechados no pacote de segurança.
+--
+-- Erros de regra de negócio usam o SQLSTATE customizado 'SOF01' — é assim que
+-- a Server Action distingue "mensagem que pode ser mostrada ao usuário" de
+-- erro interno do banco, que vira mensagem genérica.
 
 -- ============================================================
 -- 1. lancar_km_atomico (fecha B-13 — race condition no lançamento de KM)
@@ -57,17 +81,22 @@ as $$
 declare
   v_km_atual_veiculo integer;
 begin
+  if not public.sofia_has_access() then
+    raise exception 'Sem acesso ao sistema de Gestão de Frotas';
+  end if;
+
   select km_atual into v_km_atual_veiculo
   from public.veiculos
   where id = p_veiculo_id
   for update;
 
   if v_km_atual_veiculo is null then
-    raise exception 'Veículo não encontrado';
+    raise exception 'Veículo não encontrado' using errcode = 'SOF01';
   end if;
 
   if p_km_atual < v_km_atual_veiculo then
-    raise exception 'KM não pode ser menor que a última KM registrada (% km)', v_km_atual_veiculo;
+    raise exception 'KM não pode ser menor que a última KM registrada (% km)', v_km_atual_veiculo
+      using errcode = 'SOF01';
   end if;
 
   insert into public.km_diario (equipe_id, veiculo_id, motorista_id, km_atual, data, observacoes)
@@ -101,6 +130,10 @@ as $$
 declare
   v_hoje date := current_date;
 begin
+  if not public.sofia_has_access() then
+    raise exception 'Sem acesso ao sistema de Gestão de Frotas';
+  end if;
+
   perform 1 from public.veiculos where id = p_veiculo_id for update;
 
   update public.veiculo_responsabilidade_historico
@@ -140,6 +173,10 @@ as $$
 declare
   v_multa record;
 begin
+  if not public.sofia_is_admin() then
+    raise exception 'Apenas administradores podem excluir multas';
+  end if;
+
   for v_multa in
     delete from public.multas where id = any(p_ids) returning *
   loop
@@ -153,6 +190,21 @@ begin
   end loop;
 end;
 $$;
+
+-- ============================================================
+-- 4. Permissões de execução
+--    "create function" concede EXECUTE a PUBLIC por padrão, e o PostgREST
+--    expõe /rpc/<function> pra quem tiver token. Tirar de PUBLIC/anon e
+--    deixar só "authenticated" — a autorização de verdade é a guarda
+--    sofia_has_access()/sofia_is_admin() dentro de cada function.
+-- ============================================================
+revoke execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) from public, anon;
+revoke execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) from public, anon;
+revoke execute on function public.excluir_multas_em_massa(uuid[], uuid) from public, anon;
+
+grant execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) to authenticated;
+grant execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) to authenticated;
+grant execute on function public.excluir_multas_em_massa(uuid[], uuid) to authenticated;
 ```
 
 - [ ] **Step 2: Commit**
@@ -205,7 +257,12 @@ export async function lancarKmAction(
     p_observacoes: observacoes,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    // Só as regras de negócio da function (errcode 'SOF01') têm mensagem
+    // segura de exibir. Qualquer outro erro do Postgres (constraint, permissão,
+    // timeout) vira a mensagem genérica que a action já mostrava antes.
+    return { error: error.code === 'SOF01' ? error.message : 'Erro ao registrar KM' }
+  }
 
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/veiculos')
@@ -286,7 +343,7 @@ describe('lancarKmAction — via lancar_km_atomico', () => {
   it('surfaces a mensagem de erro exata que a function retorna (regra de KM menor)', async () => {
     rpcMock.mockResolvedValue({
       data: null,
-      error: { message: 'KM não pode ser menor que a última KM registrada (2000 km)' },
+      error: { code: 'SOF01', message: 'KM não pode ser menor que a última KM registrada (2000 km)' },
     })
 
     const result = await lancarKmAction(
@@ -295,6 +352,20 @@ describe('lancarKmAction — via lancar_km_atomico', () => {
     )
 
     expect(result).toEqual({ error: 'KM não pode ser menor que a última KM registrada (2000 km)' })
+  })
+
+  it('esconde erro interno do Postgres atrás da mensagem genérica', async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { code: '42501', message: 'permission denied for function lancar_km_atomico' },
+    })
+
+    const result = await lancarKmAction(
+      {},
+      buildFormData({ equipe_id: 'equipe-1', veiculo_id: 'veiculo-1', km_atual: '1500', data: '2026-07-18' })
+    )
+
+    expect(result).toEqual({ error: 'Erro ao registrar KM' })
   })
 
   it('não chama mais select/upsert direto em veiculos ou km_diario para o lançamento em si', async () => {
@@ -801,8 +872,14 @@ npx jest
 npx next build
 ```
 
-**SQL pra João rodar manualmente no Supabase Dashboard (projeto `iyytcavcgukfjnjjrerx`), antes do deploy do código desta spec:**
-- `sdd-sql-track-c-integridade.sql` (Task 1) — 3 `create or replace function`, sem migração de schema, seguro rodar quantas vezes precisar.
+**SQL pra João rodar manualmente no Supabase Dashboard (projeto `iyytcavcgukfjnjjrerx`), antes do deploy do código desta spec.** Nenhum destes rodou em produção ainda — a ordem é obrigatória, cada um depende do anterior:
+
+1. `sdd-sql-v04.sql` — cria a constraint `unique (data, veiculo_id)` que o `on conflict` de `lancar_km_atomico` exige.
+2. `sdd-sql-v04-seguranca.sql` — cria `sofia_has_access()`/`sofia_is_admin()` (usadas nas guardas das 3 functions novas) e derruba o `NOT NULL` de `audit_log.acao`/`.dados`, sem o qual `excluir_multas_em_massa` falha em toda chamada.
+3. `sdd-sql-track-b.sql` — coluna `checklist.itens_problemas`.
+4. `sdd-sql-track-c-integridade.sql` (Task 1) — 3 `create or replace function` + `revoke`/`grant`, sem migração de schema, seguro rodar quantas vezes precisar.
+
+**Verificação de segurança pós-migração** (além do checklist de `2026-07-20-checklist-pos-migracao-seguranca.md`): logado como um usuário Manfac **sem** acesso liberado ao sofia, chamar `supabase.rpc('lancar_km_atomico', {...})` pelo console do navegador — deve falhar com "Sem acesso ao sistema de Gestão de Frotas", não gravar nada.
 
 **Verificação manual recomendada após o deploy** (não é testável via mock, só contra Postgres real): abrir 2 abas do navegador, lançar KM pro mesmo veículo quase ao mesmo tempo em cada uma, confirmar que `veiculos.km_atual` final reflete o maior dos dois lançamentos.
 
