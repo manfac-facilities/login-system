@@ -19,9 +19,11 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import { registrarImportacaoAction, obterUrlDownloadAction } from '../_actions'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { isAdmin } from '@/lib/auth/roles'
 
 const inputFixture = {
   cliente: 'DPSP' as const,
@@ -75,6 +77,7 @@ describe('obterUrlDownloadAction', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     getUserMock.mockResolvedValue({ data: { user: { id: 'u1', email: 'usuario@manfac.com.br' } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
   })
 
   it('returns a signed url when the file belongs to the requesting user', async () => {
@@ -96,6 +99,7 @@ describe('obterUrlDownloadAction', () => {
   it('allows an admin to download any file without an ownership match', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'u2', email: 'jvictorco28@gmail.com' } } })
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     createSignedUrlMock.mockResolvedValue({ data: { signedUrl: 'https://signed.example/file.xlsx' }, error: null })
     const result = await obterUrlDownloadAction('DPSP/outro-usuario.xlsx')
     expect(result).toEqual({ url: 'https://signed.example/file.xlsx' })

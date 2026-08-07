@@ -34,8 +34,10 @@ jest.mock('@/lib/supabase/server', () => ({
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/sofia/auditLog', () => ({ logAudit: jest.fn() }))
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import { lancarKmAction, deletarKmAction, upsertKmExcedidoStatusAction, atualizarAutorizacaoKmExcedidoAction } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 function buildFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -44,6 +46,11 @@ function buildFormData(fields: Record<string, string>): FormData {
 }
 
 const NON_ADMIN_EMAIL = 'operador@manfac.com.br'
+
+beforeEach(() => {
+  ;(isAdmin as jest.Mock).mockReset()
+  ;(isAdmin as jest.Mock).mockResolvedValue(false)
+})
 
 describe('lancarKmAction — chave de conflito', () => {
   beforeEach(() => {

@@ -15,7 +15,10 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
+
 import { atualizarTratativaSinistroAction, atualizarAutorizacaoSinistroAction } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 const NON_ADMIN_EMAIL = 'operador@manfac.com.br'
 
@@ -60,6 +63,8 @@ describe('atualizarAutorizacaoSinistroAction', () => {
     updateMock.mockReturnValue({ eq: eqMock })
     eqMock.mockReset()
     eqMock.mockResolvedValue({ error: null })
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
   })
 
   it('não atualiza quando o usuário não é admin', async () => {

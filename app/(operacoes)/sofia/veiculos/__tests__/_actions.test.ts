@@ -25,6 +25,7 @@ jest.mock('@/lib/supabase/server', () => ({
 }))
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import {
   atualizarEquipeVeiculoAction,
@@ -33,6 +34,7 @@ import {
   retornarDaOficinaAction,
   definirSubstitutoAction,
 } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 function fd(fields: Record<string, string>): FormData {
   const f = new FormData()
@@ -48,11 +50,14 @@ describe('actions de veículo — v04', () => {
       veiculo_responsabilidade_historico: { error: null },
     }
     chains = {}
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
   })
 
   describe('atualizarEquipeVeiculoAction', () => {
     it('bloqueia usuário não-admin', async () => {
       currentUserEmail = 'operador@manfac.com.br'
+      ;(isAdmin as jest.Mock).mockResolvedValue(false)
       const result = await atualizarEquipeVeiculoAction({}, fd({ id: 'v1', equipe_id: 'e1' }))
       expect(result.error).toBe('Apenas administradores podem editar a equipe do veículo')
     })
@@ -81,6 +86,7 @@ describe('actions de veículo — v04', () => {
 
     it('lança erro quando o usuário não é admin', async () => {
       currentUserEmail = 'operador@manfac.com.br'
+      ;(isAdmin as jest.Mock).mockResolvedValue(false)
 
       await expect(
         atualizarLocacaoVeiculoAction(fd({ id: 'v1', valor_locacao_mensal: '1500' }))
@@ -92,6 +98,7 @@ describe('actions de veículo — v04', () => {
   describe('enviarParaOficinaAction', () => {
     it('bloqueia usuário não-admin', async () => {
       currentUserEmail = 'operador@manfac.com.br'
+      ;(isAdmin as jest.Mock).mockResolvedValue(false)
       const result = await enviarParaOficinaAction({}, fd({ id: 'v1', previsao_retorno_oficina: '2026-08-01' }))
       expect(result.error).toBe('Apenas administradores podem enviar veículo para oficina')
     })
@@ -111,6 +118,7 @@ describe('actions de veículo — v04', () => {
   describe('retornarDaOficinaAction', () => {
     it('bloqueia usuário não-admin', async () => {
       currentUserEmail = 'operador@manfac.com.br'
+      ;(isAdmin as jest.Mock).mockResolvedValue(false)
       const result = await retornarDaOficinaAction({}, fd({ id: 'v1' }))
       expect(result.error).toBe('Apenas administradores podem registrar retorno da oficina')
     })
@@ -124,6 +132,7 @@ describe('actions de veículo — v04', () => {
   describe('definirSubstitutoAction', () => {
     it('bloqueia usuário não-admin', async () => {
       currentUserEmail = 'operador@manfac.com.br'
+      ;(isAdmin as jest.Mock).mockResolvedValue(false)
       const result = await definirSubstitutoAction({}, fd({ id: 'v1', substituto_id: 'v2' }))
       expect(result.error).toBe('Apenas administradores podem definir o veículo substituto')
     })

@@ -14,13 +14,18 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
+
 import { toggleEquipeAction } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 describe('toggleEquipeAction', () => {
   beforeEach(() => {
     updateEqMock.mockReset()
     updateEqMock.mockResolvedValue({ error: null })
     getUserMock.mockReset()
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
   })
 
   it('não atualiza quando o usuário não é admin', async () => {

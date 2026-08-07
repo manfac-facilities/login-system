@@ -21,6 +21,7 @@ jest.mock('@/lib/supabase/server', () => ({
 }))
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import {
   registrarDescontoMultaAction,
@@ -28,6 +29,7 @@ import {
   desfazerDescontoMultaAction,
   atualizarStatusMultaAction,
 } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 function fd(fields: Record<string, string>): FormData {
   const f = new FormData()
@@ -42,10 +44,13 @@ describe('descontos/_actions — gate de admin e validação de valor', () => {
       multas: { data: { valor: 500 }, error: null },
       sinistros: { data: { valor_dano: 1000 }, error: null },
     }
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
   })
 
   it('registrarDescontoMultaAction rejeita usuário não-admin', async () => {
     currentUserEmail = 'operador@manfac.com.br'
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(
       registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '100', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
     ).rejects.toThrow('Apenas administradores podem executar esta ação')
@@ -77,11 +82,13 @@ describe('descontos/_actions — gate de admin e validação de valor', () => {
 
   it('desfazerDescontoMultaAction rejeita usuário não-admin', async () => {
     currentUserEmail = 'operador@manfac.com.br'
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(desfazerDescontoMultaAction('m1')).rejects.toThrow('Apenas administradores podem executar esta ação')
   })
 
   it('atualizarStatusMultaAction rejeita usuário não-admin', async () => {
     currentUserEmail = 'operador@manfac.com.br'
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(atualizarStatusMultaAction('m1', 'validada')).rejects.toThrow('Apenas administradores podem executar esta ação')
   })
 })

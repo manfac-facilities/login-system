@@ -30,6 +30,8 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
+
 import {
   criarMultaAction,
   enviarParaDescontoEmMassaAction,
@@ -37,6 +39,7 @@ import {
   excluirMultasEmMassaAction,
   atualizarAutorizacaoMultaAction,
 } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 function buildFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData()
@@ -120,10 +123,12 @@ describe('enviarParaDescontoEmMassaAction', () => {
     getUserMock.mockReset()
     multaUpdateInEqMock.mockReset()
     multaUpdateInEqMock.mockResolvedValue({ error: null })
+    ;(isAdmin as jest.Mock).mockReset()
   })
 
   it('rejects a non-admin user by throwing', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow(
       'Apenas administradores podem executar esta ação'
     )
@@ -132,6 +137,7 @@ describe('enviarParaDescontoEmMassaAction', () => {
 
   it('moves only pending multas to validada', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     await enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])
     expect(multaUpdateInEqMock).toHaveBeenCalledWith('status', 'pendente')
   })
@@ -144,10 +150,12 @@ describe('excluirMultaAction', () => {
     multaDeleteEqSelectSingleMock.mockResolvedValue({ data: { id: 'multa-1', valor: 100 }, error: null })
     auditInsertMock.mockReset()
     auditInsertMock.mockResolvedValue({ error: null })
+    ;(isAdmin as jest.Mock).mockReset()
   })
 
   it('blocks a non-admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     const result = await excluirMultaAction({}, buildExclusaoFormData())
     expect(result.error).toBeTruthy()
     expect(multaDeleteEqSelectSingleMock).not.toHaveBeenCalled()
@@ -155,6 +163,7 @@ describe('excluirMultaAction', () => {
 
   it('logs the deleted row to audit_log after deleting, for an admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     const result = await excluirMultaAction({}, buildExclusaoFormData())
     expect(result).toEqual({ success: true })
     expect(multaDeleteEqSelectSingleMock).toHaveBeenCalled()
@@ -165,6 +174,7 @@ describe('excluirMultaAction', () => {
 
   it('returns an error and does not log to audit_log when the delete fails', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     multaDeleteEqSelectSingleMock.mockResolvedValue({ data: null, error: new Error('delete failed') })
     const result = await excluirMultaAction({}, buildExclusaoFormData())
     expect(result.error).toBeTruthy()
@@ -173,6 +183,7 @@ describe('excluirMultaAction', () => {
 
   it('returns an error when no row comes back from the delete', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     multaDeleteEqSelectSingleMock.mockResolvedValue({ data: null, error: null })
     const result = await excluirMultaAction({}, buildExclusaoFormData())
     expect(result.error).toBe('Multa não encontrada')
@@ -185,6 +196,8 @@ describe('atualizarAutorizacaoMultaAction', () => {
     getUserMock.mockReset()
     multaUpdateEqMock.mockReset()
     multaUpdateEqMock.mockResolvedValue({ error: null })
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
   })
 
   it('não atualiza quando o usuário não é admin', async () => {
@@ -203,16 +216,19 @@ describe('excluirMultasEmMassaAction', () => {
     multaDeleteInSelectMock.mockResolvedValue({ data: [{ id: 'multa-1' }, { id: 'multa-2' }], error: null })
     auditInsertMock.mockReset()
     auditInsertMock.mockResolvedValue({ error: null })
+    ;(isAdmin as jest.Mock).mockReset()
   })
 
   it('blocks a non-admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(excluirMultasEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow()
     expect(multaDeleteInSelectMock).not.toHaveBeenCalled()
   })
 
   it('logs every deleted row to audit_log, for an admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     await excluirMultasEmMassaAction(['multa-1', 'multa-2'])
     expect(auditInsertMock).toHaveBeenCalledTimes(2)
     expect(multaDeleteInSelectMock).toHaveBeenCalled()
@@ -220,6 +236,7 @@ describe('excluirMultasEmMassaAction', () => {
 
   it('propagates the error and does not log to audit_log when the bulk delete fails', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     multaDeleteInSelectMock.mockResolvedValue({ data: null, error: new Error('bulk delete failed') })
     await expect(excluirMultasEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow('bulk delete failed')
     expect(auditInsertMock).not.toHaveBeenCalled()

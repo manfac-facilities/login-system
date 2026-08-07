@@ -16,7 +16,10 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
+
 import { lancarAbastecimentoAction, deletarAbastecimentoAction } from '../_actions'
+import { isAdmin } from '@/lib/auth/roles'
 
 function buildFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData()
@@ -82,6 +85,8 @@ describe('deletarAbastecimentoAction', () => {
     deleteEqMock.mockReset()
     deleteEqMock.mockResolvedValue({ error: null })
     getUserMock.mockReset()
+    ;(isAdmin as jest.Mock).mockReset()
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
   })
 
   it('rejeita usuário não-admin', async () => {
