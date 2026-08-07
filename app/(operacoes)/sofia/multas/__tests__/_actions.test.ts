@@ -5,10 +5,12 @@ const multaUpdateInEqMock = jest.fn()
 const multaUpdateEqMock = jest.fn()
 const multaDeleteEqSelectSingleMock = jest.fn()
 const multaDeleteInSelectMock = jest.fn()
+const rpcMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
+    rpc: rpcMock,
     from: jest.fn((table: string) => {
       if (table === 'audit_log') return { insert: auditInsertMock }
       return {
@@ -212,8 +214,8 @@ describe('atualizarAutorizacaoMultaAction', () => {
 describe('excluirMultasEmMassaAction', () => {
   beforeEach(() => {
     getUserMock.mockReset()
-    multaDeleteInSelectMock.mockReset()
-    multaDeleteInSelectMock.mockResolvedValue({ data: [{ id: 'multa-1' }, { id: 'multa-2' }], error: null })
+    rpcMock.mockReset()
+    rpcMock.mockResolvedValue({ data: null, error: null })
     auditInsertMock.mockReset()
     auditInsertMock.mockResolvedValue({ error: null })
     ;(isAdmin as jest.Mock).mockReset()
@@ -223,22 +225,26 @@ describe('excluirMultasEmMassaAction', () => {
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
     ;(isAdmin as jest.Mock).mockResolvedValue(false)
     await expect(excluirMultasEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow()
-    expect(multaDeleteInSelectMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it('logs every deleted row to audit_log, for an admin user', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+  it('calls excluir_multas_em_massa with the ids and the admin user id, for an admin user', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'admin-1', email: ADMIN_EMAIL } } })
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
     await excluirMultasEmMassaAction(['multa-1', 'multa-2'])
-    expect(auditInsertMock).toHaveBeenCalledTimes(2)
-    expect(multaDeleteInSelectMock).toHaveBeenCalled()
+    expect(rpcMock).toHaveBeenCalledWith('excluir_multas_em_massa', {
+      p_ids: ['multa-1', 'multa-2'],
+      p_usuario_id: 'admin-1',
+    })
+    // O audit log agora é gravado dentro da function, na mesma transação do
+    // delete — a action não insere mais em audit_log por fora.
+    expect(auditInsertMock).not.toHaveBeenCalled()
   })
 
-  it('propagates the error and does not log to audit_log when the bulk delete fails', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
+  it('propagates the error when the RPC fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'admin-1', email: ADMIN_EMAIL } } })
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
-    multaDeleteInSelectMock.mockResolvedValue({ data: null, error: new Error('bulk delete failed') })
+    rpcMock.mockResolvedValue({ data: null, error: new Error('bulk delete failed') })
     await expect(excluirMultasEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow('bulk delete failed')
-    expect(auditInsertMock).not.toHaveBeenCalled()
   })
 })
