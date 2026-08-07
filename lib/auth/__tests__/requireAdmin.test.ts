@@ -1,4 +1,7 @@
+jest.mock('../roles', () => ({ isAdmin: jest.fn() }))
+
 import { requireAdmin } from '../requireAdmin'
+import { isAdmin } from '../roles'
 
 function makeSupabase(email: string | null) {
   return {
@@ -10,12 +13,16 @@ function makeSupabase(email: string | null) {
 }
 
 describe('requireAdmin', () => {
+  beforeEach(() => jest.clearAllMocks())
+
   it('retorna null para um e-mail admin', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
     const result = await requireAdmin(makeSupabase('jvictorco28@gmail.com'))
     expect(result).toBeNull()
   })
 
   it('retorna mensagem de erro para um e-mail não-admin', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
     const result = await requireAdmin(makeSupabase('operador@manfac.com.br'))
     expect(result).toBe('Apenas administradores podem executar esta ação')
   })
