@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
@@ -61,7 +61,7 @@ export async function excluirMultaAction(_prev: State, formData: FormData): Prom
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem excluir multas' }
 
   const { data: multa, error } = await supabase.from('multas').delete().eq('id', id).select().single()
@@ -79,7 +79,7 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     throw new Error('Apenas administradores podem excluir multas')
 
   const { data: multas, error } = await supabase.from('multas').delete().in('id', ids).select()

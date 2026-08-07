@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { logoutAction } from './actions'
 import Logo from '@/components/ui/Logo'
 import Link from 'next/link'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
   const fullName = user.user_metadata?.full_name as string | undefined
   const firstName = fullName?.trim().split(/\s+/)[0] ?? 'Colaborador'
-  const admin = isAdminEmail(user.email ?? '')
+  const admin = await isAdmin(supabase, user.email ?? '')
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>

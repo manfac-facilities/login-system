@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isManfacEmail } from '@/lib/auth/domain'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 
 export async function middleware(request: NextRequest) {
@@ -95,7 +95,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
-    if (isAdminPage && !isAdminEmail(user.email ?? '')) {
+    if (isAdminPage && !(await isAdmin(supabase, user.email ?? ''))) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

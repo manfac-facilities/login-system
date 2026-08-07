@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import MultasTable from './_table'
 import type { Multa } from '@/lib/sofia/types'
 
@@ -16,7 +16,7 @@ export default async function MultasPage() {
     supabase.auth.getUser(),
   ])
 
-  const isAdmin = isAdminEmail(userData.user?.email ?? '')
+  const admin = await isAdmin(supabase, userData.user?.email ?? '')
 
   const totalPendente = (multas ?? [])
     .filter((m: MultaComRelacoes) => m.status === 'pendente')
@@ -44,7 +44,7 @@ export default async function MultasPage() {
         </Link>
       </div>
 
-      <MultasTable multas={multas ?? []} isAdmin={isAdmin} />
+      <MultasTable multas={multas ?? []} isAdmin={admin} />
     </div>
   )
 }

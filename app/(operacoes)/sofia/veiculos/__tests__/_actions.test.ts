@@ -42,7 +42,7 @@ function fd(fields: Record<string, string>): FormData {
 
 describe('actions de veículo — v04', () => {
   beforeEach(() => {
-    currentUserEmail = 'jvictorco28@gmail.com' // admin (lib/auth/admins.ts)
+    currentUserEmail = 'jvictorco28@gmail.com' // admin
     tableResults = {
       veiculos: { error: null },
       veiculo_responsabilidade_historico: { error: null },

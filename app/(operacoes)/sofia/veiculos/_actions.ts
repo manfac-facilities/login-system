@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
@@ -105,7 +105,7 @@ export async function atualizarEquipeVeiculoAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem editar a equipe do veículo' }
 
   if (equipe_id) {
@@ -135,7 +135,7 @@ export async function enviarParaOficinaAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem enviar veículo para oficina' }
 
   const hoje = new Date().toISOString().split('T')[0]
@@ -173,7 +173,7 @@ export async function retornarDaOficinaAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem registrar retorno da oficina' }
 
   const { error } = await supabase
@@ -202,7 +202,7 @@ export async function definirSubstitutoAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem definir o veículo substituto' }
 
   const { error } = await supabase.from('veiculos').update({ substituto_id }).eq('id', id)

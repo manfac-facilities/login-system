@@ -1,7 +1,7 @@
 'use server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import { revalidatePath } from 'next/cache'
 
 export interface UsuarioHub {
@@ -14,7 +14,7 @@ export async function listarUsuariosAction(): Promise<UsuarioHub[] | { error: st
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem ver esta página' }
 
   const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
@@ -39,7 +39,7 @@ export async function alternarAcessoAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !isAdminEmail(user.email))
+  if (!user?.email || !(await isAdmin(supabase, user.email)))
     return { error: 'Apenas administradores podem alterar acessos' }
 
   const { error } = await supabase.from('hub_system_access').upsert(

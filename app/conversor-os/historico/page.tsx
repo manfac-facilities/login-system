@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { isAdminEmail } from '@/lib/auth/admins'
+import { isAdmin } from '@/lib/auth/roles'
 import HistoricoTable from './_table'
 
 export default async function HistoricoPage() {
@@ -8,7 +8,7 @@ export default async function HistoricoPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const admin = isAdminEmail(user?.email ?? '')
+  const admin = await isAdmin(supabase, user?.email ?? '')
   let query = supabase
     .from('conversor_os_imports')
     .select('id, cliente, filename, storage_path, user_email, total_rows, converted_rows, duplicates_removed, imported_at')
