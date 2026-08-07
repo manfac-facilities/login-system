@@ -100,7 +100,8 @@ describe('criarChecklistAction — troca de responsável', () => {
     const result = await criarChecklistAction({}, buildTrocaFormData())
 
     expect(result).toEqual({
-      error: 'Erro ao processar a troca de responsável. O checklist não foi afetado.',
+      error:
+        'Erro ao processar o checklist: a atribuição de equipe não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo.',
       checklistId: 'checklist-1',
     })
   })

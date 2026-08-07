@@ -228,13 +228,14 @@ describe('excluirMultasEmMassaAction', () => {
     expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it('calls excluir_multas_em_massa with the ids and the admin user id, for an admin user', async () => {
+  it('calls excluir_multas_em_massa with the ids, for an admin user', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'admin-1', email: ADMIN_EMAIL } } })
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
     await excluirMultasEmMassaAction(['multa-1', 'multa-2'])
+    // Sem p_usuario_id: o autor da auditoria sai de auth.uid() dentro da
+    // function, pra não ser forjável por quem chamar /rpc/ direto.
     expect(rpcMock).toHaveBeenCalledWith('excluir_multas_em_massa', {
       p_ids: ['multa-1', 'multa-2'],
-      p_usuario_id: 'admin-1',
     })
     // O audit log agora é gravado dentro da function, na mesma transação do
     // delete — a action não insere mais em audit_log por fora.

@@ -82,10 +82,12 @@ describe('criarChecklistAction — devolucao', () => {
     })
   })
 
-  it('surfaces erro se a RPC falhar', async () => {
+  it('surfaces erro nomeando a devolução, não uma troca de responsável', async () => {
     rpcMock.mockResolvedValue({ data: null, error: { message: 'falhou' } })
     const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-1', tipo: 'devolucao', equipe_id: 'equipe-1' }))
-    expect(result.error).toBe('Erro ao processar a troca de responsável. O checklist não foi afetado.')
+    expect(result.error).toBe(
+      'Erro ao processar o checklist: a devolução não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo.'
+    )
   })
 })
 

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - As 3 functions usam `security definer` + `set search_path = public, pg_catalog`, mesmo padrão já estabelecido em `sdd-sql-v04-seguranca.sql` — copiar esse padrão, não inventar um novo.
-- Nenhuma function faz checagem de admin/permissão — isso continua em JS, ANTES da chamada RPC, exatamente como já acontece hoje (as functions são `security definer`, ou seja, rodam com privilégio elevado e ignoram RLS — a Server Action é a única barreira de autorização, então a checagem de admin não pode sumir).
+- ~~Nenhuma function faz checagem de admin/permissão~~ **(revisado em 2026-08-07)** — a checagem em JS continua onde está, mas **não pode ser a única**: as functions são `security definer` (ignoram RLS) e o PostgREST as expõe em `/rpc/`, alcançáveis direto do navegador por qualquer portador de token `authenticated`. Cada function repete a guarda em SQL (`sofia_has_access()` / `sofia_is_admin()`), sempre na forma `is not true` — nunca `if not f()`, que falha aberto se a função devolver NULL.
 - Mensagens de erro das functions (`RAISE EXCEPTION`) devem ser idênticas, palavra por palavra, às mensagens que a action já mostra hoje pro usuário (quando aplicável) — não é pra mudar texto visível sem necessidade.
 - As 3 Server Actions mantêm exatamente a mesma assinatura pública (mesmos parâmetros de entrada, mesmo formato de retorno `State`/`throw`) — nenhuma tela (formulário, listagem) precisa mudar.
 
@@ -25,7 +25,7 @@
 **Interfaces:**
 - Produces: `public.lancar_km_atomico(p_equipe_id uuid, p_veiculo_id uuid, p_motorista_id uuid, p_km_atual integer, p_data date, p_observacoes text) returns void`
 - Produces: `public.atribuir_responsabilidade_veiculo(p_veiculo_id uuid, p_equipe_id uuid, p_motorista_id uuid, p_tipo text, p_checklist_id uuid) returns void`
-- Produces: `public.excluir_multas_em_massa(p_ids uuid[], p_usuario_id uuid) returns setof public.multas`
+- Produces: `public.excluir_multas_em_massa(p_ids uuid[]) returns setof public.multas` (o autor do audit log sai de `auth.uid()` dentro da function, não de parâmetro)
 
 - [ ] **Step 1: Criar o arquivo SQL com as 3 functions**
 
@@ -81,7 +81,9 @@ as $$
 declare
   v_km_atual_veiculo integer;
 begin
-  if not public.sofia_has_access() then
+  -- "is not true": se a função devolver NULL (JWT sem claim de e-mail),
+  -- "if not NULL" não dispara e a guarda falharia ABERTO.
+  if public.sofia_has_access() is not true then
     raise exception 'Sem acesso ao sistema de Gestão de Frotas';
   end if;
 
@@ -133,7 +135,9 @@ as $$
 declare
   v_hoje date := current_date;
 begin
-  if not public.sofia_has_access() then
+  -- "is not true": se a função devolver NULL (JWT sem claim de e-mail),
+  -- "if not NULL" não dispara e a guarda falharia ABERTO.
+  if public.sofia_has_access() is not true then
     raise exception 'Sem acesso ao sistema de Gestão de Frotas';
   end if;
 
@@ -164,9 +168,10 @@ $$;
 -- 3. excluir_multas_em_massa (fecha B-18 — exclusão em massa sem
 --    atomicidade entre delete e audit log)
 -- ============================================================
+drop function if exists public.excluir_multas_em_massa(uuid[], uuid);
+
 create or replace function public.excluir_multas_em_massa(
-  p_ids uuid[],
-  p_usuario_id uuid
+  p_ids uuid[]
 )
 returns setof public.multas
 language plpgsql
@@ -176,18 +181,20 @@ as $$
 declare
   v_multa record;
 begin
-  if not public.sofia_is_admin() then
+  if public.sofia_is_admin() is not true then
     raise exception 'Apenas administradores podem excluir multas';
   end if;
 
   for v_multa in
     delete from public.multas where id = any(p_ids) returning *
   loop
+    -- auth.uid(), não parâmetro: autor vindo do cliente seria forjável numa
+    -- function "security definer" alcançável direto em /rpc/.
     insert into public.audit_log (tabela, operacao, registro_id, descricao, usuario_id)
     values (
       'multas', 'excluiu', v_multa.id::text,
       'Multa excluída em massa — ' || coalesce(v_multa.tipo_infracao, v_multa.descricao, v_multa.id::text),
-      p_usuario_id
+      auth.uid()
     );
     return next v_multa;
   end loop;
@@ -203,11 +210,11 @@ $$;
 -- ============================================================
 revoke execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) from public, anon;
 revoke execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) from public, anon;
-revoke execute on function public.excluir_multas_em_massa(uuid[], uuid) from public, anon;
+revoke execute on function public.excluir_multas_em_massa(uuid[]) from public, anon;
 
 grant execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) to authenticated;
 grant execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) to authenticated;
-grant execute on function public.excluir_multas_em_massa(uuid[], uuid) to authenticated;
+grant execute on function public.excluir_multas_em_massa(uuid[]) to authenticated;
 ```
 
 - [ ] **Step 2: Commit**
@@ -772,10 +779,7 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   if (!user?.email || !isAdminEmail(user.email))
     throw new Error('Apenas administradores podem excluir multas')
 
-  const { error } = await supabase.rpc('excluir_multas_em_massa', {
-    p_ids: ids,
-    p_usuario_id: user.id,
-  })
+  const { error } = await supabase.rpc('excluir_multas_em_massa', { p_ids: ids })
   if (error) throw error
 
   revalidatePath('/sofia/multas')

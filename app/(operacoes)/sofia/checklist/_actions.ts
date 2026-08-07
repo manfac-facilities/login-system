@@ -109,8 +109,17 @@ export async function criarChecklistAction(
     })
 
     if (rpcError) {
+      // O formulário já envolve esta mensagem em "O checklist já foi salvo, mas
+      // houve um erro em uma etapa seguinte: …", então aqui só entra o que
+      // falhou — e o nome da etapa varia por tipo de checklist.
+      const etapa =
+        tipo === 'devolucao'
+          ? 'a devolução não foi registrada'
+          : tipo === 'finalizacao_contrato'
+            ? 'a finalização de contrato não foi registrada'
+            : 'a atribuição de equipe não foi registrada'
       return {
-        error: 'Erro ao processar a troca de responsável. O checklist não foi afetado.',
+        error: `Erro ao processar o checklist: ${etapa}. Nenhuma alteração de equipe foi aplicada ao veículo.`,
         checklistId: id,
       }
     }

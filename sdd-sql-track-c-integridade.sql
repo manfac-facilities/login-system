@@ -53,7 +53,10 @@ as $$
 declare
   v_km_atual_veiculo integer;
 begin
-  if not public.sofia_has_access() then
+  -- "is not true" e não "not ...": se a função devolver NULL (JWT sem claim de
+  -- e-mail), "if not NULL" não dispara e a guarda falharia ABERTO. As funções
+  -- já usam coalesce desde sdd-sql-v04-seguranca.sql; isto é a segunda camada.
+  if public.sofia_has_access() is not true then
     raise exception 'Sem acesso ao sistema de Gestão de Frotas';
   end if;
 
@@ -106,7 +109,10 @@ as $$
 declare
   v_hoje date := current_date;
 begin
-  if not public.sofia_has_access() then
+  -- "is not true" e não "not ...": se a função devolver NULL (JWT sem claim de
+  -- e-mail), "if not NULL" não dispara e a guarda falharia ABERTO. As funções
+  -- já usam coalesce desde sdd-sql-v04-seguranca.sql; isto é a segunda camada.
+  if public.sofia_has_access() is not true then
     raise exception 'Sem acesso ao sistema de Gestão de Frotas';
   end if;
 
@@ -137,9 +143,12 @@ $$;
 -- 3. excluir_multas_em_massa (fecha B-18 — exclusão em massa sem
 --    atomicidade entre delete e audit log)
 -- ============================================================
+-- Assinatura antiga (com p_usuario_id) descartada: o autor da auditoria não pode
+-- vir do cliente. "create or replace" não troca assinatura, criaria overload.
+drop function if exists public.excluir_multas_em_massa(uuid[], uuid);
+
 create or replace function public.excluir_multas_em_massa(
-  p_ids uuid[],
-  p_usuario_id uuid
+  p_ids uuid[]
 )
 returns setof public.multas
 language plpgsql
@@ -149,18 +158,21 @@ as $$
 declare
   v_multa record;
 begin
-  if not public.sofia_is_admin() then
+  if public.sofia_is_admin() is not true then
     raise exception 'Apenas administradores podem excluir multas';
   end if;
 
   for v_multa in
     delete from public.multas where id = any(p_ids) returning *
   loop
+    -- auth.uid() vem do JWT, não do parâmetro: a function é "security definer"
+    -- e alcançável direto em /rpc/, então um autor recebido do cliente poderia
+    -- ser forjado — justamente o rastro que o B-18 existe pra garantir.
     insert into public.audit_log (tabela, operacao, registro_id, descricao, usuario_id)
     values (
       'multas', 'excluiu', v_multa.id::text,
       'Multa excluída em massa — ' || coalesce(v_multa.tipo_infracao, v_multa.descricao, v_multa.id::text),
-      p_usuario_id
+      auth.uid()
     );
     return next v_multa;
   end loop;
@@ -176,8 +188,8 @@ $$;
 -- ============================================================
 revoke execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) from public, anon;
 revoke execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) from public, anon;
-revoke execute on function public.excluir_multas_em_massa(uuid[], uuid) from public, anon;
+revoke execute on function public.excluir_multas_em_massa(uuid[]) from public, anon;
 
 grant execute on function public.lancar_km_atomico(uuid, uuid, uuid, integer, date, text) to authenticated;
 grant execute on function public.atribuir_responsabilidade_veiculo(uuid, uuid, uuid, text, uuid) to authenticated;
-grant execute on function public.excluir_multas_em_massa(uuid[], uuid) to authenticated;
+grant execute on function public.excluir_multas_em_massa(uuid[]) to authenticated;
