@@ -144,7 +144,6 @@ perca acesso na virada:
 
 ```sql
 INSERT INTO hub_user_roles (user_email, nivel, granted_by) VALUES
-  ('ewerton.silva@manfac.com.br',  'administrador', 'migracao'),
   ('jose.guilherme@manfac.com.br', 'administrador', 'migracao'),
   ('jvictorco28@gmail.com',        'administrador', 'migracao')
 ON CONFLICT (user_email) DO NOTHING;
