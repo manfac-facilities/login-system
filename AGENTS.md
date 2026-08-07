@@ -53,21 +53,55 @@ Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela
 
 ## Banco de dados (Supabase)
 
+- **Projeto de produção: `iyytcavcgukfjnjjrerx`** (org `wqgsiumpnccxqmnqhpin`, nome
+  "jose.guilherme@manfac.com.br's Project", us-east-1, Postgres 17). É o ref que está em
+  `.env.production` e `.env.local.example`. **Confirme sempre o ref antes de escrever.**
+- **MCP do Supabase:** o consentimento OAuth deixa escolher a quais projetos o app tem
+  acesso, e é fácil conceder sem incluir o projeto certo. Sintoma: `list_organizations`
+  responde, mas `list_projects` volta `{"projects":[]}` e qualquer chamada ao ref dá
+  `You do not have permission to perform this action`. Correção: revogar o grant em
+  Dashboard → perfil → OAuth Apps e reconectar marcando o projeto. **Teste de sanidade:
+  `list_projects` tem que listar `iyytcavcgukfjnjjrerx` antes de qualquer escrita.**
 - **Migrations são manuais.** Cada mudança de schema vira um arquivo `sdd-sql-*.sql` na
   raiz que alguém roda à mão no SQL Editor do Supabase. Não existe CLI de migration.
+  (O MCP também aplica, via `apply_migration`.)
 - Consequência: código mergeado ≠ schema aplicado. Antes de concluir que um bug é de
   código, verifique se o SQL correspondente já rodou em produção.
 - Tabela de controle de acesso: `hub_system_access` (`user_email`, `system_slug`,
   `has_access`, `granted_by`), criada em `sdd-sql-conversor-os.sql`.
+- Tabela de nível: `hub_user_roles` (`user_email` UNIQUE, `nivel` em
+  `analista`|`administrador`, `granted_by`). **Criada e semeada em produção em
+  2026-08-07** (migration `admin_usuarios_hub_user_roles`). RLS: só `authenticated read`
+  (SELECT). **Nenhuma policy de escrita — escrita só pela service role.**
+- O seed de `hub_user_roles` foi um retrato único dos usuários de então. **Não é
+  automático:** usuário criado direto no painel do Supabase não ganha linha e fica sem
+  nível. Até a tela de convite existir, inserir a linha à mão.
+
+### `sdd-sql-admin-usuarios.sql` é aplicado em DUAS PARTES
+
+- **PARTE 1** (tabela + RLS + seed): **já aplicada** em 2026-08-07.
+- **PARTE 2** (troca da policy de `hub_system_access`): **PENDENTE, não rodar ainda.**
+  Ela dropa `authenticated full access`, que hoje é a **única** policy da tabela e da
+  qual o `alternarAcessoAction` em produção depende para escrever (ele usa o client do
+  usuário, não a service role). Rodar antes do deploy quebra o toggle de
+  `/admin/acessos` com "Erro ao atualizar acesso". Só rodar **depois** do deploy do
+  código com `alternarAcessoAction` via service role.
+- O script é idempotente: reaplicar o arquivo inteiro depois do deploy é seguro.
 
 ## Autenticação e autorização
 
 - Só e-mails `@manfac.com.br` entram (`lib/auth/domain.ts`), com exceção do e-mail do
   dono.
 - Admins são uma **lista fixa no código**: `lib/auth/admins.ts`. Mudar admin = mudar
-  código + deploy.
+  código + deploy. **Em migração** para `hub_user_roles` (branch
+  `worktree-admin-usuarios`); em master ainda é a lista fixa.
 - Acesso por sistema: `lib/auth/systemAccess.ts` → `hasSystemAccess()`. Admin sempre
   passa. Aplicado no `middleware.ts`, que é a fronteira real de autorização.
+- **Falha de RLS aberta hoje em produção:** `hub_system_access` tem a policy
+  `authenticated full access` (`ALL`, `with_check = true`), então qualquer usuário
+  logado pode escrever nela pelo client do navegador e se conceder acesso a um sistema,
+  contornando as Server Actions. Não dá para virar admin por essa via. Fechada pela
+  PARTE 2 do `sdd-sql-admin-usuarios.sql`, que depende do deploy — ver seção do banco.
 - O `middleware.ts` roda em todas as rotas do `matcher` no fim do arquivo. Rota nova
   protegida = adicionar ao `matcher`, senão fica aberta.
 
