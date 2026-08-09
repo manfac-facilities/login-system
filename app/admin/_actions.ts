@@ -109,6 +109,49 @@ export async function alterarNivelAction(
   return { success: true }
 }
 
+async function acharUsuarioPorEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  alvo: string
+): Promise<{ id: string; confirmed_at: string | null } | null> {
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: PER_PAGE })
+    if (error) return null
+    const lote = data?.users ?? []
+    const achado = lote.find((u) => u.email && normalizarEmail(u.email) === alvo)
+    if (achado) return { id: achado.id, confirmed_at: achado.confirmed_at ?? null }
+    if (lote.length < PER_PAGE) return null
+  }
+}
+
+export async function removerUsuarioAction(
+  email: string
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem remover usuários')
+  if ('error' in quem) return quem
+
+  const alvo = normalizarEmail(email)
+  if (alvo === quem.email) return { error: 'Você não pode remover a si mesmo' }
+
+  const admin = createAdminClient()
+
+  if ((await nivelDe(admin, alvo)) === 'administrador' && (await contarAdministradores(admin)) <= 1) {
+    return { error: 'O hub precisa de pelo menos um administrador' }
+  }
+
+  const usuario = await acharUsuarioPorEmail(admin, alvo)
+  if (!usuario) return { error: 'Usuário não encontrado' }
+
+  // A conta primeiro: se falhar, nada mais é apagado.
+  const { error } = await admin.auth.admin.deleteUser(usuario.id)
+  if (error) return { error: 'Erro ao remover o usuário' }
+
+  await admin.from('hub_user_roles').delete().eq('user_email', alvo)
+  await admin.from('hub_system_access').delete().eq('user_email', alvo)
+
+  revalidatePath('/admin/acessos')
+  return { success: true }
+}
+
 export async function alternarAcessoAction(
   userEmail: string,
   systemSlug: string,

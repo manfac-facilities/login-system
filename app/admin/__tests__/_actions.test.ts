@@ -5,6 +5,9 @@ const isAdminMock = jest.fn()
 const rolesSelectMock = jest.fn()
 const contarAdminsMock = jest.fn()
 const nivelAtualMock = jest.fn()
+const deleteUserMock = jest.fn()
+const deleteRowsMock = jest.fn()
+const tabelasApagadas: string[] = []
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -14,8 +17,8 @@ jest.mock('@/lib/supabase/server', () => ({
 }))
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
-    auth: { admin: { listUsers: listUsersMock } },
-    from: jest.fn(() => ({
+    auth: { admin: { listUsers: listUsersMock, deleteUser: deleteUserMock } },
+    from: jest.fn((tabela: string) => ({
       // O `select` do client admin serve a três chamadas diferentes:
       // a contagem de administradores, a leitura do nível atual de um e-mail
       // e a listagem completa de níveis.
@@ -36,6 +39,12 @@ jest.mock('@/lib/supabase/admin', () => ({
         return rolesSelectMock()
       },
       upsert: upsertMock,
+      delete: () => ({
+        eq: (...args: unknown[]) => {
+          tabelasApagadas.push(tabela)
+          return deleteRowsMock(...args)
+        },
+      }),
     })),
   })),
 }))
@@ -45,7 +54,12 @@ jest.mock('@/lib/auth/roles', () => ({
 }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
-import { listarUsuariosAction, alternarAcessoAction, alterarNivelAction } from '../_actions'
+import {
+  listarUsuariosAction,
+  alternarAcessoAction,
+  alterarNivelAction,
+  removerUsuarioAction,
+} from '../_actions'
 
 describe('listarUsuariosAction', () => {
   beforeEach(() => {
@@ -201,6 +215,72 @@ describe('alterarNivelAction', () => {
     expect(await alterarNivelAction('ana@manfac.com.br', 'administrador')).toEqual({
       error: 'Erro ao alterar o nível',
     })
+  })
+})
+
+describe('removerUsuarioAction', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    tabelasApagadas.length = 0
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
+    contarAdminsMock.mockResolvedValue(3)
+    nivelAtualMock.mockResolvedValue('analista')
+    deleteRowsMock.mockResolvedValue({ error: null })
+    listUsersMock.mockResolvedValue({
+      data: {
+        users: [{ id: 'id-da-ana', email: 'ana@manfac.com.br', confirmed_at: '2026-01-01' }],
+      },
+      error: null,
+    })
+  })
+
+  it('rejects non-admins', async () => {
+    isAdminMock.mockResolvedValue(false)
+    expect(await removerUsuarioAction('ana@manfac.com.br')).toEqual({
+      error: 'Apenas administradores podem remover usuários',
+    })
+    expect(deleteUserMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses to remove yourself', async () => {
+    expect(await removerUsuarioAction('CHEFE@manfac.com.br')).toEqual({
+      error: 'Você não pode remover a si mesmo',
+    })
+    expect(deleteUserMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses to remove the last administrator', async () => {
+    nivelAtualMock.mockResolvedValue('administrador')
+    contarAdminsMock.mockResolvedValue(1)
+    expect(await removerUsuarioAction('outro@manfac.com.br')).toEqual({
+      error: 'O hub precisa de pelo menos um administrador',
+    })
+    expect(deleteUserMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses when the user does not exist', async () => {
+    listUsersMock.mockResolvedValue({ data: { users: [] }, error: null })
+    expect(await removerUsuarioAction('fantasma@manfac.com.br')).toEqual({
+      error: 'Usuário não encontrado',
+    })
+    expect(deleteUserMock).not.toHaveBeenCalled()
+  })
+
+  it('does not delete rows when deleting the account fails', async () => {
+    deleteUserMock.mockResolvedValue({ error: { message: 'boom' } })
+    expect(await removerUsuarioAction('ana@manfac.com.br')).toEqual({
+      error: 'Erro ao remover o usuário',
+    })
+    expect(deleteRowsMock).not.toHaveBeenCalled()
+  })
+
+  it('deletes the account, the role and the system access', async () => {
+    deleteUserMock.mockResolvedValue({ error: null })
+    expect(await removerUsuarioAction('Ana@Manfac.com.br')).toEqual({ success: true })
+    expect(deleteUserMock).toHaveBeenCalledWith('id-da-ana')
+    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
+    expect(deleteRowsMock).toHaveBeenCalledWith('user_email', 'ana@manfac.com.br')
   })
 })
 
