@@ -60,6 +60,32 @@ describe('ContasCard', () => {
     expect(screen.getByText('suporte@manfac.com.br')).toBeInTheDocument()
   })
 
+  it('finds an address stored with uppercase letters', () => {
+    render(
+      <ContasCard
+        usuarios={[{ ...usuarios[0], email: 'Ana@Manfac.com.br' }]}
+        emailAtual="chefe@manfac.com.br"
+      />
+    )
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar usuários...'), {
+      target: { value: 'ana@manfac' },
+    })
+    expect(screen.getByText('Ana Souza')).toBeInTheDocument()
+  })
+
+  it('reopens the invite dialog empty', () => {
+    render(<ContasCard usuarios={usuarios} emailAtual="chefe@manfac.com.br" />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar novo usuário' }))
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: 'digitado@manfac.com.br' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar novo usuário' }))
+    expect(screen.getByLabelText(/e-mail/i)).toHaveValue('')
+  })
+
   it('filters by level', () => {
     render(<ContasCard usuarios={usuarios} emailAtual="chefe@manfac.com.br" />)
     fireEvent.change(screen.getByLabelText('Filtrar por nível'), {

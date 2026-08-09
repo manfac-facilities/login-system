@@ -110,6 +110,25 @@ export async function alterarNivelAction(
   return { success: true }
 }
 
+// Chamada depois que a conta já foi apagada, então não há como desfazer.
+// Uma linha órfã aqui devolveria os acessos antigos num reconvite, e por isso
+// vira erro visível em vez de sumir em silêncio.
+async function apagarLinhasDoUsuario(
+  admin: ReturnType<typeof createAdminClient>,
+  alvo: string
+): Promise<string | null> {
+  const { error: erroNivel } = await admin.from('hub_user_roles').delete().eq('user_email', alvo)
+  const { error: erroAcessos } = await admin
+    .from('hub_system_access')
+    .delete()
+    .eq('user_email', alvo)
+
+  if (erroNivel || erroAcessos) {
+    return 'Conta apagada, mas sobraram registros de nível ou de acesso. Remova-os no Supabase antes de convidar esse e-mail de novo.'
+  }
+  return null
+}
+
 async function acharUsuarioPorEmail(
   admin: ReturnType<typeof createAdminClient>,
   alvo: string
@@ -146,11 +165,10 @@ export async function removerUsuarioAction(
   const { error } = await admin.auth.admin.deleteUser(usuario.id)
   if (error) return { error: 'Erro ao remover o usuário' }
 
-  await admin.from('hub_user_roles').delete().eq('user_email', alvo)
-  await admin.from('hub_system_access').delete().eq('user_email', alvo)
+  const sobrou = await apagarLinhasDoUsuario(admin, alvo)
 
   revalidatePath('/admin/acessos')
-  return { success: true }
+  return sobrou ? { error: sobrou } : { success: true }
 }
 
 export async function convidarUsuarioAction(
@@ -172,13 +190,19 @@ export async function convidarUsuarioAction(
     return { error: 'Erro ao enviar o convite. O e-mail já pode estar cadastrado.' }
   }
 
-  await admin.from('hub_user_roles').upsert(
+  // O convite já saiu. Se as gravações abaixo falharem, a pessoa entra sem
+  // nível e sem acesso — quem convidou precisa saber disso.
+  const { error: erroNivel } = await admin.from('hub_user_roles').upsert(
     { user_email: alvo, nivel, granted_by: quem.email, updated_at: new Date().toISOString() },
     { onConflict: 'user_email' }
   )
+  if (erroNivel) {
+    revalidatePath('/admin/acessos')
+    return { error: 'Convite enviado, mas não foi possível gravar o nível. Ajuste na lista.' }
+  }
 
   if (sistemas.length > 0) {
-    await admin.from('hub_system_access').upsert(
+    const { error: erroAcessos } = await admin.from('hub_system_access').upsert(
       sistemas.map((slug) => ({
         user_email: alvo,
         system_slug: slug,
@@ -187,6 +211,10 @@ export async function convidarUsuarioAction(
       })),
       { onConflict: 'user_email,system_slug' }
     )
+    if (erroAcessos) {
+      revalidatePath('/admin/acessos')
+      return { error: 'Convite enviado, mas não foi possível liberar os sistemas. Ajuste na lista.' }
+    }
   }
 
   revalidatePath('/admin/acessos')
@@ -223,11 +251,10 @@ export async function cancelarConviteAction(
   const { error } = await admin.auth.admin.deleteUser(usuario.id)
   if (error) return { error: 'Erro ao cancelar o convite' }
 
-  await admin.from('hub_user_roles').delete().eq('user_email', alvo)
-  await admin.from('hub_system_access').delete().eq('user_email', alvo)
+  const sobrou = await apagarLinhasDoUsuario(admin, alvo)
 
   revalidatePath('/admin/acessos')
-  return { success: true }
+  return sobrou ? { error: sobrou } : { success: true }
 }
 
 export async function enviarResetSenhaAction(

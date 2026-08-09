@@ -59,7 +59,9 @@ export default function ContasCard({
     const termo = busca.trim().toLowerCase()
     return usuarios.filter((u) => {
       const casaBusca =
-        !termo || (u.nome ?? '').toLowerCase().includes(termo) || u.email.includes(termo)
+        !termo ||
+        (u.nome ?? '').toLowerCase().includes(termo) ||
+        u.email.toLowerCase().includes(termo)
       const casaNivel = filtroNivel === 'todos' || u.nivel === filtroNivel
       return casaBusca && casaNivel
     })
@@ -250,11 +252,11 @@ export default function ContasCard({
         </table>
       </div>
 
-      <ConvidarDialog
-        aberto={convidando}
-        sistemas={SISTEMAS}
-        onFechar={() => setConvidando(false)}
-      />
+      {/* Montado só quando aberto: desmontar zera o formulário, senão o
+          próximo convite abriria com os dados do anterior. */}
+      {convidando && (
+        <ConvidarDialog aberto sistemas={SISTEMAS} onFechar={() => setConvidando(false)} />
+      )}
       {removendo && (
         <RemoverDialog
           aberto

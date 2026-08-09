@@ -295,6 +295,15 @@ describe('removerUsuarioAction', () => {
     expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
     expect(deleteRowsMock).toHaveBeenCalledWith('user_email', 'ana@manfac.com.br')
   })
+
+  it('warns when a row survives the deletion, so it is not silently reused', async () => {
+    deleteUserMock.mockResolvedValue({ error: null })
+    deleteRowsMock.mockResolvedValue({ error: { message: 'boom' } })
+    expect(await removerUsuarioAction('ana@manfac.com.br')).toEqual({
+      error:
+        'Conta apagada, mas sobraram registros de nível ou de acesso. Remova-os no Supabase antes de convidar esse e-mail de novo.',
+    })
+  })
 })
 
 describe('convidarUsuarioAction', () => {
@@ -356,6 +365,22 @@ describe('convidarUsuarioAction', () => {
   it('does not touch hub_system_access when no system was chosen', async () => {
     await convidarUsuarioAction('nova@manfac.com.br', 'analista', [])
     expect(upsertMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns when the invite went out but the level could not be saved', async () => {
+    upsertMock.mockResolvedValue({ error: { message: 'boom' } })
+    expect(await convidarUsuarioAction('nova@manfac.com.br', 'analista', [])).toEqual({
+      error: 'Convite enviado, mas não foi possível gravar o nível. Ajuste na lista.',
+    })
+  })
+
+  it('warns when the invite went out but the systems could not be granted', async () => {
+    upsertMock
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: { message: 'boom' } })
+    expect(await convidarUsuarioAction('nova@manfac.com.br', 'analista', ['sofia'])).toEqual({
+      error: 'Convite enviado, mas não foi possível liberar os sistemas. Ajuste na lista.',
+    })
   })
 
   it('reports a clear error when the invite fails', async () => {

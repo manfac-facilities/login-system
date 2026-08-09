@@ -8,14 +8,42 @@
 -- de multas/sinistros/km_excedido_desconto, que antes só eram bloqueados
 -- na camada da aplicação e ficavam contornáveis via Supabase direto.
 -- ============================================================
--- IMPORTANTE: as funções abaixo replicam ADMIN_EMAILS
--- (lib/auth/admins.ts) e a lógica de hasSystemAccess()
--- (lib/auth/systemAccess.ts) diretamente em SQL. Se a lista de
--- admins ou o slug 'sofia' mudarem no código, atualizar aqui
--- também — não há sincronização automática entre os dois lados.
+-- ESTADO: NÃO APLICADO EM PRODUÇÃO. Verificado em 2026-08-09 no projeto
+-- iyytcavcgukfjnjjrerx: sofia_is_admin() e sofia_has_access() não existem
+-- e as tabelas do Sofia continuam com a policy "authenticated full access"
+-- (qual = true). Ou seja, os furos de RLS descritos acima seguem abertos.
+--
+-- REESCRITO EM 2026-08-09: as funções liam uma lista fixa de três e-mails,
+-- copiada do antigo lib/auth/admins.ts. Esse arquivo não existe mais — o
+-- nível de acesso agora mora em hub_user_roles e é editado pela tela
+-- /admin/acessos. Rodar a versão antiga deste script congelaria no banco
+-- uma lista de admins divergente do app: promoções feitas pela tela não
+-- valeriam no Postgres, e quem foi removido da lista continuaria admin.
+--
+-- As funções abaixo passam a ler as MESMAS tabelas que o app
+-- (lib/auth/roles.ts e lib/auth/systemAccess.ts), então não há mais nada
+-- para sincronizar à mão.
 -- ============================================================
 
--- 1. Função de acesso ao sistema "sofia" (espelha hasSystemAccess)
+-- 1. Função de admin (espelha isAdmin de lib/auth/roles.ts).
+--    Vem antes de sofia_has_access porque esta a chama, e o Postgres
+--    valida o corpo da função no momento da criação.
+create or replace function public.sofia_is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_catalog
+as $$
+  select exists (
+    select 1 from public.hub_user_roles
+    where user_email = lower(trim(auth.jwt() ->> 'email'))
+      and nivel = 'administrador'
+  );
+$$;
+
+-- 2. Função de acesso ao sistema "sofia" (espelha hasSystemAccess:
+--    administrador entra sempre; os demais dependem de hub_system_access)
 create or replace function public.sofia_has_access()
 returns boolean
 language sql
@@ -24,32 +52,13 @@ stable
 set search_path = public, pg_catalog
 as $$
   select
-    lower(trim(auth.jwt() ->> 'email')) in (
-      'ewerton.silva@manfac.com.br',
-      'jose.guilherme@manfac.com.br',
-      'jvictorco28@gmail.com'
-    )
+    public.sofia_is_admin()
     or exists (
       select 1 from public.hub_system_access
       where user_email = lower(trim(auth.jwt() ->> 'email'))
         and system_slug = 'sofia'
         and has_access = true
     );
-$$;
-
--- 2. Função de admin (espelha ADMIN_EMAILS)
-create or replace function public.sofia_is_admin()
-returns boolean
-language sql
-security definer
-stable
-set search_path = public, pg_catalog
-as $$
-  select lower(trim(auth.jwt() ->> 'email')) in (
-    'ewerton.silva@manfac.com.br',
-    'jose.guilherme@manfac.com.br',
-    'jvictorco28@gmail.com'
-  );
 $$;
 
 -- 3. Substituir as 16 policies "using(true)" por "using(sofia_has_access())"

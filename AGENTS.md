@@ -92,9 +92,22 @@ Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela
 
 - Só e-mails `@manfac.com.br` entram (`lib/auth/domain.ts`), com exceção do e-mail do
   dono.
-- Admins são uma **lista fixa no código**: `lib/auth/admins.ts`. Mudar admin = mudar
-  código + deploy. **Em migração** para `hub_user_roles` (branch
-  `worktree-admin-usuarios`); em master ainda é a lista fixa.
+- Admins vêm do **banco**, tabela `hub_user_roles`, lida por `lib/auth/roles.ts`
+  (`getNivel`, `isAdmin`). Promover/rebaixar é feito na tela `/admin/acessos`, sem
+  deploy. `lib/auth/admins.ts` e o `isAdminEmail` **não existem mais** — se você
+  encontrar referência a eles em algum lugar, é resíduo desatualizado.
+- **Toda escrita** em `hub_user_roles` e `hub_system_access` passa pela service role
+  (`lib/supabase/admin.ts`), dentro de Server Actions em `app/admin/_actions.ts`. Não há
+  policy de escrita nessas tabelas: o client do navegador não consegue se autopromover.
+- Invariantes garantidos nas Server Actions, não só na UI: ninguém altera o próprio
+  nível, ninguém se remove, e o último administrador não pode ser rebaixado nem
+  removido. A checagem do último admin é um read-then-write, então duas remoções
+  realmente simultâneas ainda passariam — risco conhecido e aceito, ver o plano.
+- **`sdd-sql-v04-seguranca.sql` foi reescrito para ler `hub_user_roles`** e nunca foi
+  aplicado em produção (confirmado em 2026-08-09: `sofia_is_admin()` e
+  `sofia_has_access()` não existem no banco e as tabelas do Sofia seguem com
+  `authenticated full access`). A versão antiga trazia uma lista fixa de três e-mails
+  que hoje contradiria o banco — não rode nenhuma cópia antiga desse arquivo.
 - Acesso por sistema: `lib/auth/systemAccess.ts` → `hasSystemAccess()`. Admin sempre
   passa. Aplicado no `middleware.ts`, que é a fronteira real de autorização.
 - **Falha de RLS aberta hoje em produção:** `hub_system_access` tem a policy

@@ -16,9 +16,15 @@ export default async function DashboardPage() {
 
   const fullName = user.user_metadata?.full_name as string | undefined
   const firstName = fullName?.trim().split(/\s+/)[0] ?? 'Colaborador'
+  // Administrador abre tudo, então nem consulta os acessos. Para os demais,
+  // as duas consultas vão juntas em vez de uma esperar a outra.
   const admin = await isAdmin(supabase, user.email ?? '')
-  const podeFrotas = await hasSystemAccess(supabase, user.email ?? '', 'sofia')
-  const podeConversor = await hasSystemAccess(supabase, user.email ?? '', 'conversor-os')
+  const [podeFrotas, podeConversor] = admin
+    ? [true, true]
+    : await Promise.all([
+        hasSystemAccess(supabase, user.email ?? '', 'sofia'),
+        hasSystemAccess(supabase, user.email ?? '', 'conversor-os'),
+      ])
   const semNada = !podeFrotas && !podeConversor && !admin
 
   return (
