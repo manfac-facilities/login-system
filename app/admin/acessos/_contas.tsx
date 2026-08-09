@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import type { Nivel } from '@/lib/auth/roles'
+import { SISTEMAS } from '@/lib/sistemas'
 import type { UsuarioHub } from '../_actions'
 import {
   alterarNivelAction,
   cancelarConviteAction,
   enviarResetSenhaAction,
   reenviarConviteAction,
-  removerUsuarioAction,
 } from '../_actions'
+import { ConvidarDialog, RemoverDialog } from '../_dialogs'
 
 const formatador = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'long',
@@ -49,6 +50,8 @@ export default function ContasCard({
   const [menuAberto, setMenuAberto] = useState<string | null>(null)
   const [processando, setProcessando] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [convidando, setConvidando] = useState(false)
+  const [removendo, setRemovendo] = useState<UsuarioHub | null>(null)
 
   const eu = emailAtual.trim().toLowerCase()
 
@@ -82,6 +85,7 @@ export default function ContasCard({
         </div>
         <button
           type="button"
+          onClick={() => setConvidando(true)}
           className="px-4 py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94d1f] transition-colors"
         >
           Adicionar novo usuário
@@ -220,9 +224,10 @@ export default function ContasCard({
                               titulo={
                                 souEu ? 'Você não pode rebaixar nem remover a si mesmo.' : undefined
                               }
-                              onClick={() =>
-                                executar(usuario.email, () => removerUsuarioAction(usuario.email))
-                              }
+                              onClick={() => {
+                                setMenuAberto(null)
+                                setRemovendo(usuario)
+                              }}
                             >
                               Remover do hub
                             </ItemMenu>
@@ -244,6 +249,19 @@ export default function ContasCard({
           </tbody>
         </table>
       </div>
+
+      <ConvidarDialog
+        aberto={convidando}
+        sistemas={SISTEMAS}
+        onFechar={() => setConvidando(false)}
+      />
+      {removendo && (
+        <RemoverDialog
+          aberto
+          usuario={{ email: removendo.email, nome: removendo.nome }}
+          onFechar={() => setRemovendo(null)}
+        />
+      )}
     </section>
   )
 }
