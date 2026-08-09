@@ -3,6 +3,8 @@ const upsertMock = jest.fn()
 const listUsersMock = jest.fn()
 const isAdminMock = jest.fn()
 const rolesSelectMock = jest.fn()
+const contarAdminsMock = jest.fn()
+const nivelAtualMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -13,7 +15,28 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
     auth: { admin: { listUsers: listUsersMock } },
-    from: jest.fn(() => ({ select: rolesSelectMock })),
+    from: jest.fn(() => ({
+      // O `select` do client admin serve a três chamadas diferentes:
+      // a contagem de administradores, a leitura do nível atual de um e-mail
+      // e a listagem completa de níveis.
+      select: (colunas: string, opcoes?: { count?: string; head?: boolean }) => {
+        if (opcoes?.count) {
+          return { eq: async () => ({ count: await contarAdminsMock() }) }
+        }
+        if (colunas === 'nivel') {
+          return {
+            eq: () => ({
+              maybeSingle: async () => {
+                const nivel = await nivelAtualMock()
+                return { data: nivel ? { nivel } : null }
+              },
+            }),
+          }
+        }
+        return rolesSelectMock()
+      },
+      upsert: upsertMock,
+    })),
   })),
 }))
 jest.mock('@/lib/auth/roles', () => ({
@@ -22,7 +45,7 @@ jest.mock('@/lib/auth/roles', () => ({
 }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
-import { listarUsuariosAction, alternarAcessoAction } from '../_actions'
+import { listarUsuariosAction, alternarAcessoAction, alterarNivelAction } from '../_actions'
 
 describe('listarUsuariosAction', () => {
   beforeEach(() => {
@@ -107,6 +130,77 @@ describe('listarUsuariosAction', () => {
   it('returns an error when listUsers fails', async () => {
     listUsersMock.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
     expect(await listarUsuariosAction()).toEqual({ error: 'Erro ao listar usuários' })
+  })
+})
+
+describe('alterarNivelAction', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
+    contarAdminsMock.mockResolvedValue(3)
+    nivelAtualMock.mockResolvedValue('analista')
+    upsertMock.mockResolvedValue({ error: null })
+  })
+
+  it('rejects non-admins', async () => {
+    isAdminMock.mockResolvedValue(false)
+    expect(await alterarNivelAction('ana@manfac.com.br', 'administrador')).toEqual({
+      error: 'Apenas administradores podem alterar níveis',
+    })
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses to change your own level', async () => {
+    expect(await alterarNivelAction('CHEFE@manfac.com.br', 'analista')).toEqual({
+      error: 'Você não pode alterar o seu próprio nível',
+    })
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses an invalid level', async () => {
+    // @ts-expect-error teste de valor inválido em runtime
+    expect(await alterarNivelAction('ana@manfac.com.br', 'chefão')).toEqual({
+      error: 'Nível inválido',
+    })
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses to demote the last administrator', async () => {
+    contarAdminsMock.mockResolvedValue(1)
+    nivelAtualMock.mockResolvedValue('administrador')
+    expect(await alterarNivelAction('outro@manfac.com.br', 'analista')).toEqual({
+      error: 'O hub precisa de pelo menos um administrador',
+    })
+    expect(upsertMock).not.toHaveBeenCalled()
+  })
+
+  it('demotes an administrator while others remain', async () => {
+    contarAdminsMock.mockResolvedValue(2)
+    nivelAtualMock.mockResolvedValue('administrador')
+    expect(await alterarNivelAction('outro@manfac.com.br', 'analista')).toEqual({ success: true })
+    expect(upsertMock).toHaveBeenCalled()
+  })
+
+  it('upserts the new level for an admin', async () => {
+    expect(await alterarNivelAction('Ana@Manfac.com.br', 'administrador')).toEqual({
+      success: true,
+    })
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_email: 'ana@manfac.com.br',
+        nivel: 'administrador',
+        granted_by: 'chefe@manfac.com.br',
+      }),
+      { onConflict: 'user_email' }
+    )
+  })
+
+  it('reports an error when the upsert fails', async () => {
+    upsertMock.mockResolvedValue({ error: { message: 'boom' } })
+    expect(await alterarNivelAction('ana@manfac.com.br', 'administrador')).toEqual({
+      error: 'Erro ao alterar o nível',
+    })
   })
 })
 

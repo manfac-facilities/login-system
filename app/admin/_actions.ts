@@ -5,6 +5,7 @@ import { isAdmin, normalizarEmail, type Nivel } from '@/lib/auth/roles'
 import { revalidatePath } from 'next/cache'
 
 const PER_PAGE = 100
+const NIVEIS_VALIDOS: Nivel[] = ['analista', 'administrador']
 
 export interface UsuarioHub {
   id: string
@@ -54,6 +55,58 @@ export async function listarUsuariosAction(): Promise<UsuarioHub[] | { error: st
       convitePendente: !u.confirmed_at,
     }))
     .sort((a, b) => a.email.localeCompare(b.email))
+}
+
+async function contarAdministradores(admin: ReturnType<typeof createAdminClient>): Promise<number> {
+  const { count } = await admin
+    .from('hub_user_roles')
+    .select('user_email', { count: 'exact', head: true })
+    .eq('nivel', 'administrador')
+  return count ?? 0
+}
+
+async function nivelDe(
+  admin: ReturnType<typeof createAdminClient>,
+  alvo: string
+): Promise<Nivel | null> {
+  const { data } = await admin
+    .from('hub_user_roles')
+    .select('nivel')
+    .eq('user_email', alvo)
+    .maybeSingle()
+  return (data?.nivel as Nivel | undefined) ?? null
+}
+
+export async function alterarNivelAction(
+  email: string,
+  nivel: Nivel
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem alterar níveis')
+  if ('error' in quem) return quem
+
+  const alvo = normalizarEmail(email)
+  if (alvo === quem.email) return { error: 'Você não pode alterar o seu próprio nível' }
+  if (!NIVEIS_VALIDOS.includes(nivel)) return { error: 'Nível inválido' }
+
+  const admin = createAdminClient()
+
+  // Rebaixar o último administrador deixaria o hub sem ninguém capaz de
+  // reverter a mudança.
+  if (nivel === 'analista') {
+    const atual = await nivelDe(admin, alvo)
+    if (atual === 'administrador' && (await contarAdministradores(admin)) <= 1) {
+      return { error: 'O hub precisa de pelo menos um administrador' }
+    }
+  }
+
+  const { error } = await admin.from('hub_user_roles').upsert(
+    { user_email: alvo, nivel, granted_by: quem.email, updated_at: new Date().toISOString() },
+    { onConflict: 'user_email' }
+  )
+  if (error) return { error: 'Erro ao alterar o nível' }
+
+  revalidatePath('/admin/acessos')
+  return { success: true }
 }
 
 export async function alternarAcessoAction(
