@@ -7,13 +7,13 @@ const contarAdminsMock = jest.fn()
 const nivelAtualMock = jest.fn()
 const deleteUserMock = jest.fn()
 const inviteMock = jest.fn()
+const resetSenhaMock = jest.fn()
 const deleteRowsMock = jest.fn()
 const tabelasApagadas: string[] = []
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
-    auth: { getUser: getUserMock },
-    from: jest.fn(() => ({ upsert: upsertMock })),
+    auth: { getUser: getUserMock, resetPasswordForEmail: resetSenhaMock },
   })),
 }))
 jest.mock('@/lib/supabase/admin', () => ({
@@ -69,6 +69,9 @@ import {
   alterarNivelAction,
   removerUsuarioAction,
   convidarUsuarioAction,
+  reenviarConviteAction,
+  cancelarConviteAction,
+  enviarResetSenhaAction,
 } from '../_actions'
 
 describe('listarUsuariosAction', () => {
@@ -364,33 +367,110 @@ describe('convidarUsuarioAction', () => {
   })
 })
 
+describe('ações de convite e senha', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    tabelasApagadas.length = 0
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
+    deleteRowsMock.mockResolvedValue({ error: null })
+    listUsersMock.mockResolvedValue({
+      data: {
+        users: [{ id: 'id-da-nova', email: 'nova@manfac.com.br', confirmed_at: null }],
+      },
+      error: null,
+    })
+  })
+
+  it('reenviarConviteAction rejects non-admins', async () => {
+    isAdminMock.mockResolvedValue(false)
+    expect(await reenviarConviteAction('nova@manfac.com.br')).toEqual({
+      error: 'Apenas administradores podem reenviar convites',
+    })
+    expect(inviteMock).not.toHaveBeenCalled()
+  })
+
+  it('reenviarConviteAction invites again', async () => {
+    inviteMock.mockResolvedValue({ data: { user: { id: 'x' } }, error: null })
+    expect(await reenviarConviteAction('Nova@Manfac.com.br')).toEqual({ success: true })
+    expect(inviteMock).toHaveBeenCalledWith('nova@manfac.com.br')
+  })
+
+  it('reenviarConviteAction reports a failure', async () => {
+    inviteMock.mockResolvedValue({ data: null, error: { message: 'boom' } })
+    expect(await reenviarConviteAction('nova@manfac.com.br')).toEqual({
+      error: 'Erro ao reenviar o convite',
+    })
+  })
+
+  it('cancelarConviteAction refuses to cancel a confirmed account', async () => {
+    listUsersMock.mockResolvedValue({
+      data: { users: [{ id: '1', email: 'ana@manfac.com.br', confirmed_at: '2026-01-01' }] },
+      error: null,
+    })
+    expect(await cancelarConviteAction('ana@manfac.com.br')).toEqual({
+      error: 'Esse usuário já confirmou o cadastro. Use "Remover do hub".',
+    })
+    expect(deleteUserMock).not.toHaveBeenCalled()
+  })
+
+  it('cancelarConviteAction deletes the pending account and its rows', async () => {
+    deleteUserMock.mockResolvedValue({ error: null })
+    expect(await cancelarConviteAction('Nova@Manfac.com.br')).toEqual({ success: true })
+    expect(deleteUserMock).toHaveBeenCalledWith('id-da-nova')
+    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
+  })
+
+  it('enviarResetSenhaAction rejects non-admins', async () => {
+    isAdminMock.mockResolvedValue(false)
+    expect(await enviarResetSenhaAction('ana@manfac.com.br')).toEqual({
+      error: 'Apenas administradores podem enviar redefinição de senha',
+    })
+    expect(resetSenhaMock).not.toHaveBeenCalled()
+  })
+
+  it('enviarResetSenhaAction sends the email with the normalized address', async () => {
+    resetSenhaMock.mockResolvedValue({ error: null })
+    expect(await enviarResetSenhaAction('Ana@Manfac.com.br')).toEqual({ success: true })
+    expect(resetSenhaMock).toHaveBeenCalledWith('ana@manfac.com.br', expect.any(Object))
+  })
+})
+
 describe('alternarAcessoAction', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
   })
 
   it('rejects non-admins', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: 'usuario@manfac.com.br' } } })
     isAdminMock.mockResolvedValue(false)
-    const result = await alternarAcessoAction('outro@manfac.com.br', 'conversor-os', true)
-    expect(result).toEqual({ error: 'Apenas administradores podem alterar acessos' })
+    expect(await alternarAcessoAction('ana@manfac.com.br', 'sofia', true)).toEqual({
+      error: 'Apenas administradores podem alterar acessos',
+    })
     expect(upsertMock).not.toHaveBeenCalled()
   })
 
-  it('upserts access for an admin', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: 'jvictorco28@gmail.com' } } })
-    isAdminMock.mockResolvedValue(true)
+  it('writes with the admin client and normalizes the email', async () => {
     upsertMock.mockResolvedValue({ error: null })
-    const result = await alternarAcessoAction('outro@manfac.com.br', 'conversor-os', true)
-    expect(result).toEqual({ success: true })
+    expect(await alternarAcessoAction('Ana@Manfac.com.br', 'sofia', true)).toEqual({
+      success: true,
+    })
     expect(upsertMock).toHaveBeenCalledWith(
       {
-        user_email: 'outro@manfac.com.br',
-        system_slug: 'conversor-os',
+        user_email: 'ana@manfac.com.br',
+        system_slug: 'sofia',
         has_access: true,
-        granted_by: 'jvictorco28@gmail.com',
+        granted_by: 'chefe@manfac.com.br',
       },
       { onConflict: 'user_email,system_slug' }
     )
+  })
+
+  it('reports an error when the upsert fails', async () => {
+    upsertMock.mockResolvedValue({ error: { message: 'boom' } })
+    expect(await alternarAcessoAction('ana@manfac.com.br', 'sofia', true)).toEqual({
+      error: 'Erro ao atualizar acesso',
+    })
   })
 })

@@ -193,27 +193,76 @@ export async function convidarUsuarioAction(
   return { success: true }
 }
 
+export async function reenviarConviteAction(
+  email: string
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem reenviar convites')
+  if ('error' in quem) return quem
+
+  const alvo = normalizarEmail(email)
+  const { error } = await createAdminClient().auth.admin.inviteUserByEmail(alvo)
+  if (error) return { error: 'Erro ao reenviar o convite' }
+  return { success: true }
+}
+
+export async function cancelarConviteAction(
+  email: string
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem cancelar convites')
+  if ('error' in quem) return quem
+
+  const alvo = normalizarEmail(email)
+  const admin = createAdminClient()
+
+  const usuario = await acharUsuarioPorEmail(admin, alvo)
+  if (!usuario) return { error: 'Usuário não encontrado' }
+  if (usuario.confirmed_at) {
+    return { error: 'Esse usuário já confirmou o cadastro. Use "Remover do hub".' }
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(usuario.id)
+  if (error) return { error: 'Erro ao cancelar o convite' }
+
+  await admin.from('hub_user_roles').delete().eq('user_email', alvo)
+  await admin.from('hub_system_access').delete().eq('user_email', alvo)
+
+  revalidatePath('/admin/acessos')
+  return { success: true }
+}
+
+export async function enviarResetSenhaAction(
+  email: string
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem enviar redefinição de senha')
+  if ('error' in quem) return quem
+
+  const supabase = await createServerClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(normalizarEmail(email), {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+  })
+  if (error) return { error: 'Erro ao enviar o e-mail de redefinição' }
+  return { success: true }
+}
+
 export async function alternarAcessoAction(
   userEmail: string,
   systemSlug: string,
   hasAccess: boolean
 ): Promise<{ error?: string; success?: boolean }> {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user?.email || !(await isAdmin(supabase, user.email)))
-    return { error: 'Apenas administradores podem alterar acessos' }
+  const quem = await exigirAdmin('Apenas administradores podem alterar acessos')
+  if ('error' in quem) return quem
 
-  const { error } = await supabase.from('hub_system_access').upsert(
-    {
-      user_email: userEmail,
-      system_slug: systemSlug,
-      has_access: hasAccess,
-      granted_by: user.email,
-    },
-    { onConflict: 'user_email,system_slug' }
-  )
+  const { error } = await createAdminClient()
+    .from('hub_system_access')
+    .upsert(
+      {
+        user_email: normalizarEmail(userEmail),
+        system_slug: systemSlug,
+        has_access: hasAccess,
+        granted_by: quem.email,
+      },
+      { onConflict: 'user_email,system_slug' }
+    )
   if (error) return { error: 'Erro ao atualizar acesso' }
 
   revalidatePath('/admin/acessos')
