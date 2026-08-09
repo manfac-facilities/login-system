@@ -6,6 +6,7 @@ const rolesSelectMock = jest.fn()
 const contarAdminsMock = jest.fn()
 const nivelAtualMock = jest.fn()
 const deleteUserMock = jest.fn()
+const inviteMock = jest.fn()
 const deleteRowsMock = jest.fn()
 const tabelasApagadas: string[] = []
 
@@ -17,7 +18,13 @@ jest.mock('@/lib/supabase/server', () => ({
 }))
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: jest.fn(() => ({
-    auth: { admin: { listUsers: listUsersMock, deleteUser: deleteUserMock } },
+    auth: {
+      admin: {
+        listUsers: listUsersMock,
+        deleteUser: deleteUserMock,
+        inviteUserByEmail: inviteMock,
+      },
+    },
     from: jest.fn((tabela: string) => ({
       // O `select` do client admin serve a três chamadas diferentes:
       // a contagem de administradores, a leitura do nível atual de um e-mail
@@ -53,12 +60,15 @@ jest.mock('@/lib/auth/roles', () => ({
   normalizarEmail: (email: string) => email.trim().toLowerCase(),
 }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
+jest.mock('@/lib/auth/domain', () => ({ isManfacEmail: jest.fn(() => true) }))
 
+import { isManfacEmail } from '@/lib/auth/domain'
 import {
   listarUsuariosAction,
   alternarAcessoAction,
   alterarNivelAction,
   removerUsuarioAction,
+  convidarUsuarioAction,
 } from '../_actions'
 
 describe('listarUsuariosAction', () => {
@@ -281,6 +291,76 @@ describe('removerUsuarioAction', () => {
     expect(deleteUserMock).toHaveBeenCalledWith('id-da-ana')
     expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
     expect(deleteRowsMock).toHaveBeenCalledWith('user_email', 'ana@manfac.com.br')
+  })
+})
+
+describe('convidarUsuarioAction', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
+    ;(isManfacEmail as jest.Mock).mockReturnValue(true)
+    inviteMock.mockResolvedValue({ data: { user: { id: 'novo' } }, error: null })
+    upsertMock.mockResolvedValue({ error: null })
+  })
+
+  it('rejects non-admins', async () => {
+    isAdminMock.mockResolvedValue(false)
+    expect(await convidarUsuarioAction('nova@manfac.com.br', 'analista', [])).toEqual({
+      error: 'Apenas administradores podem convidar usuários',
+    })
+    expect(inviteMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses an email outside the allowed domain before calling the API', async () => {
+    ;(isManfacEmail as jest.Mock).mockReturnValue(false)
+    expect(await convidarUsuarioAction('alguem@gmail.com', 'analista', [])).toEqual({
+      error: 'Só é possível convidar e-mails @manfac.com.br',
+    })
+    expect(inviteMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses an invalid level', async () => {
+    // @ts-expect-error valor inválido em runtime
+    expect(await convidarUsuarioAction('nova@manfac.com.br', 'dono', [])).toEqual({
+      error: 'Nível inválido',
+    })
+    expect(inviteMock).not.toHaveBeenCalled()
+  })
+
+  it('invites, records the level and grants the chosen systems', async () => {
+    expect(await convidarUsuarioAction('Nova@Manfac.com.br', 'analista', ['conversor-os'])).toEqual({
+      success: true,
+    })
+
+    expect(inviteMock).toHaveBeenCalledWith('nova@manfac.com.br')
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ user_email: 'nova@manfac.com.br', nivel: 'analista' }),
+      { onConflict: 'user_email' }
+    )
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          user_email: 'nova@manfac.com.br',
+          system_slug: 'conversor-os',
+          has_access: true,
+        }),
+      ]),
+      { onConflict: 'user_email,system_slug' }
+    )
+  })
+
+  it('does not touch hub_system_access when no system was chosen', async () => {
+    await convidarUsuarioAction('nova@manfac.com.br', 'analista', [])
+    expect(upsertMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports a clear error when the invite fails', async () => {
+    inviteMock.mockResolvedValue({ data: null, error: { message: 'já existe' } })
+    expect(await convidarUsuarioAction('nova@manfac.com.br', 'analista', [])).toEqual({
+      error: 'Erro ao enviar o convite. O e-mail já pode estar cadastrado.',
+    })
+    expect(upsertMock).not.toHaveBeenCalled()
   })
 })
 

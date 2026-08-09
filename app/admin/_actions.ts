@@ -2,6 +2,7 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isAdmin, normalizarEmail, type Nivel } from '@/lib/auth/roles'
+import { isManfacEmail } from '@/lib/auth/domain'
 import { revalidatePath } from 'next/cache'
 
 const PER_PAGE = 100
@@ -147,6 +148,46 @@ export async function removerUsuarioAction(
 
   await admin.from('hub_user_roles').delete().eq('user_email', alvo)
   await admin.from('hub_system_access').delete().eq('user_email', alvo)
+
+  revalidatePath('/admin/acessos')
+  return { success: true }
+}
+
+export async function convidarUsuarioAction(
+  email: string,
+  nivel: Nivel,
+  sistemas: string[]
+): Promise<{ error?: string; success?: boolean }> {
+  const quem = await exigirAdmin('Apenas administradores podem convidar usuários')
+  if ('error' in quem) return quem
+
+  const alvo = normalizarEmail(email)
+  if (!isManfacEmail(alvo)) return { error: 'Só é possível convidar e-mails @manfac.com.br' }
+  if (!NIVEIS_VALIDOS.includes(nivel)) return { error: 'Nível inválido' }
+
+  const admin = createAdminClient()
+
+  const { error: erroConvite } = await admin.auth.admin.inviteUserByEmail(alvo)
+  if (erroConvite) {
+    return { error: 'Erro ao enviar o convite. O e-mail já pode estar cadastrado.' }
+  }
+
+  await admin.from('hub_user_roles').upsert(
+    { user_email: alvo, nivel, granted_by: quem.email, updated_at: new Date().toISOString() },
+    { onConflict: 'user_email' }
+  )
+
+  if (sistemas.length > 0) {
+    await admin.from('hub_system_access').upsert(
+      sistemas.map((slug) => ({
+        user_email: alvo,
+        system_slug: slug,
+        has_access: true,
+        granted_by: quem.email,
+      })),
+      { onConflict: 'user_email,system_slug' }
+    )
+  }
 
   revalidatePath('/admin/acessos')
   return { success: true }
