@@ -4,6 +4,7 @@ import { logoutAction } from './actions'
 import Logo from '@/components/ui/Logo'
 import Link from 'next/link'
 import { isAdmin } from '@/lib/auth/roles'
+import { hasSystemAccess } from '@/lib/auth/systemAccess'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -16,6 +17,9 @@ export default async function DashboardPage() {
   const fullName = user.user_metadata?.full_name as string | undefined
   const firstName = fullName?.trim().split(/\s+/)[0] ?? 'Colaborador'
   const admin = await isAdmin(supabase, user.email ?? '')
+  const podeFrotas = await hasSystemAccess(supabase, user.email ?? '', 'sofia')
+  const podeConversor = await hasSystemAccess(supabase, user.email ?? '', 'conversor-os')
+  const semNada = !podeFrotas && !podeConversor && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -45,7 +49,13 @@ export default async function DashboardPage() {
             Bem-vindo ao Hub Manfac Facilities.
           </p>
         </div>
+        {semNada ? (
+          <p className="text-[#94a3b8] text-center">
+            Você ainda não tem nenhum sistema liberado. Fale com um administrador do hub.
+          </p>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {podeFrotas && (
           <Link
             href="/sofia"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
@@ -60,6 +70,8 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
+          )}
+          {podeConversor && (
           <Link
             href="/conversor-os"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
@@ -74,6 +86,7 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
+          )}
           {admin && (
             <Link
               href="/admin/acessos"
@@ -91,6 +104,7 @@ export default async function DashboardPage() {
             </Link>
           )}
         </div>
+        )}
       </div>
     </main>
   )
