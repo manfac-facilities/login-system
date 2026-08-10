@@ -42,6 +42,17 @@ institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
 - **O hub é deployado no EasyPanel.** Variáveis de ambiente e logs ficam no painel web
   do EasyPanel. Não há acesso SSH funcional: a chave `~/.ssh/manfac_vps` recebe
   `Permission denied (publickey)`.
+- **Painel:** `http://2.25.194.184:3000`; o app do hub é
+  `/projects/manfac/app/manfac-login-system` (projeto `manfac`, app
+  `manfac-login-system`). O botão de **Deploy** fica nessa página.
+- **Quem clica é o João, não o Claude.** Abrir a URL pela extensão do Chrome cai na tela
+  de login do EasyPanel — a sessão do João não chega nesse contexto, e digitar senha é
+  proibido. O fluxo que funciona: João clica em Deploy, Claude confirma o build por fora.
+- **Como confirmar que o build subiu** (não confie no painel nem em "já cliquei"): pegar
+  os `/_next/static/chunks/*.js` de `https://hub.manfac.com.br/login` e conferir o
+  `Last-Modified` deles. Todos têm que ter o mesmo timestamp e ser posteriores ao push —
+  timestamps misturados significam cache velho junto com build novo. **Não há webhook de
+  auto-deploy:** push no `origin/master` não sobe nada sozinho.
 - **Arquivos de deploy desatualizados — não confie neles:** `deploy/DEPLOY.md`,
   `deploy/ecosystem.config.js`, `.env.production` e os `deploy/nginx-*.conf` descrevem
   uma infra antiga de VPS com PM2 + Nginx que não é mais a que está no ar.
