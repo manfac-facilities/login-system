@@ -115,7 +115,7 @@ formato, ou você troca um bug por outro.
 | Arquivo | Estado |
 |---|---|
 | `passo1`–`passo4`, `v03`, `audit-log`, `autorizacao`, `feedback-cliente`, `conversor-os` | aplicados |
-| `v04` | aplicado, **exceto** o índice `veiculos_equipe_ativo_uniq` — ver o cabeçalho do arquivo |
+| `v04` | aplicado por inteiro; o índice `veiculos_equipe_ativo_uniq` entrou em 2026-08-10 |
 | `track-b` | aplicado |
 | `admin-usuarios` PARTE 1 | aplicado |
 | `admin-usuarios` PARTE 2 | aplicada em 2026-08-10, após o deploy |
@@ -130,6 +130,21 @@ guardadas (autorização/desconto de multas e sinistros, `equipes.ativo`,
 `veiculos.valor_locacao_mensal`, insert em `centro_custo_historico`, delete em
 `abastecimentos`/`km_diario`) falha com "Apenas administradores...". Contorno:
 `alter table ... disable trigger`, corrigir, reabilitar.
+
+**Duas armadilhas de PL/pgSQL que já morderam aqui — confira nos SQLs futuros:**
+
+1. **Trigger compartilhada por tabelas de colunas diferentes.**
+   `if TG_TABLE_NAME = 'equipes' and new.ativo is distinct from old.ativo` é UMA
+   expressão SQL: `new.ativo` é resolvido contra o registro real quando ela executa, e
+   o `and` **não** protege. Numa tabela sem a coluna, levanta `42703 record "new" has
+   no field`. O teste de tabela tem que ser um `if` externo, com o campo aninhado
+   dentro. Esse bug passou por dois code reviews e um `/security-review` sem ser visto
+   e só apareceu na primeira escrita real — SQL só é verificado de verdade rodando.
+2. **Guarda de autorização falha ABERTO com NULL.** `if not minha_funcao() then raise`
+   não dispara se a função devolver NULL (`NULL in (...)` é NULL). RLS não expõe isso
+   porque policy trata NULL como negado. Toda função de autorização daqui tem que
+   devolver `true`/`false` — `exists(...)` já garante; `in (lista)` precisa de
+   `coalesce(..., false)`.
 - Tabela de controle de acesso: `hub_system_access` (`user_email`, `system_slug`,
   `has_access`, `granted_by`), criada em `sdd-sql-conversor-os.sql`.
 - Tabela de nível: `hub_user_roles` (`user_email` UNIQUE, `nivel` em

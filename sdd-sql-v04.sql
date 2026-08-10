@@ -13,12 +13,13 @@
 -- item 2. Aplicados: as duas colunas de veiculos, o drop do NOT NULL em
 -- checklist.equipe_id e a troca da constraint de km_diario.
 --
--- PENDENTE — item 2, `veiculos_equipe_ativo_uniq`: a verificação de
--- pré-requisito retornou 1 conflito. A equipe MANFAC 11
--- (55f1f969-68c8-492f-b3e9-33d55d86de74) está em dois veículos ativos:
--- TEW9A24 e TZM6E53, ambos FIAT ARGO. Criar o índice falha enquanto isso
--- existir. Resolver o dado primeiro (decidir qual placa fica com a equipe
--- e limpar a outra), depois criar só o índice.
+-- RESOLVIDO EM 2026-08-10 — item 2, `veiculos_equipe_ativo_uniq`: o conflito
+-- era a equipe MANFAC 11 (55f1f969-68c8-492f-b3e9-33d55d86de74) em dois
+-- veículos ativos, TEW9A24 e TZM6E53, ambos FIAT ARGO e ambos sem nenhum KM,
+-- checklist ou abastecimento lançado. Decisão do João: desvincular a equipe do
+-- TEW9A24, que continua ativo na frota mas sem equipe. Feito o update, o
+-- índice foi criado na migration `v04_indice_equipe_ativo_unica`. Com isso o
+-- v04 está 100% aplicado.
 -- ============================================================
 
 -- 1. Veículo na oficina + veículo substituto

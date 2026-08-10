@@ -170,45 +170,53 @@ set search_path = public, pg_catalog
 as $$
 begin
   if not public.sofia_is_admin() then
+    -- ATENÇÃO (bug corrigido em 2026-08-10, ao aplicar): o teste de tabela
+    -- precisa ser um IF EXTERNO, não "TG_TABLE_NAME = 'x' and new.campo ...".
+    -- Em PL/pgSQL essa condição é uma expressão SQL única, e new.campo é
+    -- resolvido contra o registro real quando a expressão executa — o "and"
+    -- não protege. Com os campos no mesmo nível, um UPDATE em km_excedido_
+    -- desconto morria em new.valor_descontado (do bloco de multas) com
+    -- 42703 "record new has no field", e o mesmo valia para multas x
+    -- sinistros. Aninhado, a expressão interna só é preparada no ramo certo.
     if TG_OP = 'UPDATE' then
-      if TG_TABLE_NAME = 'multas' and (
-        new.autorizacao_status is distinct from old.autorizacao_status
-        or new.valor_descontado is distinct from old.valor_descontado
-        or new.status is distinct from old.status
-      ) then
-        raise exception 'Apenas administradores podem alterar autorização/desconto de multas';
-      end if;
-      if TG_TABLE_NAME = 'sinistros' and (
-        new.autorizacao_status is distinct from old.autorizacao_status
-        or new.valor_descontado is distinct from old.valor_descontado
-        or new.status_desconto is distinct from old.status_desconto
-      ) then
-        raise exception 'Apenas administradores podem alterar autorização/desconto de sinistros';
-      end if;
-      if TG_TABLE_NAME = 'km_excedido_desconto' and (
-        new.autorizacao_status is distinct from old.autorizacao_status
-      ) then
-        raise exception 'Apenas administradores podem alterar autorização de KM excedido';
+      if TG_TABLE_NAME = 'multas' then
+        if new.autorizacao_status is distinct from old.autorizacao_status
+          or new.valor_descontado is distinct from old.valor_descontado
+          or new.status is distinct from old.status
+        then
+          raise exception 'Apenas administradores podem alterar autorização/desconto de multas';
+        end if;
+      elsif TG_TABLE_NAME = 'sinistros' then
+        if new.autorizacao_status is distinct from old.autorizacao_status
+          or new.valor_descontado is distinct from old.valor_descontado
+          or new.status_desconto is distinct from old.status_desconto
+        then
+          raise exception 'Apenas administradores podem alterar autorização/desconto de sinistros';
+        end if;
+      elsif TG_TABLE_NAME = 'km_excedido_desconto' then
+        if new.autorizacao_status is distinct from old.autorizacao_status then
+          raise exception 'Apenas administradores podem alterar autorização de KM excedido';
+        end if;
       end if;
     elsif TG_OP = 'INSERT' then
-      if TG_TABLE_NAME = 'multas' and (
-        new.autorizacao_status is distinct from 'sem_solicitacao'
-        or new.valor_descontado is not null
-        or new.status is distinct from 'pendente'
-      ) then
-        raise exception 'Apenas administradores podem inserir multas com autorização/desconto já definidos';
-      end if;
-      if TG_TABLE_NAME = 'sinistros' and (
-        new.autorizacao_status is distinct from 'sem_solicitacao'
-        or new.valor_descontado is not null
-        or new.status_desconto is distinct from 'pendente'
-      ) then
-        raise exception 'Apenas administradores podem inserir sinistros com autorização/desconto já definidos';
-      end if;
-      if TG_TABLE_NAME = 'km_excedido_desconto' and (
-        new.autorizacao_status is distinct from 'sem_solicitacao'
-      ) then
-        raise exception 'Apenas administradores podem inserir KM excedido com autorização já definida';
+      if TG_TABLE_NAME = 'multas' then
+        if new.autorizacao_status is distinct from 'sem_solicitacao'
+          or new.valor_descontado is not null
+          or new.status is distinct from 'pendente'
+        then
+          raise exception 'Apenas administradores podem inserir multas com autorização/desconto já definidos';
+        end if;
+      elsif TG_TABLE_NAME = 'sinistros' then
+        if new.autorizacao_status is distinct from 'sem_solicitacao'
+          or new.valor_descontado is not null
+          or new.status_desconto is distinct from 'pendente'
+        then
+          raise exception 'Apenas administradores podem inserir sinistros com autorização/desconto já definidos';
+        end if;
+      elsif TG_TABLE_NAME = 'km_excedido_desconto' then
+        if new.autorizacao_status is distinct from 'sem_solicitacao' then
+          raise exception 'Apenas administradores podem inserir KM excedido com autorização já definida';
+        end if;
       end if;
     elsif TG_OP = 'DELETE' then
       -- Achado da security review (Vuln 2): sem isto, RLS sozinha permitia
@@ -257,12 +265,18 @@ set search_path = public, pg_catalog
 as $$
 begin
   if not public.sofia_is_admin() then
+    -- Mesmo cuidado da função acima: veiculos não tem "ativo" e equipes não
+    -- tem "valor_locacao_mensal". Sem o IF externo por tabela, TODO update de
+    -- veículo feito por não-admin falhava com 42703 em new.ativo.
     if TG_OP = 'UPDATE' then
-      if TG_TABLE_NAME = 'equipes' and new.ativo is distinct from old.ativo then
-        raise exception 'Apenas administradores podem ativar/desativar equipes';
-      end if;
-      if TG_TABLE_NAME = 'veiculos' and new.valor_locacao_mensal is distinct from old.valor_locacao_mensal then
-        raise exception 'Apenas administradores podem alterar o valor de locação do veículo';
+      if TG_TABLE_NAME = 'equipes' then
+        if new.ativo is distinct from old.ativo then
+          raise exception 'Apenas administradores podem ativar/desativar equipes';
+        end if;
+      elsif TG_TABLE_NAME = 'veiculos' then
+        if new.valor_locacao_mensal is distinct from old.valor_locacao_mensal then
+          raise exception 'Apenas administradores podem alterar o valor de locação do veículo';
+        end if;
       end if;
     elsif TG_OP = 'INSERT' then
       if TG_TABLE_NAME = 'centro_custo_historico' then
