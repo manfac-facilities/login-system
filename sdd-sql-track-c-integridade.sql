@@ -10,6 +10,19 @@
 -- (reatribuição de equipe no checklist sem transação) e B-18 (exclusão em
 -- massa de multas sem audit log atômico).
 --
+-- ESTADO: APLICADO EM PRODUÇÃO em 2026-08-10 (iyytcavcgukfjnjjrerx, migration
+-- `track_c_integridade_functions_atomicas`), com as três dependências abaixo já
+-- aplicadas na mesma data. Verificado por teste funcional em transação
+-- revertida, com request.jwt.claims forjado por identidade:
+--   guarda de acesso    -> usuário sem acesso ao sofia é bloqueado nas 3
+--   lancar_km_atomico   -> grava km_diario e atualiza veiculos.km_atual
+--   regra de KM menor   -> levanta SOF01 com a mensagem em pt-BR ("2.214 km"),
+--                          que é o texto que a Server Action mostra ao usuário
+--   atribuir_responsab. -> troca deixa exatamente 1 histórico aberto;
+--                          finalizacao_contrato deixa o veículo inativo e sem equipe
+--   excluir_multas      -> apaga a multa e grava 1 linha em audit_log com
+--                          usuario_id vindo de auth.uid()
+--
 -- ORDEM OBRIGATÓRIA — este arquivo é o ÚLTIMO da fila. Depende de:
 --   1. sdd-sql-v04.sql            → cria a constraint unique (data, veiculo_id)
 --                                   usada pelo "on conflict" de lancar_km_atomico
