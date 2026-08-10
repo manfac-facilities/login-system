@@ -4,19 +4,16 @@ function makeChainable(result: TableResult) {
   const chain: Record<string, unknown> = {}
   const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'gte', 'lt', 'order', 'single', 'maybeSingle']
   for (const m of methods) {
-    chain[m] = jest.fn((...args: unknown[]) => {
-      if (m === 'upsert') lastUpsertArgs = args
-      return chain
-    })
+    chain[m] = jest.fn(() => chain)
   }
   chain.then = (resolve: (v: TableResult) => void) => resolve(result)
   return chain
 }
 
 let tableResults: Record<string, TableResult>
-let lastUpsertArgs: unknown[] = []
 let currentUserEmail: string | null = null
 let chains: Record<string, ReturnType<typeof makeChainable>> = {}
+const rpcMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -29,6 +26,7 @@ jest.mock('@/lib/supabase/server', () => ({
       if (!chains[table]) chains[table] = makeChainable(tableResults[table])
       return chains[table]
     }),
+    rpc: rpcMock,
   })),
 }))
 
@@ -52,23 +50,80 @@ beforeEach(() => {
   ;(isAdmin as jest.Mock).mockResolvedValue(false)
 })
 
-describe('lancarKmAction — chave de conflito', () => {
+describe('lancarKmAction — via lancar_km_atomico', () => {
   beforeEach(() => {
-    lastUpsertArgs = []
     chains = {}
     currentUserEmail = null
+    rpcMock.mockReset()
+    rpcMock.mockResolvedValue({ data: null, error: null })
     tableResults = {
-      veiculos: { data: { km_atual: 1000 }, error: null },
-      km_diario: { error: null },
+      veiculos: { data: { km_contratual_mensal: null, placa: 'ABC-1234' }, error: null },
+      km_diario: { data: [], error: null },
     }
   })
 
-  it('usa onConflict "data,veiculo_id" em vez de "data,equipe_id"', async () => {
+  it('chama lancar_km_atomico com os parâmetros certos', async () => {
+    await lancarKmAction(
+      {},
+      buildFormData({
+        equipe_id: 'equipe-1',
+        veiculo_id: 'veiculo-1',
+        motorista_id: 'motorista-1',
+        km_atual: '1500',
+        data: '2026-07-18',
+        observacoes: 'tudo certo',
+      })
+    )
+
+    expect(rpcMock).toHaveBeenCalledWith('lancar_km_atomico', {
+      p_equipe_id: 'equipe-1',
+      p_veiculo_id: 'veiculo-1',
+      p_motorista_id: 'motorista-1',
+      p_km_atual: 1500,
+      p_data: '2026-07-18',
+      p_observacoes: 'tudo certo',
+    })
+  })
+
+  it('surfaces a mensagem de erro exata que a function retorna (regra de KM menor)', async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { code: 'SOF01', message: 'KM não pode ser menor que a última KM registrada (2.000 km)' },
+    })
+
+    const result = await lancarKmAction(
+      {},
+      buildFormData({ equipe_id: 'equipe-1', veiculo_id: 'veiculo-1', km_atual: '1500', data: '2026-07-18' })
+    )
+
+    expect(result).toEqual({ error: 'KM não pode ser menor que a última KM registrada (2.000 km)' })
+  })
+
+  it('esconde erro interno do Postgres atrás da mensagem genérica', async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { code: '42501', message: 'permission denied for function lancar_km_atomico' },
+    })
+
+    const result = await lancarKmAction(
+      {},
+      buildFormData({ equipe_id: 'equipe-1', veiculo_id: 'veiculo-1', km_atual: '1500', data: '2026-07-18' })
+    )
+
+    expect(result).toEqual({ error: 'Erro ao registrar KM' })
+  })
+
+  it('não faz mais o lançamento por escritas separadas — só a chamada rpc', async () => {
     await lancarKmAction(
       {},
       buildFormData({ equipe_id: 'equipe-1', veiculo_id: 'veiculo-1', km_atual: '1500', data: '2026-07-18' })
     )
-    expect(lastUpsertArgs[1]).toEqual({ onConflict: 'data,veiculo_id' })
+
+    // chains.veiculos/km_diario ainda existem, mas só por causa de
+    // verificarERegistrarExcedencia, que roda DEPOIS e é só leitura.
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(chains.km_diario.upsert).not.toHaveBeenCalled()
+    expect(chains.veiculos.update).not.toHaveBeenCalled()
   })
 })
 

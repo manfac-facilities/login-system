@@ -181,11 +181,14 @@ guardadas (autorização/desconto de multas e sinistros, `equipes.ativo`,
   nível, ninguém se remove, e o último administrador não pode ser rebaixado nem
   removido. A checagem do último admin é um read-then-write, então duas remoções
   realmente simultâneas ainda passariam — risco conhecido e aceito, ver o plano.
-- **`sdd-sql-v04-seguranca.sql` foi reescrito para ler `hub_user_roles`** e nunca foi
-  aplicado em produção (confirmado em 2026-08-09: `sofia_is_admin()` e
-  `sofia_has_access()` não existem no banco e as tabelas do Sofia seguem com
-  `authenticated full access`). A versão antiga trazia uma lista fixa de três e-mails
-  que hoje contradiria o banco — não rode nenhuma cópia antiga desse arquivo.
+- **`sdd-sql-v04-seguranca.sql` foi reescrito para ler `hub_user_roles`** e aplicado em
+  produção em 2026-08-10: `sofia_is_admin()` e `sofia_has_access()` existem e as tabelas
+  do Sofia estão com `sofia access`. A versão antiga trazia uma lista fixa de três
+  e-mails que hoje contradiria o banco — não rode nenhuma cópia antiga desse arquivo.
+- `sdd-sql-track-c-integridade.sql` também está aplicado (2026-08-10): as functions
+  `lancar_km_atomico`, `atribuir_responsabilidade_veiculo` e `excluir_multas_em_massa`
+  são `security definer`, guardadas por `sofia_has_access()`/`sofia_is_admin()` com
+  `is not true`, e com `execute` revogado de `public`/`anon`.
 - Acesso por sistema: `lib/auth/systemAccess.ts` → `hasSystemAccess()`. Admin sempre
   passa. Aplicado no `middleware.ts`, que é a fronteira real de autorização.
 - **RLS de `hub_system_access`: fechada em 2026-08-10.** Até essa data a policy era

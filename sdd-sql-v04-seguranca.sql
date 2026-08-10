@@ -55,7 +55,7 @@ returns boolean
 language sql
 security definer
 stable
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
   select exists (
     select 1 from public.hub_user_roles
@@ -71,7 +71,7 @@ returns boolean
 language sql
 security definer
 stable
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
   select
     public.sofia_is_admin()
@@ -166,7 +166,7 @@ create or replace function public.sofia_bloquear_autorizacao_nao_admin()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
 begin
   if not public.sofia_is_admin() then
@@ -261,7 +261,7 @@ create or replace function public.sofia_bloquear_escrita_nao_admin()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
 begin
   if not public.sofia_is_admin() then

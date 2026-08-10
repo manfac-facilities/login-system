@@ -82,12 +82,13 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   if (!user?.email || !(await isAdmin(supabase, user.email)))
     throw new Error('Apenas administradores podem excluir multas')
 
-  const { data: multas, error } = await supabase.from('multas').delete().in('id', ids).select()
+  // O delete e o audit log de cada multa acontecem na mesma transação dentro
+  // da function. Antes o loop de logAudit rodava depois do delete já commitado:
+  // uma falha no meio deixava multa excluída sem rastro de quem excluiu (B-18).
+  // O autor do log sai de auth.uid() dentro da function, não daqui — a function
+  // é alcançável direto em /rpc/, então um autor vindo do cliente seria forjável.
+  const { error } = await supabase.rpc('excluir_multas_em_massa', { p_ids: ids })
   if (error) throw error
-
-  for (const multa of multas ?? []) {
-    await logAudit('multas', 'excluiu', multa.id, `Multa excluída em massa — ${multa.tipo_infracao ?? multa.descricao ?? multa.id}`)
-  }
 
   revalidatePath('/sofia/multas')
 }
