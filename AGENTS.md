@@ -68,6 +68,26 @@ institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
 
 Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela.
 
+### De onde as variáveis realmente vêm (descoberto em 2026-08-10)
+
+**O hub em produção lê o `.env.production` versionado no repositório**, não o painel do
+EasyPanel. O Next.js carrega esse arquivo sozinho no build e no `next start`. Ele contém
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e `NEXT_PUBLIC_SITE_URL`
+(esta já com `https://hub.manfac.com.br`) — e é por isso que o hub funcionava mesmo com
+o painel mal configurado.
+
+A `SUPABASE_SERVICE_ROLE_KEY` **não está nesse arquivo**, e nem pode estar: é segredo.
+Ela só chega pelo painel. Consequência prática: **ela é a única variável cuja falha é
+invisível até alguém abrir `/admin/acessos`.**
+
+**Armadilha do campo Environment do EasyPanel:** é uma caixa de texto livre onde cada
+variável precisa ser `NOME=valor` **na mesma linha**. Se estiver com o nome numa linha e
+o valor na seguinte, o painel não reconhece nada e o container sobe sem nenhuma variável
+— silenciosamente, porque o `.env.production` cobre o resto. Foi exatamente o que
+aconteceu. Corolário perigoso: **arrumar o formato faz os valores do painel passarem a
+valer e sobrescreverem o `.env.production`** — confira os valores antes de corrigir o
+formato, ou você troca um bug por outro.
+
 ## Banco de dados (Supabase)
 
 - **Projeto de produção: `iyytcavcgukfjnjjrerx`** (org `wqgsiumpnccxqmnqhpin`, nome
