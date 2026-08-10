@@ -98,7 +98,7 @@ Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela
 | `v04` | aplicado, **exceto** o índice `veiculos_equipe_ativo_uniq` — ver o cabeçalho do arquivo |
 | `track-b` | aplicado |
 | `admin-usuarios` PARTE 1 | aplicado |
-| `admin-usuarios` PARTE 2 | pendente, **só depois do deploy** |
+| `admin-usuarios` PARTE 2 | aplicada em 2026-08-10, após o deploy |
 | `v04-seguranca` | **nunca aplicado** — reescrito em 2026-08-09 para ler `hub_user_roles` |
 - Tabela de controle de acesso: `hub_system_access` (`user_email`, `system_slug`,
   `has_access`, `granted_by`), criada em `sdd-sql-conversor-os.sql`.
@@ -143,11 +143,11 @@ Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela
   que hoje contradiria o banco — não rode nenhuma cópia antiga desse arquivo.
 - Acesso por sistema: `lib/auth/systemAccess.ts` → `hasSystemAccess()`. Admin sempre
   passa. Aplicado no `middleware.ts`, que é a fronteira real de autorização.
-- **Falha de RLS aberta hoje em produção:** `hub_system_access` tem a policy
-  `authenticated full access` (`ALL`, `with_check = true`), então qualquer usuário
-  logado pode escrever nela pelo client do navegador e se conceder acesso a um sistema,
-  contornando as Server Actions. Não dá para virar admin por essa via. Fechada pela
-  PARTE 2 do `sdd-sql-admin-usuarios.sql`, que depende do deploy — ver seção do banco.
+- **RLS de `hub_system_access`: fechada em 2026-08-10.** Até essa data a policy era
+  `authenticated full access` (`ALL`, `with_check = true`), e qualquer usuário logado
+  podia se conceder acesso a um sistema pelo client do navegador, contornando as Server
+  Actions. Hoje `hub_system_access` e `hub_user_roles` têm **apenas** `authenticated
+  read` (SELECT): escrita só pela service role.
 - O `middleware.ts` roda em todas as rotas do `matcher` no fim do arquivo. Rota nova
   protegida = adicionar ao `matcher`, senão fica aberta.
 

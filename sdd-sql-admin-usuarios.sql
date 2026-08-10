@@ -7,10 +7,10 @@
 --   `admin_usuarios_hub_user_roles`. É inerte: nada lê hub_user_roles ainda.
 --   Reaplicar é seguro (idempotente).
 --
---   PARTE 2 (troca de policy de hub_system_access, no fim do arquivo): PENDENTE.
---   NÃO rodar antes do deploy do código novo. Ela derruba a policy da qual o
---   alternarAcessoAction atualmente em produção depende para escrever.
---   Ver o bloco de aviso antes da PARTE 2.
+--   PARTE 2 (troca de policy de hub_system_access, no fim do arquivo): APLICADA em
+--   2026-08-10, migration `admin_usuarios_parte2_rls_hub_system_access`, depois do
+--   deploy do código novo. Verificado: hub_system_access e hub_user_roles têm agora
+--   apenas a policy "authenticated read" (SELECT). Reaplicar é seguro.
 
 -- ============================ PARTE 1 — JÁ APLICADA ============================
 
