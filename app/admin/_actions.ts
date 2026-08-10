@@ -17,6 +17,22 @@ export interface UsuarioHub {
   convitePendente: boolean
 }
 
+const ERRO_CONFIG =
+  'Configuração do servidor incompleta: a SUPABASE_SERVICE_ROLE_KEY não está disponível. Avise quem cuida do deploy.'
+
+// `createAdminClient` lança quando falta variável de ambiente. Deixar a exceção
+// subir derruba a página inteira com a mensagem genérica de Server Component, que
+// não diz o que fazer. Aqui ela vira um erro exibível na faixa vermelha.
+function clienteAdmin():
+  | { admin: ReturnType<typeof createAdminClient> }
+  | { error: string } {
+  try {
+    return { admin: createAdminClient() }
+  } catch {
+    return { error: ERRO_CONFIG }
+  }
+}
+
 async function exigirAdmin(mensagem: string): Promise<{ email: string } | { error: string }> {
   const supabase = await createServerClient()
   const {
@@ -30,7 +46,9 @@ export async function listarUsuariosAction(): Promise<UsuarioHub[] | { error: st
   const quem = await exigirAdmin('Apenas administradores podem ver esta página')
   if ('error' in quem) return quem
 
-  const admin = createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+  const admin = c.admin
 
   const todos = []
   for (let page = 1; ; page++) {
@@ -89,7 +107,9 @@ export async function alterarNivelAction(
   if (alvo === quem.email) return { error: 'Você não pode alterar o seu próprio nível' }
   if (!NIVEIS_VALIDOS.includes(nivel)) return { error: 'Nível inválido' }
 
-  const admin = createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+  const admin = c.admin
 
   // Rebaixar o último administrador deixaria o hub sem ninguém capaz de
   // reverter a mudança.
@@ -152,7 +172,9 @@ export async function removerUsuarioAction(
   const alvo = normalizarEmail(email)
   if (alvo === quem.email) return { error: 'Você não pode remover a si mesmo' }
 
-  const admin = createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+  const admin = c.admin
 
   if ((await nivelDe(admin, alvo)) === 'administrador' && (await contarAdministradores(admin)) <= 1) {
     return { error: 'O hub precisa de pelo menos um administrador' }
@@ -183,7 +205,9 @@ export async function convidarUsuarioAction(
   if (!isManfacEmail(alvo)) return { error: 'Só é possível convidar e-mails @manfac.com.br' }
   if (!NIVEIS_VALIDOS.includes(nivel)) return { error: 'Nível inválido' }
 
-  const admin = createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+  const admin = c.admin
 
   const { error: erroConvite } = await admin.auth.admin.inviteUserByEmail(alvo)
   if (erroConvite) {
@@ -227,8 +251,11 @@ export async function reenviarConviteAction(
   const quem = await exigirAdmin('Apenas administradores podem reenviar convites')
   if ('error' in quem) return quem
 
+  const c = clienteAdmin()
+  if ('error' in c) return c
+
   const alvo = normalizarEmail(email)
-  const { error } = await createAdminClient().auth.admin.inviteUserByEmail(alvo)
+  const { error } = await c.admin.auth.admin.inviteUserByEmail(alvo)
   if (error) return { error: 'Erro ao reenviar o convite' }
   return { success: true }
 }
@@ -240,7 +267,9 @@ export async function cancelarConviteAction(
   if ('error' in quem) return quem
 
   const alvo = normalizarEmail(email)
-  const admin = createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+  const admin = c.admin
 
   const usuario = await acharUsuarioPorEmail(admin, alvo)
   if (!usuario) return { error: 'Usuário não encontrado' }
@@ -279,7 +308,10 @@ export async function alternarAcessoAction(
   const quem = await exigirAdmin('Apenas administradores podem alterar acessos')
   if ('error' in quem) return quem
 
-  const { error } = await createAdminClient()
+  const c = clienteAdmin()
+  if ('error' in c) return c
+
+  const { error } = await c.admin
     .from('hub_system_access')
     .upsert(
       {

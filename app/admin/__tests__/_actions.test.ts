@@ -63,6 +63,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/domain', () => ({ isManfacEmail: jest.fn(() => true) }))
 
 import { isManfacEmail } from '@/lib/auth/domain'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   listarUsuariosAction,
   alternarAcessoAction,
@@ -73,6 +74,49 @@ import {
   cancelarConviteAction,
   enviarResetSenhaAction,
 } from '../_actions'
+
+describe('quando a service role não está configurada', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    getUserMock.mockResolvedValue({ data: { user: { email: 'chefe@manfac.com.br' } } })
+    isAdminMock.mockResolvedValue(true)
+    // `Once` para não vazar a exceção para os outros describes.
+    ;(createAdminClient as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente')
+    })
+  })
+
+  const esperado = {
+    error:
+      'Configuração do servidor incompleta: a SUPABASE_SERVICE_ROLE_KEY não está disponível. Avise quem cuida do deploy.',
+  }
+
+  it('listarUsuariosAction explains the problem instead of crashing the page', async () => {
+    await expect(listarUsuariosAction()).resolves.toEqual(esperado)
+  })
+
+  it('alterarNivelAction explains the problem instead of crashing', async () => {
+    await expect(alterarNivelAction('ana@manfac.com.br', 'administrador')).resolves.toEqual(
+      esperado
+    )
+  })
+
+  it('removerUsuarioAction explains the problem instead of crashing', async () => {
+    await expect(removerUsuarioAction('ana@manfac.com.br')).resolves.toEqual(esperado)
+  })
+
+  it('convidarUsuarioAction explains the problem instead of crashing', async () => {
+    await expect(convidarUsuarioAction('nova@manfac.com.br', 'analista', [])).resolves.toEqual(
+      esperado
+    )
+  })
+
+  it('alternarAcessoAction explains the problem instead of crashing', async () => {
+    await expect(alternarAcessoAction('ana@manfac.com.br', 'sofia', true)).resolves.toEqual(
+      esperado
+    )
+  })
+})
 
 describe('listarUsuariosAction', () => {
   beforeEach(() => {
