@@ -23,7 +23,15 @@ Facilities atrás de um login compartilhado:
 |---|---|---|---|
 | Sofia | `/sofia` | **Gestão de Frotas** | O código diz "sofia", o cliente diz "Gestão de Frotas" — são a mesma coisa |
 | Conversor de OS | `/conversor-os` | Conversor OS | Converte planilhas de OS para o Field Control |
-| Admin | `/admin/acessos` | Admin | Liga/desliga acesso de cada e-mail a cada sistema |
+| Admin | `/admin/acessos` | Admin | Contas e acessos. O João chama de "módulo de login" |
+
+**Apelidos que já causaram confusão.** O repositório é `manfac-facilities/login-system`
+e o app no EasyPanel tem esse mesmo nome, herdado de quando o projeto era só a tela de
+login — hoje ele é o hub inteiro. Então: "login-system" = o hub; "sistema/módulo de
+login" na fala do João = a tela `/admin/acessos`, **não** a tela de entrada. E
+`manfac-site` é outro app no EasyPanel, com deploy próprio — em 2026-08-09 ele foi
+confundido com o hub ao conferir a data do último deploy, levando à conclusão errada de
+que o hub não tinha deployado.
 
 Outros diretórios da raiz que **não** fazem parte do hub: `manfac-site/` (site
 institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
@@ -47,7 +55,16 @@ institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
 | `NEXT_PUBLIC_SUPABASE_URL` | tudo | |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tudo | |
 | `NEXT_PUBLIC_SITE_URL` | links de e-mail do Supabase Auth | |
-| `SUPABASE_SERVICE_ROLE_KEY` | **só** `app/admin/_actions.ts` | **Configurada no EasyPanel** (confirmado por João em 2026-08-07) — não investigue erro do Admin por essa via. Se faltar, `createClient(url, '')` **lança exceção** e derruba a página inteira com erro 500. Ausente em `.env.production` e no `DEPLOY.md`, que estão desatualizados. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **só** `app/admin/_actions.ts` | **NÃO estava chegando no processo em 2026-08-09**, apesar de aparecer no painel. Ver aviso abaixo. Sem ela, `createAdminClient()` lança e a página `/admin/acessos` inteira cai com erro genérico de Server Component. Ausente em `.env.production` e no `DEPLOY.md`, que estão desatualizados. |
+
+> **Aviso — a anotação anterior era falsa.** Até 2026-08-09 este arquivo dizia que a
+> `SUPABASE_SERVICE_ROLE_KEY` estava configurada no EasyPanel e mandava não investigar
+> por essa via. O log do container provou o contrário:
+> `Error: SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente`, `digest 1608214092`.
+> **Aparecer no painel não é o mesmo que chegar no processo:** mudança em *Environment*
+> só entra no container num novo deploy, e o campo é `CHAVE=valor` numa linha só — a
+> chave é longa e quebra de linha ao colar a invalida silenciosamente. Confirme sempre
+> pelo log do app, nunca pela tela do painel.
 
 Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela.
 
