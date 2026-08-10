@@ -101,7 +101,7 @@ describe('criarChecklistAction — troca de responsável', () => {
 
     expect(result).toEqual({
       error:
-        'Erro ao processar o checklist: a atribuição de equipe não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo.',
+        'Erro ao processar o checklist: a atribuição de equipe não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo. Contate o suporte.',
       checklistId: 'checklist-1',
     })
   })

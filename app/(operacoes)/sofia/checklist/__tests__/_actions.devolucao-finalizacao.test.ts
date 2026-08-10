@@ -86,7 +86,7 @@ describe('criarChecklistAction — devolucao', () => {
     rpcMock.mockResolvedValue({ data: null, error: { message: 'falhou' } })
     const result = await criarChecklistAction({}, buildFormData({ id: 'checklist-1', tipo: 'devolucao', equipe_id: 'equipe-1' }))
     expect(result.error).toBe(
-      'Erro ao processar o checklist: a devolução não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo.'
+      'Erro ao processar o checklist: a devolução não foi registrada. Nenhuma alteração de equipe foi aplicada ao veículo. Contate o suporte.'
     )
   })
 })

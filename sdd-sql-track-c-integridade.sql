@@ -46,6 +46,21 @@
 -- Erros de regra de negócio usam o SQLSTATE customizado 'SOF01' — é assim que
 -- a Server Action distingue "mensagem que pode ser mostrada ao usuário" de
 -- erro interno do banco, que vira mensagem genérica.
+--
+-- PENDÊNCIA CONHECIDA (achado do code review de 2026-08-10, não corrigido):
+-- o PostgREST escolhe o status HTTP pela classe do SQLSTATE, e a classe 'SO'
+-- não casa com nenhuma regra dele, então cai no 500 genérico. Ou seja, um
+-- usuário digitar KM menor que a atual — validação rotineira — é registrado
+-- como erro 5xx nos logs do Supabase e do Next, enquanto o "sem acesso"
+-- (raise sem errcode, vira P0001) responde 400 corretamente. O usuário final
+-- não é afetado: a mensagem certa aparece, porque o corpo JSON traz o code e a
+-- action testa error.code === 'SOF01'.
+-- A correção seria trocar por 'PT400', que o PostgREST mapeia pra 400 — mas
+-- isso exige confirmar que ele continua devolvendo o code no corpo, senão a
+-- action cai na mensagem genérica e o usuário perde o "KM não pode ser menor
+-- que…". Como só dá pra confirmar isso com um JWT real batendo em /rpc/, e o
+-- efeito hoje é só ruído de log, ficou pendente de decisão em vez de trocado
+-- às cegas.
 
 -- ============================================================
 -- 1. lancar_km_atomico (fecha B-13 — race condition no lançamento de KM)
@@ -61,7 +76,7 @@ create or replace function public.lancar_km_atomico(
 returns void
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
 declare
   v_km_atual_veiculo integer;
@@ -117,7 +132,7 @@ create or replace function public.atribuir_responsabilidade_veiculo(
 returns void
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
 declare
   v_hoje date := current_date;
@@ -130,6 +145,14 @@ begin
   end if;
 
   perform 1 from public.veiculos where id = p_veiculo_id for update;
+
+  -- Sem esta checagem, um p_veiculo_id inexistente não trava linha nenhuma, os
+  -- 3 updates seguintes afetam 0 linhas e a function retorna sucesso: a action
+  -- responderia {success:true} e ainda gravaria auditoria dizendo que a equipe
+  -- foi reatribuída. Mesmo comportamento de lancar_km_atomico.
+  if not found then
+    raise exception 'Veículo não encontrado' using errcode = 'SOF01';
+  end if;
 
   update public.veiculo_responsabilidade_historico
   set fim = v_hoje
@@ -166,7 +189,7 @@ create or replace function public.excluir_multas_em_massa(
 returns setof public.multas
 language plpgsql
 security definer
-set search_path = public, pg_catalog
+set search_path = pg_catalog, public
 as $$
 declare
   v_multa record;

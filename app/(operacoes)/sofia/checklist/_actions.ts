@@ -119,7 +119,11 @@ export async function criarChecklistAction(
             ? 'a finalização de contrato não foi registrada'
             : 'a atribuição de equipe não foi registrada'
       return {
-        error: `Erro ao processar o checklist: ${etapa}. Nenhuma alteração de equipe foi aplicada ao veículo.`,
+        // "Contate o suporte" é obrigatório aqui: o formulário manda não
+        // reenviar (o checklist já existe) e não há tela nenhuma pra refazer
+        // só a etapa de equipe. Sem essa saída, o usuário fica com o veículo
+        // na equipe antiga e nenhuma ação possível.
+        error: `Erro ao processar o checklist: ${etapa}. Nenhuma alteração de equipe foi aplicada ao veículo. Contate o suporte.`,
         checklistId: id,
       }
     }
