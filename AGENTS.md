@@ -67,6 +67,22 @@ Ao adicionar uma variável nova, atualize `.env.local.example` **e** esta tabela
   (O MCP também aplica, via `apply_migration`.)
 - Consequência: código mergeado ≠ schema aplicado. Antes de concluir que um bug é de
   código, verifique se o SQL correspondente já rodou em produção.
+- **Isso já mordeu uma vez.** Em 2026-08-09 o `master` tinha um mês de código não
+  deployado que dependia de `sdd-sql-v04.sql` e `sdd-sql-track-b.sql`, nenhum dos dois
+  aplicado. Subir naquele estado quebraria a criação de checklist e a tela de veículos.
+  Ambos foram aplicados na data. **Antes de qualquer deploy, confira coluna por coluna
+  no banco** — o arquivo estar no repo não significa nada.
+
+### Estado das migrations em produção (verificado em 2026-08-09)
+
+| Arquivo | Estado |
+|---|---|
+| `passo1`–`passo4`, `v03`, `audit-log`, `autorizacao`, `feedback-cliente`, `conversor-os` | aplicados |
+| `v04` | aplicado, **exceto** o índice `veiculos_equipe_ativo_uniq` — ver o cabeçalho do arquivo |
+| `track-b` | aplicado |
+| `admin-usuarios` PARTE 1 | aplicado |
+| `admin-usuarios` PARTE 2 | pendente, **só depois do deploy** |
+| `v04-seguranca` | **nunca aplicado** — reescrito em 2026-08-09 para ler `hub_user_roles` |
 - Tabela de controle de acesso: `hub_system_access` (`user_email`, `system_slug`,
   `has_access`, `granted_by`), criada em `sdd-sql-conversor-os.sql`.
 - Tabela de nível: `hub_user_roles` (`user_email` UNIQUE, `nivel` em

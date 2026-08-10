@@ -8,6 +8,18 @@
 -- código deste branch — o app assume o schema pós-migração e
 -- falha com erros genéricos se for deployado antes de rodar isto.
 -- ============================================================
+-- ESTADO EM 2026-08-09: aplicada em produção (iyytcavcgukfjnjjrerx) via
+-- migration `v04_colunas_oficina_checklist_km`, EXCETO o índice único do
+-- item 2. Aplicados: as duas colunas de veiculos, o drop do NOT NULL em
+-- checklist.equipe_id e a troca da constraint de km_diario.
+--
+-- PENDENTE — item 2, `veiculos_equipe_ativo_uniq`: a verificação de
+-- pré-requisito retornou 1 conflito. A equipe MANFAC 11
+-- (55f1f969-68c8-492f-b3e9-33d55d86de74) está em dois veículos ativos:
+-- TEW9A24 e TZM6E53, ambos FIAT ARGO. Criar o índice falha enquanto isso
+-- existir. Resolver o dado primeiro (decidir qual placa fica com a equipe
+-- e limpar a outra), depois criar só o índice.
+-- ============================================================
 
 -- 1. Veículo na oficina + veículo substituto
 alter table public.veiculos add column previsao_retorno_oficina date;
