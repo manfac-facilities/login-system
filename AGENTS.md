@@ -119,7 +119,17 @@ formato, ou você troca um bug por outro.
 | `track-b` | aplicado |
 | `admin-usuarios` PARTE 1 | aplicado |
 | `admin-usuarios` PARTE 2 | aplicada em 2026-08-10, após o deploy |
-| `v04-seguranca` | **nunca aplicado** — reescrito em 2026-08-09 para ler `hub_user_roles` |
+| `v04-seguranca` | **aplicado em 2026-08-10** (migration `v04_seguranca_rls_sofia`), na versão que lê `hub_user_roles` |
+
+Com o `v04-seguranca` aplicado, as 18 tabelas do Sofia deixaram de ter a policy
+`authenticated full access` e passaram a `sofia access` (`using (sofia_has_access())`).
+**Consequência operacional:** os triggers `trg_bloquear_*` são `security definer` e
+disparam para qualquer role, inclusive `service_role`/`postgres` — pelo SQL Editor ou
+pelo MCP, `auth.jwt()` é NULL e `sofia_is_admin()` é false. Editar à mão as colunas
+guardadas (autorização/desconto de multas e sinistros, `equipes.ativo`,
+`veiculos.valor_locacao_mensal`, insert em `centro_custo_historico`, delete em
+`abastecimentos`/`km_diario`) falha com "Apenas administradores...". Contorno:
+`alter table ... disable trigger`, corrigir, reabilitar.
 - Tabela de controle de acesso: `hub_system_access` (`user_email`, `system_slug`,
   `has_access`, `granted_by`), criada em `sdd-sql-conversor-os.sql`.
 - Tabela de nível: `hub_user_roles` (`user_email` UNIQUE, `nivel` em

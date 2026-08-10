@@ -8,10 +8,32 @@
 -- de multas/sinistros/km_excedido_desconto, que antes só eram bloqueados
 -- na camada da aplicação e ficavam contornáveis via Supabase direto.
 -- ============================================================
--- ESTADO: NÃO APLICADO EM PRODUÇÃO. Verificado em 2026-08-09 no projeto
--- iyytcavcgukfjnjjrerx: sofia_is_admin() e sofia_has_access() não existem
--- e as tabelas do Sofia continuam com a policy "authenticated full access"
--- (qual = true). Ou seja, os furos de RLS descritos acima seguem abertos.
+-- ESTADO: APLICADO EM PRODUÇÃO em 2026-08-10 (iyytcavcgukfjnjjrerx, migration
+-- `v04_seguranca_rls_sofia`). Verificado depois de aplicar: as 2 funções
+-- existem, as 18 tabelas do Sofia trocaram "authenticated full access" por
+-- "sofia access" (0 policies abertas restantes), os 8 triggers existem e
+-- audit_log.acao/dados ficaram nullable.
+--
+-- Teste funcional feito com request.jwt.claims forjado, por identidade:
+--   administrador           -> is_admin true,  has_access true
+--   analista sem acesso     -> is_admin false, has_access false
+--   JWT sem claim de e-mail -> false (NÃO null — o fail-open descrito na
+--                              Lição 2 do Track C não se aplica a esta versão,
+--                              que usa exists() em vez de "in (lista)")
+--
+-- Pré-flight que rodou antes: as 18 tabelas existiam, todas com RLS ligada e
+-- todas com exatamente uma policy chamada "authenticated full access" — ou
+-- seja, os DROPs por nome cobriram 100% delas, nenhuma sobrou aberta por ter
+-- nome diferente. Não havia nenhum trigger de usuário no schema public.
+--
+-- LIMITAÇÃO CONHECIDA: os triggers são security definer e disparam para
+-- QUALQUER role, inclusive service_role e postgres (SQL Editor / MCP), onde
+-- auth.jwt() é NULL e sofia_is_admin() devolve false. Editar à mão pelo
+-- Dashboard as colunas guardadas (autorizacao/desconto de multas e sinistros,
+-- equipes.ativo, veiculos.valor_locacao_mensal, insert em
+-- centro_custo_historico, delete em abastecimentos/km_diario) vai falhar com
+-- "Apenas administradores...". Contorno: alter table ... disable trigger,
+-- corrigir, reabilitar. Foi decidido não abrir exceção para service_role.
 --
 -- REESCRITO EM 2026-08-09: as funções liam uma lista fixa de três e-mails,
 -- copiada do antigo lib/auth/admins.ts. Esse arquivo não existe mais — o
