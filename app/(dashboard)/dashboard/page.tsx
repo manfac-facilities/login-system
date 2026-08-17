@@ -19,13 +19,14 @@ export default async function DashboardPage() {
   // Administrador abre tudo, então nem consulta os acessos. Para os demais,
   // as duas consultas vão juntas em vez de uma esperar a outra.
   const admin = await isAdmin(supabase, user.email ?? '')
-  const [podeFrotas, podeConversor] = admin
-    ? [true, true]
+  const [podeFrotas, podeConversor, podeManutencao] = admin
+    ? [true, true, true]
     : await Promise.all([
         hasSystemAccess(supabase, user.email ?? '', 'sofia'),
         hasSystemAccess(supabase, user.email ?? '', 'conversor-os'),
+        hasSystemAccess(supabase, user.email ?? '', 'dashboard-manutencao'),
       ])
-  const semNada = !podeFrotas && !podeConversor && !admin
+  const semNada = !podeFrotas && !podeConversor && !podeManutencao && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -92,6 +93,27 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
+          )}
+          {podeManutencao && (
+          // Módulo servido por uma app Next.js separada (basePath
+          // /cockpit-manutencao), não uma rota deste projeto — usa <a>
+          // normal em vez de <Link> para forçar navegação de página cheia
+          // em vez do router client-side do Next tentar (e falhar) tratar
+          // isso como uma rota interna.
+          <a
+            href="/cockpit-manutencao"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">🏢</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Cockpit Manutenção Predial
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Volume de OS, atrasos e ranking de técnicos por cliente
+              </p>
+            </div>
+          </a>
           )}
           {admin && (
             <Link
