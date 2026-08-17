@@ -8,4 +8,5 @@ export interface Sistema {
 export const SISTEMAS: Sistema[] = [
   { slug: 'sofia', label: 'Gestão de Frotas' },
   { slug: 'conversor-os', label: 'Conversor OS' },
+  { slug: 'dashboard-manutencao', label: 'Cockpit Manutenção Predial' },
 ]
