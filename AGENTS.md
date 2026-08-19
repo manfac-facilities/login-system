@@ -59,6 +59,22 @@ institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
 - O `dockerfile` da raiz builda o `manfac-site/`, **não** o hub.
 - Produção: `https://hub.manfac.com.br`.
 
+### DNS — leia `docs/infra/dns-manfac.md` antes de tocar em domínio
+
+Resumo do que já custou 2 dias de indisponibilidade em 18/08/2026: o domínio é
+registrado via **Hostinger**, mas o DNS é servido pela **Locaweb** (`ns1/ns2/ns3.locaweb.com.br`)
+— a zona se edita no painel da **Locaweb**. `@` e `hub` são registros **A** para
+`2.25.194.184`. **Nunca troque os nameservers:** o e-mail `@manfac.com.br` está na
+Locaweb (MX + SPF) e cai junto, com perda de mensagens.
+
+**Antes de investigar "o hub caiu", isole DNS de aplicação:**
+
+```bash
+curl -sL --resolve hub.manfac.com.br:443:2.25.194.184 https://hub.manfac.com.br/ | grep -i "<title>"
+```
+
+Se o título aparecer, a aplicação está perfeita — o problema é DNS, não código nem deploy.
+
 ### Variáveis de ambiente
 
 | Variável | Onde é usada | Nota |
