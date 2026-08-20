@@ -1,6 +1,7 @@
-// Número do WhatsApp comercial da Manfac.
-// TODO: trocar pelo número real quando o cliente informar (formato: 55 + DDD + número, só dígitos).
-export const WHATSAPP_COMERCIAL = '5521999999999'
+// Número do WhatsApp comercial da Manfac, informado pelo cliente em 19/08/2026.
+// Formato exigido pelo wa.me: 55 + DDD + número, só dígitos.
+// (21) 98428-0058
+export const WHATSAPP_COMERCIAL = '5521984280058'
 
 export type DemandPath = 'Manutenção recorrente' | 'Obra ou reforma' | 'Avaliação técnica'
 
