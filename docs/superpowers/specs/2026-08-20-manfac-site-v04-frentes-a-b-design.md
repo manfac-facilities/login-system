@@ -57,10 +57,16 @@ Aplicar também ao menu mobile, mantendo o active-state que já existe lá.
 Componente novo `components/WhatsAppFloat.tsx`, montado no layout.
 
 - `fixed` inferior direito, círculo de 54px, verde `#25d366`
-- **Entra apenas após ~420px de scroll** (fade + slide + scale), fora disso `pointer-events: none`
+- **Visível 100% do tempo, desde o topo da página** — sem limiar de scroll. Correção do João
+  em 20/08: esconder o botão até rolar perde quem entra e decide na hora.
+- Única animação: uma entrada suave de ~0.5s no carregamento. Depois disso fica parado.
 - Expande no hover revelando "Falar no WhatsApp"
 - **Nunca pulsa** — decisão explícita do João: fica fora da regra do pulso (A5) para não ser invasivo
 - `aria-label` obrigatório; alvo mínimo de 44px atendido
+
+> **A distinção que vale registrar:** a ressalva original do João ("não ser animado sem
+> passar o scroll em cima") era sobre a **animação** ser invasiva, não sobre a
+> **visibilidade**. São coisas separadas — o botão fica sempre visível **e** sempre quieto.
 
 ### A5 · Pulso periódico nos CTAs
 
