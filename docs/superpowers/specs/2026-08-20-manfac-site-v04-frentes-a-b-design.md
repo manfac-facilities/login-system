@@ -277,10 +277,12 @@ Cobertura mínima, seguindo `__tests__/` ao lado do código:
 - Server Action da etapa 2 — atualiza o id existente; nunca cria linha nova
 - `Header` — sublinhado no hover não quebra o active-state existente
 
-**Nota sobre o ambiente:** o `vitest` do `manfac-site` falha de forma intermitente ao subir
-workers no Windows (`Timeout waiting for worker to respond`) quando roda os 4 arquivos em
-lote. Rodando arquivo a arquivo, ou com `--pool=threads --no-file-parallelism`, passa
-15/15. Não é teste quebrado — é flake de pool. Não interpretar como regressão.
+**Nota sobre o ambiente — resolvido em 20/08 (commit `ef6ebee`).** O `vitest` falhava de
+forma intermitente ao subir workers no Windows (`Timeout waiting for worker to respond`),
+às vezes levando 99s para nem rodar. A causa era o ambiente executar **Node 24** enquanto o
+`.nvmrc` pede **Node 20** — o pool de workers do Vitest 4 estoura nessa combinação.
+Corrigido em `vitest.config.mts` com thread única, o que fez a suíte voltar a rodar inteira
+em ~30s. **`npm test` funciona puro; não passar flags de pool.**
 
 ## Decisões pendentes do João
 

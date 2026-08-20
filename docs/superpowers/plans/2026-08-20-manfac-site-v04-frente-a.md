@@ -16,7 +16,7 @@
 - Paleta só via tokens de `app/globals.css`: `--ink #00345e`, `--orange #f85e0b`, `--orange-hover #d6520a`, `--muted #6e8894`, `--border #dadad8`, `--surface #f6f6f5`, `--background #ffffff`.
 - Testes em `__tests__/` ao lado do código que testam.
 - **`prefers-reduced-motion: reduce` desliga toda animação nova.** Sem exceção.
-- **Flake conhecido do Vitest no Windows:** rodar os 4 arquivos em lote falha com `Timeout waiting for worker to respond`. Usar `npx vitest run --pool=threads --no-file-parallelism`, ou arquivo a arquivo. **Não interpretar como regressão.**
+- ~~Flake do Vitest no Windows~~ **RESOLVIDO em 20/08 (commit `ef6ebee`).** A causa era o ambiente rodar Node 24 enquanto o `.nvmrc` pede Node 20; o pool de workers do Vitest 4 estoura nessa combinação. Corrigido em `vitest.config.mts` com thread única, então `npm test` funciona puro — **não passar mais flags de pool na linha de comando.**
 - Copy dos CTAs: **"Solicitar atendimento"** (substitui "Falar com especialista").
 - Número do WhatsApp: `WHATSAPP_COMERCIAL` em `lib/whatsapp.ts` = `5521984280058`. Nunca hardcodar.
 
