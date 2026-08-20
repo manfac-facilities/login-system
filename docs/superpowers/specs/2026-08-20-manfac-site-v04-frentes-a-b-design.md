@@ -59,30 +59,96 @@ Componente novo `components/WhatsAppFloat.tsx`, montado no layout.
 - `fixed` inferior direito, círculo de 54px, verde `#25d366`
 - **Visível 100% do tempo, desde o topo da página** — sem limiar de scroll. Correção do João
   em 20/08: esconder o botão até rolar perde quem entra e decide na hora.
-- Única animação: uma entrada suave de ~0.5s no carregamento. Depois disso fica parado.
+- Entrada suave de ~0.5s no carregamento
 - Expande no hover revelando "Falar no WhatsApp"
-- **Nunca pulsa** — decisão explícita do João: fica fora da regra do pulso (A5) para não ser invasivo
+- **Halo verde pulsante**, mesma mecânica do A5 (spread voltando a zero no repouso, blur
+  muito maior que o deslocamento, animação parando no hover), no verde claro
+  `rgb(94,246,150)` — o verde oficial `#25d366` é escuro demais e some contra o fundo branco:
+
+```css
+.wa { box-shadow: 0 0 18px 1px rgba(94,246,150,.49),
+                  0 0 36px 4px rgba(94,246,150,.24),
+                  0 5px 14px rgba(0,0,0,.16); }
+@keyframes wa-breathe {
+  0%, 100% { box-shadow: 0 0 13px  0px rgba(94,246,150,.52),
+                         0 0 22px  0px rgba(94,246,150,.21),
+                         0 5px 14px rgba(0,0,0,.16); }
+  45%      { box-shadow: 0 0 29px 14px rgba(140,255,185,.60),
+                         0 0 67px 28px rgba(94,246,150,.20),
+                         0 5px 14px rgba(0,0,0,.16); }
+}
+.wa:hover { box-shadow: 0 0 24px 4px rgba(140,255,190,.66),
+                        0 0 49px 11px rgba(94,246,150,.32),
+                        0 5px 14px rgba(0,0,0,.16); }
+```
+
+> **Nota histórica:** a ideia original era o botão não animar de jeito nenhum. O João
+> reviu em 20/08 pedindo "dar vida ao botão". O que ele vetou foi o **anel expandindo**,
+> não o brilho — o halo pulsante foi aprovado. Ver A5.
 - `aria-label` obrigatório; alvo mínimo de 44px atendido
 
 > **A distinção que vale registrar:** a ressalva original do João ("não ser animado sem
 > passar o scroll em cima") era sobre a **animação** ser invasiva, não sobre a
 > **visibilidade**. São coisas separadas — o botão fica sempre visível **e** sempre quieto.
 
-### A5 · Pulso periódico nos CTAs
+### A5 · Halo pulsante nos CTAs
 
-- Anel laranja via `::before` com `animation: pulse 5s infinite`, ativo por ~20% do ciclo
-- Aplica a **todos os botões primários**, exceto os `ghost` e o flutuante do WhatsApp
-- Suprimido em `prefers-reduced-motion`
+**Substitui a ideia original de anel expandindo, reprovada pelo João em 20/08.** O anel era
+um contorno se afastando do botão; o halo é luz saindo dele. Mesma intenção, leitura
+completamente diferente.
+
+A mecânica é a mesma do botão do WhatsApp (A4), na laranja da marca — os dois elementos de
+conversão do site pulsam igual, um em verde e outro em laranja:
+
+```css
+.btn:not(.ghost) { animation: btn-pump 2.6s ease-in-out .6s infinite; }
+@keyframes btn-pump {
+  0%, 100% { box-shadow: 0 0 11px  0px rgba(255,150,90,.49),
+                         0 0 20px  0px rgba(255,150,90,.20),
+                         0 4px 12px rgba(0,0,0,.12); }
+  45%      { box-shadow: 0 0 27px 12px rgba(255,175,120,.56),
+                         0 0 60px 24px rgba(248,94,11,.15),
+                         0 4px 12px rgba(0,0,0,.12); }
+}
+.btn:not(.ghost):hover { box-shadow: 0 0 22px 4px rgba(255,180,130,.66),
+                                     0 0 45px 10px rgba(248,94,11,.25),
+                                     0 4px 12px rgba(0,0,0,.12); }
+.btn:not(.ghost):hover { animation: none; }
+```
+
+**Três detalhes que fazem o efeito funcionar e são fáceis de perder:**
+
+1. **O spread volta a zero no repouso.** É o contraste entre encolher até colar no botão e
+   disparar para fora que o olho lê como pump. Halo que nunca some vira só "mais brilho".
+2. **Blur muito maior que o deslocamento**, e deslocamento vertical zero. É o que transforma
+   sombra em brilho. Princípio observado no sblok e traduzido para as cores da Manfac.
+3. **A animação para no hover.** Sem `animation: none`, o keyframe sobrescreve o `box-shadow`
+   do hover e o botão parece não responder ao mouse.
+
+Aplica a todos os botões primários. **Os `ghost` ficam de fora** — se todos brilhassem,
+nenhum seria prioridade. Suprimido em `prefers-reduced-motion`.
+
+**Intensidade:** os valores acima já são a versão calibrada a 70% da primeira tentativa,
+que o João achou forte demais. Blur, spread e opacidade foram reduzidos **juntos** — mexer
+só na opacidade manteria o halo do mesmo tamanho, só mais apagado.
 
 ### A6 · Ícone do WhatsApp e destino dos CTAs
 
 Os CTAs deixam de apontar para `/contato` e vão direto para `wa.me`:
 
-| Arquivo | Botão | Hoje | Passa a ser |
-|---|---|---|---|
-| `Header.tsx:105` | Falar com especialista | `/contato` | `wa.me` |
-| `Hero.tsx:41` | Falar com especialista | `/contato` | `wa.me` |
-| `ServicePage.tsx:43` | Solicitar proposta técnica | `/contato` | `wa.me` |
+| Arquivo | Copy hoje | Copy nova | Destino hoje | Destino novo |
+|---|---|---|---|---|
+| `Header.tsx:105` | Falar com especialista | **Solicitar atendimento** | `/contato` | `wa.me` |
+| `Hero.tsx:41` | Falar com especialista | **Solicitar atendimento** | `/contato` | `wa.me` |
+| `ServicePage.tsx:43` | Solicitar proposta técnica | *(ver abaixo)* | `/contato` | `wa.me` |
+
+**Copy "Solicitar atendimento"** substitui "Falar com especialista" — decisão do João em 20/08.
+
+**Pendência de copy no `ServicePage`:** "Solicitar proposta técnica" não é "Falar com
+especialista", então não entrou na troca. Agora convive com "Solicitar atendimento" em
+páginas vizinhas. Três saídas: padronizar tudo, manter a distinção, ou deixar para a
+auditoria de copy da fase 2. **Recomendação: manter a distinção** — nas páginas de serviço,
+"proposta técnica" qualifica melhor o lead do que um convite genérico. Decisão do João.
 
 Todos ganham o ícone SVG do WhatsApp inline (sem biblioteca de ícones). Reaproveitar
 `buildWhatsAppUrl`/`WHATSAPP_COMERCIAL` de `lib/whatsapp.ts`, com mensagem pré-preenchida
