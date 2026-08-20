@@ -251,6 +251,15 @@ Node 20 (`.nvmrc`).
 Nunca pular etapas: **brainstorming → mockup visual aprovado → spec → plano → código →
 code review → deploy.** Mockup antes de escrever spec ou código, sempre.
 
+- **Mockup: sempre interativo quando o pedido for de animação/interação.** Print não serve
+  para julgar hover, scroll ou pulso. Publicar como artifact com painel de controle para o
+  João comparar variantes (opacidade, on/off) na própria tela, em vez de descrever em texto.
+- **Comentários do visualizador de artifact NÃO chegam ao Claude.** As capacidades
+  declaráveis são `artifact`, `downloads`, `mcp` e `self` — não existe uma de comentários.
+  Se precisar de feedback estruturado dentro da página, declarar `capabilities: {artifact: {}}`
+  e pôr campos `contenteditable` / radio **embaixo de cada seção** (nunca num console
+  consolidado no fim) — aí sim a digitação é salva no documento e chega. Na dúvida, pedir
+  para o João colar no chat.
 - Bug reportado → usar `superpowers:systematic-debugging` (causa raiz antes de fix).
 - Feature nova → usar `superpowers:brainstorming` antes de planejar.
 - Perguntas ao João: só quando a resposta muda o que será feito, e nunca sobre fatos
