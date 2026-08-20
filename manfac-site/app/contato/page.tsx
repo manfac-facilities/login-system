@@ -18,7 +18,12 @@ export default function ContatoPage() {
   return (
     <>
       <Header />
-      <main>
+      {/*
+        O header agora é fixed e saiu do fluxo. As outras páginas começam com
+        hero de imagem full-bleed, onde a pílula de vidro sobreposta é o efeito
+        desejado. Esta começa com conteúdo claro, então precisa do respiro.
+      */}
+      <main className="pt-20">
         <ContactForm />
       </main>
       <Footer />

@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NAV_ITEMS } from '@/lib/content'
 import { isNavActive } from '@/lib/nav'
 import { buildDirectWhatsAppUrl } from '@/lib/whatsapp'
@@ -20,10 +20,32 @@ export default function Header() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [servOpen, setServOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <header
+      className={`fixed inset-x-0 top-0 z-50 px-5 transition-[padding] duration-300 ${
+        scrolled ? 'py-2' : 'py-4'
+      }`}
+    >
+      {/*
+        Pílula de vidro. A opacidade é 70% de propósito: a 95% (como era antes)
+        não há o que borrar e o backdrop-blur simplesmente não aparece. E não se
+        copia o 0.30 da referência — aquele site é escuro, este é claro, e a 30%
+        o texto do menu fica ilegível sobre fotos claras.
+      */}
+      <div
+        className={`mx-auto flex max-w-6xl items-center justify-between gap-5 rounded-full border border-[var(--border)]/75 bg-white/70 py-2.5 pl-6 pr-3 backdrop-blur-[10px] transition-shadow duration-300 ${
+          scrolled ? 'shadow-lg shadow-[var(--ink)]/15' : 'shadow-sm'
+        }`}
+      >
         <Link href="/" className="shrink-0" onClick={() => setOpen(false)}>
           <Image src="/logo.png" alt="Manfac Engenharia" width={154} height={42} priority />
         </Link>
@@ -42,7 +64,7 @@ export default function Header() {
                 >
                   <Link
                     href={item.href}
-                    className={`relative flex items-center gap-1 pb-1 transition-colors hover:text-[var(--ink)] ${
+                    className={`group/nav relative flex items-center gap-1 pb-1 transition-colors hover:text-[var(--ink)] ${
                       active ? 'text-[var(--ink)]' : ''
                     }`}
                   >
@@ -56,9 +78,11 @@ export default function Header() {
                     >
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    {active && (
-                      <span className="absolute -bottom-1 left-0 h-px w-full bg-[var(--orange)]" />
-                    )}
+                    <span
+                      className={`absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100'
+                      }`}
+                    />
                   </Link>
 
                   {/* Dropdown */}
@@ -90,14 +114,16 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative pb-1 transition-colors hover:text-[var(--ink)] ${
+                className={`group/nav relative pb-1 transition-colors hover:text-[var(--ink)] ${
                   active ? 'text-[var(--ink)]' : ''
                 }`}
               >
                 {item.label}
-                {active && (
-                  <span className="absolute -bottom-1 left-0 h-px w-full bg-[var(--orange)]" />
-                )}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100'
+                  }`}
+                />
               </Link>
             )
           })}
