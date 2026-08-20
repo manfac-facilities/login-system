@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { NAV_ITEMS } from '@/lib/content'
 import { isNavActive } from '@/lib/nav'
+import { buildDirectWhatsAppUrl } from '@/lib/whatsapp'
+import WhatsAppIcon from './WhatsAppIcon'
 
 const SERVICOS_DROPDOWN = [
   { href: '/servicos/obras-e-reformas', label: 'Obras e Reformas Corporativas' },
@@ -101,12 +103,15 @@ export default function Header() {
           })}
         </nav>
 
-        <Link
-          href="/contato"
-          className="hidden rounded-md bg-[var(--orange)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--orange-hover)] md:inline-block"
+        <a
+          href={buildDirectWhatsAppUrl('Menu')}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden items-center gap-2 rounded-full bg-[var(--orange)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--orange-hover)] md:inline-flex"
         >
-          Falar com especialista
-        </Link>
+          <WhatsAppIcon size={16} />
+          Solicitar atendimento
+        </a>
 
         <button
           type="button"

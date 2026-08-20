@@ -1,3 +1,6 @@
+import { buildDirectWhatsAppUrl } from '@/lib/whatsapp'
+import WhatsAppIcon from './WhatsAppIcon'
+
 export default function Hero() {
   return (
     <section className="relative isolate overflow-hidden border-b border-[var(--border)] text-white">
@@ -38,10 +41,13 @@ export default function Hero() {
           style={{ animationDelay: '400ms' }}
         >
           <a
-            href="/contato"
-            className="rounded-md bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
+            href={buildDirectWhatsAppUrl('Home')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
-            Falar com especialista
+            <WhatsAppIcon />
+            Solicitar atendimento
           </a>
           <a
             href="/resultados"

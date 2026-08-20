@@ -35,3 +35,13 @@ export function buildWhatsAppMessage(d: ContactFormData): string {
 export function buildWhatsAppUrl(d: ContactFormData): string {
   return `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(buildWhatsAppMessage(d))}`
 }
+
+/**
+ * URL do WhatsApp para os CTAs que levam direto à conversa, sem passar pelo
+ * formulário. `origem` identifica de onde a pessoa veio (página ou serviço),
+ * para que o atendimento já saiba o contexto na primeira mensagem.
+ */
+export function buildDirectWhatsAppUrl(origem: string): string {
+  const texto = `Olá! Vim pelo site da Manfac (${origem}) e gostaria de solicitar atendimento.`
+  return `https://wa.me/${WHATSAPP_COMERCIAL}?text=${encodeURIComponent(texto)}`
+}

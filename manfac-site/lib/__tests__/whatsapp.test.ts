@@ -1,4 +1,10 @@
-import { buildWhatsAppMessage, buildWhatsAppUrl, WHATSAPP_COMERCIAL, type ContactFormData } from '../whatsapp'
+import {
+  buildDirectWhatsAppUrl,
+  buildWhatsAppMessage,
+  buildWhatsAppUrl,
+  WHATSAPP_COMERCIAL,
+  type ContactFormData,
+} from '../whatsapp'
 
 const base: ContactFormData = {
   path: 'Obra ou reforma',
@@ -48,5 +54,22 @@ describe('buildWhatsAppUrl', () => {
     expect(url.startsWith(`https://wa.me/${WHATSAPP_COMERCIAL}?text=`)).toBe(true)
     expect(url).toContain(encodeURIComponent('Olá! Vim pelo site da Manfac.'))
     expect(url).not.toContain('\n')
+  })
+})
+
+describe('buildDirectWhatsAppUrl', () => {
+  it('monta URL wa.me com o número comercial', () => {
+    const url = buildDirectWhatsAppUrl('Home')
+    expect(url.startsWith(`https://wa.me/${WHATSAPP_COMERCIAL}?text=`)).toBe(true)
+  })
+
+  it('cita a origem na mensagem', () => {
+    const url = buildDirectWhatsAppUrl('Manutenção Predial')
+    expect(decodeURIComponent(url)).toContain('Manutenção Predial')
+  })
+
+  it('URL-encoda a mensagem, sem espaço cru', () => {
+    const url = buildDirectWhatsAppUrl('Obras e Reformas')
+    expect(url).not.toContain(' ')
   })
 })

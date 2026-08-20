@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Reveal from './Reveal'
 import Contato from './Contato'
+import WhatsAppIcon from './WhatsAppIcon'
+import { buildDirectWhatsAppUrl } from '@/lib/whatsapp'
 import type { ServicoData } from '@/lib/servicos'
 
 function Check() {
@@ -37,13 +39,13 @@ export default function ServicePage({ servico }: { servico: ServicoData }) {
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/85">{servico.sub}</p>
             <a
-              href="/contato"
+              href={buildDirectWhatsAppUrl(servico.nome)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--orange-hover)]"
             >
+              <WhatsAppIcon size={16} />
               Solicitar proposta técnica
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7h8M7.5 4l3.5 3-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
             </a>
           </Reveal>
         </div>
