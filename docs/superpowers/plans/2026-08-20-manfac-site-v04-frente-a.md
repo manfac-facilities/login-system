@@ -731,3 +731,69 @@ Depois da Task 6:
 4. **Registrar no `AGENTS.md`** o nome exato do app do site no EasyPanel — hoje o arquivo documenta o caminho do hub mas não o do site, lacuna que já causou confusão em 09/08.
 
 A frente B entra depois, em plano próprio, e depende de dois acessos que só o João tem: o segredo no painel do EasyPanel e a aplicação do SQL no Supabase.
+
+---
+
+## Status: frente A implementada e revisada (20/08/2026)
+
+As 6 tasks foram executadas e commitadas (`80ba34a`..`1ddf44b`), mais o code review
+(`d70d553`). `tsc --noEmit` limpo, `next build` limpo, **38/38 testes passando**.
+Ainda **não pushado nem deployado**.
+
+### Desvios conscientes em relação ao texto do plano
+
+Registrados aqui para que ninguém os leia como bug mais tarde:
+
+1. **`autoRaf: true` em vez do loop manual de `requestAnimationFrame`.** A opção existe
+   na 1.3.26 e elimina o `id` mutável que o plano pedia — um estado a menos para errar.
+   O `destroy()` no cleanup continua.
+2. **Sublinhado animado só no menu desktop.** A spec (A2) pedia também no mobile; em
+   touch não há hover, e o item ativo no mobile já se distingue por peso e cor.
+3. **Sem fade-in de entrada do botão flutuante** (spec A4). Ele aparece direto. Menos
+   uma animação para o `prefers-reduced-motion` cobrir.
+4. **`Contato.tsx` continua apontando para `/contato`**, não para o WhatsApp. O
+   formulário de qualificação é o destino certo desse CTA, e é ele que a frente B
+   transforma em captura de lead.
+
+### O que o code review pegou e foi corrigido em `d70d553`
+
+- **Crítico:** o hero de `/quem-somos` centraliza verticalmente em vez de usar `py`, e
+  com o header `fixed` (80px) o eyebrow ficava a 6px da pílula em 360px de largura.
+  Medido no navegador antes e depois: 6px → 46px de folga.
+- Contraste do menu: `--muted` sobre a pílula a 70% em cima dos heros escuros dava
+  ~2:1. Passou para `--ink/70` (~6:1). **A opacidade aprovada de 70% não foi tocada.**
+- `prefers-reduced-motion` não cobria as *transições* novas (a query não separa
+  `animation` de `transition`) — pílula, sublinhado e a expansão do flutuante.
+- O halo não estava no maior CTA do site ("Agendar conversa técnica"); a spec A5 pedia
+  todos os primários e o plano tinha estreitado para três sem dizer por quê.
+- Foco por teclado não revelava nem o sublinhado nem o rótulo do flutuante; falta de
+  `scroll-padding-top` deixava âncora parar embaixo do header.
+- Número do rodapé era literal; virou `WHATSAPP_COMERCIAL_DISPLAY`, e o teste passou a
+  assertar sobre a constante em vez de proteger a divergência.
+
+### Verificação no navegador (a etapa que o plano pedia e faltava)
+
+Medida com `getBoundingClientRect`, não a olho — folga entre a base da pílula e o
+primeiro conteúdo, em viewport estreito:
+
+| Rota | Folga |
+|---|---|
+| `/` | 54px |
+| `/quem-somos` | 46px (a 360px de largura simulada) |
+| `/servicos` | 54px |
+| `/servicos/[slug]` | 54px |
+| `/resultados` | 54px |
+| `/contato` | 80px |
+
+Também confirmado: scroll do Lenis continua funcionando **depois de navegar entre
+páginas** (`html.lenis` presente, `scrollY` respondendo), header contrai e ganha sombra
+ao rolar, menu desktop legível sobre o hero, e nenhum erro de console além de um aviso
+de hidratação causado por extensão do navegador (`data-lt-installed`), não pelo código.
+
+### Pendências que não são de código
+
+- **Dados que faltam do cliente:** tagline e endereço reais (hoje há texto provisório em
+  `Footer.tsx`, marcado com `TODO`), telefone fixo e Instagram.
+- Sobre o `.wa-float` e o `.btn-pump` animarem `box-shadow` a cada frame: se aparecer
+  queixa de bateria em celular fraco, a saída é mover o halo para um pseudo-elemento
+  animando `opacity`/`transform`. Não foi feito porque o efeito aprovado é este.

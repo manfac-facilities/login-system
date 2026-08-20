@@ -59,6 +59,17 @@ institucional, deploy próprio via `dockerfile` da raiz), `sistema-os/` e
 - O `dockerfile` da raiz builda o `manfac-site/`, **não** o hub.
 - Produção: `https://hub.manfac.com.br`.
 
+### O site institucional é OUTRO app no mesmo painel
+
+Mesmo projeto `manfac`, app **`manfac-site`** — caminho
+`/projects/manfac/app/manfac-site`. Domínios `manfac.com.br`, `www.manfac.com.br` e
+`manfac-manfac-site.elv4p1.easypanel.host`, porta interna 3000. **Deployar o site é
+clicar em Deploy nesse app, não no `manfac-login-system`** — os dois vivem no mesmo
+projeto e a confusão entre eles já custou uma investigação inteira em 09/08. Para
+confirmar que o build do site subiu, o mesmo truque do hub, mas em
+`https://manfac.com.br`: comparar o `Last-Modified` dos `/_next/static/chunks/*.js`.
+Baseline do deploy anterior: `Thu, 16 Jul 2026 20:54:57 GMT`.
+
 ### DNS — leia `docs/infra/dns-manfac.md` antes de tocar em domínio
 
 Resumo do que já custou 2 dias de indisponibilidade em 18/08/2026: o domínio é
