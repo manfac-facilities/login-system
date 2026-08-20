@@ -107,8 +107,48 @@ body {
     0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+/*
+ * Halo do botão flutuante de WhatsApp. Mesma mecânica do .btn-pump, em verde.
+ *
+ * O verde é `rgb(94, 246, 150)`, não o `#25d366` oficial da marca: o oficial é
+ * escuro e o brilho dele some contra o fundo branco do site. O botão continua
+ * no verde oficial — só o halo clareia.
+ */
+.wa-float {
+  box-shadow:
+    0 0 18px 1px rgba(94, 246, 150, 0.49),
+    0 0 36px 4px rgba(94, 246, 150, 0.24),
+    0 5px 14px rgba(0, 0, 0, 0.16);
+  animation: wa-pump 2.6s ease-in-out 0.6s infinite;
+}
+
+@keyframes wa-pump {
+  0%,
+  100% {
+    box-shadow:
+      0 0 13px 0px rgba(94, 246, 150, 0.52),
+      0 0 22px 0px rgba(94, 246, 150, 0.21),
+      0 5px 14px rgba(0, 0, 0, 0.16);
+  }
+  45% {
+    box-shadow:
+      0 0 29px 14px rgba(140, 255, 185, 0.6),
+      0 0 67px 28px rgba(94, 246, 150, 0.2),
+      0 5px 14px rgba(0, 0, 0, 0.16);
+  }
+}
+
+.wa-float:hover {
+  animation: none;
+  box-shadow:
+    0 0 24px 4px rgba(140, 255, 190, 0.66),
+    0 0 49px 11px rgba(94, 246, 150, 0.32),
+    0 5px 14px rgba(0, 0, 0, 0.16);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up { animation: none; }
+  .wa-float { animation: none; }
   .reveal {
     opacity: 1;
     transform: none;

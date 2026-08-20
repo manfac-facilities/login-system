@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, IBM_Plex_Mono } from 'next/font/google'
 import { SITE_URL } from '@/lib/site'
+import WhatsAppFloat from '@/components/WhatsAppFloat'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
@@ -84,6 +85,12 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${plexMono.variable} font-sans antialiased`}>
         {children}
+        {/*
+          Montado no layout, e não nas páginas: Header e Footer neste projeto são
+          importados página a página, e repetir o flutuante em 7 arquivos seria
+          erro esperando acontecer.
+        */}
+        <WhatsAppFloat />
       </body>
     </html>
   )
