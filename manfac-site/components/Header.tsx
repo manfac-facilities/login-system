@@ -156,9 +156,14 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/*
+        Menu mobile. É um cartão próprio, com fundo e borda: antes ele herdava o
+        fundo opaco do <header>, mas agora o header é só um wrapper transparente
+        em volta da pílula — sem isto o menu abriria por cima do conteúdo da
+        página, sem fundo nenhum.
+      */}
       {open && (
-        <nav className="flex flex-col gap-1 border-t border-[var(--border)] px-6 py-4 text-sm md:hidden">
+        <nav className="mx-auto mt-2 flex max-w-6xl flex-col gap-1 rounded-2xl border border-[var(--border)]/75 bg-white/95 px-4 py-3 text-sm shadow-lg shadow-[var(--ink)]/10 backdrop-blur-[10px] md:hidden">
           {NAV_ITEMS.map((item) => {
             const active = isNavActive(pathname, item.href)
             return (

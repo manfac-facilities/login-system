@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import Header from '../Header'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }))
@@ -43,5 +43,19 @@ describe('Header', () => {
     const { container } = render(<Header />)
     const ativo = container.querySelector('nav span.origin-left.scale-x-100')
     expect(ativo).not.toBeNull()
+  })
+
+  // Regressão: com o header virando wrapper transparente em volta da pílula, o
+  // menu mobile deixou de herdar fundo e abria por cima do conteúdo da página.
+  it('o menu mobile abre como cartão com fundo próprio', () => {
+    const { container } = render(<Header />)
+    expect(container.querySelector('nav.md\\:hidden')).toBeNull()
+
+    fireEvent.click(screen.getByLabelText('Abrir menu'))
+
+    const menu = container.querySelector('nav.md\\:hidden')
+    expect(menu).not.toBeNull()
+    expect(menu?.className).toMatch(/bg-white/)
+    expect(menu?.className).toContain('rounded-2xl')
   })
 })
