@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, IBM_Plex_Mono } from 'next/font/google'
 import { SITE_URL } from '@/lib/site'
+import SmoothScroll from '@/components/SmoothScroll'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 import './globals.css'
 
@@ -84,6 +85,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${plexMono.variable} font-sans antialiased`}>
+        <SmoothScroll />
         {children}
         {/*
           Montado no layout, e não nas páginas: Header e Footer neste projeto são

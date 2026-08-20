@@ -17,7 +17,12 @@ html,
 body {
   background-color: var(--background);
   color: var(--body-text);
-  scroll-behavior: smooth;
+  /*
+   * Sem `scroll-behavior: smooth` aqui de propósito: quem faz o scroll suave
+   * agora é o Lenis (components/SmoothScroll.tsx). Se os dois ficarem ligados,
+   * competem em clique de âncora e o resultado é um salto seco no meio da
+   * animação.
+   */
 }
 
 * {
