@@ -17,7 +17,14 @@ export default function QuemSomos() {
             priority
           />
           <div className="absolute inset-0 bg-[var(--ink)]/70" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+          {/*
+            O pt-20 no mobile não é respiro estético. O header virou fixed e
+            come 80px do topo; como este hero centraliza verticalmente (em vez
+            de usar py, como os outros), sem ele o eyebrow "Quem somos" fica
+            embaixo da pílula de vidro em tela estreita. No desktop o hero é
+            mais alto e a conta já fecha — daí o md:pt-0.
+          */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pt-20 text-center md:pt-0">
             <Reveal>
               <span className="font-mono text-xs uppercase tracking-widest text-[var(--orange)]">
                 Quem somos

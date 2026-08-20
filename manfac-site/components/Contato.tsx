@@ -25,7 +25,7 @@ export default function Contato() {
         <Reveal delay={360}>
           <a
             href="/contato"
-            className="mt-8 inline-flex items-center gap-3 rounded-full bg-[var(--orange)] px-8 py-4 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
+            className="btn-pump mt-8 inline-flex items-center gap-3 rounded-full bg-[var(--orange)] px-8 py-4 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
             AGENDAR CONVERSA TÉCNICA
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

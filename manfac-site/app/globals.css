@@ -18,6 +18,11 @@ body {
   background-color: var(--background);
   color: var(--body-text);
   /*
+   * Com o header fixed, âncora ou foco por teclado perto do topo posicionaria
+   * o alvo embaixo da pílula. 6rem cobre a altura dela mais folga.
+   */
+  scroll-padding-top: 6rem;
+  /*
    * Sem `scroll-behavior: smooth` aqui de propósito: quem faz o scroll suave
    * agora é o Lenis (components/SmoothScroll.tsx). Se os dois ficarem ligados,
    * competem em clique de âncora e o resultado é um salto seco no meio da
@@ -161,6 +166,19 @@ body {
   }
   .icon-float { animation: none; }
   .btn-pump { animation: none; }
+  /*
+   * `prefers-reduced-motion` não separa `animation` de `transition`, e as
+   * transições novas da v04 são movimento de layout de verdade: a pílula do
+   * header muda de altura ao rolar, o sublinhado do menu cresce da esquerda e
+   * o botão flutuante se expande 130px. Todas desligam aqui.
+   */
+  .header-shell,
+  .header-shell > div,
+  .nav-underline,
+  .wa-float,
+  .wa-float span {
+    transition: none;
+  }
 }
 
 @theme inline {

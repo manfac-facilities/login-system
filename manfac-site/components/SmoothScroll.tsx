@@ -12,6 +12,12 @@ import Lenis from 'lenis'
  *
  * `autoRaf: true` deixa o próprio Lenis rodar o requestAnimationFrame, o que
  * dispensa o loop manual e um estado a menos para errar.
+ *
+ * O `lenis/dist/lenis.css` **não** é importado de propósito: hoje ele não teria
+ * o que fazer aqui (o site não fixa `height: 100%`, não tem iframe, nenhum
+ * container com scroll próprio e ninguém chama `lenis.stop()`). Isso muda no
+ * dia em que a frente B puser o mapa em `<iframe>` na `/contato` — sem o CSS,
+ * o scroll prende em cima do mapa. Importar junto com o mapa.
  */
 export default function SmoothScroll() {
   useEffect(() => {

@@ -18,12 +18,12 @@ export default function WhatsAppFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
-      className="wa-float group fixed bottom-5 right-5 z-40 flex h-14 items-center overflow-hidden rounded-full bg-[#25d366] text-white transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] w-14 hover:w-[186px]"
+      className="wa-float group fixed bottom-5 right-5 z-40 flex h-14 items-center overflow-hidden rounded-full bg-[#25d366] text-white transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] w-14 hover:w-[186px] focus-visible:w-[186px]"
     >
       <span className="grid h-14 w-14 flex-none place-items-center">
         <WhatsAppIcon size={26} />
       </span>
-      <span className="whitespace-nowrap pr-5 text-sm font-semibold opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <span className="whitespace-nowrap pr-5 text-sm font-semibold opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
         Falar no WhatsApp
       </span>
     </a>

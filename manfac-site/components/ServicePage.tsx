@@ -29,7 +29,7 @@ export default function ServicePage({ servico }: { servico: ServicoData }) {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-[var(--ink)]/78" />
-        <div className="relative mx-auto max-w-5xl px-6 py-24 text-center md:py-32">
+        <div className="relative mx-auto max-w-5xl px-6 py-28 text-center md:py-32">
           <Reveal>
             <p className="mb-4 font-mono text-xs uppercase tracking-widest text-[var(--orange)]">
               Serviços · {servico.nome}

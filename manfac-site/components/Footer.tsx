@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import WhatsAppIcon from './WhatsAppIcon'
 import { SERVICOS_DATA } from '@/lib/servicos'
-import { buildDirectWhatsAppUrl } from '@/lib/whatsapp'
+import { buildDirectWhatsAppUrl, WHATSAPP_COMERCIAL_DISPLAY } from '@/lib/whatsapp'
 
 // TODO: dados do cliente — o João ainda não passou a tagline nem o endereço.
 // Deixados como texto provisório visível de propósito: string vazia passaria
@@ -88,7 +88,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className={colLink}
             >
-              (21) 98428-0058
+              {WHATSAPP_COMERCIAL_DISPLAY}
             </a>
             <a href="mailto:contato@manfac.com.br" className={colLink}>
               contato@manfac.com.br

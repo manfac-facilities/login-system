@@ -3,6 +3,11 @@
 // (21) 98428-0058
 export const WHATSAPP_COMERCIAL = '5521984280058'
 
+// O mesmo número, no formato que a pessoa lê. Existe para o texto exibido no
+// rodapé não divergir do número que o link disca — duas fontes de verdade aqui
+// significa exibir um e ligar para outro no dia em que o comercial trocar.
+export const WHATSAPP_COMERCIAL_DISPLAY = '(21) 98428-0058'
+
 export type DemandPath = 'Manutenção recorrente' | 'Obra ou reforma' | 'Avaliação técnica'
 
 export type ContactFormData = {

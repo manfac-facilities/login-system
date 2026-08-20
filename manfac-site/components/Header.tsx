@@ -31,7 +31,7 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 px-5 transition-[padding] duration-300 ${
+      className={`header-shell fixed inset-x-0 top-0 z-50 px-5 transition-[padding] duration-300 ${
         scrolled ? 'py-2' : 'py-4'
       }`}
     >
@@ -50,7 +50,7 @@ export default function Header() {
           <Image src="/logo.png" alt="Manfac Engenharia" width={154} height={42} priority />
         </Link>
 
-        <nav className="hidden gap-8 text-sm text-[var(--muted)] md:flex">
+        <nav className="hidden gap-8 text-sm text-[var(--ink)]/70 md:flex">
           {NAV_ITEMS.map((item) => {
             const active = isNavActive(pathname, item.href)
 
@@ -79,8 +79,8 @@ export default function Header() {
                       <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span
-                      className={`absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                        active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100'
+                      className={`nav-underline absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100 group-focus-visible/nav:scale-x-100'
                       }`}
                     />
                   </Link>
@@ -120,8 +120,8 @@ export default function Header() {
               >
                 {item.label}
                 <span
-                  className={`absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100'
+                  className={`nav-underline absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-[var(--orange)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    active ? 'scale-x-100' : 'scale-x-0 group-hover/nav:scale-x-100 group-focus-visible/nav:scale-x-100'
                   }`}
                 />
               </Link>
