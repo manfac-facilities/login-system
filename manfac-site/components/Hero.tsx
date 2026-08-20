@@ -44,7 +44,7 @@ export default function Hero() {
             href={buildDirectWhatsAppUrl('Home')}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
+            className="btn-pump inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-6 py-3 font-medium text-white transition-colors hover:bg-[var(--orange-hover)]"
           >
             <WhatsAppIcon />
             Solicitar atendimento

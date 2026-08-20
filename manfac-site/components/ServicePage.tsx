@@ -42,7 +42,7 @@ export default function ServicePage({ servico }: { servico: ServicoData }) {
               href={buildDirectWhatsAppUrl(servico.nome)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--orange-hover)]"
+              className="btn-pump mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--orange)] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--orange-hover)]"
             >
               <WhatsAppIcon size={16} />
               Solicitar proposta técnica
