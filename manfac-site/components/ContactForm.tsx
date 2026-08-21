@@ -56,14 +56,23 @@ export default function ContactForm() {
     if (!path || enviando) return
     setEnviando(true)
     setErro(null)
-    const r = await registrarLeadAction({ path, nome, email, telefone, consentimento, armadilha })
-    setEnviando(false)
-    if (r.ok === false) {
-      setErro(r.erro)
-      return
+    // A action já trata seus próprios erros e nunca deveria lançar — mas o
+    // catch aqui é a segunda linha de defesa: se algo inesperado escapar
+    // (rede, bug futuro), o botão não pode ficar preso em "Enviando…" para
+    // sempre. Quem digitou não pode ficar sem saída.
+    try {
+      const r = await registrarLeadAction({ path, nome, email, telefone, consentimento, armadilha })
+      if (r.ok === false) {
+        setErro(r.erro)
+        return
+      }
+      setLeadId(r.id)
+      setEtapa(2)
+    } catch {
+      setErro('Não conseguimos registrar agora. Fale com a gente no WhatsApp.')
+    } finally {
+      setEnviando(false)
     }
-    setLeadId(r.id)
-    setEtapa(2)
   }
 
   async function concluir(comContexto: boolean) {

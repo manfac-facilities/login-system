@@ -4,28 +4,34 @@ const insert = vi.fn()
 const update = vi.fn()
 const eq = vi.fn()
 
-vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({
-    from: () => ({
-      insert: (linha: unknown) => {
-        insert(linha)
-        return {
-          select: () => ({
-            single: async () => ({ data: { id: 'lead-1' }, error: null }),
-          }),
-        }
-      },
-      update: (campos: unknown) => {
-        update(campos)
-        return {
-          eq: async (col: string, val: string) => {
-            eq(col, val)
-            return { error: null }
-          },
-        }
-      },
-    }),
+// `vi.fn` em vez de objeto fixo: precisa ser controlável por teste para
+// simular createAdminClient() lançando (chave de service role ausente no
+// processo) — o cenário que já derrubou /admin/acessos em produção em
+// 2026-08-09 e que aqui não pode travar o botão em "Enviando…".
+const createAdminClientMock = vi.fn(() => ({
+  from: () => ({
+    insert: (linha: unknown) => {
+      insert(linha)
+      return {
+        select: () => ({
+          single: async () => ({ data: { id: 'lead-1' }, error: null }),
+        }),
+      }
+    },
+    update: (campos: unknown) => {
+      update(campos)
+      return {
+        eq: async (col: string, val: string) => {
+          eq(col, val)
+          return { error: null }
+        },
+      }
+    },
   }),
+}))
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => createAdminClientMock(),
 }))
 
 const valido = {
@@ -41,6 +47,7 @@ describe('registrarLeadAction', () => {
     insert.mockClear()
     update.mockClear()
     eq.mockClear()
+    createAdminClientMock.mockClear()
   })
 
   it('grava e devolve o id', async () => {
@@ -73,6 +80,17 @@ describe('registrarLeadAction', () => {
     expect(r.ok).toBe(true)
     expect(insert).not.toHaveBeenCalled()
   })
+
+  it('devolve { ok: false } em vez de lançar quando createAdminClient lança', async () => {
+    createAdminClientMock.mockImplementationOnce(() => {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente')
+    })
+    const r = await registrarLeadAction(valido)
+    expect(r).toEqual({
+      ok: false,
+      erro: 'Não conseguimos registrar agora. Fale com a gente no WhatsApp.',
+    })
+  })
 })
 
 describe('completarLeadAction', () => {
@@ -80,6 +98,7 @@ describe('completarLeadAction', () => {
     insert.mockClear()
     update.mockClear()
     eq.mockClear()
+    createAdminClientMock.mockClear()
   })
 
   it('atualiza a linha existente e nunca insere', async () => {
@@ -100,5 +119,13 @@ describe('completarLeadAction', () => {
     const r = await completarLeadAction('', { empresa: 'X' })
     expect(r.ok).toBe(false)
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('devolve { ok: false } em vez de lançar quando createAdminClient lança', async () => {
+    createAdminClientMock.mockImplementationOnce(() => {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente')
+    })
+    const r = await completarLeadAction('lead-1', { empresa: 'Rede X' })
+    expect(r).toEqual({ ok: false })
   })
 })

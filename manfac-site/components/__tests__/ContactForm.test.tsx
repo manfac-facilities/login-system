@@ -106,5 +106,20 @@ describe('ContactForm em duas etapas', () => {
     await user.click(screen.getByRole('button', { name: /continuar/i }))
     expect(await screen.findByText(/autorizar o uso dos seus dados/i)).toBeTruthy()
     expect((screen.getByLabelText(/Nome/) as HTMLInputElement).value).toBe('Maria Souza')
+    // O botão precisa sair do estado de carregando — senão a pessoa vê o erro
+    // mas não consegue tentar de novo.
+    expect(screen.getByRole('button', { name: /^continuar$/i })).not.toBeDisabled()
+  })
+
+  it('não trava em "enviando" quando a action rejeita em vez de devolver { ok: false }', async () => {
+    ;(registrarLeadAction as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('SUPABASE_SERVICE_ROLE_KEY não está configurada no ambiente')
+    )
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    expect(await screen.findByRole('button', { name: /^continuar$/i })).not.toBeDisabled()
+    expect((screen.getByLabelText(/Nome/) as HTMLInputElement).value).toBe('Maria Souza')
   })
 })
