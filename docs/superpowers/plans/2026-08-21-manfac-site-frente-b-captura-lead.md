@@ -71,6 +71,7 @@ create table if not exists public.site_leads (
   telefone      text not null,
   consentimento boolean not null,
   consentido_em timestamptz not null,
+  consentimento_texto text not null,
   empresa       text,
   cargo         text,
   localidade    text,
@@ -81,6 +82,9 @@ create table if not exists public.site_leads (
 
 comment on table public.site_leads is
   'Registro de captura do formulário de /contato. Imutável do ponto de vista do CRM: o CRM cria tabelas crm_* referenciando site_leads.id em vez de alterar esta.';
+
+comment on column public.site_leads.consentimento_texto is
+  'Texto de TEXTO_CONSENTIMENTO exibido no momento do aceite. Guardar o texto, não só o booleano e o carimbo: se TEXTO_CONSENTIMENTO mudar no futuro, as linhas antigas continuam apontando para o que a pessoa realmente aceitou.';
 
 -- Única ordenação que a tela de leitura usa.
 create index if not exists site_leads_criado_em_desc on public.site_leads (criado_em desc);
@@ -108,7 +112,7 @@ order by ordinal_position;
 select relrowsecurity from pg_class where relname = 'site_leads';
 ```
 
-Expected: 15 colunas na ordem acima, e `relrowsecurity = true`.
+Expected: 16 colunas na ordem acima, e `relrowsecurity = true`.
 
 - [ ] **Step 4: Commit**
 
@@ -891,7 +895,7 @@ git commit -m "feat(manfac-site): bloco de contato ao lado do formulario e mapa 
 
 1. **Code review** — `superpowers:requesting-code-review`, range da Task 1 até a Task 6.
 2. **Antes do deploy, com o João:**
-   - rodar o `sdd-sql-site-leads.sql` (Task 1) e conferir as 15 colunas;
+   - rodar o `sdd-sql-site-leads.sql` (Task 1) e conferir as 16 colunas;
    - pôr `SUPABASE_SERVICE_ROLE_KEY=<valor>` no *Environment* do app **`manfac-site`** do EasyPanel, **numa linha só**;
    - confirmar **pelo log do container**, não pela tela do painel.
 3. **Teste de fumaça em produção, obrigatório:** preencher a etapa 1 com dados reais e conferir no Supabase que a linha existe, com `consentimento = true` e `consentido_em` preenchido. Depois preencher a etapa 2 e conferir que **atualizou a mesma linha** em vez de criar outra.

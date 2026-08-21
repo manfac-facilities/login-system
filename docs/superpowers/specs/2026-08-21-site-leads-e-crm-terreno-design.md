@@ -152,6 +152,7 @@ site_leads
   telefone       text not null
   consentimento  boolean not null
   consentido_em  timestamptz not null
+  consentimento_texto text not null    -- o texto de TEXTO_CONSENTIMENTO no momento do aceite
   empresa        text                   -- etapa 2 em diante, tudo opcional
   cargo          text
   localidade     text
@@ -159,6 +160,12 @@ site_leads
   resumo         text
   etapa2_em      timestamptz            -- null = etapa 2 nunca veio
 ```
+
+16 colunas ao todo. `consentimento_texto` guarda o texto de `TEXTO_CONSENTIMENTO` no momento
+do aceite, não só o booleano e o carimbo: se `TEXTO_CONSENTIMENTO` mudar um dia, as linhas
+antigas continuam apontando para o texto que a pessoa realmente aceitou, em vez de para um
+texto novo que ninguém viu — decidido na revisão final da frente B (2026-08-21), enquanto o
+SQL ainda não tinha sido aplicado em produção.
 
 Índice em `criado_em desc` — é a única ordenação que a tela usa.
 

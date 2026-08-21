@@ -12,6 +12,7 @@ create table if not exists public.site_leads (
   telefone      text not null,
   consentimento boolean not null,
   consentido_em timestamptz not null,
+  consentimento_texto text not null,
   empresa       text,
   cargo         text,
   localidade    text,
@@ -22,6 +23,9 @@ create table if not exists public.site_leads (
 
 comment on table public.site_leads is
   'Registro de captura do formulário de /contato. Imutável do ponto de vista do CRM: o CRM cria tabelas crm_* referenciando site_leads.id em vez de alterar esta.';
+
+comment on column public.site_leads.consentimento_texto is
+  'Texto de TEXTO_CONSENTIMENTO exibido no momento do aceite. Guardar o texto, não só o booleano e o carimbo: se TEXTO_CONSENTIMENTO mudar no futuro, as linhas antigas continuam apontando para o que a pessoa realmente aceitou.';
 
 -- Única ordenação que a tela de leitura usa.
 create index if not exists site_leads_criado_em_desc on public.site_leads (criado_em desc);
