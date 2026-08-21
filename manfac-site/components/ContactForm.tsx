@@ -130,8 +130,8 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="border-b border-[var(--border)]">
-      <div className="mx-auto max-w-4xl px-6 py-20 text-center md:py-28">
+    <section>
+      <div className="pb-10 text-center">
         <p className="font-mono text-xs uppercase tracking-widest text-[var(--orange)]">Contato</p>
         <h1 className="mt-3 text-3xl font-bold leading-tight text-[var(--ink)] md:text-4xl">
           Qual é a sua demanda?
