@@ -262,6 +262,23 @@ Node 20 (`.nvmrc`).
 Nunca pular etapas: **brainstorming → mockup visual aprovado → spec → plano → código →
 code review → deploy.** Mockup antes de escrever spec ou código, sempre.
 
+### Material que o João cola no chat vira arquivo ANTES de ser usado
+
+Lista de ajustes, relatório do cliente, auditoria, feedback compilado, requisito escrito
+— **salvar literal em `docs/cliente/AAAA-MM-DD-<assunto>.md` e commitar antes de agir
+sobre o conteúdo.** Sem resumir, sem "extrair o que importa": o resumo vira spec depois,
+o arquivo é a fonte.
+
+**Por quê:** o chat não é armazenamento. Spec e memória guardam *decisões*; o texto
+original que as gerou some quando a sessão acaba, e aí não há como conferir se a decisão
+traduziu o pedido direito. Em 21/08 o João foi explícito: perder o material que ele manda
+custa a confiança dele no sistema inteiro.
+
+**Rede de segurança, não substituto:** as sessões ficam em
+`~/.claude/projects/C--Users-joao--projeto-01-elite-da-ia/*.jsonl` e dá para recuperar
+mensagem literal dali (foi assim que a lista de 20/08 voltou). Mas são arquivos locais,
+sem backup — servem para resgate, não como arquivo do projeto.
+
 - **Mockup: sempre interativo quando o pedido for de animação/interação.** Print não serve
   para julgar hover, scroll ou pulso. Publicar como artifact com painel de controle para o
   João comparar variantes (opacidade, on/off) na própria tela, em vez de descrever em texto.
