@@ -2,6 +2,8 @@
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import ContactForm from '@/components/ContactForm'
+import ContatoInfo from '@/components/ContatoInfo'
+import MapaPlaceholder from '@/components/MapaPlaceholder'
 import Footer from '@/components/Footer'
 import { SITE_URL } from '@/lib/site'
 
@@ -24,7 +26,13 @@ export default function ContatoPage() {
         desejado. Esta começa com conteúdo claro, então precisa do respiro.
       */}
       <main className="pt-20">
-        <ContactForm />
+        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 md:grid-cols-[1.6fr_1fr] md:items-start md:gap-10">
+          <ContactForm />
+          <ContatoInfo />
+        </div>
+        <div className="mx-auto max-w-6xl px-6 pb-16">
+          <MapaPlaceholder />
+        </div>
       </main>
       <Footer />
     </>
