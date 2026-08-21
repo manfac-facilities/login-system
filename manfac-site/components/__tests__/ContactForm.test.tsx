@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ContactForm from '../ContactForm'
 
@@ -162,5 +162,174 @@ describe('ContactForm em duas etapas', () => {
     expect(screen.getByLabelText(/Empresa/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /continuar/i })).not.toBeInTheDocument()
     expect(registrarLeadAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('os boxes ganham aria-disabled na etapa 2, sem mudar aparência nem copy', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user, 'Obra ou reforma')
+    expect(screen.getByRole('button', { name: /obra ou reforma/i })).toHaveAttribute('aria-disabled', 'false')
+
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+
+    expect(screen.getByRole('button', { name: /obra ou reforma/i })).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('mostra fora dos boxes o caminho para trocar de demanda na etapa 2', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user, 'Obra ou reforma')
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+
+    // Texto quebrado entre nó de texto e o <a> do link — checar o
+    // textContent inteiro evita ambiguidade de getByText casando com
+    // ancestrais.
+    expect(document.body.textContent).toMatch(/trocar o tipo de demanda/i)
+  })
+})
+
+describe('ContactForm — campo-armadilha', () => {
+  it('é renderizado e seu valor chega em registrarLeadAction', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await user.click(screen.getByText('Obra ou reforma'))
+
+    // Sem label nem role acessível de propósito — é invisível para gente.
+    // Localizado pelo name do input, como um robô que varre o DOM faria.
+    const armadilha = document.querySelector('input[name="armadilha"]') as HTMLInputElement
+    expect(armadilha).toBeInTheDocument()
+    expect(armadilha).toHaveAttribute('aria-hidden', 'true')
+
+    fireEvent.change(armadilha, { target: { value: 'http://spam.example' } })
+    await user.type(screen.getByLabelText(/Nome/), 'Maria Souza')
+    await user.type(screen.getByLabelText(/E-mail/), 'maria@empresa.com.br')
+    await user.type(screen.getByLabelText(/Telefone/), '21999990000')
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+
+    expect(registrarLeadAction).toHaveBeenCalledWith(
+      expect.objectContaining({ armadilha: 'http://spam.example' })
+    )
+  })
+})
+
+describe('ContactForm — falha de infra na etapa 1 (achado crítico #1)', () => {
+  it('falha de infra oferece link para o WhatsApp', async () => {
+    ;(registrarLeadAction as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      erro: 'Não conseguimos registrar agora. Fale com a gente no WhatsApp.',
+      falha: 'infra',
+    })
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+
+    expect(await screen.findByText(/não conseguimos registrar agora/i)).toBeTruthy()
+    const link = screen.getByRole('link', { name: /whatsapp/i })
+    expect(link).toHaveAttribute('href', expect.stringContaining('wa.me'))
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+  })
+
+  it('falha de validação NÃO oferece link — a pessoa deve corrigir o campo', async () => {
+    ;(registrarLeadAction as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      erro: 'Informe um e-mail válido.',
+      falha: 'validacao',
+    })
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+
+    expect(await screen.findByText(/informe um e-mail válido/i)).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /whatsapp/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('ContactForm — etapa 2, concluir() (achado #2)', () => {
+  it('"Pular e falar agora" abre o wa.me e NÃO chama completarLeadAction', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByRole('button', { name: /pular/i })
+
+    await user.click(screen.getByRole('button', { name: /pular/i }))
+
+    expect(window.open).toHaveBeenCalledWith(
+      expect.stringContaining('wa.me'),
+      '_blank',
+      'noopener,noreferrer'
+    )
+    expect(completarLeadAction).not.toHaveBeenCalled()
+  })
+
+  it('"Enviar e falar no WhatsApp" grava a etapa 2 antes de abrir o wa.me', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+
+    await user.click(screen.getByRole('button', { name: /enviar e falar no whatsapp/i }))
+
+    expect(completarLeadAction).toHaveBeenCalledTimes(1)
+    expect(window.open).toHaveBeenCalled()
+  })
+
+  it('quando completarLeadAction rejeita, o WhatsApp abre mesmo assim', async () => {
+    ;(completarLeadAction as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('falhou'))
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+
+    await user.click(screen.getByRole('button', { name: /enviar e falar no whatsapp/i }))
+
+    expect(window.open).toHaveBeenCalled()
+  })
+
+  it('popup bloqueado (window.open devolve null): mostra erro com link visível', async () => {
+    ;(window.open as ReturnType<typeof vi.fn>).mockReturnValueOnce(null)
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByRole('button', { name: /pular/i })
+
+    await user.click(screen.getByRole('button', { name: /pular/i }))
+
+    const link = await screen.findByRole('link', { name: /abrir whatsapp/i })
+    expect(link).toHaveAttribute('href', expect.stringContaining('wa.me'))
+  })
+
+  it('desabilita os dois botões da etapa 2 enquanto enviando — duplo clique não dispara duas chamadas', async () => {
+    let resolveCompletar: (v: { ok: boolean }) => void = () => {}
+    ;(completarLeadAction as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCompletar = resolve
+      })
+    )
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user)
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+
+    const enviar = screen.getByRole('button', { name: /enviar e falar no whatsapp/i })
+    const pular = screen.getByRole('button', { name: /pular/i })
+
+    await user.click(enviar)
+    expect(enviar).toBeDisabled()
+    expect(pular).toBeDisabled()
+
+    resolveCompletar({ ok: true })
+    await waitFor(() => expect(enviar).not.toBeDisabled())
+    expect(completarLeadAction).toHaveBeenCalledTimes(1)
   })
 })

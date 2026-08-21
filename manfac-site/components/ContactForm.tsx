@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { buildWhatsAppUrl, type DemandPath } from '../lib/whatsapp'
+import { buildDirectWhatsAppUrl, buildWhatsAppUrl, type DemandPath } from '../lib/whatsapp'
 import { registrarLeadAction, completarLeadAction } from '@/app/contato/_actions'
 import { TEXTO_CONSENTIMENTO } from '@/lib/leads'
 
@@ -29,6 +29,12 @@ export default function ContactForm() {
   const [etapa, setEtapa] = useState<1 | 2>(1)
   const [leadId, setLeadId] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  // Distingue erro de infra (banco fora do ar — a pessoa não errou nada, tem
+  // que ganhar um link pro WhatsApp) de erro de validação (a pessoa precisa
+  // corrigir o campo, não ganhar atalho que pula a correção). E o popup do
+  // WhatsApp na etapa 2, quando o navegador bloqueia por perda de ativação.
+  const [erroTipo, setErroTipo] = useState<'infra' | 'validacao' | 'popup' | null>(null)
+  const [waFallbackUrl, setWaFallbackUrl] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   // Etapa 1 — obrigatórios.
@@ -56,6 +62,7 @@ export default function ContactForm() {
     setPath(p)
     setEtapa(1)
     setErro(null)
+    setErroTipo(null)
   }
 
   async function enviarEtapa1(ev: React.FormEvent<HTMLFormElement>) {
@@ -63,6 +70,7 @@ export default function ContactForm() {
     if (!path || enviando) return
     setEnviando(true)
     setErro(null)
+    setErroTipo(null)
     // A action já trata seus próprios erros e nunca deveria lançar — mas o
     // catch aqui é a segunda linha de defesa: se algo inesperado escapar
     // (rede, bug futuro), o botão não pode ficar preso em "Enviando…" para
@@ -71,29 +79,54 @@ export default function ContactForm() {
       const r = await registrarLeadAction({ path, nome, email, telefone, consentimento, armadilha })
       if (r.ok === false) {
         setErro(r.erro)
+        setErroTipo(r.falha)
         return
       }
-      setLeadId(r.id)
+      // `r.id` só é falsy se vier vazio — hoje isso não acontece mais, mas
+      // `|| null` evita que um `leadId` falsy vire `''`, que faz o guard de
+      // `escolherPath` (`if (leadId) return`) mentir e deixar reabrir a etapa 1.
+      setLeadId(r.id || null)
       setEtapa(2)
     } catch {
       setErro('Não conseguimos registrar agora. Fale com a gente no WhatsApp.')
+      setErroTipo('infra')
     } finally {
       setEnviando(false)
     }
   }
 
   async function concluir(comContexto: boolean) {
-    if (comContexto && leadId) {
-      await completarLeadAction(leadId, { empresa, cargo, localidade, unidades, resumo })
+    if (enviando) return
+    setEnviando(true)
+    setErro(null)
+    setErroTipo(null)
+    setWaFallbackUrl(null)
+    try {
+      if (comContexto && leadId) {
+        await completarLeadAction(leadId, { empresa, cargo, localidade, unidades, resumo })
+      }
+    } catch {
+      // Perder a etapa 2 é aceitável — o `finally` abaixo garante que o
+      // WhatsApp abre de qualquer forma. Perder o handoff, não é.
+    } finally {
+      const url = buildWhatsAppUrl({
+        path: path!,
+        nome,
+        email,
+        telefone,
+        ...(comContexto ? { empresa, cargo, localidade, unidades, resumo } : {}),
+      })
+      // Depois de um `await`, a ativação do usuário já pode ter expirado e o
+      // navegador bloquear o popup — silenciosamente, se não checarmos o
+      // retorno. `window.open` devolve `null` quando bloqueado.
+      const w = window.open(url, '_blank', 'noopener,noreferrer')
+      if (!w) {
+        setErro('Não conseguimos abrir o WhatsApp automaticamente. Toque no link abaixo.')
+        setErroTipo('popup')
+        setWaFallbackUrl(url)
+      }
+      setEnviando(false)
     }
-    const url = buildWhatsAppUrl({
-      path: path!,
-      nome,
-      email,
-      telefone,
-      ...(comContexto ? { empresa, cargo, localidade, unidades, resumo } : {}),
-    })
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -113,6 +146,11 @@ export default function ContactForm() {
               key={p.path}
               type="button"
               aria-pressed={path === p.path}
+              // Semântica, não aparência: os boxes ficam inertes na etapa 2
+              // (escolherPath já é no-op com leadId setado), mas aria-disabled
+              // não muda layout, copy nem CSS — só anuncia o estado real para
+              // quem usa leitor de tela. hover/cursor continuam de propósito.
+              aria-disabled={!!leadId}
               onClick={() => escolherPath(p.path)}
               className={`rounded-2xl border-2 p-5 text-left transition-shadow ${
                 path === p.path
@@ -203,9 +241,26 @@ export default function ContactForm() {
             </label>
 
             {erro && (
-              <p className="text-sm text-red-600 md:col-span-2" role="alert">
-                {erro}
-              </p>
+              <div className="md:col-span-2" role="alert">
+                <p className="text-sm text-red-600">{erro}</p>
+                {/*
+                  Falha de infra (banco fora do ar) não pode deixar a pessoa
+                  sem caminho pro WhatsApp: antes desta frente 100% de quem
+                  preenchia chegava ao wa.me, e sem este link esse cenário
+                  cairia pra 0%. Erro de validação não ganha link — ali a
+                  pessoa deve corrigir o campo, não pular a correção.
+                */}
+                {erroTipo === 'infra' && (
+                  <a
+                    href={buildDirectWhatsAppUrl('Página de contato')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 inline-block text-sm font-semibold text-[var(--orange)] underline"
+                  >
+                    Falar no WhatsApp agora
+                  </a>
+                )}
+              </div>
             )}
 
             <div className="flex flex-wrap items-center gap-5 md:col-span-2">
@@ -299,18 +354,41 @@ export default function ContactForm() {
                 onChange={(e) => setResumo(e.target.value)}
               />
             </div>
+            {erro && (
+              <div className="md:col-span-2" role="alert">
+                <p className="text-sm text-red-600">{erro}</p>
+                {/*
+                  Popup bloqueado hoje é silêncio total: window.open depois de
+                  um await pode perder a ativação do usuário. Sem este link
+                  visível a pessoa fica sem nenhuma saída pro WhatsApp.
+                */}
+                {erroTipo === 'popup' && waFallbackUrl && (
+                  <a
+                    href={waFallbackUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 inline-block text-sm font-semibold text-[var(--orange)] underline"
+                  >
+                    Abrir WhatsApp
+                  </a>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-3 md:col-span-2">
               <button
                 type="button"
                 onClick={() => concluir(true)}
-                className="rounded-full bg-[var(--orange)] px-8 py-3.5 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)]"
+                disabled={enviando}
+                className="rounded-full bg-[var(--orange)] px-8 py-3.5 font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[var(--orange-hover)] disabled:opacity-60"
               >
-                Enviar e falar no WhatsApp
+                {enviando ? 'Enviando…' : 'Enviar e falar no WhatsApp'}
               </button>
               <button
                 type="button"
                 onClick={() => concluir(false)}
-                className="rounded-full border border-[var(--border)] px-8 py-3.5 font-semibold uppercase tracking-wider text-[var(--ink)] transition-colors hover:border-[var(--orange)]"
+                disabled={enviando}
+                className="rounded-full border border-[var(--border)] px-8 py-3.5 font-semibold uppercase tracking-wider text-[var(--ink)] transition-colors hover:border-[var(--orange)] disabled:opacity-60"
               >
                 Pular e falar agora
               </button>
@@ -318,6 +396,24 @@ export default function ContactForm() {
                 Abre no seu WhatsApp · Resposta em até 1 dia útil
               </p>
             </div>
+
+            {/*
+              Os boxes ficam inertes na etapa 2 (aria-disabled, escolherPath
+              é no-op) mas sem mudar aparência nem copy deles — este texto
+              fora dos boxes é o retorno real de "como troco a demanda".
+            */}
+            <p className="text-xs leading-relaxed text-[var(--muted)] md:col-span-2">
+              Para trocar o tipo de demanda, fale com a gente no{' '}
+              <a
+                href={buildDirectWhatsAppUrl('Página de contato')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[var(--orange)] underline"
+              >
+                WhatsApp
+              </a>
+              .
+            </p>
           </div>
         )}
       </div>
