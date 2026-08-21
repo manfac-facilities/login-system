@@ -282,12 +282,22 @@ sem backup — servem para resgate, não como arquivo do projeto.
 - **Mockup: sempre interativo quando o pedido for de animação/interação.** Print não serve
   para julgar hover, scroll ou pulso. Publicar como artifact com painel de controle para o
   João comparar variantes (opacidade, on/off) na própria tela, em vez de descrever em texto.
-- **Comentários do visualizador de artifact NÃO chegam ao Claude.** As capacidades
-  declaráveis são `artifact`, `downloads`, `mcp` e `self` — não existe uma de comentários.
-  Se precisar de feedback estruturado dentro da página, declarar `capabilities: {artifact: {}}`
-  e pôr campos `contenteditable` / radio **embaixo de cada seção** (nunca num console
-  consolidado no fim) — aí sim a digitação é salva no documento e chega. Na dúvida, pedir
-  para o João colar no chat.
+- **Quem publica o mockup é a sessão principal, NUNCA um subagente.** Descoberto em
+  21/08/2026 do jeito caro: o subagente publicou o mockup do blog, o João preencheu os
+  campos, e **nada foi salvo** — o HTML servido voltou idêntico ao publicado, byte a
+  byte. O retorno da publicação avisa quando isso acontece ("Live subscription:
+  skipped — only an interactive or SDK main-loop session holds the watch"): a assinatura
+  de documento vivo só existe para a sessão interativa. A página aceita digitação e não
+  tem para onde mandar. Subagente desenha o mockup; **a sessão principal publica.**
+- Feedback dentro da página: declarar `capabilities: {artifact: {}}` e pôr campos
+  `contenteditable` / radio **embaixo de cada seção** (nunca num console consolidado no
+  fim). Os elementos precisam da instrumentação que o mecanismo usa para ancorar o texto
+  — campo sem ela não persiste, mesmo publicado da sessão certa. **Conferir com um teste
+  real antes de mandar o João preencher: publicar, digitar, reabrir.**
+- **Comentários do visualizador AGORA chegam** — a nota anterior deste arquivo dizia o
+  contrário e está errada. Nesta versão existem `action: "comments"` e `action: "reply"`,
+  verificados em 21/08/2026. Comentário é canal legítimo, e mais confiável que os campos.
+  Na dúvida, pedir para o João colar no chat: é o único canal que nunca falhou.
 - Bug reportado → usar `superpowers:systematic-debugging` (causa raiz antes de fix).
 - Feature nova → usar `superpowers:brainstorming` antes de planejar.
 - Perguntas ao João: só quando a resposta muda o que será feito, e nunca sobre fatos
