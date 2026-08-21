@@ -2,6 +2,7 @@ import {
   buildDirectWhatsAppUrl,
   buildWhatsAppMessage,
   buildWhatsAppUrl,
+  DEMAND_PATHS,
   WHATSAPP_COMERCIAL,
   type ContactFormData,
 } from '../whatsapp'
@@ -71,6 +72,12 @@ describe('buildDirectWhatsAppUrl', () => {
   it('URL-encoda a mensagem, sem espaço cru', () => {
     const url = buildDirectWhatsAppUrl('Obras e Reformas')
     expect(url).not.toContain(' ')
+  })
+})
+
+describe('DEMAND_PATHS', () => {
+  it('lista os 3 caminhos exibidos nos boxes, fonte única para validação', () => {
+    expect(DEMAND_PATHS).toEqual(['Manutenção recorrente', 'Obra ou reforma', 'Avaliação técnica'])
   })
 })
 

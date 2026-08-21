@@ -10,6 +10,12 @@ export const WHATSAPP_COMERCIAL_DISPLAY = '(21) 98428-0058'
 
 export type DemandPath = 'Manutenção recorrente' | 'Obra ou reforma' | 'Avaliação técnica'
 
+// Única lista dos três caminhos válidos. `registrarLeadAction` é endpoint
+// público não autenticado e `DemandPath` some na compilação — sem validar
+// contra esta lista em runtime, dá para gravar qualquer string em
+// `site_leads.path`. Importar daqui em vez de duplicar os três literais.
+export const DEMAND_PATHS: DemandPath[] = ['Manutenção recorrente', 'Obra ou reforma', 'Avaliação técnica']
+
 export type ContactFormData = {
   path: DemandPath
   nome: string
