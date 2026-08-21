@@ -59,6 +59,15 @@ describe('ContactForm', () => {
     await screen.findByLabelText(/empresa/i)
     expect(screen.queryByLabelText(/nº de unidades/i)).not.toBeInTheDocument()
   })
+
+  it('pede e-mail corporativo — regressão de copy: "corporativo" precisa estar na label', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await user.click(screen.getByRole('button', { name: /obra ou reforma/i }))
+    // Regex frouxo (/E-mail/) casaria com "E-mail" sozinho e não pegaria a
+    // regressão que já aconteceu uma vez. Precisa exigir "corporativo".
+    expect(screen.getByLabelText(/^E-mail corporativo/)).toBeInTheDocument()
+  })
 })
 
 describe('ContactForm em duas etapas', () => {
@@ -121,5 +130,37 @@ describe('ContactForm em duas etapas', () => {
     await user.click(screen.getByRole('button', { name: /continuar/i }))
     expect(await screen.findByRole('button', { name: /^continuar$/i })).not.toBeDisabled()
     expect((screen.getByLabelText(/Nome/) as HTMLInputElement).value).toBe('Maria Souza')
+  })
+
+  it('clicar num outro box durante a etapa 2 não volta para a etapa 1 nem registra outro lead', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user, 'Obra ou reforma')
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+    expect(registrarLeadAction).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: /avaliação técnica/i }))
+
+    // Ainda na etapa 2: os campos da etapa 2 continuam visíveis, os da etapa
+    // 1 não voltaram, e nenhum segundo lead foi criado.
+    expect(screen.getByLabelText(/Empresa/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /continuar/i })).not.toBeInTheDocument()
+    expect(registrarLeadAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('clicar no MESMO box já selecionado durante a etapa 2 também não volta para a etapa 1', async () => {
+    const user = userEvent.setup()
+    render(<ContactForm />)
+    await preencherEtapa1(user, 'Obra ou reforma')
+    await user.click(screen.getByRole('button', { name: /continuar/i }))
+    await screen.findByLabelText(/Empresa/)
+    expect(registrarLeadAction).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: /obra ou reforma/i }))
+
+    expect(screen.getByLabelText(/Empresa/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /continuar/i })).not.toBeInTheDocument()
+    expect(registrarLeadAction).toHaveBeenCalledTimes(1)
   })
 })

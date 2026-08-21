@@ -46,6 +46,13 @@ export default function ContactForm() {
   const [resumo, setResumo] = useState('')
 
   function escolherPath(p: DemandPath) {
+    // Depois que a etapa 1 grava o lead, `leadId` fica setado. Um clique num
+    // box aqui — mesmo no já selecionado — não pode voltar para a etapa 1:
+    // "Continuar" de novo rodaria registrarLeadAction outra vez com os mesmos
+    // dados, criando uma segunda linha em site_leads e deixando a original
+    // órfã, sem etapa 2. A pessoa já passou dessa decisão; a etapa 2 tem suas
+    // próprias saídas (Enviar / Pular).
+    if (leadId) return
     setPath(p)
     setEtapa(1)
     setErro(null)
@@ -154,7 +161,7 @@ export default function ContactForm() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ct-email" className={labelCls}>
-                E-mail <span className="text-[var(--orange)]">*</span>
+                E-mail corporativo <span className="text-[var(--orange)]">*</span>
               </label>
               <input
                 id="ct-email"
