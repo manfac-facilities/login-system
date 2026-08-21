@@ -13,11 +13,11 @@ export type DemandPath = 'Manutenção recorrente' | 'Obra ou reforma' | 'Avalia
 export type ContactFormData = {
   path: DemandPath
   nome: string
-  empresa: string
+  empresa?: string
   email: string
   telefone: string
   cargo?: string
-  localidade: string
+  localidade?: string
   unidades?: string
   resumo?: string
 }
@@ -27,11 +27,13 @@ export function buildWhatsAppMessage(d: ContactFormData): string {
     'Olá! Vim pelo site da Manfac.',
     `Tipo de demanda: ${d.path}`,
     `Nome: ${d.nome}${d.cargo ? ` (${d.cargo})` : ''}`,
-    `Empresa: ${d.empresa}`,
-    `E-mail: ${d.email}`,
-    `Telefone: ${d.telefone}`,
-    `Localidade: ${d.localidade}`,
   ]
+  // A etapa 2 é opcional: cada campo dela só vira linha se existir. Mensagem
+  // com "Empresa: undefined" é pior que mensagem curta.
+  if (d.empresa) linhas.push(`Empresa: ${d.empresa}`)
+  linhas.push(`E-mail: ${d.email}`)
+  linhas.push(`Telefone: ${d.telefone}`)
+  if (d.localidade) linhas.push(`Localidade: ${d.localidade}`)
   if (d.path === 'Manutenção recorrente' && d.unidades) linhas.push(`Unidades: ${d.unidades}`)
   if (d.resumo) linhas.push(`Resumo: ${d.resumo}`)
   return linhas.join('\n')

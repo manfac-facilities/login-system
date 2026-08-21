@@ -73,3 +73,25 @@ describe('buildDirectWhatsAppUrl', () => {
     expect(url).not.toContain(' ')
   })
 })
+
+describe('buildWhatsAppMessage com etapa 2 ausente', () => {
+  const base = {
+    path: 'Avaliação técnica' as const,
+    nome: 'João Vitor',
+    email: 'joao@empresa.com.br',
+    telefone: '21999990000',
+  }
+
+  it('monta a mensagem sem empresa e sem localidade', () => {
+    const msg = buildWhatsAppMessage(base)
+    expect(msg).toContain('João Vitor')
+    expect(msg).not.toContain('Empresa:')
+    expect(msg).not.toContain('Localidade:')
+  })
+
+  it('inclui as linhas quando os campos vêm', () => {
+    const msg = buildWhatsAppMessage({ ...base, empresa: 'Rede X', localidade: 'RJ' })
+    expect(msg).toContain('Empresa: Rede X')
+    expect(msg).toContain('Localidade: RJ')
+  })
+})
