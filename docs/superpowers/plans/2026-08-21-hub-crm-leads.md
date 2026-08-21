@@ -119,7 +119,7 @@ git commit -m "feat(hub): registra o modulo CRM e fecha a rota no middleware"
 **Interfaces:**
 - Consumes: nada
 - Produces:
-  - `type Lead` — espelha as 14 colunas de `site_leads`
+  - `type Lead` — espelha as 15 colunas de `site_leads`
   - `formatarData(iso: string): string` — `21/08/2026 14:32`
   - `linkWhatsApp(telefone: string): string` — `https://wa.me/55…` só com dígitos
   - `estaCompleto(lead: Pick<Lead, 'etapa2_em'>): boolean`
