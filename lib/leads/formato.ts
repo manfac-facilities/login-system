@@ -36,7 +36,10 @@ export function formatarData(iso: string): string {
 export function linkWhatsApp(telefone: string): string {
   const digitos = telefone.replace(/\D/g, '')
   // O visitante escreve com ou sem o código do país; o wa.me só aceita com.
-  const comPais = digitos.startsWith('55') ? digitos : `55${digitos}`
+  // Decide por COMPRIMENTO, não por prefixo: 55 é o DDD de Santa Maria/RS,
+  // então um número nacional (10-11 dígitos) pode começar com "55" sem ter
+  // o código do país. Com país, o total é 12-13 dígitos.
+  const comPais = digitos.length >= 12 && digitos.startsWith('55') ? digitos : `55${digitos}`
   return `https://wa.me/${comPais}`
 }
 
