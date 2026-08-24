@@ -27,6 +27,7 @@ describe('DashboardPage', () => {
     render(await DashboardPage())
     expect(screen.getByText('Gestão de Frotas')).toBeInTheDocument()
     expect(screen.getByText('Conversor OS')).toBeInTheDocument()
+    expect(screen.getByText('CRM')).toBeInTheDocument()
     expect(screen.getByText('Admin')).toBeInTheDocument()
   })
 
@@ -38,7 +39,17 @@ describe('DashboardPage', () => {
     render(await DashboardPage())
     expect(screen.queryByText('Gestão de Frotas')).not.toBeInTheDocument()
     expect(screen.getByText('Conversor OS')).toBeInTheDocument()
+    expect(screen.queryByText('CRM')).not.toBeInTheDocument()
     expect(screen.queryByText('Admin')).not.toBeInTheDocument()
+  })
+
+  it('shows the CRM card for an analyst with access to it', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    ;(hasSystemAccess as jest.Mock).mockImplementation(
+      async (_c: unknown, _e: unknown, slug: string) => slug === 'crm'
+    )
+    render(await DashboardPage())
+    expect(screen.getByText('CRM')).toBeInTheDocument()
   })
 
   it('explains itself when the user has no system at all', async () => {
