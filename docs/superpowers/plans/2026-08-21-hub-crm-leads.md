@@ -45,7 +45,20 @@
 - Consumes: `hasSystemAccess` de `@/lib/auth/systemAccess`, `isAdmin` de `@/lib/auth/roles`
 - Produces: slug `'crm'` disponível para `hub_system_access` e para a `/admin/acessos`
 
-**Por que esta task vem primeiro:** rota fora do `matcher` fica **aberta** — o `middleware.ts` é a fronteira real de autorização, não a UI. Criar a página antes de fechar a rota publica dado pessoal de cliente na internet.
+**Por que esta task vem primeiro:** o `middleware.ts` é a fronteira real de autorização, não a UI. Criar a página antes de fechar a rota publica dado pessoal de cliente na internet.
+
+> ⚠️ **Correção de 2026-08-24 — a versão original deste plano estava errada e teria vazado dados.**
+> Ela mandava apenas acrescentar a rota ao `matcher`. **Isso não protege nada.** O `matcher`
+> decide só **em quais rotas o middleware roda**; quem bloqueia é o `isProtected` mais a
+> checagem de acesso dentro da função. Com apenas a entrada no `matcher`, `isProtected`
+> seria `false` para `/crm`, o middleware pularia o bloco inteiro e a página renderizaria
+> com **service role** — que ignora RLS — para **qualquer visitante, inclusive não
+> autenticado**. Não seria "aberta para a Manfac inteira": seria pública na internet.
+> O implementador percebeu e corrigiu por conta própria; a revisão confirmou traçando o
+> caminho no código. **Rota nova protegida = entrada no `matcher` + `isXPage` em
+> `isProtected` + checagem de acesso**, seguindo o padrão de `isSofiaPage` e
+> `isConversorOsPage`. E, por defesa em profundidade, a página também checa antes de
+> instanciar o client de service role.
 
 - [ ] **Step 1: Escrever o teste que falha**
 
@@ -90,7 +103,13 @@ Em `lib/sistemas.ts`, acrescentar ao array `SISTEMAS`:
 
 - [ ] **Step 4: Proteger a rota**
 
-Em `middleware.ts`, acrescentar `'/crm/:path*',` ao `matcher`, logo depois de `'/conversor-os/:path*',`.
+Em `middleware.ts`, **três** mudanças — as três são necessárias, e só a primeira estava na versão original deste plano:
+
+1. Acrescentar `'/crm/:path*',` ao `matcher`, logo depois de `'/conversor-os/:path*',`. Isso faz o middleware **rodar** na rota; não a protege.
+2. Acrescentar `isCrmPage` ao cálculo de `isProtected`. **Sem isto a rota não é protegida por nada** — o middleware roda e passa direto.
+3. Acrescentar o bloco de checagem, no mesmo formato de `isSofiaPage` e `isConversorOsPage`: se `hasSystemAccess(supabase, email, 'crm')` for falso, `redirect('/dashboard')`. Sem ramo de `403 JSON`, porque não existe `/api/crm` no `matcher`.
+
+O `matcher` `'/crm/:path*'` cobre `/crm` sem sufixo — o grupo de segmentos é opcional na regex gerada, e a doc deste Next confirma que `*` é "zero ou mais".
 
 - [ ] **Step 5: Colocar o card no dashboard**
 
