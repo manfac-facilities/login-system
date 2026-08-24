@@ -66,7 +66,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                 )}
                 {lead.localidade && <p>{lead.localidade}</p>}
                 {lead.unidades && <p>Unidades: {lead.unidades}</p>}
-                {lead.resumo && <p className="mt-1 text-[#c3d3e6]">{lead.resumo}</p>}
+                {lead.resumo && <p className="mt-1 text-white">{lead.resumo}</p>}
               </div>
             )}
           </li>
