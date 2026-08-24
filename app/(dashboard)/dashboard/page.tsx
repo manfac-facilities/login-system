@@ -19,14 +19,15 @@ export default async function DashboardPage() {
   // Administrador abre tudo, então nem consulta os acessos. Para os demais,
   // as duas consultas vão juntas em vez de uma esperar a outra.
   const admin = await isAdmin(supabase, user.email ?? '')
-  const [podeFrotas, podeConversor, podeManutencao] = admin
-    ? [true, true, true]
+  const [podeFrotas, podeConversor, podeManutencao, podeCrm] = admin
+    ? [true, true, true, true]
     : await Promise.all([
         hasSystemAccess(supabase, user.email ?? '', 'sofia'),
         hasSystemAccess(supabase, user.email ?? '', 'conversor-os'),
         hasSystemAccess(supabase, user.email ?? '', 'dashboard-manutencao'),
+        hasSystemAccess(supabase, user.email ?? '', 'crm'),
       ])
-  const semNada = !podeFrotas && !podeConversor && !podeManutencao && !admin
+  const semNada = !podeFrotas && !podeConversor && !podeManutencao && !podeCrm && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -114,6 +115,22 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          )}
+          {podeCrm && (
+          <Link
+            href="/crm"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">📇</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                CRM
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Leads que chegaram pelo formulário do site.
+              </p>
+            </div>
+          </Link>
           )}
           {admin && (
             <Link
