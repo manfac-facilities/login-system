@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import ContactForm from '@/components/ContactForm'
 import ContatoInfo from '@/components/ContatoInfo'
-import MapaPlaceholder from '@/components/MapaPlaceholder'
 import Footer from '@/components/Footer'
 import { SITE_URL } from '@/lib/site'
 
@@ -30,9 +29,16 @@ export default function ContatoPage() {
           <ContactForm />
           <ContatoInfo />
         </div>
-        <div className="mx-auto max-w-6xl px-6 pb-16">
-          <MapaPlaceholder />
-        </div>
+        {/*
+          O bloco do mapa sai da página enquanto o endereço da Manfac não vier —
+          decisão do João em 26/08. Reservar espaço para algo que não existe é
+          pior que não ter a seção: o visitante lê "endereço a confirmar" e
+          conclui que a empresa não tem endereço.
+
+          `components/MapaPlaceholder.tsx` continua no repositório de propósito.
+          Quando o endereço chegar, ele volta aqui e o texto provisório dá lugar
+          ao mapa de verdade.
+        */}
       </main>
       <Footer />
     </>
