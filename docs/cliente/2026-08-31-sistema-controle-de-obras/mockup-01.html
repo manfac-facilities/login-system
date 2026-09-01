@@ -120,7 +120,7 @@
   .meta b{color:var(--ink);font-weight:600}
 
   /* coluna de sinais: no máximo duas linhas, alinhadas, sem repetir número */
-  .obra-sinais{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 1 auto;max-width:340px}
+  .obra-sinais{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 1 auto;max-width:400px}
   .sinal-linha{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
   .nota{
     width:100%;text-align:right;border-radius:var(--r-sm);padding:4px 9px;
@@ -421,7 +421,7 @@
 
   /* Kanban */
   .kanban-wrap{overflow-x:auto;padding-bottom:6px}
-  .kanban{display:flex;gap:12px;min-width:900px;align-items:flex-start}
+  .kanban{display:flex;gap:12px;min-width:1120px;align-items:flex-start}
   .col{flex:1 1 0;min-width:210px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
   .col-h{
     display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);
@@ -518,9 +518,10 @@
   }
   .tl-gap span{display:block;color:var(--ink-dim);font-weight:400;margin-top:2px}
 
+  /* bloco corrido: o rótulo em negrito abre a frase, não uma coluna própria */
   .placeholder{
     border:1px dashed var(--line);border-radius:var(--r-sm);padding:14px;
-    color:var(--ink-faint);font-size:12.5px;display:flex;gap:10px;align-items:center;
+    color:var(--ink-faint);font-size:12.5px;line-height:1.55;
   }
   .placeholder b{color:var(--ink-dim);font-weight:600}
   .placeholder + .placeholder{margin-top:9px}
@@ -1009,8 +1010,15 @@
     PORID[o.id] = o;
   });
 
-  /* Vermelho só para o que é de fato crítico: obra em aberto que já passou
-     de quatro vezes a duração combinada (ou de 120 dias, quando não há duração). */
+  /* ESCALA DE URGÊNCIA — uma decisão de leitura, não de enfeite.
+     O vermelho fica reservado a uma coisa só: obra ainda em aberto há 100
+     dias ou mais. São três na base inteira, e é o caso que justificou o
+     projeto — precisa gritar sozinho. Passar da duração combinada, ficar
+     parada no mesmo bloqueio ou esperar definição é âmbar: preocupa, não
+     é emergência. Quando tudo é vermelho, nada é. */
+  function critico(o){
+    return o.etapa !== "finalizado" && o.etapa !== "definir" && o.dias >= 100;
+  }
   function estourou(o){
     if(o.etapa === "finalizado" || o.etapa === "definir") return false;
     return o.duracao ? o.dias > o.duracao * 4 : o.dias >= 120;
@@ -1019,18 +1027,18 @@
     return o.etapa !== "finalizado" && o.bloqueadaDias >= 3 && o.bloqueio !== "Sem bloqueio";
   }
   function sev(o){
-    if(o.etapa === "definir") return "var(--accent)";
     if(o.etapa === "finalizado") return "var(--ink-faint)";
-    if(estourou(o)) return "var(--crit)";
-    if(o.etapa === "paralisado") return "var(--crit)";
+    if(critico(o)) return "var(--crit)";
+    if(o.etapa === "definir") return "var(--accent)";
+    if(estourou(o) || travado(o) || o.etapa === "paralisado") return "var(--warn)";
     if(o.atraso != null && o.atraso > 0) return "var(--warn)";
     if(o.etapa === "levantamento") return "var(--info)";
     return "var(--ok)";
   }
   function classeDias(o){
-    if(o.etapa === "finalizado") return "";
-    if(estourou(o)) return "critico";
-    if(o.dias >= 30) return "atencao";
+    if(o.etapa === "finalizado" || o.etapa === "definir") return "";
+    if(critico(o)) return "critico";
+    if(estourou(o) || o.dias >= 60) return "atencao";
     return "";
   }
   function pill(o){
@@ -1044,17 +1052,25 @@
     return o.pcm ? "Responsável " + esc(o.pcm)
                  : '<span style="color:var(--accent)">sem responsável</span>';
   }
-  /* Uma única nota por obra — nunca repete o número de dias da pílula acima. */
+  /* UMA nota por obra, alinhada com a linha de cima e nunca repetindo o
+     número de dias que a pílula "N dias desde a aprovação" já mostra. */
   function notaAlerta(o){
     if(o.etapa === "definir"){
-      return '<span class="nota warn">Sem responsável e sem equipe · esperando há <span class="n">' +
-             o.dias + '</span> dias</span>';
+      return '<span class="nota warn">Sem responsável, sem equipe e sem cronograma</span>';
+    }
+    if(critico(o)){
+      var t = o.duracao ? 'Planejada para <span class="n">' + o.duracao + '</span> dias'
+                        : 'Aberta sem duração planejada';
+      if(travado(o)) t += ' · <span class="n">' + o.bloqueadaDias + '</span> dias no mesmo bloqueio';
+      return '<span class="nota crit">' + t + '</span>';
+    }
+    if(estourou(o) && travado(o)){
+      return '<span class="nota warn">Planejada para <span class="n">' + o.duracao +
+             '</span> dias · <span class="n">' + o.bloqueadaDias + '</span> dias no mesmo bloqueio</span>';
     }
     if(estourou(o)){
-      var t = o.duracao ? 'Planejada para <span class="n">' + o.duracao + '</span> dias'
-                        : 'Sem duração planejada';
-      if(travado(o)) t += ' · parada há <span class="n">' + o.bloqueadaDias + '</span> no mesmo bloqueio';
-      return '<span class="nota crit">' + t + '</span>';
+      return '<span class="nota warn">Planejada para <span class="n">' + o.duracao +
+             '</span> dias e ainda em aberto</span>';
     }
     if(travado(o)){
       return '<span class="nota warn">Mesmo bloqueio há <span class="n">' + o.bloqueadaDias +
@@ -1188,19 +1204,34 @@
     return p.join("\n");
   }
 
+  /* Publicar recarrega todas as visões abertas, esta inclusive. Guardar a
+     posição da página antes evita que o cliente perca o lugar em que estava
+     a cada campo preenchido. */
+  var CHAVE_POS = "manfac-cop-scroll";
+  (function(){
+    try{
+      var y = sessionStorage.getItem(CHAVE_POS);
+      if(y){
+        sessionStorage.removeItem(CHAVE_POS);
+        window.addEventListener("load", function(){ window.scrollTo(0, parseInt(y, 10) || 0); });
+      }
+    }catch(e){ /* sessão sem storage: segue sem restaurar */ }
+  })();
+
   var pubTimer = null, publicando = false, pubPendente = false, ultimaSecao = null;
   function agendarPublicacao(id){
     if(!artefato) return;
     ultimaSecao = id;
     statusFb(id, "salvando…");
     clearTimeout(pubTimer);
-    pubTimer = setTimeout(publicar, 1400);
+    pubTimer = setTimeout(publicar, 2200);
   }
   function publicar(){
     if(!artefato) return;
     if(publicando){ pubPendente = true; return; }
     publicando = true;
     var id = ultimaSecao;
+    try{ sessionStorage.setItem(CHAVE_POS, String(window.scrollY || 0)); }catch(e){}
     artefato.publish(documentoParaPublicar()).then(function(){
       statusFb(id, "salvo na página");
     }, function(e){
@@ -1393,16 +1424,38 @@
     return null;
   }
 
+  /* O texto ao lado do botão descreve SEMPRE o que o botão vai fazer de
+     verdade — nos dois caminhos. Enquanto falta resposta, diz o que falta;
+     quando está pronto, diz o que acontece ao salvar. */
+  function textoAcao(o, d){
+    if(precisaEscalar(o, d) && d.resp && d.prazo){
+      return "Ao salvar: sai da fila, o dia fica registrado e a obra entra na lista de escaladas — " +
+             d.resp + " resolve até " + d.prazo.toLowerCase() + ".";
+    }
+    if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e o dia de hoje entra na ficha dela como dia que andou.";
+    if(d.andou === "Não") return "Ao salvar: a obra sai da fila e o dia de hoje entra na ficha dela como dia parado por " +
+                                 String(d.motivo).toLowerCase() + ".";
+    return "";
+  }
+
   function atualizarCard(card){
     var o = PORID[card.dataset.id], d = rascunho[o.id];
     var naoAndou = d.andou === "Não";
     card.querySelector(".q-motivo").hidden = !naoAndou;
     card.querySelector(".escala").hidden = !precisaEscalar(o, d);
+
+    var av = card.querySelector(".escala-top span");
+    if(av){
+      av.textContent = (d.resp && d.prazo)
+        ? "Quem resolve e até quando já estão definidos. Ao salvar, a obra entra na lista de escaladas."
+        : "Para salvar, diga quem resolve e até quando. A obra entra na lista de escaladas.";
+    }
+
     var erro = validar(o, d);
     var btn = card.querySelector(".salvar");
     var hint = card.querySelector(".hint");
     btn.disabled = !!erro;
-    hint.textContent = erro || "";
+    hint.textContent = erro || textoAcao(o, d);
     hint.className = "hint" + (erro && d.andou ? " alerta" : "");
   }
 
@@ -1441,6 +1494,19 @@
     return h;
   }
 
+  function feitasHTML(feitas){
+    if(!feitas.length) return "";
+    return '<div class="feitas"><h2>Respondidas hoje</h2>' + feitas.map(function(o){
+      var r = respostas[o.id];
+      var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou · " + r.motivo;
+      if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
+      if(r.resp) resumo += " · escalada: " + r.resp + " até " + r.prazo.toLowerCase();
+      return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
+             '<span class="rs">' + esc(resumo) + '</span>' +
+             '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button></div>';
+    }).join("") + '</div>';
+  }
+
   function sucessoHTML(total, andaram, naoAndaram, escaladas){
     var h = '<div class="sucesso">';
     h += '<div class="mark" aria-hidden="true">&#10003;</div>';
@@ -1463,9 +1529,12 @@
     var velha = lista.reduce(function(m,o){ return Math.max(m, o.dias); }, 0);
     el.innerHTML = '<button type="button" class="aviso-def" data-ir-definir="1">' +
       '<span class="n">' + lista.length + '</span>' +
-      '<span class="txt"><b>' + (lista.length === 1 ? "obra chegou" : "obras chegaram") +
-      ' do Field e ainda não tem responsável definido.</b> A mais antiga espera há <b>' + velha +
-      ' dias</b>, e nenhuma delas entra no diário do dia enquanto ficar assim.</span>' +
+      '<span class="txt"><b>' + (lista.length === 1
+        ? "obra chegou do Field e ainda não tem responsável definido."
+        : "obras chegaram do Field e ainda não têm responsável definido.") +
+      '</b> A mais antiga espera há <b>' + velha +
+      ' dias</b>, e ' + (lista.length === 1 ? "ela não entra" : "nenhuma delas entra") +
+      ' no diário do dia enquanto ficar assim.</span>' +
       '<span class="ir">Definir agora &#8594;</span></button>';
   }
 
@@ -1517,27 +1586,21 @@
     var feitas = FILA.filter(function(o){ return respostas[o.id]; });
     pendentes.sort(function(a,b){ return b.dias - a.dias; });
 
+    /* Fila zerada de verdade: a conquista aparece, mas a lista do que foi
+       respondido continua embaixo — errar a última obra não pode deixar o
+       Yuri sem como desfazer. */
     if(!pendentes.length){
       var an = feitas.filter(function(o){ return respostas[o.id].andou === "Sim"; }).length;
       var esc2 = feitas.filter(function(o){ return respostas[o.id].resp; }).length;
-      alvo.innerHTML = barraHTML(0, feitas.length) + sucessoHTML(feitas.length, an, feitas.length - an, esc2);
+      alvo.innerHTML = barraHTML(0, feitas.length) +
+                       sucessoHTML(feitas.length, an, feitas.length - an, esc2) +
+                       feitasHTML(feitas);
       return;
     }
 
     var html = barraHTML(pendentes.length, feitas.length);
     html += '<div class="fila">' + pendentes.map(cardHTML).join("") + '</div>';
-
-    if(feitas.length){
-      html += '<div class="feitas"><h2>Respondidas hoje</h2>' + feitas.map(function(o){
-        var r = respostas[o.id];
-        var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou · " + r.motivo;
-        if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
-        if(r.resp) resumo += " · escalada: " + r.resp + " até " + r.prazo.toLowerCase();
-        return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
-               '<span class="rs">' + esc(resumo) + '</span>' +
-               '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button></div>';
-      }).join("") + '</div>';
-    }
+    html += feitasHTML(feitas);
 
     alvo.innerHTML = html;
     Array.prototype.forEach.call(alvo.querySelectorAll(".obra"), atualizarCard);
@@ -1597,11 +1660,14 @@
   function renderBase(){
     var lista = filtradas();
     document.getElementById("conta").textContent = lista.length;
-    var andamento = lista.filter(function(o){ return o.etapa === "andamento"; }).length;
-    var paralisadas = lista.filter(function(o){ return o.etapa === "paralisado"; }).length;
-    var velhas = lista.filter(function(o){ return o.etapa !== "finalizado" && o.dias >= 60; }).length;
-    var estouradas = lista.filter(function(o){ return o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0; }).length;
-    var aDefinir = lista.filter(function(o){ return o.etapa === "definir"; });
+    // Os indicadores olham sempre a base inteira, nunca o filtro: filtrar por uma
+    // etapa nao pode fazer o painel zerar e dar a impressao de que a operacao parou.
+    var todas = OBRAS;
+    var andamento = todas.filter(function(o){ return o.etapa === "andamento"; }).length;
+    var paralisadas = todas.filter(function(o){ return o.etapa === "paralisado"; }).length;
+    var velhas = todas.filter(function(o){ return o.etapa !== "finalizado" && o.dias >= 60; }).length;
+    var estouradas = todas.filter(function(o){ return o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0; }).length;
+    var aDefinir = todas.filter(function(o){ return o.etapa === "definir"; });
     var maisVelha = aDefinir.reduce(function(m,o){ return Math.max(m, o.dias); }, 0);
     document.getElementById("resumo").innerHTML = [
       {v:aDefinir.length, k:aDefinir.length ? "aguardando definição · a mais antiga há " + maisVelha + " dias" : "aguardando definição", c:"var(--accent)"},
@@ -1628,7 +1694,7 @@
       b.querySelector(".ar").textContent = b.dataset.col === k ? (dir > 0 ? "▲" : "▼") : "";
     });
     document.getElementById("tbody").innerHTML = lista.map(function(o){
-      var tr = '<tr' + (estourou(o) ? ' class="alerta"' : "") + '>';
+      var tr = '<tr' + (critico(o) ? ' class="alerta"' : "") + '>';
       tr += '<td class="os">' + esc(o.os) + '</td>';
       tr += '<td class="loja"><button data-abrir="' + o.id + '">' + esc(o.loja) + '</button></td>';
       tr += '<td>' + esc(o.tipo) + '</td>';
@@ -1650,7 +1716,7 @@
   }
 
   function renderKanban(lista){
-    document.getElementById("kanban").innerHTML = ["levantamento","andamento","paralisado","finalizado"].map(function(k){
+    document.getElementById("kanban").innerHTML = ["definir","levantamento","andamento","paralisado","finalizado"].map(function(k){
       var itens = lista.filter(function(o){ return o.etapa === k; }).sort(function(a,b){ return b.dias - a.dias; });
       var h = '<div class="col"><div class="col-h"><span class="nm" style="color:' + ETAPAS[k].cor + '">' +
               ETAPAS[k].nome + '</span><span class="ct">' + itens.length + '</span></div><div class="col-b">';
@@ -1681,7 +1747,7 @@
     h += '<p class="num">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + ' · ' + moeda(o.valor) + '</p>';
     h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + badgeDias(o) + '</div></div>';
 
-    if(estourou(o) && o.duracao){
+    if(critico(o) && o.duracao){
       h += '<div class="alerta-box">';
       h +=   '<div><div class="n">' + o.dias + '</div><div class="lbl" style="text-align:center;margin-top:3px">dias em aberto</div></div>';
       h +=   '<div><h3>Obra aprovada em ' + br(o.aprovacao) + ' e ainda não concluída.</h3>' +
