@@ -13,9 +13,10 @@ Arquivos guardados aqui **sem resumo**, como fonte de verdade para a spec:
 | `projeto-ia-manfac-transcricao.txt` | Texto literal extraído do .docx. |
 | `framework-transcricao.md` | Transcrição literal das caixas e setas do diagrama. |
 | `planilha-dpsp-rev02-dump.txt` | Dump completo das duas abas da planilha, célula a célula, com fórmulas. |
+| `transcricao-reuniao-2026-08-31.md` | Transcrição literal da reunião José Guilherme × João Victor (31/08/2026). |
 
 ## Pendências deste material
 
-- **Transcrição da reunião com o cliente ainda NÃO está no repositório.** O João
-  mencionou tê-la; quando chegar, salvar aqui como
-  `transcricao-reuniao-<data>.md`, literal.
+- ~~Transcrição da reunião pendente~~ — **recebida e salva** em `transcricao-reuniao-2026-08-31.md` (colada pelo João no chat em 31/08/2026, literal). O João
+  ainda deve enviar por e-mail o link da planilha viva (combinado no fim da reunião).
+
