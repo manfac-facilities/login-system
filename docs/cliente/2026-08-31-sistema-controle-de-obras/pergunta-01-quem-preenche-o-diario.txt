@@ -58,10 +58,14 @@ OPCAO B - O TECNICO QUE ESTA NA LOJA, PELO CELULAR
 
    A favor: a informacao vem de quem esta vendo a obra.
 
-   Contra: o Jose mesmo levantou na reuniao que quem executa nao
-   vai reportar que atrasou. Alem disso dependeria de mexer no
-   Field, que e sistema de terceiro - se eles demorarem a
-   liberar, o projeto fica parado esperando.
+   Contra: sao duas coisas que o proprio Jose falou na reuniao.
+   Primeira: quem executa a obra nao vai reportar que ela
+   atrasou. Segunda, e mais direta - ele ja descartou o Field
+   pra isso: "esquece o Field Control nesse momento, o agente
+   nao puxa nada do Field, o Field so serve como entrada da
+   obra". La nao existe cronograma, status nem motivo de
+   parada, entao a informacao teria que ser criada do zero
+   dentro dele.
 
 
 OPCAO C - UM ROBO PERGUNTANDO NO WHATSAPP
@@ -87,6 +91,32 @@ OPCAO D - COMECA PELA TELA, ROBO ENTRA DEPOIS
    funcionar. Se o robo falhar, a tela continua de pe.
 
    Contra: demora um pouco mais pra ter o pacote completo.
+
+
+------------------------------------------------------------
+DE ONDE SAIU CADA OPCAO
+------------------------------------------------------------
+
+   Opcao A - dita pelo Jose na reuniao (min 42): "nao e muito
+             mais facil o proprio Yuri responder isso aqui
+             todo dia?"
+
+   Opcao B - dita pelo Jose na reuniao (min 49): "ou o Yuri,
+             ou o proprio tecnico preenche"
+
+   Opcao C - dita pelo Jose na reuniao (min 42): "ou um agente
+             de IA vai perguntar pra ele, e o agente de IA vai
+             atualizar isso"
+
+   Opcao D - NAO foi discutida na reuniao. E uma proposta nova,
+             que combina a A com a C em duas etapas.
+
+   As tres perguntas do diario sao as palavras dele no minuto
+   37: "eu preciso saber o que foi produzido naquele dia. Teve
+   producao? Faltou algum item?" Os motivos de parada sao os
+   que ele citou no minuto 46 (clima, cliente mandou parar,
+   equipe deslocada pra outro lugar) e no minuto 49 (faltou
+   material), mais os que ja existem na planilha atual.
 
 
 ------------------------------------------------------------
