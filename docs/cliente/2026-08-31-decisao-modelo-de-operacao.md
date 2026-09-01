@@ -43,3 +43,14 @@ outros 8 — resultado pior que o atual: incoerente e ainda incorreto.
 Falta a formulação exata: "gestão e núcleo técnico próprios com parceiros homologados"
 (texto da auditoria, item 5) ou "gestão própria com execução por parceiros homologados".
 São textos diferentes e a escolha muda os 14 pontos.
+
+## Formulação escolhida (31/08/2026, decisão do João)
+
+> **"gestão e núcleo técnico próprios, com parceiros homologados"**
+
+É a formulação que a auditoria propôs no item 5. Vale para os 14 pontos listados acima —
+não só os 6 que a auditoria mapeou.
+
+**Não implementar antes da aprovação do cliente.** Ele não revisou nenhum texto sobre
+modelo de operação: o PDF de 31/08 cobriu apenas os 25 itens de troca pura de texto. Os
+textos novos entram na próxima rodada de revisão com ele.
