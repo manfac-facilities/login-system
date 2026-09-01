@@ -1,0 +1,98 @@
+SISTEMA DE CONTROLE DE OBRAS - DECISAO B
+Para aprovacao do Jose Guilherme
+01/09/2026
+
+Obs: este arquivo tinha duas perguntas. A segunda (o que o agente
+pergunta as 9h da manha) voce ja respondeu ao mudar o horario para
+as 18h - as 18h o dia ja aconteceu, entao a pergunta "a obra andou
+hoje?" volta a fazer sentido e o assunto se resolveu sozinho.
+Sobrou so a decisao B.
+
+------------------------------------------------------------
+DECISAO B - COMO O ANALISTA RESPONDE O DIARIO
+------------------------------------------------------------
+
+Voce ja decidiu quem responde o diario: o Yuri, na tela do
+sistema, as 18h. Falta so decidir o formato dessa tela, e a
+primeira vez que eu perguntei isso voce nao entendeu a
+pergunta. Vou descrever a cena.
+
+O Yuri termina o dia, abre o sistema as 18h, e tem 11 obras
+esperando resposta dele. Existem duas formas de ele ver isso
+na tela.
+
+FORMATO 1 - UMA OBRA DE CADA VEZ
+
+   Ele ve uma obra grande, sozinha na tela, com as perguntas
+   dela: andou? faltou material? qual o motivo, se parou?
+   Responde, aperta um botao, e o sistema mostra a proxima
+   obra. Ele vai descendo assim ate zerar as 11.
+
+   A favor: e mais dificil pular uma pergunta sem perceber,
+   porque cada obra ocupa a tela inteira sozinha. Fica sempre
+   claro quantas ainda faltam.
+
+   Contra: pra ver as 11 obras juntas, ele precisa ir passando
+   uma por uma - nao da pra olhar todas de uma vez.
+
+
+FORMATO 2 - TODAS AS OBRAS NUMA LISTA UNICA
+
+   Ele ve as 11 obras de uma vez, uma embaixo da outra, cada
+   obra numa linha - parecido com a planilha que ele ja usa
+   hoje. Responde direto na linha da obra e desce pra linha de
+   baixo, sem trocar de tela. Salva tudo de uma vez no fim.
+
+   A favor: ele enxerga as 11 obras juntas desde o comeco, e
+   pode responder na ordem que quiser, nao so a ordem que o
+   sistema escolher.
+
+   Contra: com muitas obras na tela ao mesmo tempo, e mais
+   facil pular uma sem perceber - principalmente respondendo
+   pelo celular, com a tela pequena.
+
+
+Voce nao precisa escolher so de imaginar. As duas formas ja
+estao construidas no mockup, com um botao pra trocar entre
+elas - o mesmo jeito que funcionou na decisao sobre tabela e
+Kanban. Entre no mockup, responda algumas obras nos dois
+formatos, e decida com a mao na tela, nao no texto.
+
+O botao fica no alto do diario, escrito COMO RESPONDER.
+
+De onde saiu: essa decisao nao foi discutida na reuniao nesse
+nivel de detalhe. E uma decisao de tela, sobre a pergunta que
+eu fiz depois e que voce nao entendeu da primeira vez.
+
+
+------------------------------------------------------------
+UMA COISA QUE PRECISO CONFIRMAR COM VOCE
+------------------------------------------------------------
+
+Na resposta anterior voce disse que o agente de inteligencia
+artificial faria as perguntas aos analistas as 9h da manha.
+Agora voce definiu que o analista preenche as 18h.
+
+Estou tratando as 18h como o horario unico do ciclo, valendo
+tambem pro agente de IA quando ele existir - ou seja, as 9h
+sairam.
+
+Se a sua ideia era ter os dois momentos (o agente de manha e o
+preenchimento no fim do dia), me avisa, porque muda o desenho.
+
+Sao as 18h pra tudo?   (   ) sim    (   ) nao, sao dois momentos
+
+
+------------------------------------------------------------
+RESPOSTA DO JOSE
+------------------------------------------------------------
+
+Decisao B - formato escolhido: ______
+
+Observacoes:
+
+_______________________________________________________________
+
+_______________________________________________________________
+
+_______________________________________________________________
