@@ -1,0 +1,1523 @@
+<title>Diário de Obras Manfac</title>
+<style>
+  :root{
+    /* Tema do hub Manfac — escuro por decisão, sem variante clara */
+    --bg:#0a1628;
+    --panel:#0b1b36;
+    --panel-2:#0d2050;
+    --line:#1e3a5f;
+    --line-soft:#162c4a;
+    --ink:#e9f0fa;
+    --ink-dim:#94a3b8;
+    --ink-faint:#64748b;
+    --accent:#f05a28;
+    --accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;
+    --ok-soft:rgba(53,201,138,.13);
+    --warn:#f4b73f;
+    --warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;
+    --crit-soft:rgba(255,77,109,.14);
+    --info:#5aa9f0;
+    --info-soft:rgba(90,169,240,.13);
+
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono","SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+
+    --r:8px;
+    --r-sm:5px;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:14px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .lbl{
+    font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:600;
+  }
+
+  /* ---------- Shell ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:40;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    padding:10px 20px;
+  }
+  .brand{display:flex;align-items:baseline;gap:9px;margin-right:4px}
+  .brand b{font-size:14px;letter-spacing:-.01em}
+  .brand span{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint)}
+  .tabs{display:flex;gap:2px;background:rgba(0,0,0,.22);padding:3px;border-radius:var(--r);border:1px solid var(--line-soft)}
+  .tabs button{
+    background:none;border:0;padding:6px 13px;border-radius:var(--r-sm);
+    color:var(--ink-dim);font-size:13px;font-weight:500;white-space:nowrap;
+  }
+  .tabs button[aria-current="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .tabs button:hover:not([aria-current="true"]){color:var(--ink);background:rgba(255,255,255,.05)}
+  .who{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--ink-dim);font-size:12px}
+  .who .av{
+    width:26px;height:26px;border-radius:50%;background:var(--accent-soft);
+    border:1px solid rgba(240,90,40,.4);color:var(--accent);
+    display:grid;place-items:center;font-size:11px;font-weight:700;
+  }
+
+  main{max-width:1220px;margin:0 auto;padding:22px 20px 90px}
+  .screen[hidden]{display:none}
+
+  .page-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .page-head h1{font-size:20px;margin:0 0 3px;letter-spacing:-.015em;text-wrap:balance}
+  .page-head p{margin:0;color:var(--ink-dim);font-size:13px}
+
+  /* ---------- Contador da fila ---------- */
+  .fila-status{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:13px 16px;margin-bottom:18px;
+  }
+  .fila-status .big{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;color:var(--accent)}
+  .fila-status .big.zero{color:var(--ok)}
+  .fila-txt{font-size:13px;color:var(--ink-dim)}
+  .fila-txt b{color:var(--ink);font-weight:600}
+  .barra{flex:1 1 180px;min-width:120px;height:5px;background:var(--line-soft);border-radius:99px;overflow:hidden}
+  .barra i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .35s ease}
+
+  /* ---------- Cards de obra (diário) ---------- */
+  .fila{display:flex;flex-direction:column;gap:12px}
+  .obra{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r);border-left:3px solid var(--sev,var(--line));
+    padding:14px 16px 14px 15px;
+    transition:opacity .25s ease,transform .25s ease;
+  }
+  .obra.saindo{opacity:0;transform:translateY(-6px)}
+  .obra-head{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .obra-id{min-width:0;flex:1 1 300px}
+  .obra-os{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.02em}
+  .obra-loja{
+    font-size:15px;font-weight:650;letter-spacing:-.01em;margin:1px 0 4px;
+    background:none;border:0;padding:0;text-align:left;color:var(--ink);
+  }
+  .obra-loja:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .obra-desc{color:var(--ink-dim);font-size:12.5px;margin:0 0 6px;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--ink-dim)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .obra-sinais{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto}
+  @media (max-width:640px){.obra-sinais{align-items:flex-start}}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;
+    letter-spacing:.02em;white-space:nowrap;border:1px solid transparent;
+  }
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .pill.andamento{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .pill.paralisado{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.32)}
+  .pill.levantamento{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.finalizado{color:var(--ink-dim);background:rgba(148,163,184,.1);border-color:var(--line)}
+
+  .dias{
+    display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:99px;
+    font-family:var(--mono);font-size:11px;font-weight:600;white-space:nowrap;
+    border:1px solid var(--line);color:var(--ink-dim);background:rgba(0,0,0,.18);
+  }
+  .dias.atencao{color:var(--warn);border-color:rgba(244,183,63,.35);background:var(--warn-soft)}
+  .dias.critico{color:var(--crit);border-color:rgba(255,77,109,.4);background:var(--crit-soft)}
+  .dias small{font-family:var(--sans);font-weight:500;font-size:10.5px;letter-spacing:.02em;opacity:.85}
+
+  .travada{
+    display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+    color:var(--crit);background:var(--crit-soft);border:1px solid rgba(255,77,109,.35);
+    padding:3px 9px;border-radius:var(--r-sm);
+  }
+  .travada .n{font-family:var(--mono)}
+  .travada.estouro{background:var(--crit);color:#2a0410;border-color:var(--crit);font-weight:700}
+
+  .pend{
+    margin-top:10px;font-size:12.5px;color:var(--ink-dim);
+    border-left:2px solid var(--line);padding-left:10px;
+  }
+  .pend b{color:var(--ink);font-weight:600}
+
+  /* ---------- Perguntas ---------- */
+  .perguntas{
+    margin-top:13px;padding-top:13px;border-top:1px dashed var(--line-soft);
+    display:flex;flex-direction:column;gap:11px;
+  }
+  .q{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap}
+  .q > .lbl{flex:0 0 130px}
+  @media (max-width:640px){.q > .lbl{flex:1 1 100%}}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{
+    background:rgba(0,0,0,.2);border:1px solid var(--line);color:var(--ink-dim);
+    padding:6px 12px;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;
+    transition:background .12s ease,color .12s ease,border-color .12s ease;
+  }
+  .chip:hover{border-color:#2b4f7d;color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .chip.sim[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#04231a}
+  .chip.nao[aria-pressed="true"]{background:var(--crit);border-color:var(--crit);color:#2a0410}
+
+  .obs-linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .obs-btn{
+    background:none;border:0;color:var(--ink-faint);font-size:12px;padding:2px 0;
+    text-decoration:underline;text-underline-offset:3px;text-decoration-style:dotted;
+  }
+  .obs-btn:hover{color:var(--accent)}
+  .obs-in{
+    flex:1 1 260px;background:rgba(0,0,0,.25);border:1px solid var(--line);
+    border-radius:var(--r-sm);padding:7px 10px;font-size:13px;
+  }
+  .obs-in::placeholder{color:var(--ink-faint)}
+
+  /* Bloco de escalonamento (3º dia sem andar) */
+  .escala{
+    border:1px solid rgba(255,77,109,.4);background:var(--crit-soft);
+    border-radius:var(--r);padding:11px 13px;display:flex;flex-direction:column;gap:9px;
+  }
+  .escala-top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .escala-top strong{color:var(--crit);font-size:12.5px}
+  .escala-top span{color:var(--ink-dim);font-size:12px}
+
+  .acoes{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:2px}
+  .btn{
+    background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;
+    padding:8px 16px;border-radius:var(--r-sm);font-size:13px;
+  }
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.ghost:hover{color:var(--ink);border-color:#2b4f7d;filter:none}
+  .hint{font-size:12px;color:var(--ink-faint)}
+  .hint.alerta{color:var(--warn)}
+
+  /* Respondidas */
+  .feitas{margin-top:26px}
+  .feitas h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 9px;font-weight:600}
+  .feita{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    background:rgba(53,201,138,.05);border:1px solid var(--line-soft);
+    border-left:3px solid var(--ok);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:6px;
+  }
+  .feita .ck{color:var(--ok);font-weight:700}
+  .feita .nm{font-weight:600;font-size:13px}
+  .feita .rs{color:var(--ink-dim);font-size:12px}
+  .feita .un{margin-left:auto}
+
+  .vazio{
+    text-align:center;padding:34px 20px;border:1px dashed var(--line);
+    border-radius:var(--r);color:var(--ink-dim);
+  }
+  .vazio strong{display:block;color:var(--ok);font-size:15px;margin-bottom:4px}
+
+  /* ---------- Caixas de decisão ---------- */
+  .decisao{
+    border:1px solid rgba(240,90,40,.35);background:rgba(240,90,40,.05);
+    border-radius:var(--r);padding:12px 14px;margin:18px 0;
+    display:flex;gap:13px;align-items:flex-start;
+  }
+  .decisao .tag{
+    flex:none;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;
+    color:var(--accent);border:1px solid rgba(240,90,40,.45);border-radius:var(--r-sm);
+    padding:4px 8px;background:rgba(240,90,40,.1);white-space:nowrap;
+  }
+  .decisao p{margin:0 0 6px;font-size:13px;line-height:1.5}
+  .decisao p:last-child{margin-bottom:0}
+  .decisao .opt{font-size:12.5px;color:var(--ink-dim)}
+  .decisao .opt b{color:var(--ink)}
+  .decisao .opt em{color:var(--accent);font-style:normal;font-weight:600}
+
+  /* ---------- Tela 2 ---------- */
+  .toolbar{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:11px 14px;margin-bottom:14px;
+  }
+  .seg{display:flex;gap:2px;background:rgba(0,0,0,.25);padding:3px;border-radius:var(--r-sm);border:1px solid var(--line-soft)}
+  .seg button{background:none;border:0;padding:6px 15px;border-radius:4px;color:var(--ink-dim);font-size:12.5px;font-weight:500}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .filtro{display:flex;align-items:center;gap:7px}
+  .filtro select{
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);
+    padding:6px 9px;font-size:12.5px;color:var(--ink);
+  }
+  .conta{margin-left:auto;font-size:12px;color:var(--ink-dim)}
+  .conta b{font-family:var(--mono);color:var(--ink)}
+
+  .resumo{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .kpi{
+    flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:11px 13px;border-top:2px solid var(--kc,var(--line));
+  }
+  .kpi .v{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1.1;color:var(--kc,var(--ink))}
+  .kpi .k{font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+
+  .tabela-wrap{
+    overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+  }
+  table{border-collapse:collapse;width:100%;min-width:940px;font-size:12.5px}
+  thead th{
+    position:sticky;top:0;background:var(--panel-2);text-align:left;
+    padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;
+  }
+  thead th button{background:none;border:0;padding:0;color:inherit;font:inherit;display:flex;gap:5px;align-items:center}
+  thead th button:hover{color:var(--ink)}
+  thead th .ar{opacity:.45;font-size:9px}
+  tbody td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tbody tr:hover{background:rgba(255,255,255,.028)}
+  tbody tr:last-child td{border-bottom:0}
+  td.loja button{background:none;border:0;padding:0;font-weight:600;font-size:13px;color:var(--ink);text-align:left}
+  td.loja button:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  td.os{font-family:var(--mono);font-size:11px;color:var(--ink-faint);white-space:nowrap}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .av-bar{display:flex;align-items:center;gap:7px;min-width:82px}
+  .av-bar i{flex:1;height:4px;background:var(--line-soft);border-radius:99px;overflow:hidden;display:block}
+  .av-bar i b{display:block;height:100%;background:var(--ink-dim);border-radius:99px}
+  .av-bar span{font-family:var(--mono);font-size:11px;color:var(--ink-dim);width:32px;text-align:right}
+  tr.alerta td{background:rgba(255,77,109,.055)}
+
+  /* Kanban */
+  .kanban-wrap{overflow-x:auto;padding-bottom:6px}
+  .kanban{display:flex;gap:12px;min-width:900px;align-items:flex-start}
+  .col{flex:1 1 0;min-width:210px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+  .col-h{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);
+    background:var(--panel-2);border-radius:var(--r) var(--r) 0 0;
+  }
+  .col-h .nm{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  .col-h .ct{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-dim);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:99px;padding:1px 7px}
+  .col-b{padding:9px;display:flex;flex-direction:column;gap:8px;min-height:60px}
+  .card{
+    background:rgba(0,0,0,.2);border:1px solid var(--line);border-left:3px solid var(--sev,var(--line));
+    border-radius:var(--r-sm);padding:10px 11px;text-align:left;width:100%;
+  }
+  .card:hover{border-color:#2b4f7d;background:rgba(255,255,255,.035)}
+  .card .os{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .card .nm{font-size:13px;font-weight:650;margin:1px 0 5px;letter-spacing:-.01em}
+  .card .ln{display:flex;gap:6px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-dim);margin-bottom:6px}
+  .card .ft{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .col-vazia{color:var(--ink-faint);font-size:12px;text-align:center;padding:14px 6px}
+
+  /* ---------- Tela 3 ---------- */
+  .voltar{
+    background:none;border:0;color:var(--ink-dim);font-size:12.5px;padding:0;margin-bottom:12px;
+    display:inline-flex;gap:6px;align-items:center;
+  }
+  .voltar:hover{color:var(--accent)}
+  .alerta-box{
+    display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
+    border:1px solid rgba(255,77,109,.45);background:var(--crit-soft);
+    border-left:4px solid var(--crit);border-radius:var(--r);padding:14px 16px;margin-bottom:18px;
+  }
+  .alerta-box .n{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1;color:var(--crit)}
+  .alerta-box h3{margin:0 0 4px;font-size:14px;color:var(--crit)}
+  .alerta-box p{margin:0;font-size:13px;color:var(--ink-dim);max-width:62ch}
+  .alerta-box p b{color:var(--ink)}
+
+  .ficha-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;align-items:start}
+  @media (max-width:860px){.ficha-grid{grid-template-columns:1fr}}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box-h{
+    padding:9px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);
+    font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);
+    display:flex;align-items:center;gap:8px;
+  }
+  .box-b{padding:13px 14px}
+  .box + .box{margin-top:14px}
+
+  .dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px}
+  .dl dt{color:var(--ink-faint);font-size:11.5px;white-space:nowrap;padding-top:1px}
+  .dl dd{margin:0;font-weight:500}
+
+  .crono{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
+  .crono-c{
+    flex:1 1 128px;background:rgba(0,0,0,.2);border:1px solid var(--line);
+    border-radius:var(--r-sm);padding:10px 12px;
+  }
+  .crono-c .v{font-family:var(--mono);font-size:19px;font-weight:700;line-height:1.15}
+  .crono-c .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;font-weight:600}
+  .crono-c.destaque{border-color:rgba(240,90,40,.4);background:var(--accent-soft)}
+  .crono-c.destaque .v{color:var(--accent)}
+  .crono-c.calc{opacity:.6;border-style:dashed}
+  .crono-c.calc .v{font-size:15px;font-weight:600;color:var(--ink-dim)}
+  .crono-nota{font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.5}
+
+  .remarc{display:flex;flex-direction:column;gap:0}
+  .remarc-i{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px}
+  .remarc-i:last-child{border-bottom:0}
+  .remarc-i .d{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);white-space:nowrap;flex:none;width:62px}
+  .remarc-i .mv{color:var(--ink-dim)}
+  .remarc-i .mv b{color:var(--ink);font-family:var(--mono);font-size:11.5px}
+  .remarc-i .mt{color:var(--warn);font-size:12px;margin-top:2px}
+
+  .tl{display:flex;flex-direction:column}
+  .tl-i{display:flex;gap:12px;padding:0 0 0 4px;position:relative}
+  .tl-i .col-l{flex:none;width:56px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--ink-faint);padding-top:9px}
+  .tl-i .col-m{flex:none;width:14px;position:relative}
+  .tl-i .col-m::before{
+    content:"";position:absolute;left:6px;top:0;bottom:0;width:1px;background:var(--line);
+  }
+  .tl-i:first-child .col-m::before{top:14px}
+  .tl-i:last-child .col-m::before{bottom:calc(100% - 14px)}
+  .tl-i .col-m i{
+    position:absolute;left:2px;top:11px;width:9px;height:9px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--sev,var(--ink-faint));
+  }
+  .tl-i .col-r{flex:1;padding:8px 0 8px;min-width:0}
+  .tl-t{font-size:13px;font-weight:600}
+  .tl-t.sim{color:var(--ok)}
+  .tl-t.nao{color:var(--crit)}
+  .tl-s{font-size:12px;color:var(--ink-dim);margin-top:2px}
+  .tl-obs{font-size:12px;color:var(--ink-dim);margin-top:3px;border-left:2px solid var(--line);padding-left:8px;font-style:italic}
+  .tl-gap{
+    margin:2px 0 2px 70px;border:1px dashed rgba(255,77,109,.45);background:var(--crit-soft);
+    border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;color:var(--crit);font-weight:600;
+  }
+  .tl-gap span{display:block;color:var(--ink-dim);font-weight:400;margin-top:2px}
+
+  .placeholder{
+    border:1px dashed var(--line);border-radius:var(--r-sm);padding:14px;
+    color:var(--ink-faint);font-size:12.5px;display:flex;gap:10px;align-items:center;
+  }
+  .placeholder b{color:var(--ink-dim);font-weight:600}
+  .placeholder + .placeholder{margin-top:9px}
+
+  .rodape{
+    max-width:1220px;margin:34px auto 0;padding:16px 20px 0;border-top:1px solid var(--line-soft);
+    color:var(--ink-faint);font-size:11.5px;line-height:1.6;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important}
+  }
+  @media (max-width:640px){
+    main{padding:16px 13px 70px}
+    .topbar{padding:9px 13px;gap:10px}
+    .who .txt{display:none}
+    .obra{padding:12px 13px 12px 12px}
+    .fila-status .big{font-size:22px}
+  }
+</style>
+
+<div class="topbar">
+  <div class="brand"><b>Manfac</b><span>Controle de obras</span></div>
+  <nav class="tabs" id="tabs" aria-label="Telas do sistema">
+    <button data-tela="diario" aria-current="true">Diário do dia</button>
+    <button data-tela="base">Base de obras</button>
+    <button data-tela="ficha">Ficha da obra</button>
+  </nav>
+  <div class="who">
+    <span class="txt">Yuri Nascimento · PCM responsável</span>
+    <span class="av" aria-hidden="true">YN</span>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ TELA 1 ============ -->
+  <section class="screen" id="tela-diario">
+    <div class="page-head">
+      <div>
+        <h1>Diário do dia</h1>
+        <p>Segunda-feira, 31 de agosto de 2026 · suas obras em aberto</p>
+      </div>
+    </div>
+
+    <div class="fila-status">
+      <span class="big num" id="faltam">11</span>
+      <span class="fila-txt" id="faltam-txt">obras para responder hoje</span>
+      <span class="barra" aria-hidden="true"><i id="barra" style="width:0%"></i></span>
+      <span class="fila-txt num" id="feitas-txt">0 de 11 respondidas</span>
+    </div>
+
+    <div class="fila" id="fila"></div>
+
+    <div class="feitas" id="feitas-box" hidden>
+      <h2>Respondidas hoje</h2>
+      <div id="feitas"></div>
+    </div>
+
+    <div class="decisao">
+      <span class="tag">DECISÃO B</span>
+      <div>
+        <p>Responder <b>uma obra de cada vez</b>, como está nesta tela, ou <b>uma linha por obra numa lista única</b>, com tudo aberto e um único botão salvar no fim?</p>
+        <p class="opt"><em>O que está na tela:</em> <b>fila de obras.</b> Cada obra é um bloco; ao salvar, ela sai da fila e o contador cai. Você vê a fila esvaziando e sabe exatamente onde parou se for interrompido — e cabe na tela do celular.</p>
+        <p class="opt"><em>Alternativa:</em> <b>lista única.</b> As 11 obras como linhas de uma planilha, as respostas em botões dentro da própria linha, um "salvar tudo" no fim. Mais rápido no computador para quem já sabe as respostas de cor; sem retorno por obra, e apertado no celular.</p>
+      </div>
+    </div>
+
+    <div class="decisao">
+      <span class="tag">DECISÃO C</span>
+      <div>
+        <p>Quando a resposta é <b>"não andou" pelo terceiro dia seguido</b>, o que o sistema deve fazer?</p>
+        <p class="opt"><em>O que está na tela:</em> <b>não deixa salvar sem uma próxima ação.</b> Aparece um bloco vermelho pedindo quem resolve e até quando. A obra fica marcada como escalada na base de obras. Responder "não andou" deixa de ser a saída mais barata — teste no DP BAIRRO DE FATIMA e no DP BARRA DE SAO JOAO.</p>
+        <p class="opt"><em>Alternativa:</em> <b>avisar sem travar.</b> O Yuri salva normalmente e o sistema dispara sozinho um aviso para você e para o Eduardo. Não atrapalha o dia dele, mas ninguém fica dono do problema e a cobrança volta para a diretoria.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELA 2 ============ -->
+  <section class="screen" id="tela-base" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Base de obras</h1>
+        <p>Cadastro vivo · alimentado pelo Field na entrada e pelo diário no dia a dia</p>
+      </div>
+    </div>
+
+    <div class="resumo" id="resumo"></div>
+
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Formato de visualização">
+        <button id="btn-tabela" aria-pressed="true">Tabela</button>
+        <button id="btn-kanban" aria-pressed="false">Kanban</button>
+      </div>
+      <div class="filtro">
+        <label class="lbl" for="f-pcm">PCM responsável</label>
+        <select id="f-pcm"></select>
+      </div>
+      <div class="filtro">
+        <label class="lbl" for="f-etapa">Etapa da obra</label>
+        <select id="f-etapa"></select>
+      </div>
+      <span class="conta"><b id="conta">0</b> obras nesta visão · base completa: <b>187</b></span>
+    </div>
+
+    <div class="decisao">
+      <span class="tag">DECISÃO A</span>
+      <div>
+        <p>Para o dia a dia da base, você prefere <b>tabela</b> ou <b>Kanban</b>? Troque no botão acima — são os mesmos dados nos dois formatos.</p>
+        <p class="opt"><em>Tabela:</em> parecida com a planilha de hoje, mostra todas as colunas de uma vez e ordena por qualquer uma delas (clique no cabeçalho). Boa para bater linha a linha e para achar quem está parado há mais tempo.</p>
+        <p class="opt"><em>Kanban:</em> uma coluna por etapa da obra. Mostra menos informação por obra, mas dá a leitura de um relance de quanta coisa está parada. Boa para reunião.</p>
+      </div>
+    </div>
+
+    <div id="vis-tabela">
+      <div class="tabela-wrap">
+        <table id="tabela">
+          <thead><tr id="thead-row"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="vis-kanban" hidden>
+      <div class="kanban-wrap"><div class="kanban" id="kanban"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ TELA 3 ============ -->
+  <section class="screen" id="tela-ficha" hidden>
+    <button class="voltar" id="voltar">&#8592; Voltar para a base de obras</button>
+    <div id="ficha"></div>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  Mockup para aprovação · Manfac Facilities · 31/08/2026. Dados reais da planilha
+  DPSP Rev.02 (11 obras do Yuri, obras de outros PCM e obras finalizadas do pipeline).
+  Nada aqui é gravado: é um desenho para você olhar e responder pelo WhatsApp citando
+  a letra da decisão.
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var HOJE = new Date(2026, 7, 31); // 31/08/2026
+
+  function diasDesde(iso){
+    if(!iso) return null;
+    var p = iso.split("-");
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    return Math.round((HOJE - d) / 86400000);
+  }
+  function br(iso){
+    if(!iso) return "—";
+    var p = iso.split("-");
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+  function somaDias(iso, n){
+    if(!iso || n == null) return null;
+    var p = iso.split("-");
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    d.setDate(d.getDate() + n);
+    var mm = ("0"+(d.getMonth()+1)).slice(-2), dd = ("0"+d.getDate()).slice(-2);
+    return d.getFullYear() + "-" + mm + "-" + dd;
+  }
+  function moeda(v){
+    if(v == null) return "—";
+    return "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  var ETAPAS = {
+    levantamento:{nome:"Levantamento", cor:"var(--info)"},
+    andamento:{nome:"Em andamento", cor:"var(--ok)"},
+    paralisado:{nome:"Paralisado", cor:"var(--crit)"},
+    finalizado:{nome:"Finalizado", cor:"var(--ink-faint)"}
+  };
+  var BLOQUEIOS = ["Clima","Cliente / loja","Disponibilidade de equipe","Contratação de prestador","Falta de material","Sem bloqueio"];
+  var ITENS = ["Não faltou","Material","Ferramenta","Equipe","Documento / ART","Outro"];
+  var RESPONSAVEIS = ["Yuri","Compras","Financeiro","Cliente DPSP","Diretoria"];
+  var PRAZOS = ["Hoje","Amanhã","Em 2 dias"];
+
+  /* ---------------------------------------------------------------
+     Base de obras — dados reais da planilha DPSP Rev.02
+     --------------------------------------------------------------- */
+  var OBRAS = [
+    {
+      id:"o1", os:"0226-014989", loja:"DP BAIRRO DE FATIMA",
+      desc:"Forro do estoque caiu", tipo:"TELHADO", valor:28520.46,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-7", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Disponibilidade de equipe", avanco:0,
+      aprovacao:"2026-04-30", inicioPlan:"2026-08-19", inicioReal:"2026-08-19", duracao:7,
+      pendencia:"Aguardando finalização de serviço TMO 107. Nova posição 24/08",
+      pendResp:"YURI", pendPrazo:"2026-08-24",
+      proxAcao:"Atualizar e designar data para execução",
+      atualizacao:"2026-08-20", naoAndouSeguidos:6, bloqueadaDias:8,
+      remarcacoes:[
+        {data:"2026-07-24", de:"2026-07-06", para:"2026-08-04", motivo:"Disponibilidade de equipe"},
+        {data:"2026-08-18", de:"2026-08-04", para:"2026-08-19", motivo:"Aguardando finalização de serviço TMO 107"}
+      ],
+      gap:{de:"2026-04-30", ate:"2026-08-18", dias:111},
+      diario:[
+        {data:"2026-08-19", andou:true,  item:"Não faltou", obs:"Equipe MANFAC-7 iniciou remoção do forro danificado."},
+        {data:"2026-08-20", andou:true,  item:"Não faltou", obs:""},
+        {data:"2026-08-21", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:"Equipe deslocada para o TMO 107."},
+        {data:"2026-08-24", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-25", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-26", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-28", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:"TMO 107 ainda não liberou a equipe."}
+      ]
+    },
+    {
+      id:"o2", os:"0226-005730", loja:"DP BARRA DE SAO JOAO",
+      desc:"Infiltração no teto, pingando sobre produtos na área de vendas", tipo:"TELHADO", valor:35706.12,
+      analista:"LEANDRO", pcm:"YURI", equipe:"ERLI / RICARDO", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Clima", avanco:90,
+      aprovacao:"2026-06-22", inicioPlan:"2026-08-03", inicioReal:"2026-08-03", duracao:5,
+      pendencia:"Falta o arremate da calha. Depende de dois dias sem chuva",
+      pendResp:"YURI", pendPrazo:"2026-09-02",
+      proxAcao:"Programar retorno da equipe na primeira janela sem chuva",
+      atualizacao:"2026-08-28", naoAndouSeguidos:2, bloqueadaDias:3,
+      remarcacoes:[
+        {data:"2026-07-20", de:"2026-07-13", para:"2026-07-27", motivo:"Clima"},
+        {data:"2026-08-01", de:"2026-07-27", para:"2026-08-03", motivo:"Clima"}
+      ],
+      diario:[
+        {data:"2026-08-25", andou:true,  item:"Não faltou", obs:"Manta aplicada em 80% do telhado."},
+        {data:"2026-08-26", andou:true,  item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Clima", item:"Não faltou", obs:"Chuva o dia inteiro."},
+        {data:"2026-08-28", andou:false, motivo:"Clima", item:"Não faltou", obs:""}
+      ]
+    },
+    {
+      id:"o3", os:"0526-013724", loja:"DP NILOPOLIS 5",
+      desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:35399.80,
+      analista:"JUAN", pcm:"YURI", equipe:"ALEXANDRE", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:50,
+      aprovacao:"2026-06-08", inicioPlan:"2026-08-13", inicioReal:"2026-08-13", duracao:16,
+      pendencia:"Pagamento da ART e locação de andaime de 8 m",
+      pendResp:"FINANCEIRO", pendPrazo:"2026-08-18",
+      proxAcao:"Cobrar financeiro sobre ART e andaime",
+      atualizacao:"2026-08-28", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[
+        {data:"2026-08-06", de:"2026-07-24", para:"2026-08-13", motivo:"Pagamento de ART e andaime pendente"},
+        {data:"2026-08-20", de:"2026-08-13", para:"2026-08-24", motivo:"Falta de material"}
+      ],
+      diario:[
+        {data:"2026-08-26", andou:true, item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:true, item:"Material", obs:"Faltou selador, comprado na hora pelo Alexandre."},
+        {data:"2026-08-28", andou:true, item:"Não faltou", obs:"Fachada frontal concluída."}
+      ]
+    },
+    {
+      id:"o4", os:"0826-004428", loja:"DP PETROPOLIS 5",
+      desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-27", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:95,
+      aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
+      pendencia:"", pendResp:"", pendPrazo:"",
+      proxAcao:"Programar vistoria de encerramento",
+      atualizacao:"2026-08-28", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[],
+      diario:[
+        {data:"2026-08-26", andou:true, item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:true, item:"Não faltou", obs:""},
+        {data:"2026-08-28", andou:true, item:"Não faltou", obs:"Falta só o retoque da platibanda."}
+      ]
+    },
+    {
+      id:"o5", os:"0826-004429", loja:"DP PETROPOLIS 6",
+      desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:10,
+      aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-26", duracao:8,
+      pendencia:"Equipe MANFAC-19 dividida com a obra de Nilópolis 4",
+      pendResp:"YURI", pendPrazo:"2026-09-01",
+      proxAcao:"Definir se a MANFAC-19 fica integral em Petrópolis 6",
+      atualizacao:"2026-08-28", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[],
+      diario:[
+        {data:"2026-08-26", andou:true,  item:"Não faltou", obs:"Início real com 9 dias de atraso."},
+        {data:"2026-08-27", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-28", andou:true,  item:"Não faltou", obs:""}
+      ]
+    },
+    {
+      id:"o6", os:"0826-007431", loja:"DP PETROPOLIS 4",
+      desc:"Pintura da retaguarda — visita do presidente da DPSP", tipo:"CIVIL", valor:null,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-26", origem:"Sistema DPSP",
+      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:90,
+      aprovacao:"2026-08-14", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
+      pendencia:"", pendResp:"", pendPrazo:"",
+      proxAcao:"Fechar a OS no Field após a última demão",
+      atualizacao:"2026-08-28", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[],
+      diario:[
+        {data:"2026-08-26", andou:true, item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:true, item:"Não faltou", obs:""},
+        {data:"2026-08-28", andou:true, item:"Não faltou", obs:"Retaguarda pronta, falta a última demão."}
+      ]
+    },
+    {
+      id:"o7", os:"0526-013745", loja:"DP LUCIO COSTA",
+      desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:29795.50,
+      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:0,
+      aprovacao:"2026-06-08", inicioPlan:null, inicioReal:null, duracao:null,
+      pendencia:"Aguardando chegar tinta",
+      pendResp:"YURI", pendPrazo:"2026-08-24",
+      proxAcao:"Cobrar chegada da tinta",
+      atualizacao:"2026-08-20", naoAndouSeguidos:5, bloqueadaDias:12,
+      remarcacoes:[],
+      diario:[
+        {data:"2026-08-24", andou:false, motivo:"Falta de material", item:"Material", obs:"Tinta não chegou."},
+        {data:"2026-08-25", andou:false, motivo:"Falta de material", item:"Material", obs:""},
+        {data:"2026-08-26", andou:false, motivo:"Cliente / loja", item:"Material", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Cliente / loja", item:"Material", obs:""},
+        {data:"2026-08-28", andou:false, motivo:"Cliente / loja", item:"Material", obs:"Loja pediu para não iniciar antes da tinta."}
+      ]
+    },
+    {
+      id:"o8", os:"0526-013743", loja:"DP PEDRA DE GUARATIBA",
+      desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:28050.15,
+      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Clima", avanco:0,
+      aprovacao:"2026-06-08", inicioPlan:"2026-08-18", inicioReal:null, duracao:15,
+      pendencia:"Aguardando estabilidade de clima. Projetar data de início e final",
+      pendResp:"YURI", pendPrazo:"2026-08-24",
+      proxAcao:"Reprogramar início com a equipe",
+      atualizacao:"2026-08-24", naoAndouSeguidos:4, bloqueadaDias:9,
+      remarcacoes:[
+        {data:"2026-08-17", de:"2026-08-04", para:"2026-08-18", motivo:"Clima"}
+      ],
+      diario:[
+        {data:"2026-08-25", andou:false, motivo:"Clima", item:"Não faltou", obs:""},
+        {data:"2026-08-26", andou:false, motivo:"Clima", item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Clima", item:"Não faltou", obs:""},
+        {data:"2026-08-28", andou:false, motivo:"Clima", item:"Não faltou", obs:"Previsão de chuva até quarta."}
+      ]
+    },
+    {
+      id:"o9", os:"0226-011320", loja:"DP PRACA DO O",
+      desc:"Loja com infiltração", tipo:"TELHADO", valor:18919.37,
+      analista:"LEANDRO", pcm:"YURI", equipe:"ALEX", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Disponibilidade de equipe", avanco:20,
+      aprovacao:"2026-03-01", inicioPlan:"2026-08-24", inicioReal:null, duracao:22,
+      pendencia:"Necessário trocar de prestador. Alex vai assumir a obra PLK",
+      pendResp:"YURI", pendPrazo:"2026-08-25",
+      proxAcao:"Fechar novo prestador",
+      atualizacao:"2026-08-25", naoAndouSeguidos:6, bloqueadaDias:14,
+      remarcacoes:[
+        {data:"2026-08-05", de:"2026-07-20", para:"2026-08-10", motivo:"Disponibilidade de equipe"},
+        {data:"2026-08-22", de:"2026-08-10", para:"2026-08-24", motivo:"Necessário trocar de prestador"}
+      ],
+      diario:[
+        {data:"2026-08-24", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-25", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:"Alex saiu para a PLK."},
+        {data:"2026-08-26", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""},
+        {data:"2026-08-28", andou:false, motivo:"Disponibilidade de equipe", item:"Equipe", obs:""}
+      ]
+    },
+    {
+      id:"o10", os:"0526-013772", loja:"DP NILOPOLIS 4",
+      desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:33356.92,
+      analista:"JUAN", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:10,
+      aprovacao:"2026-06-08", inicioPlan:"2026-07-10", inicioReal:"2026-07-10", duracao:14,
+      pendencia:"Juan solicitou a paralisação",
+      pendResp:"DPSP", pendPrazo:"2026-08-27",
+      proxAcao:"Acompanhar liberação do cliente",
+      atualizacao:"2026-08-27", naoAndouSeguidos:9, bloqueadaDias:21,
+      remarcacoes:[
+        {data:"2026-07-18", de:"2026-07-10", para:"2026-07-23", motivo:"Cliente / loja"},
+        {data:"2026-08-07", de:"2026-07-23", para:"2026-08-17", motivo:"Cliente / loja"}
+      ],
+      diario:[
+        {data:"2026-08-24", andou:false, motivo:"Cliente / loja", item:"Não faltou", obs:""},
+        {data:"2026-08-25", andou:false, motivo:"Cliente / loja", item:"Não faltou", obs:""},
+        {data:"2026-08-26", andou:false, motivo:"Cliente / loja", item:"Não faltou", obs:""},
+        {data:"2026-08-27", andou:false, motivo:"Cliente / loja", item:"Não faltou", obs:"Sem retorno do Juan."},
+        {data:"2026-08-28", andou:false, motivo:"Cliente / loja", item:"Não faltou", obs:""}
+      ]
+    },
+    {
+      id:"o11", os:"0126-018429", loja:"DP RECREIO 7",
+      desc:"Água minando nas paredes da retaguarda, avaria no estoque de fraldas", tipo:"CIVIL", valor:17702.92,
+      analista:"JUAN", pcm:"YURI", equipe:"ALEX", origem:"Garantia",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-05-17", inicioPlan:null, inicioReal:null, duracao:null,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"YURI", pendPrazo:"",
+      proxAcao:"Concluir levantamento em campo",
+      atualizacao:"2026-08-26", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[],
+      diario:[
+        {data:"2026-08-26", andou:true, item:"Não faltou", obs:"Visita técnica feita, medições levantadas."},
+        {data:"2026-08-27", andou:false, motivo:"Sem bloqueio", item:"Não faltou", obs:"Sem atividade prevista."},
+        {data:"2026-08-28", andou:true, item:"Não faltou", obs:"Orçamento em montagem."}
+      ]
+    },
+
+    /* --- obras de outros PCM (aparecem só na base de obras) --- */
+    {
+      id:"o12", os:"GARANTIA", loja:"DP CABO FRIO 4",
+      desc:"Garantia de telhado", tipo:"TELHADO", valor:null,
+      analista:"AMANDA", pcm:"LUANA", equipe:"MANFAC-4 / MANFAC-7", origem:"Garantia",
+      etapa:"paralisado", bloqueio:"Disponibilidade de equipe", avanco:0,
+      aprovacao:"2026-07-09", inicioPlan:"2026-07-09", inicioReal:null, duracao:7,
+      pendencia:"Pendente liberação do prestador. Outras obras acontecendo",
+      pendResp:"LUANA", pendPrazo:"",
+      proxAcao:"Verificar disponibilidade do prestador",
+      atualizacao:"2026-08-20", naoAndouSeguidos:7, bloqueadaDias:16,
+      remarcacoes:[
+        {data:"2026-07-16", de:"2026-07-09", para:"2026-07-28", motivo:"Disponibilidade de equipe"},
+        {data:"2026-08-04", de:"2026-07-28", para:"2026-08-18", motivo:"Disponibilidade de equipe"}
+      ],
+      diario:[]
+    },
+    {
+      id:"o13", os:"0226-013174", loja:"DP COPACABANA 8",
+      desc:"Vazamento do teto para a parede na área de vendas, medicamentos danificados", tipo:"HIDRAULICA", valor:6738.10,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:0,
+      aprovacao:"2026-04-30", inicioPlan:"2026-07-13", inicioReal:null, duracao:3,
+      pendencia:"Aguardando liberação da gerente para escolha de data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Cobrar a gerente da loja",
+      atualizacao:"2026-08-19", naoAndouSeguidos:8, bloqueadaDias:24,
+      remarcacoes:[
+        {data:"2026-07-12", de:"2026-07-13", para:"2026-07-29", motivo:"Cliente / loja"}
+      ],
+      diario:[]
+    },
+    {
+      id:"o14", os:"0626-014071", loja:"DP MAGE 1",
+      desc:"Limpeza e vedação da fossa no salão de vendas, serviço noturno", tipo:"HIDRAULICA", valor:2924.98,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4 / PARCEIRO", origem:"Sistema DPSP",
+      etapa:"paralisado", bloqueio:"Contratação de prestador", avanco:0,
+      aprovacao:"2026-07-14", inicioPlan:"2026-07-27", inicioReal:null, duracao:5,
+      pendencia:"Aguardando escolha de novo prestador",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Selecionar prestador para serviço noturno",
+      atualizacao:"2026-08-21", naoAndouSeguidos:4, bloqueadaDias:11,
+      remarcacoes:[],
+      diario:[]
+    },
+    {
+      id:"o15", os:"0426-009327", loja:"DP COPACABANA 6",
+      desc:"Portais da loja não fecham ou abrem com defeito", tipo:"CIVIL", valor:1886.40,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-07-23", inicioPlan:"2026-08-12", inicioReal:null, duracao:3,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Concluir levantamento",
+      atualizacao:"2026-08-22", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[], diario:[]
+    },
+    {
+      id:"o16", os:"0526-019295", loja:"DP BARRA DA TIJUCA 5",
+      desc:"Desentupimento do esgoto e das caixas de gordura, água retornando para a loja", tipo:"HIDRAULICA", valor:4791.20,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-06-28", inicioPlan:"2026-08-03", inicioReal:null, duracao:5,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Concluir levantamento",
+      atualizacao:"2026-08-22", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[], diario:[]
+    },
+    {
+      id:"o17", os:"0626-008727", loja:"DP ITABORAI",
+      desc:"Substituição das telas milimétricas e da grade da copa — vigilância sanitária", tipo:"SERRALHERIA", valor:2922.24,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-08-12", inicioPlan:null, inicioReal:null, duracao:null,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Concluir levantamento",
+      atualizacao:"2026-08-22", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[], diario:[]
+    },
+    {
+      id:"o18", os:"0626-008725", loja:"DP ITABORAI",
+      desc:"Reparo da parede do vestiário feminino com pintura — vigilância sanitária", tipo:"CIVIL", valor:3922.64,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-08-12", inicioPlan:null, inicioReal:null, duracao:null,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Concluir levantamento",
+      atualizacao:"2026-08-22", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[], diario:[]
+    },
+    {
+      id:"o19", os:"0626-014568", loja:"DP GILKA MACHADO",
+      desc:"Descaracterização de fachada — encerramento de loja", tipo:"CIVIL", valor:5070.52,
+      analista:"JUAN", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
+      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      aprovacao:"2026-08-14", inicioPlan:null, inicioReal:null, duracao:null,
+      pendencia:"Finalizar levantamento, pedir orçamento e programar data",
+      pendResp:"AMANDA", pendPrazo:"",
+      proxAcao:"Concluir levantamento",
+      atualizacao:"2026-08-22", naoAndouSeguidos:0, bloqueadaDias:0,
+      remarcacoes:[], diario:[]
+    },
+
+    /* --- finalizadas (pipeline) --- */
+    {
+      id:"o20", os:"0626-005880", loja:"DP BARRA DA TIJUCA 10",
+      desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:34578.20,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
+      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      aprovacao:"2026-08-06", inicioPlan:"2026-08-10", inicioReal:"2026-08-10", duracao:10,
+      fimReal:"2026-08-21",
+      pendencia:"Pendente faturamento", pendResp:"FINANCEIRO", pendPrazo:"",
+      proxAcao:"Emitir nota", atualizacao:"2026-08-21",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o21", os:"0826-007420", loja:"DP PIABETA",
+      desc:"Finalização de obra", tipo:"CIVIL", valor:15700.00,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4", origem:"Sistema DPSP",
+      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      aprovacao:"2026-05-13", inicioPlan:"2026-08-04", inicioReal:"2026-08-04", duracao:12,
+      fimReal:"2026-08-18",
+      pendencia:"Executado, aguardando aprovação da OS", pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar aprovação da OS", atualizacao:"2026-08-18",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o22", os:"0826-007423", loja:"DP MAGE 1",
+      desc:"Finalização de obra", tipo:"CIVIL", valor:14300.00,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-4", origem:"Sistema DPSP",
+      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      aprovacao:"2026-05-13", inicioPlan:"2026-08-05", inicioReal:"2026-08-05", duracao:10,
+      fimReal:"2026-08-17",
+      pendencia:"Executado, aguardando aprovação da OS", pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar aprovação da OS", atualizacao:"2026-08-17",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o23", os:"0326-018578", loja:"DP IPANEMA 8",
+      desc:"Desvio da exaustão", tipo:"AR CONDICIONADO", valor:13561.10,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
+      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      aprovacao:"2026-05-11", inicioPlan:"2026-07-28", inicioReal:"2026-07-28", duracao:6,
+      fimReal:"2026-08-05",
+      pendencia:"Faturado", pendResp:"", pendPrazo:"",
+      proxAcao:"", atualizacao:"2026-08-05",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    }
+  ];
+
+  var PORID = {};
+  OBRAS.forEach(function(o){
+    o.dias = diasDesde(o.aprovacao);
+    o.fimCalc = (o.inicioReal || o.inicioPlan) && o.duracao ? somaDias(o.inicioReal || o.inicioPlan, o.duracao) : null;
+    o.atraso = (o.etapa !== "finalizado" && o.fimCalc) ? diasDesde(o.fimCalc) : null;
+    PORID[o.id] = o;
+  });
+
+  /* severidade: cor da faixa lateral e dos marcadores */
+  function sev(o){
+    if(o.etapa === "finalizado") return "var(--ink-faint)";
+    if(o.etapa === "paralisado") return "var(--crit)";
+    if(o.dias != null && o.duracao && o.dias > o.duracao * 4) return "var(--crit)";
+    if(o.atraso != null && o.atraso > 0) return "var(--warn)";
+    if(o.etapa === "levantamento") return "var(--info)";
+    return "var(--ok)";
+  }
+  function classeDias(o){
+    if(o.etapa === "finalizado") return "";
+    if(o.dias >= 60) return "critico";
+    if(o.dias >= 30) return "atencao";
+    return "";
+  }
+  function pill(o){
+    var e = ETAPAS[o.etapa];
+    return '<span class="pill ' + o.etapa + '"><span class="dot"></span>' + e.nome + '</span>';
+  }
+  function badgeDias(o, curto){
+    return '<span class="dias ' + classeDias(o) + '">' + o.dias +
+           (curto ? ' <small>dias</small>' : ' <small>dias desde a aprovação</small>') + '</span>';
+  }
+
+  /* ---------------------------------------------------------------
+     Estado
+     --------------------------------------------------------------- */
+  var FILA = OBRAS.filter(function(o){
+    return o.pcm === "YURI" && o.etapa !== "finalizado";
+  });
+  var respostas = {};   // id -> resposta salva hoje
+  var rascunho = {};    // id -> resposta em edição
+  var tela = "diario";
+  var vis = "tabela";
+  var fPcm = "todos", fEtapa = "todas";
+  var ordem = {col:"dias", dir:-1};
+  var obraAberta = null;
+  var voltarPara = "base";
+
+  /* ---------------------------------------------------------------
+     Navegação
+     --------------------------------------------------------------- */
+  var tabs = document.getElementById("tabs");
+  tabs.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-tela]");
+    if(!b) return;
+    irPara(b.dataset.tela);
+  });
+
+  function irPara(t){
+    if(t === "ficha" && !obraAberta) obraAberta = "o1";
+    tela = t;
+    Array.prototype.forEach.call(tabs.querySelectorAll("button"), function(b){
+      b.setAttribute("aria-current", b.dataset.tela === t ? "true" : "false");
+    });
+    document.getElementById("tela-diario").hidden = t !== "diario";
+    document.getElementById("tela-base").hidden   = t !== "base";
+    document.getElementById("tela-ficha").hidden  = t !== "ficha";
+    if(t === "base") renderBase();
+    if(t === "ficha") renderFicha();
+    window.scrollTo(0, 0);
+  }
+
+  function abrirFicha(id, origem){
+    obraAberta = id;
+    voltarPara = origem || "base";
+    irPara("ficha");
+  }
+  document.getElementById("voltar").addEventListener("click", function(){ irPara(voltarPara); });
+
+  /* ---------------------------------------------------------------
+     TELA 1 — Diário do dia
+     --------------------------------------------------------------- */
+  var elFila = document.getElementById("fila");
+
+  function chipsHTML(grupo, lista, valorAtual, extraClasse){
+    return lista.map(function(v){
+      var cls = "chip";
+      if(extraClasse) cls += " " + (v === "Sim" ? "sim" : v === "Não" ? "nao" : "");
+      return '<button type="button" class="' + cls + '" data-grupo="' + grupo + '" data-valor="' + esc(v) + '"' +
+             ' aria-pressed="' + (valorAtual === v ? "true" : "false") + '">' + esc(v) + '</button>';
+    }).join("");
+  }
+
+  function cardHTML(o){
+    var d = rascunho[o.id] || (rascunho[o.id] = {andou:null, item:null, motivo:null, resp:null, prazo:null, obs:"", obsAberta:false});
+    var travado = o.bloqueadaDias >= 3 && o.bloqueio !== "Sem bloqueio";
+    var h = "";
+    h += '<article class="obra" data-id="' + o.id + '" style="--sev:' + sev(o) + '">';
+    h +=   '<div class="obra-head">';
+    h +=     '<div class="obra-id">';
+    h +=       '<div class="obra-os">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + '</div>';
+    h +=       '<button class="obra-loja" data-abrir="' + o.id + '">' + esc(o.loja) + '</button>';
+    h +=       '<p class="obra-desc">' + esc(o.desc) + '</p>';
+    h +=       '<div class="meta"><span>Equipe <b>' + esc(o.equipe) + '</b></span>' +
+                 '<span>Analista <b>' + esc(o.analista) + '</b></span>' +
+                 (o.avanco != null ? '<span>Avanço <b class="num">' + o.avanco + '%</b></span>' : "") + '</div>';
+    h +=     '</div>';
+    var estourou = o.duracao && o.dias > o.duracao * 4;
+    h +=     '<div class="obra-sinais">' + pill(o) + badgeDias(o) +
+               (estourou ? '<span class="travada estouro">Planejada para <span class="n">' + o.duracao + '</span> dias · em aberto há <span class="n">' + o.dias + '</span></span>' : "") +
+               (travado ? '<span class="travada">Mesmo bloqueio há <span class="n">' + o.bloqueadaDias + '</span> dias · ' + esc(o.bloqueio) + '</span>' : "") +
+             '</div>';
+    h +=   '</div>';
+    if(o.pendencia){
+      h += '<div class="pend"><b>Pendência:</b> ' + esc(o.pendencia) +
+           (o.pendResp ? ' · responsável <b>' + esc(o.pendResp) + '</b>' : "") + '</div>';
+    }
+    h +=   '<div class="perguntas">';
+    h +=     '<div class="q"><span class="lbl">Andou hoje?</span><div class="chips">' +
+               chipsHTML("andou", ["Sim","Não"], d.andou, true) + '</div></div>';
+    h +=     '<div class="q"><span class="lbl">Faltou algum item?</span><div class="chips">' +
+               chipsHTML("item", ITENS, d.item) + '</div></div>';
+    h +=     '<div class="q q-motivo"' + (d.andou === "Não" ? "" : " hidden") + '><span class="lbl">Por que não andou?</span><div class="chips">' +
+               chipsHTML("motivo", BLOQUEIOS, d.motivo) + '</div></div>';
+
+    var terceiro = o.naoAndouSeguidos >= 2;
+    h +=     '<div class="escala"' + (d.andou === "Não" && terceiro ? "" : " hidden") + '>';
+    h +=       '<div class="escala-top"><strong>' + (o.naoAndouSeguidos + 1) + 'º dia seguido sem andar.</strong>' +
+                 '<span>Para salvar, diga quem resolve e até quando. A obra entra na lista de escaladas.</span></div>';
+    h +=       '<div class="q"><span class="lbl">Quem resolve</span><div class="chips">' +
+                 chipsHTML("resp", RESPONSAVEIS, d.resp) + '</div></div>';
+    h +=       '<div class="q"><span class="lbl">Até quando</span><div class="chips">' +
+                 chipsHTML("prazo", PRAZOS, d.prazo) + '</div></div>';
+    h +=     '</div>';
+
+    h +=     '<div class="obs-linha">';
+    h +=       '<button type="button" class="obs-btn"' + (d.obsAberta ? " hidden" : "") + '>+ observação</button>';
+    h +=       '<input class="obs-in" type="text" maxlength="120" placeholder="Uma linha, se quiser"' +
+                 (d.obsAberta ? "" : " hidden") + ' value="' + esc(d.obs) + '">';
+    h +=     '</div>';
+
+    h +=     '<div class="acoes"><button type="button" class="btn salvar" disabled>Salvar e sair da fila</button>' +
+               '<span class="hint"></span></div>';
+    h +=   '</div>';
+    h += '</article>';
+    return h;
+  }
+
+  function validar(o, d){
+    if(!d.andou) return "Responda se a obra andou hoje.";
+    if(d.andou === "Não" && !d.motivo) return "Diga por que não andou.";
+    if(d.andou === "Não" && o.naoAndouSeguidos >= 2 && (!d.resp || !d.prazo))
+      return "Terceiro dia sem andar: escolha quem resolve e até quando.";
+    return null;
+  }
+
+  function atualizarCard(card){
+    var o = PORID[card.dataset.id], d = rascunho[o.id];
+    card.querySelector(".q-motivo").hidden = d.andou !== "Não";
+    card.querySelector(".escala").hidden = !(d.andou === "Não" && o.naoAndouSeguidos >= 2);
+    var erro = validar(o, d);
+    var btn = card.querySelector(".salvar");
+    var hint = card.querySelector(".hint");
+    btn.disabled = !!erro;
+    hint.textContent = erro || "";
+    hint.className = "hint" + (erro && d.andou ? " alerta" : "");
+  }
+
+  elFila.addEventListener("click", function(e){
+    var abrir = e.target.closest("[data-abrir]");
+    if(abrir){ abrirFicha(abrir.dataset.abrir, "diario"); return; }
+
+    var card = e.target.closest(".obra");
+    if(!card) return;
+    var o = PORID[card.dataset.id], d = rascunho[o.id];
+
+    var chip = e.target.closest(".chip");
+    if(chip){
+      var g = chip.dataset.grupo, v = chip.dataset.valor;
+      d[g] = (d[g] === v) ? null : v;
+      Array.prototype.forEach.call(card.querySelectorAll('.chip[data-grupo="' + g + '"]'), function(c){
+        c.setAttribute("aria-pressed", c.dataset.valor === d[g] ? "true" : "false");
+      });
+      if(g === "andou" && v === "Sim"){ d.motivo = null; d.resp = null; d.prazo = null;
+        Array.prototype.forEach.call(card.querySelectorAll('.chip[data-grupo="motivo"],.chip[data-grupo="resp"],.chip[data-grupo="prazo"]'),
+          function(c){ c.setAttribute("aria-pressed","false"); });
+      }
+      atualizarCard(card);
+      return;
+    }
+
+    if(e.target.closest(".obs-btn")){
+      d.obsAberta = true;
+      card.querySelector(".obs-btn").hidden = true;
+      var inp = card.querySelector(".obs-in");
+      inp.hidden = false; inp.focus();
+      return;
+    }
+
+    if(e.target.closest(".salvar")){
+      salvar(o, card);
+    }
+  });
+
+  elFila.addEventListener("input", function(e){
+    if(!e.target.classList.contains("obs-in")) return;
+    var card = e.target.closest(".obra");
+    rascunho[card.dataset.id].obs = e.target.value;
+  });
+
+  function salvar(o, card){
+    var d = rascunho[o.id];
+    if(validar(o, d)) return;
+    respostas[o.id] = {
+      andou:d.andou, item:d.item || "Não faltou", motivo:d.motivo,
+      resp:d.resp, prazo:d.prazo, obs:d.obs
+    };
+    o.diario = o.diario.concat([{
+      data:"2026-08-31", andou:d.andou === "Sim", motivo:d.motivo,
+      item:d.item || "Não faltou", obs:d.obs,
+      escalada: d.resp ? (d.resp + " até " + d.prazo.toLowerCase()) : null
+    }]);
+    card.classList.add("saindo");
+    var reduz = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(function(){ renderDiario(); }, reduz ? 0 : 240);
+  }
+
+  function desfazer(id){
+    var o = PORID[id];
+    delete respostas[id];
+    o.diario = o.diario.filter(function(x){ return x.data !== "2026-08-31"; });
+    renderDiario();
+  }
+
+  function renderDiario(){
+    var pendentes = FILA.filter(function(o){ return !respostas[o.id]; });
+    var feitas = FILA.filter(function(o){ return respostas[o.id]; });
+
+    // pendentes ordenadas: mais dias desde a aprovação primeiro
+    pendentes.sort(function(a,b){ return b.dias - a.dias; });
+
+    elFila.innerHTML = pendentes.length
+      ? pendentes.map(cardHTML).join("")
+      : '<div class="vazio"><strong>Diário de hoje fechado.</strong>' +
+        'As 11 obras foram respondidas. O que estiver escalado já está na base de obras.</div>';
+
+    Array.prototype.forEach.call(elFila.querySelectorAll(".obra"), atualizarCard);
+
+    document.getElementById("faltam").textContent = pendentes.length;
+    document.getElementById("faltam").className = "big num" + (pendentes.length ? "" : " zero");
+    document.getElementById("faltam-txt").textContent = pendentes.length === 1
+      ? "obra para responder hoje" : "obras para responder hoje";
+    document.getElementById("feitas-txt").textContent = feitas.length + " de " + FILA.length + " respondidas";
+    document.getElementById("barra").style.width = (feitas.length / FILA.length * 100) + "%";
+
+    var box = document.getElementById("feitas-box");
+    box.hidden = feitas.length === 0;
+    document.getElementById("feitas").innerHTML = feitas.map(function(o){
+      var r = respostas[o.id];
+      var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou · " + r.motivo;
+      if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
+      if(r.resp) resumo += " · escalada: " + r.resp + " até " + r.prazo.toLowerCase();
+      return '<div class="feita"><span class="ck">&#10003;</span>' +
+             '<span class="nm">' + esc(o.loja) + '</span>' +
+             '<span class="rs">' + esc(resumo) + '</span>' +
+             '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button></div>';
+    }).join("");
+  }
+
+  document.getElementById("feitas").addEventListener("click", function(e){
+    var b = e.target.closest("[data-desfazer]");
+    if(b) desfazer(b.dataset.desfazer);
+  });
+
+  /* ---------------------------------------------------------------
+     TELA 2 — Base de obras
+     --------------------------------------------------------------- */
+  var COLS = [
+    {k:"os",     t:"Nº OS",      cls:"os"},
+    {k:"loja",   t:"Loja",       cls:"loja"},
+    {k:"tipo",   t:"Tipo"},
+    {k:"pcm",    t:"PCM"},
+    {k:"equipe", t:"Equipe / prestador"},
+    {k:"etapa",  t:"Etapa da obra"},
+    {k:"bloqueio", t:"Bloqueio"},
+    {k:"dias",   t:"Dias desde a aprovação", cls:"n"},
+    {k:"duracao", t:"Duração (dias)", cls:"n"},
+    {k:"avanco", t:"Avanço"},
+    {k:"atualizacao", t:"Última atualização", cls:"n"}
+  ];
+
+  var selPcm = document.getElementById("f-pcm");
+  var selEtapa = document.getElementById("f-etapa");
+  var pcms = [];
+  OBRAS.forEach(function(o){ if(pcms.indexOf(o.pcm) < 0) pcms.push(o.pcm); });
+  pcms.sort();
+  selPcm.innerHTML = '<option value="todos">Todos</option>' +
+    pcms.map(function(p){ return '<option value="' + p + '">' + p + '</option>'; }).join("");
+  selEtapa.innerHTML = '<option value="todas">Todas</option>' +
+    Object.keys(ETAPAS).map(function(k){ return '<option value="' + k + '">' + ETAPAS[k].nome + '</option>'; }).join("");
+
+  selPcm.addEventListener("change", function(){ fPcm = this.value; renderBase(); });
+  selEtapa.addEventListener("change", function(){ fEtapa = this.value; renderBase(); });
+
+  document.getElementById("btn-tabela").addEventListener("click", function(){ setVis("tabela"); });
+  document.getElementById("btn-kanban").addEventListener("click", function(){ setVis("kanban"); });
+  function setVis(v){
+    vis = v;
+    document.getElementById("btn-tabela").setAttribute("aria-pressed", v === "tabela" ? "true":"false");
+    document.getElementById("btn-kanban").setAttribute("aria-pressed", v === "kanban" ? "true":"false");
+    document.getElementById("vis-tabela").hidden = v !== "tabela";
+    document.getElementById("vis-kanban").hidden = v !== "kanban";
+    renderBase();
+  }
+
+  function filtradas(){
+    return OBRAS.filter(function(o){
+      if(fPcm !== "todos" && o.pcm !== fPcm) return false;
+      if(fEtapa !== "todas" && o.etapa !== fEtapa) return false;
+      return true;
+    });
+  }
+
+  function renderBase(){
+    var lista = filtradas();
+    document.getElementById("conta").textContent = lista.length;
+    renderResumo(lista);
+    if(vis === "tabela") renderTabela(lista); else renderKanban(lista);
+  }
+
+  function renderResumo(lista){
+    var andamento = lista.filter(function(o){ return o.etapa === "andamento"; }).length;
+    var paralisadas = lista.filter(function(o){ return o.etapa === "paralisado"; }).length;
+    var velhas = lista.filter(function(o){ return o.etapa !== "finalizado" && o.dias >= 60; }).length;
+    var estouradas = lista.filter(function(o){ return o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0; }).length;
+    var d = [
+      {v:andamento, k:"em andamento", c:"var(--ok)"},
+      {v:paralisadas, k:"paralisadas", c:"var(--crit)"},
+      {v:velhas, k:"aprovadas há mais de 60 dias", c:"var(--warn)"},
+      {v:estouradas, k:"passaram da duração planejada", c:"var(--warn)"}
+    ];
+    document.getElementById("resumo").innerHTML = d.map(function(x){
+      return '<div class="kpi" style="--kc:' + x.c + '"><div class="v">' + x.v + '</div><div class="k">' + x.k + '</div></div>';
+    }).join("");
+  }
+
+  var theadRow = document.getElementById("thead-row");
+  theadRow.innerHTML = COLS.map(function(c){
+    return '<th scope="col"><button data-col="' + c.k + '">' + c.t + ' <span class="ar"></span></button></th>';
+  }).join("");
+  theadRow.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-col]");
+    if(!b) return;
+    var k = b.dataset.col;
+    if(ordem.col === k) ordem.dir = -ordem.dir; else { ordem.col = k; ordem.dir = 1; }
+    renderBase();
+  });
+
+  function renderTabela(lista){
+    var k = ordem.col, dir = ordem.dir;
+    lista = lista.slice().sort(function(a,b){
+      var x = a[k], y = b[k];
+      if(x == null) x = dir > 0 ? Infinity : -Infinity;
+      if(y == null) y = dir > 0 ? Infinity : -Infinity;
+      if(typeof x === "string") return dir * x.localeCompare(y, "pt-BR");
+      return dir * (x - y);
+    });
+    Array.prototype.forEach.call(theadRow.querySelectorAll("button"), function(b){
+      b.querySelector(".ar").textContent = b.dataset.col === k ? (dir > 0 ? "▲" : "▼") : "";
+    });
+
+    document.getElementById("tbody").innerHTML = lista.map(function(o){
+      var grita = o.etapa !== "finalizado" && o.dias >= 100;
+      var tr = '<tr' + (grita ? ' class="alerta"' : "") + '>';
+      tr += '<td class="os">' + esc(o.os) + '</td>';
+      tr += '<td class="loja"><button data-abrir="' + o.id + '">' + esc(o.loja) + '</button></td>';
+      tr += '<td>' + esc(o.tipo) + '</td>';
+      tr += '<td>' + esc(o.pcm) + '</td>';
+      tr += '<td>' + esc(o.equipe) + '</td>';
+      tr += '<td>' + pill(o) + '</td>';
+      tr += '<td>' + (o.bloqueio === "Sem bloqueio"
+              ? '<span style="color:var(--ink-faint)">—</span>'
+              : esc(o.bloqueio) + (o.bloqueadaDias >= 3 ? ' <span class="num" style="color:var(--crit)">(' + o.bloqueadaDias + 'd)</span>' : "")) + '</td>';
+      tr += '<td class="n">' + badgeDias(o, true) + '</td>';
+      tr += '<td class="n">' + (o.duracao != null ? o.duracao : '<span style="color:var(--ink-faint)">a definir</span>') + '</td>';
+      tr += '<td>' + (o.avanco != null
+              ? '<span class="av-bar"><i><b style="width:' + o.avanco + '%"></b></i><span>' + o.avanco + '%</span></span>'
+              : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+      tr += '<td class="n">' + br(o.atualizacao) + '</td>';
+      tr += '</tr>';
+      return tr;
+    }).join("");
+  }
+
+  document.getElementById("tbody").addEventListener("click", function(e){
+    var b = e.target.closest("[data-abrir]");
+    if(b) abrirFicha(b.dataset.abrir, "base");
+  });
+
+  function renderKanban(lista){
+    var ordemCols = ["levantamento","andamento","paralisado","finalizado"];
+    document.getElementById("kanban").innerHTML = ordemCols.map(function(k){
+      var itens = lista.filter(function(o){ return o.etapa === k; })
+                       .sort(function(a,b){ return b.dias - a.dias; });
+      var h = '<div class="col"><div class="col-h"><span class="nm" style="color:' + ETAPAS[k].cor + '">' +
+              ETAPAS[k].nome + '</span><span class="ct">' + itens.length + '</span></div><div class="col-b">';
+      h += itens.length ? itens.map(function(o){
+        var c = '<button class="card" data-abrir="' + o.id + '" style="--sev:' + sev(o) + '">';
+        c += '<div class="os">OS ' + esc(o.os) + '</div>';
+        c += '<div class="nm">' + esc(o.loja) + '</div>';
+        c += '<div class="ln"><span>' + esc(o.tipo) + '</span><span>PCM ' + esc(o.pcm) + '</span><span>' + esc(o.equipe) + '</span></div>';
+        c += '<div class="ft">' + badgeDias(o, true);
+        if(o.bloqueio !== "Sem bloqueio" && o.etapa !== "finalizado"){
+          c += '<span class="pill paralisado" style="font-weight:500">' + esc(o.bloqueio) +
+               (o.bloqueadaDias >= 3 ? ' · ' + o.bloqueadaDias + 'd' : "") + '</span>';
+        }
+        c += '</div></button>';
+        return c;
+      }).join("") : '<div class="col-vazia">nenhuma obra</div>';
+      h += '</div></div>';
+      return h;
+    }).join("");
+  }
+
+  document.getElementById("kanban").addEventListener("click", function(e){
+    var b = e.target.closest("[data-abrir]");
+    if(b) abrirFicha(b.dataset.abrir, "base");
+  });
+
+  /* ---------------------------------------------------------------
+     TELA 3 — Ficha da obra
+     --------------------------------------------------------------- */
+  function renderFicha(){
+    var o = PORID[obraAberta];
+    var h = "";
+
+    h += '<div class="page-head"><div>';
+    h += '<h1>' + esc(o.loja) + '</h1>';
+    h += '<p class="num">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + ' · ' + moeda(o.valor) + '</p>';
+    h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + badgeDias(o) + '</div></div>';
+
+    // Alerta do caso que justifica o sistema
+    var critico = o.etapa !== "finalizado" && o.duracao && o.dias > o.duracao * 4;
+    if(critico){
+      h += '<div class="alerta-box">';
+      h +=   '<div><div class="n">' + o.dias + '</div><div class="lbl" style="text-align:center;margin-top:3px">dias em aberto</div></div>';
+      h +=   '<div><h3>Obra aprovada em ' + br(o.aprovacao) + ' e ainda não concluída.</h3>' +
+             '<p>A duração planejada é de <b>' + o.duracao + ' dias</b>. Estão contados <b>' + o.dias +
+             ' dias</b> desde a aprovação — <b>' + Math.round(o.dias / o.duracao) + ' vezes</b> o prazo combinado. ' +
+             'O cliente enxerga essa mesma OS aberta no sistema dele.</p></div>';
+      h += '</div>';
+    } else if(o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0){
+      h += '<div class="alerta-box" style="border-color:rgba(244,183,63,.45);background:var(--warn-soft);border-left-color:var(--warn)">';
+      h +=   '<div><div class="n" style="color:var(--warn)">' + o.atraso + '</div><div class="lbl" style="text-align:center;margin-top:3px">dias além do prazo</div></div>';
+      h +=   '<div><h3 style="color:var(--warn)">Passou da duração planejada.</h3>' +
+             '<p>Início em <b>' + br(o.inicioReal || o.inicioPlan) + '</b> com <b>' + o.duracao +
+             ' dias</b> de duração: deveria ter terminado em <b>' + br(o.fimCalc) + '</b>.</p></div>';
+      h += '</div>';
+    }
+
+    h += '<div class="ficha-grid"><div>';
+
+    /* Identificação */
+    h += '<div class="box"><div class="box-h">Identificação</div><div class="box-b"><dl class="dl">';
+    h += '<dt>Nº OS</dt><dd class="num">' + esc(o.os) + '</dd>';
+    h += '<dt>Loja</dt><dd>' + esc(o.loja) + '</dd>';
+    h += '<dt>Chamado</dt><dd>' + esc(o.desc) + '</dd>';
+    h += '<dt>Tipo</dt><dd>' + esc(o.tipo) + '</dd>';
+    h += '<dt>Valor</dt><dd class="num">' + moeda(o.valor) + '</dd>';
+    h += '<dt>Analista</dt><dd>' + esc(o.analista) + '</dd>';
+    h += '<dt>PCM responsável</dt><dd>' + esc(o.pcm) + '</dd>';
+    h += '<dt>Equipe / prestador</dt><dd>' + esc(o.equipe) + '</dd>';
+    h += '<dt>Origem</dt><dd>' + esc(o.origem) + '</dd>';
+    h += '<dt>Bloqueio atual</dt><dd>' + (o.bloqueio === "Sem bloqueio"
+            ? '<span style="color:var(--ink-faint)">sem bloqueio</span>'
+            : '<span style="color:var(--crit);font-weight:600">' + esc(o.bloqueio) + '</span>' +
+              (o.bloqueadaDias >= 3 ? ' <span class="num" style="color:var(--ink-dim)">há ' + o.bloqueadaDias + ' dias</span>' : "")) + '</dd>';
+    h += '</dl></div></div>';
+
+    /* Cronograma */
+    h += '<div class="box"><div class="box-h">Cronograma</div><div class="box-b">';
+    h += '<div class="crono">';
+    h +=   '<div class="crono-c"><div class="k">Início planejado</div><div class="v">' + br(o.inicioPlan) + '</div></div>';
+    h +=   '<div class="crono-c"><div class="k">Início real</div><div class="v">' + br(o.inicioReal) + '</div></div>';
+    h +=   '<div class="crono-c destaque"><div class="k">Duração</div><div class="v">' +
+             (o.duracao != null ? o.duracao + " dias" : "a definir") + '</div></div>';
+    h +=   '<div class="crono-c calc"><div class="k">Final calculado</div><div class="v">' + br(o.fimCalc) + '</div></div>';
+    h += '</div>';
+    h += '<p class="crono-nota">A obra é planejada por <b style="color:var(--ink)">duração</b>, não por data de entrega. ' +
+         'O final é consequência do início mais os dias combinados e se recalcula sozinho a cada remarcação — ' +
+         'ninguém precisa reescrever data final.</p>';
+    h += '</div></div>';
+
+    /* Remarcações */
+    h += '<div class="box"><div class="box-h">Remarcações <span class="num" style="color:var(--warn)">' + o.remarcacoes.length + '</span></div><div class="box-b">';
+    if(o.remarcacoes.length){
+      h += '<div class="remarc">' + o.remarcacoes.map(function(r){
+        return '<div class="remarc-i"><span class="d">' + br(r.data) + '</span><div>' +
+               '<div class="mv">início de <b>' + br(r.de) + '</b> para <b>' + br(r.para) + '</b></div>' +
+               '<div class="mt">' + esc(r.motivo) + '</div></div></div>';
+      }).join("") + '</div>';
+    } else {
+      h += '<p style="margin:0;color:var(--ink-faint);font-size:12.5px">Nenhuma remarcação registrada.</p>';
+    }
+    h += '</div></div>';
+
+    h += '</div><div>';
+
+    /* Linha do tempo do diário */
+    h += '<div class="box"><div class="box-h">Linha do tempo do diário</div><div class="box-b">';
+    if(o.diario.length){
+      h += '<div class="tl">' + o.diario.slice().reverse().map(function(e){
+        var cor = e.andou ? "var(--ok)" : "var(--crit)";
+        var t = '<div class="tl-i" style="--sev:' + cor + '">';
+        t += '<div class="col-l">' + br(e.data).slice(0,5) + '</div>';
+        t += '<div class="col-m"><i></i></div>';
+        t += '<div class="col-r">';
+        t += '<div class="tl-t ' + (e.andou ? "sim" : "nao") + '">' + (e.andou ? "Andou" : "Não andou") + '</div>';
+        var sub = [];
+        if(!e.andou && e.motivo) sub.push(e.motivo);
+        if(e.item && e.item !== "Não faltou") sub.push("faltou " + e.item.toLowerCase());
+        if(e.escalada) sub.push("escalada: " + e.escalada);
+        if(sub.length) t += '<div class="tl-s">' + esc(sub.join(" · ")) + '</div>';
+        if(e.obs) t += '<div class="tl-obs">' + esc(e.obs) + '</div>';
+        t += '</div></div>';
+        return t;
+      }).join("") + '</div>';
+    } else {
+      h += '<p style="margin:0;color:var(--ink-faint);font-size:12.5px">Nenhum dia respondido ainda nesta obra. ' +
+           'Hoje é assim em todas: a informação só existe na cabeça de quem está em campo.</p>';
+    }
+    if(o.gap){
+      h += '<div class="tl-gap">' + o.gap.dias + ' dias sem nenhum registro' +
+           '<span>De ' + br(o.gap.de) + ' (aprovação) até ' + br(o.gap.ate) +
+           ' ninguém respondeu nada sobre esta obra. É exatamente esse buraco que o diário fecha.</span></div>';
+    }
+    h += '</div></div>';
+
+    /* Pendências e próxima ação */
+    h += '<div class="box"><div class="box-h">Pendências e próxima ação</div><div class="box-b"><dl class="dl">';
+    h += '<dt>Pendência</dt><dd>' + (o.pendencia ? esc(o.pendencia) : '<span style="color:var(--ink-faint)">nenhuma</span>') + '</dd>';
+    h += '<dt>Responsável</dt><dd>' + (o.pendResp ? esc(o.pendResp) : "—") + '</dd>';
+    h += '<dt>Prazo</dt><dd class="num">' + br(o.pendPrazo) + '</dd>';
+    h += '<dt>Próxima ação</dt><dd>' + (o.proxAcao ? esc(o.proxAcao) : "—") + '</dd>';
+    h += '<dt>Última atualização</dt><dd class="num">' + br(o.atualizacao) + '</dd>';
+    h += '</dl></div></div>';
+
+    /* Vindo do Field */
+    h += '<div class="box"><div class="box-h">Vindo do Field</div><div class="box-b">';
+    h += '<div class="placeholder"><b>Relatório fotográfico</b> — as fotos que o técnico tira em campo entram aqui quando a OS é preenchida no Field.</div>';
+    h += '<div class="placeholder"><b>Fechamento da OS</b> — data de fechamento, status no sistema do cliente e liberação para faturamento.</div>';
+    h += '</div></div>';
+
+    h += '</div></div>';
+
+    document.getElementById("ficha").innerHTML = h;
+  }
+
+  /* ---------------------------------------------------------------
+     Início
+     --------------------------------------------------------------- */
+  renderDiario();
+  setVis("tabela");
+  irPara("diario");
+})();
+</script>
+
+
