@@ -48,3 +48,6 @@ material manfac/
 # local tooling
 .claude/
 .superpowers/
+
+# artefatos de teste de navegador
+.playwright-mcp/
