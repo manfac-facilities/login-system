@@ -1,0 +1,354 @@
+Revisão de copy · Manfac Engenharia       aprovadas 14 ajustar 0 recusadas 11 pendentes 0 limpar marcações
+
+ITENS DA AUDITORIA  PRONTOS PARA APLICAR  DEPENDEM DA MANFAC                             PÁGINAS AFETADAS
+
+66 triados          26 trocas de texto    28 itens                                       9 rotas
+
+Como ler este documento
+
+Cada bloco mostra o texto que está no site hoje e o texto proposto pela auditoria, lado
+a lado. O número em azul é o mesmo da lista mestra da auditoria — para recusar ou
+pedir ajuste, basta citar o número. São 25 decisões que somam 26 trocas de texto: a
+primeira delas, o novo rótulo do menu, vale para dois lugares ao mesmo tempo.
+26                            28                         12                        2
+
+TROCAS DE TEXTO               ESPERANDO A MANFAC         EXIGEM OBRA NO SITE       JÁ ESTAVAM FEITAS
+
+Palavras, nada além.          Dependem de validar um     Pedem seção, campo ou     O site mudou depois da
+Nenhuma mexe em layout,       número, autorizar o case,  página que não existe —   auditoria: dois pedidos já
+formulário, link ou           aprovar uma promessa       não são troca de texto e  estavam atendidos antes
+funcionamento do site.        técnica ou informar dados  ficam para uma etapa      dela chegar.
+                              cadastrais.                própria.
+
+geral 2 / 6 /quem-somos 6 /servicos 1 /servicos/obras-e-reformas 1 /servicos/novas-construcoes 2
+/servicos/manutencao-predial 2 /servicos/hvac 1 /resultados 3 /contato 1
+
+Em todas as páginas Menu, rodapé e chamada final                                                                                    2 alterações
+                                                                                                                   aparece em 2 lugares
+item 1 Menu do topo e rodapé
+
+ESTÁ NO SITE HOJE                                        PROPOSTO PELA AUDITORIA
+
+Resultados                                               Case de sucesso
+
+Enquanto houver um único case, o rótulo descritivo ajuda a navegação. Quando existirem vários, volta a ser Cases.
+
+jt
+aprovar  ajustar  recusar
+
+item 19 Bloco de contato no fim de 8 páginas
+
+ESTÁ NO SITE HOJE                                           PROPOSTO PELA AUDITORIA
+
+Conte como funciona sua operação hoje — unidades, volume    Conte número de unidades, regiões, volume de demandas e
+de demandas e principais dores. Retornamos com uma leitura  principais desafios. Direcionamos o contato ao responsável
+técnica.                                                    técnico adequado e alinhamos os próximos passos.
+
+Sai a promessa de “leitura técnica” de retorno e entra o que de fato acontece: o contato é direcionado ao responsável certo.
+
+aprovar  ajustar  recusar
+
+/ Home                                                                                                                                                     6 alterações
+
+  item 7 Texto de apoio do topo                             PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                          A Manfac integra manutenção predial, obras e reformas para
+                                                            redes e empresas com múltiplas unidades, com SLA definido,
+ A Manfac atende empresas com múltiplas unidades, alto      gestão ativa, evidências de campo e um único ponto de
+ volume de demandas e necessidade de controle,              responsabilidade.
+ padronização e visibilidade em campo — da manutenção
+ recorrente às obras e reformas spot.
+O texto novo diz o que é gerido, para quem, como e com qual benefício, em vez de descrever só o perfil do cliente.
+
+aprovar  ajustar  recusar
+
+ item 11 Como funciona na prática — passo 04           PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                      Status recorrente, cronograma, painéis e relatórios na
+                                                       ferramenta acordada com o cliente, reuniões de
+Status recorrente, cronograma, dashboard, reuniões e   acompanhamento e tratativa de pendências.
+pendências.
+
+“Dashboard” sugeria uma ferramenta própria da Manfac. A nova redação deixa claro que a ferramenta é combinada com o cliente.
+
+aprovar  ajustar  recusar
+
+ item 15 Card “Contrato recorrente”                    PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                      SLA, modelo de equipe definido conforme a operação, rotina
+                                                       de chamados, priorização por criticidade e relatórios
+SLA, equipe dedicada, rotina de chamados e relatórios  gerenciais.
+
+A decidir na aprovação: o texto proposto termina com ponto final e os outros dois itens da mesma lista não têm.
+aprovar  ajustar  recusar
+
+ item 12 Card “Obras e Reformas Corporativas”              PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                          Reformas corporativas de diferentes portes, com
+                                                           planejamento, supervisão e gestão próxima para reduzir
+Reformas corporativas de diferentes portes, com            interferências e preservar a continuidade sempre que
+planejamento, equipe técnica e gestão próxima — sem        tecnicamente viável.
+paralisar sua operação.
+
+Sai a garantia absoluta de “não paralisar”. A mesma promessa continua em outro ponto do site, num item que depende de aprovação da
+operação.
+
+aprovar  ajustar  recusar
+
+item 13 Card “Manutenção Predial”
+
+ESTÁ NO SITE HOJE                                          PROPOSTO PELA AUDITORIA
+
+Rotinas preventivas que eliminam emergências e mantêm seu  Rotinas preventivas que reduzem emergências, reincidências
+prédio funcionando sem interrupções imprevistas.           e paradas não planejadas, mantendo mais previsibilidade
+                                                           para a operação.
+
+“Eliminam emergências” é uma promessa que nenhuma manutenção sustenta. “Reduzem” é verdadeiro e continua forte.
+aprovar  ajustar  recusar
+
+ item 14 Card “Climatização (HVAC)”                      PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                        Climatização corporativa com manutenção planejada,
+                                                         acompanhamento de desempenho e foco em eficiência
+Climatização funcionando, energia dentro do orçamento e  energética.
+manutenção preventiva com técnicos especializados.
+
+“Energia dentro do orçamento” é resultado que depende de tarifa, uso e infraestrutura do cliente — não é entregável da Manfac.
+
+aprovar  ajustar  recusar
+
+/quem-somos Quem somos                                                                                                                                  6 alterações
+
+  item 20 Título principal                               PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                       Engenharia e gestão para operações com múltiplas unidades.
+
+ Engenharia que vai além da obra.
+
+Troca uma frase de efeito por uma que diz o que a empresa faz e para quem.
+aprovar  ajustar  recusar
+
+item 23 Segundo parágrafo institucional
+
+ESTÁ NO SITE HOJE                                            PROPOSTO PELA AUDITORIA
+
+Enquanto o mercado divide engenharia em contratos isolados,  Enquanto muitos contratos fragmentam manutenção, obras e
+a Manfac entrega um modelo único: do diagnóstico à           comunicação, a Manfac integra planejamento, execução e
+conclusão, com um time que conhece cada detalhe da sua       acompanhamento sob uma gestão central, com
+demanda.                                                     responsabilidades definidas por escopo.
+
+Atenção: o parágrafo seguinte continua dizendo “responsabilidade total do início ao fim”, que é justamente o absoluto que este texto abandona.
+A auditoria não propôs texto novo para ele — a página fica com as duas afirmações no ar.
+
+aprovar  ajustar  recusar
+
+ item 24 Pilar “Gestão ativa, não reativa”                   PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                            Acompanhamos indicadores, antecipamos desvios e
+                                                             coordenamos a tratativa de cada demanda dentro do escopo
+Cada obra e chamado fazem parte de um plano maior.           e das responsabilidades acordadas.
+Acompanhamos de perto, ajustamos quando necessário e
+respondemos por tudo.
+
+“Respondemos por tudo” vira responsabilidade delimitada por escopo — o que o contrato de fato prevê.
+aprovar  ajustar  recusar
+
+ item 25 Título da seção “Nossa abordagem”             PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                      Do diagnóstico à entrega, sem lacunas entre planejamento,
+                                                       execução, comunicação e controle.
+Do diagnóstico à entrega — sem buracos no meio do
+caminho.
+
+Mesma ideia, vocabulário corporativo e específico sobre onde as lacunas costumam aparecer.
+
+aprovar  ajustar  recusar
+
+ item 27 Título da seção “Nossa cultura”               PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                      Uma equipe orientada por responsabilidade, registro e
+                                                       resposta.
+Uma equipe que trata sua operação como se fosse dela.
+
+Sai a metáfora afetiva, entram os três comportamentos que o cliente consegue verificar.
+
+aprovar  ajustar  recusar
+
+item 27 Card sobre a foto — “Manfac em campo”
+ESTÁ NO SITE HOJE                                           PROPOSTO PELA AUDITORIA
+
+Presença ativa. Comunicação direta. Entrega garantida.      Presença ativa, comunicação direta e entrega acompanhada
+                                                            por evidências.
+
+“Entrega garantida” é das promessas absolutas que a auditoria pede para remover em todo o site.
+
+aprovar  ajustar  recusar
+
+/servicos Serviços — página principal                                                                                                                        1 alteração
+
+  item 28 Título principal                                  PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                          Manutenção predial, obras, reformas e HVAC sob uma única
+                                                            gestão.
+ Tudo que sua infraestrutura precisa. Uma equipe. Um único
+ ponto de responsabilidade.
+
+O título passa a nomear os quatro serviços — quem chega pela busca entende a oferta na primeira linha.
+
+aprovar  ajustar  recusar
+/servicos/obras-e-reformas Obras e reformas corporativas                                                                   1 alteração
+
+item 37 Card “Demanda spot”
+
+ESTÁ NO SITE HOJE                                        PROPOSTO PELA AUDITORIA
+
+Reformas, expansões e adequações maiores viram proposta  Demandas de maior porte são contratadas por proposta
+técnica avulsa, com escopo, cronograma e orçamento       específica, com escopo, premissas, cronograma, orçamento
+fechados.                                                e processo de alteração formalizados.
+
+Acrescenta premissas e processo de alteração — os dois pontos que mais geram atrito quando o escopo muda no meio da obra.
+
+aprovar  ajustar   recusar
+
+/servicos/novas-construcoes Novas construções                                                                              2 alterações
+
+item 38 Título principal
+
+ESTÁ NO SITE HOJE                                        PROPOSTO PELA AUDITORIA
+Do zero à entrega das chaves — prazo e custo sob controle.  Construção de unidades corporativas e comerciais, do
+                                                            planejamento à entrega técnica.
+
+Atenção: o card desta mesma oferta na Home continua prometendo “cronograma real, custo sob controle”. A auditoria não escreveu texto novo
+para ele, então a promessa antiga sobrevive lá.
+
+aprovar  ajustar  recusar
+
+ item 43 Card “Demanda spot”                                PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                           A implantação é contratada por projeto ou programa de
+                                                            expansão, com escopo, marcos, orçamento e
+A construção em si é sempre um projeto spot: escopo         responsabilidades formalizados.
+fechado, cronograma, orçamento e entrega técnica
+documentada.
+
+Abre espaço para o formato mais comum em rede: programa de expansão com várias unidades, não obra avulsa.
+
+aprovar  ajustar  recusar
+
+/servicos/manutencao-predial Manutenção predial                                                            2 alterações
+ item 48 Card “Contrato recorrente”                        PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                          Contrato: atividades e limites definidos para preventiva,
+                                                           corretiva e emergencial.
+É o coração do contrato mensal: preventiva, corretiva e
+emergencial com SLA, equipe e relatórios.
+
+A decidir na aprovação: o prefixo “Contrato:” repete o rótulo que já aparece impresso acima do card.
+
+aprovar  ajustar  recusar
+
+ item 48 Card “Demanda spot”                               PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                          Spot: melhorias, ampliações, sinistros, danos de terceiros,
+                                                           mau uso, condições preexistentes ou serviços que excedam
+Intervenções fora do escopo contratual — trocas de grande  os limites do contrato, mediante proposta e aprovação.
+porte, adequações — viram proposta técnica específica.
+
+Conferir antes de publicar: a lista de exclusões precisa bater com o que o contrato-padrão da Manfac realmente exclui. O prefixo “Spot:”
+também repete o rótulo do card.
+
+aprovar  ajustar  recusar
+/servicos/hvac Climatização (HVAC)                                                                                                                      1 alteração
+
+  item 51 Texto de apoio do topo                       PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                     Instalação e manutenção preventiva e corretiva de sistemas
+                                                       split, VRF/VRV e centrais, com plano por equipamento,
+ Instalação, manutenção e gestão de sistemas HVAC com  registro de visitas e documentação definida no contrato.
+ plano preventivo dedicado e técnicos especializados.
+
+Nomeia as tecnologias que o decisor procura na busca (split, VRF/VRV, centrais) em vez da sigla genérica.
+
+aprovar  ajustar  recusar
+
+/resultados Case de sucesso                                                                                                                           3 alterações
+
+  item 57 Título principal                             PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                     Como estruturamos a manutenção predial de 400+ unidades
+                                                       no Rio de Janeiro.
+ Gestão que transforma escala em resultado.
+Título de case costuma funcionar melhor descrevendo o caso concreto. O número citado já está publicado em nove pontos do site — a
+metodologia dele continua pendente, num item separado.
+
+aprovar  ajustar  recusar
+
+item 57 Texto de apoio do topo
+
+ESTÁ NO SITE HOJE                                          PROPOSTO PELA AUDITORIA
+
+400+ unidades. Mais de 1.000 ordens de serviço por mês. 7  Um case de padronização, controle e visibilidade para uma
+anos de operação fragmentada transformados em referência   operação com mais de 1.000 ordens de serviço por mês.
+de excelência no Estado do Rio de Janeiro.
+
+Sai “referência de excelência”, que é autoelogio sem prova, e sai o julgamento sobre os 7 anos anteriores do cliente.
+
+aprovar  ajustar  recusar
+
+ item 59 Seção “O desafio”                                 PROPOSTO PELA AUDITORIA
+
+ESTÁ NO SITE HOJE                                          Antes da reestruturação, a operação enfrentava desafios
+                                                           comuns a ambientes com múltiplos fornecedores: baixa
+Quando a Manfac assumiu, a operação estava fragmentada     padronização, comunicação descentralizada e
+entre múltiplos fornecedores sem padronização de           rastreabilidade limitada dos chamados.
+processos, comunicação centralizada ou rastreabilidade. O
+cliente não sabia o que estava acontecendo nas suas
+unidades — e o custo disso aparecia toda semana em forma
+de emergência, retrabalho e insatisfação.
+de e e gê c a, et aba o e sat s ação.
+
+O texto atual expõe o cliente do case (“não sabia o que estava acontecendo”). A nova versão descreve o mesmo cenário sem constranger quem
+precisa autorizar a publicação.
+
+aprovar  ajustar  recusar
+
+/contato Contato                                                                                                                                    1 alteração
+
+  item 63 Parágrafo de abertura                    PROPOSTO PELA AUDITORIA
+
+ ESTÁ NO SITE HOJE                                 Escolha o tipo de demanda para direcionarmos seu contato
+                                                   ao responsável técnico adequado.
+ Escolha o caminho — leva menos de 1 minuto e sua
+ mensagem já chega qualificada.
+
+Este parágrafo fica fora dos três blocos de demanda — eles continuam exatamente como estão.
+
+aprovar  ajustar  recusar
+O que ficou de fora, e por quê
+
+Nenhum item foi descartado por discordância de conteúdo. Todos caíram por um
+destes quatro motivos — e a maior parte volta assim que a Manfac responder as
+perguntas da última coluna.
+
+MOTIVO       ITENS O QUE DESTRAVA
+
+Números sem  9         Para 400+ unidades, +1.000 OS/mês, 100% concluídas, +R$800 mil/mês e 18 meses: qual período, qual
+metodologia
+                       denominador, qual sistema gerou o dado e autorização do cliente do case.
+
+Promessas a  13 Trocar “SLA garantido”, “energia dentro do orçamento”, “sem paralisar a operação” e “entrega garantida”
+aprovar               por compromissos condicionados ao escopo — a operação precisa dizer o que assina embaixo.
+
+Equipe própria ou 6    O site afirma equipe própria; os materiais internos citam parceiros. A resposta muda o texto em pelo
+parceiros              menos seis pontos, então nenhum foi mexido até a definição.
+
+Exige mudar o site 12  Botão diferente por página, nota de rodapé nos indicadores, seção de perguntas frequentes, campos
+                       novos no formulário, rodapé com CNPJ e política de privacidade. Vira uma etapa de desenvolvimento,
+                       não de texto.
+
+Dois pedidos já estavam atendidos
+
+  ITEM 6 — a auditoria pede para preservar o título principal da Home. Ele está lá, intacto.
+  ITEM 4 (PARTE) — descreve o rodapé como “apenas logomarca, copyright e links básicos”. Desde 20 de agosto ele já traz
+  telefone, e-mail, cidade e a lista de serviços. Falta só o que depende de dado cadastral.
+
