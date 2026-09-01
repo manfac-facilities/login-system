@@ -1262,7 +1262,11 @@
     {k:"analista", rot:"Yuri Nascimento · analista de obras",   ini:"YN"},
     {k:"admin",    rot:"José Guilherme · administrador do hub", ini:"JG"}
   ];
-  var papel = "analista";
+  /* O mockup abre como administrador de proposito: quem julga esta pagina e o
+     dono, que e administrador, e no papel de analista a aba "Painel do dia" nao
+     existe - a aba sumia e parecia que a tela tinha sido removida do projeto.
+     Trocar para analista continua mostrando exatamente o que o Yuri ve. */
+  var papel = "admin";
 
   /* Preenchimento do diário, por analista. Os dez quadrados são os dez
      últimos dias úteis — o último é hoje. */
