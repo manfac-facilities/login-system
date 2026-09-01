@@ -1,0 +1,153 @@
+SISTEMA DE CONTROLE DE OBRAS - DECISOES B E E
+Para aprovacao do Jose Guilherme
+01/09/2026
+
+------------------------------------------------------------
+DECISAO B - COMO O ANALISTA RESPONDE O DIARIO
+------------------------------------------------------------
+
+Voce ja decidiu quem responde o diario: o Yuri, na tela do
+sistema. Falta so decidir o formato dessa tela, e a primeira
+vez que eu perguntei isso voce nao entendeu a pergunta. Vou
+descrever a cena.
+
+O Yuri chega de manha, abre o sistema, e tem 11 obras esperando
+resposta dele. Existem duas formas de ele ver isso na tela.
+
+FORMATO 1 - UMA OBRA DE CADA VEZ
+
+   Ele ve uma obra grande, sozinha na tela, com as perguntas
+   dela: andou? faltou material? qual o motivo, se parou?
+   Responde, aperta um botao, e o sistema mostra a proxima
+   obra. Ele vai descendo assim ate zerar as 11.
+
+   A favor: e mais dificil pular uma pergunta sem perceber,
+   porque cada obra ocupa a tela inteira sozinha. Fica sempre
+   claro quantas ainda faltam.
+
+   Contra: pra ver as 11 obras juntas, ele precisa ir passando
+   uma por uma - nao da pra olhar todas de uma vez.
+
+
+FORMATO 2 - TODAS AS OBRAS NUMA LISTA UNICA
+
+   Ele ve as 11 obras de uma vez, uma embaixo da outra, cada
+   obra numa linha - parecido com a planilha que ele ja usa
+   hoje. Responde direto na linha da obra e desce pra linha de
+   baixo, sem trocar de tela.
+
+   A favor: ele enxerga as 11 obras juntas desde o comeco, e
+   pode responder na ordem que quiser, nao so a ordem que o
+   sistema escolher.
+
+   Contra: com muitas obras na tela ao mesmo tempo, e mais
+   facil pular uma sem perceber - principalmente respondendo
+   pelo celular, com a tela pequena.
+
+
+Voce nao precisa escolher so de imaginar. As duas formas ja
+estao construidas no mockup, com um botao pra trocar entre
+elas - o mesmo jeito que funcionou na decisao sobre tabela e
+Kanban. Entre no mockup, responda as 11 obras nos dois formatos,
+e decida com a mao na tela, nao no texto.
+
+De onde saiu: essa decisao nao foi discutida na reuniao nesse
+nivel de detalhe. E uma decisao de tela, sobre a pergunta que eu
+fiz depois e que voce nao entendeu da primeira vez.
+
+
+------------------------------------------------------------
+DECISAO E - O QUE O AGENTE PERGUNTA AS 9H DA MANHA
+------------------------------------------------------------
+
+Voce decidiu que o agente de inteligencia artificial vai
+perguntar aos analistas todo dia as 9h da manha. Isso abriu um
+problema que ainda nao foi decidido: as 9h da manha o dia de
+trabalho praticamente nao comecou. Perguntar "a obra andou
+hoje?" as 9h nao faz sentido - ainda nao deu tempo de andar.
+
+Sobram duas perguntas diferentes, que servem pra coisas
+diferentes. E uma terceira opcao, que junta as duas.
+
+OPCAO 1 - PERGUNTAR SOBRE ONTEM
+
+   O agente pergunta: "a obra andou ontem? faltou alguma coisa?
+   por que parou?"
+
+   E o registro do que ja foi feito. Foi exatamente o que voce
+   pediu na reuniao (minuto 37): "eu preciso saber o que foi
+   produzido naquele dia."
+
+   A favor: fecha o dia anterior direitinho, com o motivo
+   registrado, todo santo dia.
+
+   Contra: nao ajuda a resolver nada do dia que esta comecando.
+   Se faltar material hoje, o sistema so vai saber amanha as 9h
+   - o dia de hoje ja era.
+
+
+OPCAO 2 - PERGUNTAR SOBRE HOJE
+
+   O agente pergunta: "a obra vai andar hoje? tem material? tem
+   equipe?"
+
+   Pega o problema logo de manha, com o dia inteiro pela frente
+   pra resolver. E a historia que voce mesmo contou na reuniao
+   (minuto 48), do piao que descobre no meio do servico que
+   faltou tinta, sai pra comprar, e quando volta falta outra
+   coisa - e o dia se perde. Perguntando as 9h se tem material,
+   esse buraco aparece antes de comecar o servico, nao no meio
+   dele.
+
+   A favor: da tempo real de resolver o problema no mesmo dia.
+
+   Contra: nao registra o que realmente aconteceu ontem - fica
+   sem esse historico.
+
+
+OPCAO 3 - PERGUNTAR AS DUAS COISAS NA MESMA CONVERSA DAS 9H
+
+   O agente fecha ontem e abre hoje na mesma conversa: "a obra
+   andou ontem? faltou algo? por que parou? e hoje, vai andar?
+   tem material e equipe?"
+
+   E a opcao mais completa: nao perde nem o registro do que
+   passou, nem o alerta do que vem pela frente. Tambem e a que
+   mais toma tempo do analista, porque ele responde o dobro de
+   perguntas, todo santo dia, pra cada obra.
+
+
+RECOMENDACAO: OPCAO 3.
+
+Motivo em uma linha: os dois problemas sao reais e voce ja
+contou os dois - a obra que ninguem via parada (minuto 42, os
+R$ 100 mil da Pacheco) e o dia perdido por falta de material
+(minuto 48) - e como o contato as 9h ja vai acontecer de
+qualquer jeito, juntar as duas perguntas resolve os dois sem
+precisar de um segundo horario de contato com o analista.
+
+De onde saiu: o problema em si (a pergunta nao fechar as 9h) eu
+que levantei, a partir do horario que voce definiu na resposta
+anterior - nao foi discutido na reuniao porque o horario so
+veio depois. A opcao 1 vem do que voce disse no minuto 37. A
+opcao 2 vem da historia do piao e da tinta, minuto 48, e da sua
+fala no minuto 49: "seria importante a gente, todo dia ali...
+falar todo dia o que ta sendo produzido." A opcao 3 e nova, junta
+as duas, nao foi discutida na reuniao.
+
+
+------------------------------------------------------------
+RESPOSTA DO JOSE
+------------------------------------------------------------
+
+Decisao B - formato escolhido: ______
+
+Decisao E - opcao escolhida: ______
+
+Observacoes:
+
+_______________________________________________________________
+
+_______________________________________________________________
+
+_______________________________________________________________
