@@ -117,6 +117,20 @@ OPCAO 3 - PERGUNTAR AS DUAS COISAS NA MESMA CONVERSA DAS 9H
    perguntas, todo santo dia, pra cada obra.
 
 
+O QUE VOCE VAI VER NO MOCKUP
+
+   A tela esta montada hoje na OPCAO 1, olhando pra tras. Ela
+   abre dizendo "terca, 1 de setembro, 9h - voce esta
+   registrando o dia de ontem, segunda 31 de agosto", e todas
+   as perguntas falam de 31/08. Foi assim pra data na tela nao
+   mentir.
+
+   A OPCAO 3 nao muda essa tela: ela acrescenta uma pergunta no
+   fim da mesma conversa ("e hoje, vai andar? tem material?").
+   Entao da pra voce olhar o mockup como esta e mesmo assim
+   escolher a 3 - e so somar a pergunta do fim.
+
+
 RECOMENDACAO: OPCAO 3.
 
 Motivo em uma linha: os dois problemas sao reais e voce ja

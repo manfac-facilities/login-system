@@ -193,14 +193,14 @@
   }
   .obs-in::placeholder{color:var(--ink-faint)}
 
-  /* Bloco de escalonamento (3º dia sem andar) */
-  .escala{
-    border:1px solid rgba(255,77,109,.4);background:var(--crit-soft);
-    border-radius:var(--r);padding:11px 13px;display:flex;flex-direction:column;gap:9px;
+  /* Contador de dias parados — informa, nunca trava o salvamento */
+  .contador{
+    display:flex;gap:7px 16px;flex-wrap:wrap;align-items:baseline;
+    border:1px solid rgba(244,183,63,.3);background:var(--warn-soft);
+    border-radius:var(--r-sm);padding:8px 11px;font-size:12px;color:var(--ink-dim);
   }
-  .escala-top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
-  .escala-top strong{color:var(--crit);font-size:12.5px}
-  .escala-top span{color:var(--ink-dim);font-size:12px}
+  .contador b{font-family:var(--mono);color:var(--warn);font-size:13.5px;font-weight:700}
+  .contador .obs{color:var(--ink-faint);font-size:11.5px;flex:1 1 220px}
 
   .acoes{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:2px}
   .btn{
@@ -339,6 +339,54 @@
   .decisao .opt{font-size:12.5px;color:var(--ink-dim)}
   .decisao .opt b{color:var(--ink)}
   .decisao .opt em{color:var(--accent);font-style:normal;font-weight:600}
+
+  /* Decisão já respondida: vira registro, não pergunta. Cor diferente
+     para o cliente enxergar de longe o que ainda espera resposta dele. */
+  .decisao.fechada{border-color:rgba(53,201,138,.32);background:rgba(53,201,138,.045)}
+  .decisao.fechada .tag{color:var(--ok);border-color:rgba(53,201,138,.42);background:rgba(53,201,138,.1)}
+  .decisao.fechada .opt em{color:var(--ok)}
+  .decisao .resp{
+    font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    color:var(--ok);display:block;margin-bottom:4px;
+  }
+
+  /* Linha discreta sobre o caminho até o agente de IA */
+  .nota-caminho{
+    margin:0 0 16px;padding-left:10px;border-left:2px solid var(--line);
+    color:var(--ink-faint);font-size:11.5px;line-height:1.55;max-width:78ch;
+  }
+  .nota-caminho b{color:var(--ink-dim);font-weight:600}
+
+  /* ---------- Forma 2 do diário: lista única, formato planilha ---------- */
+  .forma-barra{
+    display:flex;gap:12px 16px;align-items:center;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:10px 14px;margin-bottom:14px;
+  }
+  .forma-barra .expl{font-size:12px;color:var(--ink-faint);flex:1 1 240px}
+  .planilha-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table.planilha{min-width:1000px}
+  table.planilha tbody td{vertical-align:top;padding:10px 11px}
+  table.planilha tbody tr.falta td{background:rgba(244,183,63,.06)}
+  table.planilha tbody tr.pronta td{background:rgba(53,201,138,.05)}
+  .pl-loja{background:none;border:0;padding:0;font-weight:650;font-size:13px;color:var(--ink);text-align:left}
+  .pl-loja:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .pl-os{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);display:block}
+  .pl-sub{font-size:11.5px;color:var(--ink-faint);margin-top:3px}
+  .planilha .chips{gap:5px}
+  .planilha .chip{padding:5px 11px;font-size:12px}
+  .planilha select{
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);
+    padding:6px 8px;font-size:12px;color:var(--ink);max-width:190px;
+  }
+  .planilha select:disabled{opacity:.4;cursor:not-allowed}
+  .planilha select.falta{border-color:rgba(244,183,63,.6)}
+  .planilha .obs-in{width:100%;min-width:150px;font-size:12px;padding:6px 8px}
+  .pl-aviso{display:block;font-size:11px;color:var(--warn);margin-top:5px}
+  .planilha-rodape{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);
+  }
 
   /* ---------- Campos de retorno ---------- */
   .fb{
@@ -552,7 +600,18 @@
 (function(){
   "use strict";
 
-  var HOJE = new Date(2026, 7, 31); // 31/08/2026
+  /* DECISÃO E — padrão adotado: o diário olha para trás.
+     O agente de IA vai perguntar às 9h da manhã, e às 9h ninguém sabe se a
+     obra vai andar: o dia mal começou. Então o dia de referência do diário é
+     SEMPRE o dia anterior. A tela é aberta na terça de manhã e registra a
+     segunda. HOJE continua sendo o dia de referência (31/08) porque todo
+     número da tela — dias desde a aprovação, dias parados — é contado até o
+     dia que está sendo registrado. */
+  var HOJE = new Date(2026, 7, 31);     // 31/08/2026 — o dia REGISTRADO
+  var DIA_REF = "2026-08-31";
+  var DIA_REF_CURTO = "31/08";
+  var DIA_REF_LONGO = "segunda-feira, 31 de agosto";
+  var AGORA_LONGO = "Terça-feira, 1º de setembro de 2026, 9h";
 
   function diasDesde(iso){
     if(!iso) return null;
@@ -590,8 +649,8 @@
   };
   var BLOQUEIOS = ["Clima","Cliente / loja","Disponibilidade de equipe","Contratação de prestador","Falta de material","Sem bloqueio"];
   var ITENS = ["Não faltou","Material","Ferramenta","Equipe","Documento / ART","Outro"];
-  var RESPONSAVEIS = ["Yuri","Compras","Financeiro","Cliente DPSP","Diretoria"];
-  var PRAZOS = ["Hoje","Amanhã","Em 2 dias"];
+  /* Não existe mais lista de "quem resolve / até quando": a DECISÃO C tirou a
+     trava. O que sobrou obrigatório é o motivo. */
 
   /* ---------------------------------------------------------------
      Base de obras — dados reais da planilha DPSP Rev.02
@@ -1087,6 +1146,7 @@
   var rascunho = {};
   var tela = "diario";
   var estadoTela = "normal";     // normal | vazio | carregando | erro | sem-permissao
+  var formaDiario = "cartoes";   // DECISÃO B: cartoes | planilha
   var vis = "tabela";
   var fPcm = "todos", fEtapa = "todas";
   var ordem = {col:"dias", dir:-1};
@@ -1125,7 +1185,8 @@
      --------------------------------------------------------------- */
   var SECOES_FB = [
     {id:"tela1", rotulo:"a tela Diário do dia"},
-    {id:"decB",  rotulo:"a decisão B"},
+    {id:"decB",  rotulo:"a decisão B — qual das duas formas"},
+    {id:"decE",  rotulo:"a decisão E — o dia que a pergunta cobre"},
     {id:"decC",  rotulo:"a decisão C"},
     {id:"decA",  rotulo:"a decisão A"},
     {id:"tela2", rotulo:"a tela Base de obras"},
@@ -1165,6 +1226,15 @@
     h += '<span class="fb-st" data-fb-st="' + sec.id + '"></span>';
     h += '</section>';
     return h;
+  }
+
+  /* Referência por id, não por posição: acrescentar uma seção no meio da
+     lista não pode trocar o campo de retorno de lugar. */
+  function fbPor(id){
+    for(var i = 0; i < SECOES_FB.length; i++){
+      if(SECOES_FB[i].id === id) return fbHTML(SECOES_FB[i]);
+    }
+    return "";
   }
 
   function mostrarCamposFb(){
@@ -1273,28 +1343,61 @@
     /* ---- Tela 1 ---- */
     h += '<section id="tela-diario">';
     h +=   '<div class="page-head"><div><h1>Diário do dia</h1>' +
-             '<p>Segunda-feira, 31 de agosto de 2026 · suas obras em aberto</p></div>' +
+             '<p>' + AGORA_LONGO + ' · você está registrando o dia de ontem, <b>' + DIA_REF_LONGO + '</b></p></div>' +
              '<div class="demo"><label class="lbl" for="sel-estado">ver estados da tela</label>' +
              '<select id="sel-estado">' +
              ESTADOS.map(function(e){ return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join("") +
              '</select></div></div>';
+    h +=   '<p class="nota-caminho">Hoje quem responde estas perguntas é <b>você, aqui na tela</b>. ' +
+             'Numa segunda etapa, um agente de IA faz as mesmas perguntas aos analistas todo dia às 9h da manhã — ' +
+             'a tela continua sendo onde a resposta fica guardada.</p>';
     h +=   '<div id="aviso-def"></div>';
+
+    /* DECISÃO B — as duas formas construídas, com seletor. Ele escolhe vendo. */
+    h +=   '<div class="forma-barra">';
+    h +=     '<span class="lbl">Como responder</span>';
+    h +=     '<div class="seg" role="group" aria-label="Formato do diário">' +
+               '<button id="btn-cartoes" aria-pressed="true">Uma obra por vez</button>' +
+               '<button id="btn-planilha" aria-pressed="false">Lista única</button></div>';
+    h +=     '<span class="expl" id="forma-expl"></span>';
+    h +=   '</div>';
+
     h +=   '<div id="diario-corpo"></div>';
-    h +=   fbHTML(SECOES_FB[0]);
+    h +=   fbPor("tela1");
 
     h +=   '<div class="decisao"><span class="tag">DECISÃO B</span><div>';
-    h +=     '<p>Responder <b>uma obra de cada vez</b>, como está nesta tela, ou <b>uma linha por obra numa lista única</b>, com tudo aberto e um único botão salvar no fim?</p>';
-    h +=     '<p class="opt"><em>O que está na tela:</em> <b>fila de obras.</b> Cada obra é um bloco; ao salvar, ela sai da fila e o contador cai. Você vê a fila esvaziando e sabe exatamente onde parou se for interrompido — e cabe na tela do celular.</p>';
-    h +=     '<p class="opt"><em>Alternativa:</em> <b>lista única.</b> As 11 obras como linhas de uma planilha, as respostas em botões dentro da própria linha, um "salvar tudo" no fim. Mais rápido no computador para quem já sabe as respostas de cor; sem retorno por obra, e apertado no celular.</p>';
+    h +=     '<p>As duas formas de responder o diário estão prontas aí em cima. <b>Experimente as duas e diga qual fica.</b></p>';
+    h +=     '<p class="opt"><em>Uma obra por vez:</em> cada obra é um bloco com as perguntas dentro. Ao salvar, ela some da fila e o contador cai — dá para parar no meio e saber onde parou. É a que funciona no celular.</p>';
+    h +=     '<p class="opt"><em>Lista única:</em> uma linha por obra, tudo na mesma tela, do jeito de uma planilha. Responde sem sair da linha e salva tudo de uma vez no fim. É mais rápido no computador para quem já sabe as respostas de cor.</p>';
+    h +=     '<p class="opt">Muda só o jeito de responder: as perguntas, o motivo obrigatório e o que fica gravado são os mesmos nas duas.</p>';
     h +=   '</div></div>';
-    h +=   fbHTML(SECOES_FB[1]);
+    h +=   fbPor("decB");
 
-    h +=   '<div class="decisao"><span class="tag">DECISÃO C</span><div>';
-    h +=     '<p>Quando a resposta é <b>"não andou" pelo terceiro dia seguido</b>, o que o sistema deve fazer?</p>';
-    h +=     '<p class="opt"><em>O que está na tela:</em> <b>não deixa salvar sem uma próxima ação.</b> Aparece um bloco vermelho pedindo quem resolve e até quando. A obra fica marcada como escalada na base de obras. Responder "não andou" deixa de ser a saída mais barata — teste no DP PRACA DO O, no DP BAIRRO DE FATIMA e no DP BARRA DE SAO JOAO.</p>';
-    h +=     '<p class="opt"><em>Alternativa:</em> <b>avisar sem travar.</b> O Yuri salva normalmente e o sistema dispara sozinho um aviso para você e para o Eduardo. Não atrapalha o dia dele, mas ninguém fica dono do problema e a cobrança volta para a diretoria.</p>';
+    /* DECISÃO E — nasceu da resposta da D: o agente pergunta às 9h. */
+    h +=   '<div class="decisao"><span class="tag">DECISÃO E</span><div>';
+    h +=     '<p>Se o agente pergunta <b>às 9h da manhã</b>, ele não tem como perguntar se a obra andou hoje: às 9h a equipe mal chegou na loja. ' +
+               'Ou a pergunta é sobre <b>o dia que passou</b>, ou é sobre <b>o dia que começa</b>. As duas dão telas diferentes.</p>';
+    h +=     '<p class="opt"><em>Adotado na tela — olhar para trás:</em> "a obra andou ontem? faltou alguma coisa? por que parou?". ' +
+               'É registro do que foi feito, ninguém precisa adivinhar nada, e é o histórico que você pediu na reunião. ' +
+               'Em troca, a falta de material do dia só aparece no dia seguinte.</p>';
+    h +=     '<p class="opt"><em>Alternativa — olhar para frente:</em> "a obra vai andar hoje? tem material e equipe na loja?". ' +
+               'Pega a falta de material às 9h, com o dia inteiro pela frente para resolver. ' +
+               'Em troca, a resposta é uma previsão: se a obra parar às 14h, ninguém registrou.</p>';
+    h +=     '<p class="opt">Dá para ter as duas depois — uma pergunta curta de manhã e o fechamento no dia seguinte. ' +
+               'Mas a primeira versão precisa começar por uma. <b>Qual delas?</b></p>';
     h +=   '</div></div>';
-    h +=   fbHTML(SECOES_FB[2]);
+    h +=   fbPor("decE");
+
+    h +=   '<div class="decisao fechada"><span class="tag">DECISÃO C</span><div>';
+    h +=     '<p><span class="resp">Resolvida — você respondeu</span>Marcar "não andou" todos os dias continua liberado. ' +
+               '<b>O sistema não trava mais o salvamento</b> no terceiro dia seguido, e não exige mais dizer quem resolve e até quando.</p>';
+    h +=     '<p class="opt"><em>Continua obrigatório:</em> o <b>motivo</b>. "Não andou" sem motivo não salva — é ele que separa "parou por chuva" de "parou e ninguém sabe por quê".</p>';
+    h +=     '<p class="opt"><em>Continua à vista:</em> os contadores de <b>dias seguidos sem andar</b> e de <b>dias no mesmo bloqueio</b> seguem contando na tela e na base. ' +
+               'Ninguém é barrado, mas o número não some — teste no DP PRACA DO O e no DP BAIRRO DE FATIMA.</p>';
+    h +=     '<p class="opt"><em>O que se ganha:</em> registro todos os dias, sem ninguém deixar de responder para fugir da trava. ' +
+               '<em>O que se abre mão:</em> ninguém é obrigado a virar dono do problema na hora — a cobrança passa a ser do dashboard e do agente.</p>';
+    h +=   '</div></div>';
+    h +=   fbPor("decC");
     h += '</section>';
 
     /* ---- Tela 2 ---- */
@@ -1310,28 +1413,29 @@
     h +=     '<div class="filtro"><label class="lbl" for="f-etapa">Etapa da obra</label><select id="f-etapa"></select></div>';
     h +=     '<span class="conta"><b id="conta">0</b> obras nesta visão · base completa: <b>187</b></span>';
     h +=   '</div>';
-    h +=   '<div class="decisao"><span class="tag">DECISÃO A</span><div>';
-    h +=     '<p>Para o dia a dia da base, você prefere <b>tabela</b> ou <b>Kanban</b>? Troque no botão acima — são os mesmos dados nos dois formatos.</p>';
+    h +=   '<div class="decisao fechada"><span class="tag">DECISÃO A</span><div>';
+    h +=     '<p><span class="resp">Resolvida — você respondeu</span><b>As duas ficam.</b> O botão acima continua trocando entre tabela e Kanban, com os mesmos dados nos dois formatos. Cada um serve para uma coisa:</p>';
     h +=     '<p class="opt"><em>Tabela:</em> parecida com a planilha de hoje, mostra todas as colunas de uma vez e ordena por qualquer uma delas (clique no cabeçalho). Boa para bater linha a linha e para achar quem está parado há mais tempo.</p>';
     h +=     '<p class="opt"><em>Kanban:</em> uma coluna por etapa da obra. Mostra menos informação por obra, mas dá a leitura de um relance de quanta coisa está parada. Boa para reunião.</p>';
     h +=   '</div></div>';
-    h +=   fbHTML(SECOES_FB[3]);
+    h +=   fbPor("decA");
     h +=   '<div id="vis-tabela"><div class="tabela-wrap"><table>' +
              '<thead><tr id="thead-row"></tr></thead><tbody id="tbody"></tbody></table></div></div>';
     h +=   '<div id="vis-kanban" hidden><div class="kanban-wrap"><div class="kanban" id="kanban"></div></div></div>';
-    h +=   fbHTML(SECOES_FB[4]);
+    h +=   fbPor("tela2");
     h += '</section>';
 
     /* ---- Tela 3 ---- */
     h += '<section id="tela-ficha" hidden>';
     h +=   '<button class="voltar" id="voltar">&#8592; Voltar para a base de obras</button>';
     h +=   '<div id="ficha"></div>';
-    h +=   fbHTML(SECOES_FB[5]);
+    h +=   fbPor("tela3");
     h += '</section>';
 
     h += '</main>';
 
-    h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · 31/08/2026. ' +
+    h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · versão de 01/09/2026, ' +
+         'com as respostas A, C e D já aplicadas. ' +
          'Dados reais da planilha DPSP Rev.02 (11 obras do Yuri, obras de outros responsáveis, obras recém-chegadas do Field e obras finalizadas). ' +
          'Nenhuma resposta do diário é gravada: só o seu retorno nos campos abaixo de cada seção.</footer>';
     return h;
@@ -1370,8 +1474,24 @@
     }).join("");
   }
 
+  function rasc(o){
+    return rascunho[o.id] || (rascunho[o.id] = {andou:null, item:null, motivo:null, obs:"", obsAberta:false});
+  }
+
+  /* DECISÃO C — o contador aparece, mas não trava nada. Ele existe para o
+     número não sumir da vista de quem responde; a cobrança fica com o
+     dashboard e com o agente. */
+  function contadorHTML(o){
+    var partes = [];
+    if(o.naoAndouSeguidos >= 2) partes.push('<span><b>' + o.naoAndouSeguidos + '</b> dias seguidos sem andar</span>');
+    if(travado(o)) partes.push('<span><b>' + o.bloqueadaDias + '</b> dias no mesmo bloqueio · ' + esc(o.bloqueio) + '</span>');
+    if(!partes.length) return "";
+    return '<div class="contador">' + partes.join("") +
+           '<span class="obs">Registre e siga: o contador continua correndo até a obra andar.</span></div>';
+  }
+
   function cardHTML(o){
-    var d = rascunho[o.id] || (rascunho[o.id] = {andou:null, item:null, motivo:null, resp:null, prazo:null, obs:"", obsAberta:false});
+    var d = rasc(o);
     var h = "";
     h += '<article class="obra" data-id="' + o.id + '" style="--sev:' + sev(o) + '">';
     h +=   '<div class="obra-head">';
@@ -1390,21 +1510,14 @@
       h += '<div class="pend"><b>Pendência:</b> ' + esc(o.pendencia) +
            (o.pendResp ? ' · responsável <b>' + esc(o.pendResp) + '</b>' : "") + '</div>';
     }
+    h +=   contadorHTML(o);
     h +=   '<div class="perguntas">';
-    h +=     '<div class="q"><span class="lbl">Andou hoje?</span><div class="chips">' +
+    h +=     '<div class="q"><span class="lbl">Andou em ' + DIA_REF_CURTO + '?</span><div class="chips">' +
                chipsHTML("andou", ["Sim","Não"], d.andou, true) + '</div></div>';
     h +=     '<div class="q"><span class="lbl">Faltou algum item?</span><div class="chips">' +
                chipsHTML("item", ITENS, d.item) + '</div></div>';
     h +=     '<div class="q q-motivo" hidden><span class="lbl">Por que não andou?</span><div class="chips">' +
                chipsHTML("motivo", BLOQUEIOS, d.motivo) + '</div></div>';
-    h +=     '<div class="escala" hidden>';
-    h +=       '<div class="escala-top"><strong>' + (o.naoAndouSeguidos + 1) + 'º dia seguido sem andar.</strong>' +
-                 '<span>Para salvar, diga quem resolve e até quando. A obra entra na lista de escaladas.</span></div>';
-    h +=       '<div class="q"><span class="lbl">Quem resolve</span><div class="chips">' +
-                 chipsHTML("resp", RESPONSAVEIS, d.resp) + '</div></div>';
-    h +=       '<div class="q"><span class="lbl">Até quando</span><div class="chips">' +
-                 chipsHTML("prazo", PRAZOS, d.prazo) + '</div></div>';
-    h +=     '</div>';
     h +=     '<div class="obs-linha"><button type="button" class="obs-btn">+ observação</button>' +
                '<input class="obs-in" type="text" maxlength="120" placeholder="Uma linha, se quiser" hidden value=""></div>';
     h +=     '<div class="acoes"><button type="button" class="btn salvar" disabled>Salvar e sair da fila</button>' +
@@ -1414,42 +1527,28 @@
     return h;
   }
 
-  function precisaEscalar(o, d){
-    return d.andou === "Não" && o.naoAndouSeguidos >= 2;
-  }
+  /* Uma única regra barra o salvamento, e é a que o cliente pediu: "não
+     andou" tem que vir com motivo. Nada mais trava. */
   function validar(o, d){
-    if(!d.andou) return "Responda se a obra andou hoje.";
+    if(!d.andou) return "Responda se a obra andou em " + DIA_REF_CURTO + ".";
     if(d.andou === "Não" && !d.motivo) return "Diga por que não andou.";
-    if(precisaEscalar(o, d) && (!d.resp || !d.prazo)) return "Terceiro dia sem andar: escolha quem resolve e até quando.";
     return null;
   }
 
   /* O texto ao lado do botão descreve SEMPRE o que o botão vai fazer de
-     verdade — nos dois caminhos. Enquanto falta resposta, diz o que falta;
-     quando está pronto, diz o que acontece ao salvar. */
+     verdade. Enquanto falta resposta, diz o que falta; quando está pronto,
+     diz o que acontece ao salvar. */
   function textoAcao(o, d){
-    if(precisaEscalar(o, d) && d.resp && d.prazo){
-      return "Ao salvar: sai da fila, o dia fica registrado e a obra entra na lista de escaladas — " +
-             d.resp + " resolve até " + d.prazo.toLowerCase() + ".";
-    }
-    if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e o dia de hoje entra na ficha dela como dia que andou.";
-    if(d.andou === "Não") return "Ao salvar: a obra sai da fila e o dia de hoje entra na ficha dela como dia parado por " +
-                                 String(d.motivo).toLowerCase() + ".";
+    if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e " + DIA_REF_CURTO +
+                                 " entra na ficha dela como dia que andou.";
+    if(d.andou === "Não") return "Ao salvar: a obra sai da fila e " + DIA_REF_CURTO +
+                                 " entra na ficha dela como dia parado por " + String(d.motivo).toLowerCase() + ".";
     return "";
   }
 
   function atualizarCard(card){
     var o = PORID[card.dataset.id], d = rascunho[o.id];
-    var naoAndou = d.andou === "Não";
-    card.querySelector(".q-motivo").hidden = !naoAndou;
-    card.querySelector(".escala").hidden = !precisaEscalar(o, d);
-
-    var av = card.querySelector(".escala-top span");
-    if(av){
-      av.textContent = (d.resp && d.prazo)
-        ? "Quem resolve e até quando já estão definidos. Ao salvar, a obra entra na lista de escaladas."
-        : "Para salvar, diga quem resolve e até quando. A obra entra na lista de escaladas.";
-    }
+    card.querySelector(".q-motivo").hidden = d.andou !== "Não";
 
     var erro = validar(o, d);
     var btn = card.querySelector(".salvar");
@@ -1459,18 +1558,19 @@
     hint.className = "hint" + (erro && d.andou ? " alerta" : "");
   }
 
-  function salvar(o, card){
-    var d = rascunho[o.id];
-    if(validar(o, d)) return;
-    respostas[o.id] = {
-      andou:d.andou, item:d.item || "Não faltou", motivo:d.motivo,
-      resp:d.resp, prazo:d.prazo, obs:d.obs
-    };
+  function gravar(o){
+    var d = rasc(o);
+    if(validar(o, d)) return false;
+    respostas[o.id] = {andou:d.andou, item:d.item || "Não faltou", motivo:d.motivo, obs:d.obs};
     o.diario = o.diario.concat([{
-      data:"2026-08-31", andou:d.andou === "Sim", motivo:d.motivo,
-      item:d.item || "Não faltou", obs:d.obs,
-      escalada: d.resp ? (d.resp + " até " + d.prazo.toLowerCase()) : null
+      data:DIA_REF, andou:d.andou === "Sim", motivo:d.motivo,
+      item:d.item || "Não faltou", obs:d.obs
     }]);
+    return true;
+  }
+
+  function salvar(o, card){
+    if(!gravar(o)) return;
     card.classList.add("saindo");
     var reduz = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setTimeout(renderDiario, reduz ? 0 : 240);
@@ -1479,14 +1579,15 @@
   function desfazer(id){
     var o = PORID[id];
     delete respostas[id];
-    o.diario = o.diario.filter(function(x){ return x.data !== "2026-08-31"; });
+    o.diario = o.diario.filter(function(x){ return x.data !== DIA_REF; });
     renderDiario();
   }
 
   function barraHTML(pendentes, feitas){
     var h = '<div class="fila-status">';
     h += '<span class="big num" style="' + (pendentes ? "" : "color:var(--ok)") + '">' + pendentes + '</span>';
-    h += '<span class="fila-txt">' + (pendentes === 1 ? "obra para responder hoje" : "obras para responder hoje") + '</span>';
+    h += '<span class="fila-txt">' + (pendentes === 1 ? "obra para responder sobre " : "obras para responder sobre ") +
+         DIA_REF_CURTO + '</span>';
     h += '<span class="barra" aria-hidden="true"><i style="width:' + (feitas / FILA.length * 100) + '%' +
          (pendentes ? "" : ";background:var(--ok)") + '"></i></span>';
     h += '<span class="fila-txt num">' + feitas + ' de ' + FILA.length + ' respondidas</span>';
@@ -1496,26 +1597,25 @@
 
   function feitasHTML(feitas){
     if(!feitas.length) return "";
-    return '<div class="feitas"><h2>Respondidas hoje</h2>' + feitas.map(function(o){
+    return '<div class="feitas"><h2>Já respondidas</h2>' + feitas.map(function(o){
       var r = respostas[o.id];
-      var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou · " + r.motivo;
+      var resumo = r.andou === "Sim" ? "Andou em " + DIA_REF_CURTO : "Não andou · " + r.motivo;
       if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
-      if(r.resp) resumo += " · escalada: " + r.resp + " até " + r.prazo.toLowerCase();
       return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
              '<span class="rs">' + esc(resumo) + '</span>' +
              '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button></div>';
     }).join("") + '</div>';
   }
 
-  function sucessoHTML(total, andaram, naoAndaram, escaladas){
+  function sucessoHTML(total, andaram, naoAndaram, paradasSeguidas){
     var h = '<div class="sucesso">';
     h += '<div class="mark" aria-hidden="true">&#10003;</div>';
-    h += '<h2>Diário de hoje fechado</h2>';
+    h += '<h2>Diário de ' + DIA_REF_CURTO + ' fechado</h2>';
     h += '<p>As ' + total + ' obras foram respondidas. A base de obras já está atualizada e ' +
          'quem precisa cobrar alguma coisa hoje sabe o que é.</p>';
     h += '<div class="placar"><span><b>' + andaram + '</b> andaram</span>' +
          '<span><b>' + naoAndaram + '</b> não andaram</span>' +
-         '<span><b>' + escaladas + '</b> escaladas com responsável e prazo</span></div>';
+         '<span><b>' + paradasSeguidas + '</b> paradas há 3 dias ou mais</span></div>';
     h += '</div>';
     return h;
   }
@@ -1529,19 +1629,38 @@
     var velha = lista.reduce(function(m,o){ return Math.max(m, o.dias); }, 0);
     el.innerHTML = '<button type="button" class="aviso-def" data-ir-definir="1">' +
       '<span class="n">' + lista.length + '</span>' +
-      '<span class="txt"><b>' + (lista.length === 1
-        ? "obra chegou do Field e ainda não tem responsável definido."
-        : "obras chegaram do Field e ainda não têm responsável definido.") +
-      '</b> A mais antiga espera há <b>' + velha +
+      '<span class="txt"><b>Antes das obras do dia: ' + (lista.length === 1
+        ? "1 obra chegou do Field e espera você definir."
+        : lista.length + " obras chegaram do Field e esperam você definir.") +
+      '</b> Definir a obra que chega é tarefa do analista de obras. ' +
+      'A mais antiga espera há <b>' + velha +
       ' dias</b>, e ' + (lista.length === 1 ? "ela não entra" : "nenhuma delas entra") +
-      ' no diário do dia enquanto ficar assim.</span>' +
+      ' no diário enquanto ficar assim.</span>' +
       '<span class="ir">Definir agora &#8594;</span></button>';
+  }
+
+  var FORMA_EXPL = {
+    cartoes:  "Uma obra por vez: responde, salva, ela sai da fila. Dá para parar no meio.",
+    planilha: "Todas as obras na mesma tela, uma por linha. Responde na linha e salva tudo no fim."
+  };
+
+  function setForma(f){
+    formaDiario = f;
+    var b1 = document.getElementById("btn-cartoes"), b2 = document.getElementById("btn-planilha");
+    if(b1) b1.setAttribute("aria-pressed", f === "cartoes" ? "true" : "false");
+    if(b2) b2.setAttribute("aria-pressed", f === "planilha" ? "true" : "false");
+    var ex = document.getElementById("forma-expl");
+    if(ex) ex.textContent = FORMA_EXPL[f];
+    renderDiario();
   }
 
   function renderDiario(){
     var alvo = document.getElementById("diario-corpo");
     if(!alvo) return;
     renderAvisoDef();
+
+    var barra = document.querySelector(".forma-barra");
+    if(barra) barra.hidden = estadoTela !== "normal";
 
     if(estadoTela === "carregando"){
       var s = '<p class="carregando-txt">Buscando suas obras em aberto…</p>';
@@ -1576,8 +1695,9 @@
 
     if(estadoTela === "vazio"){
       var andaram = FILA.filter(function(o){ return o.etapa !== "paralisado"; }).length;
+      var travadas = FILA.filter(function(o){ return o.naoAndouSeguidos >= 3; }).length;
       alvo.innerHTML = barraHTML(0, FILA.length) +
-                       sucessoHTML(FILA.length, andaram, FILA.length - andaram, 3);
+                       sucessoHTML(FILA.length, andaram, FILA.length - andaram, travadas);
       return;
     }
 
@@ -1591,19 +1711,125 @@
        Yuri sem como desfazer. */
     if(!pendentes.length){
       var an = feitas.filter(function(o){ return respostas[o.id].andou === "Sim"; }).length;
-      var esc2 = feitas.filter(function(o){ return respostas[o.id].resp; }).length;
+      var tr3 = feitas.filter(function(o){ return o.naoAndouSeguidos >= 3; }).length;
       alvo.innerHTML = barraHTML(0, feitas.length) +
-                       sucessoHTML(feitas.length, an, feitas.length - an, esc2) +
+                       sucessoHTML(feitas.length, an, feitas.length - an, tr3) +
                        feitasHTML(feitas);
       return;
     }
 
     var html = barraHTML(pendentes.length, feitas.length);
+    if(formaDiario === "planilha"){
+      html += planilhaHTML(pendentes);
+      html += feitasHTML(feitas);
+      alvo.innerHTML = html;
+      atualizarPlanilha();
+      return;
+    }
     html += '<div class="fila">' + pendentes.map(cardHTML).join("") + '</div>';
     html += feitasHTML(feitas);
 
     alvo.innerHTML = html;
     Array.prototype.forEach.call(alvo.querySelectorAll(".obra"), atualizarCard);
+  }
+
+  /* ---------------------------------------------------------------
+     DECISÃO B, forma 2 — lista única, no formato de planilha.
+     Uma linha por obra, tudo aberto na mesma tela, e a resposta acontece
+     dentro da própria linha: nada abre, nada some, nada muda de página.
+     Um único botão salva tudo no fim.
+     --------------------------------------------------------------- */
+  function planilhaHTML(pendentes){
+    var h = '<div class="planilha-wrap"><table class="planilha">';
+    h += '<thead><tr>' +
+           '<th scope="col">Obra</th>' +
+           '<th scope="col">Andou em ' + DIA_REF_CURTO + '?</th>' +
+           '<th scope="col">Por que não andou?</th>' +
+           '<th scope="col">Faltou algum item?</th>' +
+           '<th scope="col">Observação</th>' +
+         '</tr></thead><tbody>';
+
+    h += pendentes.map(function(o){
+      var d = rasc(o);
+      var sinal = [];
+      if(o.naoAndouSeguidos >= 2) sinal.push(o.naoAndouSeguidos + " dias seguidos sem andar");
+      if(travado(o)) sinal.push(o.bloqueadaDias + " dias no mesmo bloqueio");
+
+      var tr = '<tr data-linha="' + o.id + '">';
+      tr += '<td><span class="pl-os">OS ' + esc(o.os) + '</span>' +
+              '<button type="button" class="pl-loja" data-abrir="' + o.id + '">' + esc(o.loja) + '</button>' +
+              '<div class="pl-sub">' + esc(o.equipe || "sem equipe") +
+              (sinal.length ? ' · <span style="color:var(--warn)">' + esc(sinal.join(" · ")) + '</span>' : "") +
+              '</div></td>';
+      tr += '<td><div class="chips">' + chipsHTML("andou", ["Sim","Não"], d.andou, true) + '</div></td>';
+      tr += '<td><select data-grupo="motivo" aria-label="Por que não andou — ' + esc(o.loja) + '">' +
+              opcoes(BLOQUEIOS, d.motivo, "— escolher —") + '</select>' +
+              '<span class="pl-aviso" hidden>Obrigatório para salvar</span></td>';
+      tr += '<td><select data-grupo="item" aria-label="Faltou algum item — ' + esc(o.loja) + '">' +
+              opcoes(ITENS.slice(1), d.item, "Não faltou") + '</select></td>';
+      tr += '<td><input class="obs-in" type="text" maxlength="120" placeholder="opcional" value="' +
+              esc(d.obs || "") + '"></td>';
+      tr += '</tr>';
+      return tr;
+    }).join("");
+
+    h += '</tbody></table></div>';
+    h += '<div class="planilha-rodape">' +
+           '<button type="button" class="btn" id="salvar-tudo">Salvar tudo</button>' +
+           '<span class="hint" id="hint-tudo"></span>' +
+         '</div>';
+    return h;
+  }
+
+  /* Estado de cada linha: quantas estão prontas, quantas estão faltando
+     motivo. O botão só barra o que a DECISÃO C manda barrar. */
+  function contaPlanilha(){
+    var pendentes = FILA.filter(function(o){ return !respostas[o.id]; });
+    var prontas = 0, faltando = 0;
+    pendentes.forEach(function(o){
+      var d = rasc(o);
+      if(!d.andou) return;
+      if(validar(o, d)) faltando++; else prontas++;
+    });
+    return {total:pendentes.length, prontas:prontas, faltando:faltando};
+  }
+
+  function atualizarPlanilha(){
+    var c = contaPlanilha();
+    Array.prototype.forEach.call(document.querySelectorAll("tr[data-linha]"), function(tr){
+      var o = PORID[tr.dataset.linha], d = rasc(o);
+      var naoAndou = d.andou === "Não";
+      var selMotivo = tr.querySelector('select[data-grupo="motivo"]');
+      var aviso = tr.querySelector(".pl-aviso");
+      selMotivo.disabled = !naoAndou;
+      selMotivo.classList.toggle("falta", naoAndou && !d.motivo);
+      aviso.hidden = !(naoAndou && !d.motivo);
+      tr.classList.toggle("falta", !!(d.andou && validar(o, d)));
+      tr.classList.toggle("pronta", !!(d.andou && !validar(o, d)));
+    });
+    var btn = document.getElementById("salvar-tudo");
+    var hint = document.getElementById("hint-tudo");
+    if(!btn || !hint) return;
+    btn.disabled = c.prontas === 0;
+    if(c.faltando){
+      hint.textContent = c.faltando + (c.faltando === 1 ? " obra está" : " obras estão") +
+        ' marcada como "não andou" sem motivo. Sem o motivo, essa linha não salva.';
+      hint.className = "hint alerta";
+    } else if(c.prontas){
+      hint.textContent = "Salva " + c.prontas + (c.prontas === 1 ? " obra respondida" : " obras respondidas") +
+        " de uma vez. As " + (c.total - c.prontas) + " que faltam continuam na lista.";
+      hint.className = "hint";
+    } else {
+      hint.textContent = "Responda pelo menos uma obra para salvar.";
+      hint.className = "hint";
+    }
+  }
+
+  function salvarTudo(){
+    var pendentes = FILA.filter(function(o){ return !respostas[o.id]; });
+    var salvou = 0;
+    pendentes.forEach(function(o){ if(gravar(o)) salvou++; });
+    if(salvou) renderDiario();
   }
 
   /* ---------------------------------------------------------------
@@ -1818,7 +2044,6 @@
         var sub = [];
         if(!e.andou && e.motivo) sub.push(e.motivo);
         if(e.item && e.item !== "Não faltou") sub.push("faltou " + e.item.toLowerCase());
-        if(e.escalada) sub.push("escalada: " + e.escalada);
         if(sub.length) t += '<div class="tl-s">' + esc(sub.join(" · ")) + '</div>';
         if(e.obs) t += '<div class="tl-obs">' + esc(e.obs) + '</div>';
         return t + '</div></div>';
@@ -1871,9 +2096,10 @@
     h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + badgeDias(o) + '</div></div>';
 
     h += '<div class="triagem-aviso">';
-    h +=   '<div style="flex:1 1 300px"><h3>Obra nova, ainda sem responsável</h3>' +
+    h +=   '<div style="flex:1 1 300px"><h3>Obra nova, esperando você definir</h3>' +
            '<p>Ela entrou pelo Field em <b>' + br(o.aprovacao) + '</b> e está esperando há <b>' + o.dias +
-           ' dias</b>. Só entra no diário do dia quando estes cinco campos estiverem preenchidos — ' +
+           ' dias</b>. Definir a obra que chega é tarefa do <b>analista de obras</b>. ' +
+           'Ela só entra no diário quando estes cinco campos estiverem preenchidos — ' +
            'é o checklist antes de começar a obra.</p></div>';
     h +=   '<span class="cont">' + (CAMPOS_TRI.length - faltam) + ' de ' + CAMPOS_TRI.length + ' preenchidos</span>';
     h += '</div>';
@@ -1933,17 +2159,17 @@
     h += '</div></div>';
     h += '</div></div>';
 
-    h += '<div class="decisao"><span class="tag">DECISÃO D</span><div>';
-    h += '<p>A obra chega do Field crua, sem responsável. <b>Quem completa esses cinco campos?</b></p>';
-    h += '<p class="opt"><em>O que está na tela:</em> <b>fila aberta, sem dono fixo.</b> A obra nova cai numa fila que todo mundo vê ' +
-         '(o aviso no alto do diário do dia e a primeira coluna da base), e quem abrir primeiro completa. ' +
-         'O sistema cobra a fila, não uma pessoa: mostra quantas estão esperando e há quantos dias.</p>';
-    h += '<p class="opt"><em>Alternativa 1:</em> <b>uma pessoa do escritório tria tudo que chega</b>, todo dia, como primeira tarefa. ' +
-         'Nada fica parado por falta de dono, mas tudo depende dessa pessoa estar lá.</p>';
-    h += '<p class="opt"><em>Alternativa 2:</em> <b>você ou o Eduardo distribuem caso a caso</b> e o responsável escolhido completa o resto. ' +
-         'Mantém com a diretoria a decisão de quem pega qual obra, mas põe mais um passo antes de a obra andar.</p>';
+    h += '<div class="decisao fechada"><span class="tag">DECISÃO D</span><div>';
+    h += '<p><span class="resp">Resolvida — você respondeu</span>Quem completa a obra que chega crua do Field é o ' +
+         '<b>analista de obras</b> — hoje, o Yuri. Não é fila aberta: é tarefa dele, e aparece no alto do diário ' +
+         'antes das obras do dia.</p>';
+    h += '<p class="opt"><em>Como fica:</em> a obra nova entra na base como <b>Aguardando definição</b> e não aparece ' +
+         'para ninguém responder até estes cinco campos estarem preenchidos. O contador de dias esperando fica à vista ' +
+         'no diário e na base de obras.</p>';
+    h += '<p class="opt"><em>Segunda etapa:</em> um <b>agente de IA</b> faz as perguntas aos analistas todo dia ' +
+         '<b>às 9h da manhã</b> — inclusive a de definir a obra que chegou. A tela continua sendo onde a resposta fica guardada.</p>';
     h += '</div></div>';
-    h += fbHTML(SECOES_FB[6]);
+    h += fbPor("decD");
 
     document.getElementById("ficha").innerHTML = h;
   }
@@ -1985,7 +2211,7 @@
     o.inicioPlan = t.inicio;
     o.duracao = parseInt(t.duracao, 10);
     o.etapa = "levantamento";
-    o.atualizacao = "2026-08-31";
+    o.atualizacao = DIA_REF;
     o.pendencia = "Finalizar levantamento, confirmar material e programar a equipe";
     o.pendResp = t.resp;
     o.proxAcao = "Concluir levantamento";
@@ -2022,6 +2248,28 @@
     if(e.target.closest("#voltar")){ irPara(voltarPara); return; }
     if(e.target.closest("#btn-tabela")){ setVis("tabela"); return; }
     if(e.target.closest("#btn-kanban")){ setVis("kanban"); return; }
+    if(e.target.closest("#btn-cartoes")){ setForma("cartoes"); return; }
+    if(e.target.closest("#btn-planilha")){ setForma("planilha"); return; }
+    if(e.target.closest("#salvar-tudo")){ salvarTudo(); return; }
+
+    /* Chips dentro de uma linha da planilha (DECISÃO B, forma 2) */
+    var linha = e.target.closest("tr[data-linha]");
+    if(linha){
+      var chipL = e.target.closest(".chip");
+      if(chipL){
+        var oL = PORID[linha.dataset.linha], dL = rasc(oL);
+        var vL = chipL.dataset.valor;
+        dL.andou = (dL.andou === vL) ? null : vL;
+        if(dL.andou !== "Não") dL.motivo = null;
+        Array.prototype.forEach.call(linha.querySelectorAll('.chip[data-grupo="andou"]'), function(c){
+          c.setAttribute("aria-pressed", c.dataset.valor === dL.andou ? "true" : "false");
+        });
+        var selM = linha.querySelector('select[data-grupo="motivo"]');
+        if(selM && dL.motivo === null) selM.value = "";
+        atualizarPlanilha();
+        return;
+      }
+    }
 
     t = e.target.closest("#thead-row button[data-col]");
     if(t){
@@ -2043,11 +2291,11 @@
       var g = chip.dataset.grupo, v = chip.dataset.valor;
       d[g] = (d[g] === v) ? null : v;
       if(g === "andou"){
-        /* "Sim" zera bloqueio e escalada; sem isso a tela pediria "quem resolve"
-           para uma obra que andou. */
-        if(d.andou !== "Não"){ d.motivo = null; d.resp = null; d.prazo = null; }
+        /* "Sim" zera o motivo: sem isso a tela guardaria um motivo de parada
+           numa obra que andou. */
+        if(d.andou !== "Não"){ d.motivo = null; }
       }
-      ["andou","item","motivo","resp","prazo"].forEach(function(grupo){
+      ["andou","item","motivo"].forEach(function(grupo){
         Array.prototype.forEach.call(card.querySelectorAll('.chip[data-grupo="' + grupo + '"]'), function(c){
           c.setAttribute("aria-pressed", c.dataset.valor === d[grupo] ? "true" : "false");
         });
@@ -2070,6 +2318,15 @@
 
   app.addEventListener("change", function(e){
     if(e.target.id === "sel-estado"){ estadoTela = e.target.value; renderDiario(); return; }
+
+    var linhaC = e.target.closest && e.target.closest("tr[data-linha]");
+    if(linhaC && e.target.dataset && e.target.dataset.grupo){
+      var oC = PORID[linhaC.dataset.linha];
+      rasc(oC)[e.target.dataset.grupo] = e.target.value || null;
+      atualizarPlanilha();
+      return;
+    }
+
     if(e.target.dataset && e.target.dataset.tri){
       tri(PORID[obraAberta])[e.target.dataset.tri] = e.target.value;
       atualizarTriagem();
@@ -2088,7 +2345,9 @@
   app.addEventListener("input", function(e){
     if(e.target.classList && e.target.classList.contains("obs-in")){
       var card = e.target.closest(".obra");
-      if(card) rascunho[card.dataset.id].obs = e.target.value;
+      if(card){ rasc(PORID[card.dataset.id]).obs = e.target.value; return; }
+      var linhaI = e.target.closest("tr[data-linha]");
+      if(linhaI) rasc(PORID[linhaI.dataset.linha]).obs = e.target.value;
     }
   });
 
@@ -2109,7 +2368,7 @@
      --------------------------------------------------------------- */
   app.innerHTML = shellHTML();
   montarFiltros();
-  renderDiario();
+  setForma(formaDiario);
   setVis("tabela");
   irPara("diario");
 
