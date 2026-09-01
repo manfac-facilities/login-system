@@ -61,7 +61,7 @@
   .brand{display:flex;align-items:baseline;gap:9px;margin-right:4px}
   .brand b{font-size:14px;letter-spacing:-.01em}
   .brand span{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint)}
-  .tabs{display:flex;gap:2px;background:rgba(0,0,0,.22);padding:3px;border-radius:var(--r);border:1px solid var(--line-soft)}
+  .tabs{display:flex;flex-wrap:wrap;gap:2px;background:rgba(0,0,0,.22);padding:3px;border-radius:var(--r);border:1px solid var(--line-soft)}
   .tabs button{
     background:none;border:0;padding:6px 13px;border-radius:var(--r-sm);
     color:var(--ink-dim);font-size:13px;font-weight:500;white-space:nowrap;
@@ -579,6 +579,75 @@
     color:var(--ink-faint);font-size:11.5px;line-height:1.6;
   }
 
+  /* ---------- Quem está olhando (troca de papel, controle de demonstração) ---------- */
+  .who .quem{display:flex;align-items:center;gap:7px}
+  .who select{
+    background:rgba(0,0,0,.3);border:1px dashed var(--line);border-radius:var(--r-sm);
+    padding:5px 8px;font-size:12px;color:var(--ink-dim);max-width:230px;
+  }
+  .who select:hover{border-color:#2b4f7d;color:var(--ink)}
+
+  /* ---------- O relógio do ciclo: 18h avisa, 19h sobe ---------- */
+  .hora{
+    font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.02em;
+    border:1px solid var(--line);border-radius:99px;padding:1px 7px;
+    background:rgba(0,0,0,.28);color:var(--ink-dim);white-space:nowrap;
+  }
+  .nota-caminho .hora{margin-right:7px}
+  .nota-caminho + .nota-caminho{margin-top:-10px}
+
+  .estado.atraso{border-color:rgba(244,183,63,.45);background:rgba(244,183,63,.055)}
+  .estado.atraso .ico{background:var(--warn);color:#2c1d00}
+  .estado.atraso h2{color:var(--warn)}
+
+  /* O aviso das 19h como ele chega para a diretoria — mostrado, não descrito */
+  .push{
+    margin:14px 0 0;max-width:64ch;
+    border:1px solid var(--line);border-left:3px solid var(--warn);
+    background:rgba(0,0,0,.3);border-radius:var(--r-sm);padding:11px 13px;
+  }
+  .push .de{
+    display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:7px;
+    font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;
+  }
+  .push .de .hora{color:var(--warn);border-color:rgba(244,183,63,.4);letter-spacing:.02em}
+  .push .tx{font-size:13px;line-height:1.5;color:var(--ink-dim);margin:0}
+  .push .tx b{color:var(--ink)}
+  .push .pra{margin:8px 0 0;font-size:11.5px;color:var(--ink-faint)}
+
+  /* ---------- Tela 4: painel do administrador ---------- */
+  table.adm{min-width:860px}
+  table.adm tbody td{padding:11px}
+  table.adm tbody tr.em-falta td{background:rgba(244,183,63,.06)}
+  .pessoa{display:flex;align-items:center;gap:10px}
+  .pessoa .av{
+    width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:11px;font-weight:700;background:rgba(148,163,184,.13);
+    border:1px solid var(--line);color:var(--ink-dim);
+  }
+  .pessoa.falta .av{background:var(--warn-soft);border-color:rgba(244,183,63,.45);color:var(--warn)}
+  .pessoa .nm{display:block;font-size:13px;font-weight:650;letter-spacing:-.01em}
+  .pessoa .fn{display:block;font-size:11px;color:var(--ink-faint)}
+  .selo{
+    display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+    border:1px solid var(--line);border-radius:99px;padding:3px 10px;
+    font-size:11.5px;font-weight:600;color:var(--ink-dim);
+  }
+  .selo.ok{color:var(--ok);border-color:rgba(53,201,138,.4);background:var(--ok-soft)}
+  .selo.falta{color:var(--warn);border-color:rgba(244,183,63,.45);background:var(--warn-soft)}
+  .streak{display:flex;gap:3px;align-items:flex-end}
+  .streak i{display:block;width:10px;height:16px;border-radius:2px;background:var(--line-soft)}
+  .streak i.ok{background:rgba(53,201,138,.5)}
+  .streak i.falta{background:var(--warn)}
+  .streak i.hoje{outline:1px solid var(--ink-faint);outline-offset:1.5px}
+  .streak-leg{
+    display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+    margin-top:12px;font-size:11.5px;color:var(--ink-faint);
+  }
+  .streak-leg span{display:inline-flex;align-items:center;gap:6px}
+  .streak-leg i{display:block;width:10px;height:10px;border-radius:2px}
+  .adm-fonte{margin:12px 0 0;font-size:11.5px;color:var(--ink-faint);line-height:1.55;max-width:96ch}
+
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;animation:none !important}
   }
@@ -600,18 +669,21 @@
 (function(){
   "use strict";
 
-  /* DECISÃO E — padrão adotado: o diário olha para trás.
-     O agente de IA vai perguntar às 9h da manhã, e às 9h ninguém sabe se a
-     obra vai andar: o dia mal começou. Então o dia de referência do diário é
-     SEMPRE o dia anterior. A tela é aberta na terça de manhã e registra a
-     segunda. HOJE continua sendo o dia de referência (31/08) porque todo
-     número da tela — dias desde a aprovação, dias parados — é contado até o
-     dia que está sendo registrado. */
-  var HOJE = new Date(2026, 7, 31);     // 31/08/2026 — o dia REGISTRADO
+  /* DECISÃO E — dissolvida pela resposta do cliente: o ciclo passou para as
+     18h. Às 18h o dia de trabalho acabou, então "a obra andou hoje?" volta a
+     fechar e a tela fala do DIA CORRENTE, não do dia anterior. Não existe mais
+     defasagem entre a hora da pergunta e o dia registrado.
+       18h — o analista é avisado para preencher.
+       19h — se não preencheu, os administradores do hub são avisados, com nome.
+     HOJE é 31/08 e é também o dia registrado: todo número da tela — dias desde
+     a aprovação, dias parados — é contado até ele. */
+  var HOJE = new Date(2026, 7, 31);     // 31/08/2026 — hoje, e o dia registrado
   var DIA_REF = "2026-08-31";
   var DIA_REF_CURTO = "31/08";
   var DIA_REF_LONGO = "segunda-feira, 31 de agosto";
-  var AGORA_LONGO = "Terça-feira, 1º de setembro de 2026, 9h";
+  var AGORA_LONGO = "Segunda-feira, 31 de agosto de 2026, 18h";
+  var HORA_AVISO = "18:00";             // o analista é avisado
+  var HORA_ESCALADA = "19:04";          // o aviso que subiu para a diretoria
 
   function diasDesde(iso){
     if(!iso) return null;
@@ -1174,6 +1246,7 @@
 
   var ESTADOS = [
     ["normal","Fila do dia (normal)"],
+    ["atraso","19h — não preencheu"],
     ["vazio","Todas respondidas"],
     ["carregando","Carregando"],
     ["erro","Erro ao carregar"],
@@ -1181,17 +1254,48 @@
   ];
 
   /* ---------------------------------------------------------------
+     Quem está olhando. É o mesmo sistema visto por dois papéis que o hub
+     já tem: o analista, que responde o diário, e o administrador, que
+     recebe o aviso das 19h quando o diário não foi respondido.
+     --------------------------------------------------------------- */
+  var PAPEIS = [
+    {k:"analista", rot:"Yuri Nascimento · analista de obras",   ini:"YN"},
+    {k:"admin",    rot:"José Guilherme · administrador do hub", ini:"JG"}
+  ];
+  var papel = "analista";
+
+  /* Preenchimento do diário, por analista. Os dez quadrados são os dez
+     últimos dias úteis — o último é hoje. */
+  var DIAS_UTEIS = ["18/08","19/08","20/08","21/08","24/08","25/08","26/08","27/08","28/08","31/08"];
+  var ANALISTAS = [
+    {nome:"Yuri Nascimento", ini:"YN", chave:"YURI", hora:null, desde:0,
+     dias:["ok","ok","ok","ok","ok","ok","ok","ok","ok","falta"],
+     nota:"Primeiro dia sem registro em duas semanas."},
+    {nome:"Amanda Ribeiro", ini:"AR", chave:"AMANDA", hora:"17:42", desde:22,
+     dias:["ok","ok","ok","ok","ok","ok","ok","ok","ok","ok"],
+     nota:"Responde antes das 18h todo dia."},
+    {nome:"Luana Prado", ini:"LP", chave:"LUANA", hora:"18:26", desde:4,
+     dias:["ok","ok","ok","ok","falta","falta","ok","ok","ok","ok"],
+     nota:"Ficou dois dias seguidos sem preencher em 24 e 25/08."}
+  ];
+  function obrasDe(chave){
+    return OBRAS.filter(function(o){ return o.pcm === chave && o.etapa !== "finalizado"; }).length;
+  }
+
+  /* ---------------------------------------------------------------
      Retorno do cliente (campos de feedback) — persistido republicando
      --------------------------------------------------------------- */
   var SECOES_FB = [
     {id:"tela1", rotulo:"a tela Diário do dia"},
     {id:"decB",  rotulo:"a decisão B — qual das duas formas"},
-    {id:"decE",  rotulo:"a decisão E — o dia que a pergunta cobre"},
+    {id:"decE",  rotulo:"a decisão E — o ciclo das 18h"},
     {id:"decC",  rotulo:"a decisão C"},
     {id:"decA",  rotulo:"a decisão A"},
     {id:"tela2", rotulo:"a tela Base de obras"},
     {id:"tela3", rotulo:"a tela Ficha da obra"},
-    {id:"decD",  rotulo:"a decisão D"}
+    {id:"decD",  rotulo:"a decisão D"},
+    {id:"telaAdm", rotulo:"o Painel do dia, que a diretoria abre às 19h"},
+    {id:"decF",  rotulo:"a decisão F — quando a falta se repete"}
   ];
   var VOTOS = [["aprovado","Aprovado"],["ajustar","Ajustar"],["refazer","Refazer"]];
 
@@ -1333,9 +1437,15 @@
     h +=     '<button data-tela="diario" aria-current="true">Diário do dia</button>';
     h +=     '<button data-tela="base">Base de obras</button>';
     h +=     '<button data-tela="ficha">Ficha da obra</button>';
+    h +=     '<button data-tela="adm" id="tab-adm" hidden>Painel do dia</button>';
     h +=   '</nav>';
-    h +=   '<div class="who"><span class="txt">Yuri Nascimento · responsável de obras</span>' +
-             '<span class="av" aria-hidden="true">YN</span></div>';
+    h +=   '<div class="who">';
+    h +=     '<span class="quem"><label class="lbl" for="sel-quem">quem está olhando</label>' +
+               '<select id="sel-quem">' +
+               PAPEIS.map(function(p){ return '<option value="' + p.k + '">' + esc(p.rot) + '</option>'; }).join("") +
+               '</select></span>';
+    h +=     '<span class="av" id="quem-av" aria-hidden="true"></span>';
+    h +=   '</div>';
     h += '</div>';
 
     h += '<main>';
@@ -1343,13 +1453,17 @@
     /* ---- Tela 1 ---- */
     h += '<section id="tela-diario">';
     h +=   '<div class="page-head"><div><h1>Diário do dia</h1>' +
-             '<p>' + AGORA_LONGO + ' · você está registrando o dia de ontem, <b>' + DIA_REF_LONGO + '</b></p></div>' +
+             '<p>' + AGORA_LONGO + ' · o dia acabou. Você está registrando <b>o dia de hoje</b>, obra por obra.</p></div>' +
              '<div class="demo"><label class="lbl" for="sel-estado">ver estados da tela</label>' +
              '<select id="sel-estado">' +
              ESTADOS.map(function(e){ return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join("") +
              '</select></div></div>';
+    h +=   '<p class="nota-caminho"><span class="hora">' + HORA_AVISO + '</span>' +
+             'Todo dia às 18h você recebe um aviso para preencher o diário. ' +
+             '<b>Se às 19h ele não estiver preenchido, os administradores do hub recebem um aviso com o seu nome</b> — ' +
+             'é o único lugar onde a falta aparece.</p>';
     h +=   '<p class="nota-caminho">Hoje quem responde estas perguntas é <b>você, aqui na tela</b>. ' +
-             'Numa segunda etapa, um agente de IA faz as mesmas perguntas aos analistas todo dia às 9h da manhã — ' +
+             'Numa segunda etapa, um agente de IA faz as mesmas perguntas aos analistas todo dia às 18h — ' +
              'a tela continua sendo onde a resposta fica guardada.</p>';
     h +=   '<div id="aviso-def"></div>';
 
@@ -1373,18 +1487,18 @@
     h +=   '</div></div>';
     h +=   fbPor("decB");
 
-    /* DECISÃO E — nasceu da resposta da D: o agente pergunta às 9h. */
-    h +=   '<div class="decisao"><span class="tag">DECISÃO E</span><div>';
-    h +=     '<p>Se o agente pergunta <b>às 9h da manhã</b>, ele não tem como perguntar se a obra andou hoje: às 9h a equipe mal chegou na loja. ' +
-               'Ou a pergunta é sobre <b>o dia que passou</b>, ou é sobre <b>o dia que começa</b>. As duas dão telas diferentes.</p>';
-    h +=     '<p class="opt"><em>Adotado na tela — olhar para trás:</em> "a obra andou ontem? faltou alguma coisa? por que parou?". ' +
-               'É registro do que foi feito, ninguém precisa adivinhar nada, e é o histórico que você pediu na reunião. ' +
-               'Em troca, a falta de material do dia só aparece no dia seguinte.</p>';
-    h +=     '<p class="opt"><em>Alternativa — olhar para frente:</em> "a obra vai andar hoje? tem material e equipe na loja?". ' +
-               'Pega a falta de material às 9h, com o dia inteiro pela frente para resolver. ' +
-               'Em troca, a resposta é uma previsão: se a obra parar às 14h, ninguém registrou.</p>';
-    h +=     '<p class="opt">Dá para ter as duas depois — uma pergunta curta de manhã e o fechamento no dia seguinte. ' +
-               'Mas a primeira versão precisa começar por uma. <b>Qual delas?</b></p>';
+    /* DECISÃO E — dissolvida: mudar o horário para 18h fechou a pergunta. */
+    h +=   '<div class="decisao fechada"><span class="tag">DECISÃO E</span><div>';
+    h +=     '<p><span class="resp">Resolvida — você respondeu</span><b>O ciclo do dia passou das 9h para as 18h.</b> ' +
+               'Com isso a pergunta volta a ser sobre <b>o dia corrente</b>: às 18h o dia de trabalho acabou e ninguém precisa ' +
+               'nem lembrar de ontem nem adivinhar o que vem pela frente.</p>';
+    h +=     '<p class="opt"><em>Por que a pergunta existia:</em> às 9h da manhã "a obra andou hoje?" não fechava — a equipe mal ' +
+               'tinha chegado na loja. Você não escolheu entre olhar para trás e olhar para frente: mudou a hora, e a pergunta ' +
+               'original voltou a funcionar.</p>';
+    h +=     '<p class="opt"><em>O que passa a existir:</em> às <b>18h</b> o analista é avisado para preencher; às <b>19h</b>, se não ' +
+               'preencheu, os <b>administradores do hub</b> recebem um aviso dizendo quem faltou. Veja as duas coisas no seletor ' +
+               '“ver estados da tela” (estado <b>19h — não preencheu</b>) e na aba <b>Painel do dia</b>, trocando quem está olhando ' +
+               'no alto da tela.</p>';
     h +=   '</div></div>';
     h +=   fbPor("decE");
 
@@ -1432,10 +1546,13 @@
     h +=   fbPor("tela3");
     h += '</section>';
 
+    /* ---- Tela 4: o que a diretoria abre quando recebe o aviso das 19h ---- */
+    h += '<section id="tela-adm" hidden><div id="adm"></div></section>';
+
     h += '</main>';
 
     h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · versão de 01/09/2026, ' +
-         'com as respostas A, C e D já aplicadas. ' +
+         'com as respostas A, C, D e E já aplicadas. ' +
          'Dados reais da planilha DPSP Rev.02 (11 obras do Yuri, obras de outros responsáveis, obras recém-chegadas do Field e obras finalizadas). ' +
          'Nenhuma resposta do diário é gravada: só o seu retorno nos campos abaixo de cada seção.</footer>';
     return h;
@@ -1452,9 +1569,27 @@
     document.getElementById("tela-diario").hidden = t !== "diario";
     document.getElementById("tela-base").hidden   = t !== "base";
     document.getElementById("tela-ficha").hidden  = t !== "ficha";
+    document.getElementById("tela-adm").hidden    = t !== "adm";
     if(t === "base") renderBase();
     if(t === "ficha") renderFicha();
+    if(t === "adm") renderAdm();
     window.scrollTo(0, 0);
+  }
+
+  /* Trocar quem está olhando é um controle de demonstração: o mesmo sistema
+     visto pelo analista, que responde, e pelo administrador, que recebe o
+     aviso das 19h. O Painel do dia só existe para o administrador. */
+  function setPapel(p){
+    papel = p;
+    var info = PAPEIS[0];
+    PAPEIS.forEach(function(x){ if(x.k === p) info = x; });
+    var av  = document.getElementById("quem-av");
+    var tab = document.getElementById("tab-adm");
+    var sel = document.getElementById("sel-quem");
+    if(av)  av.textContent = info.ini;
+    if(tab) tab.hidden = p !== "admin";
+    if(sel) sel.value = p;
+    irPara(p === "admin" ? "adm" : "diario");
   }
   function abrirFicha(id, origem){
     obraAberta = id;
@@ -1512,7 +1647,7 @@
     }
     h +=   contadorHTML(o);
     h +=   '<div class="perguntas">';
-    h +=     '<div class="q"><span class="lbl">Andou em ' + DIA_REF_CURTO + '?</span><div class="chips">' +
+    h +=     '<div class="q"><span class="lbl">Andou hoje?</span><div class="chips">' +
                chipsHTML("andou", ["Sim","Não"], d.andou, true) + '</div></div>';
     h +=     '<div class="q"><span class="lbl">Faltou algum item?</span><div class="chips">' +
                chipsHTML("item", ITENS, d.item) + '</div></div>';
@@ -1530,7 +1665,7 @@
   /* Uma única regra barra o salvamento, e é a que o cliente pediu: "não
      andou" tem que vir com motivo. Nada mais trava. */
   function validar(o, d){
-    if(!d.andou) return "Responda se a obra andou em " + DIA_REF_CURTO + ".";
+    if(!d.andou) return "Responda se a obra andou hoje.";
     if(d.andou === "Não" && !d.motivo) return "Diga por que não andou.";
     return null;
   }
@@ -1539,10 +1674,10 @@
      verdade. Enquanto falta resposta, diz o que falta; quando está pronto,
      diz o que acontece ao salvar. */
   function textoAcao(o, d){
-    if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e " + DIA_REF_CURTO +
-                                 " entra na ficha dela como dia que andou.";
-    if(d.andou === "Não") return "Ao salvar: a obra sai da fila e " + DIA_REF_CURTO +
-                                 " entra na ficha dela como dia parado por " + String(d.motivo).toLowerCase() + ".";
+    if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e hoje (" + DIA_REF_CURTO +
+                                 ") entra na ficha dela como dia que andou.";
+    if(d.andou === "Não") return "Ao salvar: a obra sai da fila e hoje (" + DIA_REF_CURTO +
+                                 ") entra na ficha dela como dia parado por " + String(d.motivo).toLowerCase() + ".";
     return "";
   }
 
@@ -1586,8 +1721,7 @@
   function barraHTML(pendentes, feitas){
     var h = '<div class="fila-status">';
     h += '<span class="big num" style="' + (pendentes ? "" : "color:var(--ok)") + '">' + pendentes + '</span>';
-    h += '<span class="fila-txt">' + (pendentes === 1 ? "obra para responder sobre " : "obras para responder sobre ") +
-         DIA_REF_CURTO + '</span>';
+    h += '<span class="fila-txt">' + (pendentes === 1 ? "obra para responder hoje" : "obras para responder hoje") + '</span>';
     h += '<span class="barra" aria-hidden="true"><i style="width:' + (feitas / FILA.length * 100) + '%' +
          (pendentes ? "" : ";background:var(--ok)") + '"></i></span>';
     h += '<span class="fila-txt num">' + feitas + ' de ' + FILA.length + ' respondidas</span>';
@@ -1599,7 +1733,7 @@
     if(!feitas.length) return "";
     return '<div class="feitas"><h2>Já respondidas</h2>' + feitas.map(function(o){
       var r = respostas[o.id];
-      var resumo = r.andou === "Sim" ? "Andou em " + DIA_REF_CURTO : "Não andou · " + r.motivo;
+      var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou hoje · " + r.motivo;
       if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
       return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
              '<span class="rs">' + esc(resumo) + '</span>' +
@@ -1610,7 +1744,7 @@
   function sucessoHTML(total, andaram, naoAndaram, paradasSeguidas){
     var h = '<div class="sucesso">';
     h += '<div class="mark" aria-hidden="true">&#10003;</div>';
-    h += '<h2>Diário de ' + DIA_REF_CURTO + ' fechado</h2>';
+    h += '<h2>Diário de hoje fechado</h2>';
     h += '<p>As ' + total + ' obras foram respondidas. A base de obras já está atualizada e ' +
          'quem precisa cobrar alguma coisa hoje sabe o que é.</p>';
     h += '<div class="placar"><span><b>' + andaram + '</b> andaram</span>' +
@@ -1686,9 +1820,33 @@
       alvo.innerHTML =
         '<div class="estado bloqueio"><div class="ico" aria-hidden="true">&#8722;</div><div class="corpo">' +
         '<h2>Esta tela é de quem é responsável pelas obras</h2>' +
-        '<p>Você está entrando como analista. Quem responde o diário destas obras é o responsável por elas — hoje, o Yuri.</p>' +
+        '<p>Seu acesso não inclui o diário destas obras. Quem responde é o analista responsável por elas — hoje, o Yuri.</p>' +
         '<p>Se você precisa responder no lugar dele, peça ao administrador para incluir seu acesso. A base de obras continua aberta para consulta.</p>' +
         '<div class="acoes"><button type="button" class="btn ghost" data-tela="base">Ver a base de obras</button></div>' +
+        '</div></div>';
+      return;
+    }
+
+    /* 19h — o registro não aconteceu e o aviso já subiu. Tom de fato
+       consumado, não de punição: a tela conta o que já é verdade e o caminho
+       para responder continua aberto, porque a DECISÃO C não trava nada. */
+    if(estadoTela === "atraso"){
+      var semResposta = FILA.filter(function(o){ return !respostas[o.id]; }).length;
+      alvo.innerHTML =
+        '<div class="estado atraso"><div class="ico" aria-hidden="true">!</div><div class="corpo">' +
+        '<h2>Passou das 19h e o diário de hoje não foi preenchido</h2>' +
+        '<p>O aviso das 18h chegou e <b>' + semResposta + ' obras</b> continuam sem resposta. ' +
+        'Uma hora depois, o sistema avisou os administradores do hub — com o seu nome. Já foi enviado:</p>' +
+        '<div class="push">' +
+          '<div class="de"><span class="hora">' + HORA_ESCALADA + '</span>' +
+          '<span>aviso automático do hub</span></div>' +
+          '<p class="tx"><b>Yuri Nascimento</b> não preencheu o diário de hoje, ' + DIA_REF_CURTO + '. ' +
+          '<b>' + semResposta + ' obras</b> ficaram sem registro.</p>' +
+          '<p class="pra">Para José Guilherme e Eduardo · administradores do hub</p>' +
+        '</div>' +
+        '<p style="margin-top:14px">Continua dando para responder: nada foi travado e o registro entra com a data de hoje. ' +
+        'Assim que você salvar, o Painel do dia da diretoria muda junto.</p>' +
+        '<div class="acoes"><button type="button" class="btn" data-retry="1">Responder agora</button></div>' +
         '</div></div>';
       return;
     }
@@ -1743,7 +1901,7 @@
     var h = '<div class="planilha-wrap"><table class="planilha">';
     h += '<thead><tr>' +
            '<th scope="col">Obra</th>' +
-           '<th scope="col">Andou em ' + DIA_REF_CURTO + '?</th>' +
+           '<th scope="col">Andou hoje?</th>' +
            '<th scope="col">Por que não andou?</th>' +
            '<th scope="col">Faltou algum item?</th>' +
            '<th scope="col">Observação</th>' +
@@ -2167,7 +2325,7 @@
          'para ninguém responder até estes cinco campos estarem preenchidos. O contador de dias esperando fica à vista ' +
          'no diário e na base de obras.</p>';
     h += '<p class="opt"><em>Segunda etapa:</em> um <b>agente de IA</b> faz as perguntas aos analistas todo dia ' +
-         '<b>às 9h da manhã</b> — inclusive a de definir a obra que chegou. A tela continua sendo onde a resposta fica guardada.</p>';
+         '<b>às 18h</b> — inclusive a de definir a obra que chegou. A tela continua sendo onde a resposta fica guardada.</p>';
     h += '</div></div>';
     h += fbPor("decD");
 
@@ -2221,6 +2379,123 @@
     renderDiario();
     montarFiltros();
     irPara("base");
+  }
+
+  /* ---------------------------------------------------------------
+     TELA 4 — Painel do dia (visão do administrador do hub)
+     É o que o José e o Eduardo abrem quando recebem o aviso das 19h: uma
+     linha por analista, quem preencheu, a que horas, e há quanto tempo cada
+     um está em dia ou em falta.
+     --------------------------------------------------------------- */
+  function streakHTML(a){
+    return '<div class="streak" role="img" aria-label="Últimos dez dias úteis de ' + esc(a.nome) + ': ' +
+      a.dias.filter(function(d){ return d === "falta"; }).length + ' sem registro">' +
+      a.dias.map(function(d, i){
+        return '<i class="' + d + (i === a.dias.length - 1 ? " hoje" : "") + '" title="' + DIAS_UTEIS[i] +
+               (d === "ok" ? " · preencheu" : " · não preencheu") + '"></i>';
+      }).join("") + '</div>';
+  }
+
+  function situacaoHTML(a){
+    if(!a.hora){
+      return '<span style="color:var(--warn);font-weight:600">Em falta desde hoje</span>' +
+             '<div class="pl-sub">' + esc(a.nota) + '</div>';
+    }
+    return '<span style="color:var(--ink)">Em dia há <b class="num">' + a.desde + '</b> dias úteis</span>' +
+           '<div class="pl-sub">' + esc(a.nota) + '</div>';
+  }
+
+  function renderAdm(){
+    var el = document.getElementById("adm");
+    if(!el) return;
+
+    var faltosos = ANALISTAS.filter(function(a){ return !a.hora; });
+    var semRegistro = faltosos.reduce(function(s, a){ return s + obrasDe(a.chave); }, 0);
+    var h = "";
+
+    h += '<div class="page-head"><div><h1>Painel do dia</h1>' +
+         '<p>' + AGORA_LONGO.replace(", 18h", ", 19h") + ' · quem preencheu o diário de hoje e quem não preencheu</p></div></div>';
+
+    h += '<div class="resumo">';
+    h +=   '<div class="kpi" style="--kc:var(--ink)"><div class="v">' + ANALISTAS.length + '</div>' +
+             '<div class="k">analistas com obras hoje</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--ok)"><div class="v">' + (ANALISTAS.length - faltosos.length) + '</div>' +
+             '<div class="k">preencheram o diário</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--warn)"><div class="v">' + faltosos.length + '</div>' +
+             '<div class="k">' + (faltosos.length === 1 ? "não preencheu" : "não preencheram") + ' até as 19h</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--warn)"><div class="v">' + semRegistro + '</div>' +
+             '<div class="k">obras sem registro hoje</div></div>';
+    h += '</div>';
+
+    /* O aviso, como ele chegou. A tela abre pelo motivo de ela ter sido aberta. */
+    h += '<div class="push" style="margin:0 0 16px;max-width:none">';
+    h +=   '<div class="de"><span class="hora">' + HORA_ESCALADA + '</span>' +
+             '<span>aviso automático do hub · recebido por você</span></div>';
+    h +=   '<p class="tx">' + faltosos.map(function(a){ return '<b>' + esc(a.nome) + '</b>'; }).join(", ") +
+             (faltosos.length === 1 ? ' não preencheu' : ' não preencheram') + ' o diário de hoje, ' + DIA_REF_CURTO + '. ' +
+             '<b>' + semRegistro + ' obras</b> ficaram sem registro.</p>';
+    h +=   '<p class="pra">O aviso sai todo dia às 19h, uma hora depois do aviso que o analista recebe às 18h, ' +
+             'e só quando alguém não preencheu.</p>';
+    h += '</div>';
+
+    h += '<div class="tabela-wrap"><table class="adm"><thead><tr>' +
+           '<th scope="col">Analista</th>' +
+           '<th scope="col">Diário de hoje</th>' +
+           '<th scope="col">Obras sob responsabilidade</th>' +
+           '<th scope="col">Últimos 10 dias úteis</th>' +
+           '<th scope="col">Situação</th>' +
+         '</tr></thead><tbody>';
+
+    h += ANALISTAS.map(function(a){
+      var n = obrasDe(a.chave);
+      var tr = '<tr' + (a.hora ? "" : ' class="em-falta"') + '>';
+      tr += '<td><span class="pessoa' + (a.hora ? "" : " falta") + '">' +
+              '<span class="av">' + esc(a.ini) + '</span>' +
+              '<span><span class="nm">' + esc(a.nome) + '</span>' +
+              '<span class="fn">analista de obras</span></span></span></td>';
+      tr += '<td>' + (a.hora
+              ? '<span class="selo ok">&#10003; Preencheu às <b class="num">' + a.hora + '</b></span>'
+              : '<span class="selo falta">&#9679; Não preencheu</span>') + '</td>';
+      tr += '<td><span class="num">' + (a.hora ? n : 0) + ' de ' + n + '</span> respondidas' +
+              '<div class="pl-sub">' + (a.hora ? "nenhuma obra sem registro" : n + " obras sem registro hoje") + '</div></td>';
+      tr += '<td>' + streakHTML(a) + '</td>';
+      tr += '<td>' + situacaoHTML(a) + '</td>';
+      tr += '</tr>';
+      return tr;
+    }).join("");
+
+    h += '</tbody></table></div>';
+
+    h += '<div class="streak-leg">' +
+           '<span><i style="background:rgba(53,201,138,.5)"></i> preencheu</span>' +
+           '<span><i style="background:var(--warn)"></i> não preencheu</span>' +
+           '<span>o último quadrado é hoje · passe o mouse para ver a data</span>' +
+         '</div>';
+
+    h += '<p class="adm-fonte">As obras por analista vêm da planilha DPSP Rev.02. O histórico de preenchimento é ' +
+         '<b>exemplo</b>: hoje esse dado não existe em lugar nenhum — é justamente ele que este painel passa a guardar.</p>';
+
+    h += fbPor("telaAdm");
+
+    /* DECISÃO F — a pergunta que a resposta dele abriu e não fechou. */
+    h += '<div class="decisao"><span class="tag">DECISÃO F</span><div>';
+    h +=   '<p>O aviso das 19h resolve o primeiro dia. <b>E no segundo, no terceiro, no quinto?</b> ' +
+             'Hoje o Yuri está em falta há um dia. Em agosto a Luana ficou dois dias seguidos sem preencher, ' +
+             'e ninguém soube além do aviso de cada dia.</p>';
+    h +=   '<p class="opt"><em>Adotado por padrão — o mesmo aviso, com a conta:</em> todo dia às 19h sai o mesmo aviso ' +
+             'para os administradores, com o número de dias seguidos escrito nele ("2º dia sem registro"), e o painel guarda ' +
+             'a contagem. Nada é bloqueado e nada sobe sozinho para mais ninguém: quem decide agir é quem lê o número.</p>';
+    h +=   '<p class="opt"><em>Alternativa — o aviso escala:</em> a partir do 3º dia seguido ele muda de forma e de destinatário: ' +
+             'vira um aviso separado, com outro peso, e passa a ir também para o superior direto do analista.</p>';
+    h +=   '<p class="opt"><em>Alternativa — o aviso vira pauta:</em> depois de alguns dias a falta deixa de ser um aviso ' +
+             'do dia e vira uma linha fixa da reunião semanal, com todo mundo que ficou sem registro na semana. ' +
+             'A cobrança sai da pessoa e vira rotina.</p>';
+    h +=   '<p class="opt">É a mesma escolha da DECISÃO C, um andar acima: <b>registrar e mostrar</b>, ou <b>forçar alguém a agir</b>. ' +
+             'Lá você escolheu registrar. <b>Aqui vale a mesma coisa?</b></p>';
+    h += '</div></div>';
+    h += fbPor("decF");
+
+    el.innerHTML = h;
   }
 
   /* ---------------------------------------------------------------
@@ -2318,6 +2593,7 @@
 
   app.addEventListener("change", function(e){
     if(e.target.id === "sel-estado"){ estadoTela = e.target.value; renderDiario(); return; }
+    if(e.target.id === "sel-quem"){ setPapel(e.target.value); return; }
 
     var linhaC = e.target.closest && e.target.closest("tr[data-linha]");
     if(linhaC && e.target.dataset && e.target.dataset.grupo){
@@ -2370,7 +2646,7 @@
   montarFiltros();
   setForma(formaDiario);
   setVis("tabela");
-  irPara("diario");
+  setPapel(papel);
 
   if(window.claude && typeof window.claude.use === "function"){
     window.claude.use("artifact").then(function(ns){
