@@ -137,7 +137,7 @@ const SERVICOS_HOME = [
     slug: 'manutencao-predial',
     title: 'Manutenção Predial Preventiva e Corretiva',
     description:
-      'Rotinas preventivas que eliminam emergências e mantêm seu prédio funcionando sem interrupções imprevistas.',
+      'Rotinas preventivas que reduzem emergências, reincidências e paradas não planejadas, mantendo mais previsibilidade para a operação.',
   },
   {
     Icon: HvacIcon,

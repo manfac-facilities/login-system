@@ -24,7 +24,7 @@ export default function Abordagem() {
         <div>
           <Reveal delay={80}>
             <h2 className="text-2xl font-bold leading-snug text-[var(--ink)] md:text-3xl">
-              Do diagnóstico à entrega —<br />sem buracos no meio do caminho.
+              Do diagnóstico à entrega, sem lacunas entre planejamento, execução, comunicação e controle.
             </h2>
             <p className="mt-4 text-[var(--body-text)]">
               Cada etapa tem dono, prazo e responsável. Você acompanha tudo do início ao fim,

@@ -6,7 +6,7 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/' }))
 describe('Header', () => {
   it('renderiza os 5 itens de navegação', () => {
     render(<Header />)
-    ;['Início', 'Quem somos', 'Serviços', 'Resultados', 'Contato'].forEach((label) => {
+    ;['Início', 'Quem somos', 'Serviços', 'Case de sucesso', 'Contato'].forEach((label) => {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     })
   })

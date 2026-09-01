@@ -4,7 +4,7 @@ export const NAV_ITEMS = [
   { href: '/', label: 'Início' },
   { href: '/quem-somos', label: 'Quem somos' },
   { href: '/servicos', label: 'Serviços' },
-  { href: '/resultados', label: 'Resultados' },
+  { href: '/resultados', label: 'Case de sucesso' },
   { href: '/contato', label: 'Contato' },
 ]
 
@@ -47,7 +47,7 @@ export const RECORRENTE_SPOT = {
     title: 'Sua operação, sob gestão contínua',
     items: [
       'Manutenção preventiva, corretiva e emergencial',
-      'SLA, equipe dedicada, rotina de chamados e relatórios',
+      'SLA, modelo de equipe definido conforme a operação, rotina de chamados, priorização por criticidade e relatórios gerenciais.',
       'Gestão mensal, redução de emergências e padronização',
     ],
   },
@@ -75,7 +75,7 @@ export const PILARES = [
   {
     title: 'Gestão ativa, não reativa',
     description:
-      'Cada obra e chamado fazem parte de um plano maior. Acompanhamos de perto, ajustamos quando necessário e respondemos por tudo.',
+      'Acompanhamos indicadores, antecipamos desvios e coordenamos a tratativa de cada demanda dentro do escopo e das responsabilidades acordadas.',
   },
   {
     title: 'Você sabe o que acontece antes de precisar perguntar',

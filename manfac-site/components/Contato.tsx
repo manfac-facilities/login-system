@@ -18,8 +18,7 @@ export default function Contato() {
         </Reveal>
         <Reveal delay={240}>
           <p className="mx-auto mt-4 max-w-xl text-[var(--muted)]">
-            Conte como funciona sua operação hoje — unidades, volume de demandas e principais
-            dores. Retornamos com uma leitura técnica.
+            Conte número de unidades, regiões, volume de demandas e principais desafios. Direcionamos o contato ao responsável técnico adequado e alinhamos os próximos passos.
           </p>
         </Reveal>
         <Reveal delay={360}>

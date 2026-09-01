@@ -11,7 +11,7 @@ export default function Time() {
         <div>
           <Reveal>
             <h2 className="text-2xl font-bold leading-snug text-[var(--ink)] md:text-3xl">
-              Uma equipe que trata sua operação como se fosse dela.
+              Uma equipe orientada por responsabilidade, registro e resposta.
             </h2>
             <p className="mt-4 text-[var(--body-text)]">
               A Manfac é formada por profissionais que entendem que resultado não é discurso —
@@ -57,7 +57,7 @@ export default function Time() {
                 Manfac em campo
               </p>
               <p className="mt-1 text-sm font-semibold text-white">
-                Presença ativa. Comunicação direta. Entrega garantida.
+                Presença ativa, comunicação direta e entrega acompanhada por evidências.
               </p>
             </div>
           </div>

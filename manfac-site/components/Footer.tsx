@@ -13,7 +13,7 @@ const ENDERECO = 'Rio de Janeiro · RJ'
 const INSTITUCIONAL = [
   { href: '/', label: 'Início' },
   { href: '/quem-somos', label: 'Quem somos' },
-  { href: '/resultados', label: 'Resultados' },
+  { href: '/resultados', label: 'Case de sucesso' },
   { href: '/contato', label: 'Contato' },
 ]
 

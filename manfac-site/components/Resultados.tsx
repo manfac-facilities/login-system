@@ -36,8 +36,7 @@ export default function Resultados() {
               em resultado.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/85">
-              400+ unidades. Mais de 1.000 ordens de serviço por mês. 7 anos de operação fragmentada
-              transformados em referência de excelência no Estado do Rio de Janeiro.
+              Um case de padronização, controle e visibilidade para uma operação com mais de 1.000 ordens de serviço por mês.
             </p>
           </Reveal>
           <Reveal delay={220}>
@@ -111,10 +110,7 @@ export default function Resultados() {
                 Uma operação fragmentada que precisava de estrutura — e ganhou.
               </h2>
               <p className="mt-4 text-[var(--body-text)]">
-                Quando a Manfac assumiu, a operação estava fragmentada entre múltiplos fornecedores
-                sem padronização de processos, comunicação centralizada ou rastreabilidade. O cliente não sabia o que
-                estava acontecendo nas suas unidades — e o custo disso aparecia toda semana em forma
-                de emergência, retrabalho e insatisfação.
+                Antes da reestruturação, a operação enfrentava desafios comuns a ambientes com múltiplos fornecedores: baixa padronização, comunicação descentralizada e rastreabilidade limitada dos chamados.
               </p>
             </Reveal>
             <Reveal delay={150}>

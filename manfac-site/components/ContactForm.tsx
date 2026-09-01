@@ -137,7 +137,7 @@ export default function ContactForm() {
           Qual é a sua demanda?
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-[var(--muted)]">
-          Escolha o caminho — leva menos de 1 minuto e sua mensagem já chega qualificada.
+          Escolha o tipo de demanda para direcionarmos seu contato ao responsável técnico adequado.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3" role="group" aria-label="Tipo de demanda">
