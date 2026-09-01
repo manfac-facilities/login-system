@@ -1,0 +1,104 @@
+SISTEMA DE CONTROLE DE OBRAS - DECISAO 01
+Para aprovacao do Jose Guilherme
+31/08/2026
+
+------------------------------------------------------------
+O CONTEXTO
+------------------------------------------------------------
+
+Todo dia alguem precisa contar como esta cada obra:
+
+   - Trabalharam hoje? Teve producao?
+   - Faltou algum material ou algum item?
+   - Parou? Se parou, por que? (chuva, cliente mandou parar,
+     equipe foi deslocada, falta material, falta prestador)
+
+Hoje quem faz isso e o rapaz do controle operacional. Ele senta
+com o Yuri, ou liga, e vai batendo obra por obra. Quando nao da,
+ele manda a planilha pro responsavel preencher e devolver.
+
+Foi exatamente essa falha que deixou a obra do Bairro de Fatima
+123 dias parada sem ninguem perceber - uma obra planejada pra
+durar 7 dias. E foi por causa disso que a Pacheco cancelou
+R$ 100 mil de faturamento.
+
+No sistema novo esse registro passa a ser diario e obrigatorio
+enquanto a obra estiver em andamento. A pergunta e:
+
+   QUEM DIGITA ESSA RESPOSTA, E EM QUE LUGAR?
+
+Essa e a decisao que define a tela principal do sistema. Sem ela
+nao da pra desenhar o resto.
+
+------------------------------------------------------------
+AS OPCOES
+------------------------------------------------------------
+
+OPCAO A - O YURI, NUMA TELA DO SISTEMA   [ RECOMENDADA ]
+
+   O Yuri abre o sistema de manha e ve a lista das obras dele.
+   Em cada obra, responde as tres perguntas. Sao 11 obras hoje;
+   leva uns 5 minutos.
+
+   E o mesmo que ele ja faz quando o rapaz do controle vai atras
+   dele - a diferenca e que ele mesmo digita, e ninguem precisa
+   mais cacar a informacao.
+
+   A favor: e a menor mudanca de habito das pessoas, entao e a
+   que tem mais chance de realmente pegar. Nao depende de
+   ninguem de fora pra funcionar.
+
+   Contra: depende de o Yuri entrar no sistema todo dia.
+
+
+OPCAO B - O TECNICO QUE ESTA NA LOJA, PELO CELULAR
+
+   Quem reporta e quem esta com a mao na obra, pelo aplicativo
+   que ele ja usa em campo (Field Control).
+
+   A favor: a informacao vem de quem esta vendo a obra.
+
+   Contra: o Jose mesmo levantou na reuniao que quem executa nao
+   vai reportar que atrasou. Alem disso dependeria de mexer no
+   Field, que e sistema de terceiro - se eles demorarem a
+   liberar, o projeto fica parado esperando.
+
+
+OPCAO C - UM ROBO PERGUNTANDO NO WHATSAPP
+
+   Todo fim de tarde um robo manda mensagem pro responsavel:
+   "e a obra da Barra de Sao Joao, andou hoje?" - e vai guardando
+   as respostas sozinho.
+
+   A favor: ninguem precisa entrar em sistema nenhum.
+
+   Contra: e a peca mais dificil e mais cara de construir. E se
+   ela nao funcionar, nao sobra nada - nao existe tela nenhuma
+   de reserva pra registrar a obra.
+
+
+OPCAO D - COMECA PELA TELA, ROBO ENTRA DEPOIS
+
+   Faz a tela primeiro (opcao A). Quando ela estiver rodando,
+   coloca o robo do WhatsApp por cima, so pra cobrar quem
+   esqueceu de preencher. Os dois gravam no mesmo lugar.
+
+   A favor: nenhuma parte fica dependendo da outra pra
+   funcionar. Se o robo falhar, a tela continua de pe.
+
+   Contra: demora um pouco mais pra ter o pacote completo.
+
+
+------------------------------------------------------------
+RESPOSTA DO JOSE
+------------------------------------------------------------
+
+Opcao escolhida: ______
+
+Observacoes:
+
+_______________________________________________________________
+
+_______________________________________________________________
+
+_______________________________________________________________

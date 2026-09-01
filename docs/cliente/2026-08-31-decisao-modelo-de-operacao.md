@@ -54,3 +54,16 @@ não só os 6 que a auditoria mapeou.
 **Não implementar antes da aprovação do cliente.** Ele não revisou nenhum texto sobre
 modelo de operação: o PDF de 31/08 cobriu apenas os 25 itens de troca pura de texto. Os
 textos novos entram na próxima rodada de revisão com ele.
+
+## CORREÇÃO — são 16 pontos, não 14 (31/08/2026)
+
+A tabela acima nasceu de uma busca por linha e case-sensitive, e por isso perdeu duas
+ocorrências. A busca correta (multilinha, case-insensitive) devolve **16**. As que
+faltavam:
+
+| Arquivo:linha | Trecho | Como escapou |
+|---|---|---|
+| `components/Servicos.tsx:38-39` | "…com equipe técnica própria e responsabilidade total do início ao fim." | A frase está quebrada em duas linhas no JSX; busca por linha não casa. É o item 29 da auditoria. |
+| `app/servicos/page.tsx:11` | "…tudo com equipe técnica própria." | Estava na busca original mas ficou fora da tabela por erro de transcrição. |
+
+Textos propostos: lotes A, B e C em `docs/superpowers/notas/2026-08-31-modelo-operacao-textos-lote-{a,b,c}.md`.
