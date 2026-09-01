@@ -1,0 +1,41 @@
+Projeto IA Manfac 
+Financeiro
+Lançamentos de títulos no sistema (chega por email e não tenho tempo de ficar lançando)
+Pagamentos
+Criar pagamentos no banco
+Baixar pagamentos após a aprovação
+Integração com Banco
+Auditoria de Conciliação no Omie
+Faturamento
+Receber email do cliente com obras faturadas > Faturar no Omie > atualizar faturamento liberado na planilha de controle de obras > enviar NFs ao cliente
+Agente de IA cobrança de faturamento e confirmação de programação de pagamentos
+Manutenção Predial (Contratos)
+Dashboard funcionando em tempo real
+Visibilidade do Estoque em tempo real 
+Alertas
+Agente de IA avisando programação das Equipes
+Agente de IA cobrando produtividade das Equipes
+Controle de Obras (COP)
+Função atual: atualizar planilha com obras aprovadas, cronograma de obras, status de obras, pendências com outras áreas, envio de relatórios, fechamento da OS no sistema do cliente, faturamento
+Agente de IA controlador/cobrador de pendências com disparo por email e whatsapp
+Dashboard de obras, cronograma, faturamento, pendências
+Processo atual em reconstrução com Zeev
+Medição de Parceiros/Fornecedores
+Controle de Contratos e condições de pagamento por obra
+Controle de liberação de Pagamentos
+Lançamentos de Pagamentos no Omie
+Processo rodando no Zeev com melhorias a definir
+Agente de IA disparando email após contratação
+Compras
+Processo atual em funcionamento no Zeev
+Desejável consulta de estoque ao Omie em tempo real
+Verificar possibilidade de criar sistema de solicitação de compras sem usar o Zeev, com fluxo de processos, validações e aprovações com alçadas
+CRM
+Sistema já em andamento (José)
+Criar aba de controle de contratos, vencimentos, renovações de preço
+Criar abas de prospecção de clientes, cadência de contatos por email, whatsapp e automações
+Elaboração padrão de propostas técnicas
+DP/RH
+Agente de seleção de candidatos / avaliação de currículos
+Agente de IA para avaliação e aprovação de Hora Extra, cruzando as informações com o Field
+Processo de Admissão, Demissão (Ver se vale a pena fazer no Zeev)
