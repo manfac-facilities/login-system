@@ -54,3 +54,14 @@ mensagem do dia precisa de template.
   aviso das 19h, vira aviso próprio, ou sobe para o dono?
 - **Destino de "documento / ART" e "outro"**, que estão na lista de faltas e ele
   não citou.
+
+## Resolvido em 01/09/2026
+
+> "a tarefa para a roberta nasce em nosso sistema"
+
+A tarefa **nasce no nosso sistema**, não no Zeev. O agente cobra por WhatsApp e a
+resposta volta para cá.
+
+Por que isso importa: com a tarefa em dois lugares, ninguém olha nenhum dos dois.
+O Zeev segue com o processo formal de compra depois que a Roberta responder o que
+falta — mas a cobrança não depende dele para funcionar.
