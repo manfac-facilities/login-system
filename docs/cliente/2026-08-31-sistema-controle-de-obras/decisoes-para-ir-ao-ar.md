@@ -113,3 +113,33 @@ fiel ao que acontece hoje.
 Consequência para a tela: a triagem deixa de ter qualquer campo de porte, e a
 fila "Aguardando definição" é sempre do Yuri. Definir inclui dizer quem vai
 tocar a obra.
+
+## DECISÃO B — resolvida em 01/09/2026
+
+> "mantem as duas formas do diario"
+
+O analista escolhe como responder: **uma obra por vez** (cartões) ou **lista
+única** (estilo planilha). O seletor "Como responder" fica no alto do diário.
+
+Já é o que está construído no mockup — nada muda.
+
+Custo assumido, para constar: são dois caminhos de tela para manter e testar
+para sempre, e toda mudança no diário precisa ser feita nos dois. O cliente
+escolheu isso conscientemente nas duas vezes em que a pergunta apareceu (aqui e
+na decisão A, sobre tabela e Kanban).
+
+## Situação das decisões em 01/09/2026
+
+| # | Assunto | Situação |
+|---|---|---|
+| A | Tabela ou Kanban na base | as duas |
+| B | Formato do diário | as duas |
+| C | Travar no 3º "não andou" | sem trava; motivo obrigatório |
+| D | Quem define a obra que chega | o Yuri, e ele também direciona |
+| E | O que perguntar às 9h | dissolvida — ciclo passou para 18h |
+| F | Falta repetida vários dias | **aberta** — proposta no Painel do dia |
+| G | Quem marca "faturado" | **aberta** — vai no mockup do ciclo de vida |
+| H | Porte da obra | descartada |
+
+**Nenhuma decisão em aberto trava a spec.** F e G são propostas dentro do
+mockup, e o sistema funciona com o padrão adotado em cada uma até ele responder.
