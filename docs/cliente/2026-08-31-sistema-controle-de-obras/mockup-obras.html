@@ -1851,8 +1851,9 @@
     h +=   '<div id="diario-corpo"></div>';
     h +=   fbPor("tela1");
 
-    h +=   '<div class="decisao"><span class="tag">DECISÃO B</span><div>';
-    h +=     '<p>As duas formas de responder o diário estão prontas aí em cima. <b>Experimente as duas e diga qual fica.</b></p>';
+    h +=   '<div class="decisao fechada"><span class="tag">DECISÃO B</span><div>';
+    h +=     '<p><span class="resp">Resolvida — você respondeu</span><b>As duas ficam.</b> O analista escolhe como responder no botão ' +
+               '“Como responder”, aí em cima. Cada uma serve a um momento:</p>';
     h +=     '<p class="opt"><em>Uma obra por vez:</em> cada obra é um bloco com as perguntas dentro. Ao salvar, ela some da fila e o contador cai — dá para parar no meio e saber onde parou. É a que funciona no celular.</p>';
     h +=     '<p class="opt"><em>Lista única:</em> uma linha por obra, tudo na mesma tela, do jeito de uma planilha. Responde sem sair da linha e salva tudo de uma vez no fim. É mais rápido no computador para quem já sabe as respostas de cor.</p>';
     h +=     '<p class="opt">Muda só o jeito de responder: as perguntas, o motivo obrigatório e o que fica gravado são os mesmos nas duas.</p>';
@@ -3113,21 +3114,16 @@
 
     h += fbPor("telaAdm");
 
-    /* DECISÃO F — a pergunta que a resposta dele abriu e não fechou. */
-    h += '<div class="decisao"><span class="tag">DECISÃO F</span><div>';
-    h +=   '<p>O aviso das 19h resolve o primeiro dia. <b>E no segundo, no terceiro, no quinto?</b> ' +
-             'Hoje o Yuri está em falta há um dia. Em agosto a Luana ficou dois dias seguidos sem preencher, ' +
-             'e ninguém soube além do aviso de cada dia.</p>';
-    h +=   '<p class="opt"><em>Adotado por padrão — o mesmo aviso, com a conta:</em> todo dia às 19h sai o mesmo aviso ' +
-             'para os administradores, com o número de dias seguidos escrito nele ("2º dia sem registro"), e o painel guarda ' +
-             'a contagem. Nada é bloqueado e nada sobe sozinho para mais ninguém: quem decide agir é quem lê o número.</p>';
-    h +=   '<p class="opt"><em>Alternativa — o aviso escala:</em> a partir do 3º dia seguido ele muda de forma e de destinatário: ' +
-             'vira um aviso separado, com outro peso, e passa a ir também para o superior direto do analista.</p>';
-    h +=   '<p class="opt"><em>Alternativa — o aviso vira pauta:</em> depois de alguns dias a falta deixa de ser um aviso ' +
-             'do dia e vira uma linha fixa da reunião semanal, com todo mundo que ficou sem registro na semana. ' +
-             'A cobrança sai da pessoa e vira rotina.</p>';
-    h +=   '<p class="opt">É a mesma escolha da DECISÃO C, um andar acima: <b>registrar e mostrar</b>, ou <b>forçar alguém a agir</b>. ' +
-             'Lá você escolheu registrar. <b>Aqui vale a mesma coisa?</b></p>';
+    /* DECISÃO F — respondida pelo cliente em 01/09/2026: "não, só atualiza".
+       O aviso não escala e não muda de forma; o que muda é o número dentro dele. */
+    h += '<div class="decisao fechada"><span class="tag">DECISÃO F</span><div>';
+    h +=   '<p><span class="resp">Resolvida — você respondeu</span><b>O aviso não muda, só atualiza.</b> ' +
+             'Todo dia às 19h sai o mesmo aviso para os administradores, ' +
+             'com o número de dias seguidos escrito nele ("2º dia sem registro"), e o painel guarda a contagem. ' +
+             'Nada é bloqueado e nada sobe sozinho para mais ninguém: quem decide agir é quem lê o número.</p>';
+    h +=   '<p class="opt">É a mesma linha da DECISÃO C, um andar acima: o sistema <b>registra e mostra</b>, ' +
+             'em vez de <b>forçar alguém a agir</b>. A falta repetida aparece como número que cresce, ' +
+             'não como cobrança que muda de tom.</p>';
     h += '</div></div>';
     h += fbPor("decF");
 

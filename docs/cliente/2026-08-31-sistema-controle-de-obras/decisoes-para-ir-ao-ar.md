@@ -143,3 +143,24 @@ na decisão A, sobre tabela e Kanban).
 
 **Nenhuma decisão em aberto trava a spec.** F e G são propostas dentro do
 mockup, e o sistema funciona com o padrão adotado em cada uma até ele responder.
+
+## DECISÃO F — resolvida em 01/09/2026
+
+> "F — o aviso das 19h muda quando a falta se repete? — nao, so atualiza"
+
+O aviso **não escala e não muda de forma**. Sai o mesmo todo dia às 19h, com o
+número de dias seguidos dentro dele ("2º dia sem registro"), e o painel guarda a
+contagem. Nada bloqueia, nada sobe sozinho para mais ninguém.
+
+É a mesma linha da decisão C, um andar acima: o sistema **registra e mostra** em
+vez de **forçar alguém a agir**. A falta repetida aparece como número que cresce,
+não como cobrança que muda de tom. Era o padrão já adotado no mockup — confirmado
+por ele, agora vira nota fechada na tela.
+
+## Horário do agente de IA — confirmado em 01/09/2026
+
+> "as 18h substituem as 9h para o agente de IA? isso, substitui"
+
+**As 18h são o horário único do ciclo.** As 9h saem de vez, inclusive para a
+segunda etapa com o agente de IA conversacional. Era a suposição que eu vinha
+carregando desde a decisão E — agora é fato confirmado, não inferência.
