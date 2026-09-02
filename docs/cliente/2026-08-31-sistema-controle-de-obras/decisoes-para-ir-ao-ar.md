@@ -52,3 +52,30 @@ em vez de depender de alguém lembrar.
 - Dashboard e apresentação automática para reunião (camada 4)
 - Agente de IA conversacional no WhatsApp (2ª etapa da decisão 01)
 - Integração com o Zeev (standby, decisão do cliente na reunião)
+
+## Canal das notificações — decidido em 01/09/2026
+
+> "a notificaçao aos adm do hub é via email e wpp"
+
+Os avisos aos administradores do hub (o das 19h de quem não preencheu, e o de
+falta de material) saem por **e-mail e WhatsApp**, os dois.
+
+O canal do aviso das 18h ao analista não foi especificado — não assumir.
+
+### Consequência técnica, para a spec
+
+**E-mail** é direto: o hub já usa Supabase, e o envio cabe numa rota chamada pelo
+`pg_cron` + `pg_net`, que já estão instalados em produção.
+
+**WhatsApp não é ligar uma chave.** Precisa de um provedor, e a escolha tem
+custo e prazo diferentes:
+
+| Caminho | O que exige | Risco |
+|---|---|---|
+| API oficial (Meta / Twilio / 360dialog) | conta WhatsApp Business, número dedicado, verificação da empresa e **template aprovado** para mensagem iniciada pela empresa | prazo de aprovação; custo por conversa |
+| Provedor não oficial (Z-API, Evolution) | um número comum conectado via QR | número pode ser bloqueado pelo WhatsApp; sem garantia de entrega |
+
+O aviso das 19h é mensagem iniciada pela empresa fora de qualquer conversa — ou
+seja, no caminho oficial ele **exige template aprovado**. Isso precisa entrar no
+cronograma como pré-requisito, não como detalhe de implementação: dá para o
+sistema subir com e-mail funcionando e o WhatsApp entrar depois, sem travar nada.
