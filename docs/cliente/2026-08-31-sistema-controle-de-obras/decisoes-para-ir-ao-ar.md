@@ -97,17 +97,19 @@ Três coisas de uma vez:
    "Aguardando definição" não é de qualquer analista — é **dele**, e o ato de
    definir inclui dizer quem vai tocar a obra, não só preencher os campos.
 
-### Pergunta que isso abre — vira DECISÃO H
+### DECISÃO H — descartada pelo cliente em 01/09/2026
 
-**O que separa obra grande de obra pequena?** Não foi dito, e o critério muda
-quem recebe cada obra. Duas leituras possíveis, com base na planilha real:
+> "ignora obra grande e pequena, envia direto para o yuri"
 
-- **Por valor:** as obras ativas vão de R$ 1.886 (portais do Copacabana 6) a
-  R$ 68.134 (rollout de telhado do Alcântara 5). Um corte por valor é objetivo e
-  o sistema aplica sozinho.
-- **Por duração planejada:** de 2 a 22 dias. Também objetivo, e mais ligado ao
-  esforço real de acompanhamento do que o valor.
+**Não existe classificação de porte no sistema.** Toda obra que chega do Field
+vai para a fila do Yuri, e ele direciona.
 
-Uma terceira saída é não automatizar: o Yuri olha e decide caso a caso, e o
-sistema só registra. É a mais fiel ao que existe hoje e a que menos erra — o
-custo é que o direcionamento continua dependendo de uma pessoa.
+Por que isso é bom: o porte não existe como dado na planilha — está na cabeça de
+quem distribui. Qualquer corte que inventássemos (por valor, por duração) erraria
+nos casos de fronteira, e o sistema estaria automatizando um palpite nosso em vez
+de um processo real. Uma fila só, com um dono, é mais simples de construir e mais
+fiel ao que acontece hoje.
+
+Consequência para a tela: a triagem deixa de ter qualquer campo de porte, e a
+fila "Aguardando definição" é sempre do Yuri. Definir inclui dizer quem vai
+tocar a obra.
