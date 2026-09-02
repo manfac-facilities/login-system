@@ -164,3 +164,33 @@ por ele, agora vira nota fechada na tela.
 **As 18h são o horário único do ciclo.** As 9h saem de vez, inclusive para a
 segunda etapa com o agente de IA conversacional. Era a suposição que eu vinha
 carregando desde a decisão E — agora é fato confirmado, não inferência.
+
+## WhatsApp — decidido em 01/09/2026: sem API oficial
+
+> "sobre os disparos de wpp faremos sem api oficial"
+
+Provedor não oficial (Z-API, Evolution e similares): um número comum conectado
+por QR code, sem Meta, sem verificação de empresa, sem template aprovado.
+
+**O que isso ganha:** sai em dias, não em semanas; custo baixo; e — o que mais
+importa para o agente cobrador — **conversa livre nos dois sentidos**, sem a
+janela de 24h e sem template para iniciar. O agente fala com a Roberta quando
+precisar, do jeito que precisar.
+
+**O que isso custa, e é preciso dizer:** é uso fora dos termos do WhatsApp. O
+número pode ser bloqueado, sem aviso e sem recurso. Se cair, os disparos param.
+
+**Consequências práticas para a spec:**
+
+1. **Número dedicado, nunca o pessoal de ninguém.** Um chip "Manfac Obras". Se o
+   número for bloqueado, some o WhatsApp da empresa junto — e não pode ser o
+   número que o cliente DPSP usa para falar com a Manfac.
+2. **E-mail não é redundância, é rede de segurança.** Já estava decidido que os
+   avisos vão pelos dois canais; agora isso deixa de ser conveniência e passa a
+   ser o que mantém o sistema de pé no dia em que o número cair.
+3. **O envio precisa registrar o que aconteceu** — enviado, entregue, falhou. Sem
+   confirmação da plataforma, o log do nosso lado é a única evidência de que a
+   cobrança saiu.
+4. **Volume baixo ajuda.** São poucas mensagens por dia, para pessoas da própria
+   empresa, que respondem — padrão de conversa real, que é justamente o que menos
+   chama atenção dos mecanismos anti-spam.
