@@ -79,3 +79,35 @@ O aviso das 19h é mensagem iniciada pela empresa fora de qualquer conversa — 
 seja, no caminho oficial ele **exige template aprovado**. Isso precisa entrar no
 cronograma como pré-requisito, não como detalhe de implementação: dá para o
 sistema subir com e-mail funcionando e o WhatsApp entrar depois, sem travar nada.
+
+## Quem pega qual obra — informação do cliente, 01/09/2026
+
+> "sobre quem pega qual obra. o yuri toma conta das obras grandes e os outros sao
+> equipes de manutencao e obra pequena, o cliente recomendou a pessoa que deve
+> definir/direcionar o projeto é o yuri"
+
+Três coisas de uma vez:
+
+1. **Existe uma distinção entre obra grande e obra pequena / manutenção** que o
+   mockup não representa. Ela não aparece como coluna na planilha — está na
+   cabeça de quem distribui.
+2. **A carteira é dividida por porte:** o Yuri fica com as obras grandes; os
+   outros analistas com manutenção e obra pequena.
+3. **Quem direciona é o Yuri.** Isso confirma e aperta a decisão D: a fila
+   "Aguardando definição" não é de qualquer analista — é **dele**, e o ato de
+   definir inclui dizer quem vai tocar a obra, não só preencher os campos.
+
+### Pergunta que isso abre — vira DECISÃO H
+
+**O que separa obra grande de obra pequena?** Não foi dito, e o critério muda
+quem recebe cada obra. Duas leituras possíveis, com base na planilha real:
+
+- **Por valor:** as obras ativas vão de R$ 1.886 (portais do Copacabana 6) a
+  R$ 68.134 (rollout de telhado do Alcântara 5). Um corte por valor é objetivo e
+  o sistema aplica sozinho.
+- **Por duração planejada:** de 2 a 22 dias. Também objetivo, e mais ligado ao
+  esforço real de acompanhamento do que o valor.
+
+Uma terceira saída é não automatizar: o Yuri olha e decide caso a caso, e o
+sistema só registra. É a mais fiel ao que existe hoje e a que menos erra — o
+custo é que o direcionamento continua dependendo de uma pessoa.
