@@ -144,7 +144,27 @@
   .pill.andamento{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
   .pill.paralisado{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.32)}
   .pill.levantamento{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
-  .pill.finalizado{color:var(--ink-dim);background:rgba(148,163,184,.1);border-color:var(--line)}
+  .pill.relatorio{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.aprovarOS{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.32)}
+  .pill.fecharOS{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.32)}
+  .pill.pendFat{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.32)}
+  .pill.faturado{color:var(--ink-dim);background:rgba(148,163,184,.1);border-color:var(--line)}
+
+  /* A obra carrega desde o começo se tem ou não OS aprovada no sistema do
+     cliente. Sem OS aprovada, executar é risco de faturamento — por isso o
+     rótulo não é neutro. */
+  .os-chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;
+    letter-spacing:.03em;padding:2px 7px;border-radius:99px;border:1px solid;white-space:nowrap;
+  }
+  .os-chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;flex:none}
+  .os-chip.sim{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .os-chip.nao{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.4)}
+
+  td.dono{color:var(--ink-dim);font-size:12px;white-space:nowrap}
+  .parada{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-dim)}
+  .parada small{font-family:var(--sans);font-size:10.5px}
+  .parada.alto{color:var(--warn);font-weight:700}
   .pill.definir{color:var(--accent);background:var(--accent-soft);border-color:rgba(240,90,40,.42)}
 
   .dias{
@@ -461,10 +481,16 @@
   td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
   .bloq{font-size:12px}
   .bloq .d{font-family:var(--mono);color:var(--warn)}
-  .av-bar{display:flex;align-items:center;gap:7px;min-width:82px}
-  .av-bar i{flex:1;height:4px;background:var(--line-soft);border-radius:99px;overflow:hidden;display:block}
-  .av-bar i b{display:block;height:100%;background:var(--ink-dim);border-radius:99px}
-  .av-bar span{font-family:var(--mono);font-size:11px;color:var(--ink-dim);width:32px;text-align:right}
+  /* NO LUGAR DO "AVANÇO %": prazo consumido. A barra não mede obra feita —
+     mede dia decorrido do prazo combinado, que o sistema conta sozinho. */
+  .prazo{display:flex;flex-direction:column;gap:4px;min-width:96px}
+  .prazo .t{font-family:var(--mono);font-size:11.5px;color:var(--ink);white-space:nowrap}
+  .prazo.estourado .t{color:var(--warn)}
+  .prazo.sem .t{color:var(--ink-faint);font-family:var(--sans);font-style:italic}
+  .prazo i{height:3px;background:var(--line-soft);border-radius:99px;overflow:hidden;display:block}
+  .prazo i b{display:block;height:100%;background:var(--ok);border-radius:99px}
+  .prazo.estourado i b{background:var(--warn)}
+  .prazo.pronto i b{background:var(--ink-faint)}
   tr.alerta td{background:rgba(255,77,109,.055)}
 
   /* Kanban */
@@ -490,6 +516,18 @@
   .card .ft{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .card .nota{width:auto;text-align:left;font-weight:500}
   .col-vazia{color:var(--ink-faint);font-size:12px;text-align:center;padding:14px 6px}
+  .card .ln.com{margin-bottom:6px;font-size:11.5px}
+  .card .ln.com b{color:var(--ink);font-weight:600}
+  .card .ln.com.alto,.card .ln.com.alto b{color:var(--warn)}
+  .card .ln.com.crit,.card .ln.com.crit b{color:var(--crit)}
+  /* A etapa exata dentro da fase — o detalhe que o agrupamento não pode comer */
+  .col-etapa{
+    display:flex;align-items:center;gap:8px;padding:3px 2px 2px;margin-top:2px;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+    border-top:1px solid var(--line-soft);
+  }
+  .col-etapa:first-child{border-top:0;margin-top:0}
+  .col-etapa b{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:0}
 
   /* ---------- Tela 3 ---------- */
   .voltar{
@@ -517,6 +555,117 @@
   }
   .box-b{padding:13px 14px}
   .box + .box{margin-top:14px}
+  .box-sub{
+    margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;
+    font-size:11.5px;color:var(--ink-faint);
+  }
+
+  /* ---------- Ciclo de vida da obra: a esteira ---------- */
+  .esteira-box{margin-bottom:16px}
+
+  .risco-os{
+    display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
+    border:1px solid rgba(255,77,109,.4);background:var(--crit-soft);
+    border-left:4px solid var(--crit);border-radius:var(--r);padding:12px 15px;margin-bottom:16px;
+  }
+  .risco-os .tag{
+    font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--crit);
+    border:1px solid rgba(255,77,109,.42);background:rgba(255,77,109,.1);
+    border-radius:99px;padding:3px 9px;white-space:nowrap;flex:none;
+  }
+  .risco-os p{margin:1px 0 0;font-size:13px;line-height:1.5;color:var(--ink-dim);max-width:74ch;flex:1 1 320px}
+  .risco-os p b{color:var(--ink)}
+
+  .agora{
+    display:flex;gap:10px 26px;flex-wrap:wrap;
+    padding-bottom:13px;margin-bottom:4px;border-bottom:1px solid var(--line-soft);
+  }
+  .agora-p{min-width:0}
+  .agora-p .v{font-size:13px;font-weight:600;margin-top:3px}
+  .agora-p .v.aviso{color:var(--warn)}
+
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{
+    position:relative;display:grid;grid-template-columns:22px 1fr auto;
+    gap:0 12px;align-items:start;padding:9px 0;
+  }
+  /* O trilho: uma linha contínua atrás dos marcadores, cortada no primeiro e
+     no último passo para não sobrar ponta solta. */
+  .passo::before{
+    content:"";position:absolute;left:10px;top:0;bottom:0;width:1px;background:var(--line);
+  }
+  .passo:first-child::before{top:18px}
+  .passo:last-child::before{bottom:auto;height:18px}
+  .passo .marca{padding-top:3px}
+  .passo .marca i{
+    display:block;width:11px;height:11px;border-radius:50%;position:relative;z-index:1;
+    border:2px solid var(--line);background:var(--panel);margin-left:5px;
+  }
+  .passo.feito .marca i{border-color:var(--ok);background:var(--ok)}
+  .passo.atual .marca i{
+    border-color:var(--accent);background:var(--panel);
+    box-shadow:0 0 0 4px var(--accent-soft);
+  }
+  .passo.pulado .marca i{border-style:dashed;border-color:var(--line-soft);background:transparent}
+
+  .passo .corpo{min-width:0}
+  .passo .l1{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .passo .nome{font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+  .passo.futuro .nome,.passo.pulado .nome{color:var(--ink-faint);font-weight:500}
+  .passo .aqui{
+    font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--accent);
+    border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:99px;padding:2px 8px;
+  }
+  .passo .l2{
+    display:flex;gap:4px 12px;flex-wrap:wrap;align-items:center;
+    margin-top:3px;font-size:12px;color:var(--ink-dim);
+  }
+  .passo.pulado .l2{color:var(--ink-faint);font-style:italic}
+  .passo .l2 .dono{color:var(--ink);font-weight:600}
+  .passo .l2 .onde::before{content:"·";margin-right:8px;color:var(--ink-faint)}
+  .passo .l2 .cod{
+    font-family:var(--mono);font-size:10px;letter-spacing:.02em;color:var(--ink-faint);
+    border:1px solid var(--line-soft);border-radius:3px;padding:1px 6px;
+  }
+  .passo .l3{margin-top:6px;display:flex;flex-direction:column;gap:5px}
+  .alerta-passo{
+    font-size:12px;color:var(--warn);background:var(--warn-soft);
+    border:1px solid rgba(244,183,63,.3);border-radius:var(--r-sm);padding:6px 9px;max-width:62ch;
+  }
+  .alerta-passo b{font-family:var(--mono)}
+  .sem-status{
+    font-size:11.5px;line-height:1.5;color:var(--ink-faint);
+    border-left:2px solid var(--line);padding-left:9px;max-width:64ch;
+  }
+  .passo .quando{
+    font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;
+    color:var(--ink-dim);white-space:nowrap;padding-top:3px;text-align:right;
+  }
+  .passo .quando.futuro,.passo .quando.pulado{color:var(--ink-faint);font-family:var(--sans);font-style:italic}
+  .passo .quando.atual{color:var(--accent);font-weight:700}
+
+  /* O desvio: só existe quando a obra começou sem OS aprovada. Recuado e
+     marcado, para ficar claro que é um caminho alternativo e não mais um passo. */
+  .passo.desvio{margin-left:22px;border-left:1px dashed var(--line);padding-left:14px}
+  .passo.desvio::before{display:none}
+  .passo.desvio.pulado{opacity:.62}
+  .passo.desvio .quando{padding-top:20px}
+  .passo.desvio .corpo::before{
+    content:"desvio · só quando a obra começou sem OS aprovada";
+    display:block;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;color:var(--ink-faint);margin-bottom:4px;
+  }
+
+  .esteira-nota{
+    margin:12px 0 0;padding-top:11px;border-top:1px solid var(--line-soft);
+    font-size:11.5px;line-height:1.6;color:var(--ink-faint);max-width:92ch;
+  }
+  .esteira-nota b{color:var(--ink-dim)}
+
+  @media (max-width:620px){
+    .passo{grid-template-columns:22px 1fr}
+    .passo .quando{grid-column:2;text-align:left;padding-top:5px}
+  }
 
   .dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px}
   .dl dt{color:var(--ink-faint);font-size:11.5px;white-space:nowrap;padding-top:1px}
@@ -614,6 +763,19 @@
   .push .tx{font-size:13px;line-height:1.5;color:var(--ink-dim);margin:0}
   .push .tx b{color:var(--ink)}
   .push .pra{margin:8px 0 0;font-size:11.5px;color:var(--ink-faint)}
+  /* O alerta na hora é outro bicho: cor própria para não se confundir com o
+     aviso das 19h, que fala de silêncio e não de falta material. */
+  .push.falta{border-left-color:var(--accent);background:rgba(240,90,40,.055)}
+  .push.falta .de .hora{color:var(--accent)}
+
+  .bloco-h{margin:22px 0 10px}
+  .bloco-h h2{margin:0;font-size:14.5px;letter-spacing:-.01em}
+  .bloco-h p{margin:3px 0 0;font-size:12.5px;color:var(--ink-dim);max-width:80ch}
+  .regra-alerta{
+    margin:2px 0 0;font-size:12px;line-height:1.55;color:var(--ink-dim);max-width:88ch;
+    border-left:2px solid var(--line);padding-left:11px;
+  }
+  .regra-alerta b{color:var(--ink)}
 
   /* ---------- Tela 4: painel do administrador ---------- */
   table.adm{min-width:860px}
@@ -712,13 +874,68 @@
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
-  var ETAPAS = {
-    definir:{nome:"Aguardando definição", cor:"var(--accent)"},
-    levantamento:{nome:"Levantamento", cor:"var(--info)"},
-    andamento:{nome:"Em andamento", cor:"var(--ok)"},
-    paralisado:{nome:"Paralisado", cor:"var(--crit)"},
-    finalizado:{nome:"Finalizado", cor:"var(--ink-faint)"}
-  };
+  /* ---------------------------------------------------------------
+     CICLO DE VIDA DA OBRA
+     A ordem é a que o cliente descreveu, e os nomes das etapas de depois da
+     execução são os que ele já usa na coluna STATUS MANFAC da planilha —
+     nada foi inventado. As 187 obras da base de hoje se distribuem assim:
+       EXECUTAR 12 · EXECUTAR - APROVAR OS 9 · EXECUTADO - APROVAR OS 31 ·
+       MAU USO - APROVAR OS 22 · FECHAR OS 42 · PENDENTE FATURAMENTO 47 ·
+       FATURADO 24.
+     Ou seja: 89 obras já foram executadas em campo e ainda não viraram
+     dinheiro. Hoje ninguém enxerga onde cada uma delas empacou.
+     'RELATÓRIO DE ENTREGA' é a única etapa sem nome na planilha — ela
+     acontece, mas não é registrada em lugar nenhum. Está marcada como tal.
+     --------------------------------------------------------------- */
+  var FASES = [
+    {k:"antes",      nome:"Antes de executar", cor:"var(--info)"},
+    {k:"campo",      nome:"Executando",        cor:"var(--ok)"},
+    {k:"fechamento", nome:"Fechamento",        cor:"var(--warn)"},
+    {k:"faturamento",nome:"Faturamento",       cor:"var(--accent)"}
+  ];
+
+  var CICLO = [
+    {k:"definir",     nome:"Aguardando definição",   fase:"antes", cor:"var(--accent)",
+     dono:"Analista",            onde:"Manfac", planilha:""},
+    {k:"levantamento",nome:"Levantamento",           fase:"antes", cor:"var(--info)",
+     dono:"Responsável da obra", onde:"Manfac", planilha:"EXECUTAR"},
+    {k:"andamento",   nome:"Em andamento",           fase:"campo", cor:"var(--ok)",
+     dono:"Equipe em campo",     onde:"Campo",  planilha:"EXECUTAR"},
+    {k:"paralisado",  nome:"Paralisado",             fase:"campo", cor:"var(--crit)",
+     dono:"Responsável da obra", onde:"Campo",  planilha:"EXECUTAR"},
+    {k:"relatorio",   nome:"Relatório de entrega",   fase:"fechamento", cor:"var(--info)",
+     dono:"Equipe / responsável",onde:"Field Control", planilha:null},
+    {k:"aprovarOS",   nome:"Cobrar aprovação da OS", fase:"fechamento", cor:"var(--crit)",
+     dono:"Cliente DPSP",        onde:"Sistema do cliente", planilha:"EXECUTADO - APROVAR OS"},
+    {k:"fecharOS",    nome:"Fechar OS",              fase:"fechamento", cor:"var(--warn)",
+     dono:"Responsável da obra", onde:"Sistema do cliente", planilha:"FECHAR OS"},
+    {k:"pendFat",     nome:"Pendente faturamento",   fase:"faturamento", cor:"var(--warn)",
+     dono:"Cliente DPSP",        onde:"Sistema do cliente", planilha:"PENDENTE FATURAMENTO"},
+    {k:"faturado",    nome:"Faturado",               fase:"faturamento", cor:"var(--ink-faint)",
+     dono:"Financeiro Manfac",   onde:"Manfac", planilha:"FATURADO"}
+  ];
+
+  var ETAPAS = {};
+  CICLO.forEach(function(c){ ETAPAS[c.k] = c; });
+
+  /* A esteira que a ficha desenha: só o trecho de depois de a equipe sair de
+     campo. 'aprovarOS' é o desvio — existe apenas quando a obra começou sem
+     OS aprovada no sistema do cliente. */
+  var ESTEIRA = ["relatorio","aprovarOS","fecharOS","pendFat","faturado"];
+
+  function faseDe(o){ return ETAPAS[o.etapa] ? ETAPAS[o.etapa].fase : "campo"; }
+  function posCampo(o){ var f = faseDe(o); return f === "fechamento" || f === "faturamento"; }
+  function encerrada(o){ return o.etapa === "faturado"; }
+  /* Há quanto tempo a obra está parada NA ETAPA em que está. É o número que
+     hoje não existe: a planilha guarda o status, nunca desde quando. */
+  function paradaNaEtapa(o){ return diasDesde(o.desdeEtapa || o.atualizacao); }
+  function donoDa(o){
+    var c = ETAPAS[o.etapa];
+    if(!c) return "—";
+    if(c.dono === "Responsável da obra") return o.pcm ? "Responsável " + o.pcm : "Responsável a definir";
+    if(c.dono === "Analista") return "Analista " + (o.analista || "");
+    return c.dono;
+  }
   var BLOQUEIOS = ["Clima","Cliente / loja","Disponibilidade de equipe","Contratação de prestador","Falta de material","Sem bloqueio"];
   var ITENS = ["Não faltou","Material","Ferramenta","Equipe","Documento / ART","Outro"];
   /* Não existe mais lista de "quem resolve / até quando": a DECISÃO C tirou a
@@ -731,8 +948,8 @@
     {
       id:"o1", os:"0226-014989", loja:"DP BAIRRO DE FATIMA",
       desc:"Forro do estoque caiu", tipo:"TELHADO", valor:28520.46,
-      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-7", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Disponibilidade de equipe", avanco:0,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-7", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"andamento", bloqueio:"Disponibilidade de equipe",
       aprovacao:"2026-04-30", inicioPlan:"2026-08-19", inicioReal:"2026-08-19", duracao:7,
       pendencia:"Aguardando finalização de serviço TMO 107. Nova posição 24/08",
       pendResp:"YURI", pendPrazo:"2026-08-24",
@@ -757,8 +974,8 @@
     {
       id:"o2", os:"0226-005730", loja:"DP BARRA DE SAO JOAO",
       desc:"Infiltração no teto, pingando sobre produtos na área de vendas", tipo:"TELHADO", valor:35706.12,
-      analista:"LEANDRO", pcm:"YURI", equipe:"ERLI / RICARDO", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Clima", avanco:90,
+      analista:"LEANDRO", pcm:"YURI", equipe:"ERLI / RICARDO", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"andamento", bloqueio:"Clima",
       aprovacao:"2026-06-22", inicioPlan:"2026-08-03", inicioReal:"2026-08-03", duracao:5,
       pendencia:"Falta o arremate da calha. Depende de dois dias sem chuva",
       pendResp:"YURI", pendPrazo:"2026-09-02",
@@ -778,8 +995,8 @@
     {
       id:"o3", os:"0526-013724", loja:"DP NILOPOLIS 5",
       desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:35399.80,
-      analista:"JUAN", pcm:"YURI", equipe:"ALEXANDRE", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:50,
+      analista:"JUAN", pcm:"YURI", equipe:"ALEXANDRE", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-06-08", inicioPlan:"2026-08-13", inicioReal:"2026-08-13", duracao:16,
       pendencia:"Pagamento da ART e locação de andaime de 8 m",
       pendResp:"FINANCEIRO", pendPrazo:"2026-08-18",
@@ -798,8 +1015,8 @@
     {
       id:"o4", os:"0826-004428", loja:"DP PETROPOLIS 5",
       desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
-      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-27", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:95,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-27", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
       pendencia:"", pendResp:"", pendPrazo:"",
       proxAcao:"Programar vistoria de encerramento",
@@ -814,8 +1031,8 @@
     {
       id:"o5", os:"0826-004429", loja:"DP PETROPOLIS 6",
       desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
-      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:10,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-26", duracao:8,
       pendencia:"Equipe MANFAC-19 dividida com a obra de Nilópolis 4",
       pendResp:"YURI", pendPrazo:"2026-09-01",
@@ -831,8 +1048,8 @@
     {
       id:"o6", os:"0826-007431", loja:"DP PETROPOLIS 4",
       desc:"Pintura da retaguarda — visita do presidente da DPSP", tipo:"CIVIL", valor:null,
-      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-26", origem:"Sistema DPSP",
-      etapa:"andamento", bloqueio:"Sem bloqueio", avanco:90,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-26", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-14", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
       pendencia:"", pendResp:"", pendPrazo:"",
       proxAcao:"Fechar a OS no Field após a última demão",
@@ -847,8 +1064,8 @@
     {
       id:"o7", os:"0526-013745", loja:"DP LUCIO COSTA",
       desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:29795.50,
-      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:0,
+      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Cliente / loja",
       aprovacao:"2026-06-08", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"Aguardando chegar tinta",
       pendResp:"YURI", pendPrazo:"2026-08-24",
@@ -866,8 +1083,8 @@
     {
       id:"o8", os:"0526-013743", loja:"DP PEDRA DE GUARATIBA",
       desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:28050.15,
-      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Clima", avanco:0,
+      analista:"JUAN", pcm:"YURI", equipe:"A DEFINIR", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Clima",
       aprovacao:"2026-06-08", inicioPlan:"2026-08-18", inicioReal:null, duracao:15,
       pendencia:"Aguardando estabilidade de clima. Projetar data de início e final",
       pendResp:"YURI", pendPrazo:"2026-08-24",
@@ -886,8 +1103,8 @@
     {
       id:"o9", os:"0226-011320", loja:"DP PRACA DO O",
       desc:"Loja com infiltração", tipo:"TELHADO", valor:18919.37,
-      analista:"LEANDRO", pcm:"YURI", equipe:"ALEX", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Disponibilidade de equipe", avanco:20,
+      analista:"LEANDRO", pcm:"YURI", equipe:"ALEX", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Disponibilidade de equipe",
       aprovacao:"2026-03-01", inicioPlan:"2026-08-24", inicioReal:null, duracao:22,
       pendencia:"Necessário trocar de prestador. Alex vai assumir a obra PLK",
       pendResp:"YURI", pendPrazo:"2026-08-25",
@@ -908,8 +1125,8 @@
     {
       id:"o10", os:"0526-013772", loja:"DP NILOPOLIS 4",
       desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:33356.92,
-      analista:"JUAN", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:10,
+      analista:"JUAN", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Cliente / loja",
       aprovacao:"2026-06-08", inicioPlan:"2026-07-10", inicioReal:"2026-07-10", duracao:14,
       pendencia:"Juan solicitou a paralisação",
       pendResp:"DPSP", pendPrazo:"2026-08-27",
@@ -930,8 +1147,8 @@
     {
       id:"o11", os:"0126-018429", loja:"DP RECREIO 7",
       desc:"Água minando nas paredes da retaguarda, avaria no estoque de fraldas", tipo:"CIVIL", valor:17702.92,
-      analista:"JUAN", pcm:"YURI", equipe:"ALEX", origem:"Garantia",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"JUAN", pcm:"YURI", equipe:"ALEX", origem:"Garantia", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-17", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"YURI", pendPrazo:"",
@@ -949,8 +1166,8 @@
     {
       id:"o12", os:"GARANTIA", loja:"DP CABO FRIO 4",
       desc:"Garantia de telhado", tipo:"TELHADO", valor:null,
-      analista:"AMANDA", pcm:"LUANA", equipe:"MANFAC-4 / MANFAC-7", origem:"Garantia",
-      etapa:"paralisado", bloqueio:"Disponibilidade de equipe", avanco:0,
+      analista:"AMANDA", pcm:"LUANA", equipe:"MANFAC-4 / MANFAC-7", origem:"Garantia", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Disponibilidade de equipe",
       aprovacao:"2026-07-09", inicioPlan:"2026-07-09", inicioReal:null, duracao:7,
       pendencia:"Pendente liberação do prestador. Outras obras acontecendo",
       pendResp:"LUANA", pendPrazo:"",
@@ -965,8 +1182,8 @@
     {
       id:"o13", os:"0226-013174", loja:"DP COPACABANA 8",
       desc:"Vazamento do teto para a parede na área de vendas, medicamentos danificados", tipo:"HIDRAULICA", valor:6738.10,
-      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Cliente / loja", avanco:0,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Cliente / loja",
       aprovacao:"2026-04-30", inicioPlan:"2026-07-13", inicioReal:null, duracao:3,
       pendencia:"Aguardando liberação da gerente para escolha de data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -980,8 +1197,8 @@
     {
       id:"o14", os:"0626-014071", loja:"DP MAGE 1",
       desc:"Limpeza e vedação da fossa no salão de vendas, serviço noturno", tipo:"HIDRAULICA", valor:2924.98,
-      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4 / PARCEIRO", origem:"Sistema DPSP",
-      etapa:"paralisado", bloqueio:"Contratação de prestador", avanco:0,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4 / PARCEIRO", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"paralisado", bloqueio:"Contratação de prestador",
       aprovacao:"2026-07-14", inicioPlan:"2026-07-27", inicioReal:null, duracao:5,
       pendencia:"Aguardando escolha de novo prestador",
       pendResp:"AMANDA", pendPrazo:"",
@@ -993,8 +1210,8 @@
     {
       id:"o15", os:"0426-009327", loja:"DP COPACABANA 6",
       desc:"Portais da loja não fecham ou abrem com defeito", tipo:"CIVIL", valor:1886.40,
-      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-07-23", inicioPlan:"2026-08-12", inicioReal:null, duracao:3,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -1005,8 +1222,8 @@
     {
       id:"o16", os:"0526-019295", loja:"DP BARRA DA TIJUCA 5",
       desc:"Desentupimento do esgoto e das caixas de gordura, água retornando para a loja", tipo:"HIDRAULICA", valor:4791.20,
-      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-06-28", inicioPlan:"2026-08-03", inicioReal:null, duracao:5,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -1017,8 +1234,8 @@
     {
       id:"o17", os:"0626-008727", loja:"DP ITABORAI",
       desc:"Substituição das telas milimétricas e da grade da copa — vigilância sanitária", tipo:"SERRALHERIA", valor:2922.24,
-      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-12", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -1029,8 +1246,8 @@
     {
       id:"o18", os:"0626-008725", loja:"DP ITABORAI",
       desc:"Reparo da parede do vestiário feminino com pintura — vigilância sanitária", tipo:"CIVIL", valor:3922.64,
-      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-12", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -1041,8 +1258,8 @@
     {
       id:"o19", os:"0626-014568", loja:"DP GILKA MACHADO",
       desc:"Descaracterização de fachada — encerramento de loja", tipo:"CIVIL", valor:5070.52,
-      analista:"JUAN", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP",
-      etapa:"levantamento", bloqueio:"Sem bloqueio", avanco:null,
+      analista:"JUAN", pcm:"AMANDA", equipe:"A DEFINIR", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"levantamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-14", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"Finalizar levantamento, pedir orçamento e programar data",
       pendResp:"AMANDA", pendPrazo:"",
@@ -1051,49 +1268,119 @@
       remarcacoes:[], diario:[]
     },
 
-    /* --- finalizadas (pipeline) --- */
+    /* --- executadas em campo, ainda na esteira de fechamento e faturamento ---
+       Todas vêm da aba Pipeline. O campo `marcos` guarda a data de cada passo
+       que já aconteceu; null é passo que ainda não aconteceu. `desdeEtapa` é a
+       data em que a obra entrou na etapa atual — é dele que sai o "parada há
+       N dias", o número que a planilha não tem. */
     {
       id:"o20", os:"0626-005880", loja:"DP BARRA DA TIJUCA 10",
       desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:34578.20,
-      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP",
-      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"pendFat", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-06", inicioPlan:"2026-08-10", inicioReal:"2026-08-10", duracao:10,
-      fimReal:"2026-08-21",
-      pendencia:"Pendente faturamento", pendResp:"FINANCEIRO", pendPrazo:"",
-      proxAcao:"Emitir nota", atualizacao:"2026-08-21",
+      fimReal:"2026-08-21", desdeEtapa:"2026-08-25",
+      marcos:{execFim:"2026-08-21", relatorio:"2026-08-22", osAprov:"2026-08-06",
+              fechouOS:"2026-08-25", liberouFat:null, faturou:null},
+      pendencia:"Aguardando a DPSP liberar o faturamento", pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a liberação de faturamento", atualizacao:"2026-08-25",
       naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
     },
     {
       id:"o21", os:"0826-007420", loja:"DP PIABETA",
       desc:"Finalização de obra", tipo:"CIVIL", valor:15700.00,
-      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4", origem:"Sistema DPSP",
-      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"aprovarOS", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-13", inicioPlan:"2026-08-04", inicioReal:"2026-08-04", duracao:12,
-      fimReal:"2026-08-18",
-      pendencia:"Executado, aguardando aprovação da OS", pendResp:"DPSP", pendPrazo:"",
-      proxAcao:"Cobrar aprovação da OS", atualizacao:"2026-08-18",
+      fimReal:"2026-08-18", desdeEtapa:"2026-08-19",
+      marcos:{execFim:"2026-08-18", relatorio:"2026-08-19", osAprov:null,
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Executada sem OS aprovada. A DPSP ainda não aprovou o orçamento",
+      pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a aprovação da OS na DPSP", atualizacao:"2026-08-19",
       naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
     },
     {
       id:"o22", os:"0826-007423", loja:"DP MAGE 1",
       desc:"Finalização de obra", tipo:"CIVIL", valor:14300.00,
-      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-4", origem:"Sistema DPSP",
-      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-4", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"aprovarOS", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-13", inicioPlan:"2026-08-05", inicioReal:"2026-08-05", duracao:10,
-      fimReal:"2026-08-17",
-      pendencia:"Executado, aguardando aprovação da OS", pendResp:"DPSP", pendPrazo:"",
-      proxAcao:"Cobrar aprovação da OS", atualizacao:"2026-08-17",
+      fimReal:"2026-08-17", desdeEtapa:"2026-08-18",
+      marcos:{execFim:"2026-08-17", relatorio:"2026-08-18", osAprov:null,
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Executada sem OS aprovada. A DPSP ainda não aprovou o orçamento",
+      pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a aprovação da OS na DPSP", atualizacao:"2026-08-18",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o27", os:"0726-015753", loja:"DP COPACABANA 6",
+      desc:"Vazamento no subsolo da loja, afetando a loja vizinha", tipo:"HIDRAULICA", valor:44532.15,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"aprovarOS", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-07-26", inicioPlan:"2026-08-05", inicioReal:"2026-08-05", duracao:8,
+      fimReal:"2026-08-13", desdeEtapa:"2026-08-14",
+      marcos:{execFim:"2026-08-13", relatorio:"2026-08-14", osAprov:null,
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"A maior obra parada da esteira. Executada sem OS aprovada",
+      pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a aprovação da OS na DPSP", atualizacao:"2026-08-14",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o26", os:"0826-007940", loja:"DP SAO JOSE RJ",
+      desc:"Visitas em dias alternados para conter a invasão de roedores", tipo:"DEDETIZAÇÃO", valor:5760.00,
+      analista:"LEANDRO", pcm:"LUANA", equipe:"MANFAC-4 / PARCEIRO", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"relatorio", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-08-11", inicioPlan:"2026-08-20", inicioReal:"2026-08-20", duracao:6,
+      fimReal:"2026-08-26", desdeEtapa:"2026-08-26",
+      marcos:{execFim:"2026-08-26", relatorio:null, osAprov:"2026-08-11",
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Equipe saiu de campo e o relatório de entrega ainda não foi gerado no Field",
+      pendResp:"LUANA", pendPrazo:"2026-09-01",
+      proxAcao:"Subir as fotos e gerar o PDF do relatório de entrega", atualizacao:"2026-08-26",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o24", os:"0826-006388", loja:"DP LEME",
+      desc:"Bandejamento em vários pontos da área de vendas", tipo:"TELHADO", valor:13436.90,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"fecharOS", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-08-12", inicioPlan:"2026-08-14", inicioReal:"2026-08-14", duracao:6,
+      fimReal:"2026-08-20", desdeEtapa:"2026-08-21",
+      marcos:{execFim:"2026-08-20", relatorio:"2026-08-21", osAprov:"2026-08-12",
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Relatório pronto. Falta anexar e encerrar a OS no sistema da DPSP",
+      pendResp:"AMANDA", pendPrazo:"2026-09-02",
+      proxAcao:"Anexar o relatório e encerrar a OS na DPSP", atualizacao:"2026-08-21",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"o25", os:"0526-008209", loja:"DP GLORIA",
+      desc:"Jateamento — plantão Pedro", tipo:"HIDRAULICA", valor:8600.00,
+      analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"fecharOS", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-05-02", inicioPlan:"2026-05-14", inicioReal:"2026-05-14", duracao:5,
+      fimReal:"2026-05-20", desdeEtapa:"2026-05-21",
+      marcos:{execFim:"2026-05-20", relatorio:"2026-05-21", osAprov:"2026-05-02",
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Obra entregue em maio. A OS nunca foi encerrada no sistema da DPSP",
+      pendResp:"YURI", pendPrazo:"",
+      proxAcao:"Anexar o relatório e encerrar a OS na DPSP", atualizacao:"2026-05-21",
       naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
     },
     {
       id:"o23", os:"0326-018578", loja:"DP IPANEMA 8",
       desc:"Desvio da exaustão", tipo:"AR CONDICIONADO", valor:13561.10,
-      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP",
-      etapa:"finalizado", bloqueio:"Sem bloqueio", avanco:100,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      etapa:"faturado", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-11", inicioPlan:"2026-07-28", inicioReal:"2026-07-28", duracao:6,
-      fimReal:"2026-08-05",
-      pendencia:"Faturado", pendResp:"", pendPrazo:"",
-      proxAcao:"", atualizacao:"2026-08-05",
+      fimReal:"2026-08-05", desdeEtapa:"2026-08-20",
+      marcos:{execFim:"2026-08-05", relatorio:"2026-08-06", osAprov:"2026-05-11",
+              fechouOS:"2026-08-08", liberouFat:"2026-08-14", faturou:"2026-08-20"},
+      pendencia:"", pendResp:"", pendPrazo:"",
+      proxAcao:"", atualizacao:"2026-08-20",
       naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
     }
 ,
@@ -1103,8 +1390,8 @@
       id:"n1", os:"0826-007499", loja:"DP SAO GONCALO 5",
       desc:"Instalação de tomada para a geladeira de termolábeis — a geladeira é 110v e a tomada é 220v",
       tipo:"ELETRICA", valor:1648.80,
-      analista:"AMANDA", pcm:"", equipe:"", origem:"Sistema DPSP",
-      etapa:"definir", bloqueio:"Sem bloqueio", avanco:null, prioridade:"",
+      analista:"AMANDA", pcm:"", equipe:"", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"definir", bloqueio:"Sem bloqueio", prioridade:"",
       aprovacao:"2026-08-03", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"", pendResp:"", pendPrazo:"", proxAcao:"",
       atualizacao:"2026-08-03", naoAndouSeguidos:0, bloqueadaDias:0,
@@ -1114,8 +1401,8 @@
       id:"n2", os:"0826-008374", loja:"DP RECREIO 7",
       desc:"Dedetização da loja e limpeza da caixa d'água, com urgência — grande quantidade de insetos",
       tipo:"DEDETIZAÇÃO", valor:1959.86,
-      analista:"JUAN", pcm:"", equipe:"", origem:"Sistema DPSP",
-      etapa:"definir", bloqueio:"Sem bloqueio", avanco:null, prioridade:"",
+      analista:"JUAN", pcm:"", equipe:"", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"definir", bloqueio:"Sem bloqueio", prioridade:"",
       aprovacao:"2026-08-17", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"", pendResp:"", pendPrazo:"", proxAcao:"",
       atualizacao:"2026-08-17", naoAndouSeguidos:0, bloqueadaDias:0,
@@ -1124,8 +1411,8 @@
     {
       id:"n3", os:"0826-0011526", loja:"DP BARRA DA TIJUCA 5",
       desc:"Pintura de fachada", tipo:"CIVIL", valor:null,
-      analista:"LEANDRO", pcm:"", equipe:"", origem:"Sistema DPSP",
-      etapa:"definir", bloqueio:"Sem bloqueio", avanco:null, prioridade:"",
+      analista:"LEANDRO", pcm:"", equipe:"", origem:"Sistema DPSP", osAprovada:false,
+      etapa:"definir", bloqueio:"Sem bloqueio", prioridade:"",
       aprovacao:"2026-08-21", inicioPlan:null, inicioReal:null, duracao:null,
       pendencia:"", pendResp:"", pendPrazo:"", proxAcao:"",
       atualizacao:"2026-08-21", naoAndouSeguidos:0, bloqueadaDias:0,
@@ -1137,7 +1424,27 @@
   OBRAS.forEach(function(o){
     o.dias = diasDesde(o.aprovacao);
     o.fimCalc = (o.inicioReal || o.inicioPlan) && o.duracao ? somaDias(o.inicioReal || o.inicioPlan, o.duracao) : null;
-    o.atraso = (o.etapa !== "finalizado" && o.fimCalc) ? diasDesde(o.fimCalc) : null;
+    o.atraso = (!posCampo(o) && o.fimCalc) ? diasDesde(o.fimCalc) : null;
+    if(!o.marcos) o.marcos = {execFim:null, relatorio:null, osAprov:o.osAprovada ? o.aprovacao : null,
+                              fechouOS:null, liberouFat:null, faturou:null};
+    /* NO LUGAR DO "AVANÇO %" — dois números que o sistema calcula sozinho.
+       Na planilha o avanço é preenchido no olho: a mesma coluna tem 0,9 · 0,2 ·
+       0,5 misturados com 95 e 1, e 5 das 19 obras em branco. Ninguém confere.
+       `diaDe` é quanto do prazo combinado já passou; onde não há duração
+       planejada, fica null e a tela escreve "sem prazo definido" em vez de
+       inventar número. */
+    var ini = o.inicioReal || o.inicioPlan;
+    if(ini && o.duracao && !posCampo(o)){
+      var corridos = diasDesde(ini) + 1;
+      o.diaDe = Math.max(1, corridos);
+      o.fracPrazo = o.diaDe / o.duracao;
+    } else if(posCampo(o) && o.duracao){
+      o.diaDe = o.duracao; o.fracPrazo = 1;
+    } else {
+      o.diaDe = null; o.fracPrazo = null;
+    }
+    o.paradaEtapa = posCampo(o) ? paradaNaEtapa(o) : null;
+    o.dono = donoDa(o);
     PORID[o.id] = o;
   });
 
@@ -1148,29 +1455,61 @@
      parada no mesmo bloqueio ou esperar definição é âmbar: preocupa, não
      é emergência. Quando tudo é vermelho, nada é. */
   function critico(o){
-    return o.etapa !== "finalizado" && o.etapa !== "definir" && o.dias >= 100;
+    return !encerrada(o) && o.etapa !== "definir" && o.dias >= 100;
   }
   function estourou(o){
-    if(o.etapa === "finalizado" || o.etapa === "definir") return false;
+    if(posCampo(o) || o.etapa === "definir") return false;
     return o.duracao ? o.dias > o.duracao * 4 : o.dias >= 120;
   }
   function travado(o){
-    return o.etapa !== "finalizado" && o.bloqueadaDias >= 3 && o.bloqueio !== "Sem bloqueio";
+    return !posCampo(o) && o.bloqueadaDias >= 3 && o.bloqueio !== "Sem bloqueio";
+  }
+  /* Obra que já saiu de campo e está encalhada numa etapa de papel. É o buraco
+     que o cliente descreveu: 89 obras da base já foram executadas e ainda não
+     viraram dinheiro, e ninguém enxerga em qual passo cada uma parou. */
+  function encalhada(o){
+    return posCampo(o) && !encerrada(o) && o.paradaEtapa >= 15;
   }
   function sev(o){
-    if(o.etapa === "finalizado") return "var(--ink-faint)";
+    if(encerrada(o)) return "var(--ink-faint)";
     if(critico(o)) return "var(--crit)";
     if(o.etapa === "definir") return "var(--accent)";
+    if(posCampo(o)) return encalhada(o) ? "var(--warn)" : "var(--info)";
     if(estourou(o) || travado(o) || o.etapa === "paralisado") return "var(--warn)";
     if(o.atraso != null && o.atraso > 0) return "var(--warn)";
     if(o.etapa === "levantamento") return "var(--info)";
     return "var(--ok)";
   }
   function classeDias(o){
-    if(o.etapa === "finalizado" || o.etapa === "definir") return "";
+    if(encerrada(o) || o.etapa === "definir") return "";
     if(critico(o)) return "critico";
     if(estourou(o) || o.dias >= 60) return "atencao";
     return "";
+  }
+  /* O que substituiu o "Avanço %": quanto do prazo combinado já passou. */
+  function prazoTxt(o){
+    if(posCampo(o)) return "prazo cumprido";
+    if(o.diaDe == null) return "sem prazo definido";
+    return "dia " + o.diaDe + " de " + o.duracao;
+  }
+  function paradaTxt(o){
+    if(posCampo(o)) return o.paradaEtapa + (o.paradaEtapa === 1 ? " dia nesta etapa" : " dias nesta etapa");
+    if(o.naoAndouSeguidos >= 1) return o.naoAndouSeguidos + (o.naoAndouSeguidos === 1 ? " dia sem andar" : " dias sem andar");
+    return "andou no último registro";
+  }
+  function osChip(o){
+    return o.osAprovada
+      ? '<span class="os-chip sim">OS aprovada</span>'
+      : '<span class="os-chip nao">sem OS aprovada</span>';
+  }
+  function prazoHTML(o){
+    if(o.diaDe == null){
+      return '<span class="prazo sem"><span class="t">sem prazo definido</span></span>';
+    }
+    var f = Math.min(1, o.fracPrazo);
+    var cls = posCampo(o) ? "pronto" : (o.fracPrazo > 1 ? "estourado" : "");
+    return '<span class="prazo ' + cls + '"><span class="t">' + prazoTxt(o) + '</span>' +
+           '<i><b style="width:' + Math.round(f * 100) + '%"></b></i></span>';
   }
   function pill(o){
     return '<span class="pill ' + o.etapa + '"><span class="dot"></span>' + ETAPAS[o.etapa].nome + '</span>';
@@ -1186,6 +1525,13 @@
   /* UMA nota por obra, alinhada com a linha de cima e nunca repetindo o
      número de dias que a pílula "N dias desde a aprovação" já mostra. */
   function notaAlerta(o){
+    if(encerrada(o)) return "";
+    /* Depois de a equipe sair de campo, a pergunta muda: não é mais quanto
+       falta para acabar a obra, é há quanto tempo ela está parada e com quem. */
+    /* No cartão de uma obra já executada, a linha "Com FULANO há N dias" já
+       diz tudo. Repetir o mesmo número numa nota embaixo é ruído: a urgência
+       fica na cor da linha e na tarja de severidade da borda. */
+    if(posCampo(o)) return "";
     if(o.etapa === "definir"){
       return '<span class="nota warn">Sem responsável, sem equipe e sem cronograma</span>';
     }
@@ -1213,14 +1559,14 @@
   /* ---------------------------------------------------------------
      Estado da aplicação
      --------------------------------------------------------------- */
-  var FILA = OBRAS.filter(function(o){ return o.pcm === "YURI" && o.etapa !== "finalizado"; });
+  var FILA = OBRAS.filter(function(o){ return o.pcm === "YURI" && !posCampo(o); });
   var respostas = {};
   var rascunho = {};
   var tela = "diario";
   var estadoTela = "normal";     // normal | vazio | carregando | erro | sem-permissao
   var formaDiario = "cartoes";   // DECISÃO B: cartoes | planilha
   var vis = "tabela";
-  var fPcm = "todos", fEtapa = "todas";
+  var fPcm = "todos", fEtapa = "todas", fOs = "todas";
   var ordem = {col:"dias", dir:-1};
   var obraAberta = "o1";
   var voltarPara = "base";
@@ -1282,8 +1628,29 @@
      dias:["ok","ok","ok","ok","falta","falta","ok","ok","ok","ok"],
      nota:"Ficou dois dias seguidos sem preencher em 24 e 25/08."}
   ];
+  /* ---------------------------------------------------------------
+     ALERTA NA HORA — "obra X não produziu hoje porque faltou tal coisa"
+     É um aviso diferente do das 19h. O das 19h cobra o silêncio: quem não
+     preencheu. Este dispara no instante em que o analista REGISTRA que faltou
+     alguma coisa — não espera o fim do dia, porque material que falta hoje de
+     manhã ainda dá para resolver hoje à tarde.
+     Sai por e-mail E por WhatsApp para os administradores do hub.
+
+     REGRA DE AGRUPAMENTO, e ela é o que mantém o aviso legível: UM alerta por
+     obra por dia. Se a mesma obra registrar outra falta no mesmo dia, o aviso
+     é atualizado, não repetido. Com 11 obras por analista, um alerta por
+     evento vira ruído — e em uma semana ninguém lê mais nenhum.
+     --------------------------------------------------------------- */
+  var ALERTAS_FALTA = [
+    {hora:"17:42", quem:"Amanda Ribeiro", obra:"o14", item:"equipe",
+     texto:"o prestador do serviço noturno ainda não foi contratado"},
+    {hora:"18:26", quem:"Luana Prado", obra:"o12", item:"equipe",
+     texto:"a MANFAC-7 segue retida em outra obra e não foi liberada"}
+  ];
+  var CANAIS_ADM = "e-mail e WhatsApp dos administradores do hub";
+
   function obrasDe(chave){
-    return OBRAS.filter(function(o){ return o.pcm === chave && o.etapa !== "finalizado"; }).length;
+    return OBRAS.filter(function(o){ return o.pcm === chave && !posCampo(o); }).length;
   }
 
   /* ---------------------------------------------------------------
@@ -1299,7 +1666,8 @@
     {id:"tela3", rotulo:"a tela Ficha da obra"},
     {id:"decD",  rotulo:"a decisão D"},
     {id:"telaAdm", rotulo:"o Painel do dia, que a diretoria abre às 19h"},
-    {id:"decF",  rotulo:"a decisão F — quando a falta se repete"}
+    {id:"decF",  rotulo:"a decisão F — quando a falta se repete"},
+    {id:"decG",  rotulo:"a decisão G — quem marca cada etapa depois da execução"}
   ];
   var VOTOS = [["aprovado","Aprovado"],["ajustar","Ajustar"],["refazer","Refazer"]];
 
@@ -1521,7 +1889,7 @@
     /* ---- Tela 2 ---- */
     h += '<section id="tela-base" hidden>';
     h +=   '<div class="page-head"><div><h1>Base de obras</h1>' +
-             '<p>Cadastro vivo · alimentado pelo Field na entrada e pelo diário no dia a dia</p></div></div>';
+             '<p>Cadastro vivo · da chegada do Field até a obra faturada, passando pelo diário do dia</p></div></div>';
     h +=   '<div class="resumo" id="resumo"></div>';
     h +=   '<div class="toolbar">';
     h +=     '<div class="seg" role="group" aria-label="Formato de visualização">' +
@@ -1529,12 +1897,18 @@
                '<button id="btn-kanban" aria-pressed="false">Kanban</button></div>';
     h +=     '<div class="filtro"><label class="lbl" for="f-pcm">Responsável da obra</label><select id="f-pcm"></select></div>';
     h +=     '<div class="filtro"><label class="lbl" for="f-etapa">Etapa da obra</label><select id="f-etapa"></select></div>';
+    h +=     '<div class="filtro"><label class="lbl" for="f-os">OS do cliente</label>' +
+               '<select id="f-os">' +
+                 '<option value="todas">Todas</option>' +
+                 '<option value="sim">Com OS aprovada</option>' +
+                 '<option value="nao">Sem OS aprovada</option>' +
+               '</select></div>';
     h +=     '<span class="conta"><b id="conta">0</b> obras nesta visão · base completa: <b>187</b></span>';
     h +=   '</div>';
     h +=   '<div class="decisao fechada"><span class="tag">DECISÃO A</span><div>';
     h +=     '<p><span class="resp">Resolvida — você respondeu</span><b>As duas ficam.</b> O botão acima continua trocando entre tabela e Kanban, com os mesmos dados nos dois formatos. Cada um serve para uma coisa:</p>';
     h +=     '<p class="opt"><em>Tabela:</em> parecida com a planilha de hoje, mostra todas as colunas de uma vez e ordena por qualquer uma delas (clique no cabeçalho). Boa para bater linha a linha e para achar quem está parado há mais tempo.</p>';
-    h +=     '<p class="opt"><em>Kanban:</em> uma coluna por etapa da obra. Mostra menos informação por obra, mas dá a leitura de um relance de quanta coisa está parada. Boa para reunião.</p>';
+    h +=     '<p class="opt"><em>Kanban:</em> uma coluna por <b>fase</b> — antes de executar, executando, fechamento e faturamento. O ciclo inteiro tem nove etapas, e nove colunas viram uma parede que ninguém lê; dentro de cada coluna a etapa exata continua escrita, e o detalhe fino fica na ficha da obra. Mostra menos informação por obra, mas dá a leitura de um relance de quanta coisa está parada. Boa para reunião.</p>';
     h +=   '</div></div>';
     h +=   fbPor("decA");
     h +=   '<div id="vis-tabela"><div class="tabela-wrap"><table>' +
@@ -1640,7 +2014,7 @@
     h +=       '<p class="obra-desc">' + esc(o.desc) + '</p>';
     h +=       '<div class="meta"><span>Equipe <b>' + esc(o.equipe) + '</b></span>' +
                  '<span>Analista <b>' + esc(o.analista) + '</b></span>' +
-                 (o.avanco != null ? '<span>Avanço <b class="num">' + o.avanco + '%</b></span>' : "") + '</div>';
+                 '<span>Prazo <b class="num">' + prazoTxt(o) + '</b></span>' + '</div>';
     h +=     '</div>';
     h +=     '<div class="obra-sinais"><div class="sinal-linha">' + pill(o) + badgeDias(o) + '</div>' +
                notaAlerta(o) + '</div>';
@@ -2004,10 +2378,12 @@
     {k:"pcm",    t:"Responsável"},
     {k:"equipe", t:"Equipe / prestador"},
     {k:"etapa",  t:"Etapa da obra"},
+    {k:"dono",   t:"Com quem está"},
+    {k:"paradaEtapa", t:"Parada nesta etapa"},
+    {k:"osAprovada", t:"OS do cliente"},
     {k:"bloqueio", t:"Bloqueio"},
     {k:"dias",   t:"Dias desde a aprovação"},
-    {k:"duracao", t:"Duração (dias)"},
-    {k:"avanco", t:"Avanço"},
+    {k:"fracPrazo", t:"Prazo consumido"},
     {k:"atualizacao", t:"Última atualização"}
   ];
 
@@ -2018,9 +2394,20 @@
     document.getElementById("f-pcm").innerHTML = '<option value="todos">Todos</option>' +
       pcms.map(function(p){ return '<option value="' + p + '"' + (fPcm === p ? " selected" : "") + '>' + p + '</option>'; }).join("") +
       '<option value="__sem"' + (fPcm === "__sem" ? " selected" : "") + '>Ainda sem responsável</option>';
-    document.getElementById("f-etapa").innerHTML = '<option value="todas">Todas</option>' +
-      Object.keys(ETAPAS).map(function(k){
-        return '<option value="' + k + '"' + (fEtapa === k ? " selected" : "") + '>' + ETAPAS[k].nome + '</option>';
+    /* O filtro segue a ordem do ciclo e agrupa por fase, para a lista de nove
+       etapas continuar legível e para dar de uma vez "tudo o que já foi
+       executado e ainda não virou dinheiro". */
+    document.getElementById("f-etapa").innerHTML =
+      '<option value="todas">Todas</option>' +
+      '<option value="__esteira"' + (fEtapa === "__esteira" ? " selected" : "") +
+        '>Executadas, ainda na esteira</option>' +
+      FASES.map(function(f){
+        return '<optgroup label="' + f.nome + '">' +
+          '<option value="fase:' + f.k + '"' + (fEtapa === "fase:" + f.k ? " selected" : "") +
+            '>Toda a fase ' + f.nome.toLowerCase() + '</option>' +
+          CICLO.filter(function(c){ return c.fase === f.k; }).map(function(c){
+            return '<option value="' + c.k + '"' + (fEtapa === c.k ? " selected" : "") + '>' + c.nome + '</option>';
+          }).join("") + '</optgroup>';
       }).join("");
     document.getElementById("thead-row").innerHTML = COLS.map(function(c){
       return '<th scope="col"><button data-col="' + c.k + '">' + c.t + ' <span class="ar"></span></button></th>';
@@ -2040,7 +2427,11 @@
     return OBRAS.filter(function(o){
       if(fPcm === "__sem"){ if(o.pcm) return false; }
       else if(fPcm !== "todos" && o.pcm !== fPcm) return false;
-      if(fEtapa !== "todas" && o.etapa !== fEtapa) return false;
+      if(fEtapa === "__esteira"){ if(!posCampo(o) || encerrada(o)) return false; }
+      else if(fEtapa.indexOf("fase:") === 0){ if(faseDe(o) !== fEtapa.slice(5)) return false; }
+      else if(fEtapa !== "todas" && o.etapa !== fEtapa) return false;
+      if(fOs === "sim" && !o.osAprovada) return false;
+      if(fOs === "nao" && o.osAprovada) return false;
       return true;
     });
   }
@@ -2053,14 +2444,22 @@
     var todas = OBRAS;
     var andamento = todas.filter(function(o){ return o.etapa === "andamento"; }).length;
     var paralisadas = todas.filter(function(o){ return o.etapa === "paralisado"; }).length;
-    var velhas = todas.filter(function(o){ return o.etapa !== "finalizado" && o.dias >= 60; }).length;
-    var estouradas = todas.filter(function(o){ return o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0; }).length;
+    var velhas = todas.filter(function(o){ return !posCampo(o) && o.dias >= 60; }).length;
+    var estouradas = todas.filter(function(o){ return !posCampo(o) && o.atraso != null && o.atraso > 0; }).length;
     var aDefinir = todas.filter(function(o){ return o.etapa === "definir"; });
     var maisVelha = aDefinir.reduce(function(m,o){ return Math.max(m, o.dias); }, 0);
+    /* O indicador que não existia: obra já executada em campo e ainda presa
+       numa etapa de papel. Na planilha inteira são 89 — é onde o dinheiro
+       está parado. */
+    var esteira = todas.filter(function(o){ return posCampo(o) && !encerrada(o); });
+    var esteiraVelha = esteira.reduce(function(m,o){ return Math.max(m, o.paradaEtapa || 0); }, 0);
+    var semOS = todas.filter(function(o){ return !o.osAprovada && !encerrada(o); }).length;
     document.getElementById("resumo").innerHTML = [
       {v:aDefinir.length, k:aDefinir.length ? "aguardando definição · a mais antiga há " + maisVelha + " dias" : "aguardando definição", c:"var(--accent)"},
       {v:andamento, k:"em andamento", c:"var(--ok)"},
       {v:paralisadas, k:"paralisadas", c:"var(--crit)"},
+      {v:esteira.length, k:esteira.length ? "executadas, ainda na esteira · a mais parada há " + esteiraVelha + " dias" : "executadas, ainda na esteira", c:"var(--warn)"},
+      {v:semOS, k:"sem OS aprovada no cliente", c:"var(--crit)"},
       {v:velhas, k:"aprovadas há mais de 60 dias", c:"var(--warn)"},
       {v:estouradas, k:"passaram da duração planejada", c:"var(--warn)"}
     ].map(function(x){
@@ -2089,37 +2488,154 @@
       tr += '<td>' + (o.pcm ? esc(o.pcm) : '<span style="color:var(--accent)">a definir</span>') + '</td>';
       tr += '<td>' + esc(o.equipe) + '</td>';
       tr += '<td>' + pill(o) + '</td>';
-      tr += '<td class="bloq">' + (o.bloqueio === "Sem bloqueio" || o.etapa === "finalizado"
+      tr += '<td class="dono">' + esc(o.dono) + '</td>';
+      tr += '<td class="n">' + (o.paradaEtapa != null && !encerrada(o)
+              ? '<span class="parada' + (encalhada(o) ? " alto" : "") + '">' + o.paradaEtapa + ' <small>dias</small></span>'
+              : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+      tr += '<td>' + osChip(o) + '</td>';
+      tr += '<td class="bloq">' + (o.bloqueio === "Sem bloqueio" || posCampo(o)
               ? '<span style="color:var(--ink-faint)">—</span>'
               : esc(o.bloqueio) + (travado(o) ? ' <span class="d">' + o.bloqueadaDias + 'd</span>' : "")) + '</td>';
       tr += '<td class="n">' + badgeDias(o, true) + '</td>';
-      tr += '<td class="n">' + (o.duracao != null ? o.duracao : '<span style="color:var(--ink-faint)">a definir</span>') + '</td>';
-      tr += '<td>' + (o.avanco != null
-              ? '<span class="av-bar"><i><b style="width:' + o.avanco + '%"></b></i><span>' + o.avanco + '%</span></span>'
-              : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+      tr += '<td>' + prazoHTML(o) + '</td>';
       tr += '<td class="n">' + br(o.atualizacao) + '</td>';
       tr += '</tr>';
       return tr;
     }).join("");
   }
 
+  /* O Kanban agrupa por FASE, não por etapa. São nove etapas no ciclo inteiro —
+     nove colunas viram uma parede que ninguém lê, e a leitura de quadro se
+     perde. Cada fase é uma coluna; dentro dela, a etapa exata vira um
+     subtítulo com a contagem, e o detalhe fino fica na ficha da obra. */
+  function cardKanban(o){
+    var c = '<button class="card" data-abrir="' + o.id + '" style="--sev:' + sev(o) + '">';
+    c += '<div class="os">OS ' + esc(o.os) + '</div>';
+    c += '<div class="nm">' + esc(o.loja) + '</div>';
+    c += '<div class="ln"><span>' + esc(o.tipo) + '</span><span>' + rotuloResp(o) + '</span>' +
+         (o.equipe ? '<span>' + esc(o.equipe) + '</span>' : "") + '</div>';
+    if(posCampo(o) && !encerrada(o)){
+      c += '<div class="ln com' + (critico(o) ? " crit" : (encalhada(o) ? " alto" : "")) +
+           '">Com <b>' + esc(o.dono) + '</b> há <b class="num">' + o.paradaEtapa + '</b> dias</div>';
+    }
+    c += '<div class="ft">' + badgeDias(o, true) +
+         (o.osAprovada ? "" : osChip(o)) + notaAlerta(o) + '</div>';
+    c += '</button>';
+    return c;
+  }
+
   function renderKanban(lista){
-    document.getElementById("kanban").innerHTML = ["definir","levantamento","andamento","paralisado","finalizado"].map(function(k){
-      var itens = lista.filter(function(o){ return o.etapa === k; }).sort(function(a,b){ return b.dias - a.dias; });
-      var h = '<div class="col"><div class="col-h"><span class="nm" style="color:' + ETAPAS[k].cor + '">' +
-              ETAPAS[k].nome + '</span><span class="ct">' + itens.length + '</span></div><div class="col-b">';
-      h += itens.length ? itens.map(function(o){
-        var c = '<button class="card" data-abrir="' + o.id + '" style="--sev:' + sev(o) + '">';
-        c += '<div class="os">OS ' + esc(o.os) + '</div>';
-        c += '<div class="nm">' + esc(o.loja) + '</div>';
-        c += '<div class="ln"><span>' + esc(o.tipo) + '</span><span>' + rotuloResp(o) + '</span>' +
-             (o.equipe ? '<span>' + esc(o.equipe) + '</span>' : "") + '</div>';
-        c += '<div class="ft">' + badgeDias(o, true) + notaAlerta(o) + '</div>';
-        c += '</button>';
-        return c;
-      }).join("") : '<div class="col-vazia">nenhuma obra</div>';
+    document.getElementById("kanban").innerHTML = FASES.map(function(f){
+      var itens = lista.filter(function(o){ return faseDe(o) === f.k; });
+      var h = '<div class="col"><div class="col-h"><span class="nm" style="color:' + f.cor + '">' +
+              esc(f.nome) + '</span><span class="ct">' + itens.length + '</span></div><div class="col-b">';
+      if(!itens.length){
+        h += '<div class="col-vazia">nenhuma obra</div>';
+      } else {
+        CICLO.forEach(function(c){
+          if(c.fase !== f.k) return;
+          var dela = itens.filter(function(o){ return o.etapa === c.k; }).sort(function(a,b){
+            var x = a.paradaEtapa != null ? a.paradaEtapa : a.dias;
+            var y = b.paradaEtapa != null ? b.paradaEtapa : b.dias;
+            return y - x;
+          });
+          if(!dela.length) return;
+          h += '<div class="col-etapa"><span style="color:' + c.cor + '">' + esc(c.nome) + '</span>' +
+               '<b>' + dela.length + '</b></div>';
+          h += dela.map(cardKanban).join("");
+        });
+      }
       return h + '</div></div>';
     }).join("");
+  }
+
+  /* ---------------------------------------------------------------
+     A ESTEIRA — o que acontece depois de a equipe sair de campo
+     A sequência é a que o cliente escreveu, na ordem em que ele escreveu:
+       equipe termina → relatório de entrega no Field → responsável anexa e
+       encerra a OS no sistema do cliente → cliente libera o faturamento →
+       obra faturada, e só aí ela está finalizada.
+     O desvio existe porque a obra pode ter começado sem OS aprovada: nesse
+     caso, ao sair de campo ela vai primeiro cobrar a aprovação do cliente, e
+     só depois o resto do caminho segue.
+     --------------------------------------------------------------- */
+  var MARCO_DE = {relatorio:"relatorio", aprovarOS:"osAprov", fecharOS:"fechouOS",
+                  pendFat:"liberouFat", faturado:"faturou"};
+
+  function passoHTML(p){
+    var h = '<li class="passo ' + p.cls + (p.desvio ? " desvio" : "") + '">';
+    h += '<div class="marca"><i></i></div>';
+    h += '<div class="corpo">';
+    h +=   '<div class="l1"><span class="nome">' + esc(p.nome) + '</span>' +
+             (p.cls === "atual" ? '<span class="aqui">a obra está aqui</span>' : "") + '</div>';
+    h +=   '<div class="l2"><span class="dono">' + esc(p.dono) + '</span>' +
+             '<span class="onde">' + esc(p.onde) + '</span>' +
+             (p.cod ? '<span class="cod">' + esc(p.cod) + '</span>' : "") + '</div>';
+    if(p.detalhe) h += '<div class="l3">' + p.detalhe + '</div>';
+    h += '</div>';
+    h += '<div class="quando ' + p.cls + '">' + p.quando + '</div>';
+    h += '</li>';
+    return h;
+  }
+
+  function esteiraHTML(o){
+    var h = '<ol class="esteira">';
+
+    /* Passo zero: a execução em campo, que é onde o diário do dia atua. */
+    var campoFeito = !!(o.marcos && o.marcos.execFim);
+    h += passoHTML({
+      cls: campoFeito ? "feito" : "atual",
+      nome:"Execução em campo",
+      dono: o.equipe ? "Equipe " + o.equipe : "Equipe a definir",
+      onde:"Campo · diário do dia",
+      cod:"EXECUTAR",
+      quando: campoFeito ? br(o.marcos.execFim) : "em curso",
+      detalhe: campoFeito ? "" : (esc(prazoTxt(o)) + ' · ' + esc(paradaTxt(o)))
+    });
+
+    ESTEIRA.forEach(function(k){
+      var c = ETAPAS[k];
+
+      /* O DESVIO. Quando a obra já tinha OS aprovada, ele não acontece — mas
+         continua desenhado, apagado, para o caminho inteiro ficar visível. */
+      if(k === "aprovarOS" && o.osAprovada){
+        h += '<li class="passo pulado desvio">';
+        h +=   '<div class="marca"><i></i></div>';
+        h +=   '<div class="corpo"><div class="l1"><span class="nome">Cobrar aprovação da OS</span></div>' +
+                 '<div class="l2">Desvio não usado — a OS já estava aprovada em ' + br(o.marcos.osAprov || o.aprovacao) +
+                 ', então a obra segue direto para o fechamento.</div></div>';
+        h +=   '<div class="quando pulado">não se aplica</div>';
+        h += '</li>';
+        return;
+      }
+
+      var data = o.marcos ? o.marcos[MARCO_DE[k]] : null;
+      var cls = data ? "feito" : (o.etapa === k ? "atual" : "futuro");
+      var quando = data ? br(data)
+                        : (cls === "atual" ? "há " + o.paradaEtapa + (o.paradaEtapa === 1 ? " dia" : " dias") : "—");
+      var det = "";
+      if(cls === "atual" && encalhada(o)){
+        det = '<span class="alerta-passo">Parada aqui há <b>' + o.paradaEtapa + ' dias</b>. ' +
+              'Enquanto não sair desta etapa, a obra não vira dinheiro.</span>';
+      }
+      if(k === "relatorio" && cls === "atual"){
+        det += '<span class="sem-status">Esta etapa acontece, mas não tem status na planilha de hoje — ' +
+               'a obra pula de "executada" para "fechar OS" e ninguém sabe se o relatório saiu.</span>';
+      }
+      h += passoHTML({
+        cls: cls,
+        desvio: k === "aprovarOS",
+        nome: c.nome,
+        dono: c.dono === "Responsável da obra" ? (o.pcm ? "Responsável " + o.pcm : "Responsável a definir") : c.dono,
+        onde: c.onde,
+        cod: c.planilha === null ? "sem status na planilha" : c.planilha,
+        quando: quando,
+        detalhe: det
+      });
+    });
+
+    h += '</ol>';
+    return h;
   }
 
   /* ---------------------------------------------------------------
@@ -2133,9 +2649,26 @@
     h += '<div class="page-head"><div>';
     h += '<h1>' + esc(o.loja) + '</h1>';
     h += '<p class="num">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + ' · ' + moeda(o.valor) + '</p>';
-    h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + badgeDias(o) + '</div></div>';
+    h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + osChip(o) + badgeDias(o) + '</div></div>';
 
-    if(critico(o) && o.duracao){
+    /* Obra já executada e encalhada: a manchete não pode ser a duração da obra,
+       que acabou. É há quanto tempo ela está parada e quanto dinheiro está ali. */
+    var alertou = false;
+    if(posCampo(o) && !encerrada(o) && (critico(o) || encalhada(o))){
+      alertou = true;
+      var grave = critico(o);
+      h += '<div class="alerta-box"' + (grave ? "" :
+             ' style="border-color:rgba(244,183,63,.45);background:var(--warn-soft);border-left-color:var(--warn)"') + '>';
+      h +=   '<div><div class="n"' + (grave ? "" : ' style="color:var(--warn)"') + '>' + o.paradaEtapa + '</div>' +
+               '<div class="lbl" style="text-align:center;margin-top:3px">dias parada aqui</div></div>';
+      h +=   '<div><h3' + (grave ? "" : ' style="color:var(--warn)"') + '>Obra entregue em ' +
+               br(o.marcos.execFim) + ' e ainda não faturada.</h3>' +
+             '<p>Ela saiu de campo e está na etapa <b>' + esc(ETAPAS[o.etapa].nome) + '</b> desde <b>' +
+               br(o.desdeEtapa) + '</b>, com <b>' + esc(o.dono) + '</b>.' +
+               (o.valor != null ? ' São <b>' + moeda(o.valor) + '</b> de serviço entregue que ainda não viraram nota.' : "") +
+             '</p></div>';
+      h += '</div>';
+    } else if(critico(o) && o.duracao){
       h += '<div class="alerta-box">';
       h +=   '<div><div class="n">' + o.dias + '</div><div class="lbl" style="text-align:center;margin-top:3px">dias em aberto</div></div>';
       h +=   '<div><h3>Obra aprovada em ' + br(o.aprovacao) + ' e ainda não concluída.</h3>' +
@@ -2143,7 +2676,7 @@
              ' dias</b> desde a aprovação — <b>' + Math.round(o.dias / o.duracao) + ' vezes</b> o prazo combinado. ' +
              'O cliente enxerga essa mesma OS aberta no sistema dele.</p></div>';
       h += '</div>';
-    } else if(o.etapa !== "finalizado" && o.atraso != null && o.atraso > 0){
+    } else if(!posCampo(o) && o.atraso != null && o.atraso > 0){
       h += '<div class="alerta-box" style="border-color:rgba(244,183,63,.45);background:var(--warn-soft);border-left-color:var(--warn)">';
       h +=   '<div><div class="n" style="color:var(--warn)">' + o.atraso + '</div><div class="lbl" style="text-align:center;margin-top:3px">dias além do prazo</div></div>';
       h +=   '<div><h3 style="color:var(--warn)">Passou da duração planejada.</h3>' +
@@ -2151,6 +2684,45 @@
              ' dias</b> de duração: deveria ter terminado em <b>' + br(o.fimCalc) + '</b>.</p></div>';
       h += '</div>';
     }
+
+    /* O risco que a obra carrega desde o primeiro dia. Quando a caixa de
+       alerta acima já contou essa história, não repetimos a mesma coisa duas
+       vezes empilhadas. */
+    if(!o.osAprovada && !alertou){
+      h += '<div class="risco-os">';
+      h +=   '<span class="tag">Sem OS aprovada</span>';
+      h +=   '<p>Esta obra ' + (posCampo(o) ? "foi executada" : "está sendo executada") +
+               ' <b>sem OS aprovada no sistema da DPSP</b>. ' +
+               (posCampo(o)
+                 ? 'Ela não pode ser encerrada nem faturada enquanto a DPSP não aprovar a OS. ' +
+                   'O serviço já foi entregue e ainda não tem cobertura no sistema do cliente.'
+                 : 'Se ela terminar em campo antes de a OS ser aprovada, não vai direto para o fechamento: ' +
+                   'entra na etapa de cobrar a aprovação, e o faturamento fica parado ali.') + '</p>';
+      h += '</div>';
+    }
+
+    /* ---- CICLO DE VIDA: a esteira, a tela principal desta rodada ---- */
+    h += '<div class="box esteira-box"><div class="box-h">Ciclo de vida da obra' +
+         '<span class="box-sub">onde ela está, de quem é a vez e há quanto tempo</span></div>';
+    h += '<div class="box-b">';
+    h +=   '<div class="agora">';
+    h +=     '<div class="agora-p"><div class="lbl">Etapa atual</div><div class="v">' + pill(o) + '</div></div>';
+    h +=     '<div class="agora-p"><div class="lbl">Dono da etapa</div><div class="v">' + esc(o.dono) + '</div></div>';
+    h +=     '<div class="agora-p"><div class="lbl">' + (posCampo(o) ? "Parada nesta etapa" : "Prazo") + '</div>' +
+               '<div class="v ' + (encalhada(o) ? "aviso" : "") + '">' +
+               (posCampo(o)
+                 ? (encerrada(o) ? "encerrada" : o.paradaEtapa + (o.paradaEtapa === 1 ? " dia" : " dias"))
+                 : esc(prazoTxt(o))) + '</div></div>';
+    h +=     '<div class="agora-p"><div class="lbl">Caminho</div><div class="v">' +
+               (o.osAprovada ? "direto — a OS já estava aprovada" : "com desvio — precisa cobrar a aprovação da OS") +
+               '</div></div>';
+    h +=   '</div>';
+    h +=   esteiraHTML(o);
+    h +=   '<p class="esteira-nota">Os nomes das etapas são os que a Manfac já usa na coluna ' +
+           '<b>STATUS MANFAC</b> da planilha. Hoje a planilha guarda o status, mas nunca ' +
+           '<b>desde quando</b> — é esse número, o "parada há N dias", que não existe em lugar nenhum ' +
+           'e faz a obra sumir por semanas depois de entregue.</p>';
+    h += '</div></div>';
 
     h += '<div class="ficha-grid"><div>';
 
@@ -2231,10 +2803,37 @@
 
     h += '<div class="box"><div class="box-h">Vindo do Field</div><div class="box-b">';
     h += '<div class="placeholder"><b>Relatório fotográfico</b> — as fotos que o técnico tira em campo entram aqui quando a OS é preenchida no Field.</div>';
-    h += '<div class="placeholder"><b>Fechamento da OS</b> — data de fechamento, status no sistema do cliente e liberação para faturamento.</div>';
+    h += '<div class="placeholder"><b>Relatório de entrega (PDF)</b> — o arquivo final que o responsável anexa no sistema do cliente para encerrar a OS. É o documento que destrava toda a esteira acima.</div>';
     h += '</div></div>';
 
     h += '</div></div>';
+
+    /* DECISÃO G — a pergunta que o feedback abriu e não fechou. */
+    h += '<div class="decisao"><span class="tag">DECISÃO G</span><div>';
+    h +=   '<p>Você descreveu a esteira inteira, mas não disse <b>quem aperta o botão de cada etapa</b>. ' +
+             'Do relatório até encerrar a OS no sistema do cliente está claro: é o responsável da obra, ' +
+             'você mesmo disse. <b>Depois disso, quem marca?</b> O financeiro? O próprio responsável? ' +
+             'Ou isso deveria vir sozinho de uma integração?</p>';
+    h +=   '<p class="opt"><em>Adotado por padrão — cada etapa é de quem consegue saber:</em> o responsável da obra ' +
+             'marca até <b>Fechar OS</b>, porque é ele quem anexa o relatório e encerra no sistema do cliente. ' +
+             '<b>Pendente faturamento</b> não é marcado por ninguém: entra sozinho no instante em que a OS é ' +
+             'fechada, porque é consequência, não tarefa. E <b>Faturado</b> é marcado pelo financeiro, que é ' +
+             'quem emite a nota e é o único que sabe o dia em que ela saiu.</p>';
+    h +=   '<p class="opt"><em>Alternativa — o responsável fecha tudo:</em> o mesmo que abriu a obra a marca como ' +
+             'faturada. Uma pessoa só, do começo ao fim, sem combinação entre áreas. O preço é que ele vai ' +
+             'marcar de ouvido: não é ele quem emite a nota, então a data vai ser aproximada ou vai atrasar.</p>';
+    h +=   '<p class="opt"><em>Alternativa — o financeiro assume mais cedo:</em> a obra sai da mão do responsável ' +
+             'assim que a OS é fechada, e da liberação do faturamento em diante o dono é o financeiro. ' +
+             'Fica mais fiel a quem de fato faz, mas exige o financeiro dentro do sistema todo dia.</p>';
+    h +=   '<p class="opt"><em>Alternativa — ninguém marca, o sistema lê:</em> a etapa muda sozinha pela ' +
+             'integração com o Field Control e com o sistema da DPSP. É o mais correto no papel e o único que ' +
+             'não depende de disciplina — mas depende de uma integração que hoje não existe, e enquanto ela ' +
+             'não existir a esteira fica sem dono nenhum.</p>';
+    h +=   '<p class="opt">O critério que usei para o padrão: <b>etapa que ninguém consegue marcar com honestidade ' +
+             'apodrece</b>. Foi o que aconteceu com o campo de avanço da planilha, que saiu desta tela ' +
+             'justamente por isso. <b>Concorda com a divisão?</b></p>';
+    h += '</div></div>';
+    h += fbPor("decG");
 
     document.getElementById("ficha").innerHTML = h;
   }
@@ -2379,7 +2978,7 @@
     o.proxAcao = "Concluir levantamento";
     o.fimCalc = somaDias(o.inicioPlan, o.duracao);
     o.atraso = diasDesde(o.fimCalc);
-    FILA = OBRAS.filter(function(x){ return x.pcm === "YURI" && x.etapa !== "finalizado"; });
+    FILA = OBRAS.filter(function(x){ return x.pcm === "YURI" && !posCampo(x); });
     renderDiario();
     montarFiltros();
     irPara("base");
@@ -2434,13 +3033,46 @@
     /* O aviso, como ele chegou. A tela abre pelo motivo de ela ter sido aberta. */
     h += '<div class="push" style="margin:0 0 16px;max-width:none">';
     h +=   '<div class="de"><span class="hora">' + HORA_ESCALADA + '</span>' +
-             '<span>aviso automático do hub · recebido por você</span></div>';
+             '<span>aviso automático do hub · ' + CANAIS_ADM + '</span></div>';
     h +=   '<p class="tx">' + faltosos.map(function(a){ return '<b>' + esc(a.nome) + '</b>'; }).join(", ") +
              (faltosos.length === 1 ? ' não preencheu' : ' não preencheram') + ' o diário de hoje, ' + DIA_REF_CURTO + '. ' +
              '<b>' + semRegistro + ' obras</b> ficaram sem registro.</p>';
     h +=   '<p class="pra">O aviso sai todo dia às 19h, uma hora depois do aviso que o analista recebe às 18h, ' +
-             'e só quando alguém não preencheu.</p>';
+             'e só quando alguém não preencheu. Sai pelos dois canais ao mesmo tempo: e-mail e WhatsApp.</p>';
     h += '</div>';
+
+    /* ALERTA NA HORA — o segundo tipo de aviso, e o mais novo. */
+    h += '<div class="bloco-h"><h2>Faltou alguma coisa hoje</h2>' +
+         '<p>Estes não esperam as 19h: saem no instante em que o analista registra que a obra não produziu ' +
+         'por falta de algo. Vão para o ' + CANAIS_ADM + '.</p></div>';
+
+    if(ALERTAS_FALTA.length){
+      h += ALERTAS_FALTA.map(function(al){
+        var o = PORID[al.obra];
+        if(!o) return "";
+        return '<div class="push falta" style="margin:0 0 10px;max-width:none">' +
+          '<div class="de"><span class="hora">' + al.hora + '</span>' +
+            '<span>alerta na hora · ' + CANAIS_ADM + '</span></div>' +
+          '<p class="tx"><b>' + esc(o.loja) + '</b> não produziu hoje porque faltou <b>' + esc(al.item) + '</b> — ' +
+            esc(al.texto) + '.</p>' +
+          '<p class="pra">OS ' + esc(o.os) + ' · registrado por ' + esc(al.quem) + ' às ' + al.hora +
+            ' · responsável ' + esc(o.pcm || "a definir") + ' · ' + paradaTxt(o) + '</p>' +
+        '</div>';
+      }).join("");
+    } else {
+      h += '<div class="push" style="margin:0 0 10px;max-width:none"><p class="tx">' +
+           'Nenhuma falta registrada hoje.</p></div>';
+    }
+
+    h += '<p class="regra-alerta"><b>Um alerta por obra por dia, nunca repetido.</b> Se a mesma obra ' +
+         'registrar outra falta hoje, o aviso é atualizado — não sai de novo. Com 11 obras por analista, ' +
+         'um alerta por evento vira ruído, e em uma semana ninguém lê mais nenhum.</p>';
+
+    h += '<p class="adm-fonte" style="margin-top:12px">As obras do Yuri não geraram alerta hoje por um motivo ' +
+         'simples: ele ainda não preencheu o diário. Enquanto ninguém registra, o sistema não tem o que avisar — ' +
+         'é o aviso das 19h, acima, que cobre esse caso.</p>';
+
+    h += '<div class="bloco-h" style="margin-top:22px"><h2>Quem preencheu o diário de hoje</h2></div>';
 
     h += '<div class="tabela-wrap"><table class="adm"><thead><tr>' +
            '<th scope="col">Analista</th>' +
@@ -2614,6 +3246,7 @@
     }
     if(e.target.id === "f-pcm"){ fPcm = e.target.value; renderBase(); return; }
     if(e.target.id === "f-etapa"){ fEtapa = e.target.value; renderBase(); return; }
+    if(e.target.id === "f-os"){ fOs = e.target.value; renderBase(); return; }
     if(e.target.dataset && e.target.dataset.fbVoto){
       var id = e.target.dataset.fbVoto;
       fbDe(id).voto = e.target.value;
