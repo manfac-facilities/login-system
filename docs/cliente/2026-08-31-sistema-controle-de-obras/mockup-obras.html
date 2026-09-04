@@ -169,6 +169,17 @@
   .os-chip.sim{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
   .os-chip.nao{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.4)}
 
+  /* LIBERAÇÃO PARA EXECUTAR — o segundo destravamento, ao lado da OS.
+     Liberada sem OS é âmbar: dá para trabalhar, mas a OS precisa ser cobrada,
+     e há um nome a quem recorrer. Sem OS e sem liberação é "sem cobertura":
+     nem documento nem nome, e por isso pesa igual à obra crítica. */
+  .os-chip.lib{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.42)}
+  .os-chip.cob{color:var(--crit);background:rgba(255,77,109,.2);border-color:var(--crit);font-weight:700}
+
+  /* MAU USO é CLASSIFICAÇÃO, não etapa. Por isso a etiqueta é neutra e anda
+     ao lado da pílula de etapa, nunca no lugar dela. */
+  .pill.mauuso{color:var(--ink-dim);background:rgba(148,163,184,.12);border-color:var(--line)}
+
   td.dono{color:var(--ink-dim);font-size:12px;white-space:nowrap}
   .parada{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-dim)}
   .parada small{font-family:var(--sans);font-size:10.5px}
@@ -731,6 +742,30 @@
   .placeholder b{color:var(--ink-dim);font-weight:600}
   .placeholder + .placeholder{margin-top:9px}
 
+  /* ---------- A foto de cada dia, e a faixa de evolução ----------
+     Mesmo padrão do .placeholder: o mockup desenha o LUGAR da foto, nunca uma
+     foto de verdade. O dia sem foto não fica em branco — ele é escrito, porque
+     é a ausência que dispara a cobrança. */
+  .foto-dia{display:flex;gap:9px;align-items:center;margin-top:7px}
+  .foto-mini{
+    width:74px;height:52px;flex:none;border:1px dashed var(--line);border-radius:var(--r-sm);
+    background:rgba(0,0,0,.2);color:var(--ink-faint);font-size:9px;line-height:1.25;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:3px;
+  }
+  .foto-dia .lg{font-size:11.5px;color:var(--ink-faint)}
+  .foto-dia.sem .foto-mini{border-color:rgba(244,183,63,.45);color:var(--warn)}
+  .foto-dia.sem .lg{color:var(--warn)}
+
+  .faixa{display:flex;gap:9px;overflow-x:auto;padding-bottom:5px}
+  .faixa-d{flex:none;width:74px;text-align:center}
+  .faixa-d .dt{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:5px}
+  .faixa-d.sem .dt{color:var(--warn)}
+  .faixa-nota{margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line-soft);
+    font-size:11.5px;line-height:1.6;color:var(--ink-faint)}
+  .faixa-nota b{color:var(--ink-dim)}
+
+  .obs-btn.foto[aria-pressed="true"]{color:var(--ok);text-decoration-style:solid}
+
   .rodape{
     max-width:1220px;margin:34px auto 0;padding:16px 20px 0;border-top:1px solid var(--line-soft);
     color:var(--ink-faint);font-size:11.5px;line-height:1.6;
@@ -1096,8 +1131,21 @@
        FATURADO 24.
      Ou seja: 89 obras já foram executadas em campo e ainda não viraram
      dinheiro. Hoje ninguém enxerga onde cada uma delas empacou.
-     'RELATÓRIO DE ENTREGA' é a única etapa sem nome na planilha — ela
-     acontece, mas não é registrada em lugar nenhum. Está marcada como tal.
+
+     DUAS CORREÇÕES DO FEEDBACK 05 (03/09/2026):
+
+     1) 'MAU USO - APROVAR OS' não é etapa, é CLASSIFICAÇÃO. Ele saiu da lista
+        de etapas e virou o campo `mauUso`. As 22 obras voltam para a contagem
+        normal do funil e carregam apenas uma etiqueta.
+
+     2) 'RELATÓRIO DE ENTREGA' deixou de ser "a etapa sem nome na planilha".
+        Ninguém marca o relatório à mão — ele é DEDUZIDO do Field Control:
+        OS fechada no Field, o relatório existe. Depois disso o caminho abre em
+        dois, e a diferença é de quem depende cada fila:
+          OS aprovada no cliente  → FECHAR OS            (depende de nós)
+          OS não aprovada         → PENDENTE FECHAMENTO  (depende do cliente)
+        Por isso a etapa que se chamava "Cobrar aprovação da OS" passou a se
+        chamar PENDENTE FECHAMENTO, que é o nome que o cliente usa.
      --------------------------------------------------------------- */
   var FASES = [
     {k:"antes",      nome:"Antes de executar", cor:"var(--info)"},
@@ -1116,8 +1164,8 @@
     {k:"paralisado",  nome:"Paralisado",             fase:"campo", cor:"var(--crit)",
      dono:"Responsável da obra", onde:"Campo",  planilha:"EXECUTAR"},
     {k:"relatorio",   nome:"Relatório de entrega",   fase:"fechamento", cor:"var(--info)",
-     dono:"Equipe / responsável",onde:"Field Control", planilha:null},
-    {k:"aprovarOS",   nome:"Cobrar aprovação da OS", fase:"fechamento", cor:"var(--crit)",
+     dono:"Equipe / responsável",onde:"Field Control", planilha:"deduzido do Field"},
+    {k:"aprovarOS",   nome:"Pendente fechamento",    fase:"fechamento", cor:"var(--crit)",
      dono:"Cliente DPSP",        onde:"Sistema do cliente", planilha:"EXECUTADO - APROVAR OS"},
     {k:"fecharOS",    nome:"Fechar OS",              fase:"fechamento", cor:"var(--warn)",
      dono:"Responsável da obra", onde:"Sistema do cliente", planilha:"FECHAR OS"},
@@ -1161,6 +1209,7 @@
       id:"o1", os:"0226-014989", loja:"DP BAIRRO DE FATIMA",
       desc:"Forro do estoque caiu", tipo:"TELHADO", valor:28520.46,
       analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-7", origem:"Sistema DPSP", osAprovada:true,
+      liberadoPor:"LEANDRO", liberadoEm:"2026-04-28",
       etapa:"andamento", bloqueio:"Disponibilidade de equipe",
       aprovacao:"2026-04-30", inicioPlan:"2026-08-19", inicioReal:"2026-08-19", duracao:7,
       pendencia:"Aguardando finalização de serviço TMO 107. Nova posição 24/08",
@@ -1208,6 +1257,7 @@
       id:"o3", os:"0526-013724", loja:"DP NILOPOLIS 5",
       desc:"Caminho Cliente — pintura de fachada e benfeitorias externas", tipo:"CIVIL", valor:35399.80,
       analista:"JUAN", pcm:"YURI", equipe:"ALEXANDRE", origem:"Sistema DPSP", osAprovada:true,
+      liberadoPor:"JUAN", liberadoEm:"2026-06-05",
       etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-06-08", inicioPlan:"2026-08-13", inicioReal:"2026-08-13", duracao:16,
       pendencia:"Pagamento da ART e locação de andaime de 8 m",
@@ -1228,6 +1278,7 @@
       id:"o4", os:"0826-004428", loja:"DP PETROPOLIS 5",
       desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
       analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-27", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:"AMANDA", liberadoEm:"2026-08-12",
       etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
       pendencia:"", pendResp:"", pendPrazo:"",
@@ -1244,6 +1295,7 @@
       id:"o5", os:"0826-004429", loja:"DP PETROPOLIS 6",
       desc:"Mão de obra para pintura da fachada", tipo:"CIVIL", valor:null,
       analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-19", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:null, liberadoEm:null,
       etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-17", inicioPlan:"2026-08-17", inicioReal:"2026-08-26", duracao:8,
       pendencia:"Equipe MANFAC-19 dividida com a obra de Nilópolis 4",
@@ -1261,6 +1313,7 @@
       id:"o6", os:"0826-007431", loja:"DP PETROPOLIS 4",
       desc:"Pintura da retaguarda — visita do presidente da DPSP", tipo:"CIVIL", valor:null,
       analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-26", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:"AMANDA", liberadoEm:"2026-08-14",
       etapa:"andamento", bloqueio:"Sem bloqueio",
       aprovacao:"2026-08-14", inicioPlan:"2026-08-17", inicioReal:"2026-08-17", duracao:8,
       pendencia:"", pendResp:"", pendPrazo:"",
@@ -1502,6 +1555,7 @@
       id:"o21", os:"0826-007420", loja:"DP PIABETA",
       desc:"Finalização de obra", tipo:"CIVIL", valor:15700.00,
       analista:"AMANDA", pcm:"AMANDA", equipe:"MANFAC-4", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:"AMANDA", liberadoEm:"2026-08-01",
       etapa:"aprovarOS", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-13", inicioPlan:"2026-08-04", inicioReal:"2026-08-04", duracao:12,
       fimReal:"2026-08-18", desdeEtapa:"2026-08-19",
@@ -1516,6 +1570,7 @@
       id:"o22", os:"0826-007423", loja:"DP MAGE 1",
       desc:"Finalização de obra", tipo:"CIVIL", valor:14300.00,
       analista:"AMANDA", pcm:"YURI", equipe:"MANFAC-4", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:null, liberadoEm:null,
       etapa:"aprovarOS", bloqueio:"Sem bloqueio",
       aprovacao:"2026-05-13", inicioPlan:"2026-08-05", inicioReal:"2026-08-05", duracao:10,
       fimReal:"2026-08-17", desdeEtapa:"2026-08-18",
@@ -1530,6 +1585,7 @@
       id:"o27", os:"0726-015753", loja:"DP COPACABANA 6",
       desc:"Vazamento no subsolo da loja, afetando a loja vizinha", tipo:"HIDRAULICA", valor:44532.15,
       analista:"LEANDRO", pcm:"YURI", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:"LEANDRO", liberadoEm:"2026-08-04",
       etapa:"aprovarOS", bloqueio:"Sem bloqueio",
       aprovacao:"2026-07-26", inicioPlan:"2026-08-05", inicioReal:"2026-08-05", duracao:8,
       fimReal:"2026-08-13", desdeEtapa:"2026-08-14",
@@ -1597,6 +1653,58 @@
     }
 ,
 
+    /* --- MAU USO: dano por uso indevido do cliente (feedback 05, 03/09/2026).
+       O funcionário arromba o cadeado na abertura da loja, quebra a chave
+       dentro do tambor: a Manfac conserta e cobra. Na planilha isso vira o
+       status 'MAU USO - APROVAR OS' e as 22 obras somem do funil normal.
+       Aqui não: `mauUso` é CLASSIFICAÇÃO, `etapa` continua sendo a etapa. Elas
+       percorrem a MESMA esteira de todas as outras e só carregam a etiqueta.
+       O perfil é o da planilha real: SERRALHERIA, entre R$ 175 e R$ 527. --- */
+    {
+      id:"m1", os:"0726-016210", loja:"DP TIJUCA 3",
+      desc:"Chave quebrada dentro do tambor da porta de enrolar", tipo:"SERRALHERIA", valor:246.80,
+      analista:"JUAN", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:false,
+      liberadoPor:"JUAN", liberadoEm:"2026-08-06", mauUso:true,
+      etapa:"aprovarOS", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-07-28", inicioPlan:"2026-08-10", inicioReal:"2026-08-10", duracao:1,
+      fimReal:"2026-08-11", desdeEtapa:"2026-08-12",
+      marcos:{execFim:"2026-08-11", relatorio:"2026-08-12", osAprov:null,
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Trocada no mesmo dia com liberação do Juan. A OS de mau uso ainda não foi aprovada",
+      pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a aprovação da OS de mau uso na DPSP", atualizacao:"2026-08-12",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"m2", os:"0826-002145", loja:"DP MADUREIRA 2",
+      desc:"Cadeado da porta de enrolar arrombado na abertura da loja", tipo:"SERRALHERIA", valor:175.00,
+      analista:"AMANDA", pcm:"LUANA", equipe:"MANFAC-4", origem:"Sistema DPSP", osAprovada:true,
+      liberadoPor:null, liberadoEm:null, mauUso:true,
+      etapa:"fecharOS", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-08-04", inicioPlan:"2026-08-15", inicioReal:"2026-08-15", duracao:1,
+      fimReal:"2026-08-15", desdeEtapa:"2026-08-16",
+      marcos:{execFim:"2026-08-15", relatorio:"2026-08-16", osAprov:"2026-08-04",
+              fechouOS:null, liberouFat:null, faturou:null},
+      pendencia:"Relatório pronto. Falta anexar e encerrar a OS no sistema da DPSP",
+      pendResp:"LUANA", pendPrazo:"2026-09-02",
+      proxAcao:"Anexar o relatório e encerrar a OS na DPSP", atualizacao:"2026-08-16",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+    {
+      id:"m3", os:"0826-003077", loja:"DP CAMPO GRANDE 9",
+      desc:"Tambor da fechadura da porta de vidro danificado por uso indevido", tipo:"SERRALHERIA", valor:527.00,
+      analista:"LEANDRO", pcm:"AMANDA", equipe:"MANFAC-6", origem:"Sistema DPSP", osAprovada:true,
+      liberadoPor:"LEANDRO", liberadoEm:"2026-08-07", mauUso:true,
+      etapa:"pendFat", bloqueio:"Sem bloqueio",
+      aprovacao:"2026-08-07", inicioPlan:"2026-08-12", inicioReal:"2026-08-12", duracao:1,
+      fimReal:"2026-08-12", desdeEtapa:"2026-08-18",
+      marcos:{execFim:"2026-08-12", relatorio:"2026-08-13", osAprov:"2026-08-07",
+              fechouOS:"2026-08-18", liberouFat:null, faturou:null},
+      pendencia:"Aguardando a DPSP liberar o faturamento", pendResp:"DPSP", pendPrazo:"",
+      proxAcao:"Cobrar a liberação de faturamento", atualizacao:"2026-08-18",
+      naoAndouSeguidos:0, bloqueadaDias:0, remarcacoes:[], diario:[]
+    },
+
     /* --- chegaram do Field e ainda não foram definidas (aba Pipeline) --- */
     {
       id:"n1", os:"0826-007499", loja:"DP SAO GONCALO 5",
@@ -1632,8 +1740,36 @@
     }
   ];
 
+  /* A FOTO DE CADA DIA (feedback 05, 03/09/2026).
+     Hoje a foto entra pela tela; numa segunda etapa ela chega pelo WhatsApp,
+     respondendo ao agente das 18h, e cai exatamente no mesmo lugar.
+     Só obra EM CAMPO recebe a cobrança diária — obra em levantamento ou já
+     executada não tem evolução para fotografar.
+     A lista abaixo é dos dias em que a foto NÃO veio. A ausência é dado, não
+     cálculo: é ela que vira cobrança no dia seguinte. */
+  var SEM_FOTO = {
+    o1:["2026-08-24","2026-08-27","2026-08-28"],
+    o2:["2026-08-28"],
+    o5:["2026-08-27"],
+    o7:["2026-08-25","2026-08-26","2026-08-27","2026-08-28"],
+    o8:["2026-08-26","2026-08-27"],
+    o9:["2026-08-24","2026-08-26","2026-08-27","2026-08-28"],
+    o10:["2026-08-25","2026-08-27","2026-08-28"]
+  };
+  function pedeFoto(o){ return faseDe(o) === "campo"; }
+
   var PORID = {};
   OBRAS.forEach(function(o){
+    /* Os dois destravamentos são independentes: `liberadoPor` é o OK verbal do
+       analista do cliente, `osAprovada` é o ato formal. Obra sem nenhum dos
+       dois está SEM COBERTURA. Quem não traz o campo, não foi liberada. */
+    if(o.liberadoPor === undefined) o.liberadoPor = null;
+    if(o.liberadoEm === undefined) o.liberadoEm = null;
+    if(o.mauUso === undefined) o.mauUso = false;
+    var semFoto = SEM_FOTO[o.id] || [];
+    o.diario.forEach(function(e){
+      if(e.foto === undefined) e.foto = pedeFoto(o) && semFoto.indexOf(e.data) < 0;
+    });
     o.dias = diasDesde(o.aprovacao);
     o.fimCalc = (o.inicioReal || o.inicioPlan) && o.duracao ? somaDias(o.inicioReal || o.inicioPlan, o.duracao) : null;
     o.atraso = (!posCampo(o) && o.fimCalc) ? diasDesde(o.fimCalc) : null;
@@ -1685,6 +1821,9 @@
   function sev(o){
     if(encerrada(o)) return "var(--ink-faint)";
     if(critico(o)) return "var(--crit)";
+    /* Sem cobertura pesa igual a obra crítica, e pelo mesmo motivo: é o caso
+       que ninguém consegue ver hoje e que custa dinheiro quando aparece. */
+    if(semCobertura(o)) return "var(--crit)";
     if(o.etapa === "definir") return "var(--accent)";
     if(posCampo(o)) return encalhada(o) ? "var(--warn)" : "var(--info)";
     if(estourou(o) || travado(o) || o.etapa === "paralisado") return "var(--warn)";
@@ -1713,6 +1852,36 @@
     return o.osAprovada
       ? '<span class="os-chip sim">OS aprovada</span>'
       : '<span class="os-chip nao">sem OS aprovada</span>';
+  }
+
+  /* AUTORIZAÇÃO — dois destravamentos, quatro combinações:
+       liberada e com OS      → normal
+       liberada, sem OS       → executando com o OK do analista; falta cobrar a OS
+       não liberada, com OS   → normal (a OS já é a autorização)
+       nem uma nem outra      → SEM COBERTURA, o estado de risco que hoje
+                                ninguém enxerga: serviço feito, sem documento e
+                                sem ninguém nomeado que tenha autorizado.
+     Obra que ainda está aguardando definição não conta: ninguém foi a campo. */
+  function liberada(o){ return !!o.liberadoPor; }
+  function semCobertura(o){
+    return !o.osAprovada && !o.liberadoPor && o.etapa !== "definir" && !encerrada(o);
+  }
+  /* Há quantos dias a OS não sai. Conta da liberação, quando houve alguém que
+     liberou — é a partir dela que a promessa "a OS eu aprovo depois" corre. */
+  function diasSemOS(o){
+    if(o.osAprovada) return null;
+    return diasDesde(o.liberadoEm || o.inicioReal || o.inicioPlan || o.aprovacao);
+  }
+  /* A etiqueta de cobertura, ao lado da etiqueta de OS. */
+  function covChip(o){
+    if(semCobertura(o)) return '<span class="os-chip cob">Sem cobertura</span>';
+    if(!o.osAprovada && liberada(o))
+      return '<span class="os-chip lib">Liberado por ' + esc(o.liberadoPor) + '</span>';
+    return "";
+  }
+  /* Mau uso é classificação, não etapa: a etiqueta anda AO LADO da pílula. */
+  function mauChip(o){
+    return o.mauUso ? '<span class="pill mauuso"><span class="dot"></span>Mau uso</span>' : "";
   }
   function prazoHTML(o){
     if(o.diaDe == null){
@@ -1778,7 +1947,7 @@
   var estadoTela = "normal";     // normal | vazio | carregando | erro | sem-permissao
   var formaDiario = "cartoes";   // DECISÃO B: cartoes | planilha
   var vis = "tabela";
-  var fPcm = "todos", fEtapa = "todas", fOs = "todas";
+  var fPcm = "todos", fEtapa = "todas", fOs = "todas", fMau = "todas";
   var ordem = {col:"dias", dir:-1};
   var obraAberta = "o1";
   var voltarPara = "base";
@@ -2070,7 +2239,14 @@
     {id:"decJ",  rotulo:"a decisão J — para quem vai documento/ART e outro"},
     {id:"telaAdm", rotulo:"o Painel do dia, que a diretoria abre às 19h"},
     {id:"decF",  rotulo:"a decisão F — quando a falta se repete"},
-    {id:"decG",  rotulo:"a decisão G — quem marca cada etapa depois da execução"}
+    {id:"decG",  rotulo:"a decisão G — quem marca cada etapa depois da execução"},
+    /* As quatro seções do feedback 05 (03/09/2026). Os ids não repetem os
+       "decI"/"decJ" que já existem acima: aquelas letras são de outra
+       conversa, e trocar o campo de lugar apagaria retorno já dado. */
+    {id:"novoLiberacao", rotulo:"a liberação para executar e a obra sem cobertura"},
+    {id:"novoMauUso",    rotulo:"mau uso como etiqueta, dentro da mesma esteira"},
+    {id:"novoRelatorio", rotulo:"o relatório deduzido do Field e o Pendente fechamento"},
+    {id:"novoFotos",     rotulo:"a foto de evolução, todo dia, na linha do tempo"}
   ];
   var VOTOS = [["aprovado","Aprovado"],["ajustar","Ajustar"],["refazer","Refazer"]];
 
@@ -2304,11 +2480,22 @@
                '<button id="btn-kanban" aria-pressed="false">Kanban</button></div>';
     h +=     '<div class="filtro"><label class="lbl" for="f-pcm">Responsável da obra</label><select id="f-pcm"></select></div>';
     h +=     '<div class="filtro"><label class="lbl" for="f-etapa">Etapa da obra</label><select id="f-etapa"></select></div>';
-    h +=     '<div class="filtro"><label class="lbl" for="f-os">OS do cliente</label>' +
+    h +=     '<div class="filtro"><label class="lbl" for="f-os">Autorização</label>' +
                '<select id="f-os">' +
                  '<option value="todas">Todas</option>' +
                  '<option value="sim">Com OS aprovada</option>' +
                  '<option value="nao">Sem OS aprovada</option>' +
+                 '<option value="liberada">Liberadas, ainda sem OS</option>' +
+                 '<option value="semcob">Sem cobertura — nem OS nem liberação</option>' +
+               '</select></div>';
+    /* Mau uso é classificação: filtra junto com as outras, nunca substitui a
+       etapa. É assim que dá para perguntar "quanto de mau uso está pendente de
+       cobrança" sem tirar essas obras do funil. */
+    h +=     '<div class="filtro"><label class="lbl" for="f-mau">Classificação</label>' +
+               '<select id="f-mau">' +
+                 '<option value="todas">Todas</option>' +
+                 '<option value="sim">Só mau uso</option>' +
+                 '<option value="nao">Sem mau uso</option>' +
                '</select></div>';
     h +=     '<span class="conta"><b id="conta">0</b> obras nesta visão · base completa: <b>187</b></span>';
     h +=   '</div>';
@@ -2322,6 +2509,23 @@
              '<thead><tr id="thead-row"></tr></thead><tbody id="tbody"></tbody></table></div></div>';
     h +=   '<div id="vis-kanban" hidden><div class="kanban-wrap"><div class="kanban" id="kanban"></div></div></div>';
     h +=   fbPor("tela2");
+
+    /* NOVO — mau uso como etiqueta (feedback de 03/09/2026) */
+    h +=   '<div class="decisao"><span class="tag">NOVO · MAU USO</span><div>';
+    h +=     '<p>Você disse que mau uso <b>não precisa de caminho separado</b> — que é uma classificação de ' +
+               'tipo, e que o importante é ter a obra aberta. Foi assim que ficou: <b>mau uso virou etiqueta</b>, ' +
+               'não etapa. A obra percorre a mesma esteira de todas as outras e carrega o rótulo ao lado ' +
+               'da etapa em que ela está.</p>';
+    h +=     '<p class="opt"><em>O que isso conserta:</em> na planilha, <b>MAU USO - APROVAR OS</b> mora na coluna ' +
+               'de status, junto com FECHAR OS e PENDENTE FATURAMENTO. Classificação ocupando o lugar de etapa. ' +
+               'Resultado: <b>22 obras somem do funil</b> — elas não aparecem em "aguardando aprovação de OS" ' +
+               'porque estão num status só delas. Separando as duas coisas, as 22 voltam para a contagem real.</p>';
+    h +=     '<p class="opt"><em>Onde ver:</em> o filtro <b>Classificação</b>, aí em cima, e a etiqueta cinza ' +
+               '<b>Mau uso</b> ao lado da etapa, na tabela e no Kanban. Abra <b>DP TIJUCA 3</b>, ' +
+               '<b>DP MADUREIRA 2</b> ou <b>DP CAMPO GRANDE 9</b>: são três obras de mau uso em três etapas ' +
+               'diferentes da mesma esteira — chave, cadeado e tambor, de R$ 175 a R$ 527, como na planilha.</p>';
+    h +=   '</div></div>';
+    h +=   fbPor("novoMauUso");
     h += '</section>';
 
     /* ---- Tela 3 ---- */
@@ -2339,9 +2543,10 @@
 
     h += '</main>';
 
-    h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · versão de 01/09/2026, ' +
-         'com as respostas A, C, D e E já aplicadas. ' +
-         'Dados reais da planilha DPSP Rev.02 (11 obras do Yuri, obras de outros responsáveis, obras recém-chegadas do Field e obras finalizadas). ' +
+    h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · versão de 03/09/2026, ' +
+         'com as respostas A, C, D, E, G e o feedback de 03/09 já aplicados (liberação para executar, ' +
+         'mau uso como etiqueta, relatório deduzido do Field e foto de evolução por dia). ' +
+         'Dados reais da planilha DPSP Rev.02 (11 obras do Yuri, obras de outros responsáveis, obras de mau uso, obras recém-chegadas do Field e obras finalizadas). ' +
          'Nenhuma resposta do diário é gravada: só o seu retorno nos campos abaixo de cada seção.</footer>';
     return h;
   }
@@ -2415,7 +2620,7 @@
   }
 
   function rasc(o){
-    return rascunho[o.id] || (rascunho[o.id] = {andou:null, item:null, motivo:null, obs:"", obsAberta:false});
+    return rascunho[o.id] || (rascunho[o.id] = {andou:null, item:null, motivo:null, obs:"", obsAberta:false, foto:false});
   }
 
   /* DECISÃO C — o contador aparece, mas não trava nada. Ele existe para o
@@ -2459,6 +2664,11 @@
     h +=     '<div class="q q-motivo" hidden><span class="lbl">Por que não andou?</span><div class="chips">' +
                chipsHTML("motivo", BLOQUEIOS, d.motivo) + '</div></div>';
     h +=     '<div class="obs-linha"><button type="button" class="obs-btn">+ observação</button>' +
+               /* A foto entra junto com a evolução do dia, no mesmo gesto de
+                  responder. Só obra em campo tem o que fotografar. */
+               (pedeFoto(o) ? '<button type="button" class="obs-btn foto" aria-pressed="' +
+                 (d.foto ? "true" : "false") + '">' +
+                 (d.foto ? "✓ foto do dia anexada" : "+ anexar foto do dia") + '</button>' : "") +
                '<input class="obs-in" type="text" maxlength="120" placeholder="Uma linha, se quiser" hidden value=""></div>';
     h +=     '<div class="acoes"><button type="button" class="btn salvar" disabled>Salvar e sair da fila</button>' +
                '<span class="hint"></span></div>';
@@ -2511,7 +2721,7 @@
     respostas[o.id] = {andou:d.andou, item:item, motivo:d.motivo, obs:d.obs};
     o.diario = o.diario.concat([{
       data:DIA_REF, andou:d.andou === "Sim", motivo:d.motivo,
-      item:item, obs:d.obs
+      item:item, obs:d.obs, foto: pedeFoto(o) && !!d.foto
     }]);
     /* AQUI a falta deixa de terminar em registro. Salvou "faltou alguma
        coisa", nasce a tarefa, com dono e prazo, e o agente cobra a pessoa.
@@ -2758,7 +2968,7 @@
            '<th scope="col">Andou hoje?</th>' +
            '<th scope="col">Por que não andou?</th>' +
            '<th scope="col">Faltou algum item?</th>' +
-           '<th scope="col">Observação</th>' +
+           '<th scope="col">Observação e foto</th>' +
          '</tr></thead><tbody>';
 
     h += pendentes.map(function(o){
@@ -2780,7 +2990,11 @@
       tr += '<td><select data-grupo="item" aria-label="Faltou algum item — ' + esc(o.loja) + '">' +
               opcoes(ITENS.slice(1), d.item, "Não faltou") + '</select></td>';
       tr += '<td><input class="obs-in" type="text" maxlength="120" placeholder="opcional" value="' +
-              esc(d.obs || "") + '"></td>';
+              esc(d.obs || "") + '">' +
+              (pedeFoto(o) ? '<div style="margin-top:5px"><button type="button" class="obs-btn foto" ' +
+                'aria-pressed="' + (d.foto ? "true" : "false") + '">' +
+                (d.foto ? "✓ foto anexada" : "+ foto do dia") + '</button></div>' : "") +
+            '</td>';
       tr += '</tr>';
       return tr;
     }).join("");
@@ -2908,6 +3122,10 @@
       else if(fEtapa !== "todas" && o.etapa !== fEtapa) return false;
       if(fOs === "sim" && !o.osAprovada) return false;
       if(fOs === "nao" && o.osAprovada) return false;
+      if(fOs === "liberada" && !(!o.osAprovada && liberada(o))) return false;
+      if(fOs === "semcob" && !semCobertura(o)) return false;
+      if(fMau === "sim" && !o.mauUso) return false;
+      if(fMau === "nao" && o.mauUso) return false;
       return true;
     });
   }
@@ -2930,12 +3148,16 @@
     var esteira = todas.filter(function(o){ return posCampo(o) && !encerrada(o); });
     var esteiraVelha = esteira.reduce(function(m,o){ return Math.max(m, o.paradaEtapa || 0); }, 0);
     var semOS = todas.filter(function(o){ return !o.osAprovada && !encerrada(o); }).length;
+    /* O número que hoje ninguém consegue responder: quantas obras estão sendo
+       feitas sem documento E sem ninguém nomeado que tenha autorizado. */
+    var semCob = todas.filter(semCobertura).length;
     document.getElementById("resumo").innerHTML = [
       {v:aDefinir.length, k:aDefinir.length ? "aguardando definição · a mais antiga há " + maisVelha + " dias" : "aguardando definição", c:"var(--accent)"},
       {v:andamento, k:"em andamento", c:"var(--ok)"},
       {v:paralisadas, k:"paralisadas", c:"var(--crit)"},
       {v:esteira.length, k:esteira.length ? "executadas, ainda na esteira · a mais parada há " + esteiraVelha + " dias" : "executadas, ainda na esteira", c:"var(--warn)"},
       {v:semOS, k:"sem OS aprovada no cliente", c:"var(--crit)"},
+      {v:semCob, k:"sem cobertura — nem OS nem liberação", c:"var(--crit)"},
       {v:velhas, k:"aprovadas há mais de 60 dias", c:"var(--warn)"},
       {v:estouradas, k:"passaram da duração planejada", c:"var(--warn)"}
     ].map(function(x){
@@ -2957,18 +3179,18 @@
       b.querySelector(".ar").textContent = b.dataset.col === k ? (dir > 0 ? "▲" : "▼") : "";
     });
     document.getElementById("tbody").innerHTML = lista.map(function(o){
-      var tr = '<tr' + (critico(o) ? ' class="alerta"' : "") + '>';
+      var tr = '<tr' + (critico(o) || semCobertura(o) ? ' class="alerta"' : "") + '>';
       tr += '<td class="os">' + esc(o.os) + '</td>';
       tr += '<td class="loja"><button data-abrir="' + o.id + '">' + esc(o.loja) + '</button></td>';
       tr += '<td>' + esc(o.tipo) + '</td>';
       tr += '<td>' + (o.pcm ? esc(o.pcm) : '<span style="color:var(--accent)">a definir</span>') + '</td>';
       tr += '<td>' + esc(o.equipe) + '</td>';
-      tr += '<td>' + pill(o) + '</td>';
+      tr += '<td>' + pill(o) + (o.mauUso ? " " + mauChip(o) : "") + '</td>';
       tr += '<td class="dono">' + esc(o.dono) + '</td>';
       tr += '<td class="n">' + (o.paradaEtapa != null && !encerrada(o)
               ? '<span class="parada' + (encalhada(o) ? " alto" : "") + '">' + o.paradaEtapa + ' <small>dias</small></span>'
               : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
-      tr += '<td>' + osChip(o) + '</td>';
+      tr += '<td>' + osChip(o) + (covChip(o) ? ' ' + covChip(o) : "") + '</td>';
       tr += '<td class="bloq">' + (o.bloqueio === "Sem bloqueio" || posCampo(o)
               ? '<span style="color:var(--ink-faint)">—</span>'
               : esc(o.bloqueio) + (travado(o) ? ' <span class="d">' + o.bloqueadaDias + 'd</span>' : "")) + '</td>';
@@ -2995,7 +3217,7 @@
            '">Com <b>' + esc(o.dono) + '</b> há <b class="num">' + o.paradaEtapa + '</b> dias</div>';
     }
     c += '<div class="ft">' + badgeDias(o, true) +
-         (o.osAprovada ? "" : osChip(o)) + notaAlerta(o) + '</div>';
+         (o.osAprovada ? "" : osChip(o)) + covChip(o) + mauChip(o) + notaAlerta(o) + '</div>';
     c += '</button>';
     return c;
   }
@@ -3077,9 +3299,9 @@
       if(k === "aprovarOS" && o.osAprovada){
         h += '<li class="passo pulado desvio">';
         h +=   '<div class="marca"><i></i></div>';
-        h +=   '<div class="corpo"><div class="l1"><span class="nome">Cobrar aprovação da OS</span></div>' +
+        h +=   '<div class="corpo"><div class="l1"><span class="nome">Pendente fechamento</span></div>' +
                  '<div class="l2">Desvio não usado — a OS já estava aprovada em ' + br(o.marcos.osAprov || o.aprovacao) +
-                 ', então a obra segue direto para o fechamento.</div></div>';
+                 ', então, com o relatório existindo, a obra vai direto para Fechar OS.</div></div>';
         h +=   '<div class="quando pulado">não se aplica</div>';
         h += '</li>';
         return;
@@ -3094,9 +3316,22 @@
         det = '<span class="alerta-passo">Parada aqui há <b>' + o.paradaEtapa + ' dias</b>. ' +
               'Enquanto não sair desta etapa, a obra não vira dinheiro.</span>';
       }
-      if(k === "relatorio" && cls === "atual"){
-        det += '<span class="sem-status">Esta etapa acontece, mas não tem status na planilha de hoje — ' +
-               'a obra pula de "executada" para "fechar OS" e ninguém sabe se o relatório saiu.</span>';
+      /* O relatório não é marcado por ninguém — ele é DEDUZIDO. Dizer isso no
+         próprio passo tira o ar de "campo que alguém esqueceu de preencher". */
+      if(k === "relatorio"){
+        det += '<span class="sem-status">Ninguém marca esta etapa à mão. O sistema lê o fechamento da OS ' +
+               'no Field Control: <b>OS fechada no Field, o relatório existe</b>. Enquanto o Field não ' +
+               'devolver o fechamento, a obra fica parada aqui.</span>';
+      }
+      /* A cobrança precisa ter NOME. Quem liberou a execução é a pessoa a
+         quem a Manfac vai recorrer para a OS sair. */
+      if(k === "aprovarOS"){
+        det += liberada(o)
+          ? '<span class="sem-status">Relatório pronto, OS não aprovada: quem destrava é o cliente, não nós. ' +
+            'A execução foi liberada por <b>' + esc(o.liberadoPor) + '</b> em ' + br(o.liberadoEm) +
+            ' — é com ele que a cobrança da OS começa.</span>'
+          : '<span class="alerta-passo">Ninguém liberou esta obra: não há OS aprovada e não há nome de quem ' +
+            'autorizou a execução. A cobrança fica <b>sem a quem recorrer</b>.</span>';
       }
       h += passoHTML({
         cls: cls,
@@ -3125,7 +3360,8 @@
     h += '<div class="page-head"><div>';
     h += '<h1>' + esc(o.loja) + '</h1>';
     h += '<p class="num">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + ' · ' + moeda(o.valor) + '</p>';
-    h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + osChip(o) + badgeDias(o) + '</div></div>';
+    h += '</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + pill(o) + mauChip(o) +
+         osChip(o) + covChip(o) + badgeDias(o) + '</div></div>';
 
     /* Obra já executada e encalhada: a manchete não pode ser a duração da obra,
        que acabou. É há quanto tempo ela está parada e quanto dinheiro está ali. */
@@ -3164,7 +3400,21 @@
     /* O risco que a obra carrega desde o primeiro dia. Quando a caixa de
        alerta acima já contou essa história, não repetimos a mesma coisa duas
        vezes empilhadas. */
-    if(!o.osAprovada && !alertou){
+    /* SEM COBERTURA é o caso que o cliente não consegue enxergar hoje: nem
+       documento, nem nome. Ele aparece SEMPRE, mesmo quando a caixa de alerta
+       acima já falou, porque é um risco de natureza diferente — não é atraso,
+       é serviço feito sem autorização de ninguém. */
+    if(semCobertura(o)){
+      h += '<div class="risco-os">';
+      h +=   '<span class="tag">Sem cobertura</span>';
+      h +=   '<p>Esta obra ' + (posCampo(o) ? "foi executada" : "está sendo executada") +
+               ' <b>sem OS aprovada na DPSP e sem ninguém que tenha liberado a execução</b>. ' +
+               'Não existe documento e não existe nome: se a DPSP não aprovar a OS, não há a quem recorrer, ' +
+               'porque não há registro de quem disse "pode fazer". ' +
+               (o.valor != null ? 'São <b>' + moeda(o.valor) + '</b> de serviço sem cobertura nenhuma. ' : "") +
+               'É o estado de maior risco da base, e é ele que o campo <b>Liberado por</b> existe para evitar.</p>';
+      h += '</div>';
+    } else if(!o.osAprovada && !alertou){
       h += '<div class="risco-os">';
       h +=   '<span class="tag">Sem OS aprovada</span>';
       h +=   '<p>Esta obra ' + (posCampo(o) ? "foi executada" : "está sendo executada") +
@@ -3190,23 +3440,69 @@
                  ? (encerrada(o) ? "encerrada" : o.paradaEtapa + (o.paradaEtapa === 1 ? " dia" : " dias"))
                  : esc(prazoTxt(o))) + '</div></div>';
     h +=     '<div class="agora-p"><div class="lbl">Caminho</div><div class="v">' +
-               (o.osAprovada ? "direto — a OS já estava aprovada" : "com desvio — precisa cobrar a aprovação da OS") +
+               (o.osAprovada ? "direto — a OS já estava aprovada" : "com desvio — vai parar em Pendente fechamento") +
                '</div></div>';
     h +=   '</div>';
     h +=   esteiraHTML(o);
     h +=   '<p class="esteira-nota">Os nomes das etapas são os que a Manfac já usa na coluna ' +
            '<b>STATUS MANFAC</b> da planilha. Hoje a planilha guarda o status, mas nunca ' +
            '<b>desde quando</b> — é esse número, o "parada há N dias", que não existe em lugar nenhum ' +
-           'e faz a obra sumir por semanas depois de entregue.</p>';
+           'e faz a obra sumir por semanas depois de entregue.<br><br>' +
+           'Duas filas diferentes, que hoje estão embaraçadas dentro das mesmas 89 obras executadas e ' +
+           'não faturadas: <b>Fechar OS</b> é o que depende de nós — alguém pega o relatório e encerra. ' +
+           '<b>Pendente fechamento</b> é o que depende do cliente — só a aprovação da OS destrava, e o que ' +
+           'resolve é insistir com o analista que liberou.<br><br>' +
+           '<b>Mau uso</b> não é etapa, é classificação: a obra de mau uso percorre esta mesma esteira e só ' +
+           'carrega uma etiqueta. Por isso as 22 obras que estavam paradas no status "MAU USO - APROVAR OS" ' +
+           'voltaram para a contagem normal do funil.</p>';
     h += '</div></div>';
 
     h += '<div class="ficha-grid"><div>';
+
+    /* AUTORIZAÇÃO — os dois destravamentos, um embaixo do outro. A liberação
+       é o OK verbal do analista do cliente ("pode executar, a OS eu aprovo
+       depois"); a OS aprovada é o ato formal. São datas diferentes e coisas
+       diferentes, e é a falta das duas juntas que cria o risco. */
+    h += '<div class="box"><div class="box-h">Autorização' +
+         '<span class="box-sub">o que destrava a execução e o que destrava o fechamento</span></div>' +
+         '<div class="box-b"><dl class="dl">';
+    h += '<dt>Liberação</dt><dd>' + (liberada(o)
+            ? 'Liberado por <b>' + esc(o.liberadoPor) + '</b> · <span class="num">' +
+              br(o.liberadoEm).slice(0,5) + '</span>'
+            : '<span style="color:var(--crit);font-weight:600">Ninguém liberou esta obra</span>') + '</dd>';
+    h += '<dt>OS do cliente</dt><dd>' + (o.osAprovada
+            ? 'OS aprovada · <span class="num">' + br(o.marcos.osAprov || o.aprovacao).slice(0,5) + '</span>'
+            : '<span style="color:var(--crit);font-weight:600">OS ainda não aprovada</span>' +
+              (diasSemOS(o) != null ? ' · <span class="num">há ' + diasSemOS(o) + ' dias</span>' : "")) + '</dd>';
+    h += '</dl>';
+    h += '<p class="crono-nota">' + (
+           o.osAprovada && liberada(o)
+             ? 'A obra tem as duas coberturas: alguém autorizou a execução <b style="color:var(--ink)">e</b> ' +
+               'existe OS aprovada no sistema do cliente. É o caso normal.'
+           : o.osAprovada
+             ? 'A obra não precisou de liberação: a <b style="color:var(--ink)">OS já estava aprovada</b> ' +
+               'quando a equipe foi a campo, e a OS é a própria autorização.'
+           : liberada(o)
+             ? 'A execução aconteceu com o <b style="color:var(--ink)">OK de ' + esc(o.liberadoPor) + '</b>, ' +
+               'que se comprometeu a aprovar a OS depois. Faz <b style="color:var(--ink)">' + diasSemOS(o) +
+               ' dias</b> que essa OS não sai — e é o ' + esc(o.liberadoPor) + ' quem a Manfac vai procurar.'
+             : '<b style="color:var(--crit)">Nem uma coisa nem outra.</b> A obra ' +
+               (posCampo(o) ? 'foi executada' : 'está sendo executada') +
+               ' sem OS e sem ninguém nomeado que tenha autorizado. É o que a Manfac não consegue ver hoje.'
+         ) + '</p>';
+    h += '</div></div>';
 
     h += '<div class="box"><div class="box-h">Identificação</div><div class="box-b"><dl class="dl">';
     h += '<dt>Nº OS</dt><dd class="num">' + esc(o.os) + '</dd>';
     h += '<dt>Loja</dt><dd>' + esc(o.loja) + '</dd>';
     h += '<dt>Chamado</dt><dd>' + esc(o.desc) + '</dd>';
     h += '<dt>Tipo</dt><dd>' + esc(o.tipo) + '</dd>';
+    if(o.mauUso){
+      h += '<dt>Classificação</dt><dd>' + mauChip(o) +
+           '<div style="color:var(--ink-faint);font-size:11.5px;margin-top:4px;line-height:1.5">' +
+           'Dano por uso indevido do cliente — a Manfac conserta e cobra. É etiqueta, não etapa: ' +
+           'a obra segue a mesma esteira de todas as outras.</div></dd>';
+    }
     h += '<dt>Valor</dt><dd class="num">' + moeda(o.valor) + '</dd>';
     h += '<dt>Analista</dt><dd>' + esc(o.analista) + '</dd>';
     h += '<dt>Responsável da obra</dt><dd>' + (o.pcm ? esc(o.pcm) : '<span style="color:var(--accent)">a definir</span>') + '</dd>';
@@ -3242,6 +3538,29 @@
 
     h += '</div><div>';
 
+    /* A FAIXA DE EVOLUÇÃO — o pedido em uma frase: "pra gente acompanhar a
+       evolução". Os últimos dias em sequência, para bater o olho e ver a obra
+       andando. O dia sem foto não fica em branco: ele é escrito, porque é a
+       ausência que vira cobrança. */
+    if(pedeFoto(o) && o.diario.length){
+      var ultimos = o.diario.slice(-8);
+      var comFoto = ultimos.filter(function(e){ return e.foto; }).length;
+      h += '<div class="box"><div class="box-h">Evolução em fotos' +
+           '<span class="box-sub">os últimos dias, na ordem em que aconteceram</span></div><div class="box-b">';
+      h += '<div class="faixa">' + ultimos.map(function(e){
+             return '<div class="faixa-d' + (e.foto ? "" : " sem") + '">' +
+                    '<div class="foto-mini">' + (e.foto ? "foto da obra" : "sem foto") + '</div>' +
+                    '<div class="dt">' + br(e.data).slice(0,5) + '</div></div>';
+           }).join("") + '</div>';
+      h += '<p class="faixa-nota"><b>' + comFoto + ' de ' + ultimos.length +
+           ' dias com foto.</b> Uma foto por dia, em sequência: é assim que dá para ver a obra andando sem ' +
+           'ir até a loja. O dia em que a foto não veio aparece marcado — a falta de foto é falta como ' +
+           'qualquer outra e vira tarefa com dono e prazo, na mesma mecânica das outras faltas.<br><br>' +
+           '<b>Próximo passo:</b> a foto vai poder chegar pelo WhatsApp, respondendo ao agente das 18h, ' +
+           'e cai exatamente neste mesmo lugar. Hoje ela entra pela tela, no diário do dia.</p>';
+      h += '</div></div>';
+    }
+
     h += '<div class="box"><div class="box-h">Linha do tempo do diário</div><div class="box-b">';
     if(o.diario.length){
       h += '<div class="tl">' + o.diario.slice().reverse().map(function(e){
@@ -3256,6 +3575,15 @@
         if(e.item && e.item !== "Não faltou") sub.push("faltou " + e.item.toLowerCase());
         if(sub.length) t += '<div class="tl-s">' + esc(sub.join(" · ")) + '</div>';
         if(e.obs) t += '<div class="tl-obs">' + esc(e.obs) + '</div>';
+        /* A foto do dia, dentro do próprio dia. Sem foto é estado visível: é
+           ele que dispara a cobrança no dia seguinte. */
+        if(pedeFoto(o)){
+          t += e.foto
+            ? '<div class="foto-dia"><span class="foto-mini">foto da obra</span>' +
+              '<span class="lg">Foto da evolução recebida em ' + br(e.data).slice(0,5) + '</span></div>'
+            : '<div class="foto-dia sem"><span class="foto-mini">sem foto</span>' +
+              '<span class="lg">A foto deste dia não veio</span></div>';
+        }
         var tf = tarefaDoDia(o.id, e.data);
         if(tf) t += tlTarefaHTML(tf);
         return t + '</div></div>';
@@ -3331,6 +3659,73 @@
              'justamente por isso. <b>Concorda com a divisão?</b></p>';
     h += '</div></div>';
     h += fbPor("decG");
+
+    /* NOVO — liberado por + data de liberação (feedback de 03/09/2026) */
+    h += '<div class="decisao"><span class="tag">NOVO · LIBERAÇÃO</span><div>';
+    h +=   '<p>Você descreveu uma coisa que a operação faz todo dia e que a planilha nunca guardou direito: ' +
+             'quando a obra não tem OS aprovada, <b>um analista do cliente dá o OK verbal</b> — "pode executar, ' +
+             'a OS eu aprovo depois" — e a Manfac anota <b>liberado por Amanda</b>, <b>por Leandro</b>, ' +
+             '<b>por Juan</b>, com a data.</p>';
+    h +=   '<p class="opt"><em>Uma correção de fato, para constar:</em> essa coluna <b>não existe</b> na planilha ' +
+             'que recebemos. O que existe é <b>ANALISTA</b> (o nome) numa coluna e <b>AUTORIZAÇÃO</b> (uma data) ' +
+             'em outra, sem nada dizendo que as duas se referem ao mesmo ato. Isso não enfraquece o pedido, ' +
+             'reforça: hoje não dá para saber, olhando a planilha, se alguém autorizou a obra ou se ninguém ' +
+             'autorizou nada.</p>';
+    h +=   '<p class="opt"><em>Como ficou:</em> passam a existir <b>dois destravamentos independentes</b>, cada um ' +
+             'com quem e quando — a <b>liberação</b> (nome e data do analista) e a <b>OS aprovada</b> (o ato ' +
+             'formal). Veja no bloco <b>Autorização</b>, aí em cima. São quatro combinações: liberada e com OS ' +
+             '(normal); liberada, sem OS (executando com o OK, falta cobrar a OS); não liberada, com OS ' +
+             '(normal, a OS já é a autorização); e <b>nem uma nem outra</b>.</p>';
+    h +=   '<p class="opt"><em>O quarto caso é o que interessa:</em> <b>sem cobertura</b>. Serviço sendo feito sem ' +
+             'documento e sem ninguém nomeado que tenha autorizado. Hoje ninguém consegue responder quantas obras ' +
+             'estão nesse estado; a Base de obras passa a responder, com indicador e filtro próprios. ' +
+             'Abra <b>DP PETROPOLIS 6</b> ou <b>DP MAGE 1</b> para ver como ele aparece.</p>';
+    h +=   '<p class="opt">Na esteira, a etapa de cobrança passa a mostrar <b>quem liberou</b> — a cobrança da OS ' +
+             'precisa ter nome, porque é essa pessoa que a Manfac vai procurar. <b>Os nomes e as datas estão certos?</b></p>';
+    h += '</div></div>';
+    h += fbPor("novoLiberacao");
+
+    /* NOVO — relatório deduzido do Field e o Pendente fechamento */
+    h += '<div class="decisao"><span class="tag">NOVO · RELATÓRIO</span><div>';
+    h +=   '<p>O <b>Relatório de entrega</b> era a única etapa sem nome na planilha, e você resolveu do jeito ' +
+             'certo: <b>ninguém marca o relatório à mão — ele é deduzido</b>. Se a OS foi fechada no Field ' +
+             'Control, o relatório existe. Ponto.</p>';
+    h +=   '<p class="opt"><em>E aí o caminho abre em dois:</em> se a OS <b>está aprovada</b> no sistema do cliente, ' +
+             'é só pegar o relatório e fechar lá — é a fila <b>Fechar OS</b>. Se a OS <b>não está aprovada</b>, ' +
+             'não dá para fechar, e a obra fica em <b>Pendente fechamento</b>. O nome da etapa mudou para esse, ' +
+             'que é o que você usa.</p>';
+    h +=   '<p class="opt"><em>Por que separar importa:</em> "Fechar OS" é uma <b>fila de trabalho</b> — alguém pega ' +
+             'e faz. "Pendente fechamento" é uma <b>fila de cobrança</b> — ninguém da Manfac resolve sozinho, o que ' +
+             'resolve é insistir com o analista. Hoje as duas estão embaraçadas dentro do mesmo balaio de 89 obras ' +
+             'executadas e não faturadas, e por isso ninguém sabe quanto está parado por nossa conta e quanto ' +
+             'está parado esperando o cliente.</p>';
+    h +=   '<p class="opt"><em>O que isso exige:</em> a API do Field Control precisa devolver o fechamento da OS. ' +
+             'Se ela não devolver, alguém marca à mão — é o modo degradado, o mesmo já combinado em 01/09.</p>';
+    h += '</div></div>';
+    h += fbPor("novoRelatorio");
+
+    /* NOVO — foto de evolução, todo dia */
+    h += '<div class="decisao"><span class="tag">NOVO · FOTO DIÁRIA</span><div>';
+    h +=   '<p>Você pediu que o agente peça <b>evolução e foto</b> à equipe todo dia, e que o sistema registre ' +
+             'essa foto <b>todo santo dia</b> na linha do tempo, para acompanhar a evolução. É o que está ' +
+             'desenhado: cada dia da linha do tempo pode ter foto, e existe a faixa <b>Evolução em fotos</b> ' +
+             'com os últimos dias em sequência.</p>';
+    h +=   '<p class="opt"><em>A ordem que recomendo, e o porquê:</em> a foto entra <b>pela tela na primeira ' +
+             'versão</b>, e o agente de WhatsApp entra logo depois, escrevendo no mesmo lugar. O trabalho de ' +
+             'verdade aqui é o repositório de fotos por obra e por dia — onde guarda, como aparece, quem vê — ' +
+             'e esse código é o mesmo, venha a foto do WhatsApp ou de um botão na tela. Já o WhatsApp depende de ' +
+             'duas coisas fora do nosso alcance: <b>o telefone das equipes</b>, que hoje não existe em cadastro ' +
+             'nenhum ("MANFAC-7", "ERLI/RICARDO", "DEFINIR" é o que a planilha tem), e um provedor não oficial ' +
+             'que pode ser bloqueado sem aviso.</p>';
+    h +=   '<p class="opt"><em>O que já está decidido e não muda:</em> a cobrança sai às <b>18h</b>, num disparo só, ' +
+             'junto com o resto do ciclo; só <b>obras em campo</b> recebem, porque obra em levantamento não tem ' +
+             'evolução para fotografar; e <b>foto que não veio é falta</b> — vira tarefa com dono e prazo, na ' +
+             'mesma mecânica das outras faltas, sem caminho novo.</p>';
+    h +=   '<p class="opt"><em>O que ainda depende de vocês:</em> o <b>cadastro de telefone das equipes e ' +
+             'prestadores</b>. Sem ele o agente não tem para quem mandar. É trabalho de operação, não de ' +
+             'código, e deixou de travar a primeira versão — mas continua travando o agente.</p>';
+    h += '</div></div>';
+    h += fbPor("novoFotos");
 
     document.getElementById("ficha").innerHTML = h;
   }
@@ -3915,6 +4310,16 @@
     /* Chips dentro de uma linha da planilha (DECISÃO B, forma 2) */
     var linha = e.target.closest("tr[data-linha]");
     if(linha){
+      /* "+ anexar foto do dia" na lista única. No mockup ele só marca que a
+         foto do dia veio — o arquivo em si é placeholder. */
+      var fotoL = e.target.closest(".obs-btn.foto");
+      if(fotoL){
+        var dF = rasc(PORID[linha.dataset.linha]);
+        dF.foto = !dF.foto;
+        fotoL.setAttribute("aria-pressed", dF.foto ? "true" : "false");
+        fotoL.textContent = dF.foto ? "✓ foto anexada" : "+ foto do dia";
+        return;
+      }
       var chipL = e.target.closest(".chip");
       if(chipL){
         var oL = PORID[linha.dataset.linha], dL = rasc(oL);
@@ -3964,6 +4369,17 @@
       return;
     }
 
+    /* A foto do dia. Vem antes do "+ observação" porque as duas dividem a
+       mesma classe de botão — sem esta checagem, anexar foto abriria a
+       observação. */
+    var btnFoto = e.target.closest(".obs-btn.foto");
+    if(btnFoto){
+      d.foto = !d.foto;
+      btnFoto.setAttribute("aria-pressed", d.foto ? "true" : "false");
+      btnFoto.textContent = d.foto ? "✓ foto do dia anexada" : "+ anexar foto do dia";
+      return;
+    }
+
     if(e.target.closest(".obs-btn")){
       d.obsAberta = true;
       card.querySelector(".obs-btn").hidden = true;
@@ -3996,6 +4412,7 @@
     if(e.target.id === "f-pcm"){ fPcm = e.target.value; renderBase(); return; }
     if(e.target.id === "f-etapa"){ fEtapa = e.target.value; renderBase(); return; }
     if(e.target.id === "f-os"){ fOs = e.target.value; renderBase(); return; }
+    if(e.target.id === "f-mau"){ fMau = e.target.value; renderBase(); return; }
     if(e.target.dataset && e.target.dataset.fbVoto){
       var id = e.target.dataset.fbVoto;
       fbDe(id).voto = e.target.value;
