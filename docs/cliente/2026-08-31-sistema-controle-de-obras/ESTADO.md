@@ -1,43 +1,72 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 01/09/2026.
+Atualizado em 03/09/2026.
 
 ## Onde estamos
 
-**Mockup v02 APROVADO pelo cliente**, com alterações pedidas. O João recebe os
-detalhes do José e repassa em 02/09/2026, junto com os próximos passos.
+**Mockup v03 desenhado**, aplicando o feedback 05 do cliente. Em revisão independente
+antes de publicar o artifact.
 
-Artifact: https://claude.ai/code/artifact/258d0a1e-a44a-4d6f-9463-6990f85923be
+> ⚠️ **Quem publica o artifact é a sessão principal, nunca um subagente.** Artifact
+> publicado por subagente aceita digitação e não salva nada — o canal de retorno só
+> existe para a sessão interativa.
 
-> ⚠️ O link compartilhado fica **fixado** na versão que foi compartilhada.
-> Republicar não atualiza o que o cliente vê — é preciso mover a versão
-> compartilhada no menu da própria página. Isso já causou confusão uma vez.
+> ⚠️ O link compartilhado fica **fixado** na versão compartilhada. Republicar não
+> atualiza o que o cliente vê — é preciso mover a versão compartilhada no menu da
+> própria página. Isso já causou confusão uma vez.
+
+Artifact da v02: https://claude.ai/code/artifact/258d0a1e-a44a-4d6f-9463-6990f85923be
 
 ## Processo — onde estamos na régua
 
 ```
-brainstorming → MOCKUP APROVADO ✅ → spec ⬅ PRÓXIMO → plano → código → review → deploy
+brainstorming → mockup v02 aprovado ✅ → v03 com o feedback 05 ⬅ AQUI → spec → plano → código → review → deploy
 ```
 
-**Não começar a spec antes do feedback de 02/09.** As alterações pedidas podem
-mudar telas, e spec escrita contra a v02 vira retrabalho.
+## O que entrou na v03 (feedback 05, recebido em 03/09)
 
-## Decisões já tomadas pelo cliente
+| Decisão | O que é |
+|---|---|
+| **I** | "Liberado por" + data de liberação, separados da aprovação da OS. Nasce o estado **sem cobertura** — obra executando sem OS e sem ninguém que tenha liberado |
+| **J** | Mau uso vira **classificação**, sai de dentro do status e volta para o funil normal |
+| **K** | Relatório **deduzido** do Field; "Cobrar aprovação da OS" vira **Pendente fechamento** |
+| **L** | Foto de evolução por dia na linha do tempo. **Tela na v1, agente de WhatsApp depois** |
 
-| # | Decisão | Resposta |
+## Decisões do cliente — situação
+
+| # | Assunto | Situação |
 |---|---|---|
-| 01 | Quem preenche o diário e por onde | **Opção D** — tela primeiro como fonte da verdade; agente de IA no WhatsApp numa 2ª etapa, conversacional e não bot de formulário |
-| — | Rótulo | "PCM responsável" → **"Responsável da obra"** |
-| — | Obra que chega do Field sem responsável | Precisa de um momento de definição — virou o estado "Aguardando definição" + tela de triagem |
+| 01 | Quem preenche o diário | Opção D — tela como fonte da verdade |
+| A | Tabela ou Kanban | as duas |
+| B | Formato do diário | as duas |
+| C | Travar no 3º "não andou" | sem trava; motivo obrigatório |
+| D | Quem define a obra que chega | o Yuri, e ele direciona |
+| E | O que perguntar às 9h | dissolvida — ciclo às 18h |
+| F | Falta repetida | o aviso não escala, só atualiza |
+| G | Quem marca "faturado" | **fechada** — financeiro |
+| H | Porte da obra | descartada |
+| I | Liberado por + data | fechada — na v03 |
+| J | Mau uso como etiqueta | fechada — na v03 |
+| K | Relatório derivado | fechada — na v03 |
+| L | Foto diária | fechada — tela na v1, agente depois |
 
-## Decisões ABERTAS, propostas dentro do mockup
+## Perguntas em aberto COM O CLIENTE
 
-O cliente responde por WhatsApp citando a letra — formato que tem funcionado.
+- **Pergunta 03 — "como calcula esse avanço %?"** Ele perguntou no `.docx` de 31/08 e
+  **nunca foi respondida**. Ver `pergunta-03-como-calcula-o-avanco.md`. Hoje o avanço é
+  digitado à mão sem regra — a planilha tem `0.9` numa linha e `95` em outra querendo
+  dizer a mesma coisa. Proposta: declarado no diário em passos de 10%, com a foto do dia
+  como evidência.
 
-- **A** — base de obras em tabela ou Kanban
-- **B** — diário uma obra por vez ou lista única
-- **C** — 3º "não andou" seguido trava o salvamento até dizer quem resolve e até quando
-- **D** — quem completa a obra crua do Field (padrão adotado: fila aberta, sem dono fixo)
+## Pendências
+
+- [ ] Revisão independente da v03, e então publicar o artifact **da sessão principal**
+- [ ] Responder a pergunta 03 ao cliente
+- [ ] **Cadastro de telefone das equipes / prestadores** — trabalho de operação do João.
+      Trava o agente de WhatsApp, não trava a v1
+- [ ] Campo de liberação na tela de Triagem — citado nas decisões, não estava no brief
+- [ ] Link da planilha viva, que o José ficou de mandar por e-mail
+- [ ] Só então: spec → plano → código
 
 ## Ordem de construção definida pelo cliente na reunião
 
@@ -52,20 +81,16 @@ Zeev fica em **standby**, decisão dele (minuto 38 da reunião).
 
 | Arquivo | O que é |
 |---|---|
-| `originais/` | Os três arquivos como o cliente mandou |
+| `originais/` | Os arquivos como o cliente mandou, incluindo o `.docx` de feedback e suas imagens |
 | `transcricao-reuniao-2026-08-31.md` | Transcrição literal da reunião |
-| `framework-transcricao.md` | O diagrama do cliente transcrito |
 | `planilha-dpsp-rev02-dump.txt` | A planilha inteira, célula a célula |
-| `pergunta-01-*.txt` / `decisao-01-*.md` | A decisão 01, pergunta e resposta |
-| `feedback-01-mockup-v01.md` | Retorno do cliente na v01 |
-| `brief-mockup-01.md` | Especificação do mockup |
-| `mockup-01.html` | **A v02, publicada** |
-| `mockup-01-v01-publicada.html` | A v01 aprovada, recuperada do artifact — baseline |
-| `mockup-01-PARCIAL-INTERROMPIDO.html` | Descartável. Sobra de um agente que caiu por erro de API |
-
-## Pendências
-
-- [ ] Receber o feedback detalhado do cliente (João traz em 02/09)
-- [ ] Respostas das decisões A, B, C e D
-- [ ] Link da planilha viva, que o José ficou de mandar por e-mail (combinado no fim da reunião)
-- [ ] Só então: spec → plano → código
+| `feedback-01-docx-cliente-literal.md` | O `.docx` do cliente em texto — fonte da v02 |
+| `feedback-01` … `feedback-05` | Os retornos, literais e traduzidos |
+| `decisoes-para-ir-ao-ar.md` | As decisões A–H |
+| `feedback-05-leitura-e-decisoes.md` | As decisões I–L |
+| `pergunta-03-como-calcula-o-avanco.md` | Pergunta do cliente ainda sem resposta |
+| `brief-mockup-v03.md` | A especificação da v03 |
+| `mockup-obras.html` | **A v03** |
+| `mockup-v02-BACKUP-antes-do-feedback-05.html` | A v02 aprovada — baseline |
+| `mockup-01-v05-BACKUP-aprovado.html` | Backup anterior |
+| `mockup-01-v01-publicada.html` | A v01, recuperada do artifact |
