@@ -68,6 +68,14 @@
   }
   .tabs button[aria-current="true"]{background:var(--accent);color:#fff;font-weight:600}
   .tabs button:hover:not([aria-current="true"]){color:var(--ink);background:rgba(255,255,255,.05)}
+  /* Contador de tarefas abertas na aba. Ele é o que faz alguém clicar ali. */
+  .tabs button b{
+    display:inline-block;margin-left:6px;padding:0 6px;border-radius:99px;
+    font-size:10.5px;font-weight:700;line-height:16px;vertical-align:1px;
+    color:var(--accent);background:rgba(240,90,40,.16);border:1px solid rgba(240,90,40,.42);
+  }
+  .tabs button b.venc{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.5)}
+  .tabs button[aria-current="true"] b{color:#fff;background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.35)}
   .who{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--ink-dim);font-size:12px}
   .who .av{
     width:26px;height:26px;border-radius:50%;background:var(--accent-soft);
@@ -809,6 +817,210 @@
   .streak-leg span{display:inline-flex;align-items:center;gap:6px}
   .streak-leg i{display:block;width:10px;height:10px;border-radius:2px}
   .adm-fonte{margin:12px 0 0;font-size:11.5px;color:var(--ink-faint);line-height:1.55;max-width:96ch}
+
+  /* ================================================================
+     TAREFAS E AGENTE COBRADOR
+     Duas linguagens visuais novas, e cada uma existe por um motivo.
+
+     1) A TAREFA. Laranja e "esta na mao de alguem e o relogio corre";
+        verde e "voltou resposta"; ambar e "passou do prazo". O vermelho
+        continua reservado ao que ja era vermelho na tela (obra em aberto
+        ha 100 dias ou mais) - tarefa vencida preocupa, nao e emergencia.
+     2) A CONVERSA DE WHATSAPP. Nao e um card do sistema: e a tela do
+        celular da pessoa. Por isso tem cabecalho de contato, baloes dos
+        dois lados e horario em cada um. E a convencao que o cliente
+        elogiou - mostrar o aviso COMO ELE CHEGA - aplicada ao canal em
+        que a cobranca realmente acontece.
+     ================================================================ */
+
+  /* ---------- Chip de tarefa: a forma minima, usada em toda tela ---------- */
+  .tchip{
+    display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;
+    border:1px solid rgba(240,90,40,.4);background:rgba(240,90,40,.09);
+    border-radius:99px;padding:3px 11px 3px 8px;
+    font-size:11.5px;font-weight:600;color:var(--accent);white-space:nowrap;
+  }
+  .tchip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .tchip.ok{color:var(--ok);border-color:rgba(53,201,138,.4);background:var(--ok-soft)}
+  .tchip.venc{color:var(--warn);border-color:rgba(244,183,63,.45);background:var(--warn-soft)}
+
+  /* ---------- Cartao de tarefa ---------- */
+  .tarefa{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    border-left:3px solid var(--tc,var(--accent));
+    padding:13px 15px;
+  }
+  .tarefa + .tarefa{margin-top:10px}
+  .tarefa-h{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .tarefa-id{flex:1 1 320px;min-width:0}
+  .tarefa-os{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .tarefa-loja{
+    display:block;font-size:14.5px;font-weight:650;letter-spacing:-.01em;margin:1px 0 3px;
+    background:none;border:0;padding:0;text-align:left;color:var(--ink);
+  }
+  .tarefa-loja:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .tarefa-o{font-size:12.5px;color:var(--ink-dim);margin:0}
+  .tarefa-o b{color:var(--ink)}
+  .tarefa-sit{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto}
+  .tarefa-prazo{font-size:11.5px;color:var(--ink-faint)}
+  .tarefa-prazo b{color:var(--ink-dim)}
+  @media (max-width:640px){
+    .tarefa-sit{align-items:flex-start;width:100%}
+  }
+
+  /* ---------- Grupo por dono ---------- */
+  .grupo-dono{
+    display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+    margin:22px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line-soft);
+  }
+  .grupo-dono .av{
+    width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:11px;font-weight:700;background:rgba(148,163,184,.13);
+    border:1px solid var(--line);color:var(--ink-dim);
+  }
+  .grupo-dono.compras .av{background:var(--accent-soft);border-color:rgba(240,90,40,.4);color:var(--accent)}
+  .grupo-dono .nm{font-size:14px;font-weight:650;letter-spacing:-.01em}
+  .grupo-dono .fn{font-size:11.5px;color:var(--ink-faint)}
+  .grupo-dono .ct{margin-left:auto;font-size:11.5px;color:var(--ink-dim);text-align:right}
+  .grupo-dono .ct b{font-family:var(--mono);color:var(--ink)}
+
+  /* ---------- A conversa, como ela chega no celular ---------- */
+  .zap{
+    margin-top:12px;border:1px solid var(--line);border-radius:var(--r);
+    background:rgba(0,0,0,.34);overflow:hidden;max-width:64ch;
+  }
+  .zap-h{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--panel-2);border-bottom:1px solid var(--line);padding:8px 12px;
+  }
+  .zap-h .av{
+    width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:10px;font-weight:700;background:var(--ok-soft);
+    border:1px solid rgba(53,201,138,.35);color:var(--ok);
+  }
+  .zap-h .nm{font-size:12.5px;font-weight:650}
+  .zap-h .fn{display:block;font-size:10.5px;color:var(--ink-faint);font-weight:400}
+  .zap-h .lin{
+    margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.02em;
+    color:var(--ink-faint);white-space:nowrap;
+  }
+  .zap-corpo{display:flex;flex-direction:column;gap:9px;padding:13px 13px 14px}
+  .zap-b{
+    max-width:90%;border-radius:11px;padding:9px 12px;
+    font-size:13px;line-height:1.55;color:var(--ink-dim);
+  }
+  .zap-b b{color:var(--ink);font-weight:650}
+  .zap-b.nos{
+    align-self:flex-start;border-top-left-radius:3px;
+    background:var(--panel-2);border:1px solid var(--line);
+  }
+  .zap-b.dela{
+    align-self:flex-end;border-top-right-radius:3px;
+    background:rgba(53,201,138,.12);border:1px solid rgba(53,201,138,.3);
+  }
+  .zap-b .quem{
+    display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;margin-bottom:5px;
+  }
+  .zap-b.nos .quem{color:var(--accent)}
+  .zap-b.dela .quem{color:var(--ok)}
+  .zap-b .hr{
+    display:block;text-align:right;margin-top:5px;
+    font-family:var(--mono);font-size:10px;color:var(--ink-faint);
+  }
+  .zap-pe{
+    border-top:1px solid var(--line-soft);background:rgba(0,0,0,.2);
+    padding:9px 13px;font-size:11.5px;line-height:1.55;color:var(--ink-faint);
+  }
+  .zap-pe b{color:var(--ink-dim)}
+  .zap-esperando{
+    align-self:flex-start;font-size:11.5px;color:var(--ink-faint);
+    display:inline-flex;align-items:center;gap:7px;padding-left:2px;
+  }
+  .zap-esperando i{
+    width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none;
+    animation:pulsa 1.8s ease-in-out infinite;
+  }
+  @keyframes pulsa{0%,100%{opacity:.3}50%{opacity:1}}
+
+  /* ---------- Anatomia da mensagem: as cinco partes, marcadas uma vez ---------- */
+  .anat mark{
+    background:none;color:inherit;
+    border-bottom:1px dashed rgba(240,90,40,.7);padding-bottom:1px;
+  }
+  .anat-leg{
+    display:flex;gap:7px 16px;flex-wrap:wrap;margin:11px 0 0;
+    padding:0;list-style:none;font-size:11.5px;color:var(--ink-faint);
+  }
+  .anat-leg li{display:flex;align-items:baseline;gap:6px}
+  .anat-leg .n{
+    font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);
+    border:1px solid rgba(240,90,40,.4);border-radius:99px;padding:0 5px;
+  }
+
+  /* ---------- Roteamento: qual falta vai para quem ---------- */
+  table.rota{width:auto;min-width:0}
+  table.rota th,table.rota td{padding:8px 18px 8px 0;text-align:left;font-size:12.5px;vertical-align:top}
+  table.rota thead th{
+    font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:700;border-bottom:1px solid var(--line);
+  }
+  table.rota tbody tr + tr td{border-top:1px solid var(--line-soft)}
+  table.rota .it{font-weight:600;color:var(--ink);white-space:nowrap}
+  table.rota .pes{color:var(--ink-dim)}
+  table.rota .pes b{color:var(--ink)}
+  .marca-nossa{
+    display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--accent);
+    border:1px solid rgba(240,90,40,.4);background:rgba(240,90,40,.1);
+    border-radius:var(--r-sm);padding:1px 6px;margin-left:8px;white-space:nowrap;
+  }
+
+  /* ---------- Retorno de uma linha no diario, ao salvar ---------- */
+  .abriu{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin-top:8px;padding:7px 11px;border-radius:var(--r-sm);
+    border:1px solid rgba(240,90,40,.3);background:rgba(240,90,40,.07);
+    font-size:12px;color:var(--ink-dim);
+  }
+  .abriu b{color:var(--ink)}
+  .abriu .ck{color:var(--accent);font-weight:700;flex:none}
+  .feita .abriu{margin:6px 0 0;width:100%}
+
+  /* ---------- Tarefa dentro da linha do tempo da ficha ---------- */
+  .tl-tarefa{
+    margin-top:6px;padding:7px 10px;border-radius:var(--r-sm);
+    border:1px solid var(--line);border-left:2px solid var(--tc,var(--accent));
+    background:rgba(0,0,0,.24);font-size:11.5px;line-height:1.5;color:var(--ink-faint);
+  }
+  .tl-tarefa .t{
+    display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    font-weight:700;color:var(--tc,var(--accent));margin-bottom:3px;
+  }
+  .tl-tarefa b{color:var(--ink-dim)}
+
+  /* ---------- Bloco de tarefas no Painel do dia ---------- */
+  .mao-de-quem{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+  .mao{
+    display:flex;align-items:center;gap:10px;
+    border:1px solid var(--line);background:var(--panel);border-radius:var(--r);
+    padding:9px 14px 9px 10px;
+  }
+  .mao .av{
+    width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:10.5px;font-weight:700;background:rgba(148,163,184,.13);
+    border:1px solid var(--line);color:var(--ink-dim);
+  }
+  .mao .n{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1;color:var(--ink)}
+  .mao .k{font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .mao.venc{border-color:rgba(244,183,63,.42);background:rgba(244,183,63,.06)}
+  .mao.venc .n{color:var(--warn)}
+  .ir-tarefas{
+    display:inline-flex;align-items:center;gap:8px;margin-top:13px;
+    background:none;border:1px solid var(--line);border-radius:var(--r-sm);
+    padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--ink-dim);
+  }
+  .ir-tarefas:hover{color:var(--accent);border-color:rgba(240,90,40,.45)}
 
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;animation:none !important}
@@ -1649,6 +1861,194 @@
   ];
   var CANAIS_ADM = "e-mail e WhatsApp dos administradores do hub";
 
+  /* =====================================================================
+     TAREFA E AGENTE COBRADOR  (feedback 03 e 04, de 01/09/2026)
+
+     A frase que gerou tudo: "beleza, ele respondeu que faltou material. Tá,
+     mas quando é que resolve isso? Quem resolve? Tá na mão de quem?"
+
+     Responder "faltou material" não pode terminar em registro. Vira TAREFA,
+     com dono e prazo, e o agente COBRA a pessoa pelo nome, no WhatsApp, onde
+     ela já está. A resposta dela volta e fecha a tarefa — quem resolve nunca
+     precisa entrar no sistema.
+
+     A tarefa nasce AQUI, não no Zeev. Decisão do cliente em 01/09: um lugar
+     só onde procurar tarefa. Dois lugares seriam nenhum.
+     ===================================================================== */
+
+  var PESSOAS = {
+    ROBERTA:{nome:"Roberta Lima",     ini:"RL", area:"Compras", fn:"compras",           fone:"+55 21 98••••-4417"},
+    YURI:   {nome:"Yuri Nascimento",  ini:"YN", area:"Obras",   fn:"analista de obras", fone:"+55 21 99••••-2038"},
+    AMANDA: {nome:"Amanda Ribeiro",   ini:"AR", area:"Obras",   fn:"analista de obras", fone:"+55 21 99••••-7712"},
+    LUANA:  {nome:"Luana Prado",      ini:"LP", area:"Obras",   fn:"analista de obras", fone:"+55 21 98••••-3054"}
+  };
+
+  /* O número de onde a cobrança sai. É um chip dedicado da empresa, nunca o
+     celular de ninguém: o provedor de WhatsApp é não oficial (decisão de
+     01/09) e um número não oficial pode ser bloqueado sem aviso. Se isso
+     acontecer, some o WhatsApp que estiver naquele chip — por isso ele não
+     pode ser o número que a DPSP usa para falar com a Manfac. */
+  var NUMERO_AGENTE = "Manfac Obras · +55 21 3•••-0125";
+
+  /* ROTEAMENTO — para quem vai a tarefa, por tipo de falta.
+     Material, ferramenta e equipe são palavra do cliente. Documento/ART e
+     Outro ele não citou: o padrão abaixo é nosso e está marcado como tal na
+     tela, para ele confirmar ou trocar. */
+  var ROTA_FALTA = {
+    "Material":        {chave:"ROBERTA", acao:"ver com quem registrou o que está faltando e comprar"},
+    "Ferramenta":      {chave:"YURI",    acao:"ver o que precisa ser feito com a ferramenta"},
+    "Equipe":          {chave:"YURI",    acao:"ver o que dá para remanejar de equipe"},
+    "Documento / ART": {chave:"YURI",    acao:"providenciar o documento ou a ART com o engenheiro", nosso:true},
+    "Outro":           {chave:"YURI",    acao:"ler o que foi registrado e dizer quem resolve",      nosso:true}
+  };
+
+  function destinoDe(item){
+    var r = ROTA_FALTA[item];
+    return r ? r : null;
+  }
+  function pessoaDe(chave){ return PESSOAS[chave] || PESSOAS.YURI; }
+
+  /* PRAZO PADRÃO: até o fim do dia — a fala é dele, "me responda aqui até o
+     final do dia". Falta registrada depois das 18h fica com o fim do dia útil
+     seguinte, senão a tarefa nasceria vencida no mesmo minuto. */
+  function prazoPadrao(dia, hora){
+    var depoisDas18 = hora && hora > "18:00";
+    return depoisDas18 ? somaDias(dia, 1) : dia;
+  }
+
+  /* As tarefas que já existem quando a tela abre. Cada uma nasceu de uma
+     falta registrada no diário — nenhuma foi digitada por ninguém. */
+  var TAREFAS = [
+    {
+      id:"t1", obra:"o7", item:"Material", dono:"ROBERTA",
+      aberta:"2026-08-24", horaAberta:"17:38", prazo:"2026-08-24",
+      registrou:"YURI", situacao:"respondida",
+      respostaEm:"2026-08-24", respostaHora:"16:52",
+      resumo:"Pedido 4471 emitido · tinta epóxi entregue em 26/08",
+      msgs:[
+        {de:"agente", hora:"15:10", dia:"24/08", anat:true, texto:
+          '<mark class="an">Oi Roberta</mark>, aqui é o assistente da Manfac Obras. ' +
+          '<mark class="an">O Yuri registrou hoje que a obra do <b>DP LUCIO COSTA</b> (OS 0526-013745) não andou porque faltou material</mark> — tinta. ' +
+          '<mark class="an">Você consegue ver com ele o que está faltando</mark> e <mark class="an">me responder aqui</mark> <mark class="an">até o fim do dia</mark>?'},
+        {de:"pessoa", hora:"16:52", dia:"24/08", texto:
+          'Vi com o Yuri. É tinta epóxi, 4 galões. <b>Pedido 4471</b> emitido agora, o fornecedor entrega quarta, 26/08.'},
+        {de:"agente", hora:"16:52", dia:"24/08", texto:
+          'Anotado, Roberta. Registrei na obra do DP LUCIO COSTA: <b>pedido 4471</b>, entrega prevista <b>26/08</b>. Obrigado.'}
+      ],
+      pe:'A resposta da Roberta <b>fechou a tarefa às 16h52</b> e entrou na ficha do DP LUCIO COSTA. ' +
+         'Ela não abriu o sistema em nenhum momento — respondeu no WhatsApp e pronto. ' +
+         'A obra continuou parada depois disso, mas por outro motivo: a loja pediu para não iniciar antes da tinta chegar. ' +
+         '<b>Fechar a tarefa não é o mesmo que destravar a obra</b>, e a tela não finge que é.'
+    },
+    {
+      id:"t2", obra:"o1", item:"Equipe", dono:"YURI",
+      aberta:"2026-08-28", horaAberta:"17:20", prazo:"2026-08-28",
+      registrou:"YURI", situacao:"aberta",
+      msgs:[
+        {de:"agente", hora:"17:20", dia:"28/08", texto:
+          'Oi Yuri, aqui é o assistente da Manfac Obras. Você registrou hoje que o <b>DP BAIRRO DE FATIMA</b> não andou porque faltou equipe — a MANFAC-7 segue retida no TMO 107. ' +
+          'O que dá para remanejar? Me responde aqui até o fim do dia.'},
+        {de:"agente", hora:"18:02", dia:"31/08", texto:
+          'Yuri, a tarefa da equipe do <b>DP BAIRRO DE FATIMA</b> está sem resposta desde sexta — <b>3º dia</b>. O que a gente faz com essa equipe?'}
+      ],
+      pe:'Cobrada em 28/08 e sem resposta até agora. O agente <b>repete a mesma cobrança</b>, com o número de dias dentro dela — ' +
+         'não muda de tom nem chama mais ninguém por conta própria. É exatamente o caso da <b>DECISÃO I</b>, no fim desta tela.'
+    },
+    {
+      id:"t3", obra:"o14", item:"Equipe", dono:"YURI",
+      aberta:"2026-08-31", horaAberta:"17:42", prazo:"2026-08-31",
+      registrou:"AMANDA", situacao:"aberta",
+      msgs:[
+        {de:"agente", hora:"17:42", dia:"hoje", texto:
+          'Oi Yuri, aqui é o assistente da Manfac Obras. A <b>Amanda</b> registrou agora que o <b>DP MAGE 1</b> não andou porque faltou equipe — ' +
+          'o prestador do serviço noturno ainda não foi contratado. Você consegue ver isso com ela e me responder aqui até o fim do dia?'}
+      ],
+      esperando:true,
+      pe:'Saiu no <b>instante em que a Amanda salvou o diário</b>, não às 19h. Material e equipe que faltam às 17h ainda dá para resolver hoje.'
+    },
+    {
+      id:"t4", obra:"o12", item:"Equipe", dono:"YURI",
+      aberta:"2026-08-31", horaAberta:"18:26", prazo:"2026-09-01",
+      registrou:"LUANA", situacao:"aberta",
+      msgs:[
+        {de:"agente", hora:"18:26", dia:"hoje", texto:
+          'Oi Yuri, aqui é o assistente da Manfac Obras. A <b>Luana</b> registrou agora que o <b>DP CABO FRIO 4</b> não andou porque faltou equipe — ' +
+          'a MANFAC-7 segue retida em outra obra. Vê com ela o que dá para remanejar e me responde aqui <b>até o fim do dia de amanhã, 01/09</b>?'}
+      ],
+      esperando:true,
+      pe:'Registrada <b>depois das 18h</b>, então o prazo caiu no dia útil seguinte. Se o prazo fosse sempre "hoje", esta tarefa nasceria vencida.'
+    }
+  ];
+
+  var TAR_POR_ID = {};
+  /* Cada tarefa carrega o texto que o agente mandou. Para as que nascem
+     durante a demonstração, o texto é montado com as mesmas cinco partes. */
+  function mensagemNova(t){
+    var o = PORID[t.obra];
+    var d = destinoDe(t.item);
+    var quemReg = pessoaDe(t.registrou);
+    var p = pessoaDe(t.dono);
+    var primeiro = p.nome.split(" ")[0];
+    var eleEla = t.registrou === t.dono ? "Você registrou" : "O " + quemReg.nome.split(" ")[0] + " registrou";
+    if(t.registrou !== t.dono && (t.registrou === "AMANDA" || t.registrou === "LUANA")){
+      eleEla = "A " + quemReg.nome.split(" ")[0] + " registrou";
+    }
+    var prazoTxt = t.prazo === t.aberta ? "até o fim do dia"
+                                        : "até o fim do dia de amanhã, " + br(t.prazo).slice(0,5);
+    return 'Oi ' + esc(primeiro) + ', aqui é o assistente da Manfac Obras. ' +
+           eleEla + ' agora que a obra do <b>' + esc(o.loja) + '</b> (OS ' + esc(o.os) + ') ' +
+           'não andou porque faltou <b>' + esc(t.item.toLowerCase()) + '</b>' +
+           (t.obs ? ' — ' + esc(t.obs) : "") + '. ' +
+           'Você consegue ' + esc(d.acao) + ' e me responder aqui ' + prazoTxt + '?';
+  }
+
+  function indexarTarefas(){
+    TAR_POR_ID = {};
+    TAREFAS.forEach(function(t){ TAR_POR_ID[t.id] = t; });
+  }
+  indexarTarefas();
+
+  /* Situação real, calculada: respondida > vencida > aberta. */
+  function sitTarefa(t){
+    if(t.situacao === "respondida") return "respondida";
+    var atraso = diasDesde(t.prazo);
+    return atraso > 0 ? "vencida" : "aberta";
+  }
+  function corTarefa(t){
+    var s = sitTarefa(t);
+    return s === "respondida" ? "var(--ok)" : s === "vencida" ? "var(--warn)" : "var(--accent)";
+  }
+  function diasNaMao(t){ return Math.max(0, diasDesde(t.aberta)); }
+  function diasVencida(t){ return Math.max(0, diasDesde(t.prazo)); }
+  function tarefasDaObra(id){
+    return TAREFAS.filter(function(t){ return t.obra === id; });
+  }
+  function tarefaDoDia(obraId, dia){
+    for(var i = 0; i < TAREFAS.length; i++){
+      if(TAREFAS[i].obra === obraId && TAREFAS[i].aberta === dia) return TAREFAS[i];
+    }
+    return null;
+  }
+  function tarefasAbertas(){
+    return TAREFAS.filter(function(t){ return sitTarefa(t) !== "respondida"; });
+  }
+  function tarefasVencidas(){
+    return TAREFAS.filter(function(t){ return sitTarefa(t) === "vencida"; });
+  }
+  function tarefasDeHoje(){
+    return TAREFAS.filter(function(t){ return t.aberta === DIA_REF; });
+  }
+  /* Quem está com tarefa aberta, na ordem de quem tem mais. */
+  function porDono(){
+    var m = {}, ordem = [];
+    tarefasAbertas().forEach(function(t){
+      if(!m[t.dono]){ m[t.dono] = []; ordem.push(t.dono); }
+      m[t.dono].push(t);
+    });
+    return ordem.map(function(k){ return {chave:k, lista:m[k]}; })
+                .sort(function(a,b){ return b.lista.length - a.lista.length; });
+  }
+
   function obrasDe(chave){
     return OBRAS.filter(function(o){ return o.pcm === chave && !posCampo(o); }).length;
   }
@@ -1665,6 +2065,9 @@
     {id:"tela2", rotulo:"a tela Base de obras"},
     {id:"tela3", rotulo:"a tela Ficha da obra"},
     {id:"decD",  rotulo:"a decisão D"},
+    {id:"telaTarefas", rotulo:"a tela Tarefas e o agente cobrador"},
+    {id:"decI",  rotulo:"a decisão I — quando a tarefa vence"},
+    {id:"decJ",  rotulo:"a decisão J — para quem vai documento/ART e outro"},
     {id:"telaAdm", rotulo:"o Painel do dia, que a diretoria abre às 19h"},
     {id:"decF",  rotulo:"a decisão F — quando a falta se repete"},
     {id:"decG",  rotulo:"a decisão G — quem marca cada etapa depois da execução"}
@@ -1807,6 +2210,9 @@
     h +=   '<div class="brand"><b>Manfac</b><span>Controle de obras</span></div>';
     h +=   '<nav class="tabs" aria-label="Telas do sistema">';
     h +=     '<button data-tela="diario" aria-current="true">Diário do dia</button>';
+    /* Tarefas vem logo depois do diário porque é ali que ela nasce: o analista
+       salva "faltou material" e a tarefa já existe do outro lado desta aba. */
+    h +=     '<button data-tela="tarefas">Tarefas <b id="tab-tarefas-n" class="num"></b></button>';
     h +=     '<button data-tela="base">Base de obras</button>';
     h +=     '<button data-tela="ficha">Ficha da obra</button>';
     h +=     '<button data-tela="adm" id="tab-adm" hidden>Painel do dia</button>';
@@ -1928,6 +2334,9 @@
     /* ---- Tela 4: o que a diretoria abre quando recebe o aviso das 19h ---- */
     h += '<section id="tela-adm" hidden><div id="adm"></div></section>';
 
+    /* ---- Tela 5: as tarefas que as faltas geraram, e quem está com cada uma ---- */
+    h += '<section id="tela-tarefas" hidden><div id="tarefas"></div></section>';
+
     h += '</main>';
 
     h += '<footer class="rodape">Mockup para aprovação · Manfac Facilities · versão de 01/09/2026, ' +
@@ -1945,14 +2354,28 @@
     Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function(b){
       b.setAttribute("aria-current", b.dataset.tela === t ? "true" : "false");
     });
-    document.getElementById("tela-diario").hidden = t !== "diario";
-    document.getElementById("tela-base").hidden   = t !== "base";
-    document.getElementById("tela-ficha").hidden  = t !== "ficha";
-    document.getElementById("tela-adm").hidden    = t !== "adm";
+    document.getElementById("tela-diario").hidden  = t !== "diario";
+    document.getElementById("tela-base").hidden    = t !== "base";
+    document.getElementById("tela-ficha").hidden   = t !== "ficha";
+    document.getElementById("tela-adm").hidden     = t !== "adm";
+    document.getElementById("tela-tarefas").hidden = t !== "tarefas";
     if(t === "base") renderBase();
     if(t === "ficha") renderFicha();
     if(t === "adm") renderAdm();
+    if(t === "tarefas") renderTarefas();
+    atualizarContadorTarefas();
     window.scrollTo(0, 0);
+  }
+
+  /* O número na aba é o que faz alguém clicar nela: sem ele, a tarefa aberta
+     fica num lugar que ninguém abre. Some quando não há nada em aberto. */
+  function atualizarContadorTarefas(){
+    var el = document.getElementById("tab-tarefas-n");
+    if(!el) return;
+    var n = tarefasAbertas().length;
+    el.textContent = n ? String(n) : "";
+    el.hidden = !n;
+    el.className = "num" + (tarefasVencidas().length ? " venc" : "");
   }
 
   /* Trocar quem está olhando é um controle de demonstração: o mesmo sistema
@@ -1970,9 +2393,12 @@
     if(sel) sel.value = p;
     irPara(p === "admin" ? "adm" : "diario");
   }
+  var ROTULO_VOLTAR = {diario:"o diário do dia", tarefas:"as tarefas", base:"a base de obras", adm:"o painel do dia"};
   function abrirFicha(id, origem){
     obraAberta = id;
     voltarPara = origem || "base";
+    var b = document.getElementById("voltar");
+    if(b) b.innerHTML = "&#8592; Voltar para " + (ROTULO_VOLTAR[voltarPara] || "a base de obras");
     irPara("ficha");
   }
 
@@ -2053,10 +2479,16 @@
      verdade. Enquanto falta resposta, diz o que falta; quando está pronto,
      diz o que acontece ao salvar. */
   function textoAcao(o, d){
+    /* Quando faltou alguma coisa, o texto diz para quem a tarefa vai antes de
+       ela ir — quem responde não é surpreendido por uma cobrança que ele
+       disparou sem saber. Uma frase a mais, nunca duas. */
+    var rota = d.item && d.item !== "Não faltou" ? destinoDe(d.item) : null;
+    var extra = rota ? " Abre tarefa para " + pessoaDe(rota.chave).area + " · " +
+                       pessoaDe(rota.chave).nome.split(" ")[0] + "." : "";
     if(d.andou === "Sim") return "Ao salvar: a obra sai da fila e hoje (" + DIA_REF_CURTO +
-                                 ") entra na ficha dela como dia que andou.";
+                                 ") entra na ficha dela como dia que andou." + extra;
     if(d.andou === "Não") return "Ao salvar: a obra sai da fila e hoje (" + DIA_REF_CURTO +
-                                 ") entra na ficha dela como dia parado por " + String(d.motivo).toLowerCase() + ".";
+                                 ") entra na ficha dela como dia parado por " + String(d.motivo).toLowerCase() + "." + extra;
     return "";
   }
 
@@ -2075,12 +2507,49 @@
   function gravar(o){
     var d = rasc(o);
     if(validar(o, d)) return false;
-    respostas[o.id] = {andou:d.andou, item:d.item || "Não faltou", motivo:d.motivo, obs:d.obs};
+    var item = d.item || "Não faltou";
+    respostas[o.id] = {andou:d.andou, item:item, motivo:d.motivo, obs:d.obs};
     o.diario = o.diario.concat([{
       data:DIA_REF, andou:d.andou === "Sim", motivo:d.motivo,
-      item:d.item || "Não faltou", obs:d.obs
+      item:item, obs:d.obs
     }]);
+    /* AQUI a falta deixa de terminar em registro. Salvou "faltou alguma
+       coisa", nasce a tarefa, com dono e prazo, e o agente cobra a pessoa.
+       Ninguém digitou tarefa nenhuma: o analista respondeu só o que ele sabe. */
+    if(item !== "Não faltou") abrirTarefa(o, item, d.obs);
     return true;
+  }
+
+  /* A tarefa que a falta gerou. O dono sai da tabela de roteamento, o prazo é
+     o padrão ("até o fim do dia"), e a mensagem é montada com as cinco partes
+     que você descreveu. */
+  function abrirTarefa(o, item, obs){
+    var rota = destinoDe(item);
+    if(!rota) return null;
+    var nova = {
+      id:"tn-" + o.id, obra:o.id, item:item, dono:rota.chave,
+      aberta:DIA_REF, horaAberta:HORA_AVISO, prazo:prazoPadrao(DIA_REF, HORA_AVISO),
+      registrou:"YURI", situacao:"aberta", obs:obs || "", esperando:true, nova:true,
+      pe:'Saiu no <b>instante em que você salvou o diário</b>, não às 19h — e foi para o WhatsApp ' +
+         'da pessoa, não para uma caixa de entrada que ela precisa aprender a abrir.'
+    };
+    nova.msgs = [{de:"agente", hora:HORA_AVISO, dia:"hoje", texto:mensagemNova(nova)}];
+    TAREFAS.push(nova);
+    indexarTarefas();
+    respostas[o.id].tarefa = nova.id;
+    atualizarContadorTarefas();
+    return nova;
+  }
+
+  /* O retorno de UMA LINHA no diário. O diário é a tela que sustenta o hábito
+     das 18h: ela não pode virar burocracia por causa da tarefa. */
+  function abriuHTML(idTarefa){
+    var t = TAR_POR_ID[idTarefa];
+    if(!t) return "";
+    var p = pessoaDe(t.dono);
+    return '<div class="abriu"><span class="ck">&#10003;</span><span>Tarefa aberta para <b>' +
+      esc(p.area) + ' · ' + esc(p.nome.split(" ")[0]) + '</b> — será cobrada no WhatsApp ' +
+      (t.prazo === t.aberta ? "até o fim do dia" : "até o fim do dia " + br(t.prazo).slice(0,5)) + '.</span></div>';
   }
 
   function salvar(o, card){
@@ -2094,6 +2563,11 @@
     var o = PORID[id];
     delete respostas[id];
     o.diario = o.diario.filter(function(x){ return x.data !== DIA_REF; });
+    /* Desfazer a resposta desfaz a tarefa que ela abriu. Tarefa órfã de uma
+       falta que não existe mais é pior que tarefa nenhuma. */
+    TAREFAS = TAREFAS.filter(function(t){ return !(t.nova && t.obra === id); });
+    indexarTarefas();
+    atualizarContadorTarefas();
     renderDiario();
   }
 
@@ -2116,7 +2590,8 @@
       if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
       return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
              '<span class="rs">' + esc(resumo) + '</span>' +
-             '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button></div>';
+             '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button>' +
+             (r.tarefa ? abriuHTML(r.tarefa) : "") + '</div>';
     }).join("") + '</div>';
   }
 
@@ -2781,6 +3256,8 @@
         if(e.item && e.item !== "Não faltou") sub.push("faltou " + e.item.toLowerCase());
         if(sub.length) t += '<div class="tl-s">' + esc(sub.join(" · ")) + '</div>';
         if(e.obs) t += '<div class="tl-obs">' + esc(e.obs) + '</div>';
+        var tf = tarefaDoDia(o.id, e.data);
+        if(tf) t += tlTarefaHTML(tf);
         return t + '</div></div>';
       }).join("") + '</div>';
     } else {
@@ -2793,6 +3270,25 @@
            ' ninguém respondeu nada sobre esta obra. É exatamente esse buraco que o diário fecha.</span></div>';
     }
     h += '</div></div>';
+
+    /* As tarefas que as faltas desta obra geraram. A pergunta do dono — "tá na
+       mão de quem?" — respondida sem sair da obra. */
+    var tarObra = tarefasDaObra(o.id);
+    if(tarObra.length){
+      h += '<div class="box"><div class="box-h">Tarefas que as faltas geraram ' +
+           '<span class="num" style="color:var(--accent)">' + tarObra.length + '</span></div><div class="box-b">';
+      tarObra.slice().sort(function(a,b){ return a.aberta < b.aberta ? 1 : -1; }).forEach(function(t){
+        var p = pessoaDe(t.dono);
+        h += '<div class="tl-tarefa" style="--tc:' + corTarefa(t) + ';margin:0 0 8px">' +
+             '<span class="t">Faltou ' + esc(t.item.toLowerCase()) + ' · ' + br(t.aberta).slice(0,5) + '</span>' +
+             '<b>' + esc(p.area) + ' · ' + esc(p.nome) + '</b> · prazo fim do dia ' + br(t.prazo).slice(0,5) +
+             ' · na mão dele há <b>' + diasNaMao(t) + (diasNaMao(t) === 1 ? " dia" : " dias") + '</b>' +
+             '<div style="margin-top:6px">' + tchipHTML(t) + '</div></div>';
+      });
+      h += '<button type="button" class="ir-tarefas" data-tela="tarefas" style="margin-top:4px">' +
+           'Ver a conversa do agente &#8594;</button>';
+      h += '</div></div>';
+    }
 
     h += '<div class="box"><div class="box-h">Pendências e próxima ação</div><div class="box-b"><dl class="dl">';
     h += '<dt>Pendência</dt><dd>' + (o.pendencia ? esc(o.pendencia) : '<span style="color:var(--ink-faint)">nenhuma</span>') + '</dd>';
@@ -3131,6 +3627,263 @@
   }
 
   /* ---------------------------------------------------------------
+     TELA 5 — Tarefas
+     Por que aba própria, e não uma seção do Painel do dia: o Painel do dia
+     só existe para o administrador (a aba fica escondida no papel de
+     analista). Mas o roteamento manda ferramenta e equipe para o YURI, que é
+     analista — se as tarefas morassem lá dentro, o dono da maior parte delas
+     nunca veria a própria lista. Aba própria, visível nos dois papéis.
+     No Painel do dia fica o resumo: os números que o dono lê de relance.
+     --------------------------------------------------------------- */
+
+  function tchipHTML(t){
+    var s = sitTarefa(t);
+    if(s === "respondida"){
+      return '<span class="tchip ok"><span class="dot"></span>Respondida em ' +
+             br(t.respostaEm).slice(0,5) + ' às ' + t.respostaHora + '</span>';
+    }
+    if(s === "vencida"){
+      var dv = diasVencida(t);
+      return '<span class="tchip venc"><span class="dot"></span>Venceu há ' + dv +
+             (dv === 1 ? " dia" : " dias") + '</span>';
+    }
+    return '<span class="tchip"><span class="dot"></span>Esperando resposta</span>';
+  }
+
+  /* A conversa como ela chega no celular da pessoa. É a convenção que você
+     elogiou no aviso das 19h — mostrar a mensagem, não descrevê-la — aplicada
+     ao canal em que a cobrança acontece de verdade. */
+  function zapHTML(t){
+    var p = pessoaDe(t.dono);
+    var h = '<div class="zap">';
+    h += '<div class="zap-h"><span class="av">' + esc(p.ini) + '</span>' +
+           '<span><span class="nm">' + esc(p.nome) + '</span>' +
+           '<span class="fn">' + esc(p.fn) + ' · ' + esc(p.fone) + '</span></span>' +
+           '<span class="lin">' + esc(NUMERO_AGENTE) + '</span></div>';
+    h += '<div class="zap-corpo">';
+    t.msgs.forEach(function(m, i){
+      var nos = m.de === "agente";
+      var cls = "zap-b " + (nos ? "nos" : "dela") + (m.anat ? " anat" : "");
+      h += '<div class="' + cls + '">';
+      if(i === 0 || t.msgs[i-1].de !== m.de){
+        h += '<span class="quem">' + (nos ? "Assistente Manfac Obras" : esc(p.nome)) + '</span>';
+      }
+      h += m.texto;
+      h += '<span class="hr">' + esc(m.dia) + ' · ' + esc(m.hora) + '</span>';
+      if(m.anat){
+        h += '<ol class="anat-leg">' +
+             '<li><span class="n">1</span>chama pelo nome</li>' +
+             '<li><span class="n">2</span>diz de onde veio</li>' +
+             '<li><span class="n">3</span>diz o que fazer</li>' +
+             '<li><span class="n">4</span>pede resposta</li>' +
+             '<li><span class="n">5</span>dá prazo</li>' +
+             '</ol>';
+      }
+      h += '</div>';
+    });
+    if(t.esperando){
+      h += '<div class="zap-esperando"><i></i>esperando a resposta · a tarefa fecha sozinha quando ela chegar</div>';
+    }
+    h += '</div>';
+    if(t.pe) h += '<div class="zap-pe">' + t.pe + '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function tarefaHTML(t, comConversa){
+    var o = PORID[t.obra];
+    if(!o) return "";
+    var s = sitTarefa(t);
+    var d = destinoDe(t.item);
+    var dias = diasNaMao(t);
+    var h = '<article class="tarefa" style="--tc:' + corTarefa(t) + '">';
+    h += '<div class="tarefa-h"><div class="tarefa-id">';
+    h +=   '<div class="tarefa-os">OS ' + esc(o.os) + ' · ' + esc(o.tipo) + '</div>';
+    h +=   '<button type="button" class="tarefa-loja" data-abrir="' + o.id + '">' + esc(o.loja) + '</button>';
+    h +=   '<p class="tarefa-o">Faltou <b>' + esc(t.item.toLowerCase()) + '</b> · registrado por <b>' +
+             esc(pessoaDe(t.registrou).nome.split(" ")[0]) + '</b> em <b>' + br(t.aberta).slice(0,5) +
+             '</b> · o que fazer: ' + esc(d ? d.acao : "resolver") + '</p>';
+    h += '</div><div class="tarefa-sit">' + tchipHTML(t);
+    h +=   '<span class="tarefa-prazo">Prazo <b>' +
+             (t.prazo === t.aberta ? "fim do dia " + br(t.prazo).slice(0,5) : "fim do dia " + br(t.prazo).slice(0,5)) +
+             '</b>' + (s === "respondida" ? "" : ' · na mão do ' + esc(pessoaDe(t.dono).nome.split(" ")[0]) +
+             ' há <b>' + dias + (dias === 1 ? " dia" : " dias") + '</b>') + '</span>';
+    h += '</div></div>';
+    if(t.resumo && s === "respondida"){
+      h += '<div class="abriu"><span class="ck">&#10003;</span><span>Resolvido: <b>' + esc(t.resumo) + '</b></span></div>';
+    }
+    if(comConversa !== false) h += zapHTML(t);
+    h += '</article>';
+    return h;
+  }
+
+  function grupoDonoHTML(chave, lista){
+    var p = pessoaDe(chave);
+    var venc = lista.filter(function(t){ return sitTarefa(t) === "vencida"; }).length;
+    var h = '<div class="grupo-dono' + (p.area === "Compras" ? " compras" : "") + '">';
+    h += '<span class="av">' + esc(p.ini) + '</span>';
+    h += '<span><span class="nm">' + esc(p.nome) + '</span>' +
+           '<span class="fn">' + esc(p.area) + ' · ' + esc(p.fn) + '</span></span>';
+    h += '<span class="ct"><b>' + lista.length + '</b> ' +
+           (lista.length === 1 ? "tarefa na mão dele" : "tarefas na mão dele") +
+           (venc ? ' · <b style="color:var(--warn)">' + venc + '</b> ' + (venc === 1 ? "vencida" : "vencidas") : "") +
+         '</span>';
+    h += '</div>';
+    return h;
+  }
+
+  function rotaHTML(){
+    var h = '<div class="tabela-wrap"><table class="rota">';
+    h += '<thead><tr><th scope="col">Faltou</th><th scope="col">A tarefa vai para</th>' +
+         '<th scope="col">E a cobrança pede</th></tr></thead><tbody>';
+    ITENS.slice(1).forEach(function(it){
+      var r = ROTA_FALTA[it];
+      if(!r) return;
+      var p = pessoaDe(r.chave);
+      h += '<tr><td class="it">' + esc(it) + '</td>' +
+           '<td class="pes"><b>' + esc(p.area) + ' — ' + esc(p.nome.split(" ")[0]) + '</b>' +
+           (r.nosso ? '<span class="marca-nossa">padrão nosso</span>' : "") + '</td>' +
+           '<td class="pes">' + esc(r.acao) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  /* A tarefa colada na falta que a gerou, dentro da linha do tempo da ficha.
+     É onde a pergunta "tá na mão de quem?" é feita olhando a obra. */
+  function tlTarefaHTML(t){
+    var p = pessoaDe(t.dono);
+    var s = sitTarefa(t);
+    var fim;
+    if(s === "respondida"){
+      fim = 'respondida em ' + br(t.respostaEm).slice(0,5) + ' às ' + t.respostaHora +
+            (t.resumo ? ' — ' + esc(t.resumo) : "");
+    } else if(s === "vencida"){
+      var dv = diasVencida(t);
+      fim = 'sem resposta há <b>' + dv + (dv === 1 ? " dia" : " dias") + '</b>';
+    } else {
+      fim = 'esperando resposta';
+    }
+    return '<div class="tl-tarefa" style="--tc:' + corTarefa(t) + '">' +
+      '<span class="t">Tarefa que esta falta gerou</span>' +
+      '<b>' + esc(p.area) + ' · ' + esc(p.nome) + '</b> · prazo fim do dia ' +
+      br(t.prazo).slice(0,5) + ' · ' + fim + '</div>';
+  }
+
+  function renderTarefas(){
+    var el = document.getElementById("tarefas");
+    if(!el) return;
+
+    var abertas = tarefasAbertas();
+    var vencidas = tarefasVencidas();
+    var hoje = tarefasDeHoje();
+    var respondidas = TAREFAS.filter(function(t){ return sitTarefa(t) === "respondida"; });
+    var h = "";
+
+    h += '<div class="page-head"><div><h1>Tarefas</h1>' +
+         '<p>Toda falta registrada no diário vira tarefa com dono e prazo. ' +
+         'O agente cobra a pessoa pelo nome no WhatsApp e a resposta dela fecha a tarefa.</p></div></div>';
+
+    h += '<div class="resumo">';
+    h +=   '<div class="kpi" style="--kc:var(--accent)"><div class="v">' + abertas.length + '</div>' +
+             '<div class="k">' + (abertas.length === 1 ? "tarefa aberta" : "tarefas abertas") + ' agora</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--warn)"><div class="v">' + vencidas.length + '</div>' +
+             '<div class="k">' + (vencidas.length === 1 ? "passou do prazo" : "passaram do prazo") + '</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--ink)"><div class="v">' + hoje.length + '</div>' +
+             '<div class="k">' + (hoje.length === 1 ? "falta virou tarefa hoje" : "faltas viraram tarefa hoje") + '</div></div>';
+    h +=   '<div class="kpi" style="--kc:var(--ok)"><div class="v">' + respondidas.length + '</div>' +
+             '<div class="k">' + (respondidas.length === 1 ? "respondida" : "respondidas") + ' no WhatsApp</div></div>';
+    h += '</div>';
+
+    h += '<p class="nota-caminho">Ninguém digita tarefa aqui. Ela nasce no instante em que o analista salva ' +
+         '<b>"não andou · faltou alguma coisa"</b> no diário — e nasce <b>neste sistema</b>, não no Zeev: ' +
+         'dois lugares onde procurar tarefa viram nenhum.</p>';
+
+    h += '<div class="bloco-h"><h2>Como a falta vira tarefa</h2>' +
+         '<p>O tipo da falta decide o dono. Material, ferramenta e equipe são as suas palavras; ' +
+         'documento/ART e outro você não citou, e o que está aí é padrão nosso, marcado como tal.</p></div>';
+    h += rotaHTML();
+
+    h += '<p class="regra-alerta"><b>Prazo padrão: até o fim do dia</b> — do jeito que você falou. ' +
+         'Falta registrada depois das 18h fica com o fim do dia útil seguinte; se o prazo fosse sempre "hoje", ' +
+         'a tarefa das 18h26 nasceria vencida no mesmo minuto.<br>' +
+         '<b>Ferramenta e equipe vão para o Yuri mesmo quando a obra é da Amanda ou da Luana</b>, ' +
+         'porque quem remaneja equipe e ferramenta entre obras é ele. Se não for assim, é só dizer.</p>';
+
+    h += '<div class="bloco-h" style="margin-top:24px"><h2>Na mão de quem, e há quantos dias</h2>' +
+         '<p>Agrupadas por quem tem que resolver. Dentro de cada uma está a obra que gerou a falta e ' +
+         'a conversa como ela chegou no WhatsApp da pessoa. As cinco partes da cobrança estão marcadas ' +
+         'na primeira mensagem, mais abaixo.</p></div>';
+
+    var grupos = porDono();
+    if(!grupos.length){
+      h += '<div class="push" style="max-width:none"><p class="tx">Nenhuma tarefa aberta. ' +
+           'Toda falta registrada já foi respondida.</p></div>';
+    } else {
+      grupos.forEach(function(g){
+        h += grupoDonoHTML(g.chave, g.lista);
+        g.lista.slice().sort(function(a,b){
+          return (sitTarefa(b) === "vencida") - (sitTarefa(a) === "vencida") || diasNaMao(b) - diasNaMao(a);
+        }).forEach(function(t){ h += tarefaHTML(t); });
+      });
+    }
+
+    if(respondidas.length){
+      h += '<div class="bloco-h" style="margin-top:26px"><h2>Respondidas — a volta que fecha o ciclo</h2>' +
+           '<p>Sem a resposta voltando, o agente seria só um alarme educado. ' +
+           'Quem resolveu não abriu o sistema em nenhum momento: respondeu no WhatsApp, e a tarefa fechou.</p></div>';
+      respondidas.forEach(function(t){ h += tarefaHTML(t); });
+    }
+
+    h += fbPor("telaTarefas");
+
+    /* DECISÃO I — a pergunta que o feedback 03 e o 04 deixaram aberta. */
+    h += '<div class="decisao"><span class="tag">DECISÃO I</span><div>';
+    h +=   '<p>Você não disse <b>o que acontece quando a tarefa vence</b> — quando a pessoa cobrada ' +
+             'não responde até o fim do dia. É o caso do <b>DP BAIRRO DE FATIMA</b>, aí em cima: ' +
+             'cobrado na sexta, sem resposta há 3 dias.</p>';
+    h +=   '<p class="opt"><em>Adotado por padrão — a tarefa vencida entra no aviso das 19h que já existe:</em> ' +
+             'o mesmo aviso que hoje diz quem não preencheu o diário ganha um segundo parágrafo com as tarefas ' +
+             'que passaram do prazo, o nome de quem está com cada uma e há quantos dias. ' +
+             'E o agente <b>repete a cobrança</b> para a pessoa no dia seguinte, com o número de dias dentro da ' +
+             'mensagem — sem mudar de tom e sem chamar mais ninguém.</p>';
+    h +=   '<p class="opt"><em>Por que este e não outro:</em> é a linha que você já escolheu duas vezes. Na ' +
+             '<b>decisão C</b> você tirou a trava do diário — "deixe ficar marcando não andou todo dia e o motivo". ' +
+             'Na <b>decisão F</b> você disse que o aviso da falta repetida "não muda, só atualiza". ' +
+             'Nos dois casos o sistema <b>registra e mostra</b> em vez de <b>forçar alguém a agir</b>. ' +
+             'Tarefa vencida seguindo a mesma regra é coerente — e usa o canal que já existe, ' +
+             'em vez de criar um alarme novo que em uma semana ninguém lê.</p>';
+    h +=   '<p class="opt"><em>Alternativa — aviso próprio, na hora do vencimento:</em> às 18h, quando o prazo ' +
+             'estoura, sai uma mensagem só sobre aquela tarefa para os administradores. Chega mais rápido. ' +
+             'O preço é um terceiro tipo de aviso disputando atenção com os outros dois, e ' +
+             'a tela já carrega a regra de "um alerta por obra por dia" justamente para não virar ruído.</p>';
+    h +=   '<p class="opt"><em>Alternativa — só fica marcada em atraso na tela:</em> nada é enviado, o número ' +
+             'fica em âmbar aqui e no Painel do dia. É o mais silencioso de todos. O preço é que ninguém abre ' +
+             'uma tela sobre a qual não foi avisado — o sistema inteiro funciona porque às 19h chega uma ' +
+             'mensagem que faz alguém abrir a tela.</p>';
+    h +=   '<p class="opt"><b>Qual dos três?</b> Se ficar em silêncio, vale o primeiro.</p>';
+    h += '</div></div>';
+    h += fbPor("decI");
+
+    /* DECISÃO J — o destino que faltava na sua lista. */
+    h += '<div class="decisao"><span class="tag">DECISÃO J</span><div>';
+    h +=   '<p>Faltou dizer para quem vai a tarefa quando o analista marca <b>documento / ART</b> ou ' +
+             '<b>outro</b>. Os dois estão na lista de faltas do diário e você não citou nenhum.</p>';
+    h +=   '<p class="opt"><em>Adotado por padrão — os dois vão para o Yuri:</em> ' +
+             '<b>documento / ART</b> porque o documento depende do engenheiro responsável e de contrato, ' +
+             'e é a Manfac que resolve, não Compras. <b>Outro</b> porque é justamente o caso em que o sistema ' +
+             'não sabe classificar — e quem já é o roteador do sistema é ele, pela <b>decisão D</b> ' +
+             '("quem direciona é o Yuri"). Ele lê o que foi registrado e reencaminha.</p>';
+    h +=   '<p class="opt"><em>Alternativa:</em> "outro" não gera tarefa nenhuma, só fica registrado. ' +
+             'Mais leve, e é o que acontece hoje. O preço é o buraco que você quer fechar: ' +
+             'a falta que ninguém classificou é exatamente a que some.</p>';
+    h += '</div></div>';
+    h += fbPor("decJ");
+
+    el.innerHTML = h;
+  }
+
+  /* ---------------------------------------------------------------
      Eventos (delegados no #app, que é sempre reconstruído por JS)
      --------------------------------------------------------------- */
   var app = document.getElementById("app");
@@ -3150,7 +3903,7 @@
     if(t){ irPara(t.dataset.tela); return; }
 
     t = e.target.closest("[data-abrir]");
-    if(t){ abrirFicha(t.dataset.abrir, tela === "diario" ? "diario" : "base"); return; }
+    if(t){ abrirFicha(t.dataset.abrir, (tela === "diario" || tela === "tarefas") ? tela : "base"); return; }
 
     if(e.target.closest("#voltar")){ irPara(voltarPara); return; }
     if(e.target.closest("#btn-tabela")){ setVis("tabela"); return; }
