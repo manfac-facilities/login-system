@@ -4,8 +4,11 @@ Atualizado em 03/09/2026.
 
 ## Onde estamos
 
-**Mockup v03 publicado** em 03/09/2026, aplicando o feedback 05 do cliente e os dois
-achados da revisão independente.
+**Mockup v03 publicado e ENVIADO ao cliente** em 03/09/2026, aplicando o feedback 05 e
+os dois achados da revisão independente. **Aguardando a aprovação dele.**
+
+Quando voltar: verificar se veio retorno (pelos campos da página ou colado no chat).
+Com a aprovação, o próximo passo é a **spec** — não antes.
 
 **Artifact da v03 (link novo, para o cliente):**
 https://claude.ai/code/artifact/63b26e3e-5e69-45db-b242-c00955e0d202

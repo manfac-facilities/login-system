@@ -262,7 +262,7 @@ Node 20 (`.nvmrc`).
 Nunca pular etapas: **brainstorming → mockup visual aprovado → spec → plano → código →
 code review → deploy.** Mockup antes de escrever spec ou código, sempre.
 
-### Material que o João cola no chat vira arquivo ANTES de ser usado
+### Material que o João manda vira arquivo ANTES de ser usado — anexo também
 
 Lista de ajustes, relatório do cliente, auditoria, feedback compilado, requisito escrito
 — **salvar literal em `docs/cliente/AAAA-MM-DD-<assunto>.md` e commitar antes de agir
@@ -273,6 +273,14 @@ o arquivo é a fonte.
 original que as gerou some quando a sessão acaba, e aí não há como conferir se a decisão
 traduziu o pedido direito. Em 21/08 o João foi explícito: perder o material que ele manda
 custa a confiança dele no sistema inteiro.
+
+**Isso vale para `.docx`, PDF e planilha, não só para texto colado.** Em 03/09/2026 o
+`FEEDBACK CLIENTE CONTROLE DE OBRAS V01.docx` estava solto na raiz do repositório desde
+31/08, sem versionar — e dentro dele havia **uma pergunta do cliente que ficou três dias
+sem resposta** ("como calcula esse avanço %?"). Arquivo que não vira texto versionado é
+arquivo que ninguém relê. Extraia o conteúdo (o `.docx` é um zip: `word/document.xml`
+mais as imagens em `word/media/`), salve o texto literal em `docs/cliente/` e guarde o
+original em `originais/`.
 
 **Rede de segurança, não substituto:** as sessões ficam em
 `~/.claude/projects/C--Users-joao--projeto-01-elite-da-ia/*.jsonl` e dá para recuperar
