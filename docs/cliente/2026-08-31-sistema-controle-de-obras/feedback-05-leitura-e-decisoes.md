@@ -179,8 +179,10 @@ não estiver pronto. Se a v1 tiver a tela, ela sobe, começa a acumular históri
 WhatsApp vira o que ele deve ser: o jeito mais fácil de alimentar uma coisa que já
 funciona.
 
-**Ainda vale perguntar ao João** — se ele quiser o WhatsApp junto na v1, dá, mas o
-cadastro de telefones das equipes vira tarefa dele para ontem.
+**RESPONDIDO pelo João em 03/09/2026: tela na v1, agente depois.** A linha do tempo com
+foto por dia é construída agora e alimentada pela tela; o agente de WhatsApp entra na
+sequência escrevendo no mesmo lugar. O cadastro de telefone das equipes deixa de ser
+bloqueio para a v1 subir, mas continua sendo pré-requisito do agente.
 
 ### Detalhes que decidi sozinho, para constar
 
@@ -208,11 +210,11 @@ cadastro de telefones das equipes vira tarefa dele para ontem.
 | I | Liberado por + data de liberação | **NOVA** — entra na v03 |
 | J | Mau uso como etiqueta | **NOVA** — entra na v03 |
 | K | Relatório derivado + pendente fechamento | **NOVA** — entra na v03 |
-| L | Foto diária pelo agente | **NOVA** — desenho na v03, escopo a confirmar |
+| L | Foto diária pelo agente | **FECHADA** — tela na v1, agente na sequência |
 
 ## Pendências abertas
 
-- [ ] Confirmar com o João: foto por WhatsApp na v1, ou tela primeiro (ver decisão L)
+- [x] Confirmar com o João: foto por WhatsApp na v1, ou tela primeiro → **tela na v1**
 - [ ] Cadastro de telefone das equipes / prestadores — trabalho de operação
 - [ ] Extrair e versionar o `FEEDBACK CLIENTE CONTROLE DE OBRAS V01.docx` da raiz
 - [ ] Link da planilha viva, que o José ficou de mandar
