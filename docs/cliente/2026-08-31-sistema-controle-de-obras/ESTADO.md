@@ -4,8 +4,22 @@ Atualizado em 03/09/2026.
 
 ## Onde estamos
 
-**Mockup v03 desenhado**, aplicando o feedback 05 do cliente. Em revisão independente
-antes de publicar o artifact.
+**Mockup v03 publicado** em 03/09/2026, aplicando o feedback 05 do cliente e os dois
+achados da revisão independente.
+
+**Artifact da v03 (link novo, para o cliente):**
+https://claude.ai/code/artifact/63b26e3e-5e69-45db-b242-c00955e0d202
+
+Publicado como artifact **novo**, de propósito: republicar sobre o link da v02 faria o
+cliente continuar vendo a versão antiga até alguém mover a versão compartilhada à mão.
+Link novo abre direto na v03.
+
+> ⚠️ **O canal de retorno da página não foi confirmado por teste completo.** Os campos
+> aparecem (sinal de que a capability `artifact` foi concedida), e cliques funcionam,
+> mas a extensão do Chrome não consegue digitar dentro do iframe do artifact — o teste
+> de "digitar, recarregar, conferir" ficou pela metade. Confirmar com uma digitação
+> humana antes de confiar nele. O canal que nunca falhou continua sendo o cliente colar
+> o retorno no chat.
 
 > ⚠️ **Quem publica o artifact é a sessão principal, nunca um subagente.** Artifact
 > publicado por subagente aceita digitação e não salva nada — o canal de retorno só
@@ -60,7 +74,8 @@ brainstorming → mockup v02 aprovado ✅ → v03 com o feedback 05 ⬅ AQUI →
 
 ## Pendências
 
-- [ ] Revisão independente da v03, e então publicar o artifact **da sessão principal**
+- [x] Revisão independente da v03 e publicação do artifact (feita da sessão principal)
+- [ ] Confirmar, com digitação humana, se os campos de retorno da página realmente salvam
 - [ ] Responder a pergunta 03 ao cliente
 - [ ] **Cadastro de telefone das equipes / prestadores** — trabalho de operação do João.
       Trava o agente de WhatsApp, não trava a v1
