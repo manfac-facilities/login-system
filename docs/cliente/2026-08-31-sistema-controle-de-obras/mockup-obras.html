@@ -1954,9 +1954,13 @@
 
   var triagem = {};
   function tri(o){
-    return triagem[o.id] || (triagem[o.id] = {resp:"", equipe:"", prioridade:"", inicio:"", duracao:""});
+    return triagem[o.id] || (triagem[o.id] = {resp:"", equipe:"", prioridade:"", inicio:"", duracao:"",
+                                              libPor:"", libEm:""});
   }
   var RESPONSAVEIS_OBRA = ["YURI","AMANDA","LUANA"];
+  /* Quem libera é analista do CLIENTE, não da Manfac. São os nomes que
+     aparecem na coluna ANALISTA da planilha da DPSP. */
+  var ANALISTAS_CLIENTE = ["AMANDA","LEANDRO","JUAN"];
   var EQUIPES = ["MANFAC-4","MANFAC-6","MANFAC-7","MANFAC-19","MANFAC-26","MANFAC-27",
                  "ALEX","ALEXANDRE","ERLI / RICARDO","Prestador a contratar"];
   var CAMPOS_TRI = [
@@ -2068,7 +2072,11 @@
     "Ferramenta":      {chave:"YURI",    acao:"ver o que precisa ser feito com a ferramenta"},
     "Equipe":          {chave:"YURI",    acao:"ver o que dá para remanejar de equipe"},
     "Documento / ART": {chave:"YURI",    acao:"providenciar o documento ou a ART com o engenheiro", nosso:true},
-    "Outro":           {chave:"YURI",    acao:"ler o que foi registrado e dizer quem resolve",      nosso:true}
+    "Outro":           {chave:"YURI",    acao:"ler o que foi registrado e dizer quem resolve",      nosso:true},
+    /* A foto que não veio é falta como qualquer outra — e a única cuja
+       cobrança vai para a EQUIPE em campo, não para o escritório: é ela que
+       está na obra e é ela que tira a foto. O dono sai da própria obra. */
+    "Foto":            {chave:"__EQUIPE__", acao:"mandar a foto da evolução de hoje",               nosso:true}
   };
 
   function destinoDe(item){
@@ -2076,6 +2084,21 @@
     return r ? r : null;
   }
   function pessoaDe(chave){ return PESSOAS[chave] || PESSOAS.YURI; }
+
+  /* A equipe da obra entra na lista de gente cobrável na hora em que precisa
+     ser cobrada. O telefone aparece como "a cadastrar" de propósito: hoje a
+     planilha guarda a equipe como texto solto (MANFAC-19, ALEX, DEFINIR), sem
+     telefone nenhum. Enquanto esse cadastro não existir, o agente não tem para
+     onde mandar — e a tela precisa dizer isso em vez de fingir que tem. */
+  function chaveDaEquipe(o){
+    var nome = (o.equipe && o.equipe !== "DEFINIR") ? o.equipe : "Equipe a definir";
+    var k = "EQ_" + nome.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    if(!PESSOAS[k]){
+      PESSOAS[k] = {nome:nome, ini:"EQ", area:"Equipe em campo",
+                    fn:"equipe em campo", fone:"telefone a cadastrar"};
+    }
+    return k;
+  }
 
   /* PRAZO PADRÃO: até o fim do dia — a fala é dele, "me responda aqui até o
      final do dia". Falta registrada depois das 18h fica com o fim do dia útil
@@ -2164,6 +2187,14 @@
     }
     var prazoTxt = t.prazo === t.aberta ? "até o fim do dia"
                                         : "até o fim do dia de amanhã, " + br(t.prazo).slice(0,5);
+    /* A cobrança da foto não é "a obra não andou" — a obra pode ter andado. É
+       o registro do dia que ficou faltando, e quem responde é a equipe. */
+    if(t.item === "Foto"){
+      return 'Oi, aqui é o assistente da Manfac Obras. Hoje não chegou foto da obra do <b>' +
+             esc(o.loja) + '</b> (OS ' + esc(o.os) + '). ' +
+             'Você consegue ' + esc(d.acao) + ' aqui ' + prazoTxt + '? ' +
+             'É com ela que a gente acompanha a evolução.';
+    }
     return 'Oi ' + esc(primeiro) + ', aqui é o assistente da Manfac Obras. ' +
            eleEla + ' agora que a obra do <b>' + esc(o.loja) + '</b> (OS ' + esc(o.os) + ') ' +
            'não andou porque faltou <b>' + esc(t.item.toLowerCase()) + '</b>' +
@@ -2246,7 +2277,8 @@
     {id:"novoLiberacao", rotulo:"a liberação para executar e a obra sem cobertura"},
     {id:"novoMauUso",    rotulo:"mau uso como etiqueta, dentro da mesma esteira"},
     {id:"novoRelatorio", rotulo:"o relatório deduzido do Field e o Pendente fechamento"},
-    {id:"novoFotos",     rotulo:"a foto de evolução, todo dia, na linha do tempo"}
+    {id:"novoFotos",     rotulo:"a foto de evolução, todo dia, na linha do tempo"},
+    {id:"novoLibTriagem", rotulo:"o registro da liberação na triagem da obra nova"}
   ];
   var VOTOS = [["aprovado","Aprovado"],["ajustar","Ajustar"],["refazer","Refazer"]];
 
@@ -2718,7 +2750,8 @@
     var d = rasc(o);
     if(validar(o, d)) return false;
     var item = d.item || "Não faltou";
-    respostas[o.id] = {andou:d.andou, item:item, motivo:d.motivo, obs:d.obs};
+    respostas[o.id] = {andou:d.andou, item:item, motivo:d.motivo, obs:d.obs,
+                       semFoto: pedeFoto(o) && !d.foto};
     o.diario = o.diario.concat([{
       data:DIA_REF, andou:d.andou === "Sim", motivo:d.motivo,
       item:item, obs:d.obs, foto: pedeFoto(o) && !!d.foto
@@ -2727,6 +2760,10 @@
        coisa", nasce a tarefa, com dono e prazo, e o agente cobra a pessoa.
        Ninguém digitou tarefa nenhuma: o analista respondeu só o que ele sabe. */
     if(item !== "Não faltou") abrirTarefa(o, item, d.obs);
+    /* A obra pode ter andado e a foto não ter vindo. São duas faltas
+       diferentes, e a segunda também vira tarefa — com dono e prazo, na mesma
+       mecânica. Sem isso, a tela prometeria uma cobrança que não acontece. */
+    if(pedeFoto(o) && !d.foto) abrirTarefa(o, "Foto", "");
     return true;
   }
 
@@ -2736,8 +2773,10 @@
   function abrirTarefa(o, item, obs){
     var rota = destinoDe(item);
     if(!rota) return null;
+    var dono = rota.chave === "__EQUIPE__" ? chaveDaEquipe(o) : rota.chave;
     var nova = {
-      id:"tn-" + o.id, obra:o.id, item:item, dono:rota.chave,
+      id:"tn-" + o.id + "-" + item.replace(/[^A-Za-zÀ-ú]/g, "").slice(0, 6).toLowerCase(),
+      obra:o.id, item:item, dono:dono,
       aberta:DIA_REF, horaAberta:HORA_AVISO, prazo:prazoPadrao(DIA_REF, HORA_AVISO),
       registrou:"YURI", situacao:"aberta", obs:obs || "", esperando:true, nova:true,
       pe:'Saiu no <b>instante em que você salvou o diário</b>, não às 19h — e foi para o WhatsApp ' +
@@ -2746,7 +2785,8 @@
     nova.msgs = [{de:"agente", hora:HORA_AVISO, dia:"hoje", texto:mensagemNova(nova)}];
     TAREFAS.push(nova);
     indexarTarefas();
-    respostas[o.id].tarefa = nova.id;
+    respostas[o.id].tarefa = respostas[o.id].tarefa || nova.id;
+    respostas[o.id].tarefas = (respostas[o.id].tarefas || []).concat([nova.id]);
     atualizarContadorTarefas();
     return nova;
   }
@@ -2798,10 +2838,12 @@
       var r = respostas[o.id];
       var resumo = r.andou === "Sim" ? "Andou hoje" : "Não andou hoje · " + r.motivo;
       if(r.item && r.item !== "Não faltou") resumo += " · faltou " + r.item.toLowerCase();
+      if(r.semFoto) resumo += " · sem foto";
+      var abriu = (r.tarefas || (r.tarefa ? [r.tarefa] : [])).map(abriuHTML).join("");
       return '<div class="feita"><span class="ck">&#10003;</span><span class="nm">' + esc(o.loja) + '</span>' +
              '<span class="rs">' + esc(resumo) + '</span>' +
              '<button class="btn ghost un" data-desfazer="' + o.id + '">Desfazer</button>' +
-             (r.tarefa ? abriuHTML(r.tarefa) : "") + '</div>';
+             abriu + '</div>';
     }).join("") + '</div>';
   }
 
@@ -3780,7 +3822,7 @@
 
     h += '</div><div>';
 
-    h += '<div class="box"><div class="box-h">O que falta definir</div><div class="box-b">';
+    h += '<div class="box"><div class="box-h">O que falta definir</div><div class="box-b tri-campos">';
 
     h += '<div class="campo' + (t.resp ? " ok" : "") + '"><span class="rot"><span class="mk">' +
          (t.resp ? "&#10003;" : "1") + '</span><span>Responsável da obra</span></span>' +
@@ -3810,7 +3852,38 @@
     h += '</div>';
 
     h += '</div></div>';
+
+    /* AUTORIZAÇÃO — fora do checklist de propósito. Os cinco campos de cima
+       travam a obra; este não trava nada. Obra com OS aprovada não precisa de
+       liberação nenhuma, e obrigar o campo faria alguém inventar um nome só
+       para destravar a tela — que é exatamente o tipo de dado falso que este
+       sistema existe para não ter. */
+    h += '<div class="box"><div class="box-h">Autorização para executar</div><div class="box-b">';
+    h += '<p style="margin:0 0 10px;font-size:12.5px;color:var(--ink-dim)">' +
+         (o.osAprovada
+            ? 'Esta obra já tem <b style="color:var(--ok)">OS aprovada</b> no sistema do cliente. ' +
+              'Não precisa de liberação — a OS já é a autorização.'
+            : 'Esta obra <b style="color:var(--accent)">ainda não tem OS aprovada</b>. Se algum analista da ' +
+              'DPSP autorizou começar mesmo assim, registre aqui quem foi e quando. É o que hoje ninguém ' +
+              'anota em lugar nenhum — e sem isso a obra vai para campo sem ninguém nomeado que tenha ' +
+              'autorizado.') + '</p>';
+
+    h += '<div class="campo' + (t.libPor ? " ok" : "") + '"><span class="rot"><span class="mk">' +
+         (t.libPor ? "&#10003;" : "&#183;") + '</span><span>Liberado por</span></span>' +
+         '<select data-tri="libPor" aria-label="Liberado por">' +
+         opcoes(ANALISTAS_CLIENTE, t.libPor, "— ninguém liberou —") + '</select>' +
+         '<span class="dica">analista da DPSP que deu o OK</span></div>';
+
+    h += '<div class="campo' + (t.libEm ? " ok" : "") + '"><span class="rot"><span class="mk">' +
+         (t.libEm ? "&#10003;" : "&#183;") + '</span><span>Data da liberação</span></span>' +
+         '<input type="date" data-tri="libEm" aria-label="Data da liberação" value="' + esc(t.libEm) + '">' +
+         '<span class="dica">é outra data, não a da aprovação da OS</span></div>';
+
     h += '</div></div>';
+
+    h += '</div></div>';
+
+    h += fbPor("novoLibTriagem");
 
     h += '<div class="decisao fechada"><span class="tag">DECISÃO D</span><div>';
     h += '<p><span class="resp">Resolvida — você respondeu</span>Quem completa a obra que chega crua do Field é o ' +
@@ -3837,7 +3910,7 @@
     var o = PORID[obraAberta];
     if(!o || o.etapa !== "definir") return;
     var t = tri(o), faltam = faltamTri(o);
-    var campos = document.querySelectorAll("#ficha .campo");
+    var campos = document.querySelectorAll("#ficha .tri-campos .campo");
     CAMPOS_TRI.forEach(function(c, i){
       var el = campos[i];
       if(!el) return;
@@ -3863,6 +3936,8 @@
     o.prioridade = t.prioridade;
     o.inicioPlan = t.inicio;
     o.duracao = parseInt(t.duracao, 10);
+    o.liberadoPor = t.libPor || null;
+    o.liberadoEm = t.libPor ? (t.libEm || DIA_REF) : null;
     o.etapa = "levantamento";
     o.atualizacao = DIA_REF;
     o.pendencia = "Finalizar levantamento, confirmar material e programar a equipe";
@@ -4140,6 +4215,13 @@
            (r.nosso ? '<span class="marca-nossa">padrão nosso</span>' : "") + '</td>' +
            '<td class="pes">' + esc(r.acao) + '</td></tr>';
     });
+    /* A foto é a única falta cuja cobrança sai da Manfac e vai para a ponta.
+       Por isso ela não sai da lista de itens do diário — ela não é um botão,
+       é o anexo que não veio. */
+    h += '<tr><td class="it">Foto do dia</td>' +
+         '<td class="pes"><b>Equipe em campo — a equipe definida na obra</b>' +
+         '<span class="marca-nossa">padrão nosso</span></td>' +
+         '<td class="pes">' + esc(ROTA_FALTA["Foto"].acao) + '</td></tr>';
     h += '</tbody></table></div>';
     return h;
   }
