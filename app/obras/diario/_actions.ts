@@ -30,7 +30,7 @@ import {
   BLOQUEIOS,
   type Etapa,
 } from '../_lib/tipos'
-import { chaveDoUsuario } from './_pessoa'
+import { resolverChave } from './_pessoa'
 
 export type EstadoDiario = { error?: string; success?: boolean }
 
@@ -108,7 +108,7 @@ export async function salvarDiarioAction(entrada: EntradaDiario): Promise<Estado
     item,
     obs,
     temFoto: !!entrada.fotoPath,
-    registrou: chaveDoUsuario(user.email),
+    registrou: await resolverChave(supabase, user.email),
   })
   if (erroTarefa) return { error: erroTarefa }
 

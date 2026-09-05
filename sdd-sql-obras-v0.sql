@@ -181,8 +181,21 @@ create table if not exists public.obras_pessoa (
   -- O telefone fica NULO até o João cadastrar. É pendência de operação
   -- conhecida e não trava a v0, porque o WhatsApp está fora dela.
   fone text,
+  -- A ligação entre a conta do hub e a pessoa da planilha.
+  --
+  -- `obras_obra.pcm` guarda a chave em texto (YURI, AMANDA) e é por ela que o
+  -- diário é filtrado — mas quem entra no hub entra por e-mail. Sem esta coluna
+  -- a ligação só pode ser adivinhada do e-mail (yuri.nascimento@ -> YURI), e um
+  -- apelido, um sobrenome primeiro ou um homônimo faz a pessoa ver o diário
+  -- VAZIO. Num treinamento com a equipe toda na sala, é a falha mais cara
+  -- possível. Preencher antes de terça.
+  email text,
   created_at timestamptz not null default now()
 );
+
+alter table public.obras_pessoa add column if not exists email text;
+create unique index if not exists obras_pessoa_email_uniq
+  on public.obras_pessoa (lower(email)) where email is not null;
 
 -- ------------------------------------------------------------
 -- 1.5 obras_remarcacao — só leitura na v0. Vem da importação.

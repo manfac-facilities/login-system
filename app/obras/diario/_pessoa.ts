@@ -23,6 +23,33 @@
  * pode exportar função async, então a função síncrona precisa morar fora dele.
  */
 
+import type { createClient } from '@/lib/supabase/server'
+
+type Cliente = Awaited<ReturnType<typeof createClient>>
+
+/**
+ * A chave da pessoa logada, do jeito confiável primeiro.
+ *
+ * 1. `obras_pessoa.email` — o cadastro explícito. É a verdade.
+ * 2. Se não houver linha, cai na convenção do e-mail (`chaveDoUsuario`).
+ *
+ * A ordem importa: enquanto os e-mails reais não estiverem cadastrados, a
+ * convenção mantém o sistema de pé; assim que estiverem, ela para de ser
+ * consultada e o apelido/homônimo deixa de ser um problema.
+ */
+export async function resolverChave(
+  supabase: Cliente,
+  email: string | null | undefined
+): Promise<string> {
+  if (!email) return ''
+  const { data } = await supabase
+    .from('obras_pessoa')
+    .select('chave')
+    .ilike('email', email)
+    .maybeSingle()
+  return data?.chave ?? chaveDoUsuario(email)
+}
+
 /** `yuri.nascimento@manfac.com.br` → `YURI`. String vazia quando não dá. */
 export function chaveDoUsuario(email: string | null | undefined): string {
   if (!email) return ''

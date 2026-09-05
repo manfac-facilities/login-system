@@ -23,7 +23,7 @@ import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { derivar, hojeISO, type Etapa, type ObraRow, type Obra } from '../_lib/tipos'
-import { chaveDoUsuario } from './_pessoa'
+import { resolverChave } from './_pessoa'
 import Cartoes, { type RespostaDeHoje, type TarefaDeHoje } from './_cartoes'
 import type { Pessoa } from './_cartao'
 
@@ -48,7 +48,7 @@ export default async function DiarioPage({ searchParams }: Props) {
   if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return <SemPermissao />
 
   const hoje = hojeISO()
-  const minhaChave = chaveDoUsuario(email)
+  const minhaChave = await resolverChave(supabase, email)
   // Administrador enxerga todo mundo e escolhe de quem é a fila; analista vê a
   // sua e só a sua. O filtro do não-admin vai no banco, não na memória.
   const filtroPcm = admin ? (analista || '') : minhaChave
