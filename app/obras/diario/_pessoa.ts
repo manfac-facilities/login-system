@@ -42,12 +42,21 @@ export async function resolverChave(
   email: string | null | undefined
 ): Promise<string> {
   if (!email) return ''
-  const { data } = await supabase
-    .from('obras_pessoa')
-    .select('chave')
-    .ilike('email', email)
-    .maybeSingle()
-  return data?.chave ?? chaveDoUsuario(email)
+  // O try/catch não é paranoia: a coluna `email` entrou depois na migration, e
+  // quem tiver rodado uma versão anterior do arquivo tem a tabela sem ela. Aqui
+  // a consulta falhar é um caso previsto — cair na convenção mantém o diário de
+  // pé em vez de derrubar a tela inteira por causa de uma coluna ausente.
+  try {
+    const { data } = await supabase
+      .from('obras_pessoa')
+      .select('chave')
+      .ilike('email', email)
+      .maybeSingle()
+    if (data?.chave) return data.chave
+  } catch {
+    // segue para a convenção
+  }
+  return chaveDoUsuario(email)
 }
 
 /** `yuri.nascimento@manfac.com.br` → `YURI`. String vazia quando não dá. */
