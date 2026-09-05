@@ -310,6 +310,29 @@ function Feita({
 function VerFoto({ path }: { path: string }) {
   const [pendente, iniciar] = useTransition()
   const [erro, setErro] = useState<string | null>(null)
+  const [url, setUrl] = useState<string | null>(null)
+
+  // Por que dois passos, e não um `window.open` depois do await: Safari e
+  // Firefox soltam a associação com o gesto do usuário quando a chamada
+  // atravessa um await, e o bloqueador de popup mata a janela — sem erro
+  // nenhum na tela, o botão simplesmente não faz nada. Buscar a URL e depois
+  // oferecer um link de verdade é o que funciona em todo navegador. E o link
+  // é assinado e curto, então não vira endereço permanente de foto de obra.
+  if (url) {
+    return (
+      <p className="mt-1 text-[12px]">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#f05a28] underline underline-offset-2"
+        >
+          abrir a foto do dia ↗
+        </a>
+      </p>
+    )
+  }
+
   return (
     <p className="mt-1 text-[12px]">
       <button
@@ -318,7 +341,7 @@ function VerFoto({ path }: { path: string }) {
         onClick={() =>
           iniciar(async () => {
             const r = await obterUrlFotoAction(path)
-            if (r.url) window.open(r.url, '_blank', 'noopener,noreferrer')
+            if (r.url) setUrl(r.url)
             else setErro(r.error ?? 'Não deu para abrir a foto')
           })
         }

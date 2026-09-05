@@ -57,7 +57,13 @@ function Cartao({ obra }: { obra: Obra }) {
 
       {posCampo(obra) && !encerrada(obra) ? (
         <div className="mt-1.5 text-[11px]" style={{ color: corCom }}>
-          Com <b>{obra.dono}</b> há <b>{obra.paradaEtapa}</b> dias
+          Com <b>{obra.dono}</b>
+          {obra.paradaEtapa === null ? null : (
+            <>
+              {' '}
+              há <b>{obra.paradaEtapa}</b> dias
+            </>
+          )}
         </div>
       ) : null}
 

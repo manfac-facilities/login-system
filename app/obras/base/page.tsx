@@ -37,7 +37,11 @@ export default async function BaseDeObrasPage() {
 
   const hoje = hojeISO()
   const obras = ((data ?? []) as ObraRow[]).map((o) => derivar(o, hoje))
-  const kpis = kpisDaBase(obras)
+  // Quando a consulta falha, `obras` é uma lista vazia e os indicadores dariam
+  // todos zero — "0 sem cobertura", "0 paralisadas" — em cima da caixa de erro.
+  // Zero lido como dado é pior que indicador nenhum: passa a impressão de base
+  // limpa quando na verdade não se sabe nada.
+  const kpis = error ? [] : kpisDaBase(obras)
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6">

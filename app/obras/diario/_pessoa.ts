@@ -47,10 +47,14 @@ export async function resolverChave(
   // a consulta falhar é um caso previsto — cair na convenção mantém o diário de
   // pé em vez de derrubar a tela inteira por causa de uma coluna ausente.
   try {
+    // `.eq` com o e-mail em minúsculas, não `.ilike`: em ILIKE o `_` e o `%` do
+    // endereço viram curinga, e `ana_paula@` casaria com a linha de outra
+    // pessoa — prendendo o diário à fila errada. O índice único da tabela é
+    // sobre `lower(email)`, então a comparação em minúsculas é a que ele serve.
     const { data } = await supabase
       .from('obras_pessoa')
       .select('chave')
-      .ilike('email', email)
+      .eq('email', email.toLowerCase())
       .maybeSingle()
     if (data?.chave) return data.chave
   } catch {

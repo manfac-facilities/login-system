@@ -550,6 +550,10 @@ export function prazoTxt(o: Obra): string {
 /** `paradaTxt(mockup:1846)`. */
 export function paradaTxt(o: Obra): string {
   if (posCampo(o)) {
+    // `paradaEtapa` é null quando não há `desde_etapa` nem `atualizacao` — o caso
+    // de toda obra que veio só da aba Pipeline. Sem esta guarda a tela escreve
+    // "null dias nesta etapa", que é pior que não escrever nada.
+    if (o.paradaEtapa === null) return 'sem registro de quando parou'
     return `${o.paradaEtapa} ${o.paradaEtapa === 1 ? 'dia nesta etapa' : 'dias nesta etapa'}`
   }
   if (o.nao_andou_seguidos >= 1) {

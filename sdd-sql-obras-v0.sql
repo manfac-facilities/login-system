@@ -189,6 +189,10 @@ create table if not exists public.obras_pessoa (
   -- apelido, um sobrenome primeiro ou um homônimo faz a pessoa ver o diário
   -- VAZIO. Num treinamento com a equipe toda na sala, é a falha mais cara
   -- possível. Preencher antes de terça.
+  --
+  -- GRAVAR SEMPRE EM MINÚSCULAS: a consulta do código é `eq(email, minúsculas)`
+  -- e o índice único é sobre `lower(email)`. Um endereço cadastrado com
+  -- maiúscula não seria encontrado.
   email text,
   created_at timestamptz not null default now()
 );

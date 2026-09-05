@@ -138,7 +138,7 @@ export async function liberarObraAction(
   const hoje = hojeISO()
   const libPor = nulo(dados.libPor)
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('obras_obra')
     .update({
       pcm: resp,
@@ -159,8 +159,16 @@ export async function liberarObraAction(
     })
     .eq('id', obraId)
     .eq('etapa', 'definir')
+    .select('id')
 
   if (error) return { error: 'Erro ao liberar a obra' }
+  // Zero linhas afetadas não é erro para o Postgres, mas é para nós: significa
+  // que a obra saiu de "Aguardando definição" entre o carregamento da tela e o
+  // clique — outra aba, outra pessoa, ou um duplo clique. Sem esta checagem a
+  // ação dizia "deu certo" e mandava para a base sem ter mudado nada.
+  if (!data || data.length === 0) {
+    return { error: 'Esta obra já foi liberada por outra pessoa. Recarregue a página.' }
+  }
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')

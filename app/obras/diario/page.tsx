@@ -51,6 +51,12 @@ export default async function DiarioPage({ searchParams }: Props) {
   const minhaChave = await resolverChave(supabase, email)
   // Administrador enxerga todo mundo e escolhe de quem é a fila; analista vê a
   // sua e só a sua. O filtro do não-admin vai no banco, não na memória.
+  //
+  // Sem chave, o não-admin NÃO passa. Antes, chave vazia caía no `if (filtroPcm)`
+  // lá embaixo e a consulta ia sem filtro nenhum — quem tivesse um e-mail fora
+  // do padrão via, e podia responder, o diário de todos os analistas. Guarda de
+  // autorização tem que falhar fechada.
+  if (!admin && !minhaChave) return <SemPermissao />
   const filtroPcm = admin ? (analista || '') : minhaChave
 
   let consulta = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA)
@@ -95,7 +101,10 @@ export default async function DiarioPage({ searchParams }: Props) {
         .in('obra_id', ids),
     ])
 
-    if (diario.error) return <Erro />
+    // As duas consultas contam. Se a de tarefas falhar em silêncio, as obras já
+    // respondidas aparecem sem o "✓ Tarefa aberta para…" — ou seja, a tela diz
+    // que nada foi cobrado quando foi. Melhor a tela de erro que a mentira.
+    if (diario.error || tarefasHoje.error) return <Erro />
 
     respostas = Object.fromEntries(
       (diario.data ?? []).map((d) => [d.obra_id as string, d as unknown as RespostaDeHoje])

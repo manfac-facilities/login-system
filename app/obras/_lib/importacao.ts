@@ -506,7 +506,14 @@ export function mapearLinhaPlanejamento(linha: LinhaBrutaObras): (ObraCampos & {
   const finalAtual = paraDataIso(v[COL_PLANEJAMENTO.finalAtual])
   const inicioPlan = inicioAtual ?? inicioOriginal
   const fimPlan = finalAtual ?? finalOriginal
-  const duracao = inicioPlan && fimPlan ? diasDesde(inicioPlan, fimPlan) : null
+  // `inicioPlan` e `fimPlan` são escolhidos independentes um do outro: um início
+  // "atual" (adiado) pode acabar combinado com um fim "original" (anterior),
+  // porque o fim atual caiu no bug de 1899. Isso dá duração negativa — e daí
+  // `estourou()` (dias > duracao*4) fica verdadeiro para TODA obra, o fim
+  // calculado cai antes do início e a barra de prazo ganha largura negativa.
+  // Duração que não seja positiva não é duração: é ausência de duração.
+  const bruta = inicioPlan && fimPlan ? diasDesde(inicioPlan, fimPlan) : null
+  const duracao = bruta !== null && bruta > 0 ? bruta : null
 
   const proxAcao = combinarAcaoEPrazo(paraTexto(v[COL_PLANEJAMENTO.proxAcao]), paraDataIso(v[COL_PLANEJAMENTO.prazoProxAcao]))
 
@@ -604,8 +611,22 @@ export function montarImportacao(linhasPipeline: LinhaBrutaObras[], linhasPlanej
       descartadas.push({ origem: 'pipeline', linha: obra.linha, motivo: 'sem Nº OS e sem Loja' })
       continue
     }
-    if (obra.os) porOs.set(obra.os, obra)
-    else semChave.push(obra)
+    if (obra.os) {
+      // Duas linhas com o mesmo Nº OS: a segunda sobrescrevia a primeira em
+      // silêncio, e a tela dizia "187 lidas / 186 criadas" embaixo da frase
+      // "toda linha que não entrou está listada aqui com o motivo" — que
+      // passava a ser mentira. A planilha é editada à mão; OS repetida por
+      // cópia/cola acontece.
+      const anterior = porOs.get(obra.os)
+      if (anterior) {
+        descartadas.push({
+          origem: 'pipeline',
+          linha: obra.linha,
+          motivo: `Nº OS ${obra.os} repetido (já veio na linha ${anterior.linha}) — prevaleceu esta`,
+        })
+      }
+      porOs.set(obra.os, obra)
+    } else semChave.push(obra)
   }
 
   for (const linhaBruta of linhasPlanejamento) {

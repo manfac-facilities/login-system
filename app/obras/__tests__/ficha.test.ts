@@ -36,10 +36,15 @@ import { hojeISO } from '../_lib/tipos'
  * `update(...).eq(...)` — e, na triagem, `.eq(...).eq(...)`. O encadeamento
  * devolve sempre um objeto que é, ele mesmo, o resultado da promise.
  */
-function encadear(resultado: { error: unknown }) {
-  const alvo: Record<string, unknown> = { ...resultado }
+function encadear(resultado: { error: unknown; data?: unknown }) {
+  // `liberarObraAction` fecha a cadeia com `.select('id')` para saber quantas
+  // linhas mudaram — zero linhas não é erro no Postgres, mas é conflito para
+  // nós. Quem não passar `data` ganha uma linha, que é o caso de sucesso.
+  const final = { ...resultado, data: 'data' in resultado ? resultado.data : [{ id: 'o1' }] }
+  const alvo: Record<string, unknown> = { ...final }
   alvo.eq = eqMock.mockReturnValue(alvo)
-  alvo.then = (r: (v: unknown) => unknown) => Promise.resolve(resultado).then(r)
+  alvo.select = jest.fn(() => alvo)
+  alvo.then = (r: (v: unknown) => unknown) => Promise.resolve(final).then(r)
   updateMock.mockReturnValue(alvo)
   return alvo
 }
@@ -182,5 +187,15 @@ describe('liberarObraAction', () => {
     await liberarObraAction('o1', TRIAGEM_OK)
     expect(eqMock).toHaveBeenCalledWith('id', 'o1')
     expect(eqMock).toHaveBeenCalledWith('etapa', 'definir')
+  })
+
+  it('não diz que deu certo quando não mudou linha nenhuma', async () => {
+    // Outra aba, outra pessoa, ou duplo clique: a obra saiu de "Aguardando
+    // definição" entre carregar a tela e clicar. O `.eq('etapa','definir')` não
+    // casa com nada, e o Postgres não considera isso erro — antes desta guarda
+    // a ação devolvia sucesso e navegava para a base sem ter gravado nada.
+    encadear({ error: null, data: [] })
+    const r = await liberarObraAction('o1', TRIAGEM_OK)
+    expect(r).toEqual({ error: 'Esta obra já foi liberada por outra pessoa. Recarregue a página.' })
   })
 })

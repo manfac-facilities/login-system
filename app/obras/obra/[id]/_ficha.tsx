@@ -432,7 +432,9 @@ export default function Ficha({
                 {posCampo(obra)
                   ? encerrada(obra)
                     ? 'encerrada'
-                    : `${obra.paradaEtapa} ${obra.paradaEtapa === 1 ? 'dia' : 'dias'}`
+                    : obra.paradaEtapa === null
+                      ? '—'
+                      : `${obra.paradaEtapa} ${obra.paradaEtapa === 1 ? 'dia' : 'dias'}`
                   : prazoTxt(obra)}
               </span>
             </Campo>
