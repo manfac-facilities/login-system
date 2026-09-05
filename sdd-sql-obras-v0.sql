@@ -107,8 +107,21 @@ create table if not exists public.obras_obra (
   bloqueada_dias int not null default 0,
   criado_por uuid references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz
+  updated_at timestamptz,
+
+  -- Autoria da troca de etapa.
+  -- O mockup não tem gatilho para sair de "Levantamento" — é a decisão técnica 6 da
+  -- spec, que criou a troca manual na ficha. Sem estas duas colunas a troca acontece
+  -- sem deixar rastro, e numa obra parada há 123 dias saber QUEM mexeu e QUANDO é
+  -- justamente o que faltava na planilha.
+  etapa_por text,
+  etapa_em timestamptz
 );
+
+-- Idempotência: `create table if not exists` não acrescenta coluna em tabela que já
+-- existe. Quem tiver rodado uma versão anterior deste arquivo ganha as duas colunas aqui.
+alter table public.obras_obra add column if not exists etapa_por text;
+alter table public.obras_obra add column if not exists etapa_em timestamptz;
 
 -- ------------------------------------------------------------
 -- 1.2 obras_diario — um registro por obra por dia.
