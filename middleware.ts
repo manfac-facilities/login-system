@@ -51,12 +51,14 @@ export async function middleware(request: NextRequest) {
   const isSofiaPage = pathname.startsWith('/sofia')
   const isSofiaApi = pathname.startsWith('/api/sofia')
   const isCrmPage = pathname.startsWith('/crm')
+  const isObrasPage = pathname.startsWith('/obras')
   const isAdminPage = pathname.startsWith('/admin')
   const isProtected =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/sofia') ||
     isConversorOsPage ||
     isCrmPage ||
+    isObrasPage ||
     isAdminPage ||
     isConversorOsApi ||
     isSofiaApi
@@ -103,6 +105,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
+    if (isObrasPage) {
+      const acessoObras = await hasSystemAccess(supabase, user.email ?? '', 'obras')
+      if (!acessoObras) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
     if (isAdminPage && !(await isAdmin(supabase, user.email ?? ''))) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
@@ -121,6 +129,7 @@ export const config = {
     '/sofia/:path*',
     '/conversor-os/:path*',
     '/crm/:path*',
+    '/obras/:path*',
     '/admin/:path*',
     '/api/conversor-os/:path*',
     '/api/sofia/:path*',
