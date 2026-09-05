@@ -1,8 +1,39 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 05/09/2026.
+Atualizado em 05/09/2026, fim do dia.
+
+## O QUE JÁ ESTÁ CONSTRUÍDO
+
+**A v0 de treinamento está codificada e commitada** no branch `copy-aprovada-cliente`,
+nos commits `9405c18` a `adf562e`. Build de produção compila; 189 testes de `app/obras`
+passando; `tsc` e `eslint` limpos no módulo.
+
+| Rota | O que é | Frente |
+|---|---|---|
+| `/obras/base` | Base de obras: tabela + Kanban por fase, 4 filtros, ordenação | B |
+| `/obras/obra/[id]` | Ficha da obra + Triagem (quando `etapa = definir`) | B |
+| `/obras/diario` | Diário do dia, forma cartões | C |
+| `/obras/tarefas` | Tarefas que as faltas geraram | C |
+| `/obras/importar` | Carga da planilha, com relatório do descartado | D + sessão principal |
+
+**Nada foi testado contra Supabase real** — a migration não rodou em banco nenhum. Toda a
+cobertura é de unidade com mock. O primeiro contato com o banco de verdade vai revelar
+coisa; é por isso que rodar o SQL cedo importa.
+
+### Três lacunas que o código encontrou e que a spec não previa
+
+1. **Autoria da troca de etapa** — não havia onde gravar quem mudou a etapa e quando.
+   `etapa_por` e `etapa_em` entraram na migration (`812109b`).
+2. **Nada ligava a conta do hub à pessoa da planilha.** `obras_obra.pcm` é texto (YURI) e
+   quem entra no hub entra por e-mail. Sem isso, cada analista veria o diário VAZIO no
+   treinamento. `obras_pessoa` ganhou coluna `email` e `resolverChave` consulta o cadastro
+   antes de adivinhar pelo e-mail (`45325d8`). **Os e-mails reais ainda precisam ser
+   cadastrados.**
+3. **A frente D caiu por limite de gasto da conta**, não por erro. Deixou o parser pronto;
+   a tela de importação foi escrita na sessão principal.
 
 ## Onde estamos
+
 
 **MOCKUP v03 APROVADO PELO CLIENTE em 05/09/2026.** O João comunicou a aprovação; o
 cliente pontuou algumas coisas "para termos atenção", enviadas por **áudio**. O João
