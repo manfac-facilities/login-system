@@ -1,14 +1,21 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 03/09/2026.
+Atualizado em 05/09/2026.
 
 ## Onde estamos
 
-**Mockup v03 publicado e ENVIADO ao cliente** em 03/09/2026, aplicando o feedback 05 e
-os dois achados da revisão independente. **Aguardando a aprovação dele.**
+**MOCKUP v03 APROVADO PELO CLIENTE em 05/09/2026.** O João comunicou a aprovação; o
+cliente pontuou algumas coisas "para termos atenção", enviadas por **áudio**. O João
+está transcrevendo e vai mandar o texto.
 
-Quando voltar: verificar se veio retorno (pelos campos da página ou colado no chat).
-Com a aprovação, o próximo passo é a **spec** — não antes.
+**Aguardando o texto dos áudios** — ele vira `feedback-06-audios-aprovacao.md` nesta
+pasta, literal, antes de qualquer interpretação. Só depois disso a spec começa: os
+pontos de atenção podem mexer no escopo da v1, e spec escrita antes deles nasce contra
+suposição.
+
+O retorno **não veio pelos campos da página nem por comentário no artifact** (conferido
+em 05/09: nenhuma thread). Veio por áudio, fora da ferramenta — mais uma evidência de
+que o canal confiável é o cliente falando com o João, não a página.
 
 **Artifact da v03 (link novo, para o cliente):**
 https://claude.ai/code/artifact/63b26e3e-5e69-45db-b242-c00955e0d202
@@ -37,7 +44,7 @@ Artifact da v02: https://claude.ai/code/artifact/258d0a1e-a44a-4d6f-9463-6990f85
 ## Processo — onde estamos na régua
 
 ```
-brainstorming → mockup v02 aprovado ✅ → v03 com o feedback 05 ⬅ AQUI → spec → plano → código → review → deploy
+brainstorming → mockup v02 ✅ → mockup v03 APROVADO ✅ → pontos de atenção do cliente ⬅ AQUI → spec → plano → código → review → deploy
 ```
 
 ## O que entrou na v03 (feedback 05, recebido em 03/09)
@@ -78,7 +85,9 @@ brainstorming → mockup v02 aprovado ✅ → v03 com o feedback 05 ⬅ AQUI →
 ## Pendências
 
 - [x] Revisão independente da v03 e publicação do artifact (feita da sessão principal)
-- [ ] Confirmar, com digitação humana, se os campos de retorno da página realmente salvam
+- [x] ~~Confirmar se os campos de retorno da página salvam~~ — dispensado na prática: o
+      cliente respondeu por áudio ao João. O canal da página nunca foi usado por ele
+- [ ] **Receber e versionar a transcrição dos áudios de aprovação** (`feedback-06`)
 - [ ] Responder a pergunta 03 ao cliente
 - [ ] **Cadastro de telefone das equipes / prestadores** — trabalho de operação do João.
       Trava o agente de WhatsApp, não trava a v1
