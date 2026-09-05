@@ -41,6 +41,16 @@ Link novo abre direto na v03.
 
 Artifact da v02: https://claude.ai/code/artifact/258d0a1e-a44a-4d6f-9463-6990f85923be
 
+## Mockup reenviado ao cliente em 05/09
+
+O João mandou o mockup ao cliente de novo em 05/09, depois da aprovação. Provável
+motivo: dar à equipe que será treinada na terça a chance de ver a tela antes.
+
+**Consequência de escopo, e é a que importa:** feedback que chegar agora concorre com
+uma construção de três dias. O mockup já foi aprovado (feedback 06) — retorno novo entra
+como backlog da v1, NÃO como escopo da v0, salvo se apontar algo que impeça o
+treinamento de acontecer. Quem decide isso é o João, mas o default é esse.
+
 ## Processo — onde estamos na régua
 
 ```
