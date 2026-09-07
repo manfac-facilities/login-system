@@ -1,0 +1,1216 @@
+<title>Manual do Controle de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+
+<style>
+  /* ------------------------------------------------------------------
+     Paleta: a do próprio hub Manfac. O manual tem que parecer o sistema
+     que ele documenta — fundo #0a1628, navy #0d2050, laranja #f05a28.
+     Tema único, deliberado: o sistema só existe em escuro. Impressão tem
+     bloco próprio no fim.
+     ------------------------------------------------------------------ */
+  :root {
+    --fundo: #0a1628;
+    --navy: #0d2050;
+    --navy-alto: #112a63;
+    --borda: #1e3a5f;
+    --borda-fraca: #16304f;
+    --texto: #e9eff8;
+    --texto-2: #b6c6dc;
+    --muted: #94a3b8;
+    --laranja: #f05a28;
+    --laranja-fraco: rgba(240, 90, 40, 0.14);
+    --vermelho: #ef4444;
+    --amarelo: #f4b73f;
+    --verde: #34d399;
+    --azul: #60a5fa;
+    --cinza: #64748b;
+
+    --largura-texto: 66ch;
+    --r: 6px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Archivo', 'IBM Plex Sans', sans-serif;
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+
+  a { color: var(--laranja); }
+
+  /* ---------- Cabeçalho ---------- */
+
+  .capa {
+    border-bottom: 1px solid var(--borda);
+    background:
+      radial-gradient(120% 140% at 12% 0%, rgba(240, 90, 40, 0.13) 0%, transparent 55%),
+      var(--fundo);
+  }
+
+  .capa-int {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 64px 28px 44px;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--laranja);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-size: clamp(34px, 6vw, 54px);
+    font-weight: 700;
+    line-height: 1.04;
+    margin: 0 0 18px;
+  }
+
+  .lide {
+    max-width: 60ch;
+    font-size: 17.5px;
+    color: var(--texto-2);
+    margin: 0;
+  }
+
+  .fichas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 34px;
+    padding-top: 22px;
+    border-top: 1px solid var(--borda-fraca);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .fichas b { color: var(--texto-2); font-weight: 600; }
+
+  /* ---------- Estrutura ---------- */
+
+  .corpo {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+    display: grid;
+    grid-template-columns: 216px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+
+  nav.sumario {
+    position: sticky;
+    top: 24px;
+    padding-top: 48px;
+  }
+
+  nav.sumario p {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+
+  nav.sumario ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    counter-reset: sec;
+  }
+
+  nav.sumario a {
+    display: block;
+    padding: 6px 10px 6px 0;
+    font-size: 14px;
+    color: var(--texto-2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    transition: color .15s, border-color .15s;
+  }
+
+  nav.sumario li { counter-increment: sec; }
+
+  nav.sumario a::before {
+    content: counter(sec) " ";
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-right: 8px;
+  }
+
+  nav.sumario a:hover,
+  nav.sumario a:focus-visible {
+    color: var(--laranja);
+    border-left-color: var(--laranja);
+  }
+
+  main { padding-top: 48px; min-width: 0; }
+
+  section { scroll-margin-top: 24px; }
+
+  section + section {
+    margin-top: 64px;
+    padding-top: 56px;
+    border-top: 1px solid var(--borda-fraca);
+  }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  h2 .num {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--laranja);
+    letter-spacing: 0;
+  }
+
+  h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 40px 0 10px;
+    color: var(--texto);
+  }
+
+  h4 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 26px 0 8px;
+    color: var(--texto);
+  }
+
+  p, li { max-width: var(--largura-texto); }
+
+  p { margin: 0 0 16px; }
+
+  main ul, main ol { margin: 0 0 18px; padding-left: 22px; }
+  main li { margin-bottom: 7px; }
+  main li::marker { color: var(--cinza); }
+
+  strong { color: #fff; font-weight: 600; }
+  em { color: var(--texto-2); }
+
+  /* ---------- Blocos ---------- */
+
+  .nota {
+    border-left: 3px solid var(--laranja);
+    background: var(--laranja-fraco);
+    padding: 16px 20px;
+    border-radius: 0 var(--r) var(--r) 0;
+    margin: 24px 0;
+    max-width: var(--largura-texto);
+  }
+
+  .nota p:last-child { margin-bottom: 0; }
+
+  .nota.calma {
+    border-left-color: var(--borda);
+    background: rgba(13, 32, 80, 0.55);
+  }
+
+  .painel {
+    background: var(--navy);
+    border: 1px solid var(--borda);
+    border-radius: var(--r);
+    padding: 20px 22px;
+    margin: 22px 0;
+  }
+
+  .painel > :last-child { margin-bottom: 0; }
+
+  /* ---------- Ciclo de vida ---------- */
+
+  .fase {
+    margin-top: 26px;
+  }
+
+  .fase-nome {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .fase-nome::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--borda-fraca);
+  }
+
+  .etapas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+    gap: 12px;
+  }
+
+  .etapa {
+    background: var(--navy);
+    border: 1px solid var(--borda);
+    border-radius: var(--r);
+    padding: 14px 16px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .etapa-topo {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+  }
+
+  .etapa-num {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cinza);
+  }
+
+  .etapa-nome { font-weight: 600; font-size: 15px; }
+
+  .etapa p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--texto-2);
+    line-height: 1.5;
+    max-width: none;
+  }
+
+  .etapa .move {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
+  .etapa .move b { color: var(--texto-2); font-weight: 600; }
+
+  /* ---------- Etiquetas ---------- */
+
+  .chip {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+
+  .chip.laranja { color: var(--laranja); }
+  .chip.vermelho { color: var(--vermelho); }
+  .chip.amarelo { color: var(--amarelo); }
+  .chip.verde { color: var(--verde); }
+  .chip.azul { color: var(--azul); }
+  .chip.cinza { color: var(--cinza); }
+
+  .legenda {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 12px 16px;
+    align-items: baseline;
+    margin: 20px 0 24px;
+    max-width: var(--largura-texto);
+  }
+
+  .legenda div:nth-child(even) {
+    font-size: 14.5px;
+    color: var(--texto-2);
+  }
+
+  /* ---------- Tabelas ---------- */
+
+  .rolagem {
+    overflow-x: auto;
+    margin: 20px 0 24px;
+    border: 1px solid var(--borda);
+    border-radius: var(--r);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: 14.5px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 11px 16px;
+    vertical-align: top;
+    border-bottom: 1px solid var(--borda-fraca);
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(13, 32, 80, 0.6);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  td { color: var(--texto-2); }
+  td strong { color: var(--texto); }
+
+  /* ---------- Passo a passo ---------- */
+
+  ol.passos {
+    counter-reset: passo;
+    list-style: none;
+    padding: 0;
+    margin: 18px 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  ol.passos > li {
+    counter-increment: passo;
+    position: relative;
+    padding-left: 40px;
+    margin: 0;
+    max-width: var(--largura-texto);
+  }
+
+  ol.passos > li::before {
+    content: counter(passo);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 25px;
+    height: 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--borda);
+    background: var(--navy);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--laranja);
+  }
+
+  /* ---------- Glossário ---------- */
+
+  dl.glossario {
+    margin: 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: var(--largura-texto);
+  }
+
+  dl.glossario dt {
+    font-weight: 600;
+    color: #fff;
+    font-size: 15px;
+  }
+
+  dl.glossario dd {
+    margin: 3px 0 0;
+    color: var(--texto-2);
+    font-size: 15px;
+  }
+
+  /* ---------- Rodapé ---------- */
+
+  footer {
+    border-top: 1px solid var(--borda);
+    margin-top: 72px;
+    padding-top: 26px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+    max-width: var(--largura-texto);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--laranja);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media (max-width: 900px) {
+    .corpo { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    nav.sumario { position: static; padding-top: 40px; }
+    nav.sumario ol {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0 12px;
+    }
+    main { padding-top: 40px; }
+    .capa-int { padding: 48px 22px 36px; }
+    .corpo { padding: 0 22px 72px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #111; font-size: 11pt; }
+    .capa { background: #fff; border-bottom: 1px solid #bbb; }
+    nav.sumario { display: none; }
+    .corpo { display: block; max-width: none; padding: 0; }
+    h1, h2, h3, h4, strong, dl.glossario dt { color: #000; }
+    p, li, td, .lide, .etapa p, dl.glossario dd { color: #222; }
+    .painel, .etapa, .nota { background: #fff; border: 1px solid #bbb; }
+    .nota { border-left: 3px solid #888; }
+    th { background: #eee; color: #333; }
+    section + section { page-break-before: auto; }
+    .etapa, table, .painel { page-break-inside: avoid; }
+  }
+</style>
+
+<header class="capa">
+  <div class="capa-int">
+    <p class="eyebrow">Manfac Facilities &nbsp;·&nbsp; Hub &nbsp;·&nbsp; DPSP</p>
+    <h1>Manual do Controle&nbsp;de&nbsp;Obras</h1>
+    <p class="lide">
+      Como usar o sistema que acompanha cada obra da DPSP do começo ao fim — da chegada
+      do chamado até a obra faturada. Este manual cobre a versão usada no treinamento.
+    </p>
+    <div class="fichas">
+      <span><b>Versão</b> v0 · treinamento</span>
+      <span><b>Endereço</b> hub.manfac.com.br</span>
+      <span><b>Atualizado em</b> 07/09/2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="corpo">
+  <nav class="sumario" aria-label="Sumário">
+    <p>Sumário</p>
+    <ol>
+      <li><a href="#s1">Para que serve</a></li>
+      <li><a href="#s2">Como entrar</a></li>
+      <li><a href="#s3">Ciclo de vida</a></li>
+      <li><a href="#s4">Tela por tela</a></li>
+      <li><a href="#s5">Rotina do dia</a></li>
+      <li><a href="#s6">Quando dá errado</a></li>
+      <li><a href="#s7">O que ainda não faz</a></li>
+      <li><a href="#s8">Glossário</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="s1">
+      <h2><span class="num">01</span> Para que serve este sistema</h2>
+      <p>
+        Hoje, quando uma obra para no meio do caminho — falta material, a equipe não
+        conseguiu entrar na loja, o cliente não aprovou a OS — a informação fica só com
+        quem estava lá. Ela não chega para quem cobra o material, para quem cobra a OS do
+        cliente, nem para quem precisa saber, na sexta-feira, quantas obras já foram
+        executadas e ainda não viraram nota fiscal. A planilha registra o status de hoje,
+        mas não registra o que aconteceu ontem, nem desde quando uma obra está parada num
+        mesmo passo — e é assim que uma obra some por semanas sem ninguém perceber.
+      </p>
+      <p>
+        O Controle de Obras existe para isso: todo dia, quem está com uma obra na mão
+        responde <strong>"andou ou não andou"</strong>, e o sistema já sabe para quem
+        mandar a cobrança quando faltar alguma coisa — material, ferramenta, equipe,
+        documento ou até a foto do avanço do dia. A obra passa a ter uma linha do tempo,
+        um dono visível em cada etapa e um contador de "há quantos dias está parada aqui"
+        — o número que, até hoje, só existia na planilha como um status sem data.
+      </p>
+    </section>
+
+    <section id="s2">
+      <h2><span class="num">02</span> Como entrar</h2>
+      <p>
+        O Controle de Obras é um dos sistemas do hub da Manfac. Você entra com o mesmo
+        login que já usa para os outros sistemas — não existe login separado.
+      </p>
+      <ol class="passos">
+        <li>Acesse <strong>hub.manfac.com.br</strong> e entre com seu e-mail
+          <em>@manfac.com.br</em>.</li>
+        <li>Na tela inicial do hub, procure o card <strong>Controle de Obras</strong>.</li>
+        <li>Clique nele para entrar.</li>
+      </ol>
+      <div class="nota">
+        <p>
+          <strong>Não vê o card "Controle de Obras"?</strong> Seu acesso a este sistema
+          ainda não foi liberado. Não é erro seu — é uma permissão que alguém precisa dar.
+          Fale com o administrador do hub. Enquanto isso não acontecer, o card não aparece
+          e, mesmo digitando o endereço direto no navegador, o sistema não deixa entrar.
+        </p>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="num">03</span> O ciclo de vida da obra</h2>
+      <p>
+        Toda obra passa pelas mesmas etapas, sempre nesta ordem. Nem toda obra passa por
+        todas — se a OS do cliente já estava aprovada antes de a obra sair de campo, ela
+        vai direto para "Fechar OS" sem passar por "Pendente fechamento". Uma obra sempre
+        tem uma etapa: ao chegar do Field, ela nasce em "Aguardando definição".
+      </p>
+      <p>
+        As nove etapas são agrupadas em quatro <strong>fases</strong> — é assim que a
+        visão Kanban organiza a tela.
+      </p>
+
+      <div class="fase">
+        <div class="fase-nome">Fase 1 · Antes de executar</div>
+        <div class="etapas">
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">01</span><span class="etapa-nome">Aguardando definição</span></div>
+            <p>A obra acabou de chegar do Field Control, com pouca informação — só o
+              chamado, a loja e o tipo. Ainda não tem responsável, equipe nem cronograma.</p>
+            <div class="move">Move: <b>a triagem, normalmente o Yuri</b></div>
+          </article>
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">02</span><span class="etapa-nome">Levantamento</span></div>
+            <p>A obra foi definida e está sendo preparada antes de a equipe ir para a loja.</p>
+            <div class="move">Move: <b>o responsável da obra</b></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="fase-nome">Fase 2 · Executando</div>
+        <div class="etapas">
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">03</span><span class="etapa-nome">Em andamento</span></div>
+            <p>A equipe está na loja, executando o serviço. É aqui que o diário do dia
+              passa a perguntar "andou hoje?".</p>
+            <div class="move">Move: <b>a equipe em campo</b></div>
+          </article>
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">04</span><span class="etapa-nome">Paralisado</span></div>
+            <p>A obra está em campo mas parada por algum motivo — clima, falta de material,
+              equipe indisponível. Continua aparecendo no diário do dia.</p>
+            <div class="move">Move: <b>o responsável da obra</b></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="fase-nome">Fase 3 · Fechamento</div>
+        <div class="etapas">
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">05</span><span class="etapa-nome">Relatório de entrega</span></div>
+            <p>A execução terminou e falta o relatório que fecha a OS. <strong>Nesta versão
+              esta etapa é movida à mão</strong>, pelo seletor da ficha: a leitura
+              automática do fechamento no Field ainda não existe.</p>
+            <div class="move">Move: <b>equipe / responsável</b></div>
+          </article>
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">06</span><span class="etapa-nome">Pendente fechamento</span></div>
+            <p>O relatório está pronto, mas a OS ainda não foi aprovada no sistema do
+              cliente. Só existe quando a obra saiu de campo sem OS aprovada.</p>
+            <div class="move">Move: <b>o cliente (analista DPSP)</b></div>
+          </article>
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">07</span><span class="etapa-nome">Fechar OS</span></div>
+            <p>A OS já está aprovada — ou já estava desde antes — e falta alguém encerrar
+              formalmente.</p>
+            <div class="move">Move: <b>o responsável da obra</b></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="fase-nome">Fase 4 · Faturamento</div>
+        <div class="etapas">
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">08</span><span class="etapa-nome">Pendente faturamento</span></div>
+            <p>A OS foi fechada e falta o cliente liberar o faturamento.</p>
+            <div class="move">Move: <b>o cliente (analista DPSP)</b></div>
+          </article>
+          <article class="etapa">
+            <div class="etapa-topo"><span class="etapa-num">09</span><span class="etapa-nome">Faturado</span></div>
+            <p>Fim de linha. A obra virou nota fiscal.</p>
+            <div class="move">Move: <b>o financeiro Manfac</b></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="num">04</span> Tela por tela</h2>
+      <p>
+        O sistema tem três abas no topo — <strong>Diário do dia</strong>,
+        <strong>Tarefas</strong> e <strong>Base de obras</strong> — e uma quarta tela, a
+        <strong>ficha da obra</strong>, que abre ao clicar no nome de uma obra em qualquer
+        uma delas.
+      </p>
+
+      <h3>4.1 &nbsp;Base de obras</h3>
+      <p>
+        <strong>Para que serve:</strong> é a visão geral — todas as obras cadastradas, em
+        qualquer etapa, com filtros. É a tela que responde "quantas obras estão paradas",
+        "quais estão sem OS aprovada" e "quantas já foram executadas e ainda não viraram
+        dinheiro".
+      </p>
+      <p>
+        No topo ficam oito indicadores: aguardando definição, em andamento, paralisadas,
+        executadas e ainda na esteira, sem OS aprovada, sem cobertura, aprovadas há mais de
+        60 dias e obras que passaram da duração planejada.
+        <strong>Esses números sempre contam a base inteira, nunca só o que está filtrado
+        na tela</strong> — se você filtrar por uma etapa e o número não mudar, é assim de
+        propósito: filtrar não pode dar a impressão de que a operação parou.
+      </p>
+      <p>Há duas formas de olhar a mesma lista:</p>
+      <ul>
+        <li><strong>Tabela</strong> — uma linha por obra, com todas as colunas. Clicar no
+          título de uma coluna ordena por ela; clicar de novo inverte. Por padrão a lista
+          vem com a obra de mais dias desde a aprovação primeiro. No celular a tabela vira
+          uma lista de cartões.</li>
+        <li><strong>Kanban</strong> — as obras em cartões, em quatro colunas por
+          <em>fase</em> (não por etapa: nove colunas lado a lado ficariam ilegíveis).
+          Dentro de cada coluna, a etapa exata aparece como subtítulo.</li>
+      </ul>
+
+      <h4>Passo a passo</h4>
+      <ol class="passos">
+        <li>Abra a aba <strong>Base de obras</strong>.</li>
+        <li>Escolha <strong>Tabela</strong> ou <strong>Kanban</strong> no seletor do topo.</li>
+        <li>Use os filtros — <em>Responsável da obra</em>, <em>Etapa da obra</em>,
+          <em>Autorização</em> (todas / com OS aprovada / sem OS aprovada / liberadas mas
+          ainda sem OS / sem cobertura) e <em>Classificação</em> (todas / só mau uso / sem
+          mau uso).</li>
+        <li>Clique no nome da obra para abrir a ficha dela.</li>
+      </ol>
+
+      <h4>O que as etiquetas e cores significam</h4>
+      <div class="legenda">
+        <div><span class="chip azul">Etapa</span></div>
+        <div>Uma cor por etapa: laranja para "aguardando definição", verde para "em
+          andamento", vermelho para "paralisado" e "pendente fechamento", amarelo para
+          "fechar OS" e "pendente faturamento", cinza para "faturado".</div>
+
+        <div><span class="chip cinza">Mau uso</span></div>
+        <div>Não é uma etapa: é uma classificação que anda junto com a etapa normal.
+          Significa que o dano veio de uso indevido do cliente — a Manfac conserta e cobra
+          à parte.</div>
+
+        <div><span class="chip laranja">Urgente</span></div>
+        <div>Prioridade. "Normal" aparece em cinza; "Urgente", em laranja.</div>
+
+        <div><span class="chip verde">OS aprovada</span></div>
+        <div>Verde quando o cliente já aprovou a OS no sistema dele; vermelho quando ainda
+          não.</div>
+
+        <div><span class="chip amarelo">Liberado por</span></div>
+        <div>Aparece quando não há OS aprovada, mas alguém do cliente autorizou a execução
+          mesmo assim — com o nome de quem autorizou.</div>
+
+        <div><span class="chip vermelho">Sem cobertura</span></div>
+        <div>A etiqueta de maior risco: a obra não tem OS aprovada <strong>e</strong>
+          ninguém autorizou a execução. Não existe documento nem nome de quem disse "pode
+          fazer". É o número que motivou o projeto.</div>
+      </div>
+      <ul>
+        <li><strong>Contador de dias</strong> (desde a aprovação) — vermelho a partir de
+          100 dias, amarelo quando passou muito da duração combinada ou já soma 60 dias,
+          cinza no resto.</li>
+        <li><strong>Prazo consumido</strong> ("dia 12 de 20", com uma barrinha) — substitui
+          o que a planilha chamava de "avanço físico". Não é o quanto do serviço já foi
+          feito, e sim quanto do prazo combinado já passou. Sem duração planejada, a tela
+          escreve "sem prazo definido" em vez de inventar um número.</li>
+        <li><strong>Bloqueio</strong> e os dias ao lado dele aparecem quando a obra está
+          parada no mesmo bloqueio há 3 dias ou mais.</li>
+        <li>Linhas com <strong>faixa vermelha à esquerda</strong> são obras críticas (100+
+          dias) ou sem cobertura — são as que pedem atenção primeiro.</li>
+      </ul>
+
+      <h3>4.2 &nbsp;Ficha da obra</h3>
+      <p>
+        <strong>Para que serve:</strong> é a tela de uma obra só, com tudo o que existe
+        sobre ela. Abre de qualquer lugar em que o nome da obra apareça.
+      </p>
+      <p>Os blocos aparecem sempre nesta ordem:</p>
+      <ol>
+        <li><strong>Cabeçalho</strong> — loja, nº da OS, tipo, valor e as etiquetas.</li>
+        <li><strong>Caixa de alerta</strong>, só quando há algo a dizer — obra crítica,
+          executada e ainda não faturada, ou fora do prazo planejado. Nunca aparece mais de
+          uma ao mesmo tempo.</li>
+        <li><strong>Caixa de cobertura</strong> — "Sem cobertura" ou "Sem OS aprovada".</li>
+        <li><strong>Ciclo de vida</strong> — a etapa atual, quem está com a bola, o prazo
+          (ou há quantos dias está parada) e o caminho que ela ainda vai seguir.</li>
+        <li><strong>Autorização</strong> — os dois destravamentos, lado a lado. Ver abaixo.</li>
+        <li><strong>Identificação</strong> — OS, loja, chamado, tipo, classificação,
+          prioridade, valor, analista do cliente, responsável, equipe, origem e bloqueio.</li>
+        <li><strong>Cronograma</strong> — início planejado, início real, duração e a data
+          final, que o sistema calcula sozinho. Ninguém digita data de término.</li>
+        <li><strong>Remarcações</strong> — histórico de mudanças da data de início, quando
+          existir. Só leitura; vem da importação.</li>
+        <li><strong>Evolução em fotos</strong> — as fotos dos últimos dias do diário, em
+          miniatura, só para obras em execução.</li>
+        <li><strong>Linha do tempo do diário</strong> — todo dia respondido, se andou e por
+          quê. Só leitura: quem registra é a tela do Diário.</li>
+        <li><strong>Tarefas que as faltas geraram</strong> — as cobranças abertas a partir
+          do diário desta obra.</li>
+        <li><strong>Pendências e próxima ação</strong> — texto livre, com responsável e
+          prazo.</li>
+        <li><strong>Vindo do Field</strong> — espaço reservado para o relatório fotográfico
+          e o relatório de entrega, quando a integração existir.</li>
+      </ol>
+
+      <div class="painel">
+        <h4 style="margin-top:0">Os dois destravamentos são independentes</h4>
+        <p>
+          <strong>OS aprovada</strong> é a aprovação formal, no sistema da DPSP. Quando ela
+          existe, é ela sozinha que autoriza o trabalho.
+        </p>
+        <p>
+          <strong>Liberado por</strong> é o registro de que um analista do cliente deu o
+          "pode fazer" antes de a OS sair, para a equipe não ficar esperando o processo
+          formal. Uma obra pode ter OS aprovada sem nunca ter sido liberada — não precisou.
+          E pode ter sido liberada e, dias depois, ainda estar sem a OS: é esse caso que o
+          sistema mede em "dias sem OS", contados a partir da data da liberação.
+        </p>
+        <p style="margin-bottom:0">
+          Quando <strong>nenhuma das duas</strong> existe, a obra está
+          <span class="chip vermelho">sem cobertura</span> — o estado de maior risco.
+        </p>
+      </div>
+
+      <h4>Como trocar a etapa da obra</h4>
+      <p>
+        No fim do bloco "Ciclo de vida" há um seletor com as nove etapas. Escolha a nova e
+        clique em <strong>Confirmar mudança</strong>. Qualquer pessoa com acesso ao Controle
+        de Obras pode fazer essa troca — não existe hoje trava por função. Ao confirmar,
+        fica registrado quem mudou e quando, e o contador de "dias parada nesta etapa"
+        recomeça do zero.
+      </p>
+
+      <h3>4.3 &nbsp;Triagem</h3>
+      <p>
+        A Triagem não é uma tela separada: é o que a ficha mostra automaticamente
+        <strong>quando a etapa é "Aguardando definição"</strong>. Você chega nela abrindo a
+        obra pela base.
+      </p>
+      <p>
+        <strong>Para que serve:</strong> obra que chega do Field vem só com o básico. Antes
+        de entrar na rotina do diário, alguém precisa decidir quem vai tocar a obra, com
+        qual equipe, com que prioridade e quando ela começa.
+      </p>
+      <p><strong>Os cinco campos obrigatórios</strong>, na ordem em que aparecem:</p>
+      <ol class="passos">
+        <li>Responsável da obra</li>
+        <li>Equipe / prestador</li>
+        <li>Prioridade</li>
+        <li>Data de início</li>
+        <li>Duração em dias</li>
+      </ol>
+      <p>
+        Enquanto os cinco não estiverem preenchidos, o botão <strong>"Liberar para o diário
+        do dia"</strong> fica desabilitado e a obra não aparece para ninguém responder.
+      </p>
+      <p>
+        Há também dois campos <strong>opcionais</strong>: <em>Liberado por</em> e <em>Data
+        da liberação</em>. Ficam de fora do checklist de propósito — se a obra já tem OS
+        aprovada não precisa de liberação nenhuma, e obrigar o preenchimento faria alguém
+        inventar um nome só para destravar a tela.
+      </p>
+      <p>
+        <strong>O que acontece depois de triada:</strong> ao clicar em "Liberar para o
+        diário do dia", a obra muda para <strong>Levantamento</strong>, o contador de dias
+        na etapa zera e o sistema já preenche uma pendência padrão ("Finalizar levantamento,
+        confirmar material e programar a equipe") com o responsável escolhido. A obra some
+        da triagem e, ao chegar em "Em andamento" ou "Paralisado", passa a aparecer no
+        diário de quem foi definido como responsável.
+      </p>
+      <div class="nota calma">
+        <p>
+          Se duas pessoas tentarem liberar a mesma obra ao mesmo tempo, só a primeira
+          consegue. A segunda recebe o aviso "Esta obra já foi liberada por outra pessoa" e
+          precisa recarregar a página.
+        </p>
+      </div>
+
+      <h3>4.4 &nbsp;Diário do dia</h3>
+      <p>
+        <strong>Para que serve:</strong> é a tela que sustenta o sistema. Todo dia, cada
+        responsável diz, obra por obra, se andou ou não.
+      </p>
+      <p>
+        <strong>De quem é a fila:</strong> você vê no seu diário só as obras em que
+        <strong>você</strong> é o responsável cadastrado — e só as que estão em
+        "Levantamento", "Em andamento" ou "Paralisado". Obra "Aguardando definição" nunca
+        aparece aqui: sem responsável, sem equipe e sem cronograma, não há o que responder.
+        O administrador do hub vê o diário de todo mundo, com um seletor para escolher de
+        quem quer ver.
+      </p>
+
+      <h4>Passo a passo, um cartão por vez</h4>
+      <ol class="passos">
+        <li>Abra a aba <strong>Diário do dia</strong>. As obras pendentes aparecem em
+          cartões, a mais parada primeiro.</li>
+        <li>Responda <strong>"Andou hoje?"</strong> — Sim ou Não. É a única pergunta
+          sempre obrigatória.</li>
+        <li>Responda <strong>"Faltou algum item?"</strong> — Não faltou, Material,
+          Ferramenta, Equipe, Documento / ART ou Outro.</li>
+        <li>Se marcou <strong>Não</strong> em "Andou hoje?", aparece <strong>"Por que não
+          andou?"</strong>, com os motivos de bloqueio: Clima, Cliente / loja,
+          Disponibilidade de equipe, Contratação de prestador, Falta de material, Sem
+          bloqueio. <strong>É a única resposta obrigatória além do "andou hoje"</strong> —
+          nada mais impede salvar: nem o item, nem a observação, nem a foto.</li>
+        <li>Se quiser, clique em <strong>"+ observação"</strong> e escreva uma linha livre.</li>
+        <li>Nas obras em execução aparece <strong>"+ anexar foto do dia"</strong>. A foto é
+          reduzida no próprio celular antes de subir, para não travar com sinal fraco.
+          Anexar não é obrigatório — mas, se a foto não vier, o sistema abre sozinho uma
+          tarefa cobrando a foto da equipe da obra.</li>
+        <li>Clique em <strong>"Salvar e sair da fila"</strong>. Antes de clicar, o texto ao
+          lado do botão já avisa o que vai acontecer — inclusive para quem vai a cobrança,
+          se alguma coisa faltou.</li>
+      </ol>
+
+      <p>
+        <strong>O que muda depois de salvar:</strong> a obra sai da fila e desce para
+        "Já respondidas", com um resumo. <strong>Só existe um registro por obra por
+        dia</strong> — salvar de novo para a mesma obra hoje <em>corrige</em> a resposta
+        anterior, não cria uma segunda. Se errou, use <strong>"Desfazer"</strong> na lista
+        de já respondidas: a resposta de hoje é apagada e a obra volta para a fila. As
+        tarefas que essa resposta abriu e que ninguém respondeu ainda são apagadas junto;
+        tarefa já respondida por outra pessoa fica, porque apagá-la apagaria o trabalho
+        dela.
+      </p>
+      <p>
+        Quando todas as obras do dia forem respondidas, a tela mostra um resumo: quantas
+        andaram, quantas não andaram e quantas estão paradas há 3 dias ou mais.
+      </p>
+      <div class="nota">
+        <p>
+          <strong>Os contadores se atualizam sozinhos.</strong> "Dias seguidos sem andar" e
+          "dias no mesmo bloqueio", que aparecem nos cartões e na base, são recalculados
+          toda vez que alguém responde o diário — e também quando alguém desfaz uma
+          resposta. Responder "andou" zera os dois. A conta é feita sobre os registros, e
+          não sobre o calendário: o fim de semana sem registro não quebra a sequência de
+          uma obra parada desde quinta.
+        </p>
+      </div>
+
+      <h3>4.5 &nbsp;Tarefas</h3>
+      <p>
+        <strong>Para que serve:</strong> é o quadro de cobranças que nascem sozinhas do
+        diário. <strong>Ninguém digita uma tarefa aqui</strong> — toda linha desta tela
+        nasceu no instante em que alguém salvou o diário e algo faltou, ou a foto não veio.
+      </p>
+      <div class="rolagem">
+        <table>
+          <thead>
+            <tr><th scope="col">Faltou</th><th scope="col">A cobrança vai para</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Material</strong></td><td>Compras (Roberta)</td></tr>
+            <tr><td><strong>Ferramenta</strong></td><td>Obras (Yuri)</td></tr>
+            <tr><td><strong>Equipe</strong></td><td>Obras (Yuri)</td></tr>
+            <tr><td><strong>Documento / ART</strong></td><td>Obras (Yuri)</td></tr>
+            <tr><td><strong>Outro</strong></td><td>Obras (Yuri)</td></tr>
+            <tr><td><strong>Foto do dia (não veio)</strong></td><td>A equipe em campo da própria obra</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Ferramenta e Equipe vão para o Yuri mesmo quando a obra é de outro analista, porque
+        é ele quem remaneja ferramenta e equipe entre obras.
+      </p>
+      <p>
+        <strong>Prazo:</strong> por padrão, até o fim do dia em que a falta foi registrada.
+        Se o diário for respondido depois das 18h, o prazo já nasce para o dia seguinte —
+        senão a tarefa nasceria vencida no mesmo minuto.
+      </p>
+      <p>
+        <strong>Tarefa vencida</strong> é qualquer tarefa ainda não respondida cujo prazo já
+        passou. Essa situação <strong>nunca é digitada</strong>: o sistema calcula na hora,
+        comparando o prazo com a data de hoje. Ela aparece em vermelho e em primeiro lugar
+        na lista de quem está com ela. Nesta versão, uma tarefa vencida não avisa ninguém
+        sozinha — ela só fica visível para quem entrar na tela.
+      </p>
+      <p>
+        <strong>Como responder:</strong> dentro do grupo de cada pessoa, clique em "Marcar
+        como respondida", escreva em uma linha o que foi feito e confirme. A tarefa sai das
+        abertas e entra em "Respondidas", com data, hora e resumo.
+      </p>
+
+      <h3>4.6 &nbsp;Importar planilha</h3>
+      <p>
+        <strong>Quem usa:</strong> só administradores do hub. Quem não é administrador vê,
+        ao abrir a tela, o aviso de que precisa pedir a alguém com esse acesso.
+      </p>
+      <p>
+        <strong>Para que serve:</strong> é a carga da base de obras a partir da planilha de
+        controle que a Manfac já usa. A planilha tem duas abas e as duas entram juntas: a
+        <strong>Pipeline DPSP</strong> cria as obras (a base inteira, todos os chamados) e a
+        <strong>Planejamento DPSP</strong> completa as que já estão em campo com o detalhe
+        operacional — bloqueio, pendência, cronograma. Importar só uma deixaria a base
+        incompleta.
+      </p>
+      <ol class="passos">
+        <li>Abra a aba <strong>Importar</strong>.</li>
+        <li>Escolha o arquivo <em>.xlsx</em> da planilha.</li>
+        <li>Clique em <strong>Importar</strong> e aguarde — a tela avisa para não fechar a
+          página enquanto importa.</li>
+      </ol>
+      <p>
+        <strong>O relatório de importação</strong> mostra cinco números — linhas lidas em
+        cada aba, obras criadas, obras atualizadas e linhas descartadas — seguidos da lista
+        com <strong>cada linha descartada, a aba de origem e o motivo</strong>.
+      </p>
+      <p>
+        <strong>Linha descartada</strong> é a linha que não virou obra. Os motivos mais
+        comuns são faltar o número da OS e a loja ao mesmo tempo (não dá para saber de qual
+        obra se trata) ou o número da OS já ter aparecido em outra linha da mesma aba — a
+        segunda ocorrência é descartada e a primeira prevalece. <strong>Nenhuma linha é
+        ignorada em silêncio</strong>, de propósito: para não esconder uma obra que o
+        cliente acredita que já está no sistema.
+      </p>
+      <div class="nota calma">
+        <p>
+          A importação pode ser rodada de novo com segurança. Uma obra que já existe
+          (identificada pelo número da OS) é <strong>atualizada</strong>, nunca duplicada —
+          e atualizar não apaga o que foi digitado aqui dentro: a planilha preenche o que
+          está vazio e corrige o que ela realmente tem, mas não desfaz a triagem nem
+          devolve para trás a etapa que alguém moveu na tela.
+        </p>
+      </div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="num">05</span> Rotina do dia a dia</h2>
+
+      <h3>Analista de obras / PCM</h3>
+      <ul>
+        <li><strong>De manhã:</strong> abra o <strong>Diário do dia</strong> e responda cada
+          obra da sua fila. É a tarefa mais importante do dia — é dela que nascem as
+          cobranças.</li>
+        <li><strong>Ao longo do dia:</strong> acompanhe suas <strong>Tarefas</strong> e
+          responda assim que resolver.</li>
+        <li><strong>Quando chegar obra nova</strong> ("Aguardando definição"): entre na
+          ficha e faça a <strong>Triagem</strong>, para ela entrar na rotina do diário.</li>
+        <li><strong>Quando a obra mudar de momento</strong> (saiu de campo, o cliente
+          aprovou a OS): abra a ficha e use o seletor de etapa.</li>
+      </ul>
+
+      <h3>Yuri — triagem e tarefas de Obras</h3>
+      <ul>
+        <li>Confira todo dia se chegou obra nova "Aguardando definição" na
+          <strong>Base de obras</strong> e faça a triagem dela.</li>
+        <li>Acompanhe as <strong>Tarefas</strong> do grupo "Obras" — é para lá que vão
+          ferramenta, equipe, documento / ART e "outro", de qualquer analista.</li>
+      </ul>
+
+      <h3>Administrador do hub</h3>
+      <ul>
+        <li>Libera o acesso de cada pessoa ao Controle de Obras. Sem isso, a pessoa não vê
+          o card no painel nem entra no sistema.</li>
+        <li>É quem roda a <strong>importação da planilha</strong>, na carga inicial e sempre
+          que precisar atualizar a base.</li>
+        <li>No Diário do dia, vê e responde pelo diário de qualquer analista, pelo seletor
+          "Diário de quem".</li>
+      </ul>
+    </section>
+
+    <section id="s6">
+      <h2><span class="num">06</span> Quando algo dá errado</h2>
+      <div class="rolagem">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">O que você vê</th>
+              <th scope="col">O que significa</th>
+              <th scope="col">O que fazer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Mensagem vermelha ao salvar</strong> ("Erro ao salvar o diário",
+                "Erro ao mudar a etapa da obra")</td>
+              <td>Algo falhou ao gravar no servidor — conexão, ou uma permissão que falta.
+                O que já estava salvo antes continua salvo.</td>
+              <td>Tente de novo. Se continuar, avise o administrador.</td>
+            </tr>
+            <tr>
+              <td><strong>O botão continua desabilitado</strong>, ou aparece "Diga por que
+                não andou" / "Preencha os cinco campos antes de liberar"</td>
+              <td>Um campo obrigatório está vazio: no diário, o motivo de "não andou"; na
+                triagem, um dos cinco campos.</td>
+              <td>Preencha o campo indicado. O sistema não deixa avançar sem ele de
+                propósito — é o que impede que alguém invente o motivo depois.</td>
+            </tr>
+            <tr>
+              <td><strong>A obra não aparece para responder hoje</strong>, mesmo achando que
+                não respondeu</td>
+              <td>Alguém — ou você, em outra aba — já registrou o diário dessa obra hoje.
+                Só existe um registro por obra por dia.</td>
+              <td>Procure a obra em "Já respondidas", no fim da tela. Se a resposta estiver
+                errada, use "Desfazer" e responda de novo.</td>
+            </tr>
+            <tr>
+              <td><strong>"Não deu para enviar a foto. Dá para salvar sem ela."</strong></td>
+              <td>O upload falhou: sinal fraco, arquivo grande, conexão instável.</td>
+              <td>Salve o diário mesmo assim — a foto não trava o salvamento. Sem ela, o
+                sistema abre sozinho uma tarefa cobrando a foto da equipe.</td>
+            </tr>
+            <tr>
+              <td><strong>Uma obra que eu esperava responder não aparece no meu
+                diário</strong></td>
+              <td>O diário mostra só as obras em que <strong>você</strong> é o "Responsável
+                da obra". Se está com o nome de outra pessoa, ou o campo está vazio, ela não
+                entra na sua fila.</td>
+              <td>Confira na ficha quem está em "Responsável da obra". Se estiver errado,
+                corrija na triagem (se a obra ainda não foi liberada) ou peça ao
+                administrador para ajustar.</td>
+            </tr>
+            <tr>
+              <td><strong>Não vejo o card "Controle de Obras"</strong> no painel do hub</td>
+              <td>Seu acesso a este sistema ainda não foi liberado.</td>
+              <td>Peça ao administrador do hub para liberar seu acesso.</td>
+            </tr>
+            <tr>
+              <td><strong>"Esta obra já foi liberada por outra pessoa. Recarregue a
+                página."</strong></td>
+              <td>Duas pessoas tentaram liberar a mesma obra na triagem ao mesmo tempo; só
+                a primeira valeu.</td>
+              <td>Recarregue a página — a obra já está liberada e seguiu para
+                "Levantamento".</td>
+            </tr>
+            <tr>
+              <td><strong>A tela inteira mostra "Não deu para carregar…"</strong></td>
+              <td>A lista não chegou do servidor (instabilidade momentânea).</td>
+              <td>Nada do que já foi salvo se perde. Clique em "Tentar de novo"; se
+                persistir, avise o suporte.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s7">
+      <h2><span class="num">07</span> O que esta versão ainda não faz</h2>
+      <p>
+        Esta é a primeira versão, entregue para o treinamento. De propósito, ela ainda não
+        inclui:
+      </p>
+      <ul>
+        <li><strong>Cobrança automática por WhatsApp.</strong> Quem precisa resolver uma
+          tarefa — Compras, Yuri, a equipe em campo — só vê a cobrança se entrar na tela de
+          Tarefas. Não existe mensagem automática avisando.</li>
+        <li><strong>Avisos automáticos no fim do dia</strong> (o lembrete perto das
+          18h/19h para quem ainda não respondeu o diário). Quem esquecer só percebe ao
+          abrir o sistema de novo.</li>
+        <li><strong>Integração automática com o Field Control.</strong> As obras novas
+          chegam por importação de planilha, não sozinhas; e etapas como "Relatório de
+          entrega" precisam ser movidas à mão, porque o sistema ainda não recebe a
+          informação de que a OS fechou no Field.</li>
+        <li><strong>Painel de reunião</strong> — uma tela pensada para acompanhar tudo de
+          uma vez numa reunião, em vez de abrir obra por obra.</li>
+        <li><strong>Cadastro manual de obra.</strong> Toda obra entra pela importação da
+          planilha; ainda não há tela para criar uma obra do zero dentro do sistema.</li>
+      </ul>
+      <p>
+        Essas frentes estão previstas para depois, sem data definida. Vale ter isso em mente
+        no treinamento: sem a cobrança automática, o hábito de preencher o diário todo dia
+        depende, por enquanto, da equipe — o sistema ainda não empurra sozinho.
+      </p>
+    </section>
+
+    <section id="s8">
+      <h2><span class="num">08</span> Glossário</h2>
+      <dl class="glossario">
+        <div>
+          <dt>OS — Ordem de Serviço</dt>
+          <dd>O número que identifica o chamado da obra. É o mesmo número que precisa ser
+            aprovado no sistema do cliente para liberar o fechamento e o faturamento.</dd>
+        </div>
+        <div>
+          <dt>PCM / Responsável da obra</dt>
+          <dd>A pessoa da Manfac responsável por tocar aquela obra. É por esse nome que o
+            Diário do dia decide de quem é cada obra.</dd>
+        </div>
+        <div>
+          <dt>Triagem</dt>
+          <dd>O preenchimento dos dados que faltam numa obra recém-chegada — responsável,
+            equipe, prioridade, início e duração — antes de ela entrar na rotina do diário.</dd>
+        </div>
+        <div>
+          <dt>Etapa</dt>
+          <dd>Cada um dos nove passos do ciclo de vida, de "Aguardando definição" até
+            "Faturado".</dd>
+        </div>
+        <div>
+          <dt>Bloqueio</dt>
+          <dd>O motivo pelo qual uma obra não andou num dia: clima, cliente / loja,
+            disponibilidade de equipe, contratação de prestador, falta de material — ou
+            "sem bloqueio".</dd>
+        </div>
+        <div>
+          <dt>Mau uso</dt>
+          <dd>Uma classificação, não uma etapa: dano causado por uso indevido do cliente,
+            que a Manfac conserta e cobra à parte. A obra segue o mesmo ciclo de vida das
+            outras.</dd>
+        </div>
+        <div>
+          <dt>Sem cobertura</dt>
+          <dd>A obra está sendo (ou foi) executada sem OS aprovada pelo cliente e sem
+            ninguém nomeado que tenha autorizado a execução. É o estado de maior risco: não
+            há documento nem nome a quem recorrer se algo der errado.</dd>
+        </div>
+        <div>
+          <dt>Pendente fechamento</dt>
+          <dd>A etapa em que o relatório da obra já está pronto, mas a OS ainda não foi
+            aprovada pelo cliente. Só quem destrava é o próprio cliente.</dd>
+        </div>
+        <div>
+          <dt>Avanço %</dt>
+          <dd>Termo que a planilha usava e que <strong>este sistema não tem</strong>. No
+            lugar dele, o sistema mostra "prazo consumido" (por exemplo, "dia 12 de 20"),
+            que mede quanto do prazo combinado já passou — não quanto do serviço já foi
+            feito.</dd>
+        </div>
+      </dl>
+
+      <footer>
+        Manfac Facilities · Controle de Obras · versão de treinamento — 07/09/2026.
+        Dúvida que este manual não responde: fale com o administrador do hub.
+      </footer>
+    </section>
+  </main>
+</div>

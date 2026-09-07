@@ -26,12 +26,21 @@ Facilities atrás de um login compartilhado:
 | Admin | `/admin/acessos` | Admin | Contas e acessos. O João chama de "módulo de login" |
 | Controle de Obras | `/obras` | **Controle de Obras** | Quarta frente, codificada em 05/09/2026. Slug de acesso: `obras`. Migration `sdd-sql-obras-v0.sql` **ainda não aplicada** — ver abaixo |
 
-> **Controle de Obras — estado em 05/09/2026.** O código das cinco telas está no branch
-> `copy-aprovada-cliente` e o build compila, mas **nada foi testado contra Supabase real**:
-> a migration não rodou em banco nenhum e o slug `obras` não foi liberado para ninguém em
-> `/admin/acessos`. Enquanto esses dois passos manuais não acontecerem, o card não aparece
-> no dashboard e a rota devolve erro. Contexto completo, decisões e pendências em
+> **Controle de Obras — estado em 07/09/2026.** O código das cinco telas está no `master`
+> local (o branch `copy-aprovada-cliente` foi mergeado por fast-forward), build e testes
+> limpos, mas **nada foi testado contra Supabase real**: a migration não rodou em banco
+> nenhum e o slug `obras` não foi liberado para ninguém em `/admin/acessos`. Enquanto esses
+> dois passos manuais não acontecerem, o card não aparece no dashboard e a rota devolve
+> erro. **O `master` local também não foi pushado** — ver abaixo. Contexto completo,
+> decisões e pendências em
 > `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`.
+
+> **A conta do GitHub desta máquina não tem permissão de escrita no repositório.** O `gh`
+> está logado como **`Mainsis`**, e `gh api repos/manfac-facilities/login-system` devolve
+> `{"admin": false, "push": false, "pull": true}` — `git push` morre com
+> `403 ... denied to Mainsis`. Verificado em 07/09/2026. **Quem dá push é o João**, ou
+> alguém precisa conceder escrita a essa conta. Não perca tempo investigando credencial:
+> o token tem escopo `repo`; o que falta é permissão no repositório.
 
 **Apelidos que já causaram confusão.** O repositório é `manfac-facilities/login-system`
 e o app no EasyPanel tem esse mesmo nome, herdado de quando o projeto era só a tela de

@@ -1,5 +1,52 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
+Atualizado em 07/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
+histórico de 05/09 em diante, mantido como estava.
+
+## 07/09/2026 — véspera do treinamento
+
+**Feito neste dia, tudo commitado no `master` local:**
+
+- O branch `copy-aprovada-cliente` virou `master` por fast-forward (69 commits). **O push
+  falhou:** a conta do GitHub configurada nesta máquina (`Mainsis`) tem só permissão de
+  leitura em `manfac-facilities/login-system` (`gh api` confirma
+  `{"push": false}`). Nada saiu daqui — o push é do João.
+- **Dois defeitos corrigidos** (commit `3bfc6b3`), os dois só apareceriam no uso real:
+  1. `nao_andou_seguidos` e `bloqueada_dias` eram lidos em seis lugares e **nunca
+     escritos** — nasciam 0 e ficavam parados. O alerta de "3 dias sem andar", que é o
+     mecanismo da decisão C/F, nunca dispararia. Agora são recalculados do histórico do
+     diário a cada resposta e a cada desfazer, e o `bloqueio` da obra passa a vir do
+     motivo do último registro.
+  2. Reimportar a planilha **apagava o que foi digitado no app** (a aba Pipeline manda
+     `null` em pcm, equipe, bloqueio e pendência, e o update era cru; status em branco
+     ainda devolvia a obra para `definir`). Era o achado deixado em aberto no review de
+     05/09. `camposParaAtualizar` resolve: `null` nunca sobrescreve, `etapa` e `mau_uso`
+     não se reescrevem.
+- **Manual de uso escrito e publicado** — frente E da spec, pedido explícito do cliente no
+  feedback 06. Fonte em `manual-uso-v0.md`, página em `manual-uso-v0.html`, artifact em
+  https://claude.ai/code/artifact/6ac2cb5a-055e-4812-931a-afad7b3dc8e4 (tem folha de
+  impressão embutida: Ctrl+P no navegador gera o PDF).
+- 204 testes passando, `tsc`, `eslint` e `npm run build` limpos.
+
+**Duas lacunas encontradas ao escrever o manual, contra a spec §1:**
+
+- **Cadastro manual de obra não existe.** Está na lista de escopo da v0 (item 7) e não há
+  tela nem action. Não trava o treinamento — a base vem da planilha (decisão N) — mas
+  contradiz a decisão de 01/09 ("se travar deve dar para fazer manual"). **Não foi
+  construído de propósito: não há mockup aprovado dessa tela**, e desenhar tela nova sem
+  mockup quebra o processo. Decisão do João.
+- A ficha diz que "Relatório de entrega" é deduzido do Field automaticamente
+  (`_ficha.tsx:213-220`), o que não existe na v0. O manual avisa que essa etapa é movida
+  à mão. O texto da tela continua prometendo o que não entrega — corrigir na v1.
+
+**O caminho crítico continua sendo manual e é do João:** rodar
+`sdd-sql-obras-v0.sql`, criar o bucket `obras-fotos`, dar push, deployar, importar a
+planilha, cadastrar os e-mails em `obras_pessoa` e liberar o slug `obras` em
+`/admin/acessos`. Nada disso o Claude consegue fazer sozinho — o MCP do Supabase pede
+autorização OAuth e o GitHub recusa o push.
+
+---
+
 Atualizado em 05/09/2026, fim do dia.
 
 ## O QUE JÁ ESTÁ CONSTRUÍDO
@@ -128,8 +175,10 @@ brainstorming → mockup v02 ✅ → mockup v03 APROVADO ✅ → pontos de aten�
 - [x] Revisão independente da v03 e publicação do artifact (feita da sessão principal)
 - [x] ~~Confirmar se os campos de retorno da página salvam~~ — dispensado na prática: o
       cliente respondeu por áudio ao João. O canal da página nunca foi usado por ele
-- [ ] **Receber e versionar a transcrição dos áudios de aprovação** (`feedback-06`)
-- [ ] Responder a pergunta 03 ao cliente
+- [x] **Receber e versionar a transcrição dos áudios de aprovação** (`feedback-06`)
+- [x] Manual de uso (frente E) — escrito, publicado e versionado em 07/09
+- [ ] Responder a pergunta 03 ao cliente — o texto pronto está em
+      `pergunta-03-como-calcula-o-avanco.md`, no fim. Falta só o João mandar
 - [ ] **Cadastro de telefone das equipes / prestadores** — trabalho de operação do João.
       Trava o agente de WhatsApp, não trava a v1
 - [ ] Campo de liberação na tela de Triagem — citado nas decisões, não estava no brief
