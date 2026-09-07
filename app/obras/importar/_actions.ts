@@ -21,6 +21,7 @@ import {
   localizarLinhaCabecalho,
   extrairLinhas,
   montarImportacao,
+  camposParaAtualizar,
   type LinhaDescartada,
   type ObraParaImportar,
 } from '../_lib/importacao'
@@ -106,6 +107,8 @@ export async function importarPlanilhaAction(form: FormData): Promise<EstadoImpo
 
   // --- Gravar ---------------------------------------------------------------
   // Idempotência por `os`: quem já existe é atualizado, quem não existe nasce.
+  // Atualizar é sempre parcial — ver `camposParaAtualizar`. Reimportar completa e
+  // corrige a obra, mas não desfaz a triagem nem a etapa que a equipe moveu na tela.
   // Obra sem OS (a GARANTIA, e o cadastro manual) não tem chave natural — só
   // entra na primeira carga, senão duplicaria a cada importação.
   const { data: existentes, error: erroLeitura } = await supabase
@@ -130,7 +133,18 @@ export async function importarPlanilhaAction(form: FormData): Promise<EstadoImpo
     const idExistente = obra.os ? idPorOs.get(obra.os) : undefined
 
     if (idExistente) {
-      const { error } = await supabase.from('obras_obra').update(campos).eq('id', idExistente)
+      // A planilha preenche e corrige; nunca apaga o que foi digitado no app.
+      const atualizacao = camposParaAtualizar(campos)
+      if (Object.keys(atualizacao).length === 0) {
+        descartadas.push({
+          origem: 'pipeline',
+          linha: obra.linha,
+          motivo: `OS ${obra.os} já cadastrada e a planilha não traz nada novo para ela`,
+        })
+        continue
+      }
+
+      const { error } = await supabase.from('obras_obra').update(atualizacao).eq('id', idExistente)
       if (error) {
         descartadas.push({
           origem: 'pipeline',

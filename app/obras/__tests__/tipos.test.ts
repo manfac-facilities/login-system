@@ -41,6 +41,7 @@ import {
   sitTarefa,
   somaDias,
   travado,
+  contadoresDoDiario,
   type Obra,
   type ObraRow,
   type TarefaRow,
@@ -453,5 +454,72 @@ describe('tarefas', () => {
     expect(chaveDaEquipe(obraRow({ equipe: 'DEFINIR' }))).toBe('EQ_EQUIPEADEFINIR')
     expect(chaveDaEquipe(obraRow({ equipe: null }))).toBe('EQ_EQUIPEADEFINIR')
     expect(nomeDaEquipe(obraRow({ equipe: 'DEFINIR' }))).toBe('Equipe a definir')
+  })
+})
+
+describe('contadoresDoDiario — os números que ninguém digita', () => {
+  it('obra sem nenhum registro fica zerada e sem bloqueio', () => {
+    expect(contadoresDoDiario([])).toEqual({
+      nao_andou_seguidos: 0,
+      bloqueada_dias: 0,
+      bloqueio: 'Sem bloqueio',
+    })
+  })
+
+  it('andou hoje zera tudo, mesmo depois de dias parada', () => {
+    const r = contadoresDoDiario([
+      { andou: true, motivo: null },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+    ])
+
+    expect(r).toEqual({ nao_andou_seguidos: 0, bloqueada_dias: 0, bloqueio: 'Sem bloqueio' })
+  })
+
+  it('conta os registros seguidos sem andar e o tempo no mesmo bloqueio', () => {
+    const r = contadoresDoDiario([
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: true, motivo: null },
+    ])
+
+    // 3 registros sem andar, os 3 pelo mesmo motivo — é o que `travado()` procura.
+    expect(r).toEqual({
+      nao_andou_seguidos: 3,
+      bloqueada_dias: 3,
+      bloqueio: 'Falta de material',
+    })
+  })
+
+  it('bloqueio que muda reinicia a contagem do bloqueio, não a de dias sem andar', () => {
+    const r = contadoresDoDiario([
+      { andou: false, motivo: 'Clima' },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+    ])
+
+    expect(r).toEqual({
+      nao_andou_seguidos: 3,
+      bloqueada_dias: 1,
+      bloqueio: 'Clima',
+    })
+  })
+
+  it('fim de semana não quebra a sequência — conta registros, não dias de calendário', () => {
+    // Sexta e segunda, sem registro no sábado e no domingo.
+    const r = contadoresDoDiario([
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+    ])
+
+    expect(r.nao_andou_seguidos).toBe(2)
+    expect(r.bloqueada_dias).toBe(2)
+  })
+
+  it('motivo fora da lista não vira bloqueio', () => {
+    const r = contadoresDoDiario([{ andou: false, motivo: 'qualquer coisa' }])
+
+    expect(r).toEqual({ nao_andou_seguidos: 1, bloqueada_dias: 0, bloqueio: 'Sem bloqueio' })
   })
 })

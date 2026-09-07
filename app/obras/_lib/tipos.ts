@@ -646,3 +646,64 @@ export function nomeEtapa(etapa: Etapa): string {
 export function nomeFase(fase: Fase): string {
   return FASES.find((f) => f.k === fase)?.nome ?? fase
 }
+
+// ============================================================
+// 7. Contadores do diário — os números que a tela mostra e ninguém digita
+//
+// `nao_andou_seguidos` e `bloqueada_dias` são lidos em seis lugares (o alerta de
+// "3 dias sem andar" no diário, o "há N dias" da ficha, a etiqueta da tabela e
+// `travado()`), mas NADA os escrevia: nasciam 0 no banco e ficavam parados para
+// sempre. Ou seja, a obra podia estar parada há duas semanas e a tela dizia
+// "andou no último registro". Estas são as duas colunas que o sistema existe
+// para mostrar, então elas são recalculadas do histórico a cada resposta do
+// diário — nunca incrementadas às cegas, senão corrigir a resposta de hoje
+// contaria duas vezes.
+// ============================================================
+
+export type RegistroDiario = { andou: boolean; motivo: string | null }
+
+export type ContadoresDiario = {
+  nao_andou_seguidos: number
+  bloqueada_dias: number
+  bloqueio: Bloqueio
+}
+
+/**
+ * Os contadores da obra, deduzidos do histórico do diário.
+ *
+ * `recentesPrimeiro` são os registros do diário da obra, do mais novo para o
+ * mais velho. "Seguidos" conta REGISTROS seguidos, não dias de calendário: fim
+ * de semana não tem registro e não pode quebrar a sequência de uma obra que
+ * está parada desde quinta.
+ */
+export function contadoresDoDiario(recentesPrimeiro: RegistroDiario[]): ContadoresDiario {
+  const vazio: ContadoresDiario = { nao_andou_seguidos: 0, bloqueada_dias: 0, bloqueio: SEM_BLOQUEIO }
+  const ultimo = recentesPrimeiro[0]
+  if (!ultimo) return vazio
+
+  let naoAndou = 0
+  for (const r of recentesPrimeiro) {
+    if (r.andou) break
+    naoAndou++
+  }
+
+  // Andou hoje encerra o bloqueio: o que valia ontem não vale mais.
+  if (ultimo.andou) return { ...vazio, nao_andou_seguidos: 0 }
+
+  const motivo = ultimo.motivo
+  if (!motivo || motivo === SEM_BLOQUEIO || !BLOQUEIOS.includes(motivo as Bloqueio)) {
+    return { nao_andou_seguidos: naoAndou, bloqueada_dias: 0, bloqueio: SEM_BLOQUEIO }
+  }
+
+  let mesmoBloqueio = 0
+  for (const r of recentesPrimeiro) {
+    if (r.andou || r.motivo !== motivo) break
+    mesmoBloqueio++
+  }
+
+  return {
+    nao_andou_seguidos: naoAndou,
+    bloqueada_dias: mesmoBloqueio,
+    bloqueio: motivo as Bloqueio,
+  }
+}

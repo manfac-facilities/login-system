@@ -27,6 +27,7 @@ import {
   mapearLinhaPipeline,
   mapearLinhaPlanejamento,
   montarImportacao,
+  camposParaAtualizar,
   type LinhaBrutaObras,
 } from '../_lib/importacao'
 
@@ -750,5 +751,42 @@ describe('montarImportacao — ponta a ponta com o dado real completo (187 + 20)
 
   it('não sobra nenhuma obra sem etapa (default definir aplicado)', () => {
     expect(resultado.obras.every((o) => typeof o.etapa === 'string' && o.etapa.length > 0)).toBe(true)
+  })
+})
+
+describe('camposParaAtualizar — reimportar não pode desfazer o que foi digitado no app', () => {
+  it('não sobrescreve com null o que a aba não tem', () => {
+    // A Pipeline não tem pcm, equipe, bloqueio, pendência: manda null em todos.
+    // Um update cru apagaria a triagem inteira da obra.
+    const saida = camposParaAtualizar({
+      os: '3762',
+      loja: 'DP NILOPOLIS 5',
+      pcm: null,
+      equipe: null,
+      bloqueio: null,
+      pendencia: undefined,
+    })
+
+    expect(saida).toEqual({ os: '3762', loja: 'DP NILOPOLIS 5' })
+  })
+
+  it('deixa a planilha corrigir o que ela realmente tem', () => {
+    const saida = camposParaAtualizar({ loja: 'DP PETROPOLIS 5', valor: 48000, duracao: 12 })
+
+    expect(saida).toEqual({ loja: 'DP PETROPOLIS 5', valor: 48000, duracao: 12 })
+  })
+
+  it('nunca reescreve etapa nem mau_uso — quem move a obra é a tela', () => {
+    // Status em branco na planilha vira etapa 'definir'. Sem esta regra, reimportar
+    // devolveria para a fila do Yuri toda obra que a equipe já tinha triado.
+    const saida = camposParaAtualizar({ os: '3762', etapa: 'definir', mau_uso: false })
+
+    expect(saida).toEqual({ os: '3762' })
+  })
+
+  it('valor falso que não é null continua passando (0, string vazia não existe aqui)', () => {
+    const saida = camposParaAtualizar({ valor: 0, duracao: 0 })
+
+    expect(saida).toEqual({ valor: 0, duracao: 0 })
   })
 })

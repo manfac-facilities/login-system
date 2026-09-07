@@ -660,3 +660,31 @@ export function montarImportacao(linhasPipeline: LinhaBrutaObras[], linhasPlanej
     descartadas,
   }
 }
+
+/**
+ * O que a planilha pode reescrever numa obra que JÁ existe no banco.
+ *
+ * Reimportar não pode desfazer o que a equipe digitou no app. A aba Pipeline não
+ * tem pcm, equipe, bloqueio nem pendência — ela manda `null` em todas — e um
+ * update cru apagaria a triagem inteira em silêncio. Duas regras:
+ *
+ * 1. **`null` nunca sobrescreve.** A planilha preenche o que está vazio e corrige
+ *    o que ela realmente tem; nunca apaga.
+ * 2. **`etapa` e `mau_uso` não se reescrevem.** Quem move a obra é a tela
+ *    (decisão 01: a tela é a fonte da verdade) e mau uso é classificação do app
+ *    (decisão J). O status da planilha é um retrato velho: status em branco vira
+ *    `'definir'`, o que devolveria para a fila do Yuri toda obra já triada.
+ *
+ * Na primeira carga isso não se aplica — a obra nasce com a planilha inteira.
+ */
+export function camposParaAtualizar(campos: Record<string, unknown>): Record<string, unknown> {
+  const saida: Record<string, unknown> = {}
+
+  for (const [coluna, valor] of Object.entries(campos)) {
+    if (coluna === 'etapa' || coluna === 'mau_uso') continue
+    if (valor === null || valor === undefined) continue
+    saida[coluna] = valor
+  }
+
+  return saida
+}

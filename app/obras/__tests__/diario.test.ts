@@ -20,10 +20,15 @@ const insertTarefaMock = jest.fn()
 const deleteTarefaInMock = jest.fn()
 const deleteTarefaEqMock = jest.fn()
 const createSignedUrlMock = jest.fn()
+const updateObraMock = jest.fn()
 
 type Qualquer = Record<string, unknown>
 
-const estado: { obra: Qualquer | null; tarefas: Qualquer[] } = { obra: null, tarefas: [] }
+const estado: { obra: Qualquer | null; tarefas: Qualquer[]; diario: Qualquer[] } = {
+  obra: null,
+  tarefas: [],
+  diario: [],
+}
 
 /** Construtor de query encadeável e "thenable", como a do supabase-js. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,9 +51,18 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
     from: jest.fn((tabela: string) => {
-      if (tabela === 'obras_obra') return chain({ data: estado.obra, error: null })
+      if (tabela === 'obras_obra') {
+        const c = chain({ data: estado.obra, error: null })
+        c.update = jest.fn((campos: Qualquer) => {
+          updateObraMock(campos)
+          return c
+        })
+        return c
+      }
       if (tabela === 'obras_diario') {
-        const c = chain({ error: null })
+        // O select do histórico (recálculo dos contadores) lê `estado.diario`;
+        // o resto das chamadas é upsert/delete, que ignoram `data`.
+        const c = chain({ data: estado.diario, error: null })
         c.upsert = upsertDiarioMock
         c.delete = jest.fn(() => {
           const d = chain({ error: null })
@@ -115,6 +129,7 @@ beforeEach(() => {
   jest.useFakeTimers().setSystemTime(MEIO_DIA)
   estado.obra = { ...OBRA_EM_CAMPO }
   estado.tarefas = []
+  estado.diario = []
   getUserMock.mockResolvedValue({
     data: { user: { id: 'u1', email: 'yuri.nascimento@manfac.com.br' } },
   })
@@ -423,5 +438,81 @@ describe('chaveDoUsuario — a ponte entre a conta do hub e a pessoa da planilha
     [null, ''],
   ])('%s → %s', (email, esperado) => {
     expect(chaveDoUsuario(email)).toBe(esperado)
+  })
+})
+
+describe('contadores da obra — os números que a tela mostra e ninguém digita', () => {
+  it('grava a sequência sem andar e o bloqueio a partir do histórico', async () => {
+    // O que o banco devolve depois do upsert de hoje: 3 registros seguidos sem
+    // andar, todos por falta de material. É o caso que faz `travado()` valer.
+    estado.diario = [
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: false, motivo: 'Falta de material' },
+      { andou: true, motivo: null },
+    ]
+
+    await salvarDiarioAction({
+      obraId: 'obra-1',
+      andou: false,
+      item: 'Material',
+      motivo: 'Falta de material',
+      obs: null,
+      fotoPath: 'obra-1/2026-09-05.jpg',
+    })
+
+    expect(updateObraMock).toHaveBeenCalledWith({
+      nao_andou_seguidos: 3,
+      bloqueada_dias: 3,
+      bloqueio: 'Falta de material',
+    })
+  })
+
+  it('andou hoje zera a sequência e limpa o bloqueio', async () => {
+    estado.diario = [
+      { andou: true, motivo: null },
+      { andou: false, motivo: 'Clima' },
+    ]
+
+    await salvarDiarioAction({
+      obraId: 'obra-1',
+      andou: true,
+      item: 'Não faltou',
+      motivo: null,
+      obs: null,
+      fotoPath: 'obra-1/2026-09-05.jpg',
+    })
+
+    expect(updateObraMock).toHaveBeenCalledWith({
+      nao_andou_seguidos: 0,
+      bloqueada_dias: 0,
+      bloqueio: 'Sem bloqueio',
+    })
+  })
+
+  it('desfazer também desconta — o contador não pode sobreviver à resposta apagada', async () => {
+    estado.diario = [{ andou: false, motivo: 'Clima' }]
+
+    await desfazerDiarioAction('obra-1')
+
+    expect(updateObraMock).toHaveBeenCalledWith({
+      nao_andou_seguidos: 1,
+      bloqueada_dias: 1,
+      bloqueio: 'Clima',
+    })
+  })
+
+  it('contador que falha não derruba o salvamento do dia', async () => {
+    estado.diario = []
+    const r = await salvarDiarioAction({
+      obraId: 'obra-1',
+      andou: true,
+      item: 'Não faltou',
+      motivo: null,
+      obs: null,
+      fotoPath: 'obra-1/2026-09-05.jpg',
+    })
+
+    expect(r).toEqual({ success: true })
   })
 })

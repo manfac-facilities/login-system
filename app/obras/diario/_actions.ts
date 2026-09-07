@@ -28,7 +28,9 @@ import {
   pedeFoto,
   prazoPadrao,
   BLOQUEIOS,
+  contadoresDoDiario,
   type Etapa,
+  type RegistroDiario,
 } from '../_lib/tipos'
 import { resolverChave } from './_pessoa'
 
@@ -101,6 +103,8 @@ export async function salvarDiarioAction(entrada: EntradaDiario): Promise<Estado
     { onConflict: 'obra_id,data' }
   )
   if (erroDiario) return { error: 'Erro ao salvar o diário' }
+
+  await recalcularContadores(supabase, obra.id)
 
   const erroTarefa = await abrirTarefas(supabase, obra, {
     dia,
@@ -228,6 +232,10 @@ export async function desfazerDiarioAction(obraId: string): Promise<EstadoDiario
     .eq('aberta', dia)
     .eq('situacao', 'aberta')
 
+  // Desfazer também desconta: sem isto a obra continuaria "3 dias sem andar"
+  // por causa de uma resposta que não existe mais.
+  await recalcularContadores(supabase, obraId)
+
   revalidatePath('/obras/diario')
   revalidatePath('/obras/tarefas')
   return { success: true }
@@ -249,4 +257,36 @@ export async function obterUrlFotoAction(path: string): Promise<{ url?: string; 
   const { data, error } = await supabase.storage.from('obras-fotos').createSignedUrl(path, 60)
   if (error || !data?.signedUrl) return { error: 'Não deu para abrir a foto' }
   return { url: data.signedUrl }
+}
+
+/**
+ * Recalcula `nao_andou_seguidos`, `bloqueada_dias` e `bloqueio` a partir do
+ * histórico do diário da obra.
+ *
+ * Por que recalcular em vez de incrementar: responder de novo no mesmo dia é
+ * CORRIGIR a resposta de hoje (o diário tem `unique (obra_id, data)`), e um
+ * `+1` cego contaria a mesma falta duas vezes. O histórico é a única fonte
+ * honesta. 60 registros cobrem quase três meses de dias úteis — mais que isso
+ * não muda contador nenhum, porque qualquer sequência real quebra antes.
+ *
+ * Falha aqui NÃO derruba o salvamento: o registro do dia já está gravado, e
+ * perder o registro para consertar um contador seria trocar o certo pelo enfeite.
+ */
+async function recalcularContadores(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  obraId: string
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('obras_diario')
+    .select('andou, motivo')
+    .eq('obra_id', obraId)
+    .order('data', { ascending: false })
+    .limit(60)
+  if (error) return
+
+  await supabase
+    .from('obras_obra')
+    .update(contadoresDoDiario((data ?? []) as RegistroDiario[]))
+    .eq('id', obraId)
 }
