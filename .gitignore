@@ -51,3 +51,6 @@ material manfac/
 
 # artefatos de teste de navegador
 .playwright-mcp/
+
+# insumos do cliente, nao sao codigo do hub
+sistema-os/
