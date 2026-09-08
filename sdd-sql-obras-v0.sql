@@ -31,7 +31,18 @@
 --    tabela só — obras_obra, a única com coluna `updated_at`. Se algum dia
 --    ela for reaproveitada em outra tabela, o teste de tabela tem que ser um
 --    `if` EXTERNO com o campo aninhado dentro.
+--
+-- TRANSAÇÃO EXPLÍCITA (revisão de 08/09/2026, véspera do treinamento):
+-- o arquivo roda inteiro dentro de `begin`/`commit`. O SQL Editor manda o
+-- script num batch só, e o Postgres já executaria isso numa transação
+-- implícita — mas isso é comportamento do CLIENTE, não garantia do arquivo,
+-- e estado parcial em produção é caro. Com o envelope, qualquer erro no meio
+-- (o candidato mais provável é a seção 7, que mexe em `storage.objects`,
+-- de dono `supabase_storage_admin`) desfaz tudo e deixa o banco intocado,
+-- em vez de metade aplicada.
 -- ============================================================
+
+begin;
 
 
 -- ============================================================
@@ -395,11 +406,25 @@ insert into public.obras_pessoa (chave, nome, iniciais, area, funcao, fone) valu
 on conflict (chave) do nothing;
 
 
+commit;
+
+
 -- ============================================================
 -- 9. DEPOIS DE RODAR ESTE ARQUIVO — o que ainda falta, à mão
 --
--- Liberar o acesso de cada usuário ao sistema 'obras' em /admin/acessos.
+-- O passo a passo completo, com o SQL de verificação de cada etapa, está em
+-- docs/cliente/2026-08-31-sistema-controle-de-obras/RUNBOOK-ir-ao-ar.md
+--
+-- (1) Liberar o acesso de cada usuário ao sistema 'obras' em /admin/acessos.
 -- O slug 'obras' é string livre em hub_system_access.system_slug e NÃO é
 -- criado por esta migration: sem a linha por usuário, ninguém entra em
 -- /obras — nem vê o card no dashboard. Administrador do hub passa sempre.
+--
+-- (2) Preencher obras_pessoa.email. O seed acima deixa a coluna NULA de
+-- propósito — os e-mails reais não estavam disponíveis quando ele foi
+-- escrito. Sem esse passo, `resolverChave` cai na convenção (primeiro
+-- pedaço do e-mail, em maiúsculas); se o e-mail de alguém fugir do padrão
+-- `nome.sobrenome@`, a chave não casa com nenhum `pcm` e o Diário dessa
+-- pessoa abre em "sem permissão" — não em lista vazia. É a falha mais
+-- visível possível numa sala de treinamento. O runbook traz o SQL.
 -- ============================================================

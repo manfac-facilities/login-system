@@ -10,4 +10,5 @@ export const SISTEMAS: Sistema[] = [
   { slug: 'conversor-os', label: 'Conversor OS' },
   { slug: 'dashboard-manutencao', label: 'Cockpit Manutenção Predial' },
   { slug: 'crm', label: 'CRM' },
+  { slug: 'obras', label: 'Controle de Obras' },
 ]

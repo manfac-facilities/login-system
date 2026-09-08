@@ -33,7 +33,12 @@ Facilities atrás de um login compartilhado:
 > dois passos manuais não acontecerem, o card não aparece no dashboard e a rota devolve
 > erro. **O `master` local também não foi pushado** — ver abaixo. Contexto completo,
 > decisões e pendências em
-> `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`.
+> `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`. **O passo a passo de pôr
+> no ar, com o SQL de verificação de cada etapa, está em
+> `docs/cliente/2026-08-31-sistema-controle-de-obras/RUNBOOK-ir-ao-ar.md`** — a migration
+> foi revisada em 08/09 (0 bloqueadores, relatório em `review-migration-2026-09-08.md`) e
+> hoje roda dentro de `begin`/`commit`. Criar o bucket `obras-fotos` **não** é passo
+> manual: a própria migration o cria, com as policies de storage.
 
 > **A conta do GitHub desta máquina não tem permissão de escrita no repositório.** O `gh`
 > está logado como **`Mainsis`**, e `gh api repos/manfac-facilities/login-system` devolve

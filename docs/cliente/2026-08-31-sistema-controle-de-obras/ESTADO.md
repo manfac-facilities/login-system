@@ -1,7 +1,30 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 07/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
+Atualizado em 08/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
+
+## 08/09/2026 — manhã do treinamento
+
+**O passo a passo de ir ao ar virou documento executável:
+[`RUNBOOK-ir-ao-ar.md`](RUNBOOK-ir-ao-ar.md)**, com o SQL de verificação de cada passo
+pronto para colar. Ele substitui a lista solta do bloco de 07/09.
+
+**Um bloqueador do treinamento foi encontrado e corrigido hoje:** o slug `obras` não
+estava em `lib/sistemas.ts`, a fonte única que alimenta a tela `/admin/acessos` e o
+diálogo de convite. O dashboard, o `middleware.ts` e a migration já conheciam `obras`;
+só a lista da tela de administração ficou para trás. **Consequência, se ninguém tivesse
+visto:** a coluna "Controle de Obras" não apareceria em `/admin/acessos` e não haveria
+como liberar o acesso da equipe pela tela — no dia do treinamento. Corrigido; **a
+correção só vale depois do deploy**, e é por isso que o passo 5 do runbook vem depois do
+passo 3.
+
+**Correção de fato do bloco de 07/09:** criar o bucket `obras-fotos` **não** é passo
+manual — a própria migration o cria, com as policies de storage, na seção 4 de
+`sdd-sql-obras-v0.sql` (linhas 269-381). A lista de 07/09 abaixo dizia o contrário.
+
+Higiene do repositório no mesmo dia: o `.docx` de feedback que estava solto na raiz desde
+31/08 era cópia idêntica (mesmo md5) da que já está em `originais/` e foi removido;
+`sistema-os/` foi para o `.gitignore`; o `.mcp.json` foi versionado.
 
 ## 07/09/2026 — véspera do treinamento
 
