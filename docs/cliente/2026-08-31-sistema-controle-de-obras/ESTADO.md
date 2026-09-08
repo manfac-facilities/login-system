@@ -3,6 +3,41 @@
 Atualizado em 08/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
 
+## 08/09/2026 — a obra vem sempre do Field, e a API existe
+
+**Mudança de escopo, vinda do cliente hoje** (literal em
+`feedback-07-obra-vem-sempre-do-field.md`):
+
+> O que o sistema vai puxar do Field: Numero da OS, Localização da Loja, Descrição do
+> chamado, Todo o restante das informações vamos ter que preencher manualmente
+
+Mais: só as OS com **tipo "Atividade Spot"**, e **o João já tem a chave da API do Field
+e a documentação** (https://developers.fieldcontrol.com.br/).
+
+**O "cadastro manual de obra" sai do escopo — nunca foi requisito.** O que houve foi um
+mal-entendido de uma palavra, e vale registrar para não voltar: **"manual" no que o
+cliente disse é o PREENCHIMENTO DOS CAMPOS, não a CRIAÇÃO da obra.** A obra sempre nasce
+no Field; o que é feito à mão é completar os campos que o Field não traz.
+`decisoes-para-ir-ao-ar.md` chegou a registrar o oposto ("o cadastro manual é o modo
+degradado permanente, e precisa ser tão bom quanto o automático") — está revogado.
+
+**Consequência de código, e é a que importa:** o Field entrega só **três** campos (OS,
+loja, descrição). Todo o resto — `tipo`, `valor`, `analista_cliente`, `origem` e,
+criticamente, **`aprovacao`** — passa a ser preenchido à mão. Só que hoje **a Triagem
+mostra exatamente esse bloco como SOMENTE LEITURA** (`_triagem.tsx:160-180`), porque
+assumia que esses dados vinham da planilha. Sem tela onde digitá-los, eles ficam nulos
+para sempre — e `aprovacao` nula significa que a obra **nunca vira crítica** e afunda
+para o fim da base, que é justamente o mecanismo que originou o projeto (a obra parada
+123 dias). **A v1 precisa tornar esse bloco editável na Triagem.** O levantamento que
+prova isso está em `inventario-campos-obra.md`.
+
+Duas decisões que isso reabre e que são do cliente, não nossas: a **decisão N** (a base
+vem da planilha porque não havia credencial da API) perdeu a premissa; e é preciso
+definir o que acontece com as 187 obras que já vieram da planilha quando a sincronização
+com o Field entrar.
+
+---
+
 ## 08/09/2026 — manhã do treinamento
 
 **O passo a passo de ir ao ar virou documento executável:
@@ -51,13 +86,12 @@ Higiene do repositório no mesmo dia: o `.docx` de feedback que estava solto na 
   impressão embutida: Ctrl+P no navegador gera o PDF).
 - 204 testes passando, `tsc`, `eslint` e `npm run build` limpos.
 
-**Duas lacunas encontradas ao escrever o manual, contra a spec §1:**
+**Uma lacuna encontrada ao escrever o manual, contra a spec §1:**
 
-- **Cadastro manual de obra não existe.** Está na lista de escopo da v0 (item 7) e não há
-  tela nem action. Não trava o treinamento — a base vem da planilha (decisão N) — mas
-  contradiz a decisão de 01/09 ("se travar deve dar para fazer manual"). **Não foi
-  construído de propósito: não há mockup aprovado dessa tela**, e desenhar tela nova sem
-  mockup quebra o processo. Decisão do João.
+> A outra lacuna listada aqui em 07/09 era "cadastro manual de obra não existe".
+> **Ela deixou de ser lacuna em 08/09: nunca foi requisito.** Ver o bloco de 08/09 no
+> topo deste arquivo e `feedback-07-obra-vem-sempre-do-field.md`.
+
 - A ficha diz que "Relatório de entrega" é deduzido do Field automaticamente
   (`_ficha.tsx:213-220`), o que não existe na v0. O manual avisa que essa etapa é movida
   à mão. O texto da tela continua prometendo o que não entrega — corrigir na v1.

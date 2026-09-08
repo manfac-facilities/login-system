@@ -1,4 +1,19 @@
-# Reconciliação — cadastro manual de obra vs. código/banco reais
+# Inventário dos campos de `obras_obra` — o que o código e o banco exigem
+
+> **Origem e por que este arquivo continua valendo.** Ele nasceu em 08/09/2026 como
+> levantamento para uma tela de "cadastro manual de obra" que **foi descartada no mesmo
+> dia** — nunca foi requisito, a obra vem sempre do Field Control
+> (`feedback-07-obra-vem-sempre-do-field.md`). O inventário, porém, não é sobre aquela
+> tela: é o mapa de quais campos existem, quem os preenche hoje e o que quebra quando
+> cada um fica nulo. **Ele ficou mais importante depois do descarte, não menos** — é o que
+> demonstra que, com o Field entregando só três campos (OS, loja, descrição), os demais
+> não têm hoje nenhuma tela onde ser preenchidos, porque a Triagem os mostra como somente
+> leitura. Leia as seções 1 e 2 como referência de schema; onde o texto fala em "cadastro
+> manual", entenda "o lugar onde alguém digita esses campos", que passa a ser a Triagem.
+
+---
+
+## Levantamento original
 
 Levantamento feito lendo o código em `app/obras/` e a migration `sdd-sql-obras-v0.sql`
 (estado do repositório em 2026-09-08, migration **não aplicada em produção** —

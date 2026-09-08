@@ -30,7 +30,9 @@ Fontes que esta spec traduz — leia-as se algo aqui parecer arbitrário:
 4. **Triagem** — a fila do Yuri, com os 5 campos obrigatórios
 5. **Diário do dia** — forma **cartões** (uma obra por vez)
 6. **Tarefas** — a falta virando tarefa com dono e prazo
-7. **Cadastro manual de obra**
+7. ~~**Cadastro manual de obra**~~ — **removido do escopo em 08/09/2026.** Nunca foi
+   requisito: a obra vem sempre do Field Control. Ver
+   `feedback-07-obra-vem-sempre-do-field.md`
 8. **Importação da planilha** para carga inicial
 9. **Manual de uso** (artifact + PDF)
 

@@ -19,16 +19,23 @@ Leitura mais provável, pelo precedente da decisão A ("pode manter as duas, o
 cliente gostou assim"): ele quer **as duas, com o seletor**. Mas é suposição, e
 a diferença muda o que se constrói. Perguntado ao João.
 
-## Entrada das obras — DECIDIDA: as duas vias
+## Entrada das obras — ~~DECIDIDA: as duas vias~~ **REVOGADA em 08/09/2026**
+
+> ⚠️ **A leitura abaixo estava errada e não vale mais.** Em 08/09 o cliente
+> esclareceu: a obra vem **sempre** do Field Control, e não existe cadastro manual
+> de obra. O erro foi de uma palavra só, e vale guardar porque é fácil repetir:
+> **"manual" é o preenchimento dos campos que o Field não traz, não a criação da
+> obra.** A fala original ficou preservada aqui embaixo porque foi ela que gerou a
+> interpretação. Ver `feedback-07-obra-vem-sempre-do-field.md`.
 
 > "o sistema deve ser capaz de conectar com api do field control e se travar deve
 > dar para fazer manual"
 
-Não é uma ou outra: **integração com a API do Field Control é requisito**, e o
+~~Não é uma ou outra: **integração com a API do Field Control é requisito**, e o
 cadastro manual é o caminho que mantém o sistema de pé quando ela falhar ou
 demorar. Consequência prática: o cadastro manual não é um degrau provisório a ser
 removido depois — é o modo degradado permanente, e precisa ser tão bom quanto o
-automático.
+automático.~~
 
 ## Agendador — DECIDIDO: construir, e é imprescindível
 

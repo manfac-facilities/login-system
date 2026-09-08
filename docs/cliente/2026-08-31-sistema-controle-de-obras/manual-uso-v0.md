@@ -422,8 +422,9 @@ não inclui:
   informação de que a OS fechou no Field.
 - **Um painel de reunião** (uma tela pensada para acompanhar tudo em uma reunião do dia,
   em vez de abrir obra por obra).
-- **Cadastro manual de obra.** Toda obra entra pela importação da planilha. Ainda não há
-  uma tela para criar uma obra do zero dentro do sistema.
+- **Entrada automática pelo Field Control.** Nesta versão, toda obra entra pela
+  importação da planilha. A ligação direta com o Field, que traz o número da OS, a loja e
+  a descrição do chamado sozinha, é a próxima frente.
 
 Essas frentes estão previstas para depois, sem data ainda definida. É importante ter isso
 em mente no treinamento: sem a cobrança automática, o hábito de preencher o diário todo
@@ -552,8 +553,10 @@ foi tirada.
     `docs/cliente/2026-08-31-sistema-controle-de-obras/spec-v0-treinamento.md` (seção 1)
     listar "Cadastro manual de obra" como item do escopo da v0. Por isso o manual não
     documenta essa tela — documentá-la seria inventar uma tela que não existe no código
-    entregue. Vale conferir com o time se isso ficou de fora por engano ou se foi cortado
-    depois da spec ter sido escrita.
+    entregue. **Resolvido em 08/09/2026: não ficou de fora por engano nem foi cortado —
+    nunca foi requisito.** O cliente esclareceu que a obra vem sempre do Field Control;
+    "manual", na fala dele, era o preenchimento dos campos, não a criação da obra. O item
+    saiu da spec. Ver `feedback-07-obra-vem-sempre-do-field.md`.
 35. `app/obras/tarefas/_lista.tsx:150-155` — o texto "Ferramenta e equipe vão para o Yuri
     mesmo quando a obra é de outro analista" é o texto literal da tela, usado na seção
     4.5.

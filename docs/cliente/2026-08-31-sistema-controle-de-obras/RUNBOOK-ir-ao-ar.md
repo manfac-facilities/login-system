@@ -195,9 +195,9 @@ mexer na tela.
 
 ## O que NÃO vai estar pronto no treinamento — avise a equipe
 
-- **Cadastro manual de obra não existe.** Toda obra entra pela planilha. Está no escopo
-  declarado da v0, mas não foi construído: não há mockup aprovado dessa tela, e desenhar
-  tela nova sem mockup quebra o processo combinado. Decisão sua se entra na v1.
+- **Toda obra entra pela planilha nesta versão.** A entrada pela API do Field Control é a
+  próxima frente (o cliente confirmou em 08/09 que a obra vem sempre do Field, e a chave
+  da API já existe). Não há, nem vai haver, tela de criar obra do zero.
 - **"Relatório de entrega" não é deduzido do Field automaticamente**, embora o texto da
   ficha prometa isso. No treinamento, essa etapa é movida à mão. O manual já avisa; o
   texto da tela é que continua prometendo — corrigir na v1.
