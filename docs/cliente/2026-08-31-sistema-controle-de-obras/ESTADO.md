@@ -1,7 +1,72 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 08/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
+Atualizado em 10/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
+
+## 10/09/2026 — entra o Duda, e a espera é pela resposta do cliente
+
+**Decisão do João no fim do dia: o sistema NÃO vai ao ar antes de o cliente responder
+as duas perguntas.** Ele retoma o trabalho em 11/09.
+
+> ⚠️ **Nota técnica para quem retomar:** as duas perguntas bloqueiam *liberar o acesso à
+> equipe* (passo 5 do runbook), não os passos 1–4. Nesta versão as obras vêm da planilha,
+> **e a planilha traz `tipo`, `valor` e `aprovacao`** — o buraco dos campos nulos só
+> aparece quando a obra vier do Field. Rodar a migration e deployar sem liberar o slug
+> `obras` seria seguro e resolveria o maior risco desconhecido do projeto (nada jamais
+> tocou um Supabase real). Ficou como recomendação registrada, não como pendência.
+
+**Estado verificado hoje, por medição e não por memória:**
+
+| | |
+|---|---|
+| Testes de `app/obras` | **204/204 passando** |
+| Build, `tsc`, `eslint` | limpos |
+| Migration | **não aplicada em banco nenhum** |
+| Produção | build de **26/08**; `/obras` devolve **404** |
+| Git | `master` local **80 commits** à frente do `origin` |
+| Push | segue negado — `gh api` devolve `{"push": false}` para `Mainsis` |
+
+**Entra um colaborador: o Duda**, fornecedor do João (não da Mainsis, neste projeto).
+**Escopo dele: apenas o Controle de Obras**, como teste da parceria. A divisão está em
+[`divisao-trabalho-joao-duda.md`](divisao-trabalho-joao-duda.md) e o pacote que a
+inteligência dele carrega, em `docs/onboarding-duda/`.
+
+**Dois achados de código que mudam a v1**, os dois verificados por leitura e `grep`:
+
+1. **Quatro colunas nunca são escritas por lugar nenhum** — `os_aprovada`,
+   `marco_exec_fim`, `marco_relatorio`, `marco_os_aprov` só existem como campo de tipo em
+   `_lib/tipos.ts:222,238-240`. A esteira de etapas lê `marco_exec_fim` para decidir se
+   "Execução em campo" está feita: fica congelada para sempre.
+2. **A Triagem desaparece quando a obra sai de `definir`** (`page.tsx:103`) — é mais grave
+   do que o bloco de 08/09 registrou. Não é só que o bloco "O que veio do Field" é somente
+   leitura: é que **depois da triagem não existe tela nenhuma** onde digitar os cinco
+   campos que o Field não traz. Nunca mais.
+
+**Uma estimativa deste arquivo estava errada e foi corrigida:** a decisão L ("foto de
+evolução por dia na linha do tempo — **tela na v1**") foi lida como pendência, mas **a
+foto diária está construída na v0**: `diario/_foto.tsx` com redução antes do upload,
+`foto_path`, signed URL de 60 s (`diario/_actions.ts:257`), bloco "Evolução em fotos"
+(`_ficha.tsx:627`) e o aviso de dia sem foto (`_ficha.tsx:702`), mais bucket e policies na
+migration. **Antes de construir qualquer coisa desta frente, confirme por `grep` que ela
+não existe.**
+
+**Duas páginas publicadas hoje:**
+
+- **Perguntas ao cliente** — https://claude.ai/code/artifact/3c47f0d5-586f-4a72-8b21-b3d4a9929825
+  Enviada ao cliente em 10/09. Junta a pergunta nova (onde preencher os campos) com a
+  **pergunta 03**, feita em 31/08 e nunca respondida. É a resposta destas duas que o
+  projeto está esperando.
+- **Frentes João × Duda** — https://claude.ai/code/artifact/03377e53-2156-4ae1-8257-4e844e28fc54
+  Com os três `.md` de onboarding embutidos para copiar.
+
+**Acessos definidos (ainda não executados):** Supabase — José `Owner`, João
+`Administrator`, Duda `Developer` (o único papel que roda SQL e escreve sem poder apagar
+projeto). GitHub — José `Owner` da organização, `Mainsis` `Admin` no repositório, Duda
+`Write`. Verificado na documentação: "Developer" e "Administrator" **não existem** no
+GitHub; os papéis são `Read`/`Triage`/`Write`/`Maintain`/`Admin`, e `Owner` é da
+organização, não do repositório.
+
+---
 
 ## 08/09/2026 — a obra vem sempre do Field, e a API existe
 
