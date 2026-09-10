@@ -1,8 +1,18 @@
 # Runbook — pôr o Controle de Obras no ar
 
-Escrito em 08/09/2026, manhã do treinamento. **Todos os passos abaixo são do João** —
-nenhum o Claude consegue fazer sozinho: o MCP do Supabase pede autorização OAuth e a
-conta de GitHub desta máquina (`Mainsis`) não tem permissão de push.
+Escrito em 08/09/2026, manhã do treinamento. Atualizado em **10/09/2026, à noite**, com o
+que foi de fato executado.
+
+> ## Estado em 10/09/2026
+>
+> | Passo | Estado |
+> |---|---|
+> | 1 — migration | ✅ **APLICADA E VERIFICADA em produção** (`iyytcavcgukfjnjjrerx`) |
+> | 2 — push | ❌ bloqueado: `Mainsis` tem `push: false` no repositório |
+> | 3 — deploy | ❌ pendente do passo 2. Build no ar ainda é de 26/08 |
+> | 4 — importar planilha | ❌ pendente do passo 3 |
+> | 5 — liberar acesso | ⚠️ pendente, e **AMANDA e YURI não têm conta no hub** — ver passo 6 |
+> | 6 — amarrar e-mails | ⚠️ a lista deste runbook estava errada; corrigida abaixo |
 
 **A ordem importa.** O passo 5 (liberar o acesso na tela) só funciona depois do passo 3
 (deploy), porque o slug `obras` faltava em `lib/sistemas.ts` e a correção precisa estar
@@ -10,14 +20,43 @@ no ar. Há um plano B por SQL, no fim, se o deploy atrasar.
 
 ---
 
-## Passo 0 — autorizar o MCP do Supabase (opcional, mas economiza o passo 1)
+## Passo 0 — acesso do Claude ao banco: resolvido por token, não por OAuth
 
-Se você abrir a URL de autorização que está no chat e concluir o fluxo, o Claude aplica a
-migration por você e confere o resultado. Sem isso, o passo 1 é manual.
+**O fluxo OAuth do MCP não funcionou em 10/09.** O caminho que funcionou, e que fica
+valendo:
+
+1. Gerar um Personal Access Token em https://supabase.com/dashboard/account/tokens.
+2. Gravá-lo em `C:\Users\joao-\.supabase-pat` — **fora do repositório**, e por um
+   PowerShell próprio, nunca pelo `!` do chat (o `!` traz o token para o contexto):
+   `Set-Content -NoNewline -Path "$HOME\.supabase-pat" -Value 'sbp_...'`
+3. O Claude executa SQL pela Management API, lendo o token do arquivo sem nunca vê-lo:
+   `POST https://api.supabase.com/v1/projects/<ref>/database/query`, corpo `{"query": "..."}`.
+
+Isso executa como o papel `postgres`, ou seja **acima da RLS** — o que é poder suficiente
+para aplicar migration, conferir schema e rodar os passos 5 e 6, e poder suficiente para
+estragar. Vale a mesma disciplina do SQL Editor: conferir o ref antes de escrever.
+
+⚠️ **O auto mode barra escrita em produção** (`[Production Deploy]`) e push
+(`[Sensitive-Source Provenance]`). Não é erro de token nem de rede: é uma trava que pede
+autorização explícita do João, uma vez por ação.
 
 ---
 
-## Passo 1 — rodar a migration
+## Passo 1 — rodar a migration ✅ FEITO EM 10/09/2026
+
+> **Aplicada e verificada em 10/09/2026**, pela Management API, no projeto
+> `iyytcavcgukfjnjjrerx`. Resultado conferido: 5 tabelas `obras_*` com RLS ligado, bucket
+> `obras-fotos` criado, 5 policies `obras access` e **as 3 policies de storage** — ou
+> seja, a seção 7 passou sem o erro de ownership que este runbook previa.
+>
+> A policy é `obras_has_access()` = `obras_is_admin()` **ou** linha em `hub_system_access`
+> com `system_slug = 'obras'`. As duas funções usam `exists(...)`, então devolvem
+> `true`/`false` e não caem na armadilha do NULL registrada no `AGENTS.md`.
+> **Consequência prática:** administrador do hub abre `/obras` sem precisar de linha
+> nenhuma em `hub_system_access`.
+>
+> **Foi o primeiro contato deste módulo com um Supabase real.** O texto abaixo fica como
+> referência para reaplicar em outro ambiente.
 
 **Antes de colar qualquer coisa, confirme o projeto.** O SQL Editor não pergunta duas
 vezes. O ref tem que ser **`iyytcavcgukfjnjjrerx`** — ele aparece na URL do dashboard.
@@ -55,8 +94,23 @@ errado.
 
 ## Passo 2 — push
 
-O `master` local está **72 commits à frente** do `origin/master`. Nada disso está no
-GitHub. Da sua conta:
+O `master` local está **81 commits à frente** do `origin/master` (medido em 10/09). Nada
+disso está no GitHub.
+
+> ⚠️ **A causa está identificada, e a correção é de uma linha na tela do GitHub.**
+> `gh api repos/manfac-facilities/login-system` devolve
+> `{"admin": false, "maintain": false, "pull": true, "push": false, "triage": false}`
+> para a conta `Mainsis`, que é a desta máquina. O token dela tem escopo `repo` — **o que
+> falta é permissão no repositório, não credencial.** Enquanto isso não mudar, o push é
+> manual e de outra conta.
+>
+> **A correção definitiva** (e já está no plano de acessos de 10/09): em
+> https://github.com/manfac-facilities/login-system/settings/access, dar **Admin** à conta
+> `Mainsis` — `Write` já basta para o push. É a mesma tela onde o Duda recebe `Write`.
+> Feito isso, o Claude passa a pushar sozinho e este passo deixa de bloquear o deploy,
+> como bloqueou em 07/09, 08/09 e 10/09.
+
+Da sua conta:
 
 ```bash
 git push origin master
@@ -135,6 +189,22 @@ pelo primeiro pedaço do e-mail em maiúsculas (`amanda.ribeiro@` → `AMANDA`).
 adivinhação erra, a pessoa não vê uma lista vazia — vê **"sem permissão"**. É a falha mais
 visível possível numa sala de treinamento, e some com este passo.
 
+> ⚠️ **A lista deste passo estava errada até 10/09.** Ela mandava amarrar `ROBERTA`, que
+> **não aparece uma única vez na planilha**, e não citava `GABRIEL` nem `EDUARDO`, que
+> aparecem. Conferido em 10/09 cruzando o dump da planilha com `auth.users`:
+
+| Chave na planilha | Obras | Conta no hub |
+|---|---|---|
+| `AMANDA` | 64 | ❌ **não existe** — precisa ser convidada |
+| `YURI` | 15 | ❌ **não existe** — precisa ser convidada |
+| `LUANA` | 2 | ✅ `luana.silva@manfac.com.br` |
+| `GABRIEL` | 1 | ✅ `gabriel.vidal@manfac.com.br` |
+| `EDUARDO` | 1 | ✅ `eduardo.maia@manfac.com.br` |
+
+**As duas analistas que concentram 79 das 82 obras não têm login no hub.** Não há como
+liberar acesso nem amarrar e-mail para quem não tem conta: convidar as duas é
+pré-requisito do passo 5, não um detalhe deste passo.
+
 No SQL Editor. Primeiro confira quais contas existem, para não chutar:
 
 ```sql
@@ -144,10 +214,11 @@ select email from auth.users where email ilike '%manfac.com.br' order by email;
 Depois amarre cada uma, **tudo em minúsculas**:
 
 ```sql
-update public.obras_pessoa set email = 'yuri.xxx@manfac.com.br'    where chave = 'YURI';
-update public.obras_pessoa set email = 'amanda.xxx@manfac.com.br'  where chave = 'AMANDA';
-update public.obras_pessoa set email = 'luana.xxx@manfac.com.br'   where chave = 'LUANA';
-update public.obras_pessoa set email = 'roberta.xxx@manfac.com.br' where chave = 'ROBERTA';
+update public.obras_pessoa set email = 'yuri.xxx@manfac.com.br'      where chave = 'YURI';
+update public.obras_pessoa set email = 'amanda.xxx@manfac.com.br'    where chave = 'AMANDA';
+update public.obras_pessoa set email = 'luana.silva@manfac.com.br'   where chave = 'LUANA';
+update public.obras_pessoa set email = 'gabriel.vidal@manfac.com.br' where chave = 'GABRIEL';
+update public.obras_pessoa set email = 'eduardo.maia@manfac.com.br'  where chave = 'EDUARDO';
 ```
 
 **Verificar — esta consulta é a prova de que ninguém vai abrir o Diário no vazio.** Ela
@@ -163,10 +234,10 @@ group by p.chave, p.email
 order by p.chave;
 ```
 
-Nenhuma das quatro pode ficar com `email` nulo. E se alguém que vai mexer na tela no
-treinamento aparecer com `obras_em_campo = 0`, o Diário dessa pessoa vai abrir em "sem
-permissão" — resolva antes da sala. Pela planilha atual, o esperado é AMANDA com o maior
-volume, YURI em seguida e LUANA com poucas.
+Ninguém que vá usar a tela pode ficar com `email` nulo. E se alguém que vai mexer na tela
+aparecer com `obras_em_campo = 0`, o Diário dessa pessoa vai abrir em "sem permissão" —
+resolva antes. Pela planilha atual (contagem de 10/09), o esperado é **AMANDA com 64**,
+**YURI com 15**, **LUANA com 2**, e GABRIEL e EDUARDO com 1 cada.
 
 As equipes de campo (MANFAC-7, ALEX, ...) entram sozinhas pela importação do passo 4;
 não precisam de e-mail.

@@ -1,7 +1,49 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 10/09/2026. O bloco abaixo é o mais recente; o resto do arquivo é o
+Atualizado em 10/09/2026, à noite. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
+
+## 10/09/2026, noite — a migration ENTROU em produção
+
+**O módulo tocou um Supabase real pela primeira vez.** A frase "nada foi testado contra
+Supabase real", que abria este arquivo desde 05/09, deixou de valer para o schema.
+
+**O que mudou de fato:**
+
+| | Antes | Agora |
+|---|---|---|
+| Migration `sdd-sql-obras-v0.sql` | não aplicada em banco nenhum | ✅ **aplicada e verificada** em `iyytcavcgukfjnjjrerx` |
+| Bucket `obras-fotos` + policies de storage | não existiam | ✅ criados pela própria migration, **sem** o erro de ownership previsto |
+| Acesso do Claude ao banco | nenhum | ✅ Management API com PAT em `C:\Users\joao-\.supabase-pat` (fora do repo) |
+| Produção (`/obras`) | 404 | 404 — **inalterado**, o deploy não subiu |
+| `master` vs `origin` | 80 commits à frente | 81 commits à frente, **push ainda negado** |
+
+Verificado no banco: 5 tabelas `obras_*` com RLS ligado, 5 policies `obras access`, 3
+policies de storage, e `obras_has_access()` = `obras_is_admin()` **ou** linha em
+`hub_system_access`. As duas funções usam `exists(...)` — devolvem `true`/`false`, não
+NULL. Administrador do hub entra em `/obras` sem linha de acesso nenhuma.
+
+**A decisão de esperar o cliente foi revista pelo João nesta noite:** ele mandou pôr no ar
+e liberar o acesso da equipe. A resposta do cliente veio **por áudio** e ele vai enviar a
+transcrição — que entra literal em `docs/cliente/` antes de virar decisão, como sempre.
+
+**Dois bloqueios reais, os dois fora do alcance do Claude:**
+
+1. **O push.** `Mainsis` segue com `{"push": false}`. A correção é dar `Admin`/`Write` a
+   essa conta em https://github.com/manfac-facilities/login-system/settings/access — a
+   mesma tela onde o Duda recebe `Write`. Esse mesmo bloqueio já custou o deploy de 07/09,
+   08/09 e 10/09; enquanto ele existir, todo deploy depende do João estar disponível.
+2. **Faltam contas no hub.** Cruzando o dump da planilha com `auth.users`: **AMANDA (64
+   obras) e YURI (15 obras) não têm login**. São 79 das 82 obras. Liberar o acesso da
+   equipe sem convidá-las não tem efeito. `ROBERTA`, que o runbook mandava amarrar, **não
+   existe na planilha**; quem existe e faltava na lista é `GABRIEL` e `EDUARDO` (1 obra
+   cada). O `RUNBOOK-ir-ao-ar.md` foi corrigido no mesmo commit.
+
+**O auto mode barra escrita em produção e push**, pedindo autorização do João a cada
+ação — `[Production Deploy]` e `[Sensitive-Source Provenance]`. Não confundir com falha de
+token ou de rede.
+
+---
 
 ## 10/09/2026 — entra o Duda, e a espera é pela resposta do cliente
 

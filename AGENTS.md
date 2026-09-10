@@ -24,14 +24,18 @@ Facilities atrás de um login compartilhado:
 | Sofia | `/sofia` | **Gestão de Frotas** | O código diz "sofia", o cliente diz "Gestão de Frotas" — são a mesma coisa |
 | Conversor de OS | `/conversor-os` | Conversor OS | Converte planilhas de OS para o Field Control |
 | Admin | `/admin/acessos` | Admin | Contas e acessos. O João chama de "módulo de login" |
-| Controle de Obras | `/obras` | **Controle de Obras** | Quarta frente, codificada em 05/09/2026. Slug de acesso: `obras`. Migration `sdd-sql-obras-v0.sql` **ainda não aplicada** — ver abaixo |
+| Controle de Obras | `/obras` | **Controle de Obras** | Quarta frente, codificada em 05/09/2026. Slug de acesso: `obras`. Migration `sdd-sql-obras-v0.sql` **aplicada em produção em 10/09/2026** — ver abaixo |
 
-> **Controle de Obras — estado em 07/09/2026.** O código das cinco telas está no `master`
-> local (o branch `copy-aprovada-cliente` foi mergeado por fast-forward), build e testes
-> limpos, mas **nada foi testado contra Supabase real**: a migration não rodou em banco
-> nenhum e o slug `obras` não foi liberado para ninguém em `/admin/acessos`. Enquanto esses
-> dois passos manuais não acontecerem, o card não aparece no dashboard e a rota devolve
-> erro. **O `master` local também não foi pushado** — ver abaixo. Contexto completo,
+> **Controle de Obras — estado em 10/09/2026, noite.** O código das cinco telas está no
+> `master` local (o branch `copy-aprovada-cliente` foi mergeado por fast-forward), build e
+> testes limpos. **A migration foi aplicada e verificada em produção em 10/09** (5 tabelas
+> `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage) — a frase "nada foi
+> testado contra Supabase real" **não vale mais para o schema**, embora nenhuma tela tenha
+> rodado contra ele ainda. **O que continua faltando é deploy:** o `master` local não foi
+> pushado (81 commits) e o build no ar é de 26/08, então `/obras` ainda devolve 404 e o
+> card não aparece no dashboard. O slug `obras` também não foi liberado para ninguém em
+> `/admin/acessos` — e atenção, **AMANDA e YURI, que respondem por 79 das 82 obras da
+> planilha, não têm conta no hub**. Contexto completo,
 > decisões e pendências em
 > `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`. **O passo a passo de pôr
 > no ar, com o SQL de verificação de cada etapa, está em
@@ -159,6 +163,25 @@ formato, ou você troca um bug por outro.
   `You do not have permission to perform this action`. Correção: revogar o grant em
   Dashboard → perfil → OAuth Apps e reconectar marcando o projeto. **Teste de sanidade:
   `list_projects` tem que listar `iyytcavcgukfjnjjrerx` antes de qualquer escrita.**
+- **Caminho que funcionou quando o OAuth do MCP falhou (2026-09-10): Personal Access
+  Token + Management API.** O fluxo OAuth do MCP não completou; o contorno, e ele é
+  melhor, é um PAT gerado em Dashboard → Account → Access Tokens, gravado em
+  `C:\Users\joao-\.supabase-pat` — **fora do repositório**, por um PowerShell do João,
+  **nunca pelo `!` do chat** (o `!` traz o comando inteiro, token junto, para o contexto).
+  O Claude então executa SQL sem nunca ver o valor:
+  ```bash
+  TOKEN=$(tr -d '\r\n' < /c/Users/joao-/.supabase-pat)
+  curl -s -X POST "https://api.supabase.com/v1/projects/iyytcavcgukfjnjjrerx/database/query" \
+    -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+    -d '{"query":"select 1"}'
+  ```
+  Roda como `postgres`, ou seja **acima da RLS** — poder de aplicar migration e de
+  estragar. Confirme o ref antes de escrever. Note: não há Python na máquina; para
+  formatar JSON, use `node -e`. E `/tmp` do Git Bash **não** é o `/tmp` do Windows: grave
+  arquivos temporários no scratchpad da sessão.
+- **O auto mode barra escrita em produção e push**, com `[Production Deploy]` e
+  `[Sensitive-Source Provenance]`. É trava de permissão pedindo autorização do João, não
+  falha de token nem de rede — não saia investigando credencial quando ela aparecer.
 - **Migrations são manuais.** Cada mudança de schema vira um arquivo `sdd-sql-*.sql` na
   raiz que alguém roda à mão no SQL Editor do Supabase. Não existe CLI de migration.
   (O MCP também aplica, via `apply_migration`.)
@@ -180,6 +203,7 @@ formato, ou você troca um bug por outro.
 | `admin-usuarios` PARTE 1 | aplicado |
 | `admin-usuarios` PARTE 2 | aplicada em 2026-08-10, após o deploy |
 | `v04-seguranca` | **aplicado em 2026-08-10** (migration `v04_seguranca_rls_sofia`), na versão que lê `hub_user_roles` |
+| `obras-v0` | **aplicado em 2026-09-10**, pela Management API. 5 tabelas `obras_*` com RLS, bucket `obras-fotos` e 3 policies de storage. A seção 7 passou sem o erro de ownership que o runbook previa |
 
 Com o `v04-seguranca` aplicado, as 18 tabelas do Sofia deixaram de ter a policy
 `authenticated full access` e passaram a `sofia access` (`using (sofia_has_access())`).
