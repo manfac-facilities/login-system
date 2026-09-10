@@ -1,0 +1,551 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<title>Frentes do Controle de Obras</title>
+<style>
+  :root{
+    --fundo:#0a1628;
+    --painel:#0f1f3d;
+    --painel2:#0d2050;
+    --borda:#1e3a5f;
+    --borda-forte:#2c5183;
+    --texto:#e8eef7;
+    --texto2:#94a3b8;
+    --texto3:#6b83a3;
+    --laranja:#f05a28;
+    --ciano:#38b2c4;
+    --verde:#3fbf8f;
+    --amarelo:#e0a83c;
+    --vermelho:#e05a4c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--fundo);color:var(--texto);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:15.5px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 22px 80px}
+  @media(max-width:680px){.wrap{padding:26px 15px 60px}}
+
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--laranja);margin:0 0 10px;
+  }
+  h1{
+    font-family:Archivo,sans-serif;font-weight:700;
+    font-size:clamp(29px,5vw,42px);line-height:1.1;letter-spacing:-.022em;
+    margin:0 0 14px;text-wrap:balance;
+  }
+  .sub{color:var(--texto2);font-size:17px;margin:0;max-width:66ch}
+  .sub b{color:var(--texto);font-weight:600}
+
+  h2{
+    font-family:Archivo,sans-serif;font-weight:600;font-size:22px;letter-spacing:-.01em;
+    margin:0 0 6px;
+  }
+  .h2sub{color:var(--texto3);font-size:14.5px;margin:0 0 20px;max-width:70ch}
+
+  section{margin-top:52px}
+  .rule{
+    display:flex;align-items:center;gap:14px;margin:0 0 20px;
+  }
+  .rule .n{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    color:var(--texto3);text-transform:uppercase;flex:none;
+  }
+  .rule .l{flex:1;height:1px;background:var(--borda)}
+
+  /* ---------- estado ---------- */
+  .estado{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:1px;
+    background:var(--borda);border:1px solid var(--borda);border-radius:8px;
+    overflow:hidden;margin-top:22px;
+  }
+  .est{background:var(--painel);padding:15px 17px}
+  .est .rot{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--texto3);margin:0 0 7px;
+  }
+  .est .v{font-family:Archivo,sans-serif;font-size:15.5px;font-weight:600;line-height:1.3}
+  .est .v.ok{color:var(--verde)}
+  .est .v.no{color:var(--laranja)}
+  .est .d{font-size:12.5px;color:var(--texto3);margin:5px 0 0;line-height:1.45}
+
+  /* ---------- criterio ---------- */
+  .criterios{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:14px;
+    margin-top:20px;
+  }
+  .crit{border:1px solid var(--borda);border-radius:8px;padding:17px 19px;background:rgba(15,31,61,.5)}
+  .crit .k{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--laranja);margin:0 0 8px;
+  }
+  .crit p{margin:0;font-size:14.5px;color:var(--texto2)}
+  .crit p b{color:var(--texto);font-weight:600}
+
+  /* ---------- pessoas ---------- */
+  .pessoas{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px;align-items:start}
+  @media(max-width:820px){.pessoas{grid-template-columns:1fr;gap:34px}}
+
+  .col-cab{
+    display:flex;align-items:center;gap:11px;padding-bottom:13px;margin-bottom:16px;
+    border-bottom:2px solid var(--borda-forte);
+  }
+  .col.joao .col-cab{border-bottom-color:var(--laranja)}
+  .col.duda .col-cab{border-bottom-color:var(--ciano)}
+  .nome{font-family:Archivo,sans-serif;font-weight:700;font-size:21px;letter-spacing:-.01em}
+  .papel{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;
+    color:var(--texto3);margin-left:auto;text-align:right;line-height:1.35;
+  }
+
+  .frentes{display:flex;flex-direction:column;gap:13px}
+  .fr{
+    border:1px solid var(--borda);border-radius:8px;background:rgba(15,31,61,.55);
+    padding:16px 18px;
+  }
+  .col.joao .fr{border-left:3px solid rgba(240,90,40,.55)}
+  .col.duda .fr{border-left:3px solid rgba(56,178,196,.55)}
+  .fr-cab{display:flex;gap:10px;align-items:baseline;margin-bottom:9px;flex-wrap:wrap}
+  .cod{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    letter-spacing:.06em;padding:2px 7px;border-radius:3px;flex:none;
+    border:1px solid var(--borda-forte);color:var(--texto3);
+  }
+  .col.joao .cod{color:var(--laranja);border-color:rgba(240,90,40,.4)}
+  .col.duda .cod{color:var(--ciano);border-color:rgba(56,178,196,.4)}
+  .fr-tit{font-family:Archivo,sans-serif;font-weight:600;font-size:16.5px;line-height:1.3}
+  .porque{margin:0;font-size:14px;color:var(--texto2);line-height:1.55}
+  .porque b{color:var(--texto);font-weight:600}
+  .porque code{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--texto);
+    background:rgba(44,81,131,.35);padding:1px 5px;border-radius:3px;
+  }
+  .custo{
+    display:flex;gap:22px;margin-top:13px;padding-top:11px;
+    border-top:1px solid rgba(30,58,95,.75);flex-wrap:wrap;
+  }
+  .custo div{display:flex;flex-direction:column;gap:2px}
+  .custo .cr{
+    font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--texto3);
+  }
+  .custo .cv{
+    font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;color:var(--texto);
+    font-variant-numeric:tabular-nums;
+  }
+  .total{
+    margin-top:15px;padding:13px 18px;border-radius:8px;
+    background:var(--painel2);border:1px solid var(--borda-forte);
+    display:flex;gap:24px;flex-wrap:wrap;align-items:baseline;
+  }
+  .total .lb{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--texto3);
+  }
+  .total .vl{
+    font-family:Archivo,sans-serif;font-size:17px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .col.joao .total .vl{color:var(--laranja)}
+  .col.duda .total .vl{color:var(--ciano)}
+
+  /* ---------- alerta ---------- */
+  .alerta{
+    margin-top:22px;border:1px solid rgba(224,90,76,.42);border-radius:8px;
+    background:rgba(224,90,76,.07);padding:20px 22px;
+  }
+  .alerta h3{
+    font-family:Archivo,sans-serif;font-size:18px;font-weight:600;margin:0 0 9px;
+    color:var(--texto);
+  }
+  .alerta p{margin:0;font-size:14.5px;color:var(--texto2);max-width:72ch}
+  .alerta p + p{margin-top:9px}
+  .alerta code{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--texto);
+    background:rgba(224,90,76,.14);padding:1px 5px;border-radius:3px;
+  }
+
+  /* ---------- trilhas ---------- */
+  .trilhas{
+    margin-top:20px;border:1px solid var(--borda);border-radius:8px;
+    background:var(--painel);padding:20px;overflow-x:auto;
+  }
+  .trilha{display:grid;grid-template-columns:74px 1fr;gap:14px;align-items:center;margin-bottom:11px}
+  .trilha:last-of-type{margin-bottom:0}
+  .tnome{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;text-align:right;color:var(--texto3);
+  }
+  .tbar{display:flex;gap:8px;align-items:center;min-width:520px}
+  .bl{
+    padding:9px 14px;border-radius:5px;font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px;white-space:nowrap;border:1px solid;
+  }
+  .bl.j{background:rgba(240,90,40,.13);border-color:rgba(240,90,40,.42);color:#ffb499}
+  .bl.d{background:rgba(56,178,196,.13);border-color:rgba(56,178,196,.42);color:#8fdae5}
+  .bl.wait{
+    background:transparent;border-style:dashed;border-color:var(--borda-forte);
+    color:var(--texto3);
+  }
+  .seta{color:var(--texto3);font-family:"IBM Plex Mono",monospace;font-size:14px;flex:none}
+  .tlegenda{
+    margin:16px 0 0;padding-top:14px;border-top:1px solid var(--borda);
+    font-size:13.5px;color:var(--texto3);max-width:76ch;
+  }
+  .tlegenda b{color:var(--texto2)}
+
+  /* ---------- comeco ---------- */
+  .passos{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+  .passo{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start}
+  .pn{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--laranja);
+    border:1px solid var(--borda-forte);border-radius:50%;width:28px;height:28px;
+    display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px;
+  }
+  .passo .pc{font-size:14.5px;color:var(--texto2)}
+  .passo .pc b{color:var(--texto);font-weight:600}
+  .passo .pc code{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--texto);
+    background:rgba(44,81,131,.35);padding:1px 5px;border-radius:3px;
+  }
+
+  pre{
+    margin:12px 0 0;background:#081221;border:1px solid var(--borda);border-radius:6px;
+    padding:14px 16px;overflow-x:auto;font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px;line-height:1.75;color:var(--texto2);
+  }
+  pre .c{color:var(--texto3)}
+
+  .regras{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px;margin-top:20px}
+  .rg{border:1px solid var(--borda);border-radius:8px;padding:16px 18px;background:rgba(15,31,61,.5)}
+  .rg h4{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--verde);margin:0 0 8px;font-weight:500;
+  }
+  .rg p{margin:0;font-size:14px;color:var(--texto2)}
+  .rg p b{color:var(--texto);font-weight:600}
+  .rg code{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--texto);
+    background:rgba(44,81,131,.35);padding:1px 5px;border-radius:3px;
+  }
+
+  .nota{
+    margin-top:26px;font-size:13.5px;color:var(--texto3);max-width:76ch;
+    padding-left:14px;border-left:2px solid var(--borda-forte);
+  }
+  .nota b{color:var(--texto2)}
+
+  .assin{
+    margin-top:50px;padding-top:18px;border-top:1px solid var(--borda);
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--texto3);
+    letter-spacing:.03em;
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Manfac Facilities &middot; Hub</p>
+  <h1>Frentes do Controle de Obras</h1>
+  <p class="sub">Quem faz o qu&ecirc;, por qu&ecirc;, e em que ordem. O sistema controla obras de manuten&ccedil;&atilde;o
+  em lojas da rede DPSP: a obra nasce como uma OS no <b>Field Control</b>, a equipe da Manfac
+  responde um di&aacute;rio todo dia, e o sistema acusa quando uma obra para de andar. Esse
+  &uacute;ltimo ponto &eacute; a raz&atilde;o do projeto existir &mdash; a obra que ficou <b>123 dias parada</b> sem
+  ningu&eacute;m notar.</p>
+
+  <div class="estado">
+    <div class="est">
+      <p class="rot">C&oacute;digo da v0</p>
+      <p class="v ok">Pronto</p>
+      <p class="d">5 telas, 6.638 linhas. Build limpo</p>
+    </div>
+    <div class="est">
+      <p class="rot">Testes</p>
+      <p class="v ok">204 / 204</p>
+      <p class="d">Todos com mock &mdash; nada tocou banco real ainda</p>
+    </div>
+    <div class="est">
+      <p class="rot">Banco</p>
+      <p class="v no">Migration n&atilde;o aplicada</p>
+      <p class="d">Nenhuma tabela existe em lugar nenhum</p>
+    </div>
+    <div class="est">
+      <p class="rot">Produ&ccedil;&atilde;o</p>
+      <p class="v no">Build de 26/08</p>
+      <p class="d"><span class="mono">/obras</span> devolve 404. 78 commits sem subir</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="rule"><span class="n">01</span><span class="l"></span></div>
+    <h2>Como o trabalho foi dividido</h2>
+    <p class="h2sub">O crit&eacute;rio n&atilde;o &eacute; tamanho de tarefa. S&atilde;o tr&ecirc;s coisas, nesta ordem de peso.</p>
+
+    <div class="criterios">
+      <div class="crit">
+        <p class="k">1 &middot; Credencial</p>
+        <p>O que <b>s&oacute; uma pessoa consegue executar</b> n&atilde;o &eacute; divis&iacute;vel. Supabase, push no
+        GitHub, deploy e a planilha do cliente est&atilde;o todos atr&aacute;s de credencial do Jo&atilde;o.</p>
+      </div>
+      <div class="crit">
+        <p class="k">2 &middot; Canal com o cliente</p>
+        <p>Frente que depende de <b>decis&atilde;o do cliente</b> fica com quem fala com ele. Hoje h&aacute;
+        duas perguntas em aberto, e as duas mudam c&oacute;digo.</p>
+      </div>
+      <div class="crit">
+        <p class="k">3 &middot; Sobreposi&ccedil;&atilde;o de arquivo</p>
+        <p>Duas frentes que <b>editam o mesmo arquivo</b> n&atilde;o rodam em paralelo sem merge
+        doloroso. Este crit&eacute;rio gerou a &uacute;nica restri&ccedil;&atilde;o de ordem deste documento.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rule"><span class="n">02</span><span class="l"></span></div>
+    <h2>As frentes</h2>
+    <p class="h2sub">Tempo e tokens s&atilde;o <b>estimativas</b>, calibradas pelo tamanho real do m&oacute;dulo
+    (6.638 linhas de c&oacute;digo e 2.508 de teste, em 30 arquivos). N&atilde;o h&aacute; telemetria por tarefa.
+    Os n&uacute;meros incluem subagentes e revis&atilde;o independente, n&atilde;o s&oacute; a escrita.</p>
+
+    <div class="pessoas">
+
+      <div class="col joao">
+        <div class="col-cab">
+          <span class="nome">Jo&atilde;o</span>
+          <span class="papel">o pesado<br>e o estrat&eacute;gico</span>
+        </div>
+        <div class="frentes">
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">0</span><span class="fr-tit">P&ocirc;r a v0 no ar</span></div>
+            <p class="porque"><b>Intransfer&iacute;vel hoje.</b> Migration, push, deploy, importar a planilha,
+            liberar acessos e amarrar e-mails. Supabase, GitHub, EasyPanel e a planilha DPSP est&atilde;o
+            todos atr&aacute;s de credencial dele &mdash; a conta de GitHub da m&aacute;quina de trabalho tem
+            <code>push: false</code>.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">25 min + espera</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">150&ndash;300 k</span></div>
+            </div>
+          </div>
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">1c</span><span class="fr-tit">Integra&ccedil;&atilde;o com a API do Field Control</span></div>
+            <p class="porque"><b>A maior frente, e a que muda o produto</b> &mdash; hoje toda obra entra por
+            planilha. A chave da API &eacute; dele. Sobra uma decis&atilde;o de neg&oacute;cio: se &ldquo;localiza&ccedil;&atilde;o da
+            loja&rdquo; &eacute; o endere&ccedil;o f&iacute;sico (<code>address</code>, de gra&ccedil;a) ou o nome da loja cadastrada
+            (<code>location.name</code>, uma chamada a mais por OS contra rate limit de 1 req/s).</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">12&ndash;18 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">1,5&ndash;3,0 M</span></div>
+            </div>
+          </div>
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">1a</span><span class="fr-tit">Campos edit&aacute;veis na Triagem e na ficha</span></div>
+            <p class="porque"><b>O bloqueador do mecanismo central.</b> O Field entrega 3 dos 8 campos,
+            e a Triagem some quando a obra sai de <code>definir</code> &mdash; ou seja, <b>hoje n&atilde;o existe
+            nenhuma tela onde digitar os outros 5</b>. Com <code>aprovacao</code> nula, a obra nunca vira
+            cr&iacute;tica, que &eacute; justamente o problema que originou o projeto. Depende da resposta do
+            cliente.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">4&ndash;6 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,6&ndash;1,0 M</span></div>
+            </div>
+          </div>
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">&mdash;</span><span class="fr-tit">Fechar as duas perguntas com o cliente</span></div>
+            <p class="porque"><b>&Uacute;nico canal com o cliente.</b> A p&aacute;gina j&aacute; est&aacute; pronta e publicada.
+            Uma das perguntas est&aacute; parada desde 31 de agosto.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">15 min + espera</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">~20 k</span></div>
+            </div>
+          </div>
+
+        </div>
+        <div class="total">
+          <div><span class="lb">Frentes de c&oacute;digo</span></div>
+          <div><span class="vl">16&ndash;24 h</span></div>
+          <div><span class="vl">2,1&ndash;4,0 M</span></div>
+        </div>
+      </div>
+
+      <div class="col duda">
+        <div class="col-cab">
+          <span class="nome">Duda</span>
+          <span class="papel">autocontido, sem<br>credencial nem cliente</span>
+        </div>
+        <div class="frentes">
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">1d</span><span class="fr-tit">Foto di&aacute;ria na linha do tempo</span></div>
+            <p class="porque"><b>Come&ccedil;a por aqui.</b> Requisito j&aacute; fechado com o cliente e sem
+            ambiguidade &mdash; n&atilde;o precisa de nova rodada de decis&atilde;o. Vive em
+            <code>app/obras/diario/</code>: <b>zero sobreposi&ccedil;&atilde;o</b> com o que o Jo&atilde;o toca, ent&atilde;o roda
+            em paralelo sem esperar nada.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">4&ndash;6 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,5&ndash;0,8 M</span></div>
+            </div>
+          </div>
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">1b</span><span class="fr-tit">Colunas mortas</span></div>
+            <p class="porque">Quatro colunas do banco &mdash; <code>os_aprovada</code>,
+            <code>marco_exec_fim</code>, <code>marco_relatorio</code>, <code>marco_os_aprov</code> &mdash;
+            <b>s&oacute; existem como campo de tipo</b> em <code>_lib/tipos.ts</code>. Nenhuma escrita no
+            c&oacute;digo todo, ent&atilde;o a esteira de etapas fica congelada para sempre. Escopo fechado,
+            test&aacute;vel com mock, sem banco real. <b>Depende da 1a estar mergeada</b> &mdash; ver abaixo.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">2&ndash;4 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,3&ndash;0,5 M</span></div>
+            </div>
+          </div>
+
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">&mdash;</span><span class="fr-tit">Higiene do reposit&oacute;rio</span></div>
+            <p class="porque">Sete suites de teste de <code>manfac-site/</code> (o site institucional,
+            outro app no mesmo reposit&oacute;rio) n&atilde;o carregam por depend&ecirc;ncia n&atilde;o instalada. <b>Risco
+            zero para o hub</b>, e &eacute; um bom primeiro contato com o reposit&oacute;rio antes de tocar
+            c&oacute;digo de produ&ccedil;&atilde;o.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">1&ndash;2 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,1&ndash;0,2 M</span></div>
+            </div>
+          </div>
+
+        </div>
+        <div class="total">
+          <div><span class="lb">Total</span></div>
+          <div><span class="vl">7&ndash;12 h</span></div>
+          <div><span class="vl">0,9&ndash;1,5 M</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="rule"><span class="n">03</span><span class="l"></span></div>
+    <h2>A &uacute;nica restri&ccedil;&atilde;o de ordem</h2>
+    <p class="h2sub">Se s&oacute; uma coisa deste documento for lembrada, que seja esta.</p>
+
+    <div class="alerta">
+      <h3>1a e 1b editam o mesmo arquivo</h3>
+      <p><code>app/obras/obra/[id]/_actions.ts</code> &mdash; a Triagem grava l&aacute;, e os marcos precisam
+      ser gravados na troca de etapa, que tamb&eacute;m mora l&aacute;. Tocar as duas ao mesmo tempo garante
+      conflito de merge no arquivo mais delicado do m&oacute;dulo.</p>
+      <p><b>Por isso o Duda come&ccedil;a pela 1d, n&atilde;o pela 1b.</b> A 1b entra depois que a 1a estiver
+      mergeada. A 1c &eacute; c&oacute;digo novo em pasta pr&oacute;pria e roda em paralelo com qualquer coisa.</p>
+    </div>
+
+    <div class="trilhas">
+      <div class="trilha">
+        <span class="tnome">Jo&atilde;o</span>
+        <div class="tbar">
+          <span class="bl j">0 &middot; no ar</span>
+          <span class="seta">&rarr;</span>
+          <span class="bl j">1a &middot; campos edit&aacute;veis</span>
+          <span class="seta">&rarr;</span>
+          <span class="bl j">1c &middot; Field Control</span>
+        </div>
+      </div>
+      <div class="trilha">
+        <span class="tnome">Duda</span>
+        <div class="tbar">
+          <span class="bl d">higiene</span>
+          <span class="seta">&rarr;</span>
+          <span class="bl d">1d &middot; foto di&aacute;ria</span>
+          <span class="seta">&rarr;</span>
+          <span class="bl wait">espera merge da 1a</span>
+          <span class="seta">&rarr;</span>
+          <span class="bl d">1b &middot; colunas mortas</span>
+        </div>
+      </div>
+      <p class="tlegenda"><b>A 1c n&atilde;o bloqueia nada e nada bloqueia ela</b> &mdash; &eacute; c&oacute;digo novo em pasta
+      pr&oacute;pria. Se o Jo&atilde;o estiver preso na 1a esperando o cliente, a 1c anda junto.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rule"><span class="n">04</span><span class="l"></span></div>
+    <h2>Para o Duda come&ccedil;ar</h2>
+    <p class="h2sub">Na ordem. O passo 1 &eacute; do Jo&atilde;o; os outros s&atilde;o dele.</p>
+
+    <div class="passos">
+      <div class="passo">
+        <span class="pn">1</span>
+        <p class="pc"><b>Acessos.</b> Supabase da Manfac como <code>Developer</code> &mdash; roda SQL,
+        escreve no banco, cria bucket, e <b>n&atilde;o consegue apagar projeto, mexer em cobran&ccedil;a nem
+        convidar ningu&eacute;m</b>. Mais acesso de escrita ao reposit&oacute;rio no GitHub. Convite por e-mail,
+        conta pr&oacute;pria &mdash; <b>login n&atilde;o se compartilha</b>.</p>
+      </div>
+      <div class="passo">
+        <span class="pn">2</span>
+        <p class="pc"><b>Ler antes de escrever qualquer linha.</b> O <code>AGENTS.md</code> na raiz do
+        reposit&oacute;rio &eacute; a fonte de verdade operacional: infra, deploy, banco, autoriza&ccedil;&atilde;o e as
+        armadilhas que j&aacute; custaram dias. E o <code>ESTADO.md</code> desta frente, que tem o
+        hist&oacute;rico de decis&otilde;es do cliente.</p>
+      </div>
+      <div class="passo">
+        <span class="pn">3</span>
+        <p class="pc"><b>Subir o ambiente</b> e confirmar que o verde bate antes de mudar nada.</p>
+      </div>
+    </div>
+
+    <pre><span class="c"># Node 20 (.nvmrc)</span>
+npm install
+npm run dev      <span class="c"># desenvolvimento</span>
+npm test         <span class="c"># jest &mdash; espere 204/204 em app/obras</span>
+npm run lint
+npm run build</pre>
+
+    <div class="regras">
+      <div class="rg">
+        <h4>Processo &mdash; n&atilde;o pule etapas</h4>
+        <p>brainstorming &rarr; <b>mockup visual aprovado</b> &rarr; spec &rarr; plano &rarr; c&oacute;digo &rarr;
+        code review &rarr; deploy. <b>Mockup antes de spec ou c&oacute;digo, sempre</b> &mdash; e interativo
+        quando envolver anima&ccedil;&atilde;o ou intera&ccedil;&atilde;o.</p>
+      </div>
+      <div class="rg">
+        <h4>Conven&ccedil;&otilde;es de c&oacute;digo</h4>
+        <p>Server Actions em <code>_actions.ts</code> ao lado da p&aacute;gina, formul&aacute;rios em
+        <code>_form.tsx</code>, tabelas em <code>_table.tsx</code>. Prefixo <code>_</code> n&atilde;o vira
+        rota. Testes em <code>__tests__/</code> ao lado do c&oacute;digo.</p>
+      </div>
+      <div class="rg">
+        <h4>Tema</h4>
+        <p>Fundo <code>#0a1628</code>, navy <code>#0d2050</code>, laranja <code>#f05a28</code>, texto
+        secund&aacute;rio <code>#94a3b8</code>, bordas <code>#1e3a5f</code>. Tailwind v4.</p>
+      </div>
+      <div class="rg">
+        <h4>Migrations s&atilde;o manuais</h4>
+        <p>Cada mudan&ccedil;a de schema vira um arquivo <code>sdd-sql-*.sql</code> na raiz que algu&eacute;m
+        roda &agrave; m&atilde;o. <b>C&oacute;digo mergeado n&atilde;o significa schema aplicado</b> &mdash; confira o banco
+        antes de concluir que um bug &eacute; de c&oacute;digo.</p>
+      </div>
+      <div class="rg">
+        <h4>Material do cliente vira arquivo</h4>
+        <p>Lista, relat&oacute;rio, &aacute;udio transcrito, requisito escrito: <b>salvar literal em
+        <code>docs/cliente/</code> e commitar antes de agir sobre o conte&uacute;do</b>. Sem resumir. O
+        resumo vira spec depois; o arquivo &eacute; a fonte.</p>
+      </div>
+      <div class="rg">
+        <h4>Segredos</h4>
+        <p>Nunca colar service role key, senha ou chave de API em chat ou em arquivo versionado.
+        <b>Sem exce&ccedil;&atilde;o.</b></p>
+      </div>
+    </div>
+
+    <p class="nota"><b>Uma armadilha que j&aacute; mordeu neste projeto e vale saber de antemão:</b> o
+    reposit&oacute;rio se chama <span class="mono">login-system</span> por heran&ccedil;a de quando era s&oacute; a
+    tela de login &mdash; hoje ele &eacute; o hub inteiro, com quatro sistemas dentro. E
+    <span class="mono">manfac-site/</span> na mesma &aacute;rvore &eacute; o site institucional, com deploy
+    pr&oacute;prio: n&atilde;o faz parte do hub.</p>
+  </section>
+
+  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 10 de setembro de 2026</p>
+
+</div>
