@@ -1,0 +1,333 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<title>Duas perguntas antes de ligar</title>
+<style>
+  :root{
+    --fundo:#0a1628;
+    --painel:#0f1f3d;
+    --painel2:#0d2050;
+    --borda:#1e3a5f;
+    --borda-forte:#2c5183;
+    --texto:#e8eef7;
+    --texto2:#94a3b8;
+    --texto3:#6b83a3;
+    --laranja:#f05a28;
+    --verde:#3fbf8f;
+    --amarelo:#e0a83c;
+    --sombra:0 1px 0 rgba(255,255,255,.03) inset;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--fundo);
+    color:var(--texto);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:40px 20px 72px}
+  @media(max-width:640px){.wrap{padding:28px 16px 56px}}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--laranja);margin:0 0 10px;
+  }
+  h1{
+    font-family:Archivo,"IBM Plex Sans",sans-serif;
+    font-weight:700;font-size:clamp(28px,5.5vw,40px);line-height:1.12;
+    letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance;
+  }
+  .intro{color:var(--texto2);font-size:17px;margin:0;max-width:60ch}
+  .intro b{color:var(--texto);font-weight:600}
+
+  hr.sep{border:0;border-top:1px solid var(--borda);margin:40px 0}
+
+  .q{margin:0 0 8px;display:flex;gap:12px;align-items:baseline}
+  .qnum{
+    font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--laranja);
+    border:1px solid var(--borda-forte);border-radius:3px;padding:2px 7px;flex:none;
+  }
+  h2{
+    font-family:Archivo,sans-serif;font-weight:600;font-size:clamp(21px,3.6vw,26px);
+    line-height:1.22;letter-spacing:-.01em;margin:0;text-wrap:balance;
+  }
+  .contexto{color:var(--texto2);margin:14px 0 0;max-width:62ch}
+  .contexto b{color:var(--texto);font-weight:600}
+
+  .ficha{
+    border:1px solid var(--borda);border-radius:8px;background:var(--painel);
+    margin:24px 0 8px;overflow:hidden;box-shadow:var(--sombra);
+  }
+  .ficha-top{
+    padding:11px 16px;border-bottom:1px solid var(--borda);
+    background:var(--painel2);
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--texto3);
+  }
+  .linha{
+    display:grid;grid-template-columns:150px 1fr;gap:16px;
+    padding:9px 16px;border-bottom:1px solid rgba(30,58,95,.55);align-items:center;
+  }
+  .linha:last-child{border-bottom:0}
+  .rot{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--texto3);
+    letter-spacing:.02em;
+  }
+  .val{font-size:14.5px;color:var(--texto)}
+  .val.vazio{
+    color:var(--laranja);font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+  }
+  .tag{
+    display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;
+    vertical-align:2px;margin-left:8px;
+  }
+  .tag.field{background:rgba(63,191,143,.12);color:var(--verde);border:1px solid rgba(63,191,143,.3)}
+  .tag.mao{background:rgba(240,90,40,.12);color:var(--laranja);border:1px solid rgba(240,90,40,.32)}
+  .legenda{
+    font-size:13px;color:var(--texto3);margin:10px 0 0;
+    font-family:"IBM Plex Mono",monospace;
+  }
+  @media(max-width:560px){
+    .linha{grid-template-columns:1fr;gap:2px;padding:10px 14px}
+  }
+
+  .opcoes{display:flex;flex-direction:column;gap:14px;margin:28px 0 0}
+  .op{
+    border:1px solid var(--borda);border-radius:8px;padding:18px 20px;
+    background:rgba(15,31,61,.5);
+  }
+  .op.rec{border-color:rgba(63,191,143,.45);background:rgba(63,191,143,.05)}
+  .op-cab{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:9px}
+  .letra{
+    font-family:Archivo,sans-serif;font-weight:700;font-size:15px;color:var(--laranja);
+    flex:none;
+  }
+  .op.rec .letra{color:var(--verde)}
+  .op-tit{font-family:Archivo,sans-serif;font-weight:600;font-size:17.5px;line-height:1.3;letter-spacing:-.005em}
+  .selo{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--verde);border:1px solid rgba(63,191,143,.4);
+    border-radius:3px;padding:2px 7px;margin-left:auto;flex:none;
+  }
+  .op p{margin:0;color:var(--texto2);font-size:15px;max-width:58ch}
+  .conseq{
+    display:flex;gap:9px;margin-top:12px;padding-top:12px;
+    border-top:1px solid rgba(30,58,95,.7);
+  }
+  .conseq .marca{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--amarelo);flex:none;padding-top:2px;
+  }
+  .op.rec .conseq .marca{color:var(--verde)}
+  .conseq p{font-size:14.5px}
+
+  .porque{
+    margin:28px 0 0;padding:18px 20px;border-radius:8px;
+    background:rgba(240,90,40,.07);border:1px solid rgba(240,90,40,.28);
+  }
+  .porque h3{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--laranja);margin:0 0 8px;font-weight:500;
+  }
+  .porque p{margin:0;font-size:15px;color:var(--texto);max-width:60ch}
+
+  .prova{
+    margin:20px 0 0;border:1px solid var(--borda);border-radius:8px;overflow-x:auto;
+  }
+  .prova table{width:100%;border-collapse:collapse;font-size:14px}
+  .prova th{
+    text-align:left;padding:9px 16px;background:var(--painel2);
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--texto3);font-weight:500;
+    border-bottom:1px solid var(--borda);white-space:nowrap;
+  }
+  .prova td{
+    padding:10px 16px;border-bottom:1px solid rgba(30,58,95,.5);color:var(--texto2);
+  }
+  .prova tr:last-child td{border-bottom:0}
+  .prova td.num{
+    font-family:"IBM Plex Mono",monospace;color:var(--texto);
+    font-variant-numeric:tabular-nums;
+  }
+  .prova tr.erro td{background:rgba(224,168,60,.07)}
+  .prova tr.erro td.num{color:var(--amarelo)}
+
+  .fim{
+    margin:48px 0 0;padding:24px;border:1px solid var(--borda-forte);border-radius:8px;
+    background:var(--painel2);
+  }
+  .fim h3{
+    font-family:Archivo,sans-serif;font-size:19px;font-weight:600;margin:0 0 10px;
+  }
+  .fim p{margin:0;color:var(--texto2);font-size:15px;max-width:58ch}
+  .fim p + p{margin-top:10px}
+  .assin{
+    margin-top:36px;padding-top:18px;border-top:1px solid var(--borda);
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--texto3);
+    letter-spacing:.03em;
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Controle de Obras &middot; Manfac</p>
+  <h1>Duas perguntas antes de ligar o sistema</h1>
+  <p class="intro">O sistema est&aacute; pronto para a sua equipe testar. Antes de colocar no ar de vez,
+  ficaram <b>duas decis&otilde;es que s&atilde;o suas, n&atilde;o nossas</b> &mdash; as duas mudam como a tela vai
+  se comportar no dia a dia da opera&ccedil;&atilde;o.</p>
+
+  <hr class="sep">
+
+  <div class="q">
+    <span class="qnum">01</span>
+    <h2>Quem completa o que o Field Control n&atilde;o manda, e at&eacute; quando?</h2>
+  </div>
+
+  <p class="contexto">Quando uma obra nasce no Field Control, o sistema recebe <b>tr&ecirc;s informa&ccedil;&otilde;es</b>:
+  o n&uacute;mero da OS, a loja e a descri&ccedil;&atilde;o do chamado. S&oacute; isso.</p>
+
+  <p class="contexto">Todo o resto &mdash; tipo de servi&ccedil;o, valor, analista respons&aacute;vel, origem da obra e
+  <b>a data em que a OS foi aprovada</b> &mdash; precisa ser digitado por algu&eacute;m da equipe.
+  A pergunta &eacute; em que momento isso acontece, e at&eacute; quando d&aacute; para corrigir.</p>
+
+  <div class="ficha">
+    <div class="ficha-top">Ficha da obra &mdash; o que chega e o que falta</div>
+    <div class="linha"><span class="rot">N&ordm; da OS</span><span class="val">12345<span class="tag field">vem do Field</span></span></div>
+    <div class="linha"><span class="rot">Loja</span><span class="val">DP Petr&oacute;polis 5<span class="tag field">vem do Field</span></span></div>
+    <div class="linha"><span class="rot">Chamado</span><span class="val">Troca de piso da &aacute;rea de vendas<span class="tag field">vem do Field</span></span></div>
+    <div class="linha"><span class="rot">Tipo de servi&ccedil;o</span><span class="val vazio">em branco<span class="tag mao">algu&eacute;m digita</span></span></div>
+    <div class="linha"><span class="rot">Valor</span><span class="val vazio">em branco<span class="tag mao">algu&eacute;m digita</span></span></div>
+    <div class="linha"><span class="rot">Analista</span><span class="val vazio">em branco<span class="tag mao">algu&eacute;m digita</span></span></div>
+    <div class="linha"><span class="rot">Origem</span><span class="val vazio">em branco<span class="tag mao">algu&eacute;m digita</span></span></div>
+    <div class="linha"><span class="rot">OS aprovada em</span><span class="val vazio">em branco<span class="tag mao">algu&eacute;m digita</span></span></div>
+  </div>
+  <p class="legenda">3 informa&ccedil;&otilde;es chegam prontas &middot; 5 dependem da equipe</p>
+
+  <div class="opcoes">
+
+    <div class="op">
+      <div class="op-cab"><span class="letra">A</span><span class="op-tit">S&oacute; na entrada da obra</span></div>
+      <p>A equipe preenche uma &uacute;nica vez, no momento em que a obra &eacute; recebida e distribu&iacute;da
+      para um respons&aacute;vel. Depois disso, as informa&ccedil;&otilde;es ficam travadas.</p>
+      <div class="conseq">
+        <span class="marca">Aten&ccedil;&atilde;o</span>
+        <p>Quem distribuir com pressa e deixar um campo em branco n&atilde;o tem como voltar depois.
+        E a aprova&ccedil;&atilde;o da OS, que costuma sair dias depois da obra j&aacute; ter come&ccedil;ado,
+        n&atilde;o teria onde ser registrada.</p>
+      </div>
+    </div>
+
+    <div class="op rec">
+      <div class="op-cab"><span class="letra">B</span><span class="op-tit">Na entrada, e corrig&iacute;vel depois</span><span class="selo">Recomendamos</span></div>
+      <p>A equipe preenche na entrada da obra e, a qualquer momento depois, um bot&atilde;o
+      <b>&ldquo;Editar dados da obra&rdquo;</b> abre os mesmos campos &mdash; com a obra em andamento,
+      parada ou j&aacute; conclu&iacute;da.</p>
+      <div class="conseq">
+        <span class="marca">Por qu&ecirc;</span>
+        <p>&Eacute; o &uacute;nico jeito em que esquecer de preencher tem conserto. E a data de aprova&ccedil;&atilde;o
+        da OS entra no dia em que ela realmente chegar, que &eacute; como a opera&ccedil;&atilde;o funciona hoje.</p>
+      </div>
+    </div>
+
+    <div class="op">
+      <div class="op-cab"><span class="letra">C</span><span class="op-tit">Clicar em cima e editar direto</span></div>
+      <p>Qualquer informa&ccedil;&atilde;o da ficha vira edit&aacute;vel ao clicar nela, sem bot&atilde;o e sem tela
+      separada. Menos cliques no dia a dia.</p>
+      <div class="conseq">
+        <span class="marca">Aten&ccedil;&atilde;o</span>
+        <p>A ficha &eacute; a tela que a equipe abre o dia inteiro para consultar. Misturar leitura
+        e edi&ccedil;&atilde;o no mesmo lugar aumenta a chance de algu&eacute;m alterar o valor de uma obra
+        sem perceber.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="porque">
+    <h3>Por que esta pergunta importa mais do que parece</h3>
+    <p>&Eacute; a <b>data de aprova&ccedil;&atilde;o da OS</b> que faz o sistema avisar quando uma obra est&aacute; parada
+    tempo demais. Se ela ficar em branco, a obra n&atilde;o dispara alerta nenhum e afunda no meio
+    da lista &mdash; que &eacute; exatamente o problema que deu origem a este projeto.</p>
+  </div>
+
+  <hr class="sep">
+
+  <div class="q">
+    <span class="qnum">02</span>
+    <h2>Como o avan&ccedil;o em % deve ser calculado?</h2>
+  </div>
+
+  <p class="contexto">Voc&ecirc; fez essa pergunta em <b>31 de agosto</b> e n&oacute;s ainda n&atilde;o t&iacute;nhamos
+  respondido. A resposta honesta &eacute;: <b>hoje esse n&uacute;mero n&atilde;o &eacute; calculado por ningu&eacute;m.</b>
+  Ele &eacute; digitado &agrave; m&atilde;o, sem regra nenhuma.</p>
+
+  <p class="contexto">A prova est&aacute; na pr&oacute;pria planilha que voc&ecirc;s usam &mdash; duas escalas diferentes
+  convivendo na mesma coluna:</p>
+
+  <div class="prova">
+    <table>
+      <thead>
+        <tr><th>Obra</th><th>Est&aacute; escrito</th><th>O sistema entenderia</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>DP Barra de S&atilde;o Jo&atilde;o</td><td class="num">0,9</td><td class="num">90%</td></tr>
+        <tr><td>DP Nil&oacute;polis 5</td><td class="num">0,5</td><td class="num">50%</td></tr>
+        <tr class="erro"><td>DP Petr&oacute;polis 5</td><td class="num">95</td><td class="num">9.500%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="legenda">Numa planilha isso passa despercebido. Numa barra de progresso, estoura.</p>
+
+  <div class="opcoes">
+
+    <div class="op rec">
+      <div class="op-cab"><span class="letra">A</span><span class="op-tit">Quem est&aacute; na obra declara, com foto do dia</span><span class="selo">Recomendamos</span></div>
+      <p>O respons&aacute;vel informa o avan&ccedil;o no di&aacute;rio do dia, <b>em passos de 10%</b>, e a foto
+      daquele dia fica registrada ao lado do n&uacute;mero. O sistema recusa &ldquo;95&rdquo; quando a escala
+      &eacute; de 0 a 100.</p>
+      <div class="conseq">
+        <span class="marca">Por qu&ecirc;</span>
+        <p>&Eacute; o que a opera&ccedil;&atilde;o j&aacute; faz, s&oacute; que com trilho e com prova ao lado. N&atilde;o inventa
+        processo novo, n&atilde;o exige nenhum dado que voc&ecirc;s ainda n&atilde;o tenham, e aproveita a foto
+        di&aacute;ria que j&aacute; foi aprovada.</p>
+      </div>
+    </div>
+
+    <div class="op">
+      <div class="op-cab"><span class="letra">B</span><span class="op-tit">O sistema calcula pelo tempo</span></div>
+      <p>Dias corridos desde o in&iacute;cio divididos pela dura&ccedil;&atilde;o planejada. Totalmente autom&aacute;tico,
+      ningu&eacute;m digita nada.</p>
+      <div class="conseq">
+        <span class="marca">Aten&ccedil;&atilde;o</span>
+        <p>Ele mente. Uma obra parada h&aacute; duas semanas esperando material continuaria
+        &ldquo;avan&ccedil;ando&rdquo; na tela todos os dias &mdash; o oposto exato do que este sistema existe
+        para mostrar.</p>
+      </div>
+    </div>
+
+    <div class="op">
+      <div class="op-cab"><span class="letra">C</span><span class="op-tit">O sistema calcula por etapas conclu&iacute;das</span></div>
+      <p>Cada obra teria um plano de etapas, e cada etapa fechada empurraria a barra sozinha.
+      Conceitualmente &eacute; o mais correto dos tr&ecirc;s.</p>
+      <div class="conseq">
+        <span class="marca">Aten&ccedil;&atilde;o</span>
+        <p>&Eacute; tamb&eacute;m o mais caro: exige montar um plano de etapas para cada obra, e isso n&atilde;o
+        existe hoje em lugar nenhum. Faz mais sentido como evolu&ccedil;&atilde;o futura do que agora.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="fim">
+    <h3>Como responder</h3>
+    <p>Uma frase por pergunta j&aacute; resolve &mdash; ou s&oacute; a letra da op&ccedil;&atilde;o, se preferir.
+    Pode responder por &aacute;udio ou mensagem para o Jo&atilde;o, do jeito que for mais r&aacute;pido para voc&ecirc;.</p>
+    <p>Assim que as duas estiverem definidas, a equipe j&aacute; pode come&ccedil;ar a usar o sistema
+    com as telas no formato final.</p>
+  </div>
+
+  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 10 de setembro de 2026</p>
+
+</div>
