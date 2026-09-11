@@ -145,7 +145,7 @@ export default async function DashboardPage() {
                 Controle de Obras
               </p>
               <p className="text-[#4a6080] text-sm mt-1">
-                Diário do dia, tarefas e a base de obras da DPSP
+                Diário do dia, tarefas e a base de obras de todos os clientes
               </p>
             </div>
           </Link>
