@@ -201,6 +201,13 @@ export const SITUACOES_TAREFA = ['aberta', 'respondida'] as const
 /** O que a coluna `situacao` aceita. "vencida" NUNCA é gravada — ver `sitTarefa`. */
 export type SituacaoTarefa = (typeof SITUACOES_TAREFA)[number]
 
+/**
+ * Procedência técnica da obra. Hoje só o Field cria obras; `null` significa
+ * "não sei de onde veio" e, por segurança, não autoriza o D2 a marcar ausência.
+ */
+export const FONTES_OBRA = ['field'] as const
+export type FonteObra = (typeof FONTES_OBRA)[number]
+
 // ============================================================
 // 3. Entidades — espelham as tabelas de sdd-sql-obras-v0.sql
 // ============================================================
@@ -214,6 +221,7 @@ export type ObraRow = {
   tipo: string | null
   valor: number | null
   origem: string | null
+  fonte: FonteObra | null
 
   analista_cliente: string | null
   pcm: string | null

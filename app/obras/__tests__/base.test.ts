@@ -38,6 +38,7 @@ function linha(over: Partial<ObraRow> = {}): ObraRow {
     tipo: 'TELHADO',
     valor: null,
     origem: 'Sistema DPSP',
+    fonte: null,
     analista_cliente: 'LEANDRO',
     pcm: 'YURI',
     equipe: 'MANFAC-7',

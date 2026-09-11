@@ -104,7 +104,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
   for (const lote of emLotes(numerosDeOsDoField(doField), TAMANHO_DO_LOTE)) {
     const { data, error } = await supabase
       .from('obras_obra')
-      .select('id, os, loja, descricao')
+      .select('id, os, loja, descricao, fonte')
       .in('os', lote)
 
     // Leitura parcial levaria a INSERIR obra que já existe, e o índice único

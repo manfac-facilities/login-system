@@ -31,12 +31,13 @@ function obraNoBanco(over: Partial<ObraExistente> = {}): ObraExistente {
     os: '0226-014989',
     loja: null,
     descricao: null,
+    fonte: 'field',
     ...over,
   }
 }
 
 describe('planejarSincronizacao — OS que ainda não existe', () => {
-  it('cria a obra com os, loja, descrição e etapa "definir"', () => {
+  it('cria a obra com procedência field e etapa "definir"', () => {
     const plano = planejarSincronizacao([osDoField()], [])
 
     expect(plano.inserir).toEqual([
@@ -44,6 +45,7 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
         os: '0226-014989',
         loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
         descricao: 'Forro do estoque caiu',
+        fonte: 'field',
         etapa: 'definir',
       },
     ])
@@ -56,7 +58,7 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
     const plano = planejarSincronizacao([osDoField({ loja: null, descricao: null })], [])
 
     expect(plano.inserir).toEqual([
-      { os: '0226-014989', loja: null, descricao: null, etapa: 'definir' },
+      { os: '0226-014989', loja: null, descricao: null, fonte: 'field', etapa: 'definir' },
     ])
   })
 })
@@ -83,6 +85,28 @@ describe('planejarSincronizacao — OS que já existe', () => {
       { id: 'obra-1', os: '0226-014989', campos: { descricao: 'texto novo do Field' } },
     ])
     expect(plano.inalteradas).toBe(0)
+  })
+
+  it('carimba como field a obra existente cuja procedência ainda é desconhecida', () => {
+    const plano = planejarSincronizacao(
+      [osDoField()],
+      [obraNoBanco({ loja: 'DROGARIA SP', descricao: 'Reforma', fonte: null })],
+    )
+
+    expect(plano.atualizar).toEqual([
+      { id: 'obra-1', os: '0226-014989', campos: { fonte: 'field' } },
+    ])
+    expect(plano.inalteradas).toBe(0)
+  })
+
+  it('nunca sobrescreve uma procedência já preenchida', () => {
+    const plano = planejarSincronizacao(
+      [osDoField()],
+      [obraNoBanco({ loja: 'DROGARIA SP', descricao: 'Reforma', fonte: 'field' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.inalteradas).toBe(1)
   })
 
   it('trata string em branco no banco como campo vazio', () => {

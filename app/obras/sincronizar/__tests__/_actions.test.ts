@@ -8,6 +8,7 @@
 
 const getUserMock = jest.fn()
 const selectInMock = jest.fn()
+const selectMock = jest.fn(() => ({ in: selectInMock }))
 const insertMock = jest.fn()
 const updateEqMock = jest.fn()
 const updateMock = jest.fn(() => ({ eq: updateEqMock }))
@@ -16,7 +17,7 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
     from: jest.fn(() => ({
-      select: jest.fn(() => ({ in: selectInMock })),
+      select: selectMock,
       insert: insertMock,
       update: updateMock,
     })),
@@ -115,7 +116,13 @@ describe('sincronizarComFieldAction — gravação', () => {
     const estado = await sincronizarComFieldAction()
 
     expect(insertMock).toHaveBeenCalledWith([
-      { os: '0226-014989', loja: 'Av. Paulista, 1000', descricao: 'Forro do estoque caiu', etapa: 'definir' },
+      {
+        os: '0226-014989',
+        loja: 'Av. Paulista, 1000',
+        descricao: 'Forro do estoque caiu',
+        fonte: 'field',
+        etapa: 'definir',
+      },
     ])
     expect(updateMock).not.toHaveBeenCalled()
     expect(estado.relatorio).toMatchObject({ totalDoField: 1, novas: 1, atualizadas: 0, inalteradas: 0 })
@@ -124,7 +131,7 @@ describe('sincronizarComFieldAction — gravação', () => {
   it('atualiza só o campo vazio de obra que já existe', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField()])
     selectInMock.mockResolvedValue({
-      data: [{ id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: null }],
+      data: [{ id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: null, fonte: 'field' }],
       error: null,
     })
 
@@ -136,10 +143,24 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(estado.relatorio).toMatchObject({ novas: 0, atualizadas: 1, inalteradas: 0 })
   })
 
+  it('lê e carimba a fonte quando o Field encontra uma obra de procedência desconhecida', async () => {
+    listarOsNormalizadas.mockResolvedValue([osDoField()])
+    selectInMock.mockResolvedValue({
+      data: [{ id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: 'Reforma', fonte: null }],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(selectMock).toHaveBeenCalledWith('id, os, loja, descricao, fonte')
+    expect(updateMock).toHaveBeenCalledWith({ fonte: 'field' })
+    expect(estado.relatorio).toMatchObject({ novas: 0, atualizadas: 1, inalteradas: 0 })
+  })
+
   it('não grava nada quando a obra já existe completa', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField()])
     selectInMock.mockResolvedValue({
-      data: [{ id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: 'Reforma' }],
+      data: [{ id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: 'Reforma', fonte: 'field' }],
       error: null,
     })
 
@@ -190,7 +211,7 @@ describe('sincronizarComFieldAction — gravação', () => {
   it('registra no relatório a obra que o banco recusou atualizar, sem derrubar o resto', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField(), osDoField({ os: 'OS-NOVA', idField: 'ord-2' })])
     selectInMock.mockResolvedValue({
-      data: [{ id: 'obra-1', os: '0226-014989', loja: null, descricao: null }],
+      data: [{ id: 'obra-1', os: '0226-014989', loja: null, descricao: null, fonte: 'field' }],
       error: null,
     })
     updateEqMock.mockResolvedValue({ error: { message: 'coluna inexistente' } })

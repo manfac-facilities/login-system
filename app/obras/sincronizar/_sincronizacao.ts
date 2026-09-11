@@ -22,7 +22,7 @@
 
 import { camposParaAtualizar } from '../_lib/importacao'
 import type { OsNormalizada } from '../_lib/field'
-import type { Etapa } from '../_lib/tipos'
+import type { Etapa, FonteObra } from '../_lib/tipos'
 
 /** O que precisamos saber de uma obra que já está no banco. */
 export type ObraExistente = {
@@ -30,6 +30,7 @@ export type ObraExistente = {
   os: string | null
   loja: string | null
   descricao: string | null
+  fonte: FonteObra | null
 }
 
 /** Obra nova, pronta para o insert. Só os campos que o Field conhece. */
@@ -37,6 +38,7 @@ export type ObraNovaDoField = {
   os: string
   loja: string | null
   descricao: string | null
+  fonte: FonteObra
   etapa: Etapa
 }
 
@@ -71,6 +73,9 @@ export type PlanoDeSincronizacao = {
  * faria a obra nascer no meio da esteira sem ninguém responsável.
  */
 const ETAPA_INICIAL: Etapa = 'definir'
+
+/** A única porta de criação de obras ativa hoje é o Field Control. */
+const FONTE_FIELD: FonteObra = 'field'
 
 /** Texto só conta como preenchido se tiver conteúdo — `''` e `'  '` são vazio. */
 function vazio(valor: unknown): boolean {
@@ -162,6 +167,7 @@ export function planejarSincronizacao(
     const doFieldEmColunas: Record<string, unknown> = {
       loja: vinda.loja,
       descricao: vinda.descricao,
+      fonte: FONTE_FIELD,
     }
 
     const existente = porOs.get(numero)
@@ -171,6 +177,7 @@ export function planejarSincronizacao(
         os: numero,
         loja: vinda.loja,
         descricao: vinda.descricao,
+        fonte: FONTE_FIELD,
         etapa: ETAPA_INICIAL,
       })
       continue
@@ -182,6 +189,12 @@ export function planejarSincronizacao(
     //      que são do app e nunca de fonte externa.
     //   2. o filtro daqui de baixo derruba o que o banco JÁ TEM. É este que
     //      implementa a regra do João: só preenche vazio.
+    //
+    // `fonte` segue deliberadamente o mesmo caminho. Uma obra antiga sem
+    // procedência passa a receber `field` quando o Field a mencionar: nesse
+    // instante temos evidência da origem. Uma fonte já preenchida nunca é
+    // sobrescrita, preservando a regra de recarga e preparando o D2 para agir
+    // somente sobre obras cuja procedência é conhecida.
     const candidatos = camposParaAtualizar(doFieldEmColunas)
     const campos: Record<string, unknown> = {}
     for (const [coluna, valor] of Object.entries(candidatos)) {

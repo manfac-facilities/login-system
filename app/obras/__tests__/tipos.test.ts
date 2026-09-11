@@ -58,6 +58,7 @@ function obraRow(over: Partial<ObraRow> = {}): ObraRow {
     tipo: 'TELHADO',
     valor: 28520.46,
     origem: 'Sistema DPSP',
+    fonte: null,
     analista_cliente: 'LEANDRO',
     pcm: 'YURI',
     equipe: 'MANFAC-7',
