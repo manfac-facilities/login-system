@@ -136,18 +136,37 @@ aparecer numa varredura do Field — e marcá-la como "sumiu" seria alarme falso
 > (`_lib/importacao.ts:404`), que diz de qual aba veio a linha que o relatório descartou.
 > Coisa diferente, mesmo nome. Sempre confira o tipo antes de copiar um literal.
 
-### A decisão que vale perguntar antes de codar
+### A decisão já foi tomada: coluna nova `fonte`
 
-São duas opções, e elas custam diferente:
+Esta seção **era** uma pergunta em aberto. O João respondeu em 11/09/2026, e a decisão é
+**coluna nova**, não reuso da `origem`. As duas opções e o custo de cada uma:
 
 | Opção | Custo | Efeito colateral |
 |---|---|---|
-| **Reusar a coluna `origem`** | zero — nenhuma migration | mistura o vocabulário do cliente (`"Sistema DPSP"`, `"Garantia"`) com o nosso (`"Field Control"`) na mesma coluna, que é exibida em duas telas |
-| **Coluna nova** | um arquivo `sdd-sql-*.sql` que **o João roda à mão** no Supabase | separa procedência de sistema do texto do cliente, mas adiciona uma dependência de produção a uma frente de 1 h |
+| ~~Reusar a coluna `origem`~~ | zero — nenhuma migration | **descartada:** mistura o vocabulário do cliente (`"Sistema DPSP"`, `"Garantia"`) com o nosso (`"Field Control"`) na mesma coluna, que é exibida na ficha e na triagem |
+| **Coluna nova `fonte`** ✅ | um arquivo `sdd-sql-*.sql` que **o João roda à mão** no Supabase | separa procedência de sistema do texto do cliente |
 
-**Pergunte ao João antes de escrever.** É exatamente o caso da regra 11 do
-`01-REGRAS-DE-TRABALHO.md`: a resposta muda o que vai ser feito, e a pergunta custa
-minutos. Não escolha sozinho e não fique parado — pergunte e siga.
+**Por que a coluna nova, apesar de custar uma migration:** contagem por procedência é
+pergunta de negócio ("quantas obras vieram do Field este mês?"), e texto livre
+compartilhado com o vocabulário do cliente torna essa contagem impossível. É o mesmo erro
+que o avanço físico da planilha cometeu — `0.9` numa linha e `95` em outra querendo dizer
+a mesma coisa — e que virou uma pergunta do cliente que ficou três dias sem resposta.
+
+**E o momento é agora, de graça:** a base em produção está **vazia**, zero obras. A
+migration não precisa fazer backfill de nada nem decidir o que fazer com linha antiga.
+Daqui a um mês, com a base cheia, essa mesma mudança custa uma conversa sobre dados
+existentes.
+
+**O que você escreve:**
+
+- `sdd-sql-obras-fonte.sql` na raiz, idempotente, dentro de `begin`/`commit`, seguindo o
+  estilo de `sdd-sql-obras-v0.sql`. Coluna `fonte text` em `obras_obra`.
+- Valores do vocabulário: **`'field'`**, **`'planilha'`**, **`'manual'`**. Minúsculas, sem
+  acento — são chaves do sistema, não texto de tela.
+- A sincronização grava `'field'`; a importação da planilha grava `'planilha'`.
+- **Você não roda a migration.** Escreve, avisa, e o João roda — é a regra 3 do
+  `01-REGRAS-DE-TRABALHO.md`. Até ela rodar, o código que lê `fonte` não funciona em
+  produção, e isso é esperado.
 
 ### O caminho natural no código
 

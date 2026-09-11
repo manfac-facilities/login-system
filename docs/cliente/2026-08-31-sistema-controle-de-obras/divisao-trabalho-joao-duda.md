@@ -75,7 +75,7 @@ mesmo repositório sem se cruzarem — critério 3 aplicado de propósito, não 
 
 | # | Frente | Por quê | Tempo | Tokens (est.) |
 |---|---|---|---|---|
-| D1 | Marcar de onde a obra veio | Pré-requisito do D2: hoje **nada distingue uma obra que veio do Field**, e a reconciliação precisa saber disso antes de qualquer outra coisa. ⚠️ **Tem uma decisão de modelagem dentro**, ver abaixo — não é o item trivial que a primeira redação desta tabela sugeria | 1–2 h | 0,1–0,3 M |
+| D1 | Marcar de onde a obra veio | Pré-requisito do D2: hoje **nada distingue uma obra que veio do Field**, e a reconciliação precisa saber disso antes de qualquer outra coisa. **Decidido em 11/09: coluna nova `fonte`** (`'field'`/`'planilha'`/`'manual'`), não reuso da `origem` — ver abaixo. O Duda escreve o `.sql`, o João roda | 1–2 h | 0,1–0,3 M |
 | D2 | A OS que sumiu do Field | O desenho mais delicado do módulo, e o cliente já levantou: *"abri uma OS errada, como o sistema se comporta se eu precisar excluir?"*. O Field **não avisa exclusão** — não existe `order-deleted` nem `order-archived` entre os ~26 webhooks. Só se descobre por ausência, e ausência também acontece se a API falhar ou a paginação escorregar. Duas regras fechadas: o sistema nunca apaga por causa do Field, e sumiço vira **alerta**, não exclusão. Fonte: `feedback-10-exclusao-de-os-no-field.md` | 5–8 h | 0,8–1,4 M |
 | D3 | Sincronização que roda sozinha | Hoje é um botão que alguém precisa lembrar de apertar — e obra que não entra no sistema não é cobrada por ele. Precisa de varredura recorrente com marca d'água (`updated_at>=` da última passada). ⚠️ **O mecanismo ainda não está decidido**; o João escolhe antes de a frente começar | 4–7 h | 0,6–1,1 M |
 | D4 | Smoke test contra o banco real | Todos os testes do módulo usam mock: nada aqui jamais escreveu numa tabela de verdade. Era aceitável sem migration; agora ela está aplicada e o módulo está no ar vazio, e o primeiro dado real entraria sem ninguém ter provado o caminho | 2–3 h | 0,2–0,3 M |
@@ -98,9 +98,14 @@ superficial.** O código diz outra coisa:
 
 **Consequência real, e é por isso que o registro importa:** reusar `origem` para marcar
 procedência misturaria "de que sistema a obra veio" com um texto que é do cliente e
-aparece em duas telas. A alternativa é coluna nova, que exige migration — e migration aqui
-é rodada à mão pelo João. **A escolha é dele, e o D1 não começa antes dela.** Está descrita
-com o trade-off em `docs/onboarding-duda/02-FRENTES-DO-DUDA.md`.
+aparece em duas telas.
+
+**Decisão do João, 11/09/2026: coluna nova `fonte`**, com os valores `'field'`,
+`'planilha'` e `'manual'`. O Duda escreve a migration `sdd-sql-obras-fonte.sql`; o João a
+roda. O peso da escolha foi o momento: **a base em produção está vazia**, então a migration
+não precisa de backfill nem de decisão sobre linha antiga — a mesma mudança daqui a um mês
+custaria uma conversa sobre dados existentes. E contagem por procedência é pergunta de
+negócio, que texto livre compartilhado com o vocabulário do cliente torna impossível.
 
 O achado é de uma revisão independente: quem escreveu a divisão não foi quem detalhou as
 frentes. É exatamente o que "quem executa e quem confere nunca são o mesmo" compra.
