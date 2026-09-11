@@ -3,6 +3,37 @@
 Atualizado em 10/09/2026, à noite. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
 
+## 10/09/2026, fim da noite — três decisões do João que mudam o caminho
+
+**1. A planilha NÃO será importada.** Decisão do João, seguindo o cliente: *"o cliente vai
+fazer pelo field control [...] ele vai ver o que tem no field e o que tem na planilha para
+atualizar o field e puxarmos de lá"*. O **passo 4 do runbook sai do caminho crítico** — a
+base do sistema nasce do Field, depois do pente fino de 11/09. A planilha volta a ser o
+que sempre foi: o retrato de onde a operação está hoje, insumo do saneamento que o cliente
+faz, não carga do sistema.
+
+> **Consequência que vale antecipar:** o parser de importação (`_lib/importacao.ts`, 
+> `/obras/importar`) continua construído, testado e no ar, mas **deixa de ter uso
+> previsto**. Antes de considerá-lo morto, lembrar que ele é o único caminho de carga em
+> massa que existe — se a integração com o Field atrasar, ele é o plano B.
+
+**2. Contas de AMANDA e YURI ficam para depois.** Com a base vindo do Field, não há o que
+elas vejam hoje. Os **passos 5 e 6 do runbook saem da fila desta noite** — voltam quando
+houver obra no sistema.
+
+**3. O acesso do Duda ao GitHub foi concedido.** Usuário: **`daduu27`**, papel `Write`,
+convite criado em 10/09 às 22:59 UTC. ⚠️ **O convite estava PENDENTE de aceite** na
+verificação — enquanto ele não aceitar pelo e-mail do GitHub, o push dele falha com 403.
+Colaboradores do repositório hoje: `Josemanfac` (admin), `Mainsis` (admin), `daduu27`
+(write, pendente).
+
+**Estado do caminho crítico depois disso:** ir ao ar está **concluído** no que dependia de
+infraestrutura — migration, push, deploy e módulo no hub. O que resta do runbook (passos
+4, 5 e 6) foi adiado por decisão, não por bloqueio. **A frente ativa passa a ser a
+integração com o Field.**
+
+---
+
 ## 10/09/2026, noite — a migration ENTROU em produção
 
 **O módulo tocou um Supabase real pela primeira vez.** A frase "nada foi testado contra
