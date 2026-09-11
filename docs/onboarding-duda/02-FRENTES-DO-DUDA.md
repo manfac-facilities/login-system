@@ -160,13 +160,34 @@ existentes.
 **O que você escreve:**
 
 - `sdd-sql-obras-fonte.sql` na raiz, idempotente, dentro de `begin`/`commit`, seguindo o
-  estilo de `sdd-sql-obras-v0.sql`. Coluna `fonte text` em `obras_obra`.
-- Valores do vocabulário: **`'field'`**, **`'planilha'`**, **`'manual'`**. Minúsculas, sem
-  acento — são chaves do sistema, não texto de tela.
-- A sincronização grava `'field'`; a importação da planilha grava `'planilha'`.
+  estilo de `sdd-sql-obras-v0.sql`. Coluna `fonte text` em `obras_obra`, **nullable e sem
+  default**.
+- **Um único valor no vocabulário hoje: `'field'`.** Minúsculo, sem acento — é chave de
+  sistema, não texto de tela. Só a sincronização grava.
 - **Você não roda a migration.** Escreve, avisa, e o João roda — é a regra 3 do
   `01-REGRAS-DE-TRABALHO.md`. Até ela rodar, o código que lê `fonte` não funciona em
   produção, e isso é esperado.
+
+**Por que só um valor, e não `'planilha'` junto** (decidido em 11/09, depois de a pergunta
+ser levantada): a tela `/obras/importar` existe no código, mas é resíduo da v0 — foi
+construída para a carga inicial das 187 obras da planilha, antes de a integração com o
+Field existir. **Em 10/09 o cliente decidiu que a planilha não será importada**, e a base
+nasce inteira do Field. A rota hoje não está linkada de lugar nenhum: nada na interface
+leva até ela.
+
+Então `'planilha'` seria um valor permitido que nenhum código grava — e valor fantasma em
+coluna é a semente da próxima confusão, exatamente o tipo de coisa que esta frente existe
+para evitar. Se um dia a importação voltar a ser usada, acrescenta-se o valor **e** a
+escrita no mesmo commit.
+
+**Consequência prática, e ela é confortável:** obra com `fonte` nula significa *"não sei de
+onde veio"*, e o D2 trata isso como **não mexe** — nunca marca ausência. Como a base está
+vazia e só o Field escreve nela, na prática toda obra vai nascer com `'field'`.
+
+**Se você achar mais limpo usar um `check` no banco**, use — `fonte text check (fonte in
+('field'))` documenta o vocabulário no schema e falha cedo. Mas escreva-o de forma que
+acrescentar um valor depois seja um `alter` simples, não uma reescrita da constraint sem
+nome.
 
 ### O caminho natural no código
 
@@ -184,8 +205,10 @@ conhece — mas é uma escolha, não um acidente. Deixe o motivo no código.
 ### O que NÃO fazer nesta frente
 
 - ❌ Não mexa em `app/obras/obra/[id]/` — é o território do João.
-- ❌ Não altere o que a importação da planilha grava. Ela não vai rodar, e mudá-la só
-  gera diff para revisar.
+- ❌ Não altere o que a importação da planilha grava, e **não faça ela gravar `fonte`**.
+  Ela não vai rodar — a planilha foi descartada em 10/09 e a rota nem está linkada.
+  ⚠️ Cuidado ao mexer em `_lib/importacao.ts`: apesar do nome, ele **não é só da
+  planilha**. A `camposParaAtualizar` mora ali e é reusada pela sincronização do Field.
 - ❌ Não aplique migration nenhuma. Escrever o `.sql` é seu; **rodar é do João** (regra 3
   do `01-REGRAS-DE-TRABALHO.md`).
 - ❌ Não invente um terceiro valor de procedência "para o futuro". Duas portas de entrada

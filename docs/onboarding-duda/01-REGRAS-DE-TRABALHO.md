@@ -92,6 +92,18 @@ npm test         # jest
 npm run lint     # eslint
 ```
 
+⚠️ **O `.nvmrc` diz 20, mas em Node 20 o `npx jest` não sobe.** O `jest.config.ts` é
+TypeScript, e o Jest 30 só lê isso com o *type stripping* nativo do Node, que existe a
+partir do **22.6** — em Node 20 ele cai no `ts-node`, que não estava declarado. Quem
+desenvolveu em Node 24 nunca viu o erro; quem seguiu o `.nvmrc` bateu nele de cara.
+Descoberto em 11/09/2026 por quem estava entrando no projeto — o comando oficial do
+`README` não funcionava na versão de Node que o próprio projeto manda usar.
+
+**A correção entra junto com a frente D1:** declarar `ts-node` como `devDependency`, o que
+faz os dois caminhos funcionarem sem mexer no Node do build de produção. Até esse commit
+existir, a saída é rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o
+`ts-node` nem é consultado.
+
 **O verde esperado:** `npx jest app/obras` tem que dar **294/294**. Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
