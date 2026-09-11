@@ -97,3 +97,31 @@ respondido diário.
 se a **1a** existir antes. As OS que o cliente vai abrir amanhã nascem com três campos e
 `aprovacao` nula — obra que nunca vira crítica. Construir a sincronização antes da tela
 de preencher é encher o sistema de obras invisíveis, rápido.
+
+---
+
+## A expectativa do cliente, na palavra dele
+
+Ainda em 10/09, o João transmitiu — e confirmou depois que **é fala do cliente, não dele**:
+
+> O importante é assim que cadastrar no field q eu quero fazer amanhã, ja conseguir rodar
+> no sistema
+
+**Isso é um requisito de prazo, e é do cliente.** Ele não quer só que a integração exista:
+quer **ver a obra aparecer no hub no mesmo dia em que cadastrar no Field**, 11/09. A
+expectativa dele sobre o dia é de resultado visível, não de progresso.
+
+**Consequência para a ordem das frentes:** a 1c (gravar no banco o que a camada da API
+devolve) passa a ter prazo, e o prazo é hoje. A 1a continua sendo o que evita obra
+invisível, mas deixa de poder vir antes — **vem logo atrás**, e no intervalo o risco é
+mitigado por vigilância humana: o João está olhando a primeira carga.
+
+**O que isso custa, para ficar registrado antes de acontecer:** toda OS sincronizada hoje
+entra sem `aprovacao`, `tipo`, `valor`, `origem` e `analista_cliente`, e nenhuma delas
+tem onde ser preenchida depois que a obra sai de `definir`. Se a tela de completar
+demorar, essas obras ficam invisíveis ao mecanismo de criticidade — e o buraco cresce na
+proporção do que for cadastrado.
+
+**Bloqueador prático:** a **chave da API do Field** ainda não foi entregue. Sem ela não há
+sincronização nem teste. Ela existe desde 08/09 — o João confirmou que tem a chave e a
+documentação — mas não chegou ao ambiente de desenvolvimento.
