@@ -3,6 +3,48 @@
 Atualizado em 10/09/2026, à noite. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
 
+## 11/09/2026, madrugada — fechamento da sessão
+
+**O sistema saiu do papel: está no ar, vazio, esperando a primeira OS.** O que a sessão da
+noite de 10/09 entregou, tudo verificado por medição:
+
+| | |
+|---|---|
+| Migration | ✅ aplicada e verificada em produção |
+| Push | ✅ 82 commits — e a `Mainsis` virou admin, então **o push deixou de depender do João** |
+| Deploy | ✅ build de 10/09 23h38, 10 chunks no mesmo timestamp |
+| `/obras` | ✅ responde (307 → login), card 🏗️ no dashboard |
+| Obras no banco | **0** — por decisão, não por falha |
+| Frente F1 (cliente da API do Field) | ✅ construída, revisada e pushada |
+| Frente 1c (sincronização → banco) | ✅ construída e revisada; **falta a chave para provar** |
+
+**Guia publicado para a equipe**, explicando por que a tela vazia não é defeito e o que
+cada pendência custa: https://claude.ai/code/artifact/09355e86-fc26-4f4c-873a-e40aadcf98fc
+
+### O que trava a manhã de 11/09, em ordem
+
+1. **A chave da API do Field não chegou ao ambiente.** O João tem a chave; ela precisa ir
+   para `C:\Users\joao-\.field-api-key` (para testar) **e** para o EasyPanel como
+   `FIELD_API_KEY=valor` numa linha só (para produção). Sem ela a sincronização não roda
+   nem é testada — e três incógnitas da API seguem abertas: se o servidor aceita a
+   codificação do `q`, se `sort=id` é campo válido, e se `updated_at>=` aceita timestamp
+   completo ou só data. **Qualquer uma delas custa meia hora no pior momento: durante o
+   cadastro.**
+2. **Deploy da sincronização.** O código está no `master`; a tela `/obras/sincronizar` só
+   existe em produção depois de um novo Deploy no EasyPanel.
+3. **A tela de completar a obra (1a) não existe** — e o cliente respondeu o que faltava
+   para construí-la (feedback 12). Enquanto ela não existir, toda OS sincronizada entra
+   sem `aprovacao` e **nunca vira crítica**.
+
+### Dívida de processo assumida nesta sessão
+
+A tela `/obras/sincronizar` foi construída **sem mockup aprovado antes**, por causa do
+prazo do cliente. Ela segue o padrão da `/obras/importar`, que já estava aprovada e no ar.
+**Foi decisão do Claude, comunicada ao João, e não deve virar precedente** — a regra do
+projeto continua sendo mockup antes de código.
+
+---
+
 ## 10/09/2026, fim da noite — três decisões do João que mudam o caminho
 
 **1. A planilha NÃO será importada.** Decisão do João, seguindo o cliente: *"o cliente vai

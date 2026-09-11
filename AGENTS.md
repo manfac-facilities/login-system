@@ -29,13 +29,14 @@ Facilities atrás de um login compartilhado:
 > **Controle de Obras — estado em 10/09/2026, noite.** O código das cinco telas está no
 > `master` local (o branch `copy-aprovada-cliente` foi mergeado por fast-forward), build e
 > testes limpos. **A migration foi aplicada e verificada em produção em 10/09** (5 tabelas
-> `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage) — a frase "nada foi
-> testado contra Supabase real" **não vale mais para o schema**, embora nenhuma tela tenha
-> rodado contra ele ainda. **O que continua faltando é deploy:** o `master` local não foi
-> pushado (81 commits) e o build no ar é de 26/08, então `/obras` ainda devolve 404 e o
-> card não aparece no dashboard. O slug `obras` também não foi liberado para ninguém em
-> `/admin/acessos` — e atenção, **AMANDA e YURI, que respondem por 79 das 82 obras da
-> planilha, não têm conta no hub**. Contexto completo,
+> `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage), **os 82 commits
+> foram pushados e o deploy subiu** (build de 10/09 23h38, chunks todos no mesmo
+> timestamp). `/obras` responde, e o card 🏗️ aparece no dashboard para administradores.
+> **O módulo está no ar e VAZIO: zero obras no banco** — a base vai nascer do Field
+> Control depois do pente fino do cliente, e a planilha **não será importada**, por
+> decisão de 10/09. O slug `obras` não foi liberado para ninguém em `/admin/acessos`, de
+> propósito: sem dado, liberar só mostraria tela vazia. **AMANDA e YURI, que respondem por
+> 79 das 82 obras da planilha, não têm conta no hub** — adiado junto. Contexto completo,
 > decisões e pendências em
 > `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`. **O passo a passo de pôr
 > no ar, com o SQL de verificação de cada etapa, está em
@@ -44,12 +45,20 @@ Facilities atrás de um login compartilhado:
 > hoje roda dentro de `begin`/`commit`. Criar o bucket `obras-fotos` **não** é passo
 > manual: a própria migration o cria, com as policies de storage.
 
-> **A conta do GitHub desta máquina não tem permissão de escrita no repositório.** O `gh`
-> está logado como **`Mainsis`**, e `gh api repos/manfac-facilities/login-system` devolve
-> `{"admin": false, "push": false, "pull": true}` — `git push` morre com
-> `403 ... denied to Mainsis`. Verificado em 07/09/2026. **Quem dá push é o João**, ou
-> alguém precisa conceder escrita a essa conta. Não perca tempo investigando credencial:
-> o token tem escopo `repo`; o que falta é permissão no repositório.
+> **O push desta máquina foi liberado em 10/09/2026 — o Claude pusha sozinho.** Até essa
+> data a conta `Mainsis` (a do `git`, do `gh` e do Chrome aqui) só tinha `pull`, e todo
+> deploy dependia do João estar disponível; isso custou os deploys de 07/09, 08/09 e a
+> primeira metade de 10/09. O João concedeu **Admin** no repositório e
+> `gh api repos/manfac-facilities/login-system --jq .permissions` passou a devolver
+> `{"admin": true, "push": true, ...}`. Colaboradores hoje: `Josemanfac` (admin),
+> `Mainsis` (admin), **`daduu27`** (write — é o Duda; o convite estava pendente de aceite
+> em 10/09).
+>
+> ⚠️ **O que ainda barra o push é o auto mode**, com `[Sensitive-Source Provenance]`, e a
+> escrita em produção com `[Production Deploy]`. É trava de permissão pedindo autorização
+> do João, **não** falha de credencial — não saia investigando token quando encontrar uma
+> delas. Sintoma histórico, para não confundir: o 403 do GitHub dizia
+> `denied to Mainsis`; o do auto mode não chega a tocar a rede.
 
 **Apelidos que já causaram confusão.** O repositório é `manfac-facilities/login-system`
 e o app no EasyPanel tem esse mesmo nome, herdado de quando o projeto era só a tela de
@@ -120,6 +129,7 @@ Se o título aparecer, a aplicação está perfeita — o problema é DNS, não 
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tudo | |
 | `NEXT_PUBLIC_SITE_URL` | links de e-mail do Supabase Auth | |
 | `SUPABASE_SERVICE_ROLE_KEY` | **só** `app/admin/_actions.ts` | **NÃO estava chegando no processo em 2026-08-09**, apesar de aparecer no painel. Ver aviso abaixo. Sem ela, `createAdminClient()` lança e a página `/admin/acessos` inteira cai com erro genérico de Server Component. Ausente em `.env.production` e no `DEPLOY.md`, que estão desatualizados. |
+| `FIELD_API_KEY` | **só** `app/obras/sincronizar/_actions.ts` | Header `X-Api-Key` da API do Field Control. **É segredo: não pode entrar no `.env.production` versionado — só pelo painel do EasyPanel**, com a mesma armadilha do `NOME=valor` numa linha só. Sem ela a tela `/obras/sincronizar` não quebra: a action devolve erro dizendo que a chave falta. A camada `app/obras/_lib/field/` não lê `process.env` de propósito — a chave entra por parâmetro. |
 
 > **Aviso — a anotação anterior era falsa.** Até 2026-08-09 este arquivo dizia que a
 > `SUPABASE_SERVICE_ROLE_KEY` estava configurada no EasyPanel e mandava não investigar
