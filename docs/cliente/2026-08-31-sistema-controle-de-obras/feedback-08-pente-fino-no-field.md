@@ -68,3 +68,32 @@ tem acesso aos dois lados.
 **Importar a planilha agora, ou esperar o pente fino terminar?** As duas têm custo real e
 a decisão é de operação, não de código — está registrada em `ESTADO.md`, no bloco de
 10/09 à noite.
+
+---
+
+## Complemento da mesma noite — o cliente define a prioridade
+
+Ainda em 10/09, pouco depois, o João transmitiu:
+
+> o cliente falou: é melhor trabalhar na integração e amanha eu sento com o cara e faço
+> esse pente fino com a equipe
+
+**Duas coisas ficam decididas por isso, e nenhuma delas é nossa:**
+
+1. **A prioridade de construção é a integração com o Field**, não mais o caminho da
+   planilha. A planilha era a ponte enquanto não havia credencial de API — e a credencial
+   existe desde 08/09.
+2. **O pente fino tem data: 11/09**, feito pelo cliente com o colaborador dele e a
+   equipe. Deixa de ser prazo indefinido, o que muda o cálculo da pergunta acima: esperar
+   a base saneada passa a custar um dia, não um mês.
+
+**Consequência de escopo, e ela é boa:** as 187 obras da planilha deixam de ser a base
+definitiva e viram **carga de teste**. A base real nasce do Field, depois do pente fino.
+Isso simplifica a conciliação — em vez de casar dois cadastros vivos para sempre, é uma
+carga só, descartável, com `delete from public.obras_obra` enquanto ninguém tiver
+respondido diário.
+
+**E reforça a ordem das frentes:** a integração (1c do João, F1 do Duda) só entrega valor
+se a **1a** existir antes. As OS que o cliente vai abrir amanhã nascem com três campos e
+`aprovacao` nula — obra que nunca vira crítica. Construir a sincronização antes da tela
+de preencher é encher o sistema de obras invisíveis, rápido.
