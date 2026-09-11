@@ -217,33 +217,46 @@
 
   <p class="eyebrow">Manfac Facilities &middot; Hub</p>
   <h1>Frentes do Controle de Obras</h1>
-  <p class="sub">Quem faz o qu&ecirc;, por qu&ecirc;, e em que ordem. O sistema controla obras de manuten&ccedil;&atilde;o
-  em lojas de uma rede de farm&aacute;cias: a obra nasce como uma OS no <b>Field Control</b>, a equipe
-  da Manfac responde um di&aacute;rio todo dia, e o sistema acusa quando uma obra para de andar.
-  Esse &uacute;ltimo ponto &eacute; a raz&atilde;o do projeto existir &mdash; a obra que ficou <b>123 dias parada</b>
-  sem ningu&eacute;m notar.</p>
+  <p class="sub">Quem faz o qu&ecirc;, por qu&ecirc;, e em que ordem. <b>Segunda vers&atilde;o desta
+  p&aacute;gina</b> &mdash; a primeira &eacute; de 10/09 e envelheceu em 24 horas. O sistema controla
+  obras de manuten&ccedil;&atilde;o em lojas de uma rede de farm&aacute;cias: a obra nasce como uma OS
+  no <b>Field Control</b>, a equipe da Manfac responde um di&aacute;rio todo dia, e o sistema acusa
+  quando uma obra para de andar. Esse &uacute;ltimo ponto &eacute; a raz&atilde;o do projeto existir
+  &mdash; a obra que ficou <b>123 dias parada</b> sem ningu&eacute;m notar.</p>
 
   <div class="estado">
     <div class="est">
-      <p class="rot">C&oacute;digo da v0</p>
+      <p class="rot">C&oacute;digo do m&oacute;dulo</p>
       <p class="v ok">Pronto</p>
-      <p class="d">5 telas, 6.638 linhas em 30 arquivos</p>
+      <p class="d">41 arquivos, 8.052 linhas &mdash; mais 13 de teste, 3.813 linhas</p>
     </div>
     <div class="est">
       <p class="rot">Testes</p>
-      <p class="v ok">204 / 204</p>
+      <p class="v ok">294 / 294</p>
       <p class="d">Todos com mock &mdash; nada tocou banco real ainda</p>
     </div>
     <div class="est">
       <p class="rot">Banco</p>
-      <p class="v no">Migration n&atilde;o aplicada</p>
-      <p class="d">Nenhuma tabela existe em lugar nenhum</p>
+      <p class="v ok">Migration aplicada</p>
+      <p class="d">5 tabelas <code>obras_*</code>, RLS e bucket em produ&ccedil;&atilde;o desde 10/09</p>
     </div>
     <div class="est">
-      <p class="rot">Produ&ccedil;&atilde;o</p>
-      <p class="v no">Build de 26/08</p>
-      <p class="d"><span class="mono">/obras</span> devolve 404. 78 commits sem subir</p>
+      <p class="rot">Obras cadastradas</p>
+      <p class="v no">0</p>
+      <p class="d">Est&aacute; no ar e vazio &mdash; de prop&oacute;sito, esperando a 1&ordf; OS do Field</p>
     </div>
+  </div>
+
+  <div class="nota-ok">
+    <h3>O que saiu do papel ontem</h3>
+    <p>Em 24 horas o m&oacute;dulo deixou de ser c&oacute;digo parado: a migration entrou em
+    produ&ccedil;&atilde;o, 82 commits subiram, o deploy rodou e <code>/obras</code> responde. Junto
+    vieram duas frentes que estavam nesta p&aacute;gina como trabalho a fazer &mdash; o cliente da
+    API do Field (<code>_lib/field/</code>, 12 arquivos, 1.773 linhas) e a
+    sincroniza&ccedil;&atilde;o com o banco (<code>/obras/sincronizar</code>). As duas
+    est&atilde;o no <code>master</code>, revisadas e testadas.</p>
+    <p>Por isso esta p&aacute;gina foi refeita. A F1 que abria o trabalho do Duda n&atilde;o existe
+    mais como tarefa &mdash; e o que sobrou mudou de tamanho, porque mudou de onde o dado vem.</p>
   </div>
 
   <section>
@@ -253,182 +266,246 @@
     <div class="criterios">
       <div class="crit">
         <p class="k">1 &middot; Credencial</p>
-        <p>O que <b>s&oacute; uma pessoa consegue executar</b> n&atilde;o &eacute; divis&iacute;vel. Supabase, push,
-        deploy e a planilha do cliente est&atilde;o atr&aacute;s de credencial do Jo&atilde;o.</p>
+        <p>O que <b>s&oacute; uma pessoa consegue executar</b> n&atilde;o &eacute; divis&iacute;vel. Supabase,
+        deploy no EasyPanel e a chave da API do Field est&atilde;o atr&aacute;s de credencial do
+        Jo&atilde;o. O push, esse, deixou de ser barreira em 10/09.</p>
       </div>
       <div class="crit">
         <p class="k">2 &middot; Canal com o cliente</p>
-        <p>Frente que depende de <b>decis&atilde;o do cliente</b> fica com quem fala com ele. H&aacute; duas
-        perguntas em aberto agora, e as duas mudam c&oacute;digo.</p>
+        <p>Frente que depende de <b>decis&atilde;o do cliente</b> fica com quem fala com ele. H&aacute;
+        quatro perguntas em aberto agora, e todas mudam c&oacute;digo.</p>
       </div>
       <div class="crit">
         <p class="k">3 &middot; Sobreposi&ccedil;&atilde;o de arquivo</p>
         <p>Duas frentes que <b>editam o mesmo arquivo</b> n&atilde;o rodam em paralelo sem merge
-        doloroso. Este crit&eacute;rio gerou a &uacute;nica restri&ccedil;&atilde;o de ordem deste documento.</p>
+        doloroso. &Eacute; este crit&eacute;rio que define <b>quem &eacute; dono de qual pasta</b> &mdash;
+        e &eacute; dele que sai a restri&ccedil;&atilde;o de ordem do fim do documento.</p>
       </div>
+    </div>
+
+    <div class="alerta">
+      <h3>O fato que redesenhou tudo: o Field traz tr&ecirc;s campos</h3>
+      <p>A sincroniza&ccedil;&atilde;o puxa do Field Control o n&uacute;mero da <code>os</code>, a
+      <code>loja</code> e a <code>descricao</code>. S&oacute;. A tabela <code>obras_obra</code> tem
+      cerca de 30 outras colunas &mdash; <code>aprovacao</code>, <code>os_aprovada</code>,
+      <code>inicio_plan</code>, <code>duracao</code>, equipe, valor, os seis marcos &mdash; e
+      <b>todas chegam vazias</b>.</p>
+      <p>Isso promove a tela de completar a obra de &ldquo;bloqueador conhecido&rdquo; a <b>&uacute;nica
+      porta de entrada de dado real do sistema</b>. E tem consequ&ecirc;ncia direta no mecanismo
+      central: sem <code>aprovacao</code> preenchida, <b>nenhuma obra jamais vira cr&iacute;tica</b>
+      &mdash; que &eacute; exatamente o alarme que o projeto existe para dar.</p>
     </div>
   </section>
 
   <section>
     <div class="rule"><span class="n">02</span><span class="l"></span></div>
     <h2>As frentes</h2>
-    <p class="h2sub">Tempo e tokens s&atilde;o <b>estimativas</b>, calibradas pelo tamanho real do m&oacute;dulo
-    (6.638 linhas de c&oacute;digo e 2.508 de teste, em 30 arquivos). N&atilde;o h&aacute; telemetria por tarefa.
-    Incluem subagentes e revis&atilde;o independente, n&atilde;o s&oacute; a escrita.</p>
+    <p class="h2sub">Tempo e tokens s&atilde;o <b>estimativas</b>, calibradas pelo tamanho real do
+    m&oacute;dulo e pelo que as frentes de ontem custaram de fato. Servem para comparar frentes
+    entre si, n&atilde;o como promessa de prazo.</p>
 
     <div class="pessoas">
 
       <div class="col joao">
         <div class="col-cab">
           <span class="nome">Jo&atilde;o</span>
-          <span class="papel">o cr&iacute;tico<br>e o estrat&eacute;gico</span>
+          <span class="papel">produ&ccedil;&atilde;o, cliente e<br>a porta de entrada do dado</span>
         </div>
         <div class="frentes">
           <div class="fr">
-            <div class="fr-cab"><span class="cod">0</span><span class="fr-tit">P&ocirc;r a v0 no ar</span></div>
-            <p class="porque"><b>Intransfer&iacute;vel.</b> Migration, push, deploy, importar a planilha,
-            liberar acessos e amarrar e-mails &agrave;s contas. Supabase, GitHub, EasyPanel e a planilha
-            est&atilde;o todos atr&aacute;s de credencial dele. <b>Bloqueia tudo o mais</b> &mdash; sem banco no ar,
-            nada pode ser testado de verdade.</p>
+            <div class="fr-cab"><span class="cod">J1</span><span class="fr-tit">A chave da API do Field</span></div>
+            <p class="porque"><b>Trava tudo o que est&aacute; constru&iacute;do.</b> A sincroniza&ccedil;&atilde;o
+            existe e est&aacute; testada, mas nunca rodou contra o Field de verdade. A chave precisa ir
+            para <code>C:\Users\joao-\.field-api-key</code> (teste local) <b>e</b> para o EasyPanel
+            como <code>FIELD_API_KEY=valor</code> numa linha s&oacute;. S&oacute; o Jo&atilde;o tem.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">25 min + espera</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">150&ndash;300 k</span></div>
+              <div><span class="cr">Tempo</span><span class="cv">15 min</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">~10 k</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">1a</span><span class="fr-tit">Campos edit&aacute;veis na Triagem e na ficha</span></div>
-            <p class="porque"><b>O bloqueador do mecanismo central.</b> O Field entrega 3 dos 8 campos,
-            e a Triagem some quando a obra sai de <code>definir</code> &mdash; hoje <b>n&atilde;o existe tela
-            nenhuma onde digitar os outros 5</b>. Com <code>aprovacao</code> nula, a obra nunca vira
-            cr&iacute;tica, que &eacute; o problema que originou o projeto. Depende da resposta do cliente.</p>
+            <div class="fr-cab"><span class="cod">J2</span><span class="fr-tit">Deploy da sincroniza&ccedil;&atilde;o</span></div>
+            <p class="porque"><code>/obras/sincronizar</code> est&aacute; no <code>master</code> desde as
+            02h22 de hoje; o build em produ&ccedil;&atilde;o &eacute; de ontem 23h38. A tela <b>n&atilde;o
+            existe em produ&ccedil;&atilde;o</b> at&eacute; algu&eacute;m clicar em Deploy no EasyPanel.
+            Credencial do Jo&atilde;o.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">4&ndash;6 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,6&ndash;1,0 M</span></div>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fr-cab"><span class="cod">1c</span><span class="fr-tit">Sincroniza&ccedil;&atilde;o do Field com o banco</span></div>
-            <p class="porque">A metade estrat&eacute;gica da integra&ccedil;&atilde;o: <b>a decis&atilde;o de neg&oacute;cio</b> sobre o
-            que &eacute; &ldquo;localiza&ccedil;&atilde;o da loja&rdquo;, o desenho entre webhook e varredura, a
-            reconcilia&ccedil;&atilde;o, e o que acontece com as 187 obras que j&aacute; vieram da planilha quando o
-            Field entrar. Consome a camada que o Duda entrega.</p>
-            <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">6&ndash;10 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,9&ndash;1,8 M</span></div>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fr-cab"><span class="cod">&mdash;</span><span class="fr-tit">Fechar as duas perguntas com o cliente</span></div>
-            <p class="porque"><b>&Uacute;nico canal com o cliente.</b> Uma delas est&aacute; parada desde 31 de
-            agosto, e a outra decide o desenho da frente 1a.</p>
-            <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">15 min + espera</span></div>
+              <div><span class="cr">Tempo</span><span class="cv">10 min + espera</span></div>
               <div><span class="cr">Tokens</span><span class="cv">~20 k</span></div>
+            </div>
+          </div>
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">J3</span><span class="fr-tit">Provar as quatro inc&oacute;gnitas da API</span></div>
+            <p class="porque">Depende de J1. O levantamento de 08/09 deixou quatro perguntas que
+            <b>s&oacute; a chave real responde</b>: se o servidor aceita a codifica&ccedil;&atilde;o do
+            <code>q</code>, se <code>sort=id</code> &eacute; campo v&aacute;lido, se
+            <code>updated_at&gt;=</code> aceita timestamp completo ou s&oacute; data, e &mdash; a mais
+            cara &mdash; se a OS &eacute; <b>arquivada ou exclu&iacute;da</b> no Field. Cada uma custa
+            meia hora no pior momento poss&iacute;vel: durante o cadastro do cliente.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">1&ndash;2 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,2&ndash;0,4 M</span></div>
+            </div>
+          </div>
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">J4</span><span class="fr-tit">Completar a obra &mdash; Triagem e ficha edit&aacute;veis</span></div>
+            <p class="porque"><b>A frente de maior valor do projeto agora.</b> &Eacute; o que
+            transforma a OS de tr&ecirc;s campos numa obra de verdade. Absorve a antiga F3:
+            <code>os_aprovada</code> e os marcos <code>marco_exec_fim</code>,
+            <code>marco_relatorio</code> e <code>marco_os_aprov</code> n&atilde;o s&atilde;o colunas
+            mortas &mdash; s&atilde;o <b>lidas em 20 lugares</b> (kanban, etiquetas, filtros, ficha) e
+            <b>nunca escritas por ningu&eacute;m</b>. Arquivos: <code>obra/[id]/_triagem.tsx</code>,
+            <code>_ficha.tsx</code>, <code>_actions.ts</code>.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">5&ndash;8 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,8&ndash;1,4 M</span></div>
+            </div>
+          </div>
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">&mdash;</span><span class="fr-tit">Fechar as quatro perguntas com o cliente</span></div>
+            <p class="porque"><b>&Uacute;nico canal com o cliente.</b> S&atilde;o: como se calcula o
+            avan&ccedil;o %, quem pode cancelar uma obra, se obra cancelada some das telas ou fica
+            com alerta, e o que acontece se a OS reaparecer no Field depois de descartada.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">20 min + espera</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">~25 k</span></div>
             </div>
           </div>
         </div>
         <div class="total">
           <div><span class="lb">Frentes de c&oacute;digo</span></div>
-          <div><span class="vl">10&ndash;16 h</span></div>
-          <div><span class="vl">1,5&ndash;2,8 M</span></div>
+          <div><span class="vl">6&ndash;10 h</span></div>
+          <div><span class="vl">1,0&ndash;1,8 M</span></div>
         </div>
       </div>
 
       <div class="col duda">
         <div class="col-cab">
           <span class="nome">Duda</span>
-          <span class="papel">autocontido, sem<br>credencial nem cliente</span>
+          <span class="papel">dono do ciclo<br>de vida da OS</span>
+        </div>
+        <div class="crit">
+          <p>O pacote inteiro do Duda vive em <b>duas pastas que o Jo&atilde;o n&atilde;o vai
+          tocar</b>: <code>app/obras/sincronizar/</code> e <code>app/obras/_lib/field/</code>.
+          Enquanto o Jo&atilde;o estiver em <code>obra/[id]/</code>, os dois trabalham no mesmo
+          reposit&oacute;rio sem se cruzarem. &Eacute; o crit&eacute;rio 3 aplicado de
+          prop&oacute;sito, n&atilde;o por sorte.</p>
         </div>
         <div class="frentes">
           <div class="fr">
-            <div class="fr-cab"><span class="cod">F1</span><span class="fr-tit">Cliente da API do Field Control</span></div>
-            <p class="porque"><b>Come&ccedil;a j&aacute;.</b> A camada que fala com a API e devolve dados
-            normalizados &mdash; autentica&ccedil;&atilde;o, resolver o tipo &ldquo;Atividade Spot&rdquo; por nome,
-            pagina&ccedil;&atilde;o, e o limite de <b>1 requisi&ccedil;&atilde;o por segundo</b>. Pasta nova
-            (<code>_lib/field/</code>): <b>zero sobreposi&ccedil;&atilde;o, zero credencial</b>, testada
-            inteiramente com mock.</p>
+            <div class="fr-cab"><span class="cod">D1</span><span class="fr-tit">Marcar de onde a obra veio</span></div>
+            <p class="porque"><b>Pr&eacute;-requisito do D2.</b> Hoje <b>nada distingue uma obra
+            que veio do Field</b> de uma que veio da planilha &mdash; e &ldquo;quais obras vieram
+            do Field?&rdquo; &eacute; a primeira pergunta que a reconcilia&ccedil;&atilde;o precisa
+            responder. &#9888; <b>Tem uma decis&atilde;o de modelagem dentro:</b> a coluna
+            <code>origem</code> j&aacute; existe, mas guarda <b>vocabul&aacute;rio do cliente</b>
+            (<code>Sistema DPSP</code>), vindo da planilha. Reus&aacute;-la mistura proced&ecirc;ncia
+            com texto do cliente; coluna nova exige migration, que o Jo&atilde;o roda &agrave; m&atilde;o.
+            <b>O Jo&atilde;o escolhe antes de a frente come&ccedil;ar.</b></p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">6&ndash;10 h</span></div>
+              <div><span class="cr">Tempo</span><span class="cv">1&ndash;2 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,1&ndash;0,3 M</span></div>
+            </div>
+          </div>
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">D2</span><span class="fr-tit">A OS que sumiu do Field</span></div>
+            <p class="porque">A frente de desenho mais delicada do m&oacute;dulo, e o cliente
+            j&aacute; levantou ela: <i>&ldquo;abri uma OS errada, como o sistema se comporta se eu
+            precisar excluir?&rdquo;</i>. <b>O Field n&atilde;o avisa exclus&atilde;o</b> &mdash;
+            n&atilde;o existe evento <code>order-deleted</code> nem <code>order-archived</code> na
+            lista dos ~26 webhooks. O sistema s&oacute; descobre por <b>aus&ecirc;ncia</b>, e
+            aus&ecirc;ncia &eacute; sinal fraco: tamb&eacute;m acontece se a API falhar, se o filtro
+            mudar ou se a pagina&ccedil;&atilde;o escorregar. Duas regras fechadas: <b>o sistema
+            nunca apaga nada por causa do Field</b>, e <b>sumi&ccedil;o vira alerta, n&atilde;o
+            exclus&atilde;o</b> &mdash; a obra fica inteira, com di&aacute;rio e fotos, esperando um
+            humano. Fonte: <code>feedback-10-exclusao-de-os-no-field.md</code>.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">5&ndash;8 h</span></div>
               <div><span class="cr">Tokens</span><span class="cv">0,8&ndash;1,4 M</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">F2</span><span class="fr-tit">Smoke test contra o banco real</span></div>
-            <p class="porque"><b>Nada deste m&oacute;dulo jamais tocou um Supabase de verdade.</b> Os 204
-            testes s&atilde;o todos de unidade com mock. Um roteiro de 9 passos, do import at&eacute; faturado,
-            achando o que s&oacute; aparece com dado real &mdash; antes que apare&ccedil;a numa sala de
-            treinamento.</p>
+            <div class="fr-cab"><span class="cod">D3</span><span class="fr-tit">Sincroniza&ccedil;&atilde;o que roda sozinha</span></div>
+            <p class="porque">Hoje a sincroniza&ccedil;&atilde;o &eacute; um <b>bot&atilde;o que
+            algu&eacute;m precisa lembrar de apertar</b>. Ningu&eacute;m vai apertar todo dia, e
+            obra que n&atilde;o entra no sistema n&atilde;o &eacute; cobrada por ele. Precisa de
+            varredura recorrente com marca d&rsquo;&aacute;gua (<code>updated_at&gt;=</code> da
+            &uacute;ltima passada) em vez de puxar tudo sempre. &#9888; <b>O mecanismo ainda
+            n&atilde;o est&aacute; decidido</b> &mdash; o Jo&atilde;o precisa escolher antes de a
+            frente come&ccedil;ar.</p>
+            <div class="custo">
+              <div><span class="cr">Tempo</span><span class="cv">4&ndash;7 h</span></div>
+              <div><span class="cr">Tokens</span><span class="cv">0,6&ndash;1,1 M</span></div>
+            </div>
+          </div>
+          <div class="fr">
+            <div class="fr-cab"><span class="cod">D4</span><span class="fr-tit">Smoke test contra o banco real</span></div>
+            <p class="porque">S&atilde;o 294 testes, e <b>todos usam mock</b>: nada neste m&oacute;dulo
+            jamais escreveu numa tabela de verdade. Isso era aceit&aacute;vel enquanto a migration
+            n&atilde;o existia. Agora ela est&aacute; aplicada e o m&oacute;dulo est&aacute; no ar
+            vazio &mdash; o primeiro dado real vai entrar sem que ningu&eacute;m tenha provado que
+            o caminho funciona.</p>
             <div class="custo">
               <div><span class="cr">Tempo</span><span class="cv">2&ndash;3 h</span></div>
               <div><span class="cr">Tokens</span><span class="cv">0,2&ndash;0,3 M</span></div>
             </div>
           </div>
-          <div class="fr">
-            <div class="fr-cab"><span class="cod">F3</span><span class="fr-tit">Colunas mortas</span></div>
-            <p class="porque">Quatro colunas &mdash; <code>os_aprovada</code>, <code>marco_exec_fim</code>,
-            <code>marco_relatorio</code>, <code>marco_os_aprov</code> &mdash; <b>s&oacute; existem como campo de
-            tipo</b>. Nenhuma escrita no c&oacute;digo todo, ent&atilde;o a esteira de etapas fica congelada para
-            sempre. <b>Depende da 1a estar mergeada</b> &mdash; ver abaixo.</p>
-            <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">2&ndash;4 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,3&ndash;0,5 M</span></div>
-            </div>
-          </div>
         </div>
         <div class="total">
           <div><span class="lb">Total</span></div>
-          <div><span class="vl">10&ndash;17 h</span></div>
-          <div><span class="vl">1,3&ndash;2,2 M</span></div>
+          <div><span class="vl">12&ndash;20 h</span></div>
+          <div><span class="vl">1,7&ndash;3,1 M</span></div>
         </div>
       </div>
 
-    </div>
-
-    <div class="nota-ok">
-      <h3>Duas coisas que j&aacute; est&atilde;o prontas e n&atilde;o s&atilde;o para refazer</h3>
-      <p><b>A foto di&aacute;ria est&aacute; completa</b> &mdash; captura no celular com redu&ccedil;&atilde;o antes de subir,
-      upload ao Storage, bloco &ldquo;Evolu&ccedil;&atilde;o em fotos&rdquo; na ficha e o aviso de dia sem foto na
-      linha do tempo. E <b>reimportar a planilha n&atilde;o apaga o que foi digitado no app</b>. Uma
-      estimativa deste projeto j&aacute; errou por assumir que a primeira era pendente:
-      <b>antes de construir, confirme que n&atilde;o existe.</b></p>
     </div>
   </section>
 
   <section>
     <div class="rule"><span class="n">03</span><span class="l"></span></div>
-    <h2>A &uacute;nica restri&ccedil;&atilde;o de ordem</h2>
-    <p class="h2sub">Se s&oacute; uma coisa deste documento for lembrada, que seja esta.</p>
+    <h2>A ordem, e a frente que fica esperando</h2>
+    <p class="h2sub">Uma restri&ccedil;&atilde;o nova, e ela existe pelo mesmo motivo da antiga
+    &mdash; dois trabalhos no mesmo arquivo.</p>
 
     <div class="alerta">
-      <h3>1a e F3 editam o mesmo arquivo</h3>
-      <p><code>app/obras/obra/[id]/_actions.ts</code> &mdash; a Triagem grava l&aacute;, e os marcos precisam
-      ser gravados na troca de etapa, que tamb&eacute;m mora l&aacute;. Tocar as duas ao mesmo tempo garante
-      conflito de merge no arquivo mais delicado do m&oacute;dulo.</p>
-      <p><b>Por isso o Duda come&ccedil;a pela F1, n&atilde;o pela F3.</b> A F3 entra depois que a 1a estiver
-      mergeada. A F1 &eacute; pasta pr&oacute;pria e n&atilde;o colide com nada.</p>
+      <h3>O cancelamento de obra fica para depois do J4</h3>
+      <p>O cliente pediu uma frente nova em 10/09: <i>&ldquo;as vezes o cliente cancela a OS...
+      ent&atilde;o tem que ter essa etapa, e a&iacute; se cancelar coloca o motivo&rdquo;</i>, com
+      dois valores nomeados por ele &mdash; <b>Cancelado pelo Cliente</b> e <b>Cancelado pela
+      Manfac</b>. &Eacute; requisito real e resolve de gra&ccedil;a o caso da OS aberta por engano:
+      cancelar e descartar s&atilde;o a mesma necessidade.</p>
+      <p>Mas ela toca <code>_lib/tipos.ts</code> (uma etapa terminal nova),
+      <code>base/_regras.ts</code>, <code>obra/[id]/_actions.ts</code>, <code>diario/</code> e
+      <code>tarefas/</code> &mdash; <b>exatamente onde o J4 estar&aacute; mexendo</b>.
+      Come&ccedil;ar em paralelo &eacute; garantir merge doloroso. Ela &eacute; a
+      <b>pr&oacute;xima frente do Duda</b>, assim que o J4 estiver mergeado. Fonte:
+      <code>feedback-11-cancelamento-de-obra.md</code>.</p>
     </div>
 
     <div class="trilhas">
       <div class="trilha">
         <span class="tnome">Jo&atilde;o</span>
         <div class="tbar">
-          <span class="bl j">0 &middot; no ar</span><span class="seta">&rarr;</span>
-          <span class="bl j">1a &middot; campos edit&aacute;veis</span><span class="seta">&rarr;</span>
-          <span class="bl j">1c &middot; sync do Field</span>
+          <span class="bl j">J1 &middot; chave</span><span class="seta">&rarr;</span>
+          <span class="bl j">J2 &middot; deploy</span><span class="seta">&rarr;</span>
+          <span class="bl j">J3 &middot; provar a API</span><span class="seta">&rarr;</span>
+          <span class="bl j">J4 &middot; completar a obra</span>
         </div>
       </div>
       <div class="trilha">
         <span class="tnome">Duda</span>
         <div class="tbar">
-          <span class="bl d">F1 &middot; cliente da API</span><span class="seta">&rarr;</span>
-          <span class="bl d">F2 &middot; smoke test</span><span class="seta">&rarr;</span>
-          <span class="bl wait">espera merge da 1a</span><span class="seta">&rarr;</span>
-          <span class="bl d">F3 &middot; colunas mortas</span>
+          <span class="bl d">D1 &middot; origem</span><span class="seta">&rarr;</span>
+          <span class="bl d">D2 &middot; OS que sumiu</span><span class="seta">&rarr;</span>
+          <span class="bl d">D4 &middot; smoke test</span><span class="seta">&rarr;</span>
+          <span class="bl wait">cancelamento (espera o J4)</span>
         </div>
       </div>
-      <p class="tlegenda"><b>A F1 n&atilde;o bloqueia nada e nada bloqueia ela.</b> Ela tamb&eacute;m alimenta a
-      1c do Jo&atilde;o: quanto antes a camada de cliente existir, mais cedo a sincroniza&ccedil;&atilde;o pode ser
-      desenhada em cima dela. A F2 s&oacute; depende de a migration ter rodado.</p>
+      <p class="tlegenda">As duas trilhas <b>correm ao mesmo tempo, do primeiro dia</b>, e nenhuma
+      das setas &eacute; espera pela outra pessoa &mdash; s&oacute; ordem interna de cada um. A
+      &uacute;nica depend&ecirc;ncia cruzada est&aacute; no fim da trilha do Duda. <b>O D3
+      n&atilde;o aparece aqui de prop&oacute;sito</b>: ele come&ccedil;a quando o Jo&atilde;o
+      decidir o mecanismo da varredura recorrente.</p>
     </div>
   </section>
 
@@ -492,10 +569,12 @@
     <div class="passos">
       <div class="passo">
         <span class="pn">1</span>
-        <p class="pc"><b>Acessos.</b> Supabase da Manfac como <code>Developer</code> &mdash; roda SQL,
-        escreve no banco, cria bucket, e <b>n&atilde;o apaga projeto, n&atilde;o mexe em cobran&ccedil;a, n&atilde;o
-        convida ningu&eacute;m</b>. No GitHub, <code>Write</code> no reposit&oacute;rio. Convite por e-mail,
-        conta pr&oacute;pria &mdash; <b>login n&atilde;o se compartilha</b>.</p>
+        <p class="pc"><b>Acessos.</b> No GitHub, <code>Write</code> no reposit&oacute;rio &mdash;
+        <b>j&aacute; concedido em 10/09</b> para <code>daduu27</code>; se o convite ainda estiver no
+        e-mail sem aceitar, &eacute; o primeiro clique do dia. Falta o Supabase da Manfac como
+        <code>Developer</code>, que roda SQL, escreve no banco e cria bucket, mas <b>n&atilde;o apaga
+        projeto, n&atilde;o mexe em cobran&ccedil;a e n&atilde;o convida ningu&eacute;m</b>. Conta
+        pr&oacute;pria nos dois &mdash; <b>login n&atilde;o se compartilha</b>.</p>
       </div>
       <div class="passo">
         <span class="pn">2</span>
@@ -507,12 +586,17 @@
         <span class="pn">3</span>
         <p class="pc"><b>Subir o ambiente</b> e confirmar que o verde bate <b>antes</b> de mudar nada.</p>
       </div>
+      <div class="passo">
+        <span class="pn">4</span>
+        <p class="pc"><b>Come&ccedil;ar pelo D1.</b> &Eacute; pequeno e serve de primeiro contato
+        com a base de c&oacute;digo &mdash; um arquivo, um campo, um teste.</p>
+      </div>
     </div>
 
     <pre class="cmd"><span class="c"># Node 20 (.nvmrc)</span>
 npm install
 npm run dev
-npx jest app/obras   <span class="c"># espere 204 / 204</span>
+npx jest app/obras   <span class="c"># espere 294 / 294</span>
 npm run lint
 npm run build</pre>
 
@@ -522,7 +606,8 @@ npm run build</pre>
     e est&aacute; <b>fora do escopo</b>.</p>
   </section>
 
-  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 10 de setembro de 2026</p>
+  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 11 de setembro de 2026
+  &middot; segunda vers&atilde;o desta p&aacute;gina (a primeira foi de 10/09)</p>
 
 </div>
 

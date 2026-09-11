@@ -24,7 +24,7 @@ feedback que um mockup de uma hora teria pego.
 
 ## 2. Antes de escrever, verifique se já existe
 
-Este módulo tem 6.638 linhas em 30 arquivos, e a documentação de estado nem sempre
+Este módulo tem 8.052 linhas em 41 arquivos, e a documentação de estado nem sempre
 acompanhou o código. **Uma estimativa deste projeto já errou por assumir que uma frente
 inteira estava pendente quando ela estava construída e testada.**
 
@@ -92,7 +92,7 @@ npm test         # jest
 npm run lint     # eslint
 ```
 
-**O verde esperado:** `npx jest app/obras` tem que dar **204/204**. Se você rodar
+**O verde esperado:** `npx jest app/obras` tem que dar **294/294**. Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
 
@@ -153,7 +153,7 @@ para as suas frentes — elas são testáveis inteiramente com mock.
 
 Uma frente está pronta quando **todas** valem:
 
-- [ ] Os 204 testes existentes continuam passando, mais os novos que a frente pediu
+- [ ] Os 294 testes existentes continuam passando, mais os novos que a frente pediu
 - [ ] `tsc`, `eslint` e `npm run build` limpos
 - [ ] Se mexeu em tela: mockup foi aprovado antes do código
 - [ ] Se mexeu em schema: o `.sql` está escrito, idempotente, em `begin`/`commit`, e você

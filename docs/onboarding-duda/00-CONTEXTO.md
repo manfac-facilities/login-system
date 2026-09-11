@@ -3,7 +3,12 @@
 > **Para que serve este arquivo.** É o contexto que um agente de IA precisa carregar
 > antes de escrever qualquer linha neste projeto. Ele descreve o produto, o vocabulário,
 > o modelo de dados e o estado real do código. Tudo aqui foi **verificado no repositório
-> em 10/09/2026**, não é suposição.
+> em 11/09/2026**, não é suposição.
+>
+> ⚠️ **Este arquivo envelhece rápido.** A versão de 10/09 dizia que a migration nunca
+> tinha rodado e que a base viria de uma planilha — as duas coisas deixaram de ser
+> verdade em menos de 24 horas. Antes de confiar num número daqui, confirme no
+> repositório.
 >
 > Leia junto: `01-REGRAS-DE-TRABALHO.md` (como se trabalha aqui) e
 > `02-FRENTES-DO-DUDA.md` (o que fazer).
@@ -111,7 +116,7 @@ Cinco tabelas, todas com prefixo `obras_`, definidas em `sdd-sql-obras-v0.sql` n
 
 | Tabela | O que guarda |
 |---|---|
-| `obras_obra` | A obra. 187 linhas na carga inicial |
+| `obras_obra` | A obra. Nasce vazia — a base vem do Field Control, não da planilha (seção 6) |
 | `obras_diario` | Um registro por obra por dia |
 | `obras_tarefa` | A falta virando tarefa, com dono e prazo |
 | `obras_pessoa` | Quem pode ser dono de tarefa — e a ponte entre a conta do hub e a planilha |
@@ -133,15 +138,27 @@ erra, a pessoa vê **"sem permissão"** em vez de uma lista vazia.
 
 ## 6. Como a obra entra no sistema
 
-**Hoje:** por importação de planilha (`/obras/importar`). Toda a base de 187 obras vem daí.
+**A base nasce da API do Field Control — a planilha não entra mais no jogo.** Decisão do
+cliente em 10/09/2026: a planilha de 187 linhas **não será importada**. A tela
+`/obras/importar` continua existindo no código, com o relatório do que ficou de fora,
+mas deixou de ser o caminho de entrada da base.
 
-**A partir da v1:** pela **API do Field Control**. O cliente confirmou em 08/09/2026 que
-a obra **vem sempre do Field** — não existe, nem vai existir, tela de criar obra do zero.
+O cliente já tinha confirmado em 08/09/2026 que a obra **vem sempre do Field** — não
+existe, nem vai existir, tela de criar obra do zero. Em 11/09/2026 o módulo está no ar
+com **zero obras no banco**, de propósito: a base vai nascer do Field depois do pente
+fino do cliente.
+
+O cliente do Field (`app/obras/_lib/field/`) e a tela `/obras/sincronizar` (botão "Puxar
+do Field", com a regra de só preencher o que está **vazio** no banco — o que foi digitado
+no hub nunca é sobrescrito) **já existem e estão mergeados**. Falta rodar contra o Field
+de verdade: depende da chave `FIELD_API_KEY`.
 
 **E aqui está o fato que molda a v1 inteira:** o Field entrega apenas **três** campos —
-número da OS (`identifier`), loja e descrição do chamado (`description`). Os outros
-cinco de `obras_obra` — `tipo`, `valor`, `analista_cliente`, `origem` e `aprovacao` —
-**precisam ser digitados à mão**.
+número da OS (`identifier`), loja e descrição do chamado (`description`). As outras
+cerca de **30 colunas** de `obras_obra` chegam vazias — entre elas `tipo`, `valor`,
+`analista_cliente`, `origem` e `aprovacao` — e **precisam ser digitados à mão**. Sem
+`aprovacao` preenchida, nenhuma obra vira crítica: é o mesmo problema original,
+reencenado dentro do sistema novo.
 
 O levantamento completo da API (autenticação, filtros, paginação, rate limit de 1 req/s,
 webhooks) está em
@@ -149,20 +166,21 @@ webhooks) está em
 
 ---
 
-## 7. Estado real do código — verificado em 10/09/2026
+## 7. Estado real do código — verificado em 11/09/2026
 
 | | |
 |---|---|
-| **Código da v0** | Pronto. 5 telas, 6.638 linhas em 30 arquivos sob `app/obras/` |
-| **Testes** | **204/204 passando** em `app/obras` (2.508 linhas de teste, 6 suites) |
+| **Código** | v0 pronta (5 telas) mais o cliente do Field e a sincronização, já mergeados: 8.052 linhas em 41 arquivos sob `app/obras/` |
+| **Testes** | **294/294 passando** em `app/obras` (3.813 linhas de teste, 13 suites) |
 | **Build e lint** | Limpos |
-| **Banco** | **A migration nunca rodou.** Nenhuma tabela `obras_*` existe em lugar nenhum |
-| **Produção** | Build de 26/08. A rota `/obras` devolve **404** |
-| **Git** | O `master` local está **78 commits à frente** do remoto |
+| **Banco** | **A migration foi aplicada em produção em 10/09/2026.** 5 tabelas `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage |
+| **Produção** | **No ar.** Build de 10/09 23h38, `/obras` responde, card 🏗️ no dashboard |
+| **Git** | `master` sincronizado com o remoto — os 82 commits foram pushados em 10/09 |
 
-⚠️ **Nada jamais tocou um Supabase real.** Toda a cobertura é de unidade com mock. O
-primeiro contato com o banco de verdade vai revelar coisa — é esperado, não é sinal de
-código ruim.
+⚠️ **Testes continuam 100% mock.** Nada do módulo jamais escreveu numa tabela real — os
+294 testes usam mock. A migration em si já rodou em produção sem o erro de ownership que
+o runbook previa, mas o primeiro contato do código gravando uma obra real ainda não
+aconteceu, porque o banco está vazio de propósito (seção 6).
 
 ---
 
@@ -172,10 +190,14 @@ código ruim.
 - **"Relatório de entrega" não é deduzido do Field automaticamente**, embora o texto da
   ficha (`_ficha.tsx:213-220`) prometa isso. Hoje a etapa é movida à mão. **O texto da
   tela é que está errado**, não o comportamento.
-- **Quatro colunas do banco nunca são escritas por ninguém**: `os_aprovada`,
-  `marco_exec_fim`, `marco_relatorio`, `marco_os_aprov`. Elas só existem como campo de
-  tipo em `_lib/tipos.ts:222,238-240`. A esteira de etapas lê `marco_exec_fim` para
-  decidir se "Execução em campo" está feita — ou seja, fica congelada para sempre.
+- **Quatro colunas do banco não têm escrita — mas não são "colunas mortas"**:
+  `os_aprovada`, `marco_exec_fim`, `marco_relatorio`, `marco_os_aprov` são **lidas em 20
+  lugares** (`base/_kanban.tsx`, `base/_etiquetas.tsx`, `base/_regras.ts`,
+  `obra/[id]/_ficha.tsx`), além de existirem como campo de tipo em
+  `_lib/tipos.ts:222,238-240`. O que falta é só a escrita — nada as grava. A esteira de
+  etapas lê `marco_exec_fim` para decidir se "Execução em campo" está feita, e por isso
+  fica congelada para sempre enquanto ninguém escrever ali. **Isso saiu do escopo do
+  Duda: virou a frente J4, do João.**
 - **Os cinco campos que o Field não traz não têm onde ser digitados.** A Triagem os mostra
   como somente leitura (`_triagem.tsx:158-180`), e ela some quando a obra sai de
   `definir`.

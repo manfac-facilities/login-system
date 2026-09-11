@@ -1,7 +1,34 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-Atualizado em 10/09/2026, à noite. O bloco abaixo é o mais recente; o resto do arquivo é o
+Atualizado em 11/09/2026, de manhã. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
+
+## 11/09/2026, manhã — a divisão de trabalho foi refeita
+
+**A divisão de 10/09 durou 24 horas.** Duas das frentes que ela atribuía já estavam
+entregues quando o dia começou: a F1 (cliente da API do Field) foi executada na própria
+noite de 10/09, e a 1c (sincronização) na madrugada de 11/09. O Duda não chegou a começar
+— não há branch, PR nem commit do `daduu27`.
+
+**O que redesenhou a divisão** não foi isso, e sim um fato da integração: **a API do Field
+traz três campos** (`os`, `loja`, `descricao`). As outras ~30 colunas de `obras_obra`
+chegam vazias. Com a planilha fora, a base nasce inteira do Field e nasce incompleta por
+construção — o que promove a tela de completar a obra a única porta de entrada de dado
+real, e mantém de pé o risco central: sem `aprovacao`, **nenhuma obra vira crítica**.
+
+A divisão nova, com o porquê de cada escolha, está em `divisao-trabalho-joao-duda.md`:
+**João** fica com a chave da API (J1), o deploy (J2), provar as incógnitas da API (J3) e
+completar a obra (J4, que absorveu a antiga F3); **Duda** vira dono do ciclo de vida da OS
+— marcar a origem (D1), a OS que sumiu do Field (D2), a sincronização recorrente (D3) e o
+smoke test contra o banco real (D4). As frentes do Duda vivem inteiras em
+`app/obras/sincronizar/` e `app/obras/_lib/field/`, sem cruzar com o J4.
+
+**Decisão ainda pendente do João:** o mecanismo da sincronização recorrente (D3). A frente
+não começa antes dela.
+
+**Pendência de processo:** o link do artifact está fixado na versão antiga. Republicar não
+basta — o pin de compartilhamento precisa ser movido, ou o Duda abre o link e vê a divisão
+velha.
 
 ## 11/09/2026, madrugada — fechamento da sessão
 
