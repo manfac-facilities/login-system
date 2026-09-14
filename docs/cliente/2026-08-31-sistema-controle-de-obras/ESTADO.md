@@ -7,13 +7,13 @@ histórico de 05/09 em diante, mantido como estava.
 
 | | |
 |---|---|
-| Deploy | ✅ build de **14/09 16:53:22 GMT**, 10 chunks no mesmo timestamp. Contém D1 e D2 (último commit de código: merge ) |
-| Migrations |  (D1) e  (D2) aplicadas e verificadas em 14/09 |
+| Deploy | ✅ build de **14/09 16:53:22 GMT**, 10 chunks no mesmo timestamp. Contém D1 e D2 (último commit de código: merge `b1ef5e9`) |
+| Migrations | `obras-fonte` (D1) e `obras-field-reconciliacao` (D2) aplicadas e verificadas em 14/09 |
 | Banco | **0 obras**, de propósito |
-|  | posta no Environment do EasyPanel pelo João antes do deploy. **Não verificado que chegou ao processo** — a tela  só acusa a falta ao clicar, e clicar grava as 167 OS |
-| J3 | provada com a chave local — . Aberto: se OS arquivada segue listada e se  traz  |
-| D2.1 | entregue (), 332/332 aqui; revisão  com 3 importantes. **Não mergeada** |
-| D3 | decidida — capítulo da D3 no . Espera a D2.1 |
+| `FIELD_API_KEY` | posta no Environment do EasyPanel pelo João antes do deploy. **Não verificado que chegou ao processo** — a tela `/obras/sincronizar` só acusa a falta ao clicar, e clicar grava as 167 OS |
+| J3 | provada com a chave local — `j3-verificacao-api-2026-09-14.md`. Aberto: se OS arquivada segue listada e se `GET /orders/:id` traz `archived` |
+| D2.1 | entregue (`6f5aa96`), 332/332 aqui; revisão `review-d21-2026-09-14.md` com 3 importantes. **Não mergeada** |
+| D3 | decidida — capítulo da D3 no `02-FRENTES-DO-DUDA.md`. Espera a D2.1 |
 
 ⚠️ **Não apertar "Puxar do Field" em produção**: com a chave no ar, grava as 167 OS. A primeira carga espera o pente fino do cliente e a D2.1.
 
