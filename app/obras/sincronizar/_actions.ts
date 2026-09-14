@@ -13,10 +13,13 @@ import { criarClienteField } from '../_lib/field'
 import type { OpcoesDaVarredura } from '../_lib/field'
 import {
   emLotes,
+  encontrarConsultasDeReabertura,
   planejarSincronizacao,
+  type HistoricoHerdado,
   type NumeroDeOsAlterado,
   type ObraExistente,
   type OsIgnorada,
+  type VerificacaoDeReabertura,
 } from './_sincronizacao'
 
 const TAMANHO_DO_LOTE = 100
@@ -33,6 +36,7 @@ export type RelatorioSincronizacao = {
   novosAlertasDeAusencia: number
   alertasRemovidos: number
   numerosDeOsAlterados: NumeroDeOsAlterado[]
+  historicosHerdados: HistoricoHerdado[]
   ignoradas: OsIgnorada[]
   avisos: string[]
 }
@@ -88,9 +92,10 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
   // D3 preencherá `desde`; a autorização para inferir ausência nasce desta
   // mesma opção, sem uma flag independente que alguém possa esquecer ligada.
   const opcoesDaVarredura: OpcoesDaVarredura = {}
+  const clienteField = criarClienteField({ chaveApi })
   let doField
   try {
-    doField = await criarClienteField({ chaveApi }).listarOsNormalizadas(opcoesDaVarredura)
+    doField = await clienteField.listarOsNormalizadas(opcoesDaVarredura)
   } catch (erro) {
     return { error: mensagemDeFalha(erro) }
   }
@@ -98,9 +103,22 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
   const leitura = await lerTodasAsObras(supabase)
   if (leitura.error) return { error: leitura.error }
 
+  const verificacoesDeReabertura: VerificacaoDeReabertura[] = []
+  for (const consulta of encontrarConsultasDeReabertura(doField, leitura.obras ?? [])) {
+    try {
+      const resultado = await clienteField.consultarSituacaoDaOrdem(consulta.idFieldAnterior)
+      verificacoesDeReabertura.push({ ...consulta, situacao: resultado.situacao })
+    } catch {
+      // A função do cliente já converte falhas em inconclusivo; esta guarda
+      // protege também contra transporte injetado ou regressão inesperada.
+      verificacoesDeReabertura.push({ ...consulta, situacao: 'inconclusiva' })
+    }
+  }
+
   const plano = planejarSincronizacao(doField, leitura.obras ?? [], {
     varreduraCompleta: opcoesDaVarredura.desde === undefined,
     agora: new Date().toISOString(),
+    verificacoesDeReabertura,
   })
   const ignoradas: OsIgnorada[] = [...plano.ignoradas]
 
@@ -113,6 +131,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
 
   let atualizadas = 0
   let alertasRemovidos = 0
+  const historicosHerdados: HistoricoHerdado[] = []
   const idsAtualizados = new Set<string>()
   for (const alvo of plano.atualizar) {
     const { error } = await supabase.from('obras_obra').update(alvo.campos).eq('id', alvo.id)
@@ -126,6 +145,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
     }
     idsAtualizados.add(alvo.id)
     if (alvo.removeAlerta) alertasRemovidos++
+    if (alvo.historicoHerdado) historicosHerdados.push(alvo.historicoHerdado)
     atualizadas++
   }
 
@@ -160,6 +180,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
       numerosDeOsAlterados: plano.numerosDeOsAlterados.filter((item) =>
         idsAtualizados.has(item.obraId),
       ),
+      historicosHerdados,
       ignoradas,
       avisos: plano.avisos,
     },

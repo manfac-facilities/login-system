@@ -16,6 +16,7 @@ describe('a superfície pública de app/obras/_lib/field', () => {
     expect(typeof field.ErroDeParametroInvalido).toBe('function')
     expect(typeof field.ErroDaApiField).toBe('function')
     expect(typeof field.ErroDeTipoDeOs).toBe('function')
+    expect(typeof field.consultarSituacaoDaOrdemField).toBe('function')
   })
 
   it('expõe o ponto de variação da loja, que é o que vai mudar quando o cliente responder', () => {

@@ -9,6 +9,7 @@
 import type { OsNormalizada } from '../../_lib/field'
 import {
   emLotes,
+  encontrarConsultasDeReabertura,
   numerosDeOsDoField,
   planejarSincronizacao,
   type ObraExistente,
@@ -287,8 +288,8 @@ describe('planejarSincronizacao — ausência no Field', () => {
     ])
   })
 
-  it('a segunda varredura completa consecutiva confirma o alerta', () => {
-    const cenario = umaAusente({ field_ausente_desde: '2026-09-13T12:00:00Z' })
+  it('confirma o alerta com a tolerância de 20 horas para a cadência diária', () => {
+    const cenario = umaAusente({ field_ausente_desde: '2026-09-13T16:00:00Z' })
     const plano = planejarSincronizacao(cenario.doField, cenario.existentes, {
       varreduraCompleta: true,
       agora: AGORA,
@@ -300,7 +301,7 @@ describe('planejarSincronizacao — ausência no Field', () => {
     })
   })
 
-  it('não confirma a suspeita antes do intervalo mínimo de 24 horas', () => {
+  it('não confirma a suspeita antes da tolerância de 20 horas', () => {
     const cenario = umaAusente({ field_ausente_desde: '2026-09-14T11:59:59Z' })
     const plano = planejarSincronizacao(cenario.doField, cenario.existentes, {
       varreduraCompleta: true,
@@ -320,15 +321,15 @@ describe('planejarSincronizacao — ausência no Field', () => {
     expect(plano.avisos[0]).toMatch(/0 OS/i)
   })
 
-  it('não marca ausência em massa acima de 20% e avisa no relatório', () => {
-    const existentes = Array.from({ length: 5 }, (_, indice) =>
+  it('não marca ausência em massa acima do maior valor entre 3 e 20%', () => {
+    const existentes = Array.from({ length: 10 }, (_, indice) =>
       obraNoBanco({
         id: `obra-${indice}`,
         os: `OS-${indice}`,
         field_id: `ord-${indice}`,
       }),
     )
-    const doField = existentes.slice(0, 3).map((obra) =>
+    const doField = existentes.slice(0, 6).map((obra) =>
       osDoField({ os: obra.os as string, idField: obra.field_id as string }),
     )
     const plano = planejarSincronizacao(doField, existentes, {
@@ -337,7 +338,62 @@ describe('planejarSincronizacao — ausência no Field', () => {
     })
 
     expect(plano.reconciliarAusencias).toHaveLength(0)
-    expect(plano.avisos[0]).toMatch(/mais de 20%/i)
+    expect(plano.avisos[0]).toMatch(/limite de segurança/i)
+  })
+
+  it('alertas antigos não entram no disjuntor e não bloqueiam uma ausência nova', () => {
+    const existentes = Array.from({ length: 10 }, (_, indice) =>
+      obraNoBanco({
+        id: `obra-${indice}`,
+        os: `OS-${indice}`,
+        field_id: `ord-${indice}`,
+        field_ausente_desde: indice >= 6 && indice <= 8 ? '2026-09-12T12:00:00Z' : null,
+        field_ausente_em: indice >= 6 && indice <= 8 ? '2026-09-13T12:00:00Z' : null,
+      }),
+    )
+    const doField = existentes.slice(0, 6).map((obra) =>
+      osDoField({ os: obra.os as string, idField: obra.field_id as string }),
+    )
+    const plano = planejarSincronizacao(doField, existentes, {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.avisos).toHaveLength(0)
+    expect(plano.reconciliarAusencias).toEqual([
+      {
+        id: 'obra-9',
+        os: 'OS-9',
+        idField: 'ord-9',
+        acao: 'suspeita',
+        campos: { field_ausente_desde: AGORA },
+      },
+    ])
+  })
+
+  it('o piso absoluto permite uma ausência isolada numa base pequena', () => {
+    const existentes = [
+      obraNoBanco(),
+      obraNoBanco({ id: 'obra-2', os: 'OS-2', field_id: 'ord-2' }),
+      obraNoBanco({ id: 'obra-3', os: 'OS-3', field_id: 'ord-3' }),
+    ]
+    const doField = existentes.slice(1).map((obra) =>
+      osDoField({ os: obra.os as string, idField: obra.field_id as string }),
+    )
+
+    const plano = planejarSincronizacao(doField, existentes, {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.avisos).toHaveLength(0)
+    expect(plano.reconciliarAusencias).toHaveLength(1)
+  })
+
+  it('base e Field vazios são um estado válido, sem aviso inútil', () => {
+    const plano = planejarSincronizacao([], [], { varreduraCompleta: true, agora: AGORA })
+
+    expect(plano.avisos).toHaveLength(0)
   })
 
   it('varredura incremental nunca infere ausência', () => {
@@ -381,6 +437,107 @@ describe('planejarSincronizacao — ausência no Field', () => {
       },
     ])
     expect(plano.alertasRemovidos).toBe(1)
+  })
+})
+
+describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
+  const antiga = obraNoBanco({
+    loja: 'DROGARIA SP',
+    descricao: 'Reforma',
+    field_id: 'ord-antiga',
+    field_ausente_desde: '2026-09-12T12:00:00Z',
+    field_ausente_em: '2026-09-13T12:00:00Z',
+  })
+  const reaberta = osDoField({ idField: 'ord-nova' })
+
+  it('identifica a consulta necessária antes de decidir a herança', () => {
+    expect(encontrarConsultasDeReabertura([reaberta], [antiga])).toEqual([
+      {
+        os: '0226-014989',
+        idFieldAnterior: 'ord-antiga',
+        idFieldAtual: 'ord-nova',
+      },
+    ])
+  })
+
+  it.each(['arquivada', 'inexistente'] as const)(
+    'herda o histórico quando a ordem antiga está %s',
+    (situacao) => {
+      const plano = planejarSincronizacao([reaberta], [antiga], {
+        verificacoesDeReabertura: [
+          {
+            os: '0226-014989',
+            idFieldAnterior: 'ord-antiga',
+            idFieldAtual: 'ord-nova',
+            situacao,
+          },
+        ],
+      })
+
+      expect(plano.inserir).toHaveLength(0)
+      expect(plano.atualizar).toEqual([
+        {
+          id: 'obra-1',
+          os: '0226-014989',
+          campos: {
+            field_id: 'ord-nova',
+            field_ausente_desde: null,
+            field_ausente_em: null,
+          },
+          removeAlerta: true,
+          historicoHerdado: {
+            obraId: 'obra-1',
+            os: '0226-014989',
+            idFieldAnterior: 'ord-antiga',
+            idFieldAtual: 'ord-nova',
+          },
+        },
+      ])
+      expect(plano.ignoradas).toHaveLength(0)
+    },
+  )
+
+  it('não herda quando a ordem antiga ainda está ativa', () => {
+    const plano = planejarSincronizacao([reaberta], [antiga], {
+      verificacoesDeReabertura: [
+        {
+          os: '0226-014989',
+          idFieldAnterior: 'ord-antiga',
+          idFieldAtual: 'ord-nova',
+          situacao: 'ativa',
+        },
+      ],
+    })
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toMatch(/ainda está ativa/i)
+  })
+
+  it('não herda quando a consulta é inconclusiva e deixa nova tentativa explícita', () => {
+    const plano = planejarSincronizacao([reaberta], [antiga], {
+      verificacoesDeReabertura: [
+        {
+          os: '0226-014989',
+          idFieldAnterior: 'ord-antiga',
+          idFieldAtual: 'ord-nova',
+          situacao: 'inconclusiva',
+        },
+      ],
+    })
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toMatch(/tentada novamente/i)
+  })
+
+  it('troca de números entre duas obras continua como conflito', () => {
+    const outra = obraNoBanco({ id: 'obra-2', os: 'OS-2', field_id: 'ord-2' })
+    const plano = planejarSincronizacao(
+      [osDoField({ idField: 'ord-antiga', os: 'OS-2' })],
+      [antiga, outra],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toMatch(/apontam para obras diferentes/i)
   })
 })
 

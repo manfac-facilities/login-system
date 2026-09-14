@@ -5,7 +5,7 @@
  */
 
 import { camposParaAtualizar } from '../_lib/importacao'
-import type { OsNormalizada } from '../_lib/field'
+import type { OsNormalizada, SituacaoDaOrdemField } from '../_lib/field'
 import type { Etapa, FonteObra } from '../_lib/tipos'
 
 export type ObraExistente = {
@@ -33,6 +33,20 @@ export type AtualizacaoDoField = {
   os: string
   campos: Record<string, unknown>
   removeAlerta?: boolean
+  historicoHerdado?: HistoricoHerdado
+}
+
+export type HistoricoHerdado = {
+  obraId: string
+  os: string
+  idFieldAnterior: string
+  idFieldAtual: string
+}
+
+export type ConsultaDeReabertura = Omit<HistoricoHerdado, 'obraId'>
+
+export type VerificacaoDeReabertura = ConsultaDeReabertura & {
+  situacao: SituacaoDaOrdemField
 }
 
 export type AtualizacaoDeAusencia = {
@@ -60,6 +74,7 @@ export type OpcoesDeSincronizacao = {
   /** Só uma leitura integral e bem-sucedida tem o direito de inferir ausência. */
   varreduraCompleta?: boolean
   agora?: string
+  verificacoesDeReabertura?: VerificacaoDeReabertura[]
 }
 
 export type PlanoDeSincronizacao = {
@@ -77,7 +92,8 @@ export type PlanoDeSincronizacao = {
 const ETAPA_INICIAL: Etapa = 'definir'
 const FONTE_FIELD: FonteObra = 'field'
 const LIMITE_DE_AUSENCIA_EM_MASSA = 0.2
-export const INTERVALO_MINIMO_PARA_ALERTA_MS = 24 * 60 * 60 * 1000
+const PISO_DE_AUSENCIAS_EM_MASSA = 3
+export const INTERVALO_MINIMO_PARA_ALERTA_MS = 20 * 60 * 60 * 1000
 
 function texto(valor: string | null | undefined): string | null {
   if (typeof valor !== 'string') return null
@@ -104,6 +120,39 @@ export function emLotes<T>(lista: T[], tamanho: number): T[][] {
   const lotes: T[][] = []
   for (let i = 0; i < lista.length; i += tamanho) lotes.push(lista.slice(i, i + tamanho))
   return lotes
+}
+
+/** Conflitos que precisam consultar a ordem antiga antes de qualquer escrita. */
+export function encontrarConsultasDeReabertura(
+  doField: OsNormalizada[],
+  existentes: ObraExistente[],
+): ConsultaDeReabertura[] {
+  const porFieldId = new Map(
+    existentes.flatMap((obra) => {
+      const idField = texto(obra.field_id)
+      return idField ? [[idField, obra] as const] : []
+    }),
+  )
+  const porOs = new Map(
+    existentes.flatMap((obra) => {
+      const numero = texto(obra.os)
+      return numero ? [[numero, obra] as const] : []
+    }),
+  )
+  const consultas = new Map<string, ConsultaDeReabertura>()
+
+  for (const vinda of doField) {
+    const os = texto(vinda.os)
+    const idFieldAtual = texto(vinda.idField)
+    if (!os || !idFieldAtual || porFieldId.has(idFieldAtual)) continue
+    const ocupante = porOs.get(os)
+    const idFieldAnterior = texto(ocupante?.field_id)
+    if (!ocupante || !idFieldAnterior || idFieldAnterior === idFieldAtual) continue
+    const consulta = { os, idFieldAnterior, idFieldAtual }
+    consultas.set(`${idFieldAnterior}\u0000${idFieldAtual}`, consulta)
+  }
+
+  return [...consultas.values()]
 }
 
 /**
@@ -186,13 +235,33 @@ export function planejarSincronizacao(
       })
       continue
     }
-    if (!peloId && peloNumero && texto(peloNumero.field_id) !== null) {
-      ignoradas.push({
-        os: numero,
-        idField,
-        motivo: `conflito de identidade: a OS ${numero} já pertence a outro id do Field`,
-      })
-      continue
+    const idFieldAnterior = texto(peloNumero?.field_id)
+    let historicoHerdado: HistoricoHerdado | undefined
+    if (!peloId && peloNumero && idFieldAnterior !== null) {
+      const verificacao = opcoes.verificacoesDeReabertura?.find(
+        (item) =>
+          item.os === numero &&
+          item.idFieldAnterior === idFieldAnterior &&
+          item.idFieldAtual === idField,
+      )
+      if (
+        verificacao?.situacao === 'arquivada' ||
+        verificacao?.situacao === 'inexistente'
+      ) {
+        historicoHerdado = {
+          obraId: peloNumero.id,
+          os: numero,
+          idFieldAnterior,
+          idFieldAtual: idField,
+        }
+      } else {
+        const motivo =
+          verificacao?.situacao === 'ativa'
+            ? `conflito de identidade: a OS antiga ${idFieldAnterior} ainda está ativa no Field`
+            : `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; a herança será tentada novamente`
+        ignoradas.push({ os: numero, idField, motivo })
+        continue
+      }
     }
 
     const existente = peloId ?? peloNumero
@@ -219,6 +288,7 @@ export function planejarSincronizacao(
     for (const [coluna, valor] of Object.entries(candidatos)) {
       if (vazio(existente[coluna as keyof ObraExistente])) campos[coluna] = valor
     }
+    if (historicoHerdado) campos.field_id = idField
 
     const numeroAnterior = texto(existente.os)
     if (peloId && numeroAnterior !== numero) {
@@ -245,6 +315,7 @@ export function planejarSincronizacao(
     else {
       const atualizacao: AtualizacaoDoField = { id: existente.id, os: numero, campos }
       if (alertaExistente) atualizacao.removeAlerta = true
+      if (historicoHerdado) atualizacao.historicoHerdado = historicoHerdado
       atualizar.push(atualizacao)
     }
   }
@@ -254,15 +325,21 @@ export function planejarSincronizacao(
       (obra) => obra.fonte === FONTE_FIELD && texto(obra.field_id) !== null,
     )
     const ausentes = obrasDoField.filter((obra) => !idsEncontrados.has(obra.id))
-    const proporcaoAusente = obrasDoField.length ? ausentes.length / obrasDoField.length : 0
+    const ausenciasAindaNaoAlertadas = ausentes.filter(
+      (obra) => !texto(obra.field_ausente_em),
+    )
+    const limiteDeSeguranca = Math.max(
+      PISO_DE_AUSENCIAS_EM_MASSA,
+      obrasDoField.length * LIMITE_DE_AUSENCIA_EM_MASSA,
+    )
 
-    if (doField.length === 0) {
+    if (doField.length === 0 && obrasDoField.length > 0) {
       avisos.push(
         'Varredura suspeita: o Field devolveu 0 OS. Nenhuma ausência foi registrada.',
       )
-    } else if (proporcaoAusente > LIMITE_DE_AUSENCIA_EM_MASSA) {
+    } else if (ausenciasAindaNaoAlertadas.length > limiteDeSeguranca) {
       avisos.push(
-        `Varredura suspeita: ${ausentes.length} de ${obrasDoField.length} obras do Field ficariam ausentes (mais de 20%). Nenhuma ausência foi registrada.`,
+        `Varredura suspeita: ${ausenciasAindaNaoAlertadas.length} ausências ainda não alertadas ultrapassam o limite de segurança (${Math.floor(limiteDeSeguranca)}). Nenhuma ausência foi registrada.`,
       )
     } else {
       for (const obra of ausentes) {

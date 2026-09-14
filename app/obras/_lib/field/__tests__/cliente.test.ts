@@ -239,6 +239,20 @@ describe('criarClienteField — paginação', () => {
     await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/sem a lista items/i)
   })
 
+  it('interrompe cedo quando a API ignora o offset e repete uma página cheia', async () => {
+    const pagina = Array.from({ length: 10 }, (_, i) =>
+      ordem({ id: `o${i}`, identifier: `OS-${i}` }),
+    )
+    const rede = httpDeMentira((caminho) => {
+      if (caminho === '/services') return { items: [TIPO_SPOT], totalCount: 1 }
+      return { items: pagina, totalCount: 999 }
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http, tamanhoDaPagina: 10 })
+
+    await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/repetiu a página/i)
+    expect(rede.chamadas.filter((c) => c.caminho === '/orders')).toHaveLength(2)
+  })
+
   it('para com erro alto quando a varredura passa do teto de offset documentado', async () => {
     const ordens = Array.from({ length: 40 }, (_, i) => ordem({ id: `o${i}`, identifier: `OS-${i}` }))
     const rede = httpDeMentira(rotasCom(ordens))

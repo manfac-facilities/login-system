@@ -36,6 +36,7 @@ import { sincronizarComFieldAction } from '../_actions'
 const CHAVE_FALSA = 'chave-de-teste-sem-valor-real'
 
 const listarOsNormalizadas = jest.fn()
+const consultarSituacaoDaOrdem = jest.fn()
 
 function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
   return {
@@ -70,8 +71,10 @@ beforeEach(() => {
   ;(criarClienteField as jest.Mock).mockReturnValue({
     resolverIdDoTipoDeOs: jest.fn(),
     listarOsNormalizadas,
+    consultarSituacaoDaOrdem,
   })
   listarOsNormalizadas.mockResolvedValue([])
+  consultarSituacaoDaOrdem.mockResolvedValue({ situacao: 'inconclusiva' })
   selectRangeMock.mockResolvedValue({ data: [], error: null })
   insertMock.mockResolvedValue({ error: null })
   updateEqMock.mockResolvedValue({ error: null })
@@ -222,6 +225,55 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(estado.relatorio?.novosAlertasDeAusencia).toBe(0)
   })
 
+  it('consulta a ordem antiga e herda o histórico quando ela está arquivada', async () => {
+    listarOsNormalizadas.mockResolvedValue([osDoField({ idField: 'ord-nova' })])
+    consultarSituacaoDaOrdem.mockResolvedValue({ situacao: 'arquivada' })
+    selectRangeMock.mockResolvedValue({
+      data: [
+        obraDoBanco(1, {
+          os: '0226-014989',
+          field_id: 'ord-antiga',
+          field_ausente_desde: '2026-09-12T12:00:00Z',
+          field_ausente_em: '2026-09-13T12:00:00Z',
+        }),
+      ],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(consultarSituacaoDaOrdem).toHaveBeenCalledWith('ord-antiga')
+    expect(updateMock).toHaveBeenCalledWith({
+      field_id: 'ord-nova',
+      field_ausente_desde: null,
+      field_ausente_em: null,
+    })
+    expect(estado.relatorio?.historicosHerdados).toEqual([
+      {
+        obraId: 'obra-1',
+        os: '0226-014989',
+        idFieldAnterior: 'ord-antiga',
+        idFieldAtual: 'ord-nova',
+      },
+    ])
+    expect(estado.relatorio?.alertasRemovidos).toBe(1)
+  })
+
+  it('falha ao consultar a antiga não herda e fica visível para tentar depois', async () => {
+    listarOsNormalizadas.mockResolvedValue([osDoField({ idField: 'ord-nova' })])
+    consultarSituacaoDaOrdem.mockRejectedValue(new Error('Field indisponível'))
+    selectRangeMock.mockResolvedValue({
+      data: [obraDoBanco(1, { os: '0226-014989', field_id: 'ord-antiga' })],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(updateMock).not.toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
+    expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
+    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/tentada novamente/i)
+  })
+
   it('registra a primeira ausência sem apagar nem esconder a obra', async () => {
     const presentes = Array.from({ length: 5 }, (_, indice) => obraDoBanco(indice + 2))
     listarOsNormalizadas.mockResolvedValue(
@@ -267,6 +319,7 @@ describe('sincronizarComFieldAction — gravação', () => {
       novosAlertasDeAusencia: 0,
       alertasRemovidos: 0,
       numerosDeOsAlterados: [],
+      historicosHerdados: [],
       ignoradas: [],
       avisos: [
         'Varredura suspeita: o Field devolveu 0 OS. Nenhuma ausência foi registrada.',
@@ -274,8 +327,8 @@ describe('sincronizarComFieldAction — gravação', () => {
     })
   })
 
-  it('bloqueia ausência acima de 20% e leva o aviso ao relatório', async () => {
-    const existentes = Array.from({ length: 5 }, (_, indice) => obraDoBanco(indice + 1))
+  it('bloqueia ausência em massa e leva o aviso ao relatório', async () => {
+    const existentes = Array.from({ length: 10 }, (_, indice) => obraDoBanco(indice + 1))
     listarOsNormalizadas.mockResolvedValue(
       existentes
         .slice(0, 3)
@@ -287,7 +340,7 @@ describe('sincronizarComFieldAction — gravação', () => {
 
     expect(updateMock).not.toHaveBeenCalled()
     expect(estado.relatorio?.suspeitasDeAusencia).toBe(0)
-    expect(estado.relatorio?.avisos[0]).toMatch(/mais de 20%/i)
+    expect(estado.relatorio?.avisos[0]).toMatch(/limite de segurança/i)
   })
 
   it('não grava nada quando a leitura do banco falha', async () => {
