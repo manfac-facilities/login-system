@@ -26,6 +26,7 @@ import {
 } from '../_lib/tipos'
 import {
   BadgeDias,
+  EtiquetaAusenciaField,
   EtiquetaCobertura,
   EtiquetaEtapa,
   EtiquetaMauUso,
@@ -84,7 +85,7 @@ export default function TabelaBase({
             key={o.id}
             className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-3"
             style={
-              critico(o) || semCobertura(o)
+              critico(o) || semCobertura(o) || o.field_ausente_em !== null
                 ? { borderLeftWidth: 3, borderLeftColor: '#ff4d6d' }
                 : undefined
             }
@@ -107,6 +108,7 @@ export default function TabelaBase({
               <EtiquetaPrioridade obra={o} />
               <EtiquetaOS obra={o} />
               <EtiquetaCobertura obra={o} />
+              <EtiquetaAusenciaField obra={o} />
             </div>
             <div className="mt-2 text-[11px] text-[#94a3b8]">
               {o.pcm ? `Responsável ${o.pcm}` : (
@@ -146,7 +148,7 @@ export default function TabelaBase({
                 key={o.id}
                 className="border-b border-[#1e3a5f] align-top hover:bg-[#132a52]"
                 style={
-                  critico(o) || semCobertura(o)
+                  critico(o) || semCobertura(o) || o.field_ausente_em !== null
                     ? { boxShadow: 'inset 3px 0 0 0 #ff4d6d' }
                     : undefined
                 }
@@ -175,6 +177,7 @@ export default function TabelaBase({
                   <div className="flex flex-wrap items-center gap-1">
                     <EtiquetaEtapa obra={o} />
                     <EtiquetaMauUso obra={o} />
+                    <EtiquetaAusenciaField obra={o} />
                   </div>
                 </td>
                 <td className="px-2 py-2">

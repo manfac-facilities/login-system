@@ -32,6 +32,9 @@ function obraNoBanco(over: Partial<ObraExistente> = {}): ObraExistente {
     loja: null,
     descricao: null,
     fonte: 'field',
+    field_id: 'ord-1',
+    field_ausente_desde: null,
+    field_ausente_em: null,
     ...over,
   }
 }
@@ -46,6 +49,7 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
         loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
         descricao: 'Forro do estoque caiu',
         fonte: 'field',
+        field_id: 'ord-1',
         etapa: 'definir',
       },
     ])
@@ -58,7 +62,14 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
     const plano = planejarSincronizacao([osDoField({ loja: null, descricao: null })], [])
 
     expect(plano.inserir).toEqual([
-      { os: '0226-014989', loja: null, descricao: null, fonte: 'field', etapa: 'definir' },
+      {
+        os: '0226-014989',
+        loja: null,
+        descricao: null,
+        fonte: 'field',
+        field_id: 'ord-1',
+        etapa: 'definir',
+      },
     ])
   })
 })
@@ -97,6 +108,58 @@ describe('planejarSincronizacao — OS que já existe', () => {
       { id: 'obra-1', os: '0226-014989', campos: { fonte: 'field' } },
     ])
     expect(plano.inalteradas).toBe(0)
+  })
+
+  it('vincula pelo número e grava field_id quando a obra ainda não tem a identidade do Field', () => {
+    const plano = planejarSincronizacao(
+      [osDoField()],
+      [obraNoBanco({ field_id: null, fonte: null, loja: 'DROGARIA SP', descricao: 'Reforma' })],
+    )
+
+    expect(plano.atualizar).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-014989',
+        campos: { fonte: 'field', field_id: 'ord-1' },
+      },
+    ])
+  })
+
+  it('corrige o número pelo field_id sem duplicar nem abrir alerta de sumiço', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '0226-999999', idField: 'ord-1' })],
+      [
+        obraNoBanco({
+          os: '0226-014989',
+          loja: 'DROGARIA SP',
+          descricao: 'Reforma',
+          field_ausente_desde: '2026-09-10T12:00:00Z',
+        }),
+      ],
+      { varreduraCompleta: true, agora: '2026-09-14T12:00:00Z' },
+    )
+
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.atualizar).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-999999',
+        campos: {
+          os: '0226-999999',
+          field_ausente_desde: null,
+          field_ausente_em: null,
+        },
+      },
+    ])
+    expect(plano.numerosDeOsAlterados).toEqual([
+      {
+        obraId: 'obra-1',
+        idField: 'ord-1',
+        anterior: '0226-014989',
+        atual: '0226-999999',
+      },
+    ])
   })
 
   it('nunca sobrescreve uma procedência já preenchida', () => {
@@ -175,9 +238,89 @@ describe('planejarSincronizacao — o que fica de fora', () => {
       totalDoField: 0,
       inserir: [],
       atualizar: [],
+      reconciliarAusencias: [],
+      numerosDeOsAlterados: [],
+      alertasRemovidos: 0,
       inalteradas: 0,
       ignoradas: [],
     })
+  })
+})
+
+describe('planejarSincronizacao — ausência no Field', () => {
+  const AGORA = '2026-09-14T12:00:00Z'
+
+  it('a primeira varredura completa ausente cria só uma suspeita', () => {
+    const plano = planejarSincronizacao([], [obraNoBanco()], {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-014989',
+        idField: 'ord-1',
+        acao: 'suspeita',
+        campos: { field_ausente_desde: AGORA },
+      },
+    ])
+  })
+
+  it('a segunda varredura completa consecutiva confirma o alerta', () => {
+    const plano = planejarSincronizacao(
+      [],
+      [obraNoBanco({ field_ausente_desde: '2026-09-13T12:00:00Z' })],
+      { varreduraCompleta: true, agora: AGORA },
+    )
+
+    expect(plano.reconciliarAusencias[0]).toMatchObject({
+      acao: 'alerta',
+      campos: { field_ausente_em: AGORA },
+    })
+  })
+
+  it('varredura incremental nunca infere ausência', () => {
+    const plano = planejarSincronizacao([], [obraNoBanco()], {
+      varreduraCompleta: false,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+  })
+
+  it('obra de procedência desconhecida nunca é marcada', () => {
+    const plano = planejarSincronizacao([], [obraNoBanco({ fonte: null })], {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+  })
+
+  it('reaparecer limpa suspeita e alerta automaticamente', () => {
+    const plano = planejarSincronizacao(
+      [osDoField()],
+      [
+        obraNoBanco({
+          loja: 'DROGARIA SP',
+          descricao: 'Reforma',
+          field_ausente_desde: '2026-09-12T12:00:00Z',
+          field_ausente_em: '2026-09-13T12:00:00Z',
+        }),
+      ],
+      { varreduraCompleta: false, agora: AGORA },
+    )
+
+    expect(plano.atualizar).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-014989',
+        campos: { field_ausente_desde: null, field_ausente_em: null },
+        removeAlerta: true,
+      },
+    ])
+    expect(plano.alertasRemovidos).toBe(1)
   })
 })
 

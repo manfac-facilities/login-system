@@ -35,6 +35,16 @@ export function EtiquetaMauUso({ obra }: { obra: Pick<Obra, 'mau_uso'> }) {
   return <Pill cor={TEMA.secundario}>Mau uso</Pill>
 }
 
+/** Alerta conservador: sinaliza e mantém a obra visível para tratamento humano. */
+export function EtiquetaAusenciaField({
+  obra,
+}: {
+  obra: Pick<Obra, 'field_ausente_em'>
+}) {
+  if (obra.field_ausente_em === null) return null
+  return <Pill cor="#ff4d6d">Não está mais no Field</Pill>
+}
+
 /** `osChip(mockup:1851)`. */
 export function EtiquetaOS({ obra }: { obra: Pick<Obra, 'os_aprovada'> }) {
   return obra.os_aprovada ? (

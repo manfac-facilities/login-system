@@ -39,6 +39,9 @@ function linha(over: Partial<ObraRow> = {}): ObraRow {
     valor: null,
     origem: 'Sistema DPSP',
     fonte: null,
+    field_id: null,
+    field_ausente_desde: null,
+    field_ausente_em: null,
     analista_cliente: 'LEANDRO',
     pcm: 'YURI',
     equipe: 'MANFAC-7',
@@ -168,6 +171,24 @@ describe('filtrar — Classificação', () => {
   it('mau uso não tira a obra do funil: ela continua na etapa em que está', () => {
     const m = obra({ mau_uso: true, etapa: 'fecharOS', desde_etapa: '2026-08-01' })
     expect(filtrar([m], { ...FILTROS_PADRAO, etapa: 'fecharOS' })).toHaveLength(1)
+  })
+})
+
+describe('filtrar — Field Control', () => {
+  const presente = obra({ field_ausente_em: null })
+  const ausente = obra({
+    field_ausente_desde: '2026-08-29T12:00:00Z',
+    field_ausente_em: '2026-08-30T12:00:00Z',
+  })
+
+  it('o padrão conserva todas as obras visíveis', () => {
+    expect(filtrar([presente, ausente], FILTROS_PADRAO)).toHaveLength(2)
+  })
+
+  it('permite ver somente as obras com alerta confirmado', () => {
+    expect(filtrar([presente, ausente], { ...FILTROS_PADRAO, field: 'ausentes' })).toEqual([
+      ausente,
+    ])
   })
 })
 

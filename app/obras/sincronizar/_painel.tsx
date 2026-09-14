@@ -41,7 +41,8 @@ export default function PainelSincronizacao() {
             <p className="text-sm text-[#94a3b8]">
               Lê as OS do tipo <strong className="text-[#e8eef7]">Atividade Spot</strong> no Field
               Control e traz para a base de obras. Pode rodar quantas vezes quiser: OS que já existe
-              não é duplicada, e o que foi digitado aqui no hub nunca é sobrescrito.
+              não é duplicada, e o que foi digitado aqui no hub nunca é sobrescrito. Uma OS só
+              recebe o alerta de ausência depois de faltar em duas leituras completas seguidas.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -71,7 +72,7 @@ export default function PainelSincronizacao() {
         <Box>
           <BoxH extra="sincronização concluída">Relatório</BoxH>
           <BoxB className="space-y-4">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
               <KPI rotulo="OS vindas do Field" valor={rel.totalDoField} />
               <KPI rotulo="Obras criadas" valor={rel.novas} cor="#35c98a" />
               <KPI rotulo="Obras completadas" valor={rel.atualizadas} cor="#5aa9f0" />
@@ -81,7 +82,42 @@ export default function PainelSincronizacao() {
                 valor={rel.ignoradas.length}
                 cor={rel.ignoradas.length ? '#f4b73f' : undefined}
               />
+              <KPI rotulo="Primeiras ausências" valor={rel.suspeitasDeAusencia} cor="#f4b73f" />
+              <KPI
+                rotulo="Novos alertas de ausência"
+                valor={rel.novosAlertasDeAusencia}
+                cor="#ff4d6d"
+              />
+              <KPI rotulo="Alertas removidos" valor={rel.alertasRemovidos} cor="#35c98a" />
             </div>
+
+            {rel.numerosDeOsAlterados.length ? (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-[#e8eef7]">
+                  Número da OS alterado no Field
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[32rem] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[#1e3a5f] text-[11px] uppercase tracking-wide text-[#94a3b8]">
+                        <th className="py-1.5 pr-3 font-medium">Id no Field</th>
+                        <th className="py-1.5 pr-3 font-medium">Número anterior</th>
+                        <th className="py-1.5 font-medium">Número atual</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rel.numerosDeOsAlterados.map((item) => (
+                        <tr key={item.idField} className="border-b border-[#1e3a5f]/50">
+                          <td className="py-1.5 pr-3 text-[#94a3b8]">{item.idField}</td>
+                          <td className="py-1.5 pr-3 text-[#e8eef7]">{item.anterior}</td>
+                          <td className="py-1.5 text-[#e8eef7]">{item.atual}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
 
             <div>
               <h3 className="mb-2 text-sm font-semibold text-[#e8eef7]">O que ficou de fora</h3>
