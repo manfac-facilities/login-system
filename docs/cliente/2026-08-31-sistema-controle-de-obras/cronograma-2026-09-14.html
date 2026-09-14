@@ -1,0 +1,375 @@
+<title>Cronograma do Controle de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Dark-first: o hub da Manfac é escuro. O claro é a variante. */
+  :root{
+    --chao:#0a1628; --painel:#0f1f3d; --painel2:#0d2050;
+    --borda:#1e3a5f; --borda-forte:#2c5183;
+    --texto:#e8eef7; --texto2:#9fb0c7; --texto3:#6b83a3;
+    --laranja:#f05a28; --ciano:#38b2c4; --verde:#3fbf8f; --ambar:#e0a83c;
+    --laranja-f:rgba(240,90,40,.12); --ciano-f:rgba(56,178,196,.12);
+    --verde-f:rgba(63,191,143,.12); --ambar-f:rgba(224,168,60,.13);
+    --fim:#0d2050;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --chao:#f2f5f9; --painel:#ffffff; --painel2:#e8eef7;
+      --borda:#d4dce8; --borda-forte:#aebcd1;
+      --texto:#0d1a33; --texto2:#44546e; --texto3:#6a7a92;
+      --laranja:#c9461a; --ciano:#17798a; --verde:#1f7d57; --ambar:#96620a;
+      --laranja-f:rgba(201,70,26,.09); --ciano-f:rgba(23,121,138,.09);
+      --verde-f:rgba(31,125,87,.09); --ambar-f:rgba(150,98,10,.1);
+      --fim:#e8eef7;
+    }
+  }
+  :root[data-theme="light"]{
+    --chao:#f2f5f9; --painel:#ffffff; --painel2:#e8eef7;
+    --borda:#d4dce8; --borda-forte:#aebcd1;
+    --texto:#0d1a33; --texto2:#44546e; --texto3:#6a7a92;
+    --laranja:#c9461a; --ciano:#17798a; --verde:#1f7d57; --ambar:#96620a;
+    --laranja-f:rgba(201,70,26,.09); --ciano-f:rgba(23,121,138,.09);
+    --verde-f:rgba(31,125,87,.09); --ambar-f:rgba(150,98,10,.1);
+    --fim:#e8eef7;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--chao);color:var(--texto);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 20px 72px}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+  :focus-visible{outline:2px solid var(--ciano);outline-offset:2px}
+
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--laranja);margin:0 0 10px}
+  h1{font-family:Archivo,"Arial Narrow",sans-serif;font-weight:700;font-size:clamp(28px,4.4vw,40px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;text-wrap:balance}
+  .lead{color:var(--texto2);font-size:16.5px;max-width:68ch;margin:0}
+  h2{font-family:Archivo,"Arial Narrow",sans-serif;font-weight:600;font-size:21px;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+  .h2sub{color:var(--texto3);font-size:14px;margin:0 0 18px;max-width:72ch}
+  section{margin-top:48px}
+
+  /* Resumo: fatos em linha, sem tiles */
+  .fatos{display:flex;flex-wrap:wrap;gap:12px 40px;margin:26px 0 0;padding:18px 0;border-block:1px solid var(--borda)}
+  .fato dt{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);margin:0 0 3px}
+  .fato dd{margin:0;font-family:Archivo,sans-serif;font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+  .fato dd small{font-family:"IBM Plex Sans",sans-serif;font-weight:400;font-size:13px;color:var(--texto2);margin-left:6px}
+  .fato.fim dd{color:var(--laranja)}
+
+  /* Legenda */
+  .legenda{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 0;font-size:13px;color:var(--texto2)}
+  .legenda span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+  /* Calendário em raias: dia × pessoa */
+  .cal{border:1px solid var(--borda);border-radius:8px;overflow:hidden;background:var(--painel)}
+  .linha{display:grid;grid-template-columns:118px repeat(4,minmax(0,1fr));border-top:1px solid var(--borda)}
+  .linha:first-child{border-top:0}
+  .cab{background:var(--painel2);position:sticky;top:0;z-index:1}
+  .cab > div{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);padding:10px 12px}
+  .cab .r-cli{color:var(--ambar)} .cab .r-joao{color:var(--laranja)} .cab .r-claude{color:var(--verde)} .cab .r-duda{color:var(--ciano)}
+  .dia{padding:12px;border-right:1px solid var(--borda)}
+  .dia .d{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+  .dia .s{font-size:12px;color:var(--texto3);text-transform:lowercase}
+  .dia .carga{margin-top:6px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--texto3);line-height:1.5}
+  .raia{padding:10px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--borda);min-width:0}
+  .raia:last-child{border-right:0}
+  .raia-rot{display:none}
+  .semana{background:var(--chao);padding:7px 12px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);border-top:1px solid var(--borda)}
+  .hoje .dia{background:var(--painel2)}
+  .final .dia{background:var(--fim)}
+
+  .t{border-radius:5px;padding:8px 9px;font-size:13.5px;line-height:1.4;border:1px solid transparent}
+  .t .h{display:block;margin-top:3px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--texto2);font-variant-numeric:tabular-nums}
+  .t.cli{background:var(--ambar-f);border-color:color-mix(in srgb,var(--ambar) 35%,transparent)}
+  .t.joao{background:var(--laranja-f);border-color:color-mix(in srgb,var(--laranja) 35%,transparent)}
+  .t.claude{background:var(--verde-f);border-color:color-mix(in srgb,var(--verde) 35%,transparent)}
+  .t.duda{background:var(--ciano-f);border-color:color-mix(in srgb,var(--ciano) 35%,transparent)}
+  .t.feito{background:transparent;border-style:dashed;border-color:var(--borda-forte);color:var(--texto2)}
+  .tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border-radius:3px;margin-right:5px;vertical-align:1px;border:1px solid var(--borda-forte);color:var(--texto2)}
+  .tag.crit{border-color:var(--laranja);color:var(--laranja)}
+  .tag.dec{border-color:var(--ambar);color:var(--ambar)}
+  .tag.dep{border-color:var(--verde);color:var(--verde)}
+  .vazio{font-size:12.5px;color:var(--texto3);font-style:italic;padding:4px 2px}
+
+  @media (max-width:820px){
+    .cab{display:none}
+    .linha{grid-template-columns:1fr}
+    .dia{border-right:0;border-bottom:1px solid var(--borda);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+    .dia .carga{margin-top:0}
+    .raia{border-right:0;padding:8px 12px}
+    .raia.sem{display:none}
+    .raia-rot{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3)}
+  }
+
+  /* Blocos de texto */
+  .duas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px 40px}
+  .lista{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+  .lista li{padding-left:16px;position:relative;color:var(--texto2);font-size:14.5px;max-width:68ch}
+  .lista li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--borda-forte)}
+  .lista li b{color:var(--texto);font-weight:600}
+  .lista.alerta li::before{background:var(--ambar)}
+  table.horas{width:100%;border-collapse:collapse;font-size:14px}
+  table.horas th,table.horas td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--borda)}
+  table.horas th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--texto3);font-weight:500}
+  table.horas td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.horas tr.total td{font-weight:600;border-bottom:0}
+  .tab-wrap{overflow-x:auto}
+  .rodape{margin-top:52px;padding-top:16px;border-top:1px solid var(--borda);font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--texto3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Manfac Facilities · Controle de Obras · plano de 14/09/2026</p>
+  <h1>Cronograma do Controle de Obras</h1>
+  <p class="lead">Dia a dia, quem faz o quê até o sistema estar completo e a equipe do cliente usando. Horas no ponto médio de cada estimativa; o fim pode andar para a direita se uma decisão atrasar — os pontos que empurram o calendário estão marcados como <b>decisão</b>.</p>
+
+  <dl class="fatos">
+    <div class="fato fim"><dt>Fim previsto</dt><dd>28/09 <small>segunda-feira</small></dd></div>
+    <div class="fato"><dt>Faixa realista</dt><dd>25/09 – 01/10</dd></div>
+    <div class="fato"><dt>Trabalho restante</dt><dd>31–51 h <small>técnico, sem espera</small></dd></div>
+    <div class="fato"><dt>Primeira carga real</dt><dd>16/09 <small>se o cliente liberar em 15/09</small></dd></div>
+  </dl>
+
+  <div class="legenda" aria-label="Legenda">
+    <span><i class="sw" style="background:var(--ambar)"></i>Cliente</span>
+    <span><i class="sw" style="background:var(--laranja)"></i>João · 2–3 h/dia</span>
+    <span><i class="sw" style="background:var(--verde)"></i>Claude · executa as frentes do João</span>
+    <span><i class="sw" style="background:var(--ciano)"></i>Duda · 4 h/dia</span>
+    <span><span class="tag crit">crítico</span>caminho crítico</span>
+    <span><span class="tag dec">decisão</span>atrasa se não vier</span>
+    <span><span class="tag dep">deploy</span>clique no EasyPanel</span>
+  </div>
+
+  <section aria-labelledby="cal-h">
+    <h2 id="cal-h">Dia a dia</h2>
+    <p class="h2sub">Segunda a sexta. Cada linha é um dia útil; cada coluna, uma pessoa. O Claude não tem limite de horas, mas só anda quando a aprovação do João chega.</p>
+
+    <div class="cal" role="table" aria-label="Cronograma por dia e responsável">
+      <div class="linha cab" role="row">
+        <div role="columnheader">Dia</div>
+        <div class="r-cli" role="columnheader">Cliente</div>
+        <div class="r-joao" role="columnheader">João</div>
+        <div class="r-claude" role="columnheader">Claude</div>
+        <div class="r-duda" role="columnheader">Duda</div>
+      </div>
+
+      <div class="linha hoje" role="row">
+        <div class="dia"><div class="d">14/09</div><div class="s">seg · hoje</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span><div class="t feito">Deploy D1 + D2 + D2.1 no ar<span class="h">feito · 19:36 GMT</span></div></div>
+        <div class="raia"><span class="raia-rot">Claude</span><div class="t feito">D2.1 conferida e mergeada; J3 provada; D3 decidida<span class="h">feito</span></div></div>
+        <div class="raia"><span class="raia-rot">Duda</span><div class="t feito">D1, D2 e D2.1 entregues<span class="h">feito</span></div></div>
+      </div>
+
+      <div class="semana">Semana de 15/09</div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">15/09</div><div class="s">ter</div><div class="carga">João 1,3 h · Duda 4 h</div></div>
+        <div class="raia"><span class="raia-rot">Cliente</span>
+          <div class="t cli"><span class="tag crit">crítico</span>Responde a pergunta 06: pente fino terminou? as 167 OS são obras? arquiva 1 OS de teste<span class="h">mesmo dia</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao">Envia a pergunta 06 ao cliente<span class="h">5 min</span></div>
+          <div class="t joao"><span class="tag dec">decisão</span>Responde as decisões abertas da J4 (campos, quem edita, marcos)<span class="h">30 min</span></div>
+          <div class="t joao">Confere no log do container se a FIELD_API_KEY chegou<span class="h">15 min</span></div>
+          <div class="t joao"><span class="tag dec">decisão</span>Pergunta ao cliente: cancelamento (3) e pedido de compra (4)<span class="h">30 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude"><span class="tag crit">crítico</span>Mockup da J4: brief, construção, revisão e publicação<span class="h">1–2 h</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda">D3 — rota, tabela de execuções, trava<span class="h">4 h de 4–7 h</span></div>
+        </div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">16/09</div><div class="s">qua</div><div class="carga">João 2 h · Duda 4 h</div></div>
+        <div class="raia"><span class="raia-rot">Cliente</span>
+          <div class="t cli"><span class="tag dec">decisão</span>Responde cancelamento e pedido de compra<span class="h">mesmo dia</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag crit">crítico</span>Aprova o mockup da J4, seção por seção<span class="h">1 h</span></div>
+          <div class="t joao">Acompanha a primeira carga real (167 OS)<span class="h">30 min</span></div>
+          <div class="t joao">Convida AMANDA e YURI; libera o acesso a Obras<span class="h">30 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Spec da J4 a partir do mockup aprovado<span class="h">1 h</span></div>
+          <div class="t claude">Liga os e-mails das duas em obras_pessoa e roda a verificação<span class="h">20 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda">D3 — termina<span class="h">1,5 h</span></div>
+          <div class="t duda"><span class="tag crit">crítico</span>D4 — primeira carga com roteiro de 10 passos<span class="h">2,5 h</span></div>
+        </div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">17/09</div><div class="s">qui</div><div class="carga">João 1,3 h · Duda 1 h</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao">Lê a spec da J4<span class="h">30 min</span></div>
+          <div class="t joao"><span class="tag dep">deploy</span>Autoriza a migration e o segredo da D3; clica em Deploy<span class="h">45 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Conferência de lista fechada da D3; aplica migration, segredo no Vault e os dois jobs do pg_cron<span class="h">1,5 h</span></div>
+          <div class="t claude">Plano da J4 e início do código<span class="h">plano 1 h</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda">Ajustes da D3, se a conferência pedir; relatório da D4<span class="h">≤ 1 h</span></div>
+        </div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">18/09</div><div class="s">sex</div><div class="carga">João 0,5 h · Duda livre</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag dec">decisão</span>O que o Duda faz de 18 a 22/09 (ver abaixo)<span class="h">15 min</span></div>
+          <div class="t joao">Lê o resumo da revisão da J4<span class="h">15 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude"><span class="tag crit">crítico</span>Código da J4 — Triagem e ficha editáveis<span class="h">5–8 h, 17–18/09</span></div>
+          <div class="t claude">Revisão independente da J4 (outro agente)<span class="h">1 h</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda" style="border-style:dashed">Sem frente — a próxima (cancelamento) mexe nos arquivos da J4<span class="h">decisão do João</span></div>
+        </div>
+      </div>
+
+      <div class="semana">Semana de 21/09</div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">21/09</div><div class="s">seg</div><div class="carga">João 1 h</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag dep">deploy</span>Deploy da J4<span class="h">20 min</span></div>
+          <div class="t joao">Completa uma obra real na ficha nova e valida<span class="h">40 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Ajustes da revisão e merge da J4<span class="h">1 h</span></div>
+          <div class="t claude">Os 7 marcos: gravar a data de cada evento da esteira<span class="h">2–4 h, 21–22/09</span></div>
+        </div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">22/09</div><div class="s">ter</div><div class="carga">João 0,5 h</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag dep">deploy</span>Deploy dos marcos<span class="h">20 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Marcos: termina, revisão e merge<span class="h">1,5 h</span></div>
+        </div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">23/09</div><div class="s">qua</div><div class="carga">Duda 4 h</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Manual de uso reescrito para o fluxo real (Field, ficha, alertas)<span class="h">2–3 h</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda"><span class="tag dec">decisão</span>Cancelamento de obra — começa (precisa das respostas do cliente)<span class="h">4 h de 6–10 h</span></div>
+        </div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">24/09</div><div class="s">qui</div><div class="carga">João 0,5 h · Duda 4 h</div></div>
+        <div class="raia"><span class="raia-rot">Cliente</span>
+          <div class="t cli">Combina a data do treinamento<span class="h">—</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao">Revisa o manual e marca o treinamento<span class="h">30 min</span></div>
+        </div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda">Cancelamento — termina<span class="h">4 h</span></div>
+        </div>
+      </div>
+
+      <div class="linha" role="row">
+        <div class="dia"><div class="d">25/09</div><div class="s">sex</div><div class="carga">João 0,5 h · Duda 4 h</div></div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag dep">deploy</span>Autoriza a migration e faz o deploy do cancelamento<span class="h">30 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Conferência do cancelamento; aplica a migration<span class="h">1 h</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Duda</span>
+          <div class="t duda">Ajustes do cancelamento<span class="h">1 h</span></div>
+          <div class="t duda"><span class="tag dec">decisão</span>Pedido de compra (depende das 4 respostas)<span class="h">3 h de 2–4 h</span></div>
+        </div>
+      </div>
+
+      <div class="semana">Semana de 28/09</div>
+
+      <div class="linha final" role="row">
+        <div class="dia"><div class="d">28/09</div><div class="s">seg · fim previsto</div><div class="carga">João 0,5 h</div></div>
+        <div class="raia"><span class="raia-rot">Cliente</span>
+          <div class="t cli">Treinamento da equipe, a partir daqui<span class="h">data com o cliente</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">João</span>
+          <div class="t joao"><span class="tag dep">deploy</span>Deploy do pedido de compra<span class="h">20 min</span></div>
+        </div>
+        <div class="raia"><span class="raia-rot">Claude</span>
+          <div class="t claude">Conferência do pedido de compra; atualiza o manual com cancelamento e PC<span class="h">1,5 h</span></div>
+        </div>
+        <div class="raia sem"><span class="vazio">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="dec-h">
+    <h2 id="dec-h">O que pode empurrar o calendário</h2>
+    <p class="h2sub">Nenhum destes é trabalho técnico — são respostas. Cada uma que atrasa um dia empurra tudo o que vem depois dela.</p>
+    <div class="duas">
+      <ul class="lista alerta">
+        <li><b>Pergunta 06 (cliente).</b> Se ele responder "ainda não" ao pente fino, a primeira carga e a D4 saem de 16/09 e esperam. A J4 e a D3 seguem, porque não dependem de dado real.</li>
+        <li><b>Decisões da J4 (João, 15/09).</b> O mockup não começa sem elas. Um dia de atraso aqui empurra a J4, os marcos, o cancelamento e o pedido de compra — é o caminho crítico.</li>
+        <li><b>Aprovação do mockup (João, 16/09).</b> Seção em "ajustar" volta uma rodada: conte meio dia a mais por rodada.</li>
+      </ul>
+      <ul class="lista alerta">
+        <li><b>Cancelamento (cliente).</b> Quem pode cancelar, o que fazer com obra cancelada depois de executada, e como a OS cancelada aparece no Field. Sem as três, o Duda não começa em 23/09.</li>
+        <li><b>Pedido de compra (cliente e João).</b> Quatro perguntas abertas desde 10/09, incluindo se "Pendente aprovação da OS" renomeia a etapa. A estimativa de 2–4 h é a mais frágil do plano.</li>
+        <li><b>O Duda fica sem frente de 18 a 22/09.</b> A próxima dele mexe nos arquivos da J4. Recomendação: usar essas horas para o brainstorming e o mockup do aviso das 18h/19h — é design, não toca arquivo de ninguém, e é a próxima peça que falta.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="horas-h">
+    <h2 id="horas-h">Horas por pessoa</h2>
+    <p class="h2sub">Faixas do levantamento de 14/09, cada frente de código conferida no repositório antes de entrar na conta.</p>
+    <div class="tab-wrap">
+      <table class="horas">
+        <thead><tr><th>Quem</th><th>Horas</th><th>Onde vai o tempo</th></tr></thead>
+        <tbody>
+          <tr><td>João</td><td class="n">15–25 h</td><td>decisões, aprovação de mockup e spec, deploys, primeira carga, contas, treinamento (fora da conta)</td></tr>
+          <tr><td>Duda</td><td class="n">12–20 h</td><td>D3, D4, cancelamento, pedido de compra</td></tr>
+          <tr><td>Claude</td><td class="n">4–6 h</td><td>revisões e conferências, migrations, configuração do agendador, manual — além de executar J4 e marcos, contados na linha do João</td></tr>
+          <tr><td>Cliente</td><td class="n">—</td><td>três respostas que bloqueiam etapas inteiras</td></tr>
+          <tr class="total"><td>Total</td><td class="n">31–51 h</td><td>trabalho técnico, sem espera</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="fora-h">
+    <h2 id="fora-h">Fora deste calendário</h2>
+    <div class="duas">
+      <ul class="lista">
+        <li><b>Aviso das 18h/19h por e-mail e WhatsApp</b> para quem não respondeu o diário. Decidido como imprescindível; o agendador da D3 já serve de base. Sem spec e sem estimativa — precisa de brainstorming e mockup antes de ter número.</li>
+        <li><b>Painel do dia, dashboard de reunião e agente cobrador.</b> Adiados pelo cliente em 31/08; entram depois que a equipe estiver usando.</li>
+      </ul>
+      <ul class="lista">
+        <li><b>Premissas deste plano:</b> Duda 4 h por dia, João 2–3 h por dia, segunda a sexta a partir de 15/09, cliente responde no mesmo dia, horas no ponto médio de cada faixa.</li>
+        <li><b>Backlog da integração</b> com o Field (7 itens) fica de fora por decisão: só entra quando fizer falta de verdade.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="rodape">Fonte: inventário verificado no repositório em 14/09/2026 · docs/cliente/2026-08-31-sistema-controle-de-obras/cronograma-2026-09-14.html</p>
+</div>
