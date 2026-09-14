@@ -1,5 +1,5 @@
 -- D2 — identidade estável e reconciliação de ausência com o Field Control.
--- Migration manual: escrever aqui não aplica nada. O João executa no Supabase.
+-- ESTADO: APLICADO em produção em 14/09/2026, pela Management API, com autorização do João.
 
 begin;
 

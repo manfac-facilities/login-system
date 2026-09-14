@@ -1299,6 +1299,42 @@ coluna entra sem backfill — mesmo raciocínio que fechou a D1.
 5. **Teste obrigatório:** OS com número corrigido no Field não cria duplicata nem gera
    alerta de ausência.
 
+### Estado em 14/09/2026 — D2 mergeada, D2.1 antes da D3
+
+A D2 (`3adbbfb` + ajustes `2c9a0cf`) foi **mergeada em 14/09**, depois de duas rodadas de
+revisão independente (`docs/cliente/2026-08-31-sistema-controle-de-obras/review-d2-2026-09-14.md`
+e o `-adendo.md`). A migration `sdd-sql-obras-field-reconciliacao.sql` **está aplicada em
+produção**. Três pendências ficaram conhecidas e formam a **D2.1**, que vem **antes da D3**
+(mesmos arquivos) e **antes do primeiro deploy com a chave do Field**:
+
+**1. OS reaberta com o mesmo número herda o histórico.** O cliente respondeu **2B** em
+14/09 (`pergunta-05-os-no-field-e-sincronizacao.md`), e o João confirmou a trava abaixo no
+mesmo dia. Quando chega uma OS com `field_id` novo e o número pertence a uma obra com outro
+`field_id`:
+
+- consultar a OS antiga direto no Field (`GET /orders/:id` do `field_id` antigo);
+- **antiga arquivada ou inexistente** → a obra existente recebe o `field_id` novo, limpa
+  suspeita e alerta, e o relatório mostra **"OS reaberta: histórico herdado"**;
+- **antiga ainda ativa** → não herda: é duplicidade, e fica como conflito visível;
+- **consulta falhou ou veio inconclusiva** → não herda; tenta na próxima execução. Na
+  dúvida, nunca junta;
+- troca de números entre duas obras continua como conflito visível;
+- a consulta fica numa função própria — a semântica de "arquivada" na API ainda não foi
+  provada (J3) — e os quatro caminhos têm teste.
+
+**Por que a trava:** herdar pelo número sem conferir é o erro que o `field_id` existe para
+evitar — um número em duas OS ativas faria uma obra herdar diário e fotos da loja errada.
+A trava cumpre a resposta do cliente no caso que ele descreveu (abrir errado, apagar,
+abrir de novo) sem abrir esse buraco.
+
+**2. N1 — o disjuntor de 20% conta só ausências ainda não alertadas.** Hoje alertas já
+confirmados entram na conta e, sem fluxo de descarte, acumulam até desligar a detecção.
+
+**3. N3 — tolerância no intervalo de 24h** (ex.: 20h). Sem ela, a completa do dia seguinte
+que termina segundos antes empurra o aviso para 48h.
+
+N2, N4 e N5 (adendo) entram se forem baratos.
+
 ### O que fazer
 
 1. **Definir quando uma obra conta como ausente.** Uma varredura só não basta, e uma
