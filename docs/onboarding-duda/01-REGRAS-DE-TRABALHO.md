@@ -99,12 +99,13 @@ desenvolveu em Node 24 nunca viu o erro; quem seguiu o `.nvmrc` bateu nele de ca
 Descoberto em 11/09/2026 por quem estava entrando no projeto — o comando oficial do
 `README` não funcionava na versão de Node que o próprio projeto manda usar.
 
-**A correção entra junto com a frente D1:** declarar `ts-node` como `devDependency`, o que
-faz os dois caminhos funcionarem sem mexer no Node do build de produção. Até esse commit
-existir, a saída é rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o
-`ts-node` nem é consultado.
+**Corrigido na frente D1 (commit `1c23dd3`, mergeado em 14/09/2026):** `ts-node` agora é
+`devDependency`, o que faz os dois caminhos funcionarem sem mexer no Node do build de
+produção. Se você estiver num checkout anterior a esse commit, a saída continua sendo
+rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o `ts-node` nem é
+consultado.
 
-**O verde esperado:** `npx jest app/obras` tem que dar **294/294**. Se você rodar
+**O verde esperado:** `npx jest app/obras` tem que dar **297/297** (eram 294 até a D1). Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
 
@@ -165,7 +166,7 @@ para as suas frentes — elas são testáveis inteiramente com mock.
 
 Uma frente está pronta quando **todas** valem:
 
-- [ ] Os 294 testes existentes continuam passando, mais os novos que a frente pediu
+- [ ] Os 297 testes existentes continuam passando, mais os novos que a frente pediu
 - [ ] `tsc`, `eslint` e `npm run build` limpos
 - [ ] Se mexeu em tela: mockup foi aprovado antes do código
 - [ ] Se mexeu em schema: o `.sql` está escrito, idempotente, em `begin`/`commit`, e você
