@@ -1272,6 +1272,33 @@ grava quem fez e quando, e a obra sai das telas do dia a dia sem sair do banco. 
 equivalente a arquivar, não a deletar. **É a resposta à pergunta do cliente: exclui pelo
 sistema.**
 
+### Decisão de 14/09/2026 — a identidade da obra é o `field_id`, não o número da OS
+
+Pergunta levantada na preparação da D2: *"podemos incluir field_id na migration da D2 para
+reconciliar pela identidade estável do Field?"* **Sim — decisão do João.**
+
+**Por quê.** O `identifier` (número da OS) é único mas **editável pelo gestor no painel**
+(`_lib/field/tipos.ts`, comentário do `idField`). Casando só pelo `os`, uma correção de
+número no Field faz a sincronização **criar uma segunda obra**, e o histórico fica preso na
+antiga — que em seguida cairia no alerta de sumiço. O falso desaparecimento é o sintoma; a
+duplicata é a causa. E a base em produção tem **0 obras** (verificado em 14/09), então a
+coluna entra sem backfill — mesmo raciocínio que fechou a D1.
+
+**O que entra:**
+
+1. **Coluna** `field_id text`, nullable, com índice único parcial
+   `where field_id is not null`.
+2. **Casamento na sincronização:** primeiro pelo `field_id`; se o `field_id` do banco estiver
+   nulo, pelo `os`, gravando o `field_id` nesse momento (o mesmo padrão da `fonte` na D1).
+3. **Obra nova** já nasce com `field_id` — o `idField` já vem normalizado da F1 e hoje é
+   descartado na gravação.
+4. **Obra encontrada pelo `field_id` com número diferente: o `os` segue o Field**
+   (confirmado pelo João em 14/09). É exceção deliberada à regra "só preenche vazio" — o
+   número é identificador do Field, não dado da operação — e por isso **não é silenciosa**:
+   aparece no relatório como "número da OS alterado".
+5. **Teste obrigatório:** OS com número corrigido no Field não cria duplicata nem gera
+   alerta de ausência.
+
 ### O que fazer
 
 1. **Definir quando uma obra conta como ausente.** Uma varredura só não basta, e uma
