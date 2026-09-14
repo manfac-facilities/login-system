@@ -18,7 +18,36 @@ A amostra de 3 OS que o script imprime (descrição mascarada, endereço da loja
 que `os`, `loja`, `idField` e `atualizadoEm` vêm preenchidos — não foi copiada para cá por
 ser dado de cliente.
 
+## Segunda rodada, mesmo dia — `archived` e o 404 (revisão da D2.1)
+
+Autorizada pelo João. Três chamadas só de leitura; saída restrita a nomes de campo, status e
+o valor de `archived` — nenhum dado de cliente nem a chave.
+
+| Chamada | Resultado |
+|---|---|
+| `GET /orders?limit=1&sort=id` | 200. Item da **listagem** tem `archived` **booleano** (`false` no item lido) |
+| `GET /orders/:id` de OS existente | 200. **`archived` booleano** presente (`false`). Campos: `address, archived, createdAt, createdBy, customer, deadlineContract, description, external, id, identifier, link, location, metadata, productsTotalValue, service, servicesTotalValue, ticket, totalValue, updatedAt` |
+| `GET /orders/:id` com id inventado | **422**, não 404 — corpo `{ code: "uriValidationErr", errors }`. O id inventado não tinha o formato válido; **o que a API devolve para id bem formado e inexistente continua sem prova** |
+
+**Consequências para a D2.1:**
+
+1. **`archived: true` é evidência positiva e existe** — a herança pode se apoiar nele.
+2. **404 não autoriza herança.** O cliente disse que no Field se arquiva, não se apaga (1B),
+   e o comportamento real do 404 não foi provado. Herança só com `archived === true`;
+   qualquer outra resposta é caso para decisão manual. Isso fecha o achado I3.
+3. **Como `archived` vem também na listagem**, "a OS antiga apareceu na varredura" não
+   significa "está ativa" — só significa isso se ela veio com `archived: false`. A correção
+   do I1 precisa olhar o campo, o que exige levar `archived` para a `OsNormalizada`.
+
 ## O que continua sem prova
+
+**A listagem com filtro `service_id` inclui OS arquivadas?** O item lido veio com
+`archived: false`, então não dá para saber. Se incluir, uma OS arquivada **nunca fica
+ausente** e o alerta da D2 nunca dispara por ausência — mas o próprio `archived: true` da
+listagem vira sinal direto, melhor que inferir por sumiço. Se não incluir, a ausência
+continua sendo o sinal. Testar exige uma OS arquivada de verdade.
+
+**Texto original desta seção (primeira rodada):**
 
 **Se OS arquivada continua listada em `/orders`.** O cliente respondeu em 14/09 que excluir
 no Field arquiva e dá para recuperar (`pergunta-05`, resposta 1B). Se a API listar a
