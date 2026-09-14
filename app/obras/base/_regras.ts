@@ -72,15 +72,23 @@ export type FiltroPcm = string
 export type FiltroEtapa = string
 export type FiltroOs = 'todas' | 'sim' | 'nao' | 'liberada' | 'semcob'
 export type FiltroMau = 'todas' | 'sim' | 'nao'
+export type FiltroField = 'todas' | 'ausentes'
 
 export type Filtros = {
   pcm: FiltroPcm
   etapa: FiltroEtapa
   os: FiltroOs
   mau: FiltroMau
+  field: FiltroField
 }
 
-export const FILTROS_PADRAO: Filtros = { pcm: 'todos', etapa: 'todas', os: 'todas', mau: 'todas' }
+export const FILTROS_PADRAO: Filtros = {
+  pcm: 'todos',
+  etapa: 'todas',
+  os: 'todas',
+  mau: 'todas',
+  field: 'todas',
+}
 
 /** Rótulos exatos do mockup (:2515-2531). Não reescrever — foram aprovados. */
 export const OPCOES_OS: { v: FiltroOs; t: string }[] = [
@@ -96,6 +104,27 @@ export const OPCOES_MAU: { v: FiltroMau; t: string }[] = [
   { v: 'sim', t: 'Só mau uso' },
   { v: 'nao', t: 'Sem mau uso' },
 ]
+
+export const OPCOES_FIELD: { v: FiltroField; t: string }[] = [
+  { v: 'todas', t: 'Todas' },
+  { v: 'ausentes', t: 'Não estão mais no Field' },
+]
+
+/**
+ * Ponto de variação da pergunta ainda aberta com o cliente. O padrão seguro é
+ * manter a obra visível com a etiqueta; se a decisão mudar, a política fica
+ * concentrada aqui e não se espalha pela Tabela e pelo Kanban.
+ */
+export function ocultarObrasAusentesDoField(): boolean {
+  return false
+}
+
+/** Coluna ausente em deploy anterior (`undefined`) não pode virar alerta. */
+export function temAlertaDeAusenciaField(
+  obra: { field_ausente_em?: string | null },
+): boolean {
+  return typeof obra.field_ausente_em === 'string' && obra.field_ausente_em.trim() !== ''
+}
 
 /**
  * As opções do filtro "Etapa da obra". Segue a ordem do ciclo e agrupa por
@@ -139,6 +168,8 @@ export function responsaveisDaBase(obras: Pick<Obra, 'pcm'>[]): string[] {
 /** `filtradas(mockup:3157)`. Cada filtro é independente dos outros. */
 export function filtrar(obras: Obra[], f: Filtros): Obra[] {
   return obras.filter((o) => {
+    if (ocultarObrasAusentesDoField() && temAlertaDeAusenciaField(o)) return false
+
     if (f.pcm === '__sem') {
       if (o.pcm) return false
     } else if (f.pcm !== 'todos' && o.pcm !== f.pcm) {
@@ -160,6 +191,8 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
 
     if (f.mau === 'sim' && !o.mau_uso) return false
     if (f.mau === 'nao' && o.mau_uso) return false
+
+    if (f.field === 'ausentes' && !temAlertaDeAusenciaField(o)) return false
 
     return true
   })

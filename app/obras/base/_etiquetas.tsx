@@ -22,7 +22,7 @@ import {
   semCobertura,
   type Obra,
 } from '../_lib/tipos'
-import { COR_ETAPA, COR_PRIORIDADE } from './_regras'
+import { COR_ETAPA, COR_PRIORIDADE, temAlertaDeAusenciaField } from './_regras'
 
 /** A pílula da etapa, com a cor da etapa. `pill(mockup:1893)`. */
 export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa'> }) {
@@ -33,6 +33,16 @@ export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa'> }) {
 export function EtiquetaMauUso({ obra }: { obra: Pick<Obra, 'mau_uso'> }) {
   if (!obra.mau_uso) return null
   return <Pill cor={TEMA.secundario}>Mau uso</Pill>
+}
+
+/** Alerta conservador: sinaliza e mantém a obra visível para tratamento humano. */
+export function EtiquetaAusenciaField({
+  obra,
+}: {
+  obra: Pick<Obra, 'field_ausente_em'>
+}) {
+  if (!temAlertaDeAusenciaField(obra)) return null
+  return <Pill cor="#ff4d6d">Não está mais no Field</Pill>
 }
 
 /** `osChip(mockup:1851)`. */

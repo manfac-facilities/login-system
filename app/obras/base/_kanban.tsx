@@ -26,12 +26,13 @@ import {
 } from '../_lib/tipos'
 import {
   BadgeDias,
+  EtiquetaAusenciaField,
   EtiquetaCobertura,
   EtiquetaMauUso,
   EtiquetaOS,
   EtiquetaPrioridade,
 } from './_etiquetas'
-import { COR_ETAPA, COR_FASE } from './_regras'
+import { COR_ETAPA, COR_FASE, temAlertaDeAusenciaField } from './_regras'
 
 function Cartao({ obra }: { obra: Obra }) {
   const corCom = critico(obra) ? '#ff4d6d' : encalhada(obra) ? '#f4b73f' : '#94a3b8'
@@ -39,7 +40,10 @@ function Cartao({ obra }: { obra: Obra }) {
     <Link
       href={`/obras/obra/${obra.id}`}
       className="block rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-2.5 transition hover:border-[#f05a28]"
-      style={{ borderLeftWidth: 3, borderLeftColor: COR_SEV[sev(obra)] }}
+      style={{
+        borderLeftWidth: 3,
+        borderLeftColor: temAlertaDeAusenciaField(obra) ? '#ff4d6d' : COR_SEV[sev(obra)],
+      }}
     >
       <div className="font-mono text-[10px] text-[#64748b]">OS {obra.os ?? '—'}</div>
       <div className="mt-0.5 text-sm font-semibold text-[#e8eef7]">{obra.loja ?? '—'}</div>
@@ -73,6 +77,7 @@ function Cartao({ obra }: { obra: Obra }) {
         <EtiquetaCobertura obra={obra} />
         <EtiquetaMauUso obra={obra} />
         <EtiquetaPrioridade obra={obra} />
+        <EtiquetaAusenciaField obra={obra} />
       </div>
     </Link>
   )

@@ -11,10 +11,12 @@
 
 import {
   OPCOES_MAU,
+  OPCOES_FIELD,
   OPCOES_OS,
   opcoesEtapa,
   type Filtros,
   type FiltroMau,
+  type FiltroField,
   type FiltroOs,
 } from './_regras'
 
@@ -33,7 +35,7 @@ export default function FiltrosBase({
   const etapas = opcoesEtapa()
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
       <label className="min-w-0">
         <span className="mb-1 block text-[11px] uppercase tracking-wide text-[#94a3b8]">
           Responsável da obra
@@ -106,6 +108,23 @@ export default function FiltrosBase({
           onChange={(e) => onChange({ ...filtros, mau: e.target.value as FiltroMau })}
         >
           {OPCOES_MAU.map((o) => (
+            <option key={o.v} value={o.v}>
+              {o.t}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="min-w-0">
+        <span className="mb-1 block text-[11px] uppercase tracking-wide text-[#94a3b8]">
+          Field Control
+        </span>
+        <select
+          className={SELECT}
+          value={filtros.field}
+          onChange={(e) => onChange({ ...filtros, field: e.target.value as FiltroField })}
+        >
+          {OPCOES_FIELD.map((o) => (
             <option key={o.v} value={o.v}>
               {o.t}
             </option>

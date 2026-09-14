@@ -1,57 +1,44 @@
 'use server'
 
 /**
- * Sincronização do Field Control com a base de obras.
- *
- * O cliente cadastra a OS no Field Control; esta tela puxa o que ele cadastrou
- * para dentro do hub. É a ponte entre a camada que LÊ a API
- * (`_lib/field/`, pronta e testada) e o banco.
- *
- * A DECISÃO de o que fazer com cada OS mora em `_sincronizacao.ts`, em função
- * pura. Aqui fica só o que precisa do mundo: quem pode rodar, a chave, a
- * leitura do banco, a gravação e a contagem. É o mesmo recorte de
- * `importar/_actions.ts`, e o relatório segue o mesmo formato: toda OS que não
- * entrou aparece com o motivo.
- *
- * NUNCA LANÇA. Falha de rede, chave errada, 500 do Field — tudo vira
- * `{ error }` com texto legível. Server Action que lança derruba a tela inteira
- * com o erro genérico de Server Component, que é o que já aconteceu no hub com
- * a `SUPABASE_SERVICE_ROLE_KEY` (AGENTS.md, "Variáveis de ambiente").
+ * Execução da sincronização. Só esta camada toca Field e Supabase; a decisão
+ * fica em `_sincronizacao.ts`. Toda leitura termina antes da primeira escrita,
+ * porque uma fotografia parcial nunca pode virar evidência de ausência.
  */
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/roles'
 import { criarClienteField } from '../_lib/field'
+import type { OpcoesDaVarredura } from '../_lib/field'
 import {
   emLotes,
-  numerosDeOsDoField,
   planejarSincronizacao,
+  type NumeroDeOsAlterado,
   type ObraExistente,
   type OsIgnorada,
 } from './_sincronizacao'
 
-/** Tamanho do `in (...)` de leitura e do `insert` de gravação. */
 const TAMANHO_DO_LOTE = 100
+const TAMANHO_DA_PAGINA = 1000
+const COLUNAS_DA_RECONCILIACAO =
+  'id, os, loja, descricao, fonte, field_id, field_ausente_desde, field_ausente_em'
 
 export type RelatorioSincronizacao = {
-  /** Quantas OS o Field devolveu, antes de qualquer filtro. */
   totalDoField: number
   novas: number
   atualizadas: number
   inalteradas: number
+  suspeitasDeAusencia: number
+  novosAlertasDeAusencia: number
+  alertasRemovidos: number
+  numerosDeOsAlterados: NumeroDeOsAlterado[]
   ignoradas: OsIgnorada[]
+  avisos: string[]
 }
 
 export type EstadoSincronizacao = { error?: string; relatorio?: RelatorioSincronizacao }
 
-/**
- * Mensagem de erro para o operador, sem vazar segredo.
- *
- * Os erros de `_lib/field/erros.ts` já vêm com texto bom ("Field Control
- * respondeu 500 em GET /orders") e são construídos de propósito sem a chave nem
- * os cabeçalhos. Repassamos a mensagem; qualquer outra coisa vira texto padrão.
- */
 function mensagemDeFalha(erro: unknown): string {
   if (erro instanceof Error && erro.message) {
     return `Não deu para puxar as OS do Field Control. ${erro.message}`
@@ -59,9 +46,27 @@ function mensagemDeFalha(erro: unknown): string {
   return 'Não deu para puxar as OS do Field Control. Tente de novo em alguns minutos.'
 }
 
+/** Lê a tabela inteira, em páginas estáveis. O fim da paginação é obrigatório. */
+async function lerTodasAsObras(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{ obras?: ObraExistente[]; error?: string }> {
+  const obras: ObraExistente[] = []
+  for (let inicio = 0; ; inicio += TAMANHO_DA_PAGINA) {
+    const { data, error } = await supabase
+      .from('obras_obra')
+      .select(COLUNAS_DA_RECONCILIACAO)
+      .order('id', { ascending: true })
+      .range(inicio, inicio + TAMANHO_DA_PAGINA - 1)
+
+    if (error) return { error: `Não deu para ler as obras já cadastradas: ${error.message}` }
+    const pagina = (data ?? []) as ObraExistente[]
+    obras.push(...pagina)
+    if (pagina.length < TAMANHO_DA_PAGINA) return { obras }
+  }
+}
+
 export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> {
   const supabase = await createClient()
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -71,11 +76,6 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
     return { error: 'Só administradores podem puxar as OS do Field Control.' }
   }
 
-  // --- A chave -------------------------------------------------------------
-  // Ela é segredo e só chega pelo painel do EasyPanel — o `.env.production`
-  // versionado não pode guardá-la. Por isso a falta dela é o erro mais provável
-  // no primeiro dia, e tem que ser dita com todas as letras em vez de virar um
-  // 401 misterioso do Field.
   const chaveApi = (process.env.FIELD_API_KEY ?? '').trim()
   if (!chaveApi) {
     return {
@@ -85,39 +85,25 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
     }
   }
 
-  // --- Puxar do Field ------------------------------------------------------
+  // D3 preencherá `desde`; a autorização para inferir ausência nasce desta
+  // mesma opção, sem uma flag independente que alguém possa esquecer ligada.
+  const opcoesDaVarredura: OpcoesDaVarredura = {}
   let doField
   try {
-    doField = await criarClienteField({ chaveApi }).listarOsNormalizadas()
+    doField = await criarClienteField({ chaveApi }).listarOsNormalizadas(opcoesDaVarredura)
   } catch (erro) {
     return { error: mensagemDeFalha(erro) }
   }
 
-  if (doField.length === 0) {
-    return { relatorio: { totalDoField: 0, novas: 0, atualizadas: 0, inalteradas: 0, ignoradas: [] } }
-  }
+  const leitura = await lerTodasAsObras(supabase)
+  if (leitura.error) return { error: leitura.error }
 
-  // --- Ler o que já existe -------------------------------------------------
-  // Só as OS que a varredura mencionou. Ler a base inteira seria mais simples e
-  // mais caro a cada mês que ela cresce.
-  const existentes: ObraExistente[] = []
-  for (const lote of emLotes(numerosDeOsDoField(doField), TAMANHO_DO_LOTE)) {
-    const { data, error } = await supabase
-      .from('obras_obra')
-      .select('id, os, loja, descricao, fonte')
-      .in('os', lote)
-
-    // Leitura parcial levaria a INSERIR obra que já existe, e o índice único
-    // rejeitaria o lote inteiro. Parar aqui, sem gravar nada, é o único
-    // desfecho seguro.
-    if (error) return { error: `Não deu para ler as obras já cadastradas: ${error.message}` }
-    existentes.push(...((data ?? []) as ObraExistente[]))
-  }
-
-  const plano = planejarSincronizacao(doField, existentes)
+  const plano = planejarSincronizacao(doField, leitura.obras ?? [], {
+    varreduraCompleta: opcoesDaVarredura.desde === undefined,
+    agora: new Date().toISOString(),
+  })
   const ignoradas: OsIgnorada[] = [...plano.ignoradas]
 
-  // --- Gravar --------------------------------------------------------------
   let novas = 0
   for (const lote of emLotes(plano.inserir, TAMANHO_DO_LOTE)) {
     const { error } = await supabase.from('obras_obra').insert(lote)
@@ -125,15 +111,12 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
     novas += lote.length
   }
 
-  // Um update por obra: cada uma tem um conjunto diferente de campos vazios, e
-  // não existe update em lote com valores distintos. São poucas por varredura —
-  // quem já está completa nem chega aqui.
   let atualizadas = 0
+  let alertasRemovidos = 0
+  const idsAtualizados = new Set<string>()
   for (const alvo of plano.atualizar) {
     const { error } = await supabase.from('obras_obra').update(alvo.campos).eq('id', alvo.id)
     if (error) {
-      // Falha de uma obra não pode abortar a varredura: as outras já entraram.
-      // Ela vai para o relatório com o motivo, como na importação da planilha.
       ignoradas.push({
         os: alvo.os,
         idField: alvo.id,
@@ -141,7 +124,25 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
       })
       continue
     }
+    idsAtualizados.add(alvo.id)
+    if (alvo.removeAlerta) alertasRemovidos++
     atualizadas++
+  }
+
+  let suspeitasDeAusencia = 0
+  let novosAlertasDeAusencia = 0
+  for (const alvo of plano.reconciliarAusencias) {
+    const { error } = await supabase.from('obras_obra').update(alvo.campos).eq('id', alvo.id)
+    if (error) {
+      ignoradas.push({
+        os: alvo.os,
+        idField: alvo.idField,
+        motivo: `erro ao registrar ausência da OS ${alvo.os ?? '—'}: ${error.message}`,
+      })
+      continue
+    }
+    if (alvo.acao === 'suspeita') suspeitasDeAusencia++
+    else novosAlertasDeAusencia++
   }
 
   revalidatePath('/obras/base')
@@ -153,7 +154,14 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
       novas,
       atualizadas,
       inalteradas: plano.inalteradas,
+      suspeitasDeAusencia,
+      novosAlertasDeAusencia,
+      alertasRemovidos,
+      numerosDeOsAlterados: plano.numerosDeOsAlterados.filter((item) =>
+        idsAtualizados.has(item.obraId),
+      ),
       ignoradas,
+      avisos: plano.avisos,
     },
   }
 }

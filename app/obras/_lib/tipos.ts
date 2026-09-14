@@ -222,6 +222,12 @@ export type ObraRow = {
   valor: number | null
   origem: string | null
   fonte: FonteObra | null
+  /** Identidade imutável da ordem no Field; o número da OS pode ser corrigido. */
+  field_id: string | null
+  /** Primeira varredura completa em que a ordem não apareceu. */
+  field_ausente_desde: string | null
+  /** Segunda ausência consecutiva: a partir daqui o alerta fica visível. */
+  field_ausente_em: string | null
 
   analista_cliente: string | null
   pcm: string | null
