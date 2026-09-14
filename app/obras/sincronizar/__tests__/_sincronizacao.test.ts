@@ -22,6 +22,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
+    archived: false,
     ...over,
   }
 }
@@ -460,16 +461,14 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
     ])
   })
 
-  it.each(['arquivada', 'inexistente'] as const)(
-    'herda o histórico quando a ordem antiga está %s',
-    (situacao) => {
+  it('herda o histórico somente quando a ordem antiga está arquivada', () => {
       const plano = planejarSincronizacao([reaberta], [antiga], {
         verificacoesDeReabertura: [
           {
             os: '0226-014989',
             idFieldAnterior: 'ord-antiga',
             idFieldAtual: 'ord-nova',
-            situacao,
+            situacao: 'arquivada',
           },
         ],
       })
@@ -494,8 +493,7 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
         },
       ])
       expect(plano.ignoradas).toHaveLength(0)
-    },
-  )
+  })
 
   it('não herda quando a ordem antiga ainda está ativa', () => {
     const plano = planejarSincronizacao([reaberta], [antiga], {
@@ -521,12 +519,85 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
           idFieldAnterior: 'ord-antiga',
           idFieldAtual: 'ord-nova',
           situacao: 'inconclusiva',
+          tratamento: 'tentar_novamente',
         },
       ],
     })
 
     expect(plano.atualizar).toHaveLength(0)
-    expect(plano.ignoradas[0].motivo).toMatch(/tentada novamente/i)
+    expect(plano.ignoradas[0].motivo).toMatch(/tentaremos na próxima execução/i)
+  })
+
+  it('leva resposta inconclusiva permanente ao relatório como decisão manual', () => {
+    const plano = planejarSincronizacao([reaberta], [antiga], {
+      verificacoesDeReabertura: [
+        {
+          os: '0226-014989',
+          idFieldAnterior: 'ord-antiga',
+          idFieldAtual: 'ord-nova',
+          situacao: 'inconclusiva',
+          tratamento: 'decisao_manual',
+          motivo: 'Field Control respondeu 422',
+        },
+      ],
+    })
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toMatch(/precisa de decisão manual/i)
+    expect(plano.ignoradas[0].motivo).toMatch(/Field Control respondeu 422/i)
+  })
+
+  it('herda sem consulta quando a antiga vem arquivada na mesma varredura e não cria obra híbrida', () => {
+    const antigaRenumerada = osDoField({
+      os: 'OS-300',
+      idField: 'ord-antiga',
+      archived: true,
+    })
+
+    expect(encontrarConsultasDeReabertura([antigaRenumerada, reaberta], [antiga])).toEqual([])
+
+    const plano = planejarSincronizacao([antigaRenumerada, reaberta], [antiga])
+
+    expect(plano.atualizar).toHaveLength(1)
+    expect(plano.atualizar[0].campos).toEqual({
+      field_id: 'ord-nova',
+      field_ausente_desde: null,
+      field_ausente_em: null,
+    })
+    expect(plano.numerosDeOsAlterados).toHaveLength(0)
+    expect(plano.atualizar[0].historicoHerdado).toBeDefined()
+  })
+
+  it('não consulta nem herda quando a antiga vem ativa na mesma varredura', () => {
+    const antigaRenumerada = osDoField({
+      os: 'OS-300',
+      idField: 'ord-antiga',
+      archived: false,
+    })
+
+    expect(encontrarConsultasDeReabertura([antigaRenumerada, reaberta], [antiga])).toEqual([])
+
+    const plano = planejarSincronizacao([antigaRenumerada, reaberta], [antiga])
+
+    expect(plano.atualizar).toHaveLength(1)
+    expect(plano.atualizar[0]).toMatchObject({
+      id: 'obra-1',
+      campos: { os: 'OS-300' },
+    })
+    expect(plano.atualizar[0].historicoHerdado).toBeUndefined()
+    expect(plano.ignoradas.some((item) => /ainda está ativa/i.test(item.motivo))).toBe(true)
+  })
+
+  it('OS arquivada na listagem não conta como presente ativa nem limpa alerta', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ idField: 'ord-antiga', archived: true })],
+      [antiga],
+      { varreduraCompleta: false },
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.alertasRemovidos).toBe(0)
+    expect(plano.inalteradas).toBe(0)
   })
 
   it('troca de números entre duas obras continua como conflito', () => {

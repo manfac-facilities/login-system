@@ -45,6 +45,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     loja: 'Av. Paulista, 1000',
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
+    archived: false,
     ...over,
   }
 }
@@ -74,7 +75,10 @@ beforeEach(() => {
     consultarSituacaoDaOrdem,
   })
   listarOsNormalizadas.mockResolvedValue([])
-  consultarSituacaoDaOrdem.mockResolvedValue({ situacao: 'inconclusiva' })
+  consultarSituacaoDaOrdem.mockResolvedValue({
+    situacao: 'inconclusiva',
+    tratamento: 'tentar_novamente',
+  })
   selectRangeMock.mockResolvedValue({ data: [], error: null })
   insertMock.mockResolvedValue({ error: null })
   updateEqMock.mockResolvedValue({ error: null })
@@ -271,7 +275,43 @@ describe('sincronizarComFieldAction — gravação', () => {
 
     expect(updateMock).not.toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
     expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
-    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/tentada novamente/i)
+    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/tentaremos na próxima execução/i)
+  })
+
+  it('usa archived da listagem sem consultar a ordem antiga', async () => {
+    listarOsNormalizadas.mockResolvedValue([
+      osDoField({ os: 'OS-300', idField: 'ord-antiga', archived: true }),
+      osDoField({ idField: 'ord-nova' }),
+    ])
+    selectRangeMock.mockResolvedValue({
+      data: [obraDoBanco(1, { os: '0226-014989', field_id: 'ord-antiga' })],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(consultarSituacaoDaOrdem).not.toHaveBeenCalled()
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
+    expect(estado.relatorio?.historicosHerdados).toHaveLength(1)
+  })
+
+  it('leva consulta inconclusiva não passageira ao relatório como decisão manual', async () => {
+    listarOsNormalizadas.mockResolvedValue([osDoField({ idField: 'ord-nova' })])
+    consultarSituacaoDaOrdem.mockResolvedValue({
+      situacao: 'inconclusiva',
+      tratamento: 'decisao_manual',
+      motivo: 'Field Control respondeu 422',
+    })
+    selectRangeMock.mockResolvedValue({
+      data: [obraDoBanco(1, { os: '0226-014989', field_id: 'ord-antiga' })],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
+    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/precisa de decisão manual/i)
+    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/Field Control respondeu 422/i)
   })
 
   it('registra a primeira ausência sem apagar nem esconder a obra', async () => {

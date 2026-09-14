@@ -9,11 +9,13 @@
 import { ErroDaApiField } from './erros'
 import type { HttpField } from './http'
 
-export type SituacaoDaOrdemField = 'ativa' | 'arquivada' | 'inexistente' | 'inconclusiva'
+export type SituacaoDaOrdemField = 'ativa' | 'arquivada' | 'inconclusiva'
+export type TratamentoDaConsultaInconclusiva = 'tentar_novamente' | 'decisao_manual'
 
 export type ConsultaDaOrdemField = {
   situacao: SituacaoDaOrdemField
   motivo?: string
+  tratamento?: TratamentoDaConsultaInconclusiva
 }
 
 type OrdemConsultada = {
@@ -31,14 +33,15 @@ export async function consultarSituacaoDaOrdemField(
     return {
       situacao: 'inconclusiva',
       motivo: 'a resposta da ordem antiga não informou archived como booleano',
+      tratamento: 'decisao_manual',
     }
   } catch (erro) {
-    if (erro instanceof ErroDaApiField && erro.status === 404) {
-      return { situacao: 'inexistente' }
-    }
+    const falhaPassageira =
+      !(erro instanceof ErroDaApiField) || erro.status === 429 || erro.status >= 500
     return {
       situacao: 'inconclusiva',
       motivo: erro instanceof Error ? erro.message : 'falha desconhecida ao consultar a ordem antiga',
+      tratamento: falhaPassageira ? 'tentar_novamente' : 'decisao_manual',
     }
   }
 }

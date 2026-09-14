@@ -53,6 +53,8 @@ export type OrdemField = {
   customer?: ReferenciaField | null
   /** Tipo de OS. O mesmo recurso que o endpoint `/services` lista. */
   service?: ReferenciaField | null
+  /** A API real confirmou este booleano tanto na listagem quanto no detalhe. */
+  archived?: boolean | null
   createdAt?: string | null
   updatedAt?: string | null
 }
@@ -101,4 +103,6 @@ export type OsNormalizada = {
   loja: string | null
   idField: string
   atualizadoEm: string | null
+  /** `null` preserva uma resposta ausente ou inválida, sem presumir que a OS está ativa. */
+  archived: boolean | null
 }

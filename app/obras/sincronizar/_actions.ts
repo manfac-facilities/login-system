@@ -107,11 +107,16 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
   for (const consulta of encontrarConsultasDeReabertura(doField, leitura.obras ?? [])) {
     try {
       const resultado = await clienteField.consultarSituacaoDaOrdem(consulta.idFieldAnterior)
-      verificacoesDeReabertura.push({ ...consulta, situacao: resultado.situacao })
+      verificacoesDeReabertura.push({ ...consulta, ...resultado })
     } catch {
       // A função do cliente já converte falhas em inconclusivo; esta guarda
       // protege também contra transporte injetado ou regressão inesperada.
-      verificacoesDeReabertura.push({ ...consulta, situacao: 'inconclusiva' })
+      verificacoesDeReabertura.push({
+        ...consulta,
+        situacao: 'inconclusiva',
+        tratamento: 'tentar_novamente',
+        motivo: 'falha inesperada ao consultar a ordem antiga',
+      })
     }
   }
 

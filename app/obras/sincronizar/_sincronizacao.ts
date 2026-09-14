@@ -5,7 +5,11 @@
  */
 
 import { camposParaAtualizar } from '../_lib/importacao'
-import type { OsNormalizada, SituacaoDaOrdemField } from '../_lib/field'
+import type {
+  OsNormalizada,
+  SituacaoDaOrdemField,
+  TratamentoDaConsultaInconclusiva,
+} from '../_lib/field'
 import type { Etapa, FonteObra } from '../_lib/tipos'
 
 export type ObraExistente = {
@@ -47,6 +51,8 @@ export type ConsultaDeReabertura = Omit<HistoricoHerdado, 'obraId'>
 
 export type VerificacaoDeReabertura = ConsultaDeReabertura & {
   situacao: SituacaoDaOrdemField
+  motivo?: string
+  tratamento?: TratamentoDaConsultaInconclusiva
 }
 
 export type AtualizacaoDeAusencia = {
@@ -140,6 +146,9 @@ export function encontrarConsultasDeReabertura(
     }),
   )
   const consultas = new Map<string, ConsultaDeReabertura>()
+  const idsPresentesNaVarredura = new Set(
+    doField.map((ordem) => texto(ordem.idField)).filter((id): id is string => id !== null),
+  )
 
   for (const vinda of doField) {
     const os = texto(vinda.os)
@@ -147,7 +156,12 @@ export function encontrarConsultasDeReabertura(
     if (!os || !idFieldAtual || porFieldId.has(idFieldAtual)) continue
     const ocupante = porOs.get(os)
     const idFieldAnterior = texto(ocupante?.field_id)
-    if (!ocupante || !idFieldAnterior || idFieldAnterior === idFieldAtual) continue
+    if (
+      !ocupante ||
+      !idFieldAnterior ||
+      idFieldAnterior === idFieldAtual ||
+      idsPresentesNaVarredura.has(idFieldAnterior)
+    ) continue
     const consulta = { os, idFieldAnterior, idFieldAtual }
     consultas.set(`${idFieldAnterior}\u0000${idFieldAtual}`, consulta)
   }
@@ -171,11 +185,16 @@ export function planejarSincronizacao(
   const agora = opcoes.agora ?? new Date().toISOString()
   const porFieldId = new Map<string, ObraExistente>()
   const porOs = new Map<string, ObraExistente>()
+  const vindasPorFieldId = new Map<string, OsNormalizada>()
   for (const obra of existentes) {
     const idField = texto(obra.field_id)
     const numero = texto(obra.os)
     if (idField) porFieldId.set(idField, obra)
     if (numero) porOs.set(numero, obra)
+  }
+  for (const vinda of doField) {
+    const idField = texto(vinda.idField)
+    if (idField) vindasPorFieldId.set(idField, vinda)
   }
 
   const inserir: ObraNovaDoField[] = []
@@ -204,6 +223,10 @@ export function planejarSincronizacao(
       })
       continue
     }
+    // Não sabemos ainda se o filtro service_id inclui arquivadas. Se incluir,
+    // archived:true é sinal direto de inatividade e nunca pode contar como
+    // presença ativa, limpar alerta ou alterar a obra pelo número antigo.
+    if (vinda.archived === true) continue
     const obraPeloId = porFieldId.get(idField)
     if (obraPeloId) idsEncontrados.add(obraPeloId.id)
     if (!numero) {
@@ -238,16 +261,32 @@ export function planejarSincronizacao(
     const idFieldAnterior = texto(peloNumero?.field_id)
     let historicoHerdado: HistoricoHerdado | undefined
     if (!peloId && peloNumero && idFieldAnterior !== null) {
-      const verificacao = opcoes.verificacoesDeReabertura?.find(
-        (item) =>
-          item.os === numero &&
-          item.idFieldAnterior === idFieldAnterior &&
-          item.idFieldAtual === idField,
-      )
-      if (
-        verificacao?.situacao === 'arquivada' ||
-        verificacao?.situacao === 'inexistente'
-      ) {
+      const antigaNaVarredura = vindasPorFieldId.get(idFieldAnterior)
+      const verificacao: VerificacaoDeReabertura | undefined = antigaNaVarredura
+        ? {
+            os: numero,
+            idFieldAnterior,
+            idFieldAtual: idField,
+            situacao:
+              antigaNaVarredura.archived === true
+                ? 'arquivada'
+                : antigaNaVarredura.archived === false
+                  ? 'ativa'
+                  : 'inconclusiva',
+            tratamento:
+              typeof antigaNaVarredura.archived === 'boolean' ? undefined : 'decisao_manual',
+            motivo:
+              typeof antigaNaVarredura.archived === 'boolean'
+                ? undefined
+                : 'a listagem da ordem antiga não informou archived como booleano',
+          }
+        : opcoes.verificacoesDeReabertura?.find(
+            (item) =>
+              item.os === numero &&
+              item.idFieldAnterior === idFieldAnterior &&
+              item.idFieldAtual === idField,
+          )
+      if (verificacao?.situacao === 'arquivada') {
         historicoHerdado = {
           obraId: peloNumero.id,
           os: numero,
@@ -255,10 +294,13 @@ export function planejarSincronizacao(
           idFieldAtual: idField,
         }
       } else {
-        const motivo =
-          verificacao?.situacao === 'ativa'
-            ? `conflito de identidade: a OS antiga ${idFieldAnterior} ainda está ativa no Field`
-            : `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; a herança será tentada novamente`
+        const detalhe = texto(verificacao?.motivo)
+        const sufixo = detalhe ? ` Motivo: ${detalhe}.` : ''
+        const motivo = verificacao?.situacao === 'ativa'
+          ? `conflito de identidade: a OS antiga ${idFieldAnterior} ainda está ativa no Field`
+          : verificacao?.tratamento === 'tentar_novamente'
+            ? `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; tentaremos na próxima execução.${sufixo}`
+            : `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; precisa de decisão manual.${sufixo}`
         ignoradas.push({ os: numero, idField, motivo })
         continue
       }

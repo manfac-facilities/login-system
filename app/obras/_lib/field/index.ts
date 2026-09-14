@@ -27,7 +27,11 @@ export { criarClienteField, NOME_PADRAO_DO_TIPO_DE_OS, OFFSET_MAXIMO, TAMANHO_MA
 export type { ClienteField, ConfigDoClienteField, OpcoesDaVarredura } from './cliente'
 
 export { consultarSituacaoDaOrdemField } from './consulta-ordem'
-export type { ConsultaDaOrdemField, SituacaoDaOrdemField } from './consulta-ordem'
+export type {
+  ConsultaDaOrdemField,
+  SituacaoDaOrdemField,
+  TratamentoDaConsultaInconclusiva,
+} from './consulta-ordem'
 
 export { criarResolvedorDeLoja, textoDoEndereco } from './loja'
 export type { EstrategiaDeLoja, ResolvedorDeLoja } from './loja'

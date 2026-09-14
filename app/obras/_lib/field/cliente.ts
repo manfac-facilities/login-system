@@ -240,6 +240,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         loja: await resolverLoja(ordem),
         idField: ordem.id,
         atualizadoEm: texto(ordem.updatedAt),
+        archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
       })
     }
     return normalizadas

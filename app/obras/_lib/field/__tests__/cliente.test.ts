@@ -300,7 +300,7 @@ describe('criarClienteField — varredura incremental', () => {
 })
 
 describe('criarClienteField — normalização', () => {
-  it('mapeia identifier→os, description→descricao e guarda id e updatedAt', async () => {
+  it('mapeia identifier→os, description→descricao e guarda id, updatedAt e archived', async () => {
     const rede = httpDeMentira(rotasCom([ordem()]))
     const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
 
@@ -312,7 +312,17 @@ describe('criarClienteField — normalização', () => {
       loja: 'Av. Paulista, 1000 - São Paulo/SP',
       idField: 'ord-1',
       atualizadoEm: '2026-09-09T12:00:00Z',
+      archived: null,
     })
+  })
+
+  it('leva archived booleano da listagem até a OS normalizada', async () => {
+    const rede = httpDeMentira(rotasCom([ordem({ archived: true })]))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const [os] = await cliente.listarOsNormalizadas()
+
+    expect(os.archived).toBe(true)
   })
 
   it('description null vira descricao null', async () => {
