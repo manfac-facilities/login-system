@@ -15,6 +15,7 @@
 import { criarHttpField, montarQ, type BuscarHttp, type FiltroQ, type HttpField } from './http'
 import { criarResolvedorDeLoja, type EstrategiaDeLoja } from './loja'
 import { ErroDeTipoDeOs } from './erros'
+import { consultarSituacaoDaOrdemField, type ConsultaDaOrdemField } from './consulta-ordem'
 import type { ListaField, OrdemField, OsNormalizada, TipoDeOsField } from './tipos'
 
 /** O tipo de OS que interessa ao Controle de Obras. */
@@ -75,6 +76,8 @@ export type ClienteField = {
   resolverIdDoTipoDeOs(): Promise<string>
   /** Todas as OS do tipo, já normalizadas, com a paginação resolvida por dentro. */
   listarOsNormalizadas(opcoes?: OpcoesDaVarredura): Promise<OsNormalizada[]>
+  /** Situação da ordem antiga para a herança conservadora da D2.1. */
+  consultarSituacaoDaOrdem(idField: string): Promise<ConsultaDaOrdemField>
 }
 
 /** Texto com conteúdo, ou `null`. Evita `''` e `'  '` virando dado. */
@@ -181,6 +184,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
 
     const ordens: OrdemField[] = []
     let offset = 0
+    const primeirosIdsVistos = new Set<string>()
 
     for (;;) {
       const pagina = await http.get<ListaField<OrdemField>>('/orders', {
@@ -196,6 +200,13 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         )
       }
       const itens = pagina.items
+      const primeiroId = itens[0]?.id ?? null
+      if (primeiroId && primeirosIdsVistos.has(primeiroId)) {
+        throw new Error(
+          `Field Control repetiu a página de /orders no offset ${offset}. A varredura foi interrompida.`,
+        )
+      }
+      if (primeiroId) primeirosIdsVistos.add(primeiroId)
       ordens.push(...itens)
 
       /**
@@ -229,10 +240,15 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         loja: await resolverLoja(ordem),
         idField: ordem.id,
         atualizadoEm: texto(ordem.updatedAt),
+        archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
       })
     }
     return normalizadas
   }
 
-  return { resolverIdDoTipoDeOs, listarOsNormalizadas }
+  return {
+    resolverIdDoTipoDeOs,
+    listarOsNormalizadas,
+    consultarSituacaoDaOrdem: (idField) => consultarSituacaoDaOrdemField(http, idField),
+  }
 }

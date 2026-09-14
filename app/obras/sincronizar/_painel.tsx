@@ -119,6 +119,21 @@ export default function PainelSincronizacao() {
               </div>
             ) : null}
 
+            {rel.historicosHerdados.length ? (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-[#35c98a]">
+                  OS reaberta: histórico herdado
+                </h3>
+                <div className="space-y-1 text-sm text-[#e8eef7]">
+                  {rel.historicosHerdados.map((item) => (
+                    <p key={`${item.idFieldAnterior}-${item.idFieldAtual}`}>
+                      OS {item.os}: {item.idFieldAnterior} → {item.idFieldAtual}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {rel.avisos.length ? (
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-[#f4b73f]">Atenção</h3>

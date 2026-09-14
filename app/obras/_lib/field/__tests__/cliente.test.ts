@@ -239,6 +239,20 @@ describe('criarClienteField — paginação', () => {
     await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/sem a lista items/i)
   })
 
+  it('interrompe cedo quando a API ignora o offset e repete uma página cheia', async () => {
+    const pagina = Array.from({ length: 10 }, (_, i) =>
+      ordem({ id: `o${i}`, identifier: `OS-${i}` }),
+    )
+    const rede = httpDeMentira((caminho) => {
+      if (caminho === '/services') return { items: [TIPO_SPOT], totalCount: 1 }
+      return { items: pagina, totalCount: 999 }
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http, tamanhoDaPagina: 10 })
+
+    await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/repetiu a página/i)
+    expect(rede.chamadas.filter((c) => c.caminho === '/orders')).toHaveLength(2)
+  })
+
   it('para com erro alto quando a varredura passa do teto de offset documentado', async () => {
     const ordens = Array.from({ length: 40 }, (_, i) => ordem({ id: `o${i}`, identifier: `OS-${i}` }))
     const rede = httpDeMentira(rotasCom(ordens))
@@ -286,7 +300,7 @@ describe('criarClienteField — varredura incremental', () => {
 })
 
 describe('criarClienteField — normalização', () => {
-  it('mapeia identifier→os, description→descricao e guarda id e updatedAt', async () => {
+  it('mapeia identifier→os, description→descricao e guarda id, updatedAt e archived', async () => {
     const rede = httpDeMentira(rotasCom([ordem()]))
     const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
 
@@ -298,7 +312,17 @@ describe('criarClienteField — normalização', () => {
       loja: 'Av. Paulista, 1000 - São Paulo/SP',
       idField: 'ord-1',
       atualizadoEm: '2026-09-09T12:00:00Z',
+      archived: null,
     })
+  })
+
+  it('leva archived booleano da listagem até a OS normalizada', async () => {
+    const rede = httpDeMentira(rotasCom([ordem({ archived: true })]))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const [os] = await cliente.listarOsNormalizadas()
+
+    expect(os.archived).toBe(true)
   })
 
   it('description null vira descricao null', async () => {

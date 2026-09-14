@@ -4,10 +4,11 @@
 
 Uma obra só recebe o alerta **"não está mais no Field"** depois de ficar ausente em
 **duas varreduras completas, consecutivas e bem-sucedidas** do tipo de OS integrado,
-separadas por pelo menos **24 horas**. A primeira ausência guarda apenas uma suspeita; a
-primeira varredura completa após esse intervalo confirma e torna o alerta visível. Essa
-espera foi aprovada pelo cliente em 14/09/2026. Nenhuma dessas etapas apaga, arquiva ou
-esconde a obra.
+separadas por cerca de um dia. A primeira ausência guarda apenas uma suspeita; uma nova
+varredura completa depois de pelo menos **20 horas** confirma e torna o alerta visível.
+A tolerância evita que pequenas diferenças na duração da leitura empurrem o aviso diário
+para 48 horas; a espera de aproximadamente 24 horas foi aprovada pelo cliente em
+14/09/2026. Nenhuma dessas etapas apaga, arquiva ou esconde a obra.
 
 A identidade usada nessa comparação é o `idField`, persistido como `field_id`. O número
 da OS não é uma identidade estável: ele pode ser corrigido no Field. Quando o mesmo
@@ -33,11 +34,37 @@ evidência. Uma varredura incremental nunca marca ausência, mesmo quando termin
 sucesso, porque por definição ela omite quase todas as OS que não mudaram.
 
 Mesmo depois de uma leitura tecnicamente completa, um disjuntor impede ausência em
-massa: se o Field devolver zero OS, ou se mais de 20% das obras conhecidas do Field
-ficarem ausentes, nenhuma suspeita ou confirmação é gravada e o relatório avisa que a
-varredura foi considerada suspeita. `totalCount` não encerra paginação, pois pode estar
-defasado; somente uma página menor que o limite prova o fim. Uma resposta de `/orders`
-sem a lista `items` é erro de leitura, nunca lista vazia.
+massa: se já existem obras do Field no banco e a API devolver zero OS, ou se as ausências
+ainda não alertadas ultrapassarem o maior valor entre **3 obras** e **20%** das obras
+conhecidas do Field, nenhuma nova suspeita ou confirmação é gravada e o relatório avisa
+que a varredura foi considerada suspeita. Ausências já confirmadas não entram no
+numerador e não desligam a detecção futura. `totalCount` não encerra paginação, pois pode
+estar defasado; somente uma página menor que o limite prova o fim. Uma resposta de
+`/orders` sem a lista `items`, ou uma página cheia repetida, é erro de leitura, nunca
+lista vazia nem continuação válida.
+
+## OS reaberta com o mesmo número
+
+Quando chega um `field_id` novo usando um número que já pertence a uma obra vinculada a
+outro `field_id`, a sincronização procura primeiro o `field_id` antigo na própria
+varredura. Se ele veio na listagem, não consulta e não herda: o caso fica como conflito
+visível. Só consulta a ordem antiga diretamente no Field quando o identificador anterior
+não veio na listagem:
+
+- se `archived === true`, a obra mantém todo o histórico,
+  recebe o `field_id` novo, limpa suspeita e alerta, e o relatório registra **"OS
+  reaberta: histórico herdado"**;
+- se `archived === false`, as duas são uma duplicidade e o conflito continua
+  visível, sem herança;
+- em qualquer outra resposta — 404, 422, campo ausente ou falha — não há herança, e o
+  motivo da consulta é levado ao relatório como veio.
+
+Uma OS com `archived === true` na listagem é filtrada na entrada: não cria obra, não conta
+como presença, não limpa alerta e não atualiza a obra. Ainda não está provado se o filtro
+por tipo do Field inclui arquivadas; a regra é segura nos dois comportamentos.
+
+Troca de números entre duas obras permanece conflito. Na dúvida, o sistema nunca junta
+históricos.
 
 ## Quais obras entram na comparação
 

@@ -26,6 +26,9 @@
 export { criarClienteField, NOME_PADRAO_DO_TIPO_DE_OS, OFFSET_MAXIMO, TAMANHO_MAXIMO_DA_PAGINA } from './cliente'
 export type { ClienteField, ConfigDoClienteField, OpcoesDaVarredura } from './cliente'
 
+export { consultarSituacaoDaOrdemField } from './consulta-ordem'
+export type { ConsultaDaOrdemField, SituacaoDaOrdemField } from './consulta-ordem'
+
 export { criarResolvedorDeLoja, textoDoEndereco } from './loja'
 export type { EstrategiaDeLoja, ResolvedorDeLoja } from './loja'
 
