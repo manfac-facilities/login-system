@@ -511,7 +511,7 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
     expect(plano.ignoradas[0].motivo).toMatch(/ainda está ativa/i)
   })
 
-  it('não herda quando a consulta é inconclusiva e deixa nova tentativa explícita', () => {
+  it('não herda quando a consulta é inconclusiva e leva o motivo ao relatório', () => {
     const plano = planejarSincronizacao([reaberta], [antiga], {
       verificacoesDeReabertura: [
         {
@@ -519,35 +519,18 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
           idFieldAnterior: 'ord-antiga',
           idFieldAtual: 'ord-nova',
           situacao: 'inconclusiva',
-          tratamento: 'tentar_novamente',
+          motivo: 'Field Control respondeu 404 em GET /orders/ord-antiga',
         },
       ],
     })
 
     expect(plano.atualizar).toHaveLength(0)
-    expect(plano.ignoradas[0].motivo).toMatch(/tentaremos na próxima execução/i)
+    expect(plano.ignoradas[0].motivo).toContain(
+      'Field Control respondeu 404 em GET /orders/ord-antiga',
+    )
   })
 
-  it('leva resposta inconclusiva permanente ao relatório como decisão manual', () => {
-    const plano = planejarSincronizacao([reaberta], [antiga], {
-      verificacoesDeReabertura: [
-        {
-          os: '0226-014989',
-          idFieldAnterior: 'ord-antiga',
-          idFieldAtual: 'ord-nova',
-          situacao: 'inconclusiva',
-          tratamento: 'decisao_manual',
-          motivo: 'Field Control respondeu 422',
-        },
-      ],
-    })
-
-    expect(plano.atualizar).toHaveLength(0)
-    expect(plano.ignoradas[0].motivo).toMatch(/precisa de decisão manual/i)
-    expect(plano.ignoradas[0].motivo).toMatch(/Field Control respondeu 422/i)
-  })
-
-  it('herda sem consulta quando a antiga vem arquivada na mesma varredura e não cria obra híbrida', () => {
+  it('não consulta nem herda quando o field_id antigo veio na mesma varredura', () => {
     const antigaRenumerada = osDoField({
       os: 'OS-300',
       idField: 'ord-antiga',
@@ -558,14 +541,9 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
 
     const plano = planejarSincronizacao([antigaRenumerada, reaberta], [antiga])
 
-    expect(plano.atualizar).toHaveLength(1)
-    expect(plano.atualizar[0].campos).toEqual({
-      field_id: 'ord-nova',
-      field_ausente_desde: null,
-      field_ausente_em: null,
-    })
+    expect(plano.atualizar).toHaveLength(0)
     expect(plano.numerosDeOsAlterados).toHaveLength(0)
-    expect(plano.atualizar[0].historicoHerdado).toBeDefined()
+    expect(plano.ignoradas[0].motivo).toMatch(/veio na mesma varredura/i)
   })
 
   it('não consulta nem herda quando a antiga vem ativa na mesma varredura', () => {
@@ -585,10 +563,13 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
       campos: { os: 'OS-300' },
     })
     expect(plano.atualizar[0].historicoHerdado).toBeUndefined()
-    expect(plano.ignoradas.some((item) => /ainda está ativa/i.test(item.motivo))).toBe(true)
+    expect(plano.ignoradas.some((item) => /veio na mesma varredura/i.test(item.motivo))).toBe(true)
   })
 
-  it('OS arquivada na listagem não conta como presente ativa nem limpa alerta', () => {
+  it('OS arquivada na listagem não vira obra nem conta como presença ativa', () => {
+    const novaArquivada = planejarSincronizacao([osDoField({ archived: true })], [])
+    expect(novaArquivada.inserir).toHaveLength(0)
+
     const plano = planejarSincronizacao(
       [osDoField({ idField: 'ord-antiga', archived: true })],
       [antiga],

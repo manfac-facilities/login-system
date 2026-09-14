@@ -46,23 +46,22 @@ lista vazia nem continuação válida.
 ## OS reaberta com o mesmo número
 
 Quando chega um `field_id` novo usando um número que já pertence a uma obra vinculada a
-outro `field_id`, a sincronização procura primeiro a ordem antiga na própria varredura.
-Só consulta a ordem antiga diretamente no Field quando o `field_id` anterior não veio na
-listagem:
+outro `field_id`, a sincronização procura primeiro o `field_id` antigo na própria
+varredura. Se ele veio na listagem, não consulta e não herda: o caso fica como conflito
+visível. Só consulta a ordem antiga diretamente no Field quando o identificador anterior
+não veio na listagem:
 
 - se `archived === true`, a obra mantém todo o histórico,
   recebe o `field_id` novo, limpa suspeita e alerta, e o relatório registra **"OS
   reaberta: histórico herdado"**;
 - se `archived === false`, as duas são uma duplicidade e o conflito continua
   visível, sem herança;
-- se a consulta falhar por rede ou erro 5xx, não há herança e o relatório informa que a
-  tentativa será repetida na próxima execução;
-- se houver 404, 422, outro erro não passageiro ou uma resposta sem `archived` booleano,
-  não há herança e o relatório pede decisão manual.
+- em qualquer outra resposta — 404, 422, campo ausente ou falha — não há herança, e o
+  motivo da consulta é levado ao relatório como veio.
 
-Uma OS que apareça arquivada na listagem não conta como presença ativa, não limpa alerta
-e não atualiza a obra pelo número antigo. Ainda não está provado se o filtro por tipo do
-Field inclui arquivadas; a regra é segura nos dois comportamentos.
+Uma OS com `archived === true` na listagem é filtrada na entrada: não cria obra, não conta
+como presença, não limpa alerta e não atualiza a obra. Ainda não está provado se o filtro
+por tipo do Field inclui arquivadas; a regra é segura nos dois comportamentos.
 
 Troca de números entre duas obras permanece conflito. Na dúvida, o sistema nunca junta
 históricos.

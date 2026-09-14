@@ -114,7 +114,6 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
       verificacoesDeReabertura.push({
         ...consulta,
         situacao: 'inconclusiva',
-        tratamento: 'tentar_novamente',
         motivo: 'falha inesperada ao consultar a ordem antiga',
       })
     }

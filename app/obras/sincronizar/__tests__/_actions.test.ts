@@ -77,7 +77,6 @@ beforeEach(() => {
   listarOsNormalizadas.mockResolvedValue([])
   consultarSituacaoDaOrdem.mockResolvedValue({
     situacao: 'inconclusiva',
-    tratamento: 'tentar_novamente',
   })
   selectRangeMock.mockResolvedValue({ data: [], error: null })
   insertMock.mockResolvedValue({ error: null })
@@ -263,7 +262,7 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(estado.relatorio?.alertasRemovidos).toBe(1)
   })
 
-  it('falha ao consultar a antiga não herda e fica visível para tentar depois', async () => {
+  it('falha ao consultar a antiga não herda e o motivo chega ao relatório', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField({ idField: 'ord-nova' })])
     consultarSituacaoDaOrdem.mockRejectedValue(new Error('Field indisponível'))
     selectRangeMock.mockResolvedValue({
@@ -275,10 +274,12 @@ describe('sincronizarComFieldAction — gravação', () => {
 
     expect(updateMock).not.toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
     expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
-    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/tentaremos na próxima execução/i)
+    expect(estado.relatorio?.ignoradas[0].motivo).toContain(
+      'falha inesperada ao consultar a ordem antiga',
+    )
   })
 
-  it('usa archived da listagem sem consultar a ordem antiga', async () => {
+  it('field_id antigo na listagem bloqueia consulta e herança', async () => {
     listarOsNormalizadas.mockResolvedValue([
       osDoField({ os: 'OS-300', idField: 'ord-antiga', archived: true }),
       osDoField({ idField: 'ord-nova' }),
@@ -291,15 +292,15 @@ describe('sincronizarComFieldAction — gravação', () => {
     const estado = await sincronizarComFieldAction()
 
     expect(consultarSituacaoDaOrdem).not.toHaveBeenCalled()
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
-    expect(estado.relatorio?.historicosHerdados).toHaveLength(1)
+    expect(updateMock).not.toHaveBeenCalledWith(expect.objectContaining({ field_id: 'ord-nova' }))
+    expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
+    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/veio na mesma varredura/i)
   })
 
-  it('leva consulta inconclusiva não passageira ao relatório como decisão manual', async () => {
+  it('leva o motivo da consulta ao relatório sem categorizá-lo', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField({ idField: 'ord-nova' })])
     consultarSituacaoDaOrdem.mockResolvedValue({
       situacao: 'inconclusiva',
-      tratamento: 'decisao_manual',
       motivo: 'Field Control respondeu 422',
     })
     selectRangeMock.mockResolvedValue({
@@ -310,8 +311,7 @@ describe('sincronizarComFieldAction — gravação', () => {
     const estado = await sincronizarComFieldAction()
 
     expect(estado.relatorio?.historicosHerdados).toHaveLength(0)
-    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/precisa de decisão manual/i)
-    expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/Field Control respondeu 422/i)
+    expect(estado.relatorio?.ignoradas[0].motivo).toContain('Field Control respondeu 422')
   })
 
   it('registra a primeira ausência sem apagar nem esconder a obra', async () => {

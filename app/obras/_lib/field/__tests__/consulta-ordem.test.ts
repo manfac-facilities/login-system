@@ -19,7 +19,7 @@ describe('consultarSituacaoDaOrdemField', () => {
     })
   })
 
-  it('trata 404 como inconclusivo que exige decisão manual', async () => {
+  it('trata 404 como inconclusivo e preserva o motivo', async () => {
     const http: HttpField = {
       get: jest.fn(async () => {
         throw new ErroDaApiField(404, null, 'GET /orders/ord-antiga')
@@ -29,7 +29,6 @@ describe('consultarSituacaoDaOrdemField', () => {
     await expect(consultarSituacaoDaOrdemField(http, 'ord-antiga')).resolves.toEqual({
       situacao: 'inconclusiva',
       motivo: 'Field Control respondeu 404 em GET /orders/ord-antiga',
-      tratamento: 'decisao_manual',
     })
   })
 
@@ -38,7 +37,6 @@ describe('consultarSituacaoDaOrdemField', () => {
 
     expect(resultado.situacao).toBe('inconclusiva')
     expect(resultado.motivo).toMatch(/archived/i)
-    expect(resultado.tratamento).toBe('decisao_manual')
   })
 
   it('transforma falha da consulta em resultado inconclusivo para tentar depois', async () => {
@@ -52,6 +50,5 @@ describe('consultarSituacaoDaOrdemField', () => {
 
     expect(resultado.situacao).toBe('inconclusiva')
     expect(resultado.motivo).toMatch(/500/)
-    expect(resultado.tratamento).toBe('tentar_novamente')
   })
 })

@@ -5,11 +5,7 @@
  */
 
 import { camposParaAtualizar } from '../_lib/importacao'
-import type {
-  OsNormalizada,
-  SituacaoDaOrdemField,
-  TratamentoDaConsultaInconclusiva,
-} from '../_lib/field'
+import type { OsNormalizada, SituacaoDaOrdemField } from '../_lib/field'
 import type { Etapa, FonteObra } from '../_lib/tipos'
 
 export type ObraExistente = {
@@ -52,7 +48,6 @@ export type ConsultaDeReabertura = Omit<HistoricoHerdado, 'obraId'>
 export type VerificacaoDeReabertura = ConsultaDeReabertura & {
   situacao: SituacaoDaOrdemField
   motivo?: string
-  tratamento?: TratamentoDaConsultaInconclusiva
 }
 
 export type AtualizacaoDeAusencia = {
@@ -262,30 +257,20 @@ export function planejarSincronizacao(
     let historicoHerdado: HistoricoHerdado | undefined
     if (!peloId && peloNumero && idFieldAnterior !== null) {
       const antigaNaVarredura = vindasPorFieldId.get(idFieldAnterior)
-      const verificacao: VerificacaoDeReabertura | undefined = antigaNaVarredura
-        ? {
-            os: numero,
-            idFieldAnterior,
-            idFieldAtual: idField,
-            situacao:
-              antigaNaVarredura.archived === true
-                ? 'arquivada'
-                : antigaNaVarredura.archived === false
-                  ? 'ativa'
-                  : 'inconclusiva',
-            tratamento:
-              typeof antigaNaVarredura.archived === 'boolean' ? undefined : 'decisao_manual',
-            motivo:
-              typeof antigaNaVarredura.archived === 'boolean'
-                ? undefined
-                : 'a listagem da ordem antiga não informou archived como booleano',
-          }
-        : opcoes.verificacoesDeReabertura?.find(
-            (item) =>
-              item.os === numero &&
-              item.idFieldAnterior === idFieldAnterior &&
-              item.idFieldAtual === idField,
-          )
+      if (antigaNaVarredura) {
+        ignoradas.push({
+          os: numero,
+          idField,
+          motivo: `conflito de identidade: a OS antiga ${idFieldAnterior} veio na mesma varredura do Field`,
+        })
+        continue
+      }
+      const verificacao = opcoes.verificacoesDeReabertura?.find(
+        (item) =>
+          item.os === numero &&
+          item.idFieldAnterior === idFieldAnterior &&
+          item.idFieldAtual === idField,
+      )
       if (verificacao?.situacao === 'arquivada') {
         historicoHerdado = {
           obraId: peloNumero.id,
@@ -294,13 +279,12 @@ export function planejarSincronizacao(
           idFieldAtual: idField,
         }
       } else {
-        const detalhe = texto(verificacao?.motivo)
-        const sufixo = detalhe ? ` Motivo: ${detalhe}.` : ''
-        const motivo = verificacao?.situacao === 'ativa'
-          ? `conflito de identidade: a OS antiga ${idFieldAnterior} ainda está ativa no Field`
-          : verificacao?.tratamento === 'tentar_novamente'
-            ? `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; tentaremos na próxima execução.${sufixo}`
-            : `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada; precisa de decisão manual.${sufixo}`
+        const motivoDaConsulta = texto(verificacao?.motivo)
+        const motivo = motivoDaConsulta
+          ? motivoDaConsulta
+          : verificacao?.situacao === 'ativa'
+            ? `conflito de identidade: a OS antiga ${idFieldAnterior} ainda está ativa no Field`
+            : `conflito de identidade: não foi possível confirmar se a OS antiga ${idFieldAnterior} está arquivada`
         ignoradas.push({ os: numero, idField, motivo })
         continue
       }
