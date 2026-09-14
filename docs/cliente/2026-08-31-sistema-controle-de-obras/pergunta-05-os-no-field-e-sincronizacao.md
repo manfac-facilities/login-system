@@ -5,8 +5,7 @@ I2, OS recriada com o mesmo número) e das perguntas do Duda sobre a D3 (frequê
 sincronização). Só entrou aqui o que é decisão de negócio; limites técnicos — como a trava
 contra ausência em massa — ficam com o João.
 
-**Estado:** aguardando envio. Quando a resposta chegar, ela entra literal no fim deste
-arquivo antes de virar decisão.
+**Estado:** enviada e **respondida em 14/09/2026** — resposta literal no fim deste arquivo.
 
 ---
 
@@ -47,3 +46,23 @@ Em todos os casos, o sistema nunca apaga obra, diário ou foto por causa do Fiel
 | 2C | Se o Field não deixa repetir número, o I2 cai para caso raríssimo | — |
 | 3 | Frequência do agendador da D3 e janela de horário | 15 min em horário comercial é barato (rate limit 1 req/s, incremental lê pouco) |
 | 4 | Frequência da varredura completa: a D2 exige duas completas seguidas | **A.** Mais rápido exige completa várias vezes ao dia e aumenta alarme falso |
+
+---
+
+## Resposta do cliente — 14/09/2026 (literal, repassada pelo João no chat)
+
+> 1B
+> 2B
+> 3A
+> 4A
+
+A sub-pergunta da 3 ("só em horário comercial ou também à noite e no fim de semana?")
+**não foi respondida**.
+
+Em texto corrido, o que ele escolheu:
+
+1. **B** — excluir no Field arquiva; dá para recuperar.
+2. **B** — OS apagada e reaberta com o mesmo número: a nova **herda** diário, fotos e
+   histórico da antiga. (Contrária à recomendação registrada acima.)
+3. **A** — OS nova aparece no sistema em até 15 minutos.
+4. **A** — aviso de sumiço em cerca de 24 horas está bom.
