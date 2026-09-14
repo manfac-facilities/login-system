@@ -50,7 +50,9 @@ cada pendência custa: https://claude.ai/code/artifact/09355e86-fc26-4f4c-873a-e
 
 ### O que trava a manhã de 11/09, em ordem
 
-1. **A chave da API do Field não chegou ao ambiente.** O João tem a chave; ela precisa ir
+1. **A chave da API do Field — validada localmente em 14/09, ainda fora da produção.** A J3
+   rodou com ela e passou (`j3-verificacao-api-2026-09-14.md`: autentica, `q`, `sort=id` e
+   timestamp completo; 167 OS "Atividade Spot" no Field). Ela ainda precisa ir
    para o `.env.local` da raiz como `FIELD_API_KEY=valor` (para testar — ignorado pelo git;
    é de onde `scripts/verificar-field.mjs` lê. Em 14/09 já havia ali um valor de 56
    caracteres, gravado em 11/09, ainda não validado contra o Field) **e** para o EasyPanel como

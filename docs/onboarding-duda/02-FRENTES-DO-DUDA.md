@@ -73,8 +73,9 @@ A regra que o João escolheu e que **não se reabre**: **o Field só preenche o 
 vazio no banco.** Campo que alguém digitou no hub nunca é sobrescrito, mesmo que o Field
 traga outro valor. Leia o cabeçalho de `_sincronizacao.ts` — o porquê está lá.
 
-⚠️ **Nada disso jamais rodou contra o Field de verdade.** Falta a chave `FIELD_API_KEY`,
-que é frente do João (J1). Você vai trabalhar contra mock, como todo o módulo.
+⚠️ **A sincronização ainda não rodou contra o Field de verdade.** A chave local foi validada
+em 14/09 (J3: autentica, `q`, `sort=id` e timestamp completo funcionam), mas a gravação real
+no banco não aconteceu. Você continua trabalhando contra mock, como todo o módulo.
 
 ---
 
@@ -83,7 +84,8 @@ que é frente do João (J1). Você vai trabalhar contra mock, como todo o módul
 ```
 D1  Marcar de onde a obra veio     ──────────────►  começa já
 D2  A OS que sumiu do Field              ──────────────►  depois do D1
-D3  Sincronização que roda sozinha           ───────►  quando o João decidir o mecanismo
+D2.1 Herança da OS reaberta + N1 + N3     ───────►  depois do D2 (mergeado em 14/09)
+D3  Sincronização que roda sozinha           ───────►  depois da D2.1 (mecanismo decidido em 14/09)
 D4  Smoke test contra o banco real                ──►  quando a chave e o deploy existirem
 
 depois de tudo: cancelamento de obra   ───────────►  quando o J4 mergear (leia o fim)
@@ -97,8 +99,8 @@ código antes de você encarar o desenho difícil.
 **D2 é a frente de verdade deste pacote.** É desenho de produto, não recado: você decide
 como o sistema se comporta diante de um dado que sumiu.
 
-**D3 tem uma trava:** o mecanismo da varredura recorrente **ainda não está decidido pelo
-João**. Não comece antes da decisão.
+**D3 já tem o mecanismo decidido** (14/09, no capítulo dela). A única trava agora é de
+ordem: ela espera a D2.1, porque mexe nos mesmos arquivos.
 
 **D4 depende de duas coisas que não são suas:** a chave da API e o deploy.
 
@@ -446,19 +448,59 @@ alguém ter pedido é a versão suave de apagar.
 
 **Onde:** `app/obras/sincronizar/`
 **Tempo estimado:** 4–7 h
-**Depende de:** ⚠️ **uma decisão do João que ainda não existe** — leia a seguir
+**Depende de:** **D2.1 mergeada** (mesmos arquivos). As decisões de mecanismo estão
+tomadas — abaixo.
 
-### ⚠️ Esta frente não começa antes da decisão do mecanismo
+### Decisões do João — 14/09/2026
 
-**O mecanismo da varredura recorrente ainda não está decidido pelo João.** Não escolha, não
-prototipe "só para testar", não comece pela parte que "vale para qualquer mecanismo".
+Respostas às seis perguntas do Duda (`entregas/2026-09-14-D3-perguntas-do-duda.md`). A
+frequência veio do cliente (`pergunta-05-os-no-field-e-sincronizacao.md`, respostas 3A e
+4A); o resto, do João. **Isto é o desenho — não reabra sem perguntar.**
 
-O motivo é a regra permanente do projeto, e ela vale para todo mundo aqui: **trabalho
-iniciado antes da decisão que o molda é trabalho refeito inteiro.** Uma pergunta custa
-minutos; uma frente de 4 a 7 horas desenhada contra a suposição errada custa as 4 a 7
-horas de novo.
+**1. Agendador: `pg_cron` do Supabase chamando uma rota do hub via `pg_net`.**
+`POST /api/obras/sincronizar`. As duas extensões **já estão instaladas** no projeto de
+produção (verificado em 14/09). A lógica fica no Next, onde já está testada. Nada de Edge
+Function (duplicaria a lógica em Deno), GitHub Actions (atraso e segredo fora da infra) ou
+webhook do Field, por enquanto.
 
-Quando a decisão chegar, ela entra neste documento antes de você abrir o editor.
+**2 e 4. Marca d'água e histórico: uma tabela só, `obras_sync_execucao`.**
+Uma linha por execução: início, fim, tipo (`completa`/`incremental`), origem
+(`agendada`/`botao`), status, erro, contagens do relatório e a marca d'água nova. **A marca
+vigente é a da última execução com sucesso** — não guarde em outro lugar, senão vira duas
+fontes da verdade e "só avança se deu certo" fica fácil de quebrar. As últimas execuções
+aparecem em `/obras/sincronizar`.
+
+**3. Autenticação sem usuário: segredo no cabeçalho + service role só nesta rota.**
+- A rota exige `Authorization: Bearer <OBRAS_CRON_SECRET>`, comparado em tempo constante.
+- Escrita com o `createAdminClient()` que já existe (`lib/supabase/admin.ts`). **Isto amplia
+  uma regra do hub** — até aqui a service role só era usada em `app/admin/_actions.ts` — e
+  foi decidido conscientemente pelo João.
+- `/api/obras` fica **fora** do `matcher` do `middleware.ts`, de propósito: quem protege a
+  rota é o segredo, não o login.
+- O segredo mora no Vault do Supabase (lido pelo `pg_cron`) e no Environment do EasyPanel.
+  **Quem configura os dois é o João/Claude**; o código só lê `process.env`.
+- Obra criada por execução agendada fica com `criado_por` nulo; a autoria fica na linha da
+  execução.
+
+**5. Frequência (cliente: 3A e 4A).**
+- Incremental **a cada 15 min, 24h, todos os dias**.
+- Completa **uma vez por dia às 3h de Brasília** — `0 6 * * *` no `pg_cron`, que roda em UTC.
+- Os dois configuráveis.
+- Janela incremental com **10 min de margem** antes da marca; a marca é o **maior
+  `updated_at` vindo do Field**, nunca o relógio do servidor.
+
+**6. `updated_at>=` com timestamp completo:** a J3 responde. Até lá, o formato do `desde`
+fica isolado num parâmetro — se o Field só aceitar data, a janela vira "desde o dia anterior".
+
+**Três requisitos que entram junto:**
+- **trava contra execução simultânea** (agendada + botão) no banco: índice único parcial em
+  `status = 'rodando'`, com expiração para trava órfã;
+- **o status vale pelo que ficou gravado na tabela**, não pela resposta ao `pg_net`, cujo
+  timeout é curto;
+- **contrato do botão:** insere e preenche vazio, nunca apaga nem mescla. A única junção
+  permitida é a herança da D2.1.
+
+A migration da D3 você escreve; quem aplica é o João/Claude.
 
 ### O problema
 
@@ -489,17 +531,24 @@ que o projeto existe para dar numa função da memória de alguém.
 5. **Conviver com o D2.** Marca d'água e detecção de ausência se contradizem se o desenho
    for ingênuo. Releia a seção "por que ausência é um sinal fraco".
 
-### Quatro incógnitas da API que ainda não foram provadas
+### As incógnitas da API — provadas em 14/09/2026 (J3)
 
-Elas são frente do João (J3) e dependem da chave real, mas afetam o seu desenho — saiba
-que existem: a codificação do parâmetro `q`; se `sort=id` é campo válido; se `updated_at>=`
-aceita timestamp completo ou só data; e se a OS é arquivada ou excluída no Field. O
-cliente da API já está construído de forma configurável por causa delas — veja os
-comentários de `ordenacao` e `desde` em `_lib/field/cliente.ts`.
+Rodadas com a chave real, só leitura (`docs/cliente/2026-08-31-sistema-controle-de-obras/j3-verificacao-api-2026-09-14.md`):
+
+| Pergunta | Resposta |
+|---|---|
+| A chave autentica? | **Sim** |
+| O `q` com dois filtros combinados é aceito? | **Sim** |
+| `sort=id` é ordenação válida? | **Sim** |
+| `updated_at>=` aceita timestamp completo? | **Sim** — aceita data pura e ISO completo. Use o timestamp |
+| OS arquivada continua listada em `/orders`? | **Não provado ainda.** O cliente confirmou que excluir no Field arquiva (resposta 1B); se a API continuar listando arquivada, a ausência nunca acontece e o alerta da D2 nunca dispara. Isso precisa de um caso real para testar — mantenha o comportamento isolado |
+
+Fato de contexto: em 14/09 o Field tinha **167 OS "Atividade Spot"**, e o banco, zero obras.
 
 ### O que NÃO fazer nesta frente
 
-- ❌ **Não comece antes da decisão do mecanismo.** É a única proibição dura desta frente.
+- ❌ **Não comece antes da D2.1 mergeada.** São os mesmos arquivos; em paralelo é conflito
+  garantido.
 - ❌ Não configure webhook por conta própria — e note que o Field não emite os eventos que
   resolveriam isso.
 - ❌ Não toque no painel do EasyPanel nem em nada de produção. Credencial de produção é do
@@ -509,14 +558,17 @@ comentários de `ordenacao` e `desde` em `_lib/field/cliente.ts`.
 
 ### Pronto quando
 
-- [ ] O mecanismo está decidido pelo João e registrado por escrito **antes** do primeiro
-      commit
+- [x] O mecanismo está decidido pelo João e registrado por escrito **antes** do primeiro
+      commit (14/09, seção "Decisões do João" acima)
 - [ ] A marca d'água é persistida e só avança quando a passada terminou inteira, com teste
       para o caso de falha no meio
 - [ ] A varredura recorrente reusa `listarOsNormalizadas({ desde })` e
       `planejarSincronizacao` — sem segunda implementação da regra
 - [ ] Cada passada deixa registro consultável do que fez
-- [ ] A questão de autoria/porteiro foi levada ao João e a decisão está em comentário
+- [ ] A decisão de autoria/porteiro (item 3 acima) está implementada e explicada em
+      comentário no código
+- [ ] Trava contra execução simultânea, com teste
+- [ ] Rota `/api/obras/sincronizar` recusa pedido sem o segredo, com teste
 - [ ] O botão manual continua funcionando, com teste
 - [ ] `npx jest app/obras` em verde
 
@@ -655,7 +707,8 @@ se o sistema consegue detectar o cancelamento sozinho.
 |---|---|---|---|
 | **D1** | Marcar de onde a obra veio | ~1 h | **agora** |
 | **D2** | A OS que sumiu do Field | 5–8 h | D1 mergeado |
-| **D3** | Sincronização que roda sozinha | 4–7 h | o João decidir o mecanismo |
+| **D2.1** | Herança da OS reaberta, N1 e N3 | 1–3 h | D2 mergeado ✅ (14/09) |
+| **D3** | Sincronização que roda sozinha | 4–7 h | D2.1 mergeada (mecanismo decidido em 14/09) |
 | **D4** | Smoke test contra o banco real | 2–3 h | chave `FIELD_API_KEY` + deploy |
 | — | *Cancelamento de obra* | *a estimar* | *J4 mergeado* |
 
