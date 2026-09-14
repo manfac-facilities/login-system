@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/roles'
 import { Box, BoxB } from '../_ui/primitivos'
 import PainelSincronizacao from './_painel'
+import HistoricoSincronizacao, { type ExecucaoSyncRow } from './_historico'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,14 @@ export default async function SincronizarPage() {
     )
   }
 
+  const { data: execucoes } = await supabase
+    .from('obras_sync_execucao')
+    .select(
+      'id, iniciada_em, finalizada_em, tipo, origem, status, erro, total_field, novas, atualizadas, ignoradas, marca_dagua_nova',
+    )
+    .order('iniciada_em', { ascending: false })
+    .limit(10)
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
       <header>
@@ -45,6 +54,7 @@ export default async function SincronizarPage() {
       </header>
 
       <PainelSincronizacao />
+      <HistoricoSincronizacao execucoes={(execucoes ?? []) as ExecucaoSyncRow[]} />
 
       <Box>
         <BoxB>

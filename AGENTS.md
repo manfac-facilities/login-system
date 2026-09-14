@@ -129,7 +129,8 @@ Se o título aparecer, a aplicação está perfeita — o problema é DNS, não 
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tudo | |
 | `NEXT_PUBLIC_SITE_URL` | links de e-mail do Supabase Auth | |
 | `SUPABASE_SERVICE_ROLE_KEY` | **só** `app/admin/_actions.ts` | **NÃO estava chegando no processo em 2026-08-09**, apesar de aparecer no painel. Ver aviso abaixo. Sem ela, `createAdminClient()` lança e a página `/admin/acessos` inteira cai com erro genérico de Server Component. Ausente em `.env.production` e no `DEPLOY.md`, que estão desatualizados. |
-| `FIELD_API_KEY` | **só** `app/obras/sincronizar/_actions.ts` | Header `X-Api-Key` da API do Field Control. **É segredo: não pode entrar no `.env.production` versionado — só pelo painel do EasyPanel**, com a mesma armadilha do `NOME=valor` numa linha só. Sem ela a tela `/obras/sincronizar` não quebra: a action devolve erro dizendo que a chave falta. A camada `app/obras/_lib/field/` não lê `process.env` de propósito — a chave entra por parâmetro. |
+| `FIELD_API_KEY` | **só** `app/obras/sincronizar/_execucao.ts` | Header `X-Api-Key` da API do Field Control. **É segredo: não pode entrar no `.env.production` versionado — só pelo painel do EasyPanel**, com a mesma armadilha do `NOME=valor` numa linha só. Sem ela a tela `/obras/sincronizar` não quebra: a action devolve erro dizendo que a chave falta. A camada `app/obras/_lib/field/` não lê `process.env` de propósito — a chave entra por parâmetro. |
+| `OBRAS_CRON_SECRET` | `app/api/obras/sincronizar/route.ts` | Protege a rota chamada pelo `pg_cron`. O valor fica no Vault do Supabase e no Environment do EasyPanel; nunca em arquivo versionado. |
 
 > **Aviso — a anotação anterior era falsa.** Até 2026-08-09 este arquivo dizia que a
 > `SUPABASE_SERVICE_ROLE_KEY` estava configurada no EasyPanel e mandava não investigar
