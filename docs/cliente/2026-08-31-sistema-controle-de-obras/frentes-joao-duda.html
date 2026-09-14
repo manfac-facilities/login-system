@@ -1059,8 +1059,8 @@ no banco não aconteceu. Você continua trabalhando contra mock, como todo o mó
 ```
 D1  Marcar de onde a obra veio     ──────────────►  começa já
 D2  A OS que sumiu do Field              ──────────────►  depois do D1
-D2.1 Herança da OS reaberta + N1 + N3     ───────►  depois do D2 (mergeado em 14/09)
-D3  Sincronização que roda sozinha           ───────►  depois da D2.1 (mecanismo decidido em 14/09)
+D2.1 Herança da OS reaberta + N1 + N3     ───────►  ✅ mergeada em 14/09
+D3  Sincronização que roda sozinha           ───────►  agora (mecanismo decidido em 14/09)
 D4  Smoke test contra o banco real                ──►  quando a chave e o deploy existirem
 
 depois de tudo: cancelamento de obra   ───────────►  quando o J4 mergear (leia o fim)
@@ -1314,9 +1314,18 @@ produção**. Três pendências ficaram conhecidas e formam a **D2.1**, que vem 
 mesmo dia. Quando chega uma OS com `field_id` novo e o número pertence a uma obra com outro
 `field_id`:
 
-- consultar a OS antiga direto no Field (`GET /orders/:id` do `field_id` antigo);
-- **antiga arquivada ou inexistente** → a obra existente recebe o `field_id` novo, limpa
-  suspeita e alerta, e o relatório mostra **"OS reaberta: histórico herdado"**;
+&gt; ✅ **Mergeada em 14/09** (`3edba98`), na forma simplificada que saiu do conselho sobre a
+&gt; revisão (`conselho-revisao-d21-2026-09-14.md`). A regra abaixo foi **corrigida** depois
+&gt; das chamadas reais à API: `archived` existe e **404 não autoriza herança**. O que ficou
+&gt; fora pela régua está em `backlog-integracao-field.md`.
+
+- **OS com `archived === true` na listagem é filtrada na entrada:** não cria obra e não
+  conta como presente — arquivar no Field vale como "sumiu" para a regra da D2;
+- consultar a OS antiga direto no Field (`GET /orders/:id` do `field_id` antigo) **só se
+  ela não veio na varredura**;
+- **só `archived === true` na consulta** → a obra existente recebe o `field_id` novo, limpa
+  suspeita e alerta, e o relatório mostra **"OS reaberta: histórico herdado"**. 404, 422,
+  campo ausente ou falha **não herdam**;
 - **antiga ainda ativa** → não herda: é duplicidade, e fica como conflito visível;
 - **consulta falhou ou veio inconclusiva** → não herda; tenta na próxima execução. Na
   dúvida, nunca junta;
@@ -1423,8 +1432,8 @@ alguém ter pedido é a versão suave de apagar.
 
 **Onde:** `app/obras/sincronizar/`
 **Tempo estimado:** 4–7 h
-**Depende de:** **D2.1 mergeada** (mesmos arquivos). As decisões de mecanismo estão
-tomadas — abaixo.
+**Depende de:** nada — **D2.1 mergeada em 14/09**. As decisões de mecanismo estão tomadas
+— abaixo. **Pode começar.**
 
 ### Decisões do João — 14/09/2026
 
@@ -1522,8 +1531,8 @@ Fato de contexto: em 14/09 o Field tinha **167 OS "Atividade Spot"**, e o banco,
 
 ### O que NÃO fazer nesta frente
 
-- ❌ **Não comece antes da D2.1 mergeada.** São os mesmos arquivos; em paralelo é conflito
-  garantido.
+- ❌ Não reabra o desenho da D2/D2.1 dentro da D3. O que ficou de fora está em
+  `backlog-integracao-field.md` e entra quando a dor aparecer.
 - ❌ Não configure webhook por conta própria — e note que o Field não emite os eventos que
   resolveriam isso.
 - ❌ Não toque no painel do EasyPanel nem em nada de produção. Credencial de produção é do
@@ -1682,8 +1691,8 @@ se o sistema consegue detectar o cancelamento sozinho.
 |---|---|---|---|
 | **D1** | Marcar de onde a obra veio | ~1 h | **agora** |
 | **D2** | A OS que sumiu do Field | 5–8 h | D1 mergeado |
-| **D2.1** | Herança da OS reaberta, N1 e N3 | 1–3 h | D2 mergeado ✅ (14/09) |
-| **D3** | Sincronização que roda sozinha | 4–7 h | D2.1 mergeada (mecanismo decidido em 14/09) |
+| **D2.1** | Herança da OS reaberta, N1 e N3 | 1–3 h | ✅ mergeada em 14/09 |
+| **D3** | Sincronização que roda sozinha | 4–7 h | **agora** (mecanismo decidido em 14/09) |
 | **D4** | Smoke test contra o banco real | 2–3 h | chave `FIELD_API_KEY` + deploy |
 | — | *Cancelamento de obra* | *a estimar* | *J4 mergeado* |
 

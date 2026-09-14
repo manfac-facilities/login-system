@@ -12,8 +12,9 @@ histórico de 05/09 em diante, mantido como estava.
 | Banco | **0 obras**, de propósito |
 | `FIELD_API_KEY` | posta no Environment do EasyPanel pelo João antes do deploy. **Não verificado que chegou ao processo** — a tela `/obras/sincronizar` só acusa a falta ao clicar, e clicar grava as 167 OS |
 | J3 | provada com a chave local — `j3-verificacao-api-2026-09-14.md`. Aberto: se OS arquivada segue listada e se `GET /orders/:id` traz `archived` |
-| D2.1 | entregue (`6f5aa96`), 332/332 aqui; revisão `review-d21-2026-09-14.md` com 3 importantes. **Não mergeada** |
-| D3 | decidida — capítulo da D3 no `02-FRENTES-DO-DUDA.md`. Espera a D2.1 |
+| D2.1 | ✅ **mergeada** (`03e2a83`, código `3edba98`), 337/337 aqui. Forma simplificada pelo conselho (`conselho-revisao-d21-2026-09-14.md`); conferência de lista fechada sem bloqueador. **Não deployada** — sem migration nova |
+| D3 | decidida — capítulo da D3 no `02-FRENTES-DO-DUDA.md`. **Liberada para o Duda** |
+| Backlog | `backlog-integracao-field.md` — o que ficou fora pela régua de revisão |
 
 ⚠️ **Não apertar "Puxar do Field" em produção**: com a chave no ar, grava as 167 OS. A primeira carga espera o pente fino do cliente e a D2.1.
 
