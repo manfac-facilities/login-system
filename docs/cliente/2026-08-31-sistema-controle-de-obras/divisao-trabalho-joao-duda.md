@@ -59,7 +59,7 @@ garantiria conflito de merge, então a F3 foi absorvida pela J4.
 
 | # | Frente | Por quê | Tempo | Tokens (est.) |
 |---|---|---|---|---|
-| J1 | A chave da API do Field | Trava tudo o que está construído: a sincronização existe e está testada, mas nunca rodou contra o Field de verdade. Vai para `C:\Users\joao-\.field-api-key` (teste) **e** para o EasyPanel como `FIELD_API_KEY=valor` numa linha só | 15 min | ~10 k |
+| J1 | A chave da API do Field | Trava tudo o que está construído: a sincronização existe e está testada, mas nunca rodou contra o Field de verdade. Vai para o `.env.local` da raiz (teste; ignorado pelo git) **e** para o EasyPanel como `FIELD_API_KEY=valor` numa linha só | 15 min | ~10 k |
 | J2 | Deploy da sincronização | `/obras/sincronizar` está no `master` desde 11/09 02h22; o build em produção é de 10/09 23h38. A tela não existe em produção até alguém clicar em Deploy | 10 min + espera | ~20 k |
 | J3 | Provar as quatro incógnitas da API | Depende do J1. Codificação do `q`, `sort=id` como campo válido, `updated_at>=` com timestamp ou só data, e se a OS é arquivada ou excluída no Field. Cada uma custa meia hora durante o cadastro do cliente | 1–2 h | 0,2–0,4 M |
 | J4 | Completar a obra — Triagem e ficha editáveis | A frente de maior valor agora: transforma a OS de três campos numa obra de verdade. Absorve a antiga F3. Arquivos: `obra/[id]/_triagem.tsx`, `_ficha.tsx`, `_actions.ts` | 5–8 h | 0,8–1,4 M |

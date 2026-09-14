@@ -51,7 +51,9 @@ cada pendência custa: https://claude.ai/code/artifact/09355e86-fc26-4f4c-873a-e
 ### O que trava a manhã de 11/09, em ordem
 
 1. **A chave da API do Field não chegou ao ambiente.** O João tem a chave; ela precisa ir
-   para `C:\Users\joao-\.field-api-key` (para testar) **e** para o EasyPanel como
+   para o `.env.local` da raiz como `FIELD_API_KEY=valor` (para testar — ignorado pelo git;
+   é de onde `scripts/verificar-field.mjs` lê. Em 14/09 já havia ali um valor de 56
+   caracteres, gravado em 11/09, ainda não validado contra o Field) **e** para o EasyPanel como
    `FIELD_API_KEY=valor` numa linha só (para produção). Sem ela a sincronização não roda
    nem é testada — e três incógnitas da API seguem abertas: se o servidor aceita a
    codificação do `q`, se `sort=id` é campo válido, e se `updated_at>=` aceita timestamp
