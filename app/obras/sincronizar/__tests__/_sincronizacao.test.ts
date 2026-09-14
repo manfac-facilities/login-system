@@ -243,6 +243,7 @@ describe('planejarSincronizacao — o que fica de fora', () => {
       alertasRemovidos: 0,
       inalteradas: 0,
       ignoradas: [],
+      avisos: [],
     })
   })
 })
@@ -250,8 +251,27 @@ describe('planejarSincronizacao — o que fica de fora', () => {
 describe('planejarSincronizacao — ausência no Field', () => {
   const AGORA = '2026-09-14T12:00:00Z'
 
+  function umaAusente(over: Partial<ObraExistente> = {}) {
+    const ausente = obraNoBanco(over)
+    const presentes = Array.from({ length: 5 }, (_, indice) => {
+      const n = indice + 2
+      return obraNoBanco({
+        id: `obra-${n}`,
+        os: `OS-${n}`,
+        field_id: `ord-${n}`,
+        loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
+        descricao: 'Forro do estoque caiu',
+      })
+    })
+    const doField = presentes.map((obra) =>
+      osDoField({ os: obra.os as string, idField: obra.field_id as string }),
+    )
+    return { doField, existentes: [ausente, ...presentes] }
+  }
+
   it('a primeira varredura completa ausente cria só uma suspeita', () => {
-    const plano = planejarSincronizacao([], [obraNoBanco()], {
+    const cenario = umaAusente()
+    const plano = planejarSincronizacao(cenario.doField, cenario.existentes, {
       varreduraCompleta: true,
       agora: AGORA,
     })
@@ -268,16 +288,56 @@ describe('planejarSincronizacao — ausência no Field', () => {
   })
 
   it('a segunda varredura completa consecutiva confirma o alerta', () => {
-    const plano = planejarSincronizacao(
-      [],
-      [obraNoBanco({ field_ausente_desde: '2026-09-13T12:00:00Z' })],
-      { varreduraCompleta: true, agora: AGORA },
-    )
+    const cenario = umaAusente({ field_ausente_desde: '2026-09-13T12:00:00Z' })
+    const plano = planejarSincronizacao(cenario.doField, cenario.existentes, {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
 
     expect(plano.reconciliarAusencias[0]).toMatchObject({
       acao: 'alerta',
       campos: { field_ausente_em: AGORA },
     })
+  })
+
+  it('não confirma a suspeita antes do intervalo mínimo de 24 horas', () => {
+    const cenario = umaAusente({ field_ausente_desde: '2026-09-14T11:59:59Z' })
+    const plano = planejarSincronizacao(cenario.doField, cenario.existentes, {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+  })
+
+  it('não marca ausência quando a varredura completa devolve zero OS', () => {
+    const plano = planejarSincronizacao([], [obraNoBanco()], {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.avisos[0]).toMatch(/0 OS/i)
+  })
+
+  it('não marca ausência em massa acima de 20% e avisa no relatório', () => {
+    const existentes = Array.from({ length: 5 }, (_, indice) =>
+      obraNoBanco({
+        id: `obra-${indice}`,
+        os: `OS-${indice}`,
+        field_id: `ord-${indice}`,
+      }),
+    )
+    const doField = existentes.slice(0, 3).map((obra) =>
+      osDoField({ os: obra.os as string, idField: obra.field_id as string }),
+    )
+    const plano = planejarSincronizacao(doField, existentes, {
+      varreduraCompleta: true,
+      agora: AGORA,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.avisos[0]).toMatch(/mais de 20%/i)
   })
 
   it('varredura incremental nunca infere ausência', () => {

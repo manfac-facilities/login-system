@@ -3,9 +3,11 @@
 ## Regra operacional
 
 Uma obra só recebe o alerta **"não está mais no Field"** depois de ficar ausente em
-**duas varreduras completas, consecutivas e bem-sucedidas** do tipo de OS integrado.
-A primeira ausência guarda apenas uma suspeita; a segunda confirma e torna o alerta
-visível. Nenhuma dessas etapas apaga, arquiva ou esconde a obra.
+**duas varreduras completas, consecutivas e bem-sucedidas** do tipo de OS integrado,
+separadas por pelo menos **24 horas**. A primeira ausência guarda apenas uma suspeita; a
+primeira varredura completa após esse intervalo confirma e torna o alerta visível. Essa
+espera foi aprovada pelo cliente em 14/09/2026. Nenhuma dessas etapas apaga, arquiva ou
+esconde a obra.
 
 A identidade usada nessa comparação é o `idField`, persistido como `field_id`. O número
 da OS não é uma identidade estável: ele pode ser corrigido no Field. Quando o mesmo
@@ -29,6 +31,13 @@ condições forem verdadeiras:
 Se qualquer leitura falhar, a execução para sem marcar suspeita ou ausência. Falha não é
 evidência. Uma varredura incremental nunca marca ausência, mesmo quando termina com
 sucesso, porque por definição ela omite quase todas as OS que não mudaram.
+
+Mesmo depois de uma leitura tecnicamente completa, um disjuntor impede ausência em
+massa: se o Field devolver zero OS, ou se mais de 20% das obras conhecidas do Field
+ficarem ausentes, nenhuma suspeita ou confirmação é gravada e o relatório avisa que a
+varredura foi considerada suspeita. `totalCount` não encerra paginação, pois pode estar
+defasado; somente uma página menor que o limite prova o fim. Uma resposta de `/orders`
+sem a lista `items` é erro de leitura, nunca lista vazia.
 
 ## Quais obras entram na comparação
 

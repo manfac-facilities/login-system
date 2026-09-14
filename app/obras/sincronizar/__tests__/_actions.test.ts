@@ -48,6 +48,20 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
   }
 }
 
+function obraDoBanco(indice: number, over: Record<string, unknown> = {}) {
+  return {
+    id: `obra-${indice}`,
+    os: `OS-${indice}`,
+    loja: 'Av. Paulista, 1000',
+    descricao: 'Forro do estoque caiu',
+    fonte: 'field',
+    field_id: `ord-${indice}`,
+    field_ausente_desde: null,
+    field_ausente_em: null,
+    ...over,
+  }
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   process.env.FIELD_API_KEY = CHAVE_FALSA
@@ -209,19 +223,12 @@ describe('sincronizarComFieldAction — gravação', () => {
   })
 
   it('registra a primeira ausência sem apagar nem esconder a obra', async () => {
+    const presentes = Array.from({ length: 5 }, (_, indice) => obraDoBanco(indice + 2))
+    listarOsNormalizadas.mockResolvedValue(
+      presentes.map((obra) => osDoField({ os: obra.os, idField: obra.field_id })),
+    )
     selectRangeMock.mockResolvedValue({
-      data: [
-        {
-          id: 'obra-1',
-          os: '0226-014989',
-          loja: 'DROGARIA SP',
-          descricao: 'Reforma',
-          fonte: 'field',
-          field_id: 'ord-1',
-          field_ausente_desde: null,
-          field_ausente_em: null,
-        },
-      ],
+      data: [obraDoBanco(1), ...presentes],
       error: null,
     })
 
@@ -244,11 +251,13 @@ describe('sincronizarComFieldAction — gravação', () => {
 
   it('consulta o banco mesmo quando o Field não devolve nada, pois a lista vazia pode indicar ausência', async () => {
     listarOsNormalizadas.mockResolvedValue([])
+    selectRangeMock.mockResolvedValue({ data: [obraDoBanco(1)], error: null })
 
     const estado = await sincronizarComFieldAction()
 
     expect(selectRangeMock).toHaveBeenCalled()
     expect(insertMock).not.toHaveBeenCalled()
+    expect(updateMock).not.toHaveBeenCalled()
     expect(estado.relatorio).toEqual({
       totalDoField: 0,
       novas: 0,
@@ -259,7 +268,26 @@ describe('sincronizarComFieldAction — gravação', () => {
       alertasRemovidos: 0,
       numerosDeOsAlterados: [],
       ignoradas: [],
+      avisos: [
+        'Varredura suspeita: o Field devolveu 0 OS. Nenhuma ausência foi registrada.',
+      ],
     })
+  })
+
+  it('bloqueia ausência acima de 20% e leva o aviso ao relatório', async () => {
+    const existentes = Array.from({ length: 5 }, (_, indice) => obraDoBanco(indice + 1))
+    listarOsNormalizadas.mockResolvedValue(
+      existentes
+        .slice(0, 3)
+        .map((obra) => osDoField({ os: obra.os, idField: obra.field_id })),
+    )
+    selectRangeMock.mockResolvedValue({ data: existentes, error: null })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(estado.relatorio?.suspeitasDeAusencia).toBe(0)
+    expect(estado.relatorio?.avisos[0]).toMatch(/mais de 20%/i)
   })
 
   it('não grava nada quando a leitura do banco falha', async () => {

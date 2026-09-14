@@ -34,7 +34,7 @@ import {
   EtiquetaPrioridade,
   PrazoBarra,
 } from './_etiquetas'
-import { COLS, type Ordem } from './_regras'
+import { COLS, temAlertaDeAusenciaField, type Ordem } from './_regras'
 
 function seta(ordem: Ordem, col: string) {
   if (ordem.col !== col) return ''
@@ -85,7 +85,7 @@ export default function TabelaBase({
             key={o.id}
             className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-3"
             style={
-              critico(o) || semCobertura(o) || o.field_ausente_em !== null
+              critico(o) || semCobertura(o) || temAlertaDeAusenciaField(o)
                 ? { borderLeftWidth: 3, borderLeftColor: '#ff4d6d' }
                 : undefined
             }
@@ -148,7 +148,7 @@ export default function TabelaBase({
                 key={o.id}
                 className="border-b border-[#1e3a5f] align-top hover:bg-[#132a52]"
                 style={
-                  critico(o) || semCobertura(o) || o.field_ausente_em !== null
+                  critico(o) || semCobertura(o) || temAlertaDeAusenciaField(o)
                     ? { boxShadow: 'inset 3px 0 0 0 #ff4d6d' }
                     : undefined
                 }

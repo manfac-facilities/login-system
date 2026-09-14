@@ -119,6 +119,20 @@ export default function PainelSincronizacao() {
               </div>
             ) : null}
 
+            {rel.avisos.length ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-[#f4b73f]">Atenção</h3>
+                {rel.avisos.map((aviso) => (
+                  <p
+                    key={aviso}
+                    className="rounded-md border border-[#f4b73f]/40 bg-[#f4b73f]/10 px-3 py-2 text-sm text-[#e8eef7]"
+                  >
+                    {aviso}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+
             <div>
               <h3 className="mb-2 text-sm font-semibold text-[#e8eef7]">O que ficou de fora</h3>
               {rel.ignoradas.length === 0 ? (

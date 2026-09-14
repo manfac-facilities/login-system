@@ -185,6 +185,12 @@ describe('filtrar — Field Control', () => {
     expect(filtrar([presente, ausente], FILTROS_PADRAO)).toHaveLength(2)
   })
 
+  it('coluna ainda ausente no deploy chega como undefined e não cria alerta falso', () => {
+    const semColuna = obra({ field_ausente_em: undefined as unknown as null })
+
+    expect(filtrar([semColuna], { ...FILTROS_PADRAO, field: 'ausentes' })).toHaveLength(0)
+  })
+
   it('permite ver somente as obras com alerta confirmado', () => {
     expect(filtrar([presente, ausente], { ...FILTROS_PADRAO, field: 'ausentes' })).toEqual([
       ausente,

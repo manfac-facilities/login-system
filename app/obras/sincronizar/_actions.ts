@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/roles'
 import { criarClienteField } from '../_lib/field'
+import type { OpcoesDaVarredura } from '../_lib/field'
 import {
   emLotes,
   planejarSincronizacao,
@@ -33,6 +34,7 @@ export type RelatorioSincronizacao = {
   alertasRemovidos: number
   numerosDeOsAlterados: NumeroDeOsAlterado[]
   ignoradas: OsIgnorada[]
+  avisos: string[]
 }
 
 export type EstadoSincronizacao = { error?: string; relatorio?: RelatorioSincronizacao }
@@ -83,11 +85,12 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
     }
   }
 
+  // D3 preencherá `desde`; a autorização para inferir ausência nasce desta
+  // mesma opção, sem uma flag independente que alguém possa esquecer ligada.
+  const opcoesDaVarredura: OpcoesDaVarredura = {}
   let doField
   try {
-    // Sem `desde`: esta ação manual é uma varredura completa. O cliente só
-    // resolve quando todas as páginas foram recebidas; erro interrompe aqui.
-    doField = await criarClienteField({ chaveApi }).listarOsNormalizadas()
+    doField = await criarClienteField({ chaveApi }).listarOsNormalizadas(opcoesDaVarredura)
   } catch (erro) {
     return { error: mensagemDeFalha(erro) }
   }
@@ -96,7 +99,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
   if (leitura.error) return { error: leitura.error }
 
   const plano = planejarSincronizacao(doField, leitura.obras ?? [], {
-    varreduraCompleta: true,
+    varreduraCompleta: opcoesDaVarredura.desde === undefined,
     agora: new Date().toISOString(),
   })
   const ignoradas: OsIgnorada[] = [...plano.ignoradas]
@@ -158,6 +161,7 @@ export async function sincronizarComFieldAction(): Promise<EstadoSincronizacao> 
         idsAtualizados.has(item.obraId),
       ),
       ignoradas,
+      avisos: plano.avisos,
     },
   }
 }

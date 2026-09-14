@@ -22,7 +22,7 @@ import {
   semCobertura,
   type Obra,
 } from '../_lib/tipos'
-import { COR_ETAPA, COR_PRIORIDADE } from './_regras'
+import { COR_ETAPA, COR_PRIORIDADE, temAlertaDeAusenciaField } from './_regras'
 
 /** A pílula da etapa, com a cor da etapa. `pill(mockup:1893)`. */
 export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa'> }) {
@@ -41,7 +41,7 @@ export function EtiquetaAusenciaField({
 }: {
   obra: Pick<Obra, 'field_ausente_em'>
 }) {
-  if (obra.field_ausente_em === null) return null
+  if (!temAlertaDeAusenciaField(obra)) return null
   return <Pill cor="#ff4d6d">Não está mais no Field</Pill>
 }
 

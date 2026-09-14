@@ -184,6 +184,19 @@ describe('criarClienteField — paginação', () => {
     expect(os[249].os).toBe('OS-249')
   })
 
+  it('não para por totalCount defasado quando a página ainda vem cheia', async () => {
+    const ordens = Array.from({ length: 250 }, (_, i) =>
+      ordem({ id: `o${i}`, identifier: `OS-${i}` }),
+    )
+    const rede = httpDeMentira(rotasCom(ordens, 200))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas()
+
+    expect(os).toHaveLength(250)
+    expect(rede.chamadas.filter((c) => c.caminho === '/orders')).toHaveLength(3)
+  })
+
   it('pede ordenação estável em toda página — sem sort, varredura longa pula ou repete registro', async () => {
     const ordens = Array.from({ length: 150 }, (_, i) => ordem({ id: `o${i}`, identifier: `OS-${i}` }))
     const rede = httpDeMentira(rotasCom(ordens))
@@ -216,14 +229,14 @@ describe('criarClienteField — paginação', () => {
     expect(rede.chamadas.filter((c) => c.caminho === '/orders')).toHaveLength(1)
   })
 
-  it('trata corpo sem items como página vazia em vez de estourar', async () => {
+  it('trata corpo sem items como erro de leitura, nunca como lista vazia', async () => {
     const rede = httpDeMentira((caminho) => {
       if (caminho === '/services') return { items: [TIPO_SPOT], totalCount: 1 }
       return { totalCount: 0 }
     })
     const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
 
-    await expect(cliente.listarOsNormalizadas()).resolves.toEqual([])
+    await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/sem a lista items/i)
   })
 
   it('para com erro alto quando a varredura passa do teto de offset documentado', async () => {

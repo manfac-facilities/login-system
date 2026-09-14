@@ -71,10 +71,13 @@ export type PlanoDeSincronizacao = {
   alertasRemovidos: number
   inalteradas: number
   ignoradas: OsIgnorada[]
+  avisos: string[]
 }
 
 const ETAPA_INICIAL: Etapa = 'definir'
 const FONTE_FIELD: FonteObra = 'field'
+const LIMITE_DE_AUSENCIA_EM_MASSA = 0.2
+export const INTERVALO_MINIMO_PARA_ALERTA_MS = 24 * 60 * 60 * 1000
 
 function texto(valor: string | null | undefined): string | null {
   if (typeof valor !== 'string') return null
@@ -131,6 +134,7 @@ export function planejarSincronizacao(
   const reconciliarAusencias: AtualizacaoDeAusencia[] = []
   const numerosDeOsAlterados: NumeroDeOsAlterado[] = []
   const ignoradas: OsIgnorada[] = []
+  const avisos: string[] = []
   const idsEncontrados = new Set<string>()
   const idsFieldTratados = new Set<string>()
   const numerosTratados = new Set<string>()
@@ -229,42 +233,69 @@ export function planejarSincronizacao(
 
     // Reaparecer é evidência positiva até em varredura incremental. Limpa a
     // suspeita e o alerta, sem depender da inferência negativa de ausência.
-    if (existente.field_ausente_desde !== null || existente.field_ausente_em !== null) {
+    const suspeitaExistente = texto(existente.field_ausente_desde)
+    const alertaExistente = texto(existente.field_ausente_em)
+    if (suspeitaExistente || alertaExistente) {
       campos.field_ausente_desde = null
       campos.field_ausente_em = null
-      if (existente.field_ausente_em !== null) alertasRemovidos++
+      if (alertaExistente) alertasRemovidos++
     }
 
     if (Object.keys(campos).length === 0) inalteradas++
     else {
       const atualizacao: AtualizacaoDoField = { id: existente.id, os: numero, campos }
-      if (existente.field_ausente_em !== null) atualizacao.removeAlerta = true
+      if (alertaExistente) atualizacao.removeAlerta = true
       atualizar.push(atualizacao)
     }
   }
 
   if (opcoes.varreduraCompleta) {
-    for (const obra of existentes) {
-      const idField = texto(obra.field_id)
-      if (obra.fonte !== FONTE_FIELD || !idField || idsEncontrados.has(obra.id)) continue
-      if (obra.field_ausente_em !== null) continue
+    const obrasDoField = existentes.filter(
+      (obra) => obra.fonte === FONTE_FIELD && texto(obra.field_id) !== null,
+    )
+    const ausentes = obrasDoField.filter((obra) => !idsEncontrados.has(obra.id))
+    const proporcaoAusente = obrasDoField.length ? ausentes.length / obrasDoField.length : 0
 
-      if (obra.field_ausente_desde === null) {
-        reconciliarAusencias.push({
-          id: obra.id,
-          os: obra.os,
-          idField,
-          acao: 'suspeita',
-          campos: { field_ausente_desde: agora },
-        })
-      } else {
-        reconciliarAusencias.push({
-          id: obra.id,
-          os: obra.os,
-          idField,
-          acao: 'alerta',
-          campos: { field_ausente_em: agora },
-        })
+    if (doField.length === 0) {
+      avisos.push(
+        'Varredura suspeita: o Field devolveu 0 OS. Nenhuma ausência foi registrada.',
+      )
+    } else if (proporcaoAusente > LIMITE_DE_AUSENCIA_EM_MASSA) {
+      avisos.push(
+        `Varredura suspeita: ${ausentes.length} de ${obrasDoField.length} obras do Field ficariam ausentes (mais de 20%). Nenhuma ausência foi registrada.`,
+      )
+    } else {
+      for (const obra of ausentes) {
+        const idField = texto(obra.field_id) as string
+        if (texto(obra.field_ausente_em)) continue
+
+        const suspeitaExistente = texto(obra.field_ausente_desde)
+        if (!suspeitaExistente) {
+          reconciliarAusencias.push({
+            id: obra.id,
+            os: obra.os,
+            idField,
+            acao: 'suspeita',
+            campos: { field_ausente_desde: agora },
+          })
+          continue
+        }
+
+        const suspeitaEm = Date.parse(suspeitaExistente)
+        const instanteAtual = Date.parse(agora)
+        if (
+          Number.isFinite(suspeitaEm) &&
+          Number.isFinite(instanteAtual) &&
+          instanteAtual - suspeitaEm >= INTERVALO_MINIMO_PARA_ALERTA_MS
+        ) {
+          reconciliarAusencias.push({
+            id: obra.id,
+            os: obra.os,
+            idField,
+            acao: 'alerta',
+            campos: { field_ausente_em: agora },
+          })
+        }
       }
     }
   }
@@ -278,5 +309,6 @@ export function planejarSincronizacao(
     alertasRemovidos,
     inalteradas,
     ignoradas,
+    avisos,
   }
 }

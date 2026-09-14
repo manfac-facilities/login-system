@@ -119,6 +119,13 @@ export function ocultarObrasAusentesDoField(): boolean {
   return false
 }
 
+/** Coluna ausente em deploy anterior (`undefined`) não pode virar alerta. */
+export function temAlertaDeAusenciaField(
+  obra: { field_ausente_em?: string | null },
+): boolean {
+  return typeof obra.field_ausente_em === 'string' && obra.field_ausente_em.trim() !== ''
+}
+
 /**
  * As opções do filtro "Etapa da obra". Segue a ordem do ciclo e agrupa por
  * fase — nove etapas soltas viram lista ilegível. "Executadas, ainda na
@@ -161,7 +168,7 @@ export function responsaveisDaBase(obras: Pick<Obra, 'pcm'>[]): string[] {
 /** `filtradas(mockup:3157)`. Cada filtro é independente dos outros. */
 export function filtrar(obras: Obra[], f: Filtros): Obra[] {
   return obras.filter((o) => {
-    if (ocultarObrasAusentesDoField() && o.field_ausente_em !== null) return false
+    if (ocultarObrasAusentesDoField() && temAlertaDeAusenciaField(o)) return false
 
     if (f.pcm === '__sem') {
       if (o.pcm) return false
@@ -185,7 +192,7 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
     if (f.mau === 'sim' && !o.mau_uso) return false
     if (f.mau === 'nao' && o.mau_uso) return false
 
-    if (f.field === 'ausentes' && o.field_ausente_em === null) return false
+    if (f.field === 'ausentes' && !temAlertaDeAusenciaField(o)) return false
 
     return true
   })

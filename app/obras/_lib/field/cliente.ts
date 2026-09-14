@@ -190,19 +190,20 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         sort: ordenacao,
       })
 
-      const itens = pagina?.items ?? []
+      if (!pagina || !Array.isArray(pagina.items)) {
+        throw new Error(
+          'Field Control devolveu uma página de /orders sem a lista items. A varredura foi interrompida.',
+        )
+      }
+      const itens = pagina.items
       ordens.push(...itens)
 
       /**
-       * DUAS CONDIÇÕES DE PARADA, e a segunda é a que vale.
-       * `totalCount` é informativo e pode estar velho (registros entram e saem
-       * enquanto varremos). Página incompleta, ao contrário, é fato: se veio
-       * menos que o `limit`, acabou. Confiar só no `totalCount` levaria a
-       * pedir páginas vazias para sempre quando ele exagera.
+       * Só página incompleta encerra. `totalCount` é informativo e pode estar
+       * velho; usá-lo para parar cedo transforma uma contagem em cache numa
+       * falsa prova de ausência para as páginas que ficaram sem leitura.
        */
       if (itens.length < tamanhoDaPagina) break
-      const total = pagina?.totalCount
-      if (typeof total === 'number' && ordens.length >= total) break
 
       offset += tamanhoDaPagina
       if (offset > offsetMaximo) {
