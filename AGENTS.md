@@ -214,6 +214,7 @@ formato, ou você troca um bug por outro.
 | `admin-usuarios` PARTE 2 | aplicada em 2026-08-10, após o deploy |
 | `v04-seguranca` | **aplicado em 2026-08-10** (migration `v04_seguranca_rls_sofia`), na versão que lê `hub_user_roles` |
 | `obras-v0` | **aplicado em 2026-09-10**, pela Management API. 5 tabelas `obras_*` com RLS, bucket `obras-fotos` e 3 policies de storage. A seção 7 passou sem o erro de ownership que o runbook previa |
+| `obras-fonte` | **aplicado em 2026-09-14**, pela Management API (frente D1 do Duda, commit `1c23dd3`). Coluna `fonte` nullable, sem default, com `obras_obra_fonte_check` aceitando só `'field'` |
 
 Com o `v04-seguranca` aplicado, as 18 tabelas do Sofia deixaram de ter a policy
 `authenticated full access` e passaram a `sofia access` (`using (sofia_has_access())`).

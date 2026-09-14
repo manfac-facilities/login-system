@@ -1,8 +1,8 @@
 -- ============================================================
 -- Controle de Obras — procedência da obra (D1) — 2026-09-11
 -- ============================================================
--- ESTADO: NÃO APLICADO. O Duda escreve; o João roda à mão no
--- SQL Editor do Supabase, conforme docs/onboarding-duda/.
+-- ESTADO: APLICADO em produção em 14/09/2026, pela Management API,
+-- com autorização do João. Escrito pelo Duda (1c23dd3).
 --
 -- `fonte` não reaproveita `origem`: `origem` é vocabulário livre do
 -- cliente ("Sistema DPSP", "Garantia"), enquanto `fonte` responde de
