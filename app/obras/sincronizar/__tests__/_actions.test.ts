@@ -13,15 +13,24 @@ const selectMock = jest.fn(() => ({ order: selectOrderMock }))
 const insertMock = jest.fn()
 const updateEqMock = jest.fn()
 const updateMock = jest.fn(() => ({ eq: updateEqMock }))
+const execucaoUpdateEqMock = jest.fn()
+const execucaoUpdateMock = jest.fn(() => ({ eq: execucaoUpdateEqMock }))
+const rpcMock = jest.fn()
+const fromMock = jest.fn((tabela: string) =>
+  tabela === 'obras_sync_execucao'
+    ? { update: execucaoUpdateMock }
+    : {
+        select: selectMock,
+        insert: insertMock,
+        update: updateMock,
+      },
+)
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
-    from: jest.fn(() => ({
-      select: selectMock,
-      insert: insertMock,
-      update: updateMock,
-    })),
+    from: fromMock,
+    rpc: rpcMock,
   })),
 }))
 
@@ -78,9 +87,14 @@ beforeEach(() => {
   consultarSituacaoDaOrdem.mockResolvedValue({
     situacao: 'inconclusiva',
   })
+  rpcMock.mockResolvedValue({
+    data: [{ execucao_id: 'exec-1', marca_dagua_anterior: null }],
+    error: null,
+  })
   selectRangeMock.mockResolvedValue({ data: [], error: null })
   insertMock.mockResolvedValue({ error: null })
   updateEqMock.mockResolvedValue({ error: null })
+  execucaoUpdateEqMock.mockResolvedValue({ error: null })
 })
 
 afterEach(() => {
@@ -148,6 +162,13 @@ describe('sincronizarComFieldAction — gravação', () => {
     ])
     expect(updateMock).not.toHaveBeenCalled()
     expect(estado.relatorio).toMatchObject({ totalDoField: 1, novas: 1, atualizadas: 0, inalteradas: 0 })
+    expect(execucaoUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'sucesso',
+        marca_dagua_nova: '2026-09-11T12:00:00Z',
+        novas: 1,
+      }),
+    )
   })
 
   it('atualiza só o campo vazio de obra que já existe', async () => {
@@ -416,7 +437,7 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(updateMock).not.toHaveBeenCalled()
   })
 
-  it('registra no relatório a obra que o banco recusou atualizar, sem derrubar o resto', async () => {
+  it('falha no meio fica no relatório e não avança a marca d’água', async () => {
     listarOsNormalizadas.mockResolvedValue([osDoField(), osDoField({ os: 'OS-NOVA', idField: 'ord-2' })])
     selectRangeMock.mockResolvedValue({
       data: [{ id: 'obra-1', os: '0226-014989', loja: null, descricao: null, fonte: 'field', field_id: 'ord-1', field_ausente_desde: null, field_ausente_em: null }],
@@ -429,6 +450,27 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(estado.relatorio?.atualizadas).toBe(0)
     expect(estado.relatorio?.novas).toBe(1)
     expect(estado.relatorio?.ignoradas[0].motivo).toMatch(/coluna inexistente/)
+    expect(estado.error).toMatch(/marca d’água não avançou/i)
+    expect(execucaoUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'falhou', marca_dagua_nova: null }),
+    )
+  })
+
+  it('mantém o botão manual completo e impede uma segunda execução simultânea', async () => {
+    rpcMock.mockResolvedValue({ data: [], error: null })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      'obras_iniciar_sync_execucao',
+      expect.objectContaining({
+        p_tipo: 'completa',
+        p_origem: 'botao',
+        p_criado_por: 'u1',
+      }),
+    )
+    expect(estado.jaEstavaRodando).toBe(true)
+    expect(listarOsNormalizadas).not.toHaveBeenCalled()
   })
 
   it('devolve mensagem legível quando o Field falha, sem lançar', async () => {

@@ -11,10 +11,12 @@
  */
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Box, BoxB, BoxH, Botao, EstadoVazio, KPI } from '../_ui/primitivos'
 import { sincronizarComFieldAction, type EstadoSincronizacao } from './_actions'
 
 export default function PainelSincronizacao() {
+  const router = useRouter()
   const [estado, setEstado] = useState<EstadoSincronizacao | null>(null)
   const [rodando, setRodando] = useState(false)
 
@@ -23,6 +25,7 @@ export default function PainelSincronizacao() {
     setEstado(null)
     try {
       setEstado(await sincronizarComFieldAction())
+      router.refresh()
     } catch {
       setEstado({ error: 'Não deu para falar com o servidor. Tente de novo.' })
     } finally {
