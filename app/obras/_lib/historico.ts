@@ -78,3 +78,64 @@ export type LinhaHistorico = LinhaHistoricoNova & {
   quem: string
   created_at: string
 }
+
+const CAMPOS_DATA: ReadonlySet<CampoHistorico> = new Set([
+  'inicio_plan', 'liberado_em', 'os_aprovada_em',
+  'marco_exec_fim', 'marco_relatorio', 'marco_fechou_os',
+  'marco_liberou_fat', 'marco_faturou',
+])
+
+function formatarValor(campo: CampoHistorico, v: string | number | boolean | null): string | null {
+  if (v === null || v === undefined || v === '') return null
+  if (campo === 'valor') return moeda(Number(v))
+  if (campo === 'duracao') return `${v} dias`
+  if (campo === 'mau_uso') return v ? 'Mau uso' : 'normal'
+  if (campo === 'etapa') return nomeEtapa(v as Etapa)
+  if (CAMPOS_DATA.has(campo)) return br(String(v))
+  return String(v)
+}
+
+/** Compara valor "cru" (não formatado) para decidir se algo realmente mudou. */
+function iguais(a: string | number | boolean | null | undefined, b: string | number | boolean | null | undefined): boolean {
+  const na = a === undefined || a === '' ? null : a
+  const nb = b === undefined || b === '' ? null : b
+  if (na === null && nb === null) return true
+  if (na === null || nb === null) return false
+  // números: comparação numérica, evita ruído de string "100" vs 100 ou "100.0" vs "100"
+  if (typeof na === 'number' || typeof nb === 'number') return Number(na) === Number(nb)
+  return String(na) === String(nb)
+}
+
+export function linhasDeAlteracao(
+  antes: Partial<Record<CampoHistorico, string | number | boolean | null>>,
+  depois: Partial<Record<CampoHistorico, string | number | boolean | null>>,
+  bloco: BlocoHistorico,
+  opts?: { motivoRemarcacao?: string | null; exigirMotivoRemarcacao?: boolean }
+): LinhaHistoricoNova[] {
+  const linhas: LinhaHistoricoNova[] = []
+
+  for (const campo of Object.keys(depois) as CampoHistorico[]) {
+    const antigo = antes[campo] ?? null
+    const novo = depois[campo] ?? null
+    if (iguais(antigo, novo)) continue
+
+    if (campo === 'inicio_plan' && opts?.exigirMotivoRemarcacao) {
+      const motivo = (opts.motivoRemarcacao ?? '').trim()
+      if (!motivo) {
+        throw new Error(
+          'linhasDeAlteracao: início mudou com exigirMotivoRemarcacao=true e sem motivoRemarcacao — quem chamou esqueceu de validar antes.'
+        )
+      }
+    }
+
+    linhas.push({
+      bloco,
+      campo,
+      de: formatarValor(campo, antigo),
+      para: formatarValor(campo, novo),
+      motivo: campo === 'inicio_plan' ? (opts?.motivoRemarcacao ?? null) : null,
+    })
+  }
+
+  return linhas
+}
