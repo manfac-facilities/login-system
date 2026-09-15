@@ -41,3 +41,48 @@ não foi apertado). **A primeira carga fica suspensa até isto estar entendido.*
 
 Próximo passo: medir no dado real (chamadas só de leitura, saída agregada, sem dado de
 cliente) quantas das 167 são versões da mesma obra, e o que as liga.
+
+---
+
+## Medição no dado real — 14/09/2026, noite
+
+Duas rodadas de chamadas só de leitura à API, autorizadas pelo João ("vamos ter que
+investigar o denominador comum"). Saída agregada; nenhum dado de cliente copiado para cá.
+
+**Ordens de serviço (`/orders`, tipo "Atividade Spot"):**
+
+| Medida | Resultado |
+|---|---|
+| Total listado | **175** (eram 167 na J3 de manhã) |
+| Arquivadas | 0 |
+| Número da OS (`identifier`) repetido | **nenhum** — 175 números distintos |
+| Mesma loja + mesma descrição | 2 pares (4 OS), números diferentes, ambas ativas; num dos pares as duas criadas no mesmo instante — cara de cadastro em dobro, não de "versão" |
+| `external` / `ticket` | não diferenciam (um valor único para todas / nulo) |
+| Campo de status na OS | **não existe** |
+
+**Onde o status mora: nas atividades da OS** (`GET /orders/:id/tasks`, 200). Cada atividade
+tem `status`, `statusDescription` e `statusClassification`. Nas primeiras 100 OS:
+
+| Atividades por OS | Nº de OS |
+|---|---|
+| 1 | 88 |
+| 2 | 10 |
+| 3 | 1 |
+| 4 | 1 |
+
+Status encontrados: `done`, `pending`, `scheduled`, `reported`. **Nenhum "cancelado"** na
+amostra — o cancelamento pode estar em `statusClassification` (motivo), não confirmado.
+
+### Leitura
+
+O dado **não mostra OS duplicadas**. O mais provável é que "quando atualiza o status da OS é
+criada uma nova" seja **uma atividade nova dentro da mesma OS** (12 de 100 OS têm mais de
+uma). Se isso se confirmar:
+
+- **uma obra continua sendo uma OS** — a sincronização (D1–D3) não duplica, e a primeira
+  carga não precisa esperar por isto;
+- o que falta é **ler as atividades** para o sistema saber o status real da obra (e,
+  talvez, o cancelamento) — frente nova, fora do que existe hoje.
+
+Confirmação pedida ao cliente na `pergunta-08-como-o-field-registra-status.md`, com exemplos
+reais.
