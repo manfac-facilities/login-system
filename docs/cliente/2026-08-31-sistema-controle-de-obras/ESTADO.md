@@ -9,7 +9,12 @@ histórico de 05/09 em diante, mantido como estava.
 
 **Na ordem:**
 
-1. **`OBRAS_CRON_SECRET` não chegou ao processo.** A rota `POST /api/obras/sincronizar`
+> **15/09, manhã — item 1 resolvido.** `POST /api/obras/sincronizar` sem segredo responde
+> **401**; build de 15/09 01:43:03 GMT, 10 chunks no mesmo timestamp. **Novo fato:** o cliente
+> pressionou por prazo e disse que em **21/09** vai dispensar um funcionário "por causa do
+> sistema" (`feedback-15-prazo-21-09-funcionario.md`) — o cronograma de 14/09 prevê **28/09**.
+
+1. ~~**`OBRAS_CRON_SECRET` não chegou ao processo.**~~ Resolvido em 15/09 (acima). A rota `POST /api/obras/sincronizar`
    responde **503** com e sem o Bearer — o código só devolve 503 quando a variável está vazia
    (`route.ts:26-28`). O João pôs no EasyPanel e deployou. Conferir a linha no Environment
    (`NOME=valor` na mesma linha, salva) e deployar de novo. Sucesso = **401** sem o segredo.
