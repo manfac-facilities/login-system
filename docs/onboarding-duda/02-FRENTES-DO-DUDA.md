@@ -703,10 +703,22 @@ tarefas, reversível por ação humana) está no feedback 11. **`cancelado_por` 
 estruturado, não texto livre** — o porquê está lá, e vale ler: é a mesma armadilha que o
 avanço físico da planilha caiu, com `0.9` numa linha e `95` em outra.
 
-As três perguntas que continuam com o cliente: se qualquer analista pode cancelar ou só
-administrador; o que fazer com obra cancelada **depois de executada**, onde há trabalho a
-faturar; e se, no Field, a OS cancelada é arquivada ou muda de status — porque isso define
-se o sistema consegue detectar o cancelamento sozinho.
+**As três perguntas foram respondidas pelo cliente em 14/09/2026**
+(`docs/cliente/2026-08-31-sistema-controle-de-obras/pergunta-07-cancelamento-e-pedido-de-compra.md`):
+
+- **Quem cancela: qualquer pessoa com acesso** ao módulo (1A). Sem trava por papel.
+- **Obra já executada não se cancela** (2B): segue a esteira até faturar o que foi feito. Na
+  prática, "Cancelar" só existe **antes** de a execução em campo ser concluída — o que deixa
+  a frente menor, não maior.
+- **No Field, a OS cancelada continua ativa, com status "cancelado"** — talvez arquivada no
+  futuro (3B). A D2.1 só reage a `archived`, e a J3 não encontrou campo de status em
+  `/orders`. **Portanto o cancelamento é manual no sistema.** Não tente detectá-lo pela
+  sincronização sem uma verificação da API antes (ver também `feedback-13-os-duplicadas-no-field.md`).
+
+Na mesma resposta vieram duas decisões que **não são desta frente**, mas mexem nos mesmos
+arquivos: a etapa `aprovarOS` passa a se chamar **"Executado - pendente aprovação OS"**, e o
+**pedido de compra (número + data) é pré-requisito para faturar**. As duas entram com a J4 e
+com a frente de pedido de compra — não as antecipe aqui.
 
 ---
 
