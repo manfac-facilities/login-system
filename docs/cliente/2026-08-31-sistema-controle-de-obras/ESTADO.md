@@ -3,6 +3,32 @@
 Atualizado em 11/09/2026, de manhã. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
 
+## ▶ Retomar aqui — fim de 14/09/2026
+
+**No ar:** D1, D2, D2.1 e D3 (build de 15/09 01:08 GMT). **0 obras.** Nada foi puxado do Field.
+
+**Na ordem:**
+
+1. **`OBRAS_CRON_SECRET` não chegou ao processo.** A rota `POST /api/obras/sincronizar`
+   responde **503** com e sem o Bearer — o código só devolve 503 quando a variável está vazia
+   (`route.ts:26-28`). O João pôs no EasyPanel e deployou. Conferir a linha no Environment
+   (`NOME=valor` na mesma linha, salva) e deployar de novo. Sucesso = **401** sem o segredo.
+2. **Mockup da J4 v01 revisado pelo cliente** (`feedback-14-mockup-j4-v01.md`): **D aprovada**;
+   A, B, C, E e F para ajustar. Antes da v02, fechar com o João: (a) nome da etapa —
+   "Pendente aprovação da OS pelo cliente" × "Executado - pendente aprovação OS" (pergunta 07);
+   (b) "Relatório de entrega" continua ou sai; (c) motivos iniciais de remarcação; (d) SLA 2
+   conta até quando, e prazos-alvo dos dois SLAs. Já claro: origem no bloco de autorização;
+   texto sem DPSP; atenção > 20 dias e crítico > 30; SLA 1 = dias desde a liberação sem OS
+   aprovada; SLAs são pilar da reunião semanal. **Feedback de mockup só por WhatsApp.**
+3. **Enviar a pergunta 08** (`pergunta-08-como-o-field-registra-status.md`). A medição de
+   14/09 mostrou **175 OS, nenhum número repetido** e o status nas **atividades** da OS
+   (`/orders/:id/tasks`) — o "duplicado" do feedback 13 é, provavelmente, atividade nova.
+4. Com a 08 confirmando: **pergunta 06** (primeira carga) com **175** OS; depois Vault +
+   jobs do `pg_cron` (completa em `5 6 * * *`) e a D4.
+
+**Sem dono:** dois jobs `pg_cron` fora deste repo (`field-sync-every-5-min`,
+`financeiro-producao-catalogo`) e as Edge Functions `sync`, `probe-field`, `field-probe`.
+
 ## 14/09/2026 — D1 e D2 no ar, D3 decidida, J3 provada
 
 | | |
