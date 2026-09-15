@@ -9,7 +9,8 @@
  * já gravadas continuam corretas sem backfill.
  */
 
-import { br, moeda, nomeEtapa, type Etapa } from './tipos'
+import { br, moeda, nomeEtapa, type Etapa, type ObraRow } from './tipos'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type BlocoHistorico =
   | 'Triagem'
@@ -138,4 +139,18 @@ export function linhasDeAlteracao(
   }
 
   return linhas
+}
+
+export async function gravarComHistorico(
+  supabase: SupabaseClient,
+  params: { obraId: string; campos: Record<string, unknown>; linhas: LinhaHistoricoNova[] }
+): Promise<{ data?: ObraRow; error?: string }> {
+  const { data, error } = await supabase.rpc('obras_aplicar_alteracao', {
+    p_obra_id: params.obraId,
+    p_campos: params.campos,
+    p_linhas: params.linhas,
+  })
+
+  if (error) return { error: 'Erro ao salvar a alteração da obra' }
+  return { data: data as ObraRow }
 }

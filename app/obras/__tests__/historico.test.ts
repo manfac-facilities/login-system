@@ -1,5 +1,5 @@
 import { ROTULO_CAMPO, type CampoHistorico } from '../_lib/historico'
-import { linhasDeAlteracao } from '../_lib/historico'
+import { linhasDeAlteracao, gravarComHistorico, type LinhaHistoricoNova } from '../_lib/historico'
 
 describe('ROTULO_CAMPO', () => {
   it('tem um rótulo para cada CampoHistorico, sem string vazia', () => {
@@ -124,5 +124,51 @@ describe('linhasDeAlteracao', () => {
     expect(r).toHaveLength(2)
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'etapa', de: 'Relatório de entrega', para: 'Pendente fechamento', motivo: null })
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'marco_relatorio', de: null, para: '21/08/2026', motivo: null })
+  })
+})
+
+describe('gravarComHistorico', () => {
+  it('chama obras_aplicar_alteracao com obraId, campos e linhas, e devolve a obra atualizada', async () => {
+    const obraAtualizada = { id: 'o1', pcm: 'YURI' }
+    const rpc = jest.fn().mockResolvedValue({ data: obraAtualizada, error: null })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    const linhas: LinhaHistoricoNova[] = [
+      { bloco: 'Cronograma', campo: 'pcm', de: null, para: 'YURI', motivo: null },
+    ]
+    const r = await gravarComHistorico(supabase, {
+      obraId: 'o1',
+      campos: { pcm: 'YURI' },
+      linhas,
+    })
+
+    expect(rpc).toHaveBeenCalledWith('obras_aplicar_alteracao', {
+      p_obra_id: 'o1',
+      p_campos: { pcm: 'YURI' },
+      p_linhas: linhas,
+    })
+    expect(r).toEqual({ data: obraAtualizada })
+  })
+
+  it('sem linhas (nada rastreado mudou), ainda chama a RPC com p_linhas vazio — o update precisa acontecer', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: { id: 'o1' }, error: null })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await gravarComHistorico(supabase, { obraId: 'o1', campos: { bloqueio: 'Clima' }, linhas: [] })
+
+    expect(rpc).toHaveBeenCalledWith('obras_aplicar_alteracao', {
+      p_obra_id: 'o1',
+      p_campos: { bloqueio: 'Clima' },
+      p_linhas: [],
+    })
+  })
+
+  it('erro da RPC vira { error } em português, nunca lança', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: { message: 'Sem acesso ao Controle de Obras' } })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    const r = await gravarComHistorico(supabase, { obraId: 'o1', campos: {}, linhas: [] })
+
+    expect(r).toEqual({ error: 'Erro ao salvar a alteração da obra' })
   })
 })
