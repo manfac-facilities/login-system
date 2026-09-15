@@ -9,6 +9,42 @@ histórico de 05/09 em diante, mantido como estava.
 
 **Na ordem:**
 
+## ▶ Retomar aqui — 15/09/2026, noite
+
+**Prazo novo:** o cliente quer o sistema **operando em 21/09**, quando dispensa o funcionário
+que faz o controle hoje (`feedback-15`). As tarefas dele estão em
+`transcricao-reuniao-2026-08-31.md:139-143`. Corte fechado pelo João em 15/09: até **18/09** a
+ficha editável, a remarcação, o histórico e a nova regra da crítica; **21–22/09** o botão
+"Concluir esta etapa"; **22–23/09** os SLAs, que não calculam antes dos marcos.
+
+**O que trava tudo:** a primeira carga **ainda não foi feita**. O João clica em "Puxar do
+Field" em `/obras/sincronizar`. São **185 OS** hoje (eram 175 em 14/09), com a lista literal em
+`entregas/os-field-atividade-spot-2026-09-15.xlsx` — a primeira lista salva do Field. Dentro
+dela há 3 OS de teste ("TESTE SPOT", "teste4", "testeheleno") e a **OS 7777 aparece com
+`archived: false`**, ou seja, o arquivamento que o cliente disse ter feito não pegou.
+
+**Respostas do cliente (feedback 16):** status muda como atividade nova na mesma OS; cancelar
+muda o status da atividade; uma OS por obra; pente fino terminado. Não respondeu os dois
+exemplos de OS.
+
+**Decisões do João em 15/09** (`decisoes-joao-2026-09-15.md`): etapa "Executado - pendente
+aprovação OS"; "Relatório de entrega" continua; SLA 2 conta até a obra ser **faturada**,
+amarelo acima de 15 e vermelho acima de 30; motivos de remarcação usam o vocabulário do
+`BLOQUEIOS` do Diário; **registrar uma data nunca derruba a contagem** da obra crítica, nem
+quando a data nova é a liberação (a âncora inclui a entrada).
+
+**Feito em 15/09:**
+
+| | |
+|---|---|
+| Guia de teste do cliente | publicado: https://claude.ai/artifact/Ec61mjo7kXf65CRx7QjGbN — 11 testes (T1–T11), pré-requisitos, limites e o que falta. Base: `status-testavel-2026-09-15.md` |
+| Conselho das 4 perguntas | 4 pareceres (`conselho-4-perguntas-*.md`). Veredito: só o fim do SLA 2 tinha peso; a pergunta sobre o funcionário já estava respondida na transcrição de 31/08 |
+| Regra da crítica | spec + plano + implementação na worktree `worktree-agent-ab4c29b5eb1b12b0b`. **Achado: os limiares reais eram 100 (crítica) e 60 (atenção), contando só de `aprovacao`** — os 20/30 do cliente são mudança de regra. Task 5 (decisão 12) bloqueada até alguém gravar `marco_faturou` |
+| Histórico de alterações | spec + plano + Parte 1 na worktree `worktree-agent-aec15e14f7f4ed10e`: migration `sdd-sql-obras-historico.sql` (**não aplicada**), `_lib/historico.ts`, `_historico.tsx`. Parte 2 (ligar nas actions) espera a J4 |
+| Mockup J4 v02 | `mockup-j4-v02.html`, com A–F ajustadas, a seção F de SLAs nova e uma seção de suposições declaradas. Falta publicar |
+
+**Nenhuma das duas worktrees foi mergeada nem deployada.** Migration do histórico não aplicada.
+
 > **15/09, manhã — item 1 resolvido.** `POST /api/obras/sincronizar` sem segredo responde
 > **401**; build de 15/09 01:43:03 GMT, 10 chunks no mesmo timestamp. **Novo fato:** o cliente
 > pressionou por prazo e disse que em **21/09** vai dispensar um funcionário "por causa do
