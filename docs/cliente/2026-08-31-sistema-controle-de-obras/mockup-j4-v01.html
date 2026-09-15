@@ -1,0 +1,1145 @@
+<title>Mockup J4 — completar a obra</title>
+<style data-pagina>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:1180px;margin:0 auto;padding-block:22px 90px;padding-inline:16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  h1.titulo{font-size:22px;margin:0 0 6px;letter-spacing:-.015em}
+  .topo{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin-bottom:26px}
+  .topo p{margin:0 0 8px;color:var(--ink-dim);font-size:13px;max-width:80ch}
+  .topo ul{margin:0 0 8px;padding-left:18px;color:var(--ink-dim);font-size:13px}
+  .topo b{color:var(--ink)}
+  .aviso-save{font-size:12px;color:var(--warn);margin:6px 0 0}
+
+  /* ---------- seções ---------- */
+  .sec{border-top:1px solid var(--line);padding-top:22px;margin-top:10px}
+  .sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:var(--r-sm);padding:3px 9px}
+  .sec-h h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .estados{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 14px;padding:4px;border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.18)}
+  .estados .lbl{margin:0 6px 0 4px}
+  .estados button{background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:5px 11px;color:var(--ink-dim);font-size:12.5px}
+  .estados button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .estados button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:var(--line)}
+  .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .field-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--ink-faint);border:1px solid var(--line);border-radius:99px;padding:0 6px;margin-left:6px;white-space:nowrap}
+  .nota-sec{font-size:12px;color:var(--ink-faint);border-left:2px solid var(--line);padding-left:10px;margin:12px 0 0;max-width:90ch}
+  .nota-sec b{color:var(--ink-dim)}
+
+  /* ---------- componentes da ficha ---------- */
+  .head{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .head h3{margin:0;font-size:17px;letter-spacing:-.01em}
+  .head .sub{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:2px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line);color:var(--ink-dim)}
+  .pill.definir{color:var(--accent);background:var(--accent-soft);border-color:rgba(240,90,40,.42)}
+  .pill.ok{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .pill.info{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.crit{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.35)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.35)}
+  .pill.num{font-family:var(--mono)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px}
+  .box-h .dir{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .box-b{padding:13px 14px}
+  .box-f{padding:8px 14px;border-top:1px dashed var(--line-soft);font-size:11.5px;color:var(--ink-faint)}
+  .box-f a,.link{color:var(--accent);background:none;border:0;padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+  .dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px;margin:0}
+  .dl dt{color:var(--ink-faint);font-size:11.5px;padding-top:1px}
+  .dl dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+  .vazio{color:var(--accent);font-weight:500}
+  .txt{font-size:12.5px;color:var(--ink-dim);margin:10px 0 0;line-height:1.55}
+  .txt b{color:var(--ink)}
+  .aviso{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;border:1px solid rgba(240,90,40,.42);background:rgba(240,90,40,.07);border-left:4px solid var(--accent);border-radius:var(--r);padding:13px 16px;margin-bottom:14px}
+  .aviso h4{margin:0 0 4px;font-size:14px;color:var(--accent)}
+  .aviso p{margin:0;font-size:13px;color:var(--ink-dim);max-width:70ch}
+  .aviso p b{color:var(--ink)}
+  .aviso .cont{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(240,90,40,.45);border-radius:99px;padding:3px 10px;white-space:nowrap}
+  .aviso.warn{border-color:rgba(244,183,63,.4);background:rgba(244,183,63,.06);border-left-color:var(--warn)}
+  .aviso.warn h4{color:var(--warn)}
+
+  /* ---------- formulário ---------- */
+  .campo{display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:10px 11px}
+  .campo .rot{display:flex;align-items:center;gap:8px;font-size:13px}
+  .mk{width:18px;height:18px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700;background:var(--line);color:var(--ink-dim)}
+  .campo.ok .mk{background:var(--ok);color:#04231a}
+  .campo .dica{font-size:11.5px;color:var(--ink-faint)}
+  .campo.invalido{border-color:rgba(255,77,109,.6)}
+  .campo .msg{font-size:12px;color:var(--crit);font-weight:600}
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .in:disabled{opacity:.55}
+  .ro{font-size:13px;padding:6px 0 2px;overflow-wrap:anywhere}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fgrid .larga{grid-column:1/-1}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .acoes{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:8px 15px;border-radius:var(--r-sm);font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.ghost:hover:not(:disabled){color:var(--ink);border-color:#2b4f7d}
+  .btn.mini{padding:3px 10px;font-size:11.5px;text-transform:none;letter-spacing:0}
+  .hint{font-size:12px;color:var(--ink-faint)}
+  .hint.ok{color:var(--ok)}
+  .erro-box{border:1px solid rgba(255,77,109,.5);background:var(--crit-soft);border-left:4px solid var(--crit);border-radius:var(--r-sm);padding:10px 12px;margin-top:12px;font-size:12.5px;color:var(--ink-dim)}
+  .erro-box strong{display:block;color:var(--crit);font-size:13px;margin-bottom:3px}
+  .erro-box b{color:var(--ink)}
+  .remarca{border:1px solid rgba(244,183,63,.45);background:var(--warn-soft);border-radius:var(--r-sm);padding:10px 12px}
+  .remarca strong{color:var(--warn);font-size:13px}
+  .remarca p{margin:3px 0 8px;font-size:12.5px;color:var(--ink-dim)}
+  .sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+  .sw input{accent-color:var(--accent);width:16px;height:16px}
+  .estado-vazio{border:1px dashed var(--line);border-radius:var(--r);padding:26px 18px;text-align:center;color:var(--ink-dim);font-size:13px;background:var(--panel)}
+  .estado-vazio strong{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+
+  /* ---------- esteira ---------- */
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .passo:last-child{border-bottom:0}
+  .passo .dot{margin-top:5px;width:11px;height:11px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.45}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1;box-shadow:0 0 0 4px var(--accent-soft)}
+  .passo.pulado .dot{background:transparent;border:2px dashed var(--ink-faint);opacity:1}
+  .passo .corpo{flex:1;min-width:0}
+  .passo .nm{font-weight:650;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.naoaplica .nm{color:var(--ink-faint)}
+  .passo .meta{font-size:11.5px;color:var(--ink-dim);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:1px}
+  .passo .quando{flex:none;font-size:12px;text-align:right;white-space:nowrap}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.pulado .quando,.passo.futuro .quando,.passo.naoaplica .quando{color:var(--ink-faint)}
+  .passo .extra{margin-top:7px;font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .passo .extra b{color:var(--ink)}
+  .aqui{border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 8px}
+  .desvio{border:1px solid var(--line);border-radius:4px;font-size:10px;color:var(--ink-dim);padding:0 5px;font-weight:500}
+  .corrige{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .corrige .in{width:auto}
+
+  /* ---------- histórico ---------- */
+  .filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{background:rgba(0,0,0,.2);border:1px solid var(--line);color:var(--ink-dim);padding:5px 11px;border-radius:var(--r-sm);font-size:12.5px}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:118px 1fr;gap:4px 14px;padding:10px 0;border-bottom:1px dashed var(--line-soft);font-size:13px}
+  .hist li:last-child{border-bottom:0}
+  .hist .qd{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)}
+  .hist .qd span{display:block;color:var(--ink-dim);font-family:var(--sans);font-weight:600}
+  .hist .mv{color:var(--ink-dim)}
+  .hist .mv b{color:var(--ink)}
+  .hist .antigo{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.5)}
+  .hist .mot{font-size:12px;color:var(--warn);margin-top:2px}
+  .hist li.pendente{opacity:.7}
+  .bloco-tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-right:6px}
+
+  /* ---------- regra da crítica ---------- */
+  .regra{display:flex;flex-direction:column;gap:6px;margin:0 0 14px;padding:0;list-style:none;counter-reset:r}
+  .regra li{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--ink-dim)}
+  .regra li::before{counter-increment:r;content:counter(r);font-family:var(--mono);font-weight:700;color:var(--accent);flex:none;width:18px}
+  .regra b{color:var(--ink)}
+  .exemplos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .ex{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--sev,var(--line));border-radius:var(--r);padding:12px 13px}
+  .ex .os{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .ex .nm{font-weight:650;font-size:13px;margin:1px 0 8px}
+  .ex .dl{font-size:12px}
+  .ex .res{margin-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .ex .big{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;color:var(--sev,var(--ink))}
+  .ex .antes{font-size:11.5px;color:var(--ink-faint);margin-top:8px;border-top:1px dashed var(--line-soft);padding-top:7px}
+
+  /* ---------- diálogo ---------- */
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:0;max-width:560px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(3,8,18,.72)}
+  .dlg-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);font-weight:650}
+  .dlg-b{padding:14px 16px;font-size:13px;color:var(--ink-dim)}
+  .dlg-b ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+  .dlg-b b{color:var(--ink)}
+  .dlg-f{padding:0 16px 14px;display:flex;gap:10px;flex-wrap:wrap}
+
+  /* ---------- revisão ---------- */
+  .fb{margin:18px 0 8px;border:1px dashed var(--line);border-radius:var(--r);padding:11px 14px;background:rgba(0,0,0,.15)}
+  .fb-h{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  .fb-h .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+  .fb-radios{display:flex;gap:6px;flex-wrap:wrap}
+  .fb-radios label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-dim);border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 11px;cursor:pointer;background:rgba(0,0,0,.2)}
+  .fb-radios input{accent-color:var(--accent);margin:0}
+  .fb-radios label:has(input:checked){border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+  .fb-radios label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+  .fb-st{margin-left:auto;font-size:11.5px;color:var(--ink-faint)}
+  .fb-st.erro{color:var(--warn)}
+  .fb-in{min-height:46px;border:1px solid var(--line);border-radius:var(--r-sm);background:rgba(0,0,0,.25);padding:9px 11px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  .fb-in:empty::before{content:attr(data-ph);color:var(--ink-faint)}
+  .fb-in:focus{border-color:var(--accent);outline:none}
+
+  @media (max-width:860px){.grid2,.exemplos{grid-template-columns:1fr}}
+  @media (max-width:560px){
+    .fgrid{grid-template-columns:1fr}
+    .hist li{grid-template-columns:1fr}
+    .aviso .cont{margin-left:0}
+    .fb-st{margin-left:0;width:100%}
+    .passo{flex-wrap:wrap}
+    .passo .quando{width:100%;text-align:left;padding-left:23px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;scroll-behavior:auto !important}}
+</style>
+
+<div class="pagina">
+<h1 class="titulo">Mockup J4 — completar a obra</h1>
+<div class="topo">
+  <p>A obra nasce do Field com <b>três campos</b> (número da OS, loja e descrição). Estas telas mostram como o resto é completado, quem mexeu e como a obra parada aparece. Cada seção tem um seletor de estado: troque para ver a mesma tela vazia, salvando, com erro e sem acesso.</p>
+  <ul>
+    <li><b>Julgue:</b> o que cada botão faz, o que cada diálogo promete, os textos marcados <span class="novo">texto novo</span> (substituem textos errados do mockup aprovado) e a regra da obra crítica (seção E).</li>
+    <li><b>Ignore:</b> cor, tipografia e espaçamento. São os do hub e não estão em julgamento. Dados de exemplo são inventados.</li>
+  </ul>
+  <p>Deixe sua revisão embaixo de cada seção. Ela é salva quando você marca uma opção ou sai do campo de comentário.</p>
+  <p class="aviso-save" id="aviso-save" hidden>Salvamento indisponível nesta visualização. O que você marcar fica só neste navegador.</p>
+</div>
+
+<section class="sec" id="sec-A" aria-labelledby="h-A">
+  <div class="sec-h"><span class="tag">A</span><div>
+    <h2 id="h-A">Triagem editável</h2>
+    <p>Obra em <b>Aguardando definição</b>. Os 5 obrigatórios e a liberação continuam; entra o bloco opcional <b>Dados da obra</b>, com <b>Salvar dados</b> separado de <b>Liberar</b>. Número, loja e descrição ficam só leitura.</p>
+  </div></div>
+  <div class="estados" data-sec="A"></div>
+  <div class="palco" id="palco-A"></div>
+  <p class="nota-sec">Por que "Salvar dados" é separado de "Liberar": a liberação chega por telefone antes da obra, e a aprovação da OS costuma chegar meses depois. Quem souber quem liberou, tipo, valor ou aprovação antes de ter equipe salva agora tudo o que preencheu, sem liberar e sem inventar dado.</p>
+  <div class="fb" data-fb="A"></div>
+</section>
+
+<section class="sec" id="sec-B" aria-labelledby="h-B">
+  <div class="sec-h"><span class="tag">B</span><div>
+    <h2 id="h-B">Ficha da obra com blocos editáveis</h2>
+    <p>Obra já liberada, em andamento. Cada bloco (Autorização, Identificação, Cronograma) tem seu <b>Editar</b> e vira formulário com <b>Salvar</b> e <b>Cancelar</b>. Mudar o <b>início</b> abre remarcação com motivo obrigatório; a <b>duração</b> muda livre. A ordem dos blocos é a da ficha aprovada.</p>
+  </div></div>
+  <div class="estados" data-sec="B"></div>
+  <div class="palco" id="palco-B"></div>
+  <p class="nota-sec">Experimente: em <b>Com dados</b>, clique em Editar no Cronograma e troque a data de início. Depois troque só a duração. As alterações salvas aparecem no rodapé do bloco, em Remarcações e no Histórico (seção D).</p>
+  <div class="fb" data-fb="B"></div>
+</section>
+
+<section class="sec" id="sec-C" aria-labelledby="h-C">
+  <div class="sec-h"><span class="tag">C</span><div>
+    <h2 id="h-C">Esteira com "Concluir esta etapa"</h2>
+    <p>O passo em que a obra está tem o botão. O diálogo diz tudo o que acontece antes de gravar. Passo concluído mostra a data (corrigível); passo pulado mostra <b>sem data registrada</b>, nunca uma data inventada.</p>
+  </div></div>
+  <div class="estados" data-sec="C"></div>
+  <div class="palco" id="palco-C"></div>
+  <p class="nota-sec"><b>Nomes do fim da esteira:</b> "Pendente fechamento" e "Pendente faturamento" são os nomes atuais do código. Eles dependem da pergunta ao cliente sobre pedido de compra, ainda não enviada. Veja a seção F.</p>
+  <div class="fb" data-fb="C"></div>
+</section>
+
+<section class="sec" id="sec-D" aria-labelledby="h-D">
+  <div class="sec-h"><span class="tag">D</span><div>
+    <h2 id="h-D">Histórico de alterações</h2>
+    <p>Uma linha por campo alterado: bloco, campo, valor antigo, valor novo, quem e quando. Motivo só aparece na remarcação, que é onde ele é obrigatório. Troque entre a obra da seção B (edições de bloco) e a da seção C (etapa concluída pelo botão, data corrigida, passo pulado).</p>
+  </div></div>
+  <div class="estados" data-sec="D"></div>
+  <div class="palco" id="palco-D"></div>
+  <div class="fb" data-fb="D"></div>
+</section>
+
+<section class="sec" id="sec-E" aria-labelledby="h-E">
+  <div class="sec-h"><span class="tag">E</span><div>
+    <h2 id="h-E">Regra da obra crítica <span class="novo">regra revista</span></h2>
+    <p>A obra continua virando <b>crítica aos 100 dias</b> (e âmbar aos 60). O que muda é <b>de que data</b> esses dias são contados. Hoje só se conta da aprovação, e obra sem aprovação nunca aparece.</p>
+  </div></div>
+  <div class="box"><div class="box-b">
+    <ol class="regra">
+      <li><span>Conta da <b>data mais antiga</b> entre a <b>liberação</b> (quem deu o OK para executar) e a <b>aprovação da OS</b>.</span></li>
+      <li><span>Não tem nenhuma das duas? Conta da <b>data de entrada pelo Field</b>.</span></li>
+      <li><span>Registrar uma data nova <b>nunca derruba a contagem</b>: se ela é mais recente, os dias continuam de onde estavam.</span></li>
+    </ol>
+    <p class="txt" style="margin-top:0">O selo de dias diz sempre de onde está contando: "109 dias desde a aprovação", "104 dias desde a liberação", "75 dias desde a entrada". Exemplos com hoje = <b>14/09/2026</b>:</p>
+  </div></div>
+  <div class="exemplos" id="palco-E" style="margin-top:12px"></div>
+  <div class="acoes">
+    <button type="button" class="btn ghost" id="e-simular" aria-pressed="false">Simular: a OS da obra 2 é aprovada hoje</button>
+    <span class="hint" id="e-simular-txt">Mostra que uma aprovação tardia não derruba a contagem.</span>
+  </div>
+  <p class="nota-sec"><b>Resíduo que continua, para julgar:</b> obra sem liberação e sem aprovação conta da entrada pelo Field (obra 3). Se a primeira autorização for registrada com a data de hoje, a contagem dela passa a partir de hoje. Evitar isso exigiria pôr a entrada na conta da data mais antiga, o que mudaria a contagem de toda obra que tem aprovação. A entrada é a data da sincronização: obra antiga que chegar no pente fino sem nenhuma das duas datas só vira crítica 100 dias depois de sincronizada.</p>
+  <div class="fb" data-fb="E"></div>
+</section>
+
+<section class="sec" id="sec-F" aria-labelledby="h-F">
+  <div class="sec-h"><span class="tag">F</span><div>
+    <h2 id="h-F">Pendente do cliente</h2>
+    <p>O que este mockup não decide, porque depende de resposta do cliente.</p>
+  </div></div>
+  <div class="box"><div class="box-b">
+    <dl class="dl">
+      <dt>A pergunta</dt><dd>Feedback 09: "cliente ainda não enviou o pedido de compra". São 4 perguntas sobre pedido de compra, <b>ainda não enviadas</b> ao cliente.</dd>
+      <dt>Nome em jogo 1</dt><dd>A etapa do desvio: <b>"Pendente fechamento"</b> (código hoje) ou <b>"Pendente aprovação da OS"</b> (texto do feedback 09).</dd>
+      <dt>Nome em jogo 2</dt><dd>A data que encerra "Pendente faturamento": <b>"Faturamento liberado pelo cliente"</b> (código hoje) ou <b>"Pedido de compra recebido em"</b>.</dd>
+      <dt>Como o mockup tratou</dt><dd>Usa os <b>nomes atuais do código</b> na esteira, no diálogo de concluir e no histórico. Se a resposta mudar os nomes, mudam só esses textos: botão, diálogo, colunas e regra continuam iguais.</dd>
+      <dt>O que não muda</dt><dd>A mecânica de "Concluir esta etapa", as datas corrigíveis e o "sem data registrada" valem para qualquer nome.</dd>
+    </dl>
+  </div></div>
+  <div class="fb" data-fb="F"></div>
+</section>
+
+<dialog id="dlg" aria-labelledby="dlg-h">
+  <div class="dlg-h" id="dlg-h"></div>
+  <div class="dlg-b" id="dlg-b"></div>
+  <div class="dlg-f" id="dlg-f"></div>
+</dialog>
+</div>
+
+<script type="application/json" id="revisao-estado">{"A":{"voto":null,"comentario":""},"B":{"voto":null,"comentario":""},"C":{"voto":null,"comentario":""},"D":{"voto":null,"comentario":""},"E":{"voto":null,"comentario":""},"F":{"voto":null,"comentario":""}}</script>
+
+<script data-pagina>
+/* Capturado ANTES de qualquer renderização, e só das partes marcadas da página:
+   nunca o DOM vivo inteiro, nem o que o visualizador injeta no documento. */
+const FONTE = Object.freeze({
+  title: (document.querySelector('title') || {}).outerHTML || '<title>Mockup J4 — completar a obra</title>',
+  style: document.querySelector('style[data-pagina]').outerHTML,
+  corpo: document.querySelector('.pagina').outerHTML,
+  script: (document.currentScript || document.querySelector('script[data-pagina]')).outerHTML
+});
+
+(function(){
+'use strict';
+const HOJE = '2026-09-14';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const br = iso => { if(!iso) return '—'; const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+const ms = iso => { const p = iso.split('-'); return Date.UTC(+p[0], p[1] - 1, +p[2]); };
+const dias = iso => iso ? Math.round((ms(HOJE) - ms(iso)) / 864e5) : null;
+const soma = (iso, n) => (!iso || !n) ? null : new Date(ms(iso) + n * 864e5).toISOString().slice(0, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+const RESP = ['AMANDA','LUANA','YURI'];
+const EQUIPES = ['ALEX','MANFAC-4','MANFAC-7','MANFAC-19','Prestador a contratar'];
+const ANALISTAS = ['AMANDA','JUAN','LEANDRO'];
+const TIPOS = ['CIVIL','ELÉTRICA','HIDRÁULICA','PINTURA','SERRALHERIA','Outro'];
+const ORIGENS = ['Sistema DPSP','E-mail do cliente','Telefone','Outro'];
+const PRIOR = ['Normal','Urgente'];
+
+const opts = (l, v, ph) => '<option value="">' + esc(ph) + '</option>' + l.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+const sel = (id, l, v, ph, dis) => `<select class="in" id="${id}"${dis ? ' disabled' : ''}>${opts(l, v, ph)}</select>`;
+const inp = (id, type, v, extra) => `<input class="in" id="${id}" type="${type}" value="${esc(v)}" ${extra || ''}>`;
+const campoF = (id, rot, ctl, erro, dica, larga) =>
+  `<div class="campo${erro ? ' invalido' : ''}${larga ? ' larga' : ''}"><label class="rot" for="${id}">${rot}</label>${ctl}${dica ? `<span class="dica">${dica}</span>` : ''}${erro ? `<span class="msg" role="alert">${erro}</span>` : ''}</div>`;
+const erroBox = (t, b, extra) => `<div class="erro-box" role="alert"><strong>${t}</strong>${b}${extra || ''}</div>`;
+const valorInvalido = s => { if(!s) return false; const n = Number(String(s).replace(/\./g, '').replace(',', '.')); return !Number.isFinite(n) || n < 0; };
+const semAcesso = () => `<div class="estado-vazio" role="status"><strong>Sua conta não tem acesso ao Controle de Obras</strong>Peça a um administrador do hub para liberar o acesso em Admin → Acessos. <span class="novo">texto novo</span></div>`;
+
+/* Regra da seção E (decisão 5 revista): a data MAIS ANTIGA entre liberação e
+   aprovação; sem nenhuma das duas, a entrada. Data nova nunca derruba a contagem. */
+function ancora(o){
+  const lib = o.libPor ? (o.libEm || HOJE) : null;
+  if(o.aprov && lib) return lib < o.aprov ? {nome:'liberação', data:lib} : {nome:'aprovação', data:o.aprov};
+  if(o.aprov) return {nome:'aprovação', data:o.aprov};
+  if(lib) return {nome:'liberação', data:lib};
+  return {nome:'entrada', data:o.entrada};
+}
+function selo(o, definir){
+  const a = ancora(o), n = dias(a.data);
+  const cls = definir ? '' : n >= 100 ? ' crit' : n >= 60 ? ' warn' : '';
+  return `<span class="pill num${cls}">${n} ${n === 1 ? 'dia' : 'dias'} desde a ${a.nome}</span>`;
+}
+
+/* ---------- seletor de estado por seção ---------- */
+const ESTADOS = [['dados','Com dados'],['recem','Recém-chegada do Field'],['salvando','Salvando'],['erro','Erro ao salvar'],['sem','Sem acesso']];
+const UI = {A:{estado:'dados'}, B:{estado:'dados'}, C:{estado:'dados'}, D:{estado:'dados'}};
+const RENDER = {};
+function montarEstados(){
+  document.querySelectorAll('.estados').forEach(el => {
+    const s = el.dataset.sec;
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', 'Estado da seção ' + s);
+    el.innerHTML = '<span class="lbl">Estado</span>' + ESTADOS.map(([k, t]) =>
+      `<button type="button" id="est-${s}-${k}" data-est="${k}" aria-pressed="${UI[s].estado === k}">${t}</button>`).join('');
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button[data-est]');
+      if(!b) return;
+      UI[s].estado = b.dataset.est;
+      el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      RENDER[s](true);
+    });
+  });
+}
+
+/* ---------- diálogo ---------- */
+function abrirDlg(titulo, corpo, botoes){
+  const d = $('dlg');
+  $('dlg-h').textContent = titulo;
+  $('dlg-b').innerHTML = corpo;
+  const f = $('dlg-f');
+  f.innerHTML = '';
+  botoes.forEach(b => {
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'btn' + (b.ghost ? ' ghost' : ''); el.id = b.id; el.textContent = b.t;
+    el.addEventListener('click', () => { d.close ? d.close() : d.removeAttribute('open'); if(b.fn) b.fn(); });
+    f.appendChild(el);
+    if(b.ghost) el.autofocus = true;
+  });
+  if(d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+
+/* =====================================================================
+   A — TRIAGEM
+   ===================================================================== */
+const A_VAZIO = {resp:'',equipe:'',prioridade:'',inicio:'',duracao:'',libPor:'',libEm:'',tipo:'',valor:'',origem:'',analista:'',aprov:''};
+const A_CHEIO = {resp:'YURI',equipe:'MANFAC-7',prioridade:'Urgente',inicio:'2026-09-16',duracao:'6',libPor:'LEANDRO',libEm:'2026-09-10',tipo:'CIVIL',valor:'4.380,00',origem:'Sistema DPSP',analista:'LEANDRO',aprov:''};
+const TRI = [['resp','Responsável da obra'],['equipe','Equipe / prestador'],['prioridade','Prioridade'],['inicio','Data de início','quando a equipe entra na loja'],['duracao','Duração em dias','a data final o sistema calcula']];
+const A_ENTRADA = '2026-09-09';
+let A;
+
+const textoFaltam = f => f
+  ? `Faltam ${f} ${f === 1 ? 'campo' : 'campos'}. Enquanto isso a obra não aparece para ninguém responder.`
+  : 'Pronta. Ao liberar, ela entra na base como Levantamento e passa a ser cobrada todo dia.';
+const textoAutA = v => v.aprov
+  ? `Esta obra já tem <b style="color:var(--ok)">OS aprovada</b> em ${br(v.aprov)} (informada em Dados da obra). Não precisa de liberação: a OS já é a autorização.`
+  : `Esta obra <b style="color:var(--accent)">ainda não tem OS aprovada</b>. Se algum analista da DPSP autorizou começar mesmo assim, registre aqui quem foi e quando. Sem isso a obra vai para campo sem ninguém nomeado que tenha autorizado.`;
+
+RENDER.A = function(reset){
+  const est = UI.A.estado, p = $('palco-A');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(reset) A = {v: clone(est === 'recem' ? A_VAZIO : A_CHEIO), salvandoDados: est === 'salvando', liberando: est === 'salvando', erroDados: est === 'erro', dadosMsg:'', erros:{}, liberada:false};
+  const v = A.v, dis = A.salvandoDados || A.liberando;
+  if(A.liberada){
+    p.innerHTML = `<div class="estado-vazio" role="status" style="border-style:solid;border-color:rgba(53,201,138,.45)"><strong style="color:var(--ok)">Obra liberada</strong>No sistema, você volta para a base e ela aparece em Levantamento, no diário de ${esc(v.resp)}.<div class="acoes" style="justify-content:center"><button type="button" class="btn ghost" id="a-rever">Ver a triagem de novo</button></div></div>`;
+    return;
+  }
+  const faltam = TRI.filter(c => !v[c[0]]).length;
+  const n = dias(A_ENTRADA);
+  const E = A.erros;
+  let h = `<div class="head"><div><h3>AV. ERNANI DO AMARAL PEIXOTO, 455 - CENTRO - NITERÓI/RJ</h3><div class="sub">OS 0926-011204 · ${v.tipo ? esc(v.tipo) : 'tipo a definir'} · ${v.valor ? 'R$ ' + esc(v.valor) : 'sem orçamento'}</div></div><div class="pills"><span class="pill definir">Aguardando definição</span>${selo({entrada:A_ENTRADA}, true)}</div></div>`;
+  h += `<div class="aviso"><div style="flex:1 1 300px"><h4>Obra nova, esperando definição <span class="novo">texto novo</span></h4><p>Ela entrou pelo Field em <b>${br(A_ENTRADA)}</b> e está esperando há <b>${n} dias</b>. Qualquer pessoa com acesso ao Controle de Obras pode completar, e fica registrado quem preencheu. Ela só entra no diário quando estes cinco campos estiverem preenchidos: é o checklist antes de começar a obra.</p></div><span class="cont" id="a-cont">${5 - faltam} de 5 preenchidos</span></div>`;
+  h += '<div class="grid2"><div class="col">';
+  h += `<div class="box"><div class="box-h">O que veio do Field <span class="novo">texto novo</span></div><div class="box-b"><dl class="dl">
+    <dt>Nº OS</dt><dd class="num">0926-011204 <span class="field-tag">vem do Field</span></dd>
+    <dt>Loja</dt><dd>AV. ERNANI DO AMARAL PEIXOTO, 455 - CENTRO - NITERÓI/RJ <span class="field-tag">vem do Field</span></dd>
+    <dt>Chamado</dt><dd>Infiltração no forro do estoque após chuva <span class="field-tag">vem do Field</span></dd></dl>
+    <p class="txt">O Field traz só estes três campos, e eles não se editam aqui. Se algum estiver errado, corrija no Field: a sincronização só preenche o que está vazio, então uma correção feita aqui nunca mais acompanharia o Field, sem ninguém ser avisado.</p></div></div>`;
+  h += `<div class="box"><div class="box-h">Dados da obra <span class="pill" style="text-transform:none;letter-spacing:0">opcional</span></div><div class="box-b"><div class="fgrid">
+    ${campoF('a-tipo', 'Tipo', sel('a-tipo', TIPOS, v.tipo, '— não sei ainda —', dis))}
+    ${campoF('a-valor', 'Valor (R$)', inp('a-valor', 'text', v.valor, 'inputmode="decimal" placeholder="ex.: 4.380,00"' + (dis ? ' disabled' : '')), E.valor)}
+    ${campoF('a-origem', 'Origem', sel('a-origem', ORIGENS, v.origem, '— não sei ainda —', dis))}
+    ${campoF('a-analista', 'Analista do cliente', sel('a-analista', ANALISTAS, v.analista, '— não sei ainda —', dis), null, 'analista da DPSP dono da OS')}
+    ${campoF('a-aprov', 'OS aprovada em', inp('a-aprov', 'date', v.aprov, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), E.aprov, 'Vazio: OS ainda não aprovada. Com data: a OS conta como aprovada, e é dessa data que os dias passam a contar.', true)}
+    </div>
+    <div class="acoes"><button type="button" class="btn ghost" id="a-salvar-dados"${dis ? ' disabled' : ''}>${A.salvandoDados ? 'Salvando…' : 'Salvar dados'}</button><span class="hint${A.dadosMsg ? ' ok' : ''}" id="a-dados-msg" aria-live="polite">${A.dadosMsg || 'Grava tudo o que estiver preenchido nesta tela, inclusive quem liberou e quando, sem liberar: a obra continua em Aguardando definição.'}</span></div>
+    ${A.erroDados ? erroBox('Não salvou os dados da obra', 'O servidor não confirmou a gravação, então <b>nada foi salvo</b>. O que você digitou continua nos campos. Clique em Salvar dados de novo; se falhar outra vez, anote os valores antes de sair desta página.') : ''}
+    </div></div>`;
+  h += '</div><div class="col">';
+  h += '<div class="box"><div class="box-h">O que falta definir</div><div class="box-b"><div class="stack">';
+  TRI.forEach(([k, rot, dica], i) => {
+    const id = 'a-' + k;
+    const ctl = k === 'resp' ? sel(id, RESP, v.resp, '— escolher —', dis)
+      : k === 'equipe' ? sel(id, EQUIPES, v.equipe, '— escolher —', dis)
+      : k === 'prioridade' ? sel(id, PRIOR, v.prioridade, '— escolher —', dis)
+      : k === 'inicio' ? inp(id, 'date', v.inicio, dis ? 'disabled' : '')
+      : inp(id, 'number', v.duracao, 'min="1" max="180"' + (dis ? ' disabled' : ''));
+    h += `<div class="campo${v[k] ? ' ok' : ''}${E[k] ? ' invalido' : ''}" id="a-campo-${k}"><label class="rot" for="${id}"><span class="mk">${v[k] ? '✓' : i + 1}</span>${rot}</label>${ctl}${dica ? `<span class="dica">${dica}</span>` : ''}${E[k] ? `<span class="msg" role="alert">${E[k]}</span>` : ''}</div>`;
+  });
+  h += `</div><div class="acoes" style="border-top:1px solid var(--line);padding-top:12px"><button type="button" class="btn" id="a-liberar"${faltam || dis ? ' disabled' : ''}>${A.liberando ? 'Liberando…' : 'Liberar para o diário do dia'}</button><span class="hint" id="a-faltam">${textoFaltam(faltam)}</span></div></div></div>`;
+  h += `<div class="box"><div class="box-h">Autorização para executar</div><div class="box-b"><p class="txt" style="margin-top:0" id="a-aut-txt">${textoAutA(v)}</p><div class="stack" style="margin-top:10px">
+    ${campoF('a-libPor', 'Liberado por', sel('a-libPor', ANALISTAS, v.libPor, '— ninguém liberou —', dis), E.libPor, 'analista da DPSP que deu o OK')}
+    ${campoF('a-libEm', 'Data da liberação', inp('a-libEm', 'date', v.libEm, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), E.libEm, 'é outra data, não a da aprovação da OS')}
+    </div></div></div>`;
+  h += '</div></div>';
+  p.innerHTML = h;
+};
+
+function atualizarA(){
+  const v = A.v, faltam = TRI.filter(c => !v[c[0]]).length;
+  $('a-cont').textContent = `${5 - faltam} de 5 preenchidos`;
+  TRI.forEach(([k], i) => { const c = $('a-campo-' + k); c.classList.toggle('ok', !!v[k]); c.querySelector('.mk').textContent = v[k] ? '✓' : i + 1; });
+  $('a-liberar').disabled = !!faltam;
+  $('a-faltam').textContent = textoFaltam(faltam);
+  $('a-aut-txt').innerHTML = textoAutA(v);
+}
+function focarInvalido(palco){ const c = $(palco).querySelector('.campo.invalido .in'); if(c) c.focus(); }
+
+function ligarA(){
+  const p = $('palco-A');
+  const aoMudar = e => {
+    const id = e.target.id || '';
+    if(!id.startsWith('a-') || !A || !(id.slice(2) in A.v)) return;
+    const k = id.slice(2);
+    A.v[k] = e.target.value;
+    if(A.dadosMsg){
+      A.dadosMsg = ''; const m = $('a-dados-msg'); m.className = 'hint'; m.textContent = 'Há alterações não salvas.';
+    }
+    atualizarA();
+  };
+  p.addEventListener('input', aoMudar);
+  p.addEventListener('change', aoMudar);
+  p.addEventListener('click', e => {
+    const id = (e.target.closest('button') || {}).id;
+    const v = A && A.v;
+    if(id === 'a-rever') RENDER.A(true);
+    if(id === 'a-salvar-dados'){
+      A.erros = {};
+      if(valorInvalido(v.valor)) A.erros.valor = 'Valor precisa ser um número em reais, como 4.380,00.';
+      if(v.aprov && v.aprov > HOJE) A.erros.aprov = 'A data de aprovação não pode ser depois de hoje.';
+      /* Decisão 13: grava tudo o que estiver preenchido, inclusive a liberação. */
+      if(v.libEm && !v.libPor) A.erros.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+      if(v.libEm && v.libEm > HOJE) A.erros.libEm = 'A data da liberação não pode ser depois de hoje.';
+      if(v.duracao && (+v.duracao < 1 || +v.duracao > 180)) A.erros.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+      if(Object.keys(A.erros).length){ RENDER.A(); focarInvalido('palco-A'); return; }
+      A.erroDados = false; A.salvandoDados = true; RENDER.A();
+      setTimeout(() => { A.salvandoDados = false; A.dadosMsg = 'Salvo agora, com o seu nome: tudo o que estava preenchido, inclusive a liberação. A obra continua em Aguardando definição.'; RENDER.A(); $('a-salvar-dados').focus(); }, 900);
+    }
+    if(id === 'a-liberar'){
+      A.erros = {};
+      if(v.libEm && !v.libPor) A.erros.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+      if(+v.duracao < 1 || +v.duracao > 180) A.erros.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+      if(Object.keys(A.erros).length){ RENDER.A(); focarInvalido('palco-A'); return; }
+      const an = ancora({aprov:v.aprov, libPor:v.libPor, libEm:v.libEm, entrada:A_ENTRADA});
+      const semCob = !v.aprov && !v.libPor;
+      abrirDlg('Liberar esta obra para o diário', `<p style="margin:0">Ao liberar:</p><ul>
+        <li>A obra sai de <b>Aguardando definição</b> e entra na base como <b>Levantamento</b>. Não volta para a triagem.</li>
+        <li>Passa a aparecer todo dia no <b>diário de ${esc(v.resp)}</b>, que responde se ela andou.</li>
+        <li>Os dias passam a contar da <b>${an.nome}</b> (${br(an.data)}): hoje são <b>${dias(an.data)}</b>. Com 100, ela vira crítica.</li>
+        ${v.libPor && !v.libEm ? '<li>A data da liberação está vazia: será gravada a data de hoje.</li>' : ''}
+        ${semCob ? '<li><b>Sem OS aprovada e sem ninguém que liberou:</b> ela entra marcada como <b>Sem cobertura</b>, em vermelho, até alguém preencher uma das duas.</li>' : ''}
+        <li>Os dados da obra preenchidos também são gravados. Tudo continua editável na ficha, e cada mudança fica no histórico com o seu nome.</li></ul>`,
+        [{id:'dlg-a-liberar', t:'Liberar agora', fn:() => { A.liberando = true; RENDER.A(); setTimeout(() => { A.liberando = false; A.liberada = true; RENDER.A(); const b = $('a-rever'); if(b) b.focus(); }, 1000); }},
+         {id:'dlg-a-voltar', t:'Voltar sem liberar', ghost:true}]);
+    }
+  });
+}
+
+/* =====================================================================
+   B — FICHA COM BLOCOS EDITÁVEIS
+   ===================================================================== */
+const ROT = {libPor:'Liberado por', libEm:'Data da liberação', aprov:'OS aprovada em', tipo:'Tipo', valor:'Valor', origem:'Origem', analista:'Analista do cliente', mau:'Mau uso', resp:'Responsável da obra', equipe:'Equipe / prestador', prioridade:'Prioridade', inicio:'Início planejado', duracao:'Duração'};
+const BLOCO = {aut:'Autorização', ide:'Identificação', cro:'Cronograma'};
+const fmt = (c, v) => (v === '' || v == null) ? '—' : c === 'mau' ? (v ? 'Sim' : 'Não') : ['libEm','aprov','inicio'].includes(c) ? br(v) : c === 'valor' ? 'R$ ' + v : c === 'duracao' ? v + ' dias' : v;
+const vv = v => (v === '' || v == null) ? '<span class="vazio">a definir</span>' : esc(v);
+
+const B_CHEIO = {os:'0826-010877', loja:'R. MARQUÊS DE PARANÁ, 110 - ICARAÍ - NITERÓI/RJ', desc:'Troca de piso cerâmico da área de vendas', etapa:'Em andamento', entrada:'2026-08-18',
+  aut:{libPor:'LEANDRO', libEm:'2026-08-20', aprov:''},
+  ide:{tipo:'CIVIL', valor:'18.450,00', origem:'Sistema DPSP', analista:'LEANDRO', mau:false},
+  cro:{resp:'LUANA', equipe:'MANFAC-7', prioridade:'Normal', inicio:'2026-08-24', duracao:'20'},
+  rod:{aut:['YURI','20/08'], ide:['AMANDA','02/09'], cro:['LUANA','26/08']},
+  remarc:[{data:'22/08/2026', de:'2026-08-20', para:'2026-08-24', motivo:'Loja pediu para começar depois do inventário do fim do mês', quem:'LUANA'}]};
+const B_VAZIO = {os:'0926-011388', loja:'R. GAVIÃO PEIXOTO, 212 - ICARAÍ - NITERÓI/RJ', desc:'Porta de enrolar da fachada travando', etapa:'Levantamento', entrada:'2026-09-09',
+  aut:{libPor:'', libEm:'', aprov:''}, ide:{tipo:'', valor:'', origem:'', analista:'', mau:false},
+  cro:{resp:'', equipe:'', prioridade:'', inicio:'', duracao:''}, rod:{}, remarc:[]};
+let B;
+
+const HIST = [
+  {q:'02/09/2026 10:21', quem:'AMANDA', bloco:'Identificação', campo:'Valor', de:'—', para:'R$ 18.450,00'},
+  {q:'02/09/2026 10:21', quem:'AMANDA', bloco:'Identificação', campo:'Tipo', de:'—', para:'CIVIL'},
+  {q:'26/08/2026 09:14', quem:'LUANA', bloco:'Cronograma', campo:'Duração', de:'15 dias', para:'20 dias'},
+  {q:'24/08/2026 07:50', quem:'LUANA', bloco:'Esteira', campo:'Etapa', de:'Levantamento', para:'Em andamento', obs:'pelo seletor de etapa'},
+  {q:'22/08/2026 16:40', quem:'LUANA', bloco:'Cronograma', campo:'Início planejado', de:'20/08/2026', para:'24/08/2026', mot:'Loja pediu para começar depois do inventário do fim do mês'},
+  {q:'20/08/2026 11:02', quem:'YURI', bloco:'Autorização', campo:'Liberado por', de:'—', para:'LEANDRO'},
+  {q:'20/08/2026 11:02', quem:'YURI', bloco:'Autorização', campo:'Data da liberação', de:'—', para:'20/08/2026'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Etapa', de:'Aguardando definição', para:'Levantamento', obs:'liberada para o diário'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Responsável da obra', de:'—', para:'LUANA'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Equipe / prestador', de:'—', para:'MANFAC-7'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Prioridade', de:'—', para:'Normal'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Início planejado', de:'—', para:'20/08/2026'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Duração', de:'—', para:'15 dias'}
+];
+
+const rodapeB = k => { const r = B.m.rod[k]; return r
+  ? `Editado por <b>${esc(r[0])}</b> em ${r[1]} · <button type="button" class="link" data-acao="hist" data-bloco="${k}" id="b-hist-${k}">ver no histórico</button>`
+  : `Sem edição desde a entrada pelo Field (${br(B.m.entrada)}).`; };
+const erroSalvarB = k => erroBox('Não salvou ' + {aut:'a autorização', ide:'a identificação', cro:'o cronograma'}[k],
+  'O servidor não confirmou, então <b>nada foi gravado</b>' + (k === 'cro' ? ': nem o início novo, nem a remarcação' : '') + '. O que você digitou continua abaixo. Clique em Salvar de novo. Se a mensagem disser que outra pessoa alterou esta obra, recarregue a página e refaça a alteração.');
+const precisaMotivo = () => { const o = B.m.cro, d = B.edit.cro; return !!(d && o.inicio && d.inicio && d.inicio !== o.inicio); };
+
+function blocoB(k, leitura, form, hint, bloq){
+  const ed = B.edit[k], sal = B.salvando[k];
+  const topo = ed ? '<span class="pill warn" style="text-transform:none;letter-spacing:0">editando</span>'
+    : `<button type="button" class="btn ghost mini" id="b-editar-${k}" data-acao="editar" data-bloco="${k}" aria-label="Editar ${BLOCO[k]}">Editar</button>`;
+  const corpo = !ed ? leitura : form + (B.erro[k] ? erroSalvarB(k) : '') +
+    `<div class="acoes"><button type="button" class="btn" id="b-salvar-${k}" data-acao="salvar" data-bloco="${k}"${sal || bloq ? ' disabled' : ''}>${sal ? 'Salvando…' : 'Salvar'}</button><button type="button" class="btn ghost" id="b-cancelar-${k}" data-acao="cancelar" data-bloco="${k}"${sal ? ' disabled' : ''}>Cancelar</button><span class="hint" id="b-hint-${k}" aria-live="polite">${sal ? 'Gravando no servidor. Não feche a página.' : hint}</span></div>`;
+  return `<div class="box" id="b-bloco-${k}"><div class="box-h">${BLOCO[k]}<span class="dir">${topo}</span></div><div class="box-b">${corpo}</div><div class="box-f">${rodapeB(k)}</div></div>`;
+}
+
+function dinCro(){
+  const o = B.m.cro, d = B.edit.cro, er = B.erros.cro || {}, dis = B.salvando.cro ? ' disabled' : '';
+  let h = '';
+  const fimAntes = soma(o.inicio, +o.duracao), fimDepois = soma(d.inicio, +d.duracao);
+  if(precisaMotivo()){
+    h += `<div class="remarca"><strong>Mudar o início é uma remarcação</strong><p>De <b>${br(o.inicio)}</b> para <b>${br(d.inicio)}</b>. Fica em Remarcações e no histórico, com o motivo.</p>
+      <label class="rot" for="b-cro-motivo">Motivo da remarcação (obrigatório)</label>
+      <input class="in" id="b-cro-motivo" type="text" value="${esc(d.motivo || '')}" placeholder="ex.: loja pediu para adiar"${dis}>
+      ${er.motivo ? `<span class="msg" role="alert" style="color:var(--crit);font-size:12px;font-weight:600">${er.motivo}</span>` : ''}</div>`;
+  }
+  if(fimAntes && fimDepois && fimAntes !== fimDepois) h += `<p class="hint" style="margin:8px 0 0">Final calculado: <b>${br(fimAntes)}</b> → <b>${br(fimDepois)}</b>.${d.duracao !== o.duracao ? ' A duração muda sem motivo.' : ''}</p>`;
+  return h;
+}
+function hintCro(){ return precisaMotivo() && !(B.edit.cro.motivo || '').trim() ? 'Escreva o motivo da remarcação para salvar.' : 'Duração, equipe e prioridade mudam sem motivo. Fica no histórico quem salvou.'; }
+
+RENDER.B = function(reset){
+  const est = UI.B.estado, p = $('palco-B');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(reset){
+    B = {m: clone(est === 'recem' ? B_VAZIO : B_CHEIO), edit:{}, salvando:{}, erro:{}, erros:{}};
+    if(est === 'salvando'){ B.edit.aut = {libPor:'LEANDRO', libEm:'2026-08-20', aprov:HOJE}; B.salvando.aut = true; }
+    if(est === 'erro'){
+      B.edit.aut = {libPor:'', libEm:'2026-08-20', aprov:''};
+      B.erros.aut = {libPor:'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.'};
+      B.edit.cro = Object.assign(clone(B.m.cro), {inicio:'2026-09-01', motivo:'Equipe MANFAC-7 deslocada para emergência em São Gonçalo'});
+      B.erro.cro = true;
+    }
+  }
+  const m = B.m, a = m.aut, i = m.ide, c = m.cro;
+  let h = `<div class="head"><div><h3>${esc(m.loja)}</h3><div class="sub">OS ${m.os} · ${i.tipo ? esc(i.tipo) : 'tipo a definir'} · ${i.valor ? 'R$ ' + esc(i.valor) : 'sem orçamento'}</div></div><div class="pills"><span class="pill info">${m.etapa}</span>${i.mau ? '<span class="pill warn">Mau uso</span>' : ''}${a.aprov ? '<span class="pill ok">OS aprovada</span>' : '<span class="pill crit">Sem OS aprovada</span>'}${!a.aprov && !a.libPor ? '<span class="pill crit">Sem cobertura</span>' : ''}${selo({aprov:a.aprov, libPor:a.libPor, libEm:a.libEm, entrada:m.entrada})}</div></div>`;
+
+  if(est === 'dados') h += `<div class="acoes" style="margin:0 0 12px"><button type="button" class="btn ghost mini" id="b-demo-etapa" data-acao="demo" aria-pressed="${m.etapa !== 'Em andamento'}">${m.etapa === 'Em andamento' ? 'Demonstração: pôr esta obra em Pendente fechamento' : 'Voltar a obra para Em andamento'}</button><span class="hint">Decisão 11: com a obra em Pendente fechamento, preencha "OS aprovada em" no bloco Autorização e salve.</span></div>`;
+
+  /* faixa de incompleta */
+  const falta = {ide:['tipo','valor','origem','analista'].filter(x => !i[x]), cro:['resp','equipe','prioridade','inicio','duracao'].filter(x => !c[x]), aut:(!a.aprov && !a.libPor) ? ['libPor'] : []};
+  const nFalta = falta.ide.length + falta.cro.length + falta.aut.length;
+  if(nFalta){
+    const partes = ['aut','ide','cro'].filter(k => falta[k].length).map(k =>
+      `<button type="button" class="link" data-acao="editar" data-bloco="${k}" id="b-falta-${k}">${BLOCO[k]}</button>: ${k === 'aut' ? 'nem liberação nem OS aprovada' : falta[k].map(x => ROT[x]).join(', ')}`);
+    h += `<div class="aviso warn"><div style="flex:1 1 300px"><h4>Faltam ${nFalta} dados desta obra <span class="novo">texto novo</span></h4><p>${partes.join(' · ')}</p>${!a.aprov && !a.libPor ? `<p style="margin-top:6px">Sem data de aprovação nem de liberação, os dias desta obra contam da <b>entrada pelo Field</b> (${br(m.entrada)}).</p>` : ''}</div></div>`;
+  }
+  const fim = soma(c.inicio, +c.duracao), atr = fim ? dias(fim) : null;
+  if(atr > 0 && !['Pendente fechamento','Fechar OS'].includes(m.etapa)) h +=`<div class="aviso warn"><div><h4>Passou da duração planejada</h4><p>Início em <b>${br(c.inicio)}</b> com <b>${c.duracao} dias</b> de duração: deveria ter terminado em <b>${br(fim)}</b>. São ${atr} ${atr === 1 ? 'dia' : 'dias'} além do prazo.</p></div></div>`;
+
+  /* Autorização */
+  const dSem = a.aprov ? null : dias(a.libEm || c.inicio || m.entrada);
+  const autTxt = a.aprov && a.libPor ? 'A obra tem as duas coberturas: alguém autorizou a execução <b>e</b> existe OS aprovada no sistema do cliente. É o caso normal.'
+    : a.aprov ? 'A obra não precisou de liberação: a <b>OS já estava aprovada</b>, e a OS é a própria autorização.'
+    : a.libPor ? `A execução acontece com o <b>OK de ${esc(a.libPor)}</b>, que se comprometeu a aprovar a OS depois. Faz <b>${dSem} dias</b> que essa OS não sai, e é ${esc(a.libPor)} quem a Manfac vai procurar.`
+    : '<b style="color:var(--crit)">Nem uma coisa nem outra.</b> A obra está sendo executada sem OS e sem ninguém nomeado que tenha autorizado.';
+  const autLeitura = `<dl class="dl"><dt>Liberação</dt><dd>${a.libPor ? `Liberado por <b>${esc(a.libPor)}</b> · ${br(a.libEm)}` : '<span style="color:var(--crit);font-weight:600">Ninguém liberou esta obra</span>'}</dd>
+    <dt>OS do cliente</dt><dd>${a.aprov ? `OS aprovada em ${br(a.aprov)}` : `<span style="color:var(--crit);font-weight:600">OS ainda não aprovada</span> <span style="color:var(--ink-dim)">· há ${dSem} dias</span>`}</dd></dl><p class="txt">${autTxt}</p>`;
+  let autForm = '';
+  if(B.edit.aut){
+    const d = B.edit.aut, er = B.erros.aut || {}, dis = B.salvando.aut;
+    autForm = `<div class="fgrid">
+      ${campoF('b-aut-libPor', 'Liberado por', sel('b-aut-libPor', ANALISTAS, d.libPor, '— ninguém liberou —', dis), er.libPor, 'analista da DPSP que deu o OK')}
+      ${campoF('b-aut-libEm', 'Data da liberação', inp('b-aut-libEm', 'date', d.libEm, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), er.libEm, 'é outra data, não a da aprovação')}
+      ${campoF('b-aut-aprov', 'OS aprovada em <span class="novo">um controle só</span>', inp('b-aut-aprov', 'date', d.aprov, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), er.aprov, 'Vazio: OS ainda não aprovada. Com data: a OS conta como aprovada, a data vale para a esteira, e é dela que os dias passam a contar.', true)}
+      </div>`;
+  }
+
+  /* Identificação */
+  const ideLeitura = `<dl class="dl">
+    <dt>Nº OS</dt><dd class="num">${m.os} <span class="field-tag">vem do Field</span></dd>
+    <dt>Loja</dt><dd>${esc(m.loja)} <span class="field-tag">vem do Field</span></dd>
+    <dt>Chamado</dt><dd>${esc(m.desc)} <span class="field-tag">vem do Field</span></dd>
+    <dt>Tipo</dt><dd>${vv(i.tipo)}</dd><dt>Valor</dt><dd class="num">${i.valor ? 'R$ ' + esc(i.valor) : '<span class="vazio">sem orçamento</span>'}</dd>
+    <dt>Origem</dt><dd>${vv(i.origem)}</dd><dt>Analista do cliente</dt><dd>${vv(i.analista)}</dd>
+    <dt>Classificação</dt><dd>${i.mau ? '<span class="pill warn">Mau uso</span>' : 'normal'}</dd></dl>`;
+  let ideForm = '';
+  if(B.edit.ide){
+    const d = B.edit.ide, er = B.erros.ide || {}, dis = B.salvando.ide;
+    ideForm = `<div class="fgrid">
+      <div class="campo larga"><span class="rot">Nº OS · Loja · Chamado <span class="field-tag">vem do Field</span></span><div class="ro"><span class="num">${m.os}</span> · ${esc(m.loja)}<br>${esc(m.desc)}</div><span class="dica">Não se editam aqui: corrija no Field. A sincronização só preenche o que está vazio.</span></div>
+      ${campoF('b-ide-tipo', 'Tipo', sel('b-ide-tipo', TIPOS, d.tipo, '— não sei ainda —', dis))}
+      ${campoF('b-ide-valor', 'Valor (R$)', inp('b-ide-valor', 'text', d.valor, 'inputmode="decimal" placeholder="ex.: 18.450,00"' + (dis ? ' disabled' : '')), er.valor)}
+      ${campoF('b-ide-origem', 'Origem', sel('b-ide-origem', ORIGENS, d.origem, '— não sei ainda —', dis))}
+      ${campoF('b-ide-analista', 'Analista do cliente', sel('b-ide-analista', ANALISTAS, d.analista, '— não sei ainda —', dis))}
+      <div class="campo larga"><label class="sw" for="b-ide-mau"><input type="checkbox" id="b-ide-mau"${d.mau ? ' checked' : ''}${dis ? ' disabled' : ''}> Mau uso</label><span class="dica">Dano por uso indevido do cliente. É etiqueta, não etapa: a obra segue a mesma esteira.</span></div>
+      </div>`;
+  }
+
+  /* Cronograma */
+  const croLeitura = `<dl class="dl"><dt>Responsável da obra</dt><dd>${vv(c.resp)}</dd><dt>Equipe / prestador</dt><dd>${vv(c.equipe)}</dd><dt>Prioridade</dt><dd>${vv(c.prioridade)}</dd>
+    <dt>Início planejado</dt><dd class="num">${c.inicio ? br(c.inicio) : '<span class="vazio">a definir</span>'}</dd><dt>Duração</dt><dd class="num">${c.duracao ? c.duracao + ' dias' : '<span class="vazio">a definir</span>'}</dd>
+    <dt>Final calculado</dt><dd class="num">${br(fim)}</dd></dl>
+    <p class="txt">A obra é planejada por <b>duração</b>, não por data de entrega. O final é o início mais os dias combinados e se recalcula sozinho a cada remarcação.</p>`;
+  let croForm = '';
+  if(B.edit.cro){
+    const d = B.edit.cro, er = B.erros.cro || {}, dis = B.salvando.cro;
+    croForm = `<div class="fgrid">
+      ${campoF('b-cro-resp', 'Responsável da obra', sel('b-cro-resp', RESP, d.resp, '— escolher —', dis))}
+      ${campoF('b-cro-equipe', 'Equipe / prestador', sel('b-cro-equipe', EQUIPES, d.equipe, '— escolher —', dis))}
+      ${campoF('b-cro-prioridade', 'Prioridade', sel('b-cro-prioridade', PRIOR, d.prioridade, '— escolher —', dis))}
+      ${campoF('b-cro-inicio', 'Início planejado', inp('b-cro-inicio', 'date', d.inicio, dis ? 'disabled' : ''), er.inicio, c.inicio ? 'mudar vira remarcação' : 'quando a equipe entra na loja')}
+      ${campoF('b-cro-duracao', 'Duração em dias', inp('b-cro-duracao', 'number', d.duracao, 'min="1" max="180"' + (dis ? ' disabled' : '')), er.duracao, 'muda livre, sem motivo')}
+      <div class="larga" id="b-cro-din">${dinCro()}</div></div>`;
+  }
+  const remarc = m.remarc.length ? m.remarc.map(r => `<p style="margin:0 0 9px;font-size:12.5px;color:var(--ink-dim)"><span class="num" style="color:var(--ink-faint)">${r.data}</span> · início de <b style="color:var(--ink)">${br(r.de)}</b> para <b style="color:var(--ink)">${br(r.para)}</b> · ${esc(r.quem)}<br><span style="color:var(--warn)">${esc(r.motivo)}</span></p>`).join('')
+    : '<p class="hint" style="margin:0">Nenhuma remarcação registrada.</p>';
+
+  h += '<div class="grid2"><div class="col">' + blocoB('aut', autLeitura, autForm, 'Motivo não é obrigatório. Fica no histórico quem salvou.')
+    + blocoB('ide', ideLeitura, ideForm, 'Motivo não é obrigatório. Fica no histórico quem salvou.') + '</div><div class="col">'
+    + blocoB('cro', croLeitura, croForm, B.edit.cro ? hintCro() : '', B.edit.cro && precisaMotivo() && !(B.edit.cro.motivo || '').trim())
+    + `<div class="box"><div class="box-h">Remarcações <span class="dir num">${m.remarc.length}</span></div><div class="box-b">${remarc}</div></div></div></div>`;
+  p.innerHTML = h;
+};
+
+function aplicarB(k){
+  const o = B.m[k], d = B.edit[k];
+  let mudou = false;
+  Object.keys(o).forEach(c => {
+    if(String(o[c]) === String(d[c])) return;
+    mudou = true;
+    const remarca = k === 'cro' && c === 'inicio' && o.inicio;
+    if(UI.B.estado === 'dados') HIST.unshift({q:'14/09/2026 agora', quem:'Você', bloco:BLOCO[k], campo:ROT[c], de:fmt(c, o[c]), para:fmt(c, d[c]), mot: remarca ? d.motivo : ''});
+    if(remarca) B.m.remarc.unshift({data:'14/09/2026', de:o.inicio, para:d.inicio, motivo:d.motivo, quem:'Você'});
+  });
+  Object.keys(o).forEach(c => { o[c] = d[c]; });
+  if(mudou) B.m.rod[k] = ['você', '14/09'];
+}
+
+function ligarB(){
+  const p = $('palco-B');
+  const aoMudar = e => {
+    const mt = /^b-(aut|ide|cro)-(\w+)$/.exec(e.target.id || '');
+    if(!mt || !B.edit[mt[1]]) return;
+    const [, k, c] = mt, d = B.edit[k];
+    d[c] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if(k !== 'cro') return;
+    if(c === 'inicio' || c === 'duracao') $('b-cro-din').innerHTML = dinCro();
+    $('b-salvar-cro').disabled = (precisaMotivo() && !(d.motivo || '').trim()) || !!B.salvando.cro;
+    $('b-hint-cro').textContent = hintCro();
+  };
+  p.addEventListener('input', aoMudar);
+  p.addEventListener('change', aoMudar);
+  p.addEventListener('click', e => {
+    const b = e.target.closest('button[data-acao]');
+    if(!b) return;
+    const k = b.dataset.bloco, ac = b.dataset.acao;
+    if(ac === 'editar'){
+      if(!B.edit[k]) B.edit[k] = Object.assign(clone(B.m[k]), k === 'cro' ? {motivo:''} : {});
+      RENDER.B();
+      const f = $('b-bloco-' + k).querySelector('select:not([disabled]), input:not([disabled])');
+      if(f) f.focus();
+    }
+    if(ac === 'demo'){ B.m.etapa = B.m.etapa === 'Em andamento' ? 'Pendente fechamento' : 'Em andamento'; RENDER.B(); $('b-demo-etapa').focus(); return; }
+    if(ac === 'cancelar'){ delete B.edit[k]; B.erros[k] = {}; B.erro[k] = false; RENDER.B(); $('b-editar-' + k).focus(); }
+    if(ac === 'hist'){ D.obra = 'B'; D.filtro = BLOCO[k]; if(UI.D.estado !== 'dados') $('est-D-dados').click(); else RENDER.D(); $('sec-D').scrollIntoView({block:'start'}); }
+    if(ac === 'salvar'){
+      const d = B.edit[k], er = {};
+      if(k === 'aut'){
+        if(d.libEm && !d.libPor) er.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+        if(d.aprov && d.aprov > HOJE) er.aprov = 'A data de aprovação não pode ser depois de hoje.';
+      }
+      if(k === 'ide' && valorInvalido(d.valor)) er.valor = 'Valor precisa ser um número em reais, como 18.450,00.';
+      if(k === 'cro'){
+        if(d.duracao && (+d.duracao < 1 || +d.duracao > 180)) er.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+        if(precisaMotivo() && !(d.motivo || '').trim()) er.motivo = 'Escreva o motivo da remarcação.';
+      }
+      B.erros[k] = er; B.erro[k] = false;
+      if(Object.keys(er).length){ RENDER.B(); const f = $('b-bloco-' + k).querySelector('.campo.invalido .in, #b-cro-motivo'); if(f) f.focus(); return; }
+      const gravar = avancar => {
+        B.salvando[k] = true; RENDER.B();
+        setTimeout(() => {
+          aplicarB(k);
+          if(avancar){
+            B.m.etapa = 'Fechar OS';
+            if(UI.B.estado === 'dados') HIST.unshift({q:'14/09/2026 agora', quem:'Você', bloco:'Esteira', campo:'Etapa', de:'Pendente fechamento', para:'Fechar OS', obs:'concluída ao salvar a aprovação na ficha'});
+          }
+          B.salvando[k] = false; delete B.edit[k]; RENDER.B(); RENDER.D(); $('b-editar-' + k).focus();
+        }, 900);
+      };
+      /* Decisão 11: aprovação preenchida com a obra esperando por ela avança a obra, com aviso. */
+      if(k === 'aut' && B.m.etapa === 'Pendente fechamento' && d.aprov && !B.m.aut.aprov){
+        const an = ancora({aprov:d.aprov, libPor:d.libPor, libEm:d.libEm, entrada:B.m.entrada});
+        abrirDlg('Salvar a aprovação e avançar a obra', `<p style="margin:0">Esta obra está em <b>Pendente fechamento</b>, esperando justamente a aprovação da OS. Ao salvar:</p><ul>
+          <li>Grava <b>OS aprovada em ${br(d.aprov)}</b>.</li>
+          <li>O passo <b>Pendente fechamento</b> fica concluído com essa data.</li>
+          <li>A obra passa para <b>Fechar OS</b>, o contador "parada nesta etapa" recomeça hoje, e a vez passa do <b>Cliente DPSP</b> para o <b>Responsável ${esc(B.m.cro.resp || 'a definir')}</b>.</li>
+          <li>Os dias contam da ${an.nome} (${br(an.data)}): hoje são <b>${dias(an.data)}</b>. Uma aprovação mais recente não derruba a contagem.</li>
+          <li>Fica no histórico com o seu nome: o campo e a mudança de etapa.</li></ul>`,
+          [{id:'dlg-b-avancar', t:'Salvar e avançar para Fechar OS', fn:() => gravar(true)},
+           {id:'dlg-b-voltar', t:'Voltar ao formulário', ghost:true}]);
+        return;
+      }
+      gravar(false);
+    }
+  });
+}
+
+/* =====================================================================
+   C — ESTEIRA COM "CONCLUIR ESTA ETAPA"
+   ===================================================================== */
+const PASSOS = [
+  {k:'campo', nome:'Execução em campo', dono:o => o.equipe ? 'Equipe ' + o.equipe : 'Equipe a definir', onde:'Campo · diário do dia', marco:'fim da execução em campo'},
+  {k:'relatorio', nome:'Relatório de entrega', dono:() => 'Equipe / responsável', onde:'Field Control', marco:'relatório de entrega pronto'},
+  {k:'aprovarOS', nome:'Pendente fechamento', desvio:true, dono:() => 'Cliente DPSP', onde:'Sistema do cliente', marco:'OS aprovada'},
+  {k:'fecharOS', nome:'Fechar OS', dono:o => o.resp ? 'Responsável ' + o.resp : 'Responsável a definir', onde:'Sistema do cliente', marco:'OS fechada'},
+  {k:'pendFat', nome:'Pendente faturamento', dono:() => 'Cliente DPSP', onde:'Sistema do cliente', marco:'faturamento liberado pelo cliente'},
+  {k:'faturado', nome:'Faturado', dono:() => 'Financeiro Manfac', onde:'Manfac', marco:'faturamento pela Manfac'}
+];
+const PX = k => PASSOS.find(p => p.k === k);
+const NOME_ETAPA = {levantamento:'Levantamento', campo:'Em andamento', relatorio:'Relatório de entrega', aprovarOS:'Pendente fechamento', fecharOS:'Fechar OS', pendFat:'Pendente faturamento', faturado:'Faturado'};
+const C_BASE = {os:'0726-009315', loja:'AV. VISCONDE DO RIO BRANCO, 880 - CENTRO - NITERÓI/RJ', desc:'Reparo no telhado e calhas da doca de recebimento', resp:'LUANA', equipe:'MANFAC-7', libPor:'JUAN', libEm:'2026-07-02', entrada:'2026-06-30'};
+const C_CHEIO = Object.assign({}, C_BASE, {aprov:'', etapa:'aprovarOS', desde:'2026-08-20', datas:{campo:'2026-08-18'}, pulados:{relatorio:'Passo pulado: a etapa foi mudada pelo seletor em 20/08/2026, por YURI.'}});
+const C_DIRETO = Object.assign({}, C_BASE, {aprov:'2026-07-30', etapa:'fecharOS', desde:'2026-08-21', datas:{campo:'2026-08-18', relatorio:'2026-08-21'}, pulados:{}});
+const C_VAZIO = {os:'0926-011388', loja:'R. GAVIÃO PEIXOTO, 212 - ICARAÍ - NITERÓI/RJ', desc:'Porta de enrolar da fachada travando', resp:'', equipe:'', libPor:'', libEm:'', aprov:'', entrada:'2026-09-09', etapa:'levantamento', desde:'2026-09-09', datas:{}, pulados:{}};
+let C;
+
+const proxima = k => ({campo:'relatorio', relatorio: C.m.aprov ? 'fecharOS' : 'aprovarOS', aprovarOS:'fecharOS', fecharOS:'pendFat', pendFat:'faturado'})[k] || null;
+
+function avisoData(k, v){
+  if(!v) return '';
+  if(v > HOJE) return '<p style="color:var(--crit);font-size:12px;font-weight:600;margin:6px 0 0" role="alert">A data não pode ser depois de hoje.</p>';
+  const idx = PASSOS.findIndex(p => p.k === k);
+  const ant = PASSOS.slice(0, idx).reverse().find(p => C.m.datas[p.k]);
+  if(ant && v < C.m.datas[ant.k]) return `<p class="hint" style="color:var(--warn);margin:6px 0 0">Esta data é anterior à conclusão de <b>${ant.nome}</b> (${br(C.m.datas[ant.k])}). Confira. Dá para salvar assim mesmo.</p>`;
+  return '';
+}
+
+function passoC(P){
+  const m = C.m, k = P.k;
+  let st, quando, extra = '';
+  const corrigir = rot => C.corrigindo === k
+    ? `<div class="corrige"><label class="hint" for="c-data-${k}">Data de ${P.marco}</label><input class="in" type="date" id="c-data-${k}" max="${HOJE}" value="${C.draft}"><button type="button" class="btn mini" id="c-salvar-data-${k}" data-acao="salvar-data" data-k="${k}"${!C.draft || C.draft > HOJE ? ' disabled' : ''}>Salvar data</button><button type="button" class="btn ghost mini" id="c-cancelar-data-${k}" data-acao="cancelar-data" data-k="${k}">Cancelar</button></div><div id="c-aviso-${k}" aria-live="polite">${avisoData(k, C.draft)}</div>`
+    : ` <button type="button" class="link" id="c-corrigir-${k}" data-acao="corrigir" data-k="${k}">${rot}</button>`;
+  if(k === 'aprovarOS' && m.aprov && !m.datas.aprovarOS && m.etapa !== 'aprovarOS'){
+    st = 'naoaplica'; quando = 'não se aplica';
+    extra = `Desvio não usado: a OS já estava aprovada em ${br(m.aprov)}, então, com o relatório pronto, a obra vai direto para Fechar OS.`;
+  } else if(m.datas[k]){
+    st = 'feito'; quando = br(m.datas[k]);
+    extra = corrigir('corrigir data');
+  } else if(m.pulados[k]){
+    st = 'pulado'; quando = 'sem data registrada';
+    extra = esc(m.pulados[k]) + ' Ninguém concluiu este passo pelo botão, e o sistema não inventa a data.' + corrigir('informar a data real');
+  } else if(m.etapa === k){
+    st = 'atual'; const n = dias(m.desde); quando = `há ${n} ${n === 1 ? 'dia' : 'dias'}`;
+    if(n >= 15) extra += `<p style="color:var(--warn);margin:0 0 6px">Parada aqui há <b style="color:var(--warn)">${n} dias</b>. Enquanto não sair desta etapa, a obra não vira dinheiro.</p>`;
+    if(k === 'aprovarOS') extra += m.libPor
+      ? `<p style="margin:0 0 6px">Relatório pronto, OS não aprovada: quem destrava é o cliente, não nós. A execução foi liberada por <b>${esc(m.libPor)}</b> em ${br(m.libEm)}, e é com ele que a cobrança da OS começa.</p>`
+      : '<p style="margin:0 0 6px;color:var(--crit)">Ninguém liberou esta obra: não há OS aprovada e não há nome de quem autorizou a execução. A cobrança fica <b>sem a quem recorrer</b>.</p>';
+    extra += C.gravando === k
+      ? '<button type="button" class="btn" id="c-gravando" disabled>Gravando…</button> <span class="hint">Não feche a página.</span>'
+      : `<button type="button" class="btn" id="c-concluir-${k}" data-acao="concluir" data-k="${k}">Concluir esta etapa</button>`;
+    if(C.erro === k) extra += erroBox('Não concluiu a etapa', `O servidor não confirmou, então <b>nada foi gravado</b>: a obra continua em ${P.nome}, sem data nova${k === 'aprovarOS' ? ' e sem OS aprovada' : ''}. Tente de novo. Se a mensagem disser que outra pessoa mudou a etapa, recarregue a página: alguém pode ter concluído antes de você.`,
+      `<div class="acoes"><button type="button" class="btn ghost" id="c-tentar-${k}" data-acao="concluir" data-k="${k}">Tentar de novo</button></div>`);
+  } else { st = 'futuro'; quando = '—'; }
+  if(k === 'relatorio' && (st === 'atual' || st === 'futuro'))
+    extra = `<p style="margin:0 0 6px">O sistema não lê o fechamento no Field: esta etapa é concluída aqui, pelo botão, quando o relatório de entrega estiver pronto. <span class="novo">texto novo</span></p>` + extra;
+  return `<li class="passo ${st}" id="c-passo-${k}"><span class="dot" aria-hidden="true"></span><div class="corpo"><div class="nm">${P.nome}${P.desvio ? '<span class="desvio">desvio</span>' : ''}${st === 'atual' ? '<span class="aqui">a obra está aqui</span>' : ''}</div><div class="meta"><span>${esc(P.dono(m))}</span><span>${P.onde}</span></div>${extra ? `<div class="extra">${extra}</div>` : ''}</div><span class="quando">${quando}</span></li>`;
+}
+
+RENDER.C = function(reset){
+  const est = UI.C.estado, p = $('palco-C');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(reset) C = {m: clone(est === 'recem' ? C_VAZIO : C_CHEIO), gravando: est === 'salvando' ? 'aprovarOS' : null, erro: est === 'erro' ? 'aprovarOS' : null, corrigindo:null, draft:'', direto:false};
+  /* Decisão 12: só encerra (e sai dos alertas) com a data de faturamento da Manfac. */
+  const m = C.m, encerrada = m.etapa === 'faturado' && !!m.datas.faturado;
+  const donoAtual = m.etapa === 'levantamento' ? (m.resp ? 'Responsável ' + m.resp : 'Responsável a definir') : PX(m.etapa).dono(m);
+  let h = `<div class="head"><div><h3>${esc(m.loja)}</h3><div class="sub">OS ${m.os} · ${esc(m.desc)}</div></div><div class="pills"><span class="pill ${encerrada ? 'ok' : 'info'}">${NOME_ETAPA[m.etapa]}</span>${m.aprov ? '<span class="pill ok">OS aprovada</span>' : '<span class="pill crit">Sem OS aprovada</span>'}${encerrada ? '' : selo(m)}</div></div>`;
+  h += `<div class="box"><div class="box-h">Ciclo de vida da obra<span class="dir" style="text-transform:none;letter-spacing:0;font-weight:500">onde ela está, de quem é a vez e há quanto tempo</span></div><div class="box-b">
+    <dl class="dl"><dt>Etapa atual</dt><dd>${NOME_ETAPA[m.etapa]}</dd><dt>Dono da etapa</dt><dd>${esc(donoAtual)}</dd>
+    <dt>Parada nesta etapa</dt><dd class="num">${encerrada ? 'encerrada' : dias(m.desde) + ' dias'}</dd>
+    <dt>Caminho</dt><dd>${m.aprov ? 'direto — a OS já estava aprovada' : 'com desvio — vai parar em Pendente fechamento'}</dd></dl>`;
+  if(est === 'dados') h += `<div class="acoes"><button type="button" class="btn ghost mini" id="c-caminho" aria-pressed="${C.direto}">${C.direto ? 'Ver o caminho com desvio (sem OS aprovada)' : 'Ver o caminho direto (OS já aprovada)'}</button></div>`;
+  if(m.etapa === 'levantamento') h += `<p class="txt">Esta obra ainda está em <b>Levantamento</b>, antes de campo, e sem responsável nem equipe. A esteira aparece inteira, sem nada concluído. O botão <b>Concluir esta etapa</b> aparece no passo em que a obra estiver, a partir de Em andamento.</p>`;
+  h += `<ol class="esteira" style="margin-top:10px;border-top:1px solid var(--line)">${PASSOS.map(passoC).join('')}</ol>`;
+  if(encerrada && m.datas.faturado) h += '<p class="txt" style="color:var(--ok)">Obra faturada e encerrada.</p>';
+  h += `<p class="txt" style="border-top:1px solid var(--line);padding-top:10px">Mudar a etapa pelo seletor continua possível, para exceções. Qualquer pessoa com acesso pode mudar, e quem mudou e quando aparece no <b>Histórico</b>. O seletor <b>não grava data</b> em etapa nenhuma: o passo pulado fica "sem data registrada". <span class="novo">texto novo</span></p>`;
+  h += '</div></div>';
+  p.innerHTML = h;
+};
+
+function dialogoConcluir(k){
+  const m = C.m, P = PX(k), prox = proxima(k), resp = m.resp || 'o responsável';
+  /* Decisão 5 revista: aprovação nova só muda a contagem se for mais antiga. */
+  const textoAncoraAprov = data => {
+    const antes = ancora(m), depois = ancora(Object.assign({}, m, {aprov:data}));
+    return antes.data === depois.data
+      ? `Os dias continuam contando da ${antes.nome} (${br(antes.data)}): hoje são <b>${dias(antes.data)}</b>. Uma aprovação mais recente não derruba a contagem (regra da seção E).`
+      : `Os dias passam a contar da aprovação (${br(depois.data)}), que é anterior à ${antes.nome}: o selo vai de <b>${dias(antes.data)}</b> para <b>${dias(depois.data)}</b> dias. A contagem só sobe.`;
+  };
+  const itens = [k === 'aprovarOS'
+    ? 'Grava como <b>OS aprovada</b> a data escolhida abaixo. Ela vem com hoje: corrija se a aprovação saiu antes. É o mesmo controle "OS aprovada em" da ficha.'
+    : `Grava <b>${br(HOJE)}</b> como data de <b>${P.marco}</b>.`];
+  if(prox){
+    itens.push(`A obra passa de <b>${P.nome}</b> para <b>${PX(prox).nome}</b>, e o contador "parada nesta etapa" recomeça hoje.`);
+    itens.push(`A vez passa de <b>${esc(P.dono(m))}</b> para <b>${esc(PX(prox).dono(m))}</b>.`);
+  } else itens.push('A etapa continua Faturado, e a obra passa a contar como <b>encerrada</b>.');
+  const filas = {
+    campo:`Sai do <b>diário do dia de ${esc(resp)}</b>: ninguém mais responde "andou hoje?" por ela. Entra no filtro <b>Executadas, ainda na esteira</b> da base e na coluna Fechamento do kanban.`,
+    relatorio: m.aprov ? 'Como a OS já está aprovada, vai direto para Fechar OS. Continua em <b>Executadas, ainda na esteira</b>.'
+      : `Como a OS não está aprovada, entra no desvio <b>Pendente fechamento</b>, e a cobrança é com ${esc(m.libPor || 'ninguém: não há quem liberou')}. Continua em <b>Executadas, ainda na esteira</b>.`,
+    aprovarOS:`A obra deixa de aparecer como <b>Sem OS aprovada</b> na base, no kanban e no indicador.</li><li><span id="dlg-c-ancora">${textoAncoraAprov(HOJE)}</span></li><li><label for="dlg-c-aprov"><b>OS aprovada em</b></label> <input class="in" type="date" id="dlg-c-aprov" value="${HOJE}" max="${HOJE}" style="width:auto;margin-top:4px"><span id="dlg-c-aprov-msg" role="alert" style="display:block;color:var(--crit);font-size:12px;font-weight:600"></span>`,
+    fecharOS:'Continua em <b>Executadas, ainda na esteira</b>. A cobrança passa a ser o cliente liberar o faturamento.',
+    pendFat:'A obra <b>continua</b> em <b>Executadas, ainda na esteira</b> e continua contando nos alertas de obra parada até a Manfac registrar a data de faturamento.',
+    faturado:'É esta data que <b>encerra</b> a obra: ela sai de <b>Executadas, ainda na esteira</b> e de todos os alertas de obra parada.'
+  };
+  itens.push(filas[k]);
+  itens.push('Se não foi hoje, corrija depois em "corrigir data". Nenhum passo pulado ganha data. Fica no histórico com o seu nome.');
+  abrirDlg('Concluir "' + P.nome + '"', '<ul>' + itens.map(t => '<li>' + t + '</li>').join('') + '</ul>',
+    [{id:'dlg-c-concluir', t:k === 'aprovarOS' ? 'Concluir e gravar a aprovação' : 'Concluir e gravar ' + br(HOJE), fn:() => {
+        const data = k === 'aprovarOS' ? $('dlg-c-aprov').value : HOJE;
+        C.gravando = k; C.erro = null; RENDER.C();
+        setTimeout(() => {
+          m.datas[k] = data;
+          if(k === 'aprovarOS') m.aprov = data;
+          if(prox){ m.etapa = prox; m.desde = HOJE; }
+          if(UI.C.estado === 'dados' && !C.direto){
+            HIST_C.unshift({q:'14/09/2026 agora', quem:'Você', bloco:'Esteira', campo:'Data de ' + P.marco, de:'—', para:br(data), obs:'concluída pelo botão'});
+            if(prox) HIST_C.unshift({q:'14/09/2026 agora', quem:'Você', bloco:'Esteira', campo:'Etapa', de:P.nome, para:PX(prox).nome, obs:'concluída pelo botão'});
+            RENDER.D();
+          }
+          C.gravando = null; RENDER.C();
+          const b = prox && $('c-concluir-' + prox); (b || $('c-passo-' + k)).scrollIntoView({block:'nearest'}); if(b) b.focus();
+        }, 1000);
+      }},
+     {id:'dlg-c-voltar', t:'Voltar sem gravar', ghost:true}]);
+  if(k === 'aprovarOS') $('dlg-c-aprov').addEventListener('input', e => {
+    const v = e.target.value, ok = !!v && v <= HOJE;
+    $('dlg-c-concluir').disabled = !ok;
+    $('dlg-c-aprov-msg').textContent = !v ? 'Informe a data da aprovação.' : v > HOJE ? 'A data não pode ser depois de hoje.' : '';
+    if(ok) $('dlg-c-ancora').innerHTML = textoAncoraAprov(v);
+  });
+}
+
+function ligarC(){
+  const p = $('palco-C');
+  p.addEventListener('input', e => {
+    const mt = /^c-data-(\w+)$/.exec(e.target.id || '');
+    if(!mt) return;
+    C.draft = e.target.value;
+    $('c-aviso-' + mt[1]).innerHTML = avisoData(mt[1], C.draft);
+    $('c-salvar-data-' + mt[1]).disabled = !C.draft || C.draft > HOJE;
+  });
+  p.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.id === 'c-caminho'){ C.direto = !C.direto; C.m = clone(C.direto ? C_DIRETO : C_CHEIO); C.corrigindo = null; RENDER.C(); $('c-caminho').focus(); return; }
+    const k = b.dataset.k, ac = b.dataset.acao;
+    if(ac === 'concluir') dialogoConcluir(k);
+    if(ac === 'corrigir'){ C.corrigindo = k; C.draft = C.m.datas[k] || ''; RENDER.C(); $('c-data-' + k).focus(); }
+    if(ac === 'cancelar-data'){ C.corrigindo = null; RENDER.C(); $('c-corrigir-' + k).focus(); }
+    if(ac === 'salvar-data'){
+      if(UI.C.estado === 'dados' && !C.direto && C.m.datas[k] !== C.draft){
+        HIST_C.unshift({q:'14/09/2026 agora', quem:'Você', bloco:'Esteira', campo:'Data de ' + PX(k).marco, de:br(C.m.datas[k]), para:br(C.draft), obs:C.m.pulados[k] ? 'data informada em passo pulado' : 'data corrigida'});
+        RENDER.D();
+      }
+      C.m.datas[k] = C.draft; delete C.m.pulados[k];
+      if(k === 'aprovarOS') C.m.aprov = C.draft;
+      C.corrigindo = null; RENDER.C(); $('c-corrigir-' + k).focus();
+    }
+  });
+}
+
+/* =====================================================================
+   D — HISTÓRICO
+   ===================================================================== */
+const FILTROS = ['Todos','Triagem','Autorização','Identificação','Cronograma','Esteira'];
+const D = {filtro:'Todos', obra:'B'};
+/* Obra da seção C: como aparecem marco concluído pelo botão, data corrigida e passo pulado. */
+const HIST_C = [
+  {q:'20/08/2026 09:40', quem:'YURI', bloco:'Esteira', campo:'Etapa', de:'Relatório de entrega', para:'Pendente fechamento', obs:'pelo seletor de etapa; o passo pulado ficou sem data'},
+  {q:'19/08/2026 17:05', quem:'LUANA', bloco:'Esteira', campo:'Data de fim da execução em campo', de:'19/08/2026', para:'18/08/2026', obs:'data corrigida'},
+  {q:'19/08/2026 08:12', quem:'LUANA', bloco:'Esteira', campo:'Etapa', de:'Em andamento', para:'Relatório de entrega', obs:'concluída pelo botão'},
+  {q:'19/08/2026 08:12', quem:'LUANA', bloco:'Esteira', campo:'Data de fim da execução em campo', de:'—', para:'19/08/2026', obs:'concluída pelo botão'},
+  {q:'02/07/2026 14:30', quem:'AMANDA', bloco:'Autorização', campo:'Liberado por', de:'—', para:'JUAN'},
+  {q:'02/07/2026 14:30', quem:'AMANDA', bloco:'Autorização', campo:'Data da liberação', de:'—', para:'02/07/2026'}
+];
+const linhaHist = (r, pend) => `<li${pend ? ' class="pendente"' : ''}><div class="qd">${r.q}<span>${esc(r.quem)}</span></div><div class="mv"><span class="bloco-tag">${r.bloco}</span>${r.campo}: <span class="antigo">${esc(r.de)}</span> → <b>${esc(r.para)}</b>${r.obs ? ` <span class="hint">(${r.obs})</span>` : ''}${r.mot ? `<div class="mot">Motivo: ${esc(r.mot)}</div>` : ''}${pend ? '<div class="hint">Gravando… vira definitiva quando o servidor confirmar.</div>' : ''}</div></li>`;
+
+RENDER.D = function(){
+  const est = UI.D.estado, p = $('palco-D');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  const recem = est === 'recem';
+  const ob = recem ? {loja:'R. GAVIÃO PEIXOTO, 212 - ICARAÍ - NITERÓI/RJ', os:'0926-011388'}
+    : D.obra === 'C' ? {loja:C_BASE.loja, os:C_BASE.os, entrada:'30/06/2026 07:45', hist:HIST_C}
+    : {loja:'R. MARQUÊS DE PARANÁ, 110 - ICARAÍ - NITERÓI/RJ', os:'0826-010877', entrada:'18/08/2026 08:02', hist:HIST};
+  let h = `<div class="head"><div><h3>${ob.loja}</h3><div class="sub">OS ${ob.os} · histórico de alterações</div></div>${recem || est === 'erro' ? '' : `<div class="filtros" role="group" aria-label="Escolher a obra" style="margin:0">${[['B','Obra da seção B'],['C','Obra da seção C']].map(([k, t]) => `<button type="button" class="chip" id="d-obra-${k}" data-obra="${k}" aria-pressed="${D.obra === k}">${t}</button>`).join('')}</div>`}</div>`;
+  if(recem){
+    p.innerHTML = h + '<div class="estado-vazio" role="status"><strong>Nenhuma alteração desde a entrada pelo Field</strong>Esta obra entrou em 09/09/2026 com número da OS, loja e chamado, e ninguém mexeu nela desde então. Quando alguém salvar um bloco, liberar a obra ou concluir uma etapa, cada campo alterado aparece aqui, com nome e data.</div>';
+    return;
+  }
+  if(est === 'erro'){
+    p.innerHTML = h + '<div class="box"><div class="box-b">' + erroBox('Não carregou o histórico', 'A leitura do histórico falhou. <b>As alterações não se perderam</b>: a ficha continua mostrando os valores atuais. Tente de novo; se persistir, recarregue a página.',
+      '<div class="acoes"><button type="button" class="btn ghost" id="d-tentar">Tentar de novo</button></div>') +
+      '<p class="hint" style="margin:10px 0 0">Regra assumida neste mockup: salvar um bloco e gravar a linha do histórico acontecem juntos. Se o histórico não gravar, o bloco também não grava, e quem salvou vê o erro do bloco (seção B, estado Erro ao salvar).</p></div></div>';
+    return;
+  }
+  const lista = ob.hist.filter(r => D.filtro === 'Todos' || r.bloco === D.filtro);
+  h += '<div class="box"><div class="box-b"><div class="filtros" role="group" aria-label="Filtrar por bloco">' +
+    FILTROS.map((f, i) => `<button type="button" class="chip" id="d-f-${i}" data-filtro="${f}" aria-pressed="${D.filtro === f}">${f}</button>`).join('') + '</div>';
+  h += `<p class="hint" style="margin:0 0 4px">${lista.length} ${lista.length === 1 ? 'alteração' : 'alterações'}${D.filtro === 'Todos' ? '' : ' em ' + D.filtro}</p><ul class="hist">`;
+  if(est === 'salvando') h += linhaHist({q:'14/09/2026 agora', quem:'Você', bloco:'Autorização', campo:'OS aprovada em', de:'—', para:'14/09/2026'}, true);
+  h += lista.map(r => linhaHist(r)).join('');
+  if(!lista.length && est !== 'salvando') h += '<li><div></div><div class="hint">Nenhuma alteração neste bloco.</div></li>';
+  if(D.filtro === 'Todos') h += '<li><div class="qd">' + ob.entrada + '<span>Field</span></div><div class="mv"><span class="bloco-tag">Entrada</span>Obra criada pela sincronização, com Nº OS, loja e chamado.</div></li>';
+  h += '</ul></div></div>';
+  p.innerHTML = h;
+};
+
+function ligarD(){
+  $('palco-D').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.id === 'd-tentar'){ $('est-D-dados').click(); return; }
+    if(b.dataset.filtro){ D.filtro = b.dataset.filtro; RENDER.D(); $(b.id).focus(); }
+    if(b.dataset.obra){ D.obra = b.dataset.obra; D.filtro = 'Todos'; RENDER.D(); $(b.id).focus(); }
+  });
+}
+
+/* =====================================================================
+   E — REGRA DA OBRA CRÍTICA
+   ===================================================================== */
+const EX = [
+  {os:'0526-007741', loja:'R. DR. BORMAN, 95 - CENTRO - NITERÓI/RJ', desc:'Vazamento na caixa d’água do banheiro de funcionários', aprov:'2026-05-28', libPor:'LEANDRO', libEm:'2026-06-10', entrada:'2026-05-15', antes:'A liberação foi registrada depois da aprovação: vale a mais antiga. Na regra atual do código, os mesmos 109 dias. Nada muda.'},
+  {os:'0526-008102', loja:'AV. PRESIDENTE KENNEDY, 1300 - ESTRELA DO NORTE - SÃO GONÇALO/RJ', desc:'Troca do forro de gesso da área de vendas', aprov:'', libPor:'JUAN', libEm:'2026-06-02', entrada:'2026-05-29', antes:'Regra atual: sem data de aprovação, não conta dias e nunca aparece como crítica.'},
+  {os:'0726-009020', loja:'R. MOREIRA CÉSAR, 229 - ICARAÍ - NITERÓI/RJ', desc:'Pintura da fachada após pichação', aprov:'', libPor:'', libEm:'', entrada:'2026-07-01', antes:'Regra atual: sem data de aprovação, não conta dias. Hoje aparece só como "Sem cobertura".'}
+];
+let simular = false;
+function renderE(){
+  $('palco-E').innerHTML = EX.map((x0, i) => {
+    const x = clone(x0);
+    if(simular && i === 1){ x.aprov = HOJE; x.antes = 'A OS foi aprovada hoje, mas a liberação (02/06/2026) é mais antiga: a obra continua em 104 dias, crítica. Na regra da primeira rodada, cairia para 0.'; }
+    const an = ancora(x), n = dias(an.data);
+    const cor = n >= 100 ? 'var(--crit)' : n >= 60 ? 'var(--warn)' : 'var(--line)';
+    const status = n >= 100 ? '<span class="pill crit">Crítica</span>' : n >= 60 ? '<span class="pill warn">Atenção</span>' : '<span class="pill">Normal</span>';
+    const usa = nome => an.nome === nome ? ' <b style="color:var(--accent)">← conta desta</b>' : '';
+    return `<div class="ex" style="--sev:${cor}"><div class="os">Obra ${i + 1} · OS ${x.os}</div><div class="nm">${esc(x.loja)}</div>
+      <dl class="dl"><dt>Aprovação</dt><dd class="num">${br(x.aprov)}${usa('aprovação')}</dd>
+      <dt>Liberação</dt><dd class="num">${x.libPor ? esc(x.libPor) + ' · ' + br(x.libEm) : '—'}${usa('liberação')}</dd>
+      <dt>Entrada pelo Field</dt><dd class="num">${br(x.entrada)}${usa('entrada')}</dd></dl>
+      <div class="res"><span class="big">${n}</span><span>dias desde a ${an.nome}</span>${status}</div>
+      <div class="antes">${x.antes}</div></div>`;
+  }).join('');
+}
+function ligarE(){
+  $('e-simular').addEventListener('click', e => {
+    simular = !simular;
+    e.currentTarget.setAttribute('aria-pressed', String(simular));
+    e.currentTarget.textContent = simular ? 'Desfazer a simulação' : 'Simular: a OS da obra 2 é aprovada hoje';
+    $('e-simular-txt').textContent = simular ? 'A obra 2 continua em 104 dias.' : 'Mostra que uma aprovação tardia não derruba a contagem.';
+    renderE();
+  });
+}
+
+/* =====================================================================
+   REVISÃO — renderizada a partir do JSON embutido; publica só após ação
+   ===================================================================== */
+const SECS = ['A','B','C','D','E','F'];
+const VOTOS = [['aprovado','Aprovado'],['ajustar','Ajustar'],['refazer','Refazer']];
+const CHAVE = 'mockup-j4-revisao';
+const sujos = new Set();
+const antes = {};
+let REV = {}, artifact = null, pronto = false, timer = null, publicando = false;
+try { REV = JSON.parse($('revisao-estado').textContent) || {}; } catch(e) { REV = {}; }
+SECS.forEach(s => { if(!REV[s]) REV[s] = {voto:null, comentario:''}; });
+
+const statusFb = (s, t, erro) => { const el = $('fb-' + s + '-status'); if(el){ el.textContent = t || ''; el.className = 'fb-st' + (erro ? ' erro' : ''); } };
+const backup = () => { try { localStorage.setItem(CHAVE, JSON.stringify(REV)); } catch(e) {} };
+const lerTexto = el => (el.innerText || '').replace(/ /g, ' ').replace(/\s+$/, '');
+
+function montarFb(){
+  /* Rascunho: o localStorage (a cada tecla) vale mais que o instantâneo que
+     ficou no sessionStorage antes do último publish. Qualquer diferença em
+     relação ao publicado é restaurada e avisada; nada é publicado aqui. */
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch(e) {}
+  try {
+    const sess = JSON.parse(sessionStorage.getItem(CHAVE) || 'null');
+    sessionStorage.removeItem(CHAVE);
+    if(!local && sess) local = sess;
+  } catch(e) {}
+  document.querySelectorAll('.fb[data-fb]').forEach(el => {
+    const s = el.dataset.fb;
+    let doLocal = false;
+    if(local && local[s] && ((local[s].voto || null) !== (REV[s].voto || null) || (local[s].comentario || '') !== (REV[s].comentario || ''))){
+      REV[s] = {voto: local[s].voto || null, comentario: local[s].comentario || ''}; doLocal = true;
+    }
+    el.innerHTML = `<div class="fb-h"><span class="t">Sua revisão desta seção</span><div class="fb-radios" role="radiogroup" aria-label="Sua revisão da seção ${s}">${VOTOS.map(([k, t]) => `<label for="fb-${s}-${k}"><input type="radio" name="fb-${s}" id="fb-${s}-${k}" value="${k}"${REV[s].voto === k ? ' checked' : ''}>${t}</label>`).join('')}</div><span class="fb-st" id="fb-${s}-status" aria-live="polite"></span></div><div class="fb-in" id="fb-${s}-comentario" contenteditable="true" tabindex="0" role="textbox" aria-multiline="true" aria-label="Comentário sobre a seção ${s}" data-ph="O que ajustar ou refazer, com as suas palavras."></div>`;
+    $('fb-' + s + '-comentario').textContent = REV[s].comentario;
+    if(doLocal) statusFb(s, 'rascunho deste navegador, ainda não salvo', true);
+
+    el.addEventListener('change', e => {
+      if(e.target.name !== 'fb-' + s) return;
+      REV[s].voto = e.target.value; backup(); agendar(s);
+    });
+    const ed = $('fb-' + s + '-comentario');
+    ed.addEventListener('focus', () => { antes[s] = REV[s].comentario; });
+    ed.addEventListener('input', () => { REV[s].comentario = lerTexto(ed); backup(); });
+    ed.addEventListener('blur', () => {
+      REV[s].comentario = lerTexto(ed);
+      if(!REV[s].comentario) ed.textContent = '';
+      if(REV[s].comentario !== antes[s]) agendar(s);
+      else if(sujos.size){ clearTimeout(timer); timer = setTimeout(publicar, 1500); }
+    });
+  });
+}
+
+function iniciarArtifact(){
+  const indisponivel = () => { pronto = true; $('aviso-save').hidden = false; };
+  if(!window.claude || typeof window.claude.use !== 'function'){ indisponivel(); return; }
+  window.claude.use('artifact').then(a => { artifact = a; pronto = true; if(!a) $('aviso-save').hidden = false; }).catch(indisponivel);
+}
+
+function agendar(s){
+  sujos.add(s); statusFb(s, 'salvando…');
+  clearTimeout(timer); timer = setTimeout(publicar, 1500);
+}
+
+/* Documento publicado, montado à mão só com as partes marcadas da FONTE e o
+   JSON da revisão. Todo sinal de menor do JSON vira <, o que cobre
+   fechamento de script e abertura de comentário HTML digitados na revisão. */
+function documento(texto){
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + FONTE.title + FONTE.style + '</head><body>' + FONTE.corpo
+    + '\n<scr' + 'ipt type="application/json" id="revisao-estado">' + texto.replace(/</g, '\\u003c') + '</scr' + 'ipt>\n'
+    + FONTE.script + '</body></html>';
+}
+
+const CHAVE_POS = 'mockup-j4-posicao';
+const comentarioEmFoco = () => { const a = document.activeElement; return !!(a && a.classList && a.classList.contains('fb-in')); };
+
+async function publicar(){
+  if(!pronto || publicando){ clearTimeout(timer); timer = setTimeout(publicar, 800); return; }
+  /* Publicar recarrega esta visão: nunca com um comentário em foco. O blur reagenda. */
+  if(comentarioEmFoco()) return;
+  const secs = [...sujos]; sujos.clear();
+  if(!secs.length) return;
+  if(!artifact){ secs.forEach(s => statusFb(s, 'não salvou: salvamento indisponível aqui. Copie seu comentário.', true)); return; }
+  const texto = JSON.stringify(REV);
+  const html = documento(texto);
+  publicando = true;
+  try {
+    sessionStorage.setItem(CHAVE, texto);
+    sessionStorage.setItem(CHAVE_POS, JSON.stringify({y: window.scrollY || 0, secao: secs[0]}));
+  } catch(e) {}
+  try {
+    await artifact.publish(html);
+    secs.forEach(s => statusFb(s, 'salvo'));
+    /* Só apaga o backup se nada mudou depois do instantâneo publicado. */
+    try { if(JSON.stringify(REV) === texto) localStorage.removeItem(CHAVE); } catch(e) {}
+  } catch(err) {
+    if(!err || err.code !== 'conflict'){ try { sessionStorage.removeItem(CHAVE_POS); sessionStorage.removeItem(CHAVE); } catch(e) {} }
+    const c = err && err.code;
+    if(c === 'conflict') secs.forEach(s => statusFb(s, 'outra versão foi salva antes; a página vai recarregar. Confira sua revisão depois.', true));
+    else if(['not_writer','not_granted','not_declared','capability_disabled','capability_removed','consent_required'].includes(c)){
+      artifact = null; $('aviso-save').hidden = false;
+      secs.forEach(s => statusFb(s, 'não salvou: esta visualização é só leitura. Copie seu comentário.', true));
+    } else secs.forEach(s => statusFb(s, 'não salvou — copie seu comentário', true));
+  } finally { publicando = false; }
+}
+
+/* ---------- início ---------- */
+montarEstados();
+RENDER.A(true); RENDER.B(true); RENDER.C(true); RENDER.D(true); renderE();
+ligarA(); ligarB(); ligarC(); ligarD(); ligarE();
+montarFb();
+iniciarArtifact();
+/* Depois de um publish a visão recarrega: volta para onde a pessoa estava. */
+try {
+  const pos = JSON.parse(sessionStorage.getItem(CHAVE_POS) || 'null');
+  sessionStorage.removeItem(CHAVE_POS);
+  if(pos){
+    const ir = () => { if(pos.y) window.scrollTo(0, pos.y); else if($('sec-' + pos.secao)) $('sec-' + pos.secao).scrollIntoView(); };
+    ir(); window.addEventListener('load', ir, {once:true});
+  }
+} catch(e) {}
+})();
+</script>
