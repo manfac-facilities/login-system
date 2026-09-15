@@ -225,7 +225,7 @@ export default function Cartao({
             <PillEtapa etapa={obra.etapa} cor={corSev} />
             {obra.mau_uso ? <Pill>Mau uso</Pill> : null}
             <span className="text-[12px] text-[#94a3b8]">
-              <b className="text-[#e8eef7]">{obra.dias ?? '—'}</b> dias desde a aprovação
+              <b className="text-[#e8eef7]">{obra.diasAlerta ?? '—'}</b> dias em aberto
             </span>
           </div>
         </div>
