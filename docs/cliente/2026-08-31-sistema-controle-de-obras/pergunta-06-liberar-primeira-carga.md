@@ -17,8 +17,8 @@ Oi! O Controle de Obras já está ligado no Field e pronto para puxar as obras. 
 A) Sim, pode puxar
 B) Ainda não, te aviso quando terminar
 
-*2. Hoje existem 167 OS do tipo "Atividade Spot" no Field. Todas elas são obras que a equipe precisa acompanhar no sistema?*
-A) Sim, as 167 são obras ativas
+*2. Hoje existem 175 OS do tipo "Atividade Spot" no Field. Todas elas são obras que a equipe precisa acompanhar no sistema?*
+A) Sim, as 175 são obras ativas
 B) Não, algumas já terminaram ou não são obra — vou arquivar ou mudar o tipo delas no Field antes
 C) Não sei o número certo, vou conferir
 
