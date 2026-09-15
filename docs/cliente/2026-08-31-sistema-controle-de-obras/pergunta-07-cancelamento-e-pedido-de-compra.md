@@ -65,6 +65,37 @@ C) Outro nome: ____
 | 5 | Define as colunas: número + data, só data, ou nenhuma. Com **C**, a tarefa "pedido de compra" do cronograma some |
 | 6 | Nome da etapa `aprovarOS` na tela (e no mockup da J4). **A** renomeia; **B** mantém; **C** usa o nome dito |
 
+---
+
+## Resposta — 14/09/2026 (literal, colada pelo João no chat)
+
+> 1A
+> 2B
+> 3B - status muda pra cancelado e talvez deja arquivada no futuro
+> 4A
+> 5A
+> 6C - Executado - pendente aprovação os (isso é grave pq é dinheiro parado e que depende do cliente)
+
+Em texto corrido:
+
+1. **A** — qualquer pessoa da equipe com acesso pode cancelar.
+2. **B** — obra já executada **não é cancelada**: segue até faturar o que foi feito.
+3. **B** — no Field, a OS cancelada **continua ativa com status "cancelado"**; talvez seja arquivada no futuro.
+4. **A** — o faturamento **sempre** precisa do pedido de compra.
+5. **A** — registrar **número e data** em que o pedido de compra chegou.
+6. **C** — o nome é **"Executado - pendente aprovação OS"**, com a ressalva: *"isso é grave pq é dinheiro parado e que depende do cliente"*.
+
+### O que isso muda (leitura do Claude, 14/09)
+
+| # | Consequência |
+|---|---|
+| 1 | Sem trava por papel no cancelamento — mesma linha do "qualquer um preenche" |
+| 2 | "Cancelar" só existe **antes** de a execução em campo ser concluída. Depois disso a obra segue a esteira até faturar. O cancelamento fica **menor** que o estimado (6–10 h), não maior |
+| 3 | **A sincronização não detecta o cancelamento sozinha:** a D2.1 só reage a `archived`, e a OS cancelada continua ativa. E a J3 não encontrou campo de status na ordem (`/orders` traz `archived`, não `status`) — o "status cancelado" pode estar em outro recurso (atividade/tarefa da OS). **Cancelar no sistema fica manual** até isso ser verificado. Liga-se ao feedback 13 (OS duplicadas quando o status muda) |
+| 4 | Pedido de compra é **pré-requisito** para concluir "Pendente faturamento" |
+| 5 | Duas colunas novas: número e data do pedido de compra |
+| 6 | Renomear a etapa `aprovarOS` para **"Executado - pendente aprovação OS"** em todas as telas. E ela é **dinheiro parado que depende do cliente** — pede destaque próprio nos alertas, não só um nome |
+
 **Pergunta só para o João, do feedback 09:** o texto "Obra concluída - OK / Pendente aprovação
 da OS / OU / Pendente faturamento (OS aprovada e cliente ainda não enviou o pedido de compra)",
 de 10/09, é fala do cliente ou definição sua?
