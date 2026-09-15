@@ -63,3 +63,14 @@ O modelo atual (`_lib/tipos.ts`) tem, do fim da execução em diante:
   por que a obra espera, sem registro próprio?
 - O PC é o que autoriza o **faturamento** — então ele é pré-requisito de `faturado`, ou
   existe caso em que se fatura sem ele?
+
+---
+
+## Respostas às perguntas desta página (14/09/2026)
+
+- **"Esse texto é fala do cliente ou definição do João?"** — **Fala do cliente.** Resposta do
+  João no chat, literal: *"isso foi fala do cliente"*.
+- As outras três foram respondidas pelo próprio cliente na
+  `pergunta-07-cancelamento-e-pedido-de-compra.md` (respostas 4A, 5A e 6C): o pedido de
+  compra é sempre exigido para faturar, com número e data registrados, e a etapa se chama
+  **"Executado - pendente aprovação OS"** — "dinheiro parado e que depende do cliente".
