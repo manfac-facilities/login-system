@@ -1,0 +1,397 @@
+<title>Como testar o Controle de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root {
+  --ground: #f3f6fb;
+  --surface: #ffffff;
+  --surface-2: #e9eef6;
+  --border: #d3dce9;
+  --text: #0a1628;
+  --muted: #4f607a;
+  --accent: #d24a1a;
+  --accent-soft: #fbe6dc;
+  --ok: #1f8a5b;
+  --ok-soft: #dcf2e7;
+  --warn: #a8700b;
+  --warn-soft: #f8ecd2;
+  --bad: #b93a33;
+  --bad-soft: #f7dedc;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0a1628;
+    --surface: #0e1d3a;
+    --surface-2: #0d2050;
+    --border: #1e3a5f;
+    --text: #e5ecf6;
+    --muted: #94a3b8;
+    --accent: #f05a28;
+    --accent-soft: #3a1f1a;
+    --ok: #4cc38a;
+    --ok-soft: #12352a;
+    --warn: #e5b04a;
+    --warn-soft: #3a2e12;
+    --bad: #f07a6f;
+    --bad-soft: #3d1b1c;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0a1628;
+  --surface: #0e1d3a;
+  --surface-2: #0d2050;
+  --border: #1e3a5f;
+  --text: #e5ecf6;
+  --muted: #94a3b8;
+  --accent: #f05a28;
+  --accent-soft: #3a1f1a;
+  --ok: #4cc38a;
+  --ok-soft: #12352a;
+  --warn: #e5b04a;
+  --warn-soft: #3a2e12;
+  --bad: #f07a6f;
+  --bad-soft: #3d1b1c;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.6;
+  padding: 0 20px;
+}
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 56px; }
+
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); letter-spacing: -0.01em; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.35rem; font-weight: 600; }
+p { margin: 0; max-width: 66ch; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+
+/* Cabeçalho */
+header { display: grid; gap: 18px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.answer {
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+  padding: 18px 22px;
+  display: grid; gap: 8px;
+}
+.answer strong { color: var(--accent); }
+
+section { display: grid; gap: 20px; }
+.section-head { display: grid; gap: 6px; }
+
+/* Pré-requisitos */
+.prereq { display: grid; gap: 0; border: 1px solid var(--border); background: var(--surface); }
+.prereq > div {
+  display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start;
+  padding: 16px 20px; border-top: 1px solid var(--border);
+}
+.prereq > div:first-child { border-top: 0; }
+.prereq .who { grid-column: 1 / -1; color: var(--muted); font-size: 0.92rem; }
+
+.chip {
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 3px; white-space: nowrap; align-self: center;
+}
+.chip.ok { color: var(--ok); background: var(--ok-soft); }
+.chip.warn { color: var(--warn); background: var(--warn-soft); }
+.chip.bad { color: var(--bad); background: var(--bad-soft); }
+.chip.accent { color: var(--accent); background: var(--accent-soft); }
+
+.note { font-size: 0.92rem; color: var(--muted); padding-left: 14px; border-left: 2px solid var(--border); }
+
+/* Testes */
+.group { display: grid; gap: 12px; }
+.group-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.group-title code { color: var(--muted); }
+.test {
+  display: grid; grid-template-columns: 56px 1fr; gap: 4px 16px;
+  background: var(--surface); border: 1px solid var(--border); padding: 18px 20px;
+}
+.test .id { font-family: var(--display); font-size: 1.7rem; font-weight: 700; color: var(--accent); line-height: 1; grid-row: span 3; }
+.test h3 { font-size: 1.25rem; }
+.test ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 2px; max-width: 66ch; }
+.test .expect { font-size: 0.93rem; background: var(--surface-2); padding: 10px 14px; margin-top: 10px; max-width: 70ch; }
+.test .expect b { font-weight: 600; }
+.done { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.88rem; color: var(--muted); cursor: pointer; width: fit-content; }
+.done input { width: 17px; height: 17px; accent-color: var(--ok); cursor: pointer; }
+.test:has(.done input:checked) { border-color: var(--ok); }
+.test:has(.done input:checked) .id { color: var(--ok); }
+input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tip { background: var(--accent-soft); padding: 14px 18px; font-size: 0.95rem; }
+.tip b { color: var(--accent); }
+
+/* Limites */
+.limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.limits > div { background: var(--surface); border: 1px solid var(--border); padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+.limits h3 { font-size: 1.12rem; }
+.limits p { font-size: 0.92rem; color: var(--muted); }
+
+/* Tabelas */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 0.93rem; min-width: 560px; }
+th, td { text-align: left; padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+thead th { border-top: 0; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--surface-2); }
+td.date { font-family: var(--mono); font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td b { font-weight: 600; }
+
+footer { font-size: 0.88rem; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--border); padding-top: 20px; }
+
+@media (max-width: 520px) {
+  .test { grid-template-columns: 1fr; }
+  .test .id { grid-row: auto; font-size: 1.4rem; }
+  h2 { font-size: 1.7rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .test { transition: border-color 160ms ease; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Controle de Obras · hub.manfac.com.br/obras · atualizado em 15/09/2026</span>
+  <h1>Como testar o Controle de Obras</h1>
+  <div class="answer">
+    <p><strong>Por que as OS ainda não estão lá:</strong> o sistema está no ar desde 10/09, mas a primeira carga do Field Control ainda não foi feita. Ela vai trazer <b>185 OS</b> do tipo "Atividade Spot".</p>
+    <p>Assim que as OS entrarem, todos os testes abaixo ficam disponíveis. Cada teste tem um código (T1, T2…). Mande o resultado pelo WhatsApp usando esse código, por exemplo: <span class="mono">"T5 ok"</span> ou <span class="mono">"T7 deu erro ao salvar"</span>.</p>
+  </div>
+</header>
+
+<section aria-labelledby="antes">
+  <div class="section-head">
+    <span class="eyebrow">Antes de testar</span>
+    <h2 id="antes">O que precisa estar feito</h2>
+  </div>
+  <div class="prereq">
+    <div>
+      <h3>As OS do Field carregadas no sistema</h3>
+      <span class="chip accent">hoje</span>
+      <p class="who">A equipe de desenvolvimento aperta "Puxar do Field" na tela de sincronização, que é só de administrador. Entram as 185 OS com número, loja e descrição.</p>
+    </div>
+    <div>
+      <h3>Acesso ao módulo liberado para cada pessoa</h3>
+      <span class="chip warn">a conferir</span>
+      <p class="who">Um administrador marca "Controle de Obras" para o e-mail da pessoa em <code>/admin/acessos</code>. Administrador do hub já entra sem essa liberação.</p>
+    </div>
+    <div>
+      <h3>Conta no hub para quem vai usar</h3>
+      <span class="chip warn">a conferir</span>
+      <p class="who">Em 10/09, Yuri e Amanda ainda não tinham conta. Sem conta, a pessoa não entra no hub nem vê o seu diário.</p>
+    </div>
+  </div>
+  <p class="note">Das 185 OS, pelo menos 3 são de teste ("TESTE SPOT", "teste4", "testeheleno"), e a OS 7777 ainda aparece como não arquivada no Field. Elas vão entrar e depois são retiradas. Na planilha das 185 OS, marque <b>N</b> em tudo o que não for obra para acompanhar.</p>
+</section>
+
+<section aria-labelledby="testar">
+  <div class="section-head">
+    <span class="eyebrow">Pronto para testar</span>
+    <h2 id="testar">O que já funciona</h2>
+  </div>
+
+  <div class="tip"><b>Para ver uma obra no Diário:</b> o Diário mostra só as obras em que você é o <b>Responsável</b>. No teste T5, coloque você mesmo como Responsável e libere a obra. Assim ela aparece no seu Diário no T7.</div>
+
+  <div class="group">
+    <div class="group-title"><h3>Base de obras</h3><code>/obras/base</code></div>
+
+    <article class="test">
+      <span class="id">T1</span>
+      <h3>Ver a base de obras</h3>
+      <ol><li>Abra a Base de obras.</li><li>Confira os 8 números do topo (aguardando definição, em andamento, paralisadas…).</li><li>Veja a tabela logo abaixo.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> uma linha por OS vinda do Field, todas em "Aguardando definição", com número, loja e descrição preenchidos. O resto fica em branco até a triagem.</p>
+      <label class="done" for="t1"><input type="checkbox" id="t1" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T2</span>
+      <h3>Alternar para o Kanban</h3>
+      <ol><li>Na Base, troque de Tabela para Kanban no topo.</li><li>Veja as colunas Antes de executar, Executando, Fechamento e Faturamento.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> as obras recém-chegadas todas na coluna "Antes de executar".</p>
+      <label class="done" for="t2"><input type="checkbox" id="t2" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T3</span>
+      <h3>Filtrar a base</h3>
+      <ol><li>Escolha uma etapa no filtro "Etapa da obra".</li><li>Compare a tabela com os números do topo.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a tabela muda e os 8 números do topo continuam iguais. É proposital: filtrar não pode dar a impressão de que a operação parou.</p>
+      <label class="done" for="t3"><input type="checkbox" id="t3" data-test> Testei</label>
+    </article>
+  </div>
+
+  <div class="group">
+    <div class="group-title"><h3>Ficha da obra</h3><code>/obras/obra/…</code></div>
+
+    <article class="test">
+      <span class="id">T4</span>
+      <h3>Abrir a ficha de uma obra</h3>
+      <ol><li>Na Base, clique na loja de uma obra.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> o cabeçalho com loja e OS, o aviso "Sem cobertura" (a obra ainda não tem OS aprovada nem liberação) e o bloco Identificação só com os campos que vieram do Field.</p>
+      <label class="done" for="t4"><input type="checkbox" id="t4" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T5</span>
+      <h3>Fazer a triagem de uma obra nova</h3>
+      <ol><li>Abra uma obra em "Aguardando definição".</li><li>Preencha Responsável, Equipe/prestador, Prioridade, Data de início e Duração.</li><li>Clique em "Liberar para o diário do dia".</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a obra passa para "Levantamento" e sai da fila de triagem. Se faltar um dos 5 campos, o botão fica desabilitado.</p>
+      <label class="done" for="t5"><input type="checkbox" id="t5" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T6</span>
+      <h3>Mudar a etapa de uma obra</h3>
+      <ol><li>Abra uma obra já liberada.</li><li>No fim do bloco "Ciclo de vida da obra", escolha outra etapa.</li><li>Clique em "Confirmar mudança".</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a etapa muda na hora e o contador "dias parada nesta etapa" volta a zero.</p>
+      <label class="done" for="t6"><input type="checkbox" id="t6" data-test> Testei</label>
+    </article>
+  </div>
+
+  <div class="group">
+    <div class="group-title"><h3>Diário do dia</h3><code>/obras/diario</code></div>
+
+    <article class="test">
+      <span class="id">T7</span>
+      <h3>Responder o diário</h3>
+      <ol><li>Abra o Diário.</li><li>Num cartão, responda "Andou hoje?".</li><li>Se responder Não, escolha o motivo do bloqueio (é obrigatório).</li><li>Clique em "Salvar e sair da fila".</li></ol>
+      <p class="expect"><b>Você deve ver:</b> o cartão desce para "Já respondidas". Se marcou Não, nasce sozinha uma tarefa de cobrança, que aparece no T10.</p>
+      <label class="done" for="t7"><input type="checkbox" id="t7" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T8</span>
+      <h3>Anexar a foto do dia</h3>
+      <ol><li>Numa obra em andamento, clique em "+ anexar foto do dia".</li><li>Escolha a imagem e salve o diário.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a foto na ficha da obra, em "Evolução em fotos". Não anexar não impede salvar, mas abre uma tarefa cobrando a foto da equipe.</p>
+      <label class="done" for="t8"><input type="checkbox" id="t8" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T9</span>
+      <h3>Desfazer uma resposta</h3>
+      <ol><li>Em "Já respondidas", clique em "Desfazer".</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a obra volta para a fila. As tarefas que essa resposta abriu, e que ninguém respondeu ainda, somem junto.</p>
+      <label class="done" for="t9"><input type="checkbox" id="t9" data-test> Testei</label>
+    </article>
+  </div>
+
+  <div class="group">
+    <div class="group-title"><h3>Tarefas e acessos</h3><code>/obras/tarefas · /admin/acessos</code></div>
+
+    <article class="test">
+      <span class="id">T10</span>
+      <h3>Ver e responder uma tarefa</h3>
+      <ol><li>Abra Tarefas.</li><li>No grupo do dono (Compras, Obras ou a equipe), clique em "Marcar como respondida".</li><li>Escreva o que foi feito.</li></ol>
+      <p class="expect"><b>Você deve ver:</b> a tarefa passa para "Respondidas", com data e hora. A tarefa vencida aparece em vermelho no topo da lista.</p>
+      <label class="done" for="t10"><input type="checkbox" id="t10" data-test> Testei</label>
+    </article>
+
+    <article class="test">
+      <span class="id">T11</span>
+      <h3>Liberar o acesso de uma pessoa</h3>
+      <ol><li>Como administrador, abra Acessos.</li><li>Na linha da pessoa, marque "Controle de Obras".</li></ol>
+      <p class="expect"><b>Você deve ver:</b> no próximo login dessa pessoa, o cartão "Controle de Obras" aparece no painel do hub.</p>
+      <label class="done" for="t11"><input type="checkbox" id="t11" data-test> Testei</label>
+    </article>
+  </div>
+</section>
+
+<section aria-labelledby="limites">
+  <div class="section-head">
+    <span class="eyebrow">Não é defeito</span>
+    <h2 id="limites">O que você vai notar e já está previsto</h2>
+    <p class="muted">São partes que ainda não foram construídas, não erros. Cada uma está na lista do que falta, logo abaixo.</p>
+  </div>
+  <div class="limits">
+    <div><h3>A obra chega só com 3 campos</h3><p>O Field manda número, loja e descrição. Tipo, valor, data de aprovação e o resto ainda não têm onde ser preenchidos depois da triagem.</p></div>
+    <div><h3>Nenhuma obra fica crítica</h3><p>A contagem de dias depende da data de aprovação, que ainda não tem onde ser digitada. Por isso nenhuma obra vira crítica por enquanto.</p></div>
+    <div><h3>A esteira não marca etapa concluída</h3><p>Hoje a etapa muda pelo seletor, sem gravar a data de cada passo. O botão "Concluir esta etapa" é o que vai gravar essas datas.</p></div>
+    <div><h3>Mudar a etapa não tem trava</h3><p>Qualquer pessoa com acesso move qualquer obra para qualquer etapa, inclusive pulando etapas.</p></div>
+    <div><h3>Tarefa vencida não avisa ninguém</h3><p>Ela aparece em vermelho, mas só para quem abre a tela. O aviso automático ainda não existe.</p></div>
+    <div><h3>A carga de novas OS é manual</h3><p>Hoje só entra OS nova quando alguém aperta "Puxar do Field". A sincronização automática vem logo depois da primeira carga.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="falta">
+  <div class="section-head">
+    <span class="eyebrow">Falta fazer</span>
+    <h2 id="falta">O que vem a seguir</h2>
+    <p class="muted">Previsão do cronograma de 14/09. As datas da ficha editável dependem da aprovação da nova versão das telas.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>O que</th><th>Para que serve</th><th>Previsão</th></tr></thead>
+      <tbody>
+        <tr><td><b>Sincronização automática</b></td><td>As OS novas do Field entram sozinhas, sem ninguém apertar botão.</td><td class="date">após a 1ª carga</td></tr>
+        <tr><td><b>Ficha e triagem editáveis</b></td><td>Completar a obra (tipo, valor, origem, data de aprovação), com botão Editar por bloco.</td><td class="date">17–18/09</td></tr>
+        <tr><td><b>Remarcação com motivo</b></td><td>Mudar a data de início pede um motivo, escolhido numa lista que aceita motivos novos.</td><td class="date">17–18/09</td></tr>
+        <tr><td><b>Histórico de alterações</b></td><td>Quem mudou o quê, quando, com valor antigo e novo. Tela já aprovada.</td><td class="date">17–18/09</td></tr>
+        <tr><td><b>Nova regra da obra crítica</b></td><td>Atenção acima de 20 dias e crítica acima de 30, contando da data mais antiga entre liberação e aprovação.</td><td class="date">17–18/09</td></tr>
+        <tr><td><b>"Concluir esta etapa"</b></td><td>Grava a data de cada passo da esteira: executado, aprovação da OS, fechar OS, faturamento.</td><td class="date">21–22/09</td></tr>
+        <tr><td><b>SLAs da reunião semanal</b></td><td>Dias sem OS aprovada e dias da OS aprovada até faturar (amarelo acima de 15, vermelho acima de 30).</td><td class="date">a confirmar</td></tr>
+        <tr><td><b>Cancelamento de obra</b></td><td>Cancelar com autor (cliente ou Manfac) e motivo. A obra sai do diário e das cobranças.</td><td class="date">23–24/09</td></tr>
+        <tr><td><b>Pedido de compra</b></td><td>Registrar número e data de chegada, como condição para faturar.</td><td class="date">25/09</td></tr>
+        <tr><td><b>Aviso das 18h/19h</b></td><td>Lembrete automático para quem não respondeu o diário.</td><td class="date">a definir</td></tr>
+        <tr><td><b>Relatório para o cliente</b></td><td>Painel ou exportação para a apresentação semanal.</td><td class="date">fora deste calendário</td></tr>
+        <tr><td><b>Treinamento da equipe</b></td><td>Com o sistema completo e o manual atualizado.</td><td class="date">semana de 28/09</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="rotina">
+  <div class="section-head">
+    <span class="eyebrow">A rotina de controle</span>
+    <h2 id="rotina">O que o sistema já assume</h2>
+    <p class="muted">As tarefas descritas na reunião de 31/08, comparadas com o que existe hoje.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tarefa</th><th>Hoje</th><th>Onde</th></tr></thead>
+      <tbody>
+        <tr><td>Atualizar o status das obras</td><td><span class="chip ok">coberto</span></td><td>Ficha da obra (T6) e Diário (T7)</td></tr>
+        <tr><td>Registrar as obras aprovadas</td><td><span class="chip warn">parcial</span></td><td>As obras vêm do Field. Falta a carga automática.</td></tr>
+        <tr><td>Montar o cronograma com a operação</td><td><span class="chip warn">parcial</span></td><td>A triagem grava início, duração e responsável (T5). Falta a remarcação com motivo.</td></tr>
+        <tr><td>Pendências com outras áreas</td><td><span class="chip warn">parcial</span></td><td>Tarefas cobrem Compras e Obras (T10). Financeiro e administrativo ainda não.</td></tr>
+        <tr><td>Cobrar o fechamento da OS no sistema do cliente</td><td><span class="chip warn">parcial</span></td><td>O indicador "sem OS aprovada" está na Base. Falta o SLA com alerta.</td></tr>
+        <tr><td>Acompanhar o faturamento</td><td><span class="chip warn">parcial</span></td><td>As etapas existem e mudam à mão. Faltam o pedido de compra e o SLA até faturar.</td></tr>
+        <tr><td>Relatórios e apresentação ao cliente</td><td><span class="chip bad">não coberto</span></td><td>Ainda não existe.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>Encontrou algo diferente do que está descrito aqui? Mande pelo WhatsApp o código do teste, o que você fez e o que apareceu na tela.</p>
+  <p>As caixas "Testei" ficam salvas só neste navegador, como lembrete seu.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var KEY = "guia-teste-obras-2026-09-15";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+  var boxes = document.querySelectorAll("input[data-test]");
+  boxes.forEach(function (box) {
+    if (saved[box.id]) box.checked = true;
+    box.addEventListener("change", function () {
+      saved[box.id] = box.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
+})();
+</script>
