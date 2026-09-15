@@ -13,7 +13,7 @@ histórico de 05/09 em diante, mantido como estava.
 | `FIELD_API_KEY` | posta no Environment do EasyPanel pelo João antes do deploy. **Não verificado que chegou ao processo** — a tela `/obras/sincronizar` só acusa a falta ao clicar, e clicar grava as 167 OS |
 | J3 | provada com a chave local — `j3-verificacao-api-2026-09-14.md`. Aberto: se OS arquivada segue listada e se `GET /orders/:id` traz `archived` |
 | D2.1 | ✅ **mergeada** (`03e2a83`, código `3edba98`), 337/337 aqui. Forma simplificada pelo conselho (`conselho-revisao-d21-2026-09-14.md`); conferência de lista fechada sem bloqueador. **Deployada**: build de 14/09 19:36:54 GMT, 10 chunks no mesmo timestamp. Sem migration nova |
-| D3 | decidida — capítulo da D3 no `02-FRENTES-DO-DUDA.md`. **Liberada para o Duda** |
+| D3 | ✅ **mergeada** (`06aefd9`, código `972945b`), 344/344 aqui; conferência de lista fechada sem bloqueador (`conferencia-d3-2026-09-14.md`). **Não deployada.** Migration `sdd-sql-obras-sync-execucao.sql` aplicada **só até a função da trava** — os dois `cron.schedule` **não foram criados de propósito**: a primeira incremental é a primeira carga das 167 OS e espera a pergunta 06. Segredo gerado em `C:\Users\joao-\.obras-cron-secret` (fora do repo); falta pôr no EasyPanel e, depois da liberação do cliente, no Vault |
 | Backlog | `backlog-integracao-field.md` — o que ficou fora pela régua de revisão |
 
 ⚠️ **Não apertar "Puxar do Field" em produção**: com a chave no ar, grava as 167 OS. A primeira carga espera o pente fino do cliente e a D2.1.

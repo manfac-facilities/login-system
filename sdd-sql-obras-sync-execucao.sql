@@ -1,6 +1,9 @@
 -- D3 — histórico, marca d'água e trava da sincronização automática do Field.
--- ESTADO: NÃO APLICADO. O João aplica manualmente depois de configurar
--- OBRAS_CRON_SECRET no Vault e de publicar a rota no hub.
+-- ESTADO: APLICADO PARCIALMENTE em 14/09/2026, pela Management API, com autorização
+-- do João: tabela, índices, RLS e a função da trava. Os dois cron.schedule do fim
+-- NÃO foram criados — a primeira incremental é a primeira carga real das 167 OS e
+-- espera a liberação do cliente (pergunta 06). Ao criar: segredo OBRAS_CRON_SECRET no
+-- Vault antes, e a completa em '5 6 * * *' para não disputar a trava com a incremental.
 
 begin;
 
