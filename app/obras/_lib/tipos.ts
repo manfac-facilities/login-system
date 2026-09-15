@@ -8,8 +8,9 @@
  * Origem de tudo que está aqui:
  *   docs/cliente/2026-08-31-sistema-controle-de-obras/mockup-obras.html (aprovado)
  *   docs/cliente/2026-08-31-sistema-controle-de-obras/spec-v0-treinamento.md §4
- * Os limiares (100 dias, duracao*4, 120, 3, 15, 60) foram copiados do mockup
- * linha a linha. Mudá-los é mudar o produto aprovado — não é ajuste técnico.
+ * Os limiares (duracao*4, 120, 3, 15, 60) foram copiados do mockup linha a
+ * linha; atenção > 20 e crítica > 30 vêm do feedback 14 (15/09/2026). Mudá-los
+ * é mudar o produto aprovado — não é ajuste técnico.
  *
  * CONVENÇÃO DE NOMES, e ela é semântica:
  *   snake_case  = coluna que existe no banco (obras_obra.os_aprovada)
@@ -88,6 +89,18 @@ export function somaDias(iso: string | null | undefined, n: number | null | unde
   const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
   const dd = String(d.getUTCDate()).padStart(2, '0')
   return `${d.getUTCFullYear()}-${mm}-${dd}`
+}
+
+/**
+ * `timestamptz` (ex.: `created_at`) → `AAAA-MM-DD` no dia de SÃO PAULO.
+ * `diasDesde` só entende `AAAA-MM-DD`: entregar o timestamp cru devolve null.
+ * Pelo dia UTC, a obra sincronizada às 23h de SP cairia no dia seguinte.
+ */
+export function dataSP(ts: string | null | undefined): string | null {
+  if (!ts) return null
+  const d = new Date(ts)
+  if (Number.isNaN(d.getTime())) return null
+  return hojeISO(d)
 }
 
 /** `AAAA-MM-DD` → `DD/MM/AAAA`. Vazio vira travessão. `br(mockup:1102)`. */
@@ -327,8 +340,16 @@ export type RemarcacaoRow = {
 // ============================================================
 
 export type Derivados = {
-  /** Dias desde a aprovação. É o número da coluna "dias" e da ordenação default. */
+  /** Dias desde a APROVAÇÃO. Alimenta `estourou` e o KPI de 60 dias — NÃO a crítica. */
   dias: number | null
+  /** De que data a contagem de atenção/crítica corre. Ver `ancoraDias`. */
+  ancora: AncoraDias | null
+  /**
+   * Dias desde a âncora. É o número do selo, da coluna e de `critico`/
+   * `classeDias`. Piso em 0 (spec A10): data futura não vira contagem
+   * negativa — diferente de `dias`, que a spec deixa contar negativo.
+   */
+  diasAlerta: number | null
   /** Fim previsto = início (real ou planejado) + duração. */
   fimCalc: string | null
   /** Dias passados do fim previsto. Só antes de sair de campo. */
@@ -399,6 +420,9 @@ export function donoDa(o: Pick<ObraRow, 'etapa' | 'pcm' | 'analista_cliente'>): 
  */
 export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
   const dias = diasDesde(o.aprovacao, hoje)
+  const ancora = ancoraDias(o)
+  const diasAlertaBruto = ancora ? diasDesde(ancora.data, hoje) : null
+  const diasAlerta = diasAlertaBruto !== null ? Math.max(0, diasAlertaBruto) : null
   const ini = o.inicio_real || o.inicio_plan
   const fimCalc = ini && o.duracao ? somaDias(ini, o.duracao) : null
   const atraso = !posCampo(o) && fimCalc ? diasDesde(fimCalc, hoje) : null
@@ -417,6 +441,8 @@ export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
   return {
     ...o,
     dias,
+    ancora,
+    diasAlerta,
     fimCalc,
     atraso,
     diaDe,
@@ -427,18 +453,51 @@ export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
 }
 
 // ============================================================
-// 5. Regras de leitura — o que é urgente e o que não é
-//
-// ESCALA DE URGÊNCIA, e ela é decisão de leitura, não enfeite: o vermelho fica
-// reservado a uma coisa só — obra ainda em aberto há 100 dias ou mais. São três
-// na base inteira, e é o caso que justificou o projeto: precisa gritar sozinho.
-// Passar da duração, ficar travada no bloqueio ou esperar definição é âmbar.
-// Quando tudo é vermelho, nada é.
+// 4b. Âncora da contagem de atenção / crítica
+// Cliente (feedback 14, seção E): "atenção acima de 20 dias da data de aprovação
+// da OS ou liberação, a que for menor. Acima de 30 dias já é crítico".
+// Decisão 5 revista (14/09): a data MAIS ANTIGA entre liberação e aprovação;
+// sem nenhuma das duas, a entrada. Mudar isto é mudar o produto.
 // ============================================================
 
-/** `critico(mockup:1805)`. */
+export const LIMIAR_ATENCAO = 20
+export const LIMIAR_CRITICO = 30
+
+export type AncoraDias = { de: 'aprovacao' | 'liberacao' | 'entrada'; data: string }
+
+export function ancoraDias(
+  o: Pick<ObraRow, 'aprovacao' | 'liberado_por' | 'liberado_em' | 'created_at'>
+): AncoraDias | null {
+  const aprov = msDe(o.aprovacao) !== null ? (o.aprovacao as string) : null
+  // Sem nome de quem liberou, a data da liberação não significa nada — a mesma
+  // regra que a action de liberar aplica ao gravar.
+  const lib = o.liberado_por && msDe(o.liberado_em) !== null ? (o.liberado_em as string) : null
+  if (aprov && lib) {
+    return lib < aprov ? { de: 'liberacao', data: lib } : { de: 'aprovacao', data: aprov }
+  }
+  if (aprov) return { de: 'aprovacao', data: aprov }
+  if (lib) return { de: 'liberacao', data: lib }
+  const entrada = dataSP(o.created_at)
+  return entrada ? { de: 'entrada', data: entrada } : null
+}
+
+// ============================================================
+// 5. Regras de leitura — o que é urgente e o que não é
+//
+// ESCALA DE URGÊNCIA: vermelho é obra em aberto há MAIS DE 30 dias desde a
+// âncora (a data mais antiga entre liberação e aprovação, ou a entrada). Até
+// 14/09 o limiar era 100 dias; o cliente o baixou no feedback 14. Passar da
+// duração, ficar travada no bloqueio ou esperar definição é âmbar.
+// ============================================================
+
+/** `critico(mockup:1805)`. Crítica: em aberto há mais de 30 dias desde a âncora (feedback 14, seção E). */
 export function critico(o: Obra): boolean {
-  return !encerrada(o) && o.etapa !== 'definir' && o.dias !== null && o.dias >= 100
+  return (
+    !encerrada(o) &&
+    o.etapa !== 'definir' &&
+    o.diasAlerta !== null &&
+    o.diasAlerta > LIMIAR_CRITICO
+  )
 }
 
 /** `estourou(mockup:1808)` — passou MUITO da duração combinada. */
@@ -550,7 +609,7 @@ export const COR_SEV: Record<Sev, string> = {
 export function classeDias(o: Obra): '' | 'critico' | 'atencao' {
   if (encerrada(o) || o.etapa === 'definir') return ''
   if (critico(o)) return 'critico'
-  if (estourou(o) || (o.dias !== null && o.dias >= 60)) return 'atencao'
+  if (estourou(o) || (o.diasAlerta !== null && o.diasAlerta > LIMIAR_ATENCAO)) return 'atencao'
   return ''
 }
 

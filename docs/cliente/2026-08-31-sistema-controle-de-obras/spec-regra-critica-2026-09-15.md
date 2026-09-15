@@ -1,0 +1,217 @@
+# Spec — nova contagem da obra em atenção / crítica (15/09/2026)
+
+Frente: J4, seção E do mockup. Só especificação: nenhum código foi alterado para escrever este
+documento. Plano de implementação: `plano-regra-critica-2026-09-15.md` (mesma pasta).
+
+## 1. Fontes (as decisões que valem)
+
+| Fonte | O que diz |
+|---|---|
+| `feedback-14-mockup-j4-v01.md:31-34`, fala literal do cliente | *"a sinalização de atenção fica acima de 20 dias da data de aprovação da OS ou liberação, a que for menor. Acima de 30 dias já é critico.. aqui só muda o criterio de tempo desde a data"* |
+| `j4-decisoes-2026-09-14.md:46`, decisão **5 (revista)** | Os dias contam da **data mais antiga entre liberação e aprovação**; sem nenhuma das duas, da **entrada**. Registrar uma data nova nunca derruba a contagem. Substitui a decisão 5 original (`:25`) |
+| `j4-decisoes-2026-09-14.md:49`, decisão **12** | A obra sai dos alertas de obra parada **quando a Manfac faturar** (data de faturamento registrada), não em `etapa === 'faturado'` |
+| `mockup-j4-v01.html:261-277` (seção E) e `:344-356` (`ancora`, `selo`) | O que o cliente viu e julgou: âncora na data mais antiga, fallback na entrada, selo "N dias desde a {aprovação \| liberação \| entrada}", **limiares 100 (crítica) e 60 (atenção)** |
+| `revisao-mockup-j4-2026-09-14.md:67-100, 114-124` | O caso dos 104 dias e a recomendação de que `encerrada` passe a depender de `marco_faturou` |
+| `j4-conciliacao-2026-09-14.md:63, 140, 253-263` | Mapa plano × código: `aprovacao` dispara a crítica; nula, a obra nunca fica crítica |
+
+### Como ler o "aqui só muda o critério de tempo"
+
+O mockup mostrado ao cliente **já trazia a âncora nova** (data mais antiga, com a entrada como
+fallback) e os limiares **antigos**: 100 e 60 (`mockup-j4-v01.html:262`, `:1002`). O cliente
+marcou "Ajustar" e disse que só muda o critério de tempo. Leitura: **a âncora foi aceita; os
+limiares passam de 100/60 para 30/20.**
+
+**Os limiares 20/30 não existem no código.** Hoje o código usa 100 e 60 (seção 2). A
+hipótese de que "20/30 já existem" está errada.
+
+## 2. Regra atual (código em 15/09/2026)
+
+| O quê | Onde | Regra |
+|---|---|---|
+| Número de dias | `app/obras/_lib/tipos.ts:401` | `dias = diasDesde(o.aprovacao, hoje)`. Sem `aprovacao`, `dias = null` |
+| Doc do derivado | `tipos.ts:330-331` | "Dias desde a aprovação. É o número da coluna 'dias' e da ordenação default" |
+| Crítica | `tipos.ts:440-442` | `!encerrada(o) && o.etapa !== 'definir' && o.dias !== null && o.dias >= 100` |
+| Atenção (cor do contador) | `tipos.ts:550-555` | `classeDias`: vazio se encerrada ou `definir`; `'critico'` se `critico`; `'atencao'` se `estourou(o) \|\| dias >= 60` |
+| Estourou | `tipos.ts:445-449` | fora de pós-campo e `definir`: `duracao ? dias > duracao*4 : dias >= 120`. **Usa o mesmo `dias`** |
+| Encerrada | `tipos.ts:360-363` | `etapa === 'faturado'` |
+| Severidade | `tipos.ts:522-534` | `encerrada` → `critico` → `semCobertura` → ... → `atencao` (paralisado, travado, estourou, atraso). **O token `atencao` de `sev` não olha dias corridos** |
+| Usam `encerrada` | `tipos.ts:471-473` (`encalhada`), `:489-491` (`semCobertura`), `:523` (`sev`), `:551` (`classeDias`) | |
+| Comentários que fixam o produto | `tipos.ts:11-12` ("100 dias ... mudá-los é mudar o produto"), `:432-436` ("vermelho reservado a 100 dias ou mais. São três na base") | Ficam falsos com a regra nova |
+| Aritmética de data | `tipos.ts:59-81` | `msDe`/`diasDesde` só aceitam `AAAA-MM-DD`. **Um `timestamptz` como `created_at` devolve `null`** (`'2026-09-14T16:53:22+00:00'.split('-')` dá 3 partes, e o dia `'14T16…'` vira `NaN`) |
+| Testes da regra atual | `app/obras/__tests__/tipos.test.ts:233-247` (crítico 99/100), describe `contador de dias` (60/100), `estourou o prazo`, `severidade` | |
+
+### Colunas reais (`sdd-sql-obras-v0.sql` e `tipos.ts:216-270`)
+
+| Conceito do cliente | Coluna | Tipo | Observação |
+|---|---|---|---|
+| Aprovação da OS | `aprovacao` (`sql:94`) | `date` | Decisão 4: mesma data gravada em `marco_os_aprov` (`sql:104`). A spec usa `aprovacao` |
+| Liberação | `liberado_em` (`sql:81`) + `liberado_por` (`sql:80`) | `date` + `text` | A action só grava a data junto com o nome (`obra/[id]/_actions.ts:147-152`): "sem nome de quem liberou, a data não significa nada" |
+| Entrada | **não existe coluna `entrada`**. O mais próximo é `created_at` (`sql:120`) | `timestamptz not null default now()` | É a hora do **insert**, ou seja, da sincronização. Não é a data de abertura da OS no Field |
+| Faturamento | `marco_faturou` (`sql:107`, `tipos.ts:257`) | `date` | **Existe. Não há bloqueio de schema para a decisão 12.** Mas **nenhum código grava essa coluna hoje**: o único uso é a leitura em `obra/[id]/_ficha.tsx:63` |
+
+## 3. Regra nova
+
+### 3.1 Âncora (de que data se conta)
+
+1. **Data de aprovação válida:** `aprovacao`, quando for uma data `AAAA-MM-DD` válida.
+2. **Data de liberação válida:** `liberado_em`, **só quando `liberado_por` estiver preenchido**
+   e a data for válida.
+3. Havendo as duas, vale a **mais antiga**. Empate conta como aprovação (igual ao mockup,
+   `:348`).
+4. Havendo uma só, vale essa.
+5. Sem nenhuma das duas, conta da **entrada**: `created_at` convertido para o **dia em São
+   Paulo** (`America/Sao_Paulo`, o mesmo fuso de `hojeISO`).
+6. Sem nenhuma data utilizável, não há contagem (`null`), e a obra nunca fica em atenção nem
+   crítica por tempo.
+
+Consequência da regra 3: registrar uma aprovação ou liberação **mais recente** que a outra data
+não muda a contagem. **Exceção (resíduo, ver seção 7):** obra sem nenhuma das duas, que conta da
+entrada, passa a contar da primeira autorização registrada, mesmo que ela seja mais recente que a
+entrada.
+
+### 3.2 Limiares ("acima de")
+
+- **Atenção:** contagem **> 20** (21 dias em diante).
+- **Crítica:** contagem **> 30** (31 dias em diante).
+- Exatamente 20 dias: nada. Exatamente 30 dias: atenção, ainda não crítica.
+
+O código atual usa `>=` (100, 60). A spec segue a letra do cliente ("acima de"), e isso muda a
+fronteira em um dia.
+
+### 3.3 O que continua igual na regra
+
+- `critico` continua excluindo a obra encerrada e a obra em `definir` (o selo do mockup também
+  não pinta obra em definição, `:354`).
+- `classeDias` continua pintando de âmbar a obra que `estourou()`, além da contagem > 20.
+- `sev` continua com a mesma ordem de `if`. Só muda o que entra por `critico` (e, se a decisão 12
+  entrar, por `encerrada`).
+- O derivado `dias` **continua sendo "dias desde a aprovação"**. A contagem nova vira um derivado
+  **novo** (`diasAlerta`, com a âncora em `ancora`). Motivo técnico: `dias` alimenta `estourou`,
+  o KPI "aprovadas há mais de 60 dias", a ordenação do diário e textos que dizem literalmente
+  "desde a aprovação", dois deles em arquivos que outra frente está mexendo (seção 5). Trocar o
+  significado de `dias` mudaria tudo isso sem decisão (ver ambiguidade A3).
+
+### 3.4 Selo e coluna
+
+- `BadgeDias` mostra `diasAlerta`, com cor de `classeDias`. Na forma longa, escreve "N dias desde
+  a aprovação / liberação / entrada" (mockup `:270`, `:355`). Na forma curta, só "N dias". Com 1,
+  usa o singular "dia".
+- A coluna da tabela passa a ordenar por `diasAlerta` (o número que ela mostra), e a ordem padrão
+  também. O rótulo "Dias desde a aprovação" deixa de ser verdade. **O texto novo é decisão
+  pendente (A5)**; o plano usa "Dias em aberto" como provisório, texto que já existe em
+  `_ficha.tsx:290`.
+
+### 3.5 Decisão 12: encerrada = faturada pela Manfac
+
+- `encerrada(o)` passa a ser: `marco_faturou` preenchido. `etapa` deixa de importar.
+- Obra em `etapa = 'faturado'` **sem** `marco_faturou`: continua em aberto, continua na esteira,
+  pode ser crítica.
+- **Dependência bloqueante de sequência, não de schema:** nada grava `marco_faturou` hoje. Se isso
+  subir antes de a frente da esteira gravar essa data ao concluir o passo Faturado, nenhuma obra
+  volta a encerrar. O banco tem 0 obras, então não há dado a corrigir, mas o comportamento fica
+  errado. Ver A6 e A7.
+
+## 4. Tabela de casos
+
+Hoje = **14/09/2026** (a mesma data dos exemplos do mockup). "Atual" é o código de hoje (≥100
+crítica, ≥60 atenção, só `aprovacao`, encerrada por etapa). "Nova" é esta spec. Salvo indicação,
+`etapa = 'andamento'`, `duracao = null` (para `estourou` não interferir) e `marco_faturou = null`.
+
+| # | Caso | aprovacao | liberado_por / liberado_em | created_at | Outros | Âncora nova | Contagem nova | Atual | **Nova** |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | **Os 104 dias:** liberada, OS aprovada hoje | 2026-09-14 | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | liberação 02/06 | 104 | nada (0 dias) | **Crítica** |
+| 2 | Mesma obra antes de aprovar | null | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | liberação 02/06 | 104 | nada (`dias` null) | **Crítica** |
+| 3 | Aprovação **posterior** à liberação | 2026-09-01 | LEANDRO / 2026-08-20 | | | liberação 20/08 | 25 | nada (13) | **Atenção** |
+| 4 | Aprovação **anterior** à liberação | 2026-08-10 | LEANDRO / 2026-08-30 | | | aprovação 10/08 | 35 | nada (35 < 60) | **Crítica** |
+| 5 | Mockup obra 1 (aprovação antes da liberação) | 2026-05-28 | LEANDRO / 2026-06-10 | | | aprovação 28/05 | 109 | Crítica | **Crítica** |
+| 6 | Mesma data nas duas | 2026-08-10 | LEANDRO / 2026-08-10 | | | aprovação 10/08 | 35 | nada | **Crítica** |
+| 7 | **Sem nenhuma data** (só entrada) | null | null / null | 2026-07-01T13:00:00+00:00 | | entrada 01/07 | 75 | nada | **Crítica** |
+| 8 | Entrada perto da meia-noite UTC | null | null / null | 2026-08-25T02:00:00+00:00 | | entrada **24/08** (SP) | 21 | nada | **Atenção** (no dia UTC seriam 20: nada) |
+| 9 | Sem data nenhuma utilizável | null | null / null | `''` | | nenhuma | null | nada | **nada** |
+| 10 | Liberado_em sem liberado_por | null | null / 2026-06-02 | 2026-07-01T13:00Z | | entrada 01/07 | 75 | nada | **Crítica** (a data sem nome é ignorada) |
+| 11 | Liberado_por sem liberado_em | null | JUAN / null | 2026-07-01T13:00Z | | entrada 01/07 | 75 | nada | **Crítica** (mockup usaria hoje = 0; ver A4) |
+| 12 | Resíduo: só entrada, liberação registrada hoje | null | JUAN / 2026-09-14 | 2026-07-01T13:00Z | | liberação 14/09 | 0 | nada | **nada** (cai de 75 para 0; ver C1) |
+| 13 | **Exatamente 20 dias** | 2026-08-25 | null | | | aprovação | 20 | nada | **nada** |
+| 14 | 21 dias | 2026-08-24 | null | | | aprovação | 21 | nada | **Atenção** |
+| 15 | **Exatamente 30 dias** | 2026-08-15 | null | | | aprovação | 30 | nada | **Atenção** (não crítica) |
+| 16 | 31 dias | 2026-08-14 | null | | | aprovação | 31 | nada | **Crítica** |
+| 17 | Aguardando definição | null | null | 2026-07-01T13:00Z | etapa `definir` | entrada | 75 | nada | **nada** (definir não pinta nem é crítica) |
+| 18 | Pós-campo | 2026-08-01 | null | | etapa `fecharOS`, desde_etapa 2026-09-10 | aprovação | 44 | nada (azul) | **Crítica** |
+| 19 | **Faturada pela Manfac** | null | JUAN / 2026-06-02 | | etapa `faturado`, marco_faturou 2026-09-10 | liberação | 104 | encerrada | **encerrada** (sem alerta) |
+| 20 | Etapa Faturado **sem** data de faturamento (decisão 12) | null | JUAN / 2026-06-02 | | etapa `faturado`, marco_faturou null | liberação | 104 | encerrada | **Crítica** e continua em "Executadas, ainda na esteira" |
+| 21 | Faturamento registrado fora da etapa final | null | JUAN / 2026-06-02 | | etapa `pendFat`, marco_faturou 2026-09-10 | liberação | 104 | nada (`dias` null; etapa não é `faturado`) | **encerrada** |
+| 22 | Obra que estoura com poucos dias | 2026-09-01 | null | | duracao 3 | aprovação | 13 | Atenção (13 > 12) | **Atenção** (por `estourou`, que continua) |
+
+Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 ficam como na coluna
+"Atual" quanto a encerrar.
+
+## 5. Quem consome a regra
+
+| Arquivo:linha | Consome | Efeito da regra nova | Quem mexe |
+|---|---|---|---|
+| `_lib/tipos.ts:401` `derivar` | calcula `dias` | ganha `ancora` e `diasAlerta`; `dias` fica | este plano (fora de `base/`) |
+| `_lib/tipos.ts:440` `critico` | `dias >= 100` | `diasAlerta > 30` | este plano |
+| `_lib/tipos.ts:550` `classeDias` | `dias >= 60` | `diasAlerta > 20` | este plano |
+| `_lib/tipos.ts:361` `encerrada` | etapa | `marco_faturou` (decisão 12) | este plano, Task 5 |
+| `_lib/tipos.ts:471, 489, 522` | `encerrada` | herdam a decisão 12 | este plano, Task 5 |
+| `_ui/primitivos.tsx:88` `PillSev` | token de `sev` | pinta mais vermelho | não precisa mudar |
+| `base/_etiquetas.tsx:83-93` `BadgeDias` | `classeDias` e `obra.dias`, "dias desde a aprovação" | passa a mostrar `diasAlerta` e a âncora | este plano |
+| `base/_regras.ts:234, 242` `COLS`, `ORDEM_PADRAO` | `dias` | ordenam por `diasAlerta` | este plano |
+| `base/_regras.ts:180, 305, 308` | `encerrada` | filtro "esteira", KPIs esteira e sem OS herdam a decisão 12 | este plano, Task 5 |
+| `base/_regras.ts:297` KPI "aprovadas há mais de 60 dias" | `dias >= 60` | **não muda** (A3) | ninguém |
+| `base/_regras.ts:301` KPI "a mais antiga há N dias" (definir) | `dias` | **não muda**; obra do Field em definir segue "há 0 dias" (A3) | ninguém |
+| `base/_table.tsx:88, 151` | `critico` (destaque da linha) | mais linhas destacadas | não precisa mudar |
+| `base/_table.tsx:100, 202` | `BadgeDias` | herda | não precisa mudar |
+| `base/_table.tsx:59` | `encerrada` | herda a decisão 12 | não precisa mudar |
+| `base/_kanban.tsx:38, 45, 62, 75` | `critico`, `sev`, `encerrada`, `BadgeDias` | herdam | não precisa mudar |
+| `base/_kanban.tsx:110-111` | ordena por `paradaEtapa ?? dias` | **não muda** | ninguém |
+| `diario/_cartao.tsx:80, 82, 162` | `encerrada`, `critico` (nota de alerta), `sev` | mais cartões vermelhos | não precisa mudar |
+| `diario/_cartao.tsx:228` | `obra.dias` + "dias desde a aprovação" | texto continua verdadeiro, mas **a cor vermelha vem de outra contagem** (A8) | fora de `base/`, não está no plano |
+| `diario/_cartoes.tsx:64` | ordena por `dias` | **não muda** | ninguém |
+| `obra/[id]/_ficha.tsx:249-334` `CaixaAlerta`/`temAlerta` | `critico` + `obra.dias` | **bug visível**: com `critico` verdadeiro e `aprovacao` nula, `:289` mostra número vazio, `:298` escreve "contados  dias desde a aprovação" e `:300` "0 vezes" | **ARQUIVO EM PARALELO**, sinalizar à outra frente |
+| `obra/[id]/_ficha.tsx:378, 433` | `BadgeDias`, `encerrada` | herdam | paralelo, sem edição necessária |
+| `obra/[id]/_triagem.tsx:136` | `BadgeDias` | herda o selo novo sem edição | paralelo, sem edição necessária |
+| `obra/[id]/_triagem.tsx:147` | "esperando há `obra.dias` dias" | **não muda**; obra do Field sem aprovação segue "há 0 dias" (erro pré-existente) | paralelo |
+| `obra/[id]/_actions.ts` | grava `aprovacao`, `liberado_*` | nada. Mas **precisa passar a gravar `marco_faturou`** para a decisão 12 funcionar | paralelo |
+| `tarefas/*`, `sincronizar/*` | não consomem `critico`, `classeDias`, `encerrada` nem `dias` (verificado por grep) | nenhum | ninguém |
+
+## 6. O que NÃO entra
+
+- **SLAs da seção F** (`feedback-14:38-41`): SLA 1, dias desde a liberação sem OS aprovada, e
+  SLA 2, dias desde o fechamento da OS. `diasSemOS` (`tipos.ts:498-504`) não muda.
+- **Cancelamento de obra** (feedback 11).
+- `estourou()` e o limiar de 120 dias: continuam contando de `aprovacao`.
+- O token `atencao` de `sev` (paralisado, travado, estourou, atraso) não ganha a condição "> 20
+  dias" (A2).
+- KPIs de `kpisDaBase`, exceto o que herda `encerrada` pela decisão 12.
+- Gravar a data de faturamento, o botão do passo Faturado e o nome das etapas (decisão de 15/09):
+  são da frente da esteira (`_actions.ts`, `_ficha.tsx`).
+- Qualquer migration. `marco_faturou` já existe.
+- Textos de `_ficha.tsx`, `_triagem.tsx` e `diario/_cartao.tsx`.
+
+## 7. Ambiguidades e contradições (não resolvidas aqui)
+
+| # | Ponto | Por que é aberto | O que o plano faz provisoriamente |
+|---|---|---|---|
+| A1 | "a que for menor" | Pode ser "a menor data" (a mais antiga, maior contagem) ou "o menor número de dias" (a data mais recente). A decisão 5 revista escolheu a mais antiga | Segue a decisão 5 revista |
+| A2 | "Sinalização de atenção" é só a cor do contador (`classeDias`) ou também a borda e o card (`sev = 'atencao'`)? | No código são duas "atenções" diferentes. O mockup só pinta o selo | Só `classeDias`. A borda do card de uma obra com 25 dias segue verde, com o selo âmbar |
+| A3 | A contagem nova substitui `dias` em tudo (estourou, KPI 60 dias, ordenação do diário, "a mais antiga há N dias")? | O cliente falou de atenção e crítica; a revisão notou que a âncora também afetaria `estourou` | Derivado novo `diasAlerta`; `dias` fica |
+| A4 | `liberado_por` preenchido sem `liberado_em` | O mockup conta de **hoje** (`:347`), o que zera a contagem, exatamente o que a decisão 5 revista proíbe | Trata como sem data de liberação e cai para aprovação ou entrada |
+| A5 | Rótulo da coluna da tabela | "Dias desde a aprovação" fica falso; o mockup não desenhou a tabela | "Dias em aberto" (provisório; texto que já existe em `_ficha.tsx:290`) |
+| A6 | Decisão 12: `encerrada()` global ou só os alertas? | "sai dos alertas de obra parada" pode ser só crítica/encalhada/cor (12-B), ou a obra continuar em aberto em filtro e KPIs também (12-A, a recomendação da revisão que originou a decisão) | Plano escrito para 12-A, com as substituições de 12-B listadas. Task bloqueada até a escolha |
+| A7 | Obra em etapa `faturado` sem data | Com 12-A, nunca encerra enquanto ninguém gravar `marco_faturou` | A Task 5 só pode ser mergeada depois de a frente da esteira gravar a data |
+| A8 | Cartão do diário | Vermelho por `diasAlerta`, texto "N dias desde a aprovação" por `dias` | Fica fora; `diario/` não está no perímetro |
+| A9 | Crítica em `definir` | O cliente não excluiu; o código e o mockup excluem | Mantém a exclusão |
+| A10 | Data futura (erro de digitação) | Contagem negativa | Não trata (igual a hoje) |
+| C1 | **Contradição decisão × regra:** a decisão 5 revista diz "registrar uma data nova **nunca** derruba a contagem", mas a própria regra ("sem nenhuma das duas, da entrada") derruba no caso 12 (75 → 0). A revisão (`:78-81`) e o mockup (`:277`) chamaram isso de "resíduo para julgar"; o cliente não comentou | Segue a regra como escrita e registra o caso 12 em teste, para a mudança ficar visível se for decidida |
+| C2 | **Perímetro × código:** a instrução restringe o código a `app/obras/base/` e testes, mas a regra vive em `app/obras/_lib/tipos.ts` (`critico`, `classeDias`, `derivar`, `encerrada`). `_regras.ts:7-8` diz explicitamente que essas regras "NÃO são reescritas aqui". Pôr a regra em `base/` criaria import circular (`tipos` ← `base/_regras` ← `tipos`) ou duplicaria a regra, e `diario/_cartao.tsx` e `_ficha.tsx` importam `critico` de `tipos` | O plano edita `tipos.ts` e marca as tasks como **fora do perímetro, exigem OK do coordenador**. `tipos.ts` também guarda o nome das etapas (`:152`), que a decisão de 15/09 manda trocar: risco de conflito com outra frente |
+| C3 | O comentário `tipos.ts:432-436` ("vermelho reservado a uma coisa só... quando tudo é vermelho, nada é") | Com crítica em 31 dias, a maior parte das obras abertas tende a ficar vermelha. É o produto pedido pelo cliente, mas contradiz a decisão de leitura registrada no código | Atualiza o comentário; não muda a regra |
+
+## 8. Não verificado
+
+- Se a API do Field traz a data de abertura da OS. "Entrada" aqui é `created_at`, a hora da sincronização.
+- O formato exato que o `supabase-js` devolve em `created_at` em produção (o banco tem 0 obras). A
+  spec aceita qualquer string que o `Date` do JavaScript entenda (`…Z`, `…+00:00`, com
+  microssegundos).
+- Se algum código de outra frente, ainda não commitado, já grava `marco_faturou`. O `git status` só
+  mostra `scripts/` não rastreado.
