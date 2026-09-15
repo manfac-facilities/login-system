@@ -25,6 +25,7 @@ import {
   opcoesEtapa,
   ordenar,
   responsaveisDaBase,
+  sufixoDias,
 } from '../base/_regras'
 
 const HOJE = '2026-08-31'
@@ -246,14 +247,24 @@ describe('kpisDaBase', () => {
 })
 
 describe('ordenar', () => {
-  it('o default é dias decrescente', () => {
-    expect(ORDEM_PADRAO).toEqual({ col: 'dias', dir: -1 })
+  it('o default é a contagem de alerta decrescente', () => {
+    expect(ORDEM_PADRAO).toEqual({ col: 'diasAlerta', dir: -1 })
     const base = [
       obra({ aprovacao: '2026-08-29' }),
       obra({ aprovacao: '2026-06-01' }),
       obra({ aprovacao: '2026-08-15' }),
     ]
-    expect(ordenar(base, ORDEM_PADRAO).map((o) => o.dias)).toEqual([91, 16, 2])
+    expect(ordenar(base, ORDEM_PADRAO).map((o) => o.diasAlerta)).toEqual([91, 16, 2])
+  })
+
+  it('ordena pela âncora, não pela aprovação', () => {
+    const liberadaAntes = obra({
+      aprovacao: '2026-08-29',
+      liberado_por: 'JUAN',
+      liberado_em: '2026-06-01',
+    })
+    const soAprovada = obra({ aprovacao: '2026-08-15' })
+    expect(ordenar([soAprovada, liberadaAntes], ORDEM_PADRAO)).toEqual([liberadaAntes, soAprovada])
   })
 
   it('vazio vai para o fim nos dois sentidos', () => {
@@ -317,7 +328,7 @@ describe('colunas e responsáveis', () => {
       'Parada nesta etapa',
       'OS do cliente',
       'Bloqueio',
-      'Dias desde a aprovação',
+      'Dias em aberto',
       'Prazo consumido',
       'Última atualização',
     ])
@@ -326,5 +337,32 @@ describe('colunas e responsáveis', () => {
   it('a lista de responsáveis não repete nem inclui vazio', () => {
     const base = [obra({ pcm: 'YURI' }), obra({ pcm: 'YURI' }), obra({ pcm: null })]
     expect(responsaveisDaBase(base)).toEqual(['YURI'])
+  })
+})
+
+describe('sufixoDias — o selo diz de onde está contando', () => {
+  it('forma longa nomeia a âncora', () => {
+    expect(sufixoDias({ diasAlerta: 104, ancora: { de: 'liberacao', data: '2026-06-02' } })).toBe(
+      'dias desde a liberação'
+    )
+    expect(sufixoDias({ diasAlerta: 109, ancora: { de: 'aprovacao', data: '2026-05-28' } })).toBe(
+      'dias desde a aprovação'
+    )
+    expect(sufixoDias({ diasAlerta: 75, ancora: { de: 'entrada', data: '2026-07-01' } })).toBe(
+      'dias desde a entrada'
+    )
+  })
+
+  it('singular com 1 dia', () => {
+    expect(sufixoDias({ diasAlerta: 1, ancora: { de: 'entrada', data: '2026-08-30' } })).toBe(
+      'dia desde a entrada'
+    )
+  })
+
+  it('forma curta e obra sem âncora dizem só a unidade', () => {
+    expect(
+      sufixoDias({ diasAlerta: 104, ancora: { de: 'liberacao', data: '2026-06-02' } }, true)
+    ).toBe('dias')
+    expect(sufixoDias({ diasAlerta: null, ancora: null })).toBe('dias')
   })
 })
