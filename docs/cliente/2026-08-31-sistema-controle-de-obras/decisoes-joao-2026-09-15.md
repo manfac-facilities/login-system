@@ -15,10 +15,13 @@ J4 v01) e do feedback 15 (prazo de 21/09). Registradas literais, como foram marc
 | Pergunta | Resposta do João, literal |
 |---|---|
 | 3. SLA 2 (OS já aprovada no sistema do cliente): o contador para quando? | **"até a obraser faturada"**, ou seja, até a obra ser faturada. Não para em "Fechar OS" (o Claude havia sugerido "Fechar OS"). Coerente com a decisão 12 de 14/09: a obra sai dos alertas quando a Manfac fatura |
+| 2. Motivos de remarcação com que o cadastro começa (seção B) | **"siga com as sugestoes"**, ou seja, a lista sugerida: Loja não liberou acesso · Falta de material · Equipe indisponível · Cliente pediu para mudar · Chuva/clima · Outro. O usuário pode cadastrar motivo novo (pedido do cliente no feedback 14) |
+| 4. Metas dos SLAs (amarelo/vermelho) | **"Para faturamento o contador fica amarelo acima de 15 dias, vermelho acima de 30"**. Leitura: vale para o **SLA 2** (OS aprovada → faturamento). **O SLA 1 (sem OS aprovada) não foi respondido**; o mockup v02 assume 20/30, igual à obra crítica, e declara isso como suposição. Os limiares ficam editáveis |
+| 1. O que faz o funcionário que vai sair | **Não precisou ser respondida:** já estava na transcrição de 31/08 (achado do conselho, conferido pelo Claude). `transcricao-reuniao-2026-08-31.md:139-143`, José Guilherme: atualiza a planilha com as obras aprovadas; faz o cronograma de obra com a operação; atualiza o status das obras; atualiza pendências com outras áreas (compras, financeiro, administrativo); envia relatórios e apresenta ao cliente; cobra o fechamento da OS no sistema do cliente; acompanha o faturamento. `:527`: "a gente vai demitir ele [...] O sistema passa a fazer" |
 
 ## Consequências
 
 - "Pronto em 21/09" passa a significar **operação real**: obras do Field no banco e as telas que
   substituem o trabalho do funcionário. Uma demonstração não basta.
-- Ainda abertos para a v02 do mockup: motivos iniciais de remarcação (B) e os prazos-alvo dos dois SLAs (F). O fim do SLA 2 foi respondido acima. Texto original:
-  conta e os prazos-alvo dos dois SLAs (F).
+- Ainda aberto para a v02 do mockup: os prazos-alvo dos dois SLAs (F). O fim do SLA 2 e os
+  motivos de remarcação foram respondidos acima.
