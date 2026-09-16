@@ -2,6 +2,19 @@
 
 ## ▶ Retomar aqui — 16/09/2026, madrugada
 
+> **02:48 — a carga rodou e falhou por configuracao, nao por codigo.** Disparada pela rota
+> protegida (`execucaoId 83f34bdc-6e58-4331-9102-2f1e4600438c`, HTTP 202). A linha de execucao
+> gravou: `status: falhou`, `erro: "Nao deu para puxar as OS do Field Control. FIELD_API_KEY
+> nao esta configurada no servidor"`. O segredo do cron chega ao processo (a rota autenticou),
+> **a FIELD_API_KEY nao**. Ela foi posta no EasyPanel em 14/09 e nunca foi verificada dentro do
+> container. Correcao: conferir a linha `FIELD_API_KEY=valor` no Environment, numa linha so, e
+> **deployar de novo** — mudanca de Environment so entra no container em novo deploy.
+>
+> **A tela do botao tambem estava quebrada, por outra causa, achada pelo log:** `export type`
+> num arquivo `use server` (`ReferenceError: EstadoSincronizacao is not defined`, digest
+> 3846726126). Corrigido em `e26d7ce`, ja enviado ao GitHub — o proximo deploy leva junto.
+> Testes e tsc nunca pegariam isso: em teste os tipos somem direito.
+
 **O filtro de entrada está NO AR.** Build de 16/09 02:22:51 GMT, 10 chunks no mesmo
 timestamp, com os 47 commits do dia (`181ddfd`). A carga passa a trazer só a OS cuja
 **última atividade** esteja em **pendente, agendada ou em andamento** — critério final do
