@@ -9,7 +9,7 @@
  */
 
 import { useState } from 'react'
-import { br } from '../../_lib/tipos'
+import { br, FUSO } from '../../_lib/tipos'
 import { ROTULO_CAMPO, type BlocoHistorico, type LinhaHistorico } from '../../_lib/historico'
 import { Box, BoxB, BoxH, EstadoVazio } from '../../_ui/primitivos'
 
@@ -29,7 +29,7 @@ export default function Historico({
 
   return (
     <Box>
-      <BoxH extra={String(linhas.length)}>Histórico de alterações</BoxH>
+      <BoxH extra={String(filtradas.length)}>Histórico de alterações</BoxH>
       <BoxB className="flex flex-col gap-2.5">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por bloco">
           {FILTROS.map((f) => (
@@ -50,18 +50,28 @@ export default function Historico({
         </div>
 
         {filtradas.length === 0 ? (
-          <EstadoVazio>Nenhuma alteração desde a entrada pelo Field.</EstadoVazio>
+          <EstadoVazio>
+            {entrada.fonte === 'field'
+              ? 'Nenhuma alteração desde a entrada pelo Field.'
+              : 'Nenhuma alteração registrada.'}
+          </EstadoVazio>
         ) : (
           <ul className="flex flex-col gap-2">
             {filtradas.map((l) => (
               <li key={l.id} className="border-b border-[#1e3a5f] pb-2 text-xs last:border-0">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#94a3b8]">
-                  <span>{new Date(l.created_at).toLocaleString('pt-BR')}</span>
+                  <span>
+                    {new Intl.DateTimeFormat('pt-BR', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                      timeZone: FUSO,
+                    }).format(new Date(l.created_at))}
+                  </span>
                   <span>{l.quem}</span>
                   <span className="rounded border border-[#1e3a5f] px-1.5 py-px">{l.bloco}</span>
                 </div>
                 <div className="mt-0.5 text-[#e8eef7]">
-                  {ROTULO_CAMPO[l.campo]}: <span className="text-[#64748b]">{l.de ?? '—'}</span> →{' '}
+                  {ROTULO_CAMPO[l.campo] ?? l.campo}: <span className="text-[#64748b]">{l.de ?? '—'}</span> →{' '}
                   <b>{l.para ?? '—'}</b>
                 </div>
                 {l.motivo ? (
