@@ -31,7 +31,16 @@
 > - O segredo `OBRAS_CRON_SECRET` **nao existia no Vault** e foi criado agora. Sem ele os jobs
 >   chamariam a rota sem autorizacao e falhariam em silencio a cada 5 minutos.
 > - A trava `obras_sync_execucao_uma_rodando` impede sobreposicao: passada longa nao empilha.
-> - **Falta provar que disparou de verdade**: procurar execucao com `origem = 'agendada'`.
+> - **PROVADO ponta a ponta as 03:25 de 16/09:** o `cron.job_run_details` registra o disparo do
+>   job as 03:25:00 (`succeeded`); `net._http_response` mostra a rota devolvendo **202** com a
+>   execucao `ddc2dccb`; e `obras_sync_execucao` tem a linha `tipo: incremental, origem:
+>   agendada, status: sucesso` as 03:25:01 — leu 3 OS mudadas desde a marca d'agua, 1
+>   inalterada e **2 ignoradas pelo criterio**. Ou seja, o filtro do cliente vale tambem na
+>   varredura automatica.
+> - ⚠️ **Armadilha ao verificar isto no futuro:** a rota marca `origem = 'agendada'` para
+>   QUALQUER chamada autenticada pelo segredo, inclusive as manuais feitas por nos. O sinal
+>   inequivoco de que o agendamento rodou e `tipo = 'incremental'`, ou o proprio
+>   `cron.job_run_details` — nao a coluna `origem`.
 
 > **Conferido no banco depois da carga (16/09, 03:15):**
 > - As obras entraram integras: numero da OS, loja com endereco completo, descricao real, etapa
