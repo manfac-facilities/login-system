@@ -479,7 +479,11 @@ describe('contador de dias — atenção acima de 20, crítica acima de 30', () 
   })
 
   it('estourou continua pintando de âmbar com poucos dias', () => {
-    // duracao 3 → estoura acima de 12 dias desde a aprovação; 13 dias < 20
+    // duracao 3 → estoura acima de 12 dias desde a APROVAÇÃO (`dias`, 13 > 12).
+    // Correção (review M6): o `diasAlerta` real aqui é 15, não 13 — a entrada
+    // da fixture (2026-08-30, default de `obraRow()`) é anterior à aprovação
+    // (2026-09-01) e vence como âncora. 15 não passa de 20; o âmbar só pode
+    // vir de `estourou()`, que é o que este teste prova.
     expect(classeDias(obra({ ...sem, aprovacao: '2026-09-01', duracao: 3 }, H))).toBe('atencao')
   })
 
@@ -647,6 +651,14 @@ describe('dataSP — timestamptz vira o dia em São Paulo', () => {
     expect(dataSP('2026-09-15T01:30:00+00:00')).toBe('2026-09-14')
     expect(dataSP('2026-07-01T13:00:00Z')).toBe('2026-07-01')
     expect(dataSP('2026-08-25T02:00:00.123456+00:00')).toBe('2026-08-24')
+  })
+
+  it('atravessa a virada do mês e do ano (review M4)', () => {
+    // dataSP delega a hojeISO/Intl.DateTimeFormat — a troca de mês e de ano é
+    // feita pelo formatador, não por aritmética manual, mas a regra inteira
+    // depende desta conversão, então ela ganha cobertura própria.
+    expect(dataSP('2026-09-01T02:00:00+00:00')).toBe('2026-08-31')
+    expect(dataSP('2026-01-01T02:00:00+00:00')).toBe('2025-12-31')
   })
 
   it('vazio ou lixo não vira data', () => {

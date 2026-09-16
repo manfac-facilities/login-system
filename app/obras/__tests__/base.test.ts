@@ -249,9 +249,13 @@ describe('kpisDaBase', () => {
 describe('ordenar', () => {
   it('o default é a contagem de alerta decrescente', () => {
     expect(ORDEM_PADRAO).toEqual({ col: 'diasAlerta', dir: -1 })
-    // created_at depois de todas as aprovações: a entrada é candidata sempre
-    // (decisão do João de 15/09), então sem isso ela venceria como âncora e
+    // A entrada é candidata sempre (decisão do João de 15/09), então sem
+    // fixar created_at ela venceria como âncora em pelo menos uma das obras e
     // confundiria este teste, que quer só verificar a ordenação.
+    // Correção (review M7): '2026-08-30T00:00:00Z' vira 2026-08-29 em São
+    // Paulo — EMPATA com a aprovação do primeiro item (2026-08-29), não fica
+    // depois dela. Quem decide o empate é a prioridade aprovação > entrada
+    // (a mesma de sempre), não a ordem das datas; o resultado é o mesmo.
     const entradaTardia = { created_at: '2026-08-30T00:00:00Z' }
     const base = [
       obra({ aprovacao: '2026-08-29', ...entradaTardia }),

@@ -346,8 +346,11 @@ export type Derivados = {
   ancora: AncoraDias | null
   /**
    * Dias desde a âncora. É o número do selo, da coluna e de `critico`/
-   * `classeDias`. Piso em 0 (spec A10): data futura não vira contagem
-   * negativa — diferente de `dias`, que a spec deixa contar negativo.
+   * `classeDias`. Piso em 0: data futura não vira contagem negativa —
+   * diferente de `dias`, que continua podendo contar negativo. Decisão do
+   * coordenador sobre a ambiguidade A10 (a spec, em §7/A10, respondia
+   * provisoriamente "não trata, igual a hoje" — o piso é a resposta
+   * definitiva, não a da spec).
    */
   diasAlerta: number | null
   /** Fim previsto = início (real ou planejado) + duração. */

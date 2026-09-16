@@ -8,9 +8,13 @@
  * isso não há seletor de forma aqui. Quando ela entrar, entra ao lado, sem
  * mexer neste componente.
  *
- * Ordenação fixa, sem seletor: `dias` decrescente. É a do mockup (`:2971`), e
- * a razão é que a obra parada há mais tempo é a que precisa da resposta antes
- * de a bateria do celular acabar no meio da fila.
+ * Ordenação fixa, sem seletor: decrescente pelo mesmo número que o cartão
+ * mostra (`diasAlerta`, desde a âncora — review I3: antes ordenava por `dias`
+ * enquanto o cartão já exibia `diasAlerta`, e a fila aparecia fora de ordem
+ * do que a tela mostrava). Era `dias` no mockup (`:2971`), de quando `dias` e
+ * o número do cartão ainda eram a mesma coisa. A razão continua a mesma: a
+ * obra parada há mais tempo é a que precisa da resposta antes de a bateria do
+ * celular acabar no meio da fila.
  */
 
 import { useState, useTransition } from 'react'
@@ -61,7 +65,7 @@ export default function Cartoes({
 
   const pendentes = obras
     .filter((o) => !respostas[o.id])
-    .sort((a, b) => (b.dias ?? 0) - (a.dias ?? 0))
+    .sort((a, b) => (b.diasAlerta ?? 0) - (a.diasAlerta ?? 0))
   const feitas = obras.filter((o) => respostas[o.id])
 
   return (
