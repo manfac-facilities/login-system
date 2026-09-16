@@ -7,6 +7,7 @@
 import { camposParaAtualizar } from '../_lib/importacao'
 import type { OsNormalizada, SituacaoDaOrdemField } from '../_lib/field'
 import type { Etapa, FonteObra } from '../_lib/tipos'
+import { entraNaCarga, motivoDaRecusa } from "./_criterio-de-entrada"
 
 export type ObraExistente = {
   id: string
@@ -224,6 +225,16 @@ export function planejarSincronizacao(
     if (vinda.archived === true) continue
     const obraPeloId = porFieldId.get(idField)
     if (obraPeloId) idsEncontrados.add(obraPeloId.id)
+
+    // CRITERIO DE ENTRADA (feedback 20, 15/09/2026): so entra OS cuja ULTIMA
+    // atividade esteja pendente, agendada ou em andamento. A recusa acontece
+    // DEPOIS de marcar a OS como encontrada, de proposito: a OS recusada esta
+    // presente no Field, entao nao pode virar suspeita de ausencia. E acontece
+    // ANTES de qualquer escrita, entao obra que ja existe nao e alterada.
+    if (!entraNaCarga(vinda.situacao)) {
+      ignoradas.push({ os: numero, idField, motivo: motivoDaRecusa(vinda.situacao) })
+      continue
+    }
     if (!numero) {
       ignoradas.push({
         os: vinda.os ?? null,

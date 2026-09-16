@@ -370,3 +370,96 @@ arquivo.
 | Conferência manual das fronteiras 20/21/30/31 e do piso 0 | bate com a spec §3.2 e com a fala do cliente |
 | Recálculo à mão dos 4 testes com número alterado | nenhum acomodado; ver item 4 |
 | `git diff master...HEAD --stat` | 10 arquivos; 2 deles (`_ficha.tsx`, `diario/_cartao.tsx`) fora do perímetro — ver B1 |
+
+---
+
+# Reconferência de 15/09, noite
+
+Reconferido **só o delta** (`f597622`, `b9301f3`, `179d92f` sobre `5560921`), não a branch
+inteira. `npx tsc --noEmit` limpo; `npm test` 759 passando + 1 todo.
+
+**Veredito: liberada para merge, com uma condição que não é de código** — avisar a frente da J4
+antes de mergear, porque esta branch mexe em `_ficha.tsx` enquanto ela reescreve o arquivo.
+
+## I1 — resolvido, sem caminho de volta para data vazia
+
+`titulo` (`_ficha.tsx:286-295`) escolhe o texto pela âncora. Não há caminho de volta para data
+vazia, e a prova é a cadeia de garantias: a caixa só renderiza com `grave && obra.duracao`
+(`:285`); `grave` é `critico(obra)`; e `critico` exige `diasAlerta !== null`, que só é não-nulo
+quando `ancora !== null`. Logo `obra.ancora?.de` é sempre uma das três, e o ramo de fallback
+(`Obra aprovada em …`) só roda quando `de === 'aprovacao'` — caso em que `obra.aprovacao` é
+exatamente a data que gerou a âncora. O comentário do código ("o fallback em `aprovacao` só
+existe para o TypeScript") está correto.
+
+**Contradição com o selo: não há.** O `BadgeDias` da mesma tela (`:388`) lê `obra.ancora` pela
+mesma função (`sufixoDias`), então título e selo nomeiam sempre a mesma fonte — "Obra liberada
+em 02/06" ao lado de "104 dias desde a liberação".
+
+**O que sobrou:** o título novo não tem teste. `_ficha.tsx` não tem suíte, e os testes desta
+rodada mexeram só em comentários e no `dataSP`. As três ramificações estão cobertas por leitura,
+não por asserção.
+
+## I3 — resolvido, e coerente inclusive para obra sem nenhuma das datas
+
+`_cartoes.tsx:68` passou a ordenar por `diasAlerta`, a mesma medida que `_cartao.tsx:228` exibe.
+Fila e número na tela agora são a mesma coisa.
+
+Para obra sem nenhuma das três datas: `diasAlerta` é `null`, o cartão mostra `'—'` (`?? '—'`) e
+a ordenação a trata como `0` (`?? 0`), jogando-a para o fim da fila. Coerente — obra sem data
+nenhuma não tem por que disputar o topo — e é o mesmo tratamento que o código já dava com
+`dias ?? 0`, então não é regressão desta branch. Fica só registrado que ela se mistura com as de
+0 dias, sem desempate.
+
+## Spec §9 "Pendências para a J4" — executável sem reabrir a investigação
+
+Sim, descreve com precisão suficiente. Para cada um dos dois achados a seção traz: arquivo e
+linha (`_triagem.tsx:136` e `:147` para o I2; `:146` para o M8), o trecho como está hoje, **por
+que** está errado (que `dias` é só "desde a aprovação" e que a Triagem é majoritariamente obra
+do Field sem `aprovacao`), o que o usuário vê na tela ("75 dias desde a entrada" ao lado de
+"esperando há 0 dias"), a observação de que antes os dois liam `dias` e eram coerentes — que é o
+que explica por que virou contradição agora — e a correção concreta, com a expressão pronta no
+caso do M8.
+
+Quem pegar a spec sem ter acompanhado hoje executa direto. O único detalhe que eu acrescentaria:
+dizer explicitamente que o `BadgeDias` de `:136` **não** precisa de mudança (já herda o selo
+novo), para ninguém "consertar" o lado que está certo.
+
+## Testes de `dataSP` — provam a virada, não provam o fuso
+
+Recalculei os dois: `2026-09-01T02:00:00+00:00` é 31/08 23h em São Paulo → `'2026-08-31'` ✓
+(vira mês); `2026-01-01T02:00:00+00:00` é 31/12/2025 23h → `'2025-12-31'` ✓ (vira mês **e** ano).
+Os números estão certos e falhariam se `dataSP` usasse o dia UTC.
+
+**Mas não provam a parte do fuso**, pelo mesmo motivo anotado na reconferência do histórico:
+esta máquina está em `America/Sao_Paulo` (`Intl` resolve para isso, `TZ` não definida) e o Jest
+não fixa `TZ` (`jest.config.ts`, `jest.setup.ts`, `package.json`). Tirar `timeZone: FUSO` de
+`hojeISO` deixa os dois verdes aqui e quebraria no container, que roda em UTC. Fixar
+`process.env.TZ = 'UTC'` no `jest.setup.ts` faria esta suíte inteira passar a valer — é uma
+linha, e beneficia as duas frentes.
+
+## I5 — a implementação corresponde ao que o João decidiu
+
+Conferido contra `decisoes-joao-2026-09-15.md:22-39`. Ele decidiu "conta da entrada; a âncora é
+a data mais antiga entre entrada, liberação e aprovação, e a entrada é candidata sempre", ciente
+das consequências (a régua vira "dias em aberto"; a primeira carga começa toda no mesmo dia; em
+21 dias toda obra carregada e não liberada entra em atenção). É exatamente o que `ancoraDias`
+(`tipos.ts:472-487`) faz.
+
+A spec foi atualizada junto e ficou **consistente consigo mesma**, que era o I4: §3.1 reescrita
+com a entrada como candidata permanente, casos 1, 2 e 12 recalculados (104 → 108; o 12
+permanecendo em 75), e C1 marcada como resolvida com o porquê. O teste de `etiquetas.test.tsx`
+afirma os 108. Item fechado.
+
+## B1 — deixou de ser achado; virou um aviso a dar
+
+Ao pedir as correções de I1 e I3 você autorizou, na prática, o que o plano proibia — não dá para
+corrigir `_ficha.tsx` e o diário sem tocá-los. Registro só o que sobra disso, e não é código:
+
+- O delta **amplia** o alcance: agora são três arquivos da lista "Não tocar" (`_ficha.tsx`,
+  `diario/_cartao.tsx` e, novo nesta rodada, `diario/_cartoes.tsx`).
+- O plano continua dizendo "Não tocar" para eles. Quem ler o plano depois vai concluir que a
+  fronteira foi furada sem autorização.
+- **A frente da J4 ainda não foi avisada.** `_ficha.tsx` é o arquivo que ela está reescrevendo;
+  a spec §5:172 manda "sinalizar à outra frente", e isso não aparece em lugar nenhum do delta.
+
+Antes de mergear: avise a J4 e corrija a linha do plano. É a única coisa que eu ainda faria.

@@ -59,6 +59,10 @@ function rotasCom(ordens: OrdemField[], totalCount = ordens.length) {
       const pagina: ListaField<OrdemField> = { items: ordens.slice(offset, offset + limit), totalCount }
       return pagina
     }
+    if (caminho.endsWith("/tasks")) {
+      // Toda OS do teste tem uma atividade pendente, salvo quando o caso diz o contrario.
+      return { items: [{ id: "t1", position: 1, status: "pending" }] }
+    }
     throw new Error(`caminho inesperado no teste: ${caminho}`)
   }
 }
@@ -313,6 +317,7 @@ describe('criarClienteField — normalização', () => {
       idField: 'ord-1',
       atualizadoEm: '2026-09-09T12:00:00Z',
       archived: null,
+      situacao: 'pending',
     })
   })
 
@@ -389,7 +394,9 @@ describe('criarClienteField — o circuito fechado, com fetch injetado', () => {
     const buscar = async (url: string) => {
       instantes.push(t)
       const alvo = new URL(url)
-      const corpo = alvo.pathname.startsWith('/services')
+      const corpo = alvo.pathname.endsWith('/tasks')
+        ? { items: [{ id: 't1', position: 1, status: 'pending' }] }
+        : alvo.pathname.startsWith('/services')
         ? { items: [TIPO_SPOT], totalCount: 1 }
         : {
             items: ordens.slice(Number(alvo.searchParams.get('offset') ?? 0), Number(alvo.searchParams.get('offset') ?? 0) + 2),
@@ -416,8 +423,9 @@ describe('criarClienteField — o circuito fechado, com fetch injetado', () => {
     const os = await cliente.listarOsNormalizadas()
 
     expect(os).toHaveLength(3)
-    // /services, página 1, página 2 — um segundo entre cada.
-    expect(instantes).toEqual([0, 1000, 2000])
+    // /services, página 1, página 2 e a situação de cada uma das 3 OS —
+    // um segundo entre cada, sem exceção: o limitador vale para tudo.
+    expect(instantes).toEqual([0, 1000, 2000, 3000, 4000, 5000])
   })
 })
 
@@ -437,5 +445,47 @@ describe('criarClienteField — o cache do tipo de OS não memoriza fracasso', (
     // Se a promessa falha ficasse no cache, um 429 na primeira tentativa
     // condenaria o processo inteiro a nunca mais resolver o tipo de OS.
     await expect(cliente.resolverIdDoTipoDeOs()).resolves.toBe('MTox')
+  })
+})
+
+
+describe("criarClienteField - situacao da ultima atividade", () => {
+  it("preenche a situacao lendo as atividades da OS", async () => {
+    const rede = httpDeMentira((caminho, parametros) => {
+      if (caminho.endsWith("/tasks")) {
+        return { items: [{ id: "t1", position: 1, status: "done" }, { id: "t2", position: 2, status: "scheduled" }] }
+      }
+      return rotasCom([ordem()])(caminho, parametros)
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas()
+
+    expect(os[0].situacao).toBe("scheduled")
+  })
+
+  it("pergunta as atividades de cada OS, uma vez por OS", async () => {
+    const rede = httpDeMentira(rotasCom([ordem({ id: "a" }), ordem({ id: "b", identifier: "OS-B" })]))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    await cliente.listarOsNormalizadas()
+
+    const tasks = rede.chamadas.filter((c) => c.caminho.endsWith("/tasks"))
+    expect(tasks).toHaveLength(2)
+    expect(tasks[0].caminho).toContain("a")
+    expect(tasks[1].caminho).toContain("b")
+  })
+
+  it("falha ao ler as atividades nao derruba a varredura: a OS vem sem situacao", async () => {
+    const rede = httpDeMentira((caminho, parametros) => {
+      if (caminho.endsWith("/tasks")) throw new Error("429 Too Many Requests")
+      return rotasCom([ordem()])(caminho, parametros)
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas()
+
+    expect(os).toHaveLength(1)
+    expect(os[0].situacao).toBeNull()
   })
 })

@@ -55,6 +55,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
     archived: false,
+    situacao: 'pending',
     ...over,
   }
 }

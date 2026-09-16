@@ -105,4 +105,10 @@ export type OsNormalizada = {
   atualizadoEm: string | null
   /** `null` preserva uma resposta ausente ou inválida, sem presumir que a OS está ativa. */
   archived: boolean | null
+  /**
+   * Situacao da ULTIMA atividade da OS (o status cru do Field), ou null quando
+   * nao deu para ler. E o campo que o criterio de entrada consulta - ver
+   * sincronizar/_criterio-de-entrada.ts e o feedback 20 de 15/09/2026.
+   */
+  situacao: string | null
 }

@@ -327,3 +327,120 @@ própria spec §13.5 registra, ela só é verificável rodando contra o Postgres
 migration traz o SQL de verificação para esse momento. **O B1 acima é justamente o tipo de
 defeito que a leitura pega e o teste com mock não pega** — vale reler essa seção de
 verificação depois de decidir o que fazer com a lista de colunas.
+
+---
+
+# Reconferência de 15/09, noite
+
+Reconferido **só o delta** (`041cf38`, `cce3677`, `e222ae9` sobre `1112b07`), não a branch
+inteira. `npx tsc --noEmit` limpo; `npm test` 760 passando (as 7 suítes de `manfac-site/`
+continuam falhando por motivo pré-existente, fora do diff).
+
+**Veredito: liberada para merge.** Nenhum bloqueador de pé. Sobrou uma coisa a fazer antes de
+a migration ser rodada à mão (M5, abaixo) e duas frestas estreitas que valem um ajuste antes
+de a Parte 2 começar.
+
+## B1 — RESOLVIDO
+
+Conferi nome a nome: `v_colunas_validas` e a lista do `set`/`select` do UPDATE têm **as mesmas
+34 colunas, na mesma ordem**. Conferi também que as 34 existem mesmo em `obras_obra`
+(`sdd-sql-obras-v0.sql`, mais `etapa_por`/`etapa_em` do `alter` de `:134-135`) — se alguma não
+existisse, o erro só apareceria em runtime, porque `check_function_bodies` não resolve
+referência de coluna dentro de corpo plpgsql.
+
+**O caminho que você mandou procurar — validação passa e a coluna continua não sendo gravada —
+não existe mais, e é exatamente porque as duas listas são idênticas:** toda chave que sobrevive
+ao laço de validação está no `set`. Se elas divergissem em um nome, esse nome passaria na
+validação e sumiria em silêncio; hoje não há diferença para explorar.
+
+As colunas que `liberarObraAction` e `mudarEtapaAction` escrevem hoje (`_actions.ts:143-159` e
+`:71-81`) estão todas cobertas, incluindo as três que motivaram o achado (`pendencia`,
+`pend_resp`, `prox_acao`). A recusa é `raise … errcode 22023` dentro do `begin`/`commit`: falha
+alta e desfaz tudo. E o teste do `bloqueio` ganhou o comentário certo — é coluna válida do
+UPDATE e **não** é campo rastreado; as duas listas são diferentes de propósito, e agora isso
+está escrito no arquivo em vez de estar só na cabeça de quem escreveu.
+
+## I2 — resolvido no caso que importa; duas frestas ficaram
+
+`COLUNA_PARA_CAMPO` cobre **os 19** `CampoHistorico`, com o mapeamento especial no lugar:
+`aprovacao → os_aprovada_em`. Os três testes novos provam os dois lados (lança sem a linha, não
+lança com ela).
+
+Respondendo à sua pergunta — **sim, sobrou campo que escapa, e é um só:**
+
+1. **`os_aprovada` e `marco_os_aprov` ficaram fora do mapa**, de propósito (o comentário diz que
+   são satélites de `aprovacao` e nunca mudam sozinhos). Só que isso é garantido por comentário,
+   não por código: uma chamada `campos: { os_aprovada: true, marco_os_aprov: '2026-09-10' }` com
+   `linhas: []` passa na trava do TS **e** na validação do SQL (as duas colunas são válidas),
+   grava a aprovação e não gera linha nenhuma. Mesma classe do I2 original, mais estreita. Fecha
+   barato: mapear as duas também para `'os_aprovada_em'` — a chamada legítima (as três colunas
+   juntas + uma linha `os_aprovada_em`) continua passando, porque todas caem na mesma chave.
+
+2. **A trava olha presença, não mudança.** Ela dispara se a coluna *está no payload*, mesmo com
+   valor igual ao atual. A spec §5 manda enviar "só as colunas que mudaram", então está
+   consistente com o contrato — mas se a Parte 2 mandar o bloco inteiro do formulário (o padrão
+   mais natural), toda edição parcial vai lançar, e a mensagem ("quem chamou esqueceu de gerar a
+   linha") **diagnostica errado**: o chamador não esqueceu nada, o campo só não mudou. Vale
+   ajustar o texto antes de a Parte 2 começar.
+
+## I1 — resolvido; o teste é que não prova
+
+O `Intl.DateTimeFormat` com `timeZone: FUSO` resolve: servidor e navegador passam a renderizar a
+mesma string. Varri o componente e **não sobrou nenhuma outra formatação de data** — o único
+outro uso é `br(entrada.data)`, manipulação de string em `AAAA-MM-DD`, sem `Date` e sem fuso.
+
+**Mas o teste novo não prova a correção.** Esta máquina está em `America/Sao_Paulo` (conferido:
+`Intl…resolvedOptions().timeZone` devolve `America/Sao_Paulo`, `TZ` não está definida, offset
+180) e o Jest não fixa `TZ` em lugar nenhum (`jest.config.ts`, `jest.setup.ts` e `package.json`
+não mencionam). Logo `toLocaleString('pt-BR')` sem fuso também devolve `11:30` aqui: **apagar o
+`timeZone: FUSO` deixa o teste verde.** Ele pega a conta, não a trava. Para pegar de verdade, o
+Jest precisa rodar com outro fuso (`process.env.TZ = 'UTC'` no `jest.setup.ts`), que é o
+cenário do container.
+
+## I3 — resolvido; os cinco pegam
+
+Quebrei cada um mentalmente. Todos falham:
+
+| Regra removida | Asserção que pega |
+|---|---|
+| `formatarValor` deixa de traduzir `etapa` | `toContainEqual({… de: 'Levantamento', para: 'Em andamento' …})` — viraria `'levantamento'`/`'andamento'`; e o `toHaveLength(3)` pega se a linha sumir |
+| `` `${v} dias` `` vira `String(v)` | `toEqual([… de: '5 dias', para: '10 dias' …])` |
+| rodapé passa a mostrar `· Field` sempre | `queryByText(/· Field/)).not.toBeInTheDocument()`, no teste de `fonte: null` |
+| tira o `filtro === 'Todos' ?` da linha de Entrada | `queryByText(/Obra criada pela sincronização/)).not.toBeInTheDocument()` depois do clique em Cronograma |
+| qualquer rótulo errado em `ROTULO_CAMPO` | o `toEqual` dos 19 — não é mais amostra |
+
+## M5 — `seq` resolve a ordenação, mas quebrou a idempotência do arquivo
+
+Ordenação: resolvido. `seq bigserial` mais o índice `(obra_id, created_at desc, seq desc)`
+tornam a ordem determinística mesmo com `created_at` empatado. **Sem efeito em RLS** — nenhuma
+das duas policies referencia `seq`, e o `insert` da RPC não lista a coluna, então ela vem da
+sequência.
+
+**O efeito colateral está na idempotência, e o cabeçalho ficou mentindo.** O arquivo continua
+dizendo "IDEMPOTENTE por construção: create table if not exists…", e agora isso é falso de um
+jeito específico: se alguém já tiver rodado a **versão anterior** deste mesmo arquivo, rodar a
+nova não adiciona `seq` (`create table if not exists` não altera tabela existente — é o limite
+que o `sdd-sql-obras-v0.sql:13-17` documenta como armadilha conhecida deste projeto) e também
+não recria o índice (`create index if not exists` encontra o nome e não faz nada). Resultado:
+migration "bem-sucedida", tabela sem `seq`, índice velho — e o primeiro
+`select … order by created_at desc, seq desc` da Parte 2 morre com
+`42703 column seq does not exist`, em produção, longe da migration.
+
+Pela `AGENTS.md` (tabela de estado das migrations) e pelo próprio cabeçalho, `obras-historico`
+**nunca foi aplicada**, então hoje o risco é teórico. Mas custa uma linha fechar:
+`alter table public.obras_historico add column if not exists seq bigserial;` logo depois do
+`create table`, no mesmo padrão que o v0 usa para `etapa_por`/`etapa_em`. Enquanto não tiver,
+não rode este arquivo sem antes confirmar que a tabela não existe.
+
+Encaixe: a spec §11 descreve a leitura da Parte 2 como `.order('created_at', { ascending: false })`.
+Com `seq`, precisa virar `.order('created_at', …).order('seq', …)`, senão o desempate não
+acontece do lado do cliente. O comentário da migration diz isso; a spec, não.
+
+## M6 e M7 — nenhum dos dois impede a Parte 2
+
+Conferido só sob o critério que você deu:
+
+- **M6 (validar cada par bloco×campo):** não impede. Quem escolhe o par é a Parte 2, em cada
+  action; um par incoerente seria bug dela, e o banco aceita. Nada trava.
+- **M7 (forjar conteúdo próprio pela RLS):** não impede. O caminho da RPC funciona igual; a RLS
+  só deixa de barrar uma escrita direta que a Parte 2 não faz.

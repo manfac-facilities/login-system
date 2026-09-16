@@ -16,6 +16,7 @@ import { criarHttpField, montarQ, type BuscarHttp, type FiltroQ, type HttpField 
 import { criarResolvedorDeLoja, type EstrategiaDeLoja } from './loja'
 import { ErroDeTipoDeOs } from './erros'
 import { consultarSituacaoDaOrdemField, type ConsultaDaOrdemField } from './consulta-ordem'
+import { consultarSituacaoDaUltimaAtividade } from './situacao-da-os'
 import type { ListaField, OrdemField, OsNormalizada, TipoDeOsField } from './tipos'
 
 /** O tipo de OS que interessa ao Controle de Obras. */
@@ -241,6 +242,14 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         idField: ordem.id,
         atualizadoEm: texto(ordem.updatedAt),
         archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
+
+        // A situação vive nas ATIVIDADES da OS, não na OS: uma requisição a mais por
+
+        // OS, no mesmo ritmo de 1 req/s. Falha aqui devolve null e a OS é ignorada
+
+        // com motivo, nunca derruba a varredura inteira.
+
+        situacao: (await consultarSituacaoDaUltimaAtividade(http, ordem.id)).situacao,
       })
     }
     return normalizadas

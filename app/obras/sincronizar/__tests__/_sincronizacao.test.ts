@@ -23,6 +23,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
     archived: false,
+    situacao: 'pending',
     ...over,
   }
 }
@@ -608,5 +609,53 @@ describe('auxiliares de leitura em lote', () => {
   it('quebra a lista em lotes do tamanho pedido', () => {
     expect(emLotes([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]])
     expect(emLotes([], 2)).toEqual([])
+  })
+})
+
+describe('o filtro de entrada — só entra pendente, agendada ou em andamento', () => {
+  it.each(['pending', 'scheduled', 'in-progress'])('cria a obra quando a situação é %s', (situacao) => {
+    const plano = planejarSincronizacao([osDoField({ situacao })], [])
+    expect(plano.inserir).toHaveLength(1)
+    expect(plano.ignoradas).toHaveLength(0)
+  })
+
+  it('ignora a OS concluída, com o motivo em português na tela', () => {
+    const plano = planejarSincronizacao([osDoField({ situacao: 'done' })], [])
+
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.ignoradas).toHaveLength(1)
+    expect(plano.ignoradas[0]).toMatchObject({ os: '0226-014989', idField: 'ord-1' })
+    expect(plano.ignoradas[0].motivo).toContain('concluída')
+  })
+
+  it('ignora a OS sem situação legível, e diz isso no motivo', () => {
+    const plano = planejarSincronizacao([osDoField({ situacao: null })], [])
+
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toContain('sem situação')
+  })
+
+  it('a OS recusada NÃO altera a obra que já existe no sistema', () => {
+    const existente = obraNoBanco({ loja: null, descricao: null })
+    const plano = planejarSincronizacao([osDoField({ situacao: 'done' })], [existente])
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.inserir).toHaveLength(0)
+  })
+
+  it('a OS recusada conta como PRESENTE no Field — não vira suspeita de ausência', () => {
+    const existente = obraNoBanco()
+    const plano = planejarSincronizacao([osDoField({ situacao: 'done' })], [existente], {
+      varreduraCompleta: true,
+    })
+
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+  })
+
+  it('a situação desconhecida fica de fora e mostra o valor cru, para alguém investigar', () => {
+    const plano = planejarSincronizacao([osDoField({ situacao: 'em-orbita' })], [])
+
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.ignoradas[0].motivo).toContain('em-orbita')
   })
 })
