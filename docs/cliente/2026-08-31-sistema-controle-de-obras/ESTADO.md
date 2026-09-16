@@ -2,6 +2,23 @@
 
 ## ▶ Retomar aqui — 16/09/2026, madrugada
 
+> **02:55 — o deploy NAO resolveu. A FIELD_API_KEY continua sem chegar ao container.**
+> Segunda execucao (`44d3038a`), ja no build de 02:53:36 GMT, falhou com a mesma mensagem:
+> `FIELD_API_KEY nao esta configurada no servidor`. Banco segue com **0 obras**.
+>
+> **O que isso prova, e vale nao reinvestigar:**
+> - O codigo esta certo e a rota funciona: ela autenticou pelo segredo e executou (HTTP 202).
+> - O `OBRAS_CRON_SECRET` **chega** ao processo — logo o Environment do EasyPanel entrega
+>   variaveis normalmente. O problema e especifico da linha da `FIELD_API_KEY`.
+> - A mensagem so aparece quando a variavel chega **vazia ou ausente**
+>   (`_execucao.ts`: `(process.env.FIELD_API_KEY ?? '').trim()`), entao nao e caso de aspas
+>   ou espaco no valor: e ausencia mesmo.
+>
+> **Proximo passo (so o Joao consegue):** no EasyPanel, app `manfac-login-system`, aba
+> Environment, conferir se a linha `FIELD_API_KEY=valor` existe de fato, numa linha so;
+> salvar e deployar. Conferir tambem se nao foi cadastrada por engano no app `manfac-site`,
+> que vive no mesmo projeto e ja causou confusao em 09/08.
+
 > **02:48 — a carga rodou e falhou por configuracao, nao por codigo.** Disparada pela rota
 > protegida (`execucaoId 83f34bdc-6e58-4331-9102-2f1e4600438c`, HTTP 202). A linha de execucao
 > gravou: `status: falhou`, `erro: "Nao deu para puxar as OS do Field Control. FIELD_API_KEY
