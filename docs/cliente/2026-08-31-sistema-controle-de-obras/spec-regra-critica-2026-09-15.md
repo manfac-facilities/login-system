@@ -181,7 +181,7 @@ Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 fic
 | `base/_kanban.tsx:110-111` | ordena por `paradaEtapa ?? dias` | **não muda** | ninguém |
 | `diario/_cartao.tsx:80, 82, 162` | `encerrada`, `critico` (nota de alerta), `sev` | mais cartões vermelhos | não precisa mudar |
 | `diario/_cartao.tsx:228` | `obra.dias` + "dias desde a aprovação" | texto continua verdadeiro, mas **a cor vermelha vem de outra contagem** (A8) | fora de `base/`, não está no plano |
-| `diario/_cartoes.tsx:64` | ordena por `dias` | **não muda** | ninguém |
+| `diario/_cartoes.tsx:64` | ordena por `dias` | **muda** (review I3, 15/09): passa a ordenar por `diasAlerta`, a mesma medida que `_cartao.tsx:228` já mostrava desde `02defb4` — senão a fila aparecia fora da ordem do que a tela exibia | corrigido nesta rodada |
 | `obra/[id]/_ficha.tsx:249-334` `CaixaAlerta`/`temAlerta` | `critico` + `obra.dias` | **bug visível**: com `critico` verdadeiro e `aprovacao` nula, `:289` mostra número vazio, `:298` escreve "contados  dias desde a aprovação" e `:300` "0 vezes" | **ARQUIVO EM PARALELO**, sinalizar à outra frente |
 | `obra/[id]/_ficha.tsx:378, 433` | `BadgeDias`, `encerrada` | herdam | paralelo, sem edição necessária |
 | `obra/[id]/_triagem.tsx:136` | `BadgeDias` | herda o selo novo sem edição | paralelo, sem edição necessária |
@@ -229,3 +229,40 @@ Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 fic
   microssegundos).
 - Se algum código de outra frente, ainda não commitado, já grava `marco_faturou`. O `git status` só
   mostra `scripts/` não rastreado.
+
+## 9. Pendências para a J4 (`obra/[id]/_triagem.tsx`)
+
+Achados do review independente (`review-regra-critica-2026-09-15.md`, itens I2 e M8). O arquivo
+está na lista "Não tocar" desta frente porque a J4 está reescrevendo-o — por isso ficam anotados
+aqui em vez de corrigidos, para quem pegar o arquivo não perder o achado.
+
+### I2 — Selo e texto mostram números contraditórios na mesma tela
+
+`_triagem.tsx:136` renderiza `<BadgeDias obra={obra} />`, que desde `2ce3c33` mostra `diasAlerta`
+e a âncora (ex.: "75 dias desde a entrada"). Onze linhas abaixo, `_triagem.tsx:147` ainda escreve:
+
+```tsx
+esperando há <b>{obra.dias ?? 0} dias</b>
+```
+
+`dias` continua sendo só "desde a aprovação" (decisão técnica, spec §3.3/A3) — e a Triagem é
+majoritariamente obra vinda do Field, sem `aprovacao` ainda. Resultado: o selo diz "75 dias desde
+a entrada" e o parágrafo, onze linhas abaixo, diz "esperando há 0 dias". **Antes desta frente os
+dois liam `dias` e diziam 0 — errado, mas coerente.** Trocar só o selo (o que esta frente fez, e
+que era o que estava autorizado) transformou um erro escondido numa contradição visível na tela
+que o cliente usa para triar obra nova.
+
+**O que precisa mudar:** trocar `obra.dias` por `obra.diasAlerta` em `_triagem.tsx:147`, no mesmo
+espírito da correção já feita em `_ficha.tsx`/`diario/_cartao.tsx` (`02defb4`) — número junto,
+texto que não afirme uma data que não existe.
+
+### M8 — A Triagem afirma que a obra entrou pelo Field na data de aprovação
+
+`_triagem.tsx:146`: `"Ela entrou pelo Field em {br(obra.aprovacao)}"`. Erro pré-existente, já
+registrado na conciliação de 14/09 (`j4-conciliacao-2026-09-14.md`): a OS chega do Field sem data
+de aprovação; a frase deveria usar a data de entrada, não a de aprovação.
+
+**O que esta frente criou que resolve isso:** `obra.ancora` — quando `ancora.de === 'entrada'`,
+`ancora.data` é exatamente a data que a frase precisa. Trocar `br(obra.aprovacao)` por
+`obra.ancora?.de === 'entrada' ? br(obra.ancora.data) : br(obra.aprovacao)` (ou equivalente)
+resolve os dois achados (I2 e M8) com o mesmo dado.
