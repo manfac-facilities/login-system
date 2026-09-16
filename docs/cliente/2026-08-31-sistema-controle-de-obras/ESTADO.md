@@ -24,7 +24,15 @@
 > 3. Ao cadastra-la, o Environment do EasyPanel perdeu **todas** as variaveis — a armadilha do
 >    `NOME=valor` numa linha so, ja documentada em 09/08. Resolvido no deploy de 03:07.
 >
-> **Proximo passo:** liberar o acesso da equipe em `/admin/acessos` (slug `obras`) e conferir se
+> **Conferido no banco depois da carga (16/09, 03:15):**
+> - As obras entraram integras: numero da OS, loja com endereco completo, descricao real, etapa
+>   `definir`, `fonte: field`. Nenhuma tem `aprovacao` — esperado, o Field nao manda essa data.
+> - **Ninguem tem o slug `obras` liberado** (`hub_system_access`: 0 linhas). Os **3
+>   administradores** ja entram sem liberacao, porque `hasSystemAccess` passa direto para admin.
+> - 12 contas no hub. **A Amanda tem conta; o Yuri NAO tem.** Sem conta, ele nao entra, e sem o
+>   slug liberado os analistas nao veem o modulo mesmo com conta.
+>
+> **Proximo passo:** criar a conta do Yuri e liberar o acesso da equipe em `/admin/acessos` e conferir se
 > Yuri e Amanda tem conta no hub — sem isso eles nao veem as 64 obras. Depois, a J4 (ficha
 > editavel e remarcacao), com o mockup v02 ja publicado esperando aprovacao.
 >
