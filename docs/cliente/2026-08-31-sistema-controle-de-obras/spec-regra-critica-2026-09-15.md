@@ -256,6 +256,12 @@ que o cliente usa para triar obra nova.
 espírito da correção já feita em `_ficha.tsx`/`diario/_cartao.tsx` (`02defb4`) — número junto,
 texto que não afirme uma data que não existe.
 
+**O que NÃO precisa mudar:** o `<BadgeDias obra={obra} />` de `_triagem.tsx:136` já está certo —
+ele herdou `diasAlerta` e a âncora sem precisar de edição (é o lado coerente da contradição, não o
+lado quebrado). Registrado aqui de propósito: sem esta frase, quem reescrever o arquivo pode
+"consertar" o selo de volta para `obra.dias` achando que o par tem que voltar a usar o mesmo
+campo, e recriar a contradição que esta nota existe para evitar.
+
 ### M8 — A Triagem afirma que a obra entrou pelo Field na data de aprovação
 
 `_triagem.tsx:146`: `"Ela entrou pelo Field em {br(obra.aprovacao)}"`. Erro pré-existente, já
