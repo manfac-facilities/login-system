@@ -159,10 +159,14 @@ export function linhasDeAlteracao(
  * Coluna crua de `obras_obra` -> CampoHistorico correspondente — usado só
  * pela trava de amarração de `gravarComHistorico` (I2 da review de
  * 2026-09-15), não pelo dicionário de rótulos nem pela migration.
- * `os_aprovada`/`marco_os_aprov` não aparecem aqui de propósito: são
- * satélites de `aprovacao` (spec §7) e nunca mudam sozinhos — a mesma
- * chamada que muda um dos dois também muda `aprovacao`, que é quem gera a
- * linha sob o rótulo "OS aprovada em".
+ * `os_aprovada` e `marco_os_aprov` MAPEIAM para `os_aprovada_em`, igual
+ * `aprovacao` — os três são satélites que mudam juntos, pelo mesmo clique
+ * (spec §7), e por isso geram a MESMA linha sob o rótulo "OS aprovada em".
+ * Reconferência de 2026-09-15: na primeira versão desta trava, os dois
+ * ficaram de fora "porque nunca mudam sozinhos" — mas isso descreve o uso
+ * esperado, não impede um payload que só mande `os_aprovada`/
+ * `marco_os_aprov` (sem `aprovacao`) de escapar da trava por completo. Os
+ * três precisam estar mapeados para a mesma trava pegar qualquer um deles.
  */
 const COLUNA_PARA_CAMPO: Partial<Record<string, CampoHistorico>> = {
   pcm: 'pcm',
@@ -173,6 +177,8 @@ const COLUNA_PARA_CAMPO: Partial<Record<string, CampoHistorico>> = {
   liberado_por: 'liberado_por',
   liberado_em: 'liberado_em',
   aprovacao: 'os_aprovada_em',
+  os_aprovada: 'os_aprovada_em',
+  marco_os_aprov: 'os_aprovada_em',
   tipo: 'tipo',
   valor: 'valor',
   origem: 'origem',
@@ -194,24 +200,38 @@ const COLUNA_PARA_CAMPO: Partial<Record<string, CampoHistorico>> = {
  *    migration —, obra não encontrada) — NUNCA lança, devolve
  *    `{ error: string }` (convenção `EstadoAcao` de `_actions.ts`).
  * 2. Precondição do CHAMADOR quebrada — um campo rastreado (CampoHistorico)
- *    presente em `campos` sem a linha correspondente em `linhas` (I2 da
+ *    PRESENTE em `campos` sem a linha correspondente em `linhas` (I2 da
  *    review de 2026-09-15) — LANÇA, síncrono, ANTES de qualquer chamada de
- *    rede. É o mesmo padrão de `linhasDeAlteracao` para motivo obrigatório:
- *    bug de programação da Parte 2 (esqueceu de gerar a linha), não
- *    condição de runtime — não deve ser silenciado como "erro ao salvar".
+ *    rede.
+ *
+ * IMPORTANTE sobre o que a trava (2) realmente verifica: ela olha
+ * PRESENÇA da coluna em `campos`, não se o valor MUDOU. Isso significa duas
+ * coisas para quem monta `campos` na Parte 2: (a) se um campo rastreado
+ * muda e ninguém gerou a linha correspondente (esqueceu de chamar
+ * `linhasDeAlteracao`, ou chamou e a linha se perdeu no caminho), a trava
+ * pega — esse é o caso que ela existe para pegar; (b) se `campos` incluir
+ * uma coluna rastreada que NÃO mudou (ex.: mandar o formulário inteiro em
+ * vez de só o diff), a trava ACUSA DO MESMO JEITO, porque não tem como
+ * distinguir os dois casos só olhando `campos`/`linhas` — a correção nesse
+ * cenário é a Parte 2 não incluir em `campos` uma coluna rastreada que não
+ * mudou, não remover a trava.
  */
 export async function gravarComHistorico(
   supabase: SupabaseClient,
   params: { obraId: string; campos: Record<string, unknown>; linhas: LinhaHistoricoNova[] }
 ): Promise<{ data?: ObraRow; error?: string }> {
   const camposComLinha = new Set(params.linhas.map((l) => l.campo))
-  const faltando = Object.keys(params.campos)
-    .map((coluna) => COLUNA_PARA_CAMPO[coluna])
-    .filter((campo): campo is CampoHistorico => campo !== undefined && !camposComLinha.has(campo))
+  const faltando = [
+    ...new Set(
+      Object.keys(params.campos)
+        .map((coluna) => COLUNA_PARA_CAMPO[coluna])
+        .filter((campo): campo is CampoHistorico => campo !== undefined && !camposComLinha.has(campo))
+    ),
+  ]
 
   if (faltando.length > 0) {
     throw new Error(
-      `gravarComHistorico: campo(s) rastreado(s) mudando em "campos" sem linha de histórico correspondente: ${faltando.join(', ')} — quem chamou esqueceu de gerar a linha (linhasDeAlteracao) para este campo.`
+      `gravarComHistorico: ${faltando.join(', ')} está(ão) presente(s) em "campos" sem a linha de histórico correspondente em "linhas". Isto significa uma das duas coisas: (1) o campo mudou e a linha não foi gerada — chame linhasDeAlteracao antes de gravarComHistorico; ou (2) "campos" inclui uma coluna que NÃO mudou — esta trava olha presença em "campos", não mudança de valor, então não inclua colunas inalteradas em "campos".`
     )
   }
 

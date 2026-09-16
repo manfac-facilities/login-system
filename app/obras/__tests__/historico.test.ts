@@ -271,4 +271,53 @@ describe('gravarComHistorico', () => {
 
     expect(r).toEqual({ data: { id: 'o1' } })
   })
+
+  // Reconferência 2026-09-15 (I2): os_aprovada e marco_os_aprov são
+  // satélites de aprovacao (spec §7) e por isso também precisam mapear
+  // para os_aprovada_em — sem isso um payload que mandasse só um dos dois
+  // (sem aprovacao) escapava da trava por completo.
+  it('os_aprovada sozinho (sem aprovacao) sem a linha correspondente também é pego', async () => {
+    const rpc = jest.fn()
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { os_aprovada: true }, linhas: [] })
+    ).rejects.toThrow(/os_aprovada_em/)
+
+    expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it('marco_os_aprov sozinho (sem aprovacao) sem a linha correspondente também é pego', async () => {
+    const rpc = jest.fn()
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { marco_os_aprov: '2026-09-10' }, linhas: [] })
+    ).rejects.toThrow(/os_aprovada_em/)
+  })
+
+  it('aprovacao + os_aprovada + marco_os_aprov juntos, COM a linha os_aprovada_em: não lança, e a mensagem não duplicaria o nome do campo se lançasse', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: { id: 'o1' }, error: null })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+    const linhas: LinhaHistoricoNova[] = [
+      { bloco: 'Autorização', campo: 'os_aprovada_em', de: null, para: '10/09/2026', motivo: null },
+    ]
+
+    const r = await gravarComHistorico(supabase, {
+      obraId: 'o1',
+      campos: { aprovacao: '2026-09-10', os_aprovada: true, marco_os_aprov: '2026-09-10' },
+      linhas,
+    })
+
+    expect(r).toEqual({ data: { id: 'o1' } })
+  })
+
+  it('a mensagem de erro descreve presença em "campos", não "mudança" — não presume que o campo mudou', async () => {
+    const rpc = jest.fn()
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { inicio_plan: '2026-10-01' }, linhas: [] })
+    ).rejects.toThrow(/presente.*em "campos".*não mudou/i)
+  })
 })
