@@ -623,9 +623,15 @@ Fica descrita aqui para não se perder, **não** é tarefa deste plano:
    chamada direta `.from('obras_obra').update(...)` por `linhasDeAlteracao(...)` +
    `gravarComHistorico(...)`.
 2. Em `page.tsx`: acrescentar `supabase.from('obras_historico').select('*').eq('obra_id',
-   id).order('created_at', { ascending: false })` ao `Promise.all` existente
-   (`page.tsx:81-88`), e renderizar `<Historico linhas={...} entrada={{ data:
-   obra.created_at, fonte: obra.fonte }} />` — provavelmente como uma nova seção na
+   id).order('created_at', { ascending: false }).order('seq', { ascending: false })` ao
+   `Promise.all` existente (`page.tsx:81-88`) — o segundo `.order('seq')` não é
+   cosmético: linhas da MESMA chamada da RPC compartilham `created_at` (§7), e sem o
+   desempate por `seq` (M5 da review de 2026-09-15, `sdd-sql-obras-historico.sql`) a
+   ordem entre elas fica indefinida — o Postgres pode devolver "etapa" antes ou depois
+   de "marco_relatorio" de uma leitura para outra. Omitir esta segunda `.order()` faz o
+   desempate que a migration criou não chegar à tela. Renderizar `<Historico
+   linhas={...} entrada={{ data: obra.created_at, fonte: obra.fonte }} />` — provavelmente
+   como uma nova seção na
    Ficha, ou como bloco próprio fora de `<Ficha>` para não tocar `_ficha.tsx` se a J4
    ainda não tiver mesclado. **Decisão de layout exato fica com quem implementa a Parte
    2**, olhando o `_ficha.tsx` que a J4 realmente entregar.
@@ -658,8 +664,8 @@ Fica descrita aqui para não se perder, **não** é tarefa deste plano:
    pequena de produto, não deste plano.
 3. **Paginação/limite do histórico.** Uma obra editada por meses pode acumular dezenas de
    linhas. O mockup não pagina (mostra tudo). Este documento não define limite —
-   assumido "sem limite" para a Parte 1 (índice já ordena por `created_at desc`, o que
-   paginação futura usaria sem migration nova).
+   assumido "sem limite" para a Parte 1 (índice já ordena por `created_at desc, seq desc`
+   — ver §11, item 2 —, o que paginação futura usaria sem migration nova).
 4. **Nome de `marco_liberou_fat`** depende da decisão 8, ainda pendente do cliente
    (feedback 09, 4 perguntas não enviadas). Não bloqueia esta migration — só o rótulo em
    TS, trocável sem migration (§7).
