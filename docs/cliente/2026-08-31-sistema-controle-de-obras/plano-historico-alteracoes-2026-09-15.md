@@ -153,7 +153,7 @@ begin
         'pcm','equipe','prioridade','inicio_plan','duracao',
         'liberado_por','liberado_em','os_aprovada_em',
         'tipo','valor','origem','analista_cliente','mau_uso',
-        'etapa','marco_exec_fim','marco_relatorio','marco_fechou_os',
+        'etapa','marco_exec_fim','marco_fechou_os',
         'marco_liberou_fat','marco_faturou'
       ));
   end if;
