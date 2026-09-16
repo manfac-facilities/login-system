@@ -281,12 +281,11 @@ describe('crítico — acima de 30 dias contados da âncora', () => {
     expect(critico(o)).toBe(true)
   })
 
-  it('resíduo registrado (spec C1): liberação lançada hoje derruba a contagem da entrada', () => {
-    // Contradição decisão × regra, deixada como está por decisão do coordenador
-    // (spec §7, C1): a decisão 5 revista diz que registrar uma data nova nunca
-    // derruba a contagem, mas esta regra ("sem nenhuma das duas, da entrada")
-    // derruba quando a primeira autorização chega. Fixado aqui para a mudança
-    // ficar visível se um dia for decidida.
+  it('caso 12 (decisão do João, 15/09): liberação lançada hoje NÃO derruba a contagem da entrada', () => {
+    // Decisão do João de 15/09: registrar uma data nova nunca pode derrubar a
+    // contagem, nem quando a data nova é a liberação. A entrada (01/07) segue
+    // sendo a âncora porque é a mais antiga das três — liberação lançada hoje
+    // não vira a mais antiga só por existir.
     const o = obra(
       {
         ...sem,
@@ -296,8 +295,9 @@ describe('crítico — acima de 30 dias contados da âncora', () => {
       },
       H
     )
-    expect(o.diasAlerta).toBe(0)
-    expect(critico(o)).toBe(false)
+    expect(o.ancora).toEqual({ de: 'entrada', data: '2026-07-01' })
+    expect(o.diasAlerta).toBe(75)
+    expect(critico(o)).toBe(true)
   })
 
   it('sem âncora não há contagem nem crítica', () => {
@@ -328,7 +328,10 @@ describe('crítico — acima de 30 dias contados da âncora', () => {
   it('data futura (spec A10): diasAlerta nunca fica negativo, o piso é 0', () => {
     // Decisão do coordenador para A10: diasAlerta tem piso em 0 — diferente do
     // derivado antigo `dias`, que a spec deixa contar negativo (§7, A10).
-    const o = obra({ ...sem, aprovacao: '2026-09-20' }, H) // 6 dias no futuro
+    // created_at inválido de propósito: sem ele, a entrada (mais antiga que a
+    // aprovação futura) venceria como âncora antes de o piso entrar em jogo.
+    const o = obra({ ...sem, aprovacao: '2026-09-20', created_at: '' }, H) // 6 dias no futuro
+    expect(o.ancora).toEqual({ de: 'aprovacao', data: '2026-09-20' })
     expect(o.diasAlerta).toBe(0)
     expect(critico(o)).toBe(false)
     expect(classeDias(o)).toBe('')

@@ -457,7 +457,11 @@ export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
 // Cliente (feedback 14, seção E): "atenção acima de 20 dias da data de aprovação
 // da OS ou liberação, a que for menor. Acima de 30 dias já é crítico".
 // Decisão 5 revista (14/09): a data MAIS ANTIGA entre liberação e aprovação;
-// sem nenhuma das duas, a entrada. Mudar isto é mudar o produto.
+// sem nenhuma das duas, a entrada.
+// Decisão do João (15/09, o "caso 12"): registrar uma data NUNCA pode derrubar
+// a contagem — nem quando a data nova é a liberação. Por isso a ENTRADA é
+// candidata SEMPRE, não só quando faltam aprovação e liberação: a âncora é a
+// mais antiga entre as três. Mudar isto é mudar o produto.
 // ============================================================
 
 export const LIMIAR_ATENCAO = 20
@@ -472,13 +476,15 @@ export function ancoraDias(
   // Sem nome de quem liberou, a data da liberação não significa nada — a mesma
   // regra que a action de liberar aplica ao gravar.
   const lib = o.liberado_por && msDe(o.liberado_em) !== null ? (o.liberado_em as string) : null
-  if (aprov && lib) {
-    return lib < aprov ? { de: 'liberacao', data: lib } : { de: 'aprovacao', data: aprov }
-  }
-  if (aprov) return { de: 'aprovacao', data: aprov }
-  if (lib) return { de: 'liberacao', data: lib }
   const entrada = dataSP(o.created_at)
-  return entrada ? { de: 'entrada', data: entrada } : null
+
+  // A mais antiga das três vence. Em empate, a fonte mais "oficial" —
+  // aprovação > liberação > entrada — decide (a mesma prioridade que a
+  // decisão 5 revista já dava a aprovação sobre liberação).
+  let melhor: AncoraDias | null = entrada ? { de: 'entrada', data: entrada } : null
+  if (lib && (!melhor || lib <= melhor.data)) melhor = { de: 'liberacao', data: lib }
+  if (aprov && (!melhor || aprov <= melhor.data)) melhor = { de: 'aprovacao', data: aprov }
+  return melhor
 }
 
 // ============================================================

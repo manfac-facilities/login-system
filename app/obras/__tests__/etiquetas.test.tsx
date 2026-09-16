@@ -57,21 +57,36 @@ function linha(over: Partial<ObraRow> = {}): ObraRow {
 }
 
 describe('BadgeDias', () => {
-  it('liberada há 104 dias e aprovada hoje: 104, vermelho, "desde a liberação"', () => {
+  it('entrada mais antiga que a liberação: 108, vermelho, "desde a entrada"', () => {
+    // Era "os 104 dias desde a liberação" antes da decisão do João de 15/09.
+    // A entrada desta fixture (29/05) é anterior à liberação registrada
+    // (02/06): pela regra nova a entrada é candidata sempre, e vence por ser a
+    // mais antiga — registrar a liberação depois não pode encolher a
+    // contagem que já vinha de antes.
     const o = derivar(
       linha({ liberado_por: 'JUAN', liberado_em: '2026-06-02', aprovacao: '2026-09-14' }),
       H
     )
+    expect(o.ancora).toEqual({ de: 'entrada', data: '2026-05-29' })
     render(<BadgeDias obra={o} />)
-    expect(screen.getByText('104')).toHaveStyle({ color: '#ff4d6d' })
-    expect(screen.getByText('dias desde a liberação')).toBeInTheDocument()
+    expect(screen.getByText('108')).toHaveStyle({ color: '#ff4d6d' })
+    expect(screen.getByText('dias desde a entrada')).toBeInTheDocument()
   })
 
   it('25 dias desde a liberação: âmbar', () => {
+    // created_at depois da liberação, de propósito: a entrada é candidata
+    // sempre (decisão de 15/09), e sem isolar essa data ela venceria como
+    // âncora e o teste deixaria de verificar o que se propõe (a liberação).
     const o = derivar(
-      linha({ liberado_por: 'LEANDRO', liberado_em: '2026-08-20', aprovacao: '2026-09-01' }),
+      linha({
+        liberado_por: 'LEANDRO',
+        liberado_em: '2026-08-20',
+        aprovacao: '2026-09-01',
+        created_at: '2026-08-25T12:00:00+00:00',
+      }),
       H
     )
+    expect(o.ancora).toEqual({ de: 'liberacao', data: '2026-08-20' })
     render(<BadgeDias obra={o} />)
     expect(screen.getByText('25')).toHaveStyle({ color: '#f4b73f' })
   })
@@ -84,7 +99,12 @@ describe('BadgeDias', () => {
   })
 
   it('forma curta só diz "dias"', () => {
-    const o = derivar(linha({ aprovacao: '2026-08-14' }), H)
+    // created_at depois da aprovação, pelo mesmo motivo do teste acima: isola
+    // a aprovação como âncora para testar só a forma curta.
+    const o = derivar(
+      linha({ aprovacao: '2026-08-14', created_at: '2026-08-20T12:00:00+00:00' }),
+      H
+    )
     render(<BadgeDias obra={o} curto />)
     expect(screen.getByText('31')).toBeInTheDocument()
     expect(screen.getByText('dias')).toBeInTheDocument()

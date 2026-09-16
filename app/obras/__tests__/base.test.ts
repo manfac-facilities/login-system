@@ -249,10 +249,14 @@ describe('kpisDaBase', () => {
 describe('ordenar', () => {
   it('o default é a contagem de alerta decrescente', () => {
     expect(ORDEM_PADRAO).toEqual({ col: 'diasAlerta', dir: -1 })
+    // created_at depois de todas as aprovações: a entrada é candidata sempre
+    // (decisão do João de 15/09), então sem isso ela venceria como âncora e
+    // confundiria este teste, que quer só verificar a ordenação.
+    const entradaTardia = { created_at: '2026-08-30T00:00:00Z' }
     const base = [
-      obra({ aprovacao: '2026-08-29' }),
-      obra({ aprovacao: '2026-06-01' }),
-      obra({ aprovacao: '2026-08-15' }),
+      obra({ aprovacao: '2026-08-29', ...entradaTardia }),
+      obra({ aprovacao: '2026-06-01', ...entradaTardia }),
+      obra({ aprovacao: '2026-08-15', ...entradaTardia }),
     ]
     expect(ordenar(base, ORDEM_PADRAO).map((o) => o.diasAlerta)).toEqual([91, 16, 2])
   })
