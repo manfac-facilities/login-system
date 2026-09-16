@@ -1,5 +1,36 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
+## ▶ Retomar aqui — 16/09/2026, madrugada
+
+**O filtro de entrada está NO AR.** Build de 16/09 02:22:51 GMT, 10 chunks no mesmo
+timestamp, com os 47 commits do dia (`181ddfd`). A carga passa a trazer só a OS cuja
+**última atividade** esteja em **pendente, agendada ou em andamento** — critério final do
+cliente (`feedback-20`), com "status" na fala dele significando a **situação** do Field.
+
+**Medido contra o Field real em 15/09 à noite** (`entregas/medicao-criterio-final-2026-09-15.md`):
+das 185 OS não arquivadas, **64 entram** (49 pendentes, 14 agendadas, 1 em andamento) e
+121 ficam de fora (113 concluídas, 7 reportadas, 1 a caminho). Nenhuma OS sem situação.
+
+**O que falta, na ordem:**
+
+1. O João clicar em **Puxar do Field** em `/obras/sincronizar`, com Ctrl+Shift+R antes. A
+   tela leva ~3 minutos: uma consulta por OS, no ritmo de 1 por segundo que a API impõe.
+2. **O erro de 15/09 segue sem causa raiz.** O botão respondeu "Não deu para falar com o
+   servidor" em menos de 10s. A mensagem é nossa (`_painel.tsx:30`) e só aparece quando a
+   chamada falha como requisição. Hipóteses e o que procurar no log estão em
+   `investigacao-erro-puxar-field-2026-09-15.md`. Falta a evidência do log do EasyPanel.
+3. Depois da carga: conferir quantas obras entraram e liberar o acesso da equipe.
+
+**Mergeadas e no ar hoje:** regra de atenção/crítica (20/30 dias, âncora na data mais antiga
+entre entrada, liberação e aprovação) e o histórico de alterações Parte 1. **A migration
+`sdd-sql-obras-historico.sql` NÃO foi aplicada** — o histórico só liga na Parte 2, com a J4.
+
+**Mockup J4 v02 publicado** (SUY9Cd59ud9rAD63oFUCqC) e **guia de teste do cliente**
+(Ec61mjo7kXf65CRx7QjGbN). Nenhum dos dois foi enviado ao cliente ainda.
+
+**Decisão de processo de 15/09:** acabaram as perguntas ao cliente. O que estiver ambíguo vai
+para o João, em linguagem leiga, e ele decide.
+
 Atualizado em 11/09/2026, de manhã. O bloco abaixo é o mais recente; o resto do arquivo é o
 histórico de 05/09 em diante, mantido como estava.
 
