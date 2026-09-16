@@ -2,6 +2,28 @@
 
 ## ▶ Retomar aqui — 16/09/2026, madrugada
 
+> **03:00 — o Environment do EasyPanel perdeu TODAS as variaveis. E a armadilha ja
+> documentada no AGENTS.md, acontecendo de novo.**
+>
+> Sequencia dos fatos, medidos:
+> - 02:48 e 02:55: a rota do cron **autenticou** (o `OBRAS_CRON_SECRET` chegava) e a execucao
+>   falhou so pela `FIELD_API_KEY` ausente.
+> - O Joao cadastrou a `FIELD_API_KEY` no Environment e deployou (build 03:00:37 GMT).
+> - 03:01: a mesma rota passou a responder **`OBRAS_CRON_SECRET nao configurado`** — ou seja,
+>   a variavel que funcionava **sumiu**.
+>
+> **Causa, conforme o AGENTS.md ja registrava desde 09/08:** o campo Environment e uma caixa
+> de texto livre onde cada variavel precisa ser `NOME=valor` **na mesma linha**. Uma linha
+> malformada faz o painel **nao reconhecer nenhuma**, e o container sobe sem variavel alguma,
+> em silencio. A chave do Field provavelmente entrou quebrada em duas linhas e levou o
+> segredo do cron junto.
+>
+> **Correcao:** abrir o Environment do app `manfac-login-system` e deixar CADA variavel numa
+> linha unica, sem quebra — `OBRAS_CRON_SECRET=...` e `FIELD_API_KEY=...`. Salvar e deployar.
+> **Verificacao objetiva, sem clicar em nada:** `POST /api/obras/sincronizar` sem segredo deve
+> responder **401** (segredo presente). Se responder 503 com a mensagem de nao configurado, as
+> variaveis continuam sem chegar.
+
 > **02:55 — o deploy NAO resolveu. A FIELD_API_KEY continua sem chegar ao container.**
 > Segunda execucao (`44d3038a`), ja no build de 02:53:36 GMT, falhou com a mesma mensagem:
 > `FIELD_API_KEY nao esta configurada no servidor`. Banco segue com **0 obras**.
