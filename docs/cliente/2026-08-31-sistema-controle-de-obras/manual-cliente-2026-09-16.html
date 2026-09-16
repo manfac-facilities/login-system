@@ -1,0 +1,309 @@
+<title>Manual do Controle de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root {
+  --ground: #f3f6fb;
+  --surface: #ffffff;
+  --surface-2: #e9eef6;
+  --border: #d3dce9;
+  --text: #0a1628;
+  --muted: #4f607a;
+  --accent: #d24a1a;
+  --accent-soft: #fbe6dc;
+  --ok: #1f8a5b;
+  --ok-soft: #dcf2e7;
+  --warn: #a8700b;
+  --warn-soft: #f8ecd2;
+  --bad: #b93a33;
+  --bad-soft: #f7dedc;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0a1628; --surface: #0e1d3a; --surface-2: #0d2050; --border: #1e3a5f;
+    --text: #e5ecf6; --muted: #94a3b8; --accent: #f05a28; --accent-soft: #3a1f1a;
+    --ok: #4cc38a; --ok-soft: #12352a; --warn: #e5b04a; --warn-soft: #3a2e12;
+    --bad: #f07a6f; --bad-soft: #3d1b1c;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0a1628; --surface: #0e1d3a; --surface-2: #0d2050; --border: #1e3a5f;
+  --text: #e5ecf6; --muted: #94a3b8; --accent: #f05a28; --accent-soft: #3a1f1a;
+  --ok: #4cc38a; --ok-soft: #12352a; --warn: #e5b04a; --warn-soft: #3a2e12;
+  --bad: #f07a6f; --bad-soft: #3d1b1c;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--text); font-family: var(--body); font-size: 15.5px; line-height: 1.62; padding: 0 20px; }
+.wrap { max-width: 880px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 52px; }
+
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.5rem); letter-spacing: -0.01em; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.28rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 68ch; }
+code, .mono { font-family: var(--mono); font-size: 0.85em; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+strong { font-weight: 600; }
+
+header { display: grid; gap: 18px; }
+.lead { border-left: 4px solid var(--accent); background: var(--surface); padding: 18px 22px; display: grid; gap: 10px; }
+.lead b { color: var(--accent); }
+
+.numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.numeros > div { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; display: grid; gap: 2px; }
+.numeros .n { font-family: var(--display); font-size: 2.1rem; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.numeros .rot { font-size: 0.86rem; color: var(--muted); }
+
+section { display: grid; gap: 22px; }
+.section-head { display: grid; gap: 6px; border-bottom: 2px solid var(--border); padding-bottom: 14px; }
+
+.passo { display: grid; grid-template-columns: 54px 1fr; gap: 6px 16px; background: var(--surface); border: 1px solid var(--border); padding: 18px 20px; }
+.passo .id { font-family: var(--display); font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1.1; grid-row: span 4; }
+.passo h3 { font-size: 1.22rem; }
+.passo .faca, .passo .veja { font-size: 0.95rem; max-width: 68ch; }
+.passo .veja { background: var(--surface-2); padding: 10px 14px; margin-top: 4px; }
+.passo .veja b, .passo .faca b { font-weight: 600; }
+.aviso { background: var(--accent-soft); padding: 12px 16px; font-size: 0.92rem; margin-top: 6px; max-width: 68ch; }
+.aviso b { color: var(--accent); }
+
+.func { background: var(--surface); border: 1px solid var(--border); padding: 18px 20px; display: grid; gap: 10px; }
+.func .linha { display: grid; grid-template-columns: 130px 1fr; gap: 4px 14px; font-size: 0.95rem; }
+.func .rot { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.func .falta { border-left: 3px solid var(--warn); padding-left: 12px; }
+.func .falta .rot { color: var(--warn); }
+@media (max-width: 560px) { .func .linha { grid-template-columns: 1fr; } .passo { grid-template-columns: 1fr; } .passo .id { grid-row: auto; } }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 0.93rem; min-width: 600px; }
+th, td { text-align: left; padding: 12px 14px; border-top: 1px solid var(--border); vertical-align: top; }
+thead th { border-top: 0; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--surface-2); }
+td.n, td.d { font-family: var(--mono); font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tr.total td { background: var(--surface-2); font-weight: 600; border-top: 2px solid var(--border); }
+tr.total td.n { color: var(--accent); }
+
+.chip { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
+.chip.ok { color: var(--ok); background: var(--ok-soft); }
+.chip.warn { color: var(--warn); background: var(--warn-soft); }
+
+.nota { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--muted); padding: 14px 18px; font-size: 0.93rem; display: grid; gap: 8px; }
+footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; display: grid; gap: 6px; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Manfac Facilities · 16 de setembro de 2026</span>
+  <h1>Manual do Controle de Obras</h1>
+  <div class="lead">
+    <p><b>O sistema deixou de estar vazio.</b> Na madrugada de 16/09, às 03:11, a primeira carga entrou: o sistema leu 185 ordens de serviço no Field Control e trouxe 64 obras para dentro. As outras 121 ficaram de fora porque já estavam concluídas, reportadas ou a caminho.</p>
+    <p><b>O critério é o combinado:</b> entra a OS do tipo <em>Atividade Spot</em> cuja última atividade esteja em <strong>pendente</strong>, <strong>agendada</strong> ou <strong>em andamento</strong>.</p>
+    <p><b>A atualização automática já está ligada.</b> Desde as 03:25 o sistema busca OS nova sozinho a cada 5 minutos e, uma vez por dia, confere tudo o que existe no Field. Ninguém precisa clicar em nada para a obra nova aparecer.</p>
+  </div>
+  <div class="numeros">
+    <div><span class="n">64</span><span class="rot">obras no sistema</span></div>
+    <div><span class="n">185</span><span class="rot">OS lidas no Field</span></div>
+    <div><span class="n">121</span><span class="rot">fora do critério</span></div>
+    <div><span class="n">5 min</span><span class="rot">entre uma busca e outra</span></div>
+  </div>
+  <p class="muted">As 64 obras entraram com três informações: número da OS, loja e descrição do chamado. Mais nada — o Field só devolve esses três campos. Por isso todas estão em <strong>“Aguardando definição”</strong>, esperando alguém dizer quem responde, qual equipe vai, quando começa e quanto dura.</p>
+  <div class="aviso"><b>Se alguma tela der erro:</b> uma correção subiu em 16/09. Quem tiver deixado a página aberta antes disso precisa recarregar segurando <strong>Ctrl + Shift + R</strong>. Isso resolve.</div>
+</header>
+
+<section aria-labelledby="testar">
+  <div class="section-head">
+    <span class="eyebrow">Parte 1</span>
+    <h2 id="testar">Como testar o sistema hoje</h2>
+    <p class="muted">Roteiro para percorrer o sistema inteiro numa sessão, do primeiro login à primeira cobrança respondida.</p>
+  </div>
+
+  <article class="passo">
+    <span class="id">1</span>
+    <h3>Liberar as contas e os acessos</h3>
+    <p class="faca"><b>Hoje este passo trava todos os outros.</b> Ninguém da equipe consegue abrir o Controle de Obras, exceto os 3 administradores. Duas coisas precisam acontecer, nesta ordem: <strong>o Yuri ainda não tem conta no hub</strong> — sem conta ele não entra de jeito nenhum; a Amanda já tem. E, mesmo com conta, a pessoa só vê o módulo depois que um administrador marcar o acesso dela em <strong>Admin → Acessos</strong>, o que hoje não está marcado para ninguém.</p>
+    <p class="veja"><b>Você deve ver:</b> no próximo login da pessoa, o quadro <strong>Controle de Obras</strong> aparece na tela inicial do hub. Enquanto o acesso não for liberado, esse quadro simplesmente não existe para ela.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">2</span>
+    <h3>Entrar e abrir a base</h3>
+    <p class="faca"><b>Faça:</b> entre em <code>hub.manfac.com.br</code>, faça login e clique no quadro Controle de Obras.</p>
+    <p class="veja"><b>Você deve ver:</b> a <strong>Base de obras</strong>, com as abas <em>Diário do dia</em>, <em>Tarefas</em> e <em>Base de obras</em>, e uma tabela de <strong>64 linhas</strong> — número da OS, loja, descrição e a etiqueta “Aguardando definição”. Acima, oito números-resumo. Hoje o esperado é “aguardando definição” em 64 e os outros sete em zero ou perto disso: nenhuma obra foi definida ainda.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">3</span>
+    <h3>Ver a mesma base em cartões</h3>
+    <p class="faca"><b>Faça:</b> no seletor <strong>Tabela / Kanban</strong>, escolha Kanban.</p>
+    <p class="veja"><b>Você deve ver:</b> quatro colunas — Antes de executar, Executando, Fechamento e Faturamento — com as 64 obras amontoadas na primeira.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">4</span>
+    <h3>Filtrar</h3>
+    <p class="faca"><b>Faça:</b> no filtro <strong>Etapa da obra</strong>, escolha “Aguardando definição” e depois volte para todas.</p>
+    <p class="veja"><b>Você deve ver:</b> a tabela muda, mas os oito números do topo continuam iguais. É de propósito: os indicadores mostram sempre a operação inteira, para ninguém filtrar a tela e concluir que o problema sumiu.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">5</span>
+    <h3>Abrir uma obra</h3>
+    <p class="faca"><b>Faça:</b> clique na loja de qualquer linha.</p>
+    <p class="veja"><b>Você deve ver:</b> a obra abre em modo <strong>triagem</strong>, com a faixa “Obra nova, esperando você definir” e o contador “0 de 5 preenchidos”. O bloco <strong>O que veio do Field</strong> traz número, loja e chamado preenchidos, e Tipo, Valor, Analista, Origem e Aprovada em vazios — é exatamente o que o Field manda. Pelo mesmo motivo a faixa diz “entrou pelo Field em —”: a data de aprovação não veio, então não há de onde contar.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">6</span>
+    <h3>Fazer a triagem de uma obra</h3>
+    <p class="faca"><b>Faça:</b> preencha os cinco campos — <strong>responsável</strong> (quem responde por ela todo dia), <strong>equipe ou prestador</strong>, <strong>prioridade</strong>, <strong>data de início</strong> e <strong>duração em dias</strong> (a data final o sistema calcula). Se algum analista da loja autorizou começar antes de a OS estar aprovada, registre também “Liberado por” e “Data da liberação”. Depois clique em <strong>Liberar para o diário do dia</strong>.</p>
+    <p class="veja"><b>Você deve ver:</b> cada campo ganha um ✓ e o contador sobe. Enquanto faltar campo, o botão fica apagado e o aviso diz que a obra não aparece para ninguém responder. Ao liberar, a obra volta para a Base como <strong>“Levantamento”</strong>.</p>
+    <div class="aviso"><b>Detalhe que importa para o teste:</b> escolha como responsável a mesma pessoa que vai abrir o Diário no passo seguinte. O sistema liga a conta de login à pessoa da obra <strong>pelo primeiro nome do e-mail</strong> — <code>yuri.nascimento@…</code> vira YURI. Se marcar YURI e entrar com outro login, o diário aparece vazio, e não é erro. Faça a triagem em duas ou três obras.</div>
+  </article>
+
+  <article class="passo">
+    <span class="id">7</span>
+    <h3>Responder o Diário do dia</h3>
+    <p class="faca"><b>Faça:</b> na aba <strong>Diário do dia</strong>, num cartão: responda “Andou hoje?”; se for <em>Não</em>, escolha o motivo, que é obrigatório; se faltou alguma coisa, responda “Faltou algum item?”; e salve.</p>
+    <p class="veja"><b>Você deve ver:</b> antes de salvar, o cartão escreve o que vai acontecer. Depois, ele sai da fila e desce para “Já respondidas”. Se marcou “Não” ou apontou uma falta, <strong>nasce uma cobrança sozinha</strong> na aba Tarefas. Cada pessoa vê só as obras em que é responsável; administrador vê todas, com um seletor para escolher a fila.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">8</span>
+    <h3>Anexar a foto do dia</h3>
+    <p class="faca"><b>Faça:</b> num cartão de obra em campo, clique em “+ anexar foto do dia”, escolha a imagem e salve.</p>
+    <p class="veja"><b>Você deve ver:</b> a foto é reduzida no próprio celular antes de subir, e aparece na ficha da obra em <strong>Evolução em fotos</strong>. Não anexar não impede salvar o diário, mas abre uma cobrança pedindo a foto à equipe.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">9</span>
+    <h3>Desfazer uma resposta</h3>
+    <p class="faca"><b>Faça:</b> em “Já respondidas”, clique em <strong>Desfazer</strong>.</p>
+    <p class="veja"><b>Você deve ver:</b> a obra volta para a fila do dia. As cobranças que aquela resposta abriu e que ninguém respondeu ainda somem junto; cobrança já respondida por outra pessoa continua existindo — o trabalho dela não é apagado.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">10</span>
+    <h3>Ver e responder uma cobrança</h3>
+    <p class="faca"><b>Faça:</b> abra a aba <strong>Tarefas</strong>, clique em “Marcar como respondida” e escreva o que foi feito.</p>
+    <p class="veja"><b>Você deve ver:</b> a lista agrupada por dono, vencidas em vermelho no topo. Ninguém digita tarefa aqui: toda linha nasceu de um diário respondido. Ao responder, a linha sai de Abertas e entra em Respondidas, com data, hora e o texto.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">11</span>
+    <h3>Mover uma obra de etapa</h3>
+    <p class="faca"><b>Faça:</b> na ficha de uma obra liberada, no fim do bloco <strong>Ciclo de vida da obra</strong>, escolha outra etapa e confirme.</p>
+    <p class="veja"><b>Você deve ver:</b> a etapa muda na hora e o contador “dias parada nesta etapa” zera. O sistema guarda quem mudou e quando.</p>
+  </article>
+
+  <article class="passo">
+    <span class="id">12</span>
+    <h3>Conferir a sincronização com o Field</h3>
+    <p class="faca"><b>Faça (só administrador):</b> abra <code>hub.manfac.com.br/obras/sincronizar</code> digitando o endereço — essa tela não tem link no menu, e é a única que escreve na base inteira de uma vez.</p>
+    <p class="veja"><b>Você deve ver:</b> o botão “Puxar do Field” e o histórico das últimas execuções. A carga de 16/09 aparece lá: 185 lidas, 64 criadas, 121 ignoradas, sem erro. Com a busca automática ligada, novas linhas passam a aparecer sozinhas. Pode clicar quantas vezes quiser: <strong>OS que já existe nunca é duplicada</strong> e o que foi digitado aqui dentro nunca é sobrescrito.</p>
+  </article>
+</section>
+
+<section aria-labelledby="usar">
+  <div class="section-head">
+    <span class="eyebrow">Parte 2</span>
+    <h2 id="usar">Como usar cada tela</h2>
+    <p class="muted">O que cada uma serve, quando usar, e o que ela ainda não faz.</p>
+  </div>
+
+  <div class="func">
+    <h3>Base de obras</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>Responder “onde está cada obra” numa tela só. É a substituta da planilha.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span>Para o retrato do dia, achar uma obra e abrir a ficha dela.</span></div>
+    <div class="linha"><span class="rot">Como</span><span>Oito indicadores no topo, lista em Tabela ou Kanban. Os filtros mudam a lista, nunca os indicadores.</span></div>
+    <div class="linha falta"><span class="rot">Ainda não</span><span>Os indicadores “aprovadas há mais de 60 dias” e “passaram da duração planejada” ficam em zero enquanto não houver onde digitar a data de aprovação e a duração.</span></div>
+  </div>
+
+  <div class="func">
+    <h3>Ficha da obra</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>Tudo sobre uma obra num lugar: ciclo de vida, autorização, identificação, cronograma, remarcações, fotos, diário e cobranças.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span>Antes de cobrar alguém, antes de uma reunião, ou quando perguntarem “o que houve com essa obra?”.</span></div>
+    <div class="linha"><span class="rot">Como</span><span>O bloco Autorização mostra o que destrava a execução e marca <strong>“Sem cobertura”</strong> em vermelho quando a obra não tem OS aprovada nem liberação — equipe em campo sem ninguém nomeado que tenha autorizado.</span></div>
+    <div class="linha falta"><span class="rot">Ainda não</span><span>A ficha é só de leitura: os cerca de 30 campos que o Field não manda continuam vazios e não há onde digitá-los até a próxima entrega. O relatório fotográfico e o PDF de entrega não chegam sozinhos, e a esteira ainda não marca passo concluído.</span></div>
+  </div>
+
+  <div class="func">
+    <h3>Triagem</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>É o checklist de entrada: a obra vem do Field sem responsável, sem equipe e sem cronograma, e aqui isso é decidido.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span>Sempre que aparecer obra em “Aguardando definição” — hoje, as 64.</span></div>
+    <div class="linha"><span class="rot">Depois</span><span>A obra vai para Levantamento, entra na fila do Diário do responsável escolhido e passa a ser cobrada todo dia. Antes disso não aparece para ninguém, de propósito.</span></div>
+  </div>
+
+  <div class="func">
+    <h3>Diário do dia</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>Substituir a pergunta “andou?” feita no telefone. Uma resposta por obra, por dia.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span>Todo dia, por cada responsável.</span></div>
+    <div class="linha"><span class="rot">Depois</span><span>“Não andou” com motivo, e falta de item, viram cobrança com dono e prazo na hora, sem ninguém digitar nada.</span></div>
+    <div class="linha falta"><span class="rot">Ainda não</span><span>A lista de motivos é fixa, sem cadastrar motivo novo pela tela. E não existe aviso automático: quem esquecer de responder não recebe nada às 18h nem às 19h.</span></div>
+  </div>
+
+  <div class="func">
+    <h3>Tarefas</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>A falta virando cobrança com dono, prazo e resposta escrita — o registro de quem estava com a bola e o que fez.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span>Todo dia, por quem recebe cobrança, e nas reuniões, para ver o vencido.</span></div>
+    <div class="linha"><span class="rot">Destino</span><span>Material vai para Compras; ferramenta, equipe, documento e “outro” vão para Obras; foto do dia vai para a equipe da obra, que é quem está lá.</span></div>
+    <div class="linha falta"><span class="rot">Ainda não</span><span>Tarefa vencida fica vermelha e sobe ao topo, mas não avisa ninguém sozinha. Cobrança aberta depois das 18h vence no dia seguinte corrido, mesmo sábado ou domingo.</span></div>
+  </div>
+
+  <div class="func">
+    <h3>Sincronização com o Field</h3>
+    <div class="linha"><span class="rot">Para quê</span><span>Trazer a OS do Field para cá como obra, sem ninguém redigitar.</span></div>
+    <div class="linha"><span class="rot">Quando</span><span><strong>Em nenhum momento</strong> — ela roda sozinha a cada 5 minutos, com uma varredura completa por dia. O botão fica para quando alguém quiser forçar a busca na hora.</span></div>
+    <div class="linha"><span class="rot">Regras</span><span>OS que não existe aqui vira obra nova em “Aguardando definição”. OS que já existe só ganha o que falta — o que alguém digitou aqui fica como está, e etapa e triagem nunca são tocadas. OS sem número fica de fora, com o motivo no relatório.</span></div>
+    <div class="linha falta"><span class="rot">Ainda não</span><span>Quando o cliente cancela uma OS no Field, o sistema não detecta o cancelamento sozinho — a obra continua aqui até alguém tratá-la à mão.</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="falta">
+  <div class="section-head">
+    <span class="eyebrow">Parte 3</span>
+    <h2 id="falta">O que falta para ficar pronto</h2>
+    <p class="muted">Só o que realmente falta. O que já foi entregue saiu da conta: a carga das obras, o filtro de entrada, a nova regra da obra em atenção e crítica, e a primeira parte do histórico de alterações.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Tarefa</th><th>O que entrega</th><th>Horas</th><th>Data</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td><b>Conta do Yuri e liberação de acesso</b></td><td>As pessoas entram e passam a ver as 64 obras. Hoje só os administradores veem.</td><td class="n">1h</td><td class="d">16/09</td></tr>
+        <tr><td class="n">2</td><td><b>Ficha e triagem editáveis, com remarcação por motivo</b></td><td>Preencher aqui o que o Field não manda — valor, tipo, analista, origem, data de aprovação — e mudar a data de início só com motivo registrado.</td><td class="n">5–8h</td><td class="d">no ar 21/09</td></tr>
+        <tr><td class="n">3</td><td><b>Histórico de alterações ligado</b></td><td>Cada alteração com campo, valor antigo, valor novo, quem mudou e quando.</td><td class="n">2h</td><td class="d">no ar 21/09</td></tr>
+        <tr><td class="n">4</td><td><b>Revisão independente antes de publicar</b></td><td>Garante que as entregas 2 e 3 não quebrem o que já funciona.</td><td class="n">2h</td><td class="d">18–21/09</td></tr>
+        <tr><td class="n">5</td><td><b>“Concluir esta etapa” e as datas dos 7 marcos</b></td><td>A data de cada passo passa a ser gravada: a esteira deixa de ser desenho e vira histórico.</td><td class="n">2–4h</td><td class="d">21–22/09</td></tr>
+        <tr><td class="n">6</td><td><b>Os dois SLAs da reunião semanal</b></td><td>Dias sem OS aprovada, e dias do fechamento da OS até o faturamento.</td><td class="n">2–4h</td><td class="d">22–23/09</td></tr>
+        <tr><td class="n">7</td><td><b>Cancelamento de obra</b></td><td>Cancelar com motivo e autoria; sai do diário e das cobranças na hora, e dá para reverter.</td><td class="n">6–10h</td><td class="d">no ar 25/09</td></tr>
+        <tr><td class="n">8</td><td><b>Pedido de compra</b></td><td>Registrar número e data de chegada, e exigir isso antes de a obra ir para faturamento.</td><td class="n">2–4h</td><td class="d">no ar 28/09</td></tr>
+        <tr><td class="n">9</td><td><b>Manual do fluxo real e treinamento</b></td><td>Manual reescrito com as telas novas, e o treinamento presencial.</td><td class="n">2–3h</td><td class="d">manual 23/09</td></tr>
+        <tr class="total"><td></td><td>Total</td><td></td><td class="n">24–38h</td><td class="d">fim 28/09</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota">
+    <p><strong>Fora do total, e por quê.</strong></p>
+    <p><strong>Aviso automático das 18h/19h</strong> — lembrete por WhatsApp e e-mail para quem não respondeu o diário. Está decidido que é imprescindível, e a base que dispara na hora certa já existe, mas ele ainda não foi desenhado: estimar antes de desenhar seria chute.</p>
+    <p><strong>Painel de reunião, relatório para o cliente e agente cobrador</strong> — adiados em 31/08, por decisão de vocês. Entram depois que a equipe estiver usando o sistema todo dia.</p>
+  </div>
+
+  <div class="nota">
+    <p><strong>Duas coisas dependem de uma definição.</strong></p>
+    <p>A <strong>meta do SLA de aprovação da OS</strong> — quantos dias sem OS aprovada já é demais — ainda não foi definida. Até que seja, o sistema usa 20 dias para amarelo e 30 para vermelho, os mesmos números da obra crítica. O SLA de faturamento já está definido: amarelo acima de 15 dias, vermelho acima de 30.</p>
+    <p>A <strong>data do treinamento</strong> ainda não está marcada. A semana de 28/09 é previsão do plano, não compromisso fechado.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Até 21/09 ficam no ar os itens 1 a 4: acesso liberado, ficha e triagem editáveis, remarcação com motivo e histórico de alterações — o que cobre atualizar a base, montar o cronograma da obra e registrar o que mudou.</p>
+  <p>Os itens 5 a 8 seguem até 28/09. O plano tem faixa realista de 25/09 a 01/10, porque cada entrega depende de a anterior ter sido publicada e conferida.</p>
+</footer>
+
+</div>
