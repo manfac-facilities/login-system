@@ -24,6 +24,15 @@
 > 3. Ao cadastra-la, o Environment do EasyPanel perdeu **todas** as variaveis — a armadilha do
 >    `NOME=valor` numa linha so, ja documentada em 09/08. Resolvido no deploy de 03:07.
 >
+> **Sincronizacao automatica LIGADA em 16/09, 03:2x** (`sdd-sql-obras-cron-jobs.sql`, aplicado).
+> Pedido do cliente: OS nova no Field tem que aparecer no sistema em 5 minutos ou menos.
+> - `obras-field-incremental` — `*/5 * * * *`, le so o que mudou desde a ultima marca d'agua.
+> - `obras-field-completa` — `5 6 * * *`, unica que detecta OS arquivada ou sumida; custa ~3 min.
+> - O segredo `OBRAS_CRON_SECRET` **nao existia no Vault** e foi criado agora. Sem ele os jobs
+>   chamariam a rota sem autorizacao e falhariam em silencio a cada 5 minutos.
+> - A trava `obras_sync_execucao_uma_rodando` impede sobreposicao: passada longa nao empilha.
+> - **Falta provar que disparou de verdade**: procurar execucao com `origem = 'agendada'`.
+
 > **Conferido no banco depois da carga (16/09, 03:15):**
 > - As obras entraram integras: numero da OS, loja com endereco completo, descricao real, etapa
 >   `definir`, `fonte: field`. Nenhuma tem `aprovacao` — esperado, o Field nao manda essa data.
