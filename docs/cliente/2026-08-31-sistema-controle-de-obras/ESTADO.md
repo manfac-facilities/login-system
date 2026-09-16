@@ -2,6 +2,35 @@
 
 ## ▶ Retomar aqui — 16/09/2026, madrugada
 
+> ## ✅ 03:11 — A PRIMEIRA CARGA ENTROU. O sistema deixou de estar vazio.
+>
+> Execucao `cf98d8d3-5455-4e53-ac6b-6864f20a7f0a`, disparada pela rota protegida no build de
+> 03:07:13 GMT. Duracao: 3 minutos e 8 segundos.
+>
+> | | |
+> |---|---|
+> | OS lidas no Field | 185 |
+> | **Obras criadas** | **64** |
+> | Ignoradas pelo criterio | 121 |
+> | Erro | nenhum |
+> | No banco | **64 obras, todas em "aguardando definicao"** |
+>
+> Bateu exatamente com a medicao feita antes (49 pendentes + 14 agendadas + 1 em andamento).
+>
+> **As tres causas que atrasaram isso em um dia, todas encontradas com prova:**
+> 1. `export type` num arquivo `use server` derrubava a tela inteira (`ReferenceError`).
+>    Corrigido em `e26d7ce`; teste de regressao em `4071df1` varre os 26 arquivos do hub.
+> 2. A `FIELD_API_KEY` nunca chegou ao container desde 14/09.
+> 3. Ao cadastra-la, o Environment do EasyPanel perdeu **todas** as variaveis — a armadilha do
+>    `NOME=valor` numa linha so, ja documentada em 09/08. Resolvido no deploy de 03:07.
+>
+> **Proximo passo:** liberar o acesso da equipe em `/admin/acessos` (slug `obras`) e conferir se
+> Yuri e Amanda tem conta no hub — sem isso eles nao veem as 64 obras. Depois, a J4 (ficha
+> editavel e remarcacao), com o mockup v02 ja publicado esperando aprovacao.
+>
+> **Aviso para quem for usar a tela:** aba aberta antes do deploy da erro de referencia
+> (`Server Reference ID did not match`). Recarregar com Ctrl+Shift+R resolve.
+
 > **03:00 — o Environment do EasyPanel perdeu TODAS as variaveis. E a armadilha ja
 > documentada no AGENTS.md, acontecendo de novo.**
 >
