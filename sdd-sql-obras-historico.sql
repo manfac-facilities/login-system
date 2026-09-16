@@ -4,12 +4,25 @@
 -- Revisão 2026-09-15 (review-historico-2026-09-15.md): corrige B1 (lista de
 -- colunas do UPDATE incompleta + RPC aceitava chave desconhecida em
 -- silêncio), M4 (clock_timestamp vs now()) e M5 (desempate de created_at).
+-- Reconferência 2026-09-15: a coluna `seq` do M5 tinha ficado só dentro do
+-- `create table if not exists` — corrigido para `add column if not exists`
+-- explícito, e o índice para `drop + create` (ver LIMITE CONHECIDO abaixo).
 -- ============================================================
 -- ESTADO: NÃO APLICADO. Rodar à mão no SQL Editor do Supabase, projeto de
 -- produção iyytcavcgukfjnjjrerx. Confirme o ref antes de colar (AGENTS.md).
 --
 -- IDEMPOTENTE por construção: create table if not exists, create or replace
--- function, drop policy if exists antes de recriar.
+-- function, drop policy if exists antes de recriar, add column if not
+-- exists para coluna nova em tabela que já possa existir.
+--
+-- LIMITE CONHECIDO DA IDEMPOTÊNCIA (mesmo aviso de sdd-sql-obras-v0.sql:13-17):
+-- `create table if not exists` não muda uma tabela que já exista com colunas
+-- diferentes, nem `create index if not exists` muda a definição de um índice
+-- que já exista sob aquele nome. Toda coluna/índice acrescentado depois da
+-- primeira versão deste arquivo tem que virar `alter table ... add column
+-- if not exists` / `drop index if exists` + `create index` explícito aqui
+-- embaixo — nunca só editar o `create table`/`create index` lá em cima, que
+-- seria silenciosamente ignorado por quem já rodou a versão anterior.
 --
 -- Esta migration NÃO cria nenhuma trigger — ver spec §5 para por quê. A única
 -- função nova, obras_aplicar_alteracao, roda "security invoker" (não
@@ -60,6 +73,15 @@ create table if not exists public.obras_historico (
   seq bigserial not null
 );
 
+-- Idempotência (correção pós-reconferência de 2026-09-15): `create table if
+-- not exists` NÃO acrescenta coluna em tabela que já existe — mesmo limite
+-- documentado em sdd-sql-obras-v0.sql:132-135 para etapa_por/etapa_em. Quem
+-- já tiver rodado a versão anterior deste arquivo (antes de `seq` existir)
+-- ganha a coluna aqui, explicitamente, em vez de a migration "passar" sem
+-- erro e a Parte 2 quebrar em produção com `42703 column "seq" does not
+-- exist` — bem longe de onde o problema nasceu.
+alter table public.obras_historico add column if not exists seq bigserial not null;
+
 do $$
 begin
   if not exists (
@@ -90,7 +112,15 @@ begin
 end
 $$;
 
-create index if not exists obras_historico_obra_idx
+-- `create index if not exists` não atualiza a definição de um índice que já
+-- exista sob este nome (mesma armadilha da coluna acima) — se alguém rodou
+-- a versão anterior deste arquivo, o índice ficaria preso em
+-- `(obra_id, created_at desc)`, sem `seq`, e o desempate do M5 não teria
+-- como funcionar de verdade. `drop + create` garante que a definição final
+-- bate sempre com este arquivo, e é seguro reaplicar (índice é barato de
+-- recriar, a tabela não fica bloqueada para leitura).
+drop index if exists obras_historico_obra_idx;
+create index obras_historico_obra_idx
   on public.obras_historico (obra_id, created_at desc, seq desc);
 
 -- ============================================================
@@ -251,4 +281,16 @@ commit;
 -- );
 --   -- espera erro 22023 "obras_aplicar_alteracao: coluna desconhecida em
 --   -- p_campos: coluna_que_nao_existe"
+--
+-- (e) idempotência da reconferência de 2026-09-15 — a coluna `seq` e o
+-- índice batem com este arquivo mesmo que alguém já tenha rodado a versão
+-- anterior (antes do M5):
+--
+-- select column_name, data_type from information_schema.columns
+--  where table_schema = 'public' and table_name = 'obras_historico'
+--    and column_name = 'seq';
+--   -- espera 1 linha, data_type "bigint"
+-- select indexdef from pg_indexes
+--  where schemaname = 'public' and indexname = 'obras_historico_obra_idx';
+--   -- espera a definição incluir "seq DESC" no fim
 -- ============================================================
