@@ -16,8 +16,11 @@ arquivo no mesmo commit em que descobrir.
 
 ## O que é este projeto
 
-Um único app Next.js (`hub.manfac.com.br`) que hospeda três sistemas da Manfac
-Facilities atrás de um login compartilhado:
+Um app Next.js (`hub.manfac.com.br`) que hospeda os sistemas da Manfac Facilities
+atrás de um login compartilhado. **Nem todos são rotas deste projeto:** o Cockpit e o
+Financeiro são apps Next separadas, servidas pelo proxy no mesmo domínio — no painel
+elas usam `<a>` normal em vez de `<Link>`, e **não entram no `matcher` do
+`middleware.ts`** (pôr lá quebra o acesso, porque a autorização delas é própria):
 
 | Sistema | Rota | Nome na UI | Observação |
 |---|---|---|---|
@@ -25,6 +28,8 @@ Facilities atrás de um login compartilhado:
 | Conversor de OS | `/conversor-os` | Conversor OS | Converte planilhas de OS para o Field Control |
 | Admin | `/admin/acessos` | Admin | Contas e acessos. O João chama de "módulo de login" |
 | Controle de Obras | `/obras` | **Controle de Obras** | Quarta frente, codificada em 05/09/2026. Slug de acesso: `obras`. Migration `sdd-sql-obras-v0.sql` **aplicada em produção em 10/09/2026** — ver abaixo |
+| Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit Manutenção Predial | **App separada** (repositório `manfac-facilities/dashboard-manutencao`). Slug de acesso: `dashboard-manutencao` |
+| Financeiro | `/financeiro` | **Financeiro** | **App separada** (repositório `manfac-facilities/financeiro`), no ar desde 16/09/2026, substitui o Zeev. **Sem slug de acesso de propósito:** qualquer pessoa logada no hub pode pedir um pagamento, e o porteiro do módulo só exige sessão — um slug seria trava decorativa. Por isso o card do painel fica fora de `hasSystemAccess` e o sistema não entra em `lib/sistemas.ts`. Usa o mesmo banco `iyytcavcgukfjnjjrerx`, com tabelas `fin_*` |
 
 > **Controle de Obras — estado em 10/09/2026, noite.** O código das cinco telas está no
 > `master` local (o branch `copy-aprovada-cliente` foi mergeado por fast-forward), build e
