@@ -22,6 +22,30 @@ describe('ROTULO_CAMPO', () => {
     expect(ROTULO_CAMPO.os_aprovada_em).toBe('OS aprovada em')
     expect(ROTULO_CAMPO.etapa).toBe('Etapa')
   })
+
+  it('bate exatamente com a tabela de rótulos da spec §6 (todos os 19, não só amostra)', () => {
+    expect(ROTULO_CAMPO).toEqual({
+      pcm: 'Responsável da obra',
+      equipe: 'Equipe / prestador',
+      prioridade: 'Prioridade',
+      inicio_plan: 'Início planejado',
+      duracao: 'Duração em dias',
+      liberado_por: 'Liberado por',
+      liberado_em: 'Data da liberação',
+      os_aprovada_em: 'OS aprovada em',
+      tipo: 'Tipo',
+      valor: 'Valor',
+      origem: 'Origem',
+      analista_cliente: 'Analista do cliente',
+      mau_uso: 'Classificação',
+      etapa: 'Etapa',
+      marco_exec_fim: 'Data de fim da execução em campo',
+      marco_relatorio: 'Data do relatório de entrega',
+      marco_fechou_os: 'Data de fechamento da OS',
+      marco_liberou_fat: 'Data do faturamento liberado',
+      marco_faturou: 'Data de faturamento',
+    })
+  })
 })
 
 describe('linhasDeAlteracao', () => {
@@ -52,8 +76,10 @@ describe('linhasDeAlteracao', () => {
       { valor: 5200.5, mau_uso: true, etapa: 'andamento' },
       'Identificação'
     )
+    expect(r).toHaveLength(3)
     expect(r).toContainEqual({ bloco: 'Identificação', campo: 'valor', de: 'R$ 4.380,00', para: 'R$ 5.200,50', motivo: null })
     expect(r).toContainEqual({ bloco: 'Identificação', campo: 'mau_uso', de: 'normal', para: 'Mau uso', motivo: null })
+    expect(r).toContainEqual({ bloco: 'Identificação', campo: 'etapa', de: 'Levantamento', para: 'Em andamento', motivo: null })
   })
 
   it('formata data em DD/MM/AAAA', () => {
@@ -73,6 +99,13 @@ describe('linhasDeAlteracao', () => {
   it('mesmo valor numérico em tipos diferentes (number vs string) não gera linha', () => {
     const r = linhasDeAlteracao({ duracao: 6 }, { duracao: '6' }, 'Cronograma')
     expect(r).toEqual([])
+  })
+
+  it('formata duracao como "N dias"', () => {
+    const r = linhasDeAlteracao({ duracao: 5 }, { duracao: 10 }, 'Cronograma')
+    expect(r).toEqual([
+      { bloco: 'Cronograma', campo: 'duracao', de: '5 dias', para: '10 dias', motivo: null },
+    ])
   })
 
   it('inicio_plan mudou com exigirMotivoRemarcacao=true e motivo preenchido: uma linha com motivo', () => {
@@ -125,6 +158,21 @@ describe('linhasDeAlteracao', () => {
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'etapa', de: 'Relatório de entrega', para: 'Pendente fechamento', motivo: null })
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'marco_relatorio', de: null, para: '21/08/2026', motivo: null })
   })
+
+  it("'' equivale a null: não gera linha (nem null→'' nem ''→null)", () => {
+    expect(linhasDeAlteracao({ liberado_por: null }, { liberado_por: '' }, 'Autorização')).toEqual([])
+    expect(linhasDeAlteracao({ liberado_por: '' }, { liberado_por: null }, 'Autorização')).toEqual([])
+  })
+
+  it('motivo é gravado já sem espaços nas pontas (M3)', () => {
+    const r = linhasDeAlteracao(
+      { inicio_plan: '2026-09-10' },
+      { inicio_plan: '2026-09-16' },
+      'Cronograma',
+      { exigirMotivoRemarcacao: true, motivoRemarcacao: '   Loja pediu para adiar   ' }
+    )
+    expect(r[0].motivo).toBe('Loja pediu para adiar')
+  })
 })
 
 describe('gravarComHistorico', () => {
@@ -150,6 +198,10 @@ describe('gravarComHistorico', () => {
     expect(r).toEqual({ data: obraAtualizada })
   })
 
+  // `bloqueio` NÃO é um CampoHistorico rastreado (não entra em
+  // CampoHistorico/COLUNA_PARA_CAMPO), mas É uma coluna válida do UPDATE da
+  // RPC desde a correção do B1 (ver sdd-sql-obras-historico.sql) — por isso
+  // esta chamada é válida e não deve lançar pela trava do I2.
   it('sem linhas (nada rastreado mudou), ainda chama a RPC com p_linhas vazio — o update precisa acontecer', async () => {
     const rpc = jest.fn().mockResolvedValue({ data: { id: 'o1' }, error: null })
     const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
@@ -170,5 +222,53 @@ describe('gravarComHistorico', () => {
     const r = await gravarComHistorico(supabase, { obraId: 'o1', campos: {}, linhas: [] })
 
     expect(r).toEqual({ error: 'Erro ao salvar a alteração da obra' })
+  })
+
+  it('erro de coluna desconhecida devolvido pela RPC (B1) também vira { error } genérico, nunca lança', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'obras_aplicar_alteracao: coluna desconhecida em p_campos: campo_que_nao_existe' },
+    })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    const r = await gravarComHistorico(supabase, {
+      obraId: 'o1',
+      campos: { campo_que_nao_existe: 'x' },
+      linhas: [],
+    })
+
+    expect(r).toEqual({ error: 'Erro ao salvar a alteração da obra' })
+  })
+
+  it('lança se um campo rastreado muda em campos sem linha correspondente (I2)', async () => {
+    const rpc = jest.fn()
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { inicio_plan: '2026-10-01' }, linhas: [] })
+    ).rejects.toThrow(/inicio_plan/)
+
+    expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it('aprovacao mudando sem a linha os_aprovada_em correspondente também é pego (aprovacao mapeia para os_aprovada_em)', async () => {
+    const rpc = jest.fn()
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { aprovacao: '2026-09-10' }, linhas: [] })
+    ).rejects.toThrow(/os_aprovada_em/)
+  })
+
+  it('aprovacao mudando COM a linha os_aprovada_em correspondente: não lança, chama a RPC', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: { id: 'o1' }, error: null })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+    const linhas: LinhaHistoricoNova[] = [
+      { bloco: 'Autorização', campo: 'os_aprovada_em', de: null, para: '10/09/2026', motivo: null },
+    ]
+
+    const r = await gravarComHistorico(supabase, { obraId: 'o1', campos: { aprovacao: '2026-09-10' }, linhas })
+
+    expect(r).toEqual({ data: { id: 'o1' } })
   })
 })

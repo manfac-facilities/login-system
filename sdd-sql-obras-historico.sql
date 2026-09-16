@@ -1,6 +1,9 @@
 -- ============================================================
 -- Controle de Obras — histórico de alterações (J4, seção D) — 2026-09-15
 -- Migration da spec-historico-alteracoes-2026-09-15.md
+-- Revisão 2026-09-15 (review-historico-2026-09-15.md): corrige B1 (lista de
+-- colunas do UPDATE incompleta + RPC aceitava chave desconhecida em
+-- silêncio), M4 (clock_timestamp vs now()) e M5 (desempate de created_at).
 -- ============================================================
 -- ESTADO: NÃO APLICADO. Rodar à mão no SQL Editor do Supabase, projeto de
 -- produção iyytcavcgukfjnjjrerx. Confirme o ref antes de colar (AGENTS.md).
@@ -15,6 +18,22 @@
 -- aqui: (1) não há guarda de autorização que possa devolver NULL —
 -- obras_has_access() já é exists()-based, e o e-mail nulo é checado à parte;
 -- (2) não há trigger compartilhada entre tabelas.
+--
+-- B1 (bloqueador da review de 2026-09-15): a lista de colunas do
+-- `set`/`select` do UPDATE é ESTÁTICA de propósito (sem SQL dinâmico) — mas
+-- precisa cobrir TODA coluna de obras_obra que alguma tela escreve, não só
+-- as rastreadas no histórico. As duas listas (esta aqui vs. a lista de
+-- rastreamento em app/obras/_lib/historico.ts) são propositalmente
+-- DIFERENTES: uma decide "o que o update aceita mudar", a outra decide "o
+-- que vira linha de histórico" — ver spec §6, tabela "Deliberadamente fora
+-- da lista". Confundir as duas foi o defeito original: uma coluna fora da
+-- lista do UPDATE era descartada em silêncio, sem erro, sem aviso. A
+-- correção tem duas partes: (1) a lista do UPDATE agora cobre também as 9
+-- colunas de bookkeeping que faltavam (bloqueio, pendencia, pend_resp,
+-- pend_prazo, prox_acao, inicio_real, fim_real, nao_andou_seguidos,
+-- bloqueada_dias); (2) a função RECUSA (raise exception) qualquer chave em
+-- p_campos que não esteja em v_colunas_validas, em vez de ignorá-la — falha
+-- alta, não silenciosa.
 -- ============================================================
 
 begin;
@@ -31,7 +50,14 @@ create table if not exists public.obras_historico (
   para text,
   motivo text,
   quem text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Desempate de exibição (M5 da review): linhas da MESMA chamada
+  -- compartilham created_at (v_quando é fixado uma vez por chamada da RPC,
+  -- spec §7) — sem uma coluna de ordem própria, o Postgres pode devolver
+  -- essas linhas em qualquer ordem entre uma leitura e outra. `seq` é
+  -- estritamente crescente por ordem de inserção (bigserial), então
+  -- `order by created_at desc, seq desc` é sempre determinístico.
+  seq bigserial not null
 );
 
 do $$
@@ -65,7 +91,7 @@ end
 $$;
 
 create index if not exists obras_historico_obra_idx
-  on public.obras_historico (obra_id, created_at desc);
+  on public.obras_historico (obra_id, created_at desc, seq desc);
 
 -- ============================================================
 -- 2. RLS
@@ -86,6 +112,10 @@ create policy "obras historico escrita" on public.obras_historico
   );
 
 -- Sem policy de update nem delete, de propósito: histórico é append-only.
+-- (M7 da review: a policy acima não impede quem TEM acesso de forjar
+-- CONTEÚDO de uma linha própria — só impede forjar autor. Aceito por
+-- enquanto, registrado aqui; corrigir exigiria abrir mão de security
+-- invoker ou de expor a tabela via REST, decisão maior que este fix round.)
 
 -- ============================================================
 -- 3. RPC — update de obras_obra + insert de obras_historico, atômico
@@ -102,8 +132,26 @@ set search_path = pg_catalog, public
 as $$
 declare
   v_quem   text := lower(trim(auth.jwt() ->> 'email'));
-  v_quando timestamptz := clock_timestamp();
+  v_quando timestamptz := now();
   v_obra   public.obras_obra;
+  v_chave  text;
+  -- Toda coluna de obras_obra que alguma tela deste módulo escreve por
+  -- update (Triagem, Ficha, Esteira) — NÃO é a mesma lista de
+  -- CampoHistorico (essa fica em app/obras/_lib/historico.ts): as colunas
+  -- de bookkeeping (bloqueio, pendencia, pend_resp, pend_prazo, prox_acao,
+  -- inicio_real, fim_real, nao_andou_seguidos, bloqueada_dias) mudam junto
+  -- com uma ação de tela mas não geram linha de histórico (spec §6). As
+  -- colunas do Field (os, loja, descricao, field_id, fonte, ...) ficam de
+  -- fora de propósito — decisão 9, só leitura na tela.
+  v_colunas_validas text[] := array[
+    'pcm','equipe','prioridade','inicio_plan','duracao',
+    'liberado_por','liberado_em','aprovacao','os_aprovada','marco_os_aprov',
+    'tipo','valor','origem','analista_cliente','mau_uso',
+    'etapa','desde_etapa','etapa_por','etapa_em','atualizacao',
+    'marco_exec_fim','marco_relatorio','marco_fechou_os','marco_liberou_fat','marco_faturou',
+    'bloqueio','pendencia','pend_resp','pend_prazo','prox_acao',
+    'inicio_real','fim_real','nao_andou_seguidos','bloqueada_dias'
+  ];
 begin
   if not public.obras_has_access() then
     raise exception 'Sem acesso ao Controle de Obras' using errcode = '42501';
@@ -112,19 +160,34 @@ begin
     raise exception 'Não autenticado' using errcode = '28000';
   end if;
 
+  -- B1: falha alta em vez de ignorar em silêncio. Sem isto, uma chave fora
+  -- de v_colunas_validas passava por jsonb_populate_record sem erro e o
+  -- valor nunca era atribuído (a lista do `set` abaixo é quem decide o que
+  -- realmente grava) — sucesso reportado, campo não mudou.
+  for v_chave in select jsonb_object_keys(coalesce(p_campos, '{}'::jsonb)) loop
+    if not (v_chave = any(v_colunas_validas)) then
+      raise exception 'obras_aplicar_alteracao: coluna desconhecida em p_campos: %', v_chave
+        using errcode = '22023';
+    end if;
+  end loop;
+
   update public.obras_obra o set (
     pcm, equipe, prioridade, inicio_plan, duracao,
     liberado_por, liberado_em, aprovacao, os_aprovada, marco_os_aprov,
     tipo, valor, origem, analista_cliente, mau_uso,
     etapa, desde_etapa, etapa_por, etapa_em, atualizacao,
-    marco_exec_fim, marco_relatorio, marco_fechou_os, marco_liberou_fat, marco_faturou
+    marco_exec_fim, marco_relatorio, marco_fechou_os, marco_liberou_fat, marco_faturou,
+    bloqueio, pendencia, pend_resp, pend_prazo, prox_acao,
+    inicio_real, fim_real, nao_andou_seguidos, bloqueada_dias
   ) = (
     select
       pcm, equipe, prioridade, inicio_plan, duracao,
       liberado_por, liberado_em, aprovacao, os_aprovada, marco_os_aprov,
       tipo, valor, origem, analista_cliente, mau_uso,
       etapa, desde_etapa, etapa_por, etapa_em, atualizacao,
-      marco_exec_fim, marco_relatorio, marco_fechou_os, marco_liberou_fat, marco_faturou
+      marco_exec_fim, marco_relatorio, marco_fechou_os, marco_liberou_fat, marco_faturou,
+      bloqueio, pendencia, pend_resp, pend_prazo, prox_acao,
+      inicio_real, fim_real, nao_andou_seguidos, bloqueada_dias
     from jsonb_populate_record(o, coalesce(p_campos, '{}'::jsonb))
   )
   where o.id = p_obra_id
@@ -177,4 +240,15 @@ commit;
 --   '{}'::jsonb, '[]'::jsonb
 -- );
 --   -- espera erro 28000 "Não autenticado" (rodando sem JWT, auth.jwt() é null)
+--
+-- (d) B1 — confirma que uma coluna desconhecida em p_campos é RECUSADA, não
+-- ignorada em silêncio (rodar autenticado como um usuário com acesso, via
+-- SQL Editor "Run as" ou pelo app; sem isso o teste (c) já barra antes):
+--
+-- select public.obras_aplicar_alteracao(
+--   (select id from public.obras_obra limit 1),
+--   '{"coluna_que_nao_existe": "x"}'::jsonb, '[]'::jsonb
+-- );
+--   -- espera erro 22023 "obras_aplicar_alteracao: coluna desconhecida em
+--   -- p_campos: coluna_que_nao_existe"
 -- ============================================================
