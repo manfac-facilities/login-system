@@ -2,9 +2,10 @@
  * O PONTO DE VARIAÇÃO DA "LOJA" — leia isto antes de mexer.
  *
  * O cliente pediu "localização da loja" e a API do Field Control tem DOIS
- * caminhos que respondem a esse nome. A pergunta foi feita e **ainda não foi
- * respondida** (`docs/onboarding-duda/02-FRENTES-DO-DUDA.md` §F1, e o
- * levantamento da API §3):
+ * caminhos que respondem a esse nome. **Respondido em 16/09/2026:** é a
+ * 'localizacao'. Com o 'endereco' a coluna mostrava "AV ATAULFO DE PAIVA, 319 -
+ * LEBLON - RIO DE JANEIRO/RJ" onde o cliente espera "DP LEBLON 6"
+ * (`docs/cliente/2026-08-31-sistema-controle-de-obras/whatsapp-2026-09-16-feedback-nome-da-loja.md`).
  *
  *   'endereco'    → o objeto `address`, que já vem embutido em `/orders`.
  *                   CUSTO ZERO: nenhuma chamada extra.
@@ -13,10 +14,9 @@
  *                   caro contra o limite de 1 req/s, e por isso o cache aqui
  *                   embaixo não é otimização, é requisito.
  *
- * A ARQUITETURA NÃO ESCOLHE. As duas estratégias estão implementadas e a
- * escolha é um campo de configuração. Quando o cliente responder, a mudança é
- * de uma linha — `estrategiaDeLoja` em `cliente.ts`. Não apague a estratégia
- * perdedora junto: a resposta pode mudar quando ele vir o resultado na tela.
+ * As duas estratégias continuam implementadas e a escolha é um campo de
+ * configuração (`estrategiaDeLoja` em `cliente.ts`, padrão 'localizacao').
+ * O 'endereco' fica como alternativa, não como fallback.
  *
  * UMA DECISÃO QUE TOMEI SEM A SPEC, e que precisa de revisão: na estratégia
  * 'localizacao', OS sem `location` devolve `null` — NÃO cai de volta no
@@ -83,7 +83,15 @@ export function criarResolvedorDeLoja(estrategia: EstrategiaDeLoja, http: HttpFi
     const emCache = cache.get(chave)
     if (emCache !== undefined) return emCache
 
-    const local = await http.get<LocalizacaoField>(`/customers/${idCliente}/locations/${idLocal}`)
+    let local: LocalizacaoField | null
+    try {
+      local = await http.get<LocalizacaoField>(`/customers/${idCliente}/locations/${idLocal}`)
+    } catch {
+      // Uma localização que falha (apagada, erro de rede) não pode derrubar a
+      // varredura inteira. Fica `null` e SEM cache: a sincronização preenche
+      // campo vazio, então a próxima rodada tenta de novo sozinha.
+      return null
+    }
     const nome = pedaco(local?.name)
     cache.set(chave, nome)
     return nome

@@ -2,8 +2,8 @@
  * Testes do ponto de variação da "loja".
  *
  * O QUE ESTE ARQUIVO DEFENDE: que as DUAS estratégias funcionam e que trocar
- * entre elas é configuração, não reescrita. Enquanto o cliente não responder o
- * que é "localização da loja", nenhum teste aqui pode assumir uma resposta.
+ * entre elas é configuração, não reescrita. O padrão ('localizacao', escolha do
+ * cliente em 16/09/2026) é defendido em `cliente.test.ts`.
  */
 
 import { criarResolvedorDeLoja, textoDoEndereco } from '../loja'
@@ -131,4 +131,22 @@ describe('criarResolvedorDeLoja — estratégia "localizacao"', () => {
 
     await expect(resolver(ordem())).resolves.toBeNull()
   })
+it('falha na chamada da localização devolve null sem derrubar — e sem cache, para tentar de novo', async () => {
+    const caminhos: string[] = []
+    let falhar = true
+    const http: HttpField = {
+      get: async <T,>(caminho: string): Promise<T> => {
+        caminhos.push(caminho)
+        if (falhar) throw new Error('404 localização apagada')
+        return { id: 'loc-1', name: 'DP LEBLON 6' } as T
+      },
+    }
+    const resolver = criarResolvedorDeLoja('localizacao', http)
+
+    await expect(resolver(ordem())).resolves.toBeNull()
+    falhar = false
+    await expect(resolver(ordem())).resolves.toBe('DP LEBLON 6')
+    expect(caminhos).toHaveLength(2)
+  })
 })
+

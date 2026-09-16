@@ -15,8 +15,8 @@
  *
  * TRÊS COISAS PARA SABER ANTES DE LIGAR ISTO EM PRODUÇÃO:
  *
- * 1. A "loja" ainda é decisão em aberto do cliente. O padrão é `'endereco'`
- *    (custo zero); `'localizacao'` custa uma chamada por loja. Ver `loja.ts`.
+ * 1. A "loja" é o nome da localização (`'localizacao'`, decisão do cliente em
+ *    16/09/2026), ao custo de uma chamada por loja distinta. Ver `loja.ts`.
  * 2. Nada aqui lê variável de ambiente. A chave entra por parâmetro, de
  *    propósito: onde ela mora é decisão de quem integra.
  * 3. `sort` vai como `'id'` por padrão e **não foi verificado contra a API

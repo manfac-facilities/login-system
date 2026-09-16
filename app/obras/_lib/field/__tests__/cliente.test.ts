@@ -306,7 +306,7 @@ describe('criarClienteField — varredura incremental', () => {
 describe('criarClienteField — normalização', () => {
   it('mapeia identifier→os, description→descricao e guarda id, updatedAt e archived', async () => {
     const rede = httpDeMentira(rotasCom([ordem()]))
-    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http, estrategiaDeLoja: 'endereco' })
 
     const [os] = await cliente.listarOsNormalizadas()
 
@@ -350,9 +350,9 @@ describe('criarClienteField — normalização', () => {
     expect('descricao' in os).toBe(true)
   })
 
-  it('address null vira loja null, sem quebrar a varredura', async () => {
+  it('com a estratégia "endereco", address null vira loja null, sem quebrar a varredura', async () => {
     const rede = httpDeMentira(rotasCom([ordem({ address: null })]))
-    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http, estrategiaDeLoja: 'endereco' })
 
     const [os] = await cliente.listarOsNormalizadas()
 
@@ -366,6 +366,18 @@ describe('criarClienteField — normalização', () => {
     const [os] = await cliente.listarOsNormalizadas()
 
     expect(os.atualizadoEm).toBeNull()
+  })
+
+  it('sem configurar nada, a loja é o nome da localização, não o endereço (cliente, 16/09/2026)', async () => {
+    const rede = httpDeMentira((caminho, parametros) => {
+      if (caminho === '/customers/cli-1/locations/loc-1') return { id: 'loc-1', name: 'DP LEBLON 6' }
+      return rotasCom([ordem()])(caminho, parametros)
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const [os] = await cliente.listarOsNormalizadas()
+
+    expect(os.loja).toBe('DP LEBLON 6')
   })
 
   it('com a estratégia "localizacao", a loja vem do nome da localização', async () => {
@@ -423,9 +435,10 @@ describe('criarClienteField — o circuito fechado, com fetch injetado', () => {
     const os = await cliente.listarOsNormalizadas()
 
     expect(os).toHaveLength(3)
-    // /services, página 1, página 2 e a situação de cada uma das 3 OS —
+    // /services, página 1, página 2, UMA localização (as 3 OS são da mesma
+    // loja, o cache segura as outras duas) e a situação de cada uma das 3 OS —
     // um segundo entre cada, sem exceção: o limitador vale para tudo.
-    expect(instantes).toEqual([0, 1000, 2000, 3000, 4000, 5000])
+    expect(instantes).toEqual([0, 1000, 2000, 3000, 4000, 5000, 6000])
   })
 })
 

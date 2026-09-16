@@ -32,10 +32,9 @@ export type ConfigDoClienteField = {
   /** Header `X-Api-Key`. Segredo: quem chama é que sabe de onde tirar. */
   chaveApi: string
   /**
-   * QUAL DAS DUAS LEITURAS DE "LOJA" USAR. Padrão `'endereco'` porque é a que
-   * custa zero chamada — e porque, enquanto o cliente não responde, o caro é
-   * que tem de se justificar, não o barato. Trocar aqui é a mudança de uma
-   * linha prometida em `loja.ts`.
+   * QUAL DAS DUAS LEITURAS DE "LOJA" USAR. Padrão `'localizacao'`, escolha do
+   * cliente em 16/09/2026: o nome da loja ("DP LEBLON 6"), não o endereço.
+   * Custa uma chamada por loja distinta por varredura. Ver `loja.ts`.
    */
   estrategiaDeLoja?: EstrategiaDeLoja
   nomeDoTipoDeOs?: string
@@ -146,7 +145,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
       backoffBaseMs: config.backoffBaseMs,
     })
 
-  const resolverLoja = criarResolvedorDeLoja(config.estrategiaDeLoja ?? 'endereco', http)
+  const resolverLoja = criarResolvedorDeLoja(config.estrategiaDeLoja ?? 'localizacao', http)
 
   /**
    * Cache do id do tipo de OS. A spec pede explicitamente: "o id não muda com
