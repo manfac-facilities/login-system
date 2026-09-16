@@ -32,11 +32,10 @@ Facilities atrás de um login compartilhado:
 > `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage), **os 82 commits
 > foram pushados e o deploy subiu** (build de 10/09 23h38, chunks todos no mesmo
 > timestamp). `/obras` responde, e o card 🏗️ aparece no dashboard para administradores.
-> **O módulo está no ar e VAZIO: zero obras no banco** — a base vai nascer do Field
+> **Em 16/09/2026 o módulo deixou de estar vazio: 64 obras entraram na primeira carga**, de 185 OS lidas no Field, pelo critério do cliente (última atividade em pendente, agendada ou em andamento). A sincronização automática roda desde então, a cada 5 minutos — a base vai nascer do Field
 > Control depois do pente fino do cliente, e a planilha **não será importada**, por
 > decisão de 10/09. O slug `obras` não foi liberado para ninguém em `/admin/acessos`, de
-> propósito: sem dado, liberar só mostraria tela vazia. **AMANDA e YURI, que respondem por
-> 79 das 82 obras da planilha, não têm conta no hub** — adiado junto. Contexto completo,
+> propósito: sem dado, liberar só mostraria tela vazia. **Em 16/09/2026: a AMANDA tem conta no hub, o YURI não tem.** Nenhum e-mail tem o slug `obras` liberado em `hub_system_access` — só os 3 administradores enxergam o módulo, porque admin passa direto pela checagem de acesso. Contexto completo,
 > decisões e pendências em
 > `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`. **O passo a passo de pôr
 > no ar, com o SQL de verificação de cada etapa, está em
