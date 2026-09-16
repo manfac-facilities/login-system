@@ -13,6 +13,7 @@ documento. Plano de implementação: `plano-regra-critica-2026-09-15.md` (mesma 
 | `mockup-j4-v01.html:261-277` (seção E) e `:344-356` (`ancora`, `selo`) | O que o cliente viu e julgou: âncora na data mais antiga, fallback na entrada, selo "N dias desde a {aprovação \| liberação \| entrada}", **limiares 100 (crítica) e 60 (atenção)** |
 | `revisao-mockup-j4-2026-09-14.md:67-100, 114-124` | O caso dos 104 dias e a recomendação de que `encerrada` passe a depender de `marco_faturou` |
 | `j4-conciliacao-2026-09-14.md:63, 140, 253-263` | Mapa plano × código: `aprovacao` dispara a crítica; nula, a obra nunca fica crítica |
+| Decisão do João (15/09/2026), repassada pelo coordenador desta implementação | Sobre o "caso 12" (linha 12 da tabela §4): registrar uma data nova **nunca** pode derrubar a contagem, nem quando a data nova é a liberação. Generaliza a decisão 5 revista: a **entrada** vira candidata à âncora **sempre**, não só quando faltam aprovação e liberação — vale para obras cujas datas já existiam, não só para data registrada depois. Resolve a contradição C1 (seção 7) |
 
 ### Como ler o "aqui só muda o critério de tempo"
 
@@ -53,21 +54,31 @@ hipótese de que "20/30 já existem" está errada.
 
 ### 3.1 Âncora (de que data se conta)
 
-1. **Data de aprovação válida:** `aprovacao`, quando for uma data `AAAA-MM-DD` válida.
-2. **Data de liberação válida:** `liberado_em`, **só quando `liberado_por` estiver preenchido**
+> **Atualizada em 15/09/2026 por decisão do João sobre o "caso 12" (tabela da seção 4),
+> repassada pelo coordenador — não é interpretação do implementador.** A versão original desta
+> seção (decisão 5 revista, 14/09) só olhava a entrada quando faltavam aprovação e liberação.
+> Isso contradizia a própria decisão 5 revista ("registrar uma data nova nunca derruba a
+> contagem"): no caso 12, registrar a liberação derrubava a contagem de 75 para 0 (contradição
+> C1, seção 7). O João decidiu a favor da decisão 5 revista, não da implementação literal: a
+> **entrada** passa a ser candidata **sempre**, não só como último recurso. Isso vale para
+> obras cujas datas de aprovação/liberação **já existiam desde o início**, não só para uma data
+> registrada depois do fato — por isso o caso 1 da tabela (antes "os 104 dias") também muda,
+> para 108.
+
+1. **Data de entrada:** `created_at` convertido para o **dia em São Paulo** (`America/Sao_Paulo`,
+   o mesmo fuso de `hojeISO`). Candidata **sempre**, não só na ausência das outras duas.
+2. **Data de aprovação válida:** `aprovacao`, quando for uma data `AAAA-MM-DD` válida.
+3. **Data de liberação válida:** `liberado_em`, **só quando `liberado_por` estiver preenchido**
    e a data for válida.
-3. Havendo as duas, vale a **mais antiga**. Empate conta como aprovação (igual ao mockup,
-   `:348`).
-4. Havendo uma só, vale essa.
-5. Sem nenhuma das duas, conta da **entrada**: `created_at` convertido para o **dia em São
-   Paulo** (`America/Sao_Paulo`, o mesmo fuso de `hojeISO`).
-6. Sem nenhuma data utilizável, não há contagem (`null`), e a obra nunca fica em atenção nem
+4. Vale a **mais antiga das três**. Em empate, a fonte mais "oficial" decide: aprovação >
+   liberação > entrada (a mesma prioridade que a decisão 5 revista já dava a aprovação sobre
+   liberação, agora estendida à entrada).
+5. Sem nenhuma data utilizável, não há contagem (`null`), e a obra nunca fica em atenção nem
    crítica por tempo.
 
-Consequência da regra 3: registrar uma aprovação ou liberação **mais recente** que a outra data
-não muda a contagem. **Exceção (resíduo, ver seção 7):** obra sem nenhuma das duas, que conta da
-entrada, passa a contar da primeira autorização registrada, mesmo que ela seja mais recente que a
-entrada.
+Consequência: registrar uma aprovação ou liberação **nova** — mesmo que mais recente que a
+entrada — **nunca** derruba a contagem, porque a entrada continua concorrendo como candidata.
+Isso resolve a contradição C1 (seção 7): deixa de ser exceção/resíduo e vira a regra.
 
 ### 3.2 Limiares ("acima de")
 
@@ -117,10 +128,13 @@ Hoje = **14/09/2026** (a mesma data dos exemplos do mockup). "Atual" é o códig
 crítica, ≥60 atenção, só `aprovacao`, encerrada por etapa). "Nova" é esta spec. Salvo indicação,
 `etapa = 'andamento'`, `duracao = null` (para `estourou` não interferir) e `marco_faturou = null`.
 
+**Linhas 1, 2 e 12 foram recalculadas em 15/09/2026** pela decisão do João sobre o caso 12 (âncora
+da §3.1) — não são erro de digitação, é o efeito da entrada virar candidata sempre.
+
 | # | Caso | aprovacao | liberado_por / liberado_em | created_at | Outros | Âncora nova | Contagem nova | Atual | **Nova** |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | **Os 104 dias:** liberada, OS aprovada hoje | 2026-09-14 | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | liberação 02/06 | 104 | nada (0 dias) | **Crítica** |
-| 2 | Mesma obra antes de aprovar | null | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | liberação 02/06 | 104 | nada (`dias` null) | **Crítica** |
+| 1 | **Os 108 dias** (era "104", decisão de 15/09): liberada, OS aprovada hoje | 2026-09-14 | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | entrada 29/05 — era liberação 02/06; a entrada é anterior e agora concorre | 108 | nada (0 dias) | **Crítica** |
+| 2 | Mesma obra antes de aprovar | null | JUAN / 2026-06-02 | 2026-05-29T12:00Z | | entrada 29/05 — era liberação 02/06 | 108 | nada (`dias` null) | **Crítica** |
 | 3 | Aprovação **posterior** à liberação | 2026-09-01 | LEANDRO / 2026-08-20 | | | liberação 20/08 | 25 | nada (13) | **Atenção** |
 | 4 | Aprovação **anterior** à liberação | 2026-08-10 | LEANDRO / 2026-08-30 | | | aprovação 10/08 | 35 | nada (35 < 60) | **Crítica** |
 | 5 | Mockup obra 1 (aprovação antes da liberação) | 2026-05-28 | LEANDRO / 2026-06-10 | | | aprovação 28/05 | 109 | Crítica | **Crítica** |
@@ -130,7 +144,7 @@ crítica, ≥60 atenção, só `aprovacao`, encerrada por etapa). "Nova" é esta
 | 9 | Sem data nenhuma utilizável | null | null / null | `''` | | nenhuma | null | nada | **nada** |
 | 10 | Liberado_em sem liberado_por | null | null / 2026-06-02 | 2026-07-01T13:00Z | | entrada 01/07 | 75 | nada | **Crítica** (a data sem nome é ignorada) |
 | 11 | Liberado_por sem liberado_em | null | JUAN / null | 2026-07-01T13:00Z | | entrada 01/07 | 75 | nada | **Crítica** (mockup usaria hoje = 0; ver A4) |
-| 12 | Resíduo: só entrada, liberação registrada hoje | null | JUAN / 2026-09-14 | 2026-07-01T13:00Z | | liberação 14/09 | 0 | nada | **nada** (cai de 75 para 0; ver C1) |
+| 12 | **Caso 12** (decisão do João, 15/09): só entrada, liberação registrada hoje | null | JUAN / 2026-09-14 | 2026-07-01T13:00Z | | entrada 01/07 — a liberação de hoje não vence, a entrada é mais antiga | 75 | nada | **Crítica** (permanece em 75; antes da decisão de 15/09 caía para 0 — ver C1, RESOLVIDA) |
 | 13 | **Exatamente 20 dias** | 2026-08-25 | null | | | aprovação | 20 | nada | **nada** |
 | 14 | 21 dias | 2026-08-24 | null | | | aprovação | 21 | nada | **Atenção** |
 | 15 | **Exatamente 30 dias** | 2026-08-15 | null | | | aprovação | 30 | nada | **Atenção** (não crítica) |
@@ -167,7 +181,7 @@ Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 fic
 | `base/_kanban.tsx:110-111` | ordena por `paradaEtapa ?? dias` | **não muda** | ninguém |
 | `diario/_cartao.tsx:80, 82, 162` | `encerrada`, `critico` (nota de alerta), `sev` | mais cartões vermelhos | não precisa mudar |
 | `diario/_cartao.tsx:228` | `obra.dias` + "dias desde a aprovação" | texto continua verdadeiro, mas **a cor vermelha vem de outra contagem** (A8) | fora de `base/`, não está no plano |
-| `diario/_cartoes.tsx:64` | ordena por `dias` | **não muda** | ninguém |
+| `diario/_cartoes.tsx:64` | ordena por `dias` | **muda** (review I3, 15/09): passa a ordenar por `diasAlerta`, a mesma medida que `_cartao.tsx:228` já mostrava desde `02defb4` — senão a fila aparecia fora da ordem do que a tela exibia | corrigido nesta rodada |
 | `obra/[id]/_ficha.tsx:249-334` `CaixaAlerta`/`temAlerta` | `critico` + `obra.dias` | **bug visível**: com `critico` verdadeiro e `aprovacao` nula, `:289` mostra número vazio, `:298` escreve "contados  dias desde a aprovação" e `:300` "0 vezes" | **ARQUIVO EM PARALELO**, sinalizar à outra frente |
 | `obra/[id]/_ficha.tsx:378, 433` | `BadgeDias`, `encerrada` | herdam | paralelo, sem edição necessária |
 | `obra/[id]/_triagem.tsx:136` | `BadgeDias` | herda o selo novo sem edição | paralelo, sem edição necessária |
@@ -203,7 +217,7 @@ Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 fic
 | A8 | Cartão do diário | Vermelho por `diasAlerta`, texto "N dias desde a aprovação" por `dias` | Fica fora; `diario/` não está no perímetro |
 | A9 | Crítica em `definir` | O cliente não excluiu; o código e o mockup excluem | Mantém a exclusão |
 | A10 | Data futura (erro de digitação) | Contagem negativa | Não trata (igual a hoje) |
-| C1 | **Contradição decisão × regra:** a decisão 5 revista diz "registrar uma data nova **nunca** derruba a contagem", mas a própria regra ("sem nenhuma das duas, da entrada") derruba no caso 12 (75 → 0). A revisão (`:78-81`) e o mockup (`:277`) chamaram isso de "resíduo para julgar"; o cliente não comentou | Segue a regra como escrita e registra o caso 12 em teste, para a mudança ficar visível se for decidida |
+| C1 | ~~Contradição decisão × regra~~ **RESOLVIDA em 15/09/2026, decisão do João** (repassada pelo coordenador, não interpretação do implementador): a decisão 5 revista dizia "registrar uma data nova **nunca** derruba a contagem", mas a regra original ("sem nenhuma das duas, da entrada") derrubava no caso 12 (75 → 0). A revisão (`:78-81`) e o mockup (`:277`) chamaram isso de "resíduo para julgar"; o João decidiu a favor da decisão 5 revista: a entrada vira candidata sempre (§3.1), e o caso 12 passa a **permanecer em 75**. Vale para obras cujas datas já existiam, não só para data registrada depois — por isso o caso 1 também mudou, de 104 para 108 (§4) | Ver §3.1 (regra da âncora) e §4, casos 1, 2 e 12 |
 | C2 | **Perímetro × código:** a instrução restringe o código a `app/obras/base/` e testes, mas a regra vive em `app/obras/_lib/tipos.ts` (`critico`, `classeDias`, `derivar`, `encerrada`). `_regras.ts:7-8` diz explicitamente que essas regras "NÃO são reescritas aqui". Pôr a regra em `base/` criaria import circular (`tipos` ← `base/_regras` ← `tipos`) ou duplicaria a regra, e `diario/_cartao.tsx` e `_ficha.tsx` importam `critico` de `tipos` | O plano edita `tipos.ts` e marca as tasks como **fora do perímetro, exigem OK do coordenador**. `tipos.ts` também guarda o nome das etapas (`:152`), que a decisão de 15/09 manda trocar: risco de conflito com outra frente |
 | C3 | O comentário `tipos.ts:432-436` ("vermelho reservado a uma coisa só... quando tudo é vermelho, nada é") | Com crítica em 31 dias, a maior parte das obras abertas tende a ficar vermelha. É o produto pedido pelo cliente, mas contradiz a decisão de leitura registrada no código | Atualiza o comentário; não muda a regra |
 
@@ -215,3 +229,46 @@ Os casos 19 a 21 dependem da decisão 12 (Task 5 do plano). Sem ela, 20 e 21 fic
   microssegundos).
 - Se algum código de outra frente, ainda não commitado, já grava `marco_faturou`. O `git status` só
   mostra `scripts/` não rastreado.
+
+## 9. Pendências para a J4 (`obra/[id]/_triagem.tsx`)
+
+Achados do review independente (`review-regra-critica-2026-09-15.md`, itens I2 e M8). O arquivo
+está na lista "Não tocar" desta frente porque a J4 está reescrevendo-o — por isso ficam anotados
+aqui em vez de corrigidos, para quem pegar o arquivo não perder o achado.
+
+### I2 — Selo e texto mostram números contraditórios na mesma tela
+
+`_triagem.tsx:136` renderiza `<BadgeDias obra={obra} />`, que desde `2ce3c33` mostra `diasAlerta`
+e a âncora (ex.: "75 dias desde a entrada"). Onze linhas abaixo, `_triagem.tsx:147` ainda escreve:
+
+```tsx
+esperando há <b>{obra.dias ?? 0} dias</b>
+```
+
+`dias` continua sendo só "desde a aprovação" (decisão técnica, spec §3.3/A3) — e a Triagem é
+majoritariamente obra vinda do Field, sem `aprovacao` ainda. Resultado: o selo diz "75 dias desde
+a entrada" e o parágrafo, onze linhas abaixo, diz "esperando há 0 dias". **Antes desta frente os
+dois liam `dias` e diziam 0 — errado, mas coerente.** Trocar só o selo (o que esta frente fez, e
+que era o que estava autorizado) transformou um erro escondido numa contradição visível na tela
+que o cliente usa para triar obra nova.
+
+**O que precisa mudar:** trocar `obra.dias` por `obra.diasAlerta` em `_triagem.tsx:147`, no mesmo
+espírito da correção já feita em `_ficha.tsx`/`diario/_cartao.tsx` (`02defb4`) — número junto,
+texto que não afirme uma data que não existe.
+
+**O que NÃO precisa mudar:** o `<BadgeDias obra={obra} />` de `_triagem.tsx:136` já está certo —
+ele herdou `diasAlerta` e a âncora sem precisar de edição (é o lado coerente da contradição, não o
+lado quebrado). Registrado aqui de propósito: sem esta frase, quem reescrever o arquivo pode
+"consertar" o selo de volta para `obra.dias` achando que o par tem que voltar a usar o mesmo
+campo, e recriar a contradição que esta nota existe para evitar.
+
+### M8 — A Triagem afirma que a obra entrou pelo Field na data de aprovação
+
+`_triagem.tsx:146`: `"Ela entrou pelo Field em {br(obra.aprovacao)}"`. Erro pré-existente, já
+registrado na conciliação de 14/09 (`j4-conciliacao-2026-09-14.md`): a OS chega do Field sem data
+de aprovação; a frase deveria usar a data de entrada, não a de aprovação.
+
+**O que esta frente criou que resolve isso:** `obra.ancora` — quando `ancora.de === 'entrada'`,
+`ancora.data` é exatamente a data que a frase precisa. Trocar `br(obra.aprovacao)` por
+`obra.ancora?.de === 'entrada' ? br(obra.ancora.data) : br(obra.aprovacao)` (ou equivalente)
+resolve os dois achados (I2 e M8) com o mesmo dado.

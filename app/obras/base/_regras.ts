@@ -19,6 +19,7 @@ import {
   liberada,
   posCampo,
   semCobertura,
+  type AncoraDias,
   type Etapa,
   type Fase,
   type Obra,
@@ -231,15 +232,17 @@ export const COLS: Coluna[] = [
   { k: 'paradaEtapa', t: 'Parada nesta etapa', n: true },
   { k: 'os_aprovada', t: 'OS do cliente' },
   { k: 'bloqueio', t: 'Bloqueio' },
-  { k: 'dias', t: 'Dias desde a aprovação', n: true },
+  // Rótulo provisório (spec A5): "desde a aprovação" ficou falso quando a
+  // contagem passou a correr da âncora. Aguarda o texto aprovado.
+  { k: 'diasAlerta', t: 'Dias em aberto', n: true },
   { k: 'fracPrazo', t: 'Prazo consumido' },
   { k: 'atualizacao', t: 'Última atualização', n: true },
 ]
 
 export type Ordem = { col: string; dir: 1 | -1 }
 
-/** O default do mockup: mais dias desde a aprovação primeiro. */
-export const ORDEM_PADRAO: Ordem = { col: 'dias', dir: -1 }
+/** O default: mais dias desde a âncora primeiro — as críticas no topo. */
+export const ORDEM_PADRAO: Ordem = { col: 'diasAlerta', dir: -1 }
 
 /** Clique no cabeçalho: mesma coluna inverte, coluna nova começa descendente. */
 export function alternarOrdem(atual: Ordem, col: string): Ordem {
@@ -270,6 +273,24 @@ export function ordenar(obras: Obra[], ordem: Ordem): Obra[] {
     if (typeof x === 'boolean' && typeof y === 'boolean') return dir * (Number(x) - Number(y))
     return dir * (Number(x) - Number(y))
   })
+}
+
+/* -------------------------------------------------------------------------- */
+/* Selo de dias                                                               */
+/* -------------------------------------------------------------------------- */
+
+/** Como a âncora aparece no selo (mockup J4 v01, seção E, :270). */
+export const ROTULO_ANCORA: Record<AncoraDias['de'], string> = {
+  aprovacao: 'aprovação',
+  liberacao: 'liberação',
+  entrada: 'entrada',
+}
+
+/** "dias desde a liberação" / "dia desde a entrada" / "dias" (curto ou sem âncora). */
+export function sufixoDias(o: Pick<Obra, 'diasAlerta' | 'ancora'>, curto = false): string {
+  const unidade = o.diasAlerta === 1 ? 'dia' : 'dias'
+  if (curto || !o.ancora) return unidade
+  return `${unidade} desde a ${ROTULO_ANCORA[o.ancora.de]}`
 }
 
 /* -------------------------------------------------------------------------- */

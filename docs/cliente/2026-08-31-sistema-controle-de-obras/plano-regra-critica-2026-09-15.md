@@ -13,7 +13,25 @@
 ## Global Constraints
 
 - **ATENÇÃO, perímetro:** o combinado é código só em `app/obras/base/` e testes. As Tasks 1, 2 e 5 editam `app/obras/_lib/tipos.ts`, que está **fora** desse perímetro (spec, C2). **Não comece essas tasks sem o OK explícito do coordenador.**
-- **Não tocar:** `app/obras/obra/[id]/_actions.ts`, `_triagem.tsx`, `_ficha.tsx` (outra frente mexe em paralelo), `app/obras/diario/*`, `app/obras/_ui/*`.
+- **Não tocar:** `app/obras/obra/[id]/_actions.ts`, `_triagem.tsx` (outra frente, a J4, mexe em
+  paralelo/reescreve), `app/obras/diario/*` (exceto as duas exceções abaixo), `app/obras/_ui/*`.
+- **Exceção autorizada pelo coordenador em 15/09/2026** — registrada aqui porque é este arquivo
+  que a J4 vai ler antes de reescrever `_ficha.tsx`. Três arquivos da lista "Não tocar" original
+  foram editados com OK explícito, fora do escopo deste plano. **Motivo:** sem a troca, a tela
+  mostrava número vazio (`_ficha.tsx`, com `critico` verdadeiro e `obra.dias` nulo) ou a fila
+  aparecia fora da ordem do que o cartão exibia (`diario/_cartoes.tsx`, depois que o cartão passou
+  a mostrar `diasAlerta`) — os dois, consequência direta de `critico`/`diasAlerta` passarem a
+  existir (Tasks 1 e 2). Lista exata do que mudou, linha a linha:
+  - `app/obras/obra/[id]/_ficha.tsx:285-311` (`CaixaAlerta`): `obra.dias` → `obra.diasAlerta` e o
+    texto "desde a aprovação" → "em aberto" (commit `02defb4`); o título da caixa passou a seguir
+    a âncora real (`obra.ancora`) em vez de sempre "Obra aprovada em —" (commit `b9301f3`, achado
+    I1 do review independente). Nenhuma outra mudança no arquivo.
+  - `app/obras/diario/_cartao.tsx:228`: mesma troca mínima — `obra.dias` → `obra.diasAlerta`,
+    "dias desde a aprovação" → "dias em aberto" (commit `02defb4`).
+  - `app/obras/diario/_cartoes.tsx:68` (ordenação da fila do dia): `dias` → `diasAlerta`, para
+    ordenar pela mesma medida que o cartão já mostrava (commit `b9301f3`, achado I3 do review).
+  Nenhum outro arquivo de `diario/*` foi tocado. `_triagem.tsx` continua intocado — os achados que
+  o afetam (I2, M8 do review) estão registrados na spec, seção 9, "Pendências para a J4".
 - Nenhuma migration. Nenhuma escrita no banco. Derivado nunca é gravado (`tipos.ts:14-18`: snake_case = coluna, camelCase = derivado).
 - Limiares com `>` estrito: atenção `> 20`, crítica `> 30`.
 - Âncora: `'aprovacao' | 'liberacao' | 'entrada'`. A liberação só vale com `liberado_por` preenchido. Em empate, aprovação. A entrada é `created_at` convertido para o dia em `America/Sao_Paulo`.

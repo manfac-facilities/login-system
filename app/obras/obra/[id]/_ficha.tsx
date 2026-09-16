@@ -283,21 +283,31 @@ function CaixaAlerta({ obra }: { obra: Obra }) {
   }
 
   if (grave && obra.duracao) {
+    // Título segue a âncora real (review I1): com a contagem vindo de
+    // liberação ou entrada, "obra aprovada em —" afirmava uma aprovação que
+    // não existe. `critico` já garante `diasAlerta !== null`, ou seja `ancora`
+    // não é nula aqui — o fallback em `aprovacao` só existe para o TypeScript.
+    const titulo =
+      obra.ancora?.de === 'liberacao'
+        ? `Obra liberada em ${br(obra.ancora.data)}`
+        : obra.ancora?.de === 'entrada'
+          ? `Obra em aberto desde ${br(obra.ancora.data)}`
+          : `Obra aprovada em ${br(obra.aprovacao)}`
     return (
       <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[#ff4d6d]/40 border-l-4 border-l-[#ff4d6d] bg-[#ff4d6d]/10 px-4 py-3">
         <div className="text-center">
-          <div className="text-2xl font-bold text-[#ff4d6d]">{obra.dias}</div>
+          <div className="text-2xl font-bold text-[#ff4d6d]">{obra.diasAlerta}</div>
           <div className="text-[10px] text-[#94a3b8]">dias em aberto</div>
         </div>
         <div className="min-w-[240px] flex-1">
           <h3 className="text-sm font-semibold text-[#ff4d6d]">
-            Obra aprovada em {br(obra.aprovacao)} e ainda não concluída.
+            {titulo} e ainda não concluída.
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-[#94a3b8]">
             A duração planejada é de <b className="text-[#e8eef7]">{obra.duracao} dias</b>. Estão
-            contados <b className="text-[#e8eef7]">{obra.dias} dias</b> desde a aprovação —{' '}
+            contados <b className="text-[#e8eef7]">{obra.diasAlerta} dias</b> em aberto —{' '}
             <b className="text-[#e8eef7]">
-              {Math.round((obra.dias ?? 0) / obra.duracao)} vezes
+              {Math.round((obra.diasAlerta ?? 0) / obra.duracao)} vezes
             </b>{' '}
             o prazo combinado. O cliente enxerga essa mesma OS aberta no sistema dele.
           </p>

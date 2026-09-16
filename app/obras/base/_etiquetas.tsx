@@ -22,7 +22,7 @@ import {
   semCobertura,
   type Obra,
 } from '../_lib/tipos'
-import { COR_ETAPA, COR_PRIORIDADE, temAlertaDeAusenciaField } from './_regras'
+import { COR_ETAPA, COR_PRIORIDADE, sufixoDias, temAlertaDeAusenciaField } from './_regras'
 
 /** A pílula da etapa, com a cor da etapa. `pill(mockup:1893)`. */
 export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa'> }) {
@@ -79,16 +79,18 @@ export function EtiquetaPrioridade({ obra }: { obra: Pick<Obra, 'prioridade'> })
   return <Pill cor={COR_PRIORIDADE[obra.prioridade] ?? TEMA.secundario}>{obra.prioridade}</Pill>
 }
 
-/** `badgeDias(mockup:1896)`. Vermelho só para obra crítica — ver `classeDias`. */
+/**
+ * `badgeDias(mockup:1896)`, com a âncora da seção E do mockup J4 v01: o número é
+ * a contagem desde a âncora e o texto longo diz de onde ela corre. Vermelho só
+ * para obra crítica — ver `classeDias`.
+ */
 export function BadgeDias({ obra, curto = false }: { obra: Obra; curto?: boolean }) {
   const classe = classeDias(obra)
   const cor = classe === 'critico' ? '#ff4d6d' : classe === 'atencao' ? '#f4b73f' : TEMA.secundario
   return (
     <span className="whitespace-nowrap text-xs font-semibold" style={{ color: cor }}>
-      {obra.dias ?? '—'}{' '}
-      <span className="font-normal text-[10px]">
-        {curto ? 'dias' : 'dias desde a aprovação'}
-      </span>
+      {obra.diasAlerta ?? '—'}{' '}
+      <span className="font-normal text-[10px]">{sufixoDias(obra, curto)}</span>
     </span>
   )
 }

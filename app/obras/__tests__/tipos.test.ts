@@ -11,10 +11,12 @@
  */
 
 import {
+  ancoraDias,
   br,
   chaveDaEquipe,
   classeDias,
   critico,
+  dataSP,
   derivar,
   destinoDe,
   diasDesde,
@@ -27,6 +29,8 @@ import {
   hojeISO,
   horaISO,
   liberada,
+  LIMIAR_ATENCAO,
+  LIMIAR_CRITICO,
   moeda,
   nomeDaEquipe,
   nomeEtapa,
@@ -230,19 +234,107 @@ describe('derivar', () => {
   })
 })
 
-describe('crítico — o vermelho, reservado a uma coisa só', () => {
-  it('vira crítica a partir de 100 dias, não em 99', () => {
-    expect(critico(obra({ aprovacao: '2026-05-24' }))).toBe(false) // 99 dias
-    expect(critico(obra({ aprovacao: '2026-05-23' }))).toBe(true) // 100 dias
+describe('crítico — acima de 30 dias contados da âncora', () => {
+  const H = '2026-09-14'
+  const sem = { aprovacao: null, liberado_por: null, liberado_em: null, duracao: null }
+
+  it('30 dias ainda não é crítica; 31 é', () => {
+    expect(critico(obra({ ...sem, aprovacao: '2026-08-15' }, H))).toBe(false) // 30
+    expect(critico(obra({ ...sem, aprovacao: '2026-08-14' }, H))).toBe(true) // 31
   })
 
-  it('obra aguardando definição e obra faturada nunca são críticas', () => {
-    expect(critico(obra({ aprovacao: '2026-01-01', etapa: 'definir' }))).toBe(false)
-    expect(critico(obra({ aprovacao: '2026-01-01', etapa: 'faturado' }))).toBe(false)
+  it('liberada há 104 dias e aprovada hoje: continua crítica em 104', () => {
+    const o = obra(
+      { ...sem, liberado_por: 'JUAN', liberado_em: '2026-06-02', aprovacao: '2026-09-14' },
+      H
+    )
+    expect(o.ancora).toEqual({ de: 'liberacao', data: '2026-06-02' })
+    expect(o.diasAlerta).toBe(104)
+    expect(critico(o)).toBe(true)
+    // `dias` continua sendo desde a aprovação — não mudou de significado.
+    expect(o.dias).toBe(0)
   })
 
-  it('sem data de aprovação não há dias, e sem dias não há crítico', () => {
-    expect(critico(obra({ aprovacao: null }))).toBe(false)
+  it('aprovação anterior à liberação: conta da aprovação', () => {
+    const o = obra(
+      { ...sem, aprovacao: '2026-08-10', liberado_por: 'LEANDRO', liberado_em: '2026-08-30' },
+      H
+    )
+    expect(o.diasAlerta).toBe(35)
+    expect(critico(o)).toBe(true)
+  })
+
+  it('aprovação posterior à liberação: conta da liberação, e 25 dias é atenção', () => {
+    const o = obra(
+      { ...sem, aprovacao: '2026-09-01', liberado_por: 'LEANDRO', liberado_em: '2026-08-20' },
+      H
+    )
+    expect(o.diasAlerta).toBe(25)
+    expect(critico(o)).toBe(false)
+    expect(classeDias(o)).toBe('atencao')
+  })
+
+  it('sem aprovação nem liberação: conta da entrada', () => {
+    const o = obra({ ...sem, created_at: '2026-07-01T13:00:00+00:00' }, H)
+    expect(o.ancora).toEqual({ de: 'entrada', data: '2026-07-01' })
+    expect(o.diasAlerta).toBe(75)
+    expect(critico(o)).toBe(true)
+  })
+
+  it('caso 12 (decisão do João, 15/09): liberação lançada hoje NÃO derruba a contagem da entrada', () => {
+    // Decisão do João de 15/09: registrar uma data nova nunca pode derrubar a
+    // contagem, nem quando a data nova é a liberação. A entrada (01/07) segue
+    // sendo a âncora porque é a mais antiga das três — liberação lançada hoje
+    // não vira a mais antiga só por existir.
+    const o = obra(
+      {
+        ...sem,
+        liberado_por: 'JUAN',
+        liberado_em: '2026-09-14',
+        created_at: '2026-07-01T13:00:00+00:00',
+      },
+      H
+    )
+    expect(o.ancora).toEqual({ de: 'entrada', data: '2026-07-01' })
+    expect(o.diasAlerta).toBe(75)
+    expect(critico(o)).toBe(true)
+  })
+
+  it('sem âncora não há contagem nem crítica', () => {
+    const o = obra({ ...sem, created_at: '' }, H)
+    expect(o.diasAlerta).toBeNull()
+    expect(critico(o)).toBe(false)
+  })
+
+  it('aguardando definição nunca é crítica, mesmo contando da entrada', () => {
+    const o = obra({ ...sem, etapa: 'definir', created_at: '2026-07-01T13:00:00+00:00' }, H)
+    expect(o.diasAlerta).toBe(75)
+    expect(critico(o)).toBe(false)
+  })
+
+  it('obra encerrada nunca é crítica', () => {
+    expect(critico(obra({ ...sem, aprovacao: '2026-01-01', etapa: 'faturado' }, H))).toBe(false)
+  })
+
+  it('pós-campo também vira crítica acima de 30', () => {
+    const o = obra(
+      { ...sem, aprovacao: '2026-08-01', etapa: 'fecharOS', desde_etapa: '2026-09-10' },
+      H
+    )
+    expect(o.diasAlerta).toBe(44)
+    expect(critico(o)).toBe(true)
+  })
+
+  it('data futura (spec A10): diasAlerta nunca fica negativo, o piso é 0', () => {
+    // Decisão do coordenador para A10: diasAlerta tem piso em 0 — diferente do
+    // derivado antigo `dias`, que a spec deixa contar negativo (§7, A10).
+    // created_at inválido de propósito: sem ele, a entrada (mais antiga que a
+    // aprovação futura) venceria como âncora antes de o piso entrar em jogo.
+    const o = obra({ ...sem, aprovacao: '2026-09-20', created_at: '' }, H) // 6 dias no futuro
+    expect(o.ancora).toEqual({ de: 'aprovacao', data: '2026-09-20' })
+    expect(o.diasAlerta).toBe(0)
+    expect(critico(o)).toBe(false)
+    expect(classeDias(o)).toBe('')
   })
 })
 
@@ -373,17 +465,43 @@ describe('severidade — a ordem dos ifs é a regra', () => {
   })
 })
 
-describe('contador de dias', () => {
-  it('pinta de vermelho a crítica, de âmbar a partir de 60 dias, e nada no resto', () => {
-    expect(classeDias(obra({ aprovacao: '2026-08-28' }))).toBe('')
-    expect(classeDias(obra({ aprovacao: '2026-07-02' }))).toBe('atencao') // 60 dias
-    expect(classeDias(obra({ aprovacao: '2026-05-23' }))).toBe('critico') // 100 dias
+describe('contador de dias — atenção acima de 20, crítica acima de 30', () => {
+  const H = '2026-09-14'
+  // duracao null: com 7 (o padrão da fixture), estourou() pintaria âmbar
+  // a partir de 29 dias e mascararia a fronteira.
+  const sem = { aprovacao: null, liberado_por: null, liberado_em: null, duracao: null }
+
+  it('20 não pinta; 21 e 30 são atenção; 31 é crítica', () => {
+    expect(classeDias(obra({ ...sem, aprovacao: '2026-08-25' }, H))).toBe('') // 20
+    expect(classeDias(obra({ ...sem, aprovacao: '2026-08-24' }, H))).toBe('atencao') // 21
+    expect(classeDias(obra({ ...sem, aprovacao: '2026-08-15' }, H))).toBe('atencao') // 30
+    expect(classeDias(obra({ ...sem, aprovacao: '2026-08-14' }, H))).toBe('critico') // 31
+  })
+
+  it('estourou continua pintando de âmbar com poucos dias', () => {
+    // duracao 3 → estoura acima de 12 dias desde a APROVAÇÃO (`dias`, 13 > 12).
+    // Correção (review M6): o `diasAlerta` real aqui é 15, não 13 — a entrada
+    // da fixture (2026-08-30, default de `obraRow()`) é anterior à aprovação
+    // (2026-09-01) e vence como âncora. 15 não passa de 20; o âmbar só pode
+    // vir de `estourou()`, que é o que este teste prova.
+    expect(classeDias(obra({ ...sem, aprovacao: '2026-09-01', duracao: 3 }, H))).toBe('atencao')
   })
 
   it('não pinta obra encerrada nem obra aguardando definição', () => {
     expect(classeDias(obra({ aprovacao: '2026-01-01', etapa: 'faturado' }))).toBe('')
     expect(classeDias(obra({ aprovacao: '2026-01-01', etapa: 'definir' }))).toBe('')
   })
+})
+
+describe('decisão 12 — encerrada por marco_faturou (Task 5, NÃO executada)', () => {
+  // Bloqueada por decisão do coordenador (spec §7, A6/A7 e plano, Task 5): nada
+  // grava `marco_faturou` hoje, e mergear `encerrada() = marco_faturou` antes
+  // de a frente da esteira gravar essa data faz nenhuma obra voltar a encerrar.
+  // Ver docs/cliente/2026-08-31-sistema-controle-de-obras/spec-regra-critica-2026-09-15.md
+  // §3.5 (decisão 12) e §7 (A6, A7).
+  it.todo(
+    'encerrada() passa a depender de marco_faturou só depois de _actions.ts gravar essa coluna (decisão 12)'
+  )
 })
 
 describe('texto de parada', () => {
@@ -525,5 +643,100 @@ describe('contadoresDoDiario — os números que ninguém digita', () => {
     const r = contadoresDoDiario([{ andou: false, motivo: 'qualquer coisa' }])
 
     expect(r).toEqual({ nao_andou_seguidos: 1, bloqueada_dias: 0, bloqueio: 'Sem bloqueio' })
+  })
+})
+
+describe('dataSP — timestamptz vira o dia em São Paulo', () => {
+  it('converte para o dia de São Paulo, não o dia UTC', () => {
+    expect(dataSP('2026-09-15T01:30:00+00:00')).toBe('2026-09-14')
+    expect(dataSP('2026-07-01T13:00:00Z')).toBe('2026-07-01')
+    expect(dataSP('2026-08-25T02:00:00.123456+00:00')).toBe('2026-08-24')
+  })
+
+  it('atravessa a virada do mês e do ano (review M4)', () => {
+    // dataSP delega a hojeISO/Intl.DateTimeFormat — a troca de mês e de ano é
+    // feita pelo formatador, não por aritmética manual, mas a regra inteira
+    // depende desta conversão, então ela ganha cobertura própria.
+    expect(dataSP('2026-09-01T02:00:00+00:00')).toBe('2026-08-31')
+    expect(dataSP('2026-01-01T02:00:00+00:00')).toBe('2025-12-31')
+  })
+
+  it('vazio ou lixo não vira data', () => {
+    expect(dataSP(null)).toBeNull()
+    expect(dataSP('')).toBeNull()
+    expect(dataSP('lixo')).toBeNull()
+  })
+})
+
+describe('ancoraDias — de que data os dias contam (decisão 5 revista)', () => {
+  const sem = { aprovacao: null, liberado_por: null, liberado_em: null }
+
+  it('só aprovação: conta da aprovação', () => {
+    expect(ancoraDias(obraRow({ ...sem, aprovacao: '2026-08-10' }))).toEqual({
+      de: 'aprovacao',
+      data: '2026-08-10',
+    })
+  })
+
+  it('só liberação: conta da liberação', () => {
+    expect(
+      ancoraDias(obraRow({ ...sem, liberado_por: 'JUAN', liberado_em: '2026-06-02' }))
+    ).toEqual({ de: 'liberacao', data: '2026-06-02' })
+  })
+
+  it('liberação antes da aprovação: vale a liberação', () => {
+    expect(
+      ancoraDias(
+        obraRow({ aprovacao: '2026-09-01', liberado_por: 'LEANDRO', liberado_em: '2026-08-20' })
+      )
+    ).toEqual({ de: 'liberacao', data: '2026-08-20' })
+  })
+
+  it('aprovação antes da liberação: vale a aprovação', () => {
+    expect(
+      ancoraDias(
+        obraRow({ aprovacao: '2026-08-10', liberado_por: 'LEANDRO', liberado_em: '2026-08-30' })
+      )
+    ).toEqual({ de: 'aprovacao', data: '2026-08-10' })
+  })
+
+  it('mesma data nas duas: fica com a aprovação', () => {
+    expect(
+      ancoraDias(
+        obraRow({ aprovacao: '2026-08-10', liberado_por: 'LEANDRO', liberado_em: '2026-08-10' })
+      )
+    ).toEqual({ de: 'aprovacao', data: '2026-08-10' })
+  })
+
+  it('data de liberação sem o nome de quem liberou não conta', () => {
+    expect(
+      ancoraDias(
+        obraRow({ ...sem, liberado_em: '2026-06-02', created_at: '2026-07-01T13:00:00+00:00' })
+      )
+    ).toEqual({ de: 'entrada', data: '2026-07-01' })
+  })
+
+  it('nome de quem liberou sem data não inventa data (spec A4)', () => {
+    expect(
+      ancoraDias(
+        obraRow({ ...sem, liberado_por: 'JUAN', created_at: '2026-07-01T13:00:00+00:00' })
+      )
+    ).toEqual({ de: 'entrada', data: '2026-07-01' })
+  })
+
+  it('sem aprovação nem liberação: conta da entrada, no dia de São Paulo', () => {
+    expect(ancoraDias(obraRow({ ...sem, created_at: '2026-08-25T02:00:00+00:00' }))).toEqual({
+      de: 'entrada',
+      data: '2026-08-24',
+    })
+  })
+
+  it('sem nenhuma data utilizável não há âncora', () => {
+    expect(ancoraDias(obraRow({ ...sem, created_at: '' }))).toBeNull()
+  })
+
+  it('os limiares são os do cliente: acima de 20 e acima de 30', () => {
+    expect(LIMIAR_ATENCAO).toBe(20)
+    expect(LIMIAR_CRITICO).toBe(30)
   })
 })
