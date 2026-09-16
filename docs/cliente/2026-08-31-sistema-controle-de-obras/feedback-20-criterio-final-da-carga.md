@@ -30,3 +30,17 @@ ia levar a ele sobre obra que já está acontecendo: ela entra.
 **Acabaram as perguntas ao cliente.** O que ficar ambíguo é decidido aqui, com os dados que já
 temos, registrado e feito de forma barata de reverter. O próximo contato com o cliente é o sistema
 funcionando com as obras dele dentro.
+
+## Vocabulário, esclarecido pelo João (15/09)
+
+> status = situação
+
+O que o cliente chama de **status** é o campo **Situação** da tela do Field — o campo estruturado,
+de valores fixos (pendente, agendado, em andamento, resolvido...). É ele que manda no critério.
+
+O campo de **texto livre**, onde aparecem "Falta de Tempo", "Fechar OS" e as frases digitadas à
+mão, é outro, e **não** entra na regra. Foi a confusão entre os dois que gerou o feedback 19.
+
+**Consequência para o código:** o filtro lê o campo estruturado da última atividade. Antes de
+implementar, confirmar contra a API qual campo devolve exatamente esse conjunto de valores — é
+esse o campo, independentemente do nome que a API dê a ele.
