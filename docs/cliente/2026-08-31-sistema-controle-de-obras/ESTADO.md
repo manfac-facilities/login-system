@@ -31,7 +31,7 @@ entre entrada, liberação e aprovação) e o histórico de alterações Parte 1
 **Decisão de processo de 15/09:** acabaram as perguntas ao cliente. O que estiver ambíguo vai
 para o João, em linguagem leiga, e ele decide.
 
-Atualizado em 11/09/2026, de manhã. O bloco abaixo é o mais recente; o resto do arquivo é o
+Os blocos estão em ordem do mais recente para o mais antigo; do "fim de 14/09" para baixo é o
 histórico de 05/09 em diante, mantido como estava.
 
 ## ▶ Retomar aqui — fim de 14/09/2026
