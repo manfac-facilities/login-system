@@ -1,0 +1,1485 @@
+<title>Mockup J4 v02 — completar a obra</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:1180px;margin:0 auto;padding-block:22px 90px;padding-inline:16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  h1.titulo{font-size:22px;margin:0 0 6px;letter-spacing:-.015em}
+  .topo{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin-bottom:26px}
+  .topo p{margin:0 0 8px;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .topo ul{margin:0 0 8px;padding-left:18px;color:var(--ink-dim);font-size:13px}
+  .topo b{color:var(--ink)}
+  .vered-lista{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;padding:0;list-style:none}
+  .vered-lista a{display:inline-flex;gap:6px;align-items:center;text-decoration:none;color:var(--ink-dim);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 9px;font-size:12.5px;background:rgba(0,0,0,.2)}
+  .vered-lista a b{font-family:var(--mono);color:var(--accent)}
+
+  /* ---------- seções ---------- */
+  .sec{border-top:1px solid var(--line);padding-top:22px;margin-top:10px}
+  .sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:var(--r-sm);padding:3px 9px}
+  .sec-h h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .veredito{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:11px 14px;margin:0 0 14px}
+  .veredito .v-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .veredito blockquote{margin:6px 0 10px;padding:4px 0 4px 12px;border-left:3px solid var(--accent);color:var(--ink);font-size:13px;max-width:90ch}
+  .veredito ul{margin:4px 0 0;padding-left:18px;color:var(--ink-dim);font-size:13px;display:flex;flex-direction:column;gap:3px}
+  .veredito ul b{color:var(--ink)}
+  .estados{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 14px;padding:4px;border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.18)}
+  .estados .lbl{margin:0 6px 0 4px}
+  .estados button{background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:5px 11px;color:var(--ink-dim);font-size:12.5px}
+  .estados button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .estados button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:var(--line)}
+  .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .supo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--warn);border:1px solid rgba(244,183,63,.45);background:var(--warn-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap;text-decoration:none}
+  .field-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--ink-faint);border:1px solid var(--line);border-radius:99px;padding:0 6px;margin-left:6px;white-space:nowrap}
+  .nota-sec{font-size:12px;color:var(--ink-faint);border-left:2px solid var(--line);padding-left:10px;margin:12px 0 0;max-width:90ch}
+  .nota-sec b{color:var(--ink-dim)}
+  .sub-h{font-size:13px;font-weight:650;margin:18px 0 8px;color:var(--ink)}
+  .zap{margin:18px 0 6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid rgba(53,201,138,.35);background:var(--ok-soft);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--ink-dim)}
+  .zap .ic{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--ok);border:1px solid rgba(53,201,138,.45);border-radius:99px;padding:1px 8px}
+  .zap b{color:var(--ink)}
+
+  /* ---------- componentes da ficha ---------- */
+  .head{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .head h3{margin:0;font-size:17px;letter-spacing:-.01em;overflow-wrap:anywhere}
+  .head .sub{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:2px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line);color:var(--ink-dim)}
+  .pill.definir{color:var(--accent);background:var(--accent-soft);border-color:rgba(240,90,40,.42)}
+  .pill.ok{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .pill.info{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.crit{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.35)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.35)}
+  .pill.num{font-family:var(--mono)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px}
+  .box-h .dir{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .box-b{padding:13px 14px}
+  .box-f{padding:8px 14px;border-top:1px dashed var(--line-soft);font-size:11.5px;color:var(--ink-faint)}
+  .link{color:var(--accent);background:none;border:0;padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+  .dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px;margin:0}
+  .dl dt{color:var(--ink-faint);font-size:11.5px;padding-top:1px}
+  .dl dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+  .vazio{color:var(--accent);font-weight:500}
+  .txt{font-size:12.5px;color:var(--ink-dim);margin:10px 0 0;line-height:1.55}
+  .txt b{color:var(--ink)}
+  .aviso{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;border:1px solid rgba(240,90,40,.42);background:rgba(240,90,40,.07);border-left:4px solid var(--accent);border-radius:var(--r);padding:13px 16px;margin-bottom:14px}
+  .aviso h4{margin:0 0 4px;font-size:14px;color:var(--accent)}
+  .aviso p{margin:0;font-size:13px;color:var(--ink-dim);max-width:70ch}
+  .aviso p b{color:var(--ink)}
+  .aviso .cont{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(240,90,40,.45);border-radius:99px;padding:3px 10px;white-space:nowrap}
+  .aviso.warn{border-color:rgba(244,183,63,.4);background:rgba(244,183,63,.06);border-left-color:var(--warn)}
+  .aviso.warn h4{color:var(--warn)}
+
+  /* ---------- formulário ---------- */
+  .campo{display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:10px 11px;min-width:0}
+  .campo .rot{display:flex;align-items:center;gap:8px;font-size:13px}
+  .mk{width:18px;height:18px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700;background:var(--line);color:var(--ink-dim)}
+  .campo.ok .mk{background:var(--ok);color:#04231a}
+  .campo .dica,.dica{font-size:11.5px;color:var(--ink-faint)}
+  .campo.invalido{border-color:rgba(255,77,109,.6)}
+  .msg{font-size:12px;color:var(--crit);font-weight:600}
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .in:disabled{opacity:.55}
+  .ro{font-size:13px;padding:6px 0 2px;overflow-wrap:anywhere}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fgrid .larga{grid-column:1/-1}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .acoes{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:8px 15px;border-radius:var(--r-sm);font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.ghost:hover:not(:disabled){color:var(--ink);border-color:#2b4f7d}
+  .btn.mini{padding:3px 10px;font-size:11.5px;text-transform:none;letter-spacing:0}
+  .hint{font-size:12px;color:var(--ink-faint)}
+  .hint.ok{color:var(--ok)}
+  .erro-box{border:1px solid rgba(255,77,109,.5);background:var(--crit-soft);border-left:4px solid var(--crit);border-radius:var(--r-sm);padding:10px 12px;margin-top:12px;font-size:12.5px;color:var(--ink-dim)}
+  .erro-box strong{display:block;color:var(--crit);font-size:13px;margin-bottom:3px}
+  .erro-box b{color:var(--ink)}
+  .remarca{border:1px solid rgba(244,183,63,.45);background:var(--warn-soft);border-radius:var(--r-sm);padding:10px 12px}
+  .remarca strong{color:var(--warn);font-size:13px}
+  .remarca p{margin:3px 0 0;font-size:12.5px;color:var(--ink-dim)}
+  .mot-chip{display:inline-block;font-size:11.5px;font-weight:600;color:var(--warn);border:1px solid rgba(244,183,63,.4);border-radius:99px;padding:0 8px;background:var(--warn-soft)}
+  .sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+  .sw input{accent-color:var(--accent);width:16px;height:16px}
+
+  /* ---------- estados vazios, erro de carga, carregando ---------- */
+  .estado-vazio{border:1px dashed var(--line);border-radius:var(--r);padding:26px 18px;text-align:center;color:var(--ink-dim);font-size:13px;background:var(--panel)}
+  .estado-vazio strong{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+  .erro-carga{display:flex;gap:14px;align-items:flex-start;border:1px solid rgba(255,77,109,.55);border-left:5px solid var(--crit);background:var(--crit-soft);border-radius:var(--r);padding:16px 18px}
+  .erro-carga .ic{width:28px;height:28px;border-radius:50%;background:var(--crit);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+  .erro-carga strong{display:block;color:var(--crit);font-size:15px;margin-bottom:3px}
+  .erro-carga p{margin:0 0 10px;font-size:13px;color:var(--ink-dim);max-width:70ch}
+  .erro-carga p b{color:var(--ink)}
+  .skel-wrap{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:var(--r);padding:16px;background:var(--panel)}
+  .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,var(--line-soft),var(--line),var(--line-soft));background-size:200% 100%;animation:sk 1.3s linear infinite}
+  @keyframes sk{to{background-position:-200% 0}}
+
+  /* ---------- esteira ---------- */
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .passo:last-child{border-bottom:0}
+  .passo .dot{margin-top:5px;width:11px;height:11px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.45}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1;box-shadow:0 0 0 4px var(--accent-soft)}
+  .passo.pulado .dot{background:transparent;border:2px dashed var(--ink-faint);opacity:1}
+  .passo .corpo{flex:1;min-width:0}
+  .passo .nm{font-weight:650;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.naoaplica .nm{color:var(--ink-faint)}
+  .passo .meta{font-size:11.5px;color:var(--ink-dim);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:1px}
+  .passo .quando{flex:none;font-size:12px;text-align:right;white-space:nowrap}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.pulado .quando,.passo.futuro .quando,.passo.naoaplica .quando{color:var(--ink-faint)}
+  .passo .extra{margin-top:7px;font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .passo .extra b{color:var(--ink)}
+  .aqui{border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 8px}
+  .desvio{border:1px solid var(--line);border-radius:4px;font-size:10px;color:var(--ink-dim);padding:0 5px;font-weight:500}
+  .corrige{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .corrige .in{width:auto}
+
+  /* ---------- histórico ---------- */
+  .filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{background:rgba(0,0,0,.2);border:1px solid var(--line);color:var(--ink-dim);padding:5px 11px;border-radius:var(--r-sm);font-size:12.5px}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:118px 1fr;gap:4px 14px;padding:10px 0;border-bottom:1px dashed var(--line-soft);font-size:13px}
+  .hist li:last-child{border-bottom:0}
+  .hist .qd{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)}
+  .hist .qd span{display:block;color:var(--ink-dim);font-family:var(--sans);font-weight:600}
+  .hist .mv{color:var(--ink-dim);min-width:0;overflow-wrap:anywhere}
+  .hist .mv b{color:var(--ink)}
+  .hist .antigo{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.5)}
+  .hist .mot{font-size:12px;color:var(--warn);margin-top:3px}
+  .hist li.pendente{opacity:.7}
+  .bloco-tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-right:6px}
+
+  /* ---------- regra da crítica ---------- */
+  .regra{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:0;list-style:none;counter-reset:r}
+  .regra li{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--ink-dim)}
+  .regra li::before{counter-increment:r;content:counter(r);font-family:var(--mono);font-weight:700;color:var(--accent);flex:none;width:18px}
+  .regra b{color:var(--ink)}
+  .limiares{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 4px}
+  .lim{border:1px solid var(--line);border-left:4px solid var(--c,var(--line));border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;color:var(--ink-dim)}
+  .lim b{display:block;color:var(--c,var(--ink));font-size:13.5px}
+  .exemplos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .ex{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--sev,var(--line));border-radius:var(--r);padding:12px 13px;min-width:0}
+  .ex .os{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .ex .nm{font-weight:650;font-size:13px;margin:1px 0 8px;overflow-wrap:anywhere}
+  .ex .dl{font-size:12px}
+  .ex .res{margin-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .big{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;color:var(--sev,var(--ink))}
+  .ex .antes{font-size:11.5px;color:var(--ink-faint);margin-top:8px;border-top:1px dashed var(--line-soft);padding-top:7px}
+  .fronteira{display:flex;flex-direction:column;gap:8px}
+  .fronteira input[type=range]{width:100%;accent-color:var(--accent)}
+  .regua{position:relative;height:16px;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .regua span{position:absolute;transform:translateX(-50%)}
+
+  /* ---------- tabelas e indicadores ---------- */
+  .tab-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table.tab{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px}
+  .tab th{text-align:left;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-dim);background:var(--panel-2);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+  .tab th small{display:block;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint);font-size:11px;white-space:normal;max-width:220px}
+  .tab td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  .tab tr:last-child td{border-bottom:0}
+  .tab tr.crit td:first-child{box-shadow:inset 3px 0 0 var(--crit)}
+  .tab tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;text-align:left;color:var(--ink-dim);font-size:12px}
+  button.kpi:hover{border-color:#2b4f7d}
+  .kpi[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .kpi .t{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--ink-dim)}
+  .kpi .v{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--ink);line-height:1.2}
+  .kpi .v.crit{color:var(--crit)} .kpi .v.warn{color:var(--warn)} .kpi .v.ok{color:var(--ok)}
+  .barra{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line-soft);margin:6px 0 4px}
+  .barra i{display:block;height:100%}
+  .slabox .sla-l{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 0;border-bottom:1px dashed var(--line-soft)}
+  .slabox .sla-l:last-child{border-bottom:0}
+  .sla-n b{display:block;font-size:13px}
+  .sla-d{grid-column:1/-1;margin:2px 0 0;font-size:12.5px;color:var(--ink-dim)}
+  .sla-d b{color:var(--ink)}
+  .ranking{list-style:none;margin:0;padding:0}
+  .ranking li{display:grid;grid-template-columns:78px minmax(0,1fr);gap:2px 10px;padding:8px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px}
+  .ranking li:last-child{border-bottom:0}
+  .ranking .lj{overflow-wrap:anywhere}
+  .semana-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+
+  /* ---------- motivos (diálogo de remarcação) ---------- */
+  .motivos{border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px 10px;margin:0}
+  .motivos legend{font-size:13px;color:var(--ink);padding:0 4px;font-weight:600}
+  .motivos label{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;color:var(--ink-dim);cursor:pointer}
+  .motivos label:has(input:checked){color:var(--ink)}
+  .motivos input{accent-color:var(--accent);margin:0}
+  .linha{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .linha .in{flex:1 1 180px;width:auto}
+
+  /* ---------- suposições ---------- */
+  .supos{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+  .supos li{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px 11px 46px;position:relative;font-size:13px;color:var(--ink-dim)}
+  .supos li::before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:11px;font-family:var(--mono);font-weight:700;color:var(--warn)}
+  .supos li b{color:var(--ink)}
+  .supos .pend{display:block;margin-top:5px;font-size:12px;color:var(--ink-faint)}
+  .supos .pend::before{content:"Decisão pendurada: ";font-weight:700;color:var(--warn)}
+
+  /* ---------- diálogo ---------- */
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:0;max-width:580px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(3,8,18,.72)}
+  .dlg-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);font-weight:650}
+  .dlg-b{padding:14px 16px;font-size:13px;color:var(--ink-dim);max-height:70vh;overflow:auto}
+  .dlg-b ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+  .dlg-b b{color:var(--ink)}
+  .dlg-f{padding:0 16px 14px;display:flex;gap:10px;flex-wrap:wrap}
+
+  @media (max-width:860px){.grid2{grid-template-columns:1fr}.limiares{grid-template-columns:1fr}}
+  @media (max-width:560px){
+    .fgrid{grid-template-columns:1fr}
+    .hist li{grid-template-columns:1fr}
+    .aviso .cont{margin-left:0}
+    .passo{flex-wrap:wrap}
+    .passo .quando{width:100%;text-align:left;padding-left:23px}
+    .erro-carga{flex-direction:column}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;scroll-behavior:auto !important}}
+</style>
+
+<div class="pagina">
+<h1 class="titulo">Mockup J4 v02 — completar a obra</h1>
+<div class="topo">
+  <p>Segunda versão, feita a partir da sua avaliação da v01 (14/09). <b>Cada seção começa com o que você respondeu e o que mudou.</b> Hoje, nos exemplos, é <b>15/09/2026</b>. Os dados são inventados.</p>
+  <ul class="vered-lista" aria-label="Vereditos da v01">
+    <li><a href="#sec-A"><b>A</b> Triagem · v01: Ajustar</a></li>
+    <li><a href="#sec-B"><b>B</b> Ficha · v01: Ajustar</a></li>
+    <li><a href="#sec-C"><b>C</b> Esteira · v01: Ajustar</a></li>
+    <li><a href="#sec-D"><b>D</b> Histórico · v01: Aprovado</a></li>
+    <li><a href="#sec-E"><b>E</b> Obra crítica · v01: Ajustar</a></li>
+    <li><a href="#sec-F"><b>F</b> SLAs · tela nova</a></li>
+    <li><a href="#sec-G"><b>G</b> Suposições desta versão</a></li>
+  </ul>
+  <ul>
+    <li><b>Julgue:</b> o que cada botão faz, o que cada diálogo diz que vai acontecer, os textos marcados <span class="novo">texto novo</span> e os números de dias e SLA.</li>
+    <li><b>Ignore:</b> cor, tipografia e espaçamento. São os do hub e não estão em julgamento.</li>
+    <li><b>Estados:</b> cada tela tem um seletor. Troque para ver a mesma tela vazia, salvando, com erro e sem acesso. As marcas <span class="supo">suposição</span> apontam para a seção G.</li>
+  </ul>
+  <p><b>Como responder:</b> pelo WhatsApp, uma linha por seção, no mesmo formato da v01. Exemplo: <b>Pergunta A — Aprovado</b>, ou <b>Pergunta A — Ajustar</b> seguido do comentário.</p>
+</div>
+
+<!-- ============================ A ============================ -->
+<section class="sec" id="sec-A" aria-labelledby="h-A">
+  <div class="sec-h"><span class="tag">A</span><div>
+    <h2 id="h-A">Triagem editável</h2>
+    <p>Obra em <b>Aguardando definição</b>. Continuam os 5 obrigatórios, a liberação e o bloco opcional <b>Dados da obra</b>, que tem <b>Salvar dados</b> separado de <b>Liberar</b>. Número, loja e descrição continuam só leitura.</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill warn">v01: Ajustar</span><span class="lbl">O que você respondeu</span></div>
+    <blockquote>"o campo "origem" está vinculado a autorização para executar, deve estar no mesmo frame pra facilitar preenchimento. o texto está vinculado muito a DPSP, mas isso será usado para todas as obras da Manfac em todos os clientes"</blockquote>
+    <span class="lbl">O que mudou na v02</span>
+    <ul>
+      <li><b>Origem</b> saiu de "Dados da obra" e entrou no bloco <b>Autorização para executar</b>, junto de "Liberado por" e "Data da liberação". Na ficha (seção B) ela mudou de lugar da mesma forma. <a class="supo" href="#supo-origem">suposição 4</a></li>
+      <li>Nenhum rótulo, dica ou opção fixa cita um cliente específico: "analista do cliente", "sistema do cliente". Os exemplos usam lojas de cidades diferentes.</li>
+      <li>O diálogo de liberar já traz a regra nova da obra crítica (seção E) e diz de quando o SLA 1 começa a contar (seção F).</li>
+    </ul>
+  </div>
+  <div class="estados" data-sec="A"></div>
+  <div class="palco" id="palco-A"></div>
+  <p class="nota-sec">Por que "Salvar dados" é separado de "Liberar": a liberação chega por telefone antes da obra, e a aprovação da OS costuma chegar meses depois. Quem já sabe quem liberou, tipo, valor ou aprovação antes de ter equipe salva agora o que preencheu, sem liberar e sem inventar dado.</p>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta A — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="sec" id="sec-B" aria-labelledby="h-B">
+  <div class="sec-h"><span class="tag">B</span><div>
+    <h2 id="h-B">Ficha da obra com blocos editáveis</h2>
+    <p>Obra já liberada, em andamento. Cada bloco (Autorização, Identificação, Cronograma) tem seu <b>Editar</b>, com <b>Salvar</b> e <b>Cancelar</b>. Mudar o <b>início</b> vira remarcação; a <b>duração</b> muda livre.</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill warn">v01: Ajustar</span><span class="lbl">O que você respondeu</span></div>
+    <blockquote>"o motivo da remarcação era ideal que fosse padronizado, e que também desse opção pra cadastrar um novo motivo que não esteja disponivel, mas de inicio ja ter um cadastro"</blockquote>
+    <span class="lbl">O que mudou na v02</span>
+    <ul>
+      <li>Ao salvar um início diferente, abre o diálogo <b>Remarcar o início da obra</b>. O motivo é <b>obrigatório</b> e escolhido numa lista padronizada.</li>
+      <li>A lista começa com <b>os mesmos motivos que o Diário já usa</b> quando a obra não andou no dia: Clima · Cliente/loja · Disponibilidade de equipe · Contratação de prestador · Falta de material · Outro.</li>
+      <li><b>Cadastrar novo motivo</b> fica no próprio diálogo. O motivo novo entra na lista e já vem escolhido.</li>
+      <li>"Origem" passou para o bloco Autorização. O selo do <b>SLA 1</b> aparece no topo da ficha (seção F).</li>
+    </ul>
+  </div>
+  <div class="estados" data-sec="B"></div>
+  <div class="palco" id="palco-B"></div>
+  <p class="nota-sec">Experimente: em <b>Com dados</b>, clique em Editar no Cronograma, troque a data de início e salve. Escolha um motivo ou cadastre um novo. A remarcação aparece no bloco Remarcações e no Histórico (seção D).</p>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta B — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="sec" id="sec-C" aria-labelledby="h-C">
+  <div class="sec-h"><span class="tag">C</span><div>
+    <h2 id="h-C">Esteira com "Concluir esta etapa"</h2>
+    <p>O passo em que a obra está tem o botão. Antes de gravar, o diálogo diz tudo o que vai acontecer. Passo concluído mostra a data, que pode ser corrigida. Passo pulado mostra <b>sem data registrada</b>, nunca uma data inventada.</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill warn">v01: Ajustar</span><span class="lbl">O que você respondeu</span></div>
+    <blockquote>"não é pendente fechamento o nome do status, é pendente aprovação da OS pelo cliente, após aprovação da OS já vai pra "Fechar OS". Se a OS já estiver aprovada no sistema do cliente não passa por essa etapa, após fim da execução vai direto pra fechar OS"</blockquote>
+    <span class="lbl">O que mudou na v02</span>
+    <ul>
+      <li>A etapa passou a se chamar <b>"Executado - pendente aprovação OS"</b>. O nome "Pendente fechamento" saiu de todas as telas.</li>
+      <li>Concluir a aprovação leva a obra para <b>Fechar OS</b>. Se a OS já estava aprovada no sistema do cliente, a obra <b>pula essa etapa</b>. Use o botão "Ver o caminho direto".</li>
+      <li>O <b>Relatório de entrega continua</b> na esteira, antes dessa etapa. <a class="supo" href="#supo-relatorio">suposição 9</a></li>
+      <li>O diálogo diz quando cada <b>SLA</b> começa e termina. Concluir "Fechar OS" grava a data em que o SLA 2 começa; concluir "Faturado" grava a data em que ele termina.</li>
+      <li>Mantido da v01: concluir grava a data de hoje (a da aprovação vem com hoje e pode ser corrigida no diálogo), e preencher "OS aprovada em" na ficha avança a obra com aviso.</li>
+    </ul>
+  </div>
+  <div class="estados" data-sec="C"></div>
+  <div class="palco" id="palco-C"></div>
+  <p class="nota-sec"><b>Experimente:</b> conclua a etapa atual, depois Fechar OS, Pendente faturamento e Faturado. Veja os SLAs no quadro do topo mudarem a cada passo. <b>"Pendente faturamento"</b> continua com o nome do código, porque a pergunta sobre pedido de compra ainda está sem resposta. <a class="supo" href="#supo-pendfat">suposição 10</a></p>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta C — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ D ============================ -->
+<section class="sec" id="sec-D" aria-labelledby="h-D">
+  <div class="sec-h"><span class="tag">D</span><div>
+    <h2 id="h-D">Histórico de alterações</h2>
+    <p>Uma linha por campo alterado: bloco, campo, valor antigo, valor novo, quem e quando. Troque entre a obra da seção B (edições de bloco) e a da seção C (etapa concluída pelo botão, data corrigida, passo pulado).</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill ok">v01: Aprovado</span><span class="lbl">O que mudou na v02</span></div>
+    <ul>
+      <li>Não foi redesenhado.</li>
+      <li>A linha da remarcação mostra o <b>motivo escolhido na lista padronizada</b> (e a descrição, quando o motivo é "Outro").</li>
+      <li>Os nomes seguem as outras seções: "Executado - pendente aprovação OS", e "Origem" registrada no bloco Autorização.</li>
+    </ul>
+  </div>
+  <div class="estados" data-sec="D"></div>
+  <div class="palco" id="palco-D"></div>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta D — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ E ============================ -->
+<section class="sec" id="sec-E" aria-labelledby="h-E">
+  <div class="sec-h"><span class="tag">E</span><div>
+    <h2 id="h-E">Regra da obra em atenção e crítica <span class="novo">regra revista</span></h2>
+    <p>A data de onde se conta é a mesma da v01. Os prazos mudaram: <b>atenção acima de 20 dias</b> e <b>crítica acima de 30</b> (antes eram 60 e 100).</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill warn">v01: Ajustar</span><span class="lbl">O que você respondeu</span></div>
+    <blockquote>"a sinalização de atenção fica acima de 20 dias da data de aprovação da OS ou liberação, a que for menor. Acima de 30 dias já é critico.. aqui só muda o criterio de tempo desde a data"</blockquote>
+    <span class="lbl">O que mudou na v02</span>
+    <ul>
+      <li>Os prazos passaram a ser <b>acima de 20</b> (atenção) e <b>acima de 30</b> (crítica). "Acima de" quer dizer que 20 dias não sinaliza e 21 é atenção; 30 ainda é atenção e 31 é crítica. <a class="supo" href="#supo-acima">suposição 3</a></li>
+      <li>"A que for menor" foi lido como <b>a data mais antiga</b>, que é a que dá mais dias. A contagem nunca cai quando se registra uma data nova.</li>
+      <li>A coluna da Base deixa de se chamar "Dias desde a aprovação" e passa a <b>"Dias em aberto"</b>. <a class="supo" href="#supo-rotulo">suposição 11</a></li>
+    </ul>
+  </div>
+  <div class="box"><div class="box-b">
+    <ol class="regra">
+      <li><span>Conta da <b>data mais antiga</b> entre a <b>liberação</b> (quem deu o OK para executar) e a <b>aprovação da OS</b>.</span></li>
+      <li><span>Sem nenhuma das duas, conta da <b>data de entrada pelo Field</b>.</span></li>
+      <li><span>Registrar uma data nova <b>não derruba a contagem</b>. Se ela for mais recente, os dias continuam de onde estavam.</span></li>
+      <li><span>A contagem para quando a Manfac <b>fatura</b> a obra (data de faturamento registrada). Obra em Aguardando definição não é sinalizada.</span></li>
+    </ol>
+    <div class="limiares">
+      <div class="lim"><b>Até 20 dias</b>sem sinal</div>
+      <div class="lim" style="--c:var(--warn)"><b>De 21 a 30 dias</b>atenção (selo âmbar)</div>
+      <div class="lim" style="--c:var(--crit)"><b>A partir de 31 dias</b>crítica (vermelho)</div>
+    </div>
+  </div></div>
+
+  <h3 class="sub-h">Onde muda: arraste</h3>
+  <div class="box"><div class="box-b fronteira">
+    <label for="e-range" class="hint">Dias em aberto</label>
+    <input type="range" id="e-range" min="0" max="45" value="20" aria-describedby="e-range-res">
+    <div class="regua" aria-hidden="true"><span style="left:0%;transform:none">0</span><span style="left:44.4%">20</span><span style="left:66.7%">30</span><span style="right:0;left:auto;transform:none">45</span></div>
+    <div class="res" id="e-range-res" aria-live="polite"></div>
+  </div></div>
+
+  <h3 class="sub-h">Exemplos, com hoje = 15/09/2026</h3>
+  <div class="exemplos" id="palco-E-ex"></div>
+  <div class="acoes">
+    <button type="button" class="btn ghost" id="e-simular" aria-pressed="false">Simular: a OS da obra 2 é aprovada hoje</button>
+    <span class="hint" id="e-simular-txt">Mostra que uma aprovação tardia não derruba a contagem.</span>
+  </div>
+
+  <h3 class="sub-h">Como aparece na Base</h3>
+  <div class="estados" data-sec="E"></div>
+  <div class="palco" id="palco-E"></div>
+  <p class="nota-sec"><b>Resíduo que continua:</b> uma obra sem liberação e sem aprovação conta da entrada pelo Field. Se a primeira autorização for registrada com a data de hoje, a contagem recomeça dessa data. Obra antiga que chegar no pente fino sem nenhuma das duas datas só vira crítica 31 dias depois de sincronizada. <b>Efeito dos 30 dias:</b> nos exemplos acima, a maior parte das obras abertas já fica vermelha. <a class="supo" href="#supo-residuo">suposição 14</a></p>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta E — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ F ============================ -->
+<section class="sec" id="sec-F" aria-labelledby="h-F">
+  <div class="sec-h"><span class="tag">F</span><div>
+    <h2 id="h-F">SLAs: aprovação da OS e até faturar <span class="novo">tela nova</span></h2>
+    <p>Na v01 esta seção listava o que estava pendente do cliente. Agora ela mostra os dois indicadores que a Manfac apresenta ao cliente toda semana: como eles contam, onde aparecem (Base e ficha) e como ficam na reunião semanal.</p>
+  </div></div>
+  <div class="veredito">
+    <div class="v-h"><span class="pill warn">v01: Ajustar</span><span class="lbl">O que você respondeu</span></div>
+    <blockquote>"aqui é importante temos um SLA de aprovação da OS quando a obra nao tem OS aprovada, quanto tempo decorrido desde a autorização de inicio? caso a OS tenha aprovação no sistema, quanto tempo desde a data de fechamento da OS no sistema do cliente? Esses indicadores são criticos e é um pilar importante que apresentamos ao cliente semanalmente"</blockquote>
+    <span class="lbl">O que mudou na v02</span>
+    <ul>
+      <li>A seção virou a tela dos dois SLAs. As metas do SLA 2 (15 e 30 dias) vêm da resposta de 15/09. As do SLA 1 são uma suposição. <a class="supo" href="#supo-meta1">suposição 1</a></li>
+      <li>O que era "pendente do cliente" foi para a seção G, junto das outras suposições.</li>
+    </ul>
+  </div>
+  <div class="grid2">
+    <div class="box"><div class="box-h">SLA 1 · aprovação da OS</div><div class="box-b"><dl class="dl">
+      <dt>Para quais obras</dt><dd>Obra liberada que <b>ainda não tem OS aprovada</b></dd>
+      <dt>Começa</dt><dd>Na <b>data da liberação</b> (autorização de início). Sem liberação, na entrada pelo Field. <a class="supo" href="#supo-semlib">suposição 5</a></dd>
+      <dt>Para</dt><dd>Quando a OS é aprovada: pelo botão da esteira ou pelo campo "OS aprovada em" na ficha</dd>
+      <dt>Meta</dt><dd><span class="pill ok">até 20</span> <span class="pill warn">acima de 20</span> <span class="pill crit">acima de 30</span> <a class="supo" href="#supo-meta1">suposição</a></dd>
+    </dl></div></div>
+    <div class="box"><div class="box-h">SLA 2 · até faturar</div><div class="box-b"><dl class="dl">
+      <dt>Para quais obras</dt><dd>Obra com a <b>OS já fechada</b> no sistema do cliente</dd>
+      <dt>Começa</dt><dd>Na <b>data de fechamento da OS</b>, gravada ao concluir "Fechar OS" na esteira (seção C)</dd>
+      <dt>Para</dt><dd>Quando a obra é <b>faturada</b>, na data gravada ao concluir "Faturado"</dd>
+      <dt>Meta</dt><dd><span class="pill ok">até 15</span> <span class="pill warn">acima de 15</span> <span class="pill crit">acima de 30</span></dd>
+    </dl></div></div>
+  </div>
+  <p class="nota-sec" style="border-left-color:var(--warn)"><b>O SLA 2 só pode ser calculado depois que "Concluir esta etapa" (seção C) gravar as datas de fechamento da OS e de faturamento.</b> Uma obra que passou dessas etapas pelo seletor, ou que já chega assim do Field, aparece como <b>sem data</b> e fica fora da conta até alguém informar a data real. <a class="supo" href="#supo-sla2datas">suposição 7</a> Entre a OS aprovada e o fechamento, nenhum dos dois SLAs corre. <a class="supo" href="#supo-hiato">suposição 6</a></p>
+
+  <h3 class="sub-h">Onde aparece</h3>
+  <div class="filtros" role="group" aria-label="Escolher a visão" id="f-visoes"></div>
+  <div class="estados" data-sec="F"></div>
+  <div class="palco" id="palco-F"></div>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta F — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
+</section>
+
+<!-- ============================ G ============================ -->
+<section class="sec" id="sec-G" aria-labelledby="h-G">
+  <div class="sec-h"><span class="tag">G</span><div>
+    <h2 id="h-G">Suposições desta versão</h2>
+    <p>O que o mockup precisou assumir para ficar pronto. Nada disso está decidido: cada item diz qual decisão depende dele. Se algum estiver errado, diga o número do item.</p>
+  </div></div>
+  <div class="box" style="margin-bottom:14px"><div class="box-h">Decidido depois da v01 · 15/09</div><div class="box-b">
+    <p class="txt" style="margin-top:0"><b>Os motivos de remarcação passaram a ser os mesmos que o Diário já usa</b> para responder por que a obra não andou no dia: <b>Clima · Cliente/loja · Disponibilidade de equipe · Contratação de prestador · Falta de material · Outro</b>. O motivo: o sistema e a reunião já falam esse vocabulário, e duas palavras para a mesma coisa ("Chuva/clima" ao lado de "Clima") quebrariam o cruzamento entre o bloqueio do dia e o motivo da remarcação. Continua valendo cadastrar um motivo que não esteja na lista.</p>
+  </div></div>
+  <ol class="supos">
+    <li id="supo-meta1"><b>Metas do SLA 1: amarelo acima de 20 dias, vermelho acima de 30.</b> Só as metas do SLA 2 foram informadas (15 e 30). Para o SLA 1, o mockup usou as mesmas da obra crítica. No sistema, esses números podem ser alterados.<span class="pend">cores e contagem "acima da meta" do SLA 1 na Base, na ficha e na reunião semanal (seção F).</span></li>
+    <li id="supo-motivos"><b>Como "Outro" e "Cadastrar novo motivo" convivem.</b> "Outro" pede uma descrição e vale só para aquela remarcação. "Cadastrar novo motivo" põe o motivo na lista para todas as obras. Qualquer pessoa com acesso ao módulo pode cadastrar. Não há tela para renomear nem apagar motivo.<span class="pend">o desenho do diálogo de remarcação e quem pode mexer na lista.</span></li>
+    <li id="supo-acima"><b>"Acima de" não inclui o próprio número.</b> Na obra crítica: 20 dias não sinaliza, 21 é atenção, 30 ainda é atenção, 31 é crítica. Nos SLAs vale o mesmo: no SLA 2, 15 dias está dentro da meta, 16 é amarelo e 31 é vermelho. O código de hoje conta "a partir de".<span class="pend">a fronteira exata da seção E e das cores da seção F.</span></li>
+    <li id="supo-origem"><b>"Origem" é por onde chegou a autorização para executar</b> (sistema do cliente, e-mail, telefone, WhatsApp, outro). Por isso ela entrou no bloco Autorização também na ficha (seção B), não só na Triagem. As opções da lista são provisórias.<span class="pend">o significado do campo, a lista de opções e o lugar dele na ficha.</span></li>
+    <li id="supo-semlib"><b>Sem liberação, o SLA 1 conta da entrada pelo Field.</b> O SLA 1 começa na autorização de início, e uma obra executada sem ninguém que liberou não tem essa data (ela também aparece como "Sem cobertura"). O código de hoje contaria do início planejado, e aí uma remarcação zeraria o SLA. Se a liberação for registrada depois, o SLA 1 passa a contar dela e o número diminui.<span class="pend">o SLA 1 das obras sem cobertura.</span></li>
+    <li id="supo-hiato"><b>Entre a OS aprovada e o fechamento da OS, nenhum SLA corre.</b> O SLA 1 para na aprovação e o SLA 2 só começa no fechamento. O tempo em "Fechar OS", que é uma etapa da Manfac, aparece só como "parada nesta etapa".<span class="pend">se a reunião semanal precisa de um número para esse trecho.</span></li>
+    <li id="supo-sla2datas"><b>O SLA 2 usa as datas gravadas pela esteira.</b> Obra que passou de "Fechar OS" sem data (pelo seletor, ou que já chega assim do Field) fica "sem data" e fora da conta até alguém informar a data real na esteira.<span class="pend">quantas obras entram na primeira reunião com o SLA 2 calculado.</span></li>
+    <li><b>"Fechar OS" e "Faturado" gravam a data de hoje, sem campo de data no diálogo.</b> Só a aprovação da OS tem campo de data no diálogo. Como essas duas datas agora medem o SLA 2, talvez valha dar a elas o mesmo campo.<span class="pend">o diálogo de concluir desses dois passos (seção C).</span></li>
+    <li id="supo-relatorio"><b>O Relatório de entrega fica antes de "Executado - pendente aprovação OS".</b> A resposta da v01 diz "após fim da execução vai direto pra fechar OS", e a decisão foi manter o relatório. O mockup mantém a ordem atual: execução → relatório → pendente aprovação OS (só sem OS aprovada) → Fechar OS.<span class="pend">a ordem dos passos da esteira.</span></li>
+    <li id="supo-pendfat"><b>"Pendente faturamento" mantém o nome do código</b>, e a data que encerra essa etapa continua sendo "faturamento liberado pelo cliente". A pergunta sobre pedido de compra ainda não foi respondida.<span class="pend">o nome dessa etapa e a data que a encerra.</span></li>
+    <li id="supo-rotulo"><b>A coluna se chama "Dias em aberto".</b> O nome é provisório e substitui "Dias desde a aprovação", que deixou de ser verdade.<span class="pend">o cabeçalho da coluna na Base.</span></li>
+    <li><b>Atenção pinta só o selo de dias</b>, não a borda do cartão da obra no kanban.<span class="pend">quanto a Base fica amarela.</span></li>
+    <li><b>Para obra liberada sem OS aprovada, "Dias em aberto" (E) e SLA 1 (F) mostram o mesmo número</b> e, com as metas assumidas, a mesma cor. A diferença está em quando param: o SLA 1 para na aprovação; os dias em aberto, só no faturamento.<span class="pend">se vale mostrar os dois lado a lado ou só um.</span></li>
+    <li id="supo-residuo"><b>O resíduo da regra da crítica continua</b> (nota da seção E): obra sem liberação e sem aprovação, quando recebe a primeira autorização com data de hoje, recomeça a contagem.<span class="pend">a regra da seção E.</span></li>
+    <li><b>A obra não tem campo "cliente".</b> O sistema vale para todos os clientes da Manfac, e a reunião semanal provavelmente é feita com um cliente por vez. A visão semanal não separa por cliente porque hoje não há onde guardar essa informação.<span class="pend">filtro por cliente na reunião semanal (pediria um campo novo).</span></li>
+    <li><b>A semana da reunião vai de segunda a domingo.</b> "Resolvidos na semana" são os SLAs cuja data final caiu nesses dias.<span class="pend">os números do rodapé de cada painel da reunião.</span></li>
+    <li><b>Onde o sistema dizia um cliente específico como dono da etapa, a tela diz só "Cliente".</b><span class="pend">os textos de dono na esteira e no kanban.</span></li>
+    <li><b>E e F são telas só de leitura:</b> nelas não há o estado "Salvando", e no lugar dele o seletor mostra "Carregando".<span class="pend">nenhuma; é só para você não procurar esse estado.</span></li>
+  </ol>
+  <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta G — Aprovado</b> / <b>Ajustar</b> + número do item e comentário</span></div>
+</section>
+
+<dialog id="dlg" aria-labelledby="dlg-h">
+  <div class="dlg-h" id="dlg-h"></div>
+  <div class="dlg-b" id="dlg-b"></div>
+  <div class="dlg-f" id="dlg-f"></div>
+</dialog>
+</div>
+
+<script>
+(function(){
+'use strict';
+const HOJE = '2026-09-15', AGORA = '15/09/2026 agora';
+const SEM_INI = '2026-09-14', SEM_FIM = '2026-09-20';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const br = iso => { if(!iso) return '—'; const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+const ms = iso => { const p = iso.split('-'); return Date.UTC(+p[0], p[1] - 1, +p[2]); };
+const entre = (a, b) => Math.round((ms(b) - ms(a)) / 864e5);
+const dias = iso => iso ? entre(iso, HOJE) : null;
+const soma = (iso, n) => (!iso || !n) ? null : new Date(ms(iso) + n * 864e5).toISOString().slice(0, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+const plural = (n, s, p) => n + ' ' + (n === 1 ? s : p);
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+const RESP = ['AMANDA','LUANA','YURI'];
+const EQUIPES = ['ALEX','MANFAC-4','MANFAC-7','MANFAC-19','Prestador a contratar'];
+const ANALISTAS = ['JUAN','LEANDRO','PATRICIA','RENATA'];
+const TIPOS = ['CIVIL','ELÉTRICA','HIDRÁULICA','PINTURA','SERRALHERIA','Outro'];
+const ORIGENS = ['Sistema do cliente','E-mail do cliente','Telefone','WhatsApp','Outro'];
+const PRIOR = ['Normal','Urgente'];
+/* Mesmo vocabulário do Diário (BLOQUEIOS), decisão do João em 15/09. */
+let MOTIVOS = [{t:'Clima'},{t:'Cliente/loja'},{t:'Disponibilidade de equipe'},{t:'Contratação de prestador'},{t:'Falta de material'},{t:'Outro'}];
+
+const NOME_ETAPA = {definir:'Aguardando definição', levantamento:'Levantamento', andamento:'Em andamento', campo:'Em andamento', relatorio:'Relatório de entrega', aprovarOS:'Executado - pendente aprovação OS', fecharOS:'Fechar OS', pendFat:'Pendente faturamento', faturado:'Faturado'};
+const ETAPA_APROV = NOME_ETAPA.aprovarOS;
+
+/* ---------- limiares: "acima de" é estrito (suposição 3) ---------- */
+const LIM = {aberto:{warn:20, crit:30}, sla1:{warn:20, crit:30}, sla2:{warn:15, crit:30}};
+const faixa = (n, l) => n == null ? '' : n > l.crit ? 'crit' : n > l.warn ? 'warn' : 'ok';
+
+/* ---------- regra E: data mais antiga entre liberação e aprovação; sem nenhuma, a entrada ---------- */
+function ancora(o){
+  const lib = o.libPor && o.libEm ? o.libEm : null;
+  if(o.aprov && lib) return lib < o.aprov ? {nome:'liberação', data:lib} : {nome:'aprovação', data:o.aprov};
+  if(o.aprov) return {nome:'aprovação', data:o.aprov};
+  if(lib) return {nome:'liberação', data:lib};
+  return o.entrada ? {nome:'entrada', data:o.entrada} : null;
+}
+function selo(o, opt){
+  opt = opt || {};
+  if(opt.encerrada) return '<span class="pill">encerrada</span>';
+  const a = ancora(o);
+  if(!a) return '<span class="pill">sem data para contar</span>';
+  const n = dias(a.data), fx = opt.definir ? '' : faixa(n, LIM.aberto);
+  const cls = fx === 'crit' ? ' crit' : fx === 'warn' ? ' warn' : '';
+  return `<span class="pill num${cls}" title="Dias em aberto">${plural(n, 'dia', 'dias')} desde a ${a.nome}</span>`;
+}
+
+/* ---------- SLAs (seção F) ---------- */
+function sla1(o){
+  if(o.etapa === 'definir') return {st:'nao', txt:'A obra ainda não foi liberada para execução.'};
+  const temLib = !!(o.libPor && o.libEm);
+  const ini = temLib ? o.libEm : o.entrada, base = temLib ? 'liberação' : 'entrada';
+  if(o.aprov){
+    if(!ini || o.aprov <= ini) return {st:'nao', txt:`A OS já estava aprovada (${br(o.aprov)}) antes de a obra ${temLib ? 'ser liberada' : 'entrar'}: não houve espera pela aprovação.`};
+    return {st:'fim', n:entre(ini, o.aprov), ini, fim:o.aprov, base};
+  }
+  return {st:'corre', n:dias(ini), ini, base};
+}
+function sla2(o){
+  if(o.fechou){
+    if(o.faturou) return {st:'fim', n:entre(o.fechou, o.faturou), ini:o.fechou, fim:o.faturou};
+    return {st:'corre', n:dias(o.fechou), ini:o.fechou};
+  }
+  if(o.etapa === 'pendFat' || o.etapa === 'faturado') return {st:'semdata'};
+  return {st:'ainda'};
+}
+function slaPill(q, s){
+  const lim = q === 1 ? LIM.sla1 : LIM.sla2;
+  if(!s) return '';
+  if(s.st === 'corre') return `<span class="pill num ${faixa(s.n, lim)}" title="SLA ${q}">SLA ${q} · ${plural(s.n, 'dia', 'dias')}</span>`;
+  if(s.st === 'semdata') return `<span class="pill" title="SLA ${q}">SLA ${q} · sem data</span>`;
+  return '';
+}
+function slaTexto(q, s, o){
+  const lim = q === 1 ? LIM.sla1 : LIM.sla2;
+  if(s.st === 'corre'){
+    const fx = faixa(s.n, lim);
+    const pil = `<span class="pill num ${fx}">${plural(s.n, 'dia', 'dias')}</span>`;
+    return q === 1
+      ? `${pil} desde a ${s.base} (${br(s.ini)})${s.base === 'entrada' ? ': ninguém liberou, conta da entrada <a class="supo" href="#supo-semlib">suposição 5</a>' : ''}. Para quando a OS for aprovada.`
+      : `${pil} desde o fechamento da OS no sistema do cliente (${br(s.ini)}). Para quando a obra for faturada.`;
+  }
+  if(s.st === 'fim'){
+    const fx = faixa(s.n, lim);
+    return `Concluído em <b>${plural(s.n, 'dia', 'dias')}</b> (${br(s.ini)} → ${br(s.fim)}), ${fx === 'ok' ? 'dentro da meta' : fx === 'warn' ? 'acima de ' + lim.warn + ' dias' : 'acima de ' + lim.crit + ' dias'}.`;
+  }
+  if(s.st === 'semdata') return '<b>Sem data de fechamento da OS</b>: a obra passou de "Fechar OS" sem essa data, então o SLA 2 não conta. Informe a data real no passo Fechar OS da esteira.';
+  if(s.st === 'ainda') return 'Ainda não começou. Começa quando "Fechar OS" for concluída na esteira, que grava a data de fechamento.' + (o && o.etapa === 'fecharOS' ? ' Neste trecho, entre a OS aprovada e o fechamento, nenhum SLA corre. <a class="supo" href="#supo-hiato">suposição 6</a>' : '');
+  return 'Não se aplica. ' + s.txt;
+}
+
+/* ---------- obras de exemplo compartilhadas por E e F (hoje = 15/09/2026) ---------- */
+const OBRAS = [
+  {os:'0726-009315', loja:'R RIBEIRO DE ALMEIDA, 56 - CENTRO - MARICA/RJ', etapa:'aprovarOS', libPor:'JUAN', libEm:'2026-07-28', aprov:'', entrada:'2026-07-24'},
+  {os:'0826-010877', loja:'R MARQUES DE PARANA, 110 - ICARAI - NITEROI/RJ', etapa:'andamento', libPor:'LEANDRO', libEm:'2026-08-20', aprov:'', entrada:'2026-08-18'},
+  {os:'0826-010950', loja:'AV PRESIDENTE KENNEDY, 1300 - ESTRELA DO NORTE - SAO GONCALO/RJ', etapa:'andamento', libPor:'', libEm:'', aprov:'', entrada:'2026-08-22'},
+  {os:'0826-010731', loja:'AV ERNANI DO AMARAL PEIXOTO, 455 - CENTRO - NITEROI/RJ', etapa:'relatorio', libPor:'RENATA', libEm:'2026-08-16', aprov:'', entrada:'2026-08-14'},
+  {os:'0926-011150', loja:'R ALMIRANTE TAMANDARE, 18 - CENTRO - SAO PEDRO DA ALDEIA/RJ', etapa:'levantamento', libPor:'PATRICIA', libEm:'2026-09-08', aprov:'', entrada:'2026-09-05'},
+  {os:'0826-011002', loja:'R DO IMPERADOR, 288 - CENTRO - PETROPOLIS/RJ', etapa:'levantamento', libPor:'', libEm:'', aprov:'2026-08-26', entrada:'2026-08-27'},
+  {os:'0826-010702', loja:'R CORONEL MOREIRA CESAR, 229 - ICARAI - NITEROI/RJ', etapa:'fecharOS', libPor:'JUAN', libEm:'2026-08-05', aprov:'2026-09-01', entrada:'2026-08-03'},
+  {os:'0826-010815', loja:'AV GETULIO VARGAS, 950 - CENTRO - RIO BONITO/RJ', etapa:'fecharOS', libPor:'LEANDRO', libEm:'2026-08-21', aprov:'2026-09-14', entrada:'2026-08-19'},
+  {os:'0726-009480', loja:'R VISCONDE DE UBERABA, 77 - CENTRO - ITABORAI/RJ', etapa:'pendFat', libPor:'', libEm:'', aprov:'2026-07-15', entrada:'2026-07-16', fechou:'2026-08-27'},
+  {os:'0726-009122', loja:'AV SETE DE SETEMBRO, 410 - CENTRO - MACAE/RJ', etapa:'pendFat', libPor:'', libEm:'', aprov:'2026-07-02', entrada:'2026-07-03', fechou:'2026-08-10'},
+  {os:'0726-009377', loja:'R QUINZE DE NOVEMBRO, 102 - CENTRO - PETROPOLIS/RJ', etapa:'pendFat', libPor:'', libEm:'', aprov:'2026-07-20', entrada:'2026-07-21', fechou:''},
+  {os:'0826-010655', loja:'R GAVIAO PEIXOTO, 212 - ICARAI - NITEROI/RJ', etapa:'faturado', libPor:'', libEm:'', aprov:'2026-08-04', entrada:'2026-08-05', fechou:'2026-09-02', faturou:''},
+  {os:'0626-008830', loja:'AV ASSUNCAO, 540 - CENTRO - CABO FRIO/RJ', etapa:'faturado', libPor:'', libEm:'', aprov:'2026-06-20', entrada:'2026-06-22', fechou:'2026-08-20', faturou:'2026-09-14'},
+  {os:'0926-011204', loja:'R DR PAULO ALVES, 30 - INGA - NITEROI/RJ', etapa:'definir', libPor:'', libEm:'', aprov:'', entrada:'2026-09-10'}
+];
+
+/* ---------- estados por seção ---------- */
+const EST_EDIT = [['dados','Com dados'],['vazio','Vazio'],['salvando','Salvando'],['erroSalvar','Erro ao salvar'],['erroCarregar','Erro de carregamento'],['sem','Sem acesso']];
+const EST_HIST = [['dados','Com dados'],['vazio','Vazio'],['salvando','Salvando'],['erroCarregar','Erro de carregamento'],['sem','Sem acesso']];
+const EST_LEIT = [['dados','Com dados'],['vazio','Vazio'],['carregando','Carregando'],['erroCarregar','Erro de carregamento'],['sem','Sem acesso']];
+const UI = {A:{estado:'dados', lista:EST_EDIT}, B:{estado:'dados', lista:EST_EDIT}, C:{estado:'dados', lista:EST_EDIT}, D:{estado:'dados', lista:EST_HIST}, E:{estado:'dados', lista:EST_LEIT}, F:{estado:'dados', lista:EST_LEIT}};
+const RENDER = {};
+function montarEstados(){
+  document.querySelectorAll('.estados').forEach(el => {
+    const s = el.dataset.sec;
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', 'Estado da seção ' + s);
+    el.innerHTML = '<span class="lbl">Estado</span>' + UI[s].lista.map(([k, t]) =>
+      `<button type="button" id="est-${s}-${k}" data-est="${k}" aria-pressed="${UI[s].estado === k}">${t}</button>`).join('');
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button[data-est]');
+      if(!b) return;
+      UI[s].estado = b.dataset.est;
+      el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      RENDER[s](true);
+    });
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-retry]');
+    if(!b) return;
+    const s = b.closest('section').id.slice(4);
+    const alvo = $('est-' + s + '-dados');
+    if(alvo){ alvo.click(); alvo.focus(); }
+  });
+}
+
+const semAcesso = () => `<div class="estado-vazio" role="status"><strong>Sua conta não tem acesso ao Controle de Obras</strong>Peça a um administrador do hub para liberar o acesso em Admin → Acessos.</div>`;
+const erroCarga = oque => `<div class="erro-carga" role="alert"><span class="ic" aria-hidden="true">!</span><div><strong>Não carregou ${oque}</strong><p>O servidor não respondeu. É uma falha de conexão, <b>não uma tela vazia</b>: nenhum dado foi apagado. Tente de novo. Se continuar, recarregue a página.</p><button type="button" class="btn ghost" data-retry>Tentar de novo</button></div></div>`;
+const carregando = n => `<div class="skel-wrap" role="status" aria-label="Carregando"><span class="hint">Carregando…</span>${Array.from({length:n || 5}, (_, i) => `<div class="skel" style="width:${92 - (i % 3) * 17}%"></div>`).join('')}</div>`;
+
+/* ---------- diálogo ---------- */
+function fecharDlg(){ const d = $('dlg'); if(d.close) d.close(); else d.removeAttribute('open'); }
+function abrirDlg(titulo, corpo, botoes){
+  const d = $('dlg');
+  $('dlg-h').textContent = titulo;
+  $('dlg-b').innerHTML = corpo;
+  const f = $('dlg-f');
+  f.innerHTML = '';
+  botoes.forEach(b => {
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'btn' + (b.ghost ? ' ghost' : ''); el.id = b.id; el.textContent = b.t;
+    if(b.dis) el.disabled = true;
+    el.addEventListener('click', () => { fecharDlg(); if(b.fn) b.fn(); });
+    f.appendChild(el);
+    if(b.ghost) el.autofocus = true;
+  });
+  if(d.showModal){ if(d.open) d.close(); d.showModal(); } else d.setAttribute('open', '');
+}
+
+const opts = (l, v, ph) => '<option value="">' + esc(ph) + '</option>' + l.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+const sel = (id, l, v, ph, dis) => `<select class="in" id="${id}"${dis ? ' disabled' : ''}>${opts(l, v, ph)}</select>`;
+const inp = (id, type, v, extra) => `<input class="in" id="${id}" type="${type}" value="${esc(v)}" ${extra || ''}>`;
+const campoF = (id, rot, ctl, erro, dica, larga) =>
+  `<div class="campo${erro ? ' invalido' : ''}${larga ? ' larga' : ''}"><label class="rot" for="${id}">${rot}</label>${ctl}${dica ? `<span class="dica">${dica}</span>` : ''}${erro ? `<span class="msg" role="alert">${erro}</span>` : ''}</div>`;
+const erroBox = (t, b, extra) => `<div class="erro-box" role="alert"><strong>${t}</strong>${b}${extra || ''}</div>`;
+const valorInvalido = s => { if(!s) return false; const n = Number(String(s).replace(/\./g, '').replace(',', '.')); return !Number.isFinite(n) || n < 0; };
+function focarInvalido(palco){ const c = $(palco).querySelector('.campo.invalido .in'); if(c) c.focus(); }
+
+/* =====================================================================
+   A — TRIAGEM
+   ===================================================================== */
+const A_VAZIO = {resp:'',equipe:'',prioridade:'',inicio:'',duracao:'',origem:'',libPor:'',libEm:'',tipo:'',valor:'',analista:'',aprov:''};
+const A_CHEIO = {resp:'YURI',equipe:'MANFAC-7',prioridade:'Urgente',inicio:'2026-09-17',duracao:'6',origem:'Telefone',libPor:'LEANDRO',libEm:'2026-09-11',tipo:'CIVIL',valor:'4.380,00',analista:'LEANDRO',aprov:''};
+const TRI = [['resp','Responsável da obra'],['equipe','Equipe / prestador'],['prioridade','Prioridade'],['inicio','Data de início','quando a equipe entra na loja'],['duracao','Duração em dias','a data final o sistema calcula']];
+const A_OBRA = {os:'0926-011204', loja:'R DR PAULO ALVES, 30 - INGA - NITEROI/RJ', desc:'Infiltração no forro do estoque após chuva', entrada:'2026-09-10'};
+let A;
+
+const textoFaltam = f => f
+  ? `Faltam ${f} ${f === 1 ? 'campo' : 'campos'}. Enquanto isso a obra não aparece para ninguém responder.`
+  : 'Pronta. Ao liberar, ela entra na base como Levantamento e passa a ser cobrada todo dia.';
+const textoAutA = v => v.aprov
+  ? `Esta obra já tem <b style="color:var(--ok)">OS aprovada</b> em ${br(v.aprov)} (informada em Dados da obra). Não precisa de liberação: a OS já é a autorização. Se alguém também liberou, registre mesmo assim.`
+  : `Esta obra <b style="color:var(--accent)">ainda não tem OS aprovada</b>. Se o cliente autorizou começar mesmo assim, registre por onde chegou o OK, quem deu e quando. Sem isso a obra vai para campo sem ninguém nomeado que tenha autorizado. <span class="novo">texto novo</span>`;
+
+RENDER.A = function(reset){
+  const est = UI.A.estado, p = $('palco-A');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(est === 'erroCarregar'){ p.innerHTML = erroCarga('esta obra'); return; }
+  if(reset) A = {v: clone(est === 'vazio' ? A_VAZIO : A_CHEIO), salvandoDados: est === 'salvando', liberando: est === 'salvando', erroDados: est === 'erroSalvar', dadosMsg:'', erros:{}, liberada:false};
+  const v = A.v, dis = A.salvandoDados || A.liberando;
+  if(A.liberada){
+    p.innerHTML = `<div class="estado-vazio" role="status" style="border-style:solid;border-color:rgba(53,201,138,.45)"><strong style="color:var(--ok)">Obra liberada</strong>No sistema, você volta para a base e ela aparece em Levantamento, no diário de ${esc(v.resp)}.<div class="acoes" style="justify-content:center"><button type="button" class="btn ghost" id="a-rever">Ver a triagem de novo</button></div></div>`;
+    return;
+  }
+  const faltam = TRI.filter(c => !v[c[0]]).length;
+  const n = dias(A_OBRA.entrada);
+  const E = A.erros;
+  let h = `<div class="head"><div><h3>${A_OBRA.loja}</h3><div class="sub">OS ${A_OBRA.os} · ${v.tipo ? esc(v.tipo) : 'tipo a definir'} · ${v.valor ? 'R$ ' + esc(v.valor) : 'sem orçamento'}</div></div><div class="pills"><span class="pill definir">Aguardando definição</span>${selo({entrada:A_OBRA.entrada}, {definir:true})}</div></div>`;
+  h += `<div class="aviso"><div style="flex:1 1 300px"><h4>Obra nova, esperando definição</h4><p>Ela entrou pelo Field em <b>${br(A_OBRA.entrada)}</b> e está esperando há <b>${n} dias</b>. Qualquer pessoa com acesso ao Controle de Obras pode completar, e fica registrado quem preencheu. Ela só entra no diário quando estes cinco campos estiverem preenchidos: é o checklist antes de começar a obra.</p></div><span class="cont" id="a-cont">${5 - faltam} de 5 preenchidos</span></div>`;
+  h += '<div class="grid2"><div class="col">';
+  h += `<div class="box"><div class="box-h">O que veio do Field</div><div class="box-b"><dl class="dl">
+    <dt>Nº OS</dt><dd class="num">${A_OBRA.os} <span class="field-tag">vem do Field</span></dd>
+    <dt>Loja</dt><dd>${A_OBRA.loja} <span class="field-tag">vem do Field</span></dd>
+    <dt>Chamado</dt><dd>${A_OBRA.desc} <span class="field-tag">vem do Field</span></dd></dl>
+    <p class="txt">O Field traz só estes três campos, e eles não se editam aqui. Se algum estiver errado, corrija no Field: a sincronização só preenche o que está vazio, então uma correção feita aqui nunca mais acompanharia o Field, sem ninguém ser avisado.</p></div></div>`;
+  h += `<div class="box"><div class="box-h">Dados da obra <span class="pill" style="text-transform:none;letter-spacing:0">opcional</span></div><div class="box-b"><div class="fgrid">
+    ${campoF('a-tipo', 'Tipo', sel('a-tipo', TIPOS, v.tipo, '— não sei ainda —', dis))}
+    ${campoF('a-valor', 'Valor (R$)', inp('a-valor', 'text', v.valor, 'inputmode="decimal" placeholder="ex.: 4.380,00"' + (dis ? ' disabled' : '')), E.valor)}
+    ${campoF('a-analista', 'Analista do cliente', sel('a-analista', ANALISTAS, v.analista, '— não sei ainda —', dis), null, 'analista do cliente dono da OS <span class="novo">texto novo</span>', true)}
+    ${campoF('a-aprov', 'OS aprovada em', inp('a-aprov', 'date', v.aprov, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), E.aprov, 'Vazio: OS ainda não aprovada. Com data: a OS conta como aprovada no sistema do cliente, e o SLA 1 não corre.', true)}
+    </div>
+    <div class="acoes"><button type="button" class="btn ghost" id="a-salvar-dados"${dis ? ' disabled' : ''}>${A.salvandoDados ? 'Salvando…' : 'Salvar dados'}</button><span class="hint${A.dadosMsg ? ' ok' : ''}" id="a-dados-msg" aria-live="polite">${A.dadosMsg || 'Grava tudo o que estiver preenchido nesta tela, inclusive a autorização, sem liberar: a obra continua em Aguardando definição.'}</span></div>
+    ${A.erroDados ? erroBox('Não salvou os dados da obra', 'O servidor não confirmou a gravação, então <b>nada foi salvo</b>. O que você digitou continua nos campos. Clique em Salvar dados de novo; se falhar outra vez, anote os valores antes de sair desta página.') : ''}
+    </div></div>`;
+  h += '</div><div class="col">';
+  h += '<div class="box"><div class="box-h">O que falta definir</div><div class="box-b"><div class="stack">';
+  TRI.forEach(([k, rot, dica], i) => {
+    const id = 'a-' + k;
+    const ctl = k === 'resp' ? sel(id, RESP, v.resp, '— escolher —', dis)
+      : k === 'equipe' ? sel(id, EQUIPES, v.equipe, '— escolher —', dis)
+      : k === 'prioridade' ? sel(id, PRIOR, v.prioridade, '— escolher —', dis)
+      : k === 'inicio' ? inp(id, 'date', v.inicio, dis ? 'disabled' : '')
+      : inp(id, 'number', v.duracao, 'min="1" max="180"' + (dis ? ' disabled' : ''));
+    h += `<div class="campo${v[k] ? ' ok' : ''}${E[k] ? ' invalido' : ''}" id="a-campo-${k}"><label class="rot" for="${id}"><span class="mk">${v[k] ? '✓' : i + 1}</span>${rot}</label>${ctl}${dica ? `<span class="dica">${dica}</span>` : ''}${E[k] ? `<span class="msg" role="alert">${E[k]}</span>` : ''}</div>`;
+  });
+  h += `</div><div class="acoes" style="border-top:1px solid var(--line);padding-top:12px"><button type="button" class="btn" id="a-liberar"${faltam || dis ? ' disabled' : ''}>${A.liberando ? 'Liberando…' : 'Liberar para o diário do dia'}</button><span class="hint" id="a-faltam">${textoFaltam(faltam)}</span></div></div></div>`;
+  h += `<div class="box"><div class="box-h">Autorização para executar <span class="novo" style="letter-spacing:.07em">com a origem</span></div><div class="box-b"><p class="txt" style="margin-top:0" id="a-aut-txt">${textoAutA(v)}</p><div class="stack" style="margin-top:10px">
+    ${campoF('a-origem', 'Origem', sel('a-origem', ORIGENS, v.origem, '— não sei ainda —', dis), null, 'por onde chegou o OK para executar <a class="supo" href="#supo-origem">suposição 4</a>')}
+    ${campoF('a-libPor', 'Liberado por', sel('a-libPor', ANALISTAS, v.libPor, '— ninguém liberou —', dis), E.libPor, 'analista do cliente que deu o OK')}
+    ${campoF('a-libEm', 'Data da liberação', inp('a-libEm', 'date', v.libEm, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), E.libEm, 'é outra data, não a da aprovação da OS. Sem OS aprovada, o SLA 1 conta desta data.')}
+    </div></div></div>`;
+  h += '</div></div>';
+  p.innerHTML = h;
+};
+
+function atualizarA(){
+  const v = A.v, faltam = TRI.filter(c => !v[c[0]]).length;
+  $('a-cont').textContent = `${5 - faltam} de 5 preenchidos`;
+  TRI.forEach(([k], i) => { const c = $('a-campo-' + k); c.classList.toggle('ok', !!v[k]); c.querySelector('.mk').textContent = v[k] ? '✓' : i + 1; });
+  $('a-liberar').disabled = !!faltam;
+  $('a-faltam').textContent = textoFaltam(faltam);
+  $('a-aut-txt').innerHTML = textoAutA(v);
+}
+
+function ligarA(){
+  const p = $('palco-A');
+  const aoMudar = e => {
+    const id = e.target.id || '';
+    if(!id.startsWith('a-') || !A || !(id.slice(2) in A.v)) return;
+    A.v[id.slice(2)] = e.target.value;
+    if(A.dadosMsg){ A.dadosMsg = ''; const m = $('a-dados-msg'); m.className = 'hint'; m.textContent = 'Há alterações não salvas.'; }
+    atualizarA();
+  };
+  p.addEventListener('input', aoMudar);
+  p.addEventListener('change', aoMudar);
+  p.addEventListener('click', e => {
+    const id = (e.target.closest('button') || {}).id;
+    const v = A && A.v;
+    if(id === 'a-rever') RENDER.A(true);
+    if(id === 'a-salvar-dados'){
+      A.erros = {};
+      if(valorInvalido(v.valor)) A.erros.valor = 'Valor precisa ser um número em reais, como 4.380,00.';
+      if(v.aprov && v.aprov > HOJE) A.erros.aprov = 'A data de aprovação não pode ser depois de hoje.';
+      if(v.libEm && !v.libPor) A.erros.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+      if(v.libEm && v.libEm > HOJE) A.erros.libEm = 'A data da liberação não pode ser depois de hoje.';
+      if(v.duracao && (+v.duracao < 1 || +v.duracao > 180)) A.erros.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+      if(Object.keys(A.erros).length){ RENDER.A(); focarInvalido('palco-A'); return; }
+      A.erroDados = false; A.salvandoDados = true; RENDER.A();
+      setTimeout(() => { A.salvandoDados = false; A.dadosMsg = 'Salvo agora, com o seu nome: tudo o que estava preenchido, inclusive origem e liberação. A obra continua em Aguardando definição.'; RENDER.A(); $('a-salvar-dados').focus(); }, 900);
+    }
+    if(id === 'a-liberar'){
+      A.erros = {};
+      if(v.libEm && !v.libPor) A.erros.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+      if(+v.duracao < 1 || +v.duracao > 180) A.erros.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+      if(Object.keys(A.erros).length){ RENDER.A(); focarInvalido('palco-A'); return; }
+      const libEm = v.libPor ? (v.libEm || HOJE) : '';
+      const an = ancora({aprov:v.aprov, libPor:v.libPor, libEm, entrada:A_OBRA.entrada});
+      const nAn = dias(an.data);
+      const semCob = !v.aprov && !v.libPor;
+      const itSla = v.aprov ? ''
+        : v.libPor ? `<li>Sem OS aprovada: o <b>SLA 1 (aprovação da OS)</b> conta da liberação (${br(libEm)}) até a OS ser aprovada. Hoje: <b>${plural(dias(libEm), 'dia', 'dias')}</b>.</li>`
+        : `<li><b>Sem OS aprovada e sem ninguém que liberou:</b> ela entra marcada como <b>Sem cobertura</b>, em vermelho, até alguém preencher uma das duas. O SLA 1 conta da entrada pelo Field (${br(A_OBRA.entrada)}). <a class="supo" href="#supo-semlib">suposição 5</a></li>`;
+      abrirDlg('Liberar esta obra para o diário', `<p style="margin:0">Ao liberar:</p><ul>
+        <li>A obra sai de <b>Aguardando definição</b> e entra na base como <b>Levantamento</b>. Não volta para a triagem.</li>
+        <li>Passa a aparecer todo dia no <b>diário de ${esc(v.resp)}</b>, que responde se ela andou.</li>
+        <li>Os dias em aberto contam da <b>${an.nome}</b> (${br(an.data)}): hoje são <b>${nAn}</b>. Acima de 20 dias ela fica em <b>atenção</b>; acima de 30, <b>crítica</b>.</li>
+        ${v.libPor && !v.libEm ? '<li>A data da liberação está vazia: será gravada a data de hoje.</li>' : ''}
+        ${itSla}
+        ${semCob ? '' : ''}
+        <li>Os dados da obra e a autorização preenchidos também são gravados. Tudo continua editável na ficha, e cada mudança fica no histórico com o seu nome.</li></ul>`,
+        [{id:'dlg-a-liberar', t:'Liberar agora', fn:() => { A.liberando = true; RENDER.A(); setTimeout(() => { A.liberando = false; A.liberada = true; RENDER.A(); const b = $('a-rever'); if(b) b.focus(); }, 1000); }},
+         {id:'dlg-a-voltar', t:'Voltar sem liberar', ghost:true}]);
+    }
+  });
+}
+
+/* =====================================================================
+   B — FICHA COM BLOCOS EDITÁVEIS
+   ===================================================================== */
+const ROT = {origem:'Origem', libPor:'Liberado por', libEm:'Data da liberação', aprov:'OS aprovada em', tipo:'Tipo', valor:'Valor', analista:'Analista do cliente', mau:'Mau uso', resp:'Responsável da obra', equipe:'Equipe / prestador', prioridade:'Prioridade', inicio:'Início planejado', duracao:'Duração'};
+const BLOCO = {aut:'Autorização', ide:'Identificação', cro:'Cronograma'};
+const fmt = (c, v) => (v === '' || v == null) ? '—' : c === 'mau' ? (v ? 'Sim' : 'Não') : ['libEm','aprov','inicio'].includes(c) ? br(v) : c === 'valor' ? 'R$ ' + v : c === 'duracao' ? v + ' dias' : v;
+const vv = v => (v === '' || v == null) ? '<span class="vazio">a definir</span>' : esc(v);
+const textoMotivo = (m, det) => m === 'Outro' && det ? 'Outro: ' + det : m;
+
+const B_CHEIO = {os:'0826-010877', loja:'R MARQUES DE PARANA, 110 - ICARAI - NITEROI/RJ', desc:'Troca de piso cerâmico da área de vendas', etapa:'Em andamento', entrada:'2026-08-18',
+  aut:{origem:'E-mail do cliente', libPor:'LEANDRO', libEm:'2026-08-20', aprov:''},
+  ide:{tipo:'CIVIL', valor:'18.450,00', analista:'LEANDRO', mau:false},
+  cro:{resp:'LUANA', equipe:'MANFAC-7', prioridade:'Normal', inicio:'2026-08-24', duracao:'20'},
+  rod:{aut:['YURI','20/08'], ide:['AMANDA','02/09'], cro:['LUANA','26/08']},
+  remarc:[{data:'22/08/2026', de:'2026-08-21', para:'2026-08-24', motivo:'Cliente/loja', det:'', quem:'LUANA'}]};
+const B_VAZIO = {os:'0926-011388', loja:'ESTRADA VELHA DE MARICA, 900 - INOA - MARICA/RJ', desc:'Porta de enrolar da fachada travando', etapa:'Levantamento', entrada:'2026-09-10',
+  aut:{origem:'', libPor:'', libEm:'', aprov:''}, ide:{tipo:'', valor:'', analista:'', mau:false},
+  cro:{resp:'', equipe:'', prioridade:'', inicio:'', duracao:''}, rod:{}, remarc:[]};
+let B;
+
+const HIST = [
+  {q:'02/09/2026 10:21', quem:'AMANDA', bloco:'Identificação', campo:'Valor', de:'—', para:'R$ 18.450,00'},
+  {q:'02/09/2026 10:21', quem:'AMANDA', bloco:'Identificação', campo:'Tipo', de:'—', para:'CIVIL'},
+  {q:'26/08/2026 09:14', quem:'LUANA', bloco:'Cronograma', campo:'Duração', de:'15 dias', para:'20 dias'},
+  {q:'24/08/2026 07:50', quem:'LUANA', bloco:'Esteira', campo:'Etapa', de:'Levantamento', para:'Em andamento', obs:'pelo seletor de etapa'},
+  {q:'22/08/2026 16:40', quem:'LUANA', bloco:'Cronograma', campo:'Início planejado', de:'21/08/2026', para:'24/08/2026', mot:'Cliente/loja'},
+  {q:'20/08/2026 11:02', quem:'YURI', bloco:'Autorização', campo:'Origem', de:'—', para:'E-mail do cliente'},
+  {q:'20/08/2026 11:02', quem:'YURI', bloco:'Autorização', campo:'Liberado por', de:'—', para:'LEANDRO'},
+  {q:'20/08/2026 11:02', quem:'YURI', bloco:'Autorização', campo:'Data da liberação', de:'—', para:'20/08/2026'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Etapa', de:'Aguardando definição', para:'Levantamento', obs:'liberada para o diário'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Responsável da obra', de:'—', para:'LUANA'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Equipe / prestador', de:'—', para:'MANFAC-7'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Prioridade', de:'—', para:'Normal'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Início planejado', de:'—', para:'21/08/2026'},
+  {q:'19/08/2026 15:30', quem:'YURI', bloco:'Triagem', campo:'Duração', de:'—', para:'15 dias'}
+];
+
+const rodapeB = k => { const r = B.m.rod[k]; return r
+  ? `Editado por <b>${esc(r[0])}</b> em ${r[1]} · <button type="button" class="link" data-acao="hist" data-bloco="${k}" id="b-hist-${k}">ver no histórico</button>`
+  : `Sem edição desde a entrada pelo Field (${br(B.m.entrada)}).`; };
+const erroSalvarB = k => erroBox('Não salvou ' + {aut:'a autorização', ide:'a identificação', cro:'o cronograma'}[k],
+  'O servidor não confirmou, então <b>nada foi gravado</b>' + (k === 'cro' && B.edit.cro && B.edit.cro.motivo ? `: nem o início novo, nem a remarcação (motivo escolhido: ${esc(textoMotivo(B.edit.cro.motivo, B.edit.cro.det))})` : '') + '. O que você preencheu continua abaixo. Clique em Salvar de novo. Se a mensagem disser que outra pessoa alterou esta obra, recarregue a página e refaça a alteração.');
+const precisaMotivo = () => { const o = B.m.cro, d = B.edit.cro; return !!(d && o.inicio && d.inicio && d.inicio !== o.inicio); };
+
+function blocoB(k, leitura, form, hint){
+  const ed = B.edit[k], sal = B.salvando[k];
+  const topo = ed ? '<span class="pill warn" style="text-transform:none;letter-spacing:0">editando</span>'
+    : `<button type="button" class="btn ghost mini" id="b-editar-${k}" data-acao="editar" data-bloco="${k}" aria-label="Editar ${BLOCO[k]}">Editar</button>`;
+  const corpo = !ed ? leitura : form + (B.erro[k] ? erroSalvarB(k) : '') +
+    `<div class="acoes"><button type="button" class="btn" id="b-salvar-${k}" data-acao="salvar" data-bloco="${k}"${sal ? ' disabled' : ''}>${sal ? 'Salvando…' : 'Salvar'}</button><button type="button" class="btn ghost" id="b-cancelar-${k}" data-acao="cancelar" data-bloco="${k}"${sal ? ' disabled' : ''}>Cancelar</button><span class="hint" id="b-hint-${k}" aria-live="polite">${sal ? 'Gravando no servidor. Não feche a página.' : hint}</span></div>`;
+  return `<div class="box" id="b-bloco-${k}"><div class="box-h">${BLOCO[k]}<span class="dir">${topo}</span></div><div class="box-b">${corpo}</div><div class="box-f">${rodapeB(k)}</div></div>`;
+}
+
+function dinCro(){
+  const o = B.m.cro, d = B.edit.cro;
+  let h = '';
+  const fimAntes = soma(o.inicio, +o.duracao), fimDepois = soma(d.inicio, +d.duracao);
+  if(precisaMotivo()){
+    h += `<div class="remarca"><strong>Mudar o início é uma remarcação</strong><p>De <b>${br(o.inicio)}</b> para <b>${br(d.inicio)}</b>. Ao clicar em Salvar, você escolhe o <b>motivo</b> numa lista padronizada (obrigatório). Fica em Remarcações e no histórico. <span class="novo">texto novo</span></p></div>`;
+  }
+  if(fimAntes && fimDepois && fimAntes !== fimDepois) h += `<p class="hint" style="margin:8px 0 0">Final calculado: <b>${br(fimAntes)}</b> → <b>${br(fimDepois)}</b>.${d.duracao !== o.duracao ? ' A duração muda sem motivo.' : ''}</p>`;
+  return h;
+}
+function hintCro(){ return precisaMotivo() ? 'Ao salvar, o motivo da remarcação é pedido.' : 'Duração, equipe e prioridade mudam sem motivo. Fica no histórico quem salvou.'; }
+
+RENDER.B = function(reset){
+  const est = UI.B.estado, p = $('palco-B');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(est === 'erroCarregar'){ p.innerHTML = erroCarga('a ficha desta obra'); return; }
+  if(reset){
+    B = {m: clone(est === 'vazio' ? B_VAZIO : B_CHEIO), edit:{}, salvando:{}, erro:{}, erros:{}};
+    if(est === 'salvando'){ B.edit.aut = Object.assign(clone(B.m.aut), {aprov:HOJE}); B.salvando.aut = true; }
+    if(est === 'erroSalvar'){
+      B.edit.aut = {origem:'E-mail do cliente', libPor:'', libEm:'2026-08-20', aprov:''};
+      B.erros.aut = {libPor:'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.'};
+      B.edit.cro = Object.assign(clone(B.m.cro), {inicio:'2026-09-01', motivo:'Disponibilidade de equipe', det:''});
+      B.erro.cro = true;
+    }
+  }
+  const m = B.m, a = m.aut, i = m.ide, c = m.cro;
+  const s1 = sla1({etapa:'andamento', aprov:a.aprov, libPor:a.libPor, libEm:a.libEm, entrada:m.entrada});
+  let h = `<div class="head"><div><h3>${esc(m.loja)}</h3><div class="sub">OS ${m.os} · ${i.tipo ? esc(i.tipo) : 'tipo a definir'} · ${i.valor ? 'R$ ' + esc(i.valor) : 'sem orçamento'}</div></div><div class="pills"><span class="pill info">${m.etapa}</span>${i.mau ? '<span class="pill warn">Mau uso</span>' : ''}${a.aprov ? '<span class="pill ok">OS aprovada</span>' : '<span class="pill crit">Sem OS aprovada</span>'}${!a.aprov && !a.libPor ? '<span class="pill crit">Sem cobertura</span>' : ''}${selo({aprov:a.aprov, libPor:a.libPor, libEm:a.libEm, entrada:m.entrada})}${slaPill(1, s1)}</div></div>`;
+
+  if(est === 'dados') h += `<div class="acoes" style="margin:0 0 12px"><button type="button" class="btn ghost mini" id="b-demo-etapa" data-acao="demo" aria-pressed="${m.etapa !== 'Em andamento'}">${m.etapa === 'Em andamento' ? 'Demonstração: pôr esta obra em "' + ETAPA_APROV + '"' : 'Voltar a obra para Em andamento'}</button><span class="hint">Com a obra nessa etapa, preencha "OS aprovada em" no bloco Autorização e salve: ela avança para Fechar OS, com aviso.</span></div>`;
+
+  const falta = {ide:['tipo','valor','analista'].filter(x => !i[x]), cro:['resp','equipe','prioridade','inicio','duracao'].filter(x => !c[x]), aut:(!a.aprov && !a.libPor) ? ['libPor'] : []};
+  const nFalta = falta.ide.length + falta.cro.length + falta.aut.length;
+  if(nFalta){
+    const partes = ['aut','ide','cro'].filter(k => falta[k].length).map(k =>
+      `<button type="button" class="link" data-acao="editar" data-bloco="${k}" id="b-falta-${k}">${BLOCO[k]}</button>: ${k === 'aut' ? 'nem liberação nem OS aprovada' : falta[k].map(x => ROT[x]).join(', ')}`);
+    h += `<div class="aviso warn"><div style="flex:1 1 300px"><h4>Faltam ${nFalta} dados desta obra</h4><p>${partes.join(' · ')}</p>${!a.aprov && !a.libPor ? `<p style="margin-top:6px">Sem data de aprovação nem de liberação, os dias em aberto e o SLA 1 desta obra contam da <b>entrada pelo Field</b> (${br(m.entrada)}).</p>` : ''}</div></div>`;
+  }
+  const fim = soma(c.inicio, +c.duracao), atr = fim ? dias(fim) : null;
+  if(atr > 0 && m.etapa === 'Em andamento') h += `<div class="aviso warn"><div><h4>Passou da duração planejada</h4><p>Início em <b>${br(c.inicio)}</b> com <b>${c.duracao} dias</b> de duração: deveria ter terminado em <b>${br(fim)}</b>. São ${plural(atr, 'dia', 'dias')} além do prazo.</p></div></div>`;
+
+  /* Autorização (agora com a origem) */
+  const autTxt = a.aprov && a.libPor ? 'A obra tem as duas coberturas: alguém autorizou a execução <b>e</b> existe OS aprovada no sistema do cliente. É o caso normal.'
+    : a.aprov ? 'A obra não precisou de liberação: a <b>OS já estava aprovada</b>, e a OS é a própria autorização.'
+    : a.libPor ? `A execução acontece com o <b>OK de ${esc(a.libPor)}</b>${a.origem ? ' (chegou por ' + esc(a.origem.toLowerCase()) + ')' : ''}, que se comprometeu a aprovar a OS depois. O SLA 1 está em <b>${plural(s1.n, 'dia', 'dias')}</b>, e é ${esc(a.libPor)} quem a Manfac vai procurar.`
+    : '<b style="color:var(--crit)">Nem uma coisa nem outra.</b> A obra está sendo executada sem OS e sem ninguém nomeado que tenha autorizado.';
+  const autLeitura = `<dl class="dl"><dt>Origem</dt><dd>${vv(a.origem)}</dd><dt>Liberação</dt><dd>${a.libPor ? `Liberado por <b>${esc(a.libPor)}</b> · ${br(a.libEm)}` : '<span style="color:var(--crit);font-weight:600">Ninguém liberou esta obra</span>'}</dd>
+    <dt>OS do cliente</dt><dd>${a.aprov ? `OS aprovada em ${br(a.aprov)}` : `<span style="color:var(--crit);font-weight:600">OS ainda não aprovada</span> <span style="color:var(--ink-dim)">· SLA 1 há ${plural(s1.n, 'dia', 'dias')}</span>`}</dd></dl><p class="txt">${autTxt}</p>`;
+  let autForm = '';
+  if(B.edit.aut){
+    const d = B.edit.aut, er = B.erros.aut || {}, dis = B.salvando.aut;
+    autForm = `<div class="fgrid">
+      ${campoF('b-aut-origem', 'Origem <span class="novo">mudou para cá</span>', sel('b-aut-origem', ORIGENS, d.origem, '— não sei ainda —', dis), null, 'por onde chegou o OK para executar', true)}
+      ${campoF('b-aut-libPor', 'Liberado por', sel('b-aut-libPor', ANALISTAS, d.libPor, '— ninguém liberou —', dis), er.libPor, 'analista do cliente que deu o OK')}
+      ${campoF('b-aut-libEm', 'Data da liberação', inp('b-aut-libEm', 'date', d.libEm, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), er.libEm, 'é outra data, não a da aprovação')}
+      ${campoF('b-aut-aprov', 'OS aprovada em', inp('b-aut-aprov', 'date', d.aprov, 'max="' + HOJE + '"' + (dis ? ' disabled' : '')), er.aprov, 'Vazio: OS ainda não aprovada. Com data: a OS conta como aprovada, a data vale para a esteira e encerra o SLA 1.', true)}
+      </div>`;
+  }
+
+  /* Identificação (sem a origem) */
+  const ideLeitura = `<dl class="dl">
+    <dt>Nº OS</dt><dd class="num">${m.os} <span class="field-tag">vem do Field</span></dd>
+    <dt>Loja</dt><dd>${esc(m.loja)} <span class="field-tag">vem do Field</span></dd>
+    <dt>Chamado</dt><dd>${esc(m.desc)} <span class="field-tag">vem do Field</span></dd>
+    <dt>Tipo</dt><dd>${vv(i.tipo)}</dd><dt>Valor</dt><dd class="num">${i.valor ? 'R$ ' + esc(i.valor) : '<span class="vazio">sem orçamento</span>'}</dd>
+    <dt>Analista do cliente</dt><dd>${vv(i.analista)}</dd>
+    <dt>Classificação</dt><dd>${i.mau ? '<span class="pill warn">Mau uso</span>' : 'normal'}</dd></dl>`;
+  let ideForm = '';
+  if(B.edit.ide){
+    const d = B.edit.ide, er = B.erros.ide || {}, dis = B.salvando.ide;
+    ideForm = `<div class="fgrid">
+      <div class="campo larga"><span class="rot">Nº OS · Loja · Chamado <span class="field-tag">vem do Field</span></span><div class="ro"><span class="num">${m.os}</span> · ${esc(m.loja)}<br>${esc(m.desc)}</div><span class="dica">Não se editam aqui: corrija no Field. A sincronização só preenche o que está vazio.</span></div>
+      ${campoF('b-ide-tipo', 'Tipo', sel('b-ide-tipo', TIPOS, d.tipo, '— não sei ainda —', dis))}
+      ${campoF('b-ide-valor', 'Valor (R$)', inp('b-ide-valor', 'text', d.valor, 'inputmode="decimal" placeholder="ex.: 18.450,00"' + (dis ? ' disabled' : '')), er.valor)}
+      ${campoF('b-ide-analista', 'Analista do cliente', sel('b-ide-analista', ANALISTAS, d.analista, '— não sei ainda —', dis), null, null, true)}
+      <div class="campo larga"><label class="sw" for="b-ide-mau"><input type="checkbox" id="b-ide-mau"${d.mau ? ' checked' : ''}${dis ? ' disabled' : ''}> Mau uso</label><span class="dica">Dano por uso indevido do cliente. É etiqueta, não etapa: a obra segue a mesma esteira.</span></div>
+      </div>`;
+  }
+
+  /* Cronograma */
+  const croLeitura = `<dl class="dl"><dt>Responsável da obra</dt><dd>${vv(c.resp)}</dd><dt>Equipe / prestador</dt><dd>${vv(c.equipe)}</dd><dt>Prioridade</dt><dd>${vv(c.prioridade)}</dd>
+    <dt>Início planejado</dt><dd class="num">${c.inicio ? br(c.inicio) : '<span class="vazio">a definir</span>'}</dd><dt>Duração</dt><dd class="num">${c.duracao ? c.duracao + ' dias' : '<span class="vazio">a definir</span>'}</dd>
+    <dt>Final calculado</dt><dd class="num">${br(fim)}</dd></dl>
+    <p class="txt">A obra é planejada por <b>duração</b>, não por data de entrega. O final é o início mais os dias combinados e se recalcula sozinho a cada remarcação.</p>`;
+  let croForm = '';
+  if(B.edit.cro){
+    const d = B.edit.cro, er = B.erros.cro || {}, dis = B.salvando.cro;
+    croForm = `<div class="fgrid">
+      ${campoF('b-cro-resp', 'Responsável da obra', sel('b-cro-resp', RESP, d.resp, '— escolher —', dis))}
+      ${campoF('b-cro-equipe', 'Equipe / prestador', sel('b-cro-equipe', EQUIPES, d.equipe, '— escolher —', dis))}
+      ${campoF('b-cro-prioridade', 'Prioridade', sel('b-cro-prioridade', PRIOR, d.prioridade, '— escolher —', dis))}
+      ${campoF('b-cro-inicio', 'Início planejado', inp('b-cro-inicio', 'date', d.inicio, dis ? 'disabled' : ''), er.inicio, c.inicio ? 'mudar vira remarcação, com motivo' : 'quando a equipe entra na loja')}
+      ${campoF('b-cro-duracao', 'Duração em dias', inp('b-cro-duracao', 'number', d.duracao, 'min="1" max="180"' + (dis ? ' disabled' : '')), er.duracao, 'muda livre, sem motivo')}
+      <div class="larga" id="b-cro-din">${dinCro()}</div></div>`;
+  }
+  const remarc = m.remarc.length ? m.remarc.map(r => `<p style="margin:0 0 10px;font-size:12.5px;color:var(--ink-dim)"><span class="num" style="color:var(--ink-faint)">${r.data}</span> · início de <b style="color:var(--ink)">${br(r.de)}</b> para <b style="color:var(--ink)">${br(r.para)}</b> · ${esc(r.quem)}<br><span class="mot-chip">${esc(r.motivo)}</span>${r.det ? ' <span>' + esc(r.det) + '</span>' : ''}</p>`).join('')
+    : '<p class="hint" style="margin:0">Nenhuma remarcação registrada.</p>';
+
+  h += '<div class="grid2"><div class="col">' + blocoB('aut', autLeitura, autForm, 'Motivo não é obrigatório. Fica no histórico quem salvou.')
+    + blocoB('ide', ideLeitura, ideForm, 'Motivo não é obrigatório. Fica no histórico quem salvou.') + '</div><div class="col">'
+    + blocoB('cro', croLeitura, croForm, B.edit.cro ? hintCro() : '')
+    + `<div class="box"><div class="box-h">Remarcações <span class="dir num">${m.remarc.length}</span></div><div class="box-b">${remarc}</div></div></div></div>`;
+  p.innerHTML = h;
+};
+
+function aplicarB(k){
+  const o = B.m[k], d = B.edit[k];
+  let mudou = false;
+  Object.keys(o).forEach(c => {
+    if(String(o[c]) === String(d[c])) return;
+    mudou = true;
+    const remarca = k === 'cro' && c === 'inicio' && o.inicio;
+    if(UI.B.estado === 'dados') HIST.unshift({q:AGORA, quem:'Você', bloco:BLOCO[k], campo:ROT[c], de:fmt(c, o[c]), para:fmt(c, d[c]), mot: remarca ? textoMotivo(d.motivo, d.det) : ''});
+    if(remarca) B.m.remarc.unshift({data:'15/09/2026', de:o.inicio, para:d.inicio, motivo:d.motivo, det:d.motivo === 'Outro' ? d.det : '', quem:'Você'});
+  });
+  Object.keys(o).forEach(c => { o[c] = d[c]; });
+  if(mudou) B.m.rod[k] = ['você', '15/09'];
+}
+
+/* ---------- diálogo de remarcação: motivo padronizado + cadastrar novo ---------- */
+function dialogoRemarcar(aoConfirmar){
+  const o = B.m.cro, d = B.edit.cro;
+  const R = {motivo: d.motivo || '', det: d.det || ''};
+  const fimA = soma(o.inicio, +o.duracao), fimD = soma(d.inicio, +d.duracao);
+  const listaHtml = () => '<legend>Motivo da remarcação <span class="hint">(obrigatório)</span></legend>' + MOTIVOS.map((m, i) =>
+    `<label for="dlg-r-m${i}"><input type="radio" name="dlg-r-mot" id="dlg-r-m${i}" value="${esc(m.t)}"${R.motivo === m.t ? ' checked' : ''}>${esc(m.t)}${m.novo ? ' <span class="novo">cadastrado agora por você</span>' : ''}</label>`).join('');
+  const corpo = `<p style="margin:0 0 10px">Início de <b>${br(o.inicio)}</b> para <b>${br(d.inicio)}</b>${fimA && fimD && fimA !== fimD ? `. Final calculado: <b>${br(fimA)}</b> → <b>${br(fimD)}</b>` : ''}.</p>
+    <fieldset class="motivos" id="dlg-r-lista">${listaHtml()}</fieldset>
+    <div class="campo" id="dlg-r-outro" style="margin-top:8px"${R.motivo === 'Outro' ? '' : ' hidden'}><label class="rot" for="dlg-r-det">Qual é o outro motivo?</label><input class="in" id="dlg-r-det" maxlength="120" value="${esc(R.det)}" placeholder="ex.: aguardando laudo do engenheiro"><span class="dica">Obrigatório com "Outro". Vale só para esta remarcação. Para o motivo entrar na lista, use "Cadastrar novo motivo". <a class="supo" href="#supo-motivos">suposição 2</a></span></div>
+    <div style="margin-top:10px"><button type="button" class="link" id="dlg-r-novo">+ Cadastrar novo motivo</button>
+      <div class="campo" id="dlg-r-novo-form" style="margin-top:8px" hidden><label class="rot" for="dlg-r-novo-in">Novo motivo</label>
+        <div class="linha"><input class="in" id="dlg-r-novo-in" maxlength="60" placeholder="ex.: Aguardando laudo técnico"><button type="button" class="btn mini" id="dlg-r-novo-ok">Cadastrar</button><button type="button" class="btn ghost mini" id="dlg-r-novo-x">Cancelar</button></div>
+        <span class="msg" id="dlg-r-novo-msg" role="alert"></span>
+        <span class="dica">Entra na lista para todas as obras e já fica escolhido aqui. Fica registrado quem cadastrou.</span></div></div>
+    <p style="margin:12px 0 0">Ao salvar:</p><ul>
+      <li>O início planejado passa a ser <b>${br(d.inicio)}</b>, e o final se recalcula.</li>
+      <li>A remarcação entra em <b>Remarcações</b> e no <b>Histórico</b>, com o motivo e o seu nome.</li>
+      <li>Os <b>dias em aberto</b> (seção E) e o <b>SLA 1</b> (seção F) não mudam: eles contam da liberação, da aprovação ou da entrada, nunca do início planejado.</li>
+      <li>Os outros campos do cronograma alterados salvam junto, sem motivo.</li></ul>
+    <p class="hint" id="dlg-r-falta" aria-live="polite" style="margin:10px 0 0"></p>`;
+  abrirDlg('Remarcar o início da obra', corpo,
+    [{id:'dlg-r-ok', t:'Remarcar e salvar', dis:true, fn:() => { d.motivo = R.motivo; d.det = R.motivo === 'Outro' ? R.det.trim() : ''; aoConfirmar(); }},
+     {id:'dlg-r-voltar', t:'Voltar ao formulário', ghost:true}]);
+  const validar = () => {
+    const ok = !!R.motivo && (R.motivo !== 'Outro' || R.det.trim().length >= 3);
+    $('dlg-r-ok').disabled = !ok;
+    $('dlg-r-falta').textContent = !R.motivo ? 'Escolha um motivo para remarcar.' : !ok ? 'Descreva o outro motivo (pelo menos 3 letras).' : 'Pronto para salvar.';
+  };
+  const ligarLista = () => $('dlg-r-lista').addEventListener('change', e => {
+    if(e.target.name !== 'dlg-r-mot') return;
+    R.motivo = e.target.value;
+    $('dlg-r-outro').hidden = R.motivo !== 'Outro';
+    validar();
+    if(R.motivo === 'Outro') $('dlg-r-det').focus();
+  });
+  ligarLista();
+  $('dlg-r-det').addEventListener('input', e => { R.det = e.target.value; validar(); });
+  $('dlg-r-novo').addEventListener('click', () => { $('dlg-r-novo-form').hidden = false; $('dlg-r-novo-in').focus(); });
+  $('dlg-r-novo-x').addEventListener('click', () => { $('dlg-r-novo-form').hidden = true; $('dlg-r-novo-in').value = ''; $('dlg-r-novo-msg').textContent = ''; $('dlg-r-novo').focus(); });
+  const cadastrar = () => {
+    const t = $('dlg-r-novo-in').value.trim().replace(/\s+/g, ' ');
+    const msg = $('dlg-r-novo-msg');
+    if(t.length < 3){ msg.textContent = 'Escreva o motivo com pelo menos 3 letras.'; return; }
+    const igual = MOTIVOS.find(m => norm(m.t) === norm(t));
+    if(igual){ msg.textContent = `"${igual.t}" já está na lista: foi escolhido para você.`; R.motivo = igual.t; }
+    else {
+      MOTIVOS.splice(MOTIVOS.length - 1, 0, {t: t.charAt(0).toUpperCase() + t.slice(1), novo:true});
+      R.motivo = MOTIVOS[MOTIVOS.length - 2].t;
+      msg.textContent = '';
+      $('dlg-r-novo-form').hidden = true; $('dlg-r-novo-in').value = '';
+    }
+    $('dlg-r-lista').innerHTML = listaHtml();
+    $('dlg-r-outro').hidden = R.motivo !== 'Outro';
+    validar();
+    const marcado = $('dlg-r-lista').querySelector('input:checked'); if(marcado) marcado.focus();
+  };
+  $('dlg-r-novo-ok').addEventListener('click', cadastrar);
+  $('dlg-r-novo-in').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); cadastrar(); } });
+  validar();
+}
+
+function ligarB(){
+  const p = $('palco-B');
+  const aoMudar = e => {
+    const mt = /^b-(aut|ide|cro)-(\w+)$/.exec(e.target.id || '');
+    if(!mt || !B.edit[mt[1]]) return;
+    const [, k, c] = mt, d = B.edit[k];
+    d[c] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if(k !== 'cro') return;
+    if(c === 'inicio' || c === 'duracao') $('b-cro-din').innerHTML = dinCro();
+    $('b-hint-cro').textContent = hintCro();
+  };
+  p.addEventListener('input', aoMudar);
+  p.addEventListener('change', aoMudar);
+  p.addEventListener('click', e => {
+    const b = e.target.closest('button[data-acao]');
+    if(!b) return;
+    const k = b.dataset.bloco, ac = b.dataset.acao;
+    if(ac === 'editar'){
+      if(!B.edit[k]) B.edit[k] = Object.assign(clone(B.m[k]), k === 'cro' ? {motivo:'', det:''} : {});
+      RENDER.B();
+      const f = $('b-bloco-' + k).querySelector('select:not([disabled]), input:not([disabled])');
+      if(f) f.focus();
+    }
+    if(ac === 'demo'){ B.m.etapa = B.m.etapa === 'Em andamento' ? ETAPA_APROV : 'Em andamento'; RENDER.B(); $('b-demo-etapa').focus(); return; }
+    if(ac === 'cancelar'){ delete B.edit[k]; B.erros[k] = {}; B.erro[k] = false; RENDER.B(); $('b-editar-' + k).focus(); }
+    if(ac === 'hist'){ D.obra = 'B'; D.filtro = BLOCO[k]; if(UI.D.estado !== 'dados') $('est-D-dados').click(); else RENDER.D(); $('sec-D').scrollIntoView({block:'start'}); }
+    if(ac === 'salvar'){
+      const d = B.edit[k], er = {};
+      if(k === 'aut'){
+        if(d.libEm && !d.libPor) er.libPor = 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.';
+        if(d.aprov && d.aprov > HOJE) er.aprov = 'A data de aprovação não pode ser depois de hoje.';
+      }
+      if(k === 'ide' && valorInvalido(d.valor)) er.valor = 'Valor precisa ser um número em reais, como 18.450,00.';
+      if(k === 'cro' && d.duracao && (+d.duracao < 1 || +d.duracao > 180)) er.duracao = 'A duração precisa ficar entre 1 e 180 dias.';
+      B.erros[k] = er; B.erro[k] = false;
+      if(Object.keys(er).length){ RENDER.B(); focarInvalido('palco-B'); return; }
+      const gravar = avancar => {
+        B.salvando[k] = true; RENDER.B();
+        setTimeout(() => {
+          aplicarB(k);
+          if(avancar){
+            B.m.etapa = 'Fechar OS';
+            if(UI.B.estado === 'dados') HIST.unshift({q:AGORA, quem:'Você', bloco:'Esteira', campo:'Etapa', de:ETAPA_APROV, para:'Fechar OS', obs:'concluída ao salvar a aprovação na ficha'});
+          }
+          B.salvando[k] = false; delete B.edit[k]; RENDER.B(); RENDER.D(); $('b-editar-' + k).focus();
+        }, 900);
+      };
+      if(k === 'cro' && precisaMotivo()){ dialogoRemarcar(() => gravar(false)); return; }
+      /* Aprovação preenchida com a obra esperando por ela: avança para Fechar OS, com aviso. */
+      if(k === 'aut' && B.m.etapa === ETAPA_APROV && d.aprov && !B.m.aut.aprov){
+        const an = ancora({aprov:d.aprov, libPor:d.libPor, libEm:d.libEm, entrada:B.m.entrada});
+        const s = sla1({etapa:'andamento', aprov:d.aprov, libPor:d.libPor, libEm:d.libEm, entrada:B.m.entrada});
+        abrirDlg('Salvar a aprovação e avançar a obra', `<p style="margin:0">Esta obra está em <b>${ETAPA_APROV}</b>, esperando justamente a aprovação da OS. Ao salvar:</p><ul>
+          <li>Grava <b>OS aprovada em ${br(d.aprov)}</b>.</li>
+          <li>O passo <b>${ETAPA_APROV}</b> fica concluído com essa data.</li>
+          <li>A obra passa para <b>Fechar OS</b>, o contador "parada nesta etapa" recomeça hoje, e a vez passa do <b>Cliente</b> para o <b>Responsável ${esc(B.m.cro.resp || 'a definir')}</b>.</li>
+          <li>${s.st === 'fim' ? `Encerra o <b>SLA 1</b> em <b>${plural(s.n, 'dia', 'dias')}</b> (${br(s.ini)} → ${br(s.fim)}).` : 'O SLA 1 não se aplica a esta obra.'} O SLA 2 começa quando a OS for fechada no sistema do cliente.</li>
+          <li>Os dias em aberto contam da ${an.nome} (${br(an.data)}): hoje são <b>${dias(an.data)}</b>. Uma aprovação mais recente não derruba a contagem.</li>
+          <li>Fica no histórico com o seu nome: o campo e a mudança de etapa.</li></ul>`,
+          [{id:'dlg-b-avancar', t:'Salvar e avançar para Fechar OS', fn:() => gravar(true)},
+           {id:'dlg-b-voltar', t:'Voltar ao formulário', ghost:true}]);
+        return;
+      }
+      gravar(false);
+    }
+  });
+}
+
+/* =====================================================================
+   C — ESTEIRA COM "CONCLUIR ESTA ETAPA"
+   ===================================================================== */
+const PASSOS = [
+  {k:'campo', nome:'Execução em campo', dono:o => o.equipe ? 'Equipe ' + o.equipe : 'Equipe a definir', onde:'Campo · diário do dia', marco:'fim da execução em campo'},
+  {k:'relatorio', nome:'Relatório de entrega', dono:() => 'Equipe / responsável', onde:'Field Control', marco:'relatório de entrega pronto'},
+  {k:'aprovarOS', nome:ETAPA_APROV, desvio:true, dono:() => 'Cliente', onde:'Sistema do cliente', marco:'OS aprovada'},
+  {k:'fecharOS', nome:'Fechar OS', dono:o => o.resp ? 'Responsável ' + o.resp : 'Responsável a definir', onde:'Sistema do cliente', marco:'fechamento da OS no sistema do cliente'},
+  {k:'pendFat', nome:'Pendente faturamento', dono:() => 'Cliente', onde:'Sistema do cliente', marco:'faturamento liberado pelo cliente'},
+  {k:'faturado', nome:'Faturado', dono:() => 'Financeiro Manfac', onde:'Manfac', marco:'faturamento pela Manfac'}
+];
+const PX = k => PASSOS.find(p => p.k === k);
+const C_BASE = {os:'0726-009315', loja:'R RIBEIRO DE ALMEIDA, 56 - CENTRO - MARICA/RJ', desc:'Reparo no telhado e calhas da doca de recebimento', resp:'LUANA', equipe:'MANFAC-7', libPor:'JUAN', libEm:'2026-07-28', entrada:'2026-07-24'};
+const C_CHEIO = Object.assign({}, C_BASE, {aprov:'', etapa:'aprovarOS', desde:'2026-08-27', datas:{campo:'2026-08-25'}, pulados:{relatorio:'Passo pulado: a etapa foi mudada pelo seletor em 27/08/2026, por YURI.'}});
+const C_DIRETO = Object.assign({}, C_BASE, {libPor:'', libEm:'', aprov:'2026-07-22', etapa:'fecharOS', desde:'2026-08-28', datas:{campo:'2026-08-25', relatorio:'2026-08-28'}, pulados:{}});
+const C_VAZIO = {os:'0926-011388', loja:'ESTRADA VELHA DE MARICA, 900 - INOA - MARICA/RJ', desc:'Porta de enrolar da fachada travando', resp:'', equipe:'', libPor:'', libEm:'', aprov:'', entrada:'2026-09-10', etapa:'levantamento', desde:'2026-09-10', datas:{}, pulados:{}};
+let C;
+
+const objC = m => ({etapa:m.etapa, aprov:m.aprov, libPor:m.libPor, libEm:m.libEm, entrada:m.entrada, fechou:m.datas.fecharOS || '', faturou:m.datas.faturado || ''});
+const proxima = k => ({campo:'relatorio', relatorio: C.m.aprov ? 'fecharOS' : 'aprovarOS', aprovarOS:'fecharOS', fecharOS:'pendFat', pendFat:'faturado'})[k] || null;
+
+function avisoData(k, v){
+  if(!v) return '';
+  if(v > HOJE) return '<p style="color:var(--crit);font-size:12px;font-weight:600;margin:6px 0 0" role="alert">A data não pode ser depois de hoje.</p>';
+  const idx = PASSOS.findIndex(p => p.k === k);
+  const ant = PASSOS.slice(0, idx).reverse().find(p => C.m.datas[p.k]);
+  if(ant && v < C.m.datas[ant.k]) return `<p class="hint" style="color:var(--warn);margin:6px 0 0">Esta data é anterior à conclusão de <b>${ant.nome}</b> (${br(C.m.datas[ant.k])}). Confira. Dá para salvar assim mesmo.</p>`;
+  return '';
+}
+
+function passoC(P){
+  const m = C.m, k = P.k;
+  let st, quando, extra = '';
+  const corrigir = rot => C.corrigindo === k
+    ? `<div class="corrige"><label class="hint" for="c-data-${k}">Data de ${P.marco}</label><input class="in" type="date" id="c-data-${k}" max="${HOJE}" value="${C.draft}"><button type="button" class="btn mini" id="c-salvar-data-${k}" data-acao="salvar-data" data-k="${k}"${!C.draft || C.draft > HOJE ? ' disabled' : ''}>Salvar data</button><button type="button" class="btn ghost mini" id="c-cancelar-data-${k}" data-acao="cancelar-data" data-k="${k}">Cancelar</button></div><div id="c-aviso-${k}" aria-live="polite">${avisoData(k, C.draft)}</div>`
+    : ` <button type="button" class="link" id="c-corrigir-${k}" data-acao="corrigir" data-k="${k}">${rot}</button>`;
+  if(k === 'aprovarOS' && m.aprov && !m.datas.aprovarOS && m.etapa !== 'aprovarOS'){
+    st = 'naoaplica'; quando = 'pulada';
+    extra = `A OS já estava aprovada no sistema do cliente (${br(m.aprov)}), então a obra <b>não passa por esta etapa</b>: com o relatório pronto, vai direto para Fechar OS. <span class="novo">texto novo</span>`;
+  } else if(m.datas[k]){
+    st = 'feito'; quando = br(m.datas[k]);
+    extra = corrigir('corrigir data');
+  } else if(m.pulados[k]){
+    st = 'pulado'; quando = 'sem data registrada';
+    extra = esc(m.pulados[k]) + ' Ninguém concluiu este passo pelo botão, e o sistema não inventa a data.' + corrigir('informar a data real');
+  } else if(m.etapa === k){
+    st = 'atual'; const n = dias(m.desde); quando = `há ${plural(n, 'dia', 'dias')}`;
+    if(n >= 15) extra += `<p style="color:var(--warn);margin:0 0 6px">Parada aqui há <b style="color:var(--warn)">${n} dias</b>. Enquanto não sair desta etapa, a obra não vira dinheiro.</p>`;
+    if(k === 'aprovarOS') extra += m.libPor
+      ? `<p style="margin:0 0 6px">Execução terminada, OS não aprovada: quem destrava é o cliente. A execução foi liberada por <b>${esc(m.libPor)}</b> em ${br(m.libEm)}, e é com ele que a cobrança da OS começa.</p>`
+      : '<p style="margin:0 0 6px;color:var(--crit)">Ninguém liberou esta obra: não há OS aprovada e não há nome de quem autorizou a execução. A cobrança fica <b>sem a quem recorrer</b>.</p>';
+    extra += C.gravando === k
+      ? '<button type="button" class="btn" id="c-gravando" disabled>Gravando…</button> <span class="hint">Não feche a página.</span>'
+      : `<button type="button" class="btn" id="c-concluir-${k}" data-acao="concluir" data-k="${k}">Concluir esta etapa</button>`;
+    if(C.erro === k) extra += erroBox('Não concluiu a etapa', `O servidor não confirmou, então <b>nada foi gravado</b>: a obra continua em ${P.nome}, sem data nova${k === 'aprovarOS' ? ' e sem OS aprovada' : ''}. Tente de novo. Se a mensagem disser que outra pessoa mudou a etapa, recarregue a página: alguém pode ter concluído antes de você.`,
+      `<div class="acoes"><button type="button" class="btn ghost" id="c-tentar-${k}" data-acao="concluir" data-k="${k}">Tentar de novo</button></div>`);
+  } else { st = 'futuro'; quando = '—'; }
+  if(k === 'relatorio' && (st === 'atual' || st === 'futuro'))
+    extra = `<p style="margin:0 0 6px">O sistema não lê o fechamento no Field: esta etapa é concluída aqui, pelo botão, quando o relatório de entrega estiver pronto.</p>` + extra;
+  return `<li class="passo ${st}" id="c-passo-${k}"><span class="dot" aria-hidden="true"></span><div class="corpo"><div class="nm">${P.nome}${P.desvio ? '<span class="desvio">só sem OS aprovada</span>' : ''}${st === 'atual' ? '<span class="aqui">a obra está aqui</span>' : ''}</div><div class="meta"><span>${esc(P.dono(m))}</span><span>${P.onde}</span></div>${extra ? `<div class="extra">${extra}</div>` : ''}</div><span class="quando">${quando}</span></li>`;
+}
+
+RENDER.C = function(reset){
+  const est = UI.C.estado, p = $('palco-C');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(est === 'erroCarregar'){ p.innerHTML = erroCarga('a esteira desta obra'); return; }
+  if(reset) C = {m: clone(est === 'vazio' ? C_VAZIO : C_CHEIO), gravando: est === 'salvando' ? 'aprovarOS' : null, erro: est === 'erroSalvar' ? 'aprovarOS' : null, corrigindo:null, draft:'', direto:false};
+  const m = C.m, encerrada = !!m.datas.faturado;
+  const donoAtual = m.etapa === 'levantamento' ? (m.resp ? 'Responsável ' + m.resp : 'Responsável a definir') : PX(m.etapa).dono(m);
+  const o = objC(m), s1 = sla1(o), s2 = sla2(o);
+  let h = `<div class="head"><div><h3>${esc(m.loja)}</h3><div class="sub">OS ${m.os} · ${esc(m.desc)}</div></div><div class="pills"><span class="pill ${encerrada ? 'ok' : 'info'}">${NOME_ETAPA[m.etapa]}</span>${m.aprov ? '<span class="pill ok">OS aprovada</span>' : '<span class="pill crit">Sem OS aprovada</span>'}${encerrada ? '' : selo(m)}${slaPill(1, s1)}${slaPill(2, s2)}</div></div>`;
+  h += `<div class="box"><div class="box-h">Ciclo de vida da obra<span class="dir" style="text-transform:none;letter-spacing:0;font-weight:500">onde ela está, de quem é a vez e há quanto tempo</span></div><div class="box-b">
+    <dl class="dl"><dt>Etapa atual</dt><dd>${NOME_ETAPA[m.etapa]}</dd><dt>Dono da etapa</dt><dd>${esc(donoAtual)}</dd>
+    <dt>Parada nesta etapa</dt><dd class="num">${encerrada ? 'encerrada' : plural(dias(m.desde), 'dia', 'dias')}</dd>
+    <dt>Caminho</dt><dd>${m.aprov ? 'direto: a OS já estava aprovada, pula "' + ETAPA_APROV + '"' : 'passa por "' + ETAPA_APROV + '"'}</dd>
+    <dt>SLA 1 · aprovação da OS</dt><dd>${slaTexto(1, s1, o)}</dd>
+    <dt>SLA 2 · até faturar</dt><dd>${slaTexto(2, s2, o)}</dd></dl>`;
+  if(est === 'dados') h += `<div class="acoes"><button type="button" class="btn ghost mini" id="c-caminho" aria-pressed="${C.direto}">${C.direto ? 'Ver o caminho sem OS aprovada' : 'Ver o caminho direto (OS já aprovada no sistema do cliente)'}</button></div>`;
+  if(m.etapa === 'levantamento') h += `<p class="txt">Esta obra ainda está em <b>Levantamento</b>, antes de campo, sem responsável nem equipe. A esteira aparece inteira, sem nada concluído. O botão <b>Concluir esta etapa</b> aparece no passo em que a obra estiver, a partir de Em andamento.</p>`;
+  h += `<ol class="esteira" style="margin-top:10px;border-top:1px solid var(--line)">${PASSOS.map(passoC).join('')}</ol>`;
+  if(encerrada) h += '<p class="txt" style="color:var(--ok)">Obra faturada e encerrada: saiu dos alertas de obra parada e o SLA 2 foi fechado.</p>';
+  h += `<p class="txt" style="border-top:1px solid var(--line);padding-top:10px">Mudar a etapa pelo seletor continua possível, para exceções. Qualquer pessoa com acesso pode mudar, e quem mudou e quando aparece no <b>Histórico</b>. O seletor <b>não grava data</b> em etapa nenhuma: o passo pulado fica "sem data registrada", e se for Fechar OS, o SLA 2 fica sem data.</p>`;
+  h += '</div></div>';
+  p.innerHTML = h;
+};
+
+function dialogoConcluir(k){
+  const m = C.m, P = PX(k), prox = proxima(k), resp = m.resp || 'o responsável';
+  const textoAncoraAprov = data => {
+    const antes = ancora(m), depois = ancora(Object.assign({}, m, {aprov:data}));
+    return antes.data === depois.data
+      ? `Os dias em aberto continuam contando da ${antes.nome} (${br(antes.data)}): hoje são <b>${dias(antes.data)}</b>. Uma aprovação mais recente não derruba a contagem (seção E).`
+      : `Os dias em aberto passam a contar da aprovação (${br(depois.data)}), que é anterior à ${antes.nome}: vão de <b>${dias(antes.data)}</b> para <b>${dias(depois.data)}</b>. A contagem só sobe.`;
+  };
+  const textoSla1 = data => {
+    const s = sla1(Object.assign(objC(m), {aprov:data}));
+    return s.st === 'fim' ? `Encerra o <b>SLA 1</b> (aprovação da OS) em <b>${plural(s.n, 'dia', 'dias')}</b>: da ${s.base} (${br(s.ini)}) até ${br(data)}.` : 'O SLA 1 não se aplica: ' + s.txt;
+  };
+  const itens = [k === 'aprovarOS'
+    ? 'Grava como <b>OS aprovada</b> a data escolhida abaixo. Ela vem com hoje: corrija se a aprovação saiu antes. É o mesmo controle "OS aprovada em" da ficha.'
+    : `Grava <b>${br(HOJE)}</b> como data de <b>${P.marco}</b>.`];
+  if(prox){
+    itens.push(`A obra passa de <b>${P.nome}</b> para <b>${PX(prox).nome}</b>, e o contador "parada nesta etapa" recomeça hoje.`);
+    itens.push(`A vez passa de <b>${esc(P.dono(m))}</b> para <b>${esc(PX(prox).dono(m))}</b>.`);
+  } else itens.push('A etapa continua Faturado, e a obra passa a contar como <b>encerrada</b>.');
+  const s1 = sla1(objC(m)), s2 = sla2(objC(m));
+  const filas = {
+    campo:`Sai do <b>diário do dia de ${esc(resp)}</b>: ninguém mais responde "andou hoje?" por ela. Entra no filtro <b>Executadas, ainda na esteira</b> da base e na coluna Fechamento do kanban.`,
+    relatorio: m.aprov ? `Como a OS já está aprovada no sistema do cliente, a obra <b>pula "${ETAPA_APROV}"</b> e vai direto para Fechar OS.`
+      : `Como a OS não está aprovada, entra em <b>${ETAPA_APROV}</b>, e a cobrança é com ${esc(m.libPor || 'ninguém: não há quem liberou')}. O SLA 1 continua correndo${s1.st === 'corre' ? ' (hoje: ' + plural(s1.n, 'dia', 'dias') + ')' : ''}.`,
+    aprovarOS:`A obra deixa de aparecer como <b>Sem OS aprovada</b> na base, no kanban e no indicador.</li><li><span id="dlg-c-sla1">${textoSla1(HOJE)}</span></li><li><span id="dlg-c-ancora">${textoAncoraAprov(HOJE)}</span></li><li><label for="dlg-c-aprov"><b>OS aprovada em</b></label> <input class="in" type="date" id="dlg-c-aprov" value="${HOJE}" max="${HOJE}" style="width:auto;margin-top:4px"><span id="dlg-c-aprov-msg" role="alert" style="display:block;color:var(--crit);font-size:12px;font-weight:600"></span>`,
+    fecharOS:`A data gravada aqui é a do <b>fechamento da OS no sistema do cliente</b>. O <b>SLA 2 (até faturar)</b> começa a contar dela. Sem esta data, o SLA 2 desta obra não pode ser calculado. <span class="novo">texto novo</span>`,
+    pendFat:`O <b>SLA 2 continua correndo</b>${s2.st === 'corre' ? ' (hoje: ' + plural(s2.n, 'dia', 'dias') + ' desde o fechamento da OS)' : ''}: ele só para no faturamento. A obra continua nos alertas de obra parada até a Manfac registrar a data de faturamento.`,
+    faturado: s2.st === 'corre'
+      ? `É esta data que <b>encerra</b> a obra e o <b>SLA 2</b>, em <b>${plural(s2.n, 'dia', 'dias')}</b> desde o fechamento da OS (${br(s2.ini)}). A obra sai de <b>Executadas, ainda na esteira</b> e de todos os alertas.`
+      : 'É esta data que <b>encerra</b> a obra. Como não há data de fechamento da OS, o SLA 2 desta obra não é calculado.'
+  };
+  itens.push(filas[k]);
+  itens.push('Se não foi hoje, corrija depois em "corrigir data". Nenhum passo pulado ganha data. Fica no histórico com o seu nome.');
+  abrirDlg('Concluir "' + P.nome + '"', '<ul>' + itens.map(t => '<li>' + t + '</li>').join('') + '</ul>',
+    [{id:'dlg-c-concluir', t:k === 'aprovarOS' ? 'Concluir e gravar a aprovação' : 'Concluir e gravar ' + br(HOJE), fn:() => {
+        const data = k === 'aprovarOS' ? $('dlg-c-aprov').value : HOJE;
+        C.gravando = k; C.erro = null; RENDER.C();
+        setTimeout(() => {
+          m.datas[k] = data;
+          if(k === 'aprovarOS') m.aprov = data;
+          if(prox){ m.etapa = prox; m.desde = HOJE; }
+          if(UI.C.estado === 'dados' && !C.direto){
+            HIST_C.unshift({q:AGORA, quem:'Você', bloco:'Esteira', campo:'Data de ' + P.marco, de:'—', para:br(data), obs:'concluída pelo botão'});
+            if(prox) HIST_C.unshift({q:AGORA, quem:'Você', bloco:'Esteira', campo:'Etapa', de:P.nome, para:PX(prox).nome, obs:'concluída pelo botão'});
+            RENDER.D();
+          }
+          C.gravando = null; RENDER.C();
+          const b = prox && $('c-concluir-' + prox); (b || $('c-passo-' + k)).scrollIntoView({block:'nearest'}); if(b) b.focus();
+        }, 1000);
+      }},
+     {id:'dlg-c-voltar', t:'Voltar sem gravar', ghost:true}]);
+  if(k === 'aprovarOS') $('dlg-c-aprov').addEventListener('input', e => {
+    const v = e.target.value, ok = !!v && v <= HOJE;
+    $('dlg-c-concluir').disabled = !ok;
+    $('dlg-c-aprov-msg').textContent = !v ? 'Informe a data da aprovação.' : v > HOJE ? 'A data não pode ser depois de hoje.' : '';
+    if(ok){ $('dlg-c-ancora').innerHTML = textoAncoraAprov(v); $('dlg-c-sla1').innerHTML = textoSla1(v); }
+  });
+}
+
+function ligarC(){
+  const p = $('palco-C');
+  p.addEventListener('input', e => {
+    const mt = /^c-data-(\w+)$/.exec(e.target.id || '');
+    if(!mt) return;
+    C.draft = e.target.value;
+    $('c-aviso-' + mt[1]).innerHTML = avisoData(mt[1], C.draft);
+    $('c-salvar-data-' + mt[1]).disabled = !C.draft || C.draft > HOJE;
+  });
+  p.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.id === 'c-caminho'){ C.direto = !C.direto; C.m = clone(C.direto ? C_DIRETO : C_CHEIO); C.corrigindo = null; RENDER.C(); $('c-caminho').focus(); return; }
+    const k = b.dataset.k, ac = b.dataset.acao;
+    if(ac === 'concluir') dialogoConcluir(k);
+    if(ac === 'corrigir'){ C.corrigindo = k; C.draft = C.m.datas[k] || ''; RENDER.C(); $('c-data-' + k).focus(); }
+    if(ac === 'cancelar-data'){ C.corrigindo = null; RENDER.C(); $('c-corrigir-' + k).focus(); }
+    if(ac === 'salvar-data'){
+      if(UI.C.estado === 'dados' && !C.direto && C.m.datas[k] !== C.draft){
+        HIST_C.unshift({q:AGORA, quem:'Você', bloco:'Esteira', campo:'Data de ' + PX(k).marco, de:br(C.m.datas[k]), para:br(C.draft), obs:C.m.pulados[k] ? 'data informada em passo pulado' : 'data corrigida'});
+        RENDER.D();
+      }
+      C.m.datas[k] = C.draft; delete C.m.pulados[k];
+      if(k === 'aprovarOS') C.m.aprov = C.draft;
+      C.corrigindo = null; RENDER.C(); $('c-corrigir-' + k).focus();
+    }
+  });
+}
+
+/* =====================================================================
+   D — HISTÓRICO (aprovado na v01: só nomes e motivo padronizado)
+   ===================================================================== */
+const FILTROS = ['Todos','Triagem','Autorização','Identificação','Cronograma','Esteira'];
+const D = {filtro:'Todos', obra:'B'};
+const HIST_C = [
+  {q:'27/08/2026 09:40', quem:'YURI', bloco:'Esteira', campo:'Etapa', de:'Relatório de entrega', para:ETAPA_APROV, obs:'pelo seletor de etapa; o passo pulado ficou sem data'},
+  {q:'26/08/2026 17:05', quem:'LUANA', bloco:'Esteira', campo:'Data de fim da execução em campo', de:'26/08/2026', para:'25/08/2026', obs:'data corrigida'},
+  {q:'26/08/2026 08:12', quem:'LUANA', bloco:'Esteira', campo:'Etapa', de:'Em andamento', para:'Relatório de entrega', obs:'concluída pelo botão'},
+  {q:'26/08/2026 08:12', quem:'LUANA', bloco:'Esteira', campo:'Data de fim da execução em campo', de:'—', para:'26/08/2026', obs:'concluída pelo botão'},
+  {q:'28/07/2026 14:30', quem:'AMANDA', bloco:'Autorização', campo:'Liberado por', de:'—', para:'JUAN'},
+  {q:'28/07/2026 14:30', quem:'AMANDA', bloco:'Autorização', campo:'Data da liberação', de:'—', para:'28/07/2026'}
+];
+const linhaHist = (r, pend) => `<li${pend ? ' class="pendente"' : ''}><div class="qd">${r.q}<span>${esc(r.quem)}</span></div><div class="mv"><span class="bloco-tag">${r.bloco}</span>${r.campo}: <span class="antigo">${esc(r.de)}</span> → <b>${esc(r.para)}</b>${r.obs ? ` <span class="hint">(${r.obs})</span>` : ''}${r.mot ? `<div class="mot">Motivo: <span class="mot-chip">${esc(r.mot)}</span></div>` : ''}${pend ? '<div class="hint">Gravando… vira definitiva quando o servidor confirmar.</div>' : ''}</div></li>`;
+
+RENDER.D = function(){
+  const est = UI.D.estado, p = $('palco-D');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  const vazio = est === 'vazio';
+  const ob = vazio ? {loja:'ESTRADA VELHA DE MARICA, 900 - INOA - MARICA/RJ', os:'0926-011388'}
+    : D.obra === 'C' ? {loja:C_BASE.loja, os:C_BASE.os, entrada:'24/07/2026 07:45', hist:HIST_C}
+    : {loja:B_CHEIO.loja, os:B_CHEIO.os, entrada:'18/08/2026 08:02', hist:HIST};
+  let h = `<div class="head"><div><h3>${ob.loja}</h3><div class="sub">OS ${ob.os} · histórico de alterações</div></div>${vazio || est === 'erroCarregar' ? '' : `<div class="filtros" role="group" aria-label="Escolher a obra" style="margin:0">${[['B','Obra da seção B'],['C','Obra da seção C']].map(([k, t]) => `<button type="button" class="chip" id="d-obra-${k}" data-obra="${k}" aria-pressed="${D.obra === k}">${t}</button>`).join('')}</div>`}</div>`;
+  if(vazio){ p.innerHTML = h + '<div class="estado-vazio" role="status"><strong>Nenhuma alteração desde a entrada pelo Field</strong>Esta obra entrou em 10/09/2026 com número da OS, loja e chamado, e ninguém mexeu nela desde então. Quando alguém salvar um bloco, liberar a obra, remarcar ou concluir uma etapa, cada campo alterado aparece aqui, com nome e data.</div>'; return; }
+  if(est === 'erroCarregar'){ p.innerHTML = h + erroCarga('o histórico') + '<p class="hint" style="margin:10px 0 0">As alterações não se perderam: a ficha continua mostrando os valores atuais. Salvar um bloco e gravar a linha do histórico acontecem juntos; se o histórico não gravar, o bloco também não grava.</p>'; return; }
+  const lista = ob.hist.filter(r => D.filtro === 'Todos' || r.bloco === D.filtro);
+  h += '<div class="box"><div class="box-b"><div class="filtros" role="group" aria-label="Filtrar por bloco">' +
+    FILTROS.map((f, i) => `<button type="button" class="chip" id="d-f-${i}" data-filtro="${f}" aria-pressed="${D.filtro === f}">${f}</button>`).join('') + '</div>';
+  h += `<p class="hint" style="margin:0 0 4px">${lista.length} ${lista.length === 1 ? 'alteração' : 'alterações'}${D.filtro === 'Todos' ? '' : ' em ' + D.filtro}</p><ul class="hist">`;
+  if(est === 'salvando') h += linhaHist({q:AGORA, quem:'Você', bloco:'Cronograma', campo:'Início planejado', de:'24/08/2026', para:'29/08/2026', mot:'Falta de material'}, true);
+  h += lista.map(r => linhaHist(r)).join('');
+  if(!lista.length && est !== 'salvando') h += '<li><div></div><div class="hint">Nenhuma alteração neste bloco.</div></li>';
+  if(D.filtro === 'Todos') h += '<li><div class="qd">' + ob.entrada + '<span>Field</span></div><div class="mv"><span class="bloco-tag">Entrada</span>Obra criada pela sincronização, com Nº OS, loja e chamado.</div></li>';
+  h += '</ul></div></div>';
+  p.innerHTML = h;
+};
+
+function ligarD(){
+  $('palco-D').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.dataset.filtro){ D.filtro = b.dataset.filtro; RENDER.D(); $(b.id).focus(); }
+    if(b.dataset.obra){ D.obra = b.dataset.obra; D.filtro = 'Todos'; RENDER.D(); $(b.id).focus(); }
+  });
+}
+
+/* =====================================================================
+   E — REGRA DA OBRA EM ATENÇÃO / CRÍTICA
+   ===================================================================== */
+const EX = [
+  {os:'0826-010601', loja:'R CORONEL GOMES MACHADO, 136 - CENTRO - NITEROI/RJ', aprov:'2026-08-10', libPor:'PATRICIA', libEm:'2026-08-20', entrada:'2026-08-07', antes:'A aprovação é anterior à liberação: vale a mais antiga, a aprovação.'},
+  {os:'0826-010622', loja:'AV ROBERTO SILVEIRA, 300 - CENTRO - MARICA/RJ', aprov:'', libPor:'JUAN', libEm:'2026-08-12', entrada:'2026-08-10', antes:'Sem OS aprovada: conta da liberação. Na regra antiga, sem aprovação, não contava dias.'},
+  {os:'0826-010950', loja:'AV PRESIDENTE KENNEDY, 1300 - ESTRELA DO NORTE - SAO GONCALO/RJ', aprov:'', libPor:'', libEm:'', entrada:'2026-08-22', antes:'Sem liberação nem aprovação: conta da entrada pelo Field.'},
+  {os:'0826-011002', loja:'R DO IMPERADOR, 288 - CENTRO - PETROPOLIS/RJ', aprov:'2026-08-26', libPor:'', libEm:'', entrada:'2026-08-27', antes:'Exatamente 20 dias: ainda não sinaliza. Amanhã, com 21, fica em atenção.'}
+];
+let simular = false;
+const statusDe = (n, def) => def ? '<span class="pill definir">não sinaliza em definição</span>' : n > 30 ? '<span class="pill crit">Crítica</span>' : n > 20 ? '<span class="pill warn">Atenção</span>' : '<span class="pill ok">Normal</span>';
+const corDe = n => n > 30 ? 'var(--crit)' : n > 20 ? 'var(--warn)' : 'var(--line)';
+function renderEx(){
+  $('palco-E-ex').innerHTML = EX.map((x0, i) => {
+    const x = clone(x0);
+    if(simular && i === 1){ x.aprov = HOJE; x.antes = 'A OS foi aprovada hoje, mas a liberação (12/08/2026) é mais antiga: a obra continua com 34 dias, crítica.'; }
+    const an = ancora(x), n = dias(an.data);
+    const usa = nome => an.nome === nome ? ' <b style="color:var(--accent)">← conta desta</b>' : '';
+    return `<div class="ex" style="--sev:${corDe(n)}"><div class="os">Obra ${i + 1} · OS ${x.os}</div><div class="nm">${esc(x.loja)}</div>
+      <dl class="dl"><dt>Aprovação</dt><dd class="num">${br(x.aprov)}${usa('aprovação')}</dd>
+      <dt>Liberação</dt><dd class="num">${x.libPor ? esc(x.libPor) + ' · ' + br(x.libEm) : '—'}${usa('liberação')}</dd>
+      <dt>Entrada pelo Field</dt><dd class="num">${br(x.entrada)}${usa('entrada')}</dd></dl>
+      <div class="res"><span class="big">${n}</span><span>dias desde a ${an.nome}</span>${statusDe(n)}</div>
+      <div class="antes">${x.antes}</div></div>`;
+  }).join('');
+}
+function renderFronteira(){
+  const n = +$('e-range').value;
+  const txt = n > 30 ? 'Passou de 30: <b>crítica</b>.' : n > 20 ? 'Passou de 20: <b>atenção</b>.' + (n === 30 ? ' Com exatamente 30, ainda não é crítica.' : '') : 'Até 20 dias, nada.' + (n === 20 ? ' A atenção começa no 21º dia.' : '');
+  $('e-range-res').innerHTML = `<span class="big" style="--sev:${corDe(n)}">${n}</span><span>${n === 1 ? 'dia' : 'dias'}</span>${statusDe(n)}<span class="hint">${txt}</span>`;
+}
+
+RENDER.E = function(){
+  const est = UI.E.estado, p = $('palco-E');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(est === 'erroCarregar'){ p.innerHTML = erroCarga('a base de obras'); return; }
+  if(est === 'carregando'){ p.innerHTML = carregando(6); return; }
+  if(est === 'vazio'){ p.innerHTML = '<div class="estado-vazio" role="status"><strong>Nenhuma obra na base ainda</strong>As obras chegam pela sincronização com o Field. Quando a primeira entrar, ela aparece aqui com os dias em aberto.</div>'; return; }
+  const linhas = OBRAS.map(o => {
+    const enc = !!o.faturou, def = o.etapa === 'definir', a = ancora(o), n = a ? dias(a.data) : null;
+    const fx = enc || def ? '' : faixa(n, LIM.aberto);
+    const sit = enc ? `<span class="pill">Encerrada · faturada em ${br(o.faturou)}</span>` : statusDe(n, def) + (o.etapa === 'faturado' ? '<div class="hint">etapa Faturado sem data de faturamento: continua em aberto</div>' : '');
+    return {ord: enc ? -2 : def ? -1 : n, html:`<tr class="${fx === 'ok' ? '' : fx}"><td class="num">${o.os}</td><td>${esc(o.loja)}</td><td>${NOME_ETAPA[o.etapa]}</td><td>${enc ? '—' : selo(o, {definir:def})}</td><td>${sit}</td></tr>`};
+  }).sort((x, y) => y.ord - x.ord);
+  const nCrit = linhas.filter(l => /class="crit"/.test(l.html)).length, nWarn = linhas.filter(l => /class="warn"/.test(l.html)).length;
+  p.innerHTML = `<p class="hint" style="margin:0 0 8px">${OBRAS.length} obras · <b style="color:var(--crit)">${nCrit} críticas</b> · <b style="color:var(--warn)">${nWarn} em atenção</b> · ordenadas por dias em aberto</p>
+    <div class="tab-wrap"><table class="tab"><thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th><th>Dias em aberto <span class="novo">texto novo</span><small>da data mais antiga entre liberação e aprovação; sem nenhuma, da entrada</small></th><th>Situação</th></tr></thead><tbody>${linhas.map(l => l.html).join('')}</tbody></table></div>`;
+};
+function ligarE(){
+  $('e-simular').addEventListener('click', e => {
+    simular = !simular;
+    e.currentTarget.setAttribute('aria-pressed', String(simular));
+    e.currentTarget.textContent = simular ? 'Desfazer a simulação' : 'Simular: a OS da obra 2 é aprovada hoje';
+    $('e-simular-txt').textContent = simular ? 'A obra 2 continua com 34 dias.' : 'Mostra que uma aprovação tardia não derruba a contagem.';
+    renderEx();
+  });
+  $('e-range').addEventListener('input', renderFronteira);
+}
+
+/* =====================================================================
+   F — SLAs
+   ===================================================================== */
+const F = {view:'base', filtro:'todos', obra:'0826-010877'};
+const VISOES = [['base','Na Base'],['ficha','Na ficha'],['semana','Reunião semanal']];
+const comQuem = (q, o) => q === 1
+  ? (o.libPor ? 'cobrar de ' + o.libPor + ', que liberou' : 'ninguém liberou: sem cobertura')
+  : o.etapa === 'pendFat' ? 'Cliente: liberar o faturamento' : o.etapa === 'faturado' ? 'Financeiro Manfac: faturar' : NOME_ETAPA[o.etapa];
+function linhasSla(lista){
+  const out = [];
+  lista.forEach(o => {
+    const s1 = sla1(o), s2 = sla2(o);
+    if(s1.st === 'corre') out.push({q:1, o, s:s1, n:s1.n, fx:faixa(s1.n, LIM.sla1)});
+    else if(s2.st === 'corre') out.push({q:2, o, s:s2, n:s2.n, fx:faixa(s2.n, LIM.sla2)});
+    else if(s2.st === 'semdata') out.push({q:2, o, s:s2, n:null, fx:''});
+  });
+  return out.sort((a, b) => (b.n == null ? -1 : b.n) - (a.n == null ? -1 : a.n));
+}
+function resolvidos(lista, q){
+  return lista.map(o => ({o, s: q === 1 ? sla1(o) : sla2(o)})).filter(x => x.s.st === 'fim' && x.s.fim >= SEM_INI && x.s.fim <= SEM_FIM);
+}
+const contar = (rows, q) => { const c = {tot:0, ok:0, warn:0, crit:0, semdata:0}; rows.filter(r => r.q === q).forEach(r => { if(r.n == null) c.semdata++; else { c.tot++; c[r.fx]++; } }); return c; };
+
+function viewBase(lista){
+  const rows = linhasSla(lista), c1 = contar(rows, 1), c2 = contar(rows, 2);
+  const kpi = (id, t, c, lim, extra) => `<button type="button" class="kpi" id="f-kpi-${id}" data-filtro="${id}" aria-pressed="${F.filtro === id}"><span class="t">${t}</span><div class="v">${c.tot}</div>em aberto · <b style="color:var(--crit)">${c.crit}</b> acima de ${lim.crit} · <b style="color:var(--warn)">${c.warn}</b> acima de ${lim.warn}${extra || ''}</button>`;
+  let h = `<div class="kpis">${kpi('sla1', 'SLA 1 · aprovação da OS', c1, LIM.sla1)}${kpi('sla2', 'SLA 2 · até faturar', c2, LIM.sla2, c2.semdata ? ` · ${c2.semdata} sem data` : '')}<button type="button" class="kpi" id="f-kpi-meta" data-filtro="meta" aria-pressed="${F.filtro === 'meta'}"><span class="t">Acima da meta</span><div class="v crit">${c1.warn + c1.crit + c2.warn + c2.crit}</div>obras com SLA amarelo ou vermelho</button></div>`;
+  h += `<div class="filtros" role="group" aria-label="Filtrar SLAs">${[['todos','Todos'],['sla1','SLA 1'],['sla2','SLA 2'],['meta','Acima da meta']].map(([k, t]) => `<button type="button" class="chip" id="f-fil-${k}" data-filtro="${k}" aria-pressed="${F.filtro === k}">${t}</button>`).join('')}</div>`;
+  const vis = rows.filter(r => F.filtro === 'todos' || (F.filtro === 'sla1' && r.q === 1) || (F.filtro === 'sla2' && r.q === 2) || (F.filtro === 'meta' && (r.fx === 'warn' || r.fx === 'crit')));
+  if(!rows.length) return h + '<div class="estado-vazio" role="status"><strong>Nenhuma obra com SLA correndo</strong>Não há obra liberada esperando aprovação da OS nem obra com OS fechada esperando faturamento.</div>';
+  h += `<div class="tab-wrap"><table class="tab"><thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th><th>SLA <span class="novo">coluna nova</span><small>só um corre por vez</small></th><th>Conta desde</th><th>Com quem está</th></tr></thead><tbody>`;
+  h += vis.map(r => `<tr class="${r.fx === 'ok' ? '' : r.fx}"><td class="num">${r.o.os}</td><td>${esc(r.o.loja)}</td><td>${NOME_ETAPA[r.o.etapa]}</td><td>${slaPill(r.q, r.s)}</td><td class="num">${r.n == null ? '<span class="hint">sem data de fechamento</span>' : (r.q === 1 ? r.s.base : 'fechamento da OS') + ' · ' + br(r.s.ini)}</td><td>${esc(comQuem(r.q, r.o))}</td></tr>`).join('');
+  if(!vis.length) h += '<tr><td colspan="6" class="hint">Nenhuma obra neste filtro.</td></tr>';
+  return h + '</tbody></table></div>';
+}
+
+const FICHAS_F = ['0826-010877','0826-010950','0826-010702','0726-009480','0726-009377'];
+function viewFicha(lista){
+  const o = lista.find(x => x.os === F.obra) || lista[0];
+  if(!o) return '<div class="estado-vazio" role="status"><strong>Nenhuma obra para mostrar</strong>Sem obras na base, não há ficha.</div>';
+  const s1 = sla1(o), s2 = sla2(o);
+  let h = `<div class="filtros" role="group" aria-label="Escolher a obra">${FICHAS_F.map(os => { const x = lista.find(y => y.os === os); return x ? `<button type="button" class="chip" id="f-obra-${os}" data-obra="${os}" aria-pressed="${o.os === os}">${NOME_ETAPA[x.etapa]} · ${os}</button>` : ''; }).join('')}</div>`;
+  h += `<div class="head"><div><h3>${esc(o.loja)}</h3><div class="sub">OS ${o.os}</div></div><div class="pills"><span class="pill info">${NOME_ETAPA[o.etapa]}</span>${o.aprov ? '<span class="pill ok">OS aprovada</span>' : '<span class="pill crit">Sem OS aprovada</span>'}${!o.aprov && !o.libPor ? '<span class="pill crit">Sem cobertura</span>' : ''}${selo(o)}${slaPill(1, s1)}${slaPill(2, s2)}</div></div>`;
+  h += `<p class="hint" style="margin:0 0 10px">No topo da ficha, o selo do SLA que está correndo aparece ao lado dos dias em aberto. Logo abaixo do bloco Autorização, o quadro mostra os dois SLAs:</p>`;
+  h += `<div class="box slabox"><div class="box-h">SLAs desta obra <span class="novo" style="letter-spacing:.07em">bloco novo</span></div><div class="box-b">
+    <div class="sla-l"><div class="sla-n"><b>SLA 1 · aprovação da OS</b><span class="hint">meta: amarelo acima de 20, vermelho acima de 30 <a class="supo" href="#supo-meta1">suposição</a></span></div><div>${s1.st === 'corre' ? slaPill(1, s1) : ''}</div><p class="sla-d">${slaTexto(1, s1, o)}</p></div>
+    <div class="sla-l"><div class="sla-n"><b>SLA 2 · até faturar</b><span class="hint">meta: amarelo acima de 15, vermelho acima de 30</span></div><div>${slaPill(2, s2)}</div><p class="sla-d">${slaTexto(2, s2, o)}</p></div>
+  </div></div>`;
+  return h;
+}
+
+function painelSemana(q, lista){
+  const lim = q === 1 ? LIM.sla1 : LIM.sla2;
+  const rows = linhasSla(lista).filter(r => r.q === q);
+  const c = contar(rows, q), res = resolvidos(lista, q);
+  const titulo = q === 1 ? 'SLA 1 · aprovação da OS' : 'SLA 2 · até faturar';
+  const def = q === 1 ? 'Obras liberadas esperando o cliente aprovar a OS. Dias desde a liberação.' : 'Obras com OS fechada no sistema do cliente esperando faturamento. Dias desde o fechamento.';
+  let h = `<div class="box"><div class="box-h">${titulo}</div><div class="box-b"><p class="hint" style="margin:0 0 8px">${def}</p>`;
+  if(!c.tot && !res.length && !c.semdata) return h + '<div class="estado-vazio" role="status"><strong>Nada a apresentar nesta semana</strong>Nenhuma obra com este SLA correndo e nenhum resolvido na semana.</div></div></div>';
+  const pct = v => c.tot ? (v / c.tot * 100) : 0;
+  h += `<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))"><div class="kpi"><span class="t">Em aberto</span><div class="v">${c.tot}</div></div><div class="kpi"><span class="t">Até ${lim.warn} dias</span><div class="v ok">${c.ok}</div>dentro da meta</div><div class="kpi"><span class="t">Acima de ${lim.warn}</span><div class="v warn">${c.warn}</div>amarelo</div><div class="kpi"><span class="t">Acima de ${lim.crit}</span><div class="v crit">${c.crit}</div>vermelho</div></div>`;
+  h += `<div class="barra" role="img" aria-label="${c.ok} dentro da meta, ${c.warn} amarelo, ${c.crit} vermelho"><i style="width:${pct(c.ok)}%;background:var(--ok)"></i><i style="width:${pct(c.warn)}%;background:var(--warn)"></i><i style="width:${pct(c.crit)}%;background:var(--crit)"></i></div>`;
+  const ab = rows.filter(r => r.n != null);
+  h += `<p class="lbl" style="margin:12px 0 2px">Em aberto, do mais antigo</p><ul class="ranking">${ab.map(r => `<li><span><span class="pill num ${r.fx}">${plural(r.n, 'dia', 'dias')}</span></span><div><span class="num">${r.o.os}</span> · <span class="lj">${esc(r.o.loja)}</span><div class="hint">${esc(NOME_ETAPA[r.o.etapa])} · ${esc(comQuem(q, r.o))}</div></div></li>`).join('') || '<li><span></span><span class="hint">Nenhuma em aberto.</span></li>'}</ul>`;
+  const media = res.length ? Math.round(res.reduce((t, x) => t + x.s.n, 0) / res.length) : null;
+  h += `<p class="lbl" style="margin:12px 0 2px">Resolvidos nesta semana</p>${res.length ? `<ul class="ranking">${res.map(x => `<li><span><span class="pill num">${plural(x.s.n, 'dia', 'dias')}</span></span><div><span class="num">${x.o.os}</span> · <span class="lj">${esc(x.o.loja)}</span><div class="hint">${br(x.s.ini)} → ${br(x.s.fim)} · ${faixa(x.s.n, lim) === 'ok' ? 'dentro da meta' : 'acima da meta'}</div></div></li>`).join('')}</ul><p class="hint" style="margin:4px 0 0">Média: ${plural(media, 'dia', 'dias')}.</p>` : '<p class="hint" style="margin:0">Nenhum nesta semana.</p>'}`;
+  if(c.semdata) h += `<p class="hint" style="margin:10px 0 0;color:var(--warn)">Fora da conta: ${plural(c.semdata, 'obra', 'obras')} sem data de fechamento da OS. <a class="supo" href="#supo-sla2datas">suposição 7</a></p>`;
+  return h + '</div></div>';
+}
+function viewSemana(lista){
+  return `<div class="semana-h"><div><h3 style="margin:0;font-size:16px">Reunião semanal · SLAs</h3><div class="hint">Semana de 14/09 a 20/09/2026 · posição de hoje, 15/09 <a class="supo" href="#sec-G">suposições 15 e 16</a></div></div></div><div class="grid2">${painelSemana(1, lista)}${painelSemana(2, lista)}</div>`;
+}
+
+RENDER.F = function(){
+  const est = UI.F.estado, p = $('palco-F');
+  $('f-visoes').innerHTML = VISOES.map(([k, t]) => `<button type="button" class="chip" id="f-v-${k}" data-view="${k}" aria-pressed="${F.view === k}">${t}</button>`).join('');
+  if(est === 'sem'){ p.innerHTML = semAcesso(); return; }
+  if(est === 'erroCarregar'){ p.innerHTML = erroCarga('os SLAs'); return; }
+  if(est === 'carregando'){ p.innerHTML = carregando(6); return; }
+  const lista = est === 'vazio' ? [] : OBRAS;
+  p.innerHTML = F.view === 'base' ? viewBase(lista) : F.view === 'ficha' ? viewFicha(lista) : viewSemana(lista);
+};
+function ligarF(){
+  $('f-visoes').addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if(!b) return; F.view = b.dataset.view; RENDER.F(); $('f-v-' + F.view).focus(); });
+  $('palco-F').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.dataset.filtro){ F.filtro = F.filtro === b.dataset.filtro && b.classList.contains('kpi') ? 'todos' : b.dataset.filtro; const id = b.id; RENDER.F(); if($(id)) $(id).focus(); }
+    if(b.dataset.obra){ F.obra = b.dataset.obra; RENDER.F(); $('f-obra-' + F.obra).focus(); }
+  });
+}
+
+/* ---------- início ---------- */
+montarEstados();
+RENDER.A(true); RENDER.B(true); RENDER.C(true); RENDER.D(true); RENDER.E(true); RENDER.F(true);
+renderEx(); renderFronteira();
+ligarA(); ligarB(); ligarC(); ligarD(); ligarE(); ligarF();
+})();
+</script>
