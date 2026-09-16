@@ -52,10 +52,25 @@ describe('DashboardPage', () => {
     expect(screen.getByText('CRM')).toBeInTheDocument()
   })
 
-  it('explains itself when the user has no system at all', async () => {
+  it('shows Financeiro to everyone and explains that the rest needs releasing', async () => {
     ;(isAdmin as jest.Mock).mockResolvedValue(false)
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     render(await DashboardPage())
-    expect(screen.getByText(/nenhum sistema liberado/i)).toBeInTheDocument()
+    // Qualquer pessoa logada no hub pode pedir um pagamento, então o Financeiro
+    // não depende de liberação por sistema — aparece mesmo para quem não tem nada.
+    expect(screen.getByText('Financeiro')).toBeInTheDocument()
+    expect(screen.queryByText('Gestão de Frotas')).not.toBeInTheDocument()
+    expect(screen.getByText(/dependem de liberação/i)).toBeInTheDocument()
+  })
+
+  it('keeps the Financeiro card next to the released systems', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    ;(hasSystemAccess as jest.Mock).mockImplementation(
+      async (_c: unknown, _e: unknown, slug: string) => slug === 'crm'
+    )
+    render(await DashboardPage())
+    expect(screen.getByText('Financeiro')).toBeInTheDocument()
+    expect(screen.getByText('CRM')).toBeInTheDocument()
+    expect(screen.queryByText(/dependem de liberação/i)).not.toBeInTheDocument()
   })
 })

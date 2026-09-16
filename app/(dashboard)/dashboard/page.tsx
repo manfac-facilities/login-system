@@ -59,12 +59,26 @@ export default async function DashboardPage() {
             Bem-vindo ao Hub Manfac Facilities.
           </p>
         </div>
-        {semNada ? (
-          <p className="text-[#94a3b8] text-center">
-            Você ainda não tem nenhum sistema liberado. Fale com um administrador do hub.
-          </p>
-        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {/* Financeiro não tem liberação por sistema: qualquer pessoa logada no hub
+              pode pedir um pagamento (decisão 14 do desenho do módulo), então o card
+              aparece para todos e não há slug em lib/sistemas.ts. Como o Cockpit, é uma
+              app Next separada (basePath /financeiro) — <a> normal em vez de <Link>, e
+              fora do matcher do middleware. */}
+          <a
+            href="/financeiro"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">💳</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Financeiro
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Solicitação de pagamentos — pedidos, aprovação e lançamento no Omie
+              </p>
+            </div>
+          </a>
           {podeFrotas && (
           <Link
             href="/sofia"
@@ -167,6 +181,10 @@ export default async function DashboardPage() {
             </Link>
           )}
         </div>
+        {semNada && (
+          <p className="text-[#94a3b8] text-center mt-8">
+            Os outros sistemas do hub dependem de liberação. Fale com um administrador.
+          </p>
         )}
       </div>
     </main>
