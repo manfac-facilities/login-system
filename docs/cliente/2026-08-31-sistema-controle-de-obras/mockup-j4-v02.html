@@ -383,15 +383,16 @@
     <span class="lbl">O que mudou na v02</span>
     <ul>
       <li>Os prazos passaram a ser <b>acima de 20</b> (atenção) e <b>acima de 30</b> (crítica). "Acima de" quer dizer que 20 dias não sinaliza e 21 é atenção; 30 ainda é atenção e 31 é crítica. <a class="supo" href="#supo-acima">suposição 3</a></li>
-      <li>"A que for menor" foi lido como <b>a data mais antiga</b>, que é a que dá mais dias. A contagem nunca cai quando se registra uma data nova.</li>
+      <li>"A que for menor" foi lido como <b>a data mais antiga</b>, que é a que dá mais dias.</li>
+      <li><b>Decisão de hoje à noite:</b> a <b>entrada pelo Field</b> passou a entrar na conta <b>sempre</b>, junto de liberação e aprovação, e não só quando faltavam as duas. Com ela de último recurso, registrar a liberação depois derrubava a contagem — o contrário do que foi decidido em 14/09. Na prática, como a obra chega do Field antes de ser liberada, a contagem começa quase sempre no dia da entrada, e <b>as obras da primeira carga começam todas a contar no mesmo dia</b>.</li>
       <li>A coluna da Base deixa de se chamar "Dias desde a aprovação" e passa a <b>"Dias em aberto"</b>. <a class="supo" href="#supo-rotulo">suposição 11</a></li>
     </ul>
   </div>
   <div class="box"><div class="box-b">
     <ol class="regra">
-      <li><span>Conta da <b>data mais antiga</b> entre a <b>liberação</b> (quem deu o OK para executar) e a <b>aprovação da OS</b>.</span></li>
-      <li><span>Sem nenhuma das duas, conta da <b>data de entrada pelo Field</b>.</span></li>
-      <li><span>Registrar uma data nova <b>não derruba a contagem</b>. Se ela for mais recente, os dias continuam de onde estavam.</span></li>
+      <li><span>Conta da <b>data mais antiga</b> entre três: a <b>entrada pelo Field</b>, a <b>liberação</b> (quem deu o OK para executar) e a <b>aprovação da OS</b>. <span class="novo">mudou hoje</span></span></li>
+      <li><span>A <b>entrada entra sempre na conta</b>, e não só quando faltam as outras duas. Como a obra chega do Field antes de ser liberada, <b>a contagem normalmente começa no dia em que a obra entra no sistema</b>.</span></li>
+      <li><span>Registrar uma data depois <b>nunca derruba a contagem</b>: se ela for mais recente, os dias continuam de onde estavam.</span></li>
       <li><span>A contagem para quando a Manfac <b>fatura</b> a obra (data de faturamento registrada). Obra em Aguardando definição não é sinalizada.</span></li>
     </ol>
     <div class="limiares">
@@ -419,7 +420,7 @@
   <h3 class="sub-h">Como aparece na Base</h3>
   <div class="estados" data-sec="E"></div>
   <div class="palco" id="palco-E"></div>
-  <p class="nota-sec"><b>Resíduo que continua:</b> uma obra sem liberação e sem aprovação conta da entrada pelo Field. Se a primeira autorização for registrada com a data de hoje, a contagem recomeça dessa data. Obra antiga que chegar no pente fino sem nenhuma das duas datas só vira crítica 31 dias depois de sincronizada. <b>Efeito dos 30 dias:</b> nos exemplos acima, a maior parte das obras abertas já fica vermelha. <a class="supo" href="#supo-residuo">suposição 14</a></p>
+  <p class="nota-sec"><b>O que a entrada sempre na conta resolve e o que ela custa:</b> nenhuma data registrada depois derruba mais a contagem, nem quando a obra não tinha liberação nem aprovação. Em troca, a entrada é a data em que a obra <b>entrou no sistema</b>, não a data em que o serviço nasceu: as obras da primeira carga do Field começam todas a contar no mesmo dia, e uma obra antiga que chegue no pente fino só vira crítica 31 dias depois de entrar. <b>Efeito dos 30 dias:</b> nos exemplos acima, a maior parte das obras abertas já fica vermelha.</p>
   <div class="zap"><span class="ic">WhatsApp</span><span>Responda no WhatsApp: <b>Pergunta E — Aprovado</b> / <b>Ajustar</b> + comentário</span></div>
 </section>
 
@@ -468,7 +469,8 @@
     <p>O que o mockup precisou assumir para ficar pronto. Nada disso está decidido: cada item diz qual decisão depende dele. Se algum estiver errado, diga o número do item.</p>
   </div></div>
   <div class="box" style="margin-bottom:14px"><div class="box-h">Decidido depois da v01 · 15/09</div><div class="box-b">
-    <p class="txt" style="margin-top:0"><b>Os motivos de remarcação passaram a ser os mesmos que o Diário já usa</b> para responder por que a obra não andou no dia: <b>Clima · Cliente/loja · Disponibilidade de equipe · Contratação de prestador · Falta de material · Outro</b>. O motivo: o sistema e a reunião já falam esse vocabulário, e duas palavras para a mesma coisa ("Chuva/clima" ao lado de "Clima") quebrariam o cruzamento entre o bloqueio do dia e o motivo da remarcação. Continua valendo cadastrar um motivo que não esteja na lista.</p>
+    <p class="txt" style="margin-top:0"><b>A contagem de dias em aberto passou a olhar as três datas</b> — entrada pelo Field, liberação e aprovação da OS — e a contar da mais antiga, com a <b>entrada sempre na conta</b>. Antes, a entrada só valia quando não havia nenhuma das outras duas, e aí registrar a liberação depois derrubava a contagem, que é o que a decisão de 14/09 proíbe. Como a obra chega do Field antes de ser liberada, a contagem passa a começar, quase sempre, no dia em que a obra entra no sistema — e as obras da primeira carga começam todas a contar no mesmo dia. Isso encerra o resíduo que a v02 trazia como suposição.</p>
+    <p class="txt"><b>Os motivos de remarcação passaram a ser os mesmos que o Diário já usa</b> para responder por que a obra não andou no dia: <b>Clima · Cliente/loja · Disponibilidade de equipe · Contratação de prestador · Falta de material · Outro</b>. O motivo: o sistema e a reunião já falam esse vocabulário, e duas palavras para a mesma coisa ("Chuva/clima" ao lado de "Clima") quebrariam o cruzamento entre o bloqueio do dia e o motivo da remarcação. Continua valendo cadastrar um motivo que não esteja na lista.</p>
   </div></div>
   <ol class="supos">
     <li id="supo-meta1"><b>Metas do SLA 1: amarelo acima de 20 dias, vermelho acima de 30.</b> Só as metas do SLA 2 foram informadas (15 e 30). Para o SLA 1, o mockup usou as mesmas da obra crítica. No sistema, esses números podem ser alterados.<span class="pend">cores e contagem "acima da meta" do SLA 1 na Base, na ficha e na reunião semanal (seção F).</span></li>
@@ -483,8 +485,7 @@
     <li id="supo-pendfat"><b>"Pendente faturamento" mantém o nome do código</b>, e a data que encerra essa etapa continua sendo "faturamento liberado pelo cliente". A pergunta sobre pedido de compra ainda não foi respondida.<span class="pend">o nome dessa etapa e a data que a encerra.</span></li>
     <li id="supo-rotulo"><b>A coluna se chama "Dias em aberto".</b> O nome é provisório e substitui "Dias desde a aprovação", que deixou de ser verdade.<span class="pend">o cabeçalho da coluna na Base.</span></li>
     <li><b>Atenção pinta só o selo de dias</b>, não a borda do cartão da obra no kanban.<span class="pend">quanto a Base fica amarela.</span></li>
-    <li><b>Para obra liberada sem OS aprovada, "Dias em aberto" (E) e SLA 1 (F) mostram o mesmo número</b> e, com as metas assumidas, a mesma cor. A diferença está em quando param: o SLA 1 para na aprovação; os dias em aberto, só no faturamento.<span class="pend">se vale mostrar os dois lado a lado ou só um.</span></li>
-    <li id="supo-residuo"><b>O resíduo da regra da crítica continua</b> (nota da seção E): obra sem liberação e sem aprovação, quando recebe a primeira autorização com data de hoje, recomeça a contagem.<span class="pend">a regra da seção E.</span></li>
+    <li><b>"Dias em aberto" (E) e SLA 1 (F) são dois números parecidos e quase sempre diferentes.</b> Os dias em aberto contam da data mais antiga, que costuma ser a entrada; o SLA 1 conta da liberação. Eles também param em momentos diferentes: o SLA 1 para na aprovação da OS; os dias em aberto, só no faturamento.<span class="pend">se vale mostrar os dois lado a lado ou só um.</span></li>
     <li><b>A obra não tem campo "cliente".</b> O sistema vale para todos os clientes da Manfac, e a reunião semanal provavelmente é feita com um cliente por vez. A visão semanal não separa por cliente porque hoje não há onde guardar essa informação.<span class="pend">filtro por cliente na reunião semanal (pediria um campo novo).</span></li>
     <li><b>A semana da reunião vai de segunda a domingo.</b> "Resolvidos na semana" são os SLAs cuja data final caiu nesses dias.<span class="pend">os números do rodapé de cada painel da reunião.</span></li>
     <li><b>Onde o sistema dizia um cliente específico como dono da etapa, a tela diz só "Cliente".</b><span class="pend">os textos de dono na esteira e no kanban.</span></li>
@@ -532,13 +533,18 @@ const ETAPA_APROV = NOME_ETAPA.aprovarOS;
 const LIM = {aberto:{warn:20, crit:30}, sla1:{warn:20, crit:30}, sla2:{warn:15, crit:30}};
 const faixa = (n, l) => n == null ? '' : n > l.crit ? 'crit' : n > l.warn ? 'warn' : 'ok';
 
-/* ---------- regra E: data mais antiga entre liberação e aprovação; sem nenhuma, a entrada ---------- */
+/* ---------- regra E (decisão de 15/09, noite): a data MAIS ANTIGA entre entrada,
+   liberação e aprovação. A entrada é sempre candidata, e não só quando faltam as
+   outras duas — é isso que impede uma data registrada depois de derrubar a contagem.
+   Em empate, o selo diz aprovação, depois liberação, depois entrada. ---------- */
 function ancora(o){
-  const lib = o.libPor && o.libEm ? o.libEm : null;
-  if(o.aprov && lib) return lib < o.aprov ? {nome:'liberação', data:lib} : {nome:'aprovação', data:o.aprov};
-  if(o.aprov) return {nome:'aprovação', data:o.aprov};
-  if(lib) return {nome:'liberação', data:lib};
-  return o.entrada ? {nome:'entrada', data:o.entrada} : null;
+  const cand = [];
+  if(o.aprov) cand.push({nome:'aprovação', data:o.aprov, ord:0});
+  if(o.libPor && o.libEm) cand.push({nome:'liberação', data:o.libEm, ord:1});
+  if(o.entrada) cand.push({nome:'entrada', data:o.entrada, ord:2});
+  if(!cand.length) return null;
+  cand.sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : a.ord - b.ord);
+  return cand[0];
 }
 function selo(o, opt){
   opt = opt || {};
@@ -892,7 +898,7 @@ RENDER.B = function(reset){
   if(nFalta){
     const partes = ['aut','ide','cro'].filter(k => falta[k].length).map(k =>
       `<button type="button" class="link" data-acao="editar" data-bloco="${k}" id="b-falta-${k}">${BLOCO[k]}</button>: ${k === 'aut' ? 'nem liberação nem OS aprovada' : falta[k].map(x => ROT[x]).join(', ')}`);
-    h += `<div class="aviso warn"><div style="flex:1 1 300px"><h4>Faltam ${nFalta} dados desta obra</h4><p>${partes.join(' · ')}</p>${!a.aprov && !a.libPor ? `<p style="margin-top:6px">Sem data de aprovação nem de liberação, os dias em aberto e o SLA 1 desta obra contam da <b>entrada pelo Field</b> (${br(m.entrada)}).</p>` : ''}</div></div>`;
+    h += `<div class="aviso warn"><div style="flex:1 1 300px"><h4>Faltam ${nFalta} dados desta obra</h4><p>${partes.join(' · ')}</p>${!a.aprov && !a.libPor ? `<p style="margin-top:6px">Sem data de aprovação nem de liberação, os dias em aberto e o SLA 1 desta obra contam da <b>entrada pelo Field</b> (${br(m.entrada)}). Preencher uma das duas depois não derruba a contagem: a entrada continua valendo, por ser a mais antiga.</p>` : ''}</div></div>`;
   }
   const fim = soma(c.inicio, +c.duracao), atr = fim ? dias(fim) : null;
   if(atr > 0 && m.etapa === 'Em andamento') h += `<div class="aviso warn"><div><h4>Passou da duração planejada</h4><p>Início em <b>${br(c.inicio)}</b> com <b>${c.duracao} dias</b> de duração: deveria ter terminado em <b>${br(fim)}</b>. São ${plural(atr, 'dia', 'dias')} além do prazo.</p></div></div>`;
@@ -1329,10 +1335,10 @@ function ligarD(){
    E — REGRA DA OBRA EM ATENÇÃO / CRÍTICA
    ===================================================================== */
 const EX = [
-  {os:'0826-010601', loja:'R CORONEL GOMES MACHADO, 136 - CENTRO - NITEROI/RJ', aprov:'2026-08-10', libPor:'PATRICIA', libEm:'2026-08-20', entrada:'2026-08-07', antes:'A aprovação é anterior à liberação: vale a mais antiga, a aprovação.'},
-  {os:'0826-010622', loja:'AV ROBERTO SILVEIRA, 300 - CENTRO - MARICA/RJ', aprov:'', libPor:'JUAN', libEm:'2026-08-12', entrada:'2026-08-10', antes:'Sem OS aprovada: conta da liberação. Na regra antiga, sem aprovação, não contava dias.'},
-  {os:'0826-010950', loja:'AV PRESIDENTE KENNEDY, 1300 - ESTRELA DO NORTE - SAO GONCALO/RJ', aprov:'', libPor:'', libEm:'', entrada:'2026-08-22', antes:'Sem liberação nem aprovação: conta da entrada pelo Field.'},
-  {os:'0826-011002', loja:'R DO IMPERADOR, 288 - CENTRO - PETROPOLIS/RJ', aprov:'2026-08-26', libPor:'', libEm:'', entrada:'2026-08-27', antes:'Exatamente 20 dias: ainda não sinaliza. Amanhã, com 21, fica em atenção.'}
+  {os:'0826-010601', loja:'R CORONEL GOMES MACHADO, 136 - CENTRO - NITEROI/RJ', aprov:'2026-08-10', libPor:'PATRICIA', libEm:'2026-08-20', entrada:'2026-08-12', antes:'A OS já estava aprovada antes de a obra entrar no sistema: das três datas, a aprovação é a mais antiga, e é dela que conta.'},
+  {os:'0826-010622', loja:'AV ROBERTO SILVEIRA, 300 - CENTRO - MARICA/RJ', aprov:'', libPor:'JUAN', libEm:'2026-08-12', entrada:'2026-08-10', antes:'O caso comum: a obra entrou em 10/08 e só foi liberada em 12/08, então conta da entrada. Na versão anterior deste mockup contaria da liberação, dois dias a menos.'},
+  {os:'0826-010950', loja:'AV PRESIDENTE KENNEDY, 1300 - ESTRELA DO NORTE - SAO GONCALO/RJ', aprov:'', libPor:'', libEm:'', entrada:'2026-08-22', antes:'Sem liberação e sem aprovação: conta da entrada pelo Field. Quando alguém registrar a liberação, a contagem não cai — a entrada continua sendo a mais antiga.'},
+  {os:'0826-011002', loja:'R DO IMPERADOR, 288 - CENTRO - PETROPOLIS/RJ', aprov:'2026-08-26', libPor:'', libEm:'', entrada:'2026-08-27', antes:'A OS foi aprovada um dia antes de a obra entrar no sistema, então conta da aprovação. Exatamente 20 dias: ainda não sinaliza. Amanhã, com 21, fica em atenção.'}
 ];
 let simular = false;
 const statusDe = (n, def) => def ? '<span class="pill definir">não sinaliza em definição</span>' : n > 30 ? '<span class="pill crit">Crítica</span>' : n > 20 ? '<span class="pill warn">Atenção</span>' : '<span class="pill ok">Normal</span>';
@@ -1340,7 +1346,7 @@ const corDe = n => n > 30 ? 'var(--crit)' : n > 20 ? 'var(--warn)' : 'var(--line
 function renderEx(){
   $('palco-E-ex').innerHTML = EX.map((x0, i) => {
     const x = clone(x0);
-    if(simular && i === 1){ x.aprov = HOJE; x.antes = 'A OS foi aprovada hoje, mas a liberação (12/08/2026) é mais antiga: a obra continua com 34 dias, crítica.'; }
+    if(simular && i === 1){ x.aprov = HOJE; x.antes = 'A OS foi aprovada hoje, mas a entrada (10/08/2026) continua sendo a mais antiga das três: a obra segue com 36 dias, crítica. A contagem não cai.'; }
     const an = ancora(x), n = dias(an.data);
     const usa = nome => an.nome === nome ? ' <b style="color:var(--accent)">← conta desta</b>' : '';
     return `<div class="ex" style="--sev:${corDe(n)}"><div class="os">Obra ${i + 1} · OS ${x.os}</div><div class="nm">${esc(x.loja)}</div>
@@ -1371,14 +1377,14 @@ RENDER.E = function(){
   }).sort((x, y) => y.ord - x.ord);
   const nCrit = linhas.filter(l => /class="crit"/.test(l.html)).length, nWarn = linhas.filter(l => /class="warn"/.test(l.html)).length;
   p.innerHTML = `<p class="hint" style="margin:0 0 8px">${OBRAS.length} obras · <b style="color:var(--crit)">${nCrit} críticas</b> · <b style="color:var(--warn)">${nWarn} em atenção</b> · ordenadas por dias em aberto</p>
-    <div class="tab-wrap"><table class="tab"><thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th><th>Dias em aberto <span class="novo">texto novo</span><small>da data mais antiga entre liberação e aprovação; sem nenhuma, da entrada</small></th><th>Situação</th></tr></thead><tbody>${linhas.map(l => l.html).join('')}</tbody></table></div>`;
+    <div class="tab-wrap"><table class="tab"><thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th><th>Dias em aberto <span class="novo">texto novo</span><small>da data mais antiga entre entrada, liberação e aprovação</small></th><th>Situação</th></tr></thead><tbody>${linhas.map(l => l.html).join('')}</tbody></table></div>`;
 };
 function ligarE(){
   $('e-simular').addEventListener('click', e => {
     simular = !simular;
     e.currentTarget.setAttribute('aria-pressed', String(simular));
     e.currentTarget.textContent = simular ? 'Desfazer a simulação' : 'Simular: a OS da obra 2 é aprovada hoje';
-    $('e-simular-txt').textContent = simular ? 'A obra 2 continua com 34 dias.' : 'Mostra que uma aprovação tardia não derruba a contagem.';
+    $('e-simular-txt').textContent = simular ? 'A obra 2 continua com 36 dias.' : 'Mostra que uma aprovação tardia não derruba a contagem.';
     renderEx();
   });
   $('e-range').addEventListener('input', renderFronteira);
@@ -1454,7 +1460,7 @@ function painelSemana(q, lista){
   return h + '</div></div>';
 }
 function viewSemana(lista){
-  return `<div class="semana-h"><div><h3 style="margin:0;font-size:16px">Reunião semanal · SLAs</h3><div class="hint">Semana de 14/09 a 20/09/2026 · posição de hoje, 15/09 <a class="supo" href="#sec-G">suposições 15 e 16</a></div></div></div><div class="grid2">${painelSemana(1, lista)}${painelSemana(2, lista)}</div>`;
+  return `<div class="semana-h"><div><h3 style="margin:0;font-size:16px">Reunião semanal · SLAs</h3><div class="hint">Semana de 14/09 a 20/09/2026 · posição de hoje, 15/09 <a class="supo" href="#sec-G">suposições 14 e 15</a></div></div></div><div class="grid2">${painelSemana(1, lista)}${painelSemana(2, lista)}</div>`;
 }
 
 RENDER.F = function(){
