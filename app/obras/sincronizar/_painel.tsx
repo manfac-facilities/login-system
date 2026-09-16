@@ -13,7 +13,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, BoxB, BoxH, Botao, EstadoVazio, KPI } from '../_ui/primitivos'
-import { sincronizarComFieldAction, type EstadoSincronizacao } from './_actions'
+import { sincronizarComFieldAction } from './_actions'
+import type { EstadoSincronizacao } from './_execucao'
 
 export default function PainelSincronizacao() {
   const router = useRouter()
