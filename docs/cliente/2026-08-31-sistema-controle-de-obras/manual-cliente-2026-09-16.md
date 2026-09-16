@@ -328,7 +328,7 @@ histórico de alterações já estão no ar.
 | # | Tarefa | O que entrega | Horas | Data prevista |
 |---|---|---|---|---|
 | 1 | Conta do Yuri e liberação de acesso da equipe | as pessoas entram no sistema e passam a ver as 64 obras — hoje só os administradores veem | 1h | 16/09 |
-| 2 | Ficha e triagem editáveis, com remarcação por motivo | preencher aqui o que o Field não manda (valor, tipo, analista, origem, data de aprovação da OS) e mudar a data de início só com motivo registrado, de uma lista padronizada em que se pode cadastrar motivo novo | 5–8h | trabalho 17–18/09 · no ar 21/09 |
+| 2 | Ficha e triagem editáveis, com remarcação por motivo | preencher aqui o que o Field não manda (valor, tipo, analista, origem, data de aprovação da OS) e mudar a data de início só com motivo registrado, de uma lista padronizada em que se pode cadastrar motivo novo | 5–8h | **depende do seu retorno sobre as telas** · trabalho 17–18/09 · no ar 21/09 |
 | 3 | Histórico de alterações ligado | cada alteração com campo, valor antigo, valor novo, quem mudou e quando | 2h | no ar 21/09 |
 | 4 | Revisão independente e ajustes antes de publicar | garante que as entregas 2 e 3 não quebrem o que já está funcionando | 2h | 18–21/09 |
 | 5 | Botão "Concluir esta etapa" e as datas dos 7 marcos | a data de cada passo da esteira passa a ser gravada; a esteira deixa de ser desenho e vira histórico | 2–4h | 21–22/09 |
@@ -360,5 +360,14 @@ entrega depende de a anterior ter sido publicada e conferida.
   vermelho**, os mesmos números da obra crítica. O SLA de faturamento já está definido:
   amarelo acima de **15 dias**, vermelho acima de **30**, contando do fechamento da OS
   no sistema do cliente até a obra ser faturada.
+- **O desenho das telas novas está com você para avaliar:** https://claude.ai/artifact/SUY9Cd59ud9rAD63oFUCqC
+
+  Abra e responda seção por seção (A a F), com **aprovado** ou **ajustar** e o comentário.
+
+  São as telas de ficha e triagem editáveis, a remarcação com motivo e os dois SLAs da
+  reunião semanal. **A data de 21/09 conta a partir do seu retorno:** cada dia de espera
+  empurra a entrega no mesmo tanto, porque o desenho aprovado é o que o programador segue.
+  Seção que voltar como “ajustar” entra em nova rodada e custa cerca de meio dia a mais.
+
 - **A data do treinamento** da equipe ainda não está marcada. A semana de 28/09 é a
   previsão do plano, não um compromisso fechado.
