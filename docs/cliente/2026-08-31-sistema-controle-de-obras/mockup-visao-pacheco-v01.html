@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obras Drogaria Pacheco</title>
+<style>
+  :root {
+    color-scheme: light;
+
+    /* Ground e superfícies — neutro frio, puxado para o azul do acento */
+    --ground: #EDF1F6;
+    --surface: #FFFFFF;
+    --surface-2: #F7F9FC;
+
+    /* Tinta */
+    --ink: #0B1B2B;
+    --ink-2: #40536A;
+    --ink-3: #5E7186;
+
+    /* Linhas */
+    --line: #D3DCE6;
+    --line-2: #B6C4D2;
+
+    /* Marca Manfac */
+    --brand: #9A3412;
+    --brand-fill: #EA580C;
+
+    /* Semântica de situação (separada do acento de marca) */
+    --ok: #15803D;
+    --ok-ink: #14532D;
+    --ok-soft: #E6F4EB;
+    --live: #0369A1;
+    --live-ink: #0B4A6F;
+    --live-soft: #E2EFF8;
+    --wait: #64748B;
+    --wait-ink: #334155;
+    --wait-soft: #E9EDF2;
+
+    --font-display: "Segoe UI Variable Display", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --font-data: ui-monospace, "Cascadia Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px; --s6: 48px; --s7: 64px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 0 var(--s7);
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+
+  /* ---------- Cabeçalho ---------- */
+  .top {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-in {
+    max-width: 1180px; margin: 0 auto;
+    padding-inline: 20px; padding-block: 14px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s4);
+  }
+  .top-name {
+    font-family: var(--font-display);
+    font-size: 21px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .top-sub {
+    font-size: 15px; color: var(--ink-2);
+  }
+  .top-by {
+    margin-left: auto;
+    font-family: var(--font-data);
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .by-mark {
+    width: 10px; height: 10px; border-radius: 2px;
+    background: var(--brand-fill); display: inline-block;
+  }
+
+  /* ---------- Resumo do assistente ---------- */
+  .resumo {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--brand-fill);
+    border-radius: 3px;
+    padding: var(--s4);
+    margin-top: var(--s5);
+  }
+  .resumo-head {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3);
+    margin-bottom: var(--s3);
+  }
+  .assinatura {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-data);
+    font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--brand);
+    background: #FDF0E9;
+    border: 1px solid #F6D3C0;
+    border-radius: 2px;
+    padding: 5px 9px;
+  }
+  .atualizado {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-data); font-size: 12px; color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .pulso {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--ok); flex: none;
+    box-shadow: 0 0 0 0 rgba(21,128,61,.45);
+    animation: pulso 2.6s ease-out infinite;
+  }
+  @keyframes pulso {
+    0%   { box-shadow: 0 0 0 0 rgba(21,128,61,.45); }
+    70%  { box-shadow: 0 0 0 7px rgba(21,128,61,0); }
+    100% { box-shadow: 0 0 0 0 rgba(21,128,61,0); }
+  }
+  .resumo p {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(21px, 2.4vw, 27px);
+    line-height: 1.42;
+    letter-spacing: -0.012em;
+    max-width: 44ch;
+  }
+  .resumo p + p { margin-top: var(--s2); }
+  .resumo b { font-weight: 700; }
+  .resumo-nota {
+    margin-top: var(--s3); padding-top: var(--s3);
+    border-top: 1px solid var(--line);
+    font-size: 15px; color: var(--ink-2); max-width: 62ch;
+  }
+
+  /* ---------- Faixa de números ---------- */
+  .numeros {
+    margin-top: var(--s4);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .num { padding: var(--s4) var(--s3); text-align: center; }
+  .num + .num { border-left: 1px solid var(--line); }
+  .num-val {
+    font-family: var(--font-display);
+    font-size: clamp(46px, 7.5vw, 76px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+  }
+  .num-lbl {
+    display: block; margin-top: 10px;
+    font-size: 15px; color: var(--ink-2); line-height: 1.3;
+  }
+  .num--exec .num-val { color: var(--live); }
+  .num--ent  .num-val { color: var(--ok); }
+  .num--man  .num-val { color: var(--ink); }
+
+  /* ---------- Seções ---------- */
+  section { margin-top: var(--s7); }
+  .sec-head { margin-bottom: var(--s4); }
+  .eyebrow {
+    font-family: var(--font-data);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-3);
+    display: block; margin-bottom: 6px;
+  }
+  .sec-head h2 {
+    font-size: clamp(25px, 3vw, 33px);
+    font-weight: 700; letter-spacing: -0.022em;
+  }
+  .sec-head .sub { margin: 8px 0 0; color: var(--ink-2); font-size: 16px; max-width: 64ch; }
+
+  /* ---------- Cartões de obra ---------- */
+  .obras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: var(--s3);
+  }
+  .obra {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: var(--s3);
+    display: flex; flex-direction: column; gap: var(--s3);
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .obra:hover {
+    border-color: var(--line-2);
+    box-shadow: 0 6px 18px rgba(11,27,43,.09);
+    transform: translateY(-2px);
+  }
+
+  .loja {
+    font-family: var(--font-display);
+    font-size: 19px; font-weight: 700; letter-spacing: -0.008em;
+    margin: 0;
+  }
+  .servico { margin: 4px 0 0; font-size: 16px; color: var(--ink-2); }
+
+  /* Espaço de foto — moldura com marcas de canto */
+  .foto {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+    background:
+      repeating-linear-gradient(135deg, #F2F5F9 0 10px, #EDF1F6 10px 20px);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .foto span, .foto svg { position: relative; z-index: 1; }
+  .foto-txt {
+    font-family: var(--font-data);
+    font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .foto i, .foto b {
+    position: absolute; width: 14px; height: 14px;
+    border: 2px solid var(--line-2); font-style: normal;
+  }
+  .foto i:nth-of-type(1) { top: 7px; left: 7px; border-right: 0; border-bottom: 0; }
+  .foto i:nth-of-type(2) { top: 7px; right: 7px; border-left: 0; border-bottom: 0; }
+  .foto b:nth-of-type(1) { bottom: 7px; left: 7px; border-right: 0; border-top: 0; }
+  .foto b:nth-of-type(2) { bottom: 7px; right: 7px; border-left: 0; border-top: 0; }
+
+  /* Régua de três passos — desenhada como fita métrica */
+  .rail {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    position: relative;
+  }
+  .rail::before {
+    content: "";
+    position: absolute;
+    left: 16.6%; right: 16.6%; top: 10px; height: 3px;
+    background:
+      repeating-linear-gradient(90deg, var(--line-2) 0 1px, transparent 1px 7px),
+      var(--line);
+    border-radius: 2px;
+  }
+  .step {
+    position: relative; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+  }
+  .node {
+    width: 23px; height: 23px; border-radius: 50%;
+    background: var(--surface);
+    border: 3px solid var(--line-2);
+    display: grid; place-items: center;
+    position: relative; z-index: 1;
+  }
+  .step-lbl {
+    font-size: 14px; color: var(--ink-3); line-height: 1.25;
+  }
+  .step.done .node { background: var(--ok); border-color: var(--ok); }
+  .step.done .step-lbl { color: var(--ink-2); }
+  .step.now .node {
+    background: var(--surface); border-color: var(--live);
+    box-shadow: 0 0 0 4px var(--live-soft);
+  }
+  .step.now .node::after {
+    content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--live);
+  }
+  .step.now .step-lbl { color: var(--live-ink); font-weight: 700; }
+  .check { width: 11px; height: 11px; display: block; }
+
+  .fato {
+    margin: 0; font-size: 15px; color: var(--ink);
+    border-left: 3px solid var(--line-2);
+    padding-left: var(--s2);
+  }
+  .fato strong { font-weight: 600; }
+  .fato .prev { display: block; color: var(--ink-2); }
+
+  details.feito { border-top: 1px solid var(--line); padding-top: var(--s2); }
+  details.feito summary {
+    cursor: pointer; font-size: 14px; color: var(--live-ink);
+    font-weight: 600; list-style: none; padding: 4px 0;
+  }
+  details.feito summary::-webkit-details-marker { display: none; }
+  details.feito summary::before { content: "+ "; font-family: var(--font-data); }
+  details.feito[open] summary::before { content: "– "; }
+  details.feito ul { margin: 8px 0 0; padding-left: 20px; font-size: 15px; color: var(--ink-2); }
+  details.feito li { margin-bottom: 4px; }
+
+  .mais-lojas {
+    border: 1px dashed var(--line-2);
+    border-radius: 3px;
+    padding: var(--s4) var(--s3);
+    background: var(--surface-2);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    text-align: center;
+  }
+  .mais-val {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 6vw, 60px); font-weight: 700;
+    line-height: 1; letter-spacing: -0.035em;
+    color: var(--live); font-variant-numeric: tabular-nums;
+  }
+  .mais-lbl { font-size: 16px; color: var(--ink-2); max-width: 22ch; }
+
+  /* ---------- Etiquetas de situação ---------- */
+  .tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13.5px; font-weight: 600; line-height: 1;
+    padding: 6px 10px; border-radius: 2px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .tag svg { flex: none; }
+  .tag--ok   { background: var(--ok-soft);   color: var(--ok-ink);   border-color: #BFE3CC; }
+  .tag--live { background: var(--live-soft); color: var(--live-ink); border-color: #BFD9EC; }
+  .tag--wait { background: var(--wait-soft); color: var(--wait-ink); border-color: #CFD8E3; }
+
+  /* ---------- Cronograma ---------- */
+  .crono-scroll { overflow-x: auto; }
+  .crono {
+    min-width: 760px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: var(--s3);
+  }
+  .crono-grid { display: grid; grid-template-columns: 190px repeat(5, 1fr); }
+  .crono-head {
+    font-family: var(--font-data);
+    font-size: 14px; letter-spacing: 0.04em;
+    color: var(--ink-3); text-transform: uppercase;
+    padding: 0 0 10px; text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .crono-head.first {
+    text-align: left;
+    position: sticky; left: 0; background: var(--surface); z-index: 2;
+  }
+  .crono-row {
+    display: grid; grid-template-columns: 190px repeat(5, 1fr);
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .crono-row:last-child { border-bottom: 0; }
+  .crono-loja {
+    font-size: 15px; font-weight: 600;
+    padding: 14px var(--s2) 14px 0;
+    position: sticky; left: 0; background: var(--surface); z-index: 2;
+  }
+  .crono-cell { grid-row: 1; height: 100%; border-left: 1px solid var(--line); }
+  .bar {
+    grid-row: 1; align-self: center;
+    height: 30px; border-radius: 2px;
+    display: flex; align-items: center; padding: 0 10px;
+    font-size: 14px; font-weight: 600; color: #FFFFFF;
+    background: var(--live);
+    margin: 0 3px;
+    overflow: hidden; white-space: nowrap;
+    z-index: 1;
+  }
+  .bar--plan {
+    background:
+      repeating-linear-gradient(135deg, #CBD5E1 0 6px, #E2E8F0 6px 12px);
+    color: var(--wait-ink);
+    border: 1px solid #B6C4D2;
+  }
+  .crono-legenda {
+    display: flex; flex-wrap: wrap; gap: var(--s3);
+    margin-top: var(--s3); padding-top: var(--s2);
+    border-top: 1px solid var(--line);
+    font-size: 14px; color: var(--ink-2);
+  }
+  .leg { display: inline-flex; align-items: center; gap: 8px; }
+  .leg-amostra { width: 26px; height: 13px; border-radius: 2px; flex: none; }
+  .leg-amostra.exec { background: var(--live); }
+  .leg-amostra.plan { background: repeating-linear-gradient(135deg, #CBD5E1 0 6px, #E2E8F0 6px 12px); border: 1px solid #B6C4D2; }
+
+  /* ---------- Manutenção ---------- */
+  .aviso-exemplo {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-data); font-size: 11px;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--wait-ink); background: var(--wait-soft);
+    border: 1px solid #CFD8E3; border-radius: 2px;
+    padding: 5px 9px; margin-top: var(--s2);
+  }
+  .manut {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .m-row {
+    display: grid;
+    grid-template-columns: 200px 1fr auto auto;
+    gap: var(--s3);
+    align-items: center;
+    padding: var(--s3);
+    border-bottom: 1px solid var(--line);
+  }
+  .m-row:last-child { border-bottom: 0; }
+  .m-loja { font-weight: 700; font-size: 15.5px; }
+  .m-item { color: var(--ink-2); font-size: 16px; }
+  .m-data {
+    font-family: var(--font-data); font-size: 13px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  /* ---------- E-mails ---------- */
+  .emails { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--s3); }
+  .email {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .email-topo {
+    display: flex; align-items: center; gap: var(--s2);
+    padding: var(--s2) var(--s3);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 2px; flex: none;
+    background: var(--brand-fill); color: #FFFFFF;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  }
+  .rem { font-size: 15px; font-weight: 600; line-height: 1.2; }
+  .rem small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+  .email-hora { margin-left: auto; font-family: var(--font-data); font-size: 12px; color: var(--ink-3); }
+  .email-corpo { padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); }
+  .assunto {
+    font-family: var(--font-display);
+    font-size: 19px; font-weight: 700; letter-spacing: -0.012em; margin: 0;
+  }
+  .email-corpo p { margin: 0; font-size: 16px; color: var(--ink-2); max-width: 52ch; }
+  .traz {
+    margin-top: 2px; padding-top: var(--s2);
+    border-top: 1px dashed var(--line-2);
+  }
+  .traz-t {
+    font-family: var(--font-data); font-size: 11px;
+    letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-3);
+    display: block; margin-bottom: 8px;
+  }
+  .traz ul { margin: 0; padding-left: 19px; font-size: 15px; color: var(--ink-2); }
+  .traz li { margin-bottom: 3px; }
+
+  /* ---------- Rodapé ---------- */
+  footer {
+    margin-top: var(--s7);
+    padding-top: var(--s4);
+    border-top: 1px solid var(--line-2);
+    display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4);
+    align-items: baseline;
+    font-size: 14px; color: var(--ink-3);
+  }
+  footer .marca { font-weight: 700; color: var(--ink-2); font-family: var(--font-display); }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  a:focus-visible, summary:focus-visible, .obra:focus-visible {
+    outline: 3px solid var(--brand-fill);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 760px) {
+    body { font-size: 16px; }
+    .numeros { grid-template-columns: 1fr; }
+    .num + .num { border-left: 0; border-top: 1px solid var(--line); }
+    .m-row { grid-template-columns: 1fr; gap: 8px; }
+    .atualizado { margin-left: 0; }
+    .top-by { margin-left: 0; width: 100%; }
+    .crono-scroll::before {
+      content: "Arraste para o lado para ver as próximas semanas";
+      display: block; font-size: 14px; color: var(--ink-3); margin-bottom: 8px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  @media print {
+    body { background: #FFFFFF; }
+    .top { position: static; }
+    .obra:hover { transform: none; box-shadow: none; }
+    details.feito { display: block; } details.feito ul { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <span class="top-name">Drogaria Pacheco</span>
+    <span class="top-sub">Obras e manutenção nas suas lojas</span>
+    <span class="top-by"><span class="by-mark"></span> Manfac Facilities</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <p style="margin:var(--s4) 0 0;padding:10px 14px;background:#FDF0E9;border:1px solid #F6D3C0;
+            border-radius:3px;font-size:16px;color:var(--brand)">
+    <b>Exemplo de apresentação.</b> As lojas são reais; os serviços, as datas e os números
+    desta tela são ilustrativos, só para mostrar como a informação vai chegar até você.
+  </p>
+
+  <!-- 1. RESUMO DO ASSISTENTE -->
+  <div class="resumo">
+    <div class="resumo-head">
+      <span class="assinatura">
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 1.2l1.5 3.9 3.9 1.5-3.9 1.5L8 12l-1.5-3.9L2.6 6.6l3.9-1.5z" fill="currentColor"/>
+          <circle cx="13" cy="12.4" r="1.7" fill="currentColor"/>
+        </svg>
+        Escrito pelo assistente
+      </span>
+      <span class="atualizado"><span class="pulso" aria-hidden="true"></span> Atualizado há poucos minutos</span>
+    </div>
+
+    <p><b>3 obras</b> têm entrega prevista para os próximos 7 dias.</p>
+    <p><b>12 lojas</b> com obra em execução.</p>
+    <p><b>8 manutenções</b> foram concluídas nos últimos 7 dias.</p>
+
+    <p class="resumo-nota">
+      Este resumo é escrito automaticamente e refeito ao longo do dia.
+      <b>Em breve</b>, o mesmo assistente <b>passará a enviar</b> um e-mail para você
+      quando a obra de uma loja começar e quando ela for entregue — os dois modelos
+      estão no fim desta página.
+    </p>
+  </div>
+
+  <!-- 2. FAIXA DE NÚMEROS -->
+  <div class="numeros">
+    <div class="num num--exec">
+      <span class="num-val">12</span>
+      <span class="num-lbl">lojas com obra em execução</span>
+    </div>
+    <div class="num num--ent">
+      <span class="num-val">5</span>
+      <span class="num-lbl">obras entregues em setembro</span>
+    </div>
+    <div class="num num--man">
+      <span class="num-val">34</span>
+      <span class="num-lbl">manutenções em setembro <em style="font-style:normal;color:var(--ink-3)">(exemplo)</em></span>
+    </div>
+  </div>
+
+  <!-- 3. OBRAS POR LOJA -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Loja a loja</span>
+      <h2>O que está sendo feito em cada loja</h2>
+      <p class="sub">Cada loja passa por três momentos: planejamento, execução e entrega.</p>
+    </div>
+
+    <div class="obras">
+
+      <!-- DP LEBLON 6 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP LEBLON 6</h3>
+          <p class="servico">Troca do piso da área de vendas</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da obra · 17 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Em execução desde 12 de setembro.</strong>
+          <span class="prev">Previsão de entrega: 25 de setembro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já foi feito</summary>
+          <ul>
+            <li>Piso antigo retirado de toda a área de vendas</li>
+            <li>Piso novo já assentado em metade da loja</li>
+            <li>Prateleiras protegidas e loja funcionando normalmente</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP LEBLON 2 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP LEBLON 2</h3>
+          <p class="servico">Pintura interna e troca da iluminação</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da loja pronta · 15 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Execução<span class="sr"> — concluída</span></span>
+          </li>
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Entrega<span class="sr"> — concluída</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Entregue em 15 de setembro.</strong>
+          <span class="prev">A loja voltou a funcionar por inteiro no mesmo dia.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que foi feito</summary>
+          <ul>
+            <li>Pintura de toda a área de vendas e do depósito</li>
+            <li>Luminárias novas na área de vendas</li>
+            <li>Limpeza final e conferência com o gerente da loja</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP PECHINCHA 4 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP PECHINCHA 4</h3>
+          <p class="servico">Reforma do balcão de atendimento</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da obra · 16 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Em execução desde 8 de setembro.</strong>
+          <span class="prev">Previsão de entrega: 2 de outubro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já foi feito</summary>
+          <ul>
+            <li>Balcão antigo removido</li>
+            <li>Atendimento funcionando em balcão provisório</li>
+            <li>Bancada nova já instalada; falta o acabamento</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP TIJUCA 5 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP TIJUCA 5</h3>
+          <p class="servico">Fachada e letreiro novos</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da obra · 17 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Em execução desde 1º de setembro.</strong>
+          <span class="prev">Previsão de entrega: 24 de setembro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já foi feito</summary>
+          <ul>
+            <li>Acabamento antigo da fachada retirado</li>
+            <li>Letreiro novo já produzido</li>
+            <li>Loja atendendo normalmente durante a obra</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP COPACABANA 3 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP COPACABANA 3</h3>
+          <p class="servico">Troca do ar-condicionado da loja</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da obra · 17 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Em execução desde 16 de setembro.</strong>
+          <span class="prev">Previsão de entrega: 21 de setembro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já foi feito</summary>
+          <ul>
+            <li>Aparelhos antigos retirados</li>
+            <li>Máquinas novas entregues na loja</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP MÉIER 7 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP MÉIER 7</h3>
+          <p class="servico">Troca do telhado e proteção contra goteiras</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">Foto da obra · 16 de setembro</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step done">
+            <span class="node"><svg class="check" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — concluído</span></span>
+          </li>
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>Em execução desde 10 de setembro.</strong>
+          <span class="prev">Previsão de entrega: 8 de outubro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já foi feito</summary>
+          <ul>
+            <li>Telhas antigas retiradas na parte dos fundos</li>
+            <li>Depósito já protegido contra infiltração de chuva</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- DP BARRA DA TIJUCA 8 -->
+      <article class="obra">
+        <div>
+          <h3 class="loja">DP BARRA DA TIJUCA 8</h3>
+          <p class="servico">Ampliação do estoque e porta de entrada nova</p>
+        </div>
+
+        <div class="foto">
+          <i></i><i></i><b></b><b></b>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA2B6" stroke-width="1.6" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="1.5"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 16.5l5-4 4 3 3.5-2.5L21 17"/>
+          </svg>
+          <span class="foto-txt">A foto entra quando a obra começar</span>
+        </div>
+
+        <ol class="rail">
+          <li class="step now" aria-current="step">
+            <span class="node"></span>
+            <span class="step-lbl">Planejamento<span class="sr"> — acontecendo agora</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Execução<span class="sr"> — ainda não começou</span></span>
+          </li>
+          <li class="step">
+            <span class="node"></span>
+            <span class="step-lbl">Entrega<span class="sr"> — ainda não começou</span></span>
+          </li>
+        </ol>
+
+        <p class="fato">
+          <strong>A obra começa em 24 de setembro.</strong>
+          <span class="prev">Previsão de entrega: 20 de outubro.</span>
+        </p>
+
+        <details class="feito" open>
+          <summary>O que já está definido</summary>
+          <ul>
+            <li>Medições da loja concluídas</li>
+            <li>Porta de entrada escolhida com o gerente da loja</li>
+            <li>Loja segue aberta durante toda a obra</li>
+          </ul>
+        </details>
+      </article>
+
+      <div class="mais-lojas">
+        <span class="mais-val">+7</span>
+        <span class="mais-lbl">outras lojas com obra em execução neste momento</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. CRONOGRAMA -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Próximas cinco semanas</span>
+      <h2>Quando cada loja deve ficar pronta</h2>
+      <p class="sub">Cada faixa mostra por quanto tempo a loja ainda fica em obra.
+        Estão aqui as 6 lojas com entrega mais próxima; as demais entram conforme a data se aproxima.</p>
+    </div>
+
+    <div class="crono-scroll">
+      <div class="crono">
+        <div class="crono-grid">
+          <div class="crono-head first">Loja</div>
+          <div class="crono-head">18–27 set</div>
+          <div class="crono-head">28 set–4 out</div>
+          <div class="crono-head">5–11 out</div>
+          <div class="crono-head">12–18 out</div>
+          <div class="crono-head">19–25 out</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP COPACABANA 3</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar" style="grid-column:2 / span 1">Previsão 21 set</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP TIJUCA 5</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar" style="grid-column:2 / span 1">Previsão 24 set</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP LEBLON 6</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar" style="grid-column:2 / span 1">Previsão 25 set</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP PECHINCHA 4</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar" style="grid-column:2 / span 2">Previsão 2 out</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP MÉIER 7</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar" style="grid-column:2 / span 3">Previsão 8 out</div>
+        </div>
+
+        <div class="crono-row">
+          <div class="crono-loja">DP BARRA DA TIJUCA 8</div>
+          <div class="crono-cell" style="grid-column:2"></div>
+          <div class="crono-cell" style="grid-column:3"></div>
+          <div class="crono-cell" style="grid-column:4"></div>
+          <div class="crono-cell" style="grid-column:5"></div>
+          <div class="crono-cell" style="grid-column:6"></div>
+          <div class="bar bar--plan" style="grid-column:2 / span 1">Começa 24 set</div>
+          <div class="bar" style="grid-column:3 / span 4">Previsão 20 out</div>
+        </div>
+
+        <div class="crono-legenda">
+          <span class="leg"><span class="leg-amostra exec" aria-hidden="true"></span> Loja em obra</span>
+          <span class="leg"><span class="leg-amostra plan" aria-hidden="true"></span> Ainda vai começar</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. MANUTENÇÃO -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Manutenção</span>
+      <h2>Consertos pedidos nas suas lojas</h2>
+      <p class="sub">Consertos e ajustes do dia a dia, separados das obras.</p>
+      <span class="aviso-exemplo">Exemplo — esta seção entra em seguida</span>
+    </div>
+
+    <div class="manut">
+
+      <div class="m-row">
+        <span class="m-loja">DP LEBLON 2</span>
+        <span class="m-item">Ar-condicionado sem gelar</span>
+        <span class="tag tag--ok">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Concluída
+        </span>
+        <span class="m-data">16 de setembro</span>
+      </div>
+
+      <div class="m-row">
+        <span class="m-loja">DP PECHINCHA 4</span>
+        <span class="m-item">Porta automática travando</span>
+        <span class="tag tag--live">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 3.2V6l2 1.3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+          Em atendimento
+        </span>
+        <span class="m-data">desde 17 de setembro</span>
+      </div>
+
+      <div class="m-row">
+        <span class="m-loja">DP TIJUCA 5</span>
+        <span class="m-item">Geladeira de vacinas fazendo barulho</span>
+        <span class="tag tag--live">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 3.2V6l2 1.3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+          Em atendimento
+        </span>
+        <span class="m-data">desde 15 de setembro</span>
+      </div>
+
+      <div class="m-row">
+        <span class="m-loja">DP BARRA DA TIJUCA 8</span>
+        <span class="m-item">Lâmpadas queimadas na área de vendas</span>
+        <span class="tag tag--wait">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.4" y="2.4" width="9.2" height="8.2" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.4 5h9.2M4 1.4v2M8 1.4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Agendada
+        </span>
+        <span class="m-data">22 de setembro</span>
+      </div>
+
+      <div class="m-row">
+        <span class="m-loja">DP MÉIER 7</span>
+        <span class="m-item">Troca da fechadura da porta dos fundos</span>
+        <span class="tag tag--wait">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.4" y="2.4" width="9.2" height="8.2" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.4 5h9.2M4 1.4v2M8 1.4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Agendada
+        </span>
+        <span class="m-data">24 de setembro</span>
+      </div>
+
+      <div class="m-row">
+        <span class="m-loja">DP COPACABANA 3</span>
+        <span class="m-item">Vazamento na pia do depósito</span>
+        <span class="tag tag--ok">
+          <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6.2l3 3 6-6.4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Concluída
+        </span>
+        <span class="m-data">12 de setembro</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 6. E-MAILS -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Em preparação</span>
+      <h2>Os avisos que você vai passar a receber</h2>
+      <p class="sub">Dois e-mails, e só: um quando a obra começa, outro quando a loja é entregue. Abaixo, como cada um vai chegar.</p>
+    </div>
+
+    <div class="emails">
+
+      <article class="email">
+        <div class="email-topo">
+          <span class="avatar" aria-hidden="true">MF</span>
+          <span class="rem">
+            Manfac Facilities
+            <small>aviso automático</small>
+          </span>
+          <span class="email-hora">08 set · 07h12</span>
+        </div>
+        <div class="email-corpo">
+          <h3 class="assunto">A obra da sua loja começou — DP PECHINCHA 4</h3>
+          <p>
+            Bom dia. A reforma do balcão de atendimento da DP PECHINCHA 4 começou hoje,
+            8 de setembro.
+          </p>
+          <p>
+            A previsão de entrega é 2 de outubro. A loja continua atendendo normalmente
+            durante a obra.
+          </p>
+          <div class="traz">
+            <span class="traz-t">O que este aviso traz</span>
+            <ul>
+              <li>Qual loja entrou em obra</li>
+              <li>O que vai ser feito, em uma frase</li>
+              <li>A data em que começou</li>
+              <li>A previsão de entrega</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="email">
+        <div class="email-topo">
+          <span class="avatar" aria-hidden="true">MF</span>
+          <span class="rem">
+            Manfac Facilities
+            <small>aviso automático</small>
+          </span>
+          <span class="email-hora">15 set · 18h40</span>
+        </div>
+        <div class="email-corpo">
+          <h3 class="assunto">A obra da sua loja foi entregue — DP LEBLON 2</h3>
+          <p>
+            Boa tarde. A DP LEBLON 2 foi entregue hoje, 15 de setembro, com a pintura
+            interna refeita e a iluminação nova.
+          </p>
+          <p>
+            As fotos da loja pronta ficam nesta mesma página.
+          </p>
+          <div class="traz">
+            <span class="traz-t">O que este aviso traz</span>
+            <ul>
+              <li>Qual loja ficou pronta</li>
+              <li>O que foi feito, em uma frase</li>
+              <li>A data da entrega</li>
+              <li>As fotos da loja pronta</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    <span class="marca">Manfac Facilities</span>
+    <span>Acompanhamento de obras e manutenção · Drogaria Pacheco</span>
+    <span>Modelo de apresentação — lojas reais, datas e números ilustrativos.</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
