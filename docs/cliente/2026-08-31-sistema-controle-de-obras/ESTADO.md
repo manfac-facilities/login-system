@@ -34,6 +34,40 @@ fora do ciclo de 5 — `select cron.alter_job((select jobid from cron.job where 
 06:05, a incremental daquele horário é recusada e não se perde nada: a seguinte lê tudo desde
 a última marca d'água.
 
+
+### ✅ 18/09, fim do dia — a ficha editável está pronta no código
+
+Quatro commits, todos com a suíte verde: **25 suites, 598 testes, 0 falhas**, `tsc` 0,
+`eslint` 0, `npm run build` passando. **Nada disso está em produção** — falta aplicar duas
+migrations e deployar. O passo a passo está em `RUNBOOK-ficha-editavel-2026-09-18.md`.
+
+O que entrou: os três blocos editáveis (Autorização, Identificação, Cronograma) com Editar /
+Salvar / Cancelar próprios, a remarcação com motivo obrigatório vindo do banco, o bloco
+"Dados da obra" na Triagem, seis Server Actions e a migration dos motivos.
+
+**Três defeitos achados por revisão independente, não por teste:**
+
+1. **O teste da guarda de autorização não discriminava nada.** Em JS `!x` já barra `null` e
+   `undefined`, então testar esses dois é enfeite; o que discrimina é o truthy que não é
+   `true`. Com a tabela refeita, mutar `!== true` para `!` derruba 10 testes — antes, zero.
+2. **A RPC contradizia o app sobre apagar a data de início.** O app trata como remarcação (com
+   teste); o SQL recusava com `22023`. Corrigido no SQL, que era o lado errado: a data
+   combinada deixar de valer é exatamente o que a remarcação registra.
+3. **A Triagem mostrava a coluna errada duas vezes.** "Entrou pelo Field em {aprovacao}" e o
+   número de dias ao lado vinham da MESMA coluna errada. Corrigir só a data teria deixado
+   metade do bug: assim que a ficha gravasse `aprovacao`, a tela contaria dias desde a
+   aprovação da OS chamando isso de entrada.
+
+**Degradação silenciosa tratada:** sem a migration aplicada a lista de motivos volta vazia, o
+botão de remarcar nunca habilita e ninguém descobre por quê. Agora a janela diz.
+
+**Mockup v03 em linguagem leiga publicado e entregue ao João para enviar ao cliente:**
+https://claude.ai/artifact/4saEUo8PkDGSsBZUizuNXg — revisado por agente independente, que
+pegou um filtro chamado "Esperando começar" listando obra já executada.
+
+**Fica para depois, por decisão de escopo:** a tela do histórico, os dois contadores de prazo
+e a migração de `liberarObraAction` para o caminho do histórico (a liberação não aparece lá).
+
 ### ⚠️ A chave da Supabase (PAT) expirou
 
 `C:\Users\joao-\.supabase-pat` (criada em 10/09) passou a responder **401** em 18/09 —
