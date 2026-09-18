@@ -1,5 +1,55 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
+## ▶ Retomar aqui — 18/09/2026, manhã
+
+**Prazo:** operando na **segunda, 21/09** (o cliente dispensa quem faz o controle hoje);
+projeto final em **28/09**. Restam 18 e 19/09 úteis. **17/09 passou sem commit e sem deploy.**
+
+**Corte de escopo decidido pelo João em 18/09:** entra primeiro a **ficha editável + a
+remarcação**. O histórico de alterações (Parte 2) sai desta entrega.
+
+**Verificado em produção hoje (18/09):**
+- Build no ar: 16/09 16:23 GMT. Nenhum commit novo desde `6272343`.
+- 64 obras, loja com o nome certo ("DP LEBLON 6"), 0 falhas de sincronização nas últimas 24h.
+- 4 e-mails com o slug `obras` liberado: gabriel.lima, gabriel.vidal, luana.silva, yuri.moreira.
+
+### ⚠️ A varredura diária é perdida quando colide com a de 5 minutos
+
+Os dois jobs disparam no mesmo minuto às 06:05 UTC (`*/5 * * * *` e `5 6 * * *`). Quem chega
+primeiro toma a trava `obras_sync_execucao_uma_rodando`; o outro recebe **409
+`ja_estava_rodando`** (`app/api/obras/sincronizar/route.ts:56`) e **morre em silêncio** — não
+grava linha em `obras_sync_execucao` nem erro em lugar nenhum.
+
+Medido: em **16/09** a completa venceu e rodou às 06:05:00.98; em **17/09** a incremental
+venceu (06:05:00.69) e **a completa do dia não existiu**. O `cron.job_run_details` diz
+`succeeded` nos dois casos, porque para o `pg_cron` a chamada HTTP foi feita — o sinal real é
+a linha em `obras_sync_execucao`.
+
+**Por que importa:** a completa é a **única** que detecta OS arquivada ou sumida no Field.
+Do jeito que está, ela roda uns dias sim, outros não, sem aviso.
+
+**Correção proposta (pendente da chave da Supabase voltar):** mover a completa para um minuto
+fora do ciclo de 5 — `select cron.alter_job((select jobid from cron.job where jobname =
+'obras-field-completa'), schedule => '2 6 * * *');`. Se a completa ainda estiver rodando às
+06:05, a incremental daquele horário é recusada e não se perde nada: a seguinte lê tudo desde
+a última marca d'água.
+
+### ⚠️ A chave da Supabase (PAT) expirou
+
+`C:\Users\joao-\.supabase-pat` (criada em 10/09) passou a responder **401** em 18/09 —
+funcionava em 17/09. Sem ela não há leitura nem escrita no banco de produção pela Management
+API: nem a correção do cron acima, nem migration nova. O João gera outra em Dashboard →
+Account → Access Tokens e grava no mesmo arquivo, por um PowerShell dele — **nunca pelo `!` do
+chat**, que traz o valor para o contexto.
+
+### Em andamento agora
+
+- **Mockup v03 em linguagem leiga** (`mockup-j4-v03.html`): o v02 tem vocabulário nosso
+  ("SLA 1", "esteira", "triagem", "suposições", "mockup", "diálogo"). Alvo aprovado pelo João:
+  trocar os termos e **manter** os blocos "O que você respondeu / O que mudou". Quem envia ao
+  cliente é o João, pelo WhatsApp.
+- **Spec da ficha editável + remarcação** (`spec-ficha-editavel-2026-09-18.md`).
+
 ## ▶ Retomar aqui — 16/09/2026, madrugada
 
 > ## ✅ 03:11 — A PRIMEIRA CARGA ENTROU. O sistema deixou de estar vazio.
