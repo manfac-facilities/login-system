@@ -659,3 +659,94 @@ describe('o filtro de entrada — só entra pendente, agendada ou em andamento',
     expect(plano.ignoradas[0].motivo).toContain('em-orbita')
   })
 })
+
+// ============================================================
+// Invariante que sustenta a ficha editável (spec de 18/09/2026, R19 e R20).
+//
+// A ficha passa a gravar origem, liberado_por, liberado_em, aprovacao, tipo,
+// valor, analista_cliente, mau_uso, pcm, equipe, prioridade, inicio_plan e
+// duracao. Nada disso precisa de trava contra a recarga de 5 minutos POR UM
+// MOTIVO SÓ: o conjunto de colunas que a sincronização pode escrever é
+// disjunto desse. Este teste é a prova, e quebra no dia em que alguém
+// acrescentar um campo à sincronização sem perceber o que está desfazendo.
+// ============================================================
+describe('invariante: o Field nunca escreve o que a ficha editável grava', () => {
+  const COLUNAS_QUE_O_FIELD_PODE_ESCREVER = [
+    'descricao',
+    'field_ausente_desde',
+    'field_ausente_em',
+    'field_id',
+    'fonte',
+    'loja',
+    'os',
+  ]
+
+  const COLUNAS_DA_FICHA_EDITAVEL = [
+    'analista_cliente',
+    'aprovacao',
+    'duracao',
+    'equipe',
+    'inicio_plan',
+    'liberado_em',
+    'liberado_por',
+    'mau_uso',
+    'origem',
+    'pcm',
+    'prioridade',
+    'tipo',
+    'valor',
+  ]
+
+  it('o conjunto de colunas que a sincronização escreve é exatamente o esperado', () => {
+    // Obra vazia em tudo: é o caso que deixa a sincronização escrever o máximo
+    // que ela sabe escrever. O que não aparecer aqui, ela não escreve nunca.
+    const plano = planejarSincronizacao(
+      [osDoField()],
+      [
+        obraNoBanco({
+          os: '0226-014989',
+          loja: null,
+          descricao: null,
+          fonte: null,
+          field_id: null,
+        }),
+      ],
+    )
+
+    const escritas = new Set<string>()
+    for (const linha of plano.atualizar) for (const c of Object.keys(linha.campos)) escritas.add(c)
+    for (const linha of plano.inserir) for (const c of Object.keys(linha)) escritas.add(c)
+
+    // Sem isto o teste passaria vazio, sem provar nada.
+    expect(escritas.size).toBeGreaterThan(0)
+
+    for (const coluna of escritas) {
+      expect(COLUNAS_QUE_O_FIELD_PODE_ESCREVER).toContain(coluna)
+    }
+    for (const coluna of COLUNAS_DA_FICHA_EDITAVEL) {
+      expect(escritas.has(coluna)).toBe(false)
+    }
+  })
+
+  it('obra com a ficha toda preenchida no hub passa pela sincronização sem perder nada', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ loja: 'OUTRO ENDEREÇO', descricao: 'OUTRA DESCRIÇÃO' })],
+      [obraNoBanco({ loja: 'DP LEBLON 6', descricao: 'Troca do forro' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.inalteradas).toBe(1)
+  })
+
+  it('R19: loja preenchida não é sobrescrita pelo nome que vem do Field', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ loja: 'DP LEBLON 6 (NOME NOVO)' })],
+      [obraNoBanco({ loja: 'DP LEBLON 6', descricao: 'Troca do forro' })],
+    )
+
+    const lojasEscritas = plano.atualizar.flatMap((l) =>
+      'loja' in l.campos ? [l.campos.loja] : [],
+    )
+    expect(lojasEscritas).toEqual([])
+  })
+})

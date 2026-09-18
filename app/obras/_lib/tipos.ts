@@ -207,6 +207,43 @@ export const ITEM_FOTO = 'Foto'
 export const PRIORIDADES = ['Normal', 'Urgente'] as const
 export type Prioridade = (typeof PRIORIDADES)[number]
 
+/**
+ * `ORIGENS(mockup-j4-v02:524)` — por onde chegou o OK para executar.
+ *
+ * PROVISÓRIAS, e o cliente sabe: a suposição 4 do mockup declara o significado
+ * e a lista como pendentes. O João decidiu em 18/09 seguir com elas (spec da
+ * ficha editável, decisão D3) porque mudar a lista é editar esta constante.
+ *
+ * NO BANCO `origem` É TEXTO LIVRE, e continua sendo: o importador da planilha
+ * gravava qualquer coisa (`importacao.ts:526`). Valor gravado fora desta lista
+ * NÃO pode ser descartado nem apagado — o `select` da tela o inclui e
+ * `validarAutorizacao` o aceita (risco 6 da spec). Lista fechada aqui
+ * apagaria dado do cliente sem ninguém notar.
+ */
+export const ORIGENS = [
+  'Sistema do cliente',
+  'E-mail do cliente',
+  'Telefone',
+  'WhatsApp',
+  'Outro',
+] as const
+export type Origem = (typeof ORIGENS)[number]
+
+/**
+ * `TIPOS(mockup-j4-v02:523)` — a natureza do serviço. Mesma regra da `origem`:
+ * a coluna é texto livre e valor antigo fora da lista é preservado.
+ * A grafia em caixa alta é a da planilha e a do mockup aprovado.
+ */
+export const TIPOS_OBRA = [
+  'CIVIL',
+  'ELÉTRICA',
+  'HIDRÁULICA',
+  'PINTURA',
+  'SERRALHERIA',
+  'Outro',
+] as const
+export type TipoObra = (typeof TIPOS_OBRA)[number]
+
 export const AREAS = ['Compras', 'Obras', 'Campo'] as const
 export type Area = (typeof AREAS)[number]
 
@@ -453,6 +490,23 @@ export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
     paradaEtapa: posCampo(o) ? paradaNaEtapa(o, hoje) : null,
     dono: donoDa(o),
   }
+}
+
+/**
+ * A data em que a obra ENTROU no hub — o dia de São Paulo do `created_at`.
+ *
+ * Existe para a Triagem parar de mentir (R23 da spec da ficha editável): ela
+ * escreve "Ela entrou pelo Field em …" lendo `obra.aprovacao`
+ * (`_triagem.tsx:146`), que é a data de autorização da antiga importação de
+ * planilha e é `null` em toda obra do Field. Assim que a ficha editável começar
+ * a gravar `aprovacao`, aquele texto passaria a exibir a data de aprovação da
+ * OS como se fosse a data de entrada.
+ *
+ * É a MESMA data que `ancoraDias` chama de 'entrada' — um nome só para um
+ * conceito só.
+ */
+export function entradaDaObra(o: Pick<ObraRow, 'created_at'>): string | null {
+  return dataSP(o.created_at)
 }
 
 // ============================================================

@@ -740,3 +740,72 @@ describe('ancoraDias — de que data os dias contam (decisão 5 revista)', () =>
     expect(LIMIAR_CRITICO).toBe(30)
   })
 })
+
+// ============================================================
+// Regressão da regra da obra crítica — protege R13 e R14 da spec da ficha
+// editável (18/09/2026). A ficha passa a gravar `liberado_por`, `liberado_em`,
+// `aprovacao` e `inicio_plan`, que são exatamente as colunas que a âncora lê.
+// A decisão do João de 15/09 é o que estes testes prendem: REGISTRAR UMA DATA
+// NUNCA DERRUBA A CONTAGEM. Sem eles, uma mudança em `ancoraDias` passa em
+// todos os testes acima e some com a obra parada da lista de críticas.
+// ============================================================
+describe('a ficha editável não pode derrubar a contagem da obra crítica', () => {
+  // Entrada em 01/08, com HOJE = 31/08: 30 dias desde a entrada.
+  const entrou01Ago = {
+    aprovacao: null,
+    liberado_por: null,
+    liberado_em: null,
+    created_at: '2026-08-01T13:00:00+00:00',
+  }
+
+  it('R14: registrar quem liberou, com data posterior à entrada, não reduz os dias', () => {
+    const antes = obra(entrou01Ago)
+    expect(antes.ancora).toEqual({ de: 'entrada', data: '2026-08-01' })
+    expect(antes.diasAlerta).toBe(30)
+
+    const depois = obra({ ...entrou01Ago, liberado_por: 'LEANDRO', liberado_em: '2026-08-20' })
+    expect(depois.diasAlerta).toBe(30)
+    expect(depois.ancora).toEqual({ de: 'entrada', data: '2026-08-01' })
+  })
+
+  it('R14: registrar a aprovação da OS depois também não reduz os dias', () => {
+    const depois = obra({
+      ...entrou01Ago,
+      liberado_por: 'LEANDRO',
+      liberado_em: '2026-08-20',
+      aprovacao: '2026-08-25',
+    })
+    expect(depois.diasAlerta).toBe(30)
+    expect(depois.ancora).toEqual({ de: 'entrada', data: '2026-08-01' })
+  })
+
+  it('R14: aprovação ANTERIOR à entrada aumenta os dias — a âncora é a mais antiga das três', () => {
+    const o = obra({ ...entrou01Ago, aprovacao: '2026-07-01' })
+    expect(o.ancora).toEqual({ de: 'aprovacao', data: '2026-07-01' })
+    expect(o.diasAlerta).toBe(61)
+  })
+
+  it('R13: mudar o início planejado não mexe na âncora, nos dias, no crítico nem na severidade', () => {
+    const base = { ...entrou01Ago, etapa: 'andamento' as const, inicio_plan: '2026-08-19' }
+    const antes = obra(base)
+    const remarcada = obra({ ...base, inicio_plan: '2026-09-10' })
+
+    expect(remarcada.ancora).toEqual(antes.ancora)
+    expect(remarcada.diasAlerta).toBe(antes.diasAlerta)
+    expect(critico(remarcada)).toBe(critico(antes))
+    expect(sev(remarcada)).toBe(sev(antes))
+  })
+
+  it('a fronteira do crítico não pode regredir: 30 dias não é crítica, 31 é', () => {
+    const naFronteira = obra({ ...entrou01Ago, etapa: 'andamento' })
+    expect(naFronteira.diasAlerta).toBe(30)
+    expect(critico(naFronteira)).toBe(false)
+
+    const umDiaDepois = obra(
+      { ...entrou01Ago, etapa: 'andamento' },
+      '2026-09-01'
+    )
+    expect(umDiaDepois.diasAlerta).toBe(31)
+    expect(critico(umDiaDepois)).toBe(true)
+  })
+})
