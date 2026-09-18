@@ -8,8 +8,18 @@
  * fotos → Linha do tempo do diário → Tarefas que as faltas geraram →
  * Pendências e próxima ação → Vindo do Field.
  *
- * Server Component. O único pedaço interativo é o `<SeletorEtapa>`, que é
- * client e vive dentro do bloco de ciclo de vida.
+ * Server Component — e continua sendo depois da ficha editável (spec §5.2). Os
+ * pedaços interativos são o `<SeletorEtapa>` e os TRÊS BLOCOS EDITÁVEIS
+ * (`_bloco-autorizacao`, `_bloco-identificacao`, `_bloco-cronograma`), todos
+ * client. **O estado vive só nos filhos**: esta tela lê a obra, traduz para os
+ * rascunhos de `_lib/ficha-campos.ts` e entrega — nada aqui guarda rascunho.
+ *
+ * AS SERVER ACTIONS ENTRAM NOS BLOCOS POR PROP, e não por `import` de dentro
+ * deles. Os blocos foram construídos assim para poderem ser testados sem o
+ * `_actions.ts`; amarrar as duas pontas é trabalho DESTA tela, que é Server
+ * Component e pode importar `'use server'` (passar action como prop a um Client
+ * Component é o caminho documentado — `node_modules/next/dist/docs/01-app/
+ * 01-getting-started/07-mutating-data.md`, "Passing actions as props").
  *
  * O QUE ESTA TELA NÃO FAZ: escrever no diário. Quem escreve é a frente C
  * (`/obras/diario`); aqui a linha do tempo é só leitura.
@@ -23,6 +33,7 @@ import {
   diasSemOS,
   encalhada,
   encerrada,
+  entradaDaObra,
   liberada,
   moeda,
   nomeEtapa,
@@ -43,6 +54,7 @@ import {
   type RemarcacaoRow,
   type TarefaRow,
 } from '../../_lib/tipos'
+import { moedaParaTexto } from '../../_lib/ficha-campos'
 import { Box, BoxB, BoxH, Campo, Campos, EstadoVazio, Placeholder } from '../../_ui/primitivos'
 import {
   BadgeDias,
@@ -53,6 +65,15 @@ import {
   EtiquetaPrioridade,
 } from '../../base/_etiquetas'
 import SeletorEtapa from './_etapa'
+import BlocoAutorizacao from './_bloco-autorizacao'
+import BlocoIdentificacao from './_bloco-identificacao'
+import BlocoCronograma from './_bloco-cronograma'
+import {
+  cadastrarMotivoRemarcacaoAction,
+  salvarAutorizacaoAction,
+  salvarCronogramaAction,
+  salvarIdentificacaoAction,
+} from './_actions'
 
 /** `MARCO_DE(mockup:3302)`, traduzido para as colunas reais de `obras_obra`. */
 const MARCO_DE: Record<string, keyof Obra> = {
@@ -64,6 +85,50 @@ const MARCO_DE: Record<string, keyof Obra> = {
 }
 
 export type FotoDoDia = { data: string; url: string | null }
+
+/**
+ * `obras_remarcacao` com as duas colunas que a migration dos motivos
+ * acrescentou (spec §3.2). Elas NÃO estão em `RemarcacaoRow` (`_lib/tipos.ts`,
+ * arquivo de outra frente, fora do alvo desta): são declaradas opcionais aqui
+ * para a tela mostrar o que existir sem depender da ordem em que as duas
+ * frentes entram — antes da migration, a linha simplesmente não as traz.
+ */
+export type RemarcacaoNaFicha = RemarcacaoRow & {
+  detalhe?: string | null
+  registrado_por?: string | null
+}
+
+/** A última alteração de um bloco, lida de `obras_historico`. */
+export type UltimaEdicao = {
+  quem: string
+  /** `AAAA-MM-DD`, já no fuso de São Paulo. */
+  quando: string
+}
+
+/** Uma entrada por bloco editável. Ausente = o bloco nunca foi editado. */
+export type EdicoesPorBloco = {
+  Autorização?: UltimaEdicao
+  Identificação?: UltimaEdicao
+  Cronograma?: UltimaEdicao
+}
+
+/**
+ * O rodapé de autoria de cada bloco (`rodapeB(mockup-j4-v03:850)`).
+ *
+ * Sem o link "ver no histórico": a TELA do histórico é o corte de escopo do
+ * João de 18/09 (spec §2.2). O mecanismo de gravação entrou; a tela, não —
+ * então o rodapé diz quem e quando, e para por aí.
+ */
+function Rodape({ edicao, entrada }: { edicao?: UltimaEdicao; entrada: string | null }) {
+  if (edicao) {
+    return (
+      <>
+        Editado por <b className="text-[#94a3b8]">{edicao.quem}</b> em {br(edicao.quando)}
+      </>
+    )
+  }
+  return <>Sem edição desde a entrada pelo Field ({br(entrada)}).</>
+}
 
 /* -------------------------------------------------------------------------- */
 /* Esteira                                                                    */
@@ -357,17 +422,34 @@ export default function Ficha({
   tarefas,
   pessoas,
   fotos,
+  responsaveis,
+  equipes,
+  analistasCliente,
+  motivos,
+  hoje,
+  edicoes = {},
 }: {
   obra: Obra
   diario: DiarioRow[]
-  remarcacoes: RemarcacaoRow[]
+  remarcacoes: RemarcacaoNaFicha[]
   tarefas: TarefaRow[]
   pessoas: Record<string, PessoaRow>
   fotos: Record<string, string>
+  /** Quem pode ser responsável da obra, no bloco Cronograma. */
+  responsaveis: readonly string[]
+  equipes: readonly string[]
+  /** Analistas do cliente: "Liberado por" e "Analista do cliente". */
+  analistasCliente: readonly string[]
+  /** A lista padronizada de `obras_motivo_remarcacao`, já ordenada. */
+  motivos: readonly string[]
+  /** `AAAA-MM-DD` vindo do servidor — a tela não inventa "hoje". */
+  hoje: string
+  edicoes?: EdicoesPorBloco
 }) {
   const ultimos = diario.slice(-8)
   const comFoto = ultimos.filter((d) => !!d.foto_path).length
   const dSemOS = diasSemOS(obra)
+  const entrada = entradaDaObra(obra)
 
   return (
     <div className="flex flex-col gap-4">
@@ -485,92 +567,73 @@ export default function Ficha({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* -------------------- coluna esquerda -------------------- */}
         <div className="flex flex-col gap-4">
-          {/* ---------- autorização ---------- */}
-          <Box>
-            <BoxH extra="o que destrava a execução e o que destrava o fechamento">Autorização</BoxH>
-            <BoxB>
-              <Campos cols={2}>
-                <Campo rotulo="Liberação">
-                  {liberada(obra) ? (
-                    <>
-                      Liberado por <b>{obra.liberado_por}</b> · {br(obra.liberado_em)}
-                    </>
-                  ) : (
-                    <span className="font-semibold text-[#ff4d6d]">Ninguém liberou esta obra</span>
-                  )}
-                </Campo>
-                <Campo rotulo="OS do cliente">
-                  {obra.os_aprovada ? (
-                    <>OS aprovada · {br(obra.marco_os_aprov ?? obra.aprovacao)}</>
-                  ) : (
-                    <>
-                      <span className="font-semibold text-[#ff4d6d]">OS ainda não aprovada</span>
-                      {dSemOS !== null ? (
-                        <span className="text-[#94a3b8]"> · há {dSemOS} dias</span>
-                      ) : null}
-                    </>
-                  )}
-                </Campo>
-              </Campos>
-              <p className="mt-3 text-[11px] leading-relaxed text-[#94a3b8]">
-                {obra.os_aprovada && liberada(obra) ? (
-                  <>
-                    A obra tem as duas coberturas: alguém autorizou a execução{' '}
-                    <b className="text-[#e8eef7]">e</b> existe OS aprovada no sistema do cliente. É o
-                    caso normal.
-                  </>
-                ) : obra.os_aprovada ? (
-                  <>
-                    A obra não precisou de liberação: a{' '}
-                    <b className="text-[#e8eef7]">OS já estava aprovada</b> quando a equipe foi a
-                    campo, e a OS é a própria autorização.
-                  </>
-                ) : liberada(obra) ? (
-                  <>
-                    A execução aconteceu com o{' '}
-                    <b className="text-[#e8eef7]">OK de {obra.liberado_por}</b>, que se comprometeu a
-                    aprovar a OS depois. Faz <b className="text-[#e8eef7]">{dSemOS} dias</b> que essa
-                    OS não sai — e é o {obra.liberado_por} quem a Manfac vai procurar.
-                  </>
-                ) : (
-                  <>
-                    <b className="text-[#ff4d6d]">Nem uma coisa nem outra.</b> A obra{' '}
-                    {posCampo(obra) ? 'foi executada' : 'está sendo executada'} sem OS e sem ninguém
-                    nomeado que tenha autorizado. É o que a Manfac não consegue ver hoje.
-                  </>
-                )}
-              </p>
-            </BoxB>
-          </Box>
+          {/* ---------- autorização (editável) ---------- */}
+          {/* A ORIGEM MORA AQUI, não na Identificação: feedback 14 A do cliente
+              — "por onde chegou o OK" é parte da autorização (E2 da spec). */}
+          <BlocoAutorizacao
+            obraId={obra.id}
+            valores={{
+              origem: obra.origem ?? '',
+              libPor: obra.liberado_por ?? '',
+              libEm: obra.liberado_em ?? '',
+              // R7: `aprovacao` é a coluna que manda; `os_aprovada` e
+              // `marco_os_aprov` são satélites dela. A tela lê UMA data.
+              aprovadaEm: obra.aprovacao ?? '',
+            }}
+            analistas={analistasCliente}
+            hoje={hoje}
+            diasSemOS={dSemOS}
+            etapa={obra.etapa as Etapa}
+            responsavel={obra.pcm}
+            rodape={<Rodape edicao={edicoes['Autorização']} entrada={entrada} />}
+            salvar={salvarAutorizacaoAction}
+          />
 
-          {/* ---------- identificação ---------- */}
+          {/* ---------- identificação (editável) ---------- */}
+          <BlocoIdentificacao
+            obraId={obra.id}
+            valores={{
+              tipo: obra.tipo ?? '',
+              // O input de edição recebe TEXTO pt-BR ('18.450,00'), não número:
+              // é `numeroBR` que o converte de volta na gravação (§5.4).
+              valor: moedaParaTexto(obra.valor),
+              analista: obra.analista_cliente ?? '',
+              mauUso: obra.mau_uso === true,
+            }}
+            campoDoField={{ os: obra.os, loja: obra.loja, chamado: obra.descricao }}
+            analistas={analistasCliente}
+            rodape={<Rodape edicao={edicoes['Identificação']} entrada={entrada} />}
+            salvar={salvarIdentificacaoAction}
+          />
+
+          {/* ---------- cronograma (editável) ---------- */}
+          <BlocoCronograma
+            obraId={obra.id}
+            valores={{
+              resp: obra.pcm ?? '',
+              equipe: obra.equipe ?? '',
+              prioridade: obra.prioridade ?? '',
+              inicio: obra.inicio_plan ?? '',
+              duracao: obra.duracao !== null ? String(obra.duracao) : '',
+            }}
+            responsaveis={responsaveis}
+            equipes={equipes}
+            motivos={motivos}
+            rodape={<Rodape edicao={edicoes['Cronograma']} entrada={entrada} />}
+            salvar={salvarCronogramaAction}
+            cadastrarMotivo={cadastrarMotivoRemarcacaoAction}
+          />
+
+          {/* ---------- o que o campo devolveu ----------
+              Início real e bloqueio atual não são editáveis e não estão em
+              nenhum dos três blocos do mockup — quem os escreve é o diário do
+              dia, não esta tela. Ficam aqui para não sumirem da ficha na
+              reorganização dos blocos: eram exibidos na Identificação antiga. */}
           <Box>
-            <BoxH>Identificação</BoxH>
+            <BoxH extra="escrito pelo diário do dia, não por esta tela">O que o campo devolveu</BoxH>
             <BoxB>
               <Campos cols={2}>
-                <Campo rotulo="Nº OS">{obra.os}</Campo>
-                <Campo rotulo="Loja">{obra.loja}</Campo>
-                <Campo rotulo="Chamado">{obra.descricao}</Campo>
-                <Campo rotulo="Tipo">{obra.tipo}</Campo>
-                {obra.mau_uso ? (
-                  <Campo rotulo="Classificação">
-                    <EtiquetaMauUso obra={obra} />
-                    <div className="mt-1 text-[11px] leading-relaxed text-[#64748b]">
-                      Dano por uso indevido do cliente — a Manfac conserta e cobra. É etiqueta, não
-                      etapa: a obra segue a mesma esteira de todas as outras.
-                    </div>
-                  </Campo>
-                ) : null}
-                <Campo rotulo="Prioridade">
-                  <EtiquetaPrioridade obra={obra} />
-                </Campo>
-                <Campo rotulo="Valor">{moeda(obra.valor)}</Campo>
-                <Campo rotulo="Analista">{obra.analista_cliente}</Campo>
-                <Campo rotulo="Responsável da obra">
-                  {obra.pcm ?? <span className="text-[#f05a28]">a definir</span>}
-                </Campo>
-                <Campo rotulo="Equipe / prestador">{obra.equipe}</Campo>
-                <Campo rotulo="Origem">{obra.origem}</Campo>
+                <Campo rotulo="Início real">{br(obra.inicio_real)}</Campo>
                 <Campo rotulo="Bloqueio atual">
                   {!obra.bloqueio || obra.bloqueio === SEM_BLOQUEIO ? (
                     <span className="text-[#64748b]">sem bloqueio</span>
@@ -587,26 +650,6 @@ export default function Ficha({
             </BoxB>
           </Box>
 
-          {/* ---------- cronograma ---------- */}
-          <Box>
-            <BoxH>Cronograma</BoxH>
-            <BoxB>
-              <Campos cols={4}>
-                <Campo rotulo="Início planejado">{br(obra.inicio_plan)}</Campo>
-                <Campo rotulo="Início real">{br(obra.inicio_real)}</Campo>
-                <Campo rotulo="Duração">
-                  {obra.duracao !== null ? `${obra.duracao} dias` : 'a definir'}
-                </Campo>
-                <Campo rotulo="Final calculado">{br(obra.fimCalc)}</Campo>
-              </Campos>
-              <p className="mt-3 text-[11px] leading-relaxed text-[#64748b]">
-                A obra é planejada por <b className="text-[#94a3b8]">duração</b>, não por data de
-                entrega. O final é consequência do início mais os dias combinados e se recalcula
-                sozinho a cada remarcação — ninguém precisa reescrever data final.
-              </p>
-            </BoxB>
-          </Box>
-
           {/* ---------- remarcações ---------- */}
           <Box>
             <BoxH extra={String(remarcacoes.length)}>Remarcações</BoxH>
@@ -620,9 +663,22 @@ export default function Ficha({
                       <span className="flex-none font-mono text-[#64748b]">{br(r.data)}</span>
                       <div className="min-w-0">
                         <div className="text-[#e8eef7]">
-                          início de <b>{br(r.de)}</b> para <b>{br(r.para)}</b>
+                          início de <b>{br(r.de)}</b> para{' '}
+                          <b>{r.para ? br(r.para) : 'sem data'}</b>
                         </div>
-                        {r.motivo ? <div className="text-[#94a3b8]">{r.motivo}</div> : null}
+                        {/* E7: motivo, descrição do "Outro" e quem remarcou. As duas
+                            últimas são as colunas que a migration dos motivos criou. */}
+                        {r.motivo ? (
+                          <div className="text-[#94a3b8]">
+                            {r.motivo}
+                            {r.detalhe ? <span className="text-[#64748b]"> · {r.detalhe}</span> : null}
+                          </div>
+                        ) : null}
+                        {r.registrado_por ? (
+                          <div className="text-[11px] text-[#64748b]">
+                            remarcado por {r.registrado_por}
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   ))}

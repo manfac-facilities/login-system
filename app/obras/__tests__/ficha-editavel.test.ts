@@ -545,8 +545,9 @@ describe('salvarCronogramaAction', () => {
     expect(args.p_para).toBeNull()
     expect(args.p_de).toBe('2026-09-08')
     expect(args.p_motivo).toBe('Clima')
-    expect('inicio_plan' in args.p_campos).toBe(true)
-    expect(args.p_campos.inicio_plan).toBeNull()
+    const campos = args.p_campos as Record<string, unknown>
+    expect('inicio_plan' in campos).toBe(true)
+    expect(campos.inicio_plan).toBeNull()
   })
 
   it('recusa duração fora de 1–180, sem escrever', async () => {

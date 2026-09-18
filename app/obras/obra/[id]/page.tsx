@@ -6,8 +6,9 @@
  * `/obras/triagem`, e é de propósito — quem abre a obra pela base cai no que
  * ela precisa agora.
  *
- * Server Component fino: busca, deriva e entrega. As duas escritas desta tela
- * (liberar a obra e trocar de etapa) vivem em `_actions.ts`.
+ * Server Component fino: busca, deriva e entrega. As escritas desta tela
+ * (liberar a obra, trocar de etapa e, desde a ficha editável, os três blocos)
+ * vivem em `_actions.ts`.
  */
 
 import Link from 'next/link'
@@ -16,21 +17,23 @@ import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { EstadoVazio } from '../../_ui/primitivos'
 import {
+  dataSP,
   derivar,
   hojeISO,
   type DiarioRow,
   type ObraRow,
   type PessoaRow,
-  type RemarcacaoRow,
   type TarefaRow,
 } from '../../_lib/tipos'
-import Ficha from './_ficha'
+import Ficha, { type EdicoesPorBloco, type RemarcacaoNaFicha } from './_ficha'
 import Triagem from './_triagem'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Listas de apoio da triagem.
+ * Listas de apoio da triagem — e, desde a ficha editável, também dos blocos
+ * Autorização, Identificação e Cronograma. Por isso elas são montadas ANTES do
+ * desvio da triagem: os dois modos da tela precisam das mesmas listas.
  *
  * DECISÃO DESTA FRENTE: o mockup traz `RESPONSAVEIS_OBRA`, `EQUIPES` e
  * `ANALISTAS_CLIENTE` cravados no JS (:1960-1965). Em produção eles vêm do
@@ -63,6 +66,31 @@ function unir(piso: string[], doBanco: (string | null)[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
 
+/** Os blocos que têm rodapé de autoria na ficha. */
+const BLOCOS_COM_RODAPE = ['Autorização', 'Identificação', 'Cronograma'] as const
+
+type LinhaHistoricoLida = { bloco: string; quem: string | null; created_at: string }
+
+/**
+ * A ÚLTIMA alteração de cada bloco (spec §5.2), para o rodapé "Editado por X em
+ * DD/MM". A consulta já vem do mais novo para o mais velho, então a primeira
+ * linha de cada bloco é a que vale.
+ *
+ * `obras_historico` pode não existir ainda — a migration é manual e a ordem de
+ * aplicação é do runbook, não do código. Nesse caso a consulta devolve erro,
+ * `data` vem nulo e o rodapé cai no texto de "sem edição": a ficha não quebra
+ * por causa de um rodapé.
+ */
+function ultimasEdicoes(linhas: LinhaHistoricoLida[]): EdicoesPorBloco {
+  const edicoes: EdicoesPorBloco = {}
+  for (const l of linhas) {
+    const bloco = BLOCOS_COM_RODAPE.find((b) => b === l.bloco)
+    if (!bloco || edicoes[bloco]) continue
+    edicoes[bloco] = { quem: l.quem ?? '—', quando: dataSP(l.created_at) ?? '' }
+  }
+  return edicoes
+}
+
 export default async function FichaDaObraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -78,20 +106,55 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
     )
   }
 
-  const [{ data: linha }, { data: diario }, { data: remarcacoes }, { data: tarefas }, { data: pessoas }] =
-    await Promise.all([
-      supabase.from('obras_obra').select('*').eq('id', id).maybeSingle(),
-      supabase.from('obras_diario').select('*').eq('obra_id', id).order('data', { ascending: true }),
-      supabase.from('obras_remarcacao').select('*').eq('obra_id', id).order('data', { ascending: true }),
-      supabase.from('obras_tarefa').select('*').eq('obra_id', id),
-      supabase.from('obras_pessoa').select('*'),
-    ])
+  const [
+    { data: linha },
+    { data: diario },
+    { data: remarcacoes },
+    { data: tarefas },
+    { data: pessoas },
+    { data: outras },
+    { data: motivos },
+    { data: historico },
+  ] = await Promise.all([
+    supabase.from('obras_obra').select('*').eq('id', id).maybeSingle(),
+    supabase.from('obras_diario').select('*').eq('obra_id', id).order('data', { ascending: true }),
+    supabase.from('obras_remarcacao').select('*').eq('obra_id', id).order('data', { ascending: true }),
+    supabase.from('obras_tarefa').select('*').eq('obra_id', id),
+    supabase.from('obras_pessoa').select('*'),
+    supabase.from('obras_obra').select('equipe, analista_cliente'),
+    // A lista padronizada de motivos de remarcação. A ORDEM É DO SERVIDOR
+    // (`ordem, nome`): a janela de remarcação renderiza na ordem em que recebe,
+    // e "Outro" tem ordem 900 justamente para ficar no fim.
+    supabase
+      .from('obras_motivo_remarcacao')
+      .select('nome')
+      .eq('ativo', true)
+      .order('ordem', { ascending: true })
+      .order('nome', { ascending: true }),
+    supabase
+      .from('obras_historico')
+      .select('bloco, quem, created_at')
+      .eq('obra_id', id)
+      .order('created_at', { ascending: false }),
+  ])
 
   if (!linha) notFound()
 
   const obra = derivar(linha as ObraRow, hojeISO())
   const linhasDiario = (diario ?? []) as DiarioRow[]
   const listaPessoas = (pessoas ?? []) as PessoaRow[]
+
+  const equipesDaBase = (outras ?? []).map((o) => (o as { equipe: string | null }).equipe)
+  const analistasDaBase = (outras ?? []).map(
+    (o) => (o as { analista_cliente: string | null }).analista_cliente
+  )
+
+  const responsaveis = unir(
+    RESPONSAVEIS_PISO,
+    listaPessoas.filter((p) => p.area === 'Obras').map((p) => p.chave)
+  )
+  const equipes = unir(EQUIPES_PISO, equipesDaBase)
+  const analistasCliente = unir(ANALISTAS_PISO, analistasDaBase)
 
   const voltar = (
     <Link href="/obras/base" className="text-sm text-[#94a3b8] hover:text-[#f05a28]">
@@ -101,23 +164,15 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
 
   /* ---------- modo Triagem ---------- */
   if (obra.etapa === 'definir') {
-    const { data: outras } = await supabase.from('obras_obra').select('equipe, analista_cliente')
-    const equipesDaBase = (outras ?? []).map((o) => (o as { equipe: string | null }).equipe)
-    const analistasDaBase = (outras ?? []).map(
-      (o) => (o as { analista_cliente: string | null }).analista_cliente
-    )
-
     return (
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6">
         {voltar}
         <Triagem
           obra={obra}
-          responsaveis={unir(
-            RESPONSAVEIS_PISO,
-            listaPessoas.filter((p) => p.area === 'Obras').map((p) => p.chave)
-          )}
-          equipes={unir(EQUIPES_PISO, equipesDaBase)}
-          analistasCliente={unir(ANALISTAS_PISO, analistasDaBase)}
+          responsaveis={responsaveis}
+          equipes={equipes}
+          analistasCliente={analistasCliente}
+          hoje={hojeISO()}
         />
       </div>
     )
@@ -150,10 +205,16 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
       <Ficha
         obra={obra}
         diario={linhasDiario}
-        remarcacoes={(remarcacoes ?? []) as RemarcacaoRow[]}
+        remarcacoes={(remarcacoes ?? []) as RemarcacaoNaFicha[]}
         tarefas={(tarefas ?? []) as TarefaRow[]}
         pessoas={mapaPessoas}
         fotos={fotos}
+        responsaveis={responsaveis}
+        equipes={equipes}
+        analistasCliente={analistasCliente}
+        motivos={((motivos ?? []) as { nome: string }[]).map((m) => m.nome)}
+        hoje={hojeISO()}
+        edicoes={ultimasEdicoes((historico ?? []) as LinhaHistoricoLida[])}
       />
     </div>
   )

@@ -245,6 +245,16 @@ export default function DialogoRemarcar({
             ) : null}
           </label>
         ))}
+        {itens.length === 0 ? (
+          // Degradação silenciosa que o revisor da ligação pegou: sem a migration
+          // `sdd-sql-obras-motivos-remarcacao.sql` aplicada, a lista volta vazia, o
+          // botão nunca habilita e a pessoa não descobre por quê. Melhor dizer.
+          <p role="alert" className="px-1 text-[12px] leading-relaxed text-[#f4b73f]">
+            A lista de motivos não carregou, então não dá para remarcar agora. Recarregue a
+            página; se continuar assim, avise o suporte — é configuração do sistema, não erro
+            seu.
+          </p>
+        ) : null}
       </fieldset>
 
       {precisaDetalhe ? (
