@@ -44,6 +44,7 @@ import BlocoEditavel, {
   GradeForm,
   Selecao,
   focarPrimeiroInvalido,
+  ERRO_DE_REDE,
 } from './_bloco-editavel'
 import DialogoRemarcar, {
   type CadastrarMotivo,
@@ -128,13 +129,19 @@ export default function BlocoCronograma({
   function gravar(dados: DadosCronograma) {
     setErro(null)
     iniciar(async () => {
-      const r = await salvar(obraId, dados)
-      if (r?.error) {
-        // R21: continua em edição, com tudo o que foi digitado.
-        setErro(r.error)
-        return
+      try {
+        const r = await salvar(obraId, dados)
+        if (r?.error) {
+          // R21: continua em edição, com tudo o que foi digitado.
+          setErro(r.error)
+          return
+        }
+        setEditando(false)
+      } catch {
+        // Queda de rede: a action nunca lança, mas o transporte da Server Action sim.
+        // Sem isto a página inteira morre e a promessa da caixa de erro não se cumpre.
+        setErro(ERRO_DE_REDE)
       }
-      setEditando(false)
     })
   }
 

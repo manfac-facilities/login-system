@@ -42,6 +42,7 @@ import BlocoEditavel, {
   HINT_SEM_MOTIVO,
   Selecao,
   focarPrimeiroInvalido,
+  ERRO_DE_REDE,
 } from './_bloco-editavel'
 
 /**
@@ -118,13 +119,19 @@ export default function BlocoAutorizacao({
   function gravar() {
     setErro(null)
     iniciar(async () => {
-      const r = await salvar(obraId, rascunho)
-      if (r?.error) {
-        // R21: nada de sair do modo edição nem de limpar o rascunho.
-        setErro(r.error)
-        return
+      try {
+        const r = await salvar(obraId, rascunho)
+        if (r?.error) {
+          // R21: nada de sair do modo edição nem de limpar o rascunho.
+          setErro(r.error)
+          return
+        }
+        setEditando(false)
+      } catch {
+        // Queda de rede: a action nunca lança, mas o transporte da Server Action sim.
+        // Sem isto a página inteira morre e a promessa da caixa de erro não se cumpre.
+        setErro(ERRO_DE_REDE)
       }
-      setEditando(false)
     })
   }
 

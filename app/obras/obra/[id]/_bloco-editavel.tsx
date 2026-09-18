@@ -208,6 +208,14 @@ export function focarPrimeiroInvalido(
 /* -------------------------------------------------------------------------- */
 
 /** Texto da barra de ações enquanto a gravação está em voo (`blocoB`). */
+// A caixa de erro promete "nada foi gravado, o que você preencheu continua aí". Essa
+// promessa só se cumpre se a queda de rede virar erro DENTRO do bloco: sem try/catch em
+// volta da action, o transporte da Server Action lança e a página inteira morre no error
+// boundary, levando junto o que a pessoa digitou. Achado da revisão de 18/09/2026 — e o
+// cenário é o real: equipe em obra, com internet instável.
+export const ERRO_DE_REDE =
+  'Não deu para falar com o sistema. Nada foi gravado — confira a internet e tente de novo. O que você preencheu continua aí.'
+
 export const HINT_SALVANDO = 'Gravando no sistema. Não feche a página.'
 
 /** O hint padrão dos blocos que não pedem motivo nenhum. */

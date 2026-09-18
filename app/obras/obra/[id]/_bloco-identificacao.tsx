@@ -37,6 +37,7 @@ import BlocoEditavel, {
   Selecao,
   SoLeitura,
   focarPrimeiroInvalido,
+  ERRO_DE_REDE,
 } from './_bloco-editavel'
 
 /** O tipo MÍNIMO que este bloco usa de `salvarIdentificacaoAction` (§4.2). */
@@ -100,13 +101,19 @@ export default function BlocoIdentificacao({
     }
     setErro(null)
     iniciar(async () => {
-      const r = await salvar(obraId, rascunho)
-      if (r?.error) {
-        // R21: o que foi digitado continua na tela.
-        setErro(r.error)
-        return
+      try {
+        const r = await salvar(obraId, rascunho)
+        if (r?.error) {
+          // R21: o que foi digitado continua na tela.
+          setErro(r.error)
+          return
+        }
+        setEditando(false)
+      } catch {
+        // Queda de rede: a action nunca lança, mas o transporte da Server Action sim.
+        // Sem isto a página inteira morre e a promessa da caixa de erro não se cumpre.
+        setErro(ERRO_DE_REDE)
       }
-      setEditando(false)
     })
   }
 

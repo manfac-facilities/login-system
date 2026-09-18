@@ -50,6 +50,7 @@ import {
 } from '../../_lib/ficha-campos'
 import { BadgeDias, EtiquetaEtapa } from '../../base/_etiquetas'
 import { liberarObraAction, salvarDadosTriagemAction } from './_actions'
+import { ERRO_DE_REDE } from './_bloco-editavel'
 
 type Rascunho = {
   resp: string
@@ -227,9 +228,14 @@ export default function Triagem({
       return
     }
     iniciar(async () => {
-      const r = await liberarObraAction(obra.id, t)
-      if (r.error) setErro(r.error)
-      else router.push('/obras/base')
+      try {
+        const r = await liberarObraAction(obra.id, t)
+        if (r.error) setErro(r.error)
+        else router.push('/obras/base')
+      } catch {
+        // Queda de rede: sem isto a página morre e o que foi preenchido some.
+        setErro(ERRO_DE_REDE)
+      }
     })
   }
 
@@ -242,18 +248,23 @@ export default function Triagem({
       return
     }
     iniciarDados(async () => {
-      const r = await salvarDadosTriagemAction(obra.id, {
-        tipo: t.tipo,
-        valor: t.valor,
-        analista: t.analista,
-        aprovadaEm: t.aprovadaEm,
-        origem: t.origem,
-        libPor: t.libPor,
-        libEm: t.libEm,
-      })
-      // R21: falhou, nada foi gravado e o que está na tela continua na tela.
-      if (r.error) setErroDados(r.error)
-      else setMsgDados('Dados salvos. A obra continua em Aguardando definição.')
+      try {
+        const r = await salvarDadosTriagemAction(obra.id, {
+          tipo: t.tipo,
+          valor: t.valor,
+          analista: t.analista,
+          aprovadaEm: t.aprovadaEm,
+          origem: t.origem,
+          libPor: t.libPor,
+          libEm: t.libEm,
+        })
+        // R21: falhou, nada foi gravado e o que está na tela continua na tela.
+        if (r.error) setErroDados(r.error)
+        else setMsgDados('Dados salvos. A obra continua em Aguardando definição.')
+      } catch {
+        // Queda de rede: sem isto a página morre e o que foi preenchido some.
+        setErroDados(ERRO_DE_REDE)
+      }
     })
   }
 
