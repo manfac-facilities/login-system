@@ -24,9 +24,19 @@
  *     confirma nada.
  *   • O foco volta para o elemento que abriu a janela, sempre. Quem clicou em
  *     "Salvar" continua com o teclado no "Salvar".
+ *
+ * O CAMINHO DE RESERVA NÃO É ZELO EXCESSIVO — é o que roda no teste. VERIFICADO
+ * em 18/09/2026: o jsdom desta versão (jest-environment-jsdom 30) **não
+ * implementa `HTMLDialogElement`**: `showModal`, `close` e o fechar-no-Esc
+ * simplesmente não existem, e `typeof d.showModal` é `undefined`. Por isso
+ * cada passo tem o equivalente manual — `open` como atributo, foco devolvido à
+ * mão, Esc por `keydown` — e por isso a devolução de foco não pode depender do
+ * evento `close`, que lá nunca é disparado. Em navegador de verdade o nativo
+ * faz tudo e o reserva fica desligado (o `keydown` só é registrado quando
+ * `showModal` não existe, senão o Esc fecharia duas vezes).
  */
 
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, type ReactNode } from 'react'
 import { Botao } from './primitivos'
 
 export type BotaoDialogo = {
@@ -71,53 +81,84 @@ export default function Dialogo({
     return j >= 0 ? j : 0
   })()
 
+  const devolverFoco = useCallback(() => {
+    const quem = gatilho.current
+    gatilho.current = null
+    if (quem && typeof quem.focus === 'function' && document.contains(quem)) quem.focus()
+  }, [])
+
+  /**
+   * `ecoar` diz se o pai precisa ser avisado: botão e Esc avisam (é o pai que
+   * guarda `aberto`); o fechamento que o próprio pai pediu, não — senão
+   * `onFechar` voltaria como eco do que ele acabou de mandar.
+   */
+  const encerrar = useCallback(
+    (ecoar: boolean) => {
+      const d = ref.current
+      if (!d || !d.open) {
+        if (ecoar) onFechar()
+        return
+      }
+      if (typeof d.close === 'function') {
+        fechandoPorProps.current = !ecoar
+        d.close() // dispara `close`: é lá que o foco volta e o pai é avisado
+      } else {
+        d.removeAttribute('open')
+        devolverFoco()
+        if (ecoar) onFechar()
+      }
+    },
+    [onFechar, devolverFoco]
+  )
+
+  // Abrir e fechar seguem `aberto`, sempre.
   useEffect(() => {
     const d = ref.current
     if (!d) return
-
     if (aberto && !d.open) {
       gatilho.current = document.activeElement as HTMLElement | null
-      // `showModal` existe em todo navegador que o hub suporta; o `else` é a
-      // mesma salvaguarda do mockup, e mantém a janela utilizável (sem modal)
-      // em vez de não abrir nada.
       if (typeof d.showModal === 'function') d.showModal()
       else d.setAttribute('open', '')
       rodape.current?.querySelectorAll('button')[alvoFoco]?.focus()
     } else if (!aberto && d.open) {
-      fechandoPorProps.current = true
-      if (typeof d.close === 'function') d.close()
-      else d.removeAttribute('open')
+      encerrar(false)
     }
-  }, [aberto, alvoFoco])
+  }, [aberto, alvoFoco, encerrar])
 
-  /** Chamado pelo evento `close` do `<dialog>` — Esc, `close()` ou botão. */
-  function aoFechar() {
-    const quem = gatilho.current
-    gatilho.current = null
-    if (quem && typeof quem.focus === 'function') quem.focus()
-    if (fechandoPorProps.current) {
-      fechandoPorProps.current = false
-      return
-    }
-    onFechar()
-  }
-
-  function clicar(b: BotaoDialogo) {
+  // O `close` nativo: Esc do navegador, `close()` nosso, ou o botão.
+  // `addEventListener` direto, e não `onClose`, porque `close` não borbulha.
+  useEffect(() => {
     const d = ref.current
-    if (d?.open) {
-      if (typeof d.close === 'function') d.close()
-      else d.removeAttribute('open')
-    } else {
+    if (!d) return
+    function aoFechar() {
+      devolverFoco()
+      if (fechandoPorProps.current) {
+        fechandoPorProps.current = false
+        return
+      }
       onFechar()
     }
-    b.onClick?.()
-  }
+    d.addEventListener('close', aoFechar)
+    return () => d.removeEventListener('close', aoFechar)
+  }, [onFechar, devolverFoco])
+
+  // Esc — só onde o `<dialog>` nativo não o trata.
+  useEffect(() => {
+    const d = ref.current
+    if (!aberto || !d || typeof d.showModal === 'function') return
+    function aoTeclar(ev: KeyboardEvent) {
+      if (ev.key !== 'Escape') return
+      ev.preventDefault()
+      encerrar(true)
+    }
+    document.addEventListener('keydown', aoTeclar)
+    return () => document.removeEventListener('keydown', aoTeclar)
+  }, [aberto, encerrar])
 
   return (
     <dialog
       ref={ref}
       aria-labelledby={tituloId}
-      onClose={aoFechar}
       className="w-[calc(100%-32px)] max-w-[580px] rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-0 text-[#e8eef7] backdrop:bg-[#030812b8]"
     >
       {aberto ? (
@@ -139,7 +180,10 @@ export default function Dialogo({
                 type="button"
                 tipo={b.ghost ? 'secundario' : 'principal'}
                 disabled={b.desabilitado}
-                onClick={() => clicar(b)}
+                onClick={() => {
+                  encerrar(true)
+                  b.onClick?.()
+                }}
               >
                 {b.texto}
               </Botao>
