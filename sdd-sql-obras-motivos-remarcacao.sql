@@ -340,8 +340,26 @@ begin
     raise exception 'Não autenticado' using errcode = '28000';
   end if;
 
-  if p_para is null then
-    raise exception 'obras_remarcar_inicio: a data nova de início é obrigatória'
+  -- APAGAR um início que existia também é remarcação: a data combinada deixou de
+  -- valer, e é exatamente isso que a remarcação registra. Quem decide isso é
+  -- `precisaRemarcar` em app/obras/_lib/ficha-campos.ts, com teste de regressão
+  -- em ficha-campos.test.ts. Esta função não pode contradizer o app: se ela
+  -- recusasse p_para nulo, limpar o início viraria erro cru do Postgres na cara
+  -- do usuário, e consertar custaria outra migration à mão. Só o caso
+  -- degenerado — nunca houve data e continua não havendo — é recusado.
+  if p_de is null and p_para is null then
+    raise exception 'obras_remarcar_inicio: nem a data antiga nem a nova existem — não há o que remarcar'
+      using errcode = '22023';
+  end if;
+
+  -- Com p_para nulo, `p_campos ->> 'inicio_plan'` devolve NULL tanto para
+  -- "inicio_plan": null quanto para a chave AUSENTE — e os dois casos são
+  -- diferentes: ausente faz obras_aplicar_alteracao não tocar na coluna, e a
+  -- obra ficaria com a data antiga enquanto a remarcação diz que ela sumiu.
+  -- Exigir a chave presente fecha esse buraco antes da checagem de igualdade.
+  if not jsonb_exists(p_campos, 'inicio_plan') then
+    raise exception
+      'obras_remarcar_inicio: p_campos precisa trazer inicio_plan (use null para apagar a data)'
       using errcode = '22023';
   end if;
 
@@ -455,8 +473,8 @@ from (
          (select count(*) from pg_indexes
            where schemaname = 'public' and indexname = 'obras_motivo_remarcacao_chave_uniq')::int
   union all
-  select 5, 'SEMENTE: total de motivos (rodar 2x tem que continuar 6)', 6,
-         (select count(*) from public.obras_motivo_remarcacao)::int
+  select 5, 'SEMENTE: os 6 de fabrica continuam la (motivo novo cadastrado nao conta)', 6,
+         (select count(*) from public.obras_motivo_remarcacao where criado_por is null)::int
   union all
   select 6, 'SEMENTE: os 6 nomes exatos, na grafia de BLOQUEIOS (tipos.ts:187-194)', 6,
          (select count(*) from public.obras_motivo_remarcacao
