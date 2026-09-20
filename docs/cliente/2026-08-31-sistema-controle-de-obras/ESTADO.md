@@ -1,5 +1,53 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
+## ▶ Retomar aqui — 20/09/2026, tarde
+
+**Prazo:** operando **amanhã, 21/09**. Projeto final em 28/09. **19/09 passou sem commit e sem
+deploy** — como 17/09 já havia passado.
+
+**Foco decidido pelo João hoje:** pôr a **ficha editável** no ar. O resto espera.
+
+### O que foi medido hoje, e não deduzido
+
+| O quê | Estado em 20/09 |
+|---|---|
+| Código | `master` = `origin/master`, HEAD `891a132`, árvore limpa |
+| Produção | Build de **16/09 16:23:42 GMT** — todos os chunks no mesmo timestamp |
+| Migrations da ficha | `sdd-sql-obras-historico.sql` e `sdd-sql-obras-motivos-remarcacao.sql` **não aplicadas** |
+| Chave da Supabase (PAT) | **ainda 401** — `C:\Users\joao-\.supabase-pat` segue expirada desde 18/09 |
+| Suíte | 82 suites do hub verdes, **1015 testes, 0 falhas** |
+
+**Consequência direta: nada do trabalho de 18/09 está no ar.** Os quatro commits da ficha
+editável, a remarcação e o fix da queda de rede no Salvar (`d5b6ce3`) estão pushados e parados.
+
+### ⚠️ As 7 suites que "falham" não são do hub
+
+`npm test` na raiz devolve `7 failed`. Todas em `manfac-site/` — o site institucional, que tem
+`node_modules` próprio e deploy próprio, e que o `jest.config.ts` da raiz varre sem querer
+(`testPathIgnorePatterns` só ignora `node_modules/` e `.claude/worktrees/`). O erro é
+`Cannot find module` na resolução dos imports, não asserção quebrada.
+
+**Não perca tempo investigando isso ao retomar:** é ruído de configuração, pré-existente, sem
+relação com obras. O número que importa é o das outras 82 suites.
+
+### O caminho crítico, na ordem que não se inverte
+
+1. **João:** gerar PAT novo em Dashboard → Account → Access Tokens e gravar com
+   `Set-Content -NoNewline C:\Users\joao-\.supabase-pat 'sbp_...'`, **por um PowerShell dele**.
+2. **Claude:** aplicar as duas migrations na ordem e conferir as 18 linhas `OK`.
+3. **João:** clicar em Deploy no `manfac-login-system`.
+4. **Claude:** confirmar o build pelos timestamps dos chunks + teste de fumaça (passo 5 do
+   `RUNBOOK-ficha-editavel-2026-09-18.md`).
+
+Deploy sem as migrations quebra a gravação da ficha; migration sem deploy não quebra nada.
+
+### Correção do AGENTS.md feita hoje
+
+O `AGENTS.md` afirmava que **ninguém** tinha o slug `obras` liberado e que o Yuri não tinha
+conta. Era o retrato de 16/09. A medição de 18/09 registrada abaixo mostra **4 e-mails com o
+slug** — gabriel.lima, gabriel.vidal, luana.silva e yuri.moreira. Corrigido no mesmo commit.
+Reconfirmar no banco quando a chave voltar.
+
 ## ▶ Retomar aqui — 18/09/2026, manhã
 
 **Prazo:** operando na **segunda, 21/09** (o cliente dispensa quem faz o controle hoje);

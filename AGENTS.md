@@ -39,8 +39,12 @@ elas usam `<a>` normal em vez de `<Link>`, e **não entram no `matcher` do
 > timestamp). `/obras` responde, e o card 🏗️ aparece no dashboard para administradores.
 > **Em 16/09/2026 o módulo deixou de estar vazio: 64 obras entraram na primeira carga**, de 185 OS lidas no Field, pelo critério do cliente (última atividade em pendente, agendada ou em andamento). A sincronização automática roda desde então, a cada 5 minutos — a base vai nascer do Field
 > Control depois do pente fino do cliente, e a planilha **não será importada**, por
-> decisão de 10/09. O slug `obras` não foi liberado para ninguém em `/admin/acessos`, de
-> propósito: sem dado, liberar só mostraria tela vazia. **Em 16/09/2026: a AMANDA tem conta no hub, o YURI não tem.** Nenhum e-mail tem o slug `obras` liberado em `hub_system_access` — só os 3 administradores enxergam o módulo, porque admin passa direto pela checagem de acesso. Contexto completo,
+> decisão de 10/09. **Em 18/09/2026 o slug `obras` está liberado para 4 e-mails** —
+> gabriel.lima, gabriel.vidal, luana.silva e yuri.moreira, medidos no banco naquele dia. A
+> anotação anterior ("ninguém tem o slug liberado") era o retrato de 16/09 e ficou velha; o
+> mesmo vale para "o YURI não tem conta", que a liberação do slug contradiz. Os 3
+> administradores entram sem liberação, porque admin passa direto pela checagem de acesso.
+> Reconfirmar no banco assim que a chave da Supabase voltar. Contexto completo,
 > decisões e pendências em
 > `docs/cliente/2026-08-31-sistema-controle-de-obras/ESTADO.md`. **O passo a passo de pôr
 > no ar, com o SQL de verificação de cada etapa, está em
