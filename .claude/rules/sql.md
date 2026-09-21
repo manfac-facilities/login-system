@@ -137,6 +137,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 | `obras-sync-execucao` | aplicado em 2026-09-14 (frente **D3 do Duda**), função `obras_iniciar_sync_execucao`; os dois jobs de cron (arquivo `sdd-sql-obras-cron-jobs.sql`) entraram em 2026-09-16 |
 | `obras-historico` | **aplicado em 2026-09-20.** Tabela `obras_historico` + RPC `obras_aplicar_alteracao` |
 | `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** RPC `obras_remarcar_inicio`, colunas `detalhe` e `registrado_por` em `obras_remarcacao`. Verificação devolveu 18 linhas, todas `OK` |
+| `obras-desfazer-diario-atomico` | **aplicado em 2026-09-21.** RPC `obras_desfazer_diario` (security invoker, depende da RLS `obras access`). Verificação 3/3 `OK`; testada com rollback: sem acesso levanta e não apaga, dia sem diário preserva a tarefa, com acesso apaga diário e tarefa aberta e preserva a respondida |
 
 ## Jobs de cron que não são deste repositório
 
