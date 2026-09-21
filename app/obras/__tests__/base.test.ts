@@ -306,6 +306,21 @@ describe('ordenar', () => {
       'andamento',
     ])
   })
+
+  it('ordena o número da OS numericamente, não por texto — 985 antes de 10024', () => {
+    const base = [obra({ os: '10024' }), obra({ os: '985' }), obra({ os: '200' })]
+    expect(ordenar(base, { col: 'os', dir: 1 }).map((o) => o.os)).toEqual(['200', '985', '10024'])
+    expect(ordenar(base, { col: 'os', dir: -1 }).map((o) => o.os)).toEqual(['10024', '985', '200'])
+  })
+
+  it('OS que não é puramente numérica não estoura — cai para ordem de texto, estável', () => {
+    const base = [obra({ os: '0226-014989' }), obra({ os: '985' }), obra({ os: null })]
+    const r = ordenar(base, { col: 'os', dir: 1 })
+    // Vazio sempre no fim (regra já existente). Entre as duas com valor, nenhuma
+    // é puramente numérica ao mesmo tempo que a outra ("0226-014989" tem
+    // traço), então cai para comparação de texto — sem exceção, sem NaN.
+    expect(r.map((o) => o.os)).toEqual(['0226-014989', '985', null])
+  })
 })
 
 describe('alternarOrdem', () => {

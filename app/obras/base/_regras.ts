@@ -269,10 +269,25 @@ export function ordenar(obras: Obra[], ordem: Ordem): Obra[] {
     if (xVazio && yVazio) return 0
     if (xVazio) return 1
     if (yVazio) return -1
+    if (col === 'os' && typeof x === 'string' && typeof y === 'string') {
+      return dir * compararOs(x, y)
+    }
     if (typeof x === 'string' && typeof y === 'string') return dir * x.localeCompare(y, 'pt-BR')
     if (typeof x === 'boolean' && typeof y === 'boolean') return dir * (Number(x) - Number(y))
     return dir * (Number(x) - Number(y))
   })
+}
+
+/**
+ * Nº OS ordena por VALOR, não por texto — "985" vem antes de "10024", que
+ * `localeCompare` erra por comparar caractere a caractere. Só compara como
+ * número quando os dois lados são puramente dígitos; OS que não é puramente
+ * numérica (ex. "0226-014989") cai para texto, sem estourar.
+ */
+function compararOs(a: string, b: string): number {
+  const soDigitos = /^\d+$/
+  if (soDigitos.test(a) && soDigitos.test(b)) return Number(a) - Number(b)
+  return a.localeCompare(b, 'pt-BR')
 }
 
 /* -------------------------------------------------------------------------- */
