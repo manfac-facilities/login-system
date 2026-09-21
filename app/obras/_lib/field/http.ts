@@ -22,6 +22,7 @@ export const BASE_URL_FIELD = 'https://carchost.fieldcontrol.com.br'
  * tráfego se um dia precisar.
  */
 export const USER_AGENT_PADRAO = 'ManfacHubObras/1.0 (+https://hub.manfac.com.br)'
+const ESPERA_MAXIMA_429_MS = 30_000
 
 /**
  * Forma mínima de resposta de que precisamos. Declarada estruturalmente para o
@@ -201,11 +202,13 @@ export function criarHttpField(opcoes: OpcoesDoHttp): HttpField {
          * POR QUE TETO E NÃO INFINITO: uma varredura que nunca desiste trava
          * sem ninguém ficar sabendo. Melhor falhar alto e ser reagendada.
          *
-         * Se um dia vier `Retry-After` (não é documentado, mas é barato
-         * respeitar), ele ganha do nosso palpite — é o servidor dizendo o
-         * número que nós não temos.
+         * Se um dia vier `Retry-After`, ele ganha do nosso palpite até 30 s.
+         * Acima disso, a sincronização não pode bloquear vários ciclos.
          */
-        const esperaMs = retryAfterMs(resposta) ?? backoffBaseMs * 2 ** tentativa
+        const esperaMs = Math.min(
+          retryAfterMs(resposta) ?? backoffBaseMs * 2 ** tentativa,
+          ESPERA_MAXIMA_429_MS,
+        )
         await dormir(esperaMs)
         tentativa += 1
         continue

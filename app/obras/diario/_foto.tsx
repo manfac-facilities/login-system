@@ -27,6 +27,7 @@ import { createClient } from '@/lib/supabase/client'
 
 const LADO_MAX = 1600
 const QUALIDADE = 0.82
+const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024
 
 /** Reduz a foto no próprio aparelho. Se algo der errado, sobe o original. */
 async function reduzir(arquivo: File): Promise<Blob> {
@@ -71,7 +72,15 @@ export default function BotaoFoto({
     setEnviando(true)
     setErro(null)
     try {
+      if (!arquivo.type.startsWith('image/')) {
+        setErro('Escolha uma imagem para anexar.')
+        return
+      }
       const blob = await reduzir(arquivo)
+      if (blob.type !== 'image/jpeg' || blob.size > TAMANHO_MAXIMO_FOTO) {
+        setErro('A foto precisa ser JPEG e ter até 5 MB. Dá para salvar sem ela.')
+        return
+      }
       const path = `${obraId}/${data}.jpg`
       const supabase = createClient()
       const { error } = await supabase.storage.from('obras-fotos').upload(path, blob, {

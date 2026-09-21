@@ -323,7 +323,7 @@ describe('planejarSincronizacao — ausência no Field', () => {
     expect(plano.avisos[0]).toMatch(/0 OS/i)
   })
 
-  it('não marca ausência em massa acima do maior valor entre 3 e 20%', () => {
+  it('ausência em massa registra só suspeitas; nova varredura confirma após 20 horas', () => {
     const existentes = Array.from({ length: 10 }, (_, indice) =>
       obraNoBanco({
         id: `obra-${indice}`,
@@ -339,8 +339,21 @@ describe('planejarSincronizacao — ausência no Field', () => {
       agora: AGORA,
     })
 
-    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.reconciliarAusencias).toHaveLength(4)
+    expect(plano.reconciliarAusencias.every((item) => item.acao === 'suspeita')).toBe(true)
     expect(plano.avisos[0]).toMatch(/limite de segurança/i)
+
+    const suspeitasGravadas = existentes.map((obra) => {
+      const suspeita = plano.reconciliarAusencias.find((item) => item.id === obra.id)
+      return suspeita ? { ...obra, field_ausente_desde: AGORA } : obra
+    })
+    const seguinte = planejarSincronizacao(doField, suspeitasGravadas, {
+      varreduraCompleta: true,
+      agora: '2026-09-15T12:00:00Z',
+    })
+    expect(seguinte.avisos).toHaveLength(0)
+    expect(seguinte.reconciliarAusencias).toHaveLength(4)
+    expect(seguinte.reconciliarAusencias.every((item) => item.acao === 'alerta')).toBe(true)
   })
 
   it('alertas antigos não entram no disjuntor e não bloqueiam uma ausência nova', () => {
@@ -439,6 +452,43 @@ describe('planejarSincronizacao — ausência no Field', () => {
       },
     ])
     expect(plano.alertasRemovidos).toBe(1)
+  })
+
+  it.each(['done', 'canceled'])('OS %s reaparecida limpa suspeita e alerta sem recarregar a ficha', (situacao) => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao, loja: 'LOJA ALTERADA' })],
+      [obraNoBanco({
+        loja: 'LOJA DO HUB',
+        descricao: 'Descrição do hub',
+        field_ausente_desde: '2026-09-12T12:00:00Z',
+        field_ausente_em: '2026-09-13T12:00:00Z',
+      })],
+      { varreduraCompleta: true, agora: AGORA },
+    )
+
+    expect(plano.atualizar).toEqual([{
+      id: 'obra-1',
+      os: '0226-014989',
+      campos: { field_ausente_desde: null, field_ausente_em: null },
+      removeAlerta: true,
+    }])
+    expect(plano.alertasRemovidos).toBe(1)
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.ignoradas).toHaveLength(1)
+  })
+
+  it('OS concluída reaparecida limpa também a suspeita sem alerta', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done' })],
+      [obraNoBanco({ field_ausente_desde: '2026-09-12T12:00:00Z' })],
+    )
+
+    expect(plano.atualizar).toEqual([{
+      id: 'obra-1',
+      os: '0226-014989',
+      campos: { field_ausente_desde: null, field_ausente_em: null },
+    }])
+    expect(plano.alertasRemovidos).toBe(0)
   })
 })
 

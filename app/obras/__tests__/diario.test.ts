@@ -14,12 +14,12 @@
 
 const getUserMock = jest.fn()
 const upsertDiarioMock = jest.fn()
-const deleteDiarioMock = jest.fn()
+const rpcMock = jest.fn()
 const selectTarefaMock = jest.fn()
 const insertTarefaMock = jest.fn()
 const deleteTarefaInMock = jest.fn()
-const deleteTarefaEqMock = jest.fn()
 const createSignedUrlMock = jest.fn()
+const infoFotoMock = jest.fn()
 const updateObraMock = jest.fn()
 
 type Qualquer = Record<string, unknown>
@@ -50,6 +50,7 @@ function chain(resultado: any): any {
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
+    rpc: rpcMock,
     from: jest.fn((tabela: string) => {
       if (tabela === 'obras_obra') {
         const c = chain({ data: estado.obra, error: null })
@@ -64,14 +65,6 @@ jest.mock('@/lib/supabase/server', () => ({
         // o resto das chamadas é upsert/delete, que ignoram `data`.
         const c = chain({ data: estado.diario, error: null })
         c.upsert = upsertDiarioMock
-        c.delete = jest.fn(() => {
-          const d = chain({ error: null })
-          d.eq = jest.fn(() => {
-            deleteDiarioMock()
-            return d
-          })
-          return d
-        })
         return c
       }
       if (tabela === 'obras_tarefa') {
@@ -81,20 +74,12 @@ jest.mock('@/lib/supabase/server', () => ({
           return c
         })
         c.insert = insertTarefaMock
-        c.delete = jest.fn(() => {
-          const d = chain({ error: null })
-          d.in = deleteTarefaInMock
-          d.eq = jest.fn(() => {
-            deleteTarefaEqMock()
-            return d
-          })
-          return d
-        })
+        c.delete = jest.fn(() => ({ in: deleteTarefaInMock }))
         return c
       }
       return chain({ data: [], error: null })
     }),
-    storage: { from: jest.fn(() => ({ createSignedUrl: createSignedUrlMock })) },
+    storage: { from: jest.fn(() => ({ createSignedUrl: createSignedUrlMock, info: infoFotoMock })) },
   })),
 }))
 
@@ -136,6 +121,8 @@ beforeEach(() => {
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
   upsertDiarioMock.mockResolvedValue({ error: null })
   insertTarefaMock.mockResolvedValue({ error: null })
+  rpcMock.mockResolvedValue({ error: null })
+  infoFotoMock.mockResolvedValue({ data: { contentType: 'image/jpeg', size: 200_000 }, error: null })
 })
 
 afterEach(() => {
@@ -204,6 +191,29 @@ describe('salvarDiarioAction — autorização e a única trava', () => {
       }),
       { onConflict: 'obra_id,data' }
     )
+  })
+
+  it('recusa foto de outra obra ou dia antes de gravar o diário', async () => {
+    const r = await salvarDiarioAction({
+      obraId: 'obra-1', andou: true, item: 'Não faltou', motivo: null, obs: null,
+      fotoPath: 'obra-2/2026-09-05.jpg',
+    })
+    expect(r.error).toMatch(/não pertence/)
+    expect(infoFotoMock).not.toHaveBeenCalled()
+    expect(upsertDiarioMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ contentType: 'application/pdf', size: 200_000 }, 'tipo'],
+    [{ contentType: 'image/jpeg', size: 6 * 1024 * 1024 }, 'tamanho'],
+  ])('recusa foto de %s no servidor', async (foto) => {
+    infoFotoMock.mockResolvedValue({ data: foto, error: null })
+    const r = await salvarDiarioAction({
+      obraId: 'obra-1', andou: true, item: 'Não faltou', motivo: null, obs: null,
+      fotoPath: 'obra-1/2026-09-05.jpg',
+    })
+    expect(r.error).toMatch(/JPEG.*5 MB/)
+    expect(upsertDiarioMock).not.toHaveBeenCalled()
   })
 
   it('devolve mensagem amigável quando o banco recusa, sem lançar', async () => {
@@ -398,14 +408,22 @@ describe('desfazerDiarioAction', () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await desfazerDiarioAction('obra-1')
     expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
-    expect(deleteDiarioMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
   it('apaga o registro de hoje e as tarefas ainda abertas que ele gerou', async () => {
     const r = await desfazerDiarioAction('obra-1')
     expect(r).toEqual({ success: true })
-    expect(deleteDiarioMock).toHaveBeenCalled()
-    expect(deleteTarefaEqMock).toHaveBeenCalled()
+    expect(rpcMock).toHaveBeenCalledWith('obras_desfazer_diario', {
+      p_obra_id: 'obra-1', p_dia: HOJE,
+    })
+  })
+
+  it('erro na exclusão atômica não informa sucesso nem recalcula contadores', async () => {
+    rpcMock.mockResolvedValue({ error: { message: 'delete failed' } })
+    const r = await desfazerDiarioAction('obra-1')
+    expect(r).toEqual({ error: 'Erro ao desfazer o registro de hoje' })
+    expect(updateObraMock).not.toHaveBeenCalled()
   })
 })
 

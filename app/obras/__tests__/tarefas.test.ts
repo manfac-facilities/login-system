@@ -12,6 +12,7 @@
 const getUserMock = jest.fn()
 const updateMock = jest.fn()
 const eqMock = jest.fn()
+const selectMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -64,7 +65,8 @@ beforeEach(() => {
   })
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
   updateMock.mockReturnValue({ eq: eqMock })
-  eqMock.mockResolvedValue({ error: null })
+  eqMock.mockReturnValue({ eq: eqMock, select: selectMock })
+  selectMock.mockResolvedValue({ data: [{ id: 't1' }], error: null })
 })
 
 afterEach(() => {
@@ -99,12 +101,22 @@ describe('responderTarefaAction', () => {
     expect(gravado.situacao).not.toBe('vencida')
     expect(gravado.resposta_hora).toMatch(/^\d{2}:\d{2}$/)
     expect(eqMock).toHaveBeenCalledWith('id', 't1')
+    expect(eqMock).toHaveBeenCalledWith('situacao', 'aberta')
+    expect(selectMock).toHaveBeenCalledWith('id')
   })
 
   it('devolve mensagem amigável quando o banco recusa, sem lançar', async () => {
-    eqMock.mockResolvedValue({ error: { message: 'RLS denied' } })
+    selectMock.mockResolvedValue({ data: null, error: { message: 'RLS denied' } })
     const r = await responderTarefaAction('t1', 'resolvido')
     expect(r).toEqual({ error: 'Erro ao marcar a tarefa como respondida' })
+  })
+
+  it('não sobrescreve uma resposta já dada em outra aba', async () => {
+    selectMock.mockResolvedValue({ data: [], error: null })
+    const r = await responderTarefaAction('t1', 'resposta atrasada')
+    expect(r).toEqual({ error: 'Esta tarefa já foi respondida ou não existe. Atualize a página.' })
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ resumo: 'resposta atrasada' }))
+    expect(eqMock).toHaveBeenCalledWith('situacao', 'aberta')
   })
 })
 

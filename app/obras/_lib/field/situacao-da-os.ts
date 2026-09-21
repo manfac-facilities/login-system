@@ -14,9 +14,8 @@
  *    medidas — um critério apoiado nele deixaria a maioria das OS sem resposta.
  *    Quando existe, ele nunca contradiz o `status`: carrega o mesmo estado
  *    dentro de `statusClassification.status`.
- * 2. **Falha nunca derruba a varredura.** Mesma escolha de `consulta-ordem.ts`:
- *    sem resposta legível, a OS fica sem situação e é ignorada com motivo. Uma
- *    OS que não se conseguiu ler nunca vira obra e nunca altera obra existente.
+ * 2. **Falha de leitura interrompe a varredura.** Ignorar uma OS após erro de
+ *    rede permitiria registrar sucesso e avançar a marca d'água sem criá-la.
  *
  * Custo: uma requisição por OS, no ritmo de 1 por segundo que o limitador impõe.
  */
@@ -89,10 +88,7 @@ export async function consultarSituacaoDaUltimaAtividade(
     )
 
     if (!lista || !Array.isArray(lista.items)) {
-      return {
-        situacao: null,
-        motivo: 'a resposta das atividades da OS não trouxe a lista items',
-      }
+      throw new Error('a resposta das atividades da OS não trouxe a lista items')
     }
 
     if (lista.items.length === 0) {
@@ -111,12 +107,8 @@ export async function consultarSituacaoDaUltimaAtividade(
 
     return { situacao }
   } catch (erro) {
-    return {
-      situacao: null,
-      motivo:
-        erro instanceof Error
-          ? `falha ao ler as atividades da OS: ${erro.message}`
-          : 'falha desconhecida ao ler as atividades da OS',
-    }
+    throw new Error(
+      `falha ao ler as atividades da OS ${idField}: ${erro instanceof Error ? erro.message : 'erro desconhecido'}`,
+    )
   }
 }

@@ -389,7 +389,7 @@ describe('sincronizarComFieldAction — gravação', () => {
     })
   })
 
-  it('bloqueia ausência em massa e leva o aviso ao relatório', async () => {
+  it('registra só suspeitas na ausência em massa e leva o aviso ao relatório', async () => {
     const existentes = Array.from({ length: 10 }, (_, indice) => obraDoBanco(indice + 1))
     listarOsNormalizadas.mockResolvedValue(
       existentes
@@ -400,8 +400,10 @@ describe('sincronizarComFieldAction — gravação', () => {
 
     const estado = await sincronizarComFieldAction()
 
-    expect(updateMock).not.toHaveBeenCalled()
-    expect(estado.relatorio?.suspeitasDeAusencia).toBe(0)
+    expect(updateMock).toHaveBeenCalledTimes(7)
+    expect(updateMock).toHaveBeenCalledWith({ field_ausente_desde: expect.any(String) })
+    expect(estado.relatorio?.suspeitasDeAusencia).toBe(7)
+    expect(estado.relatorio?.novosAlertasDeAusencia).toBe(0)
     expect(estado.relatorio?.avisos[0]).toMatch(/limite de segurança/i)
   })
 

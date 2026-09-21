@@ -242,11 +242,8 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         atualizadoEm: texto(ordem.updatedAt),
         archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
 
-        // A situação vive nas ATIVIDADES da OS, não na OS: uma requisição a mais por
-
-        // OS, no mesmo ritmo de 1 req/s. Falha aqui devolve null e a OS é ignorada
-
-        // com motivo, nunca derruba a varredura inteira.
+        // A situação vive nas atividades da OS. Falha de leitura interrompe a
+        // varredura para impedir sucesso com marca d'água após pular uma OS.
 
         situacao: (await consultarSituacaoDaUltimaAtividade(http, ordem.id)).situacao,
       })

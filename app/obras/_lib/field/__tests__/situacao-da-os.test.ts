@@ -6,9 +6,8 @@
  * precisa ser lida, e lida do campo estruturado (`status`), nunca do texto
  * livre que a equipe digita.
  *
- * Falha aqui NUNCA derruba a varredura inteira: a OS fica sem situação e é
- * ignorada com motivo, do mesmo jeito que `consulta-ordem.ts` faz com a ordem
- * antiga inconclusiva.
+ * Falha de leitura interrompe a varredura para não avançar a marca d'água
+ * enquanto uma OS ainda não foi processada.
  */
 
 import { consultarSituacaoDaUltimaAtividade } from '../situacao-da-os'
@@ -82,18 +81,14 @@ describe('quando não dá para saber', () => {
     expect(resultado.motivo).toContain('nenhuma atividade')
   })
 
-  it('resposta sem a lista de atividades fica sem situação, com motivo', async () => {
+  it('resposta sem a lista de atividades interrompe a varredura', async () => {
     const http = httpFalso({})
-    const resultado = await consultarSituacaoDaUltimaAtividade(http, 'OS-6')
-    expect(resultado.situacao).toBeNull()
-    expect(resultado.motivo).toBeTruthy()
+    await expect(consultarSituacaoDaUltimaAtividade(http, 'OS-6')).rejects.toThrow(/OS-6.*lista items/)
   })
 
-  it('falha de rede não derruba a varredura: devolve motivo, não lança', async () => {
+  it('falha de rede interrompe a varredura com a OS identificada', async () => {
     const http = httpQueFalha(new Error('429 Too Many Requests'))
-    const resultado = await consultarSituacaoDaUltimaAtividade(http, 'OS-7')
-    expect(resultado.situacao).toBeNull()
-    expect(resultado.motivo).toContain('429')
+    await expect(consultarSituacaoDaUltimaAtividade(http, 'OS-7')).rejects.toThrow(/OS-7.*429/)
   })
 
   it('atividade sem status vira situação nula, não string vazia', async () => {

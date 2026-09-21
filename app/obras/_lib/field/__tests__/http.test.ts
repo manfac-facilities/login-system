@@ -173,6 +173,21 @@ describe('criarHttpField', () => {
     expect(instantes).toEqual([0, 5000])
   })
 
+  it('limita Retry-After excessivo para não paralisar vários ciclos de sincronização', async () => {
+    const relogio = relogioVirtual()
+    const instantes: number[] = []
+    const rede = fetchFalso(resposta(429, {}, { 'retry-after': '3600' }), resposta(200, {}))
+    const buscar = async (url: string, init: { method?: string; headers?: Record<string, string> }) => {
+      instantes.push(relogio.agora())
+      return rede.buscar(url, init)
+    }
+    const http = criarHttpField({ chaveApi: CHAVE, buscar, ...relogio })
+
+    await http.get('/orders')
+
+    expect(instantes).toEqual([0, 30_000])
+  })
+
   it('desiste depois do teto de repetições e lança ErroDeRateLimit', async () => {
     const rede = fetchFalso(resposta(429, {}))
     const http = criarHttpField({
