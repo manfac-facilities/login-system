@@ -7,6 +7,58 @@ deploy** — como 17/09 já havia passado.
 
 **Foco decidido pelo João hoje:** pôr a **ficha editável** no ar. O resto espera.
 
+### ✅ O BANCO JÁ ESTÁ PRONTO. Falta só o deploy, e ele está travado fora daqui
+
+**As duas migrations foram aplicadas em produção hoje, 20/09**, pela Management API, e
+verificadas:
+
+| Migration | Verificação |
+|---|---|
+| `sdd-sql-obras-historico.sql` | tabela `obras_historico`, RPC `obras_aplicar_alteracao`, RLS ligada — 4/4 OK |
+| `sdd-sql-obras-motivos-remarcacao.sql` | **18 linhas, todas `OK`** |
+
+Depois delas: 8 tabelas `obras_*`, **6 motivos de fábrica**, **77 obras** (eram 64 em 16/09 — o
+sync trouxe 13), 0 linhas no histórico (esperado, o código que grava ainda não subiu).
+
+> **Migration sem deploy não quebra nada.** As duas só acrescentam objetos; o código no ar não
+> os usa. A ficha segue só leitura, como antes. Não há estado pela metade esperando ninguém.
+
+**⛔ O deploy está bloqueado por credencial que não é nossa:** o código de acesso ao EasyPanel
+está **com o cliente**, e o João só consegue clicar em Deploy quando ele mandar. Isso é novo —
+até aqui a barreira do deploy era disponibilidade do João, não credencial de terceiro.
+**Se o código não chegar hoje, o prazo de 21/09 não se cumpre**, porque nenhum código de 18/09
+entra sem esse clique.
+
+### ✅ A colisão do cron das 06:05 foi corrigida hoje
+
+`obras-field-completa` saiu de `5 6 * * *` para **`2 6 * * *`**, por `cron.alter_job`. Confirmado
+no `cron.job` depois da mudança.
+
+**E o estrago era maior do que esta página registrava.** A anotação de 18/09 dizia "roda uns
+dias sim, outros não". O banco desmente — `obras_sync_execucao` por dia:
+
+| Dia | Completas | Incrementais |
+|---|---|---|
+| 16/09 | 4 | 246 |
+| 17/09 | **0** | 288 |
+| 18/09 | **0** | 288 |
+| 19/09 | **0** | 288 |
+| 20/09 | **0** | 285 |
+
+**A varredura completa não rodava desde 16/09 — quatro dias seguidos.** A incremental vencia a
+corrida pela trava todo dia, de forma consistente, não aleatória. Como ela é a única que detecta
+OS arquivada ou sumida no Field, o sistema passou quatro dias cego para remoção.
+**Conferir amanhã depois das 06:02 que a completa voltou a aparecer** em `obras_sync_execucao`.
+
+### Acessos, medidos hoje
+
+`hub_system_access` com slug `obras`: **4 e-mails** — gabriel.lima, gabriel.vidal, luana.silva,
+yuri.moreira. Confirma a correção feita hoje no `AGENTS.md`.
+
+⚠️ **Nenhum desses 4 tem linha em `hub_user_roles`.** A tabela só tem 4 pessoas: eduardo.maia,
+jose.guilherme e jvictorco28 (administradores) e igor.jesus (analista). Falta confirmar se os 4
+têm conta em `auth.users` — sem conta não entram, por mais que o slug esteja liberado.
+
 ### O que foi medido hoje, e não deduzido
 
 | O quê | Estado em 20/09 |
