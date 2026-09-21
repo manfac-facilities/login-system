@@ -648,6 +648,21 @@ describe('cadastrarMotivoRemarcacaoAction', () => {
     expect(insertMotivoMock).not.toHaveBeenCalled()
   })
 
+  it('item 5a — motivo já existente mas DESATIVADO não é oferecido como escolhido', async () => {
+    // Antes: virava `jaExistia: true` igual a um motivo ativo, a janela
+    // selecionava e fechava, e `salvarCronogramaAction` recusava salvar
+    // depois (`motivoCanonico` só aceita `ativo = true`) — sem saída na tela.
+    lerMotivosMock.mockResolvedValue({
+      data: [{ id: 'm7', nome: 'Chuva forte', ativo: false }],
+      error: null,
+    })
+    const r = await cadastrarMotivoRemarcacaoAction('chuva forte')
+    expect(r.motivo).toBeUndefined()
+    expect(r.jaExistia).toBeUndefined()
+    expect(r.error).toContain('Chuva forte')
+    expect(insertMotivoMock).not.toHaveBeenCalled()
+  })
+
   it('R15 — compara sem acento: "contratacao de prestador" acha "Contratação de prestador"', async () => {
     lerMotivosMock.mockResolvedValue({
       data: [{ id: 'm4', nome: 'Contratação de prestador' }],

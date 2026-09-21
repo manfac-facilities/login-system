@@ -683,18 +683,27 @@ function nomeParaGravar(nome: string): string {
   return limpo.charAt(0).toUpperCase() + limpo.slice(1)
 }
 
-/** A lista inteira, inclusive inativos: o índice único do banco não os ignora. */
+/**
+ * A lista inteira, inclusive inativos: o índice único do banco não os ignora.
+ *
+ * Item 5a da revisão de 20/09: um motivo achado mas INATIVO não pode virar
+ * `jaExistia` como se fosse igual a um ativo — `motivoCanonico` (usado por
+ * `salvarCronogramaAction`) só aceita motivo `ativo = true`, então oferecer o
+ * inativo como "escolhido" levava a janela a fechar com um motivo que a
+ * gravação sempre recusaria depois, sem saída na tela.
+ */
 async function procurarMotivo(
   supabase: Cliente,
   nome: string
-): Promise<{ motivo?: { id: string; nome: string }; error?: string }> {
-  const { data, error } = await supabase.from('obras_motivo_remarcacao').select('id, nome')
+): Promise<{ motivo?: { id: string; nome: string }; inativo?: string; error?: string }> {
+  const { data, error } = await supabase.from('obras_motivo_remarcacao').select('id, nome, ativo')
   if (error) return { error: 'Erro ao carregar os motivos de remarcação' }
 
   const alvo = normalizarMotivo(nome)
-  const achado = ((data ?? []) as { id: string; nome: string }[]).find(
+  const achado = ((data ?? []) as { id: string; nome: string; ativo?: boolean }[]).find(
     (m) => normalizarMotivo(m.nome) === alvo
   )
+  if (achado && achado.ativo === false) return { inativo: achado.nome }
   return { motivo: achado }
 }
 
@@ -726,6 +735,11 @@ export async function cadastrarMotivoRemarcacaoAction(
 
   const existente = await procurarMotivo(supabase, limpo)
   if (existente.error) return { error: existente.error }
+  if (existente.inativo) {
+    return {
+      error: `"${existente.inativo}" já existe na lista, mas está desativado. Escolha outro nome — não é possível reativar por aqui.`,
+    }
+  }
   if (existente.motivo) return { motivo: existente.motivo, jaExistia: true }
 
   const { data, error } = await supabase

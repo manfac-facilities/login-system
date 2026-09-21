@@ -62,7 +62,15 @@ function arrumarNome(s: string): string {
  */
 function montarLista(base: readonly string[], extras: readonly string[]): ItemMotivo[] {
   const itens: ItemMotivo[] = base.map((nome) => ({ nome, novo: false }))
-  const novos: ItemMotivo[] = extras.map((nome) => ({ nome, novo: true }))
+  // Item 5b da revisão de 20/09: um motivo cadastrado nesta sessão do diálogo
+  // (`extras`) pode reaparecer em `base` depois que o servidor revalida a
+  // página — o diálogo continua montado, com o `extras` antigo, e o mesmo
+  // nome entrava duas vezes: um de `base`, um de `extras`. Com `motivo`
+  // (o estado escolhido) igual à mesma string, OS DOIS `<input>` ficavam
+  // `checked`. Filtrar aqui é mais barato que sincronizar os dois estados.
+  const novos: ItemMotivo[] = extras
+    .filter((nome) => !base.some((b) => normalizarMotivo(b) === normalizarMotivo(nome)))
+    .map((nome) => ({ nome, novo: true }))
   const iOutro = itens.findIndex((i) => ehMotivoOutro(i.nome))
   if (iOutro < 0) return [...itens, ...novos]
   return [...itens.slice(0, iOutro), ...novos, ...itens.slice(iOutro)]

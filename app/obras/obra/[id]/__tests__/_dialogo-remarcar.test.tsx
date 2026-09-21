@@ -140,6 +140,46 @@ describe('DialogoRemarcar', () => {
     expect(nomes[nomes.length - 1]).toBe('Outro')
   })
 
+  it('item 5b — motivo cadastrado que a lista do servidor passa a incluir não duplica o rádio', async () => {
+    // Reproduz o encaixe real: `_ficha.tsx` revalida a página depois de
+    // salvar, o `<DialogoRemarcar>` continua montado (não desmonta), e a
+    // prop `motivos` chega atualizada — já com o nome que só existia em
+    // `extras` até então. Sem o filtro em `montarLista`, o motivo aparecia
+    // duas vezes, com os dois rádios marcados ao mesmo tempo.
+    const cadastrarMotivo = jest
+      .fn()
+      .mockResolvedValue({ motivo: { id: 'm1', nome: 'Aguardando laudo técnico' } })
+    const u = userEvent.setup()
+
+    function PalcoComLista({ motivos }: { motivos: string[] }) {
+      return (
+        <DialogoRemarcar
+          aberto
+          de="2026-08-24"
+          para="2026-09-01"
+          duracao="20"
+          motivos={motivos}
+          cadastrarMotivo={cadastrarMotivo}
+          onConfirmar={() => {}}
+          onFechar={() => {}}
+        />
+      )
+    }
+
+    const { rerender } = render(<PalcoComLista motivos={MOTIVOS} />)
+
+    await u.click(screen.getByRole('button', { name: '+ Cadastrar novo motivo' }))
+    await u.type(screen.getByLabelText('Novo motivo'), 'aguardando laudo técnico')
+    await u.click(screen.getByRole('button', { name: 'Cadastrar' }))
+    await screen.findByRole('radio', { name: /Aguardando laudo técnico/ })
+
+    rerender(
+      <PalcoComLista motivos={[...MOTIVOS.slice(0, -1), 'Aguardando laudo técnico', 'Outro']} />
+    )
+
+    expect(screen.getAllByRole('radio', { name: /Aguardando laudo técnico/ })).toHaveLength(1)
+  })
+
   it('cadastrar nome que já existe escolhe o existente, avisa e não duplica', async () => {
     const cadastrarMotivo = jest.fn()
     const u = await abrir({ onConfirmar: jest.fn(), cadastrarMotivo })
