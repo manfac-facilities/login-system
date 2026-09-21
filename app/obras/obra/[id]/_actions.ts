@@ -159,7 +159,17 @@ function rascunhoAutorizacao(
   // gravava hoje por cima, perdendo o que ela quis apagar (e reiniciando o
   // contador de "esperando a OS há N dias", sem como desfazer pela tela).
   // Limpar precisa gravar `null`, não hoje.
-  const liberadoEm = libPor ? (libEmDigitado ?? (obra.liberado_em ? null : hoje)) : null
+  //
+  // Correção bloqueante de 21/09: a condição de "primeira liberação" olhava
+  // `obra.liberado_em`, não `obra.liberado_por`. Depois que alguém limpa a
+  // data (liberado_em fica null, liberado_por continua com o nome), o
+  // PRÓXIMO salvamento do bloco — mesmo um que só preencha `aprovadaEm` —
+  // reavaliava `obra.liberado_em` (null) como "nunca houve liberação" e
+  // voltava a gravar hoje por cima, desfazendo a limpeza que a pessoa tinha
+  // acabado de fazer. Quem decide se é a primeira liberação é `liberado_por`
+  // (havia alguém nomeado antes?), não `liberado_em` (que o item 3 passou a
+  // permitir ficar vazio de propósito).
+  const liberadoEm = libPor ? (libEmDigitado ?? (obra.liberado_por ? null : hoje)) : null
   return {
     antes: {
       origem: obra.origem,

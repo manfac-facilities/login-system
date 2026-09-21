@@ -308,6 +308,28 @@ describe('salvarAutorizacaoAction', () => {
     expect(campos()).not.toHaveProperty('liberado_por')
   })
 
+  it('bloqueante 21/09 — depois que a data já foi limpa, salvar só a aprovação NÃO re-carimba hoje', async () => {
+    // Regressão do item 3: a condição de "primeira liberação" olhava
+    // `obra.liberado_em`, não `obra.liberado_por`. Depois que alguém limpa a
+    // data (liberado_em fica null, liberado_por continua), o PRÓXIMO
+    // salvamento do bloco — aqui, preenchendo só `aprovadaEm` — reavaliava
+    // `obra.liberado_em` (null) como "nunca houve liberação" e voltava a
+    // gravar hoje por cima, desfazendo a limpeza que a pessoa tinha acabado
+    // de fazer.
+    obraAtual = obra({ liberado_por: 'LEANDRO', liberado_em: null })
+    const r = await salvarAutorizacaoAction('o1', {
+      ...AUT_VAZIA,
+      libPor: 'LEANDRO',
+      libEm: '',
+      aprovadaEm: '2026-09-10',
+    })
+    expect(r).toEqual({ success: true })
+    // `liberado_por` e `liberado_em` não mudam — nem entram em `campos`.
+    expect(campos()).not.toHaveProperty('liberado_em')
+    expect(campos()).not.toHaveProperty('liberado_por')
+    expect(campos()).toMatchObject({ aprovacao: '2026-09-10' })
+  })
+
   it('recusa data de liberação no futuro', async () => {
     const r = await salvarAutorizacaoAction('o1', {
       ...AUT_VAZIA,
