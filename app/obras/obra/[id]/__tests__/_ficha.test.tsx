@@ -1,10 +1,10 @@
 /**
  * Testes de composição da Ficha (`../_ficha.tsx`).
  *
- * Diferente de `_blocos-editaveis.test.tsx` (testa cada bloco isolado), este
- * arquivo renderiza a `<Ficha>` inteira — é o único jeito de testar a
- * ligação do histórico (item 1 da revisão de 20/09), que só aparece no
- * encaixe entre `page.tsx` e `_ficha.tsx`, não em cada peça isolada.
+ * Diferente de `_blocos-editaveis.test.tsx` (testa cada bloco isolado),
+ * este arquivo renderiza a `<Ficha>` inteira — é o único jeito de testar
+ * como os pedaços se encaixam: a esteira (item 7 da revisão de 20/09) e a
+ * ligação do histórico (item 1) só aparecem no encaixe, não em cada peça.
  *
  * Padrão de fixture de `app/obras/__tests__/tipos.test.ts` (`obraRow` +
  * `derivar`): a Ficha só aceita `Obra`, o tipo já derivado.
@@ -77,7 +77,7 @@ function obraRow(over: Partial<ObraRow> = {}): ObraRow {
 }
 
 /** As props mínimas de `<Ficha>` — os blocos vazios (`[]`/`{}`) bastam para o
- * que este arquivo confere: a ligação do bloco de histórico. */
+ * que este arquivo confere: a esteira e o bloco de histórico. */
 function fichaProps(overObra: Partial<ObraRow> = {}, historico: LinhaHistorico[] = []) {
   return {
     obra: derivar(obraRow(overObra), HOJE),
@@ -124,5 +124,54 @@ describe('Histórico de alterações (item 1 da revisão de 20/09)', () => {
     render(<Ficha {...fichaProps()} />)
     expect(screen.getByText('Histórico de alterações')).toBeInTheDocument()
     expect(screen.getByText(/nenhuma alteração/i)).toBeInTheDocument()
+  })
+})
+
+describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', () => {
+  // As duas obras destes testes já saíram de campo (`marco_exec_fim`
+  // preenchido): isola a contagem no PASSO ZERO ("Execução em campo", que é
+  // 'atual' sempre que `marco_exec_fim` falta, fora do laço de `ESTEIRA`) do
+  // que o laço de `ESTEIRA` (relatório → aprovarOS → fecharOS → pendFat →
+  // faturado) decide sozinho.
+  const POS_CAMPO = { marco_exec_fim: '2026-08-24', marco_relatorio: '2026-08-25' }
+
+  it('etapa parada em aprovarOS com OS já aprovada ainda marca ESSE passo como atual', () => {
+    // Combinação que disparava o bug: `_etapa.tsx` troca a etapa livremente
+    // (sem trava por papel), então uma obra pode ficar PARADA em `aprovarOS`
+    // com `os_aprovada = true` mas `marco_os_aprov` ainda não preenchido (o
+    // satélite não sincronizou — R7 espera os três juntos, mas nada no banco
+    // IMPEDE o descompasso). Antes do fix, isso caía sempre no ramo do
+    // desvio "pulado" e NENHUM passo da esteira recebia o selo.
+    render(
+      <Ficha
+        {...fichaProps({
+          ...POS_CAMPO,
+          etapa: 'aprovarOS',
+          os_aprovada: true,
+          aprovacao: '2026-08-20',
+          marco_os_aprov: null,
+        })}
+      />
+    )
+    expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
+  })
+
+  it('o desvio "Pendente fechamento" continua desenhado, apagado, quando a etapa já passou dele', () => {
+    // Regressão: o caminho ORIGINAL do desvio (obra que pulou aprovarOS de
+    // verdade, porque a OS já estava aprovada antes do relatório) continua
+    // funcionando depois do fix.
+    render(
+      <Ficha
+        {...fichaProps({
+          ...POS_CAMPO,
+          etapa: 'fecharOS',
+          os_aprovada: true,
+          aprovacao: '2026-08-20',
+          marco_os_aprov: '2026-08-20',
+        })}
+      />
+    )
+    expect(screen.getByText(/Desvio não usado/)).toBeInTheDocument()
+    expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
   })
 })

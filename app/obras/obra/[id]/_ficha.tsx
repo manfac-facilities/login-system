@@ -228,8 +228,14 @@ function Esteira({ obra }: { obra: Obra }) {
         const c = ETAPAS[k]
 
         /* O DESVIO. Quando a obra já tinha OS aprovada ele não acontece — mas
-           continua desenhado, apagado, para o caminho inteiro ficar visível. */
-        if (k === 'aprovarOS' && obra.os_aprovada) {
+           continua desenhado, apagado, para o caminho inteiro ficar visível.
+           Item 7 da revisão de 20/09: `obra.etapa !== k` é o que falta aqui —
+           sem essa condição, uma obra que a troca manual de etapa (`_etapa.tsx`,
+           sem trava por papel) deixou PARADA em `aprovarOS` com `os_aprovada`
+           true caía sempre neste desvio "pulado", e nenhum Passo da esteira
+           recebia o selo "a obra está aqui": o próprio passo em que ela está
+           virava o desvio apagado, em vez de aparecer como atual. */
+        if (k === 'aprovarOS' && obra.os_aprovada && obra.etapa !== k) {
           return (
             <Passo
               key={k}
