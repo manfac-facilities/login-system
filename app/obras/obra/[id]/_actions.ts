@@ -270,23 +270,40 @@ const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
 /**
  * Os marcos da esteira que `mudarEtapaAction` precisa acertar ao trocar de
  * etapa — decisões do João de 21/09 (`docs/cliente/
- * 2026-09-21-decisoes-marcos-da-esteira.md`):
+ * 2026-09-21-decisoes-marcos-da-esteira.md`), calculadas pelo ESTADO FINAL
+ * (a posição da NOVA etapa), não pela direção da troca (revisão
+ * independente de 21/09).
  *
- * AVANÇAR (inclusive pulando passos): todo marco de passo ANTERIOR à nova
- * etapa que esteja `null` recebe hoje; `marco_exec_fim` recebe hoje se a
- * nova etapa for pós-campo (mesmo entrando exatamente em `relatorio`); ao
- * entrar em `faturado` — etapa terminal, sem passo seguinte que a torne
- * "anterior" — `marco_faturou` TAMBÉM recebe hoje. Marco que já tem data
- * nunca é sobrescrito.
+ * Por quê: a primeira versão comparava índice antigo × novo e só AGIA numa
+ * das duas direções — um avanço só carimbava marco `null`, nunca apagava um
+ * marco de passo futuro que tivesse sobrado de um estado inconsistente; e
+ * "trocar" para a mesma etapa nem entrava no `if`/`else if`, então nunca
+ * reconciliava nada. Isso importa porque a chamada que grava os marcos roda
+ * numa escrita SEPARADA do update da etapa (ver comentário em
+ * `mudarEtapaAction`): se ela falhar depois de uma VOLTA, a obra fica com a
+ * etapa nova mas os marcos ainda no estado antigo — inconsistente — e só
+ * uma reconciliação por estado final (em vez de "para onde a etapa foi")
+ * corrige isso na PRÓXIMA troca, mesmo que a próxima troca seja para a
+ * mesma etapa.
  *
- * VOLTAR: os marcos dos passos da nova etapa em diante são apagados
- * (`null`); voltar para uma etapa de campo (antes de `relatorio`) também
- * apaga `marco_exec_fim`. `linhasDeAlteracao`, chamada por quem usa este
- * retorno, é quem transforma cada apagamento em linha de histórico — o
- * valor antigo nunca se perde.
+ * Regra, para a nova etapa de índice N (posição em `CICLO`):
+ *   - cada marco de `PASSOS_MARCO` (exceto `marco_faturou`) com passo de
+ *     índice < N → recebe hoje SE estiver `null` (marco com data existente
+ *     nunca é sobrescrito); com índice >= N → vira `null` (apagado, com
+ *     histórico — `linhasDeAlteracao`, chamada por quem usa este retorno,
+ *     transforma isso em linha, o valor antigo nunca se perde).
+ *   - `marco_faturou`: recebe hoje se `null` quando a NOVA etapa é
+ *     `faturado` (etapa terminal — a esteira só marca como feita com data,
+ *     mesmo não havendo passo seguinte que a torne "anterior"); em
+ *     qualquer outra etapa nova, vira `null`.
+ *   - `marco_exec_fim`: recebe hoje se `null` quando N é pós-campo; vira
+ *     `null` quando não é.
+ *   - `marco_os_aprov` nunca entra aqui — fora de `PASSOS_MARCO` de
+ *     propósito (satélite do trio de aprovação, decisão 3).
  *
- * Etapa igual (`indiceNovo === indiceAtual`): nada muda, `depois` sai igual
- * a `antes`.
+ * "Trocar" para a etapa em que a obra já está passa pela MESMA conta: se o
+ * estado já é coerente, `depois` sai igual a `antes` e `linhasDeAlteracao`
+ * não gera linha (nada é gravado); se não é, esta chamada reconcilia.
  */
 function calcularMarcosDaEsteira(
   obra: ObraRow,
@@ -302,22 +319,16 @@ function calcularMarcosDaEsteira(
   }
   const depois: Rascunho = { ...antes }
 
-  const indiceAtual = ORDEM_ETAPA[obra.etapa]
   const indiceNovo = ORDEM_ETAPA[novaEtapa]
-  const novaEhPosCampo = posCampo({ etapa: novaEtapa })
 
-  if (indiceNovo > indiceAtual) {
-    for (const { etapa, campo } of PASSOS_MARCO) {
-      if (ORDEM_ETAPA[etapa] < indiceNovo && depois[campo] === null) depois[campo] = hoje
-    }
-    if (novaEtapa === 'faturado' && depois.marco_faturou === null) depois.marco_faturou = hoje
-    if (novaEhPosCampo && depois.marco_exec_fim === null) depois.marco_exec_fim = hoje
-  } else if (indiceNovo < indiceAtual) {
-    for (const { etapa, campo } of PASSOS_MARCO) {
-      if (ORDEM_ETAPA[etapa] >= indiceNovo) depois[campo] = null
-    }
-    if (!novaEhPosCampo) depois.marco_exec_fim = null
+  for (const { etapa, campo } of PASSOS_MARCO) {
+    if (campo === 'marco_faturou') continue // regra própria, abaixo — etapa terminal
+    depois[campo] = ORDEM_ETAPA[etapa] < indiceNovo ? (antes[campo] ?? hoje) : null
   }
+
+  depois.marco_faturou = novaEtapa === 'faturado' ? (antes.marco_faturou ?? hoje) : null
+
+  depois.marco_exec_fim = posCampo({ etapa: novaEtapa }) ? (antes.marco_exec_fim ?? hoje) : null
 
   return { antes, depois }
 }
@@ -363,14 +374,17 @@ export async function mudarEtapaAction(obraId: string, etapa: string): Promise<E
 
   if (error) return { error: 'Erro ao mudar a etapa da obra' }
 
-  // Marcos da esteira (decisões de 21/09): carimba passo pulado ao avançar,
-  // apaga com histórico ao voltar. Roda DEPOIS da etapa ter mudado de
-  // verdade — se esta parte falhar, a etapa já foi trocada e os marcos
-  // ficam atrasados até a PRÓXIMA troca de etapa recalculá-los; nada é
-  // apagado sem o valor antigo já estar no histórico, então não há perda de
-  // dado, só um atraso de exibição (registrado em docs/DIVIDAS.md — as duas
-  // escritas não são atômicas entre si, e torná-las seria mudar o RPC, fora
-  // do escopo desta troca).
+  // Marcos da esteira (decisões de 21/09, calculadas pelo ESTADO FINAL —
+  // ver o comentário de calcularMarcosDaEsteira). Roda numa escrita
+  // SEPARADA, DEPOIS da etapa já ter mudado de verdade: as duas não são
+  // atômicas entre si (torná-las exigiria mudar a RPC ou o schema, fora do
+  // escopo desta troca — registrado em docs/DIVIDAS.md, B1). Se ESTA parte
+  // falhar, a obra fica com a etapa nova mas os marcos ainda no estado
+  // antigo — inconsistente — até a PRÓXIMA troca de etapa: como o cálculo é
+  // por estado final (não por direção), a próxima troca reconcilia sozinha,
+  // mesmo que seja outra vez para a mesma etapa. Nada é apagado sem o valor
+  // antigo já estar no histórico primeiro, então não há perda de dado — só
+  // uma janela de exibição incoerente entre as duas escritas.
   const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje)
   const linhas = linhasDeAlteracao(antes, depois, 'Esteira')
   if (linhas.length > 0) {

@@ -212,6 +212,60 @@ describe('mudarEtapaAction — voltar apaga os marcos com histórico', () => {
   })
 })
 
+describe('mudarEtapaAction — reconcilia pelo ESTADO FINAL, não pela direção (revisão de 21/09)', () => {
+  // Motivo: se a chamada de marcos falhar depois do update da etapa (ex.:
+  // numa VOLTA), a obra fica com a etapa nova mas os marcos ainda refletem
+  // a etapa antiga — um estado INCONSISTENTE. Antes desta correção, o
+  // cálculo comparava índice antigo × novo: um AVANÇO só carimbava `null`,
+  // nunca apagava marco de passo futuro que tivesse sobrado; e etapa igual
+  // à atual nem entrava no `if`/`else if`, então nunca reconciliava nada.
+  // Calcular pelo estado final (índice da NOVA etapa contra cada marco,
+  // sem olhar a etapa antiga) corrige os dois: qualquer troca — inclusive
+  // "trocar" para a mesma etapa — deixa os marcos coerentes com onde a
+  // obra está agora.
+  it('andamento com TODOS os marcos preenchidos (inconsistente) → mudarEtapa para relatorio apaga fecharOS/pendFat/faturou/relatorio e mantém exec_fim', async () => {
+    obraAtual = obra({
+      etapa: 'andamento',
+      marco_exec_fim: '2026-08-01',
+      marco_relatorio: '2026-08-02',
+      marco_fechou_os: '2026-08-03',
+      marco_liberou_fat: '2026-08-04',
+      marco_faturou: '2026-08-05',
+    })
+    const r = await mudarEtapaAction('o1', 'relatorio')
+    expect(r).toEqual({ success: true })
+    expect(camposMarco()).toEqual({
+      marco_relatorio: null,
+      marco_fechou_os: null,
+      marco_liberou_fat: null,
+      marco_faturou: null,
+    })
+    // marco_exec_fim é mantido: relatorio é pós-campo e o marco já tinha data.
+    expect(camposMarco()).not.toHaveProperty('marco_exec_fim')
+  })
+
+  it('trocar para a MESMA etapa (andamento) com estado inconsistente reconcilia — nada fica de fora', async () => {
+    obraAtual = obra({
+      etapa: 'andamento',
+      marco_exec_fim: '2026-08-01',
+      marco_relatorio: '2026-08-02',
+      marco_fechou_os: '2026-08-03',
+      marco_liberou_fat: '2026-08-04',
+      marco_faturou: '2026-08-05',
+    })
+    const r = await mudarEtapaAction('o1', 'andamento')
+    expect(r).toEqual({ success: true })
+    // andamento é pré-campo: nenhum marco deveria ter data, nem exec_fim.
+    expect(camposMarco()).toEqual({
+      marco_exec_fim: null,
+      marco_relatorio: null,
+      marco_fechou_os: null,
+      marco_liberou_fat: null,
+      marco_faturou: null,
+    })
+  })
+})
+
 describe('mudarEtapaAction — marco_os_aprov nunca é tocado', () => {
   it('avançar pulando aprovarOS não grava marco_os_aprov', async () => {
     obraAtual = obra({ etapa: 'andamento' })
