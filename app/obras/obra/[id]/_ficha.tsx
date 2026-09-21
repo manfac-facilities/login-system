@@ -250,16 +250,20 @@ function Esteira({ obra }: { obra: Obra }) {
         }
 
         const data = obra[MARCO_DE[k]] as string | null
-        const estado: 'feito' | 'atual' | 'futuro' = data
-          ? 'feito'
-          : obra.etapa === k
-            ? 'atual'
-            : 'futuro'
-        const quando = data
-          ? br(data)
-          : estado === 'atual'
+        // Correção da revisão independente de 21/09: a etapa ATUAL precisa
+        // ganhar prioridade sobre o marco preenchido. Antes, um passo cujo
+        // marco já tinha data (ex.: `marco_os_aprov` sincronizado por outro
+        // caminho antes da troca de etapa) virava 'feito' mesmo sendo o
+        // passo em que a obra está agora — e nenhum passo da esteira
+        // recebia o selo "a obra está aqui".
+        const estado: 'feito' | 'atual' | 'futuro' =
+          obra.etapa === k ? 'atual' : data ? 'feito' : 'futuro'
+        const quando =
+          estado === 'atual'
             ? `há ${obra.paradaEtapa ?? 0} ${obra.paradaEtapa === 1 ? 'dia' : 'dias'}`
-            : '—'
+            : data
+              ? br(data)
+              : '—'
 
         return (
           <Passo

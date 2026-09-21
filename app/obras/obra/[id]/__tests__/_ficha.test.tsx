@@ -156,6 +156,27 @@ describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', (
     expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
   })
 
+  it('etapa parada em aprovarOS com marco_os_aprov JÁ preenchido continua marcada como atual', () => {
+    // Bug da revisão independente de 21/09: `estado` calculava `data ?
+    // 'feito' : etapa === k ? 'atual' : 'futuro'` — se o marco do passo em
+    // que a obra ESTÁ já tem data (o satélite marco_os_aprov sincronizou
+    // antes da troca de etapa, ou foi preenchido por outro caminho), o passo
+    // vira 'feito' e nenhum recebe o selo "a obra está aqui". A etapa atual
+    // tem que ganhar prioridade sobre o marco preenchido.
+    render(
+      <Ficha
+        {...fichaProps({
+          ...POS_CAMPO,
+          etapa: 'aprovarOS',
+          os_aprovada: true,
+          aprovacao: '2026-08-20',
+          marco_os_aprov: '2026-08-21',
+        })}
+      />
+    )
+    expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
+  })
+
   it('o desvio "Pendente fechamento" continua desenhado, apagado, quando a etapa já passou dele', () => {
     // Regressão: o caminho ORIGINAL do desvio (obra que pulou aprovarOS de
     // verdade, porque a OS já estava aprovada antes do relatório) continua
