@@ -199,10 +199,38 @@ describe('derivar', () => {
   })
 
   it('conta o prazo consumido como "dia N de M", nunca como percentual', () => {
+    // Obra já atrasada (atraso = 5): a contagem é duracao + atraso = 7 + 5.
+    // Antes da revisão do coordenador este teste travava 13 (12 dias corridos
+    // + 1); mudou para 12 junto com a correção abaixo — ver o commit.
     const o = obra()
-    expect(o.diaDe).toBe(13) // 12 dias corridos + 1
-    expect(o.fracPrazo).toBeCloseTo(13 / 7)
-    expect(prazoTxt(o)).toBe('dia 13 de 7')
+    expect(o.diaDe).toBe(12)
+    expect(o.fracPrazo).toBeCloseTo(12 / 7)
+    expect(prazoTxt(o)).toBe('dia 12 de 7')
+  })
+
+  it('no último dia do prazo (hoje == fimCalc) "dia N de M" não passa de M — o atraso ainda não bateu', () => {
+    // inicio_real 19/08 + duracao 7 => fimCalc 26/08 (`somaDias(mockup:1107)`).
+    // Nesse dia o atraso (mecanismo existente) ainda é 0 — a obra só fica
+    // atrasada A PARTIR do dia seguinte. Antes da correção, diaDe contava
+    // offset+1 sem olhar para isso e escrevia "dia 8 de 7" / 114% no mesmo
+    // dia em que `atraso` diz que ainda está no prazo.
+    const o = obra({}, '2026-08-26')
+    expect(o.atraso).toBe(0)
+    expect(o.diaDe).toBe(7)
+    expect(o.fracPrazo).toBe(1)
+    expect(prazoTxt(o)).toBe('dia 7 de 7')
+  })
+
+  it('obra genuinamente atrasada avança um dia por vez, sem pular — o atraso não fica escondido', () => {
+    // 25/08 e 26/08 mostram os dois "dia 7 de 7" (dia de folga do fimCalc,
+    // ver DIVIDAS.md). A partir daqui, quando atraso > 0, diaDe = duracao +
+    // atraso — não os "dias corridos desde o início" (que pulariam de 7 para
+    // 9, porque também carregam aquele mesmo dia de folga).
+    const o = obra({}, '2026-08-27') // 1 dia depois do fimCalc
+    expect(o.atraso).toBe(1)
+    expect(o.diaDe).toBe(8)
+    expect(o.fracPrazo).toBeCloseTo(8 / 7)
+    expect(prazoTxt(o)).toBe('dia 8 de 7')
   })
 
   it('sem duração planejada não inventa número', () => {

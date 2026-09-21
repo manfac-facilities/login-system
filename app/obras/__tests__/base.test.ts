@@ -306,6 +306,52 @@ describe('ordenar', () => {
       'andamento',
     ])
   })
+
+  it('ordena o número da OS numericamente, não por texto — 985 antes de 10024', () => {
+    const base = [obra({ os: '10024' }), obra({ os: '985' }), obra({ os: '200' })]
+    expect(ordenar(base, { col: 'os', dir: 1 }).map((o) => o.os)).toEqual(['200', '985', '10024'])
+    expect(ordenar(base, { col: 'os', dir: -1 }).map((o) => o.os)).toEqual(['10024', '985', '200'])
+  })
+
+  it('ordena os três formatos de OS de produção (dígito puro, prefixo, texto livre) numa ordem total e estável', () => {
+    // Comparar como número só quando os DOIS lados são puramente dígitos (a
+    // versão anterior) não é transitivo quando um dos lados é texto — a
+    // ordem podia depender de quem era comparado com quem. `localeCompare`
+    // com `numeric: true` usa o mesmo algoritmo (UCA) nos três formatos, então
+    // dá uma ordem total consistente qualquer que seja a ordem de entrada.
+    const os = [
+      '0926-009923',
+      'DP CATETE 10 - PINTURA HUB',
+      '106',
+      '0126-013004',
+      'VISA141',
+      '2755523',
+      'DP CATETE 5 - PINTURA HUB',
+      '54',
+    ]
+    const esperado = [
+      '54',
+      '106',
+      '0126-013004',
+      '0926-009923',
+      '2755523',
+      'DP CATETE 5 - PINTURA HUB',
+      'DP CATETE 10 - PINTURA HUB',
+      'VISA141',
+    ]
+    const base = os.map((v) => obra({ os: v }))
+    const embaralhada = [...base].reverse()
+    expect(ordenar(base, { col: 'os', dir: 1 }).map((o) => o.os)).toEqual(esperado)
+    // Mesmo resultado partindo de uma entrada em outra ordem — confirma que é
+    // uma ordem total, não um artefato da ordem de chegada.
+    expect(ordenar(embaralhada, { col: 'os', dir: 1 }).map((o) => o.os)).toEqual(esperado)
+  })
+
+  it('OS ausente continua indo para o fim, mesmo com os outros formatos misturados', () => {
+    const base = [obra({ os: '0226-014989' }), obra({ os: '985' }), obra({ os: null })]
+    const r = ordenar(base, { col: 'os', dir: 1 })
+    expect(r.map((o) => o.os)).toEqual(['0226-014989', '985', null])
+  })
 })
 
 describe('alternarOrdem', () => {
