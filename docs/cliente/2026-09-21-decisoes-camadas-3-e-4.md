@@ -21,3 +21,10 @@ Perguntas feitas pelo Claude em 21/09, respostas do João escolhidas entre opç�
    - Até 28/09, uma **ponte**: tela "cobranças do dia" com um botão por pessoa que abre o
      WhatsApp já com a mensagem escrita; alguém clica e envia. Vira automático quando o provedor
      estiver pronto. Mockup antes de código.
+
+4. **Ponte — quem opera: o responsável de cada obra** (PCM). Cada um cobra as faltas das
+   próprias obras: abre a tela, clica, envia do próprio WhatsApp e registra a resposta na tarefa.
+
+5. **Ponte — telefones: nenhum cadastro agora.** O botão abre o WhatsApp com a mensagem pronta e
+   a pessoa escolhe o contato na própria agenda (`wa.me/?text=`). Sem mudança de schema. O
+   cadastro de telefones fica para o caminho oficial.
