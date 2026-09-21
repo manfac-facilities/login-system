@@ -49,6 +49,7 @@ export type EntradaDiario = {
 }
 
 const SEM_ACESSO = 'Sem acesso ao Controle de Obras'
+const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024
 
 /** A obra, com o mínimo que as regras precisam. */
 type ObraMinima = { id: string; etapa: Etapa; equipe: string | null; pcm: string | null }
@@ -86,6 +87,19 @@ export async function salvarDiarioAction(entrada: EntradaDiario): Promise<Estado
   const dia = hojeISO()
   const hora = horaISO()
   const obs = (entrada.obs ?? '').trim()
+
+  if (entrada.fotoPath) {
+    if (entrada.fotoPath !== `${obra.id}/${dia}.jpg`) {
+      return { error: 'A foto não pertence a esta obra e a este dia.' }
+    }
+    const { data: foto, error: erroFoto } = await supabase.storage
+      .from('obras-fotos')
+      .info(entrada.fotoPath)
+    if (erroFoto || !foto || foto.contentType !== 'image/jpeg' ||
+        typeof foto.size !== 'number' || foto.size > TAMANHO_MAXIMO_FOTO) {
+      return { error: 'A foto precisa ser JPEG e ter até 5 MB. Dá para salvar sem ela.' }
+    }
+  }
 
   // Um registro por obra por dia — o banco tem `unique (obra_id, data)`.
   // Responder de novo é CORRIGIR a resposta de hoje, não um erro de duplicata.
@@ -208,9 +222,8 @@ async function abrirTarefas(
 /**
  * Desfazer: tira a obra da lista "Já respondidas" e a devolve para a fila.
  *
- * Apaga junto as tarefas AINDA ABERTAS que a resposta de hoje gerou — tarefa
- * órfã de uma falta que não existe mais é pior que tarefa nenhuma. Tarefa já
- * respondida fica: alguém trabalhou nela, e apagar seria apagar o trabalho.
+ * A RPC apaga na mesma transação as tarefas AINDA ABERTAS que a resposta de
+ * hoje gerou. Tarefa já respondida fica: alguém trabalhou nela.
  */
 export async function desfazerDiarioAction(obraId: string): Promise<EstadoDiario> {
   const supabase = await createClient()
@@ -222,15 +235,11 @@ export async function desfazerDiarioAction(obraId: string): Promise<EstadoDiario
 
   const dia = hojeISO()
 
-  const { error } = await supabase.from('obras_diario').delete().eq('obra_id', obraId).eq('data', dia)
+  const { error } = await supabase.rpc('obras_desfazer_diario', {
+    p_obra_id: obraId,
+    p_dia: dia,
+  })
   if (error) return { error: 'Erro ao desfazer o registro de hoje' }
-
-  await supabase
-    .from('obras_tarefa')
-    .delete()
-    .eq('obra_id', obraId)
-    .eq('aberta', dia)
-    .eq('situacao', 'aberta')
 
   // Desfazer também desconta: sem isto a obra continuaria "3 dias sem andar"
   // por causa de uma resposta que não existe mais.

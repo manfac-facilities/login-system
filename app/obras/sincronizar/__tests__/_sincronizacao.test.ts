@@ -323,7 +323,7 @@ describe('planejarSincronizacao — ausência no Field', () => {
     expect(plano.avisos[0]).toMatch(/0 OS/i)
   })
 
-  it('não marca ausência em massa acima do maior valor entre 3 e 20%', () => {
+  it('ausência em massa registra só suspeitas; nova varredura confirma após 20 horas', () => {
     const existentes = Array.from({ length: 10 }, (_, indice) =>
       obraNoBanco({
         id: `obra-${indice}`,
@@ -339,8 +339,21 @@ describe('planejarSincronizacao — ausência no Field', () => {
       agora: AGORA,
     })
 
-    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.reconciliarAusencias).toHaveLength(4)
+    expect(plano.reconciliarAusencias.every((item) => item.acao === 'suspeita')).toBe(true)
     expect(plano.avisos[0]).toMatch(/limite de segurança/i)
+
+    const suspeitasGravadas = existentes.map((obra) => {
+      const suspeita = plano.reconciliarAusencias.find((item) => item.id === obra.id)
+      return suspeita ? { ...obra, field_ausente_desde: AGORA } : obra
+    })
+    const seguinte = planejarSincronizacao(doField, suspeitasGravadas, {
+      varreduraCompleta: true,
+      agora: '2026-09-15T12:00:00Z',
+    })
+    expect(seguinte.avisos).toHaveLength(0)
+    expect(seguinte.reconciliarAusencias).toHaveLength(4)
+    expect(seguinte.reconciliarAusencias.every((item) => item.acao === 'alerta')).toBe(true)
   })
 
   it('alertas antigos não entram no disjuntor e não bloqueiam uma ausência nova', () => {

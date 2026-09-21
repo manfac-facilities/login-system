@@ -37,7 +37,7 @@ export async function responderTarefaAction(
   const texto = resumo.trim()
   if (!texto) return { error: 'Escreva em uma linha o que foi resolvido.' }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('obras_tarefa')
     .update({
       situacao: 'respondida',
@@ -46,8 +46,11 @@ export async function responderTarefaAction(
       resumo: texto,
     })
     .eq('id', tarefaId)
+    .eq('situacao', 'aberta')
+    .select('id')
 
   if (error) return { error: 'Erro ao marcar a tarefa como respondida' }
+  if (!data?.length) return { error: 'Esta tarefa já foi respondida ou não existe. Atualize a página.' }
 
   revalidatePath('/obras/tarefas')
   revalidatePath('/obras/diario')

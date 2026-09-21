@@ -373,8 +373,8 @@ export function planejarSincronizacao(
       (obra) => obra.fonte === FONTE_FIELD && texto(obra.field_id) !== null,
     )
     const ausentes = obrasDoField.filter((obra) => !idsEncontrados.has(obra.id))
-    const ausenciasAindaNaoAlertadas = ausentes.filter(
-      (obra) => !texto(obra.field_ausente_em),
+    const novasAusencias = ausentes.filter(
+      (obra) => !texto(obra.field_ausente_desde) && !texto(obra.field_ausente_em),
     )
     const limiteDeSeguranca = Math.max(
       PISO_DE_AUSENCIAS_EM_MASSA,
@@ -385,10 +385,19 @@ export function planejarSincronizacao(
       avisos.push(
         'Varredura suspeita: o Field devolveu 0 OS. Nenhuma ausência foi registrada.',
       )
-    } else if (ausenciasAindaNaoAlertadas.length > limiteDeSeguranca) {
+    } else if (novasAusencias.length > limiteDeSeguranca) {
       avisos.push(
-        `Varredura suspeita: ${ausenciasAindaNaoAlertadas.length} ausências ainda não alertadas ultrapassam o limite de segurança (${Math.floor(limiteDeSeguranca)}). Nenhuma ausência foi registrada.`,
+        `Varredura suspeita: ${novasAusencias.length} novas ausências ultrapassam o limite de segurança (${Math.floor(limiteDeSeguranca)}). Foram registradas apenas suspeitas; nenhum alerta foi emitido.`,
       )
+      for (const obra of novasAusencias) {
+        reconciliarAusencias.push({
+          id: obra.id,
+          os: obra.os,
+          idField: texto(obra.field_id) as string,
+          acao: 'suspeita',
+          campos: { field_ausente_desde: agora },
+        })
+      }
     } else {
       for (const obra of ausentes) {
         const idField = texto(obra.field_id) as string
