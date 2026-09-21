@@ -13,17 +13,28 @@ Consequência que já mordeu de verdade: **código mergeado ≠ schema aplicado.
 que um bug é de código, verifique se o SQL correspondente rodou em produção.
 
 Em 2026-08-09 o `master` tinha um mês de código não deployado dependendo de dois SQLs que
-ninguém havia rodado. Subir naquele estado quebraria a criação de checklist e a tela de veículos.
+ninguém havia rodado: `sdd-sql-v04.sql` e `sdd-sql-track-b.sql`. Subir naquele estado quebraria a
+criação de checklist e a tela de veículos. Ambos foram aplicados na mesma data.
 
 **Antes de qualquer deploy, confira coluna por coluna no banco.** O arquivo estar no repositório
 não significa absolutamente nada.
 
 ## Como aplicar
 
-Projeto de produção: **`iyytcavcgukfjnjjrerx`**. **Confirme o ref antes de escrever** — há mais de
-um projeto visível na conta.
+Projeto de produção: **`iyytcavcgukfjnjjrerx`** (org `wqgsiumpnccxqmnqhpin`, nome
+"jose.guilherme@manfac.com.br's Project", região `us-east-1`, Postgres 17). **Confirme o
+ref antes de escrever** — há mais de um projeto visível na conta.
 
-Caminho que funciona (Personal Access Token + Management API), sem o Claude ver o valor:
+**Troubleshooting do MCP do Supabase (OAuth):** o consentimento deixa escolher a quais
+projetos o app tem acesso, e é fácil conceder sem incluir o projeto certo. Sintoma:
+`list_organizations` responde, mas `list_projects` volta `{"projects":[]}` e qualquer
+chamada ao ref dá "You do not have permission to perform this action". Correção: revogar
+o grant em Dashboard → perfil → OAuth Apps e reconectar marcando o projeto. **Teste de
+sanidade: `list_projects` tem que listar `iyytcavcgukfjnjjrerx` antes de qualquer
+escrita.**
+
+Caminho que funciona quando o OAuth do MCP falha (Personal Access Token + Management
+API), sem o Claude ver o valor:
 
 ```bash
 TOKEN=$(tr -d '\r\n' < /c/Users/joao-/.supabase-pat)
@@ -42,6 +53,10 @@ valor para o contexto. Ele expira: `401` significa token vencido, não código e
 > duas vezes em 20/09/2026. Se acontecer, o token tem que ser revogado — o valor vaza para
 > qualquer listagem de diretório. Use `-Path` e `-Value` nomeados, ou o script que pede o valor
 > por `Read-Host`.
+
+Duas notas de ambiente: **não há Python na máquina** — para formatar JSON, use `node -e`.
+E o `/tmp` do Git Bash **não é** o `/tmp` do Windows: grave arquivos temporários no
+scratchpad da sessão.
 
 ## Escreva a migration para ser conferível
 
@@ -93,12 +108,15 @@ Os `trg_bloquear_*` são `security definer` e disparam para **qualquer** role, i
 
 Contorno: `alter table ... disable trigger`, corrigir, **reabilitar**. Não esqueça de reabilitar.
 
-## Pendência que não pode ser rodada por engano
+## `sdd-sql-admin-usuarios.sql` PARTE 2 — já aplicada, histórico da ordem
 
-**`sdd-sql-admin-usuarios.sql` PARTE 2** dropa `authenticated full access` de
-`hub_system_access`. Só rode **depois** do deploy do código que escreve por service role —
-antes disso, quebra o toggle de `/admin/acessos`. O script é idempotente: reaplicar o arquivo
-inteiro depois do deploy é seguro.
+**PARTE 2** dropa `authenticated full access` de `hub_system_access`, deixando só
+`authenticated read`. **Já foi aplicada** — medido em 20/09/2026, confirmado na tabela de
+migrations abaixo. Registro do porquê da ordem importava, não instrução pendente: até o
+deploy do código que escreve por service role (`alternarAcessoAction` em
+`app/admin/_actions.ts`), essa tabela dependia da policy antiga para o toggle de
+`/admin/acessos` funcionar — rodar a PARTE 2 antes teria quebrado esse toggle com "Erro ao
+atualizar acesso". O script é idempotente: reaplicar o arquivo inteiro é seguro.
 
 ## Estado das migrations em produção
 
@@ -108,15 +126,17 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 |---|---|
 | `passo1`–`passo4`, `v03`, `audit-log`, `autorizacao`, `feedback-cliente`, `conversor-os` | aplicados |
 | `v04` | aplicado por inteiro; o índice `veiculos_equipe_ativo_uniq` entrou em 2026-08-10 |
-| `track-b`, `track-c-integridade` | aplicados |
+| `track-b` | aplicado |
+| `track-c-integridade` | aplicado em 2026-08-10 |
 | `admin-usuarios` PARTE 1 | aplicado em 2026-08-07 |
 | `admin-usuarios` PARTE 2 | **aplicado.** Medido em 20/09/2026: `hub_system_access` tem apenas a policy `authenticated read` (SELECT), ou seja `authenticated full access` já foi dropada. O `AGENTS.md` se contradizia sobre isto até 20/09 |
-| `v04-seguranca` | aplicado em 2026-08-10, na versão que lê `hub_user_roles`. **Não rode cópia antiga** — a antiga trazia três e-mails fixos que hoje contradiriam o banco |
-| `obras-v0` | aplicado em 2026-09-10. 5 tabelas `obras_*`, bucket `obras-fotos` e 3 policies de storage |
-| `obras-fonte`, `obras-field-reconciliacao` | aplicados em 2026-09-14 |
-| `obras-sync-execucao` | aplicado em 2026-09-14; os dois jobs de cron entraram em 2026-09-16 |
+| `v04-seguranca` | aplicado em 2026-08-10 (migration `v04_seguranca_rls_sofia`), na versão que lê `hub_user_roles`. **Não rode cópia antiga** — a antiga trazia três e-mails fixos que hoje contradiriam o banco |
+| `obras-v0` | aplicado em 2026-09-10. 5 tabelas `obras_*`, bucket `obras-fotos` e 3 policies de storage. A seção 7 passou sem o erro de ownership que o runbook previa |
+| `obras-fonte` | aplicado em 2026-09-14 (frente **D1 do Duda**, commit `1c23dd3`). Coluna `fonte` nullable, sem default, com o check `obras_obra_fonte_check` aceitando só `'field'` |
+| `obras-field-reconciliacao` | aplicado em 2026-09-14 (frente **D2 do Duda**). Colunas `field_id`, `field_ausente_desde` e `field_ausente_em`; índice `obras_obra_field_id_unico` (parcial); checks `obras_obra_field_id_nao_vazio` e `obras_obra_alerta_field_tem_suspeita` |
+| `obras-sync-execucao` | aplicado em 2026-09-14 (frente **D3 do Duda**), função `obras_iniciar_sync_execucao`; os dois jobs de cron (arquivo `sdd-sql-obras-cron-jobs.sql`) entraram em 2026-09-16 |
 | `obras-historico` | **aplicado em 2026-09-20.** Tabela `obras_historico` + RPC `obras_aplicar_alteracao` |
-| `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** Verificação devolveu 18 linhas, todas `OK` |
+| `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** RPC `obras_remarcar_inicio`, colunas `detalhe` e `registrado_por` em `obras_remarcacao`. Verificação devolveu 18 linhas, todas `OK` |
 
 ## Jobs de cron que não são deste repositório
 

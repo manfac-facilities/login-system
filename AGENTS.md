@@ -75,6 +75,7 @@ Outros documentos, para abrir sob demanda:
 | `docs/infra/variaveis-e-deploy.md` | EasyPanel, variáveis, a armadilha do Environment, como confirmar build |
 | `docs/infra/dns-manfac.md` | Registrador, zona, e por que nunca trocar nameserver |
 | `docs/DIVIDAS.md` | O que foi deixado passar de propósito, com data e motivo |
+| `docs/HISTORICO-INCIDENTES.md` | **O relato do que gerou cada regra.** Leia antes de achar que uma regra daqui é exagero — cada uma custou horas ou dias |
 | `docs/onboarding-duda/inventario-hub-2026-09-20.md` | Mapa medido do repositório: árvore, exports, arquivos grandes |
 
 ---
@@ -113,8 +114,8 @@ e o sistema não entra em `lib/sistemas.ts`. Usa o mesmo banco, com tabelas `fin
 
 ## Infra — o mínimo, o resto em `docs/infra/variaveis-e-deploy.md`
 
-- O hub roda no **EasyPanel**, app `manfac-login-system` no projeto `manfac`. Produção:
-  `https://hub.manfac.com.br`.
+- Repositório: **`manfac-facilities/login-system`**. O hub roda no **EasyPanel**, app
+  `manfac-login-system` no projeto `manfac`. Produção: `https://hub.manfac.com.br`.
 - **Push é livre desta máquina** desde 10/09/2026 — o Claude pusha sozinho. O que ainda barra é o
   auto mode, com `[Sensitive-Source Provenance]` e `[Production Deploy]`: **é trava de permissão
   pedindo autorização do João, não falha de credencial.** Não saia investigando token.

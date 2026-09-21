@@ -12,6 +12,32 @@ paths:
 Este é o código onde um erro vaza dado de cliente ou deixa alguém se autopromover.
 Leia isto antes de tocar em qualquer arquivo destas pastas.
 
+## Quem entra e quem é admin — domínio, tabelas e onde se mexe
+
+**Só e-mails `@manfac.com.br` entram** (`lib/auth/domain.ts`), com exceção do e-mail do
+dono. Este é o primeiro filtro, antes de qualquer checagem de sistema ou nível.
+
+Duas tabelas guardam autorização, e as duas só têm policy de leitura (`authenticated
+read`, SELECT) — escrita é assunto da seção seguinte:
+
+- **`hub_system_access`** (`user_email`, `system_slug`, `has_access`, `granted_by`),
+  criada em `sdd-sql-conversor-os.sql`.
+- **`hub_user_roles`** (`user_email` UNIQUE, `nivel` em `analista`|`administrador`,
+  `granted_by`). Criada e semeada em produção em 2026-08-07, migration
+  `admin_usuarios_hub_user_roles`.
+
+Admins vêm do banco, lidos por `lib/auth/roles.ts` (`getNivel`, `isAdmin`). **Promover
+ou rebaixar é feito na tela `/admin/acessos`, sem deploy.** Acesso por sistema é
+`lib/auth/systemAccess.ts` → `hasSystemAccess()`, aplicado no `middleware.ts`.
+
+**O seed não é automático.** Usuário criado direto no painel do Supabase não ganha
+linha em `hub_user_roles` e fica sem nível — até a tela de convite existir, a linha
+entra à mão. Isso já é o caso hoje: medido em 20/09/2026, os 4 e-mails com o slug
+`obras` liberado (gabriel.lima, gabriel.vidal, luana.silva, yuri.moreira) têm conta e já
+entraram, e **nenhum tem linha em `hub_user_roles`**. Não é bug a corrigir — `getNivel`
+usa `maybeSingle()` e devolve `null` sem lançar, então a ausência de linha só significa
+"sem nível administrativo", não erro.
+
 ## A fronteira real de autorização é o `middleware.ts`
 
 Todo o controle de acesso por rota (login exigido, domínio `@manfac.com.br`, acesso por
@@ -27,6 +53,11 @@ Não "corrija" essa ausência.
 
 ## `app/crm/page.tsx` repete a checagem que o middleware já fez — não remova
 
+O CRM (`/crm`) existe desde a Frente B do site — slug `crm` em `lib/sistemas.ts:12`,
+rota no `matcher` em `middleware.ts:131`. Lista os leads capturados em
+`manfac.com.br` (tabela `site_leads`). **Esse sistema faltou na documentação até
+20/09/2026** — quem lesse só o `AGENTS.md` antigo não saberia que ele existe.
+
 A página chama `hasSystemAccess(..., 'crm')` de novo, depois do middleware já ter
 barrado a rota. É intencional, com comentário explícito no próprio arquivo: a doc deste
 Next (`node_modules/next/dist/docs/01-app/02-guides/authentication.md`) classifica
@@ -37,6 +68,10 @@ Sem a segunda checagem, o middleware vira a **única** barreira entre qualquer b
 reordenação/refactor futuro e a exposição de dado de cliente direto pela query. Remover
 essa checagem "porque já tem no middleware" é o tipo de simplificação que parece
 correta e não é — mantenha a duplicação.
+
+**Outros dois sistemas deste hub, para referência:** Conversor de OS (`/conversor-os`)
+converte planilhas de OS para o Field Control; Admin (`/admin/acessos`) é a tela de
+contas e acessos — o João chama de "módulo de login".
 
 ## Escrita em `hub_system_access` e `hub_user_roles` só pela service role
 
