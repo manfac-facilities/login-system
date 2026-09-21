@@ -472,6 +472,12 @@ export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
   if (ini && o.duracao && !posCampo(o)) {
     const corridos = (diasDesde(ini, hoje) ?? 0) + 1
     diaDe = Math.max(1, corridos)
+    // No dia do fimCalc (ou antes), "dia N de M" não pode passar de M: nesse
+    // dia `atraso` (o mecanismo que já existe) ainda diz que está no prazo —
+    // sem este teto, o mesmo dia escrevia "dia 8 de 7" / 114%. Só quem já
+    // cruzou o fimCalc (atraso > 0, de verdade atrasada) segue sem teto, para
+    // não esconder o atraso.
+    if (atraso === null || atraso <= 0) diaDe = Math.min(diaDe, o.duracao)
     fracPrazo = diaDe / o.duracao
   } else if (posCampo(o) && o.duracao) {
     diaDe = o.duracao

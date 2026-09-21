@@ -205,6 +205,27 @@ describe('derivar', () => {
     expect(prazoTxt(o)).toBe('dia 13 de 7')
   })
 
+  it('no último dia do prazo (hoje == fimCalc) "dia N de M" não passa de M — o atraso ainda não bateu', () => {
+    // inicio_real 19/08 + duracao 7 => fimCalc 26/08 (`somaDias(mockup:1107)`).
+    // Nesse dia o atraso (mecanismo existente) ainda é 0 — a obra só fica
+    // atrasada A PARTIR do dia seguinte. Antes da correção, diaDe contava
+    // offset+1 sem olhar para isso e escrevia "dia 8 de 7" / 114% no mesmo
+    // dia em que `atraso` diz que ainda está no prazo.
+    const o = obra({}, '2026-08-26')
+    expect(o.atraso).toBe(0)
+    expect(o.diaDe).toBe(7)
+    expect(o.fracPrazo).toBe(1)
+    expect(prazoTxt(o)).toBe('dia 7 de 7')
+  })
+
+  it('obra genuinamente atrasada continua avançando o dia e passando de 100% — o atraso não fica escondido', () => {
+    const o = obra({}, '2026-08-27') // 1 dia depois do fimCalc
+    expect(o.atraso).toBe(1)
+    expect(o.diaDe).toBe(9) // 8 dias corridos + 1, sem teto — já está atrasada de verdade
+    expect(o.fracPrazo).toBeCloseTo(9 / 7)
+    expect(prazoTxt(o)).toBe('dia 9 de 7')
+  })
+
   it('sem duração planejada não inventa número', () => {
     const o = obra({ duracao: null })
     expect(o.diaDe).toBeNull()
