@@ -68,6 +68,8 @@ import SeletorEtapa from './_etapa'
 import BlocoAutorizacao from './_bloco-autorizacao'
 import BlocoIdentificacao from './_bloco-identificacao'
 import BlocoCronograma from './_bloco-cronograma'
+import Historico from './_historico'
+import type { LinhaHistorico } from '../../_lib/historico'
 import {
   cadastrarMotivoRemarcacaoAction,
   salvarAutorizacaoAction,
@@ -115,9 +117,11 @@ export type EdicoesPorBloco = {
 /**
  * O rodapé de autoria de cada bloco (`rodapeB(mockup-j4-v03:850)`).
  *
- * Sem o link "ver no histórico": a TELA do histórico é o corte de escopo do
- * João de 18/09 (spec §2.2). O mecanismo de gravação entrou; a tela, não —
- * então o rodapé diz quem e quando, e para por aí.
+ * Sem link "ver no histórico" aqui: o histórico completo já está nesta MESMA
+ * tela, no bloco "Histórico de alterações" mais abaixo (item 1 da revisão de
+ * 20/09 ligou o componente, que já existia pronto e testado desde 18/09 sem
+ * ninguém o importar) — não precisa de âncora para algo que já está na
+ * página. O rodapé fica só com quem e quando.
  */
 function Rodape({ edicao, entrada }: { edicao?: UltimaEdicao; entrada: string | null }) {
   if (edicao) {
@@ -428,6 +432,7 @@ export default function Ficha({
   motivos,
   hoje,
   edicoes = {},
+  historico,
 }: {
   obra: Obra
   diario: DiarioRow[]
@@ -445,6 +450,8 @@ export default function Ficha({
   /** `AAAA-MM-DD` vindo do servidor — a tela não inventa "hoje". */
   hoje: string
   edicoes?: EdicoesPorBloco
+  /** As linhas de `obras_historico` desta obra, mais novas primeiro (item 1). */
+  historico: LinhaHistorico[]
 }) {
   const ultimos = diario.slice(-8)
   const comFoto = ultimos.filter((d) => !!d.foto_path).length
@@ -686,6 +693,16 @@ export default function Ficha({
               )}
             </BoxB>
           </Box>
+
+          {/* ---------- histórico de alterações ----------
+              Item 1 da revisão de 20/09: o componente (`_historico.tsx`) já
+              existia pronto e testado desde 18/09, órfão — ninguém o
+              importava. Fica logo depois de Remarcações: a remarcação já é um
+              recorte do histórico, então os dois lidos juntos fazem sentido. */}
+          <Historico
+            linhas={historico}
+            entrada={{ data: entrada ?? '', fonte: obra.fonte ?? null }}
+          />
         </div>
 
         {/* -------------------- coluna direita -------------------- */}

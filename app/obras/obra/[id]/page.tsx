@@ -27,6 +27,7 @@ import {
 } from '../../_lib/tipos'
 import Ficha, { type EdicoesPorBloco, type RemarcacaoNaFicha } from './_ficha'
 import Triagem from './_triagem'
+import type { LinhaHistorico } from '../../_lib/historico'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,19 +70,16 @@ function unir(piso: string[], doBanco: (string | null)[]): string[] {
 /** Os blocos que têm rodapé de autoria na ficha. */
 const BLOCOS_COM_RODAPE = ['Autorização', 'Identificação', 'Cronograma'] as const
 
-type LinhaHistoricoLida = { bloco: string; quem: string | null; created_at: string }
-
 /**
  * A ÚLTIMA alteração de cada bloco (spec §5.2), para o rodapé "Editado por X em
  * DD/MM". A consulta já vem do mais novo para o mais velho, então a primeira
  * linha de cada bloco é a que vale.
  *
- * `obras_historico` pode não existir ainda — a migration é manual e a ordem de
- * aplicação é do runbook, não do código. Nesse caso a consulta devolve erro,
- * `data` vem nulo e o rodapé cai no texto de "sem edição": a ficha não quebra
- * por causa de um rodapé.
+ * Recebe `LinhaHistorico[]` inteiro (o mesmo array que alimenta o bloco
+ * Histórico de alterações, item 1 da revisão de 20/09) — só usa três dos
+ * campos, mas é o mesmo dado, buscado uma vez só.
  */
-function ultimasEdicoes(linhas: LinhaHistoricoLida[]): EdicoesPorBloco {
+function ultimasEdicoes(linhas: LinhaHistorico[]): EdicoesPorBloco {
   const edicoes: EdicoesPorBloco = {}
   for (const l of linhas) {
     const bloco = BLOCOS_COM_RODAPE.find((b) => b === l.bloco)
@@ -131,9 +129,12 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
       .eq('ativo', true)
       .order('ordem', { ascending: true })
       .order('nome', { ascending: true }),
+    // Colunas completas: item 1 da revisão de 20/09 liga o bloco Histórico de
+    // alterações, que precisa de `campo`/`de`/`para`/`motivo` além do trio
+    // (`bloco`, `quem`, `created_at`) que já servia só ao rodapé.
     supabase
       .from('obras_historico')
-      .select('bloco, quem, created_at')
+      .select('id, obra_id, bloco, campo, de, para, motivo, quem, created_at')
       .eq('obra_id', id)
       .order('created_at', { ascending: false }),
   ])
@@ -214,7 +215,8 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
         analistasCliente={analistasCliente}
         motivos={((motivos ?? []) as { nome: string }[]).map((m) => m.nome)}
         hoje={hojeISO()}
-        edicoes={ultimasEdicoes((historico ?? []) as LinhaHistoricoLida[])}
+        edicoes={ultimasEdicoes((historico ?? []) as LinhaHistorico[])}
+        historico={(historico ?? []) as LinhaHistorico[]}
       />
     </div>
   )
