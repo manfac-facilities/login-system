@@ -16,7 +16,15 @@ import { revalidatePath } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
-import { CICLO, PRIORIDADES, hojeISO, type Etapa, type ObraRow, type Prioridade } from '../../_lib/tipos'
+import {
+  CICLO,
+  PRIORIDADES,
+  hojeISO,
+  posCampo,
+  type Etapa,
+  type ObraRow,
+  type Prioridade,
+} from '../../_lib/tipos'
 import {
   gravarComHistorico,
   linhasDeAlteracao,
@@ -233,6 +241,88 @@ function colunaInexistente(erro: { code?: string; message?: string } | null): bo
 }
 
 /**
+ * Posição de cada etapa em `CICLO` — a ordem que decide "anterior"/"depois"
+ * para os marcos da esteira, abaixo.
+ */
+const ORDEM_ETAPA: Record<Etapa, number> = CICLO.reduce(
+  (acc, c, i) => {
+    acc[c.k] = i
+    return acc
+  },
+  {} as Record<Etapa, number>
+)
+
+/**
+ * Passo da ESTEIRA → coluna de marco, na ordem do ciclo. `aprovarOS` fica
+ * FORA de propósito: `marco_os_aprov` é satélite do trio da aprovação
+ * (`colunasDoCampo`, R7) e é gravado só por `salvarAutorizacaoAction` /
+ * `salvarDadosTriagemAction` — decisão do João de 21/09
+ * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): esta
+ * troca de etapa nunca carimba nem apaga `marco_os_aprov`.
+ */
+const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
+  { etapa: 'relatorio', campo: 'marco_relatorio' },
+  { etapa: 'fecharOS', campo: 'marco_fechou_os' },
+  { etapa: 'pendFat', campo: 'marco_liberou_fat' },
+  { etapa: 'faturado', campo: 'marco_faturou' },
+]
+
+/**
+ * Os marcos da esteira que `mudarEtapaAction` precisa acertar ao trocar de
+ * etapa — decisões do João de 21/09 (`docs/cliente/
+ * 2026-09-21-decisoes-marcos-da-esteira.md`):
+ *
+ * AVANÇAR (inclusive pulando passos): todo marco de passo ANTERIOR à nova
+ * etapa que esteja `null` recebe hoje; `marco_exec_fim` recebe hoje se a
+ * nova etapa for pós-campo (mesmo entrando exatamente em `relatorio`); ao
+ * entrar em `faturado` — etapa terminal, sem passo seguinte que a torne
+ * "anterior" — `marco_faturou` TAMBÉM recebe hoje. Marco que já tem data
+ * nunca é sobrescrito.
+ *
+ * VOLTAR: os marcos dos passos da nova etapa em diante são apagados
+ * (`null`); voltar para uma etapa de campo (antes de `relatorio`) também
+ * apaga `marco_exec_fim`. `linhasDeAlteracao`, chamada por quem usa este
+ * retorno, é quem transforma cada apagamento em linha de histórico — o
+ * valor antigo nunca se perde.
+ *
+ * Etapa igual (`indiceNovo === indiceAtual`): nada muda, `depois` sai igual
+ * a `antes`.
+ */
+function calcularMarcosDaEsteira(
+  obra: ObraRow,
+  novaEtapa: Etapa,
+  hoje: string
+): { antes: Rascunho; depois: Rascunho } {
+  const antes: Rascunho = {
+    marco_exec_fim: obra.marco_exec_fim,
+    marco_relatorio: obra.marco_relatorio,
+    marco_fechou_os: obra.marco_fechou_os,
+    marco_liberou_fat: obra.marco_liberou_fat,
+    marco_faturou: obra.marco_faturou,
+  }
+  const depois: Rascunho = { ...antes }
+
+  const indiceAtual = ORDEM_ETAPA[obra.etapa]
+  const indiceNovo = ORDEM_ETAPA[novaEtapa]
+  const novaEhPosCampo = posCampo({ etapa: novaEtapa })
+
+  if (indiceNovo > indiceAtual) {
+    for (const { etapa, campo } of PASSOS_MARCO) {
+      if (ORDEM_ETAPA[etapa] < indiceNovo && depois[campo] === null) depois[campo] = hoje
+    }
+    if (novaEtapa === 'faturado' && depois.marco_faturou === null) depois.marco_faturou = hoje
+    if (novaEhPosCampo && depois.marco_exec_fim === null) depois.marco_exec_fim = hoje
+  } else if (indiceNovo < indiceAtual) {
+    for (const { etapa, campo } of PASSOS_MARCO) {
+      if (ORDEM_ETAPA[etapa] >= indiceNovo) depois[campo] = null
+    }
+    if (!novaEhPosCampo) depois.marco_exec_fim = null
+  }
+
+  return { antes, depois }
+}
+
+/**
  * TROCA DE ETAPA MANUAL — decisão técnica 6 da spec.
  *
  * O mockup não tem gatilho para `levantamento → andamento` nem para
@@ -248,6 +338,10 @@ export async function mudarEtapaAction(obraId: string, etapa: string): Promise<E
   const user = { email: sessao.email as string }
 
   if (!ETAPAS_VALIDAS.includes(etapa as Etapa)) return { error: 'Etapa inválida' }
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
 
   const hoje = hojeISO()
   const base = {
@@ -268,6 +362,28 @@ export async function mudarEtapaAction(obraId: string, etapa: string): Promise<E
   }
 
   if (error) return { error: 'Erro ao mudar a etapa da obra' }
+
+  // Marcos da esteira (decisões de 21/09): carimba passo pulado ao avançar,
+  // apaga com histórico ao voltar. Roda DEPOIS da etapa ter mudado de
+  // verdade — se esta parte falhar, a etapa já foi trocada e os marcos
+  // ficam atrasados até a PRÓXIMA troca de etapa recalculá-los; nada é
+  // apagado sem o valor antigo já estar no histórico, então não há perda de
+  // dado, só um atraso de exibição (registrado em docs/DIVIDAS.md — as duas
+  // escritas não são atômicas entre si, e torná-las seria mudar o RPC, fora
+  // do escopo desta troca).
+  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje)
+  const linhas = linhasDeAlteracao(antes, depois, 'Esteira')
+  if (linhas.length > 0) {
+    const camposMarco = camposDasLinhas(linhas, depois)
+    const { error: erroMarco } = await gravarComHistorico(supabase, {
+      obraId,
+      campos: camposMarco,
+      linhas,
+    })
+    if (erroMarco) {
+      return { error: 'A etapa mudou, mas houve erro ao atualizar os marcos da esteira' }
+    }
+  }
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')

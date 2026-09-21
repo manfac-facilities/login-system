@@ -17,11 +17,21 @@
 const getUserMock = jest.fn()
 const updateMock = jest.fn()
 const eqMock = jest.fn()
+// `mudarEtapaAction` passou a ler a obra ANTES de trocar a etapa (para
+// calcular os marcos da esteira — decisões do João de 21/09). Este arquivo
+// não testa marcos (isso mora em `obra/[id]/__tests__/_actions.test.ts`);
+// a obra "de fábrica" só precisa satisfazer o `lerObra` sem lançar, com
+// etapa e marcos que nunca disparam mudança (todos os alvos usados aqui são
+// etapas de campo, anteriores a `relatorio`).
+const obraLidaMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
-    from: jest.fn(() => ({ update: updateMock })),
+    from: jest.fn(() => ({
+      update: updateMock,
+      select: jest.fn(() => ({ eq: jest.fn(() => ({ maybeSingle: obraLidaMock })) })),
+    })),
   })),
 }))
 
@@ -61,6 +71,19 @@ beforeEach(() => {
   jest.clearAllMocks()
   getUserMock.mockResolvedValue({ data: { user: { id: 'u1', email: 'yuri@manfac.com.br' } } })
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
+  obraLidaMock.mockResolvedValue({
+    data: {
+      id: 'o1',
+      etapa: 'levantamento',
+      marco_exec_fim: null,
+      marco_relatorio: null,
+      marco_os_aprov: null,
+      marco_fechou_os: null,
+      marco_liberou_fat: null,
+      marco_faturou: null,
+    },
+    error: null,
+  })
   encadear({ error: null })
 })
 
