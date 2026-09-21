@@ -139,6 +139,26 @@
     font-variant-numeric:tabular-nums}
   .note-box tr:last-child td{border-bottom:0}
 
+  .files{border:1px solid var(--line); background:var(--surface)}
+  .f-row{display:grid; grid-template-columns:minmax(190px,1fr) 2.1fr auto; gap:6px 18px;
+    padding:13px 20px; border-bottom:1px solid var(--line-soft); align-items:baseline;
+    text-decoration:none; color:inherit}
+  .f-row:last-child{border-bottom:0}
+  a.f-row:hover{background:rgba(240,90,40,.07)}
+  a.f-row:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+  .f-head{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); background:rgba(0,0,0,.2)}
+  .f-row .p{font-family:var(--mono); font-size:12.5px; color:var(--accent-soft); word-break:break-all}
+  .f-row .d{font-size:13.5px; color:var(--ink-2)}
+  .f-row .d b{color:var(--ink)}
+  .f-row .n{font-family:var(--mono); font-size:12px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; text-align:right}
+  @media (max-width:680px){
+    .f-row{grid-template-columns:1fr auto}
+    .f-row .d{grid-column:1 / -1}
+    .f-head span:nth-child(2){display:none}
+  }
+
   .done{border:1px solid var(--line); border-left:3px solid var(--ok);
     background:var(--surface); padding:16px 20px; margin-top:18px}
   .done p{margin:0 0 8px; color:var(--ink-3); font-size:13.5px}
@@ -217,6 +237,61 @@
           <p>Criado, e já nasceu com <b>15 itens</b>: 12 decisões tomadas de propósito e 3 que ninguém tinha percebido. Cada uma com arquivo e linha.</p>
           <p>Uma descoberta: <b>não existe um único “TODO” no código do hub</b>. A dívida deste projeto sempre morou nos documentos, invisível para quem lê só o código.</p></div>
       </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Duda — os arquivos, e como usá-los</h2>
+    <p class="sec-lead">Tudo já está no <b>master</b>, e você tem escrita no repositório. <b>Dê um <code style="font-family:var(--mono);font-size:13px;color:var(--accent-soft)">git pull</code> antes de abrir</b> — subiu hoje. Não mandamos cópia por fora de propósito: cópia envelhece e vira uma segunda verdade.</p>
+
+    <div class="files">
+      <div class="f-row f-head"><span>Arquivo</span><span>Quando carrega</span><span class="n">Linhas</span></div>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/AGENTS.md" target="_blank" rel="noopener">
+        <span class="p">AGENTS.md</span>
+        <span class="d">Sempre. As regras, a fase declarada e a régua de escopo. <b>Era 445 linhas.</b></span>
+        <span class="n">200</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/.claude/rules/obras.md" target="_blank" rel="noopener">
+        <span class="p">.claude/rules/obras.md</span>
+        <span class="d">Só quando você abre um arquivo de <b>app/obras</b>. O mapa do módulo e as armadilhas que já morderam.</span>
+        <span class="n">91</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/.claude/rules/sql.md" target="_blank" rel="noopener">
+        <span class="p">.claude/rules/sql.md</span>
+        <span class="d">Só em arquivo <b>.sql</b>. Migrations, o estado de cada uma em produção, e as duas armadilhas de PL/pgSQL que passaram por dois reviews sem ninguém ver.</span>
+        <span class="n">147</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/.claude/rules/acesso-e-admin.md" target="_blank" rel="noopener">
+        <span class="p">.claude/rules/acesso-e-admin.md</span>
+        <span class="d">Só em <b>login, acesso, CRM e middleware</b>. O território onde um erro vaza dado de cliente.</span>
+        <span class="n">127</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/.claude/rules/sofia.md" target="_blank" rel="noopener">
+        <span class="p">.claude/rules/sofia.md</span>
+        <span class="d">Só em <b>Gestão de Frotas</b>. Inclui a pegadinha do arquivo que é só reexportação e engana a busca por nome.</span>
+        <span class="n">83</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/docs/DIVIDAS.md" target="_blank" rel="noopener">
+        <span class="p">docs/DIVIDAS.md</span>
+        <span class="d">Sob demanda. <b>A sua ideia 6.</b> Ao deixar algo passar, acrescente uma linha com arquivo, data e motivo.</span>
+        <span class="n">110</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/docs/HISTORICO-INCIDENTES.md" target="_blank" rel="noopener">
+        <span class="p">docs/HISTORICO-INCIDENTES.md</span>
+        <span class="d">Sob demanda. O relato do que gerou cada regra. <b>Leia antes de achar que alguma é exagero</b> — cada uma custou horas ou dias.</span>
+        <span class="n">107</span></a>
+
+      <a class="f-row" href="https://github.com/manfac-facilities/login-system/blob/master/docs/infra/variaveis-e-deploy.md" target="_blank" rel="noopener">
+        <span class="p">docs/infra/variaveis-e-deploy.md</span>
+        <span class="d">Sob demanda. EasyPanel, variáveis de ambiente e a armadilha do painel que já apagou tudo duas vezes.</span>
+        <span class="n">108</span></a>
+    </div>
+
+    <div class="note-box">
+      <h3>O detalhe que quase deixou você sem nada disso</h3>
+      <p>O <b>.gitignore</b> tinha <b>.claude/</b>, então as regras ficariam só na máquina de quem as escreveu — você daria <code style="font-family:var(--mono);font-size:13px;color:var(--accent-soft)">git pull</code> e não receberia nada. Virou <b>.claude/*</b> com exceção de <b>.claude/rules/</b>, porque o git não re-inclui arquivo cujo diretório-pai está excluído. Está comentado no próprio arquivo, para ninguém desfazer sem saber.</p>
+      <p><b>Uma correção entrou depois da primeira versão:</b> uma revisão independente comparou o arquivo antigo com o novo, linha por linha, e achou <b>43 fatos que o corte tinha perdido</b> — entre eles a regra de que só e-mail @manfac.com.br entra, o formato das tabelas de acesso, e <b>os identificadores das três migrations que você entregou</b>, que sumiram junto com a atribuição. Tudo reposto e no ar.</p>
     </div>
   </section>
 
