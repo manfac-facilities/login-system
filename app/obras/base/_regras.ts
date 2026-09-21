@@ -269,25 +269,21 @@ export function ordenar(obras: Obra[], ordem: Ordem): Obra[] {
     if (xVazio && yVazio) return 0
     if (xVazio) return 1
     if (yVazio) return -1
-    if (col === 'os' && typeof x === 'string' && typeof y === 'string') {
-      return dir * compararOs(x, y)
+    if (typeof x === 'string' && typeof y === 'string') {
+      // Nº OS ordena por VALOR, não por texto — "985" antes de "10024", que
+      // localeCompare puro erra por comparar caractere a caractere. `numeric:
+      // true` (Unicode Collation Algorithm) compara qualquer trecho de dígitos
+      // pelo valor, nos três formatos que aparecem em produção: puramente
+      // numérica ("985"), com prefixo ("0126-013004" < "0926-009923") e texto
+      // livre ("DP CATETE 5" < "DP CATETE 10") — de forma total e consistente,
+      // ao contrário de comparar número só quando os dois lados são dígitos
+      // (não-transitivo quando um lado é texto e o outro é número).
+      const numerico = col === 'os'
+      return dir * x.localeCompare(y, 'pt-BR', numerico ? { numeric: true } : undefined)
     }
-    if (typeof x === 'string' && typeof y === 'string') return dir * x.localeCompare(y, 'pt-BR')
     if (typeof x === 'boolean' && typeof y === 'boolean') return dir * (Number(x) - Number(y))
     return dir * (Number(x) - Number(y))
   })
-}
-
-/**
- * Nº OS ordena por VALOR, não por texto — "985" vem antes de "10024", que
- * `localeCompare` erra por comparar caractere a caractere. Só compara como
- * número quando os dois lados são puramente dígitos; OS que não é puramente
- * numérica (ex. "0226-014989") cai para texto, sem estourar.
- */
-function compararOs(a: string, b: string): number {
-  const soDigitos = /^\d+$/
-  if (soDigitos.test(a) && soDigitos.test(b)) return Number(a) - Number(b)
-  return a.localeCompare(b, 'pt-BR')
 }
 
 /* -------------------------------------------------------------------------- */
