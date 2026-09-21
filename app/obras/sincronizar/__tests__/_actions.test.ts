@@ -54,6 +54,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     loja: 'Av. Paulista, 1000',
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
+    criadoEm: null,
     archived: false,
     situacao: 'pending',
     ...over,

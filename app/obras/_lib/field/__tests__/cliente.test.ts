@@ -298,8 +298,61 @@ describe('criarClienteField — varredura incremental', () => {
 
     await cliente.listarOsNormalizadas()
 
-    const pagina = rede.chamadas.find((c) => c.caminho === '/orders')
-    expect(pagina?.parametros.q).toBe('service_id:"MTox"')
+    const paginas = rede.chamadas.filter((c) => c.caminho === '/orders')
+    expect(paginas.map((c) => c.parametros.q)).toEqual(['service_id:"MTox"'])
+  })
+
+  /**
+   * Bug de 21/09/2026 (docs/cliente/2026-09-21-os-cadastradas-no-field-nao-subiram.md):
+   * OS recém-criada e nunca editada tem `updatedAt = null` no Field e não casa
+   * com `updated_at>=`. A incremental precisa perguntar também por `created_at>=`.
+   */
+  function rotasPorFiltro(porUpdated: OrdemField[], porCreated: OrdemField[]) {
+    return (caminho: string, parametros: ParametrosDeBusca): unknown => {
+      if (caminho === '/orders') {
+        const lista = (parametros.q ?? '').includes('created_at>=') ? porCreated : porUpdated
+        const offset = parametros.offset ?? 0
+        const limit = parametros.limit ?? 100
+        return { items: lista.slice(offset, offset + limit), totalCount: lista.length }
+      }
+      return rotasCom([])(caminho, parametros)
+    }
+  }
+
+  it('com "desde", também busca created_at>= e traz a OS nova com updatedAt null', async () => {
+    const nova = ordem({
+      id: 'ord-nova',
+      identifier: '0926-013146',
+      createdAt: '2026-09-21T13:48:02Z',
+      updatedAt: null,
+    })
+    const rede = httpDeMentira(rotasPorFiltro([], [nova]))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas({ desde: '2026-09-21T13:00:00Z' })
+
+    const qs = rede.chamadas.filter((c) => c.caminho === '/orders').map((c) => c.parametros.q)
+    expect(qs).toEqual([
+      'service_id:"MTox" updated_at>=:2026-09-21T13:00:00Z',
+      'service_id:"MTox" created_at>=:2026-09-21T13:00:00Z',
+    ])
+    expect(os.map((o) => o.os)).toEqual(['0926-013146'])
+    expect(os[0].atualizadoEm).toBeNull()
+    expect(os[0].criadoEm).toBe('2026-09-21T13:48:02Z')
+  })
+
+  it('OS que casa nos dois filtros entra uma vez só', async () => {
+    const editada = ordem({ id: 'ord-a', identifier: 'A', createdAt: '2026-09-21T14:01:02Z', updatedAt: '2026-09-21T14:02:03Z' })
+    const antiga = ordem({ id: 'ord-b', identifier: 'B', createdAt: '2026-08-26T17:03:31Z', updatedAt: '2026-09-21T18:40:14Z' })
+    const nova = ordem({ id: 'ord-c', identifier: 'C', createdAt: '2026-09-21T13:48:02Z', updatedAt: null })
+    const rede = httpDeMentira(rotasPorFiltro([antiga, editada], [editada, nova]))
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas({ desde: '2026-09-21T13:00:00Z' })
+
+    expect(os.map((o) => o.idField)).toEqual(['ord-b', 'ord-a', 'ord-c'])
+    // A situação é lida uma vez por OS, não uma por aparição.
+    expect(rede.chamadas.filter((c) => c.caminho.endsWith('/tasks'))).toHaveLength(3)
   })
 })
 
@@ -316,6 +369,7 @@ describe('criarClienteField — normalização', () => {
       loja: 'Av. Paulista, 1000 - São Paulo/SP',
       idField: 'ord-1',
       atualizadoEm: '2026-09-09T12:00:00Z',
+      criadoEm: null,
       archived: null,
       situacao: 'pending',
     })

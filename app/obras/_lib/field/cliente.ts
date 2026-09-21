@@ -64,8 +64,8 @@ export type ConfigDoClienteField = {
 
 export type OpcoesDaVarredura = {
   /**
-   * Marca d'água: só volta o que mudou a partir daqui. Vira o filtro
-   * `updated_at>=`. Aceita `Date` ou o texto já pronto — a doc usa
+   * Marca d'água: só volta o que mudou ou nasceu a partir daqui. Vira duas
+   * consultas, `updated_at>=` e `created_at>=`, mescladas por id. Aceita `Date` ou o texto já pronto — a doc usa
    * `2024-02-01` no exemplo, mas não proíbe timestamp completo.
    */
   desde?: string | Date
@@ -175,13 +175,54 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
   async function listarOsNormalizadas(opcoes: OpcoesDaVarredura = {}): Promise<OsNormalizada[]> {
     const serviceId = await resolverIdDoTipoDeOs()
 
-    const filtros: FiltroQ[] = [{ campo: 'service_id', valor: serviceId }]
-    if (opcoes.desde !== undefined) {
+    const doTipo: FiltroQ = { campo: 'service_id', valor: serviceId }
+    let ordens: OrdemField[]
+    if (opcoes.desde === undefined) {
+      ordens = await varrer(montarQ([doTipo]))
+    } else {
       const desde = opcoes.desde instanceof Date ? opcoes.desde.toISOString() : opcoes.desde
-      filtros.push({ campo: 'updated_at', operador: '>=', valor: desde })
+      /**
+       * DUAS CONSULTAS, e não uma: OS recém-criada e nunca editada vem com
+       * `updatedAt = null` no Field e não casa com `updated_at>=` (bug de
+       * 21/09/2026, docs/cliente/2026-09-21-os-cadastradas-no-field-nao-subiram.md).
+       * `created_at>=:` foi confirmado na API real no mesmo dia. Mescla por id:
+       * OS criada e editada depois da marca aparece nas duas.
+       */
+      const porAtualizacao = await varrer(montarQ([doTipo, { campo: 'updated_at', operador: '>=', valor: desde }]))
+      const porCriacao = await varrer(montarQ([doTipo, { campo: 'created_at', operador: '>=', valor: desde }]))
+      const vistos = new Set(porAtualizacao.map((o) => o.id))
+      ordens = [...porAtualizacao, ...porCriacao.filter((o) => !vistos.has(o.id))]
     }
-    const q = montarQ(filtros)
 
+    /**
+     * A normalização é SEQUENCIAL de propósito. Na estratégia 'localizacao'
+     * ela faz uma requisição por loja nova, e essas requisições precisam entrar
+     * na mesma fila de 1 req/s. Um `Promise.all` aqui despejaria todas de uma
+     * vez: o limitador seguraria o ritmo, mas a ordem do resultado deixaria de
+     * ser a da API — e ordem estável é o que torna a varredura auditável.
+     */
+    const normalizadas: OsNormalizada[] = []
+    for (const ordem of ordens) {
+      normalizadas.push({
+        os: ordem.identifier,
+        descricao: texto(ordem.description),
+        loja: await resolverLoja(ordem),
+        idField: ordem.id,
+        atualizadoEm: texto(ordem.updatedAt),
+        criadoEm: texto(ordem.createdAt),
+        archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
+
+        // A situação vive nas atividades da OS. Falha de leitura interrompe a
+        // varredura para impedir sucesso com marca d'água após pular uma OS.
+
+        situacao: (await consultarSituacaoDaUltimaAtividade(http, ordem.id)).situacao,
+      })
+    }
+    return normalizadas
+  }
+
+  /** Pagina `/orders` com um `q` até a página incompleta. O teto de offset vale por consulta. */
+  async function varrer(q: string): Promise<OrdemField[]> {
     const ordens: OrdemField[] = []
     let offset = 0
     const primeirosIdsVistos = new Set<string>()
@@ -224,31 +265,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         )
       }
     }
-
-    /**
-     * A normalização é SEQUENCIAL de propósito. Na estratégia 'localizacao'
-     * ela faz uma requisição por loja nova, e essas requisições precisam entrar
-     * na mesma fila de 1 req/s. Um `Promise.all` aqui despejaria todas de uma
-     * vez: o limitador seguraria o ritmo, mas a ordem do resultado deixaria de
-     * ser a da API — e ordem estável é o que torna a varredura auditável.
-     */
-    const normalizadas: OsNormalizada[] = []
-    for (const ordem of ordens) {
-      normalizadas.push({
-        os: ordem.identifier,
-        descricao: texto(ordem.description),
-        loja: await resolverLoja(ordem),
-        idField: ordem.id,
-        atualizadoEm: texto(ordem.updatedAt),
-        archived: typeof ordem.archived === 'boolean' ? ordem.archived : null,
-
-        // A situação vive nas atividades da OS. Falha de leitura interrompe a
-        // varredura para impedir sucesso com marca d'água após pular uma OS.
-
-        situacao: (await consultarSituacaoDaUltimaAtividade(http, ordem.id)).situacao,
-      })
-    }
-    return normalizadas
+    return ordens
   }
 
   return {

@@ -1,7 +1,8 @@
 /** @jest-environment node */
 
 import { criarClienteField } from '../../_lib/field'
-import { executarExecucaoPreparada, prepararExecucao } from '../_execucao'
+import type { OsNormalizada } from '../../_lib/field'
+import { executarExecucaoPreparada, maiorMarcaDagua, prepararExecucao } from '../_execucao'
 
 jest.mock('../../_lib/field', () => ({ criarClienteField: jest.fn() }))
 
@@ -45,6 +46,31 @@ describe('prepararExecucao — marca d’água e trava', () => {
 
     expect(resultado.execucao?.desde).toBeUndefined()
     expect(resultado.execucao?.tipo).toBe('incremental')
+  })
+})
+
+describe('maiorMarcaDagua — considera createdAt além de updatedAt', () => {
+  function os(over: Partial<OsNormalizada>): OsNormalizada {
+    return {
+      os: 'X', descricao: null, loja: null, idField: 'ord-1',
+      atualizadoEm: null, criadoEm: null, archived: false, situacao: 'scheduled',
+      ...over,
+    }
+  }
+
+  it('avança pelo createdAt quando updatedAt é null (OS recém-criada no Field)', () => {
+    const marca = maiorMarcaDagua('2026-09-21T13:00:00Z', [
+      os({ atualizadoEm: null, criadoEm: '2026-09-21T13:48:02Z' }),
+    ])
+    expect(marca).toBe('2026-09-21T13:48:02Z')
+  })
+
+  it('usa o maior entre updatedAt e createdAt de cada OS vista', () => {
+    const marca = maiorMarcaDagua('2026-09-21T13:00:00Z', [
+      os({ idField: 'a', atualizadoEm: '2026-09-21T14:02:03Z', criadoEm: '2026-09-21T14:01:02Z' }),
+      os({ idField: 'b', atualizadoEm: null, criadoEm: '2026-09-21T14:04:26Z' }),
+    ])
+    expect(marca).toBe('2026-09-21T14:04:26Z')
   })
 })
 

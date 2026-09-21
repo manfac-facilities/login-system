@@ -73,12 +73,14 @@ function mensagemDeFalha(erro: unknown): string {
   return 'Não deu para puxar as OS do Field Control. Tente de novo em alguns minutos.'
 }
 
-function maiorMarcaDagua(anterior: string | null, ordens: OsNormalizada[]): string | null {
+/** Maior instante visto entre a marca anterior e o `updatedAt`/`createdAt` de cada OS. */
+export function maiorMarcaDagua(anterior: string | null, ordens: OsNormalizada[]): string | null {
   let maior = anterior && Number.isFinite(Date.parse(anterior)) ? anterior : null
   for (const ordem of ordens) {
-    const candidata = ordem.atualizadoEm
-    if (!candidata || !Number.isFinite(Date.parse(candidata))) continue
-    if (!maior || Date.parse(candidata) > Date.parse(maior)) maior = candidata
+    for (const candidata of [ordem.atualizadoEm, ordem.criadoEm]) {
+      if (!candidata || !Number.isFinite(Date.parse(candidata))) continue
+      if (!maior || Date.parse(candidata) > Date.parse(maior)) maior = candidata
+    }
   }
   return maior
 }

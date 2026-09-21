@@ -103,6 +103,11 @@ export type OsNormalizada = {
   loja: string | null
   idField: string
   atualizadoEm: string | null
+  /**
+   * `createdAt` do Field. Também alimenta a marca d'água: OS nunca editada vem
+   * com `updatedAt = null` e só o `createdAt` diz quando ela apareceu.
+   */
+  criadoEm: string | null
   /** `null` preserva uma resposta ausente ou inválida, sem presumir que a OS está ativa. */
   archived: boolean | null
   /**
