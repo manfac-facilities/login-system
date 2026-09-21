@@ -105,14 +105,14 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
   }
 
   const [
-    { data: linha },
-    { data: diario },
-    { data: remarcacoes },
-    { data: tarefas },
-    { data: pessoas },
-    { data: outras },
-    { data: motivos },
-    { data: historico },
+    { data: linha, error: erroLinha },
+    { data: diario, error: erroDiario },
+    { data: remarcacoes, error: erroRemarcacoes },
+    { data: tarefas, error: erroTarefas },
+    { data: pessoas, error: erroPessoas },
+    { data: outras, error: erroOutras },
+    { data: motivos, error: erroMotivos },
+    { data: historico, error: erroHistorico },
   ] = await Promise.all([
     supabase.from('obras_obra').select('*').eq('id', id).maybeSingle(),
     supabase.from('obras_diario').select('*').eq('obra_id', id).order('data', { ascending: true }),
@@ -138,6 +138,25 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
       .eq('obra_id', id)
       .order('created_at', { ascending: false }),
   ])
+
+  // Item 6 da revisão de 20/09: nenhuma das 8 consultas conferia erro — uma
+  // falha momentânea do banco em QUALQUER uma delas terminava em `!linha`
+  // (ou em lista vazia) e virava "obra não encontrada" ou tela incompleta
+  // sem aviso. Erro de consulta é falha de infraestrutura: lança, e quem
+  // trata é o error boundary do Next (`node_modules/next/dist/docs/01-app/
+  // 01-getting-started/16-error-handling.md`). Só ausência REAL da linha —
+  // sem erro nenhum — é `notFound()`.
+  const erro = [
+    erroLinha,
+    erroDiario,
+    erroRemarcacoes,
+    erroTarefas,
+    erroPessoas,
+    erroOutras,
+    erroMotivos,
+    erroHistorico,
+  ].find(Boolean)
+  if (erro) throw new Error(`Falha ao carregar a ficha da obra: ${erro.message}`)
 
   if (!linha) notFound()
 
