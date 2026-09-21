@@ -46,7 +46,14 @@ next-env.d.ts
 material manfac/
 
 # local tooling
-.claude/
+# ATENÇÃO: é `.claude/*`, não `.claude/`. O git não consegue re-incluir um
+# arquivo cujo diretório-pai está excluído, e as regras de projeto em
+# `.claude/rules/` PRECISAM ser versionadas — são elas que carregam o mapa de
+# cada módulo para qualquer pessoa ou agente que abra o repositório. Trocar
+# isto de volta para `.claude/` faz as regras sumirem para todo mundo menos
+# para quem as escreveu.
+.claude/*
+!.claude/rules/
 .superpowers/
 
 # artefatos de teste de navegador
