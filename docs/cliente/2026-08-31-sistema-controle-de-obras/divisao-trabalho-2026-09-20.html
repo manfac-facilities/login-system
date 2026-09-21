@@ -1,0 +1,443 @@
+<title>Divisão de frentes — Obras</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#0a1628; --surface:#0f1f3d;
+    --line:#1e3a5f; --line-soft:#182f4d;
+    --ink:#e8eef7; --ink-2:#94a3b8; --ink-3:#6b83a3;
+    --accent:#f05a28; --accent-soft:#ffb499;
+    --ok:#3fbf8f; --warn:#e0a83c; --risk:#e05a4c; --info:#38b2c4;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --display:Archivo,"IBM Plex Sans",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.6;
+    padding-inline:20px; padding-block:0 64px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto}
+
+  header.top{padding-block:44px 28px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 14px}
+  h1{font-family:var(--display); font-weight:700; font-size:clamp(28px,5vw,42px);
+    line-height:1.1; margin:0 0 14px; text-wrap:balance; letter-spacing:-.02em}
+  .lead{font-size:17px; color:var(--ink-2); max-width:64ch; margin:0}
+  .lead b{color:var(--ink); font-weight:600}
+
+  .state{display:grid; gap:1px; background:var(--line-soft);
+    grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+    border:1px solid var(--line-soft); margin-block:28px 0}
+  .tile{background:var(--surface); padding:16px 18px}
+  .tile .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 7px}
+  .tile .v{font-family:var(--display); font-size:21px; font-weight:600;
+    font-variant-numeric:tabular-nums; margin:0; line-height:1.2}
+  .tile .v small{display:block; font-family:var(--sans); font-size:12px;
+    font-weight:400; color:var(--ink-3); margin-top:3px; letter-spacing:0}
+  .v.ok{color:var(--ok)} .v.warn{color:var(--warn)} .v.risk{color:var(--risk)}
+
+  section{padding-block:40px 0}
+  h2{font-family:var(--display); font-size:13px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 6px}
+  .sec-lead{color:var(--ink-2); margin:0 0 22px; max-width:68ch; font-size:14.5px}
+  .sec-lead b{color:var(--ink)}
+
+  .reply{border:1px solid var(--line); background:var(--surface)}
+  .reply .row{display:grid; grid-template-columns:1.1fr 1.4fr; border-bottom:1px solid var(--line-soft)}
+  .reply .row:last-child{border-bottom:0}
+  .reply .ask,.reply .did{padding:16px 20px}
+  .reply .ask{border-right:1px solid var(--line-soft); background:rgba(0,0,0,.14)}
+  .reply .ask p{margin:0; color:var(--ink-2); font-size:14px}
+  .reply .ask .n{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em;
+    color:var(--ink-3); display:block; margin-bottom:6px; text-transform:uppercase}
+  .reply .did p{margin:0 0 8px; font-size:14px; color:var(--ink-2)}
+  .reply .did p:last-child{margin-bottom:0}
+  .reply .did b{color:var(--ink)}
+  .tag{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    padding:3px 8px; border:1px solid currentColor; display:inline-block; margin-bottom:9px}
+  .tag.feito{color:var(--ok)} .tag.dif{color:var(--warn)} .tag.nao{color:var(--risk)}
+
+  .alarm{border:1px solid var(--risk);
+    background:linear-gradient(180deg,rgba(224,90,76,.13),rgba(224,90,76,.04));
+    padding:22px 24px; margin-block:0 0}
+  .alarm h3{font-family:var(--display); font-size:19px; margin:0 0 12px; letter-spacing:-.01em}
+  .crit{list-style:none; margin:0; padding:0; display:grid; gap:14px}
+  .crit li{display:grid; gap:4px}
+  .crit .t{margin:0; font-weight:600; color:var(--ink)}
+  .crit .d{margin:0; color:var(--ink-2); font-size:14px; max-width:74ch}
+  .crit .f{font-family:var(--mono); font-size:11px; color:var(--ink-3); word-break:break-all}
+
+  .rest{border:1px solid var(--line); background:var(--surface); margin-top:18px}
+  .rest h4{font-family:var(--display); font-size:15px; margin:0; padding:14px 20px;
+    border-bottom:1px solid var(--line-soft); color:var(--ink)}
+  .rest ul{list-style:none; margin:0; padding:0}
+  .rest li{padding:11px 20px; border-bottom:1px solid var(--line-soft);
+    display:grid; grid-template-columns:1fr auto; gap:4px 16px; align-items:baseline}
+  .rest li:last-child{border-bottom:0}
+  .rest p{margin:0; font-size:14px; color:var(--ink-2)}
+  .rest .f{font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    text-align:right; white-space:nowrap}
+  @media (max-width:620px){.rest li{grid-template-columns:1fr} .rest .f{text-align:left}}
+
+  .layers{display:grid; gap:1px; background:var(--line-soft); border:1px solid var(--line-soft)}
+  .layer{background:var(--surface); padding:16px 20px; display:grid;
+    grid-template-columns:auto 1fr auto; gap:14px; align-items:center}
+  .layer .num{font-family:var(--display); font-size:24px; font-weight:700; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; line-height:1}
+  .layer .nm{margin:0; font-weight:500}
+  .layer .nm small{display:block; font-weight:400; color:var(--ink-3); font-size:13px; margin-top:2px}
+  .badge{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 9px; border:1px solid currentColor; white-space:nowrap}
+  .badge.ok{color:var(--ok)} .badge.no{color:var(--risk)} .badge.part{color:var(--warn)}
+  @media (max-width:560px){.layer{grid-template-columns:auto 1fr} .layer .badge{grid-column:2}}
+
+  .owners{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .owner{border:1px solid var(--line); background:var(--surface); display:flex; flex-direction:column}
+  .owner > header{padding:16px 20px; border-bottom:1px solid var(--line);
+    border-top:3px solid var(--who); display:flex; align-items:baseline;
+    justify-content:space-between; gap:12px}
+  .owner h3{font-family:var(--display); font-size:20px; margin:0; letter-spacing:-.01em}
+  .owner .count{font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.08em}
+  .owner .why{padding:13px 20px; margin:0; font-size:13px; color:var(--ink-3);
+    border-bottom:1px solid var(--line-soft); background:rgba(0,0,0,.14)}
+  .owner .why b{color:var(--ink-2); font-weight:500}
+  .tasks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; flex:1}
+  .tasks li{padding:15px 20px; border-bottom:1px solid var(--line-soft); display:grid; gap:6px}
+  .tasks li:last-child{border-bottom:0}
+  .tasks .top{display:flex; align-items:baseline; gap:9px}
+  .id{font-family:var(--mono); font-size:11px; color:var(--who); font-weight:500;
+    flex:none; padding-top:1px}
+  .what{margin:0; font-weight:500; color:var(--ink)}
+  .note{margin:0; font-size:13.5px; color:var(--ink-2); padding-left:22px}
+  .ref{display:block; font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    padding-left:22px; word-break:break-all}
+  .cost{display:flex; flex-wrap:wrap; gap:6px; padding-left:22px; margin:2px 0 0;
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.06em}
+  .cost span{padding:2px 7px; border:1px solid var(--line); color:var(--ink-2); white-space:nowrap}
+  .cost .tk{color:var(--accent-soft); border-color:#3a2418}
+  .cost .flag{border:0; padding-left:0; text-transform:uppercase}
+  .flag.hot{color:var(--risk)} .flag.mid{color:var(--warn)} .flag.cool{color:var(--ok)}
+  .owner footer{margin-top:auto; padding:13px 20px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:11px; color:var(--ink-2);
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; background:rgba(0,0,0,.14)}
+  .owner footer b{color:var(--ink); font-weight:500}
+  .joao{--who:#38b2c4} .duda{--who:#f05a28}
+
+  .note-box{border:1px solid var(--line); border-left:3px solid var(--info);
+    background:var(--surface); padding:20px 24px; margin-top:20px}
+  .note-box.warn{border-left-color:var(--warn)}
+  .note-box h3{font-family:var(--display); font-size:17px; margin:0 0 9px}
+  .note-box p{margin:0 0 12px; color:var(--ink-2); max-width:76ch}
+  .note-box p:last-child{margin-bottom:0}
+  .note-box b{color:var(--ink)}
+  .note-box table{border-collapse:collapse; width:100%; max-width:520px; font-size:13px}
+  .note-box td{padding:5px 0; color:var(--ink-2); border-bottom:1px solid var(--line-soft)}
+  .note-box td:last-child{text-align:right; font-family:var(--mono); color:var(--accent-soft);
+    font-variant-numeric:tabular-nums}
+  .note-box tr:last-child td{border-bottom:0}
+
+  .done{border:1px solid var(--line); border-left:3px solid var(--ok);
+    background:var(--surface); padding:16px 20px; margin-top:18px}
+  .done p{margin:0 0 8px; color:var(--ink-3); font-size:13.5px}
+  .done p:last-child{margin:0}
+  .done b{color:var(--ok)}
+
+  footer.end{margin-top:48px; padding-top:20px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+    display:flex; flex-wrap:wrap; gap:6px 20px}
+
+  @media (max-width:640px){
+    .reply .row{grid-template-columns:1fr}
+    .reply .ask{border-right:0; border-bottom:1px solid var(--line-soft)}
+  }
+  @media (max-width:560px){
+    header.top{padding-block:32px 22px}
+    .note,.ref,.cost{padding-left:0}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Controle de Obras · 20 de setembro de 2026 · atualizado após a revisão de código</p>
+    <h1>O que falta para entregar, e quem faz cada parte</h1>
+    <p class="lead">A tela de edição entrou no ar hoje e o João já validou na prática. Mas a revisão de código encontrou <b>15 problemas reais</b>, três deles corrompendo dado agora — e <b>duas das quatro camadas que o cliente pediu ainda não existem</b>. Esta página é a lista completa, dividida em duas frentes que não se atrapalham.</p>
+
+    <div class="state">
+      <div class="tile"><p class="k">Versão no ar</p><p class="v ok">Hoje<small>testada pelo João</small></p></div>
+      <div class="tile"><p class="k">Obras cadastradas</p><p class="v">77<small>sincronizando a cada 5 min</small></p></div>
+      <div class="tile"><p class="k">Problemas encontrados</p><p class="v risk">15<small>3 perdem dado agora</small></p></div>
+      <div class="tile"><p class="k">Camadas entregues</p><p class="v warn">2 de 4<small>faltam cobrança e painel</small></p></div>
+      <div class="tile"><p class="k">Prazo final</p><p class="v">28/09<small>meta: entregar antes</small></p></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Duda — o que fizemos com a sua sugestão</h2>
+    <p class="sec-lead">Seu áudio virou arquivo no projeto antes de virar decisão, sem resumo. Depois pesquisamos o assunto na documentação oficial e em fontes externas, e implementamos. Em dois pontos o resultado ficou diferente do que você propôs — os dois estão explicados.</p>
+
+    <div class="reply">
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 1</span><p>Criar um AGENTS.md na raiz, cópia do CLAUDE.md, e manter os dois sincronizados.</p></div>
+        <div class="did"><span class="tag feito">Já existia</span>
+          <p>O CLAUDE.md daqui tem <b>uma linha só</b>, que aponta para o AGENTS.md. Uma fonte só, nada para sincronizar e nada para divergir.</p></div>
+      </div>
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 2</span><p>Pôr no arquivo as regras de como a gente tem que se comportar no projeto.</p></div>
+        <div class="did"><span class="tag feito">Feito</span>
+          <p>As regras existiam, espalhadas e misturadas com infraestrutura. Agora estão juntas no começo, e a <b>fase do projeto está declarada</b>: entrega ao cliente, com sistema em produção.</p></div>
+      </div>
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 3</span><p>Nunca ir no micro do micro. Se for caso raro e pouco provável, deixar passar e anotar.</p></div>
+        <div class="did"><span class="tag feito">Feito, em dois níveis</span>
+          <p>A regra padrão é fazer a menor mudança que resolve, sem defesa que ninguém pediu.</p>
+          <p><b>Mas há cinco áreas onde isso não vale</b> e o caso raro se trata na hora: controle de acesso, login, qualquer gravação que apague dado de cliente, as regras de segurança do banco, e dinheiro. Este projeto já se queimou nas duas primeiras.</p>
+          <p>A pesquisa trouxe algo útil: nenhuma equipe escreve “ignore casos de borda”. Todas escrevem <b>o que não fazer</b> com um gatilho objetivo — por exemplo, parar e perguntar se a mudança passar de 20 linhas além do pedido.</p></div>
+      </div>
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 4</span><p>Um mapa de onde está cada arquivo, dentro do CLAUDE.md, para a IA não gastar tempo e token procurando.</p></div>
+        <div class="did"><span class="tag dif">Feito por outro caminho</span>
+          <p>O problema que você apontou é real. Mas a documentação oficial mostra que o CLAUDE.md <b>entra inteiro em toda conversa</b> e recomenda menos de 200 linhas: “arquivos mais longos consomem mais contexto e reduzem a aderência”. O nosso tinha 445.</p>
+          <p>Um mapa ali seria cobrado em toda sessão, inclusive nas que nem tocam naquele módulo. Existe mecanismo melhor: arquivos de regra que <b>carregam sozinhos só quando o agente abre um arquivo daquela pasta</b>.</p>
+          <p>Resultado: o arquivo que sempre carrega <b>caiu de 445 para 199 linhas</b>, e os mapas por módulo (395 linhas somadas) só custam para quem mexe naquele módulo.</p></div>
+      </div>
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 5</span><p>Deixar os arquivos com poucas linhas, não passando muito de 600 ou 700 cada.</p></div>
+        <div class="did"><span class="tag nao">Não adotado como regra</span>
+          <p>Fomos atrás da origem do número e <b>ele não tem fonte</b>. As recomendações existentes vão de 150 a 880 linhas conforme a linguagem, todas opinião, sem estudo por trás.</p>
+          <p>O que tem medição de verdade é sobre <b>o tamanho total do contexto</b>, não sobre linhas por arquivo — e isso foi atendido pela Sugestão 4.</p>
+          <p>Na prática, adotar 700 linhas hoje significaria quebrar justamente a tela que acabou de subir, na véspera do prazo. Em vez disso, os arquivos grandes estão <b>nomeados no mapa</b>, com o tamanho.</p></div>
+      </div>
+      <div class="row">
+        <div class="ask"><span class="n">Sugestão 6</span><p>Um arquivo markdown com as coisas que deixamos passar de propósito, para voltar no futuro.</p></div>
+        <div class="did"><span class="tag feito">Feito</span>
+          <p>Criado, e já nasceu com <b>15 itens</b>: 12 decisões tomadas de propósito e 3 que ninguém tinha percebido. Cada uma com arquivo e linha.</p>
+          <p>Uma descoberta: <b>não existe um único “TODO” no código do hub</b>. A dívida deste projeto sempre morou nos documentos, invisível para quem lê só o código.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>O que a revisão de código encontrou</h2>
+    <p class="sec-lead">Quatro revisores independentes leram as ~12.800 linhas do módulo. Cada achado foi conferido no código antes de entrar aqui. <b>Nenhum deles é pego pelos testes automáticos</b> — os 598 testes passam e o verificador de estilo está limpo.</p>
+
+    <div class="alarm">
+      <h3>Três estão corrompendo ou perdendo dado agora</h3>
+      <ul class="crit">
+        <li>
+          <p class="t">Obra que reaparece no Field fica marcada como sumida para sempre</p>
+          <p class="d">Quando uma ordem de serviço volta a aparecer já concluída ou cancelada, o sistema sai do laço antes de limpar o alerta de sumiço. O aviso nunca mais some.</p>
+          <p class="f">sincronizar/_sincronizacao.ts:236</p>
+        </li>
+        <li>
+          <p class="t">Falha de rede esconde obra nova por um dia inteiro</p>
+          <p class="d">Se o Field responde com erro momentâneo, a obra é silenciosamente ignorada, o marcador de “já li até aqui” avança mesmo assim, e a execução é registrada como <b>sucesso</b>. A obra só aparece na varredura do dia seguinte.</p>
+          <p class="f">_lib/field/situacao-da-os.ts:113</p>
+        </li>
+        <li>
+          <p class="t">Apagar a data de liberação grava a data de hoje no lugar</p>
+          <p class="d">Se alguém limpa a data mas mantém o nome de quem liberou, o sistema grava hoje. O contador de “esperando a OS há N dias” zera, e não há como desfazer pela tela.</p>
+          <p class="f">obra/[id]/_actions.ts:165</p>
+        </li>
+      </ul>
+    </div>
+
+    <div class="rest">
+      <h4>Os outros 12, todos confirmados no código</h4>
+      <ul>
+        <li><p>O freio de emergência contra sumiço em massa nunca desarma, e o sistema fica cego a ausências</p><span class="f">_sincronizacao.ts:377</span></li>
+        <li><p>Data digitada errada (ano 0226) é aceita e deixa a obra vermelha para sempre; 31 de fevereiro vira erro cru do banco</p><span class="f">_lib/ficha-campos.ts:212</span></li>
+        <li><p>Uma segunda aba aberta sobrescreve a resposta que já tinha sido dada numa tarefa</p><span class="f">tarefas/_actions.ts:48</span></li>
+        <li><p>Desfazer um diário deixa tarefa órfã cobrando um registro que não existe mais</p><span class="f">diario/_actions.ts:228</span></li>
+        <li><p>Foto sem limite de tipo nem de tamanho, em nenhuma das três camadas</p><span class="f">diario/_foto.tsx:48</span></li>
+        <li><p>A janela de remarcação sugere um motivo desativado e depois recusa salvar, sem saída</p><span class="f">obra/[id]/_actions.ts:683</span></li>
+        <li><p>Motivo cadastrado aparece duplicado na lista, com dois botões marcados ao mesmo tempo</p><span class="f">_dialogo-remarcar.tsx:63</span></li>
+        <li><p>Falha momentânea do banco vira “obra não encontrada”; nenhuma das 8 consultas checa erro</p><span class="f">obra/[id]/page.tsx:141</span></li>
+        <li><p>Em certa combinação, nenhum passo da esteira recebe o selo de “a obra está aqui”</p><span class="f">obra/[id]/_ficha.tsx:228</span></li>
+        <li><p>O Field pode pedir uma hora de espera e travar a sincronização em silêncio</p><span class="f">_lib/field/http.ts:208</span></li>
+        <li><p>Ordenar por número da OS coloca 10024 antes de 985</p><span class="f">base/_regras.ts:272</span></li>
+        <li><p>No último dia do prazo a tela escreve “dia 8 de 7”, com a barra em 114%</p><span class="f">_lib/tipos.ts:473</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>O projeto inteiro, não só o que estava na lista</h2>
+    <p class="sec-lead">O cliente definiu quatro camadas na reunião de 31/08. Conferi no código o que existe de verdade — e a resposta muda o tamanho do que falta até 28/09.</p>
+
+    <div class="layers">
+      <div class="layer"><span class="num">1</span>
+        <p class="nm">Base de obras<small>entram sozinhas pelo Field, a cada 5 minutos</small></p>
+        <span class="badge ok">no ar</span></div>
+      <div class="layer"><span class="num">2</span>
+        <p class="nm">Dia a dia das obras<small>diário, tarefas e a ficha editável — o coração do sistema</small></p>
+        <span class="badge part">no ar, com os 15 problemas acima</span></div>
+      <div class="layer"><span class="num">3</span>
+        <p class="nm">Agente que cobra sozinho<small>hoje alguém precisa abrir a tela e marcar na mão</small></p>
+        <span class="badge no">não existe</span></div>
+      <div class="layer"><span class="num">4</span>
+        <p class="nm">Painel para a reunião<small>a visão que o cliente apresenta</small></p>
+        <span class="badge no">não existe</span></div>
+    </div>
+
+    <div class="note-box warn">
+      <h3>As camadas 3 e 4 precisam de uma decisão sua antes de virar tarefa</h3>
+      <p>Nenhuma das duas tem mockup aprovado, e a regra do projeto é não escrever código antes disso. Enquanto não houver desenho aprovado, elas <b>não entram na divisão abaixo</b> — seria estimar contra suposição.</p>
+      <p>O caminho mais rápido, se a meta é surpreender antes de 28/09: <b>eu desenho as duas telas amanhã cedo</b>, você aprova ou corrige no mesmo dia, e aí viram tarefa com dono. Sem isso, o realista é entregar as camadas 1 e 2 sem defeito, o que já é uma entrega inteira.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>As duas frentes, em paralelo</h2>
+    <p class="sec-lead">A divisão não é por dificuldade — é por <b>arquivo</b>. Cada frente mexe numa parte que a outra não toca, então vocês podem trabalhar ao mesmo tempo sem conflito e sem esperar um pelo outro.</p>
+
+    <div class="owners">
+
+      <article class="owner joao">
+        <header><h3>João</h3><span class="count">7 itens</span></header>
+        <p class="why">Frente <b>ficha e tela da obra</b> — tudo dentro de <b>obra/[id]</b>. O Duda não encosta nesses arquivos.</p>
+        <ul class="tasks">
+          <li>
+            <div class="top"><span class="id">1</span><p class="what">Ligar a tela de histórico que já está pronta</p></div>
+            <p class="note">O componente existe, tem teste próprio e <b>ninguém o usa</b>. É só buscar as linhas e mostrar na página. Era o item que eu tinha estimado em 6 horas.</p>
+            <span class="ref">obra/[id]/_historico.tsx (95 linhas, órfão)</span>
+            <p class="cost"><span>~1 h</span><span class="tk">~70k tokens</span><span class="flag cool">ganho fácil</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">2</span><p class="what">Fazer o sistema gravar as datas de conclusão</p></div>
+            <p class="note">Sem isso nenhuma obra sai de “em execução”, por mais pronta que esteja. É o maior risco da lista.</p>
+            <p class="cost"><span>2–3 h</span><span class="tk">~200k tokens</span><span class="flag hot">maior risco</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">3</span><p class="what">Apagar a data de liberação sem gravar hoje</p></div>
+            <p class="note">Um dos três que perdem dado agora.</p>
+            <p class="cost"><span>~45 min</span><span class="tk">~60k tokens</span><span class="flag hot">perde dado</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">4</span><p class="what">Validar a data de verdade</p></div>
+            <p class="note">Hoje aceita ano 0226 e deixa a obra vermelha para sempre; 31 de fevereiro estoura com erro do banco.</p>
+            <p class="cost"><span>~45 min</span><span class="tk">~60k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">5</span><p class="what">Consertar a janela de remarcação</p></div>
+            <p class="note">Dois problemas juntos: sugere motivo desativado e depois recusa salvar; e mostra motivo duplicado com dois botões marcados.</p>
+            <p class="cost"><span>~1 h</span><span class="tk">~80k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">6</span><p class="what">Falha do banco não pode virar “obra não encontrada”</p></div>
+            <p class="note">Nenhuma das oito consultas da página checa se deu erro.</p>
+            <p class="cost"><span>~45 min</span><span class="tk">~60k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">7</span><p class="what">O selo de “a obra está aqui” sumindo da esteira</p></div>
+            <p class="note">Numa combinação específica, nenhum passo fica marcado. Menor impacto da sua lista.</p>
+            <p class="cost"><span>~30 min</span><span class="tk">~40k tokens</span><span class="flag cool">se sobrar tempo</span></p>
+          </li>
+        </ul>
+        <footer><span>Total</span><b>7–8 h · ~570k tokens</b></footer>
+      </article>
+
+      <article class="owner duda">
+        <header><h3>Duda</h3><span class="count">7 itens</span></header>
+        <p class="why">Frente <b>sincronização, diário e tarefas</b> — <b>sincronizar/</b>, <b>_lib/field/</b>, <b>diario/</b> e <b>tarefas/</b>. Área que ele já conhece das entregas anteriores.</p>
+        <ul class="tasks">
+          <li>
+            <div class="top"><span class="id">1</span><p class="what">Obra que volta não pode ficar marcada como sumida</p></div>
+            <p class="note">A limpeza do alerta está depois do ponto onde o código sai do laço.</p>
+            <span class="ref">sincronizar/_sincronizacao.ts:236</span>
+            <p class="cost"><span>~1 h</span><span class="tk">~80k tokens</span><span class="flag hot">corrompe dado</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">2</span><p class="what">Falha de rede não pode esconder obra nova</p></div>
+            <p class="note">Hoje a obra some, o marcador avança e a execução é registrada como sucesso. Some por um dia inteiro.</p>
+            <span class="ref">_lib/field/situacao-da-os.ts:113</span>
+            <p class="cost"><span>1–2 h</span><span class="tk">~120k tokens</span><span class="flag hot">perde obra</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">3</span><p class="what">O freio de emergência que nunca desarma</p></div>
+            <p class="note">Quando dispara, não registra nada — então o contador nunca baixa e ele dispara para sempre, deixando o sistema cego a ausências.</p>
+            <span class="ref">_sincronizacao.ts:377</span>
+            <p class="cost"><span>~1 h</span><span class="tk">~80k tokens</span><span class="flag mid">cega o sistema</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">4</span><p class="what">Limitar o tempo de espera pedido pelo Field</p></div>
+            <p class="note">Se o Field pedir uma hora de espera, a sincronização trava em silêncio e perde cerca de 12 ciclos.</p>
+            <span class="ref">_lib/field/http.ts:208</span>
+            <p class="cost"><span>~45 min</span><span class="tk">~60k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">5</span><p class="what">Tarefa não pode ser respondida duas vezes</p></div>
+            <p class="note">Uma segunda aba sobrescreve a resposta que já tinha sido dada.</p>
+            <span class="ref">tarefas/_actions.ts:48</span>
+            <p class="cost"><span>~30 min</span><span class="tk">~50k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">6</span><p class="what">Desfazer diário sem deixar tarefa órfã</p></div>
+            <p class="note">O apagamento não confere se deu erro, e mesmo assim a tela diz que deu certo.</p>
+            <span class="ref">diario/_actions.ts:228</span>
+            <p class="cost"><span>~45 min</span><span class="tk">~60k tokens</span></p>
+          </li>
+          <li>
+            <div class="top"><span class="id">7</span><p class="what">Limitar tipo e tamanho da foto</p></div>
+            <p class="note">Hoje não há limite em nenhuma das três camadas, nem no armazenamento. Um arquivo enorme sobe rotulado como foto.</p>
+            <span class="ref">diario/_foto.tsx:48</span>
+            <p class="cost"><span>~1 h</span><span class="tk">~80k tokens</span></p>
+          </li>
+        </ul>
+        <footer><span>Total</span><b>6–7 h · ~530k tokens</b></footer>
+      </article>
+
+    </div>
+
+    <div class="note-box">
+      <h3>Os dois últimos, de quem terminar primeiro</h3>
+      <p>Sobram dois ajustes pequenos que não pertencem a nenhuma das frentes: a <b>ordenação por número de OS</b>, que hoje põe 10024 antes de 985, e o <b>“dia 8 de 7”</b> com a barra passando de 100% no último dia do prazo. Juntos: cerca de 40 minutos.</p>
+      <p>Eu fico com a conferência de tudo: reviso cada entrega das duas frentes e confirmo no banco que o efeito é o esperado, antes de considerar fechado.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>De onde vêm as estimativas de token</h2>
+    <p class="sec-lead">Não é chute: é calibrado pelo consumo real dos agentes que trabalharam neste projeto hoje.</p>
+
+    <div class="note-box">
+      <h3>Medido hoje, neste repositório</h3>
+      <table>
+        <tr><td>Revisar um quarto do módulo de obras</td><td>232.784</td></tr>
+        <tr><td>Revisar a sincronização e o Field</td><td>151.713</td></tr>
+        <tr><td>Levantar as dívidas do projeto</td><td>165.287</td></tr>
+        <tr><td>Conferir o corte das instruções</td><td>141.138</td></tr>
+        <tr><td>Mapear a estrutura do repositório</td><td>120.721</td></tr>
+        <tr><td>Escrever o mapa do módulo de obras</td><td>103.339</td></tr>
+      </table>
+      <p style="margin-top:14px">Ler bastante e escrever um arquivo ficou entre <b>82 mil e 165 mil</b>. Revisar código de verdade passou de <b>230 mil</b>. Corrigir custa mais que ler, porque roda o teste, lê o erro e corrige — por isso as estimativas de correção ficam entre 40 e 200 mil.</p>
+      <p><b>Trate como ordem de grandeza, não como orçamento.</b> A primeira entrega de cada frente calibra o resto de verdade.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Feito e fora do caminho</h2>
+    <div class="done">
+      <p><b>✓</b> João testou a tela com obra de verdade</p>
+      <p><b>✓</b> João respondeu ao cliente como se calcula o avanço %</p>
+      <p><b>✓</b> João avisou a equipe sobre recarregar a página</p>
+      <p><b>✓</b> João pediu ao José o link da planilha</p>
+      <p style="margin-top:10px">Continua aberto, sem pressa e sem travar ninguém: cadastrar o telefone das equipes e prestadores — o robô de cobrança da camada 3 vai precisar deles.</p>
+    </div>
+
+    <div class="note-box warn">
+      <h3>Esperando o cliente</h3>
+      <p>A tela para o dono da Pacheco foi enviada em 18/09 e ainda não voltou resposta. Ela <b>não atrapalha o prazo</b>: é para o cliente do cliente ver, não para a equipe trabalhar.</p>
+      <p>E uma coisa para resolver com calma: <b>a senha de publicação do sistema está com o cliente</b>. Hoje deu certo, mas na próxima urgência pode não dar.</p>
+    </div>
+  </section>
+
+  <footer class="end">
+    <span>Achados conferidos no código em 20/09/2026</span>
+    <span>Tokens calibrados pelo consumo real dos agentes desta sessão</span>
+  </footer>
+
+</div>
