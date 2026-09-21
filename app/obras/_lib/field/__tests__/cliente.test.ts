@@ -489,16 +489,14 @@ describe("criarClienteField - situacao da ultima atividade", () => {
     expect(tasks[1].caminho).toContain("b")
   })
 
-  it("falha ao ler as atividades nao derruba a varredura: a OS vem sem situacao", async () => {
+  it("falha ao ler as atividades interrompe a varredura antes de devolver OS parciais", async () => {
     const rede = httpDeMentira((caminho, parametros) => {
-      if (caminho.endsWith("/tasks")) throw new Error("429 Too Many Requests")
-      return rotasCom([ordem()])(caminho, parametros)
+      if (caminho === '/orders/b/tasks') throw new Error('429 Too Many Requests')
+      return rotasCom([ordem({ id: 'a' }), ordem({ id: 'b', identifier: 'OS-B' })])(caminho, parametros)
     })
     const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
 
-    const os = await cliente.listarOsNormalizadas()
-
-    expect(os).toHaveLength(1)
-    expect(os[0].situacao).toBeNull()
+    await expect(cliente.listarOsNormalizadas()).rejects.toThrow(/b.*429/)
+    expect(rede.chamadas.filter((c) => c.caminho.endsWith('/tasks'))).toHaveLength(2)
   })
 })

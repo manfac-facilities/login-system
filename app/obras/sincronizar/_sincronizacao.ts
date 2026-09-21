@@ -230,8 +230,19 @@ export function planejarSincronizacao(
     // atividade esteja pendente, agendada ou em andamento. A recusa acontece
     // DEPOIS de marcar a OS como encontrada, de proposito: a OS recusada esta
     // presente no Field, entao nao pode virar suspeita de ausencia. E acontece
-    // ANTES de qualquer escrita, entao obra que ja existe nao e alterada.
+    // ANTES de recarregar campos, mas a presença confirmada precisa limpar
+    // uma ausência anterior mesmo quando a situação já não entra na carga.
     if (!entraNaCarga(vinda.situacao)) {
+      if (obraPeloId && (texto(obraPeloId.field_ausente_desde) || texto(obraPeloId.field_ausente_em))) {
+        const removeAlerta = texto(obraPeloId.field_ausente_em) !== null
+        atualizar.push({
+          id: obraPeloId.id,
+          os: texto(obraPeloId.os) ?? numero ?? '—',
+          campos: { field_ausente_desde: null, field_ausente_em: null },
+          ...(removeAlerta ? { removeAlerta: true } : {}),
+        })
+        if (removeAlerta) alertasRemovidos++
+      }
       ignoradas.push({ os: numero, idField, motivo: motivoDaRecusa(vinda.situacao) })
       continue
     }

@@ -440,6 +440,43 @@ describe('planejarSincronizacao — ausência no Field', () => {
     ])
     expect(plano.alertasRemovidos).toBe(1)
   })
+
+  it.each(['done', 'canceled'])('OS %s reaparecida limpa suspeita e alerta sem recarregar a ficha', (situacao) => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao, loja: 'LOJA ALTERADA' })],
+      [obraNoBanco({
+        loja: 'LOJA DO HUB',
+        descricao: 'Descrição do hub',
+        field_ausente_desde: '2026-09-12T12:00:00Z',
+        field_ausente_em: '2026-09-13T12:00:00Z',
+      })],
+      { varreduraCompleta: true, agora: AGORA },
+    )
+
+    expect(plano.atualizar).toEqual([{
+      id: 'obra-1',
+      os: '0226-014989',
+      campos: { field_ausente_desde: null, field_ausente_em: null },
+      removeAlerta: true,
+    }])
+    expect(plano.alertasRemovidos).toBe(1)
+    expect(plano.reconciliarAusencias).toHaveLength(0)
+    expect(plano.ignoradas).toHaveLength(1)
+  })
+
+  it('OS concluída reaparecida limpa também a suspeita sem alerta', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done' })],
+      [obraNoBanco({ field_ausente_desde: '2026-09-12T12:00:00Z' })],
+    )
+
+    expect(plano.atualizar).toEqual([{
+      id: 'obra-1',
+      os: '0226-014989',
+      campos: { field_ausente_desde: null, field_ausente_em: null },
+    }])
+    expect(plano.alertasRemovidos).toBe(0)
+  })
 })
 
 describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
