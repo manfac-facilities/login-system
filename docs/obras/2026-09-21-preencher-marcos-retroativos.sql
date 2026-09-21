@@ -6,8 +6,11 @@
 -- padrão de conferibilidade de .claude/rules/sql.md (begin/commit, seção de
 -- pré-condição, verificação depois do commit) porque escreve em produção.
 --
--- ESTADO: NÃO APLICADO. João roda à mão no SQL Editor do Supabase, projeto
--- de produção iyytcavcgukfjnjjrerx. Confirme o ref antes de colar
+-- ESTADO: APLICADO em 21/09/2026 ~02:15 (Brasília), pela Management API, com
+-- autorização do João. Verificação: 6 linhas, todas OK. As 2 obras (DP
+-- ITABORAI, pendFat) receberam exec_fim/relatorio/fechou_os = 16/09/2026.
+-- Reaplicar ABORTA na guarda (a contagem cai para 0) — esperado.
+-- Projeto de produção iyytcavcgukfjnjjrerx. Confirme o ref antes de colar
 -- (AGENTS.md). O PAT fica em C:\Users\joao-\.supabase-pat — nunca pelo `!`
 -- do chat (vaza o valor para o contexto).
 --
