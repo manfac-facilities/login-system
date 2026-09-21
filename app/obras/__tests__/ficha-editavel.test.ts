@@ -290,9 +290,22 @@ describe('salvarAutorizacaoAction', () => {
     expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it('R8 — nome sem data grava hoje', async () => {
+  it('R8 — nome sem data grava hoje (primeira liberação, sem data anterior)', async () => {
     await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' })
     expect(campos()).toMatchObject({ liberado_por: 'LEANDRO', liberado_em: HOJE })
+  })
+
+  it('item 3 — apagar a data mantendo o nome grava null, nunca hoje', async () => {
+    // Antes deste fix: limpar a data com o nome preservado gravava hoje por
+    // cima, perdendo o que a pessoa quis apagar e reiniciando o contador de
+    // "esperando a OS há N dias" sem como desfazer pela tela.
+    obraAtual = obra({ liberado_por: 'LEANDRO', liberado_em: '2026-08-20' })
+    const r = await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, libPor: 'LEANDRO', libEm: '' })
+    expect(r).toEqual({ success: true })
+    // `liberado_por` não muda (continua 'LEANDRO'), então nem entra em
+    // `campos` — só o que muda de verdade vira linha de histórico e coluna.
+    expect(campos()).toMatchObject({ liberado_em: null })
+    expect(campos()).not.toHaveProperty('liberado_por')
   })
 
   it('recusa data de liberação no futuro', async () => {

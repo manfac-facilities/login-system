@@ -150,6 +150,16 @@ function rascunhoAutorizacao(
   hoje: string
 ): { antes: Rascunho; depois: Rascunho } {
   const libPor = nulo(dados.libPor)
+  const libEmDigitado = nulo(dados.libEm)
+  // R8: a data só existe junto do nome; data sem nome é barrada na validação.
+  // Nome sem data assume hoje — MAS só quando não havia liberação registrada
+  // antes (a primeira liberação, igual `liberarObraAction`). Item 3 da
+  // revisão de 20/09: se JÁ havia `liberado_em` e a pessoa limpou o campo
+  // mantendo o nome, é uma edição que apaga a data de propósito — antes isto
+  // gravava hoje por cima, perdendo o que ela quis apagar (e reiniciando o
+  // contador de "esperando a OS há N dias", sem como desfazer pela tela).
+  // Limpar precisa gravar `null`, não hoje.
+  const liberadoEm = libPor ? (libEmDigitado ?? (obra.liberado_em ? null : hoje)) : null
   return {
     antes: {
       origem: obra.origem,
@@ -160,9 +170,7 @@ function rascunhoAutorizacao(
     depois: {
       origem: nulo(dados.origem),
       liberado_por: libPor,
-      // R8: a data só existe junto do nome. Nome sem data assume hoje, como
-      // `liberarObraAction` já fazia; data sem nome é barrada na validação.
-      liberado_em: libPor ? (nulo(dados.libEm) ?? hoje) : null,
+      liberado_em: liberadoEm,
       os_aprovada_em: nulo(dados.aprovadaEm),
     },
   }
