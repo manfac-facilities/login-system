@@ -214,6 +214,26 @@ describe('validarAutorizacao', () => {
     const e = validarAutorizacao(aut({ libPor: 'LEANDRO', libEm: '20/08/2026' }), { hoje: HOJE })
     expect(e.libEm).toBe('Data inválida.')
   })
+
+  // Item 4 da revisão de 20/09: ano '0226' (dedo escorregou no '2') está no
+  // formato ISO — passava direto e deixava a obra "vermelha para sempre" (o
+  // cálculo de dias em aberto explode). 31 de fevereiro também está no
+  // formato, mas não é uma data de calendário real — antes ia pro banco e
+  // estourava lá.
+  it('item 4 — recusa ano fora de faixa plausível, com mensagem amigável', () => {
+    const e = validarAutorizacao(aut({ libPor: 'LEANDRO', libEm: '0226-08-20' }), { hoje: HOJE })
+    expect(e.libEm).toBe('Data inválida.')
+  })
+
+  it('item 4 — recusa data de calendário inexistente (31 de fevereiro)', () => {
+    const e = validarAutorizacao(aut({ libPor: 'LEANDRO', libEm: '2026-02-31' }), { hoje: HOJE })
+    expect(e.libEm).toBe('Data inválida.')
+  })
+
+  it('item 4 — a mesma checagem vale para a data de aprovação', () => {
+    const e = validarAutorizacao(aut({ aprovadaEm: '2026-02-30' }), { hoje: HOJE })
+    expect(e.aprovadaEm).toBe('Data inválida.')
+  })
 })
 
 // ============================================================
@@ -324,6 +344,17 @@ describe('validarCronograma', () => {
 
   it('recusa início malformado', () => {
     expect(validarCronograma(cro({ inicio: '17/09/2026' })).inicio).toBe('Data inválida.')
+  })
+
+  // Item 4 da revisão de 20/09: mesma checagem de ano plausível e data de
+  // calendário real vale para o início planejado, que também é `date` no
+  // banco.
+  it('item 4 — recusa ano fora de faixa plausível no início', () => {
+    expect(validarCronograma(cro({ inicio: '0226-09-20' })).inicio).toBe('Data inválida.')
+  })
+
+  it('item 4 — recusa data de calendário inexistente no início', () => {
+    expect(validarCronograma(cro({ inicio: '2026-02-31' })).inicio).toBe('Data inválida.')
   })
 })
 

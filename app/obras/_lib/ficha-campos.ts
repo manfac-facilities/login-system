@@ -28,6 +28,28 @@ const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 const MSG_DATA = 'Data inválida.'
 
+/**
+ * Ano plausível para qualquer data da ficha — nem século de dedo escorregado
+ * (item 4 da revisão de 20/09: '0226' em vez de '2026' passava batido, e
+ * deixava a obra "vermelha para sempre" porque a contagem de dias em aberto
+ * explode), nem futuro longe demais.
+ */
+const ANO_MIN = 2000
+const ANO_MAX = 2100
+
+/**
+ * `v` já bateu no formato ISO (`erroData` confere antes de chamar) — aqui é
+ * só ano plausível e data de CALENDÁRIO real. `new Date` não estoura em `31
+ * de fevereiro`, ela rola para março (2026-02-31 vira 2026-03-03): comparar os
+ * três campos de volta é o jeito de pegar isso sem `new Date` mentir por nós.
+ */
+function dataDeCalendarioValida(v: string): boolean {
+  const [ano, mes, dia] = v.split('-').map(Number)
+  if (ano < ANO_MIN || ano > ANO_MAX) return false
+  const d = new Date(Date.UTC(ano, mes - 1, dia))
+  return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia
+}
+
 // ============================================================
 // 1. Valor em reais — o parser que aguenta o que o usuário digita
 // ============================================================
@@ -209,7 +231,7 @@ export type ContextoAutorizacao = {
 function erroData(valor: string, hoje: string, mensagemFuturo: string): string | undefined {
   const v = valor.trim()
   if (!v) return undefined
-  if (!ISO.test(v)) return MSG_DATA
+  if (!ISO.test(v) || !dataDeCalendarioValida(v)) return MSG_DATA
   if (v > hoje) return mensagemFuturo
   return undefined
 }
@@ -326,7 +348,9 @@ export function validarCronograma(
   const e: Erros<DadosCronograma> = {}
 
   const inicio = d.inicio.trim()
-  if (inicio && !ISO.test(inicio)) e.inicio = MSG_DATA
+  // Mesma checagem do item 4 (ano plausível + data de calendário real): o
+  // início planejado é `date` no banco que nem `liberado_em`/`aprovadaEm`.
+  if (inicio && (!ISO.test(inicio) || !dataDeCalendarioValida(inicio))) e.inicio = MSG_DATA
 
   const duracao = d.duracao.trim()
   if (duracao) {
