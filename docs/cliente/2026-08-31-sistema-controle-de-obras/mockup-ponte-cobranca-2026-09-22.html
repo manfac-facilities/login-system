@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cobrança pelo WhatsApp</title>
+<style>
+:root{
+  --fundo:#0a1628; --navy:#0d2050; --laranja:#f05a28; --laranja-h:#d94d20;
+  --texto:#e8eef7; --sec:#94a3b8; --borda:#1e3a5f; --apagado:#64748b;
+  --campo:#0f1f3d; --verm:#ff4d6d; --amar:#f4b73f; --verde:#35c98a;
+  --pagina:#060e1b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--pagina);color:var(--texto);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.45}
+button,select,input{font:inherit}
+a{color:inherit}
+
+/* ---------- moldura do mockup (fora da tela) ---------- */
+.barra{position:sticky;top:0;z-index:50;background:#08111f;border-bottom:1px solid var(--borda);padding:10px 16px}
+.barra-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.barra h1{font-size:14px;margin:0;font-weight:600;flex:1 1 100%}
+.barra h1 span{color:var(--sec);font-weight:400}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ctl>b{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sec);font-weight:500;margin-right:2px}
+.seg{border:1px solid var(--borda);background:transparent;color:var(--sec);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;min-height:34px}
+.seg:hover{border-color:var(--laranja);color:var(--texto)}
+.seg[aria-pressed="true"]{background:var(--laranja);border-color:var(--laranja);color:#fff;font-weight:600}
+.chk{font-size:12px;color:var(--sec);display:flex;gap:6px;align-items:center;cursor:pointer}
+
+.doc{max-width:1180px;margin:0 auto;padding:20px 16px 80px}
+.intro{border:1px solid var(--borda);background:#0b1a33;border-radius:10px;padding:14px 16px;color:var(--sec);font-size:13px}
+.intro b{color:var(--texto)}
+.intro ul{margin:8px 0 0;padding-left:18px}
+.secao{margin-top:34px}
+.secao>h2{font-size:18px;margin:0 0 4px;display:flex;gap:10px;align-items:baseline}
+.secao>h2 .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--laranja);color:#fff;font-size:14px;flex:none}
+.secao>p.leg{margin:0 0 12px;color:var(--sec);font-size:13px;max-width:820px}
+.secao>p.leg b{color:var(--texto)}
+.lado{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.lado>div{flex:1 1 380px;min-width:0}
+.rot{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--sec);margin:0 0 6px}
+.fones{display:flex;flex-wrap:wrap;gap:28px}
+
+/* janela = o navegador; fone = o celular */
+.janela{position:relative;container-type:inline-size;container-name:tela;border:1px solid var(--borda);border-radius:10px;overflow:hidden;background:var(--fundo);margin:0 auto}
+.janela.desk{width:100%}
+.janela.fone{width:390px;max-width:100%;border:10px solid #1b2a44;border-radius:34px}
+.rolagem{overflow:auto}
+.cromo{display:flex;gap:6px;align-items:center;padding:7px 12px;background:#050c18;border-bottom:1px solid var(--borda);font-size:11px;color:var(--apagado)}
+.cromo i{width:9px;height:9px;border-radius:50%;background:#1e3a5f;display:inline-block}
+.cromo span{margin-left:8px;background:#0b1528;border-radius:6px;padding:2px 10px}
+.fone .cromo{justify-content:center}
+.fone .cromo i{display:none}
+
+/* ---------- a TELA (traduz as classes Tailwind de _lista.tsx) ---------- */
+.hub-h{border-bottom:1px solid var(--borda);background:var(--navy)}
+.hub-h .l1{display:flex;justify-content:space-between;gap:16px;padding:14px 20px 10px;font-size:13px}
+.hub-h .l1 a{color:var(--sec);text-decoration:none}
+.hub-h .l1 b{color:#fff}
+.abas{display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto}
+.aba{font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--borda);color:var(--sec);white-space:nowrap}
+.aba.on{background:var(--laranja);border-color:var(--laranja);color:#fff;font-weight:600}
+.pg{max-width:896px;margin:0 auto;padding:24px 16px}
+@container tela (min-width:640px){.pg{padding:24px 24px}}
+.pg h1{font-size:20px;font-weight:600;margin:0}
+.pg .sub{margin:4px 0 0;font-size:14px;color:var(--sec)}
+.pg h2.t{margin:24px 0 0;font-size:14px;font-weight:600}
+.pg p.s12{margin:4px 0 0;font-size:12px;color:var(--sec)}
+.pg p.s12 b{color:var(--texto)}
+
+.kpis{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+@container tela (min-width:640px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kpi{border:1px solid var(--borda);background:var(--navy);border-radius:8px;padding:10px 12px}
+.kpi .v{font-size:20px;font-weight:600;line-height:1.2}
+.kpi .r{margin-top:2px;font-size:11px;color:var(--sec);line-height:1.2}
+.kpi .nt{margin-top:4px;font-size:10px;color:var(--apagado);line-height:1.2}
+
+.box{border:1px solid var(--borda);background:var(--navy);border-radius:8px;overflow:hidden}
+.box-h{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--borda);padding:10px 16px}
+.box-h h3{margin:0;font-size:14px;font-weight:600}
+.box-h .x{font-size:12px;color:var(--sec);white-space:nowrap}
+.box-b{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.pill{display:inline-flex;align-items:center;border:1px solid var(--sec);color:var(--sec);background:#94a3b82e;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:500;white-space:nowrap;vertical-align:middle}
+.rota{overflow-x:auto}
+.rota table{width:100%;min-width:34rem;border-collapse:collapse;font-size:12px;text-align:left}
+.rota th{padding:8px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--sec);font-weight:500;border-bottom:1px solid var(--borda)}
+.rota td{padding:8px 16px;border-bottom:1px solid #1e3a5f99}
+.rota td.c{color:var(--sec)}
+.rota tr:last-child td{border-bottom:0}
+.rota p{padding:8px 16px;margin:0;font-size:11px;color:var(--apagado)}
+
+.linha{border:1px solid var(--borda);background:var(--fundo);border-radius:6px;padding:10px 12px}
+.linha .top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.linha .tt{font-size:14px;font-weight:500}
+.linha .os{font-size:12px;color:var(--sec);text-decoration:none}
+.linha .os:hover{color:var(--laranja);text-decoration:underline}
+.linha .st{margin-left:auto;font-size:11px}
+.linha .meta{margin:4px 0 0;font-size:12px;color:var(--sec)}
+.btn-sec{margin-top:8px;min-height:36px;border-radius:6px;border:1px solid var(--borda);background:transparent;color:var(--sec);padding:6px 10px;font-size:12px;cursor:pointer}
+.btn-sec:hover{border-color:var(--laranja);color:var(--texto)}
+.resp{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+@container tela (min-width:640px){.resp{flex-direction:row}}
+.resp input{min-height:44px;width:100%;border-radius:6px;border:1px solid var(--borda);background:var(--campo);padding:8px 12px;color:var(--texto);font-size:14px}
+.resp input::placeholder{color:#4a6080}
+.resp input:focus{outline:none;border-color:var(--laranja)}
+.btn-pri{min-height:44px;flex:none;border-radius:6px;border:0;background:var(--laranja);color:#fff;padding:8px 12px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn-pri:hover{background:var(--laranja-h)}
+.vazio{border:1px dashed var(--borda);border-radius:8px;padding:32px 16px;text-align:center;font-size:14px;color:var(--sec)}
+.vazio.ok{border-color:#35c98a66;color:var(--texto)}
+.vazio.ok .ic{color:var(--verde);font-size:22px;display:block;margin-bottom:6px}
+.vazio.ok small{display:block;margin-top:6px;color:var(--sec);font-size:12px}
+.erro{border:1px solid var(--verm);background:var(--navy);border-radius:8px;padding:20px 16px}
+.erro h3{margin:0;font-size:16px;font-weight:600}
+.erro p{margin:8px 0 0;font-size:14px;color:var(--sec)}
+.erro p b{color:var(--texto)}
+.erro .btn-pri{margin-top:16px}
+
+/* ---------- o que é NOVO ---------- */
+.filtro{margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--borda);background:var(--navy);border-radius:8px;padding:10px 12px}
+.filtro label{font-size:12px;color:var(--sec)}
+.filtro select{min-height:44px;border-radius:6px;border:1px solid var(--borda);background:var(--campo);color:var(--texto);padding:8px 12px;font-size:14px}
+.filtro select:focus{outline:none;border-color:var(--laranja)}
+.filtro .fixo{font-size:14px;font-weight:600}
+.filtro .nt{font-size:11px;color:var(--apagado);flex:1 1 220px}
+.cobra{display:flex;flex-direction:column;gap:6px;padding-bottom:10px;margin-bottom:2px;border-bottom:1px dashed var(--borda)}
+@container tela (min-width:640px){.cobra{flex-direction:row;align-items:center;justify-content:space-between}}
+.cobra .btn-pri{width:100%}
+@container tela (min-width:640px){.cobra .btn-pri{width:auto}}
+.cobra .q{font-size:12px;color:var(--sec)}
+.cobra.feito{flex-direction:column;align-items:stretch}
+.feito .ok{display:flex;gap:8px;align-items:flex-start;border:1px solid #35c98a66;background:#35c98a14;border-radius:6px;padding:8px 10px;font-size:13px}
+.feito .ok svg{flex:none;color:var(--verde);margin-top:2px}
+.feito .nota{font-size:11px;color:var(--apagado)}
+.feito .acoes{display:flex;justify-content:flex-end}
+.feito .btn-sec{margin-top:0;min-height:44px}
+.eu{font-size:12px;color:var(--sec);padding-bottom:10px;border-bottom:1px dashed var(--borda)}
+
+.destaque .novo{position:relative;outline:2px dashed #f05a28aa;outline-offset:3px;border-radius:8px}
+.destaque .novo::after{content:"novo";position:absolute;top:-10px;right:8px;background:var(--laranja);color:#fff;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px}
+
+/* prévia: diálogo no computador, folha de baixo no celular */
+.sobre{position:absolute;inset:0;z-index:20;background:#050c18cc;display:flex;align-items:flex-end;justify-content:center}
+@container tela (min-width:640px){.sobre{align-items:center;padding:20px}}
+.dlg{background:var(--navy);border:1px solid var(--borda);width:100%;max-height:92%;overflow:auto;border-radius:14px 14px 0 0;padding:16px}
+@container tela (min-width:640px){.dlg{max-width:560px;border-radius:10px;padding:18px 20px}}
+.dlg h4{margin:0;font-size:16px;font-weight:600}
+.dlg .sb{margin:2px 0 0;font-size:12px;color:var(--sec)}
+.aviso{margin-top:12px;border:1px solid var(--amar);background:#f4b73f1a;border-radius:8px;padding:10px 12px;font-size:13px}
+.aviso b{color:var(--amar)}
+.aviso .quem{display:block;margin-top:4px;font-size:15px;font-weight:600;color:var(--texto)}
+.msg{margin-top:12px;background:var(--fundo);border:1px solid var(--borda);border-radius:8px;padding:12px;white-space:pre-wrap;font-size:13px;line-height:1.5;color:var(--texto);font-family:inherit}
+.dlg .rod{margin-top:12px;display:flex;flex-direction:column-reverse;gap:8px}
+@container tela (min-width:640px){.dlg .rod{flex-direction:row;justify-content:flex-end}}
+.dlg .rod .btn-sec{margin-top:0;min-height:44px;font-size:14px}
+.dlg .pq{margin-top:8px;font-size:11px;color:var(--apagado)}
+.mob-only{display:inline}
+@container tela (min-width:640px){.mob-only{display:none}}
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <div class="barra-in">
+    <h1>Controle de Obras · Tarefas — cobrança pelo WhatsApp <span>(ponte até o envio automático) — mockup, dados de exemplo</span></h1>
+    <div class="ctl" role="group" aria-label="Estado da tela"><b>Estado da tela</b>
+      <button class="seg" data-estado="pend" aria-pressed="true">Com pendências</button>
+      <button class="seg" data-estado="vazio" aria-pressed="false">Sem pendência</button>
+      <button class="seg" data-estado="erro" aria-pressed="false">Erro ao carregar</button>
+      <button class="seg" data-estado="foto" aria-pressed="false">Foto cobrada da equipe</button>
+      <button class="seg" data-estado="aberto" aria-pressed="false">Já aberto no WhatsApp</button>
+    </div>
+    <div class="ctl" role="group" aria-label="Largura"><b>Largura</b>
+      <button class="seg" data-larg="desk" aria-pressed="true">Computador</button>
+      <button class="seg" data-larg="fone" aria-pressed="false">Celular</button>
+    </div>
+    <div class="ctl" role="group" aria-label="Quem está vendo"><b>Visto por</b>
+      <button class="seg" data-visto="admin" aria-pressed="true">Administrador</button>
+      <button class="seg" data-visto="AMANDA" aria-pressed="false">Amanda (responsável)</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="destaque" checked> marcar o que é novo</label>
+  </div>
+</div>
+
+<main class="doc destaque" id="doc">
+
+  <div class="intro">
+    <b>O que muda na tela de Tarefas que já está no ar:</b> só três coisas, marcadas com a etiqueta <b>novo</b>.
+    <ul>
+      <li>Um filtro <b>Responsável</b> no topo: cada responsável de obra vê só as pendências das próprias obras.</li>
+      <li>Em cada pessoa cobrada, um botão <b>Cobrar no WhatsApp</b> que junta todas as pendências dela numa mensagem só, mostra o texto antes e abre o WhatsApp já escrito. O WhatsApp abre <b>sem número</b>: quem cobra escolhe o contato na própria agenda.</li>
+      <li>Depois do clique, o aviso <b>"aberto no WhatsApp às …"</b> no grupo, até a página ser recarregada.</li>
+    </ul>
+    <div style="margin-top:8px">O resto — agrupar por quem resolve, prazo, dias na mão, <b>Marcar como respondida</b> — é a tela de hoje, sem mudança. Os botões desta página funcionam: dá para clicar em tudo. O botão "Abrir WhatsApp" abre o WhatsApp de verdade, sem destinatário.</div>
+  </div>
+
+  <section class="secao" id="s1">
+    <h2><span class="n">1</span>Filtro por responsável</h2>
+    <p class="leg">A tela inteira, controlada pela barra do topo (estado, largura e quem está vendo). <b>Quem é responsável de obra</b> abre a tela já filtrada nas próprias obras, sem poder trocar — igual ao Diário do dia. <b>O administrador</b> escolhe o responsável ou <b>Todos os responsáveis</b>. Os números do topo continuam contando todas as obras, como hoje.</p>
+    <div id="t1"></div>
+  </section>
+
+  <section class="secao" id="s2">
+    <h2><span class="n">2</span>Botão e prévia da mensagem</h2>
+    <p class="leg">Um botão por pessoa cobrada. Ele junta <b>todas</b> as pendências abertas dela nas obras do filtro, uma por linha, no tom que o cliente descreveu ("ó Roberta … me responda aqui até o final do dia"). Antes de abrir, a tela mostra o texto e <b>diz qual contato escolher</b>, porque o WhatsApp vai abrir sem número.</p>
+    <div id="t2"></div>
+  </section>
+
+  <section class="secao" id="s3">
+    <h2><span class="n">3</span>Depois de abrir o WhatsApp</h2>
+    <p class="leg">O grupo mostra a hora do clique e lembra de registrar a resposta. A resposta continua sendo registrada como hoje: <b>Marcar como respondida</b> na pendência, com uma linha do que foi resolvido. O sistema <b>não sabe se a mensagem foi enviada</b> — só que o botão foi clicado — e o aviso some ao recarregar a página, porque nada é gravado.</p>
+    <div id="t3"></div>
+  </section>
+
+  <section class="secao" id="s4">
+    <h2><span class="n">4</span>Foto do dia cobrada da equipe em campo</h2>
+    <p class="leg">Quando a foto da evolução não vem, a pendência é da <b>equipe definida na obra</b>, não do escritório. O botão funciona igual; a mensagem pede a foto de hoje. Como a equipe não tem uma pessoa cadastrada, a tela pede para escolher <b>o encarregado ou o grupo da equipe</b>.</p>
+    <div id="t4"></div>
+  </section>
+
+  <section class="secao" id="s5">
+    <h2><span class="n">5</span>Estados vazio e erro</h2>
+    <p class="leg">Os dois são diferentes de propósito. <b>Vazio</b> é boa notícia: nada para cobrar hoje. <b>Erro</b> é a lista que não chegou: borda vermelha, a garantia de que nada respondido se perdeu e o botão <b>Tentar de novo</b>.</p>
+    <div class="lado">
+      <div><p class="rot">Vazio — Luana, nenhuma pendência</p><div id="t5a"></div></div>
+      <div><p class="rot">Erro ao carregar</p><div id="t5b"></div></div>
+    </div>
+  </section>
+
+  <section class="secao" id="s6">
+    <h2><span class="n">6</span>No celular</h2>
+    <p class="leg">O responsável usa no celular. O botão ocupa a largura toda, com altura para o dedo; a prévia sobe como folha de baixo, com <b>Abrir WhatsApp</b> embaixo, onde o polegar alcança. No celular o link abre o aplicativo do WhatsApp direto.</p>
+    <div class="fones">
+      <div><p class="rot">Lista (já rolada até as pendências)</p><div id="t6a"></div></div>
+      <div><p class="rot">Prévia aberta</p><div id="t6b"></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+var HOJE='2026-09-21', ONTEM='2026-09-20';
+
+var PESSOAS={
+  ROBERTA:{nome:'Roberta Lima',area:'Compras'},
+  YURI:{nome:'Yuri Nascimento',area:'Obras'},
+  AMANDA:{nome:'Amanda Ribeiro',area:'Obras'},
+  LUANA:{nome:'Luana Prado',area:'Obras'}
+};
+var ARTIGO={AMANDA:'a',LUANA:'a',YURI:'o'};
+var PRIMEIRO={AMANDA:'Amanda',LUANA:'Luana',YURI:'Yuri'};
+var OBRAS={
+  o1:{id:'o1',os:'4312',loja:'DP ITABORAI',pcm:'AMANDA',equipe:'MANFAC-19'},
+  o2:{id:'o2',os:'4298',loja:'DP CATETE 5',pcm:'AMANDA',equipe:'MANFAC-19'},
+  o3:{id:'o3',os:'4331',loja:'DP RECREIO 10',pcm:'LUANA',equipe:'ALEX'},
+  o4:{id:'o4',os:'4275',loja:'DP LEBLON 6',pcm:'YURI',equipe:'MANFAC-07'}
+};
+var RESPONSAVEIS=['AMANDA','LUANA','YURI'];
+
+function T(id,obra,item,dono,aberta,hora,prazo,registrou,extra){
+  var t={id:id,obra_id:obra,item:item,dono:dono,aberta:aberta,hora_aberta:hora,prazo:prazo,registrou:registrou,situacao:'aberta',resposta_em:null,resposta_hora:null,resumo:null};
+  if(extra) for(var k in extra) t[k]=extra[k];
+  return t;
+}
+function base(){
+  return [
+    T('t1','o1','Material','ROBERTA',ONTEM,'17:10',ONTEM,'AMANDA'),
+    T('t2','o2','Material','ROBERTA',HOJE,'09:15',HOJE,'AMANDA'),
+    T('t3','o1','Ferramenta','YURI',HOJE,'08:50',HOJE,'AMANDA'),
+    T('t4','o2','Equipe','YURI',ONTEM,'16:40',ONTEM,'AMANDA'),
+    T('t6','o3','Material','ROBERTA',HOJE,'10:05',HOJE,'LUANA'),
+    T('t8','o4','Equipe','YURI',HOJE,'09:40',HOJE,'YURI'),
+    T('t9','o4','Material','ROBERTA',HOJE,'09:41',HOJE,'YURI'),
+    T('t10','o2','Ferramenta','YURI','2026-09-19','15:20','2026-09-19','AMANDA',{situacao:'respondida',resposta_em:ONTEM,resposta_hora:'14:30',resumo:'furadeira de impacto levada da obra do Méier'})
+  ];
+}
+function comFoto(){
+  var l=base();
+  l.push(T('t5','o1','Foto','EQ_MANFAC19',HOJE,'09:20',HOJE,'AMANDA'));
+  l.push(T('t11','o2','Foto','EQ_MANFAC19',ONTEM,'18:02',ONTEM,'AMANDA'));
+  l.push(T('t7','o3','Foto','EQ_ALEX',ONTEM,'17:55',ONTEM,'LUANA'));
+  return l;
+}
+function semLuana(){
+  return base().map(function(t){
+    if(t.id==='t6'){t.situacao='respondida';t.resposta_em=HOJE;t.resposta_hora='11:20';t.resumo='cimento e argamassa entregues pela Leroy às 11h';}
+    return t;
+  });
+}
+
+/* ---------- regras copiadas de tipos.ts / _lista.tsx ---------- */
+function diasDesde(d,hoje){ if(!d) return null; return Math.round((Date.parse(hoje)-Date.parse(d))/864e5); }
+function sit(t,hoje){ if(t.situacao==='respondida') return 'respondida'; var d=diasDesde(t.prazo,hoje); return (d!==null&&d>0)?'vencida':'aberta'; }
+function diasNaMao(t,hoje){ return Math.max(0,diasDesde(t.aberta,hoje)||0); }
+function diasVencida(t,hoje){ return Math.max(0,diasDesde(t.prazo,hoje)||0); }
+function br(d){ var p=d.split('-'); return p[2]+'/'+p[1]; }
+function porDono(ts,hoje){
+  var m={},ordem=[];
+  ts.forEach(function(t){ if(sit(t,hoje)==='respondida') return; var k=t.dono||''; if(!m[k]){m[k]=[];ordem.push(k);} m[k].push(t); });
+  return ordem.map(function(k){return {chave:k,lista:m[k]};}).sort(function(a,b){return b.lista.length-a.lista.length;});
+}
+function ordenar(l,hoje){
+  return l.slice().sort(function(a,b){
+    var va=sit(a,hoje)==='vencida'?1:0, vb=sit(b,hoje)==='vencida'?1:0;
+    return (vb-va)||(diasNaMao(b,hoje)-diasNaMao(a,hoje));
+  });
+}
+function rotuloDono(chave,equipe){
+  var p=PESSOAS[chave]; if(p) return {nome:p.nome,area:p.area||'Obras'};
+  if(chave.indexOf('EQ_')===0) return {nome:equipe||'a equipe da obra',area:'Equipe em campo'};
+  return {nome:chave||'sem dono',area:'Obras'};
+}
+var COR={aberta:'#f05a28',vencida:'#ff4d6d',respondida:'#35c98a'};
+var ROTA=[
+  ['Material','Compras — Roberta','ver com quem registrou o que está faltando e comprar',false],
+  ['Ferramenta','Obras — Yuri','ver o que precisa ser feito com a ferramenta',false],
+  ['Equipe','Obras — Yuri','ver o que dá para remanejar de equipe',false],
+  ['Documento / ART','Obras — Yuri','providenciar o documento ou a ART com o engenheiro',true],
+  ['Outro','Obras — Yuri','ler o que foi registrado e dizer quem resolve',true]
+];
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function agora(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+
+/* ---------- a mensagem (base: feedback-04, texto do cliente) ---------- */
+function oQue(item){ return item==='Foto' ? 'a foto da evolução não veio' : 'faltou '+item.toLowerCase(); }
+function desde(t){
+  if(t.aberta===HOJE) return 'desde hoje';
+  if(t.aberta===ONTEM) return 'desde ontem ('+br(t.aberta)+')';
+  return 'desde '+br(t.aberta);
+}
+function destinatario(g){
+  var equipe=OBRAS[g.lista[0].obra_id].equipe;
+  if(g.chave.indexOf('EQ_')===0) return {saud:'Pessoal da equipe '+equipe, contato:'o encarregado ou o grupo da equipe '+equipe, curto:'equipe '+equipe, eqp:true};
+  var p=PESSOAS[g.chave]; var pn=p.nome.split(' ')[0];
+  return {saud:pn, contato:p.nome+(p.area==='Compras'?' (Compras)':''), curto:pn, eqp:false};
+}
+function mensagem(g,remetente){
+  var d=destinatario(g), linhas=ordenar(g.lista,HOJE);
+  var regs=[]; linhas.forEach(function(t){ if(regs.indexOf(t.registrou)<0) regs.push(t.registrou); });
+  var origem;
+  if(remetente && regs.length===1 && regs[0]===remetente) origem='registrei no diário';
+  else if(regs.length===1) origem=(ARTIGO[regs[0]]||'')+' '+(PRIMEIRO[regs[0]]||regs[0])+' registrou no diário';
+  else origem='foi registrado no diário';
+  origem=origem.trim();
+  var soMat=linhas.every(function(t){return t.item==='Material';});
+  var o='';
+  if(d.eqp) o+=d.saud+', olha aqui: '+origem+' que a foto da evolução não chegou nestas obras:\n\n';
+  else o+='Ó '+d.saud+', olha aqui: '+origem+' que '+(soMat?'está faltando material':'está faltando coisa')+' nestas obras:\n\n';
+  linhas.forEach(function(t){
+    var o2=OBRAS[t.obra_id], s=sit(t,HOJE), v='';
+    if(s==='vencida'){ var n=diasVencida(t,HOJE); v=' — o prazo venceu '+(n===1?'ontem':'há '+n+' dias'); }
+    o+='• '+o2.loja+' (OS '+o2.os+') — '+oQue(t.item)+', '+desde(t)+v+'\n';
+  });
+  o+='\n';
+  if(d.eqp) o+='Preciso que vocês mandem a foto da evolução de hoje e me respondam aqui até o final do dia.';
+  else if(soMat) o+='Preciso que cê veja '+(remetente&&regs.length===1&&regs[0]===remetente?'comigo':regs.length===1?(ARTIGO[regs[0]]==='a'?'com ela':'com ele'):'com quem registrou')+' o que está faltando e me responda aqui até o final do dia.';
+  else o+='Preciso que cê veja o que dá pra fazer em cada uma e me responda aqui até o final do dia.';
+  o+='\n\n— '+(remetente?PRIMEIRO[remetente]+', ':'')+'Controle de Obras Manfac';
+  return o;
+}
+
+var ICO_MSG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 20l1.2-4.4A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+var ICO_OK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+/* ---------- instâncias da tela ---------- */
+var INST={};
+function cria(id,cfg){
+  var s={id:id,estado:cfg.estado||'pend',larg:cfg.larg||'desk',visto:cfg.visto||'admin',filtro:cfg.filtro!==undefined?cfg.filtro:'AMANDA',
+    abertos:cfg.abertos||{},dialogo:cfg.dialogo||null,respondendo:{},resumos:{},altura:cfg.altura||null,so:cfg.so||'tudo',tarefas:null};
+  carrega(s); INST[id]=s; desenha(s); return s;
+}
+function carrega(s){
+  s.tarefas = s.estado==='foto'?comFoto(): s.estado==='vazio'?semLuana(): base();
+  if(s.estado==='vazio'){ s.filtro='LUANA'; }
+  if(s.estado==='aberto' && !s.abertos.ROBERTA) s.abertos={ROBERTA:'10:42'};
+  if(s.estado==='foto' && s.visto==='admin' && s.filtro==='') s.filtro='AMANDA';
+}
+function filtroEfetivo(s){ return s.visto==='admin'? s.filtro : s.visto; }
+function remetente(s){ return s.visto==='admin'? null : s.visto; }
+
+function desenha(s){
+  var el=document.getElementById(s.id);
+  var hh = s.altura ? 'height:'+s.altura+'px' : '';
+  var h='<div class="janela '+s.larg+'" style="'+(s.larg==='fone'&&!s.altura?'height:760px':'')+'">';
+  h+='<div class="cromo"><i></i><i></i><i></i><span>hub.manfac.com.br/obras/tarefas</span></div>';
+  var alt = s.larg==='fone' ? (s.altura||760)-32 : (s.altura?s.altura-30:null);
+  h+='<div class="rolagem" style="'+(alt?'height:'+alt+'px':'')+'">';
+  h+=tela(s);
+  h+='</div>';
+  if(s.dialogo) h+=dialogo(s);
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function tela(s){
+  var h='';
+  if(s.so==='tudo'){
+    h+='<div class="hub-h"><div class="l1"><a href="#" data-nada>← Voltar ao Hub</a><b>Controle de Obras</b></div>';
+    h+='<div class="abas"><span class="aba">Diário do dia</span><span class="aba on">Tarefas</span><span class="aba">Base de obras</span></div></div>';
+  }
+  h+='<div class="pg">';
+  if(s.estado==='erro'){
+    h+='<div class="erro"><h3>Não deu para carregar as tarefas</h3><p>A lista não chegou. <b>Nada do que já foi respondido foi perdido</b> — o que estava salvo continua salvo.</p><button class="btn-pri" data-act="retry">Tentar de novo</button></div>';
+    return h+'</div>';
+  }
+  var hoje=HOJE, todas=s.tarefas;
+  var f=filtroEfetivo(s);
+  var vis=todas.filter(function(t){ return !f || OBRAS[t.obra_id].pcm===f; });
+
+  if(s.so==='tudo'){
+    h+='<h1>Tarefas</h1><p class="sub">Toda falta registrada no diário vira tarefa com dono e prazo. Ninguém digita tarefa aqui: ela nasce no instante em que o analista salva a resposta do dia.</p>';
+  }
+  if(s.so==='tudo' || s.so==='filtro+grupos'){
+    h+='<div class="filtro novo">';
+    if(s.visto==='admin'){
+      h+='<label for="f-'+s.id+'">Responsável</label><select id="f-'+s.id+'" data-act="filtro"><option value="">Todos os responsáveis</option>';
+      RESPONSAVEIS.forEach(function(r){ h+='<option value="'+r+'"'+(r===s.filtro?' selected':'')+'>'+r+'</option>'; });
+      h+='</select><span class="nt">Você é administrador do hub — cada responsável vê só as pendências das obras dele.</span>';
+    } else {
+      h+='<label>Responsável</label><span class="fixo">'+s.visto+'</span><span class="nt">Você vê só as pendências das suas obras.</span>';
+    }
+    h+='</div>';
+  }
+  if(s.so==='tudo'){
+    var ab=todas.filter(function(t){return sit(t,hoje)!=='respondida';}).length;
+    var ve=todas.filter(function(t){return sit(t,hoje)==='vencida';}).length;
+    var dh=todas.filter(function(t){return t.aberta===hoje;}).length;
+    h+='<div class="kpis">';
+    h+='<div class="kpi"><div class="v" style="color:#f05a28">'+ab+'</div><div class="r">'+(ab===1?'tarefa aberta':'tarefas abertas')+' agora</div><div class="nt">em todas as obras</div></div>';
+    h+='<div class="kpi"><div class="v" style="color:#f4b73f">'+ve+'</div><div class="r">'+(ve===1?'passou do prazo':'passaram do prazo')+'</div><div class="nt">em todas as obras</div></div>';
+    h+='<div class="kpi"><div class="v">'+dh+'</div><div class="r">'+(dh===1?'falta virou tarefa hoje':'faltas viraram tarefa hoje')+'</div><div class="nt">em todas as obras</div></div>';
+    h+='</div>';
+    h+='<div style="margin-top:20px"><div class="box"><div class="box-h"><h3>A tarefa vai para</h3><span class="x">o tipo da falta decide o dono</span></div><div class="rota"><table><thead><tr><th>Faltou</th><th>A tarefa vai para</th><th>E a cobrança pede</th></tr></thead><tbody>';
+    ROTA.forEach(function(r){ h+='<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b>'+(r[3]?' <span class="pill">padrão nosso</span>':'')+'</td><td class="c">'+r[2]+'</td></tr>'; });
+    h+='<tr><td>Foto do dia</td><td><b>Equipe em campo — a equipe definida na obra</b> <span class="pill">padrão nosso</span></td><td class="c">mandar a foto da evolução de hoje</td></tr>';
+    h+='</tbody></table><p>A foto é a única falta cuja cobrança sai da Manfac e vai para a ponta — por isso ela não é uma opção do diário: é o anexo que não veio.</p></div></div>';
+    h+='<p class="s12" style="margin-top:8px"><b>Prazo padrão: até o fim do dia.</b> Falta registrada depois das 18h fica com o dia seguinte — se o prazo fosse sempre "hoje", a tarefa das 18h26 nasceria vencida no mesmo minuto. <b>Ferramenta e equipe vão para o Yuri mesmo quando a obra é de outro analista</b>, porque quem remaneja equipe e ferramenta entre obras é ele.</p></div>';
+  }
+  h+='<h2 class="t">Na mão de quem, e há quantos dias</h2><p class="s12">Agrupadas por quem tem que resolver. Vencida aparece em vermelho e em primeiro lugar — na v0 ela não escala sozinha para ninguém.</p>';
+
+  var grupos=porDono(vis,hoje);
+  if(s.so==='so-foto') grupos=grupos.filter(function(g){return g.chave.indexOf('EQ_')===0;});
+  if(s.so==='so-roberta') grupos=grupos.filter(function(g){return g.chave==='ROBERTA';});
+  if(!grupos.length){
+    if(f){
+      var nome=PESSOAS[f]?PESSOAS[f].nome.split(' ')[0]:f;
+      h+='<div style="margin-top:12px" class="vazio ok novo"><span class="ic">'+ICO_OK+'</span><b>Nenhuma cobrança hoje, '+esc(nome)+'.</b> Toda falta das suas obras já foi respondida.<small>Quando o diário registrar uma falta numa obra sua, ela aparece aqui com o botão de cobrar.</small></div>';
+    } else {
+      h+='<div style="margin-top:12px" class="vazio">Nenhuma tarefa aberta. Toda falta registrada já foi respondida.</div>';
+    }
+  } else {
+    h+='<div style="margin-top:12px;display:flex;flex-direction:column;gap:16px">';
+    grupos.forEach(function(g){
+      var eq=OBRAS[g.lista[0].obra_id].equipe;
+      var d=rotuloDono(g.chave,eq);
+      h+='<section class="box"><div class="box-h"><h3>'+esc(d.area)+' · '+esc(d.nome)+'</h3><span class="x">'+g.lista.length+' '+(g.lista.length===1?'tarefa':'tarefas')+'</span></div><div class="box-b">';
+      h+=faixaCobranca(s,g,f);
+      ordenar(g.lista,hoje).forEach(function(t){ h+=linha(s,t); });
+      h+='</div></section>';
+    });
+    h+='</div>';
+  }
+  if(s.so==='tudo'){
+    var resp=vis.filter(function(t){return sit(t,hoje)==='respondida';});
+    if(resp.length){
+      h+='<h2 class="t">Respondidas — a volta que fecha o ciclo</h2><div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">';
+      resp.forEach(function(t){ h+=linha(s,t); });
+      h+='</div>';
+    }
+  }
+  return h+'</div>';
+}
+
+function faixaCobranca(s,g,f){
+  // o próprio responsável não se cobra
+  if(f && g.chave===f){
+    return '<div class="eu novo">Estas estão com '+esc(PRIMEIRO[f]||f)+', que é o responsável destas obras — não há de quem cobrar pelo WhatsApp.</div>';
+  }
+  var d=destinatario(g), hora=s.abertos[g.chave];
+  if(hora){
+    return '<div class="cobra feito novo"><div class="ok">'+ICO_OK+'<div><b>Aberto no WhatsApp às '+hora+'</b> — registre a resposta quando ela chegar.</div></div>'+
+      '<div class="nota">O sistema só sabe que o botão foi clicado, não se a mensagem foi enviada. Este aviso some ao recarregar a página: nada é gravado.</div>'+
+      '<div class="acoes"><button class="btn-sec" data-act="abrir" data-g="'+g.chave+'">Cobrar de novo</button></div></div>';
+  }
+  var n=g.lista.length;
+  return '<div class="cobra novo"><span class="q">'+(n===1?'1 pendência':n+' pendências')+' numa mensagem só, com prazo até o fim do dia.</span>'+
+    '<button class="btn-pri" data-act="abrir" data-g="'+g.chave+'">'+ICO_MSG+'Cobrar '+esc(d.curto)+' no WhatsApp</button></div>';
+}
+
+function linha(s,t){
+  var hoje=HOJE, st=sit(t,hoje), o=OBRAS[t.obra_id], fim;
+  if(st==='respondida') fim='respondida em '+br(t.resposta_em)+(t.resposta_hora?' às '+t.resposta_hora:'')+(t.resumo?' — '+esc(t.resumo):'');
+  else if(st==='vencida'){ var d=diasVencida(t,hoje); fim='sem resposta há '+d+' '+(d===1?'dia':'dias'); }
+  else fim='esperando resposta';
+  var h='<div class="linha" style="border-left:3px solid '+COR[st]+'"><div class="top">';
+  h+='<span class="tt">'+(t.item==='Foto'?'Foto do dia':'Faltou '+t.item.toLowerCase())+'</span>';
+  h+='<a href="#" data-nada class="os">OS '+o.os+' · '+o.loja+'</a>';
+  h+='<span class="st" style="color:'+COR[st]+'">'+st+'</span></div>';
+  h+='<p class="meta">aberta em '+br(t.aberta)+(t.hora_aberta?' às '+t.hora_aberta:'')+' · prazo fim do dia '+(t.prazo?br(t.prazo):'—')+' · '+(st==='respondida'?'':'há '+diasNaMao(t,hoje)+' dia(s) na mão · ')+fim+'</p>';
+  if(st!=='respondida'){
+    if(s.respondendo[t.id]){
+      h+='<div class="resp"><input type="text" maxlength="160" placeholder="Em uma linha: o que foi resolvido" aria-label="Resumo da resposta" data-in="'+t.id+'" value="'+esc(s.resumos[t.id]||'')+'"><button class="btn-pri" data-act="salvar" data-t="'+t.id+'">Marcar como respondida</button></div>';
+    } else {
+      h+='<button class="btn-sec" data-act="responder" data-t="'+t.id+'">Marcar como respondida</button>';
+    }
+  }
+  return h+'</div>';
+}
+
+function dialogo(s){
+  var f=filtroEfetivo(s);
+  var vis=s.tarefas.filter(function(t){ return !f || OBRAS[t.obra_id].pcm===f; });
+  var g=porDono(vis,HOJE).filter(function(x){return x.chave===s.dialogo;})[0];
+  if(!g) return '';
+  var d=destinatario(g), txt=mensagem(g,remetente(s));
+  var url='https://wa.me/?text='+encodeURIComponent(txt);
+  var h='<div class="sobre" data-act="fechar-fundo"><div class="dlg" role="dialog" aria-modal="true" aria-label="Prévia da cobrança">';
+  h+='<h4>Cobrar '+esc(d.curto)+' no WhatsApp</h4><p class="sb">'+g.lista.length+' '+(g.lista.length===1?'pendência':'pendências')+' '+(f?'nas obras de '+esc(f):'em todas as obras')+'</p>';
+  h+='<div class="aviso"><b>O WhatsApp vai abrir sem destinatário.</b> Na sua agenda, escolha:<span class="quem">'+esc(d.contato)+'</span></div>';
+  h+='<div class="msg">'+esc(txt)+'</div>';
+  h+='<p class="pq">Dá para ajustar o texto no próprio WhatsApp antes de enviar.</p>';
+  h+='<div class="rod"><button class="btn-sec" data-act="fechar">Cancelar</button><a class="btn-pri" href="'+url+'" target="_blank" rel="noopener" data-act="enviar" data-g="'+g.chave+'">'+ICO_MSG+'Abrir WhatsApp</a></div>';
+  return h+'</div></div>';
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',function(e){
+  var a=e.target.closest('[data-nada]'); if(a){e.preventDefault();return;}
+  var el=e.target.closest('[data-act]'); if(!el) return;
+  var host=el.closest('[id]'); while(host && !INST[host.id]) host=host.parentElement && host.parentElement.closest('[id]');
+  if(!host) return; var s=INST[host.id], act=el.getAttribute('data-act');
+  if(act==='fechar-fundo'){ if(e.target!==el) return; s.dialogo=null; desenha(s); return; }
+  if(act==='abrir'){ s.dialogo=el.getAttribute('data-g'); desenha(s); return; }
+  if(act==='fechar'){ s.dialogo=null; desenha(s); return; }
+  if(act==='enviar'){ s.abertos[el.getAttribute('data-g')]=agora(); s.dialogo=null; setTimeout(function(){desenha(s);},0); return; }
+  if(act==='responder'){ s.respondendo[el.getAttribute('data-t')]=true; desenha(s); var i=document.querySelector('#'+s.id+' [data-in="'+el.getAttribute('data-t')+'"]'); if(i) i.focus(); return; }
+  if(act==='salvar'){
+    var id=el.getAttribute('data-t'), txt=(s.resumos[id]||'').trim();
+    if(!txt){ var inp=document.querySelector('#'+s.id+' [data-in="'+id+'"]'); if(inp){inp.focus();inp.placeholder='Escreva em uma linha o que foi resolvido.';} return; }
+    s.tarefas.forEach(function(t){ if(t.id===id){ t.situacao='respondida'; t.resposta_em=HOJE; t.resposta_hora=agora(); t.resumo=txt; } });
+    delete s.respondendo[id]; desenha(s); return;
+  }
+  if(act==='retry'){ s.estado='pend'; carrega(s); desenha(s); if(s.id==='t1') marcaBarra(); return; }
+});
+document.addEventListener('input',function(e){
+  var id=e.target.getAttribute && e.target.getAttribute('data-in'); if(!id) return;
+  var host=e.target.closest('.janela').parentElement; var s=INST[host.id]; if(s) s.resumos[id]=e.target.value;
+});
+document.addEventListener('change',function(e){
+  if(e.target.getAttribute('data-act')!=='filtro') return;
+  var s=INST[e.target.closest('.janela').parentElement.id]; s.filtro=e.target.value; s.dialogo=null; desenha(s);
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return; for(var k in INST){ if(INST[k].dialogo){ INST[k].dialogo=null; desenha(INST[k]); } }
+});
+
+/* ---------- barra do topo: controla a seção 1 ---------- */
+var principal={estado:'pend',larg:'desk',visto:'admin'};
+function marcaBarra(){
+  var s=INST.t1;
+  document.querySelectorAll('[data-estado]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-estado')===s.estado));});
+  document.querySelectorAll('[data-larg]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-larg')===s.larg));});
+  document.querySelectorAll('[data-visto]').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-visto')===s.visto));});
+}
+document.querySelectorAll('[data-estado]').forEach(function(b){ b.addEventListener('click',function(){
+  var s=INST.t1; s.estado=b.getAttribute('data-estado'); s.abertos={}; s.dialogo=null; s.respondendo={};
+  if(s.estado==='vazio' && s.visto!=='admin') s.visto='admin';
+  if(s.estado!=='vazio' && s.filtro==='LUANA') s.filtro='AMANDA';
+  carrega(s); desenha(s); marcaBarra();
+});});
+document.querySelectorAll('[data-larg]').forEach(function(b){ b.addEventListener('click',function(){ var s=INST.t1; s.larg=b.getAttribute('data-larg'); desenha(s); marcaBarra(); });});
+document.querySelectorAll('[data-visto]').forEach(function(b){ b.addEventListener('click',function(){
+  var s=INST.t1; s.visto=b.getAttribute('data-visto');
+  if(s.estado==='vazio' && s.visto!=='admin'){ s.estado='pend'; carrega(s); }
+  s.dialogo=null; desenha(s); marcaBarra();
+});});
+document.getElementById('destaque').addEventListener('change',function(e){ document.getElementById('doc').classList.toggle('destaque',e.target.checked); });
+
+/* ---------- as seções ---------- */
+cria('t1',{estado:'pend',larg:'desk',visto:'admin',filtro:'AMANDA',altura:1150});
+cria('t2',{estado:'pend',larg:'desk',visto:'AMANDA',so:'filtro+grupos',dialogo:'ROBERTA',altura:700});
+cria('t3',{estado:'aberto',larg:'desk',visto:'AMANDA',so:'so-roberta'});
+cria('t4',{estado:'foto',larg:'desk',visto:'AMANDA',so:'so-foto',dialogo:'EQ_MANFAC19',altura:600});
+cria('t5a',{estado:'vazio',larg:'desk',visto:'admin',so:'filtro+grupos'});
+cria('t5b',{estado:'erro',larg:'desk',visto:'admin',so:'filtro+grupos'});
+cria('t6a',{estado:'pend',larg:'fone',visto:'AMANDA',so:'filtro+grupos'});
+cria('t6b',{estado:'pend',larg:'fone',visto:'AMANDA',dialogo:'YURI'});
+})();
+</script>
+</body>
+</html>
