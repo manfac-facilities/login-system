@@ -41,7 +41,9 @@
 -- Contado hoje (21/09/2026, antes de rodar): 2 obras em pendFat com
 -- marco_exec_fim null. Confirme de novo com a SEÇÃO 1 antes de gravar — a
 -- contagem muda se alguém trocar etapa entre a escrita deste arquivo e a
--- aplicação.
+-- aplicação. A SEÇÃO 2 também confere isso sozinha (guarda dentro da
+-- transação, que ABORTA se a contagem não for exatamente 2) — a Seção 1 é
+-- para OLHAR antes; a guarda é para não gravar às cegas se ninguém olhou.
 -- ============================================================
 
 
@@ -125,6 +127,43 @@ begin
 end
 $$;
 
+-- Snapshot ANTES do update — é o MESMO filtro do update logo abaixo (a
+-- update usa `id in (select id from esta tabela)`, então os dois nunca
+-- divergem por edição futura de um dos dois). Serve para três coisas: (1) a
+-- guarda de contagem abaixo, que aborta se o número não bater com o que foi
+-- contado ao escrever este arquivo — não rodar às cegas se a base mudou
+-- nesse meio-tempo; (2) a verificação de depois do commit (Seção 3) comparar
+-- antes×depois de verdade, inclusive provar que marco_os_aprov não mudou;
+-- (3) documentação viva de quais obras este script tocou. `temporary`
+-- (sem `on commit drop`) sobrevive ao `commit;` abaixo — continua visível
+-- para a Seção 3 dentro da MESMA sessão do SQL Editor.
+create temporary table _marcos_backfill_antes as
+select o.id, o.os, o.etapa, o.desde_etapa, o.atualizacao,
+       o.marco_exec_fim, o.marco_relatorio, o.marco_fechou_os,
+       o.marco_liberou_fat, o.marco_faturou, o.marco_os_aprov
+from public.obras_obra o
+where o.etapa in ('relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado')
+  and o.marco_exec_fim is null;
+
+-- Guarda: aborta se a contagem não bater com o que foi visto ao escrever
+-- este script (21/09/2026, "Hoje são 2 obras em pendFat" — ver cabeçalho).
+-- Se a base mudou desde então (alguém trocou etapa de uma destas obras,
+-- ou entrou uma obra nova nesse estado), rodar sem olhar de novo não é
+-- seguro — pare e confira a SEÇÃO 1 antes de mudar o número aqui.
+-- Reaplicar este arquivo depois de rodado com sucesso também aborta aqui
+-- (a contagem cai para 0, porque o filtro não acha mais nenhuma obra
+-- pós-campo com marco_exec_fim null) — comportamento esperado, não bug.
+do $$
+declare
+  v_afetadas int;
+begin
+  select count(*) into v_afetadas from _marcos_backfill_antes;
+  if v_afetadas <> 2 then
+    raise exception 'preencher-marcos-retroativos: esperava 2 obras (contadas em 21/09/2026), achou %. Confira a SEÇÃO 1 antes de continuar — o número mudou desde a escrita deste script, e rodar às cegas sobre uma contagem diferente da esperada não é seguro.', v_afetadas;
+  end if;
+end
+$$;
+
 update public.obras_obra o set
   marco_exec_fim = coalesce(o.marco_exec_fim, coalesce(o.desde_etapa, o.atualizacao)),
 
@@ -164,32 +203,87 @@ update public.obras_obra o set
     else o.marco_faturou
   end
 
-where o.etapa in ('relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado')
-  and o.marco_exec_fim is null;
+where o.id in (select id from _marcos_backfill_antes);
 
 commit;
 
 -- ============================================================
--- SEÇÃO 3 — DEPOIS DE RODAR: confirma que não sobrou obra pós-campo com
--- marco_exec_fim null (a menos que desde_etapa E atualizacao sejam AMBOS
--- null — caso que este script não tem como resolver e precisa ser olhado à
--- mão) e que marco_os_aprov não mudou.
--- ============================================================
+-- SEÇÃO 3 — VERIFICAÇÃO, depois do commit, tudo só leitura. Mesmo padrão de
+-- sdd-sql-obras-motivos-remarcacao.sql §5: uma consulta só (o SQL Editor só
+-- mostra o resultado da ÚLTIMA instrução do batch), uma linha por
+-- invariante, com o esperado, o encontrado e OK / *** FALHOU ***.
 --
--- select count(*) as obras_pos_campo_ainda_sem_marco_exec_fim
---  from public.obras_obra o
---  where o.etapa in ('relatorio','aprovarOS','fecharOS','pendFat','faturado')
---    and o.marco_exec_fim is null;
---   -- espera 0 (ou, se não for 0, que cada uma tenha desde_etapa E
---   -- atualizacao null — conferir à mão antes de se preocupar)
---
--- select id, os, etapa, marco_exec_fim, marco_relatorio, marco_fechou_os,
---        marco_liberou_fat, marco_faturou, marco_os_aprov
---  from public.obras_obra
---  where etapa in ('relatorio','aprovarOS','fecharOS','pendFat','faturado')
---  order by etapa;
---   -- conferência visual: cada obra tem marco_exec_fim preenchido; os
---   -- marcos ANTERIORES à etapa atual também; o marco do passo ATUAL
---   -- (ex.: marco_liberou_fat numa obra em pendFat) continua null;
---   -- marco_os_aprov está EXATAMENTE como estava antes de rodar este script.
+-- ESPERADO: 6 linhas, todas com resultado = OK.
 -- ============================================================
+
+select n as "#", verificacao, esperado, encontrado,
+       case when encontrado = esperado then 'OK' else '*** FALHOU ***' end as resultado
+from (
+  select 1 as n,
+         'obras identificadas para o backfill (pos-campo, marco_exec_fim null, contadas antes do update)' as verificacao,
+         2 as esperado,
+         (select count(*) from _marcos_backfill_antes)::int as encontrado
+  union all
+  select 2,
+         'marco_exec_fim preenchido em toda afetada que tinha desde_etapa ou atualizacao para usar',
+         (select count(*) from _marcos_backfill_antes where not (desde_etapa is null and atualizacao is null))::int,
+         (select count(*) from public.obras_obra o join _marcos_backfill_antes b on b.id = o.id
+            where o.marco_exec_fim is not null)::int
+  union all
+  select 3,
+         'marco_os_aprov NAO mudou em nenhuma afetada (satelite da aprovacao, fora desta conta)',
+         0,
+         (select count(*) from public.obras_obra o join _marcos_backfill_antes b on b.id = o.id
+            where o.marco_os_aprov is distinct from b.marco_os_aprov)::int
+  union all
+  select 4,
+         'marco do PROPRIO passo atual continua null nas afetadas que NAO estao em faturado',
+         0,
+         (select count(*) from public.obras_obra o join _marcos_backfill_antes b on b.id = o.id
+            where o.etapa <> 'faturado'
+              and (
+                (o.etapa = 'relatorio' and o.marco_relatorio is not null)
+                or (o.etapa = 'fecharOS' and o.marco_fechou_os is not null)
+                or (o.etapa = 'pendFat' and o.marco_liberou_fat is not null)
+              ))::int
+  union all
+  select 5,
+         'marco_faturou preenchido nas afetadas que JA ESTAO em faturado (excecao da etapa terminal)',
+         (select count(*) from _marcos_backfill_antes where etapa = 'faturado')::int,
+         (select count(*) from public.obras_obra o join _marcos_backfill_antes b on b.id = o.id
+            where o.etapa = 'faturado' and o.marco_faturou is not null)::int
+  union all
+  select 6,
+         'nenhum marco ANTERIOR ao passo atual ficou null quando estava null e havia data para preencher',
+         0,
+         (select count(*) from public.obras_obra o join _marcos_backfill_antes b on b.id = o.id
+            where not (b.desde_etapa is null and b.atualizacao is null)
+              and (
+                ((case b.etapa when 'relatorio' then 4 when 'aprovarOS' then 5 when 'fecharOS' then 6
+                                when 'pendFat' then 7 when 'faturado' then 8 else -1 end) > 4
+                  and b.marco_relatorio is null and o.marco_relatorio is null)
+                or
+                ((case b.etapa when 'relatorio' then 4 when 'aprovarOS' then 5 when 'fecharOS' then 6
+                                when 'pendFat' then 7 when 'faturado' then 8 else -1 end) > 6
+                  and b.marco_fechou_os is null and o.marco_fechou_os is null)
+                or
+                ((case b.etapa when 'relatorio' then 4 when 'aprovarOS' then 5 when 'fecharOS' then 6
+                                when 'pendFat' then 7 when 'faturado' then 8 else -1 end) > 7
+                  and b.marco_liberou_fat is null and o.marco_liberou_fat is null)
+              ))::int
+) x
+order by n;
+
+-- Conferência visual complementar, se alguma linha acima der FALHOU (rodar
+-- separado, não faz parte do batch principal):
+--
+-- select b.id, b.os, b.etapa,
+--        b.marco_exec_fim as exec_fim_antes, o.marco_exec_fim as exec_fim_depois,
+--        b.marco_relatorio as relatorio_antes, o.marco_relatorio as relatorio_depois,
+--        b.marco_fechou_os as fechou_os_antes, o.marco_fechou_os as fechou_os_depois,
+--        b.marco_liberou_fat as liberou_fat_antes, o.marco_liberou_fat as liberou_fat_depois,
+--        b.marco_faturou as faturou_antes, o.marco_faturou as faturou_depois,
+--        b.marco_os_aprov as os_aprov_antes, o.marco_os_aprov as os_aprov_depois
+--  from _marcos_backfill_antes b
+--  join public.obras_obra o on o.id = b.id
+--  order by b.etapa;
