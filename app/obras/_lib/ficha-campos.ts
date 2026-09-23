@@ -18,7 +18,7 @@
  * caixa e mandar o foco; a action usa a primeira mensagem como `{ error }`.
  */
 
-import { ORIGENS, PRIORIDADES, TIPOS_OBRA, BLOQUEIOS, SEM_BLOQUEIO, hojeISO } from './tipos'
+import { ORIGENS, PRIORIDADES, TIPOS_OBRA, BLOQUEIOS, SEM_BLOQUEIO, br, hojeISO } from './tipos'
 
 /** Erros por campo do rascunho. Ausente = campo sem problema. */
 export type Erros<T> = Partial<Record<keyof T, string>>
@@ -233,6 +233,29 @@ function erroData(valor: string, hoje: string, mensagemFuturo: string): string |
   if (!v) return undefined
   if (!ISO.test(v) || !dataDeCalendarioValida(v)) return MSG_DATA
   if (v > hoje) return mensagemFuturo
+  return undefined
+}
+
+/**
+ * Data de fechamento da OS (ajuste 2 de 23/09, spec-ajustes-ficha §5.2).
+ * A MESMA função valida o campo do seletor de etapa, o "corrigir data" e as
+ * duas Server Actions. Referência mínima = a MAIOR das datas não nulas entre
+ * relatório e aprovação (empate: aprovação).
+ */
+export function validarDataFechamentoOS(
+  data: string,
+  ctx: { hoje: string; relatorio: string | null; aprovacao: string | null }
+): string | undefined {
+  const v = data.trim()
+  if (!v) return 'Informe a data de fechamento da OS.'
+  if (!ISO.test(v) || !dataDeCalendarioValida(v)) return MSG_DATA
+  if (v > ctx.hoje) return 'A data não pode ser posterior a hoje.'
+  const { relatorio, aprovacao } = ctx
+  if (aprovacao && (!relatorio || aprovacao >= relatorio)) {
+    if (v < aprovacao) return `A data não pode ser anterior à aprovação da OS (${br(aprovacao)}).`
+  } else if (relatorio && v < relatorio) {
+    return `A data não pode ser anterior ao relatório de entrega (${br(relatorio)}).`
+  }
   return undefined
 }
 

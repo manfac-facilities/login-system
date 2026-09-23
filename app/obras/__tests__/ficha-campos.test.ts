@@ -22,6 +22,7 @@ import {
   precisaRemarcar,
   validarAutorizacao,
   validarCronograma,
+  validarDataFechamentoOS,
   validarIdentificacao,
   type DadosAutorizacao,
   type DadosCronograma,
@@ -382,5 +383,41 @@ describe('constantes novas de tipos.ts', () => {
     expect(entradaDaObra({ created_at: '2026-09-11T02:30:00Z' })).toBe('2026-09-10')
     expect(entradaDaObra({ created_at: '2026-09-10T15:00:00Z' })).toBe('2026-09-10')
     expect(entradaDaObra({ created_at: '' })).toBeNull()
+  })
+})
+
+describe('validarDataFechamentoOS', () => {
+  const HOJE_F = '2026-09-22'
+  const CTX = { hoje: HOJE_F, relatorio: '2026-09-18', aprovacao: '2026-09-20' }
+
+  it('vazio pede a data', () => {
+    expect(validarDataFechamentoOS('', CTX)).toBe('Informe a data de fechamento da OS.')
+    expect(validarDataFechamentoOS('   ', CTX)).toBe('Informe a data de fechamento da OS.')
+  })
+  it('data que não existe no calendário é inválida', () => {
+    expect(validarDataFechamentoOS('2026-02-30', CTX)).toBe('Data inválida.')
+  })
+  it('recusa data futura', () => {
+    expect(validarDataFechamentoOS('2026-09-23', CTX)).toBe('A data não pode ser posterior a hoje.')
+  })
+  it('aceita hoje e a própria data de referência', () => {
+    expect(validarDataFechamentoOS(HOJE_F, CTX)).toBeUndefined()
+    expect(validarDataFechamentoOS('2026-09-20', CTX)).toBeUndefined()
+  })
+  it('caminho com desvio: a referência é a aprovação (a maior das duas)', () => {
+    expect(validarDataFechamentoOS('2026-09-19', CTX)).toBe(
+      'A data não pode ser anterior à aprovação da OS (20/09/2026).'
+    )
+  })
+  it('caminho direto: OS aprovada antes do relatório — a referência é o relatório', () => {
+    const direto = { hoje: HOJE_F, relatorio: '2026-09-18', aprovacao: '2026-09-14' }
+    expect(validarDataFechamentoOS('2026-09-15', direto)).toBe(
+      'A data não pode ser anterior ao relatório de entrega (18/09/2026).'
+    )
+  })
+  it('sem relatório nem aprovação, só a recusa de futuro vale', () => {
+    const vazio = { hoje: HOJE_F, relatorio: null, aprovacao: null }
+    expect(validarDataFechamentoOS('2020-01-01', vazio)).toBeUndefined()
+    expect(validarDataFechamentoOS('2026-09-23', vazio)).toBe('A data não pode ser posterior a hoje.')
   })
 })
