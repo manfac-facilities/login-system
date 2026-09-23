@@ -167,3 +167,10 @@ Um e-mail por destinatário (`hub_system_access` do slug `obras` + administrador
 **Ordem recomendada:** resolver 5 → deployar 1 e 2 → só então inserir e publicar → resolver 3 e 4
 antes do Passo 4 (a faixa pode subir antes do e-mail funcionar, o e-mail não pode sair antes da
 faixa — `erroDePublicacao`, `scripts/enviar-comunicado.mjs:74-79`, já trava isso no script).
+
+## Publicado — 23/09/2026 19:52 UTC
+
+Autorizado pelo João ("pode publicar o novidade"), depois do deploy de 23/09 19:38 UTC. Inserido já
+com `publicado_em = now()` pela Management API (projeto `iyytcavcgukfjnjjrerx`), id
+`0d0c7548-eb52-49a6-b218-0dd01dd864c2`, corpo conferido após gravar (3 linhas). E-mail **não
+enviado**: falta Resend + DNS + `.resend-key`.
