@@ -10,3 +10,12 @@ Transcrição literal, colada no chat:
 > (0:28) Ou seja, aí a gente precisa avisar eles. (0:33) Senão eles não vão entrar lá, obra a obra,
 > para ficar vendo. (0:37) E, não, agora dá para escrever, deixa eu atualizar tudo aqui, entendeu?
 > (0:41) Tem que ter algum tipo de comunicado quando saírem as atualizações de novas features.
+
+## Decisões do João, 22/09 (respostas a perguntas do Claude)
+
+- **Canal:** aviso dentro do hub + e-mail.
+- **E-mail:** Resend (o hub não tinha nenhum envio de e-mail até aqui; zona DNS na Locaweb).
+- **Quem escreve:** resposta literal — "voce escreve, eu aprovo - deve existir um filtro sobre qual
+  notificaçao mandar, tem detalhes que corrigimos que nao precisam saber - eles so precisamsaber
+  para atualizar o que nao foi feito por falta de recurso dos sistema".
+- **Quem recebe:** só quem tem acesso ao sistema atualizado (slug em `hub_system_access`).
