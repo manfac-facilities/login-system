@@ -29,11 +29,20 @@ titulo:
 Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS
 
 corpo (linha 1):
-Equipe/prestador agora aceita texto livre. Revise as obras marcadas "Prestador a contratar" e preencha quem vai executar — no cadastro da obra e no Cronograma.
+Equipe/prestador agora aceita texto livre, no cadastro da obra e no Cronograma.
 
 corpo (linha 2):
 Ao concluir "Fechar OS", informe a data real de fechamento da OS (vem preenchida com hoje; dá para corrigir depois). Para obras que já passaram por "Fechar OS" com a data errada, use "corrigir data" no mesmo passo da ficha.
+
+corpo (linha 3):
+A etapa "Pendente fechamento" agora se chama "Executado - pendente aprovação OS".
 ```
+
+**Revisado pelo João em 23/09:** (1) saiu a frase "Revise as obras marcadas 'Prestador a contratar'
+e preencha quem vai executar" — era tarefa que ninguém pediu ("não faça nada que não pedimos");
+(2) entrou a linha 3, do nome novo da etapa — a confusão do cliente ("Fechar OS é pulado") veio do
+nome antigo. As seções 2 e 3 abaixo refletem esta versão; a tabela da seção 2 guarda a análise
+original do redator com as duas correções marcadas.
 
 ### Como isso renderiza (automático, não é texto separado)
 
@@ -41,12 +50,12 @@ Ao concluir "Fechar OS", informe a data real de fechamento da OS (vem preenchida
 clicar "ver o que mudou":
 
 > 🔔 **Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS** `novidade`
-> Equipe/prestador agora aceita texto livre. Revise as obras marcadas "Prestador a contratar" e
-> preencha quem vai executar — no cadastro da obra e no Cronograma.
+> Equipe/prestador agora aceita texto livre, no cadastro da obra e no Cronograma.
 > [ver o que mudou] [Entendi]
 > *(expandido)* • Ao concluir "Fechar OS", informe a data real de fechamento da OS (vem
 > preenchida com hoje; dá para corrigir depois). Para obras que já passaram por "Fechar OS" com a
 > data errada, use "corrigir data" no mesmo passo da ficha.
+> • A etapa "Pendente fechamento" agora se chama "Executado - pendente aprovação OS".
 
 **E-mail** (`scripts/enviar-comunicado.mjs:53-71`) — assunto = `titulo`; corpo = **as duas linhas
 como itens de lista** (a 1 também vira `<li>`, o script não separa curto/detalhe como a faixa) +
@@ -55,11 +64,11 @@ botão + rodapé:
 > De: Controle de Obras \<avisos@manfac.com.br>
 > Assunto: Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS
 >
-> • Equipe/prestador agora aceita texto livre. Revise as obras marcadas "Prestador a contratar" e
->   preencha quem vai executar — no cadastro da obra e no Cronograma.
+> • Equipe/prestador agora aceita texto livre, no cadastro da obra e no Cronograma.
 > • Ao concluir "Fechar OS", informe a data real de fechamento da OS (vem preenchida com hoje; dá
 >   para corrigir depois). Para obras que já passaram por "Fechar OS" com a data errada, use
 >   "corrigir data" no mesmo passo da ficha.
+> • A etapa "Pendente fechamento" agora se chama "Executado - pendente aprovação OS".
 >
 > [Abrir o Controle de Obras]
 > Você recebeu este e-mail porque tem acesso ao Controle de Obras no Hub Manfac.
@@ -76,9 +85,9 @@ Os três ajustes da spec (`spec-ajustes-ficha-2026-09-23.md`, seção 2.1):
 
 | Item da spec | No comunicado? | Por quê |
 |---|---|---|
-| **A7 — equipe/prestador em texto livre** | **Entra** (linha 1) | Antes só dava para escolher de uma lista fechada; quem não estava na lista virava "Prestador a contratar" para sempre. Agora dá para digitar — a equipe **precisa agir**: revisar as obras já marcadas assim e preencher. |
+| **A7 — equipe/prestador em texto livre** | **Entra** (linha 1) | Antes só dava para escolher de uma lista fechada; quem não estava na lista virava "Prestador a contratar" para sempre. Agora dá para digitar. **Correção do João (23/09): sem o pedido de revisar as obras já marcadas — ninguém pediu essa tarefa.** |
 | **A3/A4/A5 — data de fechamento da OS informável e corrigível** | **Entra** (linha 2) | Antes não existia campo: o sistema gravava "hoje" sem chance de mudar, mesmo quando a OS foi fechada no cliente em outro dia, e não havia como corrigir depois. Agora existe os dois — a equipe **precisa agir**: informar a data real ao mudar a etapa, e usar "corrigir data" nas obras que já passaram com data errada. |
-| **A1 — renomear a etapa "Pendente fechamento" → "Executado - pendente aprovação OS"** | **Fica de fora** | É rótulo/clareza de tela (corrige a leitura errada de que "Fechar OS" é pulado), mas não é um dado que a equipe passa a poder registrar nem pede ação nenhuma. Mesmo padrão do mockup aprovado em 22/09 (`mockup-comunicado-atualizacoes-2026-09-22.html`), que já ilustrava este exato comunicado com só os dois itens acima. |
+| **A1 — renomear a etapa "Pendente fechamento" → "Executado - pendente aprovação OS"** | **Entra (linha 3), por decisão do João em 23/09** — o redator tinha deixado de fora | É rótulo/clareza de tela (corrige a leitura errada de que "Fechar OS" é pulado), mas não é um dado que a equipe passa a poder registrar nem pede ação nenhuma. Mesmo padrão do mockup aprovado em 22/09 (`mockup-comunicado-atualizacoes-2026-09-22.html`), que já ilustrava este exato comunicado com só os dois itens acima. |
 | **A2 — selo "sempre existe" e texto do caminho direto** | **Fica de fora** | Mesma razão do A1: reforça leitura da tela, não é ação nem dado novo. |
 | **A6 — estados Salvando/Salvo/Erro do seletor** | **Fica de fora** | Feedback de UI durante uma ação que já existe; não é capacidade nova. |
 | **Mensagens de validação (data futura, anterior ao relatório/aprovação)** | **Fica de fora como item próprio** | Detalhe de como o campo da linha 2 se comporta, não uma novidade separada — quem tentar uma data inválida vê o erro na hora, não precisa ser avisado antes. |
@@ -99,7 +108,7 @@ administração — spec, linha 11: "Nada de tela de administração"). Colunas 
 TOKEN=$(tr -d '\r\n' < /c/Users/joao-/.supabase-pat)
 curl -s -X POST "https://api.supabase.com/v1/projects/iyytcavcgukfjnjjrerx/database/query" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"query":"insert into public.hub_comunicados (sistema, titulo, corpo) values ('\''obras'\'', '\''Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS'\'', '\''Equipe/prestador agora aceita texto livre. Revise as obras marcadas \"Prestador a contratar\" e preencha quem vai executar — no cadastro da obra e no Cronograma.\nAo concluir \"Fechar OS\", informe a data real de fechamento da OS (vem preenchida com hoje; dá para corrigir depois). Para obras que já passaram por \"Fechar OS\" com a data errada, use \"corrigir data\" no mesmo passo da ficha.'\'') returning id;"}'
+  -d '{"query":"insert into public.hub_comunicados (sistema, titulo, corpo) values ('\''obras'\'', '\''Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS'\'', '\''Equipe/prestador agora aceita texto livre, no cadastro da obra e no Cronograma.\nAo concluir \"Fechar OS\", informe a data real de fechamento da OS (vem preenchida com hoje; dá para corrigir depois). Para obras que já passaram por \"Fechar OS\" com a data errada, use \"corrigir data\" no mesmo passo da ficha.\nA etapa \"Pendente fechamento\" agora se chama \"Executado - pendente aprovação OS\".'\'') returning id;"}'
 ```
 
 Guardar o `id` devolvido.
