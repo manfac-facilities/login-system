@@ -161,3 +161,28 @@ aperta o caminho crítico.
 5. **A relação entre "camada 4" e o "dashboard de saúde da operação"** (pedido novo de 22/09) não
    está escrita em nenhum documento — são tratados aqui como duas coisas diferentes por inferência
    (públicos diferentes: cliente-do-cliente vs. equipe interna), não por confirmação.
+
+---
+
+## 6. Até o sistema 100% pronto — estimativa nova (23/09), pedida pelo João
+
+"100% pronto" = as quatro camadas do cliente (31/08) + dashboard de saúde (22/09) + agentes. Todas as
+horas abaixo são **estimativa nova do coordenador**, sem documento de origem; régua: frentes
+parecidas já feitas (J4 5–8h de código; comunicado inteiro em ~1 dia).
+
+| Item | Horas | Espera de calendário | Por quê da estimativa |
+|---|---|---|---|
+| Tudo da seção 3 (até 28/09) | 21–30 h | código do EasyPanel | seção 3 |
+| Dashboard de saúde da operação (mockup → deploy) | 13–19 h | aprovação do mockup | lê dados que já existem; mockup 2–3h, spec+plano 2h, código 8–12h, review+deploy 1–2h |
+| Visão do dono da Pacheco (camada 4) | 20–30 h | resposta do cliente ao mockup de 18/09 | primeira tela para gente de fora: acesso externo + RLS (território de autenticação), página, e-mail de início/fim de obra (reusa o Resend) |
+| ↳ manutenção real vinda do Cockpit | +8–16 h | — | Cockpit é outro app, não integrado; sem isso a seção fica com dado de exemplo |
+| Agente de cobrança das tarefas (WhatsApp) | 20–30 h | verificação Meta via BSP: 2–3 semanas | pesquisa de 21/09; exige telefones cadastrados |
+| Agente de cobrança de fotos das equipes | 24–40 h | idem | conversa com a equipe/grupo e foto que volta para o diário; o próprio cliente disse que "precisa estudar mais" |
+| Telefones de equipes/prestadores (operação) | 2–4 h João | — | pré-requisito dos dois agentes |
+| "Pendente faturamento" dentro da esteira (adiado 22/09) | 2–4 h | decisão do João | mexe na esteira e no filtro da Base |
+| Dívidas que tocam dado de cliente (A1, A13, B5, B7) | 8–12 h | — | edição simultânea, escrita não atômica da etapa, marcos no auto-avanço, validação de data no servidor |
+| Dois contadores de SLA (A6) — **confirmar se já entraram** | 0–5 h | — | cortados em 18/09; ESTADO previa para 22–23/09, sem evidência de entrega |
+
+**Total para 100%:** ≈ 120–190 h de trabalho. Com as esperas (Meta 2–3 semanas, respostas do
+cliente), o realista é **4 a 6 semanas depois de 28/09**. O gargalo não é hora de código: é
+aprovação de mockup, resposta do cliente, deploy manual e a verificação da Meta.
