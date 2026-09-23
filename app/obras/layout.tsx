@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import FaixaComunicados from './_ui/faixa-comunicados'
 
 /**
  * Esqueleto do módulo Controle de Obras.
@@ -64,6 +65,7 @@ export default function ObrasLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
       </header>
+      <FaixaComunicados />
       <main>{children}</main>
     </div>
   )
