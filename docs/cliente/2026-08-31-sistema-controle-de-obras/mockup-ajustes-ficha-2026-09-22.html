@@ -1,0 +1,600 @@
+<title>Controle de Obras — ajustes da ficha (22/09)</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:980px;margin:0 auto;padding-block:22px 90px;padding-inline:16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  h1.titulo{font-size:21px;margin:0 0 6px;letter-spacing:-.015em}
+  .topo{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin-bottom:26px}
+  .topo p{margin:0 0 8px;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .topo ul{margin:0;padding-left:18px;color:var(--ink-dim);font-size:13px}
+  .topo b{color:var(--ink)}
+  .topo li{margin-bottom:3px}
+
+  .sec{border-top:1px solid var(--line);padding-top:22px;margin-top:18px}
+  .sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:var(--r-sm);padding:3px 9px}
+  .sec-h h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:13px;max-width:78ch}
+
+  .recon{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:11px 14px;margin:0 0 14px}
+  .recon .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;display:block;margin-bottom:5px}
+  .recon ul{margin:0;padding-left:18px;color:var(--ink-dim);font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+  .recon b{color:var(--ink)}
+  .recon code{font-family:var(--mono);font-size:11.5px;color:var(--info);background:rgba(90,169,240,.1);border-radius:3px;padding:0 3px}
+
+  .estados{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 14px;padding:4px;border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.18)}
+  .estados .lbl{margin:0 6px 0 4px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .estados button{background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:5px 11px;color:var(--ink-dim);font-size:12.5px}
+  .estados button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .estados button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:var(--line)}
+
+  .novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px}
+  .box-h .dir{margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-faint)}
+  .box-b{padding:13px 14px}
+  .head{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+  .head h3{margin:0;font-size:15.5px;letter-spacing:-.01em}
+  .head .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line);color:var(--ink-dim)}
+  .pill.ok{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .pill.info{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.crit{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.35)}
+
+  .dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12.5px;margin:0}
+  .dl dt{color:var(--ink-faint);font-size:11px;padding-top:1px}
+  .dl dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+
+  /* ---------- esteira ---------- */
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .passo:last-child{border-bottom:0}
+  .passo .dot{margin-top:5px;width:11px;height:11px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.45}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1;box-shadow:0 0 0 4px var(--accent-soft)}
+  .passo.pulado .dot{background:transparent;border:2px dashed var(--ink-faint);opacity:1}
+  .passo .corpo{flex:1;min-width:0}
+  .passo .nm{font-weight:650;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.pulado .nm{color:var(--ink-faint)}
+  .passo .meta{font-size:11.5px;color:var(--ink-dim);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:1px}
+  .passo .quando{flex:none;font-size:12px;text-align:right;white-space:nowrap}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.pulado .quando,.passo.futuro .quando{color:var(--ink-faint)}
+  .passo .extra{margin-top:7px;font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .passo .extra b{color:var(--ink)}
+  .aqui{border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 8px}
+  .desvio{border:1px solid var(--line);border-radius:4px;font-size:10px;color:var(--ink-dim);padding:0 5px;font-weight:500}
+  .sempre{border-radius:99px;background:var(--ok-soft);color:var(--ok);border:1px solid rgba(53,201,138,.4);font-size:10px;font-weight:700;padding:1px 8px}
+
+  /* ---------- formulário / campo ---------- */
+  .campo{display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:10px 11px;min-width:0}
+  .campo .rot{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink)}
+  .campo .dica{font-size:11.5px;color:var(--ink-faint)}
+  .campo.invalido{border-color:rgba(255,77,109,.6)}
+  .campo.valido{border-color:rgba(53,201,138,.5)}
+  .msg-erro{font-size:12px;color:var(--crit);font-weight:600}
+  .msg-ok{font-size:12px;color:var(--ok);font-weight:600}
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .in:disabled{opacity:.55}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:8px 15px;border-radius:var(--r-sm);font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.ghost:hover:not(:disabled){color:var(--ink);border-color:#2b4f7d}
+  .btn.mini{padding:3px 10px;font-size:11.5px}
+  .link{color:var(--accent);background:none;border:0;padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+  .acoes{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .corrige{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .corrige .in{width:auto}
+
+  .erro-box{border:1px solid rgba(255,77,109,.5);background:var(--crit-soft);border-left:4px solid var(--crit);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;font-size:12.5px;color:var(--ink-dim)}
+  .erro-box strong{display:block;color:var(--crit);font-size:13px;margin-bottom:3px}
+  .ok-box{border:1px solid rgba(53,201,138,.4);background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r-sm);padding:8px 12px;margin-top:10px;font-size:12.5px;color:var(--ink-dim);display:flex;align-items:center;gap:8px}
+  .ok-box b{color:var(--ok)}
+  .ok-ic{width:16px;height:16px;border-radius:50%;background:var(--ok);color:#04231a;flex:none;display:grid;place-items:center;font-size:10px;font-weight:800}
+
+  /* ---------- histórico ---------- */
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:112px 1fr;gap:4px 14px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px}
+  .hist li:last-child{border-bottom:0}
+  .hist .qd{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .hist .qd span{display:block;color:var(--ink-dim);font-family:var(--sans);font-weight:600}
+  .hist .mv{color:var(--ink-dim);min-width:0;overflow-wrap:anywhere}
+  .hist .mv b{color:var(--ink)}
+  .hist .antigo{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.5)}
+
+  /* ---------- autocomplete de equipe ---------- */
+  .autoc{position:relative}
+  .sugestoes{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:5;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-sm);max-height:190px;overflow:auto;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+  .sugestoes button{display:block;width:100%;text-align:left;background:none;border:0;padding:7px 10px;font-size:12.5px;color:var(--ink-dim)}
+  .sugestoes button:hover,.sugestoes button.ativa{background:var(--accent-soft);color:var(--ink)}
+  .sugestoes .vaz{padding:8px 10px;font-size:12px;color:var(--ink-faint)}
+  .sugestoes mark{background:none;color:var(--accent);font-weight:700}
+
+  /* ---------- janela ---------- */
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:0;max-width:520px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(3,8,18,.72)}
+  .dlg-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);font-weight:650;font-size:14px}
+  .dlg-b{padding:14px 16px;font-size:13px;color:var(--ink-dim);max-height:70vh;overflow:auto}
+  .dlg-b p{margin:0 0 10px}
+  .dlg-b b{color:var(--ink)}
+  .dlg-f{padding:0 16px 14px;display:flex;gap:10px;flex-wrap:wrap}
+
+  /* ---------- julgar ---------- */
+  .julgar{border:1px solid rgba(240,90,40,.4);background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:var(--r);padding:12px 15px;margin-top:16px}
+  .julgar .t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:6px}
+  .julgar ol{margin:0;padding-left:18px;color:var(--ink);font-size:13px;display:flex;flex-direction:column;gap:5px}
+
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+
+  @media (max-width:720px){.fgrid{grid-template-columns:1fr}}
+  @media (max-width:560px){
+    .passo{flex-wrap:wrap}
+    .passo .quando{width:100%;text-align:left;padding-left:23px}
+    .hist li{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;scroll-behavior:auto !important}}
+</style>
+
+<div class="pagina">
+<h1 class="titulo">Ficha da obra — os três ajustes do feedback de 22/09</h1>
+<div class="topo">
+  <p>Rascunho de tela para você aprovar antes do código — <b>quem vê direto no ar é o cliente</b> (decisão de 22/09). Cor, tipografia e espaçamento são os mesmos do mockup J4 v03 aprovado; não estão em julgamento. Hoje, nos exemplos, é <b>22/09/2026</b>. Dados de obras DPSP inventados, mas plausíveis.</p>
+  <ul>
+    <li><b>Seção 1</b> — nome novo da etapa de desvio, nos dois caminhos da esteira.</li>
+    <li><b>Seção 2</b> — data de fechamento da OS: editável ao concluir, corrigível depois, com os dois erros pedidos.</li>
+    <li><b>Seção 3</b> — equipe/prestador em texto livre com sugestão, nos dois lugares em que aparece.</li>
+  </ul>
+</div>
+
+<!-- ============================ SEÇÃO 1 ============================ -->
+<section class="sec" id="sec-1" aria-labelledby="h-1">
+  <div class="sec-h"><span class="tag">1</span><div>
+    <h2 id="h-1">Nome da etapa de desvio</h2>
+    <p>A etapa some do texto "Pendente fechamento" e passa a se chamar <b>"Executado - pendente aprovação OS"</b>, do jeito que a v2 do mockup J4 já tinha aprovado. "Fechar OS" continua existindo nos dois caminhos — é o passo que nunca é pulado.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>Hoje o nome gravado é <b>"Pendente fechamento"</b> (<code>app/obras/_lib/tipos.ts:165</code>). É provável que esse nome antigo tenha causado o susto do cliente.</li>
+      <li>A esteira <b>nunca pula "Fechar OS"</b>. O único desvio é a etapa <code>aprovarOS</code>, apagada apenas quando a OS já estava aprovada antes de a obra chegar nela (<code>_ficha.tsx:238</code>). Este mockup só troca o nome — a lógica do desvio não muda.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Ver os dois caminhos" data-sec="1">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="desvio" aria-pressed="true">Caminho com desvio (OS ainda não aprovada)</button>
+    <button type="button" data-est="direto" aria-pressed="false">Caminho direto (OS já aprovada, desvio apagado)</button>
+  </div>
+
+  <div class="box"><div class="box-h">Como a obra caminha<span class="dir" id="s1-sub">DP ITABORAI · OS 0926-011480</span></div>
+    <div class="box-b"><ol class="esteira" id="s1-esteira"></ol></div>
+  </div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>O nome "Executado - pendente aprovação OS" está claro para quem opera, ou prefere outro texto?</li>
+      <li>O selo <span class="sempre" style="vertical-align:1px">sempre existe</span> ao lado de "Fechar OS" resolve o receio do cliente, ou falta algo mais explícito?</li>
+      <li>No caminho direto, o texto do passo apagado ("não passa por esta etapa…") está claro o suficiente, ou precisa reforçar mais?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 2 ============================ -->
+<section class="sec" id="sec-2" aria-labelledby="h-2">
+  <div class="sec-h"><span class="tag">2</span><div>
+    <h2 id="h-2">Data de fechamento da OS</h2>
+    <p>Mesmo controle que já existe hoje — o <b>select "Mudar a etapa desta obra"</b>. Quando o destino escolhido é "Pendente faturamento" saindo de "Fechar OS", aparece abaixo do select o campo "Data de fechamento da OS", pré-preenchido com hoje e editável, e só então a mudança é confirmada. Depois de concluído, o passo "Fechar OS" na esteira mostra a data com a ação "corrigir data".</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>Hoje <code>marco_fechou_os</code> é gravado <b>automaticamente com a data de hoje</b> ao trocar a etapa para <code>fecharOS</code> (<code>_actions.ts</code>, <code>calcularMarcosDaEsteira</code>) — sem campo de data, sem edição depois.</li>
+      <li>Não existe botão "Concluir" por passo em produção: a troca de etapa é sempre este mesmo <code>&lt;select&gt;</code> genérico ("Mudar a etapa desta obra", <code>_etapa.tsx</code>) com o botão "Confirmar mudança". <b>Este mockup não inventa um controle novo</b> — a única peça nova é o campo de data condicional, que aparece só nesta transição específica (Fechar OS → Pendente faturamento).</li>
+      <li><code>obras_historico</code> já existe e já é usado para outros campos da ficha; usar o mesmo mecanismo para registrar a correção (quem, quando, de → para) não exige tabela nova.</li>
+    </ul>
+  </div>
+
+  <div class="box"><div class="box-h">Onde a obra está<span class="dir">passo atual: Fechar OS</span></div>
+    <div class="box-b">
+      <ol class="esteira">
+        <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div><div class="meta"><span>Equipe / responsável</span></div></div><span class="quando">18/09/2026</span></li>
+        <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Executado - pendente aprovação OS</div><div class="meta"><span>Cliente DPSP</span></div></div><span class="quando">20/09/2026</span></li>
+        <li class="passo atual"><span class="dot"></span><div class="corpo">
+          <div class="nm">Fechar OS<span class="aqui">a obra está aqui</span></div>
+          <div class="meta"><span>Responsável LUANA</span><span>Sistema do cliente</span></div>
+          <div class="extra">Parada aqui há <b>2 dias</b>. Mude a etapa no controle abaixo para avançar.</div>
+        </div><span class="quando">há 2 dias</span></li>
+        <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Pendente faturamento</div><div class="meta"><span>Cliente DPSP</span></div></div><span class="quando">—</span></li>
+        <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Faturado</div><div class="meta"><span>Financeiro Manfac</span></div></div><span class="quando">—</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="fgrid">
+    <div class="box"><div class="box-h">Mudar a etapa desta obra<span class="dir">controle que já existe hoje</span></div>
+      <div class="box-b">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label class="dica" for="s2-select-etapa" style="text-transform:uppercase;letter-spacing:.06em;font-size:11px;color:var(--ink-faint)">Mudar a etapa desta obra</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <select class="in" id="s2-select-etapa" style="max-width:260px">
+              <option value="definir">Aguardando definição</option>
+              <option value="levantamento">Levantamento</option>
+              <option value="andamento">Em andamento</option>
+              <option value="paralisado">Paralisado</option>
+              <option value="relatorio">Relatório de entrega</option>
+              <option value="aprovarOS">Executado - pendente aprovação OS</option>
+              <option value="fecharOS" selected>Fechar OS</option>
+              <option value="pendFat">Pendente faturamento</option>
+              <option value="faturado">Faturado</option>
+            </select>
+            <button type="button" class="btn" id="s2-confirmar-mudanca" disabled>Confirmar mudança</button>
+          </div>
+          <p class="dica" id="s2-select-texto">Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado quem mudou e quando.</p>
+          <div id="s2-campo-data-fechamento" hidden>
+            <div class="campo">
+              <label class="rot" for="s2-data-fechamento">Data de fechamento da OS<span class="novo">campo novo</span></label>
+              <input class="in" type="date" id="s2-data-fechamento" style="width:auto">
+              <span class="dica">Vem preenchida com hoje. Edite se a OS foi fechada no sistema do cliente em outro dia. É essa data que inicia os dias esperando o faturamento.</span>
+              <span class="msg-erro" id="s2-data-fechamento-erro"></span>
+            </div>
+          </div>
+          <div id="s2-select-resultado"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box"><div class="box-h">Fechar OS já concluído<span class="dir">outra obra, para mostrar a correção</span></div>
+      <div class="box-b">
+        <ol class="esteira">
+          <li class="passo feito" id="s2-passo-feito"><span class="dot"></span><div class="corpo">
+            <div class="nm">Fechar OS</div>
+            <div class="meta"><span>Responsável YURI</span><span>Sistema do cliente</span></div>
+            <div class="extra" id="s2-feito-extra">
+              Fechada no sistema do cliente em <b id="s2-feito-data-txt">19/09/2026</b>.
+              <button type="button" class="link" id="s2-abrir-corrigir">corrigir data</button>
+            </div>
+          </div><span class="quando" id="s2-feito-quando">19/09/2026</span></li>
+        </ol>
+        <p class="dl" style="margin-top:10px;font-size:11.5px;color:var(--ink-faint)">A correção fica no histórico: quem, quando, e a data de → para. Nada é sobrescrito sem rastro.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="lbl" style="margin:18px 0 6px">Estados de salvar (visivelmente diferentes)</p>
+  <div class="estados" role="group" aria-label="Ver estado de salvar" data-sec="2b">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="salvando" aria-pressed="false">Salvando</button>
+    <button type="button" data-est="salvo" aria-pressed="true">Salvo</button>
+    <button type="button" data-est="erro" aria-pressed="false">Erro ao salvar</button>
+  </div>
+  <div class="box"><div class="box-b" id="s2-demo-estado"></div></div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>O campo de data aparecendo só dentro do select existente (em vez de uma janela própria) é claro o suficiente, ou fica escondido demais dentro do controle genérico?</li>
+      <li>A mensagem de erro para data futura e para data anterior à aprovação/relatório está clara, ou precisa de outro texto?</li>
+      <li>"Corrigir data" abrindo edição inline (sem janela cheia) é suficiente, ou prefere sempre em janela?</li>
+      <li>O histórico de correção (quem, quando, de → para) aparece só no bloco Histórico da ficha, ou você quer um resumo também aqui no passo?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 3 ============================ -->
+<section class="sec" id="sec-3" aria-labelledby="h-3">
+  <div class="sec-h"><span class="tag">3</span><div>
+    <h2 id="h-3">Equipe / prestador em texto livre</h2>
+    <p>Troca o <code>&lt;select&gt;</code> fixo por um campo de texto com sugestões: as equipes já usadas aparecem enquanto digita, mas qualquer texto é aceito, sem erro. Nos dois lugares em que o campo existe hoje.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>Hoje é <code>&lt;select&gt;</code> fixo nos dois lugares, com a lista <code>EQUIPES_PISO</code> unida ao que já existe no banco (<code>page.tsx:48-67</code>), incluindo a opção <b>"Prestador a contratar"</b>.</li>
+      <li><code>obras_obra.equipe</code> já é coluna <code>text</code> no banco: texto livre <b>não exige migration</b>.</li>
+      <li>Aparece em <code>_triagem.tsx</code> (obra nova, campo 2 dos 5 obrigatórios) e em <code>_bloco-cronograma.tsx</code> (edição, bloco Cronograma).</li>
+    </ul>
+  </div>
+
+  <p class="lbl" style="margin:0 0 6px">Estado do campo</p>
+  <div class="estados" role="group" aria-label="Ver estado do campo de equipe" data-sec="3">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="vazio" aria-pressed="true">Vazio</button>
+    <button type="button" data-est="digitando" aria-pressed="false">Digitando, com sugestões</button>
+    <button type="button" data-est="novo" aria-pressed="false">Texto novo (aceito, sem erro)</button>
+    <button type="button" data-est="salvo" aria-pressed="false">Salvo</button>
+  </div>
+
+  <div class="fgrid">
+    <div class="box"><div class="box-h">Triagem de obra nova<span class="dir">DP ITABORAI</span></div>
+      <div class="box-b">
+        <div class="campo" id="s3-campo-tri">
+          <label class="rot" for="s3-in-tri">2 · Equipe / prestador</label>
+          <div class="autoc">
+            <input class="in" id="s3-in-tri" type="text" autocomplete="off" placeholder="Digite a equipe ou o prestador">
+            <div class="sugestoes" id="s3-sug-tri" hidden></div>
+          </div>
+          <span class="dica" id="s3-dica-tri">Comece a digitar para ver equipes já usadas. Qualquer texto é aceito.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="box"><div class="box-h">Bloco de cronograma<span class="dir">edição, obra já liberada</span></div>
+      <div class="box-b">
+        <div class="campo" id="s3-campo-cro">
+          <label class="rot" for="s3-in-cro">Equipe / prestador</label>
+          <div class="autoc">
+            <input class="in" id="s3-in-cro" type="text" autocomplete="off" placeholder="Digite a equipe ou o prestador">
+            <div class="sugestoes" id="s3-sug-cro" hidden></div>
+          </div>
+          <span class="dica" id="s3-dica-cro">Duração, equipe e prioridade mudam sem motivo. Fica no histórico quem salvou.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>As sugestões (lista real do código: MANFAC-4, MANFAC-6, MANFAC-7, MANFAC-19, MANFAC-26, MANFAC-27, ALEX, ALEXANDRE, ERLI / RICARDO, Prestador a contratar) continuam certas, ou a lista mudou desde 20/09?</li>
+      <li>"Prestador a contratar" continua fazendo sentido como sugestão em texto livre, ou isso agora é só texto comum, sem destaque?</li>
+      <li>Sem confirmação de nenhum tipo para texto novo (aceito direto, sem aviso) está certo, ou você quer algum aviso brando na primeira vez que o texto não bate com nenhuma sugestão?</li>
+    </ol>
+  </div>
+</section>
+
+<dialog id="dlg" aria-labelledby="dlg-h">
+  <div class="dlg-h" id="dlg-h"></div>
+  <div class="dlg-b" id="dlg-b"></div>
+  <div class="dlg-f" id="dlg-f"></div>
+</dialog>
+</div>
+
+<script>
+(function(){
+'use strict';
+const HOJE = '2026-09-22';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const br = iso => { if(!iso) return '—'; const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+
+/* ================= janela genérica ================= */
+function fecharDlg(){ const d = $('dlg'); if(d.close) d.close(); else d.removeAttribute('open'); }
+function abrirDlg(titulo, corpo, botoes){
+  const d = $('dlg');
+  $('dlg-h').textContent = titulo;
+  $('dlg-b').innerHTML = corpo;
+  const f = $('dlg-f');
+  f.innerHTML = '';
+  (botoes || []).forEach(b => {
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'btn' + (b.ghost ? ' ghost' : ''); el.id = b.id; el.textContent = b.t;
+    if(b.dis) el.disabled = true;
+    el.addEventListener('click', () => { if(b.fn) b.fn(); });
+    f.appendChild(el);
+    if(b.ghost) el.autofocus = true;
+  });
+  if(d.showModal){ if(d.open) d.close(); d.showModal(); } else d.setAttribute('open', '');
+}
+
+/* ================= seção 1 — nome do desvio ================= */
+const S1 = {
+  desvio: `
+    <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div><div class="meta"><span>Equipe / responsável</span><span>Field Control</span></div></div><span class="quando">18/09/2026</span></li>
+    <li class="passo atual"><span class="dot"></span><div class="corpo"><div class="nm">Executado - pendente aprovação OS<span class="novo">nome novo</span><span class="aqui">a obra está aqui</span></div><div class="meta"><span>Cliente DPSP</span><span>Sistema do cliente</span></div><div class="extra">Relatório pronto, OS não aprovada: quem destrava é o cliente. A execução foi liberada por <b>JUAN</b> em 15/09/2026.</div></div><span class="quando">há 4 dias</span></li>
+    <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Fechar OS<span class="sempre">sempre existe</span></div><div class="meta"><span>Responsável LUANA</span><span>Sistema do cliente</span></div></div><span class="quando">—</span></li>
+    <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Pendente faturamento</div><div class="meta"><span>Cliente DPSP</span></div></div><span class="quando">—</span></li>
+    <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Faturado</div><div class="meta"><span>Financeiro Manfac</span></div></div><span class="quando">—</span></li>`,
+  direto: `
+    <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div><div class="meta"><span>Equipe / responsável</span><span>Field Control</span></div></div><span class="quando">18/09/2026</span></li>
+    <li class="passo pulado"><span class="dot"></span><div class="corpo"><div class="nm">Executado - pendente aprovação OS<span class="desvio">desvio não usado</span></div><div class="meta"></div><div class="extra">A OS já estava aprovada no sistema do cliente (14/09/2026), então, com o relatório pronto, a obra vai <b>direto para Fechar OS</b>. Nenhuma data é inventada aqui.</div></div><span class="quando">não se aplica</span></li>
+    <li class="passo atual"><span class="dot"></span><div class="corpo"><div class="nm">Fechar OS<span class="sempre">sempre existe</span><span class="aqui">a obra está aqui</span></div><div class="meta"><span>Responsável LUANA</span><span>Sistema do cliente</span></div><div class="extra">Este passo <b>nunca é pulado</b>: é quando o analista de obras insere o relatório no sistema do cliente e finaliza a OS lá. Só depois é possível faturar.</div></div><span class="quando">há 1 dia</span></li>
+    <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Pendente faturamento</div><div class="meta"><span>Cliente DPSP</span></div></div><span class="quando">—</span></li>
+    <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Faturado</div><div class="meta"><span>Financeiro Manfac</span></div></div><span class="quando">—</span></li>`
+};
+function renderS1(est){
+  $('s1-esteira').innerHTML = S1[est];
+  $('s1-sub').textContent = est === 'desvio' ? 'DP ITABORAI · OS 0926-011480 · sem OS aprovada' : 'DP NITEROI ICARAI · OS 0826-010815 · OS já aprovada';
+}
+renderS1('desvio');
+
+/* ================= seção 2 — data de fechamento da OS ================= */
+const RELATORIO_S2 = '2026-09-18';
+const APROV_S2 = '2026-09-20';
+
+function validarDataFechamento(v){
+  if(!v) return 'Informe a data de fechamento da OS.';
+  if(v > HOJE) return 'A data não pode ser posterior a hoje.';
+  const referencia = APROV_S2 || RELATORIO_S2;
+  if(v < referencia) return `A data não pode ser anterior à aprovação da OS (${br(referencia)}).`;
+  return '';
+}
+
+/* ---- o mesmo select "Mudar a etapa desta obra" que já existe hoje (_etapa.tsx) ---- */
+const NOME_ETAPA_S2 = {
+  definir:'Aguardando definição', levantamento:'Levantamento', andamento:'Em andamento',
+  paralisado:'Paralisado', relatorio:'Relatório de entrega', aprovarOS:'Executado - pendente aprovação OS',
+  fecharOS:'Fechar OS', pendFat:'Pendente faturamento', faturado:'Faturado'
+};
+const ETAPA_ATUAL_S2 = 'fecharOS';
+let s2Data = HOJE;
+
+function precisaDataFechamento(escolhida){
+  return ETAPA_ATUAL_S2 === 'fecharOS' && escolhida === 'pendFat';
+}
+function renderSelectEtapa(){
+  const escolhida = $('s2-select-etapa').value;
+  const mudou = escolhida !== ETAPA_ATUAL_S2;
+  const precisaData = precisaDataFechamento(escolhida);
+  $('s2-select-texto').textContent = mudou
+    ? `A obra passa de "${NOME_ETAPA_S2[ETAPA_ATUAL_S2]}" para "${NOME_ETAPA_S2[escolhida]}" e o contador de dias parada nesta etapa recomeça hoje.`
+    : 'Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado quem mudou e quando.';
+  $('s2-campo-data-fechamento').hidden = !precisaData;
+  let erroData = '';
+  if(precisaData){
+    $('s2-data-fechamento').value = s2Data;
+    erroData = validarDataFechamento(s2Data);
+    $('s2-data-fechamento').closest('.campo').classList.toggle('invalido', !!erroData);
+    $('s2-data-fechamento-erro').textContent = erroData;
+  }
+  $('s2-confirmar-mudanca').disabled = !mudou || (precisaData && !!erroData);
+  return { mudou, precisaData };
+}
+$('s2-select-etapa').addEventListener('change', () => { s2Data = HOJE; renderSelectEtapa(); });
+$('s2-data-fechamento').addEventListener('input', e => { s2Data = e.target.value; renderSelectEtapa(); });
+$('s2-confirmar-mudanca').addEventListener('click', () => {
+  const { precisaData } = renderSelectEtapa();
+  $('s2-select-etapa').disabled = true;
+  $('s2-confirmar-mudanca').disabled = true;
+  $('s2-select-resultado').innerHTML = '<div class="acoes"><button type="button" class="btn" disabled>Salvando…</button><span class="dica">Não feche a página.</span></div>';
+  setTimeout(() => {
+    const msg = precisaData
+      ? `Etapa atualizada para "Pendente faturamento", com o fechamento da OS gravado em <b>${esc(br(s2Data))}</b>.`
+      : `Etapa atualizada para "${NOME_ETAPA_S2[$('s2-select-etapa').value]}".`;
+    $('s2-select-resultado').innerHTML = `<div class="ok-box"><span class="ok-ic">✓</span><span>${msg}</span></div>`;
+  }, 900);
+});
+renderSelectEtapa();
+
+/* ---- corrigir data de um passo já concluído ---- */
+let s2CorrigindoAberto = false;
+function abrirCorrigirData(){
+  if(s2CorrigindoAberto) return;
+  s2CorrigindoAberto = true;
+  const atual = $('s2-feito-data-txt').textContent;
+  $('s2-feito-extra').innerHTML = `
+    <div class="corrige">
+      <label class="dica" for="s2-corrigir-data">Data de fechamento da OS</label>
+      <input class="in" type="date" id="s2-corrigir-data" value="2026-09-19" max="${HOJE}">
+      <button type="button" class="btn mini" id="s2-corrigir-salvar">Salvar correção</button>
+      <button type="button" class="btn ghost mini" id="s2-corrigir-cancelar">Cancelar</button>
+    </div>
+    <div id="s2-corrigir-erro"></div>
+    <p class="dica" style="margin-top:6px">A correção entra no Histórico de alterações: quem corrigiu, quando, de <b>${esc(atual)}</b> para a nova data.</p>`;
+  $('s2-corrigir-cancelar').addEventListener('click', () => { s2CorrigindoAberto = false; renderPassoFecharOSConcluido('2026-09-19'); });
+  $('s2-corrigir-data').addEventListener('input', e => {
+    const v = e.target.value, erro = validarDataFechamento(v);
+    $('s2-corrigir-erro').innerHTML = erro ? `<span class="msg-erro" role="alert">${erro}</span>` : '';
+    $('s2-corrigir-salvar').disabled = !!erro;
+  });
+  $('s2-corrigir-salvar').addEventListener('click', () => {
+    const v = $('s2-corrigir-data').value;
+    if(validarDataFechamento(v)) return;
+    s2CorrigindoAberto = false;
+    renderPassoFecharOSConcluido(v, '2026-09-19');
+  });
+}
+function renderPassoFecharOSConcluido(data, corrigidaDe){
+  $('s2-feito-data-txt').textContent = br(data);
+  $('s2-feito-quando').textContent = br(data);
+  $('s2-feito-extra').innerHTML = `Fechada no sistema do cliente em <b id="s2-feito-data-txt">${esc(br(data))}</b>.
+    <button type="button" class="link" id="s2-abrir-corrigir">corrigir data</button>
+    ${corrigidaDe ? `<span class="msg-ok" style="display:block;margin-top:4px">Corrigido: de ${esc(br(corrigidaDe))} para ${esc(br(data))}. Fica no histórico.</span>` : ''}`;
+  $('s2-abrir-corrigir').addEventListener('click', abrirCorrigirData);
+}
+$('s2-abrir-corrigir').addEventListener('click', abrirCorrigirData);
+
+/* ---- vitrine de estados salvando/salvo/erro ---- */
+const S2_ESTADOS = {
+  salvando: `<div class="acoes"><button type="button" class="btn" disabled>Salvando…</button><span class="dica">Não feche a página.</span></div>`,
+  salvo: `<div class="ok-box"><span class="ok-ic">✓</span><span>Fechamento gravado em <b>22/09/2026</b>. A obra passa para Pendente faturamento.</span></div>`,
+  erro: `<div class="erro-box" role="alert"><strong>Não concluiu "Fechar OS"</strong>O sistema não confirmou, então <b>nada foi gravado</b>: a obra continua em Fechar OS, sem data nova.<div class="acoes"><button type="button" class="btn ghost mini">Tentar de novo</button></div></div>`
+};
+function renderS2Demo(est){ $('s2-demo-estado').innerHTML = S2_ESTADOS[est]; }
+renderS2Demo('salvo');
+
+/* ================= toggles genéricos (data-sec) ================= */
+document.querySelectorAll('.estados[data-sec]').forEach(grupo => {
+  grupo.addEventListener('click', e => {
+    const b = e.target.closest('button[data-est]');
+    if(!b) return;
+    grupo.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    const sec = grupo.dataset.sec, est = b.dataset.est;
+    if(sec === '1') renderS1(est);
+    if(sec === '2b') renderS2Demo(est);
+    if(sec === '3') renderS3Estado(est);
+  });
+});
+
+/* ================= seção 3 — equipe em texto livre ================= */
+const EQUIPES = ['MANFAC-4','MANFAC-6','MANFAC-7','MANFAC-19','MANFAC-26','MANFAC-27','ALEX','ALEXANDRE','ERLI / RICARDO','Prestador a contratar'];
+
+function marcarTrecho(nome, termo){
+  if(!termo) return esc(nome);
+  const i = nome.toLowerCase().indexOf(termo.toLowerCase());
+  if(i < 0) return esc(nome);
+  return esc(nome.slice(0, i)) + '<mark>' + esc(nome.slice(i, i + termo.length)) + '</mark>' + esc(nome.slice(i + termo.length));
+}
+function montarSugestoes(inputId, listaId){
+  const input = $(inputId), lista = $(listaId);
+  function render(){
+    const termo = input.value.trim();
+    if(!termo){ lista.hidden = true; lista.innerHTML = ''; return; }
+    const bat = EQUIPES.filter(e => e.toLowerCase().includes(termo.toLowerCase()));
+    if(!bat.length){
+      lista.innerHTML = '<div class="vaz">Nenhuma sugestão — o texto digitado é aceito do mesmo jeito.</div>';
+    } else {
+      lista.innerHTML = bat.map(e => `<button type="button">${marcarTrecho(e, termo)}</button>`).join('');
+      lista.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+        input.value = btn.textContent;
+        lista.hidden = true; lista.innerHTML = '';
+        input.dispatchEvent(new Event('change'));
+        input.focus();
+      }));
+    }
+    lista.hidden = false;
+  }
+  input.addEventListener('input', render);
+  input.addEventListener('focus', () => { if(input.value.trim()) render(); });
+  input.addEventListener('blur', () => setTimeout(() => { lista.hidden = true; }, 150));
+}
+montarSugestoes('s3-in-tri', 's3-sug-tri');
+montarSugestoes('s3-in-cro', 's3-sug-cro');
+
+function renderS3Estado(est){
+  [['s3-in-tri','s3-dica-tri','s3-campo-tri'], ['s3-in-cro','s3-dica-cro','s3-campo-cro']].forEach(([inId, dicaId, campoId]) => {
+    const input = $(inId), dica = $(dicaId), campo = $(campoId);
+    campo.classList.remove('valido');
+    input.disabled = false;
+    if(est === 'vazio'){
+      input.value = ''; dica.textContent = 'Comece a digitar para ver equipes já usadas. Qualquer texto é aceito.'; dica.style.color = '';
+    } else if(est === 'digitando'){
+      input.value = 'MA'; dica.textContent = 'Sugestões filtradas pelo que já foi digitado — ainda editável.'; dica.style.color = '';
+      input.dispatchEvent(new Event('focus'));
+    } else if(est === 'novo'){
+      input.value = 'GRUPO SERTAO MANUTENCAO'; dica.textContent = 'Texto novo, fora da lista — aceito sem erro.'; dica.style.color = 'var(--ok)';
+      campo.classList.add('valido');
+      $('s3-sug-' + inId.slice(6)).hidden = true;
+    } else if(est === 'salvo'){
+      input.value = 'MANFAC-7'; dica.textContent = 'Salvo. Editado por Você em 22/09/2026.'; dica.style.color = 'var(--ok)';
+      $('s3-sug-' + inId.slice(6)).hidden = true;
+    }
+  });
+}
+renderS3Estado('vazio');
+})();
+</script>
