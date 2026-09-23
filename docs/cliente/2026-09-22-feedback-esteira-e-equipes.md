@@ -30,3 +30,23 @@ esteira". O segundo pede campo de texto livre para equipe/prestador, em vez de l
 3. **Primeiro os ajustes da ficha** (item C em três partes + equipe/prestador como texto livre),
    que é o "operacional validado pelo time" da ordem do cliente. O mockup do dashboard de saúde da
    operação vem depois.
+
+## Decisões do João, 22/09, segunda rodada (respostas a perguntas do Claude)
+
+4. **"Trocar o status ainda na esteira para pendente faturamento": adiado.** Resposta literal:
+   "vamos resolver os outros pontos, essa nao é a mais relevante". Contexto levantado pelo Claude:
+   "Executadas, ainda na esteira" é o filtro/indicador da Base (`app/obras/base/_regras.ts:148,357`),
+   que junta relatório, aprovação OS, Fechar OS e Pendente faturamento.
+5. **Comunicado de atualização (áudio de 22/09): aviso dentro do hub + e-mail.**
+6. **Mockup dos ajustes da ficha: o João aprova; o cliente vê direto no ar.** Exceção pontual à
+   decisão de 18/09 (cliente aprova mockup), para caber no prazo de 28/09.
+
+**Fatos levantados pelo Claude sobre o item C (não são fala do cliente):**
+- O código **não pula "Fechar OS" em caso nenhum**. O único desvio é a etapa `aprovarOS`, pulada
+  quando a OS já estava aprovada (`app/obras/obra/[id]/_ficha.tsx:238`).
+- Essa etapa ainda aparece no hub como **"Pendente fechamento"** (`app/obras/_lib/tipos.ts:165`),
+  embora a versão 2 do mockup J4 a tenha renomeado para "Executado - pendente aprovação OS". É
+  provável que o nome antigo tenha causado a leitura de que "Fechar OS" é pulado.
+- Não existe data de fechamento editável: `marco_fechou_os` é gravado com a data de hoje ao
+  concluir Fechar OS. O histórico já aceita esse campo.
+- `obras_obra.equipe` já é `text` livre no banco: texto livre para equipe/prestador **não exige migration**.
