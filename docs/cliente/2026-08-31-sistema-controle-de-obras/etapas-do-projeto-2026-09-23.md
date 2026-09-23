@@ -173,9 +173,9 @@ parecidas já feitas (J4 5–8h de código; comunicado inteiro em ~1 dia).
 | Item | Horas | Espera de calendário | Por quê da estimativa |
 |---|---|---|---|
 | Tudo da seção 3 (até 28/09) | 21–30 h | código do EasyPanel | seção 3 |
+| **Notificador de novidades** (faixa no hub + e-mail): código pronto desde 22/09, sobe no deploy de 23/09; falta publicar o comunicado 01 (texto aprovado, c277356) depois do teste da equipe, e Resend + DNS + chave para o e-mail sair | ~1–2 h (João: Resend/DNS ~1 h; Claude: publicar ~15 min) | deploy de 23/09 + conta Resend | faixa não precisa de Resend; só o e-mail precisa |
 | Dashboard de saúde da operação (mockup → deploy) | 13–19 h | aprovação do mockup | lê dados que já existem; mockup 2–3h, spec+plano 2h, código 8–12h, review+deploy 1–2h |
 | Visão do dono da Pacheco (camada 4) | 20–30 h | resposta do cliente ao mockup de 18/09 | primeira tela para gente de fora: acesso externo + RLS (território de autenticação), página, e-mail de início/fim de obra (reusa o Resend) |
-| ↳ manutenção real vinda do Cockpit | +8–16 h | — | Cockpit é outro app, não integrado; sem isso a seção fica com dado de exemplo |
 | Agente de cobrança das tarefas (WhatsApp) | 20–30 h | verificação Meta via BSP: 2–3 semanas | pesquisa de 21/09; exige telefones cadastrados |
 | Agente de cobrança de fotos das equipes | 24–40 h | idem | conversa com a equipe/grupo e foto que volta para o diário; o próprio cliente disse que "precisa estudar mais" |
 | Telefones de equipes/prestadores (operação) | 2–4 h João | — | pré-requisito dos dois agentes |
@@ -183,6 +183,6 @@ parecidas já feitas (J4 5–8h de código; comunicado inteiro em ~1 dia).
 | Dívidas que tocam dado de cliente (A1, A13, B5, B7) | 8–12 h | — | edição simultânea, escrita não atômica da etapa, marcos no auto-avanço, validação de data no servidor |
 | Dois contadores de SLA (A6) — **confirmar se já entraram** | 0–5 h | — | cortados em 18/09; ESTADO previa para 22–23/09, sem evidência de entrega |
 
-**Total para 100%:** ≈ 120–190 h de trabalho. Com as esperas (Meta 2–3 semanas, respostas do
+**Total para 100%:** ≈ 110–175 h de trabalho (23/09: João tirou da lista a manutenção real vinda do Cockpit na visão da Pacheco). Com as esperas (Meta 2–3 semanas, respostas do
 cliente), o realista é **4 a 6 semanas depois de 28/09**. O gargalo não é hora de código: é
 aprovação de mockup, resposta do cliente, deploy manual e a verificação da Meta.
