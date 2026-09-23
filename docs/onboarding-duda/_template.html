@@ -217,244 +217,183 @@
 
   <p class="eyebrow">Manfac Facilities &middot; Hub</p>
   <h1>Frentes do Controle de Obras</h1>
-  <p class="sub">Quem faz o qu&ecirc;, por qu&ecirc;, e em que ordem. <b>Segunda vers&atilde;o desta
-  p&aacute;gina</b> &mdash; a primeira &eacute; de 10/09 e envelheceu em 24 horas. O sistema controla
-  obras de manuten&ccedil;&atilde;o em lojas de uma rede de farm&aacute;cias: a obra nasce como uma OS
-  no <b>Field Control</b>, a equipe da Manfac responde um di&aacute;rio todo dia, e o sistema acusa
-  quando uma obra para de andar. Esse &uacute;ltimo ponto &eacute; a raz&atilde;o do projeto existir
+  <p class="sub">Quem faz o qu&ecirc;, por qu&ecirc;, e em que ordem. <b>Terceira vers&atilde;o desta
+  p&aacute;gina, de 23/09</b> &mdash; a divis&atilde;o depois do feedback do cliente de 22/09. O sistema
+  controla obras de manuten&ccedil;&atilde;o em lojas de uma rede de farm&aacute;cias: a obra nasce como
+  uma OS no <b>Field Control</b>, a equipe da Manfac responde um di&aacute;rio todo dia, e o sistema
+  acusa quando uma obra para de andar. Esse &uacute;ltimo ponto &eacute; a raz&atilde;o do projeto existir
   &mdash; a obra que ficou <b>123 dias parada</b> sem ningu&eacute;m notar.</p>
 
   <div class="estado">
     <div class="est">
-      <p class="rot">C&oacute;digo do m&oacute;dulo</p>
-      <p class="v ok">Pronto</p>
-      <p class="d">41 arquivos, 8.052 linhas &mdash; mais 13 de teste, 3.813 linhas</p>
+      <p class="rot">Produ&ccedil;&atilde;o</p>
+      <p class="v ok">No ar, em uso</p>
+      <p class="d">Ficha edit&aacute;vel desde 20/09; ajustes da ficha no deploy de 23/09</p>
+    </div>
+    <div class="est">
+      <p class="rot">Sincroniza&ccedil;&atilde;o</p>
+      <p class="v ok">Rodando sozinha</p>
+      <p class="d">Incremental a cada 5 min e completa di&aacute;ria, com a chave real do Field</p>
     </div>
     <div class="est">
       <p class="rot">Testes</p>
-      <p class="v ok">294 / 294</p>
-      <p class="d">Todos com mock &mdash; nada tocou banco real ainda</p>
+      <p class="v ok">716 passando</p>
+      <p class="d">34 suites em <code>app/obras</code> &mdash; todos com mock</p>
     </div>
     <div class="est">
-      <p class="rot">Banco</p>
-      <p class="v ok">Migration aplicada</p>
-      <p class="d">5 tabelas <code>obras_*</code>, RLS e bucket em produ&ccedil;&atilde;o desde 10/09</p>
-    </div>
-    <div class="est">
-      <p class="rot">Obras cadastradas</p>
-      <p class="v no">0</p>
-      <p class="d">Est&aacute; no ar e vazio &mdash; de prop&oacute;sito, esperando a 1&ordf; OS do Field</p>
+      <p class="rot">Entrega final</p>
+      <p class="v no">28/09</p>
+      <p class="d">Falta validar o operacional com dado real &mdash; a D5</p>
     </div>
   </div>
 
   <div class="nota-ok">
-    <h3>O que saiu do papel ontem</h3>
-    <p>Em 24 horas o m&oacute;dulo deixou de ser c&oacute;digo parado: a migration entrou em
-    produ&ccedil;&atilde;o, 82 commits subiram, o deploy rodou e <code>/obras</code> responde. Junto
-    vieram duas frentes que estavam nesta p&aacute;gina como trabalho a fazer &mdash; o cliente da
-    API do Field (<code>_lib/field/</code>, 12 arquivos, 1.773 linhas) e a
-    sincroniza&ccedil;&atilde;o com o banco (<code>/obras/sincronizar</code>). As duas
-    est&atilde;o no <code>master</code>, revisadas e testadas.</p>
-    <p>Por isso esta p&aacute;gina foi refeita. A F1 que abria o trabalho do Duda n&atilde;o existe
-    mais como tarefa &mdash; e o que sobrou mudou de tamanho, porque mudou de onde o dado vem.</p>
+    <h3>O que o Duda j&aacute; entregou</h3>
+    <p><b>D1</b> (proced&ecirc;ncia da obra), <b>D2</b> e <b>D2.1</b> (a OS que some do Field vira
+    alerta, nunca exclus&atilde;o), <b>D3</b> (sincroniza&ccedil;&atilde;o que roda sozinha) e os
+    <b>7 ajustes de 21/09</b> (sincroniza&ccedil;&atilde;o, di&aacute;rio at&ocirc;mico, fotos) &mdash;
+    tudo mergeado e no ar. A D4 (smoke test) n&atilde;o teve entrega registrada: ela &eacute;
+    absorvida pela D5, que valida o mesmo caminho em produ&ccedil;&atilde;o, com dado real.</p>
   </div>
 
   <section>
     <div class="rule"><span class="n">01</span><span class="l"></span></div>
     <h2>Como o trabalho foi dividido</h2>
-    <p class="h2sub">O crit&eacute;rio n&atilde;o &eacute; tamanho de tarefa. S&atilde;o tr&ecirc;s coisas, nesta ordem de peso.</p>
+    <p class="h2sub">Os mesmos crit&eacute;rios de 11/09 e 20/09. N&atilde;o &eacute; tamanho de tarefa.</p>
     <div class="criterios">
       <div class="crit">
-        <p class="k">1 &middot; Credencial</p>
-        <p>O que <b>s&oacute; uma pessoa consegue executar</b> n&atilde;o &eacute; divis&iacute;vel. Supabase,
-        deploy no EasyPanel e a chave da API do Field est&atilde;o atr&aacute;s de credencial do
-        Jo&atilde;o. O push, esse, deixou de ser barreira em 10/09.</p>
+        <p class="k">1 &middot; Credencial e cliente</p>
+        <p>O que depende de <b>credencial</b> (Supabase, deploy, Resend, DNS) ou de
+        <b>conversa com o cliente</b> fica com o Jo&atilde;o.</p>
       </div>
       <div class="crit">
-        <p class="k">2 &middot; Canal com o cliente</p>
-        <p>Frente que depende de <b>decis&atilde;o do cliente</b> fica com quem fala com ele. H&aacute;
-        quatro perguntas em aberto agora, e todas mudam c&oacute;digo.</p>
+        <p class="k">2 &middot; Sobreposi&ccedil;&atilde;o de arquivo</p>
+        <p>Duas frentes que <b>editam o mesmo arquivo</b> n&atilde;o rodam em paralelo. &Eacute;
+        isto que define <b>quem &eacute; dono de qual pasta</b>.</p>
       </div>
       <div class="crit">
-        <p class="k">3 &middot; Sobreposi&ccedil;&atilde;o de arquivo</p>
-        <p>Duas frentes que <b>editam o mesmo arquivo</b> n&atilde;o rodam em paralelo sem merge
-        doloroso. &Eacute; este crit&eacute;rio que define <b>quem &eacute; dono de qual pasta</b> &mdash;
-        e &eacute; dele que sai a restri&ccedil;&atilde;o de ordem do fim do documento.</p>
+        <p class="k">3 &middot; Horas parecidas</p>
+        <p>As duas colunas t&ecirc;m carga pr&oacute;xima, com a <b>responsabilidade maior do
+        lado do Jo&atilde;o</b>. &ldquo;Jo&atilde;o&rdquo; inclui os subagentes do Claude.</p>
       </div>
     </div>
 
     <div class="alerta">
-      <h3>O fato que redesenhou tudo: o Field traz tr&ecirc;s campos</h3>
-      <p>A sincroniza&ccedil;&atilde;o puxa do Field Control o n&uacute;mero da <code>os</code>, a
-      <code>loja</code> e a <code>descricao</code>. S&oacute;. A tabela <code>obras_obra</code> tem
-      cerca de 30 outras colunas &mdash; <code>aprovacao</code>, <code>os_aprovada</code>,
-      <code>inicio_plan</code>, <code>duracao</code>, equipe, valor, os seis marcos &mdash; e
-      <b>todas chegam vazias</b>.</p>
-      <p>Isso promove a tela de completar a obra de &ldquo;bloqueador conhecido&rdquo; a <b>&uacute;nica
-      porta de entrada de dado real do sistema</b>. E tem consequ&ecirc;ncia direta no mecanismo
-      central: sem <code>aprovacao</code> preenchida, <b>nenhuma obra jamais vira cr&iacute;tica</b>
-      &mdash; que &eacute; exatamente o alarme que o projeto existe para dar.</p>
+      <h3>O cancelamento de obra saiu do Duda</h3>
+      <p>A vers&atilde;o anterior desta p&aacute;gina fazia do cancelamento a pr&oacute;xima frente do
+      Duda, depois da ficha. Em 23/09 o Jo&atilde;o o assumiu: ele mexe <b>nos mesmos arquivos da
+      ficha</b> (<code>obra/[id]</code>, <code>_lib/tipos.ts</code>, <code>base/</code>), exige
+      migration, e o cliente pediu agilidade. O mockup espera a aprova&ccedil;&atilde;o do cliente.
+      <b>Duda: n&atilde;o mexa no cancelamento.</b></p>
+      <p>A &uacute;nica linha dele na &aacute;rea do Duda &eacute; um filtro em
+      <code>tarefas/page.tsx</code> (obra cancelada sai da lista) &mdash; feita pelo Jo&atilde;o,
+      <b>avisando o Duda antes</b>.</p>
     </div>
   </section>
 
   <section>
     <div class="rule"><span class="n">02</span><span class="l"></span></div>
     <h2>As frentes</h2>
-    <p class="h2sub">Tempo e tokens s&atilde;o <b>estimativas</b>, calibradas pelo tamanho real do
-    m&oacute;dulo e pelo que as frentes de ontem custaram de fato. Servem para comparar frentes
-    entre si, n&atilde;o como promessa de prazo.</p>
+    <p class="h2sub">Horas s&atilde;o <b>estimativas</b> para comparar frentes entre si, n&atilde;o
+    promessa de prazo. Fonte: <code>divisao-trabalho-2026-09-23.md</code>.</p>
 
     <div class="pessoas">
 
       <div class="col joao">
         <div class="col-cab">
           <span class="nome">Jo&atilde;o</span>
-          <span class="papel">produ&ccedil;&atilde;o, cliente e<br>a porta de entrada do dado</span>
+          <span class="papel">+ subagentes do Claude<br>ficha, cliente e credencial</span>
         </div>
         <div class="frentes">
           <div class="fr">
-            <div class="fr-cab"><span class="cod">J1</span><span class="fr-tit">A chave da API do Field</span></div>
-            <p class="porque"><b>Trava tudo o que est&aacute; constru&iacute;do.</b> A sincroniza&ccedil;&atilde;o
-            existe e est&aacute; testada, mas nunca rodou contra o Field de verdade. A chave precisa ir
-            para <code>C:\Users\joao-\.field-api-key</code> (teste local) <b>e</b> para o EasyPanel
-            como <code>FIELD_API_KEY=valor</code> numa linha s&oacute;. S&oacute; o Jo&atilde;o tem.</p>
+            <div class="fr-cab"><span class="cod">1</span><span class="fr-tit">Cancelamento de obra</span></div>
+            <p class="porque">Espera a <b>aprova&ccedil;&atilde;o do cliente</b> sobre o mockup. Mesmos
+            arquivos da ficha (<code>obra/[id]</code>, <code>_lib/tipos.ts</code>,
+            <code>base/</code>); exige migration.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">15 min</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">~10 k</span></div>
+              <div><span class="cr">Horas</span><span class="cv">9&ndash;14 h</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">J2</span><span class="fr-tit">Deploy da sincroniza&ccedil;&atilde;o</span></div>
-            <p class="porque"><code>/obras/sincronizar</code> est&aacute; no <code>master</code> desde as
-            02h22 de hoje; o build em produ&ccedil;&atilde;o &eacute; de ontem 23h38. A tela <b>n&atilde;o
-            existe em produ&ccedil;&atilde;o</b> at&eacute; algu&eacute;m clicar em Deploy no EasyPanel.
-            Credencial do Jo&atilde;o.</p>
+            <div class="fr-cab"><span class="cod">2</span><span class="fr-tit">D&iacute;vidas da ficha que tocam dado</span></div>
+            <p class="porque">A1, A13, B5 e B7 de <code>docs/DIVIDAS.md</code>. Ficha e as actions
+            dela.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">10 min + espera</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">~20 k</span></div>
+              <div><span class="cr">Horas</span><span class="cv">8&ndash;12 h</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">J3</span><span class="fr-tit">Provar as quatro inc&oacute;gnitas da API</span></div>
-            <p class="porque">Depende de J1. O levantamento de 08/09 deixou quatro perguntas que
-            <b>s&oacute; a chave real responde</b>: se o servidor aceita a codifica&ccedil;&atilde;o do
-            <code>q</code>, se <code>sort=id</code> &eacute; campo v&aacute;lido, se
-            <code>updated_at&gt;=</code> aceita timestamp completo ou s&oacute; data, e &mdash; a mais
-            cara &mdash; se a OS &eacute; <b>arquivada ou exclu&iacute;da</b> no Field. Cada uma custa
-            meia hora no pior momento poss&iacute;vel: durante o cadastro do cliente.</p>
+            <div class="fr-cab"><span class="cod">3</span><span class="fr-tit">&ldquo;Pendente faturamento&rdquo; na esteira</span></div>
+            <p class="porque">Quando o Jo&atilde;o decidir &mdash; <b>adiado em 22/09</b>. Esteira e
+            Base.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">1&ndash;2 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,2&ndash;0,4 M</span></div>
+              <div><span class="cr">Horas</span><span class="cv">2&ndash;4 h</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">J4</span><span class="fr-tit">Completar a obra &mdash; Triagem e ficha edit&aacute;veis</span></div>
-            <p class="porque"><b>A frente de maior valor do projeto agora.</b> &Eacute; o que
-            transforma a OS de tr&ecirc;s campos numa obra de verdade. Absorve a antiga F3:
-            <code>os_aprovada</code> e os marcos <code>marco_exec_fim</code>,
-            <code>marco_relatorio</code> e <code>marco_os_aprov</code> n&atilde;o s&atilde;o colunas
-            mortas &mdash; s&atilde;o <b>lidas em 20 lugares</b> (kanban, etiquetas, filtros, ficha) e
-            <b>nunca escritas por ningu&eacute;m</b>. Arquivos: <code>obra/[id]/_triagem.tsx</code>,
-            <code>_ficha.tsx</code>, <code>_actions.ts</code>.</p>
+            <div class="fr-cab"><span class="cod">4</span><span class="fr-tit">S&oacute; o Jo&atilde;o: Resend, DNS e cliente</span></div>
+            <p class="porque">Chave e dom&iacute;nio do e-mail dos comunicados; a pergunta 03 ao
+            cliente (como se calcula o avan&ccedil;o %). <b>Credencial e canal com o cliente.</b></p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">5&ndash;8 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,8&ndash;1,4 M</span></div>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fr-cab"><span class="cod">&mdash;</span><span class="fr-tit">Fechar as quatro perguntas com o cliente</span></div>
-            <p class="porque"><b>&Uacute;nico canal com o cliente.</b> S&atilde;o: como se calcula o
-            avan&ccedil;o %, quem pode cancelar uma obra, se obra cancelada some das telas ou fica
-            com alerta, e o que acontece se a OS reaparecer no Field depois de descartada.</p>
-            <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">20 min + espera</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">~25 k</span></div>
+              <div><span class="cr">Horas</span><span class="cv">~2&ndash;3 h</span></div>
             </div>
           </div>
         </div>
         <div class="total">
-          <div><span class="lb">Frentes de c&oacute;digo</span></div>
-          <div><span class="vl">6&ndash;10 h</span></div>
-          <div><span class="vl">1,0&ndash;1,8 M</span></div>
+          <div><span class="lb">Total</span></div>
+          <div><span class="vl">&asymp; 21&ndash;33 h</span></div>
         </div>
       </div>
 
       <div class="col duda">
         <div class="col-cab">
           <span class="nome">Duda</span>
-          <span class="papel">dono do ciclo<br>de vida da OS</span>
+          <span class="papel">sincroniza&ccedil;&atilde;o, di&aacute;rio,<br>tarefas e o dashboard</span>
         </div>
         <div class="crit">
-          <p>O pacote inteiro do Duda vive em <b>duas pastas que o Jo&atilde;o n&atilde;o vai
-          tocar</b>: <code>app/obras/sincronizar/</code> e <code>app/obras/_lib/field/</code>.
-          Enquanto o Jo&atilde;o estiver em <code>obra/[id]/</code>, os dois trabalham no mesmo
-          reposit&oacute;rio sem se cruzarem. &Eacute; o crit&eacute;rio 3 aplicado de
-          prop&oacute;sito, n&atilde;o por sorte.</p>
+          <p>A &aacute;rea do Duda: <code>sincronizar/</code>, <code>_lib/field/</code>,
+          <code>api/obras/sincronizar/</code>, <code>diario/</code>, <code>tarefas/</code> e a
+          <b>rota nova</b> do dashboard. <code>obra/[id]/</code> &eacute; do Jo&atilde;o;
+          <code>_lib/tipos.ts</code> e <code>base/</code> s&atilde;o <b>s&oacute; leitura</b>.</p>
         </div>
         <div class="frentes">
           <div class="fr">
-            <div class="fr-cab"><span class="cod">D1</span><span class="fr-tit">Marcar de onde a obra veio</span></div>
-            <p class="porque"><b>Pr&eacute;-requisito do D2.</b> Hoje <b>nada distingue uma obra
-            que veio do Field</b> de uma que veio da planilha &mdash; e &ldquo;quais obras vieram
-            do Field?&rdquo; &eacute; a primeira pergunta que a reconcilia&ccedil;&atilde;o precisa
-            responder. &#9888; <b>Tem uma decis&atilde;o de modelagem dentro:</b> a coluna
-            <code>origem</code> j&aacute; existe, mas guarda <b>vocabul&aacute;rio do cliente</b>
-            (<code>Sistema DPSP</code>), vindo da planilha. Reus&aacute;-la mistura proced&ecirc;ncia
-            com texto do cliente; coluna nova exige migration, que o Jo&atilde;o roda &agrave; m&atilde;o.
-            <b>O Jo&atilde;o escolhe antes de a frente come&ccedil;ar.</b></p>
+            <div class="fr-cab"><span class="cod">D5</span><span class="fr-tit">Validar o operacional</span></div>
+            <p class="porque"><b>Item 1 da ordem do cliente.</b> Teste ponta a ponta em
+            produ&ccedil;&atilde;o: sincroniza&ccedil;&atilde;o (OS nova entra, OS sumida vira
+            alerta, obra que volta limpa o alerta), di&aacute;rio (registro, foto, desfazer) e
+            tarefas (cobran&ccedil;a aparece, resposta grava, some quando resolve). O que quebrar
+            na &aacute;rea dele, ele corrige; fora dela, <b>relata com passo a passo</b>. O
+            resultado vira o checklist da entrega de 28/09.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">1&ndash;2 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,1&ndash;0,3 M</span></div>
+              <div><span class="cr">Horas</span><span class="cv">4&ndash;8 h</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">D2</span><span class="fr-tit">A OS que sumiu do Field</span></div>
-            <p class="porque">A frente de desenho mais delicada do m&oacute;dulo, e o cliente
-            j&aacute; levantou ela: <i>&ldquo;abri uma OS errada, como o sistema se comporta se eu
-            precisar excluir?&rdquo;</i>. <b>O Field n&atilde;o avisa exclus&atilde;o</b> &mdash;
-            n&atilde;o existe evento <code>order-deleted</code> nem <code>order-archived</code> na
-            lista dos ~26 webhooks. O sistema s&oacute; descobre por <b>aus&ecirc;ncia</b>, e
-            aus&ecirc;ncia &eacute; sinal fraco: tamb&eacute;m acontece se a API falhar, se o filtro
-            mudar ou se a pagina&ccedil;&atilde;o escorregar. Duas regras fechadas: <b>o sistema
-            nunca apaga nada por causa do Field</b>, e <b>sumi&ccedil;o vira alerta, n&atilde;o
-            exclus&atilde;o</b> &mdash; a obra fica inteira, com di&aacute;rio e fotos, esperando um
-            humano. Fonte: <code>feedback-10-exclusao-de-os-no-field.md</code>.</p>
+            <div class="fr-cab"><span class="cod">D6</span><span class="fr-tit">Dashboard de sa&uacute;de da opera&ccedil;&atilde;o</span></div>
+            <p class="porque"><b>Item 2 da ordem do cliente</b>, no lugar dos agentes:
+            <i>&ldquo;adicionar uma tela de dashboard da sa&uacute;de da opera&ccedil;ao no lugar dos
+            agentes&rdquo;</i>. <b>Mockup primeiro</b>: o Duda desenha, o Jo&atilde;o revisa, a
+            sess&atilde;o principal do Claude publica, o cliente aprova &mdash; s&oacute; ent&atilde;o
+            spec, plano e c&oacute;digo. S&oacute; l&ecirc; dados que j&aacute; existem; tela nova.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">5&ndash;8 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,8&ndash;1,4 M</span></div>
+              <div><span class="cr">Horas</span><span class="cv">13&ndash;19 h</span></div>
             </div>
           </div>
           <div class="fr">
-            <div class="fr-cab"><span class="cod">D3</span><span class="fr-tit">Sincroniza&ccedil;&atilde;o que roda sozinha</span></div>
-            <p class="porque">Hoje a sincroniza&ccedil;&atilde;o &eacute; um <b>bot&atilde;o que
-            algu&eacute;m precisa lembrar de apertar</b>. Ningu&eacute;m vai apertar todo dia, e
-            obra que n&atilde;o entra no sistema n&atilde;o &eacute; cobrada por ele. Precisa de
-            varredura recorrente com marca d&rsquo;&aacute;gua (<code>updated_at&gt;=</code> da
-            &uacute;ltima passada) em vez de puxar tudo sempre. &#9888; <b>O mecanismo ainda
-            n&atilde;o est&aacute; decidido</b> &mdash; o Jo&atilde;o precisa escolher antes de a
-            frente come&ccedil;ar.</p>
+            <div class="fr-cab"><span class="cod">D7</span><span class="fr-tit">D&iacute;vidas da &aacute;rea dele</span></div>
+            <p class="porque">A14 e A15 de <code>docs/DIVIDAS.md</code> (backlog dos 7 ajustes e
+            bordas da incremental) e o teste inst&aacute;vel de
+            <code>_blocos-editaveis.test.tsx</code> &mdash; neste, <b>s&oacute; o timeout</b>, porque
+            o arquivo fica em <code>obra/[id]</code>.</p>
             <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">4&ndash;7 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,6&ndash;1,1 M</span></div>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fr-cab"><span class="cod">D4</span><span class="fr-tit">Smoke test contra o banco real</span></div>
-            <p class="porque">S&atilde;o 294 testes, e <b>todos usam mock</b>: nada neste m&oacute;dulo
-            jamais escreveu numa tabela de verdade. Isso era aceit&aacute;vel enquanto a migration
-            n&atilde;o existia. Agora ela est&aacute; aplicada e o m&oacute;dulo est&aacute; no ar
-            vazio &mdash; o primeiro dado real vai entrar sem que ningu&eacute;m tenha provado que
-            o caminho funciona.</p>
-            <div class="custo">
-              <div><span class="cr">Tempo</span><span class="cv">2&ndash;3 h</span></div>
-              <div><span class="cr">Tokens</span><span class="cv">0,2&ndash;0,3 M</span></div>
+              <div><span class="cr">Horas</span><span class="cv">3&ndash;5 h</span></div>
             </div>
           </div>
         </div>
         <div class="total">
           <div><span class="lb">Total</span></div>
-          <div><span class="vl">12&ndash;20 h</span></div>
-          <div><span class="vl">1,7&ndash;3,1 M</span></div>
+          <div><span class="vl">&asymp; 20&ndash;32 h</span></div>
         </div>
       </div>
 
@@ -463,49 +402,33 @@
 
   <section>
     <div class="rule"><span class="n">03</span><span class="l"></span></div>
-    <h2>A ordem, e a frente que fica esperando</h2>
-    <p class="h2sub">Uma restri&ccedil;&atilde;o nova, e ela existe pelo mesmo motivo da antiga
-    &mdash; dois trabalhos no mesmo arquivo.</p>
-
-    <div class="alerta">
-      <h3>O cancelamento de obra fica para depois do J4</h3>
-      <p>O cliente pediu uma frente nova em 10/09: <i>&ldquo;as vezes o cliente cancela a OS...
-      ent&atilde;o tem que ter essa etapa, e a&iacute; se cancelar coloca o motivo&rdquo;</i>, com
-      dois valores nomeados por ele &mdash; <b>Cancelado pelo Cliente</b> e <b>Cancelado pela
-      Manfac</b>. &Eacute; requisito real e resolve de gra&ccedil;a o caso da OS aberta por engano:
-      cancelar e descartar s&atilde;o a mesma necessidade.</p>
-      <p>Mas ela toca <code>_lib/tipos.ts</code> (uma etapa terminal nova),
-      <code>base/_regras.ts</code>, <code>obra/[id]/_actions.ts</code>, <code>diario/</code> e
-      <code>tarefas/</code> &mdash; <b>exatamente onde o J4 estar&aacute; mexendo</b>.
-      Come&ccedil;ar em paralelo &eacute; garantir merge doloroso. Ela &eacute; a
-      <b>pr&oacute;xima frente do Duda</b>, assim que o J4 estiver mergeado. Fonte:
-      <code>feedback-11-cancelamento-de-obra.md</code>.</p>
-    </div>
+    <h2>A ordem, e os pontos de contato</h2>
+    <p class="h2sub">A ordem do cliente, literal: <i>&ldquo;finalizar o operaional validado pelo time
+    &gt; faz o dash &gt; faz o agente&rdquo;</i>. O agente est&aacute; fora desta divis&atilde;o.</p>
 
     <div class="trilhas">
       <div class="trilha">
         <span class="tnome">Jo&atilde;o</span>
         <div class="tbar">
-          <span class="bl j">J1 &middot; chave</span><span class="seta">&rarr;</span>
-          <span class="bl j">J2 &middot; deploy</span><span class="seta">&rarr;</span>
-          <span class="bl j">J3 &middot; provar a API</span><span class="seta">&rarr;</span>
-          <span class="bl j">J4 &middot; completar a obra</span>
+          <span class="bl wait">cancelamento (espera o cliente)</span><span class="seta">&rarr;</span>
+          <span class="bl j">d&iacute;vidas da ficha</span><span class="seta">&rarr;</span>
+          <span class="bl j">Resend &middot; cliente</span>
         </div>
       </div>
       <div class="trilha">
         <span class="tnome">Duda</span>
         <div class="tbar">
-          <span class="bl d">D1 &middot; origem</span><span class="seta">&rarr;</span>
-          <span class="bl d">D2 &middot; OS que sumiu</span><span class="seta">&rarr;</span>
-          <span class="bl d">D4 &middot; smoke test</span><span class="seta">&rarr;</span>
-          <span class="bl wait">cancelamento (espera o J4)</span>
+          <span class="bl d">D5 &middot; validar</span><span class="seta">&rarr;</span>
+          <span class="bl d">D6 &middot; mockup</span><span class="seta">&rarr;</span>
+          <span class="bl wait">aprova&ccedil;&atilde;o &middot; D7 encaixa aqui</span><span class="seta">&rarr;</span>
+          <span class="bl d">D6 &middot; c&oacute;digo</span>
         </div>
       </div>
-      <p class="tlegenda">As duas trilhas <b>correm ao mesmo tempo, do primeiro dia</b>, e nenhuma
-      das setas &eacute; espera pela outra pessoa &mdash; s&oacute; ordem interna de cada um. A
-      &uacute;nica depend&ecirc;ncia cruzada est&aacute; no fim da trilha do Duda. <b>O D3
-      n&atilde;o aparece aqui de prop&oacute;sito</b>: ele come&ccedil;a quando o Jo&atilde;o
-      decidir o mecanismo da varredura recorrente.</p>
+      <p class="tlegenda">As duas trilhas <b>correm ao mesmo tempo</b>. As setas s&atilde;o ordem
+      interna de cada um. <b>Pontos de contato:</b> o filtro do cancelamento em
+      <code>tarefas/page.tsx</code> (Jo&atilde;o avisa antes); o mockup do dashboard (Duda desenha,
+      a sess&atilde;o principal publica, Jo&atilde;o revisa, cliente aprova); revis&atilde;o cruzada
+      em uma rodada, lista fechada, que <b>s&oacute; bloqueia dano de dado alcan&ccedil;&aacute;vel</b>.</p>
     </div>
   </section>
 
@@ -519,15 +442,17 @@
       <h3>Como usar</h3>
       <p>Copie os tr&ecirc;s e salve como arquivos <code>.md</code> na raiz do projeto do Duda &mdash; ou
       cole o conte&uacute;do no arquivo de instru&ccedil;&otilde;es que a ferramenta dele usa
-      (<code>CLAUDE.md</code>, <code>AGENTS.md</code> ou equivalente).</p>
-      <p><b>A ordem de leitura importa:</b> contexto primeiro, regras depois, frentes por
-      &uacute;ltimo. O arquivo de frentes assume que os outros dois j&aacute; foram lidos.</p>
+      (<code>CLAUDE.md</code>, <code>AGENTS.md</code> ou equivalente). Se j&aacute; tinha a vers&atilde;o
+      anterior, <b>substitua os tr&ecirc;s</b>.</p>
+      <p><b>A ordem de leitura importa:</b> <code>00-CONTEXTO</code> primeiro,
+      <code>01-REGRAS-DE-TRABALHO</code> depois, <code>02-FRENTES-DO-DUDA</code> por &uacute;ltimo.
+      O arquivo de frentes assume que os outros dois j&aacute; foram lidos.</p>
     </div>
 
     <div class="arq">
       <div class="arq-cab">
         <span class="arq-nome">00-CONTEXTO.md</span>
-        <span class="arq-desc">O produto, o vocabul&aacute;rio, o modelo de dados e o estado real do c&oacute;digo</span>
+        <span class="arq-desc">O produto, o vocabul&aacute;rio, o modelo de dados e o estado real do c&oacute;digo em 23/09</span>
         <span class="arq-acoes">
           <button class="ver" data-alvo="md0">Ver</button>
           <button class="copiar" data-fonte="md0">Copiar</button>
@@ -539,7 +464,7 @@
     <div class="arq">
       <div class="arq-cab">
         <span class="arq-nome">01-REGRAS-DE-TRABALHO.md</span>
-        <span class="arq-desc">Processo, conven&ccedil;&otilde;es, armadilhas conhecidas e defini&ccedil;&atilde;o de pronto</span>
+        <span class="arq-desc">Processo, r&eacute;gua de escopo, conven&ccedil;&otilde;es, armadilhas e defini&ccedil;&atilde;o de pronto</span>
         <span class="arq-acoes">
           <button class="ver" data-alvo="md1">Ver</button>
           <button class="copiar" data-fonte="md1">Copiar</button>
@@ -551,7 +476,7 @@
     <div class="arq">
       <div class="arq-cab">
         <span class="arq-nome">02-FRENTES-DO-DUDA.md</span>
-        <span class="arq-desc">As tr&ecirc;s frentes em detalhe: escopo, o que n&atilde;o fazer, e crit&eacute;rio de pronto</span>
+        <span class="arq-desc">D5, D6 e D7 em detalhe: escopo, o que n&atilde;o fazer, e crit&eacute;rio de pronto</span>
         <span class="arq-acoes">
           <button class="ver" data-alvo="md2">Ver</button>
           <button class="copiar" data-fonte="md2">Copiar</button>
@@ -564,39 +489,35 @@
   <section>
     <div class="rule"><span class="n">05</span><span class="l"></span></div>
     <h2>Para come&ccedil;ar</h2>
-    <p class="h2sub">Na ordem. O passo 1 &eacute; do Jo&atilde;o; os outros s&atilde;o do Duda.</p>
+    <p class="h2sub">Na ordem.</p>
 
     <div class="passos">
       <div class="passo">
         <span class="pn">1</span>
-        <p class="pc"><b>Acessos.</b> No GitHub, <code>Write</code> no reposit&oacute;rio &mdash;
-        <b>j&aacute; concedido em 10/09</b> para <code>daduu27</code>; se o convite ainda estiver no
-        e-mail sem aceitar, &eacute; o primeiro clique do dia. Falta o Supabase da Manfac como
-        <code>Developer</code>, que roda SQL, escreve no banco e cria bucket, mas <b>n&atilde;o apaga
-        projeto, n&atilde;o mexe em cobran&ccedil;a e n&atilde;o convida ningu&eacute;m</b>. Conta
-        pr&oacute;pria nos dois &mdash; <b>login n&atilde;o se compartilha</b>.</p>
+        <p class="pc"><b>Atualizar o reposit&oacute;rio</b> com <code>git pull</code> no
+        <code>master</code> e substituir os tr&ecirc;s arquivos acima.</p>
       </div>
       <div class="passo">
         <span class="pn">2</span>
-        <p class="pc"><b>Ler antes de escrever qualquer linha.</b> Os tr&ecirc;s arquivos acima, e o
-        <code>AGENTS.md</code> da raiz do reposit&oacute;rio &mdash; a fonte de verdade operacional sobre
-        infra, banco e as armadilhas que j&aacute; custaram dias.</p>
+        <p class="pc"><b>Ler antes de escrever qualquer linha.</b> Os tr&ecirc;s arquivos, o
+        <code>AGENTS.md</code> da raiz (curto, reorganizado em 20/09), e
+        <code>.claude/rules/obras.md</code> &mdash; que carrega sozinho quando o agente abre
+        <code>app/obras/</code>.</p>
       </div>
       <div class="passo">
         <span class="pn">3</span>
-        <p class="pc"><b>Subir o ambiente</b> e confirmar que o verde bate <b>antes</b> de mudar nada.</p>
+        <p class="pc"><b>Confirmar que o verde bate</b> antes de mudar nada.</p>
       </div>
       <div class="passo">
         <span class="pn">4</span>
-        <p class="pc"><b>Come&ccedil;ar pelo D1.</b> &Eacute; pequeno e serve de primeiro contato
-        com a base de c&oacute;digo &mdash; um arquivo, um campo, um teste.</p>
+        <p class="pc"><b>Come&ccedil;ar pela D5.</b> &Eacute; o item 1 da ordem do cliente, e o
+        resultado dela vira o checklist da entrega de 28/09.</p>
       </div>
     </div>
 
     <pre class="cmd"><span class="c"># Node 20 (.nvmrc)</span>
 npm install
-npm run dev
-npx jest app/obras   <span class="c"># espere 294 / 294</span>
+npx jest app/obras   <span class="c"># espere 716 passando + 1 todo, 34 suites</span>
 npm run lint
 npm run build</pre>
 
@@ -606,8 +527,8 @@ npm run build</pre>
     e est&aacute; <b>fora do escopo</b>.</p>
   </section>
 
-  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 11 de setembro de 2026
-  &middot; segunda vers&atilde;o desta p&aacute;gina (a primeira foi de 10/09)</p>
+  <p class="assin">Manfac Facilities &middot; Controle de Obras &middot; 23 de setembro de 2026
+  &middot; terceira vers&atilde;o desta p&aacute;gina (a primeira foi de 10/09, a segunda de 11/09)</p>
 
 </div>
 

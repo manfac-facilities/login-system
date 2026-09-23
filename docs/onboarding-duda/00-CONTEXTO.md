@@ -2,13 +2,14 @@
 
 > **Para que serve este arquivo.** É o contexto que um agente de IA precisa carregar
 > antes de escrever qualquer linha neste projeto. Ele descreve o produto, o vocabulário,
-> o modelo de dados e o estado real do código. Tudo aqui foi **verificado no repositório
-> em 11/09/2026**, não é suposição.
+> o modelo de dados e o estado real do código. Escrito em 11/09/2026 e **atualizado em
+> 23/09/2026** (seções 2, 4 a 8 e a nova seção 10), verificado no repositório.
 >
 > ⚠️ **Este arquivo envelhece rápido.** A versão de 10/09 dizia que a migration nunca
 > tinha rodado e que a base viria de uma planilha — as duas coisas deixaram de ser
 > verdade em menos de 24 horas. Antes de confiar num número daqui, confirme no
-> repositório.
+> repositório. O mapa detalhado de cada pasta do módulo está em `.claude/rules/obras.md`,
+> que carrega sozinho quando o agente abre um arquivo de `app/obras/`.
 >
 > Leia junto: `01-REGRAS-DE-TRABALHO.md` (como se trabalha aqui) e
 > `02-FRENTES-DO-DUDA.md` (o que fazer).
@@ -30,26 +31,32 @@ parada não grita — ela só afunda.
 kanban, fotos — é meio. Se uma decisão de implementação enfraquecer o mecanismo de
 "acusar obra parada", ela está errada, por mais elegante que pareça.
 
-Isso tem uma consequência que já mordeu: a data de aprovação da OS (`aprovacao`) é o que
-faz a obra virar **crítica**. Uma obra com esse campo nulo **nunca dispara alerta
-nenhum** — que é exatamente o problema original, reencenado dentro do sistema novo.
+Isso tem uma consequência que já mordeu: até 14/09 a contagem que faz a obra virar
+**crítica** dependia só da data de aprovação da OS (`aprovacao`), e uma obra com esse
+campo nulo **nunca disparava alerta** — o problema original, reencenado dentro do sistema
+novo. Desde 15/09 a contagem corre da data **mais antiga** entre aprovação, liberação e
+entrada da obra (`ancoraDias`, `_lib/tipos.ts:542`): atenção acima de 20 dias, crítica
+acima de 30 (números do cliente). Mudar essa âncora é mudar o produto.
 
 ---
 
 ## 2. Onde este módulo vive
 
-O repositório hospeda um único app **Next.js** que serve de **hub** para quatro sistemas
-da Manfac, atrás de um login compartilhado:
+O repositório hospeda um app **Next.js** que serve de **hub** para os sistemas da Manfac,
+atrás de um login compartilhado. A tabela completa (inclusive CRM, Cockpit e Financeiro,
+que são apps separadas servidas no mesmo domínio) está no `AGENTS.md` da raiz. Os que
+moram neste app:
 
 | Sistema | Rota | Nome na UI |
 |---|---|---|
 | Sofia | `/sofia` | Gestão de Frotas |
 | Conversor de OS | `/conversor-os` | Conversor OS |
 | Admin | `/admin/acessos` | Admin |
+| CRM | `/crm` | CRM |
 | **Controle de Obras** | **`/obras`** | **Controle de Obras** |
 
-**O Duda atua apenas no Controle de Obras (`app/obras/`).** Os outros três sistemas estão
-fora de escopo — não os altere, mesmo que encontre algo melhorável neles.
+**O Duda atua apenas no Controle de Obras (`app/obras/` e `app/api/obras/`).** Os outros
+sistemas estão fora de escopo — não os altere, mesmo que encontre algo melhorável neles.
 
 ⚠️ **Duas armadilhas de nome que já custaram tempo neste projeto:**
 
@@ -88,22 +95,29 @@ definir → levantamento → andamento → paralisado → relatorio
 ```
 
 `aprovarOS` é um **desvio**, não um passo normal: só existe quando a obra saiu de campo
-sem OS aprovada no sistema do cliente.
+sem OS aprovada no sistema do cliente. **Na tela ela se chama "Executado - pendente
+aprovação OS"** desde 23/09 (antes, "Pendente fechamento"; `_lib/tipos.ts:165`). A chave no
+banco continua `aprovarOS`.
 
 **Os seis bloqueios** (também são os motivos de "não andou"): Clima, Cliente / loja,
 Disponibilidade de equipe, Contratação de prestador, Falta de material, Sem bloqueio.
 
 ---
 
-## 4. As cinco telas
+## 4. As telas
 
 | Rota | O que faz |
 |---|---|
-| `/obras/base` | Base de obras: tabela + kanban por fase, 4 filtros, ordenação |
+| `/obras/base` | Base de obras: tabela + kanban por fase, filtros, ordenação, indicadores do topo |
 | `/obras/obra/[id]` | Ficha da obra — **e a Triagem**, quando `etapa = 'definir'` |
 | `/obras/diario` | O diário do dia, em cartões |
 | `/obras/tarefas` | As tarefas que as faltas geraram |
-| `/obras/importar` | Carga da planilha, com relatório do que ficou de fora |
+| `/obras/sincronizar` | Botão "Puxar do Field" e as últimas execuções da sincronização |
+| `/obras/importar` | Carga da planilha — legado, não é mais a fonte da base |
+
+No topo das telas de `/obras` aparece a **faixa "Novidade"** (`_ui/faixa-comunicados.tsx`),
+que mostra os comunicados de atualização ainda não lidos (tabelas `hub_comunicados` e
+`hub_comunicados_lidos`). O primeiro foi publicado em 23/09.
 
 **A ficha e a Triagem são a mesma rota**, em modos diferentes (`page.tsx:103`). Isso
 importa: quando a obra sai de `definir`, a Triagem **desaparece para sempre**.
@@ -112,15 +126,19 @@ importa: quando a obra sai de `definir`, a Triagem **desaparece para sempre**.
 
 ## 5. Modelo de dados
 
-Cinco tabelas, todas com prefixo `obras_`, definidas em `sdd-sql-obras-v0.sql` na raiz:
+Oito tabelas com prefixo `obras_`. As cinco originais estão em `sdd-sql-obras-v0.sql`; as
+outras vieram em migrations próprias (`sdd-sql-obras-*.sql` na raiz), todas aplicadas:
 
 | Tabela | O que guarda |
 |---|---|
-| `obras_obra` | A obra. Nasce vazia — a base vem do Field Control, não da planilha (seção 6) |
+| `obras_obra` | A obra. Nasce do Field Control, não da planilha (seção 6) |
 | `obras_diario` | Um registro por obra por dia |
 | `obras_tarefa` | A falta virando tarefa, com dono e prazo |
 | `obras_pessoa` | Quem pode ser dono de tarefa — e a ponte entre a conta do hub e a planilha |
-| `obras_remarcacao` | Só leitura na v0, vem da importação |
+| `obras_remarcacao` | Remarcações de início, com motivo |
+| `obras_motivo_remarcacao` | Os motivos de remarcação (6 de fábrica) |
+| `obras_historico` | Histórico de alterações da ficha: bloco, campo, de, para, motivo, quem |
+| `obras_sync_execucao` | Cada execução da sincronização: tipo, origem, status, contagens, marca d'água |
 
 O tipo `ObraRow` em `app/obras/_lib/tipos.ts` espelha `obras_obra` 1:1 — é o melhor lugar
 para entender as colunas sem abrir o SQL.
@@ -144,21 +162,22 @@ cliente em 10/09/2026: a planilha de 187 linhas **não será importada**. A tela
 mas deixou de ser o caminho de entrada da base.
 
 O cliente já tinha confirmado em 08/09/2026 que a obra **vem sempre do Field** — não
-existe, nem vai existir, tela de criar obra do zero. Em 11/09/2026 o módulo está no ar
-com **zero obras no banco**, de propósito: a base vai nascer do Field depois do pente
-fino do cliente.
+existe, nem vai existir, tela de criar obra do zero.
 
-O cliente do Field (`app/obras/_lib/field/`) e a tela `/obras/sincronizar` (botão "Puxar
-do Field", com a regra de só preencher o que está **vazio** no banco — o que foi digitado
-no hub nunca é sobrescrito) **já existem e estão mergeados**. Falta rodar contra o Field
-de verdade: depende da chave `FIELD_API_KEY`.
+**Desde 14–16/09 a sincronização roda sozinha, em produção, com a chave real.** O
+cliente do Field (`app/obras/_lib/field/`), a tela `/obras/sincronizar` e a rota
+`POST /api/obras/sincronizar` (chamada pelo `pg_cron`) formam um executor só: incremental
+a cada 5 minutos e varredura completa diária às 06:02 UTC (03:02 de Brasília) — só a
+completa detecta OS que sumiu do Field. A regra de gravação continua a mesma: o Field só
+preenche o que está **vazio** no banco; o que foi digitado no hub nunca é sobrescrito.
+Obra que some do Field vira **alerta**, nunca exclusão. Em 20/09 a base tinha 77 obras.
 
-**E aqui está o fato que molda a v1 inteira:** o Field entrega apenas **três** campos —
+**E aqui está o fato que molda o produto:** o Field entrega apenas **três** campos —
 número da OS (`identifier`), loja e descrição do chamado (`description`). As outras
 cerca de **30 colunas** de `obras_obra` chegam vazias — entre elas `tipo`, `valor`,
-`analista_cliente`, `origem` e `aprovacao` — e **precisam ser digitados à mão**. Sem
-`aprovacao` preenchida, nenhuma obra vira crítica: é o mesmo problema original,
-reencenado dentro do sistema novo.
+`analista_cliente`, `origem` e `aprovacao` — e **são digitadas à mão na ficha**
+(seção 10). Sem `aprovacao` preenchida, a contagem de atenção/crítica corre pela data de
+entrada da obra — a ideia é que nenhuma obra fique sem contagem.
 
 O levantamento completo da API (autenticação, filtros, paginação, rate limit de 1 req/s,
 webhooks) está em
@@ -166,43 +185,29 @@ webhooks) está em
 
 ---
 
-## 7. Estado real do código — verificado em 11/09/2026
+## 7. Estado real do código — verificado em 23/09/2026
 
 | | |
 |---|---|
-| **Código** | v0 pronta (5 telas) mais o cliente do Field e a sincronização, já mergeados: 8.052 linhas em 41 arquivos sob `app/obras/` |
-| **Testes** | **294/294 passando** em `app/obras` (3.813 linhas de teste, 13 suites) |
-| **Build e lint** | Limpos |
-| **Banco** | **A migration foi aplicada em produção em 10/09/2026.** 5 tabelas `obras_*` com RLS, bucket `obras-fotos` e as 3 policies de storage |
-| **Produção** | **No ar.** Build de 10/09 23h38, `/obras` responde, card 🏗️ no dashboard |
-| **Git** | `master` sincronizado com o remoto — os 82 commits foram pushados em 10/09 |
+| **Código** | 59 arquivos, 13.760 linhas sob `app/obras/` (sem contar teste), mais a rota `app/api/obras/sincronizar/` |
+| **Testes** | `npx jest app/obras`: **716 passando + 1 `todo`**, 34 suites |
+| **Banco** | Todas as migrations `sdd-sql-obras-*.sql` aplicadas em produção; 8 tabelas `obras_*` com RLS; bucket `obras-fotos` só aceita JPEG até 5 MiB |
+| **Produção** | **No ar e em uso pela equipe.** Último deploy em 23/09 (19:38 UTC), com os ajustes da ficha |
+| **Sincronização** | Rodando sozinha pelo `pg_cron`, com a chave real do Field |
 
-⚠️ **Testes continuam 100% mock.** Nada do módulo jamais escreveu numa tabela real — os
-294 testes usam mock. A migration em si já rodou em produção sem o erro de ownership que
-o runbook previa, mas o primeiro contato do código gravando uma obra real ainda não
-aconteceu, porque o banco está vazio de propósito (seção 6).
+⚠️ **Os testes continuam 100% mock.** O que prova que o caminho funciona com dado real é
+a validação ponta a ponta em produção — a frente D5.
 
 ---
 
-## 8. O que a v0 não faz, e é de propósito
+## 8. O que o sistema não faz, e é de propósito
 
 - **Não existe tela de criar obra do zero**, e não vai existir. A obra vem do Field.
-- **"Relatório de entrega" não é deduzido do Field automaticamente**, embora o texto da
-  ficha (`_ficha.tsx:213-220`) prometa isso. Hoje a etapa é movida à mão. **O texto da
-  tela é que está errado**, não o comportamento.
-- **Quatro colunas do banco não têm escrita — mas não são "colunas mortas"**:
-  `os_aprovada`, `marco_exec_fim`, `marco_relatorio`, `marco_os_aprov` são **lidas em 20
-  lugares** (`base/_kanban.tsx`, `base/_etiquetas.tsx`, `base/_regras.ts`,
-  `obra/[id]/_ficha.tsx`), além de existirem como campo de tipo em
-  `_lib/tipos.ts:222,238-240`. O que falta é só a escrita — nada as grava. A esteira de
-  etapas lê `marco_exec_fim` para decidir se "Execução em campo" está feita, e por isso
-  fica congelada para sempre enquanto ninguém escrever ali. **Isso saiu do escopo do
-  Duda: virou a frente J4, do João.**
-- **Os cinco campos que o Field não traz não têm onde ser digitados.** A Triagem os mostra
-  como somente leitura (`_triagem.tsx:158-180`), e ela some quando a obra sai de
-  `definir`.
-
-Os três últimos são trabalho da v1, não bugs a corrigir por conta própria.
+- **Cancelamento de obra ainda não existe.** Está com o João (mockup aguardando aprovação
+  do cliente em 23/09). Não é para fazer por conta própria.
+- **Agente e cobrança por WhatsApp estão parados** por decisão do cliente: só depois de o
+  sistema estar validado. A cobrança das tarefas hoje é feita na tela.
+- **"Pendente faturamento ainda na esteira"** foi pedido em 22/09 e **adiado** pelo João.
 
 ---
 
@@ -212,13 +217,37 @@ Isto está aqui porque uma estimativa deste projeto já errou por assumir que er
 
 - **A foto diária está completa.** Captura no celular com redução para ~200 KB
   (`diario/_foto.tsx`), upload direto ao Storage antes de gravar o diário, coluna
-  `foto_path`, signed URL de 60 s (`diario/_actions.ts:257`), bloco **"Evolução em fotos"**
-  na ficha (`_ficha.tsx:627`) e o aviso *"A foto deste dia não veio"* na linha do tempo
-  (`_ficha.tsx:702`). Bucket e policies na migration.
+  `foto_path`, signed URL de 60 s (`diario/_actions.ts:266`), bloco **"Evolução em fotos"**
+  na ficha (`_ficha.tsx:768`) e o aviso *"A foto deste dia não veio"* na linha do tempo
+  (`_ficha.tsx:845`). Só JPEG até 5 MiB, validado no navegador, no servidor e no bucket.
 - **Contadores do diário** (`nao_andou_seguidos`, `bloqueada_dias`) são recalculados a
-  cada resposta e a cada desfazer.
+  cada resposta e a cada desfazer. O desfazer é atômico: apaga o registro e as tarefas
+  abertas dele numa transação só (RPC `obras_desfazer_diario`).
 - **Reimportar a planilha não apaga o que foi digitado no app** — campo vazio da planilha
   nunca sobrescreve, e `etapa` e `mau_uso` nunca são reescritos.
+- **A ficha é editável e os marcos da esteira são gravados** (seção 10).
 
 **Antes de construir qualquer coisa, verifique se ela já existe.** Este módulo é maior do
 que parece, e a documentação de estado nem sempre acompanhou o código.
+
+---
+
+## 10. A ficha editável e o que mudou até 23/09
+
+- **Ficha editável no ar desde 20/09.** Os blocos Autorização, Identificação e Cronograma
+  são editáveis, com remarcação de início (motivo obrigatório). É a porta de entrada dos
+  campos que o Field não traz.
+- **Histórico de alterações ligado.** Toda edição passa pela RPC `obras_aplicar_alteracao`
+  e grava em `obras_historico` quem mudou, o quê, de quanto para quanto e por quê.
+- **Marcos da esteira gravados.** Desde 21/09 a troca de etapa (`mudarEtapaAction`) grava
+  os marcos (`marco_exec_fim`, `marco_relatorio`, `marco_os_aprov`, `marco_fechou_os`…)
+  calculados pelo estado final — a esteira deixou de ficar congelada.
+- **Ajustes da ficha de 23/09**, no ar: a etapa `aprovarOS` passou a se chamar
+  **"Executado - pendente aprovação OS"**; ao concluir **Fechar OS** a ficha pede a **data
+  de fechamento da OS** (vem com hoje, corrigível depois, com histórico); **equipe/prestador
+  virou texto livre**, com sugestões das equipes já usadas.
+- **Faixa "Novidade"** no topo de `/obras` (seção 4): comunicado de atualização para a
+  equipe. O envio por e-mail ainda depende de configuração do João.
+
+Tudo isso vive em `obra/[id]/`, `_lib/` e `base/` — **área do João** (ver
+`02-FRENTES-DO-DUDA.md`).

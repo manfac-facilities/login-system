@@ -6,14 +6,22 @@ Os três arquivos que o Duda carrega na inteligência dele antes de tocar o proj
 | Arquivo | O que é |
 |---|---|
 | `00-CONTEXTO.md` | O produto, o vocabulário, o modelo de dados e o estado real do código |
-| `01-REGRAS-DE-TRABALHO.md` | Processo, convenções, armadilhas conhecidas, definição de pronto |
-| `02-FRENTES-DO-DUDA.md` | As quatro frentes (D1–D4): escopo, o que não fazer, critério de pronto |
+| `01-REGRAS-DE-TRABALHO.md` | Processo, régua de escopo da fase de entrega, convenções, armadilhas conhecidas, definição de pronto |
+| `02-FRENTES-DO-DUDA.md` | O que ele já entregou (D1–D3 e os 7 ajustes de 21/09) e as frentes D5–D7: escopo, o que não fazer, critério de pronto |
+| `_template.html` + `gerar.mjs` | A página que o João manda ao Duda (ver abaixo) |
+| `entregas/` | Mensagens de entrega do Duda, literais |
+| `revisoes/` | Revisões das entregas dele |
+| `2026-09-*-mensagem-whatsapp-duda.md` | Mensagens enviadas a ele, literais |
 
-> **Segunda versão do pacote, de 11/09/2026.** A primeira é de 10/09 e descrevia as
-> frentes F1, F2 e F3. A F1 (cliente da API do Field) acabou sendo executada pelo João na
-> mesma noite, a F3 virou parte de uma frente dele, e a divisão foi refeita em cima do
-> fato de que **a base de obras nasce da API do Field Control, não da planilha**. O porquê
-> completo está em `../cliente/2026-08-31-sistema-controle-de-obras/divisao-trabalho-joao-duda.md`.
+> **Terceira versão do pacote, de 23/09/2026** — a divisão de trabalho de 23/09: D5 (validar o
+> operacional), D6 (dashboard de saúde da operação, mockup primeiro) e D7 (dívidas da área dele).
+> O cancelamento de obra, que a segunda versão (11/09) dava como próxima frente do Duda, ficou com o
+> João. A decisão está em
+> `../cliente/2026-08-31-sistema-controle-de-obras/divisao-trabalho-2026-09-23.md`.
+>
+> Histórico: a primeira versão (10/09) tinha F1–F3; a segunda (11/09) refez tudo porque a base de
+> obras nasce da API do Field Control, não da planilha
+> (`../cliente/2026-08-31-sistema-controle-de-obras/divisao-trabalho-joao-duda.md`).
 
 ## A página
 
@@ -41,5 +49,5 @@ tempo.
 Depois republique `frentes-joao-duda.html` no mesmo artifact, para manter a URL:
 https://claude.ai/code/artifact/03377e53-2156-4ae1-8257-4e844e28fc54
 
-A decisão da divisão e o porquê dela estão em
-`docs/cliente/2026-08-31-sistema-controle-de-obras/divisao-trabalho-joao-duda.md`.
+A divisão vigente e o porquê dela estão em
+`docs/cliente/2026-08-31-sistema-controle-de-obras/divisao-trabalho-2026-09-23.md`.

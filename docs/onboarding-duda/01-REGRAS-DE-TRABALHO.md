@@ -20,11 +20,41 @@ precisa ser **interativo** — print não serve para julgar interação.
 Pular etapa aqui não acelera: já aconteceu de três dias de construção baterem contra um
 feedback que um mockup de uma hora teria pego.
 
+**Mockup: quem publica é a sessão principal do Claude, nunca um subagente** — mockup
+publicado por subagente aceita digitação e não salva nada. Você entrega o `.html` no
+repositório; o João pede a publicação. O feedback do cliente volta pelo WhatsApp, por
+seção, colado pelo João — não ponha campos de revisão dentro do mockup.
+
+---
+
+## 1b. A régua de escopo da fase de entrega
+
+Desde 20/09/2026 o projeto está em **fase de entrega ao cliente, com sistema em produção**
+(seção "Fase do projeto e régua de escopo" do `AGENTS.md` da raiz). A regra padrão:
+
+> Faça a **menor mudança** que satisfaz o pedido. Não crie abstração para um único caso
+> de uso. **Não adicione tratamento de erro, fallback, retry ou guarda defensiva que não
+> foram pedidos**, a menos que a entrada seja genuinamente não confiável.
+
+Borda improvável e não pedida **não para a frente**: registre em `docs/DIVIDAS.md` (com
+âncora `arquivo:linha`, data, motivo e consequência) e siga. O que substitui a varredura de
+borda é **verificação** — se você não prova com teste ou consulta, não está pronto.
+
+**As exceções**, onde a borda se trata na hora mesmo sem pedido: RLS e policies;
+`hub_system_access` e `hub_user_roles`; escrita que apaga ou sobrescreve dado de cliente;
+autenticação e autorização; dinheiro.
+
+**Onde estão as regras detalhadas:** o `AGENTS.md` foi reorganizado em 20/09 e ficou curto
+de propósito. O detalhe de cada módulo vive em `.claude/rules/` e carrega sozinho quando o
+agente abre um arquivo daquela área — para você, `.claude/rules/obras.md` (mapa do módulo e
+armadilhas da sincronização) e `.claude/rules/sql.md`. O relato do que gerou cada regra
+está em `docs/HISTORICO-INCIDENTES.md`.
+
 ---
 
 ## 2. Antes de escrever, verifique se já existe
 
-Este módulo tem 8.052 linhas em 41 arquivos, e a documentação de estado nem sempre
+Este módulo tem 13.760 linhas em 59 arquivos (sem contar teste), e a documentação de estado nem sempre
 acompanhou o código. **Uma estimativa deste projeto já errou por assumir que uma frente
 inteira estava pendente quando ela estava construída e testada.**
 
@@ -105,7 +135,8 @@ produção. Se você estiver num checkout anterior a esse commit, a saída conti
 rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o `ts-node` nem é
 consultado.
 
-**O verde esperado:** `npx jest app/obras` tem que dar **297/297** (eram 294 até a D1). Se você rodar
+**O verde esperado (23/09/2026):** `npx jest app/obras` tem que dar **716 passando + 1 `todo`,
+34 suites**. O número cresce a cada frente — confira o do `master` antes de começar. Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
 
@@ -147,7 +178,8 @@ havia uma pergunta do cliente que ninguém tinha visto.
 arquivo versionado. Sem exceção, nem "só para testar".
 
 A chave da API do Field Control existe e é do dono do projeto. **Você não precisa dela**
-para as suas frentes — elas são testáveis inteiramente com mock.
+para as suas frentes: o código é testável com mock, e a validação em produção (D5) usa as
+telas do hub, que já rodam com a chave configurada no servidor.
 
 ---
 
@@ -166,7 +198,7 @@ para as suas frentes — elas são testáveis inteiramente com mock.
 
 Uma frente está pronta quando **todas** valem:
 
-- [ ] Os 297 testes existentes continuam passando, mais os novos que a frente pediu
+- [ ] Os testes existentes continuam passando (716 + 1 `todo` em 23/09), mais os novos que a frente pediu
 - [ ] `tsc`, `eslint` e `npm run build` limpos
 - [ ] Se mexeu em tela: mockup foi aprovado antes do código
 - [ ] Se mexeu em schema: o `.sql` está escrito, idempotente, em `begin`/`commit`, e você
@@ -175,6 +207,9 @@ Uma frente está pronta quando **todas** valem:
 - [ ] Code review por alguém que não escreveu o código
 
 **Quem executa e quem confere nunca são a mesma pessoa** — nem o mesmo agente.
+
+**A revisão tem régua:** uma rodada, lista fechada. Só bloqueia o merge o que for **dano de
+dado alcançável**; o resto vai para `docs/DIVIDAS.md` e não volta para quem desenvolveu.
 
 ---
 
