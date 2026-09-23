@@ -69,9 +69,11 @@ import BlocoAutorizacao from './_bloco-autorizacao'
 import BlocoIdentificacao from './_bloco-identificacao'
 import BlocoCronograma from './_bloco-cronograma'
 import Historico from './_historico'
+import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fechamento'
 import type { LinhaHistorico } from '../../_lib/historico'
 import {
   cadastrarMotivoRemarcacaoAction,
+  corrigirDataFechamentoAction,
   salvarAutorizacaoAction,
   salvarCronogramaAction,
   salvarIdentificacaoAction,
@@ -212,7 +214,15 @@ function Passo({
   )
 }
 
-function Esteira({ obra }: { obra: Obra }) {
+function Esteira({
+  obra,
+  hoje,
+  corrigir,
+}: {
+  obra: Obra
+  hoje: string
+  corrigir: CorrigirDataFechamento
+}) {
   const campoFeito = !!obra.marco_exec_fim
   return (
     <ol className="divide-y divide-[#1e3a5f]">
@@ -296,6 +306,17 @@ function Esteira({ obra }: { obra: Obra }) {
                 Parada aqui há <b>{obra.paradaEtapa} dias</b>. Enquanto não sair desta etapa, a obra
                 não vira dinheiro.
               </p>
+            ) : null}
+
+            {/* Fechar OS concluído: a data e o "corrigir data" (ajuste 2 de 23/09). */}
+            {k === 'fecharOS' && estado === 'feito' && data ? (
+              <CorrigirFechamento
+                obraId={obra.id}
+                data={data}
+                hoje={hoje}
+                referencia={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
+                corrigir={corrigir}
+              />
             ) : null}
 
             {/* Caminho direto (ajuste 1 de 23/09): o cliente entendia que
@@ -574,7 +595,7 @@ export default function Ficha({
           </Campos>
 
           <div className="mt-3 border-t border-[#1e3a5f] pt-1">
-            <Esteira obra={obra} />
+            <Esteira obra={obra} hoje={hoje} corrigir={corrigirDataFechamentoAction} />
           </div>
 
           <p className="mt-3 text-[11px] leading-relaxed text-[#64748b]">
@@ -597,7 +618,12 @@ export default function Ficha({
         </BoxB>
 
         {/* Decisão técnica 6 da spec: sem isto o quadro trava no primeiro dia. */}
-        <SeletorEtapa obraId={obra.id} etapa={obra.etapa as Etapa} />
+        <SeletorEtapa
+          obraId={obra.id}
+          etapa={obra.etapa as Etapa}
+          hoje={hoje}
+          referenciaFechamento={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
+        />
       </Box>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
