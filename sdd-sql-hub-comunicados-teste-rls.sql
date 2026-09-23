@@ -70,62 +70,62 @@ begin
   select string_agg(id::text, ',') into v_txt
   from public.hub_comunicados where id in (c_pub, c_fut, c_rasc, c_outro);
   n_total := n_total + 1;
-  if v_txt = c_pub::text then n_ok := n_ok + 1; r := r || '(a) A com o slug vê só o publicado: OK';
-  else r := r || format('(a) A com o slug vê só o publicado: *** FALHOU *** (viu %s)', coalesce(v_txt, 'nada')); end if;
+  if v_txt = c_pub::text then n_ok := n_ok + 1; r := r || ('(a) A com o slug vê só o publicado: OK')::text;
+  else r := r || (format('(a) A com o slug vê só o publicado: *** FALHOU *** (viu %s)', coalesce(v_txt, 'nada')))::text; end if;
 
   -- (c) authenticated não insere comunicado
   n_total := n_total + 1;
   begin
     insert into public.hub_comunicados (sistema, titulo, corpo, publicado_em)
     values (slug, 'invasor', 'x', now());
-    r := r || '(c) A inserindo em hub_comunicados: *** FALHOU *** (insert passou)';
+    r := r || ('(c) A inserindo em hub_comunicados: *** FALHOU *** (insert passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(c) A inserindo em hub_comunicados: OK (' || sqlerrm || ')';
+    n_ok := n_ok + 1; r := r || ('(c) A inserindo em hub_comunicados: OK (' || sqlerrm || ')')::text;
   end;
 
   -- (c2) nem altera nem apaga (sem privilégio)
   n_total := n_total + 1;
   begin
     update public.hub_comunicados set titulo = 'alterado' where id = c_pub;
-    r := r || '(c2) A fazendo UPDATE em hub_comunicados: *** FALHOU *** (update passou)';
+    r := r || ('(c2) A fazendo UPDATE em hub_comunicados: *** FALHOU *** (update passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(c2) A fazendo UPDATE em hub_comunicados: OK';
+    n_ok := n_ok + 1; r := r || ('(c2) A fazendo UPDATE em hub_comunicados: OK')::text;
   end;
 
   -- (d) insert em lidos com user_id de OUTRO usuário falha
   n_total := n_total + 1;
   begin
     insert into public.hub_comunicados_lidos (comunicado_id, user_id) values (c_pub, uid_b);
-    r := r || '(d) A marcando lido em nome de B: *** FALHOU *** (insert passou)';
+    r := r || ('(d) A marcando lido em nome de B: *** FALHOU *** (insert passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(d) A marcando lido em nome de B: OK (' || sqlerrm || ')';
+    n_ok := n_ok + 1; r := r || ('(d) A marcando lido em nome de B: OK (' || sqlerrm || ')')::text;
   end;
 
   -- (e) insert em lidos para comunicado futuro (que A não lê) falha
   n_total := n_total + 1;
   begin
     insert into public.hub_comunicados_lidos (comunicado_id, user_id) values (c_fut, uid_a);
-    r := r || '(e) A marcando lido um comunicado futuro: *** FALHOU *** (insert passou)';
+    r := r || ('(e) A marcando lido um comunicado futuro: *** FALHOU *** (insert passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(e) A marcando lido um comunicado futuro: OK';
+    n_ok := n_ok + 1; r := r || ('(e) A marcando lido um comunicado futuro: OK')::text;
   end;
 
   -- (f) insert em lidos da própria linha, comunicado legível: passa
   n_total := n_total + 1;
   begin
     insert into public.hub_comunicados_lidos (comunicado_id, user_id) values (c_pub, uid_a);
-    n_ok := n_ok + 1; r := r || '(f) A marcando o próprio lido: OK';
+    n_ok := n_ok + 1; r := r || ('(f) A marcando o próprio lido: OK')::text;
   exception when others then
-    r := r || '(f) A marcando o próprio lido: *** FALHOU *** (' || sqlerrm || ')';
+    r := r || ('(f) A marcando o próprio lido: *** FALHOU *** (' || sqlerrm || ')')::text;
   end;
 
   -- (g) não apaga o próprio lido (sem privilégio de DELETE)
   n_total := n_total + 1;
   begin
     delete from public.hub_comunicados_lidos where user_id = uid_a;
-    r := r || '(g) A apagando o próprio lido: *** FALHOU *** (delete passou)';
+    r := r || ('(g) A apagando o próprio lido: *** FALHOU *** (delete passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(g) A apagando o próprio lido: OK';
+    n_ok := n_ok + 1; r := r || ('(g) A apagando o próprio lido: OK')::text;
   end;
 
   -- ---------- USUÁRIO B (sem o slug; tem linha com has_access=false) ----------
@@ -136,22 +136,22 @@ begin
   select count(*) into v_int from public.hub_comunicados
   where id in (c_pub, c_fut, c_rasc, c_outro);
   n_total := n_total + 1;
-  if v_int = 0 then n_ok := n_ok + 1; r := r || '(b) B sem o slug não vê nada: OK';
-  else r := r || format('(b) B sem o slug não vê nada: *** FALHOU *** (viu %s)', v_int); end if;
+  if v_int = 0 then n_ok := n_ok + 1; r := r || ('(b) B sem o slug não vê nada: OK')::text;
+  else r := r || (format('(b) B sem o slug não vê nada: *** FALHOU *** (viu %s)', v_int))::text; end if;
 
   -- (h) B não enxerga o lido de A
   select count(*) into v_int from public.hub_comunicados_lidos where user_id = uid_a;
   n_total := n_total + 1;
-  if v_int = 0 then n_ok := n_ok + 1; r := r || '(h) B não enxerga o lido de A: OK';
-  else r := r || format('(h) B não enxerga o lido de A: *** FALHOU *** (viu %s)', v_int); end if;
+  if v_int = 0 then n_ok := n_ok + 1; r := r || ('(h) B não enxerga o lido de A: OK')::text;
+  else r := r || (format('(h) B não enxerga o lido de A: *** FALHOU *** (viu %s)', v_int))::text; end if;
 
   -- (i) B não marca como lido um comunicado de slug que não tem
   n_total := n_total + 1;
   begin
     insert into public.hub_comunicados_lidos (comunicado_id, user_id) values (c_pub, uid_b);
-    r := r || '(i) B marcando lido sem o slug: *** FALHOU *** (insert passou)';
+    r := r || ('(i) B marcando lido sem o slug: *** FALHOU *** (insert passou)')::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(i) B marcando lido sem o slug: OK';
+    n_ok := n_ok + 1; r := r || ('(i) B marcando lido sem o slug: OK')::text;
   end;
 
   -- ---------- JWT SEM E-MAIL (não pode falhar aberto) ----------
@@ -160,8 +160,8 @@ begin
   select count(*) into v_int from public.hub_comunicados
   where id in (c_pub, c_fut, c_rasc, c_outro);
   n_total := n_total + 1;
-  if v_int = 0 then n_ok := n_ok + 1; r := r || '(j) JWT sem e-mail não vê nada: OK';
-  else r := r || format('(j) JWT sem e-mail não vê nada: *** FALHOU *** (viu %s)', v_int); end if;
+  if v_int = 0 then n_ok := n_ok + 1; r := r || ('(j) JWT sem e-mail não vê nada: OK')::text;
+  else r := r || (format('(j) JWT sem e-mail não vê nada: *** FALHOU *** (viu %s)', v_int))::text; end if;
 
   -- ---------- ADMINISTRADOR (espelha hasSystemAccess: admin vê todo slug) ----------
   perform set_config('request.jwt.claims',
@@ -169,8 +169,8 @@ begin
   select count(*) into v_int from public.hub_comunicados
   where id in (c_pub, c_fut, c_rasc, c_outro);
   n_total := n_total + 1;
-  if v_int = 2 then n_ok := n_ok + 1; r := r || '(k) admin vê os 2 publicados (ambos os slugs), nenhum futuro/rascunho: OK';
-  else r := r || format('(k) admin vê os 2 publicados: *** FALHOU *** (viu %s)', v_int); end if;
+  if v_int = 2 then n_ok := n_ok + 1; r := r || ('(k) admin vê os 2 publicados (ambos os slugs), nenhum futuro/rascunho: OK')::text;
+  else r := r || (format('(k) admin vê os 2 publicados: *** FALHOU *** (viu %s)', v_int))::text; end if;
 
   -- ---------- ANON ----------
   perform set_config('role', 'anon', true);
@@ -178,9 +178,9 @@ begin
   n_total := n_total + 1;
   begin
     select count(*) into v_int from public.hub_comunicados;
-    r := r || format('(l) anon lendo hub_comunicados: *** FALHOU *** (select passou, %s linhas)', v_int);
+    r := r || (format('(l) anon lendo hub_comunicados: *** FALHOU *** (select passou, %s linhas)', v_int))::text;
   exception when insufficient_privilege then
-    n_ok := n_ok + 1; r := r || '(l) anon lendo hub_comunicados: OK (sem privilégio)';
+    n_ok := n_ok + 1; r := r || ('(l) anon lendo hub_comunicados: OK (sem privilégio)')::text;
   end;
 
   -- ---------- RELATÓRIO + ROLLBACK FORÇADO ----------
