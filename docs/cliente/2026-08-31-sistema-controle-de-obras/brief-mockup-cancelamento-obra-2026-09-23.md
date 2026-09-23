@@ -157,3 +157,9 @@ no insert) — o cancelamento não é desfeito pelo cron.
   esperar". Spec, plano e código esperam a aprovação dele. Quando vier, fica com subagente
   (decisão do João: "mantenha o cancelamento como subagente").
 - **Observação do cancelamento: opcional** (decisão do João, 23/09), como está no mockup.
+
+## Aprovado — 23/09/2026
+
+Mensagem do João no chat (literal): "o mockup cancelaento de obra está aprovado". Aprovado como
+está, com a observação opcional (decisão anterior do mesmo dia). Próximo passo: spec → plano (com o
+SQL final da migration para o João aprovar) → código por subagente → revisão → migration → deploy.
