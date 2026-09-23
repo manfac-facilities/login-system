@@ -162,7 +162,7 @@ export const CICLO: EtapaInfo[] = [
   { k: 'andamento', nome: 'Em andamento', fase: 'campo', dono: 'Equipe em campo', onde: 'Campo', planilha: 'EXECUTAR' },
   { k: 'paralisado', nome: 'Paralisado', fase: 'campo', dono: 'Responsável da obra', onde: 'Campo', planilha: 'EXECUTAR' },
   { k: 'relatorio', nome: 'Relatório de entrega', fase: 'fechamento', dono: 'Equipe / responsável', onde: 'Field Control', planilha: 'deduzido do Field' },
-  { k: 'aprovarOS', nome: 'Pendente fechamento', fase: 'fechamento', dono: 'Cliente DPSP', onde: 'Sistema do cliente', planilha: 'EXECUTADO - APROVAR OS' },
+  { k: 'aprovarOS', nome: 'Executado - pendente aprovação OS', fase: 'fechamento', dono: 'Cliente DPSP', onde: 'Sistema do cliente', planilha: 'EXECUTADO - APROVAR OS' },
   { k: 'fecharOS', nome: 'Fechar OS', fase: 'fechamento', dono: 'Responsável da obra', onde: 'Sistema do cliente', planilha: 'FECHAR OS' },
   { k: 'pendFat', nome: 'Pendente faturamento', fase: 'faturamento', dono: 'Cliente DPSP', onde: 'Sistema do cliente', planilha: 'PENDENTE FATURAMENTO' },
   { k: 'faturado', nome: 'Faturado', fase: 'faturamento', dono: 'Financeiro Manfac', onde: 'Manfac', planilha: 'FATURADO' },

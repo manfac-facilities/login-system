@@ -24,6 +24,7 @@ import {
   donoDa,
   encalhada,
   encerrada,
+  ETAPAS,
   estourou,
   faseDe,
   hojeISO,
@@ -184,9 +185,14 @@ describe('ciclo de vida', () => {
   })
 
   it('devolve os nomes aprovados de etapa e fase', () => {
-    expect(nomeEtapa('aprovarOS')).toBe('Pendente fechamento')
+    expect(nomeEtapa('aprovarOS')).toBe('Executado - pendente aprovação OS')
     expect(nomeEtapa('definir')).toBe('Aguardando definição')
     expect(nomeFase('campo')).toBe('Executando')
+  })
+
+  it('renomear o nome não mexe no valor da planilha nem na chave', () => {
+    expect(ETAPAS.aprovarOS.k).toBe('aprovarOS')
+    expect(ETAPAS.aprovarOS.planilha).toBe('EXECUTADO - APROVAR OS')
   })
 })
 

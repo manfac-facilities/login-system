@@ -155,7 +155,7 @@ describe('linhasDeAlteracao', () => {
       'Esteira'
     )
     expect(r).toHaveLength(2)
-    expect(r).toContainEqual({ bloco: 'Esteira', campo: 'etapa', de: 'Relatório de entrega', para: 'Pendente fechamento', motivo: null })
+    expect(r).toContainEqual({ bloco: 'Esteira', campo: 'etapa', de: 'Relatório de entrega', para: 'Executado - pendente aprovação OS', motivo: null })
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'marco_relatorio', de: null, para: '21/08/2026', motivo: null })
   })
 
