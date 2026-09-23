@@ -70,6 +70,14 @@ export function renderizarTexto({ titulo, corpo }) {
   return [titulo, '', ...itens, '', `Abrir o Controle de Obras: ${LINK}`, '', RODAPE].join('\n')
 }
 
+/** O e-mail nunca sai antes da faixa: só comunicado publicado e já no passado. */
+export function erroDePublicacao(comunicado, agora = new Date()) {
+  if (!comunicado.publicado_em || new Date(comunicado.publicado_em) > agora) {
+    return 'comunicado não publicado; a faixa ainda não aparece'
+  }
+  return null
+}
+
 export function montarEmail(comunicado, para) {
   return {
     from: REMETENTE,
@@ -106,10 +114,15 @@ async function main() {
   const pat = readFileSync(CAMINHO_PAT, 'utf8').trim()
   const [comunicado] = await consultar(
     pat,
-    `select titulo, corpo from public.hub_comunicados where id = '${id}'`,
+    `select titulo, corpo, publicado_em from public.hub_comunicados where id = '${id}'`,
   )
   if (!comunicado) {
     console.error(`Comunicado ${id} não encontrado.`)
+    process.exit(1)
+  }
+  const erro = erroDePublicacao(comunicado)
+  if (erro) {
+    console.error(`Comunicado ${id}: ${erro}.`)
     process.exit(1)
   }
 

@@ -3,7 +3,13 @@
  * com a Management API nem com a Resend.
  */
 
-import { montarDestinatarios, renderizarHtml, renderizarTexto, montarEmail } from '../enviar-comunicado.mjs'
+import {
+  montarDestinatarios,
+  renderizarHtml,
+  renderizarTexto,
+  montarEmail,
+  erroDePublicacao,
+} from '../enviar-comunicado.mjs'
 
 const COMUNICADO = {
   titulo: 'Equipe <nova> & "texto" livre',
@@ -48,6 +54,23 @@ describe('renderizarTexto', () => {
     expect(texto).toContain('- Primeira linha com <b>tag</b>')
     expect(texto).toContain('- Segunda & última')
     expect(texto).toContain('https://hub.manfac.com.br/obras')
+  })
+})
+
+describe('erroDePublicacao', () => {
+  const agora = new Date('2026-09-22T12:00:00Z')
+  const MSG = 'comunicado não publicado; a faixa ainda não aparece'
+
+  it('recusa rascunho (publicado_em nulo)', () => {
+    expect(erroDePublicacao({ publicado_em: null }, agora)).toBe(MSG)
+  })
+
+  it('recusa publicação no futuro', () => {
+    expect(erroDePublicacao({ publicado_em: '2026-09-22T12:00:01Z' }, agora)).toBe(MSG)
+  })
+
+  it('aceita publicado no passado', () => {
+    expect(erroDePublicacao({ publicado_em: '2026-09-22T11:59:59Z' }, agora)).toBeNull()
   })
 })
 
