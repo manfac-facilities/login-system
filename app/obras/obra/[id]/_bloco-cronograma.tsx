@@ -237,14 +237,21 @@ export default function BlocoCronograma({
       </CampoForm>
 
       <CampoForm id="b-cro-equipe" rotulo="Equipe / prestador" erro={erros.equipe}>
-        <Selecao
+        {/* Texto livre com sugestões (ajuste 3 de 23/09). */}
+        <Entrada
           id="b-cro-equipe"
-          opcoes={equipes}
           valor={rascunho.equipe}
-          vazio="— escolher —"
           desabilitado={salvando}
+          list="equipes-cro"
+          autoComplete="off"
+          placeholder="Digite a equipe ou o prestador"
           onChange={(v) => campo('equipe', v)}
         />
+        <datalist id="equipes-cro">
+          {equipes.map((e) => (
+            <option key={e} value={e} />
+          ))}
+        </datalist>
       </CampoForm>
 
       <CampoForm id="b-cro-prioridade" rotulo="Prioridade" erro={erros.prioridade}>
