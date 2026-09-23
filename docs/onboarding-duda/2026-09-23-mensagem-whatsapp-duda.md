@@ -5,7 +5,7 @@
 
 **Revisado em 23/09:** o João decidiu que o cancelamento fica com o Claude, junto com os ajustes da
 ficha (mesmos arquivos), porque o cliente quer agilidade nele. A primeira versão desta mensagem o
-entregava ao Duda. A próxima frente do Duda está **em aberto**, e o João precisa definir antes de
+entregava ao Duda. Próxima frente do Duda, decidida pelo João em 23/09: **validar o operacional**.
 
 ## O texto
 
