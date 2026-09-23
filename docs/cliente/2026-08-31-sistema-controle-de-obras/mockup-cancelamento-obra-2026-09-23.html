@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancelamento de obra</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --canc:#64748b;--canc-soft:rgba(100,116,139,.16);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;overflow-x:hidden}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:980px;margin:0 auto;padding-block:22px 90px;padding-inline:16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  h1.titulo{font-size:21px;margin:0 0 6px;letter-spacing:-.015em}
+  .topo{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin-bottom:26px}
+  .topo p{margin:0 0 8px;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .topo ul{margin:0;padding-left:18px;color:var(--ink-dim);font-size:13px}
+  .topo b{color:var(--ink)}
+  .topo li{margin-bottom:3px}
+
+  .sec{border-top:1px solid var(--line);padding-top:22px;margin-top:18px}
+  .sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:var(--r-sm);padding:3px 9px}
+  .sec-h h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:13px;max-width:78ch}
+  .sec-h p b{color:var(--ink)}
+
+  .recon{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:11px 14px;margin:0 0 14px}
+  .recon .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;display:block;margin-bottom:5px}
+  .recon ul{margin:0;padding-left:18px;color:var(--ink-dim);font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+  .recon b{color:var(--ink)}
+  .recon code{font-family:var(--mono);font-size:11.5px;color:var(--info);background:rgba(90,169,240,.1);border-radius:3px;padding:0 3px;overflow-wrap:anywhere}
+
+  .estados{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 14px;padding:4px;border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.18)}
+  .estados .lbl{margin:0 6px 0 4px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .estados button{background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:5px 11px;color:var(--ink-dim);font-size:12.5px}
+  .estados button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .estados button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:var(--line)}
+
+  .novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box + .box{margin-top:12px}
+  .box-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px}
+  .box-h .dir{margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-faint)}
+  .box-b{padding:13px 14px}
+  .head{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .head h3{margin:0;font-size:17px;letter-spacing:-.01em}
+  .head .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line);color:var(--ink-dim)}
+  .pill.ok{color:var(--ok);background:var(--ok-soft);border-color:rgba(53,201,138,.3)}
+  .pill.info{color:var(--info);background:var(--info-soft);border-color:rgba(90,169,240,.3)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft);border-color:rgba(244,183,63,.3)}
+  .pill.crit{color:var(--crit);background:var(--crit-soft);border-color:rgba(255,77,109,.35)}
+  .pill.acc{color:var(--accent);background:var(--accent-soft);border-color:rgba(240,90,40,.35)}
+  .pill.canc{color:#cbd5e1;background:var(--canc-soft);border:1px dashed #7b8aa0}
+
+  .dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;font-size:12.5px;margin:0}
+  .dl div{min-width:0}
+  .dl dt{color:var(--ink-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+  .dl dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+
+  /* ---------- esteira ---------- */
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .passo:last-child{border-bottom:0}
+  .passo .dot{margin-top:5px;width:11px;height:11px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.45}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1;box-shadow:0 0 0 4px var(--accent-soft)}
+  .passo.pulado .dot{background:transparent;border:2px dashed var(--ink-faint);opacity:1}
+  .passo.parou .dot{background:transparent;border:2px solid #9aa8bb;opacity:1;position:relative}
+  .passo.parou .dot::after{content:"";position:absolute;left:50%;top:50%;width:9px;height:2px;background:#9aa8bb;transform:translate(-50%,-50%) rotate(45deg)}
+  .passo .corpo{flex:1;min-width:0}
+  .passo .nm{font-weight:650;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.pulado .nm,.passo.congelado .nm{color:var(--ink-faint)}
+  .passo.congelado .dot{opacity:.25}
+  .passo .meta{font-size:11.5px;color:var(--ink-dim);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:1px}
+  .passo .quando{flex:none;font-size:12px;text-align:right;white-space:nowrap}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.parou .quando{color:#cbd5e1}
+  .passo.pulado .quando,.passo.futuro .quando,.passo.congelado .quando{color:var(--ink-faint)}
+  .passo .extra{margin-top:6px;font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .passo .extra b{color:var(--ink)}
+  .aqui{border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 8px}
+  .aqui.canc{background:#475569}
+  .desvio{border:1px solid var(--line);border-radius:4px;font-size:10px;color:var(--ink-dim);padding:0 5px;font-weight:500}
+
+  /* ---------- controles ---------- */
+  .campo{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:10px 11px;min-width:0}
+  .campo .rot{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);font-weight:600}
+  .campo .dica{font-size:11.5px;color:var(--ink-faint)}
+  .campo.invalido{border-color:rgba(255,77,109,.6)}
+  .msg-erro{font-size:12px;color:var(--crit);font-weight:600}
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .in:disabled{opacity:.55}
+  textarea.in{resize:vertical;min-height:62px}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:8px 15px;border-radius:var(--r-sm);font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.ghost:hover:not(:disabled){color:var(--ink);border-color:#2b4f7d}
+  .btn.perigo{background:transparent;color:var(--crit);border-color:rgba(255,77,109,.55)}
+  .btn.perigo:hover:not(:disabled){background:var(--crit-soft)}
+  .btn.perigo-cheio{background:var(--crit);border-color:var(--crit);color:#fff}
+  .btn.perigo-cheio:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line)}
+  .btn.mini{padding:3px 10px;font-size:11.5px}
+  .link{color:var(--accent);background:none;border:0;padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+  .acoes{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+
+  .erro-box{border:1px solid rgba(255,77,109,.5);background:var(--crit-soft);border-left:4px solid var(--crit);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;font-size:12.5px;color:var(--ink-dim)}
+  .erro-box strong{display:block;color:var(--crit);font-size:13px;margin-bottom:3px}
+  .ok-box{border:1px solid rgba(53,201,138,.4);background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r-sm);padding:8px 12px;margin-top:10px;font-size:12.5px;color:var(--ink-dim);display:flex;align-items:flex-start;gap:8px}
+  .ok-box b{color:var(--ok)}
+  .ok-ic{width:16px;height:16px;border-radius:50%;background:var(--ok);color:#04231a;flex:none;display:grid;place-items:center;font-size:10px;font-weight:800;margin-top:1px}
+  .aviso-box{border:1px solid var(--line);background:rgba(0,0,0,.2);border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;color:var(--ink-dim)}
+  .aviso-box ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+  .aviso-box b{color:var(--ink)}
+  .girando{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:gira .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes gira{to{transform:rotate(360deg)}}
+
+  /* ---------- blocos editáveis (só a cabeça) ---------- */
+  .blocos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+  .bloco{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);overflow:hidden;min-width:0}
+  .bloco .bh{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--panel-2);border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim)}
+  .bloco .bh .btn{margin-left:auto;text-transform:none;letter-spacing:0}
+  .bloco .bh .so-leitura{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;font-size:11px;color:var(--ink-faint)}
+  .bloco .bb{padding:9px 12px;font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px}
+  .bloco .bb b{color:var(--ink);font-weight:500}
+
+  /* ---------- faixa de cancelar / cancelada ---------- */
+  .faixa-cancelar{border-top:1px solid var(--line);padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(255,77,109,.04)}
+  .faixa-cancelar .txt{flex:1;min-width:220px;font-size:12px;color:var(--ink-dim)}
+  .faixa-cancelar .txt b{color:var(--ink)}
+  .faixa-cancelar .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);font-weight:600;display:block;margin-bottom:2px}
+  .nao-cancela{border-top:1px solid var(--line);padding:11px 14px;font-size:12px;color:var(--ink-dim);display:flex;gap:8px;align-items:flex-start}
+  .nao-cancela .ic{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid var(--ink-faint);display:grid;place-items:center;font-size:10px;color:var(--ink-faint);margin-top:1px;font-weight:700}
+  .nao-cancela b{color:var(--ink)}
+  .seletor{border-top:1px solid var(--line);padding:11px 14px;display:flex;flex-direction:column;gap:7px}
+  .seletor .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint)}
+  .seletor .linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .seletor select{max-width:260px}
+  .seletor .dica{font-size:11px;color:var(--ink-faint)}
+
+  .selo-cancelada{border:1px solid #475569;border-left:4px solid #94a3b8;background:var(--canc-soft);border-radius:var(--r);padding:12px 14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .selo-cancelada .grande{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#cbd5e1;border:1.5px dashed #94a3b8;border-radius:var(--r-sm);padding:6px 10px;flex:none}
+  .selo-cancelada .info{flex:1;min-width:220px;font-size:12.5px;color:var(--ink-dim)}
+  .selo-cancelada .info .l1{color:var(--ink);font-weight:650;font-size:14px;margin-bottom:2px}
+  .selo-cancelada .info b{color:var(--ink)}
+  .selo-cancelada .obs{margin-top:5px;font-style:italic;color:var(--ink-dim)}
+
+  /* ---------- janela ---------- */
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:0;max-width:540px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(3,8,18,.72)}
+  .dlg-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);font-weight:650;font-size:14px}
+  .dlg-h .sub{display:block;font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .dlg-b{padding:14px 16px;font-size:13px;color:var(--ink-dim);max-height:68vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  .dlg-b p{margin:0}
+  .dlg-b b{color:var(--ink)}
+  .dlg-f{padding:0 16px 14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .opcoes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .opcao{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;background:rgba(0,0,0,.2);cursor:pointer}
+  .opcao:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+  .opcao input{margin-top:3px;accent-color:var(--accent)}
+  .opcao .o1{color:var(--ink);font-weight:600;font-size:13px}
+  .opcao .o2{font-size:11.5px;color:var(--ink-faint)}
+  .demo-janela{border:1px dashed var(--line);border-radius:var(--r);padding:0;background:var(--panel);max-width:540px}
+
+  /* ---------- histórico ---------- */
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:120px 1fr;gap:4px 14px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px}
+  .hist li:last-child{border-bottom:0}
+  .hist .qd{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .hist .qd span{display:block;color:var(--ink-dim);font-family:var(--sans);font-weight:600}
+  .hist .mv{color:var(--ink-dim);min-width:0;overflow-wrap:anywhere}
+  .hist .mv b{color:var(--ink)}
+  .hist .antigo{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.5)}
+
+  /* ---------- base ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+  .kpi{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:9px 11px;border-left:3px solid var(--c,#94a3b8);min-width:0}
+  .kpi .v{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--c)}
+  .kpi .r{font-size:11px;color:var(--ink-dim);line-height:1.35}
+  .kpi .dv{font-size:10.5px;color:var(--ink-faint);font-family:var(--mono)}
+  .kpi.proposta{border-style:dashed;border-left-style:solid}
+  .filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .filtros label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);min-width:0}
+  .filtros select{min-width:240px;max-width:100%}
+  .rolar{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:640px}
+  th{background:var(--panel-2);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  td.n{text-align:right;font-family:var(--mono)}
+  tr.cancelada td{color:var(--ink-faint)}
+  tr.cancelada td.loja{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.55)}
+  .dias-crit{color:var(--crit);font-weight:700}
+  .dias-warn{color:var(--warn);font-weight:700}
+  .nota-base{font-size:12px;color:var(--ink-dim);margin:8px 2px 0}
+  .nota-base b{color:var(--ink)}
+
+  /* ---------- antes/depois ---------- */
+  .ad{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cartao{border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:8px;transition:opacity .35s,transform .35s}
+  .cartao .c1{font-weight:650;font-size:13px}
+  .cartao .c2{font-size:11.5px;color:var(--ink-dim);font-family:var(--mono)}
+  .cartao .c3{font-size:11.5px;color:var(--ink-dim);margin-top:3px}
+  .cartao.sai{opacity:.35;border-style:dashed}
+  .cartao.sai .c1{text-decoration:line-through}
+  .sumiu{font-size:11.5px;color:var(--ink-faint);font-style:italic;margin:0 0 8px}
+  .tarefa{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--bg);border-radius:var(--r-sm);padding:8px 11px;margin-bottom:8px}
+  .tarefa.venc{border-left-color:var(--crit)}
+  .tarefa .t1{font-size:11px;color:var(--ink-dim)}
+  .tarefa .t2{font-size:12.5px;margin-top:1px}
+  .tarefa .t3{font-size:11px;font-weight:600;color:var(--warn);margin-top:2px}
+  .tarefa.venc .t3{color:var(--crit)}
+  .tarefa.sai{opacity:.35;border-style:dashed}
+  .tarefa.sai .t2{text-decoration:line-through}
+
+  /* ---------- julgar ---------- */
+  .julgar{border:1px solid rgba(240,90,40,.4);background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:var(--r);padding:12px 15px;margin-top:16px}
+  .julgar .t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:6px}
+  .julgar ol{margin:0;padding-left:18px;color:var(--ink);font-size:13px;display:flex;flex-direction:column;gap:5px}
+  .decisao{border:1px solid rgba(90,169,240,.35);background:var(--info-soft);border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;color:var(--ink-dim);margin-top:12px}
+  .decisao b{color:var(--ink)}
+  .decisao .t{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--info);display:block;margin-bottom:3px}
+
+  @media (max-width:760px){
+    .dl{grid-template-columns:1fr 1fr}
+    .blocos{grid-template-columns:1fr}
+    .kpis{grid-template-columns:1fr 1fr}
+    .ad{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .passo{flex-wrap:wrap}
+    .passo .quando{width:100%;text-align:left;padding-left:23px}
+    .hist li{grid-template-columns:1fr}
+    .opcoes{grid-template-columns:1fr}
+    .filtros select{min-width:0;width:100%}
+    .filtros label{width:100%}
+    .dlg-f .btn{flex:1}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;scroll-behavior:auto !important}}
+</style>
+</head>
+<body>
+<div class="pagina">
+<h1 class="titulo">Cancelamento de obra — onde fica, como se faz, como a obra fica depois</h1>
+<div class="topo">
+  <p>Rascunho de tela para você aprovar antes da spec e do código. Cor, tipografia e espaçamento são os mesmos do mockup dos ajustes da ficha aprovado em 23/09; não estão em julgamento. Hoje, nos exemplos, é <b>23/09/2026</b>. Obras DPSP inventadas, mas plausíveis. Tudo é clicável: os botões com fundo tracejado ("Ver") trocam o estado da tela.</p>
+  <p>O que o cliente já decidiu em 14/09 (pergunta 07) e este desenho segue sem reabrir:</p>
+  <ul>
+    <li><b>1A</b> — qualquer pessoa com acesso ao Controle de Obras pode cancelar.</li>
+    <li><b>2B</b> — obra já executada em campo <b>não se cancela</b>: segue até faturar o que foi feito.</li>
+    <li><b>3B</b> — no Field a OS cancelada continua ativa, com status "cancelado". O sistema não percebe sozinho: <b>cancelar é um clique aqui</b>.</li>
+    <li>E a dúvida do cliente de hoje: os botões <b>Editar</b> dos blocos <b>não</b> cancelam a obra. Cancelar tem botão próprio, em outro lugar da ficha (seção 1).</li>
+  </ul>
+</div>
+
+<!-- ============================ SEÇÃO 1 ============================ -->
+<section class="sec" id="sec-1" aria-labelledby="h-1">
+  <div class="sec-h"><span class="tag">1</span><div>
+    <h2 id="h-1">Onde fica o botão "Cancelar obra"</h2>
+    <p>Dentro do bloco <b>Ciclo de vida da obra</b>, numa faixa própria embaixo do "Mudar a etapa desta obra" — longe dos botões <b>Editar</b> de Autorização, Identificação e Cronograma. Cancelar é mudar o destino da obra, não corrigir um dado; por isso mora junto da etapa.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>A ficha hoje tem, nesta ordem: cabeçalho → alertas → <b>Ciclo de vida</b> (etapa, dono, esteira e o seletor "Mudar a etapa desta obra", <code>_etapa.tsx</code>) → <b>Autorização / Identificação / Cronograma</b>, cada um com o seu <b>Editar</b>. Nenhum desses botões mexe na etapa.</li>
+      <li>Obra em <b>Aguardando definição</b> não abre a ficha, abre a <b>Triagem</b> (<code>obra/[id]/page.tsx:186</code>). É justamente onde cai a OS aberta por engano — então o botão precisa estar lá também.</li>
+      <li>"Execução em campo concluída" = a obra saiu de campo (fase fechamento ou faturamento, <code>posCampo</code> em <code>_lib/tipos.ts:416</code>). Até <b>Paralisado</b> ainda dá para cancelar; de <b>Relatório de entrega</b> em diante, não.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Qual obra ver" data-grupo="s1">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="andamento" aria-pressed="true">Obra em andamento</button>
+    <button type="button" data-est="triagem" aria-pressed="false">Obra na triagem</button>
+    <button type="button" data-est="executada" aria-pressed="false">Obra já executada</button>
+  </div>
+
+  <!-- ---- estado: em andamento ---- -->
+  <div data-painel="s1" data-est="andamento">
+    <div class="head">
+      <div><h3>DP ITABORAI</h3><div class="sub">OS 0926-011480 · CIVIL · R$ 18.450,00</div></div>
+      <div class="pills"><span class="pill ok">Em andamento</span><span class="pill">Normal</span><span class="pill ok">OS aprovada</span><span class="pill">16 dias desde a liberação</span></div>
+    </div>
+    <div class="box">
+      <div class="box-h">Ciclo de vida da obra<span class="dir">onde ela está, de quem é a vez e há quanto tempo</span></div>
+      <div class="box-b">
+        <dl class="dl">
+          <div><dt>Etapa atual</dt><dd><span class="pill ok">Em andamento</span></dd></div>
+          <div><dt>Dono da etapa</dt><dd>Equipe em campo</dd></div>
+          <div><dt>Prazo</dt><dd>dia 16 de 20</dd></div>
+          <div><dt>Caminho</dt><dd>direto — a OS já estava aprovada</dd></div>
+        </dl>
+        <ol class="esteira" style="margin-top:10px;border-top:1px solid var(--line);padding-top:2px">
+          <li class="passo atual"><span class="dot"></span><div class="corpo"><div class="nm">Execução em campo<span class="aqui">a obra está aqui</span></div><div class="meta"><span>Equipe MANFAC-7</span><span>Campo · diário do dia</span></div><div class="extra">dia 16 de 20 · andou no último registro</div></div><span class="quando">em curso</span></li>
+          <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div><div class="meta"><span>Equipe / responsável</span><span>Field Control</span></div></div><span class="quando">—</span></li>
+          <li class="passo pulado"><span class="dot"></span><div class="corpo"><div class="nm">Executado - pendente aprovação OS<span class="desvio">desvio</span></div><div class="meta"><span>não se aplica — a OS já estava aprovada</span></div></div><span class="quando">não se aplica</span></li>
+          <li class="passo futuro"><span class="dot"></span><div class="corpo"><div class="nm">Fechar OS · Pendente faturamento · Faturado</div><div class="meta"><span>resumido neste mockup</span></div></div><span class="quando">—</span></li>
+        </ol>
+      </div>
+      <div class="seletor">
+        <span class="t">Mudar a etapa desta obra</span>
+        <div class="linha"><select class="in" aria-label="Mudar a etapa desta obra" disabled><option>Em andamento</option></select><button class="btn" type="button" disabled>Confirmar mudança</button></div>
+        <span class="dica">Controle que já existe hoje. "Cancelada" <b>não</b> aparece nesta lista — só se chega nela pelo botão abaixo, que pede o motivo.</span>
+      </div>
+      <div class="faixa-cancelar">
+        <div class="txt"><span class="t">Encerrar sem executar<span class="novo">novo</span></span>O cliente desistiu, a Manfac não vai executar ou a OS foi aberta por engano? Cancele aqui. <b>Nada é apagado e dá para desfazer.</b></div>
+        <button type="button" class="btn perigo" data-abre-cancelar>Cancelar obra</button>
+      </div>
+    </div>
+    <div class="blocos" aria-label="Blocos editáveis, sem mudança">
+      <div class="bloco"><div class="bh">Autorização<button class="btn ghost mini" type="button" data-editar>Editar</button></div><div class="bb"><span>Liberado por <b>LEANDRO</b> em 07/09</span><span>OS aprovada em <b>09/09/2026</b></span></div></div>
+      <div class="bloco"><div class="bh">Identificação<button class="btn ghost mini" type="button" data-editar>Editar</button></div><div class="bb"><span>Tipo <b>CIVIL</b> · Valor <b>R$ 18.450,00</b></span><span>Analista do cliente <b>AMANDA</b></span></div></div>
+      <div class="bloco"><div class="bh">Cronograma<button class="btn ghost mini" type="button" data-editar>Editar</button></div><div class="bb"><span>Responsável <b>YURI</b> · Equipe <b>MANFAC-7</b></span><span>Início <b>08/09/2026</b> · <b>20</b> dias</span></div></div>
+    </div>
+    <p class="nota-base" id="s1-editar-nota" hidden>Os botões <b>Editar</b> abrem só os campos do próprio bloco (responsável, datas, valor…). Nenhum deles muda a etapa nem cancela a obra.</p>
+  </div>
+
+  <!-- ---- estado: triagem ---- -->
+  <div data-painel="s1" data-est="triagem" hidden>
+    <div class="head">
+      <div><h3>DP MAGE</h3><div class="sub">OS 0926-011702 · entrou pelo Field em 20/09/2026</div></div>
+      <div class="pills"><span class="pill acc">Aguardando definição</span><span class="pill">há 3 dias</span></div>
+    </div>
+    <div class="box">
+      <div class="box-h">Triagem — definir antes de ir a campo<span class="dir">o que existe hoje, resumido</span></div>
+      <div class="box-b">
+        <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-dim)">Faltam <b style="color:var(--ink)">4 de 5</b> campos para liberar: responsável, equipe, prioridade, início e duração.</p>
+        <div class="acoes" style="margin-top:0"><button class="btn" type="button" disabled>Liberar para o diário do dia</button></div>
+      </div>
+      <div class="faixa-cancelar">
+        <div class="txt"><span class="t">Esta OS não vai virar obra?<span class="novo">novo</span></span>Aberta por engano no Field, duplicada, ou o cliente desistiu antes de começar. Cancele em vez de deixar parada em "Aguardando definição".</div>
+        <button type="button" class="btn perigo" data-abre-cancelar>Cancelar obra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- estado: já executada ---- -->
+  <div data-painel="s1" data-est="executada" hidden>
+    <div class="head">
+      <div><h3>DP CATETE</h3><div class="sub">OS 0826-010233 · PINTURA · R$ 9.870,00</div></div>
+      <div class="pills"><span class="pill warn">Fechar OS</span><span class="pill ok">OS aprovada</span><span class="pill">6 dias nesta etapa</span></div>
+    </div>
+    <div class="box">
+      <div class="box-h">Ciclo de vida da obra<span class="dir">onde ela está, de quem é a vez e há quanto tempo</span></div>
+      <div class="box-b">
+        <ol class="esteira">
+          <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Execução em campo</div><div class="meta"><span>Equipe MANFAC-4</span></div></div><span class="quando">12/09/2026</span></li>
+          <li class="passo feito"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div><div class="meta"><span>Field Control</span></div></div><span class="quando">17/09/2026</span></li>
+          <li class="passo atual"><span class="dot"></span><div class="corpo"><div class="nm">Fechar OS<span class="aqui">a obra está aqui</span></div><div class="meta"><span>Responsável LUANA</span><span>Sistema do cliente</span></div></div><span class="quando">há 6 dias</span></li>
+        </ol>
+      </div>
+      <div class="seletor">
+        <span class="t">Mudar a etapa desta obra</span>
+        <div class="linha"><select class="in" aria-label="Mudar a etapa desta obra" disabled><option>Fechar OS</option></select><button class="btn" type="button" disabled>Confirmar mudança</button></div>
+      </div>
+      <div class="nao-cancela"><span class="ic">i</span><div><b>Esta obra já foi executada em campo e não pode ser cancelada.</b> Ela segue até faturar o que foi feito (decisão do cliente, 14/09). Se o cliente cancelou o pedido depois do serviço, registre isso em Pendências.</div></div>
+    </div>
+  </div>
+
+  <div class="decisao"><span class="t">Decisão que tomei, para você julgar</span>Na obra já executada o botão <b>some</b> e fica <b>uma linha de explicação</b> no lugar — não um botão cinza desabilitado. Botão desabilitado convida ao clique e vira pergunta de suporte ("por que não funciona?"); a linha responde antes da pergunta. Ausente sem explicação também não serve: quem procura o botão acharia que o recurso não existe.</div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>A faixa "Encerrar sem executar", dentro do Ciclo de vida e separada dos Editar, deixa claro para o cliente que Editar não cancela — ou prefere o botão no cabeçalho da ficha, ao lado das etiquetas?</li>
+      <li>Na obra já executada: a linha de explicação no lugar do botão está boa, ou prefere o botão desabilitado?</li>
+      <li>"Paralisado" ainda pode ser cancelado (a equipe não terminou o serviço). Concorda com o corte em "Relatório de entrega"?</li>
+      <li>O texto "Registre isso em Pendências" para o caso cliente-cancelou-depois-do-serviço é suficiente por agora?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 2 ============================ -->
+<section class="sec" id="sec-2" aria-labelledby="h-2">
+  <div class="sec-h"><span class="tag">2</span><div>
+    <h2 id="h-2">A janela de cancelar</h2>
+    <p>Uma escolha obrigatória — <b>quem cancelou</b> — e uma observação livre, opcional. O botão de confirmar só acende depois da escolha. Clique em "Cancelar obra" na seção 1, ou use os botões abaixo para ver cada estado sem precisar preencher.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com as fontes</span>
+    <ul>
+      <li>Os dois valores são literais do pedido de 10/09: <b>"Cancelado pelo Cliente"</b> e <b>"Cancelado pela Manfac"</b> — gravados como opção fechada (<code>cliente</code> / <code>manfac</code>), nunca texto livre, para dar para contar depois.</li>
+      <li>O esboço do feedback 11 pedia um "motivo" em texto <b>obrigatório</b>. Aqui o obrigatório virou a escolha estruturada e o texto ficou <b>opcional</b>, como pedido na instrução desta frente. Ver pergunta 2 abaixo.</li>
+      <li>O aviso repete o que o cliente leu na pergunta 07: sai do diário e das cobranças, nada é apagado, dá para desfazer.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Estado da janela" data-grupo="s2">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="preenchendo" aria-pressed="true">Preenchendo</button>
+    <button type="button" data-est="salvando" aria-pressed="false">Salvando</button>
+    <button type="button" data-est="cancelada" aria-pressed="false">Cancelada</button>
+    <button type="button" data-est="erro" aria-pressed="false">Erro</button>
+  </div>
+  <div class="estados" role="group" aria-label="O que a próxima gravação faz" data-grupo="s2r">
+    <span class="lbl">Ao confirmar, simular</span>
+    <button type="button" data-est="sucesso" aria-pressed="true">sucesso</button>
+    <button type="button" data-est="falha" aria-pressed="false">falha de rede</button>
+  </div>
+
+  <div class="demo-janela" id="s2-demo"></div>
+
+  <dialog id="dlg-cancelar" aria-labelledby="dlg-cancelar-h"><div id="dlg-cancelar-corpo"></div></dialog>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>"Quem cancelou?" com as duas opções é a pergunta certa, ou o cliente vai querer uma terceira (ex.: "OS duplicada / aberta por engano")? Hoje esse caso vai em "pela Manfac" + observação.</li>
+      <li>A observação deve ser <b>obrigatória</b> (como no esboço de 10/09) ou opcional (como está)? Obrigatória dá mais contexto; opcional evita "xxx" digitado só para passar.</li>
+      <li>O aviso de quatro linhas está no tamanho certo, ou é texto demais para uma janela?</li>
+      <li>Depois de cancelar, a janela fecha e a ficha já aparece cancelada (seção 3). Precisa de mais alguma confirmação?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 3 ============================ -->
+<section class="sec" id="sec-3" aria-labelledby="h-3">
+  <div class="sec-h"><span class="tag">3</span><div>
+    <h2 id="h-3">A ficha de uma obra cancelada</h2>
+    <p>Selo no topo com <b>quem, quando e por quê</b>. A esteira fica congelada no ponto em que parou. Os blocos continuam legíveis, mas <b>sem Editar</b>: para mexer, primeiro desfaz o cancelamento. "Desfazer cancelamento" pede confirmação e devolve a obra para a etapa em que estava.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>Para "voltar para a etapa em que estava" o sistema precisa <b>guardar essa etapa</b> ao cancelar — hoje não existe coluna para isso (ver brief, SQL).</li>
+      <li>A troca de etapa atual grava quem e quando na própria obra (<code>etapa_por</code>, <code>etapa_em</code>), mas <b>não gera linha no Histórico de alterações</b> — só os marcos geram (<code>_actions.ts:389</code>). O cancelamento e o desfazer <b>vão</b> gerar linha, como o feedback 11 pede.</li>
+      <li>Com a obra cancelada, as caixas de alerta ("Sem OS aprovada", "Passou da duração", crítica) somem: não há mais nada a cobrar.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Qual situação ver" data-grupo="s3">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="cliente" aria-pressed="true">Cancelada pelo Cliente</button>
+    <button type="button" data-est="manfac" aria-pressed="false">Cancelada pela Manfac (triagem)</button>
+    <button type="button" data-est="desfeita" aria-pressed="false">Depois de desfazer</button>
+  </div>
+
+  <div id="s3-ficha"></div>
+
+  <dialog id="dlg-desfazer" aria-labelledby="dlg-desfazer-h"><div id="dlg-desfazer-corpo"></div></dialog>
+
+  <div class="decisao"><span class="t">Decisões que tomei, para você julgar</span>(1) Obra cancelada fica <b>só leitura</b>: sem Editar e sem "Mudar a etapa". Se alguém quiser mexer, desfaz primeiro — assim ninguém "descancela" sem querer trocando a etapa. (2) Desfazer volta para a etapa exata e <b>não zera</b> a contagem de dias: a obra não ganha dias de graça por ter ficado cancelada. (3) Cancelada pela Manfac na triagem volta para a Triagem.</div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>O selo cinza tracejado lê como "arquivada, sem alarme"? Ou cancelada deveria ter mais destaque?</li>
+      <li>Obra cancelada só leitura (sem Editar) — concorda, ou ainda deve dar para corrigir valor/responsável sem desfazer?</li>
+      <li>Ao desfazer, a contagem de dias continua de onde estava (os dias cancelada contam). Prefere que recomece hoje?</li>
+      <li>Precisa mostrar o nome da pessoa em vez do e-mail no selo?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 4 ============================ -->
+<section class="sec" id="sec-4" aria-labelledby="h-4">
+  <div class="sec-h"><span class="tag">4</span><div>
+    <h2 id="h-4">Na Base de obras</h2>
+    <p>No filtro padrão ("Todas") a obra cancelada <b>não aparece</b>, e uma linha embaixo avisa quantas estão fora. No filtro de etapa entra um grupo novo, <b>Canceladas</b>. Os indicadores do topo <b>nunca</b> contam cancelada. Troque o filtro para ver.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com <code>base/_regras.ts</code></span>
+    <ul>
+      <li>Os indicadores olham sempre a base inteira, nunca a lista filtrada (<code>kpisDaBase</code>, regra que não se dobra). Então cancelada precisa sair <b>dentro</b> da conta — em "em andamento", "sem OS aprovada", "aprovadas há mais de 60 dias" e "passaram da duração".</li>
+      <li>O filtro de etapa hoje é agrupado por fase (<code>opcoesEtapa</code>). Cancelada não é fase da esteira, então vira um grupo à parte, no fim.</li>
+      <li>No <b>Kanban</b> as colunas são as quatro fases (<code>_kanban.tsx:90</code>). Cancelada não entra em coluna nenhuma — só se acha pela lista filtrada.</li>
+      <li>"Dias em aberto" não corre para cancelada: mostra "—" e ela nunca é pintada de crítica.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Comparar os indicadores" data-grupo="s4k">
+    <span class="lbl">Indicadores</span>
+    <button type="button" data-est="depois" aria-pressed="true">Depois dos 2 cancelamentos de hoje</button>
+    <button type="button" data-est="antes" aria-pressed="false">Antes</button>
+  </div>
+  <div class="kpis" id="s4-kpis"></div>
+
+  <div class="filtros">
+    <label>Etapa da obra
+      <select class="in" id="s4-filtro">
+        <option value="todas">Todas</option>
+        <option value="__esteira">Executadas, ainda na esteira</option>
+        <optgroup label="Antes de executar">
+          <option value="fase:antes">Toda a fase antes de executar</option>
+          <option value="definir">Aguardando definição</option>
+          <option value="levantamento">Levantamento</option>
+        </optgroup>
+        <optgroup label="Executando">
+          <option value="fase:campo">Toda a fase executando</option>
+          <option value="andamento">Em andamento</option>
+          <option value="paralisado">Paralisado</option>
+        </optgroup>
+        <optgroup label="Fechamento">
+          <option value="fase:fechamento">Toda a fase fechamento</option>
+          <option value="aprovarOS">Executado - pendente aprovação OS</option>
+          <option value="fecharOS">Fechar OS</option>
+        </optgroup>
+        <optgroup label="Canceladas (novo)">
+          <option value="cancelado">Todas as canceladas</option>
+          <option value="cancelado:cliente">Canceladas pelo Cliente</option>
+          <option value="cancelado:manfac">Canceladas pela Manfac</option>
+        </optgroup>
+      </select>
+    </label>
+  </div>
+  <div class="rolar"><table>
+    <thead><tr><th>Nº OS</th><th>Loja</th><th>Responsável</th><th>Etapa da obra</th><th>Com quem está</th><th style="text-align:right">Dias em aberto</th></tr></thead>
+    <tbody id="s4-tabela"></tbody>
+  </table></div>
+  <p class="nota-base" id="s4-nota"></p>
+
+  <div class="decisao"><span class="t">Decisões que tomei, para você julgar</span>(1) "Todas" <b>esconde</b> as canceladas, com o aviso "N canceladas fora desta lista · ver". Mostrar misturado faria a base parecer maior e mais atrasada do que é. (2) O indicador tracejado "canceladas no mês" é <b>proposta</b>: responde a pergunta de negócio do feedback 11 (quanto o cliente cancela × quanto a Manfac cancela), mas não foi pedido.</div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>"Todas" sem as canceladas, com aviso embaixo — ou prefere que "Todas" traga tudo, canceladas no fim da lista?</li>
+      <li>O indicador "canceladas no mês (Cliente · Manfac)" entra, ou fica de fora por agora?</li>
+      <li>Cancelada fora do Kanban está certo, ou quer uma coluna recolhida "Canceladas" no fim?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO 5 ============================ -->
+<section class="sec" id="sec-5" aria-labelledby="h-5">
+  <div class="sec-h"><span class="tag">5</span><div>
+    <h2 id="h-5">Diário e tarefas: a cancelada para de cobrar</h2>
+    <p>No mesmo instante do cancelamento, a obra sai da fila do diário do responsável e as tarefas abertas dela saem da lista de cobranças. As respostas antigas e as tarefas continuam guardadas na ficha.</p>
+  </div></div>
+
+  <div class="recon">
+    <span class="lbl">Reconciliado com o código real</span>
+    <ul>
+      <li>O diário já busca só três etapas (<code>diario/page.tsx:31,62</code>): cancelada sai sozinha, sem mudança de código na fila.</li>
+      <li>A tela de tarefas lista <b>todas</b> as tarefas, sem olhar a obra (<code>tarefas/page.tsx:42-46</code>). Aqui precisa mudar: esconder tarefa de obra cancelada.</li>
+    </ul>
+  </div>
+
+  <div class="estados" role="group" aria-label="Antes ou depois" data-grupo="s5">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="antes" aria-pressed="true">Antes de cancelar DP ITABORAI</button>
+    <button type="button" data-est="depois" aria-pressed="false">Depois</button>
+  </div>
+
+  <div class="ad">
+    <div class="box"><div class="box-h">Diário do dia — fila de YURI<span class="dir" id="s5-fila-n">3 obras</span></div>
+      <div class="box-b" id="s5-fila"></div>
+    </div>
+    <div class="box"><div class="box-h">Tarefas — cobranças abertas<span class="dir" id="s5-tar-n">3 abertas</span></div>
+      <div class="box-b" id="s5-tarefas"></div>
+    </div>
+  </div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>Tarefa aberta de obra cancelada: <b>some da lista</b> (como está) ou fica na lista marcada "obra cancelada"?</li>
+      <li>Se o cancelamento for desfeito, a tarefa volta a cobrar do jeito que estava. Concorda?</li>
+    </ol>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  /* ---------- grupos de estado ---------- */
+  const ouvintes = {};
+  function grupo(nome, aoMudar){
+    ouvintes[nome] = aoMudar;
+    const g = $(`.estados[data-grupo="${nome}"]`);
+    g.addEventListener('click', e => {
+      const b = e.target.closest('button[data-est]');
+      if(!b) return;
+      marcar(nome, b.dataset.est);
+    });
+  }
+  function marcar(nome, est){
+    const g = $(`.estados[data-grupo="${nome}"]`);
+    $$('button[data-est]', g).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.est === est)));
+    ouvintes[nome] && ouvintes[nome](est);
+  }
+  function atual(nome){
+    const b = $(`.estados[data-grupo="${nome}"] button[aria-pressed="true"]`);
+    return b ? b.dataset.est : null;
+  }
+
+  /* ================= SEÇÃO 1 ================= */
+  grupo('s1', est => $$('[data-painel="s1"]').forEach(p => p.hidden = p.dataset.est !== est));
+  $$('[data-editar]').forEach(b => b.addEventListener('click', () => { $('#s1-editar-nota').hidden = false; }));
+
+  /* ================= SEÇÃO 2: janela ================= */
+  const OBRAS = {
+    andamento: { loja:'DP ITABORAI', os:'0926-011480', etapa:'Em andamento', resp:'YURI' },
+    triagem:   { loja:'DP MAGE', os:'0926-011702', etapa:'Aguardando definição', resp:null }
+  };
+  let ctx = OBRAS.andamento;
+  let escolha = null, obs = '';
+
+  function janelaHTML(estado, dentroDeDialog){
+    const bloqueado = estado === 'salvando';
+    const cab = `<div class="dlg-h" id="${dentroDeDialog ? 'dlg-cancelar-h' : 's2-h'}">Cancelar a obra ${esc(ctx.loja)}<span class="sub">OS ${esc(ctx.os)} · hoje em "${esc(ctx.etapa)}"</span></div>`;
+    if(estado === 'cancelada'){
+      return cab + `<div class="dlg-b"><div class="ok-box" style="margin:0"><span class="ok-ic">✓</span><div><b>Obra cancelada.</b> ${esc(ctx.loja)} saiu do diário${ctx.resp ? ' de ' + esc(ctx.resp) : ''} e das cobranças. Fica na base, no filtro "Canceladas", e dá para desfazer na própria ficha.</div></div></div>
+        <div class="dlg-f"><button type="button" class="btn" data-acao="ver-ficha">Ver a ficha cancelada</button></div>`;
+    }
+    const opc = (v, t1, t2) => `<label class="opcao"><input type="radio" name="${dentroDeDialog ? 'quem-d' : 'quem-s'}" value="${v}" ${escolha === v ? 'checked' : ''} ${bloqueado ? 'disabled' : ''}><span><span class="o1">${t1}</span><br><span class="o2">${t2}</span></span></label>`;
+    return cab + `<div class="dlg-b">
+      <div class="campo${estado === 'faltou' ? ' invalido' : ''}">
+        <span class="rot">Quem cancelou? <span style="color:var(--crit)">*</span></span>
+        <div class="opcoes" role="radiogroup" aria-label="Quem cancelou">
+          ${opc('cliente','Cancelado pelo Cliente','a DPSP desistiu ou suspendeu')}
+          ${opc('manfac','Cancelado pela Manfac','não vamos executar, ou OS aberta por engano')}
+        </div>
+        ${estado === 'faltou' ? '<span class="msg-erro">Escolha quem cancelou para continuar.</span>' : ''}
+      </div>
+      <div class="campo">
+        <label class="rot" for="${dentroDeDialog ? 'obs-d' : 'obs-s'}">O que aconteceu <span style="font-weight:400;color:var(--ink-faint)">(opcional)</span></label>
+        <textarea class="in" id="${dentroDeDialog ? 'obs-d' : 'obs-s'}" maxlength="300" placeholder="ex.: loja desistiu da reforma; OS duplicada no Field" ${bloqueado ? 'disabled' : ''}>${esc(obs)}</textarea>
+      </div>
+      <div class="aviso-box"><b>O que acontece ao cancelar</b><ul>
+        <li>A obra <b>sai do diário do dia e das cobranças</b> na hora.</li>
+        <li><b>Nada é apagado</b>: diário, fotos, tarefas e histórico continuam na ficha.</li>
+        <li><b>Dá para desfazer</b> na própria ficha, e ela volta para "${esc(ctx.etapa)}".</li>
+        <li>No Field nada muda: se a OS também foi cancelada lá, é outro passo.</li>
+      </ul></div>
+      ${estado === 'erro' ? `<div class="erro-box" style="margin:0"><strong>Não deu para cancelar.</strong>A conexão falhou e <b>nada mudou na obra</b> — ela continua em "${esc(ctx.etapa)}". Sua escolha foi mantida: é só tentar de novo.</div>` : ''}
+    </div>
+    <div class="dlg-f">
+      <button type="button" class="btn ghost" data-acao="voltar" ${bloqueado ? 'disabled' : ''}>Voltar sem cancelar</button>
+      <button type="button" class="btn perigo-cheio" data-acao="confirmar" ${(!escolha || bloqueado) ? 'disabled' : ''}>${bloqueado ? '<span class="girando"></span>Cancelando…' : estado === 'erro' ? 'Tentar de novo' : 'Cancelar obra'}</button>
+    </div>`;
+  }
+
+  const demo = $('#s2-demo');
+  const dlg = $('#dlg-cancelar');
+  const dlgCorpo = $('#dlg-cancelar-corpo');
+  let estadoDlg = 'preenchendo';
+
+  function pintarDemo(est){
+    if(est === 'salvando' || est === 'cancelada' || est === 'erro'){ if(!escolha) escolha = 'cliente'; }
+    demo.innerHTML = janelaHTML(est, false);
+    ligar(demo, false);
+  }
+  function pintarDlg(){ dlgCorpo.innerHTML = janelaHTML(estadoDlg, true); ligar(dlgCorpo, true); }
+
+  function ligar(raiz, ehDialog){
+    $$('input[type=radio]', raiz).forEach(r => r.addEventListener('change', () => {
+      escolha = r.value;
+      if(ehDialog){ if(estadoDlg === 'faltou') estadoDlg = 'preenchendo'; pintarDlg(); } else { marcar('s2', 'preenchendo'); }
+    }));
+    const ta = $('textarea', raiz);
+    if(ta) ta.addEventListener('input', () => { obs = ta.value; });
+    const conf = $('[data-acao="confirmar"]', raiz);
+    if(conf) conf.addEventListener('click', () => confirmar(ehDialog));
+    const volt = $('[data-acao="voltar"]', raiz);
+    if(volt) volt.addEventListener('click', () => { if(ehDialog) dlg.close(); else { escolha = null; obs = ''; marcar('s2','preenchendo'); } });
+    const ver = $('[data-acao="ver-ficha"]', raiz);
+    if(ver) ver.addEventListener('click', () => {
+      const base = ctx === OBRAS.triagem ? 'manfac' : 'cliente';
+      CANC[base].porTxt = escolha === 'manfac' ? 'pela Manfac' : 'pelo Cliente';
+      if(ehDialog) dlg.close();
+      marcar('s3', base);
+      $('#sec-3').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  }
+
+  function confirmar(ehDialog){
+    if(!escolha){ if(ehDialog){ estadoDlg = 'faltou'; pintarDlg(); } return; }
+    const falha = atual('s2r') === 'falha';
+    if(ehDialog){
+      estadoDlg = 'salvando'; pintarDlg();
+      setTimeout(() => { estadoDlg = falha ? 'erro' : 'cancelada'; pintarDlg(); }, 1300);
+    } else {
+      marcar('s2', 'salvando');
+      setTimeout(() => marcar('s2', falha ? 'erro' : 'cancelada'), 1300);
+    }
+  }
+
+  grupo('s2', pintarDemo);
+  grupo('s2r', () => {});
+  pintarDemo('preenchendo');
+
+  $$('[data-abre-cancelar]').forEach(b => b.addEventListener('click', () => {
+    ctx = b.closest('[data-painel]').dataset.est === 'triagem' ? OBRAS.triagem : OBRAS.andamento;
+    escolha = null; obs = ''; estadoDlg = 'preenchendo';
+    pintarDlg(); dlg.showModal();
+  }));
+  dlg.addEventListener('close', () => { ctx = OBRAS.andamento; escolha = null; obs = ''; pintarDemo(atual('s2')); });
+
+  /* ================= SEÇÃO 3: ficha cancelada ================= */
+  const s3 = $('#s3-ficha');
+  const CANC = {
+    cliente: {
+      loja:'DP ITABORAI', os:'0926-011480 · CIVIL · R$ 18.450,00', etapaAnt:'Em andamento', porTxt:'pelo Cliente',
+      quem:'rafael.souza@manfac.com.br', quando:'23/09/2026 às 10:42', obs:'Loja informou que a reforma foi suspensa pela regional.',
+      esteira:`
+        <li class="passo parou"><span class="dot"></span><div class="corpo"><div class="nm">Execução em campo<span class="aqui canc">cancelada aqui</span></div><div class="meta"><span>Equipe MANFAC-7</span><span>Campo · diário do dia</span></div><div class="extra">Parou no dia 16 de 20. Últimos registros do diário continuam abaixo, só leitura.</div></div><span class="quando">23/09/2026</span></li>
+        <li class="passo congelado"><span class="dot"></span><div class="corpo"><div class="nm">Relatório de entrega</div></div><span class="quando">não se aplica</span></li>
+        <li class="passo congelado"><span class="dot"></span><div class="corpo"><div class="nm">Fechar OS · Pendente faturamento · Faturado</div></div><span class="quando">não se aplica</span></li>`,
+      blocos:[['Autorização','Liberado por <b>LEANDRO</b> em 07/09','OS aprovada em <b>09/09/2026</b>'],['Identificação','Tipo <b>CIVIL</b> · Valor <b>R$ 18.450,00</b>','Analista do cliente <b>AMANDA</b>'],['Cronograma','Responsável <b>YURI</b> · Equipe <b>MANFAC-7</b>','Início <b>08/09/2026</b> · <b>20</b> dias']]
+    },
+    manfac: {
+      loja:'DP MAGE', os:'0926-011702 · entrou pelo Field em 20/09/2026', etapaAnt:'Aguardando definição', porTxt:'pela Manfac',
+      quem:'rafael.souza@manfac.com.br', quando:'23/09/2026 às 11:05', obs:'OS aberta em duplicidade no Field — a obra certa é a 0926-011698.',
+      esteira:`
+        <li class="passo parou"><span class="dot"></span><div class="corpo"><div class="nm">Triagem<span class="aqui canc">cancelada aqui</span></div><div class="meta"><span>Analista</span><span>Manfac</span></div><div class="extra">Nunca foi liberada para o diário: não há registros de campo.</div></div><span class="quando">23/09/2026</span></li>
+        <li class="passo congelado"><span class="dot"></span><div class="corpo"><div class="nm">Execução em campo e esteira</div></div><span class="quando">não se aplica</span></li>`,
+      blocos:null
+    }
+  };
+  let s3Desfeita = false;
+  let s3Base = 'cliente';
+
+  function histLinhas(c, desfeita){
+    const l = [];
+    if(desfeita) l.push(`<li><div class="qd">23/09 às 14:10<span>Cancelamento</span></div><div class="mv"><b>Cancelamento desfeito</b> — Etapa: <span class="antigo">Cancelada</span> → <b>${esc(c.etapaAnt)}</b> · por rafael.souza@manfac.com.br</div></li>`);
+    l.push(`<li><div class="qd">${c.quando.replace('/2026 às',' às')}<span>Cancelamento</span></div><div class="mv"><b>Obra cancelada ${esc(c.porTxt)}</b> — Etapa: <span class="antigo">${esc(c.etapaAnt)}</span> → <b>Cancelada</b> · "${esc(c.obs)}" · por ${esc(c.quem)}</div></li>`);
+    if(c.blocos) l.push(`<li><div class="qd">09/09 às 16:22<span>Autorização</span></div><div class="mv">OS aprovada em: <span class="antigo">—</span> → <b>09/09/2026</b> · por rafael.souza@manfac.com.br</div></li>`);
+    return l.join('');
+  }
+
+  function pintarS3(){
+    const c = CANC[s3Base];
+    if(s3Desfeita){
+      const ehTriagem = s3Base === 'manfac';
+      s3.innerHTML = `
+        <div class="ok-box" style="margin:0 0 12px"><span class="ok-ic">✓</span><div><b>Cancelamento desfeito.</b> ${esc(c.loja)} voltou para "${esc(c.etapaAnt)}"${ehTriagem ? ' e abre de novo na Triagem' : ' e entra de novo no diário de YURI amanhã'}. O cancelamento continua registrado no histórico.</div></div>
+        <div class="head"><div><h3>${esc(c.loja)}</h3><div class="sub">OS ${esc(c.os)}</div></div>
+          <div class="pills">${ehTriagem ? '<span class="pill acc">Aguardando definição</span>' : '<span class="pill ok">Em andamento</span><span class="pill ok">OS aprovada</span><span class="pill">16 dias desde a liberação</span>'}</div></div>
+        <div class="box"><div class="box-h">Histórico de alterações<span class="dir">mais recentes primeiro</span></div><div class="box-b"><ul class="hist">${histLinhas(c, true)}</ul></div></div>
+        <div class="acoes"><button type="button" class="btn ghost" id="s3-reset">Voltar para a obra cancelada</button></div>`;
+      $('#s3-reset').addEventListener('click', () => { s3Desfeita = false; marcar('s3', s3Base); });
+      return;
+    }
+    const blocos = c.blocos ? `<div class="blocos">${c.blocos.map(b => `<div class="bloco"><div class="bh">${b[0]}<span class="so-leitura">só leitura</span></div><div class="bb"><span>${b[1]}</span><span>${b[2]}</span></div></div>`).join('')}</div>` : '';
+    s3.innerHTML = `
+      <div class="head"><div><h3 style="color:var(--ink-dim)">${esc(c.loja)}</h3><div class="sub">OS ${esc(c.os)}</div></div>
+        <div class="pills"><span class="pill canc">Cancelada · ${c.porTxt === 'pelo Cliente' ? 'Cliente' : 'Manfac'}</span></div></div>
+      <div class="selo-cancelada">
+        <span class="grande">Cancelada</span>
+        <div class="info">
+          <div class="l1">Cancelado ${esc(c.porTxt)}</div>
+          em <b>${esc(c.quando)}</b> por <b>${esc(c.quem)}</b> · estava em <b>${esc(c.etapaAnt)}</b>
+          <div class="obs">"${esc(c.obs)}"</div>
+        </div>
+        <button type="button" class="btn ghost" id="s3-desfazer">Desfazer cancelamento</button>
+      </div>
+      <div class="box">
+        <div class="box-h">Ciclo de vida da obra<span class="dir">congelado desde o cancelamento</span></div>
+        <div class="box-b"><ol class="esteira">${c.esteira}</ol></div>
+        <div class="nao-cancela"><span class="ic">i</span><div>Obra cancelada não muda de etapa. Para voltar a trabalhar nela, use <b>Desfazer cancelamento</b>.</div></div>
+      </div>
+      ${blocos}
+      <div class="box" style="margin-top:12px"><div class="box-h">Histórico de alterações<span class="dir">mais recentes primeiro</span></div><div class="box-b"><ul class="hist">${histLinhas(c, false)}</ul></div></div>`;
+    $('#s3-desfazer').addEventListener('click', abrirDesfazer);
+  }
+
+  const dlgD = $('#dlg-desfazer');
+  const dlgDC = $('#dlg-desfazer-corpo');
+  function abrirDesfazer(){ pintarDesfazer('pergunta'); dlgD.showModal(); }
+  function pintarDesfazer(est){
+    const c = CANC[s3Base];
+    const ehTriagem = s3Base === 'manfac';
+    const carregando = est === 'salvando';
+    dlgDC.innerHTML = `<div class="dlg-h" id="dlg-desfazer-h">Desfazer o cancelamento?<span class="sub">${esc(c.loja)} · OS ${esc(c.os.split(' ·')[0])}</span></div>
+      <div class="dlg-b">
+        <p>A obra volta para <b>${esc(c.etapaAnt)}</b>${ehTriagem ? ' e abre de novo na Triagem.' : ', entra de novo no diário de <b>YURI</b> e as tarefas abertas dela voltam a cobrar.'}</p>
+        <p>O cancelamento ${esc(c.porTxt)} de ${esc(c.quando.split(' ')[0])} <b>continua no histórico</b>, junto com este desfazer.</p>
+      </div>
+      <div class="dlg-f">
+        <button type="button" class="btn ghost" id="d-nao" ${carregando ? 'disabled' : ''}>Manter cancelada</button>
+        <button type="button" class="btn" id="d-sim" ${carregando ? 'disabled' : ''}>${carregando ? '<span class="girando"></span>Desfazendo…' : 'Desfazer cancelamento'}</button>
+      </div>`;
+    $('#d-nao').addEventListener('click', () => dlgD.close());
+    $('#d-sim').addEventListener('click', () => {
+      pintarDesfazer('salvando');
+      setTimeout(() => { dlgD.close(); s3Desfeita = true; marcarSemRepintar('s3','desfeita'); pintarS3(); }, 1100);
+    });
+  }
+  function marcarSemRepintar(nome, est){
+    $$(`.estados[data-grupo="${nome}"] button[data-est]`).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.est === est)));
+  }
+  $('.estados[data-grupo="s3"]').addEventListener('click', () => { CANC.cliente.porTxt = 'pelo Cliente'; CANC.manfac.porTxt = 'pela Manfac'; }, true);
+  grupo('s3', est => {
+    if(est === 'desfeita'){ s3Desfeita = true; }
+    else { s3Base = est; s3Desfeita = false; }
+    pintarS3();
+  });
+  pintarS3();
+
+  /* ================= SEÇÃO 4: base ================= */
+  const LINHAS = [
+    { os:'0726-009512', loja:'DP COPACABANA', resp:'AMANDA', etapa:'andamento', nome:'Em andamento', pill:'ok', com:'Equipe em campo', dias:41 },
+    { os:'0826-010877', loja:'DP MADUREIRA', resp:'LUANA', etapa:'aprovarOS', nome:'Executado - pendente aprovação OS', pill:'crit', com:'Cliente DPSP', dias:33 },
+    { os:'0926-011366', loja:'DP LEBLON', resp:'YURI', etapa:'paralisado', nome:'Paralisado', pill:'crit', com:'Responsável YURI', dias:22 },
+    { os:'0826-010233', loja:'DP CATETE', resp:'LUANA', etapa:'fecharOS', nome:'Fechar OS', pill:'warn', com:'Responsável LUANA', dias:19 },
+    { os:'0926-011522', loja:'DP BARRA DA TIJUCA', resp:'YURI', etapa:'levantamento', nome:'Levantamento', pill:'info', com:'Responsável YURI', dias:6 },
+    { os:'0926-011590', loja:'DP NILOPOLIS', resp:'—', etapa:'definir', nome:'Aguardando definição', pill:'acc', com:'Analista', dias:null },
+    { os:'0926-011480', loja:'DP ITABORAI', resp:'YURI', etapa:'cancelado', por:'cliente', nome:'Cancelada · Cliente', pill:'canc', com:'—', dias:null },
+    { os:'0926-011702', loja:'DP MAGE', resp:'—', etapa:'cancelado', por:'manfac', nome:'Cancelada · Manfac', pill:'canc', com:'—', dias:null }
+  ];
+  const FASE = { definir:'antes', levantamento:'antes', andamento:'campo', paralisado:'campo', aprovarOS:'fechamento', fecharOS:'fechamento' };
+  function passa(o, f){
+    if(f === 'todas') return o.etapa !== 'cancelado';
+    if(f === '__esteira') return FASE[o.etapa] === 'fechamento';
+    if(f.startsWith('fase:')) return FASE[o.etapa] === f.slice(5);
+    if(f === 'cancelado') return o.etapa === 'cancelado';
+    if(f.startsWith('cancelado:')) return o.etapa === 'cancelado' && o.por === f.slice(10);
+    return o.etapa === f;
+  }
+  function pintarTabela(){
+    const f = $('#s4-filtro').value;
+    const vis = LINHAS.filter(o => passa(o, f));
+    $('#s4-tabela').innerHTML = vis.length ? vis.map(o => {
+      const d = o.dias === null ? '<span style="color:var(--ink-faint)">—</span>' : `<span class="${o.dias > 30 ? 'dias-crit' : o.dias > 20 ? 'dias-warn' : ''}">${o.dias}</span>`;
+      return `<tr class="${o.etapa === 'cancelado' ? 'cancelada' : ''}"><td class="num">${o.os}</td><td class="loja">${o.loja}</td><td>${o.resp}</td><td><span class="pill ${o.pill}">${o.nome}</span></td><td>${o.com}</td><td class="n">${d}</td></tr>`;
+    }).join('') : '<tr><td colspan="6" style="color:var(--ink-faint)">Nenhuma obra neste filtro.</td></tr>';
+    const nCanc = LINHAS.filter(o => o.etapa === 'cancelado').length;
+    const nota = $('#s4-nota');
+    if(f === 'todas'){
+      nota.innerHTML = `<b>${nCanc} obras canceladas</b> fora desta lista · <button type="button" class="link" id="s4-ver">ver canceladas</button>`;
+      $('#s4-ver').addEventListener('click', () => { $('#s4-filtro').value = 'cancelado'; pintarTabela(); });
+    } else if(f.startsWith('cancelado')){
+      nota.innerHTML = 'Canceladas não contam dias, não aparecem no Kanban e não entram em nenhum indicador acima. Abrir a obra mostra quem cancelou, quando e por quê.';
+    } else nota.innerHTML = '';
+  }
+  $('#s4-filtro').addEventListener('change', pintarTabela);
+  pintarTabela();
+
+  const KPI_DEPOIS = [
+    [11,'aguardando definição · a mais antiga há 9 dias','#f05a28','era 12 — DP MAGE saiu'],
+    [22,'em andamento','#35c98a','era 23 — DP ITABORAI saiu'],
+    [4,'paralisadas','#ff4d6d',''],
+    [31,'executadas, ainda na esteira · a mais parada há 33 dias','#f4b73f',''],
+    [26,'sem OS aprovada no cliente','#ff4d6d','era 27 — DP MAGE saiu'],
+    [3,'sem cobertura — nem OS nem liberação','#ff4d6d',''],
+    [6,'aprovadas há mais de 60 dias','#f4b73f',''],
+    [9,'passaram da duração planejada','#f4b73f','']
+  ];
+  function pintarKpis(q){
+    const antes = q === 'antes';
+    const alt = {0:12,1:23,4:27};
+    const html = KPI_DEPOIS.map((k,i) => {
+      const v = antes && alt[i] !== undefined ? alt[i] : k[0];
+      return `<div class="kpi" style="--c:${k[2]}"><div class="v">${v}</div><div class="r">${k[1]}</div>${!antes && k[3] ? `<div class="dv">${k[3]}</div>` : ''}</div>`;
+    }).join('') + `<div class="kpi proposta" style="--c:#94a3b8"><div class="v">${antes ? 0 : 2}</div><div class="r">canceladas em setembro · ${antes ? '0 Cliente · 0 Manfac' : '1 Cliente · 1 Manfac'}</div><div class="dv">proposta — não pedido</div></div>`;
+    $('#s4-kpis').innerHTML = html;
+  }
+  grupo('s4k', pintarKpis);
+  pintarKpis('depois');
+
+  /* ================= SEÇÃO 5 ================= */
+  function pintarS5(q){
+    const depois = q === 'depois';
+    const fila = [
+      { l:'DP ITABORAI', s:'OS 0926-011480 · Em andamento', c:'dia 16 de 20 · MANFAC-7', canc:true },
+      { l:'DP LEBLON', s:'OS 0926-011366 · Paralisado', c:'2 dias sem andar · Falta de material' },
+      { l:'DP BARRA DA TIJUCA', s:'OS 0926-011522 · Levantamento', c:'dia 3 de 15 · ERLI / RICARDO' }
+    ];
+    $('#s5-fila').innerHTML = fila.map(f => (f.canc && depois)
+      ? `<p class="sumiu">DP ITABORAI saiu da fila — cancelada hoje às 10:42.</p>`
+      : `<div class="cartao"><div class="c1">${f.l}</div><div class="c2">${f.s}</div><div class="c3">${f.c} · <b style="color:var(--accent)">Andou hoje?</b></div></div>`).join('');
+    $('#s5-fila-n').textContent = depois ? '2 obras' : '3 obras';
+    const tar = [
+      { t1:'Faltou material · 22/09', t2:'Compras · DP ITABORAI · prazo fim do dia 23/09', t3:'aberta', canc:true },
+      { t1:'Faltou foto · 22/09', t2:'Equipe MANFAC-19 · DP LEBLON · prazo fim do dia 22/09', t3:'vencida', venc:true },
+      { t1:'Faltou equipe · 23/09', t2:'Obras · DP COPACABANA · prazo fim do dia 23/09', t3:'aberta' }
+    ];
+    $('#s5-tarefas').innerHTML = tar.map(t => (t.canc && depois)
+      ? `<p class="sumiu">"Faltou material · DP ITABORAI" saiu das cobranças. Continua registrada na ficha da obra.</p>`
+      : `<div class="tarefa${t.venc ? ' venc' : ''}"><div class="t1">${t.t1}</div><div class="t2">${t.t2}</div><div class="t3">${t.t3}</div></div>`).join('');
+    $('#s5-tar-n').textContent = depois ? '2 abertas' : '3 abertas';
+  }
+  grupo('s5', pintarS5);
+  pintarS5('antes');
+})();
+</script>
+</body>
+</html>
