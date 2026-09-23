@@ -191,7 +191,8 @@ export default function Triagem({
   const [salvandoDados, iniciarDados] = useTransition()
 
   const set = (k: keyof Rascunho) => (v: string) => setT((a) => ({ ...a, [k]: v }))
-  const faltam = CAMPOS_TRI.filter((c) => !t[c.k]).length
+  // `.trim()`: equipe é texto livre — só espaço não conta como preenchido.
+  const faltam = CAMPOS_TRI.filter((c) => !t[c.k].trim()).length
   const preenchidos = CAMPOS_TRI.length - faltam
   const ocupado = pendente || salvandoDados
 
@@ -475,21 +476,30 @@ export default function Triagem({
                 </select>
               </CampoTri>
 
-              <CampoTri n="2" rotulo="Equipe / prestador" preenchido={!!t.equipe}>
-                <select
+              <CampoTri
+                n="2"
+                rotulo="Equipe / prestador"
+                preenchido={!!t.equipe.trim()}
+                dica="Comece a digitar para ver equipes já usadas. Qualquer texto é aceito."
+              >
+                {/* Texto livre com sugestões (ajuste 3 de 23/09): o cliente
+                    pediu "pra não limitar e ficar errado". */}
+                <input
+                  type="text"
+                  list="equipes-tri"
+                  autoComplete="off"
+                  placeholder="Digite a equipe ou o prestador"
                   className={INPUT}
                   aria-label="Equipe ou prestador"
                   value={t.equipe}
                   disabled={ocupado}
                   onChange={(e) => set('equipe')(e.target.value)}
-                >
-                  <option value="">— escolher —</option>
+                />
+                <datalist id="equipes-tri">
                   {equipes.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
+                    <option key={r} value={r} />
                   ))}
-                </select>
+                </datalist>
               </CampoTri>
 
               <CampoTri n="3" rotulo="Prioridade" preenchido={!!t.prioridade}>

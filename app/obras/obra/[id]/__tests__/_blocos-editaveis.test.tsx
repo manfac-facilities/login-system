@@ -130,3 +130,28 @@ test('cronograma: apagar o inicio tambem pede motivo', async () => {
   await u.click(screen.getByRole('button', { name: 'Remarcar e salvar' }))
   expect(salvar).toHaveBeenCalledWith('o1', expect.objectContaining({ inicio: '', motivo: 'Clima' }))
 })
+
+test('cronograma: equipe aceita texto livre, com sugestões das equipes já usadas', async () => {
+  const u = userEvent.setup()
+  const salvar = jest.fn().mockResolvedValue({ success: true })
+  render(
+    <BlocoCronograma
+      obraId="o1"
+      valores={{ resp: 'LUANA', equipe: 'MANFAC-7', prioridade: 'Normal', inicio: '2026-08-24', duracao: '20' }}
+      responsaveis={['LUANA']}
+      equipes={['ALEX', 'MANFAC-7']}
+      motivos={['Clima', 'Outro']}
+      rodape={null}
+      salvar={salvar}
+    />
+  )
+  await u.click(screen.getByRole('button', { name: 'Editar Cronograma' }))
+  const campo = screen.getByLabelText('Equipe / prestador')
+  expect(campo).toHaveAttribute('type', 'text')
+  const lista = document.getElementById(campo.getAttribute('list')!)!
+  expect(lista.querySelectorAll('option')).toHaveLength(2)
+  await u.clear(campo)
+  await u.type(campo, 'GRUPO SERTAO MANUTENCAO')
+  await u.click(screen.getByRole('button', { name: 'Salvar' }))
+  expect(salvar).toHaveBeenCalledWith('o1', expect.objectContaining({ equipe: 'GRUPO SERTAO MANUTENCAO' }))
+}, 20000)

@@ -11,6 +11,7 @@
  */
 
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 // `_ficha.tsx` importa as Server Actions de verdade de `./_actions` (R17 do
 // header do arquivo: "as actions entram nos blocos por prop", e é esta tela
@@ -177,7 +178,7 @@ describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', (
     expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
   })
 
-  it('o desvio "Pendente fechamento" continua desenhado, apagado, quando a etapa já passou dele', () => {
+  it('o desvio "Executado - pendente aprovação OS" continua desenhado, apagado, quando a etapa já passou dele', () => {
     // Regressão: o caminho ORIGINAL do desvio (obra que pulou aprovarOS de
     // verdade, porque a OS já estava aprovada antes do relatório) continua
     // funcionando depois do fix.
@@ -195,4 +196,66 @@ describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', (
     expect(screen.getByText(/Desvio não usado/)).toBeInTheDocument()
     expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
   })
+})
+
+describe('Nome do desvio e "Fechar OS sempre existe" (ajuste 1, 23/09)', () => {
+  const POS_CAMPO = { marco_exec_fim: '2026-08-24', marco_relatorio: '2026-08-25' }
+  const DIRETO = {
+    ...POS_CAMPO,
+    etapa: 'fecharOS' as const,
+    os_aprovada: true,
+    aprovacao: '2026-08-20',
+    marco_os_aprov: '2026-08-20',
+  }
+
+  it('o nome antigo "Pendente fechamento" não aparece em lugar nenhum da ficha', () => {
+    render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'aprovarOS' })} />)
+    expect(screen.queryByText(/Pendente fechamento/)).not.toBeInTheDocument()
+    expect(screen.getAllByText(/Executado - pendente aprovação OS/).length).toBeGreaterThan(0)
+  })
+  it('caminho direto: o desvio pulado usa o nome novo', () => {
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText(/Desvio não usado/)).toBeInTheDocument()
+    expect(screen.queryByText(/Pendente fechamento/)).not.toBeInTheDocument()
+  })
+  it('"Fechar OS" leva o selo "sempre existe" nos dois caminhos', () => {
+    const { unmount } = render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'aprovarOS' })} />)
+    expect(screen.getByText('sempre existe')).toBeInTheDocument()
+    unmount()
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText('sempre existe')).toBeInTheDocument()
+  })
+  it('caminho direto parado em Fechar OS explica que o passo nunca é pulado', () => {
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText(/nunca é pulado/)).toBeInTheDocument()
+  })
+})
+
+describe('Data de fechamento da OS na ficha (ajuste 2, 23/09)', () => {
+  const POS_CAMPO = { marco_exec_fim: '2026-08-24', marco_relatorio: '2026-08-25' }
+
+  it('Fechar OS concluído mostra a data e "corrigir data"', () => {
+    render(
+      <Ficha
+        {...fichaProps({
+          ...POS_CAMPO,
+          etapa: 'pendFat',
+          marco_relatorio: '2026-09-15',
+          marco_fechou_os: '2026-09-19',
+        })}
+      />
+    )
+    expect(screen.getByText(/Fechada no sistema do cliente em/)).toHaveTextContent('19/09/2026')
+    expect(screen.getByRole('button', { name: 'corrigir data' })).toBeInTheDocument()
+  })
+  it('Fechar OS atual ou futuro não oferece "corrigir data"', () => {
+    render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'fecharOS' })} />)
+    expect(screen.queryByRole('button', { name: 'corrigir data' })).not.toBeInTheDocument()
+  })
+  it('o seletor de etapa recebe hoje e a referência (campo aparece em Fechar OS → Pendente faturamento)', async () => {
+    const u = userEvent.setup()
+    render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'fecharOS' })} />)
+    await u.selectOptions(screen.getByLabelText('Mudar a etapa desta obra'), 'pendFat')
+    expect(screen.getByLabelText('Data de fechamento da OS')).toHaveValue(HOJE)
+  }, 20000)
 })

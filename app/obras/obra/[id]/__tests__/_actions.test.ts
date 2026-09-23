@@ -48,7 +48,7 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { hojeISO, type ObraRow } from '../../../_lib/tipos'
-import { mudarEtapaAction } from '../_actions'
+import { corrigirDataFechamentoAction, mudarEtapaAction } from '../_actions'
 
 const HOJE = hojeISO()
 const EMAIL = 'yuri@manfac.com.br'
@@ -312,5 +312,161 @@ describe('mudarEtapaAction — revalidação (inalterada)', () => {
     await mudarEtapaAction('o1', 'relatorio')
     expect(revalidatePath).toHaveBeenCalledWith('/obras/obra/o1')
     expect(revalidatePath).toHaveBeenCalledWith('/obras/base')
+  })
+})
+
+function diasAtras(n: number): string {
+  const d = new Date(`${HOJE}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - n)
+  return d.toISOString().slice(0, 10)
+}
+const br = (iso: string) => iso.split('-').reverse().join('/')
+
+describe('mudarEtapaAction — data de fechamento da OS (ajuste 2, 23/09)', () => {
+  const emFecharOS = () =>
+    obra({
+      etapa: 'fecharOS',
+      marco_exec_fim: diasAtras(10),
+      marco_relatorio: diasAtras(6),
+      aprovacao: diasAtras(5),
+    })
+
+  it('Fechar OS → Pendente faturamento grava a data informada no marco, com histórico, e em desde_etapa', async () => {
+    obraAtual = emFecharOS()
+    const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(2))
+    expect(r).toEqual({ success: true })
+    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+    expect(linhasMarco()).toContainEqual(
+      expect.objectContaining({ campo: 'marco_fechou_os', de: null, para: br(diasAtras(2)) })
+    )
+    expect(objetoDoUpdate()).toMatchObject({ etapa: 'pendFat', desde_etapa: diasAtras(2) })
+  })
+
+  it('sem data, continua carimbando hoje (comportamento anterior)', async () => {
+    obraAtual = emFecharOS()
+    await mudarEtapaAction('o1', 'pendFat')
+    expect(camposMarco()).toMatchObject({ marco_fechou_os: HOJE })
+    expect(objetoDoUpdate()).toMatchObject({ desde_etapa: HOJE })
+  })
+
+  it('data futura é recusada ANTES de qualquer escrita', async () => {
+    obraAtual = emFecharOS()
+    const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(-1))
+    expect(r).toEqual({ error: 'A data não pode ser posterior a hoje.' })
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('data anterior à aprovação é recusada ANTES de qualquer escrita', async () => {
+    obraAtual = emFecharOS()
+    const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(6))
+    expect(r.error).toMatch(/^A data não pode ser anterior à aprovação da OS/)
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('data numa troca que não conclui Fechar OS é recusada', async () => {
+    obraAtual = obra({ etapa: 'andamento' })
+    const r = await mudarEtapaAction('o1', 'relatorio', HOJE)
+    expect(r).toEqual({ error: 'A data de fechamento da OS só vale ao concluir Fechar OS.' })
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it('data com o marco já gravado é recusada (quem corrige é "corrigir data")', async () => {
+    obraAtual = obra({ etapa: 'pendFat', marco_fechou_os: diasAtras(3), marco_relatorio: diasAtras(6) })
+    const r = await mudarEtapaAction('o1', 'faturado', diasAtras(1))
+    expect(r.error).toBe('A data de fechamento da OS só vale ao concluir Fechar OS.')
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it('"Tentar de novo" depois de falha parcial: obra já em pendFat sem marco aceita a data', async () => {
+    obraAtual = obra({
+      etapa: 'pendFat',
+      marco_exec_fim: diasAtras(10),
+      marco_relatorio: diasAtras(6),
+      marco_fechou_os: null,
+    })
+    const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(2))
+    expect(r).toEqual({ success: true })
+    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+  })
+
+  it('Fechar OS → Faturado com data: marco recebe a data, desde_etapa continua hoje', async () => {
+    obraAtual = emFecharOS()
+    await mudarEtapaAction('o1', 'faturado', diasAtras(2))
+    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+    expect(objetoDoUpdate()).toMatchObject({ desde_etapa: HOJE })
+  })
+})
+
+describe('corrigirDataFechamentoAction (ajuste 2, 23/09)', () => {
+  const concluida = (over: Partial<ObraRow> = {}) =>
+    obra({
+      etapa: 'pendFat',
+      marco_relatorio: diasAtras(8),
+      aprovacao: diasAtras(7),
+      marco_fechou_os: diasAtras(3),
+      desde_etapa: diasAtras(3),
+      ...over,
+    })
+
+  it('sem sessão não grava', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(4))).toEqual({ error: 'Não autenticado' })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('sem acesso ao módulo não grava', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(4))).toEqual({
+      error: 'Sem acesso ao Controle de Obras',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('obra que ainda não concluiu Fechar OS não é corrigida', async () => {
+    obraAtual = obra({ etapa: 'fecharOS', marco_fechou_os: null })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(1))).toEqual({
+      error: 'Fechar OS ainda não foi concluído nesta obra.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('corrige com histórico de → para e leva desde_etapa junto quando a espera começou nessa data', async () => {
+    obraAtual = concluida()
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(5))).toEqual({ success: true })
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5), desde_etapa: diasAtras(5) })
+    expect(linhasMarco()).toEqual([
+      expect.objectContaining({ campo: 'marco_fechou_os', de: br(diasAtras(3)), para: br(diasAtras(5)) }),
+    ])
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/obra/o1')
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/base')
+  })
+  it('não toca desde_etapa quando a obra já saiu da espera (faturado) ou a espera começou em outro dia', async () => {
+    obraAtual = concluida({ etapa: 'faturado', desde_etapa: diasAtras(1) })
+    await corrigirDataFechamentoAction('o1', diasAtras(5))
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5) })
+    obraAtual = concluida({ desde_etapa: diasAtras(1) })
+    await corrigirDataFechamentoAction('o1', diasAtras(5))
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5) })
+  })
+  it('recusa futuro e anterior à aprovação, sem gravar', async () => {
+    obraAtual = concluida()
+    expect((await corrigirDataFechamentoAction('o1', diasAtras(-1))).error).toBe(
+      'A data não pode ser posterior a hoje.'
+    )
+    expect((await corrigirDataFechamentoAction('o1', diasAtras(8))).error).toMatch(
+      /^A data não pode ser anterior à aprovação da OS/
+    )
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('mesma data: sucesso sem chamar a RPC', async () => {
+    obraAtual = concluida()
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(3))).toEqual({ success: true })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('erro da RPC vira mensagem, não exceção', async () => {
+    obraAtual = concluida()
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'x' } })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(5))).toEqual({
+      error: 'Erro ao corrigir a data de fechamento da OS',
+    })
   })
 })

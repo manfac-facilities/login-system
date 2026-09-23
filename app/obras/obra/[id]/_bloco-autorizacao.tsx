@@ -20,7 +20,7 @@
  * `aprovacao`, `os_aprovada` e `marco_os_aprov` sempre coerentes.
  *
  * O AVANÇO DE ETAPA (E8/R16) é decidido pelo SERVIDOR; o que é da tela é
- * avisar antes. Com a obra parada em "Pendente fechamento", preencher a
+ * avisar antes. Com a obra parada em "Executado - pendente aprovação OS", preencher a
  * aprovação a faz avançar para "Fechar OS" — e ninguém pode descobrir isso
  * depois do clique. Por isso a janela de confirmação, com a lista do que vai
  * acontecer.

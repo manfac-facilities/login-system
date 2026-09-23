@@ -69,9 +69,11 @@ import BlocoAutorizacao from './_bloco-autorizacao'
 import BlocoIdentificacao from './_bloco-identificacao'
 import BlocoCronograma from './_bloco-cronograma'
 import Historico from './_historico'
+import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fechamento'
 import type { LinhaHistorico } from '../../_lib/historico'
 import {
   cadastrarMotivoRemarcacaoAction,
+  corrigirDataFechamentoAction,
   salvarAutorizacaoAction,
   salvarCronogramaAction,
   salvarIdentificacaoAction,
@@ -146,6 +148,7 @@ function Passo({
   cod,
   quando,
   desvio = false,
+  sempre = false,
   children,
 }: {
   estado: 'feito' | 'atual' | 'futuro' | 'pulado'
@@ -155,6 +158,8 @@ function Passo({
   cod?: string
   quando: string
   desvio?: boolean
+  /** Selo "sempre existe" (ajuste 1 de 23/09): Fechar OS nunca é pulado. */
+  sempre?: boolean
   children?: React.ReactNode
 }) {
   const cor =
@@ -184,6 +189,11 @@ function Passo({
               desvio
             </span>
           ) : null}
+          {sempre ? (
+            <span className="rounded border border-[#1e3a5f] px-1.5 py-px text-[10px] text-[#94a3b8]">
+              sempre existe
+            </span>
+          ) : null}
           {estado === 'atual' ? (
             <span className="rounded-full bg-[#f05a28] px-2 py-px text-[10px] font-semibold text-white">
               a obra está aqui
@@ -204,7 +214,15 @@ function Passo({
   )
 }
 
-function Esteira({ obra }: { obra: Obra }) {
+function Esteira({
+  obra,
+  hoje,
+  corrigir,
+}: {
+  obra: Obra
+  hoje: string
+  corrigir: CorrigirDataFechamento
+}) {
   const campoFeito = !!obra.marco_exec_fim
   return (
     <ol className="divide-y divide-[#1e3a5f]">
@@ -241,7 +259,7 @@ function Esteira({ obra }: { obra: Obra }) {
               key={k}
               estado="pulado"
               desvio
-              nome="Pendente fechamento"
+              nome={c.nome}
               dono={`Desvio não usado — a OS já estava aprovada em ${br(obra.marco_os_aprov ?? obra.aprovacao)}, então, com o relatório existindo, a obra vai direto para Fechar OS.`}
               onde=""
               quando="não se aplica"
@@ -270,6 +288,7 @@ function Esteira({ obra }: { obra: Obra }) {
             key={k}
             estado={estado}
             desvio={k === 'aprovarOS'}
+            sempre={k === 'fecharOS'}
             nome={c.nome}
             dono={
               c.dono === 'Responsável da obra'
@@ -286,6 +305,27 @@ function Esteira({ obra }: { obra: Obra }) {
               <p className="text-[#f4b73f]">
                 Parada aqui há <b>{obra.paradaEtapa} dias</b>. Enquanto não sair desta etapa, a obra
                 não vira dinheiro.
+              </p>
+            ) : null}
+
+            {/* Fechar OS concluído: a data e o "corrigir data" (ajuste 2 de 23/09). */}
+            {k === 'fecharOS' && estado === 'feito' && data ? (
+              <CorrigirFechamento
+                obraId={obra.id}
+                data={data}
+                hoje={hoje}
+                referencia={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
+                corrigir={corrigir}
+              />
+            ) : null}
+
+            {/* Caminho direto (ajuste 1 de 23/09): o cliente entendia que
+                Fechar OS era pulado quando a OS já estava aprovada. */}
+            {k === 'fecharOS' && estado === 'atual' && obra.os_aprovada ? (
+              <p className="text-[#94a3b8]">
+                Este passo <b className="text-[#e8eef7]">nunca é pulado</b>: é quando o analista de
+                obras insere o relatório no sistema do cliente e finaliza a OS lá. Só depois é
+                possível faturar.
               </p>
             ) : null}
 
@@ -550,12 +590,12 @@ export default function Ficha({
             <Campo rotulo="Caminho">
               {obra.os_aprovada
                 ? 'direto — a OS já estava aprovada'
-                : 'com desvio — vai parar em Pendente fechamento'}
+                : `com desvio — vai parar em ${ETAPAS.aprovarOS.nome}`}
             </Campo>
           </Campos>
 
           <div className="mt-3 border-t border-[#1e3a5f] pt-1">
-            <Esteira obra={obra} />
+            <Esteira obra={obra} hoje={hoje} corrigir={corrigirDataFechamentoAction} />
           </div>
 
           <p className="mt-3 text-[11px] leading-relaxed text-[#64748b]">
@@ -567,7 +607,7 @@ export default function Ficha({
             <br />
             <br />
             <b className="text-[#94a3b8]">Fechar OS</b> é o que depende de nós — alguém pega o
-            relatório e encerra. <b className="text-[#94a3b8]">Pendente fechamento</b> é o que
+            relatório e encerra. <b className="text-[#94a3b8]">{ETAPAS.aprovarOS.nome}</b> é o que
             depende do cliente — só a aprovação da OS destrava, e o que resolve é insistir com o
             analista que liberou.
             <br />
@@ -578,7 +618,12 @@ export default function Ficha({
         </BoxB>
 
         {/* Decisão técnica 6 da spec: sem isto o quadro trava no primeiro dia. */}
-        <SeletorEtapa obraId={obra.id} etapa={obra.etapa as Etapa} />
+        <SeletorEtapa
+          obraId={obra.id}
+          etapa={obra.etapa as Etapa}
+          hoje={hoje}
+          referenciaFechamento={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
+        />
       </Box>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
