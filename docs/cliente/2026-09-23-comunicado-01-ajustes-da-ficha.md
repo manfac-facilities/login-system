@@ -1,6 +1,6 @@
-# Comunicado 01 — ajustes da ficha (rascunho, 23/09/2026)
+# Comunicado 01 — ajustes da ficha (publicado em 23/09/2026)
 
-**Status: RASCUNHO.** O Claude escreve, o João aprova antes de publicar (decisão de 22/09,
+**Status: PUBLICADO na faixa em 23/09 19:52 UTC (ver fim do arquivo); e-mail não enviado.** Era rascunho: O Claude escreve, o João aprova antes de publicar (decisão de 22/09,
 `docs/cliente/2026-09-22-audio-joao-comunicado-de-atualizacoes.md`). Nada foi inserido no banco,
 nada foi enviado, nenhum código foi tocado.
 
