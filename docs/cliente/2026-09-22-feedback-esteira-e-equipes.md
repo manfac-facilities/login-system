@@ -15,3 +15,7 @@ esteira". O segundo pede campo de texto livre para equipe/prestador, em vez de l
 
 > o cliente pediu para adicionar uma tela de dashboard da saúde da operaçao no lugar dos agentes
 > e só fazer os agentes quando finalizar o sistema
+
+## Ordem de prioridade dada pelo cliente (colada pelo João, literal)
+
+> a ordem dele foi: finalizar o operaional validado pelo time > faz o dash > faz o agente
