@@ -62,3 +62,8 @@ texto novo que não está na lista (aceito, sem erro), salvo.
 - **Não publique.** Grave em
   `docs/cliente/2026-08-31-sistema-controle-de-obras/mockup-ajustes-ficha-2026-09-22.html`
   e devolva um resumo curto + qualquer divergência encontrada entre este brief e o código.
+
+## Aprovação
+
+**23/09/2026 — o João aprovou o mockup como está** (resposta no chat: "Aprovado como está").
+Próximo passo: spec → plano → código.
