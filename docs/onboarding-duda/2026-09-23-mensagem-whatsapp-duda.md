@@ -6,7 +6,6 @@
 **Revisado em 23/09:** o João decidiu que o cancelamento fica com o Claude, junto com os ajustes da
 ficha (mesmos arquivos), porque o cliente quer agilidade nele. A primeira versão desta mensagem o
 entregava ao Duda. A próxima frente do Duda está **em aberto**, e o João precisa definir antes de
-enviar.
 
 ## O texto
 
@@ -21,7 +20,8 @@ Fala Duda! Atualização do Controle de Obras depois do feedback do cliente de o
 *Cancelamento de obra: fica comigo*
 O cliente pediu agilidade, então vou fazer junto com os ajustes da ficha, que mexem nos mesmos arquivos (obra/[id], _lib/tipos.ts, base/). *Não mexe no cancelamento*, pra gente não colidir. Quando entrar, a obra cancelada vai sair de diario/ e tarefas/, que são a sua área. Te aviso antes de mexer lá.
 
-[PRÓXIMA FRENTE DO DUDA: a definir pelo João]
+*Sua próxima frente: validar o operacional*
+É o item 1 da ordem do cliente ("operacional validado pelo time"). Teste de ponta a ponta com dados reais, na sua área: sincronização (OS nova no Field entra, OS sumida gera alerta, obra que volta limpa o alerta), diário (registro, foto, desfazer) e tarefas (cobrança aparece, resposta grava, some quando resolve). O que quebrar na sua área, você corrige. O que quebrar em obra/[id] ou base/, me passa com o passo a passo pra reproduzir, sem corrigir. Anota o roteiro e o resultado num .md em docs/ pra virar o checklist da entrega do dia 28.
 
 Entrega final segue dia 28. Qualquer coisa me chama!
 ```
