@@ -103,6 +103,18 @@ it('"Entendi" com falha mantém a faixa e mostra o aviso', async () => {
   expect(screen.getByText(/Não deu para salvar sua confirmação agora/)).toBeInTheDocument()
 })
 
+it('"Entendi" com a action lançando (rede) mantém a faixa e mostra o aviso', async () => {
+  listarMock.mockResolvedValue([C1])
+  marcarMock.mockRejectedValue(new Error('Failed to fetch'))
+  render(<FaixaComunicados />)
+
+  await screen.findByText(C1.titulo)
+  await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
+
+  expect(screen.getByText(C1.titulo)).toBeInTheDocument()
+  expect(await screen.findByText(/Não deu para salvar sua confirmação agora/)).toBeInTheDocument()
+})
+
 it('corpo com <b> aparece como texto literal', async () => {
   listarMock.mockResolvedValue([{ ...C1, corpo: 'Linha com <b>negrito</b>\nDetalhe <b>x</b>' }])
   const { container } = render(<FaixaComunicados />)

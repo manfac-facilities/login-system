@@ -37,9 +37,14 @@ export default function FaixaComunicados() {
   const [textoCurto, ...detalhe] = linhas(primeiro.corpo)
 
   async function entendi() {
-    const resultados = await Promise.all(comunicados.map((c) => marcarComunicadoLido(c.id)))
-    if (resultados.every((r) => r.ok)) setComunicados([])
-    else setErro(true)
+    try {
+      const resultados = await Promise.all(comunicados.map((c) => marcarComunicadoLido(c.id)))
+      if (resultados.every((r) => r.ok)) setComunicados([])
+      else setErro(true)
+    } catch {
+      // Action que lança (rede caiu) é o mesmo estado "erro ao marcar como lido" do mockup.
+      setErro(true)
+    }
   }
 
   return (
