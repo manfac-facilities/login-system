@@ -134,7 +134,7 @@ export default function SeletorEtapa({
 
       <p className="text-[11px] leading-relaxed text-[#64748b]">
         {mudou
-          ? `A obra passa de "${nomeEtapa(etapa)}" para "${nomeEtapa(escolhida as Etapa)}" e o contador de dias parada nesta etapa recomeça hoje.`
+          ? `A obra passa de "${nomeEtapa(etapa)}" para "${nomeEtapa(escolhida as Etapa)}" e o contador de dias parada nesta etapa ${comData && data ? `começa em ${br(data)}` : 'recomeça hoje'}.`
           : 'Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado quem mudou e quando.'}
       </p>
 
