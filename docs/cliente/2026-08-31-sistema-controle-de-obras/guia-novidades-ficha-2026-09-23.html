@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novidades da ficha</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--crit:#ff4d6d;--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:15px;line-height:1.5}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+
+  header h1{font-size:23px;margin:0 0 4px;letter-spacing:-.015em}
+  header p{margin:0;color:var(--ink-dim)}
+  .bonus{margin:16px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);font-size:13.5px;color:var(--ink-dim)}
+  .bonus b{color:var(--ink)}
+
+  section{border-top:1px solid var(--line);margin-top:26px;padding-top:22px;break-inside:avoid}
+  .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;margin-right:8px;vertical-align:1px}
+  section h2{font-size:18px;margin:0 0 6px;letter-spacing:-.01em}
+  .oque{margin:0 0 14px;color:var(--ink-dim)}
+  .oque b{color:var(--ink)}
+  h3.como{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);margin:16px 0 6px}
+  ol.passos{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+  ol.passos b{color:var(--ink)}
+  .erro-dica{margin:10px 0 0;font-size:13.5px;color:var(--ink-dim);border-left:3px solid var(--crit);padding-left:10px}
+  .erro-dica b{color:var(--crit)}
+  .rotulo-tela{font-size:11px;color:var(--ink-faint);margin:12px 0 5px}
+
+  /* ---------- mockups (copiam a tela real) ---------- */
+  .mock{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:13px}
+  .mock-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;min-height:38px}
+  .mock-h .dir{margin-left:auto}
+  .mock-b{padding:12px 14px}
+  .novo{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px;position:relative}
+  .selo-novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:#fff;background:var(--accent);border-radius:99px;padding:1px 7px;white-space:nowrap}
+
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .passo:last-child{border-bottom:0}
+  .dot{margin-top:6px;width:10px;height:10px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.4}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1}
+  .passo .corpo{flex:1;min-width:0}
+  .nm{font-weight:600;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm{color:var(--ink-faint)}
+  .meta{font-size:11px;color:var(--ink-dim);display:flex;gap:2px 12px;flex-wrap:wrap;margin-top:1px}
+  .quando{flex:none;font-size:11px;white-space:nowrap;color:var(--ink-faint)}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .etq{border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:10px;color:var(--ink-dim);font-weight:400}
+  .aqui{background:var(--accent);color:#fff;border-radius:99px;padding:0 8px;font-size:10px;font-weight:600}
+  .extra{margin-top:6px;font-size:11px;line-height:1.55;color:var(--ink-dim)}
+  .extra b{color:var(--ink)}
+  .lnk{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:11px}
+
+  .lbl{display:block;font-size:11px;color:var(--ink-dim)}
+  .lbl.up{text-transform:uppercase;letter-spacing:.05em}
+  .inp{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:8px;font-size:14px;color:#e8eef7}
+  .inp.bad{border-color:var(--crit)}
+  .fraco{font-size:11px;color:var(--ink-faint);line-height:1.5}
+  .msg-erro{font-size:11px;font-weight:600;color:var(--crit)}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .btn{border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:8px 14px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.sm{font-size:12px;font-weight:500;padding:6px 10px}
+  .btn.sec{background:none;border:1px solid var(--line);color:#e8eef7;font-weight:500}
+  .btn-edit{border:1px solid var(--line);background:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#e8eef7;text-transform:none;letter-spacing:0;font-weight:500}
+  .pill-ed{border:1px solid rgba(244,183,63,.4);color:#f4b73f;border-radius:99px;padding:1px 8px;font-size:11px;text-transform:none;letter-spacing:0;font-weight:600}
+  .campo-tri{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .n-tri{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--ink-dim);font-size:11px;font-weight:700;margin-right:8px}
+  .ok-msg{font-size:11px;color:var(--ok)}
+
+  .faixa{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-top:8px}
+  .sino{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--info-soft);border:1px solid rgba(90,169,240,.45)}
+  .faixa .tt{font-weight:600;font-size:13px}
+  .chip{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:4px}
+  .faixa .ac{display:flex;gap:14px;align-items:center;margin-top:7px;font-size:12px}
+  .faixa .ver{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .faixa .ent{color:var(--ink-dim);border:1px solid var(--line);border-radius:5px;padding:3px 10px}
+
+  footer{margin-top:30px;font-size:12px;color:var(--ink-faint);text-align:center}
+
+  @media print{
+    @page{margin:14mm}
+    html,body{background:#fff;color:#1a2233}
+    .pagina{max-width:none;padding:0}
+    header p,.oque,h3.como,.erro-dica,.rotulo-tela,footer,.bonus{color:#3a4557}
+    .oque b,ol.passos b,.bonus b{color:#111}
+    .bonus{background:#fff;border-color:#c9d2de}
+    section{border-top-color:#c9d2de}
+    .mock,.faixa,.num,.selo-novo{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mock,.faixa{break-inside:avoid;color:var(--ink)}
+    .faixa{background:var(--panel)}
+  }
+</style>
+</head>
+<body>
+<main class="pagina">
+
+<header>
+  <h1>Novidades da ficha da obra</h1>
+  <p>3 mudanças no Controle de Obras, no ar desde 23/09/2026.</p>
+  <div class="bonus">
+    Ao abrir o Controle de Obras, aparece no topo um aviso <b>“Novidade”</b> com este resumo. Depois de ler, clique em <b>Entendi</b> para fechar.
+    <div class="faixa" aria-hidden="true">
+      <div class="sino">🔔</div>
+      <div>
+        <span class="tt">Atualização no Controle de Obras: equipe/prestador e data de fechamento da OS</span><span class="chip">novidade</span>
+        <div class="ac"><span class="ver">ver o que mudou</span><span class="ent novo">Entendi</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 1 ================= -->
+<section>
+  <h2><span class="num">1</span>Etapa com nome novo</h2>
+  <p class="oque">A etapa <b>“Pendente fechamento”</b> agora se chama <b>“Executado - pendente aprovação OS”</b>. Só mudou o nome: o passo <b>“Fechar OS”</b> continua existindo em toda obra.</p>
+
+  <div class="mock" aria-label="Exemplo da sequência de etapas na ficha">
+    <div class="mock-h">Onde está a obra<span class="dir">DP ITABORAI</span></div>
+    <div class="mock-b">
+      <ol class="esteira">
+        <li class="passo feito"><span class="dot"></span><div class="corpo">
+          <div class="nm">Relatório de entrega</div>
+          <div class="meta"><span>Equipe / responsável</span><span>Field Control</span></div>
+        </div><span class="quando">15/09/2026</span></li>
+        <li class="passo atual"><span class="dot"></span><div class="corpo">
+          <div class="nm"><span class="novo">Executado - pendente aprovação OS</span> <span class="etq">desvio</span> <span class="aqui">a obra está aqui</span></div>
+          <div class="meta"><span>Cliente DPSP</span><span>Sistema do cliente</span></div>
+        </div><span class="quando">há 3 dias</span></li>
+        <li class="passo futuro"><span class="dot"></span><div class="corpo">
+          <div class="nm">Fechar OS <span class="etq">sempre existe</span></div>
+          <div class="meta"><span>Responsável Carlos Mendes</span><span>Sistema do cliente</span></div>
+        </div><span class="quando">—</span></li>
+        <li class="passo futuro"><span class="dot"></span><div class="corpo">
+          <div class="nm">Pendente faturamento</div>
+          <div class="meta"><span>Cliente DPSP</span><span>Sistema do cliente</span></div>
+        </div><span class="quando">—</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Nada muda no seu trabalho. Onde você via “Pendente fechamento”, agora lê <b>“Executado - pendente aprovação OS”</b>.</li>
+    <li>Depois dela, a obra sempre passa por <b>“Fechar OS”</b> antes de ir para faturamento.</li>
+  </ol>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+  <h2><span class="num">2</span>Data de fechamento da OS</h2>
+  <p class="oque">Ao passar a obra de <b>“Fechar OS”</b> para <b>“Pendente faturamento”</b>, o sistema pede a <b>data em que a OS foi fechada</b> no sistema do cliente.</p>
+
+  <p class="rotulo-tela">Na ficha da obra, embaixo das etapas:</p>
+  <div class="mock">
+    <div class="mock-b col">
+      <label class="lbl up" for="m-etapa">Mudar a etapa desta obra</label>
+      <select id="m-etapa" class="inp">
+        <option>Fechar OS</option>
+        <option selected>Pendente faturamento</option>
+      </select>
+      <div class="col novo" style="padding:8px">
+        <label class="lbl" for="m-data">Data de fechamento da OS <span class="selo-novo">novo</span></label>
+        <input id="m-data" class="inp" type="date" value="2026-09-23" max="2026-09-23">
+        <span id="m-data-erro" class="msg-erro" role="alert" hidden>A data não pode ser posterior a hoje.</span>
+        <span class="fraco">Vem preenchida com hoje. Edite se a OS foi fechada no sistema do cliente em outro dia. É essa data que inicia os dias esperando o faturamento.</span>
+      </div>
+      <div><button id="m-confirmar" class="btn" type="button">Confirmar mudança</button></div>
+    </div>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Na ficha da obra, em <b>“Mudar a etapa desta obra”</b>, escolha <b>Pendente faturamento</b>.</li>
+    <li>A data já vem com <b>hoje</b>. Se a OS foi fechada no sistema do cliente em outro dia, troque para a <b>data real</b>.</li>
+    <li>Clique em <b>Confirmar mudança</b>.</li>
+    <li>Errou a data? No passo <b>“Fechar OS”</b> da ficha, clique em <b>corrigir data</b> (veja abaixo). Fica registrado quem corrigiu.</li>
+  </ol>
+
+  <p class="rotulo-tela">Depois, no passo “Fechar OS” (clique em “corrigir data” para ver):</p>
+  <div class="mock">
+    <div class="mock-b">
+      <ol class="esteira"><li class="passo feito"><span class="dot"></span><div class="corpo">
+        <div class="nm">Fechar OS <span class="etq">sempre existe</span></div>
+        <div class="meta"><span>Responsável Carlos Mendes</span><span>Sistema do cliente</span></div>
+        <div class="extra">
+          <div id="c-leitura">
+            Fechada no sistema do cliente em <b id="c-data-txt">23/09/2026</b>.
+            <button id="c-abrir" type="button" class="lnk novo">corrigir data</button>
+            <span id="c-ok" class="ok-msg" style="display:block" hidden></span>
+          </div>
+          <div id="c-form" class="col" hidden>
+            <label class="lbl" for="c-data">Data de fechamento da OS</label>
+            <div class="linha">
+              <input id="c-data" class="inp" style="width:auto" type="date" value="2026-09-23" max="2026-09-23">
+              <button id="c-salvar" type="button" class="btn sm">Salvar correção</button>
+              <button id="c-cancelar" type="button" class="btn sm sec">Cancelar</button>
+            </div>
+            <span id="c-erro" class="msg-erro" role="alert" hidden>A data não pode ser posterior a hoje.</span>
+            <span class="fraco">A correção entra no Histórico de alterações: quem corrigiu, quando, de <b style="color:var(--ink-dim)" id="c-de">23/09/2026</b> para a nova data.</span>
+          </div>
+        </div>
+      </div><span class="quando">23/09/2026</span></li></ol>
+    </div>
+  </div>
+
+  <p class="erro-dica"><b>Se aparecer erro:</b> “A data não pode ser posterior a hoje” — escolha hoje ou um dia anterior. A data também não pode ser anterior ao relatório de entrega (ou à aprovação da OS); a mensagem mostra qual é a data mínima.</p>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+  <h2><span class="num">3</span>Equipe / prestador: digite o nome</h2>
+  <p class="oque">A equipe ou o prestador agora é <b>digitado</b>, não escolhido de uma lista fechada. As equipes já usadas aparecem como sugestão, mas <b>qualquer nome é aceito</b>.</p>
+
+  <p class="rotulo-tela">Na ficha, bloco Cronograma, depois de clicar em Editar:</p>
+  <div class="mock">
+    <div class="mock-h">Cronograma<span class="dir"><span class="pill-ed">editando</span></span></div>
+    <div class="mock-b col">
+      <div class="col novo" style="padding:8px">
+        <label class="lbl" for="m-equipe">Equipe / prestador <span class="selo-novo">novo</span></label>
+        <input id="m-equipe" class="inp" list="equipes-guia" autocomplete="off" placeholder="Digite a equipe ou o prestador">
+        <datalist id="equipes-guia">
+          <option value="Equipe Leandro"></option>
+          <option value="Equipe Márcio"></option>
+          <option value="Refrigeração Norte Ltda"></option>
+        </datalist>
+      </div>
+      <div class="linha" style="margin-top:4px">
+        <button type="button" class="btn">Salvar</button>
+        <button type="button" class="btn sec">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="rotulo-tela">Numa obra nova, no checklist antes de começar:</p>
+  <div class="campo-tri novo">
+    <span style="font-size:14px;color:#e8eef7"><span class="n-tri">2</span>Equipe / prestador</span>
+    <input class="inp" list="equipes-guia" autocomplete="off" placeholder="Digite a equipe ou o prestador" aria-label="Equipe ou prestador">
+    <span class="fraco">Comece a digitar para ver equipes já usadas. Qualquer texto é aceito.</span>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Na ficha da obra, no bloco <b>Cronograma</b>, clique em <b>Editar</b> (ou, numa obra nova, vá ao campo <b>2 · Equipe / prestador</b>).</li>
+    <li>Comece a digitar o nome. Se a equipe já foi usada antes, <b>toque na sugestão</b>.</li>
+    <li>Se não aparecer, <b>escreva o nome completo</b> do prestador e clique em <b>Salvar</b>.</li>
+  </ol>
+</section>
+
+<footer>Controle de Obras · Hub Manfac</footer>
+</main>
+
+<script>
+(function(){
+  var HOJE = '2026-09-23';
+  function br(d){ var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function futura(v){ return !!v && v > HOJE; }
+
+  // Seletor de etapa: avisa data no futuro e trava o botão, como na tela real.
+  var data = document.getElementById('m-data');
+  var erro = document.getElementById('m-data-erro');
+  var conf = document.getElementById('m-confirmar');
+  data.addEventListener('input', function(){
+    var ruim = futura(data.value);
+    erro.hidden = !ruim; data.classList.toggle('bad', ruim); conf.disabled = ruim;
+  });
+
+  // "corrigir data": abre o campo, salva e mostra o aviso de corrigido.
+  var atual = HOJE;
+  var leitura = document.getElementById('c-leitura'), form = document.getElementById('c-form');
+  var cData = document.getElementById('c-data'), cErro = document.getElementById('c-erro');
+  var salvar = document.getElementById('c-salvar'), ok = document.getElementById('c-ok');
+  document.getElementById('c-abrir').addEventListener('click', function(){
+    cData.value = atual; cErro.hidden = true; cData.classList.remove('bad'); salvar.disabled = false;
+    document.getElementById('c-de').textContent = br(atual);
+    ok.hidden = true; leitura.hidden = true; form.hidden = false; cData.focus();
+  });
+  cData.addEventListener('input', function(){
+    var ruim = futura(cData.value) || !cData.value;
+    cErro.hidden = !futura(cData.value); cData.classList.toggle('bad', ruim); salvar.disabled = ruim;
+  });
+  document.getElementById('c-cancelar').addEventListener('click', function(){ form.hidden = true; leitura.hidden = false; });
+  salvar.addEventListener('click', function(){
+    var de = atual; atual = cData.value;
+    document.getElementById('c-data-txt').textContent = br(atual);
+    if (de !== atual) { ok.textContent = 'Corrigido: de ' + br(de) + ' para ' + br(atual) + '. Fica no histórico.'; ok.hidden = false; }
+    form.hidden = true; leitura.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
