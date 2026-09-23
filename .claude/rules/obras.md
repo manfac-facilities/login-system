@@ -80,12 +80,13 @@ A obra nasce no Field Control — **não existe cadastro manual em produção**
    `tipo: 'incremental'` combinado com `cron.job_run_details`, nunca a coluna
    `origem` sozinha. (`ESTADO.md`, seção 16/09, "Armadilha ao verificar isto no futuro")
 
-## Estado em 20/09/2026
+## Estado em 23/09/2026
 
-No ar: build de 16/09 16:23 GMT — a ficha editável (Autorização/Identificação/
-Cronograma, remarcação) está pronta e testada mas **não deployada**, deploy
-bloqueado por credencial do EasyPanel que está com o cliente. No banco: as
-migrations `obras-historico` e `obras-motivos-remarcacao` já foram aplicadas
-(RPC `obras_aplicar_alteracao`, 6 motivos de fábrica), 77 obras. Falta: o deploy
-em si, e confirmar se os 4 e-mails com slug `obras` liberado têm conta em
-`auth.users` (nenhum tem linha em `hub_user_roles` ainda).
+No ar: build de **23/09 19:38 UTC** (master `2b7d2fa`) — ficha editável (no ar desde
+20/09), marcos da esteira gravados, histórico de alterações ligado, e os ajustes de
+23/09: etapa `aprovarOS` exibida como "Executado - pendente aprovação OS", data de
+fechamento da OS informável/corrigível, equipe/prestador em texto livre. Faixa
+"Novidade" (`hub_comunicados`) no ar, comunicado 01 publicado; e-mail pendente do
+Resend. Os 4 e-mails com slug `obras` têm conta e já entraram. Deploy segue manual,
+com o código de acesso ao EasyPanel com o cliente. Próximo: cancelamento de obra
+(mockup aprovado 23/09; exige migration `sdd-sql-obras-cancelamento.sql`).
