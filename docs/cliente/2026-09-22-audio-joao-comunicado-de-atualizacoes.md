@@ -19,3 +19,15 @@ Transcrição literal, colada no chat:
   notificaçao mandar, tem detalhes que corrigimos que nao precisam saber - eles so precisamsaber
   para atualizar o que nao foi feito por falta de recurso dos sistema".
 - **Quem recebe:** só quem tem acesso ao sistema atualizado (slug em `hub_system_access`).
+
+## Aprovação do mockup — 22/09/2026
+
+Mockup `docs/cliente/2026-08-31-sistema-controle-de-obras/mockup-comunicado-atualizacoes-2026-09-22.html`
+(https://claude.ai/artifact/MAshbLMfYRhMHnk54UA7UE). Resposta do João, literal:
+
+> Mockup — comunicado de atualizações do sistema
+>  aprovado
+
+Aprovação da página inteira (seção 1, faixa; seção 2, e-mail). As perguntas "o que julgar" ficam
+com a opção desenhada: mais recente + chip "+1", "Entendi" some de vez, e-mail junta as mudanças do
+mesmo dia, botão abre `/obras`.
