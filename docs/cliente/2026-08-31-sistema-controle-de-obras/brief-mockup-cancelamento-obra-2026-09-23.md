@@ -149,3 +149,11 @@ no insert) — o cancelamento não é desfeito pelo cron.
 | `_lib/tipos.ts:127-136,159-169,411-424` | `Etapa`, `CICLO`, `faseDe`, `encerrada` | `cancelado` no tipo `Etapa`, **fora** do `CICLO` (senão entra no seletor); `faseDe`/`encerrada`/`sev`/`critico`/`semCobertura`/`pedeFoto` tratando `cancelado` |
 | `obra/[id]/_actions.ts:345` `mudarEtapaAction` | aceita qualquer `ETAPAS_VALIDAS` | recusar destino `cancelado` e origem `cancelado` |
 | `obra/[id]/page.tsx:186` | `definir` → Triagem | botão de cancelar também na `_triagem.tsx` |
+
+## Estado da aprovação — 23/09/2026
+
+- Publicado em https://claude.ai/artifact/QiMcQupmStD4svv5TDsKvB.
+- **Quem aprova: o cliente.** Resposta do João: "o cliente ainda nao viu e aprovou, vamos ter que
+  esperar". Spec, plano e código esperam a aprovação dele. Quando vier, fica com subagente
+  (decisão do João: "mantenha o cancelamento como subagente").
+- **Observação do cancelamento: opcional** (decisão do João, 23/09), como está no mockup.
