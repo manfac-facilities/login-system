@@ -39,6 +39,7 @@ import {
   primeiroErro,
   validarAutorizacao,
   validarCronograma,
+  validarDataFechamentoOS,
   validarIdentificacao,
   type DadosAutorizacao,
   type DadosCronograma,
@@ -308,7 +309,10 @@ const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
 function calcularMarcosDaEsteira(
   obra: ObraRow,
   novaEtapa: Etapa,
-  hoje: string
+  hoje: string,
+  /** Ajuste 2 de 23/09: a data em que a OS foi fechada no sistema do
+   * cliente. Presente, substitui `hoje` só no carimbo de `marco_fechou_os`. */
+  dataFechamentoOS?: string
 ): { antes: Rascunho; depois: Rascunho } {
   const antes: Rascunho = {
     marco_exec_fim: obra.marco_exec_fim,
@@ -323,7 +327,8 @@ function calcularMarcosDaEsteira(
 
   for (const { etapa, campo } of PASSOS_MARCO) {
     if (campo === 'marco_faturou') continue // regra própria, abaixo — etapa terminal
-    depois[campo] = ORDEM_ETAPA[etapa] < indiceNovo ? (antes[campo] ?? hoje) : null
+    const carimbo = campo === 'marco_fechou_os' ? (dataFechamentoOS ?? hoje) : hoje
+    depois[campo] = ORDEM_ETAPA[etapa] < indiceNovo ? (antes[campo] ?? carimbo) : null
   }
 
   depois.marco_faturou = novaEtapa === 'faturado' ? (antes.marco_faturou ?? hoje) : null
@@ -342,7 +347,11 @@ function calcularMarcosDaEsteira(
  * acesso muda a etapa. Travar exige a resposta do cliente (decisão G, aberta);
  * não travar só permite, e é reversível.
  */
-export async function mudarEtapaAction(obraId: string, etapa: string): Promise<EstadoAcao> {
+export async function mudarEtapaAction(
+  obraId: string,
+  etapa: string,
+  dataFechamentoOS?: string
+): Promise<EstadoAcao> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
   const supabase = sessao.supabase as Cliente
@@ -355,11 +364,34 @@ export async function mudarEtapaAction(obraId: string, etapa: string): Promise<E
   const obra = leitura.obra as ObraRow
 
   const hoje = hojeISO()
+
+  // Marcos calculados ANTES do update (função pura): a data de fechamento da
+  // OS é validada contra o relatório do estado FINAL, e toda recusa sai antes
+  // de qualquer escrita (ajuste 2 de 23/09, spec-ajustes-ficha §5.3).
+  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje, dataFechamentoOS)
+
+  if (dataFechamentoOS !== undefined) {
+    // Aplicável só quando ESTA troca carimba `marco_fechou_os` a partir de
+    // `null` — olhando a obra lida do banco, não a etapa que a tela acha que
+    // ela tem. É o que deixa o "Tentar de novo" recuperar a falha parcial.
+    const aplicavel =
+      obra.marco_fechou_os === null && ORDEM_ETAPA[etapa as Etapa] > ORDEM_ETAPA.fecharOS
+    if (!aplicavel) return { error: 'A data de fechamento da OS só vale ao concluir Fechar OS.' }
+    const erroData = validarDataFechamentoOS(dataFechamentoOS, {
+      hoje,
+      relatorio: (depois.marco_relatorio as string | null) ?? null,
+      aprovacao: obra.aprovacao,
+    })
+    if (erroData) return { error: erroData }
+  }
+
   const base = {
     etapa,
     // Quanto tempo a obra está parada NA ETAPA é o número que hoje não existe
     // em lugar nenhum. Ele só continua verdadeiro se zerar a cada troca.
-    desde_etapa: hoje,
+    // Exceção (A4): em Pendente faturamento com data informada, a espera
+    // começa na data em que a OS foi fechada.
+    desde_etapa: dataFechamentoOS !== undefined && etapa === 'pendFat' ? dataFechamentoOS : hoje,
     atualizacao: hoje,
   }
 
@@ -385,7 +417,6 @@ export async function mudarEtapaAction(obraId: string, etapa: string): Promise<E
   // mesmo que seja outra vez para a mesma etapa. Nada é apagado sem o valor
   // antigo já estar no histórico primeiro, então não há perda de dado — só
   // uma janela de exibição incoerente entre as duas escritas.
-  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje)
   const linhas = linhasDeAlteracao(antes, depois, 'Esteira')
   if (linhas.length > 0) {
     const camposMarco = camposDasLinhas(linhas, depois)
