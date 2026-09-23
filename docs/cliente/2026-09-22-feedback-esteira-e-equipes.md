@@ -19,3 +19,14 @@ esteira". O segundo pede campo de texto livre para equipe/prestador, em vez de l
 ## Ordem de prioridade dada pelo cliente (colada pelo João, literal)
 
 > a ordem dele foi: finalizar o operaional validado pelo time > faz o dash > faz o agente
+
+## Decisões do João, 22/09, depois do feedback
+
+1. **Letra D do mockup da ficha: tratada como aprovada** (o cliente não citou; João optou por não
+   perguntar).
+2. **Verificação na Meta / 360dialog: PARADA.** Não seguir com nada do provedor de WhatsApp agora;
+   recomeça quando o agente entrar na fila (2-3 semanas de espera naquele momento).
+   `passo-a-passo-360dialog-2026-09-22.md` fica como referência, não como tarefa.
+3. **Primeiro os ajustes da ficha** (item C em três partes + equipe/prestador como texto livre),
+   que é o "operacional validado pelo time" da ordem do cliente. O mockup do dashboard de saúde da
+   operação vem depois.
