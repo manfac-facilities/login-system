@@ -177,7 +177,7 @@ describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', (
     expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
   })
 
-  it('o desvio "Pendente fechamento" continua desenhado, apagado, quando a etapa já passou dele', () => {
+  it('o desvio "Executado - pendente aprovação OS" continua desenhado, apagado, quando a etapa já passou dele', () => {
     // Regressão: o caminho ORIGINAL do desvio (obra que pulou aprovarOS de
     // verdade, porque a OS já estava aprovada antes do relatório) continua
     // funcionando depois do fix.
@@ -194,5 +194,38 @@ describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', (
     )
     expect(screen.getByText(/Desvio não usado/)).toBeInTheDocument()
     expect(screen.getAllByText('a obra está aqui')).toHaveLength(1)
+  })
+})
+
+describe('Nome do desvio e "Fechar OS sempre existe" (ajuste 1, 23/09)', () => {
+  const POS_CAMPO = { marco_exec_fim: '2026-08-24', marco_relatorio: '2026-08-25' }
+  const DIRETO = {
+    ...POS_CAMPO,
+    etapa: 'fecharOS',
+    os_aprovada: true,
+    aprovacao: '2026-08-20',
+    marco_os_aprov: '2026-08-20',
+  }
+
+  it('o nome antigo "Pendente fechamento" não aparece em lugar nenhum da ficha', () => {
+    render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'aprovarOS' })} />)
+    expect(screen.queryByText(/Pendente fechamento/)).not.toBeInTheDocument()
+    expect(screen.getAllByText(/Executado - pendente aprovação OS/).length).toBeGreaterThan(0)
+  })
+  it('caminho direto: o desvio pulado usa o nome novo', () => {
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText(/Desvio não usado/)).toBeInTheDocument()
+    expect(screen.queryByText(/Pendente fechamento/)).not.toBeInTheDocument()
+  })
+  it('"Fechar OS" leva o selo "sempre existe" nos dois caminhos', () => {
+    const { unmount } = render(<Ficha {...fichaProps({ ...POS_CAMPO, etapa: 'aprovarOS' })} />)
+    expect(screen.getByText('sempre existe')).toBeInTheDocument()
+    unmount()
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText('sempre existe')).toBeInTheDocument()
+  })
+  it('caminho direto parado em Fechar OS explica que o passo nunca é pulado', () => {
+    render(<Ficha {...fichaProps(DIRETO)} />)
+    expect(screen.getByText(/nunca é pulado/)).toBeInTheDocument()
   })
 })

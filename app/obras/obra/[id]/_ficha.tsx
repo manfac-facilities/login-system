@@ -146,6 +146,7 @@ function Passo({
   cod,
   quando,
   desvio = false,
+  sempre = false,
   children,
 }: {
   estado: 'feito' | 'atual' | 'futuro' | 'pulado'
@@ -155,6 +156,8 @@ function Passo({
   cod?: string
   quando: string
   desvio?: boolean
+  /** Selo "sempre existe" (ajuste 1 de 23/09): Fechar OS nunca é pulado. */
+  sempre?: boolean
   children?: React.ReactNode
 }) {
   const cor =
@@ -182,6 +185,11 @@ function Passo({
           {desvio ? (
             <span className="rounded border border-[#1e3a5f] px-1.5 py-px text-[10px] text-[#94a3b8]">
               desvio
+            </span>
+          ) : null}
+          {sempre ? (
+            <span className="rounded border border-[#1e3a5f] px-1.5 py-px text-[10px] text-[#94a3b8]">
+              sempre existe
             </span>
           ) : null}
           {estado === 'atual' ? (
@@ -241,7 +249,7 @@ function Esteira({ obra }: { obra: Obra }) {
               key={k}
               estado="pulado"
               desvio
-              nome="Pendente fechamento"
+              nome={c.nome}
               dono={`Desvio não usado — a OS já estava aprovada em ${br(obra.marco_os_aprov ?? obra.aprovacao)}, então, com o relatório existindo, a obra vai direto para Fechar OS.`}
               onde=""
               quando="não se aplica"
@@ -270,6 +278,7 @@ function Esteira({ obra }: { obra: Obra }) {
             key={k}
             estado={estado}
             desvio={k === 'aprovarOS'}
+            sempre={k === 'fecharOS'}
             nome={c.nome}
             dono={
               c.dono === 'Responsável da obra'
@@ -286,6 +295,16 @@ function Esteira({ obra }: { obra: Obra }) {
               <p className="text-[#f4b73f]">
                 Parada aqui há <b>{obra.paradaEtapa} dias</b>. Enquanto não sair desta etapa, a obra
                 não vira dinheiro.
+              </p>
+            ) : null}
+
+            {/* Caminho direto (ajuste 1 de 23/09): o cliente entendia que
+                Fechar OS era pulado quando a OS já estava aprovada. */}
+            {k === 'fecharOS' && estado === 'atual' && obra.os_aprovada ? (
+              <p className="text-[#94a3b8]">
+                Este passo <b className="text-[#e8eef7]">nunca é pulado</b>: é quando o analista de
+                obras insere o relatório no sistema do cliente e finaliza a OS lá. Só depois é
+                possível faturar.
               </p>
             ) : null}
 
@@ -550,7 +569,7 @@ export default function Ficha({
             <Campo rotulo="Caminho">
               {obra.os_aprovada
                 ? 'direto — a OS já estava aprovada'
-                : 'com desvio — vai parar em Pendente fechamento'}
+                : `com desvio — vai parar em ${ETAPAS.aprovarOS.nome}`}
             </Campo>
           </Campos>
 
@@ -567,7 +586,7 @@ export default function Ficha({
             <br />
             <br />
             <b className="text-[#94a3b8]">Fechar OS</b> é o que depende de nós — alguém pega o
-            relatório e encerra. <b className="text-[#94a3b8]">Pendente fechamento</b> é o que
+            relatório e encerra. <b className="text-[#94a3b8]">{ETAPAS.aprovarOS.nome}</b> é o que
             depende do cliente — só a aprovação da OS destrava, e o que resolve é insistir com o
             analista que liberou.
             <br />
