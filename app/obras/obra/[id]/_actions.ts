@@ -435,6 +435,60 @@ export async function mudarEtapaAction(
   return { success: true }
 }
 
+/**
+ * "corrigir data" do passo Fechar OS já concluído (ajuste 2 de 23/09,
+ * spec-ajustes-ficha §5.6). Sobrescreve dado de cliente: a guarda de
+ * "concluído" e a validação rodam AQUI, e a gravação passa pela RPC com
+ * histórico (quem e quando vêm do JWT/created_at; de → para, da linha).
+ */
+export async function corrigirDataFechamentoAction(
+  obraId: string,
+  data: string
+): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
+
+  // Só corrige o que existe: marco gravado E a obra já depois de Fechar OS.
+  if (
+    obra.marco_fechou_os === null ||
+    !(ORDEM_ETAPA[obra.etapa as Etapa] > ORDEM_ETAPA.fecharOS)
+  ) {
+    return { error: 'Fechar OS ainda não foi concluído nesta obra.' }
+  }
+
+  const hoje = hojeISO()
+  const nova = nulo(data) ?? ''
+  const erroData = validarDataFechamentoOS(nova, {
+    hoje,
+    relatorio: obra.marco_relatorio,
+    aprovacao: obra.aprovacao,
+  })
+  if (erroData) return { error: erroData }
+
+  if (nova === obra.marco_fechou_os) return { success: true }
+
+  const depois: Rascunho = { marco_fechou_os: nova }
+  const linhas = linhasDeAlteracao({ marco_fechou_os: obra.marco_fechou_os }, depois, 'Esteira')
+  const campos = camposDasLinhas(linhas, depois)
+  // A espera por faturamento começou nesta data? Então ela acompanha a
+  // correção, na mesma chamada atômica. Em qualquer outro caso, intocada.
+  if (obra.etapa === 'pendFat' && obra.desde_etapa === obra.marco_fechou_os) {
+    campos.desde_etapa = nova
+  }
+
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
+  if (error) return { error: 'Erro ao corrigir a data de fechamento da OS' }
+
+  revalidatePath(`/obras/obra/${obraId}`)
+  revalidatePath('/obras/base')
+  return { success: true }
+}
+
 export type DadosTriagem = {
   resp: string
   equipe: string

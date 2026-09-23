@@ -48,7 +48,7 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { hojeISO, type ObraRow } from '../../../_lib/tipos'
-import { mudarEtapaAction } from '../_actions'
+import { corrigirDataFechamentoAction, mudarEtapaAction } from '../_actions'
 
 const HOJE = hojeISO()
 const EMAIL = 'yuri@manfac.com.br'
@@ -396,5 +396,77 @@ describe('mudarEtapaAction — data de fechamento da OS (ajuste 2, 23/09)', () =
     await mudarEtapaAction('o1', 'faturado', diasAtras(2))
     expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
     expect(objetoDoUpdate()).toMatchObject({ desde_etapa: HOJE })
+  })
+})
+
+describe('corrigirDataFechamentoAction (ajuste 2, 23/09)', () => {
+  const concluida = (over: Partial<ObraRow> = {}) =>
+    obra({
+      etapa: 'pendFat',
+      marco_relatorio: diasAtras(8),
+      aprovacao: diasAtras(7),
+      marco_fechou_os: diasAtras(3),
+      desde_etapa: diasAtras(3),
+      ...over,
+    })
+
+  it('sem sessão não grava', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(4))).toEqual({ error: 'Não autenticado' })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('sem acesso ao módulo não grava', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(4))).toEqual({
+      error: 'Sem acesso ao Controle de Obras',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('obra que ainda não concluiu Fechar OS não é corrigida', async () => {
+    obraAtual = obra({ etapa: 'fecharOS', marco_fechou_os: null })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(1))).toEqual({
+      error: 'Fechar OS ainda não foi concluído nesta obra.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('corrige com histórico de → para e leva desde_etapa junto quando a espera começou nessa data', async () => {
+    obraAtual = concluida()
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(5))).toEqual({ success: true })
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5), desde_etapa: diasAtras(5) })
+    expect(linhasMarco()).toEqual([
+      expect.objectContaining({ campo: 'marco_fechou_os', de: br(diasAtras(3)), para: br(diasAtras(5)) }),
+    ])
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/obra/o1')
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/base')
+  })
+  it('não toca desde_etapa quando a obra já saiu da espera (faturado) ou a espera começou em outro dia', async () => {
+    obraAtual = concluida({ etapa: 'faturado', desde_etapa: diasAtras(1) })
+    await corrigirDataFechamentoAction('o1', diasAtras(5))
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5) })
+    obraAtual = concluida({ desde_etapa: diasAtras(1) })
+    await corrigirDataFechamentoAction('o1', diasAtras(5))
+    expect(camposMarco()).toEqual({ marco_fechou_os: diasAtras(5) })
+  })
+  it('recusa futuro e anterior à aprovação, sem gravar', async () => {
+    obraAtual = concluida()
+    expect((await corrigirDataFechamentoAction('o1', diasAtras(-1))).error).toBe(
+      'A data não pode ser posterior a hoje.'
+    )
+    expect((await corrigirDataFechamentoAction('o1', diasAtras(8))).error).toMatch(
+      /^A data não pode ser anterior à aprovação da OS/
+    )
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('mesma data: sucesso sem chamar a RPC', async () => {
+    obraAtual = concluida()
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(3))).toEqual({ success: true })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+  it('erro da RPC vira mensagem, não exceção', async () => {
+    obraAtual = concluida()
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'x' } })
+    expect(await corrigirDataFechamentoAction('o1', diasAtras(5))).toEqual({
+      error: 'Erro ao corrigir a data de fechamento da OS',
+    })
   })
 })
