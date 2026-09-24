@@ -15,3 +15,15 @@ Repassada pelo João no chat, literal:
 existe em `obras_obra` (as OS "TESTE SPOT"/"teste4"/"testeheleno" de 15/09 não estão lá). A OS nova
 entra pela sincronização (testa o passo 1 da D5), o Duda roda diário/tarefa/foto nela, e no fim ela
 é cancelada no hub pelo botão "Cancelar obra" (pela Manfac, observação "OS de teste da D5").
+
+## OS de teste criada — 24/09
+
+- Criada pela API do Field pelo João (comando `!` no chat; o auto mode barrou a chamada do Claude
+  como "Real-World Transactions"), às 18:17:35 UTC: identificador **TESTE D5**, descrição "Teste do
+  sistema Controle de Obras (D5) - NAO EXECUTAR", cliente DPSP, mesmo local/endereço de teste da
+  "TESTE SPOT" (Vila Leopoldina, SP), tipo Atividade Spot, 1 atividade `pending`, sem colaborador.
+  Field id `NmFjOGIxZDktYzdiOS00YjVmLWIxOTItMzFhZThiNDQyMGQwOjk1NzMx`.
+- **Entrou no hub pela sincronização incremental em ~2,5 min** (18:20:07 UTC): `obras_obra.id`
+  `93edbca3-3ee2-4a57-9437-af8b367fbdad`, loja "DPSP Matriz", etapa `definir`, `fonte = 'field'`.
+  Passo 1 da D5 validado.
+- Cidade gravada como "S�o Paulo" no Field (codificação do terminal Windows); não afeta o hub.
