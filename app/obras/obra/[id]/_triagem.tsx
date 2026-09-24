@@ -40,6 +40,7 @@ import {
   diasDesde,
   entradaDaObra,
   moeda,
+  nomeEtapa,
   type Obra,
 } from '../../_lib/tipos'
 import {
@@ -49,7 +50,8 @@ import {
   validarIdentificacao,
 } from '../../_lib/ficha-campos'
 import { BadgeDias, EtiquetaEtapa } from '../../base/_etiquetas'
-import { liberarObraAction, salvarDadosTriagemAction } from './_actions'
+import { cancelarObraAction, liberarObraAction, salvarDadosTriagemAction } from './_actions'
+import FaixaCancelar from './_cancelar-obra'
 import { ERRO_DE_REDE } from './_bloco-editavel'
 
 type Rascunho = {
@@ -563,6 +565,16 @@ export default function Triagem({
                 {erro ? <span className="text-xs font-semibold text-[#ff4d6d]">{erro}</span> : null}
               </div>
             </BoxB>
+            {/* Cancelamento (spec-cancelamento §6.2): a OS que não vai virar obra. */}
+            <FaixaCancelar
+              obraId={obra.id}
+              loja={obra.loja}
+              os={obra.os}
+              etapaNome={nomeEtapa(obra.etapa)}
+              responsavel={obra.pcm}
+              variante="triagem"
+              cancelar={cancelarObraAction}
+            />
           </Box>
 
           <Box>
