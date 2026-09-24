@@ -135,8 +135,8 @@ produção. Se você estiver num checkout anterior a esse commit, a saída conti
 rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o `ts-node` nem é
 consultado.
 
-**O verde esperado (23/09/2026):** `npx jest app/obras` tem que dar **716 passando + 1 `todo`,
-34 suites**. O número cresce a cada frente — confira o do `master` antes de começar. Se você rodar
+**O verde esperado (24/09/2026):** `npx jest app/obras` tem que dar **870 passando + 1 `todo`,
+39 suites**. O número cresce a cada frente — confira o do `master` antes de começar. Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
 
@@ -198,7 +198,7 @@ telas do hub, que já rodam com a chave configurada no servidor.
 
 Uma frente está pronta quando **todas** valem:
 
-- [ ] Os testes existentes continuam passando (716 + 1 `todo` em 23/09), mais os novos que a frente pediu
+- [ ] Os testes existentes continuam passando (870 + 1 `todo` em 24/09), mais os novos que a frente pediu
 - [ ] `tsc`, `eslint` e `npm run build` limpos
 - [ ] Se mexeu em tela: mockup foi aprovado antes do código
 - [ ] Se mexeu em schema: o `.sql` está escrito, idempotente, em `begin`/`commit`, e você

@@ -190,7 +190,7 @@ webhooks) está em
 | | |
 |---|---|
 | **Código** | 59 arquivos, 13.760 linhas sob `app/obras/` (sem contar teste), mais a rota `app/api/obras/sincronizar/` |
-| **Testes** | `npx jest app/obras`: **716 passando + 1 `todo`**, 34 suites |
+| **Testes** | `npx jest app/obras`: **870 passando + 1 `todo`**, 39 suites (24/09, com cancelamento e dívidas da ficha) |
 | **Banco** | Todas as migrations `sdd-sql-obras-*.sql` aplicadas em produção; 8 tabelas `obras_*` com RLS; bucket `obras-fotos` só aceita JPEG até 5 MiB |
 | **Produção** | **No ar e em uso pela equipe.** Último deploy em 23/09 (19:38 UTC), com os ajustes da ficha |
 | **Sincronização** | Rodando sozinha pelo `pg_cron`, com a chave real do Field |
@@ -203,8 +203,10 @@ a validação ponta a ponta em produção — a frente D5.
 ## 8. O que o sistema não faz, e é de propósito
 
 - **Não existe tela de criar obra do zero**, e não vai existir. A obra vem do Field.
-- **Cancelamento de obra ainda não existe.** Está com o João (mockup aprovado pelo cliente em
-  23/09, spec em andamento). Não é para fazer por conta própria.
+- **Cancelamento de obra: pronto no `master` em 24/09, ainda sem deploy.** Etapa `cancelado`
+  (migration aplicada em 23/09), botão "Cancelar obra" na ficha e na Triagem, "Desfazer
+  cancelamento", filtro "Canceladas" na Base; tarefa aberta de obra cancelada some de
+  `/obras/tarefas`. É do João — não mexa.
 - **Agente e cobrança por WhatsApp estão parados** por decisão do cliente: só depois de o
   sistema estar validado. A cobrança das tarefas hoje é feita na tela.
 - **"Pendente faturamento ainda na esteira"** foi pedido em 22/09 e **adiado** pelo João.

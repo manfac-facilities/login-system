@@ -237,14 +237,31 @@
     </div>
     <div class="est">
       <p class="rot">Testes</p>
-      <p class="v ok">716 passando</p>
-      <p class="d">34 suites em <code>app/obras</code> &mdash; todos com mock</p>
+      <p class="v ok">870 passando</p>
+      <p class="d">39 suites em <code>app/obras</code> &mdash; todos com mock</p>
     </div>
     <div class="est">
       <p class="rot">Entrega final</p>
       <p class="v no">28/09</p>
       <p class="d">Falta validar o operacional com dado real &mdash; a D5</p>
     </div>
+  </div>
+
+  <div class="nota-ok">
+    <h3>O que aconteceu em 23 e 24/09</h3>
+    <p><b>No ar (deploy de 23/09, 19:38 UTC):</b> os ajustes da ficha que o cliente pediu em 22/09
+    &mdash; a etapa &ldquo;Pendente fechamento&rdquo; virou <b>&ldquo;Executado - pendente aprova&ccedil;&atilde;o
+    OS&rdquo;</b>, a <b>data de fechamento da OS</b> passou a ser informada ao concluir Fechar OS (e
+    pode ser corrigida, com hist&oacute;rico) e <b>equipe/prestador virou texto livre</b> com
+    sugest&otilde;es. A faixa <b>&ldquo;Novidade&rdquo;</b> estreou no topo de <code>/obras</code> com o
+    primeiro comunicado, e o cliente recebeu um guia de 3 p&aacute;ginas para a equipe.</p>
+    <p><b>Pronto no <code>master</code>, esperando deploy:</b> o <b>cancelamento de obra</b> (mockup
+    aprovado pelo cliente, migration aplicada e testada em produ&ccedil;&atilde;o, c&oacute;digo revisado
+    &mdash; <code>fed48eb</code>) e o fechamento das <b>d&iacute;vidas da ficha</b> A1, A13, B5 e B7
+    (edi&ccedil;&atilde;o simult&acirc;nea avisada, troca de etapa at&ocirc;mica e no Hist&oacute;rico,
+    valida&ccedil;&atilde;o de data na Triagem &mdash; <code>29b526e</code>). Testes: 870 passando.</p>
+    <p><b>Para voc&ecirc;:</b> d&ecirc; <code>git pull</code> antes de continuar a D5/D6/D7 &mdash; o
+    cancelamento mexeu em <code>tarefas/page.tsx</code> e no tipo <code>Etapa</code>.</p>
   </div>
 
   <div class="nota-ok">
@@ -519,7 +536,7 @@
 
     <pre class="cmd"><span class="c"># Node 20 (.nvmrc)</span>
 npm install
-npx jest app/obras   <span class="c"># espere 716 passando + 1 todo, 34 suites</span>
+npx jest app/obras   <span class="c"># espere 870 passando + 1 todo, 39 suites</span>
 npm run lint
 npm run build</pre>
 

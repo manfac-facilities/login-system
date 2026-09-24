@@ -237,14 +237,31 @@
     </div>
     <div class="est">
       <p class="rot">Testes</p>
-      <p class="v ok">716 passando</p>
-      <p class="d">34 suites em <code>app/obras</code> &mdash; todos com mock</p>
+      <p class="v ok">870 passando</p>
+      <p class="d">39 suites em <code>app/obras</code> &mdash; todos com mock</p>
     </div>
     <div class="est">
       <p class="rot">Entrega final</p>
       <p class="v no">28/09</p>
       <p class="d">Falta validar o operacional com dado real &mdash; a D5</p>
     </div>
+  </div>
+
+  <div class="nota-ok">
+    <h3>O que aconteceu em 23 e 24/09</h3>
+    <p><b>No ar (deploy de 23/09, 19:38 UTC):</b> os ajustes da ficha que o cliente pediu em 22/09
+    &mdash; a etapa &ldquo;Pendente fechamento&rdquo; virou <b>&ldquo;Executado - pendente aprova&ccedil;&atilde;o
+    OS&rdquo;</b>, a <b>data de fechamento da OS</b> passou a ser informada ao concluir Fechar OS (e
+    pode ser corrigida, com hist&oacute;rico) e <b>equipe/prestador virou texto livre</b> com
+    sugest&otilde;es. A faixa <b>&ldquo;Novidade&rdquo;</b> estreou no topo de <code>/obras</code> com o
+    primeiro comunicado, e o cliente recebeu um guia de 3 p&aacute;ginas para a equipe.</p>
+    <p><b>Pronto no <code>master</code>, esperando deploy:</b> o <b>cancelamento de obra</b> (mockup
+    aprovado pelo cliente, migration aplicada e testada em produ&ccedil;&atilde;o, c&oacute;digo revisado
+    &mdash; <code>fed48eb</code>) e o fechamento das <b>d&iacute;vidas da ficha</b> A1, A13, B5 e B7
+    (edi&ccedil;&atilde;o simult&acirc;nea avisada, troca de etapa at&ocirc;mica e no Hist&oacute;rico,
+    valida&ccedil;&atilde;o de data na Triagem &mdash; <code>29b526e</code>). Testes: 870 passando.</p>
+    <p><b>Para voc&ecirc;:</b> d&ecirc; <code>git pull</code> antes de continuar a D5/D6/D7 &mdash; o
+    cancelamento mexeu em <code>tarefas/page.tsx</code> e no tipo <code>Etapa</code>.</p>
   </div>
 
   <div class="nota-ok">
@@ -652,7 +669,7 @@ webhooks) está em
 | | |
 |---|---|
 | **Código** | 59 arquivos, 13.760 linhas sob `app/obras/` (sem contar teste), mais a rota `app/api/obras/sincronizar/` |
-| **Testes** | `npx jest app/obras`: **716 passando + 1 `todo`**, 34 suites |
+| **Testes** | `npx jest app/obras`: **870 passando + 1 `todo`**, 39 suites (24/09, com cancelamento e dívidas da ficha) |
 | **Banco** | Todas as migrations `sdd-sql-obras-*.sql` aplicadas em produção; 8 tabelas `obras_*` com RLS; bucket `obras-fotos` só aceita JPEG até 5 MiB |
 | **Produção** | **No ar e em uso pela equipe.** Último deploy em 23/09 (19:38 UTC), com os ajustes da ficha |
 | **Sincronização** | Rodando sozinha pelo `pg_cron`, com a chave real do Field |
@@ -665,8 +682,10 @@ a validação ponta a ponta em produção — a frente D5.
 ## 8. O que o sistema não faz, e é de propósito
 
 - **Não existe tela de criar obra do zero**, e não vai existir. A obra vem do Field.
-- **Cancelamento de obra ainda não existe.** Está com o João (mockup aprovado pelo cliente em
-  23/09, spec em andamento). Não é para fazer por conta própria.
+- **Cancelamento de obra: pronto no `master` em 24/09, ainda sem deploy.** Etapa `cancelado`
+  (migration aplicada em 23/09), botão "Cancelar obra" na ficha e na Triagem, "Desfazer
+  cancelamento", filtro "Canceladas" na Base; tarefa aberta de obra cancelada some de
+  `/obras/tarefas`. É do João — não mexa.
 - **Agente e cobrança por WhatsApp estão parados** por decisão do cliente: só depois de o
   sistema estar validado. A cobrança das tarefas hoje é feita na tela.
 - **"Pendente faturamento ainda na esteira"** foi pedido em 22/09 e **adiado** pelo João.
@@ -862,8 +881,8 @@ produção. Se você estiver num checkout anterior a esse commit, a saída conti
 rodar em **Node 22 ou mais novo**, onde o type stripping é nativo e o `ts-node` nem é
 consultado.
 
-**O verde esperado (23/09/2026):** `npx jest app/obras` tem que dar **716 passando + 1 `todo`,
-34 suites**. O número cresce a cada frente — confira o do `master` antes de começar. Se você rodar
+**O verde esperado (24/09/2026):** `npx jest app/obras` tem que dar **870 passando + 1 `todo`,
+39 suites**. O número cresce a cada frente — confira o do `master` antes de começar. Se você rodar
 `npx jest` sem filtro, sete suites de `manfac-site/` vão falhar por dependência não
 instalada — isso é conhecido, esperado, **e está fora do seu escopo**.
 
@@ -925,7 +944,7 @@ telas do hub, que já rodam com a chave configurada no servidor.
 
 Uma frente está pronta quando **todas** valem:
 
-- [ ] Os testes existentes continuam passando (716 + 1 `todo` em 23/09), mais os novos que a frente pediu
+- [ ] Os testes existentes continuam passando (870 + 1 `todo` em 24/09), mais os novos que a frente pediu
 - [ ] `tsc`, `eslint` e `npm run build` limpos
 - [ ] Se mexeu em tela: mockup foi aprovado antes do código
 - [ ] Se mexeu em schema: o `.sql` está escrito, idempotente, em `begin`/`commit`, e você
@@ -1308,7 +1327,7 @@ nada na asserção. Se o timeout não resolver, relate ao João.
 
     <pre class="cmd"><span class="c"># Node 20 (.nvmrc)</span>
 npm install
-npx jest app/obras   <span class="c"># espere 716 passando + 1 todo, 34 suites</span>
+npx jest app/obras   <span class="c"># espere 870 passando + 1 todo, 39 suites</span>
 npm run lint
 npm run build</pre>
 
