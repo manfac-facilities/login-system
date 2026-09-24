@@ -21,6 +21,7 @@ import {
   FILTROS_PADRAO,
   ORDEM_PADRAO,
   alternarOrdem,
+  canceladasFora,
   filtrar,
   ordenar,
   responsaveisDaBase,
@@ -36,6 +37,7 @@ export default function VisaoBase({ obras }: { obras: Obra[] }) {
   const responsaveis = useMemo(() => responsaveisDaBase(obras), [obras])
   const lista = useMemo(() => filtrar(obras, filtros), [obras, filtros])
   const listaOrdenada = useMemo(() => ordenar(lista, ordem), [lista, ordem])
+  const fora = useMemo(() => canceladasFora(obras, filtros), [obras, filtros])
 
   const botao = (v: 'tabela' | 'kanban', rotulo: string) => (
     <button
@@ -84,6 +86,28 @@ export default function VisaoBase({ obras }: { obras: Obra[] }) {
       ) : (
         <KanbanBase obras={listaOrdenada} />
       )}
+
+      {/* Canceladas (spec do cancelamento §7.3): fora de "Todas", com o caminho para vê-las. */}
+      {filtros.etapa === 'todas' && fora > 0 ? (
+        <p className="text-xs text-[#94a3b8]">
+          <b className="text-[#e8eef7]">
+            {fora} {fora === 1 ? 'obra cancelada' : 'obras canceladas'}
+          </b>{' '}
+          fora desta lista ·{' '}
+          <button
+            type="button"
+            onClick={() => setFiltros((f) => ({ ...f, etapa: 'cancelado' }))}
+            className="font-medium text-[#f05a28] underline-offset-2 hover:underline"
+          >
+            ver canceladas
+          </button>
+        </p>
+      ) : filtros.etapa.startsWith('cancelado') ? (
+        <p className="text-xs text-[#94a3b8]">
+          Canceladas não contam dias, não aparecem no Kanban e não entram em nenhum indicador acima. Abrir a
+          obra mostra quem cancelou, quando e por quê.
+        </p>
+      ) : null}
     </div>
   )
 }
