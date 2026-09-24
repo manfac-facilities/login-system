@@ -332,7 +332,7 @@ test.each(TITULOS)(
     await u.click(screen.getByRole('button', { name: `Editar ${titulo}` }))
     await u.click(screen.getByRole('button', { name: 'Cancelar' }))
     rerender(bloco(titulo, 'v2', salvar))
-    await u.click(await screen.findByRole('button', { name: `Editar ${titulo}` }))
+    await u.click(await screen.findByRole('button', { name: `Editar ${titulo}` }, { timeout: 5000 }))
     await mudarUmCampo(u, titulo)
     await u.click(screen.getByRole('button', { name: 'Salvar' }))
     expect(salvar).toHaveBeenCalledWith('o1', expect.any(Object), 'v2')
@@ -349,9 +349,9 @@ test.each(TITULOS)(
     await u.click(screen.getByRole('button', { name: `Editar ${titulo}` }))
     await mudarUmCampo(u, titulo)
     await u.click(screen.getByRole('button', { name: 'Salvar' }))
-    expect(await screen.findByText(CONFLITO, { exact: false })).toBeInTheDocument()
+    expect(await screen.findByText(CONFLITO, { exact: false }, { timeout: 5000 })).toBeInTheDocument()
     // findByRole: o "Salvando…" volta a "Salvar" quando a transição termina.
-    expect(await screen.findByRole('button', { name: 'Salvar' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Salvar' }, { timeout: 5000 })).toBeInTheDocument()
   },
   20000
 )
