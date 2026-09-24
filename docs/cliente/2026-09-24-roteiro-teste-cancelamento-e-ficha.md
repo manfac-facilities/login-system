@@ -1,6 +1,6 @@
 # Roteiro de teste — cancelamento de obra e ajustes da ficha
 
-**Data:** 24/09/2026 · **Quando usar:** depois do próximo deploy do Controle de Obras em produção
+**Data:** 24/09/2026 · **Quando usar:** no ar desde o deploy de 24/09 (11:03 de Brasília)
 (`hub.manfac.com.br/obras`). **Quem executa:** qualquer pessoa da equipe com acesso ao sistema.
 
 ## Antes de começar
@@ -11,7 +11,7 @@
 - Para o teste de "edição ao mesmo tempo" (bloco 3), você precisa de **duas pessoas** (ou duas abas
   do navegador, uma anônima) logadas ao mesmo tempo na mesma obra.
 - Marque cada linha como **OK** ou **Deu errado**, e escreva o que apareceu na tela quando der
-  errado. No fim, mande o roteiro marcado de volta.
+  errado. No fim, mande pelo WhatsApp os passos que deram errado.
 
 ---
 
@@ -145,5 +145,5 @@ navegador deixar. Preencha os outros campos obrigatórios normalmente e tente sa
 
 ## Ao terminar
 
-Mande este roteiro marcado de volta. Se algum passo deu errado, descreva exatamente o que
+Mande pelo WhatsApp os números dos passos que deram errado. Se algum passo deu errado, descreva exatamente o que
 apareceu na tela (ou uma captura de tela) — isso encurta a correção.
