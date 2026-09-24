@@ -3,7 +3,7 @@
  */
 import { render, screen } from '@testing-library/react'
 import { derivar, type ObraRow } from '../_lib/tipos'
-import { BadgeDias } from '../base/_etiquetas'
+import { BadgeDias, EtiquetaEtapa } from '../base/_etiquetas'
 
 const H = '2026-09-14'
 
@@ -114,5 +114,19 @@ describe('BadgeDias', () => {
     const o = derivar(linha({ created_at: '' }), H)
     render(<BadgeDias obra={o} />)
     expect(screen.getByText('—')).toBeInTheDocument()
+  })
+})
+
+describe('EtiquetaEtapa — cancelamento', () => {
+  test('cancelada mostra quem cancelou', () => {
+    const { rerender } = render(<EtiquetaEtapa obra={{ etapa: 'cancelado', cancelado_por: 'manfac' }} />)
+    expect(screen.getByText('Cancelada · Manfac')).toBeInTheDocument()
+    rerender(<EtiquetaEtapa obra={{ etapa: 'cancelado', cancelado_por: 'cliente' }} />)
+    expect(screen.getByText('Cancelada · Cliente')).toBeInTheDocument()
+  })
+
+  test('etapa comum continua com o nome da etapa', () => {
+    render(<EtiquetaEtapa obra={{ etapa: 'andamento' }} />)
+    expect(screen.getByText('Em andamento')).toBeInTheDocument()
   })
 })
