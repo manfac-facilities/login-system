@@ -366,3 +366,12 @@ Nada em `_triagem.tsx`, `_etapa.tsx`, `_bloco-editavel.tsx`, `historico.ts`, `ti
 - Revisão independente (agente diferente do que implementou), contra esta spec.
 - Depois do deploy, teste manual em produção (plano, T9): dois navegadores no mesmo bloco da mesma
   obra de teste; troca de etapa conferindo a linha nova no Histórico; Triagem com data inválida.
+
+## Aprovações do João — 23/09/2026
+
+- **A1:** mensagem de conflito aprovada como está: "Outra pessoa alterou esta obra enquanto você
+  editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração."
+- **B7:** mensagem "Data de início inválida. Confira o dia, o mês e o ano." aprovada, com a régua de
+  ano 2000–2100 (a mesma da ficha).
+- **A13:** troca de etapa passa a aparecer no Histórico ("Esteira · Etapa: A → B") — aprovado.
+- Sem SQL: nada a aprovar de schema.
