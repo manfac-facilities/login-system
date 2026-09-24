@@ -235,23 +235,6 @@ async function gravarBloco(
 }
 
 /**
- * As colunas que registram QUEM mudou a etapa e QUANDO ainda não existem em
- * `sdd-sql-obras-v0.sql` (arquivo da frente A, que esta frente não pode
- * editar). O update tenta gravá-las; se o PostgREST responder que a coluna não
- * existe, refaz sem elas — a troca de etapa continua funcionando e passa a
- * registrar autoria sozinha no dia em que a migration ganhar:
- *
- *   alter table public.obras_obra
- *     add column if not exists etapa_por text,
- *     add column if not exists etapa_em timestamptz;
- */
-function colunaInexistente(erro: { code?: string; message?: string } | null): boolean {
-  if (!erro) return false
-  if (erro.code === 'PGRST204') return true
-  return /column .* does not exist|Could not find the '.*' column/i.test(erro.message ?? '')
-}
-
-/**
  * Posição de cada etapa em `CICLO` — a ordem que decide "anterior"/"depois"
  * para os marcos da esteira, abaixo.
  */
@@ -289,13 +272,11 @@ const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
  * das duas direções — um avanço só carimbava marco `null`, nunca apagava um
  * marco de passo futuro que tivesse sobrado de um estado inconsistente; e
  * "trocar" para a mesma etapa nem entrava no `if`/`else if`, então nunca
- * reconciliava nada. Isso importa porque a chamada que grava os marcos roda
- * numa escrita SEPARADA do update da etapa (ver comentário em
- * `mudarEtapaAction`): se ela falhar depois de uma VOLTA, a obra fica com a
- * etapa nova mas os marcos ainda no estado antigo — inconsistente — e só
- * uma reconciliação por estado final (em vez de "para onde a etapa foi")
- * corrige isso na PRÓXIMA troca, mesmo que a próxima troca seja para a
- * mesma etapa.
+ * reconciliava nada. Desde 23/09 (A13) a troca é atômica — etapa e marcos
+ * numa chamada só da RPC —, mas o cálculo por estado final continua valendo
+ * para qualquer estado herdado (obra de antes de 21/09, ou gravada quando as
+ * duas escritas ainda eram separadas): a PRÓXIMA troca reconcilia, mesmo que
+ * seja para a mesma etapa.
  *
  * Regra, para a nova etapa de índice N (posição em `CICLO`):
  *   - cada marco de `PASSOS_MARCO` (exceto `marco_faturou`) com passo de
@@ -396,50 +377,28 @@ export async function mudarEtapaAction(
     if (erroData) return { error: erroData }
   }
 
-  const base = {
-    etapa,
+  // A13 (23/09): etapa e marcos numa chamada SÓ da RPC — gravam juntos ou
+  // nada grava. A linha da etapa vem primeiro (mesmo `created_at`, desempate
+  // por `seq`); ela só existe quando a etapa muda de verdade, e `etapa` só
+  // entra em `campos` com a linha (a trava de `gravarComHistorico`).
+  const linhas = [
+    ...linhasDeAlteracao({ etapa: obra.etapa }, { etapa }, 'Esteira'),
+    ...linhasDeAlteracao(antes, depois, 'Esteira'),
+  ]
+  const campos: Record<string, unknown> = {
+    ...camposDasLinhas(linhas, { ...depois, etapa }),
     // Quanto tempo a obra está parada NA ETAPA é o número que hoje não existe
     // em lugar nenhum. Ele só continua verdadeiro se zerar a cada troca.
     // Exceção (A4): em Pendente faturamento com data informada, a espera
     // começa na data em que a OS foi fechada.
     desde_etapa: dataFechamentoOS !== undefined && etapa === 'pendFat' ? dataFechamentoOS : hoje,
     atualizacao: hoje,
+    etapa_por: user.email,
+    etapa_em: new Date().toISOString(),
   }
 
-  let { error } = await supabase
-    .from('obras_obra')
-    .update({ ...base, etapa_por: user.email, etapa_em: new Date().toISOString() })
-    .eq('id', obraId)
-
-  if (colunaInexistente(error)) {
-    ;({ error } = await supabase.from('obras_obra').update(base).eq('id', obraId))
-  }
-
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
   if (error) return { error: 'Erro ao mudar a etapa da obra' }
-
-  // Marcos da esteira (decisões de 21/09, calculadas pelo ESTADO FINAL —
-  // ver o comentário de calcularMarcosDaEsteira). Roda numa escrita
-  // SEPARADA, DEPOIS da etapa já ter mudado de verdade: as duas não são
-  // atômicas entre si (torná-las exigiria mudar a RPC ou o schema, fora do
-  // escopo desta troca — registrado em docs/DIVIDAS.md, B1). Se ESTA parte
-  // falhar, a obra fica com a etapa nova mas os marcos ainda no estado
-  // antigo — inconsistente — até a PRÓXIMA troca de etapa: como o cálculo é
-  // por estado final (não por direção), a próxima troca reconcilia sozinha,
-  // mesmo que seja outra vez para a mesma etapa. Nada é apagado sem o valor
-  // antigo já estar no histórico primeiro, então não há perda de dado — só
-  // uma janela de exibição incoerente entre as duas escritas.
-  const linhas = linhasDeAlteracao(antes, depois, 'Esteira')
-  if (linhas.length > 0) {
-    const camposMarco = camposDasLinhas(linhas, depois)
-    const { error: erroMarco } = await gravarComHistorico(supabase, {
-      obraId,
-      campos: camposMarco,
-      linhas,
-    })
-    if (erroMarco) {
-      return { error: 'A etapa mudou, mas houve erro ao atualizar os marcos da esteira' }
-    }
-  }
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')
