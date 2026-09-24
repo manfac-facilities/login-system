@@ -881,7 +881,7 @@ export default function Ficha({
         {/* -------------------- coluna direita -------------------- */}
         <div className="flex flex-col gap-4">
           {/* ---------- evolução em fotos ---------- */}
-          {pedeFoto(obra) && diario.length > 0 ? (
+          {(pedeFoto(obra) || cancelada(obra)) && diario.length > 0 ? (
             <Box>
               <BoxH extra="os últimos dias, na ordem em que aconteceram">Evolução em fotos</BoxH>
               <BoxB>
@@ -953,7 +953,7 @@ export default function Ficha({
                             {d.obs ? (
                               <div className="mt-1 text-xs text-[#e8eef7]">{d.obs}</div>
                             ) : null}
-                            {pedeFoto(obra) ? (
+                            {pedeFoto(obra) || cancelada(obra) ? (
                               <div className="mt-1.5 text-[11px]">
                                 {d.foto_path ? (
                                   <span className="text-[#35c98a]">

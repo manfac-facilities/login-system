@@ -352,6 +352,25 @@ describe('Cancelamento na ficha (spec-cancelamento §6.2, §6.3)', () => {
     expect(screen.queryByText('Execução em campo')).not.toBeInTheDocument()
   })
 
+  test('cancelada: as fotos e o diário continuam na ficha, só leitura (review B1)', () => {
+    const diario = [
+      {
+        id: 'd1', obra_id: 'o1', data: '2026-09-20', andou: true, motivo: null, item: 'Não faltou',
+        obs: null, foto_path: 'o1/2026-09-20.jpg', registrado_por: null, created_at: '2026-09-20T12:00:00Z',
+      },
+    ]
+    render(
+      <Ficha
+        {...fichaProps(CANC)}
+        diario={diario}
+        fotos={{ 'o1/2026-09-20.jpg': 'https://exemplo/foto.jpg' }}
+      />
+    )
+    expect(screen.getByText('Evolução em fotos')).toBeInTheDocument()
+    expect(screen.getByAltText('Foto da obra em 20/09/2026')).toBeInTheDocument()
+    expect(screen.getByText('Foto da evolução recebida em 20/09')).toBeInTheDocument()
+  })
+
   test('cancelada: a frase "Obra cancelada não muda de etapa…"', () => {
     const { container } = render(<Ficha {...fichaProps(CANC)} />)
     expect(container).toHaveTextContent(
