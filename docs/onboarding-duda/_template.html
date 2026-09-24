@@ -307,17 +307,19 @@
         <div class="frentes">
           <div class="fr">
             <div class="fr-cab"><span class="cod">1</span><span class="fr-tit">Cancelamento de obra</span></div>
-            <p class="porque">Mockup <b>aprovado pelo cliente</b> em 23/09; spec em andamento. Mesmos
-            arquivos da ficha (<code>obra/[id]</code>, <code>_lib/tipos.ts</code>,
-            <code>base/</code>); exige migration.</p>
+            <p class="porque"><b>Pronto no <code>master</code> em 24/09</b> (merge <code>fed48eb</code>), revisado; migration
+            aplicada em 23/09; falta o deploy. <b>Duda: d&ecirc; <code>git pull</code></b> &mdash; mudou
+            <code>tarefas/page.tsx</code> (tarefa aberta de obra cancelada some da lista), o tipo
+            <code>Etapa</code> ganhou <code>&#39;cancelado&#39;</code> (as nove de antes viraram <code>EtapaCiclo</code>) e
+            <code>faseDe</code> pode devolver <code>null</code>.</p>
             <div class="custo">
               <div><span class="cr">Horas</span><span class="cv">9&ndash;14 h</span></div>
             </div>
           </div>
           <div class="fr">
             <div class="fr-cab"><span class="cod">2</span><span class="fr-tit">D&iacute;vidas da ficha que tocam dado</span></div>
-            <p class="porque">A1, A13, B5 e B7 de <code>docs/DIVIDAS.md</code>. Ficha e as actions
-            dela.</p>
+            <p class="porque"><b>Pronto no <code>master</code> em 24/09</b> (merge <code>29b526e</code>), revisado, sem SQL;
+            falta o deploy. Ficha e as actions dela.</p>
             <div class="custo">
               <div><span class="cr">Horas</span><span class="cv">8&ndash;12 h</span></div>
             </div>
