@@ -218,7 +218,8 @@ export default function BlocoAutorizacao({
               </>
             ) : null}
           </>
-        ) : (
+        ) : etapa === 'cancelado' ? null : (
+          // Obra cancelada não está "sendo executada" (revisão do cancelamento, B2).
           <>
             <b className="text-[#ff4d6d]">Nem uma coisa nem outra.</b> A obra está sendo executada
             sem OS e sem ninguém nomeado que tenha autorizado.

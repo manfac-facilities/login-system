@@ -759,7 +759,7 @@ export default function Ficha({
             }}
             analistas={analistasCliente}
             hoje={hoje}
-            diasSemOS={dSemOS}
+            diasSemOS={cancelada(obra) ? null : dSemOS}
             etapa={obra.etapa as Etapa}
             responsavel={obra.pcm}
             rodape={<Rodape edicao={edicoes['Autorização']} entrada={entrada} />}

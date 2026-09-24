@@ -371,6 +371,26 @@ describe('Cancelamento na ficha (spec-cancelamento §6.2, §6.3)', () => {
     expect(screen.getByText('Foto da evolução recebida em 20/09')).toBeInTheDocument()
   })
 
+  test('cancelada sem OS e sem liberação: Autorização não diz que está sendo executada nem conta dias (review B2)', () => {
+    const { container } = render(
+      <Ficha
+        {...fichaProps({
+          ...CANC,
+          cancelado_por: 'manfac',
+          cancelado_etapa_anterior: 'definir',
+          os_aprovada: false,
+          aprovacao: null,
+          liberado_por: null,
+          liberado_em: null,
+          inicio_plan: '2026-08-01',
+        })}
+      />
+    )
+    expect(screen.getByText('OS ainda não aprovada')).toBeInTheDocument()
+    expect(container).not.toHaveTextContent('Nem uma coisa nem outra')
+    expect(container).not.toHaveTextContent('esperando a aprovação da OS há')
+  })
+
   test('cancelada: a frase "Obra cancelada não muda de etapa…"', () => {
     const { container } = render(<Ficha {...fichaProps(CANC)} />)
     expect(container).toHaveTextContent(
