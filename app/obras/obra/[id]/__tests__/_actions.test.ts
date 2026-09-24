@@ -477,6 +477,35 @@ describe('corrigirDataFechamentoAction (ajuste 2, 23/09)', () => {
 })
 
 // ============================================================
+// Cancelamento — spec-cancelamento-obra-2026-09-23 §5.3
+// ============================================================
+
+describe('mudarEtapaAction — cancelada não entra nem sai pelo seletor', () => {
+  it('destino "cancelado" é recusado como etapa inválida', async () => {
+    expect(await mudarEtapaAction('o1', 'cancelado')).toEqual({ error: 'Etapa inválida' })
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('origem "cancelado" é recusada antes de qualquer escrita', async () => {
+    obraAtual = obra({ etapa: 'cancelado', cancelado_etapa_anterior: 'andamento' })
+    expect(await mudarEtapaAction('o1', 'andamento')).toEqual({
+      error: 'Obra cancelada não muda de etapa. Use "Desfazer cancelamento".',
+    })
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+})
+
+it('corrigirDataFechamentoAction recusa obra cancelada (comportamento de hoje, agora explícito)', async () => {
+  obraAtual = obra({ etapa: 'cancelado', marco_fechou_os: '2026-09-01', cancelado_etapa_anterior: 'andamento' })
+  expect(await corrigirDataFechamentoAction('o1', '2026-09-02')).toEqual({
+    error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.',
+  })
+  expect(rpcMock).not.toHaveBeenCalled()
+})
+
+// ============================================================
 // Cancelamento — spec-cancelamento-obra-2026-09-23 §5.1 / §5.2
 // ============================================================
 

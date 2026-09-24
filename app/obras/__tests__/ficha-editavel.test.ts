@@ -806,3 +806,24 @@ describe('liberarObraAction — os campos novos de §4.6', () => {
     expect(updateMock).not.toHaveBeenCalled()
   })
 })
+
+describe('obra cancelada é só leitura no servidor (spec do cancelamento §5.3)', () => {
+  beforeEach(() => {
+    obraAtual = obra({
+      etapa: 'cancelado',
+      cancelado_por: 'cliente',
+      cancelado_em: '2026-09-23T13:42:00Z',
+      cancelado_quem: EMAIL,
+      cancelado_etapa_anterior: 'andamento',
+    })
+  })
+
+  it.each([
+    ['salvarAutorizacaoAction', () => salvarAutorizacaoAction('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' })],
+    ['salvarIdentificacaoAction', () => salvarIdentificacaoAction('o1', { ...IDENT_VAZIA, tipo: 'CIVIL' })],
+    ['salvarCronogramaAction', () => salvarCronogramaAction('o1', { ...CRONO_VAZIO, duracao: '10' })],
+  ])('%s recusa obra cancelada, sem chamar a RPC', async (_n, chamar) => {
+    expect(await chamar()).toEqual({ error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.' })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+})

@@ -58,6 +58,10 @@ const SEM_ACESSO = 'Sem acesso ao Controle de Obras'
 const NAO_AUTENTICADO = 'Não autenticado'
 const OBRA_NAO_ENCONTRADA = 'Obra não encontrada'
 const CORRIDA_TRIAGEM = 'Esta obra já foi liberada por outra pessoa. Recarregue a página.'
+// Obra cancelada (spec do cancelamento §5.3): a tela esconde o Editar e o seletor;
+// o servidor é a fronteira (aba antiga).
+const CANCELADA_SO_LEITURA = 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.'
+const CANCELADA_NAO_MUDA_ETAPA = 'Obra cancelada não muda de etapa. Use "Desfazer cancelamento".'
 
 const ETAPAS_VALIDAS = CICLO.map((c) => c.k)
 
@@ -368,6 +372,7 @@ export async function mudarEtapaAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_NAO_MUDA_ETAPA }
 
   const hoje = hojeISO()
 
@@ -458,6 +463,7 @@ export async function corrigirDataFechamentoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   // Só corrige o que existe: marco gravado E a obra já depois de Fechar OS.
   if (
@@ -758,6 +764,7 @@ export async function salvarAutorizacaoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const hoje = hojeISO()
 
@@ -812,6 +819,7 @@ export async function salvarIdentificacaoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const erro = primeiroErro(validarIdentificacao(dados, { tipoAtual: obra.tipo }))
   if (erro) return { error: erro }
@@ -876,6 +884,7 @@ export async function salvarCronogramaAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const erro = primeiroErro(validarCronograma(dados, { inicioAtual: obra.inicio_plan }))
   if (erro) return { error: erro }
