@@ -3,7 +3,8 @@
 -- Spec:  docs/cliente/2026-08-31-sistema-controle-de-obras/spec-cancelamento-obra-2026-09-23.md
 -- Plano: docs/cliente/2026-08-31-sistema-controle-de-obras/plano-cancelamento-obra-2026-09-23.md
 -- ============================================================
--- ESTADO: NÃO APLICADO. Rodar à mão, projeto de produção iyytcavcgukfjnjjrerx
+-- ESTADO: APLICADO em produção em 2026-09-23 (verificação 11/11 OK, teste 11/11 OK).
+-- Projeto de produção iyytcavcgukfjnjjrerx
 -- (confirme o ref antes — AGENTS.md). Aplicar ANTES do deploy do código do
 -- cancelamento. O código que está no ar hoje continua funcionando com esta
 -- migration aplicada: nenhuma obra fica cancelada até alguém usar o botão novo,

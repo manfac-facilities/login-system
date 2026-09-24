@@ -139,6 +139,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 | `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** RPC `obras_remarcar_inicio`, colunas `detalhe` e `registrado_por` em `obras_remarcacao`. Verificação devolveu 18 linhas, todas `OK` |
 | `obras-desfazer-diario-atomico` | **aplicado em 2026-09-21.** RPC `obras_desfazer_diario` (security invoker, depende da RLS `obras access`). Verificação 3/3 `OK`; testada com rollback: sem acesso levanta e não apaga, dia sem diário preserva a tarefa, com acesso apaga diário e tarefa aberta e preserva a respondida |
 | `hub-comunicados` | **aplicado em 2026-09-22.** Tabelas `hub_comunicados` e `hub_comunicados_lidos` + função `hub_tem_acesso_sistema(slug)`. Verificação 12/12 `OK`; teste de RLS (`sdd-sql-hub-comunicados-teste-rls.sql`) 13/13 `OK` com rollback confirmado (0 linhas depois). Escrita só pelo PAT/service role |
+| `obras-cancelamento` | **aplicado em 2026-09-23** (aprovado pelo João; revisão independente sem bloqueante). Etapa `cancelado` no CHECK, 5 colunas `cancelado_*`, CHECK `obras_obra_cancelamento_coerente`, trigger `obras_obra_transicao_cancelamento`, bloco `Cancelamento` no histórico, RPC `obras_aplicar_alteracao` com as 5 colunas. Verificação 11/11 `OK`; teste de comportamento 11/11 `OK`, nada gravado (0 canceladas, 0 histórico). Rollback: restaurar a RPC ANTES de dropar colunas |
 
 ## Jobs de cron que não são deste repositório
 
