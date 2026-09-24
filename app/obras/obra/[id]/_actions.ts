@@ -17,10 +17,16 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import {
+  CANCELADO_POR,
   CICLO,
+  PODE_CANCELAR,
   PRIORIDADES,
+  cancelada,
   hojeISO,
+  podeCancelar,
   posCampo,
+  rotuloCancelado,
+  type CanceladoPor,
   type EtapaCiclo,
   type ObraRow,
   type Prioridade,
@@ -486,6 +492,112 @@ export async function corrigirDataFechamentoAction(
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')
+  return { success: true }
+}
+
+// ============================================================
+// CANCELAMENTO — spec-cancelamento-obra-2026-09-23.md §5
+//
+// Sobrescreve dado de cliente (território de exceção do AGENTS.md): toda
+// recusa sai ANTES de qualquer escrita, olhando a obra LIDA DO BANCO, e a
+// gravação é uma chamada só da RPC — a obra e a linha de histórico gravam
+// juntas ou nenhuma. `desde_etapa` nunca entra: o desfazer devolve a obra com
+// a mesma contagem de dias (decisão do mockup aprovado em 23/09).
+// ============================================================
+
+const ESCOLHA_QUEM_CANCELOU = 'Escolha quem cancelou: o Cliente ou a Manfac.'
+const JA_CANCELADA = 'Esta obra já está cancelada. Recarregue a página.'
+const JA_EXECUTADA = 'Esta obra já foi executada em campo e não pode ser cancelada.'
+const ERRO_CANCELAR = 'Não deu para cancelar a obra. Nada mudou — tente de novo.'
+const NAO_CANCELADA = 'Esta obra não está cancelada. Recarregue a página.'
+const SEM_ETAPA_ANTERIOR = 'Não dá para desfazer: a etapa anterior não está registrada.'
+const ERRO_DESFAZER = 'Não deu para desfazer o cancelamento. Nada mudou — tente de novo.'
+
+function revalidarCancelamento(obraId: string) {
+  revalidatePath(`/obras/obra/${obraId}`)
+  revalidatePath('/obras/base')
+  revalidatePath('/obras/diario')
+  revalidatePath('/obras/tarefas')
+}
+
+export async function cancelarObraAction(
+  obraId: string,
+  dados: { por: string; obs?: string }
+): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+  const email = sessao.email as string
+
+  if (!(CANCELADO_POR as readonly string[]).includes(dados?.por)) return { error: ESCOLHA_QUEM_CANCELOU }
+  const por = dados.por as CanceladoPor
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
+
+  if (cancelada(obra)) return { error: JA_CANCELADA }
+  if (!podeCancelar(obra)) return { error: JA_EXECUTADA }
+
+  const obs = nulo(dados.obs)
+  const agora = new Date().toISOString()
+  const campos: Record<string, unknown> = {
+    etapa: 'cancelado',
+    cancelado_por: por,
+    cancelado_obs: obs,
+    cancelado_em: agora,
+    cancelado_quem: email,
+    cancelado_etapa_anterior: obra.etapa,
+    etapa_por: email,
+    etapa_em: agora,
+    atualizacao: hojeISO(),
+  }
+  const motivo = rotuloCancelado(por) + (obs ? ` — ${obs}` : '')
+  const linhas = linhasDeAlteracao({ etapa: obra.etapa }, { etapa: 'cancelado' }, 'Cancelamento').map(
+    (l) => ({ ...l, motivo })
+  )
+
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
+  if (error) return { error: ERRO_CANCELAR }
+
+  revalidarCancelamento(obraId)
+  return { success: true }
+}
+
+export async function desfazerCancelamentoAction(obraId: string): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+  const email = sessao.email as string
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
+
+  if (!cancelada(obra)) return { error: NAO_CANCELADA }
+  const anterior = obra.cancelado_etapa_anterior ?? null
+  if (anterior === null || !PODE_CANCELAR.includes(anterior)) return { error: SEM_ETAPA_ANTERIOR }
+
+  const campos: Record<string, unknown> = {
+    etapa: anterior,
+    cancelado_por: null,
+    cancelado_obs: null,
+    cancelado_em: null,
+    cancelado_quem: null,
+    cancelado_etapa_anterior: null,
+    etapa_por: email,
+    etapa_em: new Date().toISOString(),
+    atualizacao: hojeISO(),
+  }
+  const linhas = linhasDeAlteracao({ etapa: 'cancelado' }, { etapa: anterior }, 'Cancelamento').map((l) => ({
+    ...l,
+    motivo: 'Cancelamento desfeito',
+  }))
+
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
+  if (error) return { error: ERRO_DESFAZER }
+
+  revalidarCancelamento(obraId)
   return { success: true }
 }
 

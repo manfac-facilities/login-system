@@ -48,7 +48,12 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { hojeISO, type ObraRow } from '../../../_lib/tipos'
-import { corrigirDataFechamentoAction, mudarEtapaAction } from '../_actions'
+import {
+  cancelarObraAction,
+  corrigirDataFechamentoAction,
+  desfazerCancelamentoAction,
+  mudarEtapaAction,
+} from '../_actions'
 
 const HOJE = hojeISO()
 const EMAIL = 'yuri@manfac.com.br'
@@ -467,6 +472,185 @@ describe('corrigirDataFechamentoAction (ajuste 2, 23/09)', () => {
     rpcMock.mockResolvedValue({ data: null, error: { message: 'x' } })
     expect(await corrigirDataFechamentoAction('o1', diasAtras(5))).toEqual({
       error: 'Erro ao corrigir a data de fechamento da OS',
+    })
+  })
+})
+
+// ============================================================
+// Cancelamento — spec-cancelamento-obra-2026-09-23 §5.1 / §5.2
+// ============================================================
+
+type LinhaComMotivo = { bloco: string; campo: string; de: string | null; para: string | null; motivo?: string | null }
+const linhasCanc = () => linhasMarco() as LinhaComMotivo[]
+
+describe('cancelarObraAction', () => {
+  it('recusa sem acesso, sem ler a obra', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(fromMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa sem sessão', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } })
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({ error: 'Não autenticado' })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa "por" fora de cliente/manfac, sem gravar', async () => {
+    expect(await cancelarObraAction('o1', { por: 'outro' })).toEqual({
+      error: 'Escolha quem cancelou: o Cliente ou a Manfac.',
+    })
+    expect(await cancelarObraAction('o1', { por: '' })).toEqual({
+      error: 'Escolha quem cancelou: o Cliente ou a Manfac.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it.each(['relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado'])('2B: recusa obra em %s', async (etapa) => {
+    obraAtual = obra({ etapa: etapa as ObraRow['etapa'] })
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({
+      error: 'Esta obra já foi executada em campo e não pode ser cancelada.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa obra já cancelada', async () => {
+    obraAtual = obra({ etapa: 'cancelado', cancelado_etapa_anterior: 'andamento' })
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({
+      error: 'Esta obra já está cancelada. Recarregue a página.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it.each(['definir', 'levantamento', 'andamento', 'paralisado'])(
+    'cancela de %s numa chamada só da RPC',
+    async (etapa) => {
+      obraAtual = obra({ etapa: etapa as ObraRow['etapa'], desde_etapa: '2026-09-01' })
+      expect(await cancelarObraAction('o1', { por: 'manfac', obs: '  OS duplicada  ' })).toEqual({ success: true })
+      expect(rpcMock).toHaveBeenCalledTimes(1)
+      expect(rpcMock.mock.calls[0][0]).toBe('obras_aplicar_alteracao')
+      expect(updateMock).not.toHaveBeenCalled()
+      const c = camposMarco()!
+      expect(c).toMatchObject({
+        etapa: 'cancelado',
+        cancelado_por: 'manfac',
+        cancelado_obs: 'OS duplicada',
+        cancelado_quem: EMAIL,
+        cancelado_etapa_anterior: etapa,
+        etapa_por: EMAIL,
+        atualizacao: HOJE,
+      })
+      expect(typeof c.cancelado_em).toBe('string')
+      expect(typeof c.etapa_em).toBe('string')
+      expect(c).not.toHaveProperty('desde_etapa')
+      expect(linhasCanc()).toEqual([
+        expect.objectContaining({
+          bloco: 'Cancelamento',
+          campo: 'etapa',
+          para: 'Cancelada',
+          motivo: 'Cancelado pela Manfac — OS duplicada',
+        }),
+      ])
+    }
+  )
+
+  it('observação vazia vira null e o motivo fica só com quem cancelou', async () => {
+    await cancelarObraAction('o1', { por: 'cliente', obs: '   ' })
+    expect(camposMarco()!.cancelado_obs).toBeNull()
+    expect(linhasCanc()[0].motivo).toBe('Cancelado pelo Cliente')
+  })
+
+  it('falha da RPC vira mensagem, sem lançar', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'x' } })
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({
+      error: 'Não deu para cancelar a obra. Nada mudou — tente de novo.',
+    })
+    expect(revalidatePath).not.toHaveBeenCalled()
+  })
+
+  it('revalida ficha, base, diário e tarefas', async () => {
+    await cancelarObraAction('o1', { por: 'cliente' })
+    const caminhos = (revalidatePath as jest.Mock).mock.calls.map((c) => c[0])
+    expect(caminhos).toEqual(
+      expect.arrayContaining(['/obras/obra/o1', '/obras/base', '/obras/diario', '/obras/tarefas'])
+    )
+  })
+})
+
+describe('desfazerCancelamentoAction', () => {
+  const cancelada = () =>
+    obra({
+      etapa: 'cancelado',
+      cancelado_por: 'cliente',
+      cancelado_obs: 'x',
+      cancelado_em: '2026-09-23T13:42:00Z',
+      cancelado_quem: EMAIL,
+      cancelado_etapa_anterior: 'paralisado',
+      desde_etapa: '2026-09-01',
+    })
+
+  it('recusa sem acesso, sem ler a obra', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await desfazerCancelamentoAction('o1')).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(fromMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa obra que não está cancelada', async () => {
+    obraAtual = obra({ etapa: 'andamento' })
+    expect(await desfazerCancelamentoAction('o1')).toEqual({
+      error: 'Esta obra não está cancelada. Recarregue a página.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa quando a etapa anterior não está registrada', async () => {
+    obraAtual = { ...cancelada(), cancelado_etapa_anterior: null }
+    expect(await desfazerCancelamentoAction('o1')).toEqual({
+      error: 'Não dá para desfazer: a etapa anterior não está registrada.',
+    })
+    obraAtual = { ...cancelada(), cancelado_etapa_anterior: 'relatorio' }
+    expect(await desfazerCancelamentoAction('o1')).toEqual({
+      error: 'Não dá para desfazer: a etapa anterior não está registrada.',
+    })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('volta à etapa exata, limpa as cinco colunas, não toca em desde_etapa, registra no histórico', async () => {
+    obraAtual = cancelada()
+    expect(await desfazerCancelamentoAction('o1')).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(camposMarco()).toMatchObject({
+      etapa: 'paralisado',
+      cancelado_por: null,
+      cancelado_obs: null,
+      cancelado_em: null,
+      cancelado_quem: null,
+      cancelado_etapa_anterior: null,
+      etapa_por: EMAIL,
+      atualizacao: HOJE,
+    })
+    expect(camposMarco()).not.toHaveProperty('desde_etapa')
+    expect(linhasCanc()).toEqual([
+      expect.objectContaining({
+        bloco: 'Cancelamento',
+        campo: 'etapa',
+        de: 'Cancelada',
+        para: 'Paralisado',
+        motivo: 'Cancelamento desfeito',
+      }),
+    ])
+    const caminhos = (revalidatePath as jest.Mock).mock.calls.map((c) => c[0])
+    expect(caminhos).toEqual(
+      expect.arrayContaining(['/obras/obra/o1', '/obras/base', '/obras/diario', '/obras/tarefas'])
+    )
+  })
+
+  it('falha da RPC vira mensagem', async () => {
+    obraAtual = cancelada()
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'x' } })
+    expect(await desfazerCancelamentoAction('o1')).toEqual({
+      error: 'Não deu para desfazer o cancelamento. Nada mudou — tente de novo.',
     })
   })
 })
