@@ -54,7 +54,8 @@ import DialogoRemarcar, {
 /** O tipo MÍNIMO que este bloco usa de `salvarCronogramaAction` (§4.3). */
 export type SalvarCronograma = (
   obraId: string,
-  dados: DadosCronograma
+  dados: DadosCronograma,
+  versao: string
 ) => Promise<{ error?: string; success?: boolean }>
 
 const CAMPOS = [
@@ -77,6 +78,7 @@ function dias(duracao: string): number | null {
 
 export default function BlocoCronograma({
   obraId,
+  versao,
   valores,
   responsaveis,
   equipes,
@@ -87,6 +89,8 @@ export default function BlocoCronograma({
   somenteLeitura,
 }: {
   obraId: string
+  /** `versaoDoBloco` da obra lida — capturada no Editar, devolvida ao salvar (A1). */
+  versao: string
   /** O que está gravado hoje. `valores.inicio` é o que define a remarcação. */
   valores: DadosCronograma
   responsaveis: readonly string[]
@@ -108,11 +112,15 @@ export default function BlocoCronograma({
   /** O motivo da última tentativa — a caixa de erro o cita, como no mockup. */
   const [tentativa, setTentativa] = useState<Remarcacao | null>(null)
   const [salvando, iniciar] = useTransition()
+  // A1: a versão que a pessoa VIU ao abrir a edição, e não a da prop na hora
+  // de salvar — a página pode ser revalidada no meio da edição.
+  const [versaoLida, setVersaoLida] = useState(versao)
 
   const remarcando = editando && precisaRemarcar(valores.inicio, rascunho.inicio)
 
   function editar() {
     setRascunho({ ...valores, motivo: '', detalhe: '' })
+    setVersaoLida(versao)
     setErros({})
     setErro(null)
     setTentativa(null)
@@ -133,7 +141,7 @@ export default function BlocoCronograma({
     setErro(null)
     iniciar(async () => {
       try {
-        const r = await salvar(obraId, dados)
+        const r = await salvar(obraId, dados, versaoLida)
         if (r?.error) {
           // R21: continua em edição, com tudo o que foi digitado.
           setErro(r.error)

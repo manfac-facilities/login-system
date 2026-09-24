@@ -52,7 +52,8 @@ import BlocoEditavel, {
  */
 export type SalvarAutorizacao = (
   obraId: string,
-  dados: DadosAutorizacao
+  dados: DadosAutorizacao,
+  versao: string
 ) => Promise<{ error?: string; success?: boolean; avancou?: boolean }>
 
 /** Ordem da tela — é ela que decide para onde o foco vai no erro. */
@@ -65,6 +66,7 @@ const CAMPOS = [
 
 export default function BlocoAutorizacao({
   obraId,
+  versao,
   valores,
   analistas,
   hoje,
@@ -76,6 +78,8 @@ export default function BlocoAutorizacao({
   somenteLeitura,
 }: {
   obraId: string
+  /** `versaoDoBloco` da obra lida — capturada no Editar, devolvida ao salvar (A1). */
+  versao: string
   /** O que está gravado hoje. O rascunho nasce daqui a cada **Editar**. */
   valores: DadosAutorizacao
   /** Quem pode aparecer em "Liberado por": os analistas do cliente. */
@@ -98,12 +102,16 @@ export default function BlocoAutorizacao({
   const [erro, setErro] = useState<string | null>(null)
   const [avisoAvanco, setAvisoAvanco] = useState(false)
   const [salvando, iniciar] = useTransition()
+  // A1: a versão que a pessoa VIU ao abrir a edição, e não a da prop na hora
+  // de salvar — a página pode ser revalidada no meio da edição.
+  const [versaoLida, setVersaoLida] = useState(versao)
 
   const liberada = !!valores.libPor
   const aprovada = !!valores.aprovadaEm
 
   function editar() {
     setRascunho(valores)
+    setVersaoLida(versao)
     setErros({})
     setErro(null)
     setEditando(true)
@@ -123,7 +131,7 @@ export default function BlocoAutorizacao({
     setErro(null)
     iniciar(async () => {
       try {
-        const r = await salvar(obraId, rascunho)
+        const r = await salvar(obraId, rascunho, versaoLida)
         if (r?.error) {
           // R21: nada de sair do modo edição nem de limpar o rascunho.
           setErro(r.error)

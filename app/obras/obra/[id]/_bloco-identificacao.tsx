@@ -43,7 +43,8 @@ import BlocoEditavel, {
 /** O tipo MÍNIMO que este bloco usa de `salvarIdentificacaoAction` (§4.2). */
 export type SalvarIdentificacao = (
   obraId: string,
-  dados: DadosIdentificacao
+  dados: DadosIdentificacao,
+  versao: string
 ) => Promise<{ error?: string; success?: boolean }>
 
 const CAMPOS = [
@@ -54,6 +55,7 @@ const CAMPOS = [
 
 export default function BlocoIdentificacao({
   obraId,
+  versao,
   valores,
   campoDoField,
   analistas,
@@ -62,6 +64,8 @@ export default function BlocoIdentificacao({
   somenteLeitura,
 }: {
   obraId: string
+  /** `versaoDoBloco` da obra lida — capturada no Editar, devolvida ao salvar (A1). */
+  versao: string
   /** O que está gravado hoje. `valor` é texto pt-BR: '18.450,00'. */
   valores: DadosIdentificacao
   /** O que vem do Field e não se edita aqui (R19). */
@@ -77,9 +81,13 @@ export default function BlocoIdentificacao({
   const [erros, setErros] = useState<Erros<DadosIdentificacao>>({})
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, iniciar] = useTransition()
+  // A1: a versão que a pessoa VIU ao abrir a edição, e não a da prop na hora
+  // de salvar — a página pode ser revalidada no meio da edição.
+  const [versaoLida, setVersaoLida] = useState(versao)
 
   function editar() {
     setRascunho(valores)
+    setVersaoLida(versao)
     setErros({})
     setErro(null)
     setEditando(true)
@@ -105,7 +113,7 @@ export default function BlocoIdentificacao({
     setErro(null)
     iniciar(async () => {
       try {
-        const r = await salvar(obraId, rascunho)
+        const r = await salvar(obraId, rascunho, versaoLida)
         if (r?.error) {
           // R21: o que foi digitado continua na tela.
           setErro(r.error)
