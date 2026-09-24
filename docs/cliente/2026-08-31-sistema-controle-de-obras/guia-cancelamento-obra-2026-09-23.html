@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancelamento de obra</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --canc:#64748b;--canc-soft:rgba(100,116,139,.16);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:15px;line-height:1.5}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+
+  header h1{font-size:23px;margin:0 0 4px;letter-spacing:-.015em}
+  header p{margin:0;color:var(--ink-dim)}
+  .bonus{margin:16px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);font-size:13.5px;color:var(--ink-dim)}
+  .bonus b{color:var(--ink)}
+
+  section{border-top:1px solid var(--line);margin-top:26px;padding-top:22px;break-inside:avoid}
+  .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;margin-right:8px;vertical-align:1px}
+  section h2{font-size:18px;margin:0 0 6px;letter-spacing:-.01em}
+  .oque{margin:0 0 14px;color:var(--ink-dim)}
+  .oque b{color:var(--ink)}
+  h3.como{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);margin:16px 0 6px}
+  ol.passos{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+  ol.passos b{color:var(--ink)}
+  .erro-dica{margin:10px 0 0;font-size:13.5px;color:var(--ink-dim);border-left:3px solid var(--crit);padding-left:10px}
+  .erro-dica b{color:var(--crit)}
+  .rotulo-tela{font-size:11px;color:var(--ink-faint);margin:12px 0 5px}
+
+  /* ---------- mockups (copiam a tela real) ---------- */
+  .mock{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:13px}
+  .mock-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;min-height:38px}
+  .mock-h .dir{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500}
+  .mock-b{padding:12px 14px}
+  .novo{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px;position:relative}
+  .selo-novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:#fff;background:var(--accent);border-radius:99px;padding:1px 7px;white-space:nowrap}
+
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .passo:last-child{border-bottom:0}
+  .dot{margin-top:6px;width:10px;height:10px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.4}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1}
+  .passo.parou .dot{background:transparent;border:2px solid #9aa8bb;opacity:1;position:relative}
+  .passo.parou .dot::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:2px;background:#9aa8bb;transform:translate(-50%,-50%) rotate(45deg)}
+  .passo.congelado .dot{opacity:.25}
+  .corpo{flex:1;min-width:0}
+  .nm{font-weight:600;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.congelado .nm{color:var(--ink-faint)}
+  .meta{font-size:11px;color:var(--ink-dim);display:flex;gap:2px 12px;flex-wrap:wrap;margin-top:1px}
+  .quando{flex:none;font-size:11px;white-space:nowrap;color:var(--ink-faint)}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.parou .quando{color:#cbd5e1}
+  .etq{border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:10px;color:var(--ink-dim);font-weight:400}
+  .aqui{background:var(--accent);color:#fff;border-radius:99px;padding:0 8px;font-size:10px;font-weight:600}
+  .aqui.canc{background:#475569}
+  .extra{margin-top:6px;font-size:11px;line-height:1.55;color:var(--ink-dim)}
+  .extra b{color:var(--ink)}
+
+  .lbl{display:block;font-size:11px;color:var(--ink-dim)}
+  .lbl.up{text-transform:uppercase;letter-spacing:.05em}
+  .btn{border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:8px 14px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.sec{background:none;border:1px solid var(--line);color:#e8eef7;font-weight:500}
+  .btn.perigo{background:none;border:1px solid rgba(255,77,109,.55);color:var(--crit);font-weight:600}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+  /* ---------- faixa "encerrar sem executar" (igual à tela real) ---------- */
+  .faixa-canc{border-top:1px solid var(--line);padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(255,77,109,.05)}
+  .faixa-canc .txt{flex:1;min-width:180px;font-size:12px;color:var(--ink-dim)}
+  .faixa-canc .txt b{color:var(--ink)}
+  .faixa-canc .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);font-weight:600;display:block;margin-bottom:2px}
+
+  .nao-cancela{border-top:1px solid var(--line);padding:11px 14px;font-size:12px;color:var(--ink-dim);display:flex;gap:8px;align-items:flex-start}
+  .nao-cancela .ic{flex:none;width:15px;height:15px;border-radius:50%;border:1px solid var(--ink-faint);display:grid;place-items:center;font-size:9px;color:var(--ink-faint);margin-top:1px;font-weight:700}
+  .nao-cancela b{color:var(--ink)}
+
+  /* ---------- janela de cancelar ---------- */
+  .op{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;background:rgba(0,0,0,.2);cursor:pointer}
+  .op:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+  .op input{margin-top:3px;accent-color:var(--accent)}
+  .op .o1{color:var(--ink);font-weight:600;font-size:12.5px}
+  .op .o2{font-size:11px;color:var(--ink-faint)}
+  .avisin{border:1px solid var(--line);background:rgba(0,0,0,.2);border-radius:var(--r-sm);padding:9px 11px;font-size:11.5px;color:var(--ink-dim)}
+  .avisin ul{margin:5px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
+  .avisin b{color:var(--ink)}
+  .ta-obs{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:12.5px;color:var(--ink-faint);min-height:38px}
+
+  /* ---------- selo cancelada ---------- */
+  .selo{border:1px solid #475569;border-left:4px solid #94a3b8;background:var(--canc-soft);border-radius:var(--r);padding:11px 13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .selo .grande{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#cbd5e1;border:1.5px dashed #94a3b8;border-radius:var(--r-sm);padding:5px 9px;flex:none}
+  .selo .info{flex:1;min-width:180px;font-size:12px;color:var(--ink-dim)}
+  .selo .info .l1{color:var(--ink);font-weight:650;font-size:13px;margin-bottom:2px}
+  .selo .info b{color:var(--ink)}
+  .selo .obs{margin-top:4px;font-style:italic;color:var(--ink-dim)}
+
+  /* ---------- Base: filtro e aviso ---------- */
+  .sel-etapa{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 9px;font-size:13px;color:var(--ink)}
+  .aviso-lista{font-size:12px;color:var(--ink-dim);margin:10px 2px 0}
+  .aviso-lista b{color:var(--ink)}
+  .lnk{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-weight:600}
+  tr.linha-canc td{color:var(--ink-faint)}
+  tr.linha-canc td.loja{text-decoration:line-through;text-decoration-color:rgba(148,163,184,.55)}
+  table.tb{border-collapse:collapse;width:100%;font-size:11.5px}
+  table.tb th{background:var(--panel-2);text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.tb td{padding:6px 8px;border-bottom:1px solid var(--line-soft)}
+  table.tb tr:last-child td{border-bottom:0}
+  .pill-tb{display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;border:1px dashed #7b8aa0;color:#cbd5e1;background:var(--canc-soft)}
+
+  .faixa{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-top:8px}
+  .sino{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--info-soft);border:1px solid rgba(90,169,240,.45)}
+  .faixa .tt{font-weight:600;font-size:13px}
+  .chip{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:4px}
+  .faixa .ac{display:flex;gap:14px;align-items:center;margin-top:7px;font-size:12px}
+  .faixa .ver{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .faixa .ent{color:var(--ink-dim);border:1px solid var(--line);border-radius:5px;padding:3px 10px}
+
+  footer{margin-top:30px;font-size:12px;color:var(--ink-faint);text-align:center}
+
+  @media print{
+    @page{margin:14mm}
+    html,body{background:#fff;color:#1a2233}
+    .pagina{max-width:none;padding:0}
+    header p,.oque,h3.como,.erro-dica,.rotulo-tela,footer,.bonus{color:#3a4557}
+    .oque b,ol.passos b,.bonus b{color:#111}
+    .bonus{background:#fff;border-color:#c9d2de}
+    section{border-top-color:#c9d2de}
+    .mock,.faixa,.num,.selo-novo,.selo,.avisin{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mock,.faixa{break-inside:avoid;color:var(--ink)}
+    .faixa{background:var(--panel)}
+  }
+</style>
+</head>
+<body>
+<main class="pagina">
+
+<header>
+  <h1>Cancelamento de obra</h1>
+  <p>Como cancelar uma obra, como ela fica depois e como achá-la na Base. No ar em breve no Controle de Obras.</p>
+  <div class="bonus">
+    Ao abrir o Controle de Obras, aparece no topo um aviso <b>“Novidade”</b> com este resumo. Depois de ler, clique em <b>Entendi</b> para fechar.
+    <div class="faixa" aria-hidden="true">
+      <div class="sino">🔔</div>
+      <div>
+        <span class="tt">Atualização no Controle de Obras: cancelamento de obra</span><span class="chip">novidade</span>
+        <div class="ac"><span class="ver">ver o que mudou</span><span class="ent novo">Entendi</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 1 ================= -->
+<section>
+  <h2><span class="num">1</span>Como cancelar</h2>
+  <p class="oque">Quando a obra não vai ser executada — o cliente desistiu, a Manfac não vai fazer, ou a OS foi aberta por engano —, cancele em vez de deixar ela parada numa etapa.</p>
+
+  <p class="rotulo-tela">Na ficha da obra, no bloco Ciclo de vida (ou na Triagem, se ainda não foi liberada):</p>
+  <div class="mock">
+    <div class="mock-h">Ciclo de vida da obra<span class="dir">DP ITABORAI</span></div>
+    <div class="mock-b" style="padding:0">
+      <div style="padding:12px 14px">
+        <ol class="esteira" style="margin:0">
+          <li class="passo atual"><span class="dot"></span><div class="corpo"><div class="nm">Execução em campo<span class="aqui">a obra está aqui</span></div><div class="meta"><span>Equipe MANFAC-7</span></div></div><span class="quando">dia 16 de 20</span></li>
+        </ol>
+      </div>
+      <div class="faixa-canc novo">
+        <div class="txt"><span class="t">Encerrar sem executar <span class="selo-novo">novo</span></span>O cliente desistiu, a Manfac não vai executar ou a OS foi aberta por engano? Cancele aqui. <b>Nada é apagado e dá para desfazer.</b></div>
+        <button type="button" class="btn perigo" id="abrir-janela">Cancelar obra</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="rotulo-tela">Ao clicar em “Cancelar obra”, abre esta janela (toque nas opções para ver):</p>
+  <div class="mock novo">
+    <div class="mock-h">Cancelar a obra DP ITABORAI<span class="dir">OS 0926-011480</span></div>
+    <div class="mock-b col">
+      <label class="lbl up">Quem cancelou? <span style="color:var(--crit)">*</span></label>
+      <label class="op"><input type="radio" name="quem-guia" value="cliente" checked><span><span class="o1">Cancelado pelo Cliente</span><br><span class="o2">a DPSP desistiu ou suspendeu</span></span></label>
+      <label class="op"><input type="radio" name="quem-guia" value="manfac"><span><span class="o1">Cancelado pela Manfac</span><br><span class="o2">não vamos executar, ou OS aberta por engano</span></span></label>
+      <label class="lbl" style="margin-top:4px">O que aconteceu <span style="color:var(--ink-faint)">(opcional)</span></label>
+      <textarea class="ta-obs" placeholder="ex.: loja desistiu da reforma; OS duplicada no Field" readonly></textarea>
+      <div class="avisin">
+        <b>O que acontece ao cancelar</b>
+        <ul>
+          <li>A obra sai do diário do dia e das cobranças na hora.</li>
+          <li>Nada é apagado: diário, fotos, tarefas e histórico continuam na ficha.</li>
+          <li>Dá para desfazer na própria ficha, e ela volta para “Em andamento”.</li>
+          <li>No Field nada muda: se a OS também foi cancelada lá, é outro passo.</li>
+        </ul>
+      </div>
+      <div class="linha" style="margin-top:2px"><button type="button" class="btn sec" disabled>Voltar sem cancelar</button><button type="button" class="btn perigo" style="background:var(--crit);color:#fff;border:0">Cancelar obra</button></div>
+    </div>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Na ficha da obra (ou na Triagem, se ela ainda não foi liberada para o diário), role até <b>“Encerrar sem executar”</b> e clique em <b>Cancelar obra</b>.</li>
+    <li>Escolha <b>quem cancelou</b>: Cliente ou Manfac. É obrigatório — o botão de confirmar só acende depois da escolha.</li>
+    <li>Se quiser, escreva o que aconteceu — é opcional.</li>
+    <li>Clique em <b>Cancelar obra</b> para confirmar.</li>
+  </ol>
+
+  <p class="erro-dica"><b>Se aparecer:</b> em vez do botão, a linha <i>“Esta obra já foi executada em campo e não pode ser cancelada”</i> — é a obra que já passou por “Relatório de entrega”. Ela segue até faturar o que foi feito.</p>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+  <h2><span class="num">2</span>Como fica a obra cancelada, e como desfazer</h2>
+  <p class="oque">A ficha fica <b>só leitura</b>, com um selo mostrando quem cancelou, quando e por quê. <b>Nada é apagado</b> — diário, fotos, tarefas e histórico continuam ali — e dá para desfazer quando quiser.</p>
+
+  <p class="rotulo-tela">No topo da ficha de uma obra cancelada:</p>
+  <div class="mock">
+    <div class="mock-b">
+      <div class="selo novo">
+        <span class="grande">Cancelada</span>
+        <div class="info">
+          <div class="l1">Cancelado pelo Cliente</div>
+          em <b>23/09/2026 às 10:42</b> por <b>rafael.souza@manfac.com.br</b> · estava em <b>Em andamento</b>
+          <div class="obs">“Loja informou que a reforma foi suspensa pela regional.”</div>
+        </div>
+        <button type="button" class="btn sec">Desfazer cancelamento</button>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Abra a obra cancelada — o selo cinza no topo mostra <b>quem</b> cancelou, <b>quando</b> e a <b>etapa em que ela estava</b>.</li>
+    <li>Para voltar a trabalhar nela, clique em <b>Desfazer cancelamento</b>.</li>
+    <li>Confirme na janela que abre — a obra volta <b>exatamente</b> para a etapa em que estava (na Triagem, se foi cancelada de lá).</li>
+  </ol>
+
+  <p class="erro-dica"><b>Se aparecer:</b> os botões <b>Editar</b> e <b>Mudar a etapa</b> não aparecem numa obra cancelada. Para editar de novo, desfaça o cancelamento primeiro. O cancelamento continua registrado no Histórico de alterações, mesmo depois de desfeito.</p>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+  <h2><span class="num">3</span>Onde achar as canceladas na Base</h2>
+  <p class="oque">A lista do dia a dia (“Todas”) não mostra mais as obras canceladas. Um aviso embaixo da lista diz quantas ficaram de fora, e um filtro novo mostra só elas.</p>
+
+  <p class="rotulo-tela">Na Base, com o filtro “Todas”:</p>
+  <div class="mock">
+    <div class="mock-b" style="padding-bottom:8px">
+      <table class="tb">
+        <thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th></tr></thead>
+        <tbody>
+          <tr><td>0726-009512</td><td>DP COPACABANA</td><td>Em andamento</td></tr>
+          <tr><td>0926-011522</td><td>DP BARRA DA TIJUCA</td><td>Levantamento</td></tr>
+        </tbody>
+      </table>
+      <p class="aviso-lista novo"><b>2 obras canceladas</b> fora desta lista · <span class="lnk">ver canceladas</span></p>
+    </div>
+  </div>
+
+  <p class="rotulo-tela">Filtro de etapa, grupo novo no fim:</p>
+  <div class="mock">
+    <div class="mock-b">
+      <select class="sel-etapa novo" disabled>
+        <option>Todas</option>
+        <option>— Antes de executar —</option>
+        <option>— Executando —</option>
+        <option>— Fechamento —</option>
+        <optgroup label="Canceladas (novo)">
+          <option selected>Todas as canceladas</option>
+          <option>Canceladas pelo Cliente</option>
+          <option>Canceladas pela Manfac</option>
+        </optgroup>
+      </select>
+      <table class="tb" style="margin-top:10px">
+        <thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa</th></tr></thead>
+        <tbody>
+          <tr class="linha-canc"><td>0926-011480</td><td class="loja">DP ITABORAI</td><td><span class="pill-tb">Cancelada · Cliente</span></td></tr>
+          <tr class="linha-canc"><td>0926-011702</td><td class="loja">DP MAGE</td><td><span class="pill-tb">Cancelada · Manfac</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="como">Como usar</h3>
+  <ol class="passos">
+    <li>Na Base, se houver canceladas fora da lista “Todas”, aparece o aviso embaixo da tabela ou do Kanban.</li>
+    <li>Clique em <b>ver canceladas</b>, ou abra o filtro <b>Etapa da obra</b> e escolha o grupo <b>Canceladas</b> (todas, pelo Cliente ou pela Manfac).</li>
+  </ol>
+
+  <p class="erro-dica"><b>Se aparecer:</b> canceladas não contam <b>“Dias em aberto”</b> (mostra “—”), não entram em nenhum indicador do topo da Base e não aparecem no Kanban.</p>
+</section>
+
+<footer>Controle de Obras · Hub Manfac</footer>
+</main>
+
+<script>
+(function(){
+  var radios = document.querySelectorAll('input[name="quem-guia"]');
+  radios.forEach(function(r){ r.addEventListener('change', function(){}); });
+
+  var abrir = document.getElementById('abrir-janela');
+  if (abrir) {
+    abrir.addEventListener('click', function(){
+      var janela = document.querySelectorAll('.mock.novo')[0];
+      if (janela) janela.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+})();
+</script>
+</body>
+</html>
