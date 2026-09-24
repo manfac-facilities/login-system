@@ -163,3 +163,9 @@ no insert) — o cancelamento não é desfeito pelo cron.
 Mensagem do João no chat (literal): "o mockup cancelaento de obra está aprovado". Aprovado como
 está, com a observação opcional (decisão anterior do mesmo dia). Próximo passo: spec → plano (com o
 SQL final da migration para o João aprovar) → código por subagente → revisão → migration → deploy.
+
+## Migration aprovada — 23/09/2026
+
+O João aprovou a migration (`sdd-sql-obras-cancelamento.sql`) e decidiu **manter a trigger** de
+transição (a trava extra). Revisão independente do SQL: "pode aplicar", zero bloqueantes
+(`review-sql-cancelamento-2026-09-23.md`); RPC nova conferida contra a definição lida de produção.

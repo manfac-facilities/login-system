@@ -30,6 +30,7 @@
 --            parar e não deployar;
 --   PASSO 3  o teste de comportamento da PARTE 3 (rollback forçado, não grava
 --            nada). A mensagem de erro final é o relatório: "RESUMO: 11/11 OK".
+--            Sem a linha "RESUMO" na mensagem = FALHOU (erro diferente do esperado).
 --
 -- IDEMPOTENTE: drop constraint/trigger if exists antes de recriar, add column if
 -- not exists, create or replace function. Reaplicar o arquivo inteiro é seguro.
@@ -56,7 +57,9 @@
 --   alter table public.obras_historico drop constraint obras_historico_bloco_check;
 --   alter table public.obras_historico add constraint obras_historico_bloco_check
 --     check (bloco in ('Triagem','Autorização','Identificação','Cronograma','Esteira'));
---   -- e rodar de novo a seção 3 de sdd-sql-obras-historico.sql (RPC original).
+--   -- ORDEM OBRIGATÓRIA: restaurar a RPC (seção 3 de sdd-sql-obras-historico.sql)
+--   -- ANTES de dropar as colunas — a RPC nova cita cancelado_*, e sem elas a RPC
+--   -- quebra inteira (ficha e remarcação param).
 --   -- As cinco colunas podem ficar (vazias, não atrapalham) ou sair com
 --   -- alter table public.obras_obra drop column if exists cancelado_por, ... ;
 --   commit;
