@@ -59,6 +59,7 @@ export default function BlocoIdentificacao({
   analistas,
   rodape,
   salvar,
+  somenteLeitura,
 }: {
   obraId: string
   /** O que está gravado hoje. `valor` é texto pt-BR: '18.450,00'. */
@@ -68,6 +69,8 @@ export default function BlocoIdentificacao({
   analistas: readonly string[]
   rodape: React.ReactNode
   salvar: SalvarIdentificacao
+  /** Obra cancelada: sem Editar (spec do cancelamento §6.5). */
+  somenteLeitura?: boolean
 }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState<DadosIdentificacao>(valores)
@@ -240,6 +243,7 @@ export default function BlocoIdentificacao({
   return (
     <BlocoEditavel
       id="ide"
+      somenteLeitura={somenteLeitura}
       titulo="Identificação"
       editando={editando}
       salvando={salvando}

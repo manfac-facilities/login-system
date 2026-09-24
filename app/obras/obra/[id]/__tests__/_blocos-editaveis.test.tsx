@@ -155,3 +155,63 @@ test('cronograma: equipe aceita texto livre, com sugestões das equipes já usad
   await u.click(screen.getByRole('button', { name: 'Salvar' }))
   expect(salvar).toHaveBeenCalledWith('o1', expect.objectContaining({ equipe: 'GRUPO SERTAO MANUTENCAO' }))
 }, 20000)
+
+// Obra cancelada: os três blocos só leitura (spec do cancelamento §6.5).
+function renderBloco(titulo: string, extra: { somenteLeitura?: boolean }) {
+  const salvar = jest.fn()
+  if (titulo === 'Autorização') {
+    return render(
+      <BlocoAutorizacao
+        obraId="o1"
+        valores={{ origem: '', libPor: 'LEANDRO', libEm: '2026-08-20', aprovadaEm: '' }}
+        analistas={['LEANDRO']}
+        hoje="2026-09-18"
+        diasSemOS={12}
+        etapa="cancelado"
+        responsavel="LUANA"
+        rodape={null}
+        salvar={salvar}
+        {...extra}
+      />
+    )
+  }
+  if (titulo === 'Identificação') {
+    return render(
+      <BlocoIdentificacao
+        obraId="o1"
+        valores={{ tipo: 'CIVIL', valor: '18.450,00', analista: '', mauUso: false }}
+        campoDoField={{ os: '0826-1', loja: 'LOJA', chamado: 'Piso' }}
+        analistas={['LEANDRO']}
+        rodape={null}
+        salvar={salvar}
+        {...extra}
+      />
+    )
+  }
+  return render(
+    <BlocoCronograma
+      obraId="o1"
+      valores={{ resp: 'LUANA', equipe: 'MANFAC-7', prioridade: 'Normal', inicio: '2026-08-24', duracao: '20' }}
+      responsaveis={['LUANA']}
+      equipes={['MANFAC-7']}
+      motivos={['Clima', 'Outro']}
+      rodape={null}
+      salvar={salvar}
+      {...extra}
+    />
+  )
+}
+
+test.each(['Autorização', 'Identificação', 'Cronograma'])(
+  '%s com somenteLeitura: mostra os valores e não tem Editar',
+  (titulo) => {
+    renderBloco(titulo, { somenteLeitura: true })
+    expect(screen.getByText(titulo)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: `Editar ${titulo}` })).not.toBeInTheDocument()
+  }
+)
+
+test('sem a prop, o Editar continua lá (comportamento de hoje)', () => {
+  renderBloco('Cronograma', {})
+  expect(screen.getByRole('button', { name: 'Editar Cronograma' })).toBeInTheDocument()
+})
