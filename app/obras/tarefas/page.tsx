@@ -19,6 +19,8 @@ import { isAdmin } from '@/lib/auth/roles'
 import {
   hojeISO,
   nomeDaEquipe,
+  tarefaVisivelNaLista,
+  type Etapa,
   type ObraRow,
   type TarefaRow,
 } from '../_lib/tipos'
@@ -50,12 +52,14 @@ export default async function TarefasPage() {
   const idsObra = Array.from(new Set(tarefas.map((t) => t.obra_id)))
 
   const obras: Record<string, ObraDaTarefa> = {}
+  const etapaDaObra: Record<string, Etapa> = {}
   if (idsObra.length) {
     const { data: linhasObra } = await supabase
       .from('obras_obra')
-      .select('id, os, loja, equipe, pcm')
+      .select('id, os, loja, equipe, pcm, etapa')
       .in('id', idsObra)
-    for (const o of (linhasObra ?? []) as Pick<ObraRow, 'id' | 'os' | 'loja' | 'equipe' | 'pcm'>[]) {
+    for (const o of (linhasObra ?? []) as Pick<ObraRow, 'id' | 'os' | 'loja' | 'equipe' | 'pcm' | 'etapa'>[]) {
+      etapaDaObra[o.id] = o.etapa
       obras[o.id] = {
         id: o.id,
         os: o.os,
@@ -73,7 +77,16 @@ export default async function TarefasPage() {
     ])
   )
 
-  return <Lista tarefas={tarefas} obras={obras} pessoas={pessoas} hoje={hoje} />
+  // Cancelamento de obra (spec-cancelamento §8): a tarefa ABERTA de obra
+  // cancelada sai da lista; volta sozinha se o cancelamento for desfeito.
+  return (
+    <Lista
+      tarefas={tarefas.filter((t) => tarefaVisivelNaLista(t, etapaDaObra[t.obra_id]))}
+      obras={obras}
+      pessoas={pessoas}
+      hoje={hoje}
+    />
+  )
 }
 
 function Erro() {
