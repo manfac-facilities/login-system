@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roteiro de teste</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0d2050;--panel-2:#0b1b36;--line:#1e3a5f;
+    --ink:#e8eef7;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:10px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);margin:0}
+  body{font-family:var(--sans);font-size:15px;line-height:1.55;padding:0 16px 60px}
+  .pagina{max-width:640px;margin:0 auto;padding-top:24px}
+
+  header{margin-bottom:8px}
+  header h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+  header p{margin:0 0 4px;color:var(--ink-dim);font-size:14px}
+  .quando{font-size:13px;color:var(--ink-faint)}
+
+  .aviso{margin:20px 0;padding:12px 14px;border:1px solid var(--crit);border-left-width:4px;
+    border-radius:var(--r);background:var(--crit-soft);font-size:13.5px;color:var(--ink)}
+  .aviso b{color:var(--crit)}
+  .aviso ul{margin:6px 0 0;padding-left:18px}
+  .aviso li{margin:3px 0}
+
+  h2{font-size:17px;margin:30px 0 4px;padding-top:16px;border-top:1px solid var(--line);
+    letter-spacing:-.005em}
+  h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:13px;margin-right:8px;
+    vertical-align:-4px}
+
+  .passo{margin:16px 0;padding:14px 14px 12px;border:1px solid var(--line);border-radius:var(--r);
+    background:var(--panel-2)}
+  .passo .num{font-weight:700;color:var(--accent);font-size:13px;letter-spacing:.02em}
+  .passo .faca{margin:4px 0 10px;font-size:14.5px}
+  .passo .faca b{color:var(--ink)}
+  .passo .resultado{margin:0 0 10px;padding:9px 11px;border-left:3px solid var(--ok);
+    border-radius:5px;background:rgba(53,201,138,.08);font-size:13.5px;color:var(--ink-dim)}
+  .passo .resultado b{color:var(--ink)}
+  .passo .resultado .lbl{display:block;font-size:10.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ok);margin-bottom:3px;font-weight:700}
+
+  .marcar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:13.5px}
+  .marcar label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+  .marcar input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
+  .obs{margin-top:8px}
+  .obs summary{font-size:12.5px;color:var(--ink-faint);cursor:pointer}
+  .obs textarea{width:100%;margin-top:6px;min-height:52px;resize:vertical;
+    background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);
+    font-family:inherit;font-size:13px;padding:7px 9px}
+  .obs textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--ink-dim)}
+
+  @media (max-width:420px){
+    body{font-size:14.5px}
+    header h1{font-size:20px}
+  }
+
+  @media print{
+    html,body{background:#fff;color:#111}
+    header p,.quando,.passo .resultado{color:#333}
+    .aviso{background:#fff0ee;border-color:#c0392b;color:#111}
+    .aviso b{color:#c0392b}
+    h2{border-top-color:#ccc}
+    .passo{background:#fff;border-color:#ccc;break-inside:avoid}
+    .passo .resultado{background:#f2f8f5;border-left-color:#2e9e6a}
+    .marcar input[type=checkbox]{accent-color:#111}
+    .obs{display:none}
+    a{color:#111;text-decoration:underline}
+  }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <header>
+    <h1>Roteiro de teste — cancelamento e ficha</h1>
+    <p>Controle de Obras · depois do próximo deploy em <b>hub.manfac.com.br/obras</b></p>
+    <p class="quando">24/09/2026 · qualquer pessoa da equipe com acesso ao sistema</p>
+  </header>
+
+  <div class="aviso">
+    <b>Antes de começar</b>
+    <ul>
+      <li>Isto é <b>produção</b> — dado real. Use, para cancelar, uma obra que <b>precise mesmo</b>
+        ser cancelada, ou cancele e já desfaça em seguida (passo 10), para não deixar uma obra real
+        cancelada por engano.</li>
+      <li>O bloco 3 (edição ao mesmo tempo) precisa de <b>duas pessoas</b> — ou duas abas do
+        navegador, uma delas anônima — logadas ao mesmo tempo na mesma obra.</li>
+      <li>Marque cada passo como <b>OK</b> ou <b>Deu errado</b>. Quando der errado, escreva o que
+        apareceu na tela (o campo de observação abre ao lado da marcação).</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">1</span>Cancelar uma obra e desfazer</h2>
+
+  <div class="passo">
+    <div class="num">Passo 1</div>
+    <p class="faca">Abra a ficha de uma obra que esteja em <b>Levantamento</b>, <b>Em andamento</b>
+      ou <b>Paralisado</b>. Role até o quadro <b>"Ciclo de vida da obra"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Abaixo do seletor de etapa, uma
+      faixa <b>"Encerrar sem executar"</b> com o botão <b>"Cancelar obra"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 2</div>
+    <p class="faca">Clique em <b>"Cancelar obra"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Uma janela <b>"Cancelar a obra
+      [nome da loja]"</b>, com "Quem cancelou?" (opções "Cancelado pelo Cliente" / "Cancelado pela
+      Manfac"), um campo de observação opcional, e os botões <b>"Voltar sem cancelar"</b> e
+      <b>"Cancelar obra"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 3</div>
+    <p class="faca">Sem escolher quem cancelou, tente clicar em <b>"Cancelar obra"</b> (o botão da
+      janela).</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>O botão <b>desabilitado</b>, e a
+      frase <b>"Escolha quem cancelou para continuar."</b></div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 4</div>
+    <p class="faca">Escolha <b>"Cancelado pelo Cliente"</b> ou <b>"Cancelado pela Manfac"</b> (o que
+      fizer sentido para a obra escolhida). A observação pode ficar em branco — é opcional. Clique
+      em <b>"Cancelar obra"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A janela fecha e a própria ficha já
+      aparece cancelada, com uma faixa cinza mostrando "Cancelado pelo Cliente" (ou "pela Manfac"),
+      a data e hora, quem cancelou, e a etapa em que a obra estava.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 5</div>
+    <p class="faca">Confira o resto da ficha: fotos, diário e histórico anteriores.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Nada some — fotos, diário e
+      histórico continuam visíveis, só que a ficha não deixa mais editar nada (sem botão Editar nos
+      blocos).</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 6</div>
+    <p class="faca">Vá em <b>Controle de Obras → Diário do dia</b> e em
+      <b>Controle de Obras → Tarefas</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A obra cancelada <b>não aparece</b>
+      em nenhuma das duas telas.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 7</div>
+    <p class="faca">Vá em <b>Controle de Obras → Base</b>, deixe o filtro de etapa em
+      <b>"Todas"</b>, e olhe o Kanban.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A obra cancelada não está na lista
+      nem no Kanban; embaixo da lista aparece o aviso <b>"N obra(s) cancelada(s) fora desta lista ·
+      ver canceladas"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 8</div>
+    <p class="faca">Clique em <b>"ver canceladas"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A lista muda para o grupo
+      <b>"Canceladas"</b>, a obra aparece com a etiqueta <b>"Cancelada · Cliente"</b> (ou
+      "· Manfac"), e a coluna "Dias em aberto" mostra <b>"—"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 9</div>
+    <p class="faca">Volte à ficha da obra cancelada e clique em <b>"Desfazer cancelamento"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Uma janela <b>"Desfazer o
+      cancelamento?"</b> dizendo para onde a obra volta, com os botões <b>"Manter cancelada"</b> e
+      <b>"Desfazer cancelamento"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 10</div>
+    <p class="faca">Clique em <b>"Desfazer cancelamento"</b> (o botão da janela).</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A ficha volta exatamente para a
+      etapa em que a obra estava antes de cancelar (o selo cinza some, o seletor de etapa volta, o
+      botão "Cancelar obra" volta a aparecer).</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 11</div>
+    <p class="faca">Confira de novo o Diário do dia, Tarefas, e a Base com o filtro "Todas".</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A obra voltou a aparecer
+      normalmente nas três telas, como antes do cancelamento.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <div class="passo">
+    <div class="num">Passo 12</div>
+    <p class="faca">Na ficha, abra o <b>Histórico de alterações</b> e filtre por
+      <b>"Cancelamento"</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Duas linhas novas — uma do
+      cancelamento e uma do "desfazer", com quem fez e quando.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <h2><span class="n">2</span>Obra já executada não pode ser cancelada</h2>
+
+  <div class="passo">
+    <div class="num">Passo 13</div>
+    <p class="faca">Abra a ficha de uma obra que já esteja em <b>"Relatório de entrega"</b> ou em
+      qualquer etapa depois dela (Executado, Fechar OS, Faturado, etc.).</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span><b>Nenhum botão</b> "Cancelar
+      obra" no quadro Ciclo de vida — só a frase <b>"Esta obra já foi executada em campo e não pode
+      ser cancelada. Ela segue até faturar o que foi feito (decisão do cliente, 14/09)."</b></div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <h2><span class="n">3</span>Duas pessoas editando a mesma obra ao mesmo tempo</h2>
+
+  <div class="passo">
+    <div class="num">Passo 14</div>
+    <p class="faca">Com duas pessoas (ou duas abas) logadas, abram a <b>mesma obra</b> e, no mesmo
+      bloco (por exemplo, <b>Cronograma</b>), cliquem em <b>Editar</b> nas duas. A Pessoa A altera
+      um campo e clica em <b>Salvar</b> primeiro (confirme que salvou). Em seguida, a Pessoa B —
+      sem recarregar a página — altera outro campo do mesmo bloco e clica em <b>Salvar</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Para a Pessoa B: uma mensagem
+      dizendo que <b>não salvou</b>, com a frase <b>"Outra pessoa alterou esta obra enquanto você
+      editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração."</b> O que a
+      Pessoa B tinha digitado continua no formulário (não some).</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <h2><span class="n">4</span>Trocar a etapa aparece no Histórico</h2>
+
+  <div class="passo">
+    <div class="num">Passo 15</div>
+    <p class="faca">Numa obra qualquer (não cancelada), use o <b>seletor de etapa</b> no quadro
+      Ciclo de vida para mudar a etapa para a próxima da esteira. Depois, abra o <b>Histórico de
+      alterações</b>.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>Uma linha nova no formato
+      <b>"Esteira · Etapa: [etapa antiga] → [etapa nova]"</b>.</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <h2><span class="n">5</span>Data de início inválida na Triagem</h2>
+
+  <div class="passo">
+    <div class="num">Passo 16</div>
+    <p class="faca">Abra uma obra em <b>"Aguardando definição"</b> (Triagem). No campo <b>Data de
+      início</b>, tente digitar uma data que não existe (por exemplo, 31/02) ou um ano com 5
+      dígitos, se o navegador deixar. Preencha os outros campos obrigatórios normalmente e tente
+      salvar.</p>
+    <div class="resultado"><span class="lbl">Deve aparecer</span>A mensagem <b>"Data de início
+      inválida. Confira o dia, o mês e o ano."</b>, e a obra continua em "Aguardando definição"
+      (nada foi salvo).</div>
+    <div class="marcar">
+      <label><input type="checkbox"> OK</label>
+      <label><input type="checkbox"> Deu errado</label>
+    </div>
+    <details class="obs"><summary>O que apareceu (se deu errado)</summary>
+      <textarea placeholder="descreva aqui"></textarea></details>
+  </div>
+
+  <footer>
+    Ao terminar, mande este roteiro marcado de volta. Se algum passo deu errado, descreva
+    exatamente o que apareceu na tela (ou uma captura de tela) — isso encurta a correção.
+  </footer>
+
+</div>
+</body>
+</html>
