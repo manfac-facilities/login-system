@@ -19,6 +19,7 @@
  */
 
 import { ORIGENS, PRIORIDADES, TIPOS_OBRA, BLOQUEIOS, SEM_BLOQUEIO, br, hojeISO } from './tipos'
+import type { ObraRow } from './tipos'
 
 /** Erros por campo do rascunho. Ausente = campo sem problema. */
 export type Erros<T> = Partial<Record<keyof T, string>>
@@ -402,6 +403,28 @@ export function validarCronograma(
   }
 
   return e
+}
+
+/** Os três blocos editáveis da ficha que detectam edição concorrente (A1). */
+export type BlocoVersionado = 'Autorização' | 'Identificação' | 'Cronograma'
+
+const COLUNAS_DO_BLOCO: Record<BlocoVersionado, readonly (keyof ObraRow)[]> = {
+  Autorização: ['origem', 'liberado_por', 'liberado_em', 'aprovacao'],
+  Identificação: ['tipo', 'valor', 'analista_cliente', 'mau_uso'],
+  Cronograma: ['pcm', 'equipe', 'prioridade', 'inicio_plan', 'duracao'],
+}
+
+/**
+ * A "versão" de um bloco = os valores crus do banco das colunas DELE. A tela
+ * captura no Editar e devolve ao salvar; a action recusa se mudou (A1,
+ * spec-dividas-ficha-2026-09-23 §5.3).
+ *
+ * POR QUE NÃO `updated_at`: a trigger o toca em TODO update — a sincronização
+ * do Field a cada 5 min, o diário, e salvar outro bloco da mesma obra. Tudo
+ * isso viraria conflito falso, e conflito falso ensina a recarregar sem ler.
+ */
+export function versaoDoBloco(obra: Partial<ObraRow>, bloco: BlocoVersionado): string {
+  return JSON.stringify(COLUNAS_DO_BLOCO[bloco].map((c) => obra[c] ?? null))
 }
 
 /** A primeira mensagem de um mapa de erros — o `{ error }` que a action devolve. */
