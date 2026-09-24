@@ -45,6 +45,7 @@ import {
   validarCronograma,
   validarDataFechamentoOS,
   validarIdentificacao,
+  versaoDoBloco,
   type DadosAutorizacao,
   type DadosCronograma,
   type DadosIdentificacao,
@@ -63,6 +64,10 @@ const CANCELADA_NAO_MUDA_ETAPA = 'Obra cancelada não muda de etapa. Use "Desfaz
 // B7: na Triagem o erro cai na caixa geral, sem campo embaixo — o "Data
 // inválida." genérico não diria de qual data se trata.
 const INICIO_INVALIDO = 'Data de início inválida. Confira o dia, o mês e o ano.'
+// A1: a versão do bloco que a tela leu no Editar não é mais a gravada. Versão
+// ausente (aba de antes do deploy) também cai aqui — falha fechada.
+const CONFLITO_EDICAO =
+  'Outra pessoa alterou esta obra enquanto você editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração.'
 
 const ETAPAS_VALIDAS = CICLO.map((c) => c.k)
 
@@ -736,7 +741,8 @@ export async function liberarObraAction(
  */
 export async function salvarAutorizacaoAction(
   obraId: string,
-  dados: DadosAutorizacao
+  dados: DadosAutorizacao,
+  versao: string
 ): Promise<EstadoAcao & { avancou?: boolean }> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -746,6 +752,7 @@ export async function salvarAutorizacaoAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Autorização')) return { error: CONFLITO_EDICAO }
 
   const hoje = hojeISO()
 
@@ -802,7 +809,8 @@ export async function salvarAutorizacaoAction(
  */
 export async function salvarIdentificacaoAction(
   obraId: string,
-  dados: DadosIdentificacao
+  dados: DadosIdentificacao,
+  versao: string
 ): Promise<EstadoAcao> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -812,6 +820,7 @@ export async function salvarIdentificacaoAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Identificação')) return { error: CONFLITO_EDICAO }
 
   const erro = primeiroErro(validarIdentificacao(dados, { tipoAtual: obra.tipo }))
   if (erro) return { error: erro }
@@ -867,7 +876,8 @@ async function motivoCanonico(
  */
 export async function salvarCronogramaAction(
   obraId: string,
-  dados: DadosCronograma
+  dados: DadosCronograma,
+  versao: string
 ): Promise<EstadoAcao> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -877,6 +887,7 @@ export async function salvarCronogramaAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Cronograma')) return { error: CONFLITO_EDICAO }
 
   const erro = primeiroErro(validarCronograma(dados, { inicioAtual: obra.inicio_plan }))
   if (erro) return { error: erro }

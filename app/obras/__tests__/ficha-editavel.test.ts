@@ -58,10 +58,11 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { hojeISO } from '../_lib/tipos'
+import { versaoDoBloco, type BlocoVersionado } from '../_lib/ficha-campos'
 import {
-  salvarAutorizacaoAction,
-  salvarIdentificacaoAction,
-  salvarCronogramaAction,
+  salvarAutorizacaoAction as autorizacaoComVersao,
+  salvarIdentificacaoAction as identificacaoComVersao,
+  salvarCronogramaAction as cronogramaComVersao,
   salvarDadosTriagemAction,
   cadastrarMotivoRemarcacaoAction,
   liberarObraAction,
@@ -69,6 +70,22 @@ import {
 
 const HOJE = hojeISO()
 const EMAIL = 'yuri@manfac.com.br'
+
+/** A versão do bloco na obra que o mock vai devolver — a que a tela teria lido (A1). */
+function versao(bloco: BlocoVersionado): string {
+  return versaoDoBloco((obraAtual ?? {}) as Parameters<typeof versaoDoBloco>[0], bloco)
+}
+
+// Os testes anteriores à A1 falam da regra de cada bloco, não de concorrência:
+// chamam a action como a tela chama, com a versão da obra que está no mock.
+// Os testes da A1 (fim do arquivo) usam as actions cruas, com versão explícita.
+type Args<F> = F extends (id: string, dados: infer D, versao: string) => unknown ? D : never
+const salvarAutorizacaoAction = (id: string, d: Args<typeof autorizacaoComVersao>) =>
+  autorizacaoComVersao(id, d, versao('Autorização'))
+const salvarIdentificacaoAction = (id: string, d: Args<typeof identificacaoComVersao>) =>
+  identificacaoComVersao(id, d, versao('Identificação'))
+const salvarCronogramaAction = (id: string, d: Args<typeof cronogramaComVersao>) =>
+  cronogramaComVersao(id, d, versao('Cronograma'))
 
 /** Obra "em branco": tudo que a ficha grava nasce `null`, então tudo muda. */
 function obra(over: Record<string, unknown> = {}) {
@@ -915,5 +932,91 @@ describe('obra cancelada é só leitura no servidor (spec do cancelamento §5.3)
   ])('%s recusa obra cancelada, sem chamar a RPC', async (_n, chamar) => {
     expect(await chamar()).toEqual({ error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.' })
     expect(rpcMock).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================
+// A1 — o servidor recusa gravação sobre edição de outra pessoa
+// (spec-dividas-ficha-2026-09-23 §5.3–5.4)
+// ============================================================
+
+describe('A1 — versão do bloco conferida no servidor', () => {
+  const CONFLITO =
+    'Outra pessoa alterou esta obra enquanto você editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração.'
+
+  // Cada bloco: a action crua, um rascunho que grava algo, e uma coluna DO
+  // bloco que outra pessoa mudou depois do Editar.
+  const BLOCOS = [
+    [
+      'Autorização',
+      (v: string | undefined) => autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, v as string),
+      { origem: 'Telefone' },
+    ],
+    [
+      'Identificação',
+      (v: string | undefined) => identificacaoComVersao('o1', { ...IDENT_VAZIA, tipo: 'CIVIL' }, v as string),
+      { valor: 100 },
+    ],
+    [
+      'Cronograma',
+      (v: string | undefined) => cronogramaComVersao('o1', { ...CRONO_VAZIO, duracao: '10' }, v as string),
+      { pcm: 'AMANDA' },
+    ],
+  ] as const
+
+  it.each(BLOCOS)('%s: versão igual grava', async (bloco, chamar) => {
+    expect(await chamar(versao(bloco))).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(BLOCOS)('%s: versão de antes da mudança de outra pessoa é recusada, sem RPC', async (bloco, chamar, mudanca) => {
+    const lida = versao(bloco)
+    obraAtual = obra(mudanca)
+    expect(await chamar(lida)).toEqual({ error: CONFLITO })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it.each(BLOCOS)('%s: versão ausente (aba de antes do deploy) também é recusada', async (_bloco, chamar) => {
+    expect(await chamar(undefined)).toEqual({ error: CONFLITO })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('mudança só em coluna de fora do bloco não é conflito', async () => {
+    const lida = versao('Autorização')
+    obraAtual = obra({ pendencia: 'Aguardando material', equipe: 'MANFAC-1' })
+    expect(
+      await autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, lida)
+    ).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('Cronograma com remarcação e versão errada recusa antes de ler os motivos e antes da RPC', async () => {
+    obraAtual = obra({ inicio_plan: '2026-09-01' })
+    const lida = versao('Cronograma')
+    obraAtual = obra({ inicio_plan: '2026-09-01', duracao: 12 })
+    lerMotivosMock.mockResolvedValue({ data: [{ nome: 'Clima' }], error: null })
+    const r = await cronogramaComVersao(
+      'o1',
+      { ...CRONO_VAZIO, inicio: '2026-09-05', motivo: 'Clima' },
+      lida
+    )
+    expect(r).toEqual({ error: CONFLITO })
+    expect(fromMock).not.toHaveBeenCalledWith('obras_motivo_remarcacao')
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('obra cancelada com versão errada: a mensagem é a de cancelada (vem primeiro)', async () => {
+    obraAtual = obra({ etapa: 'cancelado', cancelado_etapa_anterior: 'andamento' })
+    expect(await autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, 'errada')).toEqual({
+      error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.',
+    })
+  })
+
+  it('R1 continua primeiro: sem acesso e versão errada → sem acesso', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await identificacaoComVersao('o1', IDENT_VAZIA, 'errada')).toEqual({
+      error: 'Sem acesso ao Controle de Obras',
+    })
+    expect(fromMock).not.toHaveBeenCalled()
   })
 })
