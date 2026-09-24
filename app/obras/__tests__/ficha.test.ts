@@ -183,11 +183,65 @@ describe('liberarObraAction', () => {
     )
   })
 
-  it('sem quem liberou, a data da liberação não é gravada — nem como string vazia', async () => {
-    await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '2026-09-01' })
+  it('sem quem liberou e sem data, nada de liberação é gravado — nem como string vazia', async () => {
+    await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '' })
     expect(updateMock).toHaveBeenCalledWith(
       expect.objectContaining({ liberado_por: null, liberado_em: null })
     )
+  })
+
+  // B7 (spec-dividas-ficha-2026-09-23 §4): as datas da liberação são
+  // validadas no SERVIDOR com as mesmas funções da ficha.
+  describe('B7 — datas validadas no servidor', () => {
+    const INICIO_INVALIDO = 'Data de início inválida. Confira o dia, o mês e o ano.'
+
+    it.each(['2026-02-31', '20266-01-01', '0226-09-01'])('início %s é recusado', async (inicio) => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, inicio })).toEqual({ error: INICIO_INVALIDO })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de liberação que não existe é recusada', async () => {
+      expect(
+        await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: 'LEANDRO', libEm: '2026-13-01' })
+      ).toEqual({ error: 'Data inválida.' })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de liberação sem nome é recusada (antes era descartada em silêncio)', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '2026-09-01' })).toEqual({
+        error: 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de aprovação que não existe é recusada', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, aprovadaEm: '2026-02-30' })).toEqual({
+        error: 'Data inválida.',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('duração com lixo depois do número é recusada', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, duracao: '12abc' })).toEqual({
+        error: 'A duração precisa ficar entre 1 e 180 dias',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('duração 0 e 181 continuam com a mensagem de hoje', async () => {
+      for (const duracao of ['0', '181']) {
+        expect(await liberarObraAction('o1', { ...TRIAGEM_OK, duracao })).toEqual({
+          error: 'A duração precisa ficar entre 1 e 180 dias',
+        })
+      }
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('origem fora da lista continua aceita (a liberação não valida origem)', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, origem: 'Pombo-correio' })).toEqual({
+        success: true,
+      })
+    })
   })
 
   it('com quem liberou e sem data, assume hoje', async () => {

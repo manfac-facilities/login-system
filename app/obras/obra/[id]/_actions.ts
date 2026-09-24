@@ -20,7 +20,6 @@ import {
   CANCELADO_POR,
   CICLO,
   PODE_CANCELAR,
-  PRIORIDADES,
   cancelada,
   hojeISO,
   podeCancelar,
@@ -29,7 +28,6 @@ import {
   type CanceladoPor,
   type EtapaCiclo,
   type ObraRow,
-  type Prioridade,
 } from '../../_lib/tipos'
 import {
   gravarComHistorico,
@@ -62,6 +60,9 @@ const CORRIDA_TRIAGEM = 'Esta obra já foi liberada por outra pessoa. Recarregue
 // o servidor é a fronteira (aba antiga).
 const CANCELADA_SO_LEITURA = 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.'
 const CANCELADA_NAO_MUDA_ETAPA = 'Obra cancelada não muda de etapa. Use "Desfazer cancelamento".'
+// B7: na Triagem o erro cai na caixa geral, sem campo embaixo — o "Data
+// inválida." genérico não diria de qual data se trata.
+const INICIO_INVALIDO = 'Data de início inválida. Confira o dia, o mês e o ano.'
 
 const ETAPAS_VALIDAS = CICLO.map((c) => c.k)
 
@@ -614,10 +615,30 @@ export async function liberarObraAction(
   if (!resp || !equipe || !prioridade || !inicio || !Number.isFinite(duracao)) {
     return { error: 'Preencha os cinco campos antes de liberar' }
   }
-  if (!PRIORIDADES.includes(prioridade as Prioridade)) return { error: 'Prioridade inválida' }
-  if (duracao < 1 || duracao > 180) return { error: 'A duração precisa ficar entre 1 e 180 dias' }
+
+  // B7 (23/09): os cinco campos SÃO os do bloco Cronograma — mesma função,
+  // mesmas mensagens (prioridade, duração 1–180, data de calendário 2000–2100).
+  // Sem `inicioAtual`: liberar não é remarcar.
+  const errosCrono = validarCronograma(
+    { resp, equipe, prioridade, inicio, duracao: dados.duracao },
+    {}
+  )
+  if (errosCrono.inicio) return { error: INICIO_INVALIDO }
+  const erroCrono = primeiroErro(errosCrono)
+  if (erroCrono) return { error: erroCrono }
 
   const hoje = hojeISO()
+
+  // Só `libEm` e `aprovadaEm`: a origem fica de fora de propósito — esta
+  // action não lê a obra (a trava é o `.eq('etapa','definir')`), então não
+  // tem `origemAtual`, e validar recusaria origem legada que a tela exibe.
+  const errosAut = validarAutorizacao(
+    { origem: '', libPor: dados.libPor ?? '', libEm: dados.libEm ?? '', aprovadaEm: dados.aprovadaEm ?? '' },
+    { hoje }
+  )
+  const erroAut = errosAut.libEm ?? errosAut.aprovadaEm
+  if (erroAut) return { error: erroAut }
+
   const libPor = nulo(dados.libPor)
 
   // §4.6 — o diálogo de liberar promete que "os dados da obra e a autorização
