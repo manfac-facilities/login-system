@@ -84,6 +84,7 @@ export default function BlocoCronograma({
   rodape,
   salvar,
   cadastrarMotivo,
+  somenteLeitura,
 }: {
   obraId: string
   /** O que está gravado hoje. `valores.inicio` é o que define a remarcação. */
@@ -96,6 +97,8 @@ export default function BlocoCronograma({
   salvar: SalvarCronograma
   /** Ausente: a janela não oferece "+ Cadastrar novo motivo". */
   cadastrarMotivo?: CadastrarMotivo
+  /** Obra cancelada: sem Editar (spec do cancelamento §6.5). */
+  somenteLeitura?: boolean
 }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState<DadosCronograma>(valores)
@@ -334,6 +337,7 @@ export default function BlocoCronograma({
     <>
       <BlocoEditavel
         id="cro"
+        somenteLeitura={somenteLeitura}
         titulo="Cronograma"
         editando={editando}
         salvando={salvando}

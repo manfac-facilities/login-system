@@ -259,3 +259,142 @@ describe('Data de fechamento da OS na ficha (ajuste 2, 23/09)', () => {
     expect(screen.getByLabelText('Data de fechamento da OS')).toHaveValue(HOJE)
   }, 20000)
 })
+
+describe('Cancelamento na ficha (spec-cancelamento §6.2, §6.3)', () => {
+  const CANC: Partial<ObraRow> = {
+    etapa: 'cancelado',
+    cancelado_por: 'cliente',
+    cancelado_obs: 'Loja suspendeu a reforma.',
+    cancelado_em: '2026-09-23T13:42:00Z',
+    cancelado_quem: 'rafael.souza@manfac.com.br',
+    cancelado_etapa_anterior: 'andamento',
+  }
+  const FRASE_EXECUTADA =
+    'Esta obra já foi executada em campo e não pode ser cancelada. Ela segue até faturar o que foi feito (decisão do cliente, 14/09).'
+
+  test.each(['levantamento', 'andamento', 'paralisado'] as const)(
+    '%s: faixa "Encerrar sem executar" no Ciclo de vida, com a legenda do seletor',
+    (etapa) => {
+      render(<Ficha {...fichaProps({ etapa })} />)
+      expect(screen.getByText('Encerrar sem executar')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Cancelar obra' })).toBeInTheDocument()
+      expect(
+        screen.getByText(/"Cancelada" não aparece nesta lista — só se chega nela pelo botão abaixo, que pede o motivo\./)
+      ).toBeInTheDocument()
+    }
+  )
+
+  test.each(['relatorio', 'fecharOS', 'faturado'] as const)(
+    '%s: sem botão, com a linha "já foi executada em campo"',
+    (etapa) => {
+      const { container } = render(
+        <Ficha {...fichaProps({ etapa, marco_exec_fim: '2026-09-01', desde_etapa: '2026-09-10' })} />
+      )
+      expect(screen.queryByRole('button', { name: 'Cancelar obra' })).not.toBeInTheDocument()
+      expect(container).toHaveTextContent(FRASE_EXECUTADA)
+      // Divergência 2 da spec (§10): a frase das Pendências sai.
+      expect(container).not.toHaveTextContent('registre isso em Pendências')
+    }
+  )
+
+  test('cancelada: selo, sem seletor de etapa, sem faixa, sem Editar nos três blocos', () => {
+    render(<Ficha {...fichaProps(CANC)} />)
+    expect(screen.getByText('Cancelado pelo Cliente')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Desfazer cancelamento' })).toBeInTheDocument()
+    expect(screen.getAllByText('Cancelada · Cliente').length).toBeGreaterThan(0)
+    expect(screen.queryByLabelText('Mudar a etapa desta obra')).not.toBeInTheDocument()
+    expect(screen.queryByText('Encerrar sem executar')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancelar obra' })).not.toBeInTheDocument()
+    for (const t of ['Autorização', 'Identificação', 'Cronograma']) {
+      expect(screen.queryByRole('button', { name: `Editar ${t}` })).not.toBeInTheDocument()
+    }
+  })
+
+  test('cancelada: sem caixa "Sem OS aprovada" nem caixa de alerta', () => {
+    render(
+      <Ficha
+        {...fichaProps({
+          ...CANC,
+          os_aprovada: false,
+          liberado_por: null,
+          aprovacao: null,
+          inicio_plan: '2026-01-02',
+          duracao: 5,
+          created_at: '2026-01-01T00:00:00Z',
+        })}
+      />
+    )
+    expect(screen.queryByText('Sem OS aprovada')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sem cobertura')).not.toBeInTheDocument()
+    expect(screen.queryByText('Passou da duração planejada.')).not.toBeInTheDocument()
+    expect(screen.queryByText(/e ainda não concluída\./)).not.toBeInTheDocument()
+  })
+
+  test('cancelada: esteira com "cancelada aqui" e os passos "não se aplica"', () => {
+    const { container } = render(<Ficha {...fichaProps(CANC)} />)
+    expect(screen.getByText('congelado desde o cancelamento')).toBeInTheDocument()
+    expect(screen.getByText('cancelada aqui')).toBeInTheDocument()
+    expect(screen.queryByText('a obra está aqui')).not.toBeInTheDocument()
+    expect(screen.getByText('Execução em campo')).toBeInTheDocument()
+    expect(container).toHaveTextContent('Parou aqui. O diário e as fotos continuam abaixo, só leitura.')
+    expect(screen.getAllByText('não se aplica')).toHaveLength(5)
+    expect(screen.getByText('23/09/2026')).toBeInTheDocument()
+  })
+
+  test('cancelada vinda da triagem: passo zero "Triagem" com "Nunca foi liberada para o diário"', () => {
+    const { container } = render(
+      <Ficha {...fichaProps({ ...CANC, cancelado_por: 'manfac', cancelado_etapa_anterior: 'definir' })} />
+    )
+    // `span`: "Triagem" também é um botão de filtro do Histórico de alterações.
+    expect(screen.getByText('Triagem', { selector: 'span' })).toBeInTheDocument()
+    expect(screen.getByText('Analista Manfac')).toBeInTheDocument()
+    expect(container).toHaveTextContent('Nunca foi liberada para o diário: não há registros de campo.')
+    expect(screen.queryByText('Execução em campo')).not.toBeInTheDocument()
+  })
+
+  test('cancelada: as fotos e o diário continuam na ficha, só leitura (review B1)', () => {
+    const diario = [
+      {
+        id: 'd1', obra_id: 'o1', data: '2026-09-20', andou: true, motivo: null, item: 'Não faltou',
+        obs: null, foto_path: 'o1/2026-09-20.jpg', registrado_por: null, created_at: '2026-09-20T12:00:00Z',
+      },
+    ]
+    render(
+      <Ficha
+        {...fichaProps(CANC)}
+        diario={diario}
+        fotos={{ 'o1/2026-09-20.jpg': 'https://exemplo/foto.jpg' }}
+      />
+    )
+    expect(screen.getByText('Evolução em fotos')).toBeInTheDocument()
+    expect(screen.getByAltText('Foto da obra em 20/09/2026')).toBeInTheDocument()
+    expect(screen.getByText('Foto da evolução recebida em 20/09')).toBeInTheDocument()
+  })
+
+  test('cancelada sem OS e sem liberação: Autorização não diz que está sendo executada nem conta dias (review B2)', () => {
+    const { container } = render(
+      <Ficha
+        {...fichaProps({
+          ...CANC,
+          cancelado_por: 'manfac',
+          cancelado_etapa_anterior: 'definir',
+          os_aprovada: false,
+          aprovacao: null,
+          liberado_por: null,
+          liberado_em: null,
+          inicio_plan: '2026-08-01',
+        })}
+      />
+    )
+    expect(screen.getByText('OS ainda não aprovada')).toBeInTheDocument()
+    expect(container).not.toHaveTextContent('Nem uma coisa nem outra')
+    expect(container).not.toHaveTextContent('esperando a aprovação da OS há')
+  })
+
+  test('cancelada: a frase "Obra cancelada não muda de etapa…"', () => {
+    const { container } = render(<Ficha {...fichaProps(CANC)} />)
+    expect(container).toHaveTextContent(
+      'Obra cancelada não muda de etapa. Para voltar a trabalhar nela, use Desfazer cancelamento.'
+    )
+  })
+})

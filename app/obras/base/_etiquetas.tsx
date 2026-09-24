@@ -24,8 +24,15 @@ import {
 } from '../_lib/tipos'
 import { COR_ETAPA, COR_PRIORIDADE, sufixoDias, temAlertaDeAusenciaField } from './_regras'
 
-/** A pílula da etapa, com a cor da etapa. `pill(mockup:1893)`. */
-export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa'> }) {
+/**
+ * A pílula da etapa, com a cor da etapa. `pill(mockup:1893)`.
+ * Cancelada diz quem cancelou: "Cancelada · Cliente" / "Cancelada · Manfac".
+ */
+export function EtiquetaEtapa({ obra }: { obra: Pick<Obra, 'etapa' | 'cancelado_por'> }) {
+  if (obra.etapa === 'cancelado') {
+    const quem = obra.cancelado_por === 'cliente' ? 'Cliente' : obra.cancelado_por === 'manfac' ? 'Manfac' : null
+    return <Pill cor={COR_ETAPA.cancelado}>{quem ? `${nomeEtapa('cancelado')} · ${quem}` : nomeEtapa('cancelado')}</Pill>
+  }
   return <Pill cor={COR_ETAPA[obra.etapa]}>{nomeEtapa(obra.etapa)}</Pill>
 }
 

@@ -20,6 +20,7 @@ import {
   FILTROS_PADRAO,
   ORDEM_PADRAO,
   alternarOrdem,
+  canceladasFora,
   filtrar,
   kpisDaBase,
   opcoesEtapa,
@@ -129,6 +130,7 @@ describe('filtrar — Etapa da obra', () => {
       'Executando',
       'Fechamento',
       'Faturamento',
+      'Canceladas',
     ])
   })
 })
@@ -418,5 +420,83 @@ describe('sufixoDias — o selo diz de onde está contando', () => {
       sufixoDias({ diasAlerta: 104, ancora: { de: 'liberacao', data: '2026-06-02' } }, true)
     ).toBe('dias')
     expect(sufixoDias({ diasAlerta: null, ancora: null })).toBe('dias')
+  })
+})
+
+describe('cancelamento na Base (spec do cancelamento §7.1)', () => {
+  const ativas = [
+    obra({ etapa: 'definir', pcm: 'YURI', os_aprovada: false, aprovacao: null }),
+    obra({ etapa: 'levantamento', pcm: 'YURI' }),
+    obra({ etapa: 'andamento', pcm: 'AMANDA', aprovacao: '2026-05-01' }),
+    obra({ etapa: 'paralisado', pcm: 'YURI', bloqueio: 'Clima', bloqueada_dias: 5 }),
+    obra({ etapa: 'relatorio', pcm: 'YURI' }),
+    obra({ etapa: 'faturado', pcm: 'YURI' }),
+  ]
+  const pelaCliente = obra({
+    etapa: 'cancelado',
+    pcm: 'YURI',
+    aprovacao: '2026-06-02', // há 90 dias: o KPI de 60 dias a contaria
+    os_aprovada: false,
+    cancelado_por: 'cliente',
+    cancelado_etapa_anterior: 'andamento',
+    cancelado_em: '2026-08-30T12:00:00Z',
+    cancelado_quem: 'a@manfac.com.br',
+  })
+  const pelaManfac = obra({
+    etapa: 'cancelado',
+    pcm: 'AMANDA',
+    os_aprovada: false,
+    liberado_por: null,
+    cancelado_por: 'manfac',
+    cancelado_etapa_anterior: 'definir',
+    cancelado_em: '2026-08-30T12:00:00Z',
+    cancelado_quem: 'a@manfac.com.br',
+  })
+  const base = [...ativas, pelaCliente, pelaManfac]
+
+  it('"Todas" esconde as canceladas', () => {
+    const r = filtrar(base, FILTROS_PADRAO)
+    expect(r).toHaveLength(ativas.length)
+    expect(r.some((o) => o.etapa === 'cancelado')).toBe(false)
+  })
+
+  it('"cancelado", "cancelado:cliente", "cancelado:manfac"', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, etapa: 'cancelado' })).toEqual([pelaCliente, pelaManfac])
+    expect(filtrar(base, { ...FILTROS_PADRAO, etapa: 'cancelado:cliente' })).toEqual([pelaCliente])
+    expect(filtrar(base, { ...FILTROS_PADRAO, etapa: 'cancelado:manfac' })).toEqual([pelaManfac])
+  })
+
+  it('"Executadas, ainda na esteira" e "fase:*" não trazem cancelada', () => {
+    for (const etapa of ['__esteira', 'fase:antes', 'fase:campo', 'fase:fechamento', 'fase:faturamento']) {
+      expect(filtrar(base, { ...FILTROS_PADRAO, etapa }).some((o) => o.etapa === 'cancelado')).toBe(false)
+    }
+  })
+
+  it('canceladasFora respeita os outros filtros', () => {
+    expect(canceladasFora(base, FILTROS_PADRAO)).toBe(2)
+    expect(canceladasFora(base, { ...FILTROS_PADRAO, pcm: 'YURI' })).toBe(1)
+    expect(canceladasFora(ativas, FILTROS_PADRAO)).toBe(0)
+  })
+
+  it('opcoesEtapa termina com o grupo Canceladas', () => {
+    expect(opcoesEtapa().grupos.at(-1)).toEqual({
+      fase: 'Canceladas',
+      opcoes: [
+        { v: 'cancelado', t: 'Todas as canceladas' },
+        { v: 'cancelado:cliente', t: 'Canceladas pelo Cliente' },
+        { v: 'cancelado:manfac', t: 'Canceladas pela Manfac' },
+      ],
+    })
+  })
+
+  it('nenhum indicador conta cancelada', () => {
+    const com = kpisDaBase(base)
+    const sem = kpisDaBase(ativas)
+    com.forEach((k, i) => expect([k.rotulo, k.valor]).toEqual([sem[i].rotulo, sem[i].valor]))
+  })
+
+  it('ordenar por etapa usa o nome de tela ("Cancelada")', () => {
+    const r = ordenar([obra({ etapa: 'andamento' }), pelaCliente], { col: 'etapa', dir: 1 })
+    expect(r[0].etapa).toBe('cancelado') // "Cancelada" < "Em andamento"
   })
 })

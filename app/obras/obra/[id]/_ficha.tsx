@@ -30,6 +30,8 @@ import {
   ESTEIRA,
   ETAPAS,
   br,
+  cancelada,
+  dataSP,
   diasSemOS,
   encalhada,
   encerrada,
@@ -39,6 +41,7 @@ import {
   nomeEtapa,
   paradaTxt,
   pedeFoto,
+  podeCancelar,
   posCampo,
   prazoTxt,
   semCobertura,
@@ -70,10 +73,14 @@ import BlocoIdentificacao from './_bloco-identificacao'
 import BlocoCronograma from './_bloco-cronograma'
 import Historico from './_historico'
 import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fechamento'
+import FaixaCancelar from './_cancelar-obra'
+import SeloCancelada from './_cancelamento'
 import type { LinhaHistorico } from '../../_lib/historico'
 import {
   cadastrarMotivoRemarcacaoAction,
+  cancelarObraAction,
   corrigirDataFechamentoAction,
+  desfazerCancelamentoAction,
   salvarAutorizacaoAction,
   salvarCronogramaAction,
   salvarIdentificacaoAction,
@@ -151,7 +158,8 @@ function Passo({
   sempre = false,
   children,
 }: {
-  estado: 'feito' | 'atual' | 'futuro' | 'pulado'
+  /** `cancelada`: o passo em que a obra parou ao ser cancelada (selo "cancelada aqui"). */
+  estado: 'feito' | 'atual' | 'futuro' | 'pulado' | 'cancelada'
   nome: string
   dono: string
   onde: string
@@ -169,7 +177,9 @@ function Passo({
         ? '#35c98a'
         : estado === 'pulado'
           ? '#334e78'
-          : '#64748b'
+          : estado === 'cancelada'
+            ? '#94a3b8'
+            : '#64748b'
   return (
     <li className="flex gap-3 py-2.5">
       <span
@@ -199,6 +209,11 @@ function Passo({
               a obra está aqui
             </span>
           ) : null}
+          {estado === 'cancelada' ? (
+            <span className="rounded-full border border-dashed border-[#94a3b8] px-2 py-px text-[10px] font-semibold text-[#cbd5e1]">
+              cancelada aqui
+            </span>
+          ) : null}
         </div>
         <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-[#94a3b8]">
           <span>{dono}</span>
@@ -223,6 +238,33 @@ function Esteira({
   hoje: string
   corrigir: CorrigirDataFechamento
 }) {
+  /* Obra cancelada (spec-cancelamento §6.3): a esteira congela. O passo zero
+     diz onde ela parou e quando; os passos da ESTEIRA não se aplicam. */
+  if (cancelada(obra)) {
+    const naTriagem = obra.cancelado_etapa_anterior === 'definir'
+    return (
+      <ol className="divide-y divide-[#1e3a5f]">
+        <Passo
+          estado="cancelada"
+          nome={naTriagem ? 'Triagem' : 'Execução em campo'}
+          dono={naTriagem ? 'Analista Manfac' : obra.equipe ? `Equipe ${obra.equipe}` : 'Equipe a definir'}
+          onde={naTriagem ? 'Manfac' : 'Campo · diário do dia'}
+          cod={naTriagem ? undefined : 'EXECUTAR'}
+          quando={br(dataSP(obra.cancelado_em))}
+        >
+          <span className="text-[#94a3b8]">
+            {naTriagem
+              ? 'Nunca foi liberada para o diário: não há registros de campo.'
+              : 'Parou aqui. O diário e as fotos continuam abaixo, só leitura.'}
+          </span>
+        </Passo>
+        {ESTEIRA.map((k) => (
+          <Passo key={k} estado="pulado" nome={ETAPAS[k].nome} dono="" onde="" quando="não se aplica" />
+        ))}
+      </ol>
+    )
+  }
+
   const campoFeito = !!obra.marco_exec_fim
   return (
     <ol className="divide-y divide-[#1e3a5f]">
@@ -357,6 +399,18 @@ function Esteira({
         )
       })}
     </ol>
+  )
+}
+
+/** Linha informativa com o "i" no rodapé do Ciclo de vida (mockup do cancelamento). */
+function LinhaInfo({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 border-t border-[#1e3a5f] px-4 py-3 text-[12px] text-[#94a3b8]">
+      <span className="mt-px flex h-4 w-4 flex-none items-center justify-center rounded-full border border-[#64748b] text-[10px] font-bold text-[#64748b]">
+        i
+      </span>
+      <div>{children}</div>
+    </div>
   )
 }
 
@@ -528,6 +582,22 @@ export default function Ficha({
         </div>
       </header>
 
+      {/* ---------- obra cancelada: o selo, com o desfazer ---------- */}
+      {cancelada(obra) ? (
+        <SeloCancelada
+          obraId={obra.id}
+          loja={obra.loja}
+          os={obra.os}
+          por={obra.cancelado_por === 'cliente' ? 'cliente' : 'manfac'}
+          obs={obra.cancelado_obs ?? null}
+          em={obra.cancelado_em ?? ''}
+          quem={obra.cancelado_quem ?? ''}
+          etapaAnterior={obra.cancelado_etapa_anterior ?? 'definir'}
+          responsavel={obra.pcm}
+          desfazer={desfazerCancelamentoAction}
+        />
+      ) : null}
+
       {/* ---------- caixa de alerta condicional (uma só) ---------- */}
       <CaixaAlerta obra={obra} />
 
@@ -552,7 +622,7 @@ export default function Ficha({
             evitar.
           </p>
         </div>
-      ) : !obra.os_aprovada && !temAlerta(obra) ? (
+      ) : !obra.os_aprovada && !temAlerta(obra) && !cancelada(obra) ? (
         <div className="rounded-lg border border-[#ff4d6d]/45 border-l-4 border-l-[#ff4d6d] bg-[#ff4d6d]/10 px-4 py-3">
           <span className="inline-block rounded-full border border-[#ff4d6d] px-2 py-0.5 text-[11px] font-semibold text-[#ff4d6d]">
             Sem OS aprovada
@@ -569,7 +639,15 @@ export default function Ficha({
 
       {/* ---------- ciclo de vida ---------- */}
       <Box>
-        <BoxH extra="onde ela está, de quem é a vez e há quanto tempo">Ciclo de vida da obra</BoxH>
+        <BoxH
+          extra={
+            cancelada(obra)
+              ? 'congelado desde o cancelamento'
+              : 'onde ela está, de quem é a vez e há quanto tempo'
+          }
+        >
+          Ciclo de vida da obra
+        </BoxH>
         <BoxB>
           <Campos cols={4}>
             <Campo rotulo="Etapa atual">
@@ -584,7 +662,9 @@ export default function Ficha({
                     : obra.paradaEtapa === null
                       ? '—'
                       : `${obra.paradaEtapa} ${obra.paradaEtapa === 1 ? 'dia' : 'dias'}`
-                  : prazoTxt(obra)}
+                  : cancelada(obra)
+                    ? 'cancelada'
+                    : prazoTxt(obra)}
               </span>
             </Campo>
             <Campo rotulo="Caminho">
@@ -617,13 +697,48 @@ export default function Ficha({
           </p>
         </BoxB>
 
-        {/* Decisão técnica 6 da spec: sem isto o quadro trava no primeiro dia. */}
-        <SeletorEtapa
-          obraId={obra.id}
-          etapa={obra.etapa as Etapa}
-          hoje={hoje}
-          referenciaFechamento={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
-        />
+        {cancelada(obra) ? (
+          /* Obra cancelada não muda de etapa (spec-cancelamento §6.3). */
+          <LinhaInfo>
+            Obra cancelada não muda de etapa. Para voltar a trabalhar nela, use{' '}
+            <b className="text-[#e8eef7]">Desfazer cancelamento</b>.
+          </LinhaInfo>
+        ) : (
+          <>
+            {/* Decisão técnica 6 da spec: sem isto o quadro trava no primeiro dia. */}
+            <SeletorEtapa
+              obraId={obra.id}
+              etapa={obra.etapa as Etapa}
+              hoje={hoje}
+              referenciaFechamento={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
+            />
+            {/* Cancelamento (spec-cancelamento §6.2): só até sair de campo (2B). */}
+            {podeCancelar(obra) ? (
+              <>
+                <p className="-mt-1 px-4 pb-3 text-[11px] leading-relaxed text-[#64748b]">
+                  &quot;Cancelada&quot; não aparece nesta lista — só se chega nela pelo botão abaixo, que
+                  pede o motivo.
+                </p>
+                <FaixaCancelar
+                  obraId={obra.id}
+                  loja={obra.loja}
+                  os={obra.os}
+                  etapaNome={nomeEtapa(obra.etapa)}
+                  responsavel={obra.pcm}
+                  variante="ficha"
+                  cancelar={cancelarObraAction}
+                />
+              </>
+            ) : posCampo(obra) ? (
+              <LinhaInfo>
+                <b className="text-[#e8eef7]">
+                  Esta obra já foi executada em campo e não pode ser cancelada.
+                </b>{' '}
+                Ela segue até faturar o que foi feito (decisão do cliente, 14/09).
+              </LinhaInfo>
+            ) : null}
+          </>
+        )}
       </Box>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -644,11 +759,12 @@ export default function Ficha({
             }}
             analistas={analistasCliente}
             hoje={hoje}
-            diasSemOS={dSemOS}
+            diasSemOS={cancelada(obra) ? null : dSemOS}
             etapa={obra.etapa as Etapa}
             responsavel={obra.pcm}
             rodape={<Rodape edicao={edicoes['Autorização']} entrada={entrada} />}
             salvar={salvarAutorizacaoAction}
+            somenteLeitura={cancelada(obra)}
           />
 
           {/* ---------- identificação (editável) ---------- */}
@@ -666,6 +782,7 @@ export default function Ficha({
             analistas={analistasCliente}
             rodape={<Rodape edicao={edicoes['Identificação']} entrada={entrada} />}
             salvar={salvarIdentificacaoAction}
+            somenteLeitura={cancelada(obra)}
           />
 
           {/* ---------- cronograma (editável) ---------- */}
@@ -684,6 +801,7 @@ export default function Ficha({
             rodape={<Rodape edicao={edicoes['Cronograma']} entrada={entrada} />}
             salvar={salvarCronogramaAction}
             cadastrarMotivo={cadastrarMotivoRemarcacaoAction}
+            somenteLeitura={cancelada(obra)}
           />
 
           {/* ---------- o que o campo devolveu ----------
@@ -763,7 +881,7 @@ export default function Ficha({
         {/* -------------------- coluna direita -------------------- */}
         <div className="flex flex-col gap-4">
           {/* ---------- evolução em fotos ---------- */}
-          {pedeFoto(obra) && diario.length > 0 ? (
+          {(pedeFoto(obra) || cancelada(obra)) && diario.length > 0 ? (
             <Box>
               <BoxH extra="os últimos dias, na ordem em que aconteceram">Evolução em fotos</BoxH>
               <BoxB>
@@ -835,7 +953,7 @@ export default function Ficha({
                             {d.obs ? (
                               <div className="mt-1 text-xs text-[#e8eef7]">{d.obs}</div>
                             ) : null}
-                            {pedeFoto(obra) ? (
+                            {pedeFoto(obra) || cancelada(obra) ? (
                               <div className="mt-1.5 text-[11px]">
                                 {d.foto_path ? (
                                   <span className="text-[#35c98a]">

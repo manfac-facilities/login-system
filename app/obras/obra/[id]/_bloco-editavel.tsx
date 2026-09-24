@@ -236,6 +236,7 @@ export default function BlocoEditavel({
   onEditar,
   onSalvar,
   onCancelar,
+  somenteLeitura = false,
 }: {
   /** `aut` | `ide` | `cro`. Só compõe os ids dos botões, como no mockup. */
   id: string
@@ -255,6 +256,8 @@ export default function BlocoEditavel({
   onEditar: () => void
   onSalvar: () => void
   onCancelar: () => void
+  /** Obra cancelada (spec do cancelamento §6.5): sem o botão Editar. */
+  somenteLeitura?: boolean
 }) {
   const botaoEditar = useRef<HTMLButtonElement>(null)
   const corpo = useRef<HTMLDivElement>(null)
@@ -278,7 +281,7 @@ export default function BlocoEditavel({
         extra={
           editando ? (
             <Pill cor="#f4b73f">editando</Pill>
-          ) : (
+          ) : somenteLeitura ? null : (
             <button
               ref={botaoEditar}
               id={`b-editar-${id}`}

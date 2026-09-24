@@ -17,11 +17,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import {
+  CANCELADO_POR,
   CICLO,
+  PODE_CANCELAR,
   PRIORIDADES,
+  cancelada,
   hojeISO,
+  podeCancelar,
   posCampo,
-  type Etapa,
+  rotuloCancelado,
+  type CanceladoPor,
+  type EtapaCiclo,
   type ObraRow,
   type Prioridade,
 } from '../../_lib/tipos'
@@ -52,6 +58,10 @@ const SEM_ACESSO = 'Sem acesso ao Controle de Obras'
 const NAO_AUTENTICADO = 'Não autenticado'
 const OBRA_NAO_ENCONTRADA = 'Obra não encontrada'
 const CORRIDA_TRIAGEM = 'Esta obra já foi liberada por outra pessoa. Recarregue a página.'
+// Obra cancelada (spec do cancelamento §5.3): a tela esconde o Editar e o seletor;
+// o servidor é a fronteira (aba antiga).
+const CANCELADA_SO_LEITURA = 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.'
+const CANCELADA_NAO_MUDA_ETAPA = 'Obra cancelada não muda de etapa. Use "Desfazer cancelamento".'
 
 const ETAPAS_VALIDAS = CICLO.map((c) => c.k)
 
@@ -245,12 +255,12 @@ function colunaInexistente(erro: { code?: string; message?: string } | null): bo
  * Posição de cada etapa em `CICLO` — a ordem que decide "anterior"/"depois"
  * para os marcos da esteira, abaixo.
  */
-const ORDEM_ETAPA: Record<Etapa, number> = CICLO.reduce(
+const ORDEM_ETAPA: Record<EtapaCiclo, number> = CICLO.reduce(
   (acc, c, i) => {
     acc[c.k] = i
     return acc
   },
-  {} as Record<Etapa, number>
+  {} as Record<EtapaCiclo, number>
 )
 
 /**
@@ -261,7 +271,7 @@ const ORDEM_ETAPA: Record<Etapa, number> = CICLO.reduce(
  * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): esta
  * troca de etapa nunca carimba nem apaga `marco_os_aprov`.
  */
-const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
+const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
   { etapa: 'relatorio', campo: 'marco_relatorio' },
   { etapa: 'fecharOS', campo: 'marco_fechou_os' },
   { etapa: 'pendFat', campo: 'marco_liberou_fat' },
@@ -308,7 +318,7 @@ const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
  */
 function calcularMarcosDaEsteira(
   obra: ObraRow,
-  novaEtapa: Etapa,
+  novaEtapa: EtapaCiclo,
   hoje: string,
   /** Ajuste 2 de 23/09: a data em que a OS foi fechada no sistema do
    * cliente. Presente, substitui `hoje` só no carimbo de `marco_fechou_os`. */
@@ -357,25 +367,26 @@ export async function mudarEtapaAction(
   const supabase = sessao.supabase as Cliente
   const user = { email: sessao.email as string }
 
-  if (!ETAPAS_VALIDAS.includes(etapa as Etapa)) return { error: 'Etapa inválida' }
+  if (!ETAPAS_VALIDAS.includes(etapa as EtapaCiclo)) return { error: 'Etapa inválida' }
 
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_NAO_MUDA_ETAPA }
 
   const hoje = hojeISO()
 
   // Marcos calculados ANTES do update (função pura): a data de fechamento da
   // OS é validada contra o relatório do estado FINAL, e toda recusa sai antes
   // de qualquer escrita (ajuste 2 de 23/09, spec-ajustes-ficha §5.3).
-  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje, dataFechamentoOS)
+  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as EtapaCiclo, hoje, dataFechamentoOS)
 
   if (dataFechamentoOS !== undefined) {
     // Aplicável só quando ESTA troca carimba `marco_fechou_os` a partir de
     // `null` — olhando a obra lida do banco, não a etapa que a tela acha que
     // ela tem. É o que deixa o "Tentar de novo" recuperar a falha parcial.
     const aplicavel =
-      obra.marco_fechou_os === null && ORDEM_ETAPA[etapa as Etapa] > ORDEM_ETAPA.fecharOS
+      obra.marco_fechou_os === null && ORDEM_ETAPA[etapa as EtapaCiclo] > ORDEM_ETAPA.fecharOS
     if (!aplicavel) return { error: 'A data de fechamento da OS só vale ao concluir Fechar OS.' }
     const erroData = validarDataFechamentoOS(dataFechamentoOS, {
       hoje,
@@ -452,11 +463,12 @@ export async function corrigirDataFechamentoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   // Só corrige o que existe: marco gravado E a obra já depois de Fechar OS.
   if (
     obra.marco_fechou_os === null ||
-    !(ORDEM_ETAPA[obra.etapa as Etapa] > ORDEM_ETAPA.fecharOS)
+    !(ORDEM_ETAPA[obra.etapa as EtapaCiclo] > ORDEM_ETAPA.fecharOS)
   ) {
     return { error: 'Fechar OS ainda não foi concluído nesta obra.' }
   }
@@ -486,6 +498,112 @@ export async function corrigirDataFechamentoAction(
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')
+  return { success: true }
+}
+
+// ============================================================
+// CANCELAMENTO — spec-cancelamento-obra-2026-09-23.md §5
+//
+// Sobrescreve dado de cliente (território de exceção do AGENTS.md): toda
+// recusa sai ANTES de qualquer escrita, olhando a obra LIDA DO BANCO, e a
+// gravação é uma chamada só da RPC — a obra e a linha de histórico gravam
+// juntas ou nenhuma. `desde_etapa` nunca entra: o desfazer devolve a obra com
+// a mesma contagem de dias (decisão do mockup aprovado em 23/09).
+// ============================================================
+
+const ESCOLHA_QUEM_CANCELOU = 'Escolha quem cancelou: o Cliente ou a Manfac.'
+const JA_CANCELADA = 'Esta obra já está cancelada. Recarregue a página.'
+const JA_EXECUTADA = 'Esta obra já foi executada em campo e não pode ser cancelada.'
+const ERRO_CANCELAR = 'Não deu para cancelar a obra. Nada mudou — tente de novo.'
+const NAO_CANCELADA = 'Esta obra não está cancelada. Recarregue a página.'
+const SEM_ETAPA_ANTERIOR = 'Não dá para desfazer: a etapa anterior não está registrada.'
+const ERRO_DESFAZER = 'Não deu para desfazer o cancelamento. Nada mudou — tente de novo.'
+
+function revalidarCancelamento(obraId: string) {
+  revalidatePath(`/obras/obra/${obraId}`)
+  revalidatePath('/obras/base')
+  revalidatePath('/obras/diario')
+  revalidatePath('/obras/tarefas')
+}
+
+export async function cancelarObraAction(
+  obraId: string,
+  dados: { por: string; obs?: string }
+): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+  const email = sessao.email as string
+
+  if (!(CANCELADO_POR as readonly string[]).includes(dados?.por)) return { error: ESCOLHA_QUEM_CANCELOU }
+  const por = dados.por as CanceladoPor
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
+
+  if (cancelada(obra)) return { error: JA_CANCELADA }
+  if (!podeCancelar(obra)) return { error: JA_EXECUTADA }
+
+  const obs = nulo(dados.obs)
+  const agora = new Date().toISOString()
+  const campos: Record<string, unknown> = {
+    etapa: 'cancelado',
+    cancelado_por: por,
+    cancelado_obs: obs,
+    cancelado_em: agora,
+    cancelado_quem: email,
+    cancelado_etapa_anterior: obra.etapa,
+    etapa_por: email,
+    etapa_em: agora,
+    atualizacao: hojeISO(),
+  }
+  const motivo = rotuloCancelado(por) + (obs ? ` — ${obs}` : '')
+  const linhas = linhasDeAlteracao({ etapa: obra.etapa }, { etapa: 'cancelado' }, 'Cancelamento').map(
+    (l) => ({ ...l, motivo })
+  )
+
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
+  if (error) return { error: ERRO_CANCELAR }
+
+  revalidarCancelamento(obraId)
+  return { success: true }
+}
+
+export async function desfazerCancelamentoAction(obraId: string): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+  const email = sessao.email as string
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { error: leitura.error }
+  const obra = leitura.obra as ObraRow
+
+  if (!cancelada(obra)) return { error: NAO_CANCELADA }
+  const anterior = obra.cancelado_etapa_anterior ?? null
+  if (anterior === null || !PODE_CANCELAR.includes(anterior)) return { error: SEM_ETAPA_ANTERIOR }
+
+  const campos: Record<string, unknown> = {
+    etapa: anterior,
+    cancelado_por: null,
+    cancelado_obs: null,
+    cancelado_em: null,
+    cancelado_quem: null,
+    cancelado_etapa_anterior: null,
+    etapa_por: email,
+    etapa_em: new Date().toISOString(),
+    atualizacao: hojeISO(),
+  }
+  const linhas = linhasDeAlteracao({ etapa: 'cancelado' }, { etapa: anterior }, 'Cancelamento').map((l) => ({
+    ...l,
+    motivo: 'Cancelamento desfeito',
+  }))
+
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
+  if (error) return { error: ERRO_DESFAZER }
+
+  revalidarCancelamento(obraId)
   return { success: true }
 }
 
@@ -646,6 +764,7 @@ export async function salvarAutorizacaoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const hoje = hojeISO()
 
@@ -700,6 +819,7 @@ export async function salvarIdentificacaoAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const erro = primeiroErro(validarIdentificacao(dados, { tipoAtual: obra.tipo }))
   if (erro) return { error: erro }
@@ -764,6 +884,7 @@ export async function salvarCronogramaAction(
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
+  if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
 
   const erro = primeiroErro(validarCronograma(dados, { inicioAtual: obra.inicio_plan }))
   if (erro) return { error: erro }

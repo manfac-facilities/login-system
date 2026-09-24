@@ -159,6 +159,11 @@ describe('linhasDeAlteracao', () => {
     expect(r).toContainEqual({ bloco: 'Esteira', campo: 'marco_relatorio', de: null, para: '21/08/2026', motivo: null })
   })
 
+  it('bloco Cancelamento: a linha da etapa sai com o nome "Cancelada"', () => {
+    const [l] = linhasDeAlteracao({ etapa: 'andamento' }, { etapa: 'cancelado' }, 'Cancelamento')
+    expect(l).toEqual({ bloco: 'Cancelamento', campo: 'etapa', de: 'Em andamento', para: 'Cancelada', motivo: null })
+  })
+
   it("'' equivale a null: não gera linha (nem null→'' nem ''→null)", () => {
     expect(linhasDeAlteracao({ liberado_por: null }, { liberado_por: '' }, 'Autorização')).toEqual([])
     expect(linhasDeAlteracao({ liberado_por: '' }, { liberado_por: null }, 'Autorização')).toEqual([])

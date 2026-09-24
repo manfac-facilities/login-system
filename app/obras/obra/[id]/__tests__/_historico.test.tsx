@@ -103,6 +103,28 @@ describe('Historico', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 
+  it('filtro "Cancelamento" mostra só as linhas do cancelamento, com o motivo', async () => {
+    const user = userEvent.setup()
+    const linhas = [
+      {
+        id: '1', obra_id: 'o1', bloco: 'Cronograma' as const, campo: 'prioridade' as const,
+        de: 'Normal', para: 'Urgente', motivo: null, quem: 'y@manfac.com.br', created_at: '2026-08-01T09:00:00Z',
+      },
+      {
+        id: '2', obra_id: 'o1', bloco: 'Cancelamento' as const, campo: 'etapa' as const,
+        de: 'Em andamento', para: 'Cancelada', motivo: 'Cancelado pelo Cliente — loja suspensa',
+        quem: 'r@manfac.com.br', created_at: '2026-09-23T13:42:00Z',
+      },
+    ]
+    render(<Historico linhas={linhas} entrada={{ data: '2026-06-30', fonte: 'field' }} />)
+
+    await user.click(screen.getByRole('button', { name: 'Cancelamento' }))
+
+    expect(screen.queryByText('Urgente')).not.toBeInTheDocument()
+    expect(screen.getByText('Cancelada')).toBeInTheDocument()
+    expect(screen.getByText(/Motivo: Cancelado pelo Cliente — loja suspensa/)).toBeInTheDocument()
+  })
+
   it('rótulo ausente no dicionário cai para a própria chave, não "undefined" (M10)', () => {
     const linhas = [
       {

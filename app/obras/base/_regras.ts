@@ -13,7 +13,8 @@
 
 import {
   CICLO,
-  ETAPAS,
+  cancelada,
+  nomeEtapa,
   encerrada,
   faseDe,
   liberada,
@@ -47,6 +48,7 @@ export const COR_ETAPA: Record<Etapa, string> = {
   fecharOS: '#f4b73f', // --warn
   pendFat: '#f4b73f', // --warn
   faturado: '#64748b', // --ink-faint
+  cancelado: '#64748b', // --ink-faint, a mesma de encerrada (spec do cancelamento §7.1)
 }
 
 /** A cor de cada fase, para o cabeçalho das colunas do Kanban (`FASES`, :1150). */
@@ -153,7 +155,15 @@ export function opcoesEtapa(): { soltas: { v: string; t: string }[]; grupos: Gru
         { v: `fase:${f}`, t: `Toda a fase ${nomes[f].toLowerCase()}` },
         ...CICLO.filter((c) => c.fase === f).map((c) => ({ v: c.k as string, t: c.nome })),
       ],
-    })),
+    })).concat({
+      // Spec do cancelamento §7.1: fora de "Todas", só se vê aqui.
+      fase: 'Canceladas',
+      opcoes: [
+        { v: 'cancelado', t: 'Todas as canceladas' },
+        { v: 'cancelado:cliente', t: 'Canceladas pelo Cliente' },
+        { v: 'cancelado:manfac', t: 'Canceladas pela Manfac' },
+      ],
+    }),
   }
 }
 
@@ -177,11 +187,16 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
       return false
     }
 
-    if (f.etapa === '__esteira') {
+    if (f.etapa === 'todas') {
+      // "Todas" esconde as canceladas (spec do cancelamento §7.1).
+      if (cancelada(o)) return false
+    } else if (f.etapa === '__esteira') {
       if (!posCampo(o) || encerrada(o)) return false
     } else if (f.etapa.startsWith('fase:')) {
       if (faseDe(o) !== f.etapa.slice(5)) return false
-    } else if (f.etapa !== 'todas' && o.etapa !== f.etapa) {
+    } else if (f.etapa.startsWith('cancelado:')) {
+      if (!cancelada(o) || o.cancelado_por !== f.etapa.slice(10)) return false
+    } else if (o.etapa !== f.etapa) {
       return false
     }
 
@@ -197,6 +212,14 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
 
     return true
   })
+}
+
+/**
+ * Quantas canceladas a lista "Todas" deixou de fora — com os OUTROS filtros
+ * ativos, para o número do aviso ser o que o "ver canceladas" vai mostrar.
+ */
+export function canceladasFora(obras: Obra[], f: Filtros): number {
+  return filtrar(obras, { ...f, etapa: 'cancelado' }).length
 }
 
 /* -------------------------------------------------------------------------- */
@@ -258,7 +281,7 @@ export function alternarOrdem(atual: Ordem, col: string): Ordem {
 export function ordenar(obras: Obra[], ordem: Ordem): Obra[] {
   const { col, dir } = ordem
   const valor = (o: Obra): unknown => {
-    if (col === 'etapa') return ETAPAS[o.etapa]?.nome ?? o.etapa
+    if (col === 'etapa') return nomeEtapa(o.etapa)
     return (o as unknown as Record<string, unknown>)[col]
   }
   return obras.slice().sort((a, b) => {
@@ -326,7 +349,7 @@ export function kpisDaBase(todas: Obra[]): Kpi[] {
 
   const andamento = todas.filter((o) => o.etapa === 'andamento').length
   const paralisadas = todas.filter((o) => o.etapa === 'paralisado').length
-  const velhas = todas.filter((o) => !posCampo(o) && o.dias !== null && o.dias >= 60).length
+  const velhas = todas.filter((o) => !posCampo(o) && !encerrada(o) && o.dias !== null && o.dias >= 60).length
   const estouradas = todas.filter((o) => !posCampo(o) && o.atraso !== null && o.atraso > 0).length
 
   const aDefinir = todas.filter((o) => o.etapa === 'definir')

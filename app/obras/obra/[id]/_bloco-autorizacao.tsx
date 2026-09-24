@@ -73,6 +73,7 @@ export default function BlocoAutorizacao({
   responsavel,
   rodape,
   salvar,
+  somenteLeitura,
 }: {
   obraId: string
   /** O que está gravado hoje. O rascunho nasce daqui a cada **Editar**. */
@@ -88,6 +89,8 @@ export default function BlocoAutorizacao({
   responsavel: string | null
   rodape: React.ReactNode
   salvar: SalvarAutorizacao
+  /** Obra cancelada: sem Editar (spec do cancelamento §6.5). */
+  somenteLeitura?: boolean
 }) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState<DadosAutorizacao>(valores)
@@ -215,7 +218,8 @@ export default function BlocoAutorizacao({
               </>
             ) : null}
           </>
-        ) : (
+        ) : etapa === 'cancelado' ? null : (
+          // Obra cancelada não está "sendo executada" (revisão do cancelamento, B2).
           <>
             <b className="text-[#ff4d6d]">Nem uma coisa nem outra.</b> A obra está sendo executada
             sem OS e sem ninguém nomeado que tenha autorizado.
@@ -305,6 +309,7 @@ export default function BlocoAutorizacao({
     <>
       <BlocoEditavel
         id="aut"
+        somenteLeitura={somenteLeitura}
         titulo="Autorização"
         editando={editando}
         salvando={salvando}

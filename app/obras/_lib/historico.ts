@@ -18,6 +18,7 @@ export type BlocoHistorico =
   | 'Identificação'
   | 'Cronograma'
   | 'Esteira'
+  | 'Cancelamento'
 
 export type CampoHistorico =
   | 'pcm'

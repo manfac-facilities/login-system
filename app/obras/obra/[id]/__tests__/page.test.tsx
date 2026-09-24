@@ -26,6 +26,8 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import FichaDaObraPage from '../page'
+import Ficha from '../_ficha'
+import Triagem from '../_triagem'
 
 const OK = { data: [], error: null }
 
@@ -156,5 +158,26 @@ describe('FichaDaObraPage — item 6: erro de consulta não vira "obra não enco
     mockRespostas({})
     await expect(FichaDaObraPage({ params })).resolves.toBeDefined()
     expect(notFound).not.toHaveBeenCalled()
+  })
+})
+
+describe('FichaDaObraPage — cancelamento (spec-cancelamento §6.1)', () => {
+  it('obra cancelada que veio da triagem abre a FICHA, não a Triagem', async () => {
+    mockRespostas({
+      obra: {
+        data: linhaObra({
+          etapa: 'cancelado',
+          cancelado_por: 'manfac',
+          cancelado_etapa_anterior: 'definir',
+          cancelado_em: '2026-09-23T13:42:00Z',
+          cancelado_quem: 'yuri@manfac.com.br',
+        }),
+        error: null,
+      },
+    })
+    const el = (await FichaDaObraPage({ params })) as React.ReactElement<{ children: React.ReactElement[] }>
+    const tipos = el.props.children.map((c) => c?.type)
+    expect(tipos).toContain(Ficha)
+    expect(tipos).not.toContain(Triagem)
   })
 })
