@@ -47,6 +47,12 @@ import {
   somaDias,
   travado,
   contadoresDoDiario,
+  CICLO,
+  PODE_CANCELAR,
+  podeCancelar,
+  rotuloCancelado,
+  tarefaVisivelNaLista,
+  type Etapa,
   type Obra,
   type ObraRow,
   type TarefaRow,
@@ -841,5 +847,73 @@ describe('a ficha editável não pode derrubar a contagem da obra crítica', () 
     )
     expect(umDiaDepois.diasAlerta).toBe(31)
     expect(critico(umDiaDepois)).toBe(true)
+  })
+})
+
+describe('cancelamento — regras de leitura', () => {
+  const canc = (over: Partial<ObraRow> = {}) =>
+    obraRow({
+      etapa: 'cancelado',
+      cancelado_por: 'cliente',
+      cancelado_etapa_anterior: 'andamento',
+      cancelado_em: '2026-09-23T13:42:00Z',
+      cancelado_quem: 'rafael.souza@manfac.com.br',
+      ...over,
+    })
+
+  it('nome, rótulos e quem pode cancelar', () => {
+    expect(nomeEtapa('cancelado')).toBe('Cancelada')
+    expect(rotuloCancelado('cliente')).toBe('Cancelado pelo Cliente')
+    expect(rotuloCancelado('manfac')).toBe('Cancelado pela Manfac')
+    expect(PODE_CANCELAR).toEqual(['definir', 'levantamento', 'andamento', 'paralisado'])
+    expect(podeCancelar(obraRow({ etapa: 'paralisado' }))).toBe(true)
+    expect(podeCancelar(obraRow({ etapa: 'relatorio' }))).toBe(false)
+    expect(podeCancelar(canc())).toBe(false)
+  })
+
+  it('não entra no ciclo: o seletor de etapa não a oferece', () => {
+    expect(CICLO.map((c) => c.k)).not.toContain('cancelado')
+  })
+
+  it('não tem fase: fora do Kanban, não pede foto, não é pós-campo', () => {
+    expect(faseDe(canc())).toBeNull()
+    expect(posCampo(canc())).toBe(false)
+    expect(pedeFoto(canc())).toBe(false)
+  })
+
+  it('etapa realmente desconhecida continua caindo em "campo" (comportamento antigo)', () => {
+    expect(faseDe(obraRow({ etapa: 'xyz' as Etapa }))).toBe('campo')
+  })
+
+  it('é encerrada: sem alarme de nenhum tipo', () => {
+    const o = derivar(
+      canc({ aprovacao: '2026-01-01', inicio_plan: '2026-01-02', duracao: 5, bloqueio: 'Clima', bloqueada_dias: 9 }),
+      HOJE
+    )
+    expect(encerrada(o)).toBe(true)
+    expect(sev(o)).toBe('encerrada')
+    expect(critico(o)).toBe(false)
+    expect(estourou(o)).toBe(false)
+    expect(travado(o)).toBe(false)
+    expect(semCobertura(o)).toBe(false)
+    expect(classeDias(o)).toBe('')
+    expect(donoDa(o)).toBe('—')
+  })
+
+  it('derivar zera o que conta dias e prazo', () => {
+    const o = derivar(
+      canc({ aprovacao: '2026-01-01', inicio_plan: '2026-01-02', duracao: 5, desde_etapa: '2026-09-01' }),
+      HOJE
+    )
+    expect([o.diasAlerta, o.atraso, o.diaDe, o.fracPrazo, o.paradaEtapa]).toEqual([null, null, null, null, null])
+    expect(o.dias).not.toBeNull()
+  })
+
+  it('tarefa aberta de obra cancelada some; respondida fica; obra ativa não muda', () => {
+    const t = (situacao: 'aberta' | 'respondida') => ({ situacao }) as TarefaRow
+    expect(tarefaVisivelNaLista(t('aberta'), 'cancelado')).toBe(false)
+    expect(tarefaVisivelNaLista(t('respondida'), 'cancelado')).toBe(true)
+    expect(tarefaVisivelNaLista(t('aberta'), 'andamento')).toBe(true)
+    expect(tarefaVisivelNaLista(t('aberta'), undefined)).toBe(true)
   })
 })

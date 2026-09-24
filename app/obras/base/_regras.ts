@@ -13,7 +13,7 @@
 
 import {
   CICLO,
-  ETAPAS,
+  nomeEtapa,
   encerrada,
   faseDe,
   liberada,
@@ -47,6 +47,7 @@ export const COR_ETAPA: Record<Etapa, string> = {
   fecharOS: '#f4b73f', // --warn
   pendFat: '#f4b73f', // --warn
   faturado: '#64748b', // --ink-faint
+  cancelado: '#64748b', // --ink-faint, a mesma de encerrada (spec do cancelamento §7.1)
 }
 
 /** A cor de cada fase, para o cabeçalho das colunas do Kanban (`FASES`, :1150). */
@@ -258,7 +259,7 @@ export function alternarOrdem(atual: Ordem, col: string): Ordem {
 export function ordenar(obras: Obra[], ordem: Ordem): Obra[] {
   const { col, dir } = ordem
   const valor = (o: Obra): unknown => {
-    if (col === 'etapa') return ETAPAS[o.etapa]?.nome ?? o.etapa
+    if (col === 'etapa') return nomeEtapa(o.etapa)
     return (o as unknown as Record<string, unknown>)[col]
   }
   return obras.slice().sort((a, b) => {

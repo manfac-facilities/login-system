@@ -124,7 +124,8 @@ export function moeda(v: number | null | undefined): string {
 // Os nomes em português são os aprovados pelo cliente. Não reescrever.
 // ============================================================
 
-export type Etapa =
+/** As nove etapas da esteira — as que o seletor "Mudar a etapa" oferece. */
+export type EtapaCiclo =
   | 'definir'
   | 'levantamento'
   | 'andamento'
@@ -134,6 +135,13 @@ export type Etapa =
   | 'fecharOS'
   | 'pendFat'
   | 'faturado'
+
+/**
+ * Toda etapa que o banco aceita. `cancelado` é a saída lateral (spec do
+ * cancelamento, §4.1): não está em `CICLO`, então `ETAPAS[o.etapa]` não a
+ * conhece — o `tsc` força cada leitura a decidir o que fazer com ela.
+ */
+export type Etapa = EtapaCiclo | 'cancelado'
 
 export type Fase = 'antes' | 'campo' | 'fechamento' | 'faturamento'
 
@@ -145,7 +153,7 @@ export const FASES: { k: Fase; nome: string }[] = [
 ]
 
 export type EtapaInfo = {
-  k: Etapa
+  k: EtapaCiclo
   nome: string
   fase: Fase
   /** Quem é o dono da bola nesta etapa. `donoDa` traduz para o nome da pessoa. */
@@ -168,12 +176,12 @@ export const CICLO: EtapaInfo[] = [
   { k: 'faturado', nome: 'Faturado', fase: 'faturamento', dono: 'Financeiro Manfac', onde: 'Manfac', planilha: 'FATURADO' },
 ]
 
-export const ETAPAS: Record<Etapa, EtapaInfo> = CICLO.reduce(
+export const ETAPAS: Record<EtapaCiclo, EtapaInfo> = CICLO.reduce(
   (acc, c) => {
     acc[c.k] = c
     return acc
   },
-  {} as Record<Etapa, EtapaInfo>
+  {} as Record<EtapaCiclo, EtapaInfo>
 )
 
 /**
@@ -181,7 +189,27 @@ export const ETAPAS: Record<Etapa, EtapaInfo> = CICLO.reduce(
  * campo. `aprovarOS` é o DESVIO — só existe quando a obra saiu de campo sem OS
  * aprovada no sistema do cliente. `ESTEIRA(mockup:1155)`.
  */
-export const ESTEIRA: Etapa[] = ['relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado']
+export const ESTEIRA: EtapaCiclo[] = ['relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado']
+
+/**
+ * Cancelamento (spec-cancelamento-obra-2026-09-23 §4.2). Quem cancelou — os
+ * dois valores do banco, e os rótulos literais do pedido do cliente (10/09).
+ */
+export const CANCELADO_POR = ['cliente', 'manfac'] as const
+export type CanceladoPor = (typeof CANCELADO_POR)[number]
+
+export function rotuloCancelado(por: CanceladoPor): string {
+  return por === 'cliente' ? 'Cancelado pelo Cliente' : 'Cancelado pela Manfac'
+}
+
+/**
+ * De onde dá para cancelar: até sair de campo (resposta 2B do cliente, 14/09).
+ * Espelho da lista do CHECK `obras_obra_cancelamento_coerente` — mudar um é
+ * mudar o outro.
+ */
+export const PODE_CANCELAR: EtapaCiclo[] = ['definir', 'levantamento', 'andamento', 'paralisado']
+
+export const NOME_CANCELADA = 'Cancelada'
 
 /** `BLOQUEIOS(mockup:1197)` — também são os motivos de "não andou". */
 export const BLOQUEIOS = [
@@ -317,6 +345,17 @@ export type ObraRow = {
   criado_por: string | null
   created_at: string
   updated_at: string | null
+
+  /**
+   * Cancelamento (sdd-sql-obras-cancelamento.sql). OPCIONAIS de propósito
+   * (spec do cancelamento §4.1): os fixtures de teste montam `ObraRow` à mão e
+   * não precisam deles. Ler sempre com `?? null`.
+   */
+  cancelado_por?: CanceladoPor | null
+  cancelado_obs?: string | null
+  cancelado_em?: string | null
+  cancelado_quem?: string | null
+  cancelado_etapa_anterior?: EtapaCiclo | null
 }
 
 /** `obras_diario`. `motivo` é obrigatório quando `andou = false` (decisão C). */
@@ -407,9 +446,35 @@ export type Derivados = {
 /** Obra pronta para a tela: linha do banco + os derivados. */
 export type Obra = ObraRow & Derivados
 
-/** A fase da obra. `faseDe(mockup:1186)`. Etapa desconhecida cai em "campo". */
-export function faseDe(o: Pick<ObraRow, 'etapa'>): Fase {
-  return ETAPAS[o.etapa] ? ETAPAS[o.etapa].fase : 'campo'
+/**
+ * A fase da obra. `faseDe(mockup:1186)`. Etapa desconhecida cai em "campo".
+ * A cancelada não tem fase (null): fica fora do Kanban e de todo filtro por fase.
+ */
+export function faseDe(o: Pick<ObraRow, 'etapa'>): Fase | null {
+  if (o.etapa === 'cancelado') return null
+  const info = ETAPAS[o.etapa as EtapaCiclo]
+  return info ? info.fase : 'campo'
+}
+
+/** Obra cancelada — a saída lateral da esteira (spec do cancelamento §4.2). */
+export function cancelada(o: Pick<ObraRow, 'etapa'>): boolean {
+  return o.etapa === 'cancelado'
+}
+
+/** Pode mostrar o botão "Cancelar obra": ainda não saiu de campo (2B). */
+export function podeCancelar(o: Pick<ObraRow, 'etapa'>): boolean {
+  return (PODE_CANCELAR as Etapa[]).includes(o.etapa)
+}
+
+/**
+ * Tarefa ABERTA de obra cancelada sai da tela Tarefas; a respondida fica, como
+ * registro. Nada muda em `obras_tarefa`: ao desfazer, a tarefa volta sozinha.
+ */
+export function tarefaVisivelNaLista(
+  t: Pick<TarefaRow, 'situacao'>,
+  etapaDaObra: Etapa | undefined
+): boolean {
+  return !(t.situacao === 'aberta' && etapaDaObra === 'cancelado')
 }
 
 /** Já saiu de campo: está em fechamento ou faturamento. `posCampo(mockup:1187)`. */
@@ -418,9 +483,9 @@ export function posCampo(o: Pick<ObraRow, 'etapa'>): boolean {
   return f === 'fechamento' || f === 'faturamento'
 }
 
-/** Fim de linha. `encerrada(mockup:1188)`. */
+/** Fim de linha. `encerrada(mockup:1188)`. Faturada ou cancelada: sem alarme nenhum. */
 export function encerrada(o: Pick<ObraRow, 'etapa'>): boolean {
-  return o.etapa === 'faturado'
+  return o.etapa === 'faturado' || o.etapa === 'cancelado'
 }
 
 /**
@@ -442,6 +507,7 @@ export function pedeFoto(o: Pick<ObraRow, 'etapa'>): boolean {
 
 /** `donoDa(mockup:1192)`. */
 export function donoDa(o: Pick<ObraRow, 'etapa' | 'pcm' | 'analista_cliente'>): string {
+  if (o.etapa === 'cancelado') return '—'
   const c = ETAPAS[o.etapa]
   if (!c) return '—'
   if (c.dono === 'Responsável da obra') return o.pcm ? 'Responsável ' + o.pcm : 'Responsável a definir'
@@ -460,16 +526,19 @@ export function donoDa(o: Pick<ObraRow, 'etapa' | 'pcm' | 'analista_cliente'>): 
  */
 export function derivar(o: ObraRow, hoje: string = hojeISO()): Obra {
   const dias = diasDesde(o.aprovacao, hoje)
+  // Cancelada não conta dias nem prazo (spec do cancelamento §4.3): "Dias em
+  // aberto" = "—" e nenhuma caixa de alerta. `dias` continua calculado.
+  const canc = cancelada(o)
   const ancora = ancoraDias(o)
-  const diasAlertaBruto = ancora ? diasDesde(ancora.data, hoje) : null
+  const diasAlertaBruto = ancora && !canc ? diasDesde(ancora.data, hoje) : null
   const diasAlerta = diasAlertaBruto !== null ? Math.max(0, diasAlertaBruto) : null
   const ini = o.inicio_real || o.inicio_plan
   const fimCalc = ini && o.duracao ? somaDias(ini, o.duracao) : null
-  const atraso = !posCampo(o) && fimCalc ? diasDesde(fimCalc, hoje) : null
+  const atraso = !canc && !posCampo(o) && fimCalc ? diasDesde(fimCalc, hoje) : null
 
   let diaDe: number | null = null
   let fracPrazo: number | null = null
-  if (ini && o.duracao && !posCampo(o)) {
+  if (!canc && ini && o.duracao && !posCampo(o)) {
     const corridos = (diasDesde(ini, hoje) ?? 0) + 1
     diaDe = Math.max(1, corridos)
     if (atraso === null || atraso <= 0) {
@@ -578,6 +647,7 @@ export function critico(o: Obra): boolean {
 
 /** `estourou(mockup:1808)` — passou MUITO da duração combinada. */
 export function estourou(o: Obra): boolean {
+  if (encerrada(o)) return false
   if (posCampo(o) || o.etapa === 'definir') return false
   if (o.dias === null) return false
   return o.duracao ? o.dias > o.duracao * 4 : o.dias >= 120
@@ -590,6 +660,7 @@ export function estourou(o: Obra): boolean {
  * nenhum apareceria travada. Null é tratado como "sem bloqueio".
  */
 export function travado(o: Obra): boolean {
+  if (encerrada(o)) return false
   return (
     !posCampo(o) &&
     o.bloqueada_dias >= 3 &&
@@ -788,6 +859,7 @@ export function sitTarefa(
 
 /** Nome da etapa como aparece na tela. Etapa desconhecida devolve a própria chave. */
 export function nomeEtapa(etapa: Etapa): string {
+  if (etapa === 'cancelado') return NOME_CANCELADA
   return ETAPAS[etapa]?.nome ?? etapa
 }
 

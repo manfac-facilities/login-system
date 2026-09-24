@@ -21,7 +21,7 @@ import {
   PRIORIDADES,
   hojeISO,
   posCampo,
-  type Etapa,
+  type EtapaCiclo,
   type ObraRow,
   type Prioridade,
 } from '../../_lib/tipos'
@@ -245,12 +245,12 @@ function colunaInexistente(erro: { code?: string; message?: string } | null): bo
  * Posição de cada etapa em `CICLO` — a ordem que decide "anterior"/"depois"
  * para os marcos da esteira, abaixo.
  */
-const ORDEM_ETAPA: Record<Etapa, number> = CICLO.reduce(
+const ORDEM_ETAPA: Record<EtapaCiclo, number> = CICLO.reduce(
   (acc, c, i) => {
     acc[c.k] = i
     return acc
   },
-  {} as Record<Etapa, number>
+  {} as Record<EtapaCiclo, number>
 )
 
 /**
@@ -261,7 +261,7 @@ const ORDEM_ETAPA: Record<Etapa, number> = CICLO.reduce(
  * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): esta
  * troca de etapa nunca carimba nem apaga `marco_os_aprov`.
  */
-const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
+const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
   { etapa: 'relatorio', campo: 'marco_relatorio' },
   { etapa: 'fecharOS', campo: 'marco_fechou_os' },
   { etapa: 'pendFat', campo: 'marco_liberou_fat' },
@@ -308,7 +308,7 @@ const PASSOS_MARCO: { etapa: Etapa; campo: CampoHistorico }[] = [
  */
 function calcularMarcosDaEsteira(
   obra: ObraRow,
-  novaEtapa: Etapa,
+  novaEtapa: EtapaCiclo,
   hoje: string,
   /** Ajuste 2 de 23/09: a data em que a OS foi fechada no sistema do
    * cliente. Presente, substitui `hoje` só no carimbo de `marco_fechou_os`. */
@@ -357,7 +357,7 @@ export async function mudarEtapaAction(
   const supabase = sessao.supabase as Cliente
   const user = { email: sessao.email as string }
 
-  if (!ETAPAS_VALIDAS.includes(etapa as Etapa)) return { error: 'Etapa inválida' }
+  if (!ETAPAS_VALIDAS.includes(etapa as EtapaCiclo)) return { error: 'Etapa inválida' }
 
   const leitura = await lerObra(supabase, obraId)
   if (leitura.error) return { error: leitura.error }
@@ -368,14 +368,14 @@ export async function mudarEtapaAction(
   // Marcos calculados ANTES do update (função pura): a data de fechamento da
   // OS é validada contra o relatório do estado FINAL, e toda recusa sai antes
   // de qualquer escrita (ajuste 2 de 23/09, spec-ajustes-ficha §5.3).
-  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as Etapa, hoje, dataFechamentoOS)
+  const { antes, depois } = calcularMarcosDaEsteira(obra, etapa as EtapaCiclo, hoje, dataFechamentoOS)
 
   if (dataFechamentoOS !== undefined) {
     // Aplicável só quando ESTA troca carimba `marco_fechou_os` a partir de
     // `null` — olhando a obra lida do banco, não a etapa que a tela acha que
     // ela tem. É o que deixa o "Tentar de novo" recuperar a falha parcial.
     const aplicavel =
-      obra.marco_fechou_os === null && ORDEM_ETAPA[etapa as Etapa] > ORDEM_ETAPA.fecharOS
+      obra.marco_fechou_os === null && ORDEM_ETAPA[etapa as EtapaCiclo] > ORDEM_ETAPA.fecharOS
     if (!aplicavel) return { error: 'A data de fechamento da OS só vale ao concluir Fechar OS.' }
     const erroData = validarDataFechamentoOS(dataFechamentoOS, {
       hoje,
@@ -456,7 +456,7 @@ export async function corrigirDataFechamentoAction(
   // Só corrige o que existe: marco gravado E a obra já depois de Fechar OS.
   if (
     obra.marco_fechou_os === null ||
-    !(ORDEM_ETAPA[obra.etapa as Etapa] > ORDEM_ETAPA.fecharOS)
+    !(ORDEM_ETAPA[obra.etapa as EtapaCiclo] > ORDEM_ETAPA.fecharOS)
   ) {
     return { error: 'Fechar OS ainda não foi concluído nesta obra.' }
   }
