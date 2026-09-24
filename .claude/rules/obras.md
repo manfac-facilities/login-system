@@ -90,3 +90,10 @@ fechamento da OS informável/corrigível, equipe/prestador em texto livre. Faixa
 Resend. Os 4 e-mails com slug `obras` têm conta e já entraram. Deploy segue manual,
 com o código de acesso ao EasyPanel com o cliente. Próximo: cancelamento de obra
 (mockup aprovado 23/09; exige migration `sdd-sql-obras-cancelamento.sql`).
+
+Branch `feat/dividas-ficha` (24/09, sem deploy — quem deploya atualiza): a troca de
+etapa passou a ser atômica (etapa + marcos numa chamada só da RPC, com linha
+"Esteira · Etapa" no Histórico), o auto-avanço da Autorização carimba os marcos, a
+liberação da Triagem valida as datas no servidor, e os três blocos da ficha detectam
+edição concorrente pela versão do bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5,
+B7 fechadas; bordas novas em A31–A35.

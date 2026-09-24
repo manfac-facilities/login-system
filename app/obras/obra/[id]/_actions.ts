@@ -20,7 +20,6 @@ import {
   CANCELADO_POR,
   CICLO,
   PODE_CANCELAR,
-  PRIORIDADES,
   cancelada,
   hojeISO,
   podeCancelar,
@@ -29,7 +28,6 @@ import {
   type CanceladoPor,
   type EtapaCiclo,
   type ObraRow,
-  type Prioridade,
 } from '../../_lib/tipos'
 import {
   gravarComHistorico,
@@ -47,6 +45,7 @@ import {
   validarCronograma,
   validarDataFechamentoOS,
   validarIdentificacao,
+  versaoDoBloco,
   type DadosAutorizacao,
   type DadosCronograma,
   type DadosIdentificacao,
@@ -62,6 +61,13 @@ const CORRIDA_TRIAGEM = 'Esta obra já foi liberada por outra pessoa. Recarregue
 // o servidor é a fronteira (aba antiga).
 const CANCELADA_SO_LEITURA = 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.'
 const CANCELADA_NAO_MUDA_ETAPA = 'Obra cancelada não muda de etapa. Use "Desfazer cancelamento".'
+// B7: na Triagem o erro cai na caixa geral, sem campo embaixo — o "Data
+// inválida." genérico não diria de qual data se trata.
+const INICIO_INVALIDO = 'Data de início inválida. Confira o dia, o mês e o ano.'
+// A1: a versão do bloco que a tela leu no Editar não é mais a gravada. Versão
+// ausente (aba de antes do deploy) também cai aqui — falha fechada.
+const CONFLITO_EDICAO =
+  'Outra pessoa alterou esta obra enquanto você editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração.'
 
 const ETAPAS_VALIDAS = CICLO.map((c) => c.k)
 
@@ -235,23 +241,6 @@ async function gravarBloco(
 }
 
 /**
- * As colunas que registram QUEM mudou a etapa e QUANDO ainda não existem em
- * `sdd-sql-obras-v0.sql` (arquivo da frente A, que esta frente não pode
- * editar). O update tenta gravá-las; se o PostgREST responder que a coluna não
- * existe, refaz sem elas — a troca de etapa continua funcionando e passa a
- * registrar autoria sozinha no dia em que a migration ganhar:
- *
- *   alter table public.obras_obra
- *     add column if not exists etapa_por text,
- *     add column if not exists etapa_em timestamptz;
- */
-function colunaInexistente(erro: { code?: string; message?: string } | null): boolean {
-  if (!erro) return false
-  if (erro.code === 'PGRST204') return true
-  return /column .* does not exist|Could not find the '.*' column/i.test(erro.message ?? '')
-}
-
-/**
  * Posição de cada etapa em `CICLO` — a ordem que decide "anterior"/"depois"
  * para os marcos da esteira, abaixo.
  */
@@ -268,8 +257,9 @@ const ORDEM_ETAPA: Record<EtapaCiclo, number> = CICLO.reduce(
  * FORA de propósito: `marco_os_aprov` é satélite do trio da aprovação
  * (`colunasDoCampo`, R7) e é gravado só por `salvarAutorizacaoAction` /
  * `salvarDadosTriagemAction` — decisão do João de 21/09
- * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): esta
- * troca de etapa nunca carimba nem apaga `marco_os_aprov`.
+ * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): a troca
+ * de etapa — pelo seletor ou pelo avanço automático da Autorização (B5) —
+ * nunca carimba nem apaga `marco_os_aprov`.
  */
 const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
   { etapa: 'relatorio', campo: 'marco_relatorio' },
@@ -289,13 +279,11 @@ const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
  * das duas direções — um avanço só carimbava marco `null`, nunca apagava um
  * marco de passo futuro que tivesse sobrado de um estado inconsistente; e
  * "trocar" para a mesma etapa nem entrava no `if`/`else if`, então nunca
- * reconciliava nada. Isso importa porque a chamada que grava os marcos roda
- * numa escrita SEPARADA do update da etapa (ver comentário em
- * `mudarEtapaAction`): se ela falhar depois de uma VOLTA, a obra fica com a
- * etapa nova mas os marcos ainda no estado antigo — inconsistente — e só
- * uma reconciliação por estado final (em vez de "para onde a etapa foi")
- * corrige isso na PRÓXIMA troca, mesmo que a próxima troca seja para a
- * mesma etapa.
+ * reconciliava nada. Desde 23/09 (A13) a troca é atômica — etapa e marcos
+ * numa chamada só da RPC —, mas o cálculo por estado final continua valendo
+ * para qualquer estado herdado (obra de antes de 21/09, ou gravada quando as
+ * duas escritas ainda eram separadas): a PRÓXIMA troca reconcilia, mesmo que
+ * seja para a mesma etapa.
  *
  * Regra, para a nova etapa de índice N (posição em `CICLO`):
  *   - cada marco de `PASSOS_MARCO` (exceto `marco_faturou`) com passo de
@@ -396,50 +384,28 @@ export async function mudarEtapaAction(
     if (erroData) return { error: erroData }
   }
 
-  const base = {
-    etapa,
+  // A13 (23/09): etapa e marcos numa chamada SÓ da RPC — gravam juntos ou
+  // nada grava. A linha da etapa vem primeiro (mesmo `created_at`, desempate
+  // por `seq`); ela só existe quando a etapa muda de verdade, e `etapa` só
+  // entra em `campos` com a linha (a trava de `gravarComHistorico`).
+  const linhas = [
+    ...linhasDeAlteracao({ etapa: obra.etapa }, { etapa }, 'Esteira'),
+    ...linhasDeAlteracao(antes, depois, 'Esteira'),
+  ]
+  const campos: Record<string, unknown> = {
+    ...camposDasLinhas(linhas, { ...depois, etapa }),
     // Quanto tempo a obra está parada NA ETAPA é o número que hoje não existe
     // em lugar nenhum. Ele só continua verdadeiro se zerar a cada troca.
     // Exceção (A4): em Pendente faturamento com data informada, a espera
     // começa na data em que a OS foi fechada.
     desde_etapa: dataFechamentoOS !== undefined && etapa === 'pendFat' ? dataFechamentoOS : hoje,
     atualizacao: hoje,
+    etapa_por: user.email,
+    etapa_em: new Date().toISOString(),
   }
 
-  let { error } = await supabase
-    .from('obras_obra')
-    .update({ ...base, etapa_por: user.email, etapa_em: new Date().toISOString() })
-    .eq('id', obraId)
-
-  if (colunaInexistente(error)) {
-    ;({ error } = await supabase.from('obras_obra').update(base).eq('id', obraId))
-  }
-
+  const { error } = await gravarComHistorico(supabase, { obraId, campos, linhas })
   if (error) return { error: 'Erro ao mudar a etapa da obra' }
-
-  // Marcos da esteira (decisões de 21/09, calculadas pelo ESTADO FINAL —
-  // ver o comentário de calcularMarcosDaEsteira). Roda numa escrita
-  // SEPARADA, DEPOIS da etapa já ter mudado de verdade: as duas não são
-  // atômicas entre si (torná-las exigiria mudar a RPC ou o schema, fora do
-  // escopo desta troca — registrado em docs/DIVIDAS.md, B1). Se ESTA parte
-  // falhar, a obra fica com a etapa nova mas os marcos ainda no estado
-  // antigo — inconsistente — até a PRÓXIMA troca de etapa: como o cálculo é
-  // por estado final (não por direção), a próxima troca reconcilia sozinha,
-  // mesmo que seja outra vez para a mesma etapa. Nada é apagado sem o valor
-  // antigo já estar no histórico primeiro, então não há perda de dado — só
-  // uma janela de exibição incoerente entre as duas escritas.
-  const linhas = linhasDeAlteracao(antes, depois, 'Esteira')
-  if (linhas.length > 0) {
-    const camposMarco = camposDasLinhas(linhas, depois)
-    const { error: erroMarco } = await gravarComHistorico(supabase, {
-      obraId,
-      campos: camposMarco,
-      linhas,
-    })
-    if (erroMarco) {
-      return { error: 'A etapa mudou, mas houve erro ao atualizar os marcos da esteira' }
-    }
-  }
 
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')
@@ -654,10 +620,30 @@ export async function liberarObraAction(
   if (!resp || !equipe || !prioridade || !inicio || !Number.isFinite(duracao)) {
     return { error: 'Preencha os cinco campos antes de liberar' }
   }
-  if (!PRIORIDADES.includes(prioridade as Prioridade)) return { error: 'Prioridade inválida' }
-  if (duracao < 1 || duracao > 180) return { error: 'A duração precisa ficar entre 1 e 180 dias' }
+
+  // B7 (23/09): os cinco campos SÃO os do bloco Cronograma — mesma função,
+  // mesmas mensagens (prioridade, duração 1–180, data de calendário 2000–2100).
+  // Sem `inicioAtual`: liberar não é remarcar.
+  const errosCrono = validarCronograma(
+    { resp, equipe, prioridade, inicio, duracao: dados.duracao },
+    {}
+  )
+  if (errosCrono.inicio) return { error: INICIO_INVALIDO }
+  const erroCrono = primeiroErro(errosCrono)
+  if (erroCrono) return { error: erroCrono }
 
   const hoje = hojeISO()
+
+  // Só `libEm` e `aprovadaEm`: a origem fica de fora de propósito — esta
+  // action não lê a obra (a trava é o `.eq('etapa','definir')`), então não
+  // tem `origemAtual`, e validar recusaria origem legada que a tela exibe.
+  const errosAut = validarAutorizacao(
+    { origem: '', libPor: dados.libPor ?? '', libEm: dados.libEm ?? '', aprovadaEm: dados.aprovadaEm ?? '' },
+    { hoje }
+  )
+  const erroAut = errosAut.libEm ?? errosAut.aprovadaEm
+  if (erroAut) return { error: erroAut }
+
   const libPor = nulo(dados.libPor)
 
   // §4.6 — o diálogo de liberar promete que "os dados da obra e a autorização
@@ -755,7 +741,8 @@ export async function liberarObraAction(
  */
 export async function salvarAutorizacaoAction(
   obraId: string,
-  dados: DadosAutorizacao
+  dados: DadosAutorizacao,
+  versao: string
 ): Promise<EstadoAcao & { avancou?: boolean }> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -765,6 +752,7 @@ export async function salvarAutorizacaoAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Autorização')) return { error: CONFLITO_EDICAO }
 
   const hoje = hojeISO()
 
@@ -784,8 +772,19 @@ export async function salvarAutorizacaoAction(
     depois.etapa = 'fecharOS'
   }
 
-  const linhas = linhasDeAlteracao(antes, depois, 'Autorização')
-  const campos: Record<string, unknown> = { ...camposDasLinhas(linhas, depois), atualizacao: hoje }
+  // B5 (23/09): o avanço aprovarOS → fecharOS é um avanço como qualquer outro
+  // (decisão 1 de 21/09) — os passos anteriores sem data recebem hoje, pela
+  // mesma função do seletor, na MESMA chamada. Chaves disjuntas de `depois`:
+  // `marco_os_aprov` chega pelo trio (`os_aprovada_em`), não por aqui.
+  const marcos = avancou ? calcularMarcosDaEsteira(obra, 'fecharOS', hoje) : { antes: {}, depois: {} }
+  const linhas = [
+    ...linhasDeAlteracao(antes, depois, 'Autorização'),
+    ...linhasDeAlteracao(marcos.antes, marcos.depois, 'Esteira'),
+  ]
+  const campos: Record<string, unknown> = {
+    ...camposDasLinhas(linhas, { ...depois, ...marcos.depois }),
+    atualizacao: hoje,
+  }
 
   if (avancou) {
     // O contador de dias parados na etapa só continua verdadeiro se zerar aqui,
@@ -810,7 +809,8 @@ export async function salvarAutorizacaoAction(
  */
 export async function salvarIdentificacaoAction(
   obraId: string,
-  dados: DadosIdentificacao
+  dados: DadosIdentificacao,
+  versao: string
 ): Promise<EstadoAcao> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -820,6 +820,7 @@ export async function salvarIdentificacaoAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Identificação')) return { error: CONFLITO_EDICAO }
 
   const erro = primeiroErro(validarIdentificacao(dados, { tipoAtual: obra.tipo }))
   if (erro) return { error: erro }
@@ -875,7 +876,8 @@ async function motivoCanonico(
  */
 export async function salvarCronogramaAction(
   obraId: string,
-  dados: DadosCronograma
+  dados: DadosCronograma,
+  versao: string
 ): Promise<EstadoAcao> {
   const sessao = await abrirSessao()
   if (sessao.error) return { error: sessao.error }
@@ -885,6 +887,7 @@ export async function salvarCronogramaAction(
   if (leitura.error) return { error: leitura.error }
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_SO_LEITURA }
+  if (versao !== versaoDoBloco(obra, 'Cronograma')) return { error: CONFLITO_EDICAO }
 
   const erro = primeiroErro(validarCronograma(dados, { inicioAtual: obra.inicio_plan }))
   if (erro) return { error: erro }

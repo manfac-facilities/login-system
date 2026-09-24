@@ -91,9 +91,17 @@ function linhasMarco(): { campo: string; de: string | null; para: string | null 
   )
 }
 
-/** O objeto passado ao `.update(...)` de `obras_obra` (troca de etapa). */
-function objetoDoUpdate(): Record<string, unknown> {
-  return updateMock.mock.calls.at(-1)?.[0] as Record<string, unknown>
+/**
+ * `p_campos` inteiro da última chamada da RPC. Desde a A13 (23/09) a troca de
+ * etapa grava etapa + marcos numa chamada só — não há mais `.update(...)`.
+ */
+function camposDaChamada(): Record<string, unknown> {
+  return camposMarco() ?? {}
+}
+
+/** Só as colunas `marco_*` de `p_campos` — o que os testes dos marcos olham. */
+function marcos(): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(camposDaChamada()).filter(([k]) => k.startsWith('marco_')))
 }
 
 function encadearUpdate(resultado: { error: unknown } = { error: null }) {
@@ -132,30 +140,30 @@ describe('mudarEtapaAction — avançar carimba os marcos anteriores', () => {
     obraAtual = obra({ etapa: 'paralisado' })
     const r = await mudarEtapaAction('o1', 'relatorio')
     expect(r).toEqual({ success: true })
-    expect(objetoDoUpdate()).toMatchObject({ etapa: 'relatorio' })
+    expect(camposDaChamada()).toMatchObject({ etapa: 'relatorio' })
     // marco_relatorio é o marco do PRÓPRIO passo que a obra está entrando —
     // fica null (o passo é 'atual', não 'feito') até a obra sair dele.
-    expect(camposMarco()).toEqual({ marco_exec_fim: HOJE })
+    expect(marcos()).toEqual({ marco_exec_fim: HOJE })
   })
 
   it('avanço pulando passos (andamento → pendFat): carimba tudo que é anterior', async () => {
     obraAtual = obra({ etapa: 'andamento' })
     const r = await mudarEtapaAction('o1', 'pendFat')
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toEqual({
+    expect(marcos()).toEqual({
       marco_exec_fim: HOJE,
       marco_relatorio: HOJE,
       marco_fechou_os: HOJE,
     })
     // pendFat é a etapa nova — o próprio marco dela não é carimbado.
-    expect(camposMarco()).not.toHaveProperty('marco_liberou_fat')
+    expect(marcos()).not.toHaveProperty('marco_liberou_fat')
   })
 
   it('entrada em faturado: além dos anteriores, marco_faturou também recebe hoje (etapa terminal)', async () => {
     obraAtual = obra({ etapa: 'pendFat' })
     const r = await mudarEtapaAction('o1', 'faturado')
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toEqual({
+    expect(marcos()).toEqual({
       marco_exec_fim: HOJE,
       marco_relatorio: HOJE,
       marco_fechou_os: HOJE,
@@ -173,9 +181,11 @@ describe('mudarEtapaAction — avançar carimba os marcos anteriores', () => {
     const r = await mudarEtapaAction('o1', 'aprovarOS')
     expect(r).toEqual({ success: true })
     // Nada mudou nos marcos rastreados (marco_relatorio já anterior a
-    // aprovarOS e já preenchido; marco_exec_fim já preenchido) — não há
-    // linha de histórico, então a RPC de marcos nem é chamada.
-    expect(rpcMock).not.toHaveBeenCalled()
+    // aprovarOS e já preenchido; marco_exec_fim já preenchido) — a chamada
+    // leva só a etapa, com a linha dela e nenhuma linha de marco.
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(marcos()).toEqual({})
+    expect(linhasMarco().map((l) => l.campo)).toEqual(['etapa'])
   })
 })
 
@@ -191,12 +201,12 @@ describe('mudarEtapaAction — voltar apaga os marcos com histórico', () => {
     })
     const r = await mudarEtapaAction('o1', 'pendFat')
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toEqual({ marco_liberou_fat: null, marco_faturou: null })
+    expect(marcos()).toEqual({ marco_liberou_fat: null, marco_faturou: null })
     // Passos ANTES de pendFat na esteira não são tocados.
-    expect(camposMarco()).not.toHaveProperty('marco_relatorio')
-    expect(camposMarco()).not.toHaveProperty('marco_fechou_os')
+    expect(marcos()).not.toHaveProperty('marco_relatorio')
+    expect(marcos()).not.toHaveProperty('marco_fechou_os')
     // marco_exec_fim continua — pendFat ainda é pós-campo.
-    expect(camposMarco()).not.toHaveProperty('marco_exec_fim')
+    expect(marcos()).not.toHaveProperty('marco_exec_fim')
 
     const linhas = linhasMarco()
     const liberouFat = linhas.find((l) => l.campo === 'marco_liberou_fat')
@@ -213,7 +223,7 @@ describe('mudarEtapaAction — voltar apaga os marcos com histórico', () => {
     })
     const r = await mudarEtapaAction('o1', 'andamento')
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toEqual({ marco_exec_fim: null, marco_relatorio: null })
+    expect(marcos()).toEqual({ marco_exec_fim: null, marco_relatorio: null })
   })
 })
 
@@ -239,14 +249,14 @@ describe('mudarEtapaAction — reconcilia pelo ESTADO FINAL, não pela direção
     })
     const r = await mudarEtapaAction('o1', 'relatorio')
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toEqual({
+    expect(marcos()).toEqual({
       marco_relatorio: null,
       marco_fechou_os: null,
       marco_liberou_fat: null,
       marco_faturou: null,
     })
     // marco_exec_fim é mantido: relatorio é pós-campo e o marco já tinha data.
-    expect(camposMarco()).not.toHaveProperty('marco_exec_fim')
+    expect(marcos()).not.toHaveProperty('marco_exec_fim')
   })
 
   it('trocar para a MESMA etapa (andamento) com estado inconsistente reconcilia — nada fica de fora', async () => {
@@ -261,7 +271,7 @@ describe('mudarEtapaAction — reconcilia pelo ESTADO FINAL, não pela direção
     const r = await mudarEtapaAction('o1', 'andamento')
     expect(r).toEqual({ success: true })
     // andamento é pré-campo: nenhum marco deveria ter data, nem exec_fim.
-    expect(camposMarco()).toEqual({
+    expect(marcos()).toEqual({
       marco_exec_fim: null,
       marco_relatorio: null,
       marco_fechou_os: null,
@@ -275,8 +285,8 @@ describe('mudarEtapaAction — marco_os_aprov nunca é tocado', () => {
   it('avançar pulando aprovarOS não grava marco_os_aprov', async () => {
     obraAtual = obra({ etapa: 'andamento' })
     await mudarEtapaAction('o1', 'faturado')
-    expect(camposMarco()).not.toHaveProperty('marco_os_aprov')
-    expect(objetoDoUpdate()).not.toHaveProperty('marco_os_aprov')
+    expect(marcos()).not.toHaveProperty('marco_os_aprov')
+    expect(camposDaChamada()).not.toHaveProperty('marco_os_aprov')
   })
 
   it('voltar por cima de aprovarOS não apaga marco_os_aprov', async () => {
@@ -289,7 +299,7 @@ describe('mudarEtapaAction — marco_os_aprov nunca é tocado', () => {
       marco_faturou: '2026-08-28',
     })
     await mudarEtapaAction('o1', 'aprovarOS')
-    expect(camposMarco()).not.toHaveProperty('marco_os_aprov')
+    expect(marcos()).not.toHaveProperty('marco_os_aprov')
   })
 })
 
@@ -302,12 +312,68 @@ describe('mudarEtapaAction — erros da leitura do estado atual e do update', ()
     expect(rpcMock).not.toHaveBeenCalled()
   })
 
-  it('erro do update da etapa vira mensagem em português, sem tentar gravar marcos', async () => {
+  it('erro da RPC não grava nada: uma chamada só, mensagem em português, sem revalidar', async () => {
     obraAtual = obra({ etapa: 'andamento' })
-    encadearUpdate({ error: { code: '42501', message: 'RLS' } })
+    rpcMock.mockResolvedValue({ data: null, error: { code: '42501', message: 'RLS' } })
     const r = await mudarEtapaAction('o1', 'relatorio')
     expect(r).toEqual({ error: 'Erro ao mudar a etapa da obra' })
-    expect(rpcMock).not.toHaveBeenCalled()
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(revalidatePath).not.toHaveBeenCalled()
+  })
+
+  it('a mensagem de falha parcial não existe mais no código', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fonte = require('fs').readFileSync(require('path').join(__dirname, '..', '_actions.ts'), 'utf8')
+    expect(fonte).not.toMatch(/A etapa mudou, mas houve erro/)
+  })
+})
+
+describe('mudarEtapaAction — etapa e marcos numa chamada só (A13, 23/09)', () => {
+  it('andamento → relatorio: sem update, uma RPC com etapa, controle e marcos; linha da etapa primeiro', async () => {
+    obraAtual = obra({ etapa: 'andamento' })
+    const r = await mudarEtapaAction('o1', 'relatorio')
+    expect(r).toEqual({ success: true })
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(rpcMock.mock.calls[0][0]).toBe('obras_aplicar_alteracao')
+    const c = camposDaChamada()
+    expect(c).toMatchObject({
+      etapa: 'relatorio',
+      desde_etapa: HOJE,
+      atualizacao: HOJE,
+      etapa_por: EMAIL,
+      marco_exec_fim: HOJE,
+    })
+    expect(typeof c.etapa_em).toBe('string')
+    const linhas = linhasMarco()
+    expect(linhas[0]).toEqual({
+      bloco: 'Esteira',
+      campo: 'etapa',
+      de: 'Em andamento',
+      para: 'Relatório de entrega',
+      motivo: null,
+    })
+    expect(linhas.slice(1).map((l) => l.campo)).toEqual(['marco_exec_fim'])
+  })
+
+  it('mesma etapa com marcos coerentes: sem etapa em p_campos, desde_etapa zera, nenhuma linha', async () => {
+    obraAtual = obra({ etapa: 'andamento' })
+    const r = await mudarEtapaAction('o1', 'andamento')
+    expect(r).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(camposDaChamada()).not.toHaveProperty('etapa')
+    expect(camposDaChamada()).toMatchObject({ desde_etapa: HOJE, atualizacao: HOJE })
+    expect(linhasMarco()).toEqual([])
+  })
+
+  it('mesma etapa com marcos incoerentes: reconcilia na mesma chamada, sem linha de etapa', async () => {
+    obraAtual = obra({ etapa: 'andamento', marco_relatorio: '2026-08-02' })
+    await mudarEtapaAction('o1', 'andamento')
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(camposDaChamada()).not.toHaveProperty('etapa')
+    expect(marcos()).toEqual({ marco_relatorio: null })
+    expect(linhasMarco().map((l) => l.campo)).toEqual(['marco_relatorio'])
   })
 })
 
@@ -340,18 +406,21 @@ describe('mudarEtapaAction — data de fechamento da OS (ajuste 2, 23/09)', () =
     obraAtual = emFecharOS()
     const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(2))
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+    expect(marcos()).toMatchObject({ marco_fechou_os: diasAtras(2) })
     expect(linhasMarco()).toContainEqual(
       expect.objectContaining({ campo: 'marco_fechou_os', de: null, para: br(diasAtras(2)) })
     )
-    expect(objetoDoUpdate()).toMatchObject({ etapa: 'pendFat', desde_etapa: diasAtras(2) })
+    expect(camposDaChamada()).toMatchObject({ etapa: 'pendFat', desde_etapa: diasAtras(2) })
+    // A16: data digitada, etapa e desde_etapa gravam na MESMA chamada.
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(updateMock).not.toHaveBeenCalled()
   })
 
   it('sem data, continua carimbando hoje (comportamento anterior)', async () => {
     obraAtual = emFecharOS()
     await mudarEtapaAction('o1', 'pendFat')
-    expect(camposMarco()).toMatchObject({ marco_fechou_os: HOJE })
-    expect(objetoDoUpdate()).toMatchObject({ desde_etapa: HOJE })
+    expect(marcos()).toMatchObject({ marco_fechou_os: HOJE })
+    expect(camposDaChamada()).toMatchObject({ desde_etapa: HOJE })
   })
 
   it('data futura é recusada ANTES de qualquer escrita', async () => {
@@ -393,14 +462,14 @@ describe('mudarEtapaAction — data de fechamento da OS (ajuste 2, 23/09)', () =
     })
     const r = await mudarEtapaAction('o1', 'pendFat', diasAtras(2))
     expect(r).toEqual({ success: true })
-    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+    expect(marcos()).toMatchObject({ marco_fechou_os: diasAtras(2) })
   })
 
   it('Fechar OS → Faturado com data: marco recebe a data, desde_etapa continua hoje', async () => {
     obraAtual = emFecharOS()
     await mudarEtapaAction('o1', 'faturado', diasAtras(2))
-    expect(camposMarco()).toMatchObject({ marco_fechou_os: diasAtras(2) })
-    expect(objetoDoUpdate()).toMatchObject({ desde_etapa: HOJE })
+    expect(marcos()).toMatchObject({ marco_fechou_os: diasAtras(2) })
+    expect(camposDaChamada()).toMatchObject({ desde_etapa: HOJE })
   })
 })
 

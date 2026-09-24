@@ -24,11 +24,20 @@ import {
   validarCronograma,
   validarDataFechamentoOS,
   validarIdentificacao,
+  versaoDoBloco,
   type DadosAutorizacao,
   type DadosCronograma,
   type DadosIdentificacao,
 } from '../_lib/ficha-campos'
-import { BLOQUEIOS, ORIGENS, TIPOS_OBRA, entradaDaObra } from '../_lib/tipos'
+import {
+  BLOQUEIOS,
+  ORIGENS,
+  TIPOS_OBRA,
+  derivar,
+  entradaDaObra,
+  type Etapa,
+  type ObraRow,
+} from '../_lib/tipos'
 
 const HOJE = '2026-08-31'
 
@@ -419,5 +428,122 @@ describe('validarDataFechamentoOS', () => {
     const vazio = { hoje: HOJE_F, relatorio: null, aprovacao: null }
     expect(validarDataFechamentoOS('2020-01-01', vazio)).toBeUndefined()
     expect(validarDataFechamentoOS('2026-09-23', vazio)).toBe('A data não pode ser posterior a hoje.')
+  })
+})
+
+// ============================================================
+// versaoDoBloco — A1 (spec-dividas-ficha-2026-09-23 §5.3)
+// ============================================================
+
+function linhaObra(over: Partial<ObraRow> = {}): ObraRow {
+  return {
+    id: 'obra-1',
+    os: '0226-000001',
+    loja: 'DP TESTE',
+    descricao: null,
+    tipo: 'TELHADO',
+    valor: 18450,
+    origem: 'Sistema do cliente',
+    fonte: null,
+    field_id: null,
+    field_ausente_desde: null,
+    field_ausente_em: null,
+    analista_cliente: 'LEANDRO',
+    pcm: 'YURI',
+    equipe: 'MANFAC-7',
+    os_aprovada: true,
+    liberado_por: 'Raphael',
+    liberado_em: '2026-08-19',
+    etapa: 'andamento' as Etapa,
+    bloqueio: 'Sem bloqueio',
+    mau_uso: false,
+    prioridade: 'Normal',
+    aprovacao: '2026-08-20',
+    inicio_plan: '2026-08-21',
+    inicio_real: null,
+    duracao: 7,
+    fim_real: null,
+    desde_etapa: null,
+    marco_exec_fim: null,
+    marco_relatorio: null,
+    marco_os_aprov: null,
+    marco_fechou_os: null,
+    marco_liberou_fat: null,
+    marco_faturou: null,
+    pendencia: null,
+    pend_resp: null,
+    pend_prazo: null,
+    prox_acao: null,
+    atualizacao: '2026-08-30',
+    nao_andou_seguidos: 0,
+    bloqueada_dias: 0,
+    criado_por: null,
+    created_at: '2026-08-20T00:00:00Z',
+    updated_at: null,
+    ...over,
+  }
+}
+
+describe('versaoDoBloco', () => {
+  const BLOCOS = ['Autorização', 'Identificação', 'Cronograma'] as const
+  type Bloco = (typeof BLOCOS)[number]
+
+  it.each(BLOCOS)('mesma linha dá a mesma versão (%s)', (b) => {
+    expect(versaoDoBloco(linhaObra(), b)).toBe(versaoDoBloco(linhaObra(), b))
+  })
+
+  it.each([
+    ['Autorização', { origem: 'Telefone' }],
+    ['Autorização', { liberado_por: 'Outro' }],
+    ['Autorização', { liberado_em: '2026-08-18' }],
+    ['Autorização', { aprovacao: '2026-08-22' }],
+    ['Identificação', { tipo: 'PISO' }],
+    ['Identificação', { valor: 100 }],
+    ['Identificação', { analista_cliente: 'OUTRA' }],
+    ['Identificação', { mau_uso: true }],
+    ['Cronograma', { pcm: 'AMANDA' }],
+    ['Cronograma', { equipe: 'MANFAC-1' }],
+    ['Cronograma', { prioridade: 'Urgente' }],
+    ['Cronograma', { inicio_plan: '2026-08-25' }],
+    ['Cronograma', { duracao: 8 }],
+  ] as [Bloco, Partial<ObraRow>][])('mudar uma coluna do bloco muda a versão (%s, %o)', (b, over) => {
+    expect(versaoDoBloco(linhaObra(over), b)).not.toBe(versaoDoBloco(linhaObra(), b))
+  })
+
+  it.each([
+    ['Autorização', { equipe: 'MANFAC-1' }],
+    ['Autorização', { etapa: 'relatorio' as Etapa }],
+    ['Autorização', { pendencia: 'x' }],
+    ['Autorização', { nao_andou_seguidos: 3 }],
+    ['Autorização', { updated_at: '2026-09-23T10:00:00Z' }],
+    ['Cronograma', { origem: 'Telefone' }],
+    ['Cronograma', { aprovacao: '2026-08-22' }],
+  ] as [Bloco, Partial<ObraRow>][])(
+    'mudar coluna de fora do bloco não muda a versão (%s, %o)',
+    (b, over) => {
+      expect(versaoDoBloco(linhaObra(over), b)).toBe(versaoDoBloco(linhaObra(), b))
+    }
+  )
+
+  it('undefined e null na mesma coluna dão a mesma versão', () => {
+    const semOrigem: Partial<ObraRow> = { ...linhaObra() }
+    delete semOrigem.origem
+    expect(versaoDoBloco(semOrigem, 'Autorização')).toBe(
+      versaoDoBloco(linhaObra({ origem: null }), 'Autorização')
+    )
+  })
+
+  it('distingue 18450 de 18450.5 e mau_uso false de true', () => {
+    expect(versaoDoBloco(linhaObra({ valor: 18450 }), 'Identificação')).not.toBe(
+      versaoDoBloco(linhaObra({ valor: 18450.5 }), 'Identificação')
+    )
+    expect(versaoDoBloco(linhaObra({ mau_uso: false }), 'Identificação')).not.toBe(
+      versaoDoBloco(linhaObra({ mau_uso: true }), 'Identificação')
+    )
+  })
+
+  it.each(BLOCOS)('a obra derivada tem a mesma versão da linha crua (%s)', (b) => {
+    const l = linhaObra()
+    expect(versaoDoBloco(derivar(l, HOJE), b)).toBe(versaoDoBloco(l, b))
   })
 })

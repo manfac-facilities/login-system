@@ -10,13 +10,15 @@
  *  - a receita do hub: sem acesso não escreve, e a action nunca lança;
  *  - a trava dos cinco campos da triagem no SERVIDOR, não só na tela;
  *  - `null` como único sentinela de vazio (decisão 8 da spec);
- *  - a troca de etapa registrando quando ela mudou, e sobrevivendo à ausência
- *    das colunas de autoria (ver o comentário em `_actions.ts`).
+ *  - a troca de etapa registrando quando ela mudou, numa chamada só da RPC (A13).
  */
 
 const getUserMock = jest.fn()
 const updateMock = jest.fn()
 const eqMock = jest.fn()
+// Desde a A13 (23/09) a troca de etapa grava pela RPC `obras_aplicar_alteracao`
+// (etapa + marcos numa chamada só), não mais por `.update(...)`.
+const rpcMock = jest.fn()
 // `mudarEtapaAction` passou a ler a obra ANTES de trocar a etapa (para
 // calcular os marcos da esteira — decisões do João de 21/09). Este arquivo
 // não testa marcos (isso mora em `obra/[id]/__tests__/_actions.test.ts`);
@@ -28,6 +30,7 @@ const obraLidaMock = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
+    rpc: rpcMock,
     from: jest.fn(() => ({
       update: updateMock,
       select: jest.fn(() => ({ eq: jest.fn(() => ({ maybeSingle: obraLidaMock })) })),
@@ -85,7 +88,13 @@ beforeEach(() => {
     error: null,
   })
   encadear({ error: null })
+  rpcMock.mockResolvedValue({ data: null, error: null })
 })
+
+/** `p_campos` da última chamada da RPC. */
+function camposDaRpc(): Record<string, unknown> {
+  return (rpcMock.mock.calls.at(-1)?.[1] as { p_campos: Record<string, unknown> }).p_campos
+}
 
 describe('mudarEtapaAction', () => {
   it('recusa quem não tem acesso ao sistema, sem escrever nada', async () => {
@@ -111,7 +120,9 @@ describe('mudarEtapaAction', () => {
   it('grava a etapa e RECOMEÇA o contador de dias parada nela', async () => {
     const r = await mudarEtapaAction('o1', 'paralisado')
     expect(r).toEqual({ success: true })
-    expect(updateMock).toHaveBeenCalledWith(
+    expect(updateMock).not.toHaveBeenCalled()
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(camposDaRpc()).toEqual(
       expect.objectContaining({
         etapa: 'paralisado',
         desde_etapa: hojeISO(),
@@ -121,28 +132,8 @@ describe('mudarEtapaAction', () => {
     )
   })
 
-  it('sobrevive à ausência das colunas de autoria, refazendo o update sem elas', async () => {
-    // Primeira tentativa: o PostgREST não conhece etapa_por/etapa_em.
-    updateMock
-      .mockReturnValueOnce({
-        eq: jest.fn().mockResolvedValue({ error: { code: 'PGRST204', message: "Could not find the 'etapa_por' column" } }),
-      })
-      .mockReturnValueOnce({ eq: jest.fn().mockResolvedValue({ error: null }) })
-
-    const r = await mudarEtapaAction('o1', 'andamento')
-    expect(r).toEqual({ success: true })
-    expect(updateMock).toHaveBeenCalledTimes(2)
-    expect(updateMock).toHaveBeenLastCalledWith({
-      etapa: 'andamento',
-      desde_etapa: hojeISO(),
-      atualizacao: hojeISO(),
-    })
-  })
-
   it('devolve mensagem em português quando o banco recusa, sem lançar', async () => {
-    updateMock.mockReturnValue({
-      eq: jest.fn().mockResolvedValue({ error: { code: '42501', message: 'RLS denied' } }),
-    })
+    rpcMock.mockResolvedValue({ data: null, error: { code: '42501', message: 'RLS denied' } })
     await expect(mudarEtapaAction('o1', 'andamento')).resolves.toEqual({
       error: 'Erro ao mudar a etapa da obra',
     })
@@ -192,11 +183,65 @@ describe('liberarObraAction', () => {
     )
   })
 
-  it('sem quem liberou, a data da liberação não é gravada — nem como string vazia', async () => {
-    await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '2026-09-01' })
+  it('sem quem liberou e sem data, nada de liberação é gravado — nem como string vazia', async () => {
+    await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '' })
     expect(updateMock).toHaveBeenCalledWith(
       expect.objectContaining({ liberado_por: null, liberado_em: null })
     )
+  })
+
+  // B7 (spec-dividas-ficha-2026-09-23 §4): as datas da liberação são
+  // validadas no SERVIDOR com as mesmas funções da ficha.
+  describe('B7 — datas validadas no servidor', () => {
+    const INICIO_INVALIDO = 'Data de início inválida. Confira o dia, o mês e o ano.'
+
+    it.each(['2026-02-31', '20266-01-01', '0226-09-01'])('início %s é recusado', async (inicio) => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, inicio })).toEqual({ error: INICIO_INVALIDO })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de liberação que não existe é recusada', async () => {
+      expect(
+        await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: 'LEANDRO', libEm: '2026-13-01' })
+      ).toEqual({ error: 'Data inválida.' })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de liberação sem nome é recusada (antes era descartada em silêncio)', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, libPor: '', libEm: '2026-09-01' })).toEqual({
+        error: 'Tem data da liberação sem nome. Escolha quem liberou ou apague a data.',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('data de aprovação que não existe é recusada', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, aprovadaEm: '2026-02-30' })).toEqual({
+        error: 'Data inválida.',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('duração com lixo depois do número é recusada', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, duracao: '12abc' })).toEqual({
+        error: 'A duração precisa ficar entre 1 e 180 dias',
+      })
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('duração 0 e 181 continuam com a mensagem de hoje', async () => {
+      for (const duracao of ['0', '181']) {
+        expect(await liberarObraAction('o1', { ...TRIAGEM_OK, duracao })).toEqual({
+          error: 'A duração precisa ficar entre 1 e 180 dias',
+        })
+      }
+      expect(updateMock).not.toHaveBeenCalled()
+    })
+
+    it('origem fora da lista continua aceita (a liberação não valida origem)', async () => {
+      expect(await liberarObraAction('o1', { ...TRIAGEM_OK, origem: 'Pombo-correio' })).toEqual({
+        success: true,
+      })
+    })
   })
 
   it('com quem liberou e sem data, assume hoje', async () => {

@@ -58,10 +58,11 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { hojeISO } from '../_lib/tipos'
+import { versaoDoBloco, type BlocoVersionado } from '../_lib/ficha-campos'
 import {
-  salvarAutorizacaoAction,
-  salvarIdentificacaoAction,
-  salvarCronogramaAction,
+  salvarAutorizacaoAction as autorizacaoComVersao,
+  salvarIdentificacaoAction as identificacaoComVersao,
+  salvarCronogramaAction as cronogramaComVersao,
   salvarDadosTriagemAction,
   cadastrarMotivoRemarcacaoAction,
   liberarObraAction,
@@ -69,6 +70,22 @@ import {
 
 const HOJE = hojeISO()
 const EMAIL = 'yuri@manfac.com.br'
+
+/** A versão do bloco na obra que o mock vai devolver — a que a tela teria lido (A1). */
+function versao(bloco: BlocoVersionado): string {
+  return versaoDoBloco((obraAtual ?? {}) as Parameters<typeof versaoDoBloco>[0], bloco)
+}
+
+// Os testes anteriores à A1 falam da regra de cada bloco, não de concorrência:
+// chamam a action como a tela chama, com a versão da obra que está no mock.
+// Os testes da A1 (fim do arquivo) usam as actions cruas, com versão explícita.
+type Args<F> = F extends (id: string, dados: infer D, versao: string) => unknown ? D : never
+const salvarAutorizacaoAction = (id: string, d: Args<typeof autorizacaoComVersao>) =>
+  autorizacaoComVersao(id, d, versao('Autorização'))
+const salvarIdentificacaoAction = (id: string, d: Args<typeof identificacaoComVersao>) =>
+  identificacaoComVersao(id, d, versao('Identificação'))
+const salvarCronogramaAction = (id: string, d: Args<typeof cronogramaComVersao>) =>
+  cronogramaComVersao(id, d, versao('Cronograma'))
 
 /** Obra "em branco": tudo que a ficha grava nasce `null`, então tudo muda. */
 function obra(over: Record<string, unknown> = {}) {
@@ -398,6 +415,96 @@ describe('salvarAutorizacaoAction', () => {
     const r = await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
     expect(r).toEqual({ success: true })
     expect(campos()).not.toHaveProperty('etapa')
+  })
+})
+
+// ============================================================
+// B5 — o auto-avanço da Autorização carimba os marcos da esteira
+// (spec-dividas-ficha-2026-09-23 §3)
+// ============================================================
+
+describe('salvarAutorizacaoAction — B5: avanço automático carimba os marcos', () => {
+  const MARCOS_VAZIOS = {
+    marco_exec_fim: null,
+    marco_relatorio: null,
+    marco_fechou_os: null,
+    marco_liberou_fat: null,
+    marco_faturou: null,
+  }
+  type Linha = { bloco: string; campo: string; de: string | null; para: string | null }
+  const linhas = () => argumentos().p_linhas as Linha[]
+
+  it('aprovarOS sem marcos: uma RPC com etapa, trio e marcos anteriores; linhas Autorização e depois Esteira', async () => {
+    obraAtual = obra({ etapa: 'aprovarOS', ...MARCOS_VAZIOS })
+    const r = await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(r).toEqual({ success: true, avancou: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(campos()).toMatchObject({
+      etapa: 'fecharOS',
+      marco_exec_fim: HOJE,
+      marco_relatorio: HOJE,
+      aprovacao: '2026-09-10',
+      os_aprovada: true,
+      marco_os_aprov: '2026-09-10',
+    })
+    expect(linhas().map((l) => [l.bloco, l.campo])).toEqual([
+      ['Autorização', 'os_aprovada_em'],
+      ['Autorização', 'etapa'],
+      ['Esteira', 'marco_exec_fim'],
+      ['Esteira', 'marco_relatorio'],
+    ])
+  })
+
+  it('marcos já preenchidos nunca são sobrescritos: nenhum marco em p_campos, nenhuma linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      marco_exec_fim: '2026-09-01',
+      marco_relatorio: '2026-09-05',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    const marcos = Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')
+    expect(marcos).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+  })
+
+  it('estado incoerente (marco_fechou_os preenchido em aprovarOS) vira null com linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      marco_exec_fim: '2026-09-01',
+      marco_relatorio: '2026-09-05',
+      marco_fechou_os: '2026-09-06',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(campos()).toMatchObject({ marco_fechou_os: null })
+    expect(linhas()).toContainEqual(
+      expect.objectContaining({ bloco: 'Esteira', campo: 'marco_fechou_os', de: '06/09/2026', para: null })
+    )
+  })
+
+  it('sem avanço (obra já aprovada, ou em outra etapa): nenhum marco, nenhuma linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      aprovacao: '2026-09-01',
+      os_aprovada: true,
+      marco_os_aprov: '2026-09-01',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-02' })
+    expect(Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+
+    obraAtual = obra({ etapa: 'andamento', ...MARCOS_VAZIOS })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+  })
+
+  it('marco_os_aprov continua vindo só pelo trio — nunca como linha própria', async () => {
+    obraAtual = obra({ etapa: 'aprovarOS', ...MARCOS_VAZIOS })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(linhas().find((l) => l.campo === 'marco_os_aprov')).toBeUndefined()
   })
 })
 
@@ -825,5 +932,91 @@ describe('obra cancelada é só leitura no servidor (spec do cancelamento §5.3)
   ])('%s recusa obra cancelada, sem chamar a RPC', async (_n, chamar) => {
     expect(await chamar()).toEqual({ error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.' })
     expect(rpcMock).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================
+// A1 — o servidor recusa gravação sobre edição de outra pessoa
+// (spec-dividas-ficha-2026-09-23 §5.3–5.4)
+// ============================================================
+
+describe('A1 — versão do bloco conferida no servidor', () => {
+  const CONFLITO =
+    'Outra pessoa alterou esta obra enquanto você editava. Recarregue a página para ver o que foi gravado e refaça a sua alteração.'
+
+  // Cada bloco: a action crua, um rascunho que grava algo, e uma coluna DO
+  // bloco que outra pessoa mudou depois do Editar.
+  const BLOCOS = [
+    [
+      'Autorização',
+      (v: string | undefined) => autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, v as string),
+      { origem: 'Telefone' },
+    ],
+    [
+      'Identificação',
+      (v: string | undefined) => identificacaoComVersao('o1', { ...IDENT_VAZIA, tipo: 'CIVIL' }, v as string),
+      { valor: 100 },
+    ],
+    [
+      'Cronograma',
+      (v: string | undefined) => cronogramaComVersao('o1', { ...CRONO_VAZIO, duracao: '10' }, v as string),
+      { pcm: 'AMANDA' },
+    ],
+  ] as const
+
+  it.each(BLOCOS)('%s: versão igual grava', async (bloco, chamar) => {
+    expect(await chamar(versao(bloco))).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(BLOCOS)('%s: versão de antes da mudança de outra pessoa é recusada, sem RPC', async (bloco, chamar, mudanca) => {
+    const lida = versao(bloco)
+    obraAtual = obra(mudanca)
+    expect(await chamar(lida)).toEqual({ error: CONFLITO })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it.each(BLOCOS)('%s: versão ausente (aba de antes do deploy) também é recusada', async (_bloco, chamar) => {
+    expect(await chamar(undefined)).toEqual({ error: CONFLITO })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('mudança só em coluna de fora do bloco não é conflito', async () => {
+    const lida = versao('Autorização')
+    obraAtual = obra({ pendencia: 'Aguardando material', equipe: 'MANFAC-1' })
+    expect(
+      await autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, lida)
+    ).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('Cronograma com remarcação e versão errada recusa antes de ler os motivos e antes da RPC', async () => {
+    obraAtual = obra({ inicio_plan: '2026-09-01' })
+    const lida = versao('Cronograma')
+    obraAtual = obra({ inicio_plan: '2026-09-01', duracao: 12 })
+    lerMotivosMock.mockResolvedValue({ data: [{ nome: 'Clima' }], error: null })
+    const r = await cronogramaComVersao(
+      'o1',
+      { ...CRONO_VAZIO, inicio: '2026-09-05', motivo: 'Clima' },
+      lida
+    )
+    expect(r).toEqual({ error: CONFLITO })
+    expect(fromMock).not.toHaveBeenCalledWith('obras_motivo_remarcacao')
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('obra cancelada com versão errada: a mensagem é a de cancelada (vem primeiro)', async () => {
+    obraAtual = obra({ etapa: 'cancelado', cancelado_etapa_anterior: 'andamento' })
+    expect(await autorizacaoComVersao('o1', { ...AUT_VAZIA, libPor: 'LEANDRO' }, 'errada')).toEqual({
+      error: 'Obra cancelada é só leitura. Desfaça o cancelamento para editar.',
+    })
+  })
+
+  it('R1 continua primeiro: sem acesso e versão errada → sem acesso', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    expect(await identificacaoComVersao('o1', IDENT_VAZIA, 'errada')).toEqual({
+      error: 'Sem acesso ao Controle de Obras',
+    })
+    expect(fromMock).not.toHaveBeenCalled()
   })
 })

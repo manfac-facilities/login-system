@@ -57,7 +57,7 @@ import {
   type RemarcacaoRow,
   type TarefaRow,
 } from '../../_lib/tipos'
-import { moedaParaTexto } from '../../_lib/ficha-campos'
+import { moedaParaTexto, versaoDoBloco } from '../../_lib/ficha-campos'
 import { Box, BoxB, BoxH, Campo, Campos, EstadoVazio, Placeholder } from '../../_ui/primitivos'
 import {
   BadgeDias,
@@ -749,6 +749,7 @@ export default function Ficha({
               — "por onde chegou o OK" é parte da autorização (E2 da spec). */}
           <BlocoAutorizacao
             obraId={obra.id}
+            versao={versaoDoBloco(obra, 'Autorização')}
             valores={{
               origem: obra.origem ?? '',
               libPor: obra.liberado_por ?? '',
@@ -770,6 +771,7 @@ export default function Ficha({
           {/* ---------- identificação (editável) ---------- */}
           <BlocoIdentificacao
             obraId={obra.id}
+            versao={versaoDoBloco(obra, 'Identificação')}
             valores={{
               tipo: obra.tipo ?? '',
               // O input de edição recebe TEXTO pt-BR ('18.450,00'), não número:
@@ -788,6 +790,7 @@ export default function Ficha({
           {/* ---------- cronograma (editável) ---------- */}
           <BlocoCronograma
             obraId={obra.id}
+            versao={versaoDoBloco(obra, 'Cronograma')}
             valores={{
               resp: obra.pcm ?? '',
               equipe: obra.equipe ?? '',
