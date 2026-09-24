@@ -91,9 +91,9 @@ Resend. Os 4 e-mails com slug `obras` têm conta e já entraram. Deploy segue ma
 com o código de acesso ao EasyPanel com o cliente. Próximo: cancelamento de obra
 (mockup aprovado 23/09; exige migration `sdd-sql-obras-cancelamento.sql`).
 
-Branch `feat/dividas-ficha` (24/09, sem deploy — quem deploya atualiza): a troca de
-etapa passou a ser atômica (etapa + marcos numa chamada só da RPC, com linha
-"Esteira · Etapa" no Histórico), o auto-avanço da Autorização carimba os marcos, a
-liberação da Triagem valida as datas no servidor, e os três blocos da ficha detectam
-edição concorrente pela versão do bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5,
-B7 fechadas; bordas novas em A31–A35.
+**No master em 24/09, ainda sem deploy (quem deploya atualiza esta linha):** cancelamento de
+obra (merge `fed48eb`; migration `obras-cancelamento` já aplicada em 23/09) e as dívidas da ficha
+(merge `29b526e`): troca de etapa atômica (etapa + marcos numa chamada só da RPC, com linha
+"Esteira · Etapa" no Histórico), auto-avanço da Autorização carimba os marcos, liberação da
+Triagem valida datas no servidor, e os três blocos detectam edição concorrente pela versão do
+bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5, B7 fechadas; bordas novas em A31–A36.
