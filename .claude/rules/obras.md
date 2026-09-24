@@ -91,7 +91,7 @@ Resend. Os 4 e-mails com slug `obras` têm conta e já entraram. Deploy segue ma
 com o código de acesso ao EasyPanel com o cliente. Próximo: cancelamento de obra
 (mockup aprovado 23/09; exige migration `sdd-sql-obras-cancelamento.sql`).
 
-**No master em 24/09, ainda sem deploy (quem deploya atualiza esta linha):** cancelamento de
+**No ar desde o deploy de 24/09 14:03 UTC (master `3f08943`):** cancelamento de
 obra (merge `fed48eb`; migration `obras-cancelamento` já aplicada em 23/09) e as dívidas da ficha
 (merge `29b526e`): troca de etapa atômica (etapa + marcos numa chamada só da RPC, com linha
 "Esteira · Etapa" no Histórico), auto-avanço da Autorização carimba os marcos, liberação da
