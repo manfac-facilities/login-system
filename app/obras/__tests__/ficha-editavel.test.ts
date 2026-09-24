@@ -402,6 +402,96 @@ describe('salvarAutorizacaoAction', () => {
 })
 
 // ============================================================
+// B5 — o auto-avanço da Autorização carimba os marcos da esteira
+// (spec-dividas-ficha-2026-09-23 §3)
+// ============================================================
+
+describe('salvarAutorizacaoAction — B5: avanço automático carimba os marcos', () => {
+  const MARCOS_VAZIOS = {
+    marco_exec_fim: null,
+    marco_relatorio: null,
+    marco_fechou_os: null,
+    marco_liberou_fat: null,
+    marco_faturou: null,
+  }
+  type Linha = { bloco: string; campo: string; de: string | null; para: string | null }
+  const linhas = () => argumentos().p_linhas as Linha[]
+
+  it('aprovarOS sem marcos: uma RPC com etapa, trio e marcos anteriores; linhas Autorização e depois Esteira', async () => {
+    obraAtual = obra({ etapa: 'aprovarOS', ...MARCOS_VAZIOS })
+    const r = await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(r).toEqual({ success: true, avancou: true })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    expect(campos()).toMatchObject({
+      etapa: 'fecharOS',
+      marco_exec_fim: HOJE,
+      marco_relatorio: HOJE,
+      aprovacao: '2026-09-10',
+      os_aprovada: true,
+      marco_os_aprov: '2026-09-10',
+    })
+    expect(linhas().map((l) => [l.bloco, l.campo])).toEqual([
+      ['Autorização', 'os_aprovada_em'],
+      ['Autorização', 'etapa'],
+      ['Esteira', 'marco_exec_fim'],
+      ['Esteira', 'marco_relatorio'],
+    ])
+  })
+
+  it('marcos já preenchidos nunca são sobrescritos: nenhum marco em p_campos, nenhuma linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      marco_exec_fim: '2026-09-01',
+      marco_relatorio: '2026-09-05',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    const marcos = Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')
+    expect(marcos).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+  })
+
+  it('estado incoerente (marco_fechou_os preenchido em aprovarOS) vira null com linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      marco_exec_fim: '2026-09-01',
+      marco_relatorio: '2026-09-05',
+      marco_fechou_os: '2026-09-06',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(campos()).toMatchObject({ marco_fechou_os: null })
+    expect(linhas()).toContainEqual(
+      expect.objectContaining({ bloco: 'Esteira', campo: 'marco_fechou_os', de: '06/09/2026', para: null })
+    )
+  })
+
+  it('sem avanço (obra já aprovada, ou em outra etapa): nenhum marco, nenhuma linha Esteira', async () => {
+    obraAtual = obra({
+      etapa: 'aprovarOS',
+      ...MARCOS_VAZIOS,
+      aprovacao: '2026-09-01',
+      os_aprovada: true,
+      marco_os_aprov: '2026-09-01',
+    })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-02' })
+    expect(Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+
+    obraAtual = obra({ etapa: 'andamento', ...MARCOS_VAZIOS })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(Object.keys(campos()).filter((k) => k.startsWith('marco_') && k !== 'marco_os_aprov')).toEqual([])
+    expect(linhas().filter((l) => l.bloco === 'Esteira')).toEqual([])
+  })
+
+  it('marco_os_aprov continua vindo só pelo trio — nunca como linha própria', async () => {
+    obraAtual = obra({ etapa: 'aprovarOS', ...MARCOS_VAZIOS })
+    await salvarAutorizacaoAction('o1', { ...AUT_VAZIA, aprovadaEm: '2026-09-10' })
+    expect(linhas().find((l) => l.campo === 'marco_os_aprov')).toBeUndefined()
+  })
+})
+
+// ============================================================
 // 4.2 — salvarIdentificacaoAction
 // ============================================================
 

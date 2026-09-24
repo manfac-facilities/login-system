@@ -251,8 +251,9 @@ const ORDEM_ETAPA: Record<EtapaCiclo, number> = CICLO.reduce(
  * FORA de propósito: `marco_os_aprov` é satélite do trio da aprovação
  * (`colunasDoCampo`, R7) e é gravado só por `salvarAutorizacaoAction` /
  * `salvarDadosTriagemAction` — decisão do João de 21/09
- * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): esta
- * troca de etapa nunca carimba nem apaga `marco_os_aprov`.
+ * (`docs/cliente/2026-09-21-decisoes-marcos-da-esteira.md`, item 3): a troca
+ * de etapa — pelo seletor ou pelo avanço automático da Autorização (B5) —
+ * nunca carimba nem apaga `marco_os_aprov`.
  */
 const PASSOS_MARCO: { etapa: EtapaCiclo; campo: CampoHistorico }[] = [
   { etapa: 'relatorio', campo: 'marco_relatorio' },
@@ -743,8 +744,19 @@ export async function salvarAutorizacaoAction(
     depois.etapa = 'fecharOS'
   }
 
-  const linhas = linhasDeAlteracao(antes, depois, 'Autorização')
-  const campos: Record<string, unknown> = { ...camposDasLinhas(linhas, depois), atualizacao: hoje }
+  // B5 (23/09): o avanço aprovarOS → fecharOS é um avanço como qualquer outro
+  // (decisão 1 de 21/09) — os passos anteriores sem data recebem hoje, pela
+  // mesma função do seletor, na MESMA chamada. Chaves disjuntas de `depois`:
+  // `marco_os_aprov` chega pelo trio (`os_aprovada_em`), não por aqui.
+  const marcos = avancou ? calcularMarcosDaEsteira(obra, 'fecharOS', hoje) : { antes: {}, depois: {} }
+  const linhas = [
+    ...linhasDeAlteracao(antes, depois, 'Autorização'),
+    ...linhasDeAlteracao(marcos.antes, marcos.depois, 'Esteira'),
+  ]
+  const campos: Record<string, unknown> = {
+    ...camposDasLinhas(linhas, { ...depois, ...marcos.depois }),
+    atualizacao: hoje,
+  }
 
   if (avancou) {
     // O contador de dias parados na etapa só continua verdadeiro se zerar aqui,
