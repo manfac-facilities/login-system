@@ -37,6 +37,13 @@
   antes de desfazer. Entrou no hub pela sincronização incremental em ~2,5 min (18:20:07 UTC).
   No fim, a OS será cancelada no hub pela Manfac, com observação "OS de teste da D5".
   (`docs/onboarding-duda/entregas/2026-09-24-D5-pergunta-obra-de-teste-duda.md`)
+  **24/09, fim do dia:** roteiro operacional passou sem falha
+  (`docs/onboarding-duda/entregas/2026-09-24-D5-resultado-mensagem-do-duda.md`). Limpeza
+  conferida no banco pelo coordenador: TESTE D5 `cancelado`/`manfac`, obs "OS de teste da D5",
+  0 diários, 1 tarefa (Material/Roberta) `respondida` preservada. Commit citado por ele
+  (`1e6cfd9`) **não está no GitHub**. Faltam 3 dos 10 itens: ausência em duas varreduras
+  completas, tela de sincronização, foto em "Evolução em fotos". Nenhuma foto de diário existe
+  ainda em produção — a primeira foto real da equipe será a primeira a aparecer na ficha.
 - **Duda — D6** (mockup do dashboard de saúde da operação): próxima frente dele, ainda sem
   mockup. **Não está travada por RLS** (conferido em produção 24/09): a policy
   `"obras sync admin"` de `obras_sync_execucao` **já** deixa admin ler (`obras_is_admin()`). Se a
