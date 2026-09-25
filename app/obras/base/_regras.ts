@@ -83,6 +83,8 @@ export type Filtros = {
   os: FiltroOs
   mau: FiltroMau
   field: FiltroField
+  /** "Buscar loja ou OS" (spec-busca-base-2026-09-24). Texto livre, cru — normalizado só em `filtrar`. */
+  q: string
 }
 
 export const FILTROS_PADRAO: Filtros = {
@@ -91,6 +93,19 @@ export const FILTROS_PADRAO: Filtros = {
   os: 'todas',
   mau: 'todas',
   field: 'todas',
+  q: '',
+}
+
+/**
+ * NFD + remove diacríticos + minúsculo + trim — "praca do o" acha "DP PRAÇA DO
+ * Ó" (spec-busca-base-2026-09-24 §2). Mesma técnica do mockup (`norm`, :117).
+ */
+export function normalizarBusca(s: string | null | undefined): string {
+  return (s ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
 }
 
 /** Rótulos exatos do mockup (:2515-2531). Não reescrever — foram aprovados. */
@@ -209,6 +224,12 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
     if (f.mau === 'nao' && o.mau_uso) return false
 
     if (f.field === 'ausentes' && !temAlertaDeAusenciaField(o)) return false
+
+    const q = normalizarBusca(f.q)
+    if (q) {
+      const achou = [o.loja, o.os, o.descricao].some((campo) => normalizarBusca(campo).includes(q))
+      if (!achou) return false
+    }
 
     return true
   })

@@ -423,6 +423,69 @@ describe('sufixoDias — o selo diz de onde está contando', () => {
   })
 })
 
+describe('filtrar — busca (q), spec-busca-base-2026-09-24', () => {
+  const ipanema = obra({ loja: 'DP IPANEMA 3', os: '0926-010550', descricao: 'Forro de gesso' })
+  const pracaDoO = obra({ loja: 'DP PRAÇA DO Ó', os: '0226-011320', descricao: 'Impermeabilização' })
+  const outra = obra({ loja: 'DP TIJUCA 4', os: '773', descricao: 'Rampa de acessibilidade' })
+  const base = [ipanema, pracaDoO, outra]
+
+  it('acha pelo trecho contido na loja', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: 'ipanema' })).toEqual([ipanema])
+  })
+
+  it('acha pelo trecho contido no Nº da OS', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: '010550' })).toEqual([ipanema])
+  })
+
+  it('acha pelo trecho contido na descrição', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: 'gesso' })).toEqual([ipanema])
+  })
+
+  it('ignora acento e maiúscula/minúscula', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: 'praca do o' })).toEqual([pracaDoO])
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: 'PRAÇA' })).toEqual([pracaDoO])
+  })
+
+  it('espaços nas pontas não contam', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: '  ipanema  ' })).toEqual([ipanema])
+  })
+
+  it('texto vazio (ou só espaço) não filtra nada', () => {
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: '' })).toHaveLength(3)
+    expect(filtrar(base, { ...FILTROS_PADRAO, q: '   ' })).toHaveLength(3)
+  })
+
+  it('soma com outro filtro (etapa)', () => {
+    const ipanemaFecharOS = obra({ loja: 'DP IPANEMA 3', etapa: 'fecharOS', desde_etapa: '2026-08-01' })
+    const ipanemaAndamento = obra({ loja: 'DP IPANEMA 3', etapa: 'andamento' })
+    const r = filtrar([ipanemaFecharOS, ipanemaAndamento], {
+      ...FILTROS_PADRAO,
+      q: 'ipanema',
+      etapa: 'fecharOS',
+    })
+    expect(r).toEqual([ipanemaFecharOS])
+  })
+
+  it('campos null não quebram a busca', () => {
+    const semNada = obra({ loja: null, os: null, descricao: null })
+    expect(filtrar([semNada, ipanema], { ...FILTROS_PADRAO, q: 'ipanema' })).toEqual([ipanema])
+  })
+
+  it('cancelada some de "Todas" mesmo achando a busca, mas conta em canceladasFora', () => {
+    const cancelada = obra({
+      loja: 'DPSP Matriz',
+      os: 'TESTE D5',
+      etapa: 'cancelado',
+      cancelado_por: 'manfac',
+      cancelado_etapa_anterior: 'definir',
+      cancelado_em: '2026-08-30T12:00:00Z',
+      cancelado_quem: 'a@manfac.com.br',
+    })
+    expect(filtrar([cancelada], { ...FILTROS_PADRAO, q: 'TESTE D5' })).toHaveLength(0)
+    expect(canceladasFora([cancelada], { ...FILTROS_PADRAO, q: 'TESTE D5' })).toBe(1)
+  })
+})
+
 describe('cancelamento na Base (spec do cancelamento §7.1)', () => {
   const ativas = [
     obra({ etapa: 'definir', pcm: 'YURI', os_aprovada: false, aprovacao: null }),
