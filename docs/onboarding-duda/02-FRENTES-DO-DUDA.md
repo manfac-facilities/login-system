@@ -138,6 +138,13 @@ escrita, e desfaça o que criou. Nada de apagar ou sobrescrever dado que não fo
 
 ---
 
+> **Estado em 25/09/2026:** roteiro operacional passou (`entregas/2026-09-24-D5-resultado-mensagem-do-duda.md`),
+> limpeza conferida no banco pelo Claude. Faltam: (1) push do commit `1e6cfd9`; (2) tela de
+> sincronização — status, contagens, marca d'água; (3) foto em "Evolução em fotos" na ficha usando
+> a TESTE D5: Desfazer cancelamento → diário com foto → conferir na ficha → Desfazer o diário →
+> cancelar de novo como Manfac, obs "OS de teste da D5" (registre se o Desfazer cancelamento
+> funcionou). O teste da OS sumindo em duas varreduras completas **fica para depois de 28/09**.
+
 ## D6 · Dashboard de saúde da operação
 
 **Estimativa: 13–19 h.** Item 2 da ordem do cliente.
@@ -154,14 +161,20 @@ Quem responde isso é o mockup — não você, e não o código.
 
 ### Mockup primeiro, e o caminho dele é fixo
 
+> **Atualizado em 25/09/2026 — fim de semana 25–27/09.** O João não trabalha sábado nem domingo,
+> e o dashboard tem entrega prevista para **quarta/quinta (30/09–01/10)**. Por isso, **nesta
+> rodada você mesmo publica o mockup** como artifact da sua sessão do Claude e manda o link ao
+> João pelo WhatsApp até **domingo à noite**. O João revisa na segunda e repassa ao cliente.
+> O motivo antigo para não publicar (mockup de subagente não salvava os campos de revisão) não
+> se aplica mais: não há campos, o retorno vem pelo WhatsApp. Publique pela sua sessão
+> principal, não por subagente, e compartilhe o link para o João conseguir abrir.
+
 ```
-você desenha um HTML de mockup  →  o João revisa  →  a sessão principal do Claude publica
-→  o cliente aprova  →  spec  →  plano  →  código
+você desenha e publica o mockup  →  link ao João (WhatsApp, até domingo)  →  João revisa (segunda)
+→  cliente aprova  →  spec  →  plano  →  código (terça a quinta)
 ```
 
-- **Você NÃO publica o mockup.** Mockup publicado por subagente aceita digitação e não salva
-  nada. Entregue o arquivo `.html` no repositório; quem publica é a sessão principal do Claude,
-  a pedido do João.
+- Salve também o `.html` no repositório (`docs/onboarding-duda/entregas/`), com push.
 - O feedback do cliente volta pelo WhatsApp, por seção, colado pelo João. Não ponha campos de
   revisão dentro do mockup.
 - **Nenhuma linha de código de tela antes do "aprovado" do cliente.**
@@ -188,7 +201,7 @@ Verificado no código em 23/09. **Leia e importe; não copie a regra para a sua 
 | Tarefas | tabela `obras_tarefa` (`sdd-sql-obras-v0.sql:164`); situação em `tipos.ts:779` (`sitTarefa`) | Aberta / respondida / vencida (vencida é calculada, nunca gravada) |
 
 ⚠️ **Um fato que o mockup precisa enfrentar:** a RLS de `obras_sync_execucao` só deixa
-**administrador** ler (`sdd-sql-obras-sync-execucao.sql:53-56`, `obras_is_admin()`). Um bloco de
+**administrador** ler (conferido em produção em 24/09 — para tela de admin não há o que decidir) (`sdd-sql-obras-sync-execucao.sql:53-56`, `obras_is_admin()`). Um bloco de
 "saúde da sincronização" mostrado a quem não é admin chega **vazio**, sem erro. Mudar isso é
 mudar policy — território de exceção do `AGENTS.md`, decisão do João, não sua.
 
@@ -215,7 +228,7 @@ arquivo.
 **Mockup:**
 
 - [ ] HTML no repositório, com as perguntas acima respondidas como opções visíveis
-- [ ] Revisado pelo João, publicado pela sessão principal, **aprovado pelo cliente**
+- [ ] Publicado por você (rodada de 25–27/09), revisado pelo João, **aprovado pelo cliente**
 
 **Código (só depois):**
 
