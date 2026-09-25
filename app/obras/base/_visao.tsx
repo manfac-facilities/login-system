@@ -75,7 +75,19 @@ export default function VisaoBase({ obras }: { obras: Obra[] }) {
         <FiltrosBase filtros={filtros} responsaveis={responsaveis} onChange={setFiltros} />
       </div>
 
-      {lista.length === 0 ? (
+      {lista.length === 0 && filtros.q.trim() !== '' ? (
+        <EstadoVazio>
+          Nenhuma obra com &quot;{filtros.q.trim()}&quot; na loja, no Nº da OS ou na descrição.
+          <br />
+          <button
+            type="button"
+            onClick={() => setFiltros((f) => ({ ...f, q: '' }))}
+            className="font-medium text-[#f05a28] underline-offset-2 hover:underline"
+          >
+            Limpar busca
+          </button>
+        </EstadoVazio>
+      ) : lista.length === 0 ? (
         <EstadoVazio>Nenhuma obra nesta visão. Troque os filtros acima.</EstadoVazio>
       ) : vis === 'tabela' ? (
         <TabelaBase
