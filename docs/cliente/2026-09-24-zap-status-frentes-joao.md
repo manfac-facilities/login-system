@@ -50,7 +50,7 @@ Bom dia! Segue o status do *Controle de Obras* para a entrega de segunda (28/09)
 
 🔧 *FALTA DA PARTE DO DUDA*
 • *Fechar a validação*: conferir a tela de sincronização com o Field e a foto do diário aparecendo em "Evolução em fotos" na ficha. Previsto para sexta (25/09).
-• *Dashboard da saúde da operação* (o pedido de vocês no lugar dos agentes): o próximo passo é o mockup, para vocês aprovarem antes de desenvolvermos.
+• *Dashboard da saúde da operação* (o pedido de vocês no lugar dos agentes): o próximo passo é o mockup, para vocês aprovarem antes de desenvolvermos. Entrega prevista para *quarta ou quinta (30/09 ou 01/10)*.
 
 ⏳ *DEPENDE DE VOCÊS*
 1. *"Pendente faturamento"*: montei 3 formas de atender o pedido, preciso que escolham uma: [LINK DO MOCKUP]
@@ -58,7 +58,7 @@ Bom dia! Segue o status do *Controle de Obras* para a entrega de segunda (28/09)
    • *B*: separar "Pendente faturamento" em cartão e filtro próprios (é a que recomendamos)
    • *C*: a ficha já mostra "Pendente faturamento" depois de concluir Fechar OS; se era isso, já está pronto
 2. *Teste da equipe* no roteiro (cancelamento + ajustes da ficha): [LINK DO ROTEIRO]
-3. *Aprovar o mockup do dashboard* quando o Duda mandar.
+3. *Aprovar o mockup do dashboard* quando o Duda mandar. Para entregar quarta/quinta, preciso dessa aprovação até segunda (28/09).
 
 Preciso das respostas 1 e 2 até *sexta (25/09)* para entrar na entrega de segunda. Se o teste mostrar algum problema, ainda dá tempo de corrigir.
 
