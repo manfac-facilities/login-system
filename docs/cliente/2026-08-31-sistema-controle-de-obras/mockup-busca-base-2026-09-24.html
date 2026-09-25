@@ -1,0 +1,155 @@
+<title>Busca na Base de Obras</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1628;--card:#0d2050;--ink:#e8eef7;--mute:#94a3b8;--line:#1e3a5f;--acc:#f05a28;--faint:#64748b}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:20px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-size:18px;margin:0}
+.nota{background:#10284f;border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:var(--mute);font-size:13px}
+.nota b{color:var(--ink)}
+.nota ol{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.lab{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.busca{position:relative}
+.busca input{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:9px 34px 9px 34px;font-size:14px;outline:none}
+.busca input:focus{border-color:var(--acc)}
+.busca svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mute)}
+.busca button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer;padding:2px 6px}
+.busca button:hover{color:var(--ink)}
+.filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+select{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:14px}
+.cont{font-size:12px;color:var(--mute)}
+.cont b{color:var(--ink)}
+.tab{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);background:var(--card)}
+tr:last-child td{border-bottom:0}
+mark{background:rgba(240,90,40,.28);color:var(--ink);border-radius:2px;padding:0 1px}
+.pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--mute)}
+.pill.canc{color:var(--faint);border-style:dashed}
+.aviso{font-size:12px;color:var(--mute);margin:0}
+.aviso b{color:var(--ink)}
+.link{background:none;border:0;padding:0;color:var(--acc);font:inherit;font-weight:600;cursor:pointer}
+.link:hover{text-decoration:underline}
+.vazio{border:1px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--mute)}
+.vazio b{color:var(--ink)}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--mute)}
+.atalhos button{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
+.atalhos button:hover{border-color:var(--acc)}
+</style>
+
+<div class="wrap">
+  <h1>Base de obras</h1>
+
+  <div class="nota">
+    <b>Mockup: busca por loja ou OS.</b> Teste digitando. O que julgar:
+    <ol>
+      <li>A busca olha <b>loja, Nº da OS e descrição</b> ao mesmo tempo. Ignora maiúscula e acento ("praca do o" acha "DP PRAÇA DO Ó").</li>
+      <li>Ela <b>soma</b> com os filtros de baixo. Se "Etapa da obra" estiver em "Fechar OS", só busca entre as obras em Fechar OS. Tente "ipanema" e troque a etapa.</li>
+      <li>Obra <b>cancelada</b> continua fora de "Todas", como hoje. Se a busca achar uma, aparece o aviso "1 obra cancelada fora desta lista · ver canceladas". Tente "TESTE D5".</li>
+      <li>Nenhum resultado mostra uma caixa diferente da lista, dizendo o que foi buscado. A busca vale também no Kanban.</li>
+    </ol>
+  </div>
+
+  <div class="atalhos">Experimente:
+    <button type="button" data-q="DPSP Matriz">DPSP Matriz</button>
+    <button type="button" data-q="TESTE D5">TESTE D5</button>
+    <button type="button" data-q="ipanema">ipanema</button>
+    <button type="button" data-q="praca do o">praca do o</button>
+    <button type="button" data-q="Leblon">Leblon</button>
+  </div>
+
+  <label class="busca" for="q">
+    <span class="lab">Buscar loja ou OS</span>
+    <span style="position:relative;display:block">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Ex.: DP Ipanema 3, 0926-010550" autocomplete="off">
+      <button type="button" id="limpar" aria-label="Limpar busca" hidden>×</button>
+    </span>
+  </label>
+
+  <div class="filtros">
+    <label><span class="lab">Responsável da obra</span>
+      <select id="pcm"><option value="todos">Todos</option><option>AMANDA</option><option>YURI</option><option value="__sem">Ainda sem responsável</option></select></label>
+    <label><span class="lab">Etapa da obra</span>
+      <select id="etapa">
+        <option value="todas">Todas</option>
+        <option value="__esteira">Executadas, ainda na esteira</option>
+        <optgroup label="Antes de executar"><option value="fase:antes">Toda a fase antes de executar</option><option value="definir">Aguardando definição</option><option value="levantamento">Levantamento</option></optgroup>
+        <optgroup label="Executando"><option value="fase:campo">Toda a fase executando</option><option value="andamento">Em andamento</option><option value="paralisado">Paralisado</option></optgroup>
+        <optgroup label="Fechamento"><option value="fase:fechamento">Toda a fase fechamento</option><option value="relatorio">Relatório de entrega</option><option value="aprovarOS">Executado - pendente aprovação OS</option><option value="fecharOS">Fechar OS</option></optgroup>
+        <optgroup label="Faturamento"><option value="fase:faturamento">Toda a fase faturamento</option><option value="pendFat">Pendente faturamento</option><option value="faturado">Faturado</option></optgroup>
+        <optgroup label="Canceladas"><option value="cancelado">Todas as canceladas</option><option value="cancelado:cliente">Canceladas pelo Cliente</option><option value="cancelado:manfac">Canceladas pela Manfac</option></optgroup>
+      </select></label>
+    <label><span class="lab">Autorização</span><select disabled><option>Todas</option></select></label>
+    <label><span class="lab">Classificação</span><select disabled><option>Todas</option></select></label>
+    <label><span class="lab">Field Control</span><select disabled><option>Todas</option></select></label>
+  </div>
+
+  <div class="cont" id="cont"></div>
+  <div id="lista"></div>
+  <p class="aviso" id="aviso" hidden></p>
+</div>
+
+<script>
+const E={definir:["Aguardando definição","antes"],levantamento:["Levantamento","antes"],andamento:["Em andamento","campo"],paralisado:["Paralisado","campo"],relatorio:["Relatório de entrega","fechamento"],aprovarOS:["Executado - pendente aprovação OS","fechamento"],fecharOS:["Fechar OS","fechamento"],pendFat:["Pendente faturamento","faturamento"],faturado:["Faturado","faturamento"]};
+const OBRAS=[
+ {os:"VISA TMO-108",loja:"TMO-108",desc:"Troca de luminárias do salão",pcm:"",e:"definir"},
+ {os:"3226990",loja:"DML-23",desc:"Reparo de piso vinílico",pcm:"",e:"definir"},
+ {os:"DP NOVA FRIBURGO 3",loja:"DP NOVA FRIBURGO 3",desc:"Adequação de fachada",pcm:"",e:"levantamento"},
+ {os:"0226-011320",loja:"DP PRAÇA DO Ó",desc:"Impermeabilização da laje",pcm:"",e:"definir"},
+ {os:"0926-012205",loja:"DP CABO FRIO 5",desc:"Pintura interna",pcm:"YURI",e:"relatorio"},
+ {os:"0926-010550",loja:"DP IPANEMA 3",desc:"Forro de gesso do depósito",pcm:"AMANDA",e:"fecharOS"},
+ {os:"773",loja:"DP IPANEMA 6",desc:"Troca de porta de enrolar",pcm:"YURI",e:"paralisado"},
+ {os:"0826-009871",loja:"DP COPACABANA 12",desc:"Ar-condicionado da farmácia",pcm:"YURI",e:"andamento"},
+ {os:"0826-009410",loja:"DP BOTAFOGO 2",desc:"Reforma do banheiro de clientes",pcm:"AMANDA",e:"aprovarOS"},
+ {os:"0726-008102",loja:"DP IPANEMA 1",desc:"Troca de telhas do depósito",pcm:"AMANDA",e:"pendFat"},
+ {os:"0626-007355",loja:"DP TIJUCA 4",desc:"Rampa de acessibilidade",pcm:"YURI",e:"faturado"},
+ {os:"TESTE D5",loja:"DPSP Matriz",desc:"OS de teste da D5",pcm:"",e:"cancelado",por:"manfac"},
+].map(o=>({...o,canc:o.e==="cancelado",etapa:o.e==="cancelado"?(o.por==="manfac"?"Cancelada pela Manfac":"Cancelada pelo Cliente"):E[o.e][0],fase:o.e==="cancelado"?"":E[o.e][1]}));
+const $=id=>document.getElementById(id);
+const norm=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function realce(txt,q){
+  if(!q)return esc(txt);
+  const n=norm(txt),i=n.indexOf(q);
+  if(i<0)return esc(txt);
+  return esc(txt.slice(0,i))+'<mark>'+esc(txt.slice(i,i+q.length))+'</mark>'+esc(txt.slice(i+q.length));
+}
+function passa(o,f){
+  if(f.pcm==="__sem"){if(o.pcm)return false}else if(f.pcm!=="todos"&&o.pcm!==f.pcm)return false;
+  const t=f.etapa;
+  if(t==="todas"){if(o.canc)return false}
+  else if(t==="__esteira"){if(!["fechamento","faturamento"].includes(o.fase)||o.e==="faturado")return false}
+  else if(t.startsWith("fase:")){if(o.fase!==t.slice(5))return false}
+  else if(t==="cancelado"){if(!o.canc)return false}
+  else if(t.startsWith("cancelado:")){if(!o.canc||o.por!==t.slice(10))return false}
+  else if(o.e!==t)return false;
+  if(f.q&&![o.os,o.loja,o.desc].some(c=>norm(c).includes(f.q)))return false;
+  return true;
+}
+function render(){
+  const f={q:norm($('q').value),pcm:$('pcm').value,etapa:$('etapa').value};
+  $('limpar').hidden=!$('q').value;
+  const lista=OBRAS.filter(o=>passa(o,f));
+  const fora=f.etapa==='todas'?OBRAS.filter(o=>passa(o,{...f,etapa:'cancelado'})).length:0;
+  $('cont').innerHTML=f.q?`<b>${lista.length}</b> ${lista.length===1?'obra encontrada':'obras encontradas'} para "${esc($('q').value.trim())}"`:`<b>${lista.length}</b> obras`;
+  if(!lista.length){
+    $('lista').innerHTML=`<div class="vazio">Nenhuma obra com <b>"${esc($('q').value.trim())}"</b> na loja, no Nº da OS ou na descrição${f.pcm!=='todos'||f.etapa!=='todas'?', dentro dos filtros escolhidos':''}.<br><button type="button" class="link" id="lz">Limpar busca</button></div>`;
+    $('lz').onclick=()=>{$('q').value='';render();$('q').focus()};
+  }else{
+    $('lista').innerHTML='<div class="tab"><table><thead><tr><th>Nº OS</th><th>Loja</th><th>Descrição</th><th>Responsável</th><th>Etapa da obra</th></tr></thead><tbody>'+
+      lista.map(o=>`<tr><td>${realce(o.os,f.q)}</td><td>${realce(o.loja,f.q)}</td><td>${realce(o.desc,f.q)}</td><td>${o.pcm||'<span style="color:var(--faint)">—</span>'}</td><td><span class="pill${o.canc?' canc':''}">${o.etapa}</span></td></tr>`).join('')+'</tbody></table></div>';
+  }
+  $('aviso').hidden=!fora;
+  if(fora){
+    $('aviso').innerHTML=`<b>${fora} ${fora===1?'obra cancelada':'obras canceladas'}</b> fora desta lista · <button type="button" class="link" id="vc">ver canceladas</button>`;
+    $('vc').onclick=()=>{$('etapa').value='cancelado';render()};
+  }
+}
+$('q').addEventListener('input',render);
+$('pcm').addEventListener('change',render);
+$('etapa').addEventListener('change',render);
+$('limpar').onclick=()=>{$('q').value='';render();$('q').focus()};
+document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{$('q').value=b.dataset.q;$('etapa').value='todas';render()});
+render();
+</script>
