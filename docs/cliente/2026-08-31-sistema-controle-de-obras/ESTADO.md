@@ -53,6 +53,8 @@
   `"obras sync admin"` de `obras_sync_execucao` **já** deixa admin ler (`obras_is_admin()`). Se a
   tela for para admin, nada muda no banco. Só vira mudança de policy se o mockup mostrar a saúde
   da sincronização para quem **não** é admin — aí é decisão do João, depois do mockup.
+- **D6 fora do prazo de 28/09, decisão do João (25/09, literal):** "nao tem problema o dashboard
+  nao estar pronto na segunda, o cliente pediu isso essa semana". Até 28/09 basta o mockup andar.
 - **Duda — D7** (dívidas da área dele: A14, A15, teste instável de `_blocos-editaveis.test.tsx`).
 
 ### Esperando decisão/retorno
