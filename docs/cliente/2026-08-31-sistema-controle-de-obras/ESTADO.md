@@ -38,8 +38,10 @@
   No fim, a OS será cancelada no hub pela Manfac, com observação "OS de teste da D5".
   (`docs/onboarding-duda/entregas/2026-09-24-D5-pergunta-obra-de-teste-duda.md`)
 - **Duda — D6** (mockup do dashboard de saúde da operação): próxima frente dele, ainda sem
-  mockup. **Decisão pendente do João:** liberar RLS de `obras_sync_execucao` só para admin, para
-  o D6 poder ler os dados de sincronização.
+  mockup. **Não está travada por RLS** (conferido em produção 24/09): a policy
+  `"obras sync admin"` de `obras_sync_execucao` **já** deixa admin ler (`obras_is_admin()`). Se a
+  tela for para admin, nada muda no banco. Só vira mudança de policy se o mockup mostrar a saúde
+  da sincronização para quem **não** é admin — aí é decisão do João, depois do mockup.
 - **Duda — D7** (dívidas da área dele: A14, A15, teste instável de `_blocos-editaveis.test.tsx`).
 
 ### Esperando decisão/retorno
@@ -47,7 +49,7 @@
 - **Do cliente:** roteiro de teste do cancelamento e da ficha (link acima); escolha entre as
   leituras A/B/C do "pendente faturamento"; visão do dono da Pacheco (mockup de 18/09, parado,
   fora da divisão de 23/09 por decisão do João).
-- **Do João:** decisão de RLS para a D6; publicar o comunicado 02 depois do OK da equipe.
+- **Do João:** publicar o comunicado 02 depois do OK da equipe.
 
 ### Fora da divisão de trabalho por decisão do João (23/09)
 
@@ -58,7 +60,7 @@ nenhum dos três entra no trabalho até 28/09.
 
 1. Equipe testar o roteiro publicado e o João repassar o retorno pelo WhatsApp.
 2. Cliente escolher a leitura do "pendente faturamento" (A/B/C).
-3. João decidir a RLS de `obras_sync_execucao` para destravar a D6.
+3. D6 segue sem esperar RLS (policy atual já atende tela de admin; ver "Em andamento").
 4. Publicar o comunicado 02 após o OK da equipe.
 5. Duda seguir D5 → D6 (mockup) → D7.
 6. Resend + DNS para o e-mail dos comunicados sair de verdade (João).
