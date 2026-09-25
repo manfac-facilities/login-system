@@ -15,6 +15,10 @@
 
 ### Pronto, esperando algo
 
+- **Busca por loja ou OS na Base** — pedido do João 24/09, mockup aprovado ("busca aprovada, pode
+  codar"), spec `spec-busca-base-2026-09-24.md`, merge `a82e3aa` no master e no GitHub. Revisão
+  independente aprovou sem bloqueante (backlog em A37). **Falta o deploy.**
+
 - **Comunicado 02 (cancelamento) + guia do cancelamento** — texto e código prontos (`e025ce4`).
   Falta o OK da equipe pelo roteiro de teste antes de publicar.
 - **E-mail dos comunicados** — código existe, roda em modo simulação. Falta Resend + DNS
