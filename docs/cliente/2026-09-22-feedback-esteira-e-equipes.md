@@ -50,3 +50,9 @@ esteira". O segundo pede campo de texto livre para equipe/prestador, em vez de l
 - Não existe data de fechamento editável: `marco_fechou_os` é gravado com a data de hoje ao
   concluir Fechar OS. O histórico já aceita esse campo.
 - `obras_obra.equipe` já é `text` livre no banco: texto livre para equipe/prestador **não exige migration**.
+
+## Decisão do João, 24/09
+
+7. **"Trocar o status ainda na esteira para pendente faturamento": retomado.** Enquanto a equipe
+   testa o cancelamento, seguir com esta frente. Mockup primeiro, mostrando as leituras possíveis
+   do pedido para o cliente escolher (o pedido é ambíguo).

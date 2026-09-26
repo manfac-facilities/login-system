@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pendente faturamento na esteira</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;overflow-x:hidden}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:980px;margin:0 auto;padding-block:22px 90px;padding-inline:16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  h1.titulo{font-size:21px;margin:0 0 6px;letter-spacing:-.015em}
+  .topo{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:14px 16px;margin-bottom:26px}
+  .topo p{margin:0 0 8px;color:var(--ink-dim);font-size:13px;max-width:84ch}
+  .topo b{color:var(--ink)}
+  .literal{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--r-sm);padding:10px 14px;margin:6px 0 12px;font-size:15px;color:var(--ink)}
+  .literal small{display:block;color:var(--ink-faint);font-size:11px;margin-top:4px}
+  .pergunta{font-size:17px;font-weight:700;margin:14px 0 8px;color:var(--ink)}
+  .leituras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px}
+  .leitura{display:block;border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:10px 12px;text-decoration:none;color:inherit;min-width:0}
+  .leitura:hover{border-color:var(--accent)}
+  .leitura .l{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:13px}
+  .leitura .t{font-weight:650;font-size:13.5px;margin:2px 0 3px}
+  .leitura .d{font-size:12px;color:var(--ink-dim)}
+  .leitura .ja{display:inline-block;margin-top:5px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--ok);border:1px solid rgba(53,201,138,.45);background:var(--ok-soft);border-radius:99px;padding:0 7px}
+
+  .sec{border-top:1px solid var(--line);padding-top:22px;margin-top:18px}
+  .sec-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft);border-radius:var(--r-sm);padding:3px 9px}
+  .sec-h h2{margin:0 0 3px;font-size:17px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:13px;max-width:78ch}
+  .sec-h p b{color:var(--ink)}
+
+  .estados{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 14px;padding:4px;border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.18)}
+  .estados .lbl{margin:0 6px 0 4px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .estados button{background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:5px 11px;color:var(--ink-dim);font-size:12.5px}
+  .estados button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+  .estados button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:var(--line)}
+
+  .novo{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft);border-radius:99px;padding:0 6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .mudou{outline:1.5px dashed var(--info);outline-offset:2px}
+
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .box + .box{margin-top:12px}
+  .box-h{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px}
+  .box-h .dir{margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-faint)}
+  .box-b{padding:13px 14px}
+  .head{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .head h3{margin:0;font-size:17px;letter-spacing:-.01em}
+  .head .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line);color:var(--c,var(--ink-dim));background:color-mix(in srgb,var(--c,#94a3b8) 14%,transparent);border-color:color-mix(in srgb,var(--c,#94a3b8) 35%,transparent)}
+
+  .dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;font-size:12.5px;margin:0}
+  .dl div{min-width:0}
+  .dl dt{color:var(--ink-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+  .dl dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+
+  /* ---------- esteira ---------- */
+  .esteira{list-style:none;margin:0;padding:0}
+  .passo{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .passo:last-child{border-bottom:0}
+  .passo .dot{margin-top:5px;width:11px;height:11px;border-radius:50%;flex:none;background:var(--ink-faint);opacity:.45}
+  .passo.feito .dot{background:var(--ok);opacity:1}
+  .passo.atual .dot{background:var(--accent);opacity:1;box-shadow:0 0 0 4px var(--accent-soft)}
+  .passo.pulado .dot{background:transparent;border:2px dashed var(--ink-faint);opacity:1}
+  .passo .corpo{flex:1;min-width:0}
+  .passo .nm{font-weight:650;font-size:13.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .passo.futuro .nm,.passo.pulado .nm{color:var(--ink-faint)}
+  .passo .meta{font-size:11.5px;color:var(--ink-dim);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:1px}
+  .passo .meta .cod{font-family:var(--mono);color:var(--ink-faint)}
+  .passo .quando{flex:none;font-size:12px;text-align:right;white-space:nowrap}
+  .passo.feito .quando{color:var(--ok)}
+  .passo.atual .quando{color:var(--accent)}
+  .passo.pulado .quando,.passo.futuro .quando{color:var(--ink-faint)}
+  .passo .extra{margin-top:6px;font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .passo .extra b{color:var(--ink)}
+  .aqui{border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 8px}
+  .desvio{border:1px solid var(--line);border-radius:4px;font-size:10px;color:var(--ink-dim);padding:0 5px;font-weight:500}
+
+  /* ---------- controles ---------- */
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:8px 15px;border-radius:var(--r-sm);font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500}
+  .btn.mini{padding:3px 10px;font-size:11.5px}
+  .link{color:var(--accent);background:none;border:0;padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:3px}
+  .seletor{border-top:1px solid var(--line);padding:11px 14px;display:flex;flex-direction:column;gap:7px}
+  .seletor .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint)}
+  .seletor .linha{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .seletor select,.seletor input[type=date]{max-width:260px}
+  .seletor .dica{font-size:11px;color:var(--ink-faint)}
+  .ok-box{border:1px solid rgba(53,201,138,.4);background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r-sm);padding:8px 12px;font-size:12.5px;color:var(--ok)}
+
+  /* ---------- base ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+  .kpi{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:9px 11px;border-left:3px solid var(--c,#94a3b8);min-width:0}
+  .kpi .v{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--c)}
+  .kpi .r{font-size:11px;color:var(--ink-dim);line-height:1.35}
+  .filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .filtros label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);min-width:0}
+  .filtros select{min-width:280px;max-width:100%}
+  .filtros .conta{font-size:12px;color:var(--ink-dim);padding-bottom:8px}
+  .filtros .conta b{color:var(--ink)}
+  .rolar{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:640px}
+  th{background:var(--panel-2);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  td.n{text-align:right;font-family:var(--mono)}
+  td.os{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);white-space:nowrap}
+  .nota-base{font-size:12px;color:var(--ink-dim);margin:8px 2px 0}
+  .nota-base b{color:var(--ink)}
+
+  .kanban{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+  .col{flex:none;width:250px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+  .col-h{display:flex;justify-content:space-between;padding:8px 11px;border-bottom:1px solid var(--line);font-weight:650;font-size:13px}
+  .col-h span:last-child{color:var(--ink-dim);font-weight:400;font-size:12px}
+  .col-b{padding:8px;display:flex;flex-direction:column;gap:7px}
+  .sub-et{display:flex;justify-content:space-between;font-size:11px;padding:3px 3px 0}
+  .card{border:1px solid var(--line);border-left:3px solid var(--c,#94a3b8);background:var(--panel-2);border-radius:var(--r-sm);padding:8px 10px}
+  .card .o{font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+  .card .lj{font-weight:650;font-size:13px}
+  .card .cm{font-size:11px;color:var(--warn);margin-top:3px}
+  .vazio{font-size:12px;color:var(--ink-faint);text-align:center;padding:14px 0}
+
+  .comparar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+  .comparar .c{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;color:var(--ink-dim)}
+  .comparar .c b{color:var(--ink)}
+  .comparar .c .h{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:3px}
+
+  .julgar{border:1px solid rgba(240,90,40,.4);background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:var(--r);padding:12px 15px;margin-top:16px}
+  .julgar .t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:6px}
+  .julgar ol{margin:0;padding-left:18px;color:var(--ink);font-size:13px;display:flex;flex-direction:column;gap:5px}
+  .nota{border:1px solid rgba(90,169,240,.35);background:var(--info-soft);border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;color:var(--ink-dim);margin-top:12px}
+  .nota b{color:var(--ink)}
+  .nota .t{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--info);display:block;margin-bottom:3px}
+  .ja-no-ar{border:1px solid rgba(53,201,138,.45);background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r-sm);padding:10px 13px;font-size:13px;color:var(--ink-dim);margin-bottom:12px}
+  .ja-no-ar b{color:var(--ok)}
+
+  @media (max-width:760px){
+    .dl{grid-template-columns:1fr 1fr}
+    .kpis{grid-template-columns:1fr 1fr}
+    .leituras{grid-template-columns:1fr}
+    .comparar{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .passo{flex-wrap:wrap}
+    .passo .quando{width:100%;text-align:left;padding-left:23px}
+    .filtros select{min-width:0;width:100%}
+    .filtros label{width:100%}
+    .seletor select,.seletor input[type=date]{max-width:none;width:100%}
+    .seletor .linha .btn{width:100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<div class="pagina">
+<h1 class="titulo">"Pendente faturamento" na esteira — qual destas é o pedido?</h1>
+<div class="topo">
+  <p>O pedido que chegou em 22/09, literal:</p>
+  <div class="literal">"trocar o status ainda na esteira para pendente faturamento"<small>Pedido do cliente, 22/09/2026, repassado pelo WhatsApp.</small></div>
+  <p>Ele pode ser lido de mais de um jeito, e cada jeito muda uma coisa diferente na tela. Antes de mexer em qualquer coisa, desenhamos as leituras possíveis lado a lado. Tudo aqui é clicável: os botões com fundo tracejado trocam entre <b>antes</b> e <b>depois</b>. Hoje, nos exemplos, é <b>24/09/2026</b>; as obras são inventadas, mas plausíveis.</p>
+  <div class="pergunta">Qual destas é o que você pediu?</div>
+  <div class="leituras">
+    <a class="leitura" href="#sec-a"><div class="l">A</div><div class="t">Trocar o nome</div><div class="d">O cartão e o filtro "Executadas, ainda na esteira" passam a se chamar "Pendente faturamento". As mesmas obras, com outro nome.</div></a>
+    <a class="leitura" href="#sec-b"><div class="l">B</div><div class="t">Separar em dois</div><div class="d">As obras em "Pendente faturamento" saem do grupo "ainda na esteira" e ganham cartão e filtro próprios.</div></a>
+    <a class="leitura" href="#sec-c"><div class="l">C</div><div class="t">Na ficha, depois de Fechar OS</div><div class="d">Ao concluir Fechar OS, a obra passa a mostrar "Pendente faturamento".</div><span class="ja">já funciona assim hoje</span></a>
+  </div>
+  <p>Responda pelo WhatsApp com a letra (<b>A</b>, <b>B</b> ou <b>C</b>) — ou "nenhuma, é outra coisa", contando onde você viu. Cada seção termina com duas ou três perguntas curtas; responder a elas também ajuda.</p>
+</div>
+
+<!-- ============================ SEÇÃO 1 ============================ -->
+<section class="sec" id="sec-hoje" aria-labelledby="h-hoje">
+  <div class="sec-h"><span class="tag">1</span><div>
+    <h2 id="h-hoje">Como a Base de obras está hoje</h2>
+    <p>O termo <b>"ainda na esteira"</b> aparece em dois lugares, os dois na Base de obras: no <b>cartão</b> do topo ("executadas, ainda na esteira") e na primeira opção do <b>filtro "Etapa da obra"</b>. Ele junta todas as obras que já saíram de campo e ainda não foram faturadas — as quatro etapas: <b>Relatório de entrega</b>, <b>Executado - pendente aprovação OS</b>, <b>Fechar OS</b> e <b>Pendente faturamento</b>.</p>
+  </div></div>
+
+  <div class="kpis" id="hoje-kpis"></div>
+  <div class="estados" role="group" aria-label="Formato" data-grupo="hoje-vis">
+    <span class="lbl">Ver como</span>
+    <button type="button" data-est="tabela" aria-pressed="true">Tabela</button>
+    <button type="button" data-est="kanban" aria-pressed="false">Kanban</button>
+  </div>
+  <div class="filtros">
+    <label>Etapa da obra <select class="in" id="hoje-filtro"></select></label>
+    <span class="conta" id="hoje-conta"></span>
+  </div>
+  <div data-painel="hoje-vis" data-est="tabela"><div class="rolar"><table>
+    <thead><tr><th>Nº OS</th><th>Loja</th><th>Responsável</th><th>Etapa da obra</th><th>Com quem está</th><th style="text-align:right">Parada nesta etapa</th></tr></thead>
+    <tbody id="hoje-tabela"></tbody>
+  </table></div></div>
+  <div data-painel="hoje-vis" data-est="kanban" hidden><div class="kanban" id="hoje-kanban"></div></div>
+  <p class="nota-base"><b>2 obras canceladas</b> fora desta lista · <button type="button" class="link" disabled style="opacity:.8;cursor:default">ver canceladas</button> <span style="color:var(--ink-faint)">(cancelamento no ar desde 24/09 — não muda em nenhuma leitura)</span></p>
+
+  <div class="nota"><span class="t">Repare</span>No <b>Kanban</b>, "Pendente faturamento" <b>já tem coluna própria</b>: a coluna <b>Faturamento</b>, separada da coluna <b>Fechamento</b>. E na tabela, a coluna "Etapa da obra" de cada obra já diz "Pendente faturamento" quando é o caso. O que junta tudo sob "ainda na esteira" é só o <b>cartão</b> e o <b>filtro</b>.</div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>Onde você viu o "ainda na esteira" que quer trocar: no cartão do topo, no filtro "Etapa da obra", ou em outro lugar?</li>
+      <li>A obra que você tinha em mente estava em qual etapa — Fechar OS, Pendente aprovação OS, Relatório de entrega ou já Pendente faturamento?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO A ============================ -->
+<section class="sec" id="sec-a" aria-labelledby="h-a">
+  <div class="sec-h"><span class="tag">A</span><div>
+    <h2 id="h-a">Leitura A — trocar o nome "ainda na esteira" por "Pendente faturamento"</h2>
+    <p>O cartão e o filtro continuam contando <b>as mesmas 8 obras</b> (tudo o que saiu de campo e não foi faturado). Só o nome muda. Nada muda no Kanban nem na ficha.</p>
+  </div></div>
+
+  <div class="estados" role="group" aria-label="Antes ou depois" data-grupo="a">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="antes" aria-pressed="false">Antes (hoje)</button>
+    <button type="button" data-est="depois" aria-pressed="true">Depois</button>
+  </div>
+  <div class="kpis" id="a-kpis"></div>
+  <div class="filtros">
+    <label>Etapa da obra <select class="in" id="a-filtro"></select></label>
+    <span class="conta" id="a-conta"></span>
+  </div>
+  <div class="rolar"><table>
+    <thead><tr><th>Nº OS</th><th>Loja</th><th>Responsável</th><th>Etapa da obra</th><th>Com quem está</th><th style="text-align:right">Parada nesta etapa</th></tr></thead>
+    <tbody id="a-tabela"></tbody>
+  </table></div>
+
+  <div class="nota"><span class="t">O efeito colateral desta leitura</span>O nome <b>"Pendente faturamento"</b> passa a valer para duas coisas: o grupo de <b>8</b> obras (cartão e filtro) e a etapa de <b>3</b> obras (a que espera o pedido de compra). No filtro aparecem duas opções com o mesmo nome e números diferentes — troque entre elas acima para ver. E uma obra em <b>Fechar OS</b> passa a contar como "pendente faturamento", embora a OS ainda não tenha sido fechada.</div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>Chamar as 8 de "pendente faturamento" está certo, sabendo que só 3 estão de fato esperando o pedido de compra (as outras ainda esperam relatório, aprovação da OS ou o fechamento da OS)?</li>
+      <li>Se for esta, prefere um nome que não repita o da etapa — por exemplo, <b>"Executadas, a faturar"</b>?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO B ============================ -->
+<section class="sec" id="sec-b" aria-labelledby="h-b">
+  <div class="sec-h"><span class="tag">B</span><div>
+    <h2 id="h-b">Leitura B — "Pendente faturamento" sai do grupo e ganha cartão e filtro próprios</h2>
+    <p>O cartão de hoje vira dois: o que ainda está <b>no fechamento</b> (relatório, aprovação da OS, Fechar OS — ainda há o que fazer) e o que já está <b>pendente faturamento</b> (OS fechada, esperando o pedido de compra do cliente). O filtro ganha as duas opções no topo. O Kanban já separa assim e não muda.</p>
+  </div></div>
+
+  <div class="estados" role="group" aria-label="Antes ou depois" data-grupo="b">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="antes" aria-pressed="false">Antes (hoje)</button>
+    <button type="button" data-est="depois" aria-pressed="true">Depois</button>
+  </div>
+  <div class="kpis" id="b-kpis"></div>
+  <div class="filtros">
+    <label>Etapa da obra <select class="in" id="b-filtro"></select></label>
+    <span class="conta" id="b-conta"></span>
+  </div>
+  <div class="rolar"><table>
+    <thead><tr><th>Nº OS</th><th>Loja</th><th>Responsável</th><th>Etapa da obra</th><th>Com quem está</th><th style="text-align:right">Parada nesta etapa</th></tr></thead>
+    <tbody id="b-tabela"></tbody>
+  </table></div>
+
+  <div class="comparar" data-painel="b" data-est="depois">
+    <div class="c"><div class="h" style="color:var(--warn)">Executadas, ainda no fechamento · 5</div>A bola ainda está no caminho da OS: relatório, aprovação ou fechamento. <b>Quem destrava é a Manfac ou o analista do cliente.</b></div>
+    <div class="c"><div class="h" style="color:var(--accent)">Pendente faturamento · 3</div>OS fechada; falta o <b>pedido de compra</b> do cliente para faturar. <b>É a cobrança do pedido de compra.</b></div>
+  </div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>Ver separado quem só espera o pedido de compra (3) de quem ainda está no fechamento (5) é o que você queria?</li>
+      <li>O nome <b>"Executadas, ainda no fechamento"</b> para as 5 serve, ou prefere manter "ainda na esteira"?</li>
+      <li>Dois cartões, como acima — ou um cartão só (8) com "3 pendente faturamento" escrito dentro dele?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ SEÇÃO C ============================ -->
+<section class="sec" id="sec-c" aria-labelledby="h-c">
+  <div class="sec-h"><span class="tag">C</span><div>
+    <h2 id="h-c">Leitura C — na ficha, ao concluir Fechar OS, a obra vai para "Pendente faturamento"</h2>
+    <p>Esta leitura <b>já é assim hoje</b>, no ar. Faça o teste abaixo: a DP ITABORAI está em <b>Fechar OS</b>. Escolha "Pendente faturamento" no "Mudar a etapa desta obra", confira a data de fechamento da OS e confirme.</p>
+  </div></div>
+
+  <div class="ja-no-ar"><b>Já no ar.</b> Se o pedido era este, não há nada a mudar — a etapa seguinte a Fechar OS é "Pendente faturamento", na ficha, na tabela da Base e na coluna Faturamento do Kanban.</div>
+
+  <div class="estados" role="group" aria-label="Demonstração" data-grupo="c">
+    <span class="lbl">Ver</span>
+    <button type="button" data-est="antes" aria-pressed="true">Obra em Fechar OS</button>
+    <button type="button" data-est="depois" aria-pressed="false">Depois de concluir</button>
+  </div>
+
+  <div class="box">
+    <div class="box-h">Ficha da obra<span class="dir">Controle de Obras › Base › DP ITABORAI</span></div>
+    <div class="box-b">
+      <div class="head">
+        <div><h3>DP ITABORAI</h3><div class="sub">OS 0926-010412 · DPSP / Drogarias Pacheco · Adequação elétrica</div></div>
+        <div class="pills"><span class="pill" style="--c:#35c98a">OS aprovada</span><span id="c-pill"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="box-h">Ciclo de vida da obra</div>
+    <div class="box-b">
+      <dl class="dl">
+        <div><dt>Etapa atual</dt><dd id="c-etapa"></dd></div>
+        <div><dt>Dono da etapa</dt><dd id="c-dono"></dd></div>
+        <div><dt>Parada nesta etapa</dt><dd id="c-parada"></dd></div>
+        <div><dt>Caminho</dt><dd>direto — a OS já estava aprovada</dd></div>
+      </dl>
+      <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:2px"><ol class="esteira" id="c-esteira"></ol></div>
+    </div>
+    <div class="seletor">
+      <label class="t" for="c-sel">Mudar a etapa desta obra</label>
+      <div class="linha">
+        <select class="in" id="c-sel"></select>
+        <button type="button" class="btn" id="c-conf" disabled>Confirmar mudança</button>
+      </div>
+      <div id="c-data" hidden style="display:flex;flex-direction:column;gap:4px">
+        <label for="c-dt" style="font-size:11px;color:var(--ink-dim)">Data de fechamento da OS</label>
+        <input class="in" type="date" id="c-dt" value="2026-09-24" max="2026-09-24">
+        <span class="dica">Vem preenchida com hoje. Edite se a OS foi fechada no sistema do cliente em outro dia. É essa data que inicia os dias esperando o faturamento.</span>
+      </div>
+      <p class="dica" id="c-expl" style="margin:0">Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado quem mudou e quando.</p>
+      <div class="ok-box" id="c-ok" hidden></div>
+    </div>
+  </div>
+
+  <div class="julgar">
+    <div class="t">O que julgar aqui</div>
+    <ol>
+      <li>Era isto — depois de concluir Fechar OS, a obra passa a mostrar "Pendente faturamento"? Se sim, já está funcionando e não há mudança.</li>
+      <li>Trocar pelo "Mudar a etapa desta obra" atende, ou você esperava um botão direto, tipo <b>"Concluir Fechar OS"</b>?</li>
+    </ol>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  /* ---------- catálogo (igual ao sistema) ---------- */
+  const CICLO = [
+    {k:'definir', nome:'Aguardando definição', fase:'antes', cor:'#f05a28'},
+    {k:'levantamento', nome:'Levantamento', fase:'antes', cor:'#5aa9f0'},
+    {k:'andamento', nome:'Em andamento', fase:'campo', cor:'#35c98a'},
+    {k:'paralisado', nome:'Paralisado', fase:'campo', cor:'#ff4d6d'},
+    {k:'relatorio', nome:'Relatório de entrega', fase:'fechamento', cor:'#5aa9f0'},
+    {k:'aprovarOS', nome:'Executado - pendente aprovação OS', fase:'fechamento', cor:'#ff4d6d'},
+    {k:'fecharOS', nome:'Fechar OS', fase:'fechamento', cor:'#f4b73f'},
+    {k:'pendFat', nome:'Pendente faturamento', fase:'faturamento', cor:'#f4b73f'},
+    {k:'faturado', nome:'Faturado', fase:'faturamento', cor:'#64748b'},
+  ];
+  const ET = Object.fromEntries(CICLO.map(c => [c.k, c]));
+  const FASES = [
+    {k:'antes', nome:'Antes de executar', cor:'#5aa9f0'},
+    {k:'campo', nome:'Executando', cor:'#35c98a'},
+    {k:'fechamento', nome:'Fechamento', cor:'#f4b73f'},
+    {k:'faturamento', nome:'Faturamento', cor:'#f05a28'},
+  ];
+
+  /* ---------- a base de exemplo (24/09/2026) ---------- */
+  const OBRAS = [
+    {os:'0926-010412', loja:'DP ITABORAI', pcm:'Rafael', etapa:'fecharOS', parada:4},
+    {os:'0826-009871', loja:'DP NITEROI ICARAI', pcm:'Bruno', etapa:'pendFat', parada:21},
+    {os:'0826-009540', loja:'DP SAO GONCALO ALCANTARA', pcm:'Rafael', etapa:'pendFat', parada:12},
+    {os:'0926-010118', loja:'DP MARICA CENTRO', pcm:'Thiago', etapa:'pendFat', parada:3},
+    {os:'0826-009702', loja:'DP CAMPO GRANDE', pcm:'Thiago', etapa:'aprovarOS', parada:17},
+    {os:'0926-010233', loja:'DP TIJUCA SAENS PENA', pcm:'Bruno', etapa:'relatorio', parada:5},
+    {os:'0926-010301', loja:'DP BOTAFOGO', pcm:'Bruno', etapa:'fecharOS', parada:9},
+    {os:'0726-008812', loja:'DP MEIER', pcm:'Rafael', etapa:'aprovarOS', parada:30},
+    {os:'0926-010377', loja:'DP COPACABANA', pcm:'Thiago', etapa:'andamento'},
+    {os:'0926-010390', loja:'DP BANGU', pcm:'Rafael', etapa:'andamento'},
+    {os:'0926-010266', loja:'DP NOVA IGUACU', pcm:'Bruno', etapa:'paralisado'},
+    {os:'0926-010455', loja:'DP RIO BONITO', pcm:null, etapa:'definir'},
+    {os:'0826-009415', loja:'DP DUQUE DE CAXIAS', pcm:'Thiago', etapa:'faturado'},
+  ];
+  const fase = o => ET[o.etapa].fase;
+  const posCampo = o => fase(o) === 'fechamento' || fase(o) === 'faturamento';
+  const naEsteira = o => posCampo(o) && o.etapa !== 'faturado';
+  function dono(o){
+    if (o.etapa === 'fecharOS' || o.etapa === 'paralisado' || o.etapa === 'levantamento') return o.pcm ? 'Responsável ' + o.pcm : 'Responsável a definir';
+    return {definir:'Analista', andamento:'Equipe em campo', relatorio:'Equipe / responsável', aprovarOS:'Cliente DPSP', pendFat:'Cliente DPSP', faturado:'Financeiro Manfac'}[o.etapa];
+  }
+  const pill = (txt, cor) => `<span class="pill" style="--c:${cor}">${esc(txt)}</span>`;
+
+  /* ---------- indicadores ---------- */
+  function maisParada(l){ return l.reduce((m, o) => Math.max(m, o.parada || 0), 0); }
+  function kpis(modo){
+    const est = OBRAS.filter(naEsteira);
+    const fech = OBRAS.filter(o => fase(o) === 'fechamento');
+    const pf = OBRAS.filter(o => o.etapa === 'pendFat');
+    const lista = [
+      {v:1, r:'aguardando definição · a mais antiga há 3 dias', c:'#f05a28'},
+      {v:2, r:'em andamento', c:'#35c98a'},
+      {v:1, r:'paralisadas', c:'#ff4d6d'},
+    ];
+    if (modo === 'B') {
+      lista.push({v:fech.length, r:`executadas, ainda no fechamento · a mais parada há ${maisParada(fech)} dias`, c:'#f4b73f', mudou:true});
+      lista.push({v:pf.length, r:`pendente faturamento · a mais parada há ${maisParada(pf)} dias`, c:'#f05a28', mudou:true, novo:true});
+    } else {
+      const nome = modo === 'A' ? 'pendente faturamento' : 'executadas, ainda na esteira';
+      lista.push({v:est.length, r:`${nome} · a mais parada há ${maisParada(est)} dias`, c:'#f4b73f', mudou: modo === 'A'});
+    }
+    lista.push(
+      {v:3, r:'sem OS aprovada no cliente', c:'#ff4d6d'},
+      {v:1, r:'sem cobertura — nem OS nem liberação', c:'#ff4d6d'},
+      {v:1, r:'aprovadas há mais de 60 dias', c:'#f4b73f'},
+      {v:1, r:'passaram da duração planejada', c:'#f4b73f'},
+    );
+    return lista.map(k => `<div class="kpi${k.mudou ? ' mudou' : ''}" style="--c:${k.c}"><div class="v">${k.v}</div><div class="r">${esc(k.r)}${k.novo ? '<span class="novo">novo</span>' : ''}</div></div>`).join('');
+  }
+
+  /* ---------- filtro ---------- */
+  function opcoes(modo){
+    let soltas = [['todas', 'Todas']];
+    if (modo === 'A') soltas.push(['__esteira', 'Pendente faturamento']);
+    else if (modo === 'B') soltas.push(['__fech', 'Executadas, ainda no fechamento'], ['__pf', 'Pendente faturamento (aguardando pedido de compra)']);
+    else soltas.push(['__esteira', 'Executadas, ainda na esteira']);
+    let h = soltas.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('');
+    FASES.forEach(f => {
+      h += `<optgroup label="${esc(f.nome)}"><option value="fase:${f.k}">Toda a fase ${esc(f.nome.toLowerCase())}</option>`;
+      CICLO.filter(c => c.fase === f.k).forEach(c => { h += `<option value="${c.k}">${esc(c.nome)}</option>`; });
+      h += '</optgroup>';
+    });
+    return h;
+  }
+  function filtrar(v){
+    return OBRAS.filter(o => {
+      if (v === 'todas') return true;
+      if (v === '__esteira') return naEsteira(o);
+      if (v === '__fech') return fase(o) === 'fechamento';
+      if (v === '__pf') return o.etapa === 'pendFat';
+      if (v.startsWith('fase:')) return fase(o) === v.slice(5);
+      return o.etapa === v;
+    });
+  }
+  function linhas(l){
+    if (!l.length) return '<tr><td colspan="6" style="color:var(--ink-faint);text-align:center">Nenhuma obra nesta visão.</td></tr>';
+    return l.slice().sort((a, b) => (b.parada ?? -1) - (a.parada ?? -1)).map(o => {
+      const e = ET[o.etapa];
+      const p = posCampo(o) && o.etapa !== 'faturado' ? `${o.parada} ${o.parada === 1 ? 'dia' : 'dias'}` : '—';
+      const cls = o.parada >= 15 ? ' style="color:var(--warn);font-weight:700"' : '';
+      return `<tr><td class="os">${o.os}</td><td>${esc(o.loja)}</td><td>${o.pcm ? esc(o.pcm) : '<span style="color:var(--accent)">sem responsável</span>'}</td><td>${pill(e.nome, e.cor)}</td><td>${esc(dono(o))}</td><td class="n"${cls}>${p}</td></tr>`;
+    }).join('');
+  }
+  function kanban(){
+    return FASES.map(f => {
+      const daFase = OBRAS.filter(o => fase(o) === f.k);
+      let corpo = '';
+      CICLO.filter(c => c.fase === f.k).forEach(c => {
+        const dela = daFase.filter(o => o.etapa === c.k).sort((a, b) => (b.parada || 0) - (a.parada || 0));
+        if (!dela.length) return;
+        corpo += `<div class="sub-et"><span style="color:${c.cor}">${esc(c.nome)}</span><b style="color:var(--ink-dim)">${dela.length}</b></div>`;
+        corpo += dela.map(o => `<div class="card" style="--c:${o.parada >= 15 ? '#f4b73f' : '#1e3a5f'}"><div class="o">OS ${o.os}</div><div class="lj">${esc(o.loja)}</div>${naEsteira(o) ? `<div class="cm">Com <b>${esc(dono(o))}</b> há <b>${o.parada}</b> dias</div>` : ''}</div>`).join('');
+      });
+      return `<div class="col"><div class="col-h"><span style="color:${f.cor}">${esc(f.nome)}</span><span>${daFase.length}</span></div><div class="col-b">${corpo || '<div class="vazio">nenhuma obra</div>'}</div></div>`;
+    }).join('');
+  }
+
+  /* ---------- montar uma Base (hoje / A / B) ---------- */
+  function montarBase(pref, modoFn, padrao){
+    const sel = $('#' + pref + '-filtro');
+    function render(manterValor){
+      const modo = modoFn();
+      const atual = sel.value;
+      $('#' + pref + '-kpis').innerHTML = kpis(modo);
+      sel.innerHTML = opcoes(modo);
+      const valido = Array.from(sel.options).some(op => op.value === atual);
+      sel.value = manterValor && valido ? atual : padrao(modo);
+      sel.classList.toggle('mudou', modo !== 'hoje');
+      desenhar();
+    }
+    function desenhar(){
+      const l = filtrar(sel.value);
+      $('#' + pref + '-tabela').innerHTML = linhas(l);
+      $('#' + pref + '-conta').innerHTML = `<b>${l.length}</b> obras nesta visão · base completa: <b>${OBRAS.length}</b>`;
+    }
+    sel.addEventListener('change', desenhar);
+    return render;
+  }
+
+  /* ---------- grupos de estado ---------- */
+  const estado = {};
+  function grupo(nome, aoMudar){
+    const bts = $$(`[data-grupo="${nome}"] button`);
+    const aplicar = est => {
+      estado[nome] = est;
+      bts.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.est === est)));
+      $$(`[data-painel="${nome}"]`).forEach(p => { p.hidden = p.dataset.est !== est; });
+      if (aoMudar) aoMudar(est);
+    };
+    bts.forEach(b => b.addEventListener('click', () => aplicar(b.dataset.est)));
+    const ini = bts.find(b => b.getAttribute('aria-pressed') === 'true');
+    aplicar(ini ? ini.dataset.est : bts[0].dataset.est);
+    return aplicar;
+  }
+
+  // Seção 1 — hoje
+  const rHoje = montarBase('hoje', () => 'hoje', () => '__esteira');
+  rHoje(false);
+  $('#hoje-kanban').innerHTML = kanban();
+  grupo('hoje-vis');
+
+  // Seção A
+  const rA = montarBase('a', () => estado.a === 'depois' ? 'A' : 'hoje', () => '__esteira');
+  grupo('a', () => rA(true));
+
+  // Seção B
+  const rB = montarBase('b', () => estado.b === 'depois' ? 'B' : 'hoje', m => m === 'B' ? '__pf' : '__esteira');
+  grupo('b', () => rB(false));
+
+  /* ---------- Seção C — ficha ---------- */
+  const PASSOS = ['relatorio', 'aprovarOS', 'fecharOS', 'pendFat', 'faturado'];
+  const csel = $('#c-sel'), cconf = $('#c-conf'), cdata = $('#c-data'), cdt = $('#c-dt'), cexpl = $('#c-expl'), cok = $('#c-ok');
+  const ficha = {etapa:'fecharOS', fechou:null};
+  const br = iso => iso ? iso.split('-').reverse().join('/') : '—';
+  function passo(cls, nome, meta, quando, extra, selos){
+    return `<li class="passo ${cls}"><span class="dot"></span><div class="corpo"><div class="nm">${esc(nome)}${selos || ''}</div><div class="meta">${meta}</div>${extra ? `<div class="extra">${extra}</div>` : ''}</div><span class="quando">${quando}</span></li>`;
+  }
+  function renderFicha(){
+    const e = ET[ficha.etapa];
+    $('#c-pill').innerHTML = pill(e.nome, e.cor);
+    $('#c-etapa').innerHTML = pill(e.nome, e.cor);
+    $('#c-dono').textContent = ficha.etapa === 'fecharOS' ? 'Responsável Rafael' : 'Cliente DPSP';
+    $('#c-parada').textContent = ficha.etapa === 'fecharOS' ? '4 dias' : (ficha.fechou === '2026-09-24' ? '0 dias' : diasAte(ficha.fechou) + ' dias');
+    let h = passo('feito', 'Execução em campo', '<span>Equipe Eletro Norte</span><span>Campo · diário do dia</span><span class="cod">EXECUTAR</span>', '16/09/2026');
+    PASSOS.forEach(k => {
+      const c = ET[k];
+      if (k === 'relatorio') { h += passo('feito', c.nome, '<span>Equipe / responsável</span><span>Field Control</span><span class="cod">deduzido do Field</span>', '18/09/2026'); return; }
+      if (k === 'aprovarOS') { h += passo('pulado', c.nome, '<span>Desvio não usado — a OS já estava aprovada em 02/09/2026, então, com o relatório existindo, a obra vai direto para Fechar OS.</span>', 'não se aplica', '', ' <span class="desvio">desvio</span>'); return; }
+      const atual = ficha.etapa === k;
+      const sempre = k === 'fecharOS' ? ' <span class="desvio">sempre existe</span>' : '';
+      const aqui = atual ? ' <span class="aqui">a obra está aqui</span>' : '';
+      const onde = {fecharOS:'<span>Responsável Rafael</span><span>Sistema do cliente</span><span class="cod">FECHAR OS</span>', pendFat:'<span>Cliente DPSP</span><span>Sistema do cliente</span><span class="cod">PENDENTE FATURAMENTO</span>', faturado:'<span>Financeiro Manfac</span><span>Manfac</span><span class="cod">FATURADO</span>'}[k];
+      if (k === 'fecharOS') {
+        if (atual) h += passo('atual', c.nome, onde, 'há 4 dias', 'Este passo <b>nunca é pulado</b>: é quando o analista de obras insere o relatório no sistema do cliente e finaliza a OS lá. Só depois é possível faturar.', sempre + aqui);
+        else h += passo('feito', c.nome, onde, br(ficha.fechou), `OS fechada no sistema do cliente em <b>${br(ficha.fechou)}</b> · <button type="button" class="link" disabled style="cursor:default">corrigir data</button>`, sempre);
+        return;
+      }
+      if (k === 'pendFat' && atual) { h += passo('atual', c.nome, onde, ficha.fechou === '2026-09-24' ? 'há 0 dias' : `há ${diasAte(ficha.fechou)} dias`, '', aqui); return; }
+      h += passo('futuro', c.nome, onde, '—');
+    });
+    $('#c-esteira').innerHTML = h;
+    csel.innerHTML = CICLO.map(c => `<option value="${c.k}">${esc(c.nome)}</option>`).join('');
+    csel.value = ficha.etapa;
+    atualizarSeletor();
+  }
+  function diasAte(iso){ return Math.round((Date.parse('2026-09-24') - Date.parse(iso)) / 864e5); }
+  function atualizarSeletor(){
+    const mudou = csel.value !== ficha.etapa;
+    const comData = ficha.etapa === 'fecharOS' && csel.value === 'pendFat';
+    cdata.hidden = !comData;
+    const dt = cdt.value;
+    const dataOk = !comData || (dt && dt <= '2026-09-24' && dt >= '2026-09-18');
+    cconf.disabled = !mudou || !dataOk;
+    cexpl.textContent = mudou
+      ? `A obra passa de "${ET[ficha.etapa].nome}" para "${ET[csel.value].nome}" e o contador de dias parada nesta etapa ${comData && dt ? 'começa em ' + br(dt) : 'recomeça hoje'}.`
+      : 'Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado quem mudou e quando.';
+  }
+  csel.addEventListener('change', () => { cdt.value = '2026-09-24'; cok.hidden = true; atualizarSeletor(); });
+  cdt.addEventListener('input', atualizarSeletor);
+  cconf.addEventListener('click', () => {
+    if (csel.value !== 'pendFat' || ficha.etapa !== 'fecharOS') { cok.hidden = false; cok.textContent = 'Nesta demonstração, só a troca Fechar OS → Pendente faturamento é simulada.'; return; }
+    aplicarC('depois', cdt.value);
+  });
+  let noClique = false;
+  function aplicarC(est, data){
+    if (est === 'depois') { ficha.etapa = 'pendFat'; ficha.fechou = data || '2026-09-24'; }
+    else { ficha.etapa = 'fecharOS'; ficha.fechou = null; }
+    renderFicha();
+    cok.hidden = est !== 'depois';
+    if (est === 'depois') cok.innerHTML = `✓ Etapa atualizada para "Pendente faturamento", com o fechamento da OS gravado em <b>${br(ficha.fechou)}</b>.`;
+    if (!noClique) { noClique = true; aplicarGrupoC(est); noClique = false; }
+  }
+  const aplicarGrupoC = grupo('c', est => { if (!noClique) { noClique = true; aplicarC(est); noClique = false; } });
+})();
+</script>
+</body>
+</html>

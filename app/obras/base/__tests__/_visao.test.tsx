@@ -105,3 +105,38 @@ test('singular com 1 cancelada; nada quando não há cancelada', () => {
   render(<VisaoBase obras={[ativa('LOJA A1')]} />)
   expect(screen.queryByText(/fora desta lista/)).not.toBeInTheDocument()
 })
+
+describe('busca — vazio com texto buscado (spec-busca-base-2026-09-24 §5)', () => {
+  test('sem busca, o vazio de sempre continua igual', async () => {
+    render(<VisaoBase obras={[]} />)
+    expect(screen.getByText('Nenhuma obra nesta visão. Troque os filtros acima.')).toBeInTheDocument()
+  })
+
+  test('com busca sem resultado, mostra o texto da spec e o botão "Limpar busca"', async () => {
+    const u = userEvent.setup()
+    render(<VisaoBase obras={[ativa('LOJA A1')]} />)
+
+    const campo = screen.getByLabelText('Buscar loja ou OS')
+    await u.type(campo, 'nao existe nenhuma loja assim')
+
+    expect(
+      screen.getByText('Nenhuma obra com "nao existe nenhuma loja assim" na loja, no Nº da OS ou na descrição.')
+    ).toBeInTheDocument()
+    // Há dois controles com o nome acessível "Limpar busca" quando a busca não
+    // acha nada: o "×" do campo (aria-label) e o link do vazio (texto visível).
+    // O do vazio é o que tem texto próprio "Limpar busca".
+    expect(screen.getByText('Limpar busca').tagName).toBe('BUTTON')
+  })
+
+  test('"Limpar busca" (do vazio) zera q e a obra volta a aparecer', async () => {
+    const u = userEvent.setup()
+    render(<VisaoBase obras={[ativa('LOJA A1')]} />)
+
+    const campo = screen.getByLabelText('Buscar loja ou OS')
+    await u.type(campo, 'nao existe nenhuma loja assim')
+    await u.click(screen.getByText('Limpar busca'))
+
+    expect(presente('LOJA A1')).toBe(true)
+    expect(campo).toHaveValue('')
+  })
+})

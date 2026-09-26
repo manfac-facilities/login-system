@@ -1,6 +1,98 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-## ▶ Retomar aqui — 20/09/2026, tarde
+## ▶ Retomar aqui — 24/09/2026
+
+**Prazo:** entrega final ao cliente em **28/09/2026, segunda**. Dias úteis restantes: 25/09 e 28/09.
+
+### No ar
+
+| O quê | Quando | Evidência |
+|---|---|---|
+| Ajustes da ficha (nome da etapa, data de fechamento da OS, equipe em texto livre) + faixa "Novidade" | Deploy 23/09 19:38 UTC, master `2b7d2fa` | `.claude/rules/obras.md`, seção "Estado em 23/09/2026" |
+| Cancelamento de obra (merge `fed48eb`) + dívidas A1/A13/B5/B7 da ficha (merge `29b526e`) | Deploy 24/09 14:03 UTC, master `3f08943` | Conferido pelo `Last-Modified` dos chunks (fato confirmado pelo coordenador); `.claude/rules/obras.md` |
+| Migration `obras-cancelamento` (etapa `cancelado`, colunas `cancelado_*`, trigger, RPC) | Aplicada em produção 23/09, 11/11 + teste 11/11 `OK` | `.claude/rules/sql.md`, tabela de migrations |
+| Comunicado 01 (ajustes da ficha) | Publicado na faixa 23/09 19:52 UTC | `docs/cliente/2026-09-23-comunicado-01-ajustes-da-ficha.md` |
+
+### Pronto, esperando algo
+
+- **Busca por loja ou OS na Base** — pedido do João 24/09, mockup aprovado ("busca aprovada, pode
+  codar"), spec `spec-busca-base-2026-09-24.md`, merge `a82e3aa` no master e no GitHub. Revisão
+  independente aprovou sem bloqueante (backlog em A37). **Falta o deploy.**
+
+- **Comunicado 02 (cancelamento) + guia do cancelamento** — texto e código prontos (`e025ce4`).
+  Falta o OK da equipe pelo roteiro de teste antes de publicar.
+- **E-mail dos comunicados** — código existe, roda em modo simulação. Falta Resend + DNS
+  (Locaweb) + chave, trabalho do João.
+- **"Pendente faturamento na esteira"** — mockup com as 3 leituras do pedido (A renomear / B
+  grupo próprio / C já é assim hoje na ficha) publicado:
+  https://claude.ai/artifact/TSpFGfSj1Ez9caMEoSmEjc. Recomendação do coordenador: **B** — separa
+  o cartão/filtro "Pendente faturamento" do resto de "ainda na esteira", sem mexer no Kanban (que
+  já separa por coluna). Aguardando o cliente escolher.
+- **Roteiro de teste da equipe** (cancelamento + ajustes da ficha), publicado 24/09:
+  https://claude.ai/artifact/VULi23tvCDBd6xs73Njyzb. Aguardando retorno pelo WhatsApp.
+- **Pergunta 03 do cliente** ("como calcula o avanço %?") — texto pronto desde 31/08, **adiada
+  pelo João em 24/09** ("não é relevante agora") — `docs/DIVIDAS.md`, item B2.
+
+### Em andamento
+
+- **Duda — D5** (validar o operacional ponta a ponta): em curso com uma OS de teste real do
+  Field, identificador **"TESTE D5"** (loja "DPSP Matriz" no hub), criada a pedido do João —
+  decisão dele foi usar OS de teste, não obra real, porque o roteiro cria diário/tarefa/foto
+  antes de desfazer. Entrou no hub pela sincronização incremental em ~2,5 min (18:20:07 UTC).
+  No fim, a OS será cancelada no hub pela Manfac, com observação "OS de teste da D5".
+  (`docs/onboarding-duda/entregas/2026-09-24-D5-pergunta-obra-de-teste-duda.md`)
+  **24/09, fim do dia:** roteiro operacional passou sem falha
+  (`docs/onboarding-duda/entregas/2026-09-24-D5-resultado-mensagem-do-duda.md`). Limpeza
+  conferida no banco pelo coordenador: TESTE D5 `cancelado`/`manfac`, obs "OS de teste da D5",
+  0 diários, 1 tarefa (Material/Roberta) `respondida` preservada. Commit citado por ele
+  (`1e6cfd9`) **não está no GitHub**. Faltam 3 dos 10 itens: ausência em duas varreduras
+  completas, tela de sincronização, foto em "Evolução em fotos". Nenhuma foto de diário existe
+  ainda em produção — a primeira foto real da equipe será a primeira a aparecer na ficha.
+- **Duda — D6** (mockup do dashboard de saúde da operação): próxima frente dele, ainda sem
+  mockup. **Não está travada por RLS** (conferido em produção 24/09): a policy
+  `"obras sync admin"` de `obras_sync_execucao` **já** deixa admin ler (`obras_is_admin()`). Se a
+  tela for para admin, nada muda no banco. Só vira mudança de policy se o mockup mostrar a saúde
+  da sincronização para quem **não** é admin — aí é decisão do João, depois do mockup.
+- **D6 fora do prazo de 28/09, decisão do João (25/09, literal):** "nao tem problema o dashboard
+  nao estar pronto na segunda, o cliente pediu isso essa semana". Até 28/09 basta o mockup andar.
+  **Nova data (25/09, literal): "entregamos na quarta/quinta"** — 30/09 ou 01/10. Lido como a data
+  do dashboard. Exige mockup aprovado pelo cliente até ~segunda (28/09): código é 13–19 h.
+- **Duda — D7** (dívidas da área dele: A14, A15, teste instável de `_blocos-editaveis.test.tsx`).
+
+### Esperando decisão/retorno
+
+- **Do cliente:** roteiro de teste do cancelamento e da ficha (link acima); escolha entre as
+  leituras A/B/C do "pendente faturamento"; visão do dono da Pacheco (mockup de 18/09, parado,
+  fora da divisão de 23/09 por decisão do João).
+- **Do João:** publicar o comunicado 02 depois do OK da equipe.
+
+### Fora da divisão de trabalho por decisão do João (23/09)
+
+Visão do dono da Pacheco, agentes de cobrança por WhatsApp, manutenção real do Cockpit —
+nenhum dos três entra no trabalho até 28/09.
+
+### Próximos passos
+
+1. Equipe testar o roteiro publicado e o João repassar o retorno pelo WhatsApp.
+2. Cliente escolher a leitura do "pendente faturamento" (A/B/C).
+3. D6 segue sem esperar RLS (policy atual já atende tela de admin; ver "Em andamento").
+4. Publicar o comunicado 02 após o OK da equipe.
+5. Duda seguir D5 → D6 (mockup) → D7.
+6. Resend + DNS para o e-mail dos comunicados sair de verdade (João).
+
+### Dívidas fechadas em 24/09 (revisão sem bloqueante)
+
+A1, A13, A16, B5, B7 — ver `.claude/rules/obras.md` e `review-dividas-ficha-2026-09-24.md`.
+Bordas novas registradas em A31–A36 (`docs/DIVIDAS.md`), nenhuma bloqueante.
+
+### Links desta seção
+
+- Mockup "pendente faturamento": https://claude.ai/artifact/TSpFGfSj1Ez9caMEoSmEjc
+- Roteiro de teste (cancelamento + ficha): https://claude.ai/artifact/VULi23tvCDBd6xs73Njyzb
+
+---
+
+## ▶ Retomar aqui — 20/09/2026, tarde (histórico)
 
 **Prazo:** operando **amanhã, 21/09**. Projeto final em 28/09. **19/09 passou sem commit e sem
 deploy** — como 17/09 já havia passado.
