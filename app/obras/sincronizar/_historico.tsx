@@ -46,7 +46,8 @@ export default function HistoricoSincronizacao({ execucoes }: { execucoes: Execu
                   <th className="py-1.5 pr-3 font-medium">Tipo</th>
                   <th className="py-1.5 pr-3 font-medium">Origem</th>
                   <th className="py-1.5 pr-3 font-medium">Status</th>
-                  <th className="py-1.5 font-medium">Resultado</th>
+                  <th className="py-1.5 pr-3 font-medium">Resultado</th>
+                  <th className="py-1.5 font-medium">Marca d’água</th>
                 </tr>
               </thead>
               <tbody>
@@ -60,10 +61,13 @@ export default function HistoricoSincronizacao({ execucoes }: { execucoes: Execu
                     <td className="py-2 pr-3 font-medium" style={{ color: COR_DO_STATUS[execucao.status] }}>
                       {execucao.status}
                     </td>
-                    <td className="py-2 text-[#94a3b8]">
+                    <td className="py-2 pr-3 text-[#94a3b8]">
                       {execucao.erro
                         ? execucao.erro
                         : `${execucao.total_field} lidas · ${execucao.novas} novas · ${execucao.atualizadas} atualizadas · ${execucao.ignoradas} ignoradas`}
+                    </td>
+                    <td className="whitespace-nowrap py-2 text-[#94a3b8]">
+                      {dataHora(execucao.marca_dagua_nova)}
                     </td>
                   </tr>
                 ))}
