@@ -208,7 +208,7 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
   if (caminhos.length > 0) {
     const { data: assinadas } = await supabase.storage
       .from('obras-fotos')
-      .createSignedUrls(caminhos, 60)
+      .createSignedUrls(caminhos, 300)
     ;(assinadas ?? []).forEach((a) => {
       if (a.path && a.signedUrl) fotos[a.path] = a.signedUrl
     })
