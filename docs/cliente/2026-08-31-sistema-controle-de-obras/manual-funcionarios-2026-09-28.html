@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Controle de Obras — Manual do usuário</title>
+<style>
+  :root {
+    --navy: #0d2050;
+    --navy-deep: #0a1628;
+    --orange: #f05a28;
+    --ink: #1a2333;
+    --ink-soft: #45526b;
+    --line: #d8dee8;
+    --line-soft: #e8ecf2;
+    --ok: #1f8a5c;
+    --warn-bg: #fff6ea;
+    --warn-border: #f0b95a;
+    --tip-bg: #f1f6ff;
+    --tip-border: #9db8e8;
+    --chip-definir: #f05a28;
+    --chip-levant: #3f7fd1;
+    --chip-andamento: #1f8a5c;
+    --chip-paralisado: #d6304a;
+    --chip-fechamento: #c98a1a;
+    --chip-faturado: #7a869c;
+  }
+
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--navy);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  .page-header .titulo {
+    font-size: 15pt;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .page-header .titulo span {
+    color: var(--orange);
+  }
+  .page-header .meta {
+    font-size: 8.5pt;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  h1 { display: none; }
+
+  h2 {
+    font-size: 12.5pt;
+    color: var(--navy);
+    margin: 20px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1.5px solid var(--orange);
+    break-after: avoid;
+  }
+  section.top h2:first-of-type { margin-top: 0; }
+
+  h3 {
+    font-size: 10.8pt;
+    color: var(--navy);
+    margin: 14px 0 4px;
+    break-after: avoid;
+  }
+
+  p { margin: 5px 0; }
+
+  .subtitulo {
+    font-size: 8.7pt;
+    color: var(--ink-soft);
+    margin: 4px 0 10px;
+  }
+
+  .para-que-serve {
+    font-size: 9.6pt;
+    color: var(--ink-soft);
+    margin: 2px 0 6px;
+  }
+  .para-que-serve b { color: var(--navy); }
+
+  ul.lista-simples {
+    margin: 6px 0;
+    padding-left: 18px;
+  }
+  ul.lista-simples li {
+    margin: 3px 0;
+  }
+
+  ol.passos {
+    margin: 6px 0 8px;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: passo;
+  }
+  ol.passos li {
+    counter-increment: passo;
+    position: relative;
+    padding-left: 24px;
+    margin: 5px 0;
+  }
+  ol.passos li::before {
+    content: counter(passo);
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #fff;
+    background: var(--orange);
+    border-radius: 50%;
+  }
+
+  .caixa {
+    border-left: 3px solid var(--warn-border);
+    background: var(--warn-bg);
+    padding: 6px 10px;
+    margin: 8px 0;
+    font-size: 9.6pt;
+    border-radius: 0 4px 4px 0;
+    break-inside: avoid;
+  }
+  .caixa.dica {
+    border-left-color: var(--tip-border);
+    background: var(--tip-bg);
+  }
+  .caixa b.rotulo {
+    color: #9a6b12;
+    text-transform: uppercase;
+    font-size: 7.8pt;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .caixa.dica b.rotulo { color: #3a5f9e; }
+
+  .secao {
+    break-inside: avoid;
+  }
+  .subsecao {
+    break-inside: avoid;
+    margin-bottom: 4px;
+  }
+
+  hr.div {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 16px 0;
+  }
+
+  strong { color: var(--navy); }
+
+  .admin-nota {
+    display: inline-block;
+    background: var(--navy);
+    color: #fff;
+    font-size: 8.3pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: 3px;
+    margin: 4px 0 8px;
+  }
+
+  /* ---------- pequenos desenhos dos elementos da tela ---------- */
+
+  .miniabas {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 14px;
+  }
+  .miniabas span {
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .miniabas span.ativa {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+  }
+
+  .pilula {
+    display: inline-block;
+    font-size: 7.6pt;
+    font-weight: 700;
+    color: #fff;
+    padding: 1.5px 7px;
+    border-radius: 9px;
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+
+  .miniesteira {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 8px 0 10px;
+    font-size: 7.6pt;
+    color: var(--ink-soft);
+  }
+  .miniesteira .passo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 92px;
+    text-align: center;
+  }
+  .miniesteira .bolinha {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-bottom: 3px;
+  }
+  .miniesteira .linha {
+    flex: 1;
+    height: 2px;
+    background: var(--line);
+    margin: 0 -2px 15px;
+  }
+  .miniesteira .feito .bolinha { background: var(--chip-andamento); }
+  .miniesteira .atual .bolinha { background: var(--orange); box-shadow: 0 0 0 3px #f05a2822; }
+  .miniesteira .atual span.rot { color: var(--orange); font-weight: 700; }
+  .miniesteira .futuro .bolinha { background: var(--line); }
+  .miniesteira .futuro span.rot { color: #a9b2c2; }
+
+  .minicard {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--chip-paralisado);
+    border-radius: 6px;
+    padding: 8px 10px;
+    width: 220px;
+    margin: 8px 0 12px;
+    font-size: 8pt;
+    background: #fbfcfe;
+  }
+  .minicard .os { font-family: monospace; color: #8a93a6; font-size: 7.6pt; }
+  .minicard .loja { font-weight: 700; color: var(--navy); font-size: 9.3pt; margin: 1px 0 4px; }
+  .minicard .chips { margin-top: 4px; }
+
+  footer.rodape {
+    margin-top: 22px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    font-size: 7.8pt;
+    color: #9aa4b5;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="titulo">Controle de Obras <span>—</span> Manual do usuário</div>
+  <div class="meta">Manfac · setembro/2026</div>
+</div>
+
+<section class="top secao">
+  <h2>O que é</h2>
+  <p>O Controle de Obras é o sistema que acompanha cada obra desde a hora em que ela
+  entra (pelo Field Control) até o momento em que é faturada. Ele substitui a planilha:
+  mostra em que etapa cada obra está, de quem é a vez de agir e há quantos dias ela está
+  parada ali.</p>
+
+  <h2>Para que serve</h2>
+  <ul class="lista-simples">
+    <li>Ver todas as obras de uma vez, com quem está com cada uma e o que está travando.</li>
+    <li>Responder, todo dia, se a obra andou em campo — e por quê, quando não andou.</li>
+    <li>Cobrar automaticamente quem precisa resolver uma falta (material, ferramenta,
+      equipe, documento ou foto), com prazo.</li>
+    <li>Registrar quem autorizou a obra, quando a OS foi aprovada pelo cliente e quando
+      foi fechada.</li>
+    <li>Cancelar uma obra que não vai ser executada, sem apagar nada.</li>
+  </ul>
+
+  <h2>Como entrar</h2>
+  <ol class="passos">
+    <li>Acesse <strong>hub.manfac.com.br</strong> e faça login.</li>
+    <li>Clique no card <strong>Controle de Obras</strong>.</li>
+    <li>Se o card não aparecer, seu acesso ainda não foi liberado — peça a um
+      administrador do hub para liberar o acesso ao módulo <strong>Controle de
+      Obras</strong> em Admin → Acessos.</li>
+  </ol>
+  <p>O sistema tem três telas principais, nas abas do topo:</p>
+  <div class="miniabas">
+    <span class="ativa">Diário do dia</span>
+    <span>Tarefas</span>
+    <span>Base de obras</span>
+  </div>
+  <p>A partir de qualquer uma delas, clicar numa obra abre a <strong>ficha</strong> dela.</p>
+</section>
+
+<hr class="div" />
+
+<section class="secao">
+  <h2>Base de obras</h2>
+  <p class="para-que-serve"><b>Para que serve:</b> ver a base inteira, filtrar e encontrar
+  uma obra.</p>
+
+  <p>No topo da tela ficam os <strong>indicadores</strong> (quantas obras aguardam
+  definição, estão em andamento, paralisadas, presas no fechamento, pendentes de
+  faturamento, sem OS aprovada, sem cobertura, aprovadas há mais de 60 dias, ou passaram
+  do prazo). Eles sempre mostram a base inteira, mesmo quando você aplica um filtro —
+  não são afetados pela busca.</p>
+
+  <div class="minicard">
+    <div class="os">OS 0926-010550</div>
+    <div class="loja">DP Ipanema 3</div>
+    <div class="chips">
+      <span class="pilula" style="background:var(--chip-andamento)">Em andamento</span>
+      <span class="pilula" style="background:var(--chip-paralisado)">sem OS aprovada</span>
+    </div>
+  </div>
+
+  <ol class="passos">
+    <li>Escolha <strong>Tabela</strong> ou <strong>Kanban</strong> no topo da lista. A
+      Tabela mostra todas as colunas (no celular vira uma lista de cartões); o Kanban
+      agrupa as obras por fase do processo (Antes de executar, Executando, Fechamento,
+      Faturamento).</li>
+    <li>Para achar uma obra, digite no campo <strong>Buscar loja ou OS</strong> — funciona
+      com o nome da loja, o número da OS ou parte da descrição.</li>
+    <li>Use os filtros <strong>Responsável da obra</strong>, <strong>Etapa da
+      obra</strong>, <strong>Autorização</strong>, <strong>Classificação</strong> e
+      <strong>Field Control</strong> para restringir a lista.</li>
+    <li>Na Tabela, clique no cabeçalho de uma coluna para ordenar por ela; clique de novo
+      para inverter.</li>
+    <li>Clique em qualquer linha ou cartão para abrir a ficha da obra.</li>
+  </ol>
+
+  <div class="caixa">
+    <b class="rotulo">Atenção</b>
+    Obras canceladas ficam de fora da lista "Todas" de propósito. Para vê-las, use o
+    filtro <strong>Etapa da obra</strong> e escolha uma das opções de "Canceladas", ou
+    clique em "ver canceladas" no aviso que aparece no fim da lista.
+  </div>
+</section>
+
+<section class="secao">
+  <h2>Ficha da obra</h2>
+  <p>A ficha é a tela de uma obra: mostra onde ela está, de quem é a vez de agir e há
+  quanto tempo. Ela abre ao clicar em qualquer obra, na Base, no Diário ou nas Tarefas.</p>
+
+  <div class="subsecao">
+    <h3>A esteira: onde a obra está</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> ver o caminho completo da obra, do
+    que já passou ao que falta.</p>
+
+    <div class="miniesteira">
+      <div class="passo feito"><span class="bolinha"></span><span class="rot">Execução em campo</span></div>
+      <div class="linha"></div>
+      <div class="passo atual"><span class="bolinha"></span><span class="rot">Fechar OS</span></div>
+      <div class="linha"></div>
+      <div class="passo futuro"><span class="bolinha"></span><span class="rot">Pendente faturamento</span></div>
+      <div class="linha"></div>
+      <div class="passo futuro"><span class="bolinha"></span><span class="rot">Faturado</span></div>
+    </div>
+
+    <p>A esteira lista os passos da obra em ordem: Execução em campo → Relatório de
+    entrega → Executado - pendente aprovação OS (só quando a OS não estava aprovada
+    antes) → Fechar OS → Pendente faturamento → Faturado. O passo em que a obra está
+    agora fica marcado com "a obra está aqui".</p>
+    <ol class="passos">
+      <li>Abra a ficha da obra.</li>
+      <li>Role até <strong>Ciclo de vida da obra</strong>.</li>
+      <li>Veja o passo atual, quem é o dono dele e há quantos dias está parado ali.</li>
+    </ol>
+    <div class="caixa">
+      <b class="rotulo">Atenção</b>
+      A obra <strong>não sai de campo sozinha</strong>. Quando a equipe terminar o serviço, abra a
+      ficha e use <strong>Mudar a etapa desta obra</strong> para levá-la a <strong>Relatório de entrega</strong>
+      (e depois às etapas seguintes). Sem isso, ela continua aparecendo como em campo.
+    </div>
+  </div>
+
+  <div class="subsecao">
+    <h3>Obra aguardando definição (Triagem)</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> preencher o mínimo para a obra poder
+    entrar no dia a dia.</p>
+    <p>Enquanto a obra está na etapa "Aguardando definição", abrir a ficha mostra um
+    checklist em vez da esteira normal. Nenhuma obra aparece no Diário do dia até esses
+    cinco campos estarem completos.</p>
+    <ol class="passos">
+      <li>Abra a ficha da obra recém-chegada (etapa "Aguardando definição").</li>
+      <li>Preencha <strong>Responsável da obra</strong>, <strong>Equipe /
+        prestador</strong>, <strong>Prioridade</strong>, <strong>Data de início</strong> e
+        <strong>Duração em dias</strong>.</li>
+      <li>Se já souber quem autorizou a execução ou se a OS já foi aprovada, preencha
+        também e clique em <strong>Salvar dados</strong> — isso não libera a obra, só
+        guarda o que você já sabe.</li>
+      <li>Com os cinco campos do checklist completos, clique em <strong>Liberar para o
+        diário do dia</strong>.</li>
+    </ol>
+    <div class="caixa">
+      <b class="rotulo">Atenção</b>
+      Ao liberar, a obra entra na base como "Levantamento" e passa a ser cobrada todo dia
+      no Diário.
+    </div>
+  </div>
+
+  <div class="subsecao">
+    <h3>Os três blocos que você edita</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> manter Autorização, Identificação e
+    Cronograma atualizados depois que a obra já está em andamento.</p>
+    <ol class="passos">
+      <li>Na ficha, localize o bloco (<strong>Autorização</strong>,
+        <strong>Identificação</strong> ou <strong>Cronograma</strong>) e clique em
+        <strong>Editar</strong>.</li>
+      <li>Altere os campos necessários.</li>
+      <li>Clique em <strong>Salvar</strong>.</li>
+      <li>Se o que você salvar destravar a obra (por exemplo, preencher a data de
+        aprovação da OS numa obra parada esperando isso), o sistema avisa antes e pede
+        confirmação.</li>
+    </ol>
+    <p>Alguns campos não se editam na ficha porque vêm do Field Control (Nº OS, Loja,
+    Chamado) — eles são corrigidos lá, e o sistema só os preenche aqui quando estão
+    vazios.</p>
+    <div class="caixa dica">
+      <b class="rotulo">Dica</b>
+      Cada bloco mostra no rodapé quem editou por último e quando.
+    </div>
+  </div>
+
+  <div class="subsecao">
+    <h3>Mudar a etapa da obra</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> mover a obra manualmente de uma etapa
+    para outra.</p>
+    <ol class="passos">
+      <li>Na ficha, role até <strong>Ciclo de vida da obra</strong> e use o campo
+        <strong>Mudar a etapa desta obra</strong>.</li>
+      <li>Escolha a nova etapa na lista.</li>
+      <li>Se a mudança for de "Fechar OS" para "Pendente faturamento", informe também a
+        <strong>Data de fechamento da OS</strong> — ela vem preenchida com hoje, mas pode
+        ser ajustada se o fechamento aconteceu em outro dia.</li>
+      <li>Clique em <strong>Confirmar mudança</strong>.</li>
+    </ol>
+    <div class="caixa">
+      <b class="rotulo">Atenção</b>
+      Qualquer pessoa com acesso ao Controle de Obras pode mudar a etapa. Fica registrado
+      quem mudou e quando. Se a obra já estiver com a OS fechada, dá para
+      <strong>corrigir a data</strong> depois, direto no passo "Fechar OS" da esteira.
+    </div>
+  </div>
+
+  <div class="subsecao">
+    <h3>Remarcar o início</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> registrar por que a data de início
+    mudou.</p>
+    <ol class="passos">
+      <li>No bloco <strong>Cronograma</strong>, clique em <strong>Editar</strong>.</li>
+      <li>Altere o campo <strong>Início planejado</strong>.</li>
+      <li>Clique em <strong>Salvar</strong> — a janela <strong>Remarcar o início da
+        obra</strong> abre automaticamente.</li>
+      <li>Escolha o <strong>motivo</strong> na lista (ou clique em <strong>+ Cadastrar
+        novo motivo</strong> se o motivo não estiver lá).</li>
+      <li>Clique em <strong>Remarcar e salvar</strong>.</li>
+    </ol>
+    <div class="caixa dica">
+      <b class="rotulo">Dica</b>
+      Mudar a duração, a equipe, o responsável ou a prioridade não exige motivo — só
+      mudar a data de início. A lista de remarcações fica registrada na própria ficha.
+    </div>
+  </div>
+
+  <div class="subsecao">
+    <h3>Evolução em fotos</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> ver a obra andando em fotos, sem
+    precisar ir até a loja.</p>
+    <p>Enquanto a obra está em campo, cada resposta do Diário do dia pode levar uma foto.
+    Elas aparecem em sequência na ficha, em <strong>Evolução em fotos</strong>.</p>
+    <ol class="passos">
+      <li>Abra a ficha de uma obra em campo (ou já cancelada, se tinha fotos).</li>
+      <li>Veja as fotos dos últimos dias, na ordem em que foram tiradas.</li>
+      <li>Dias sem foto aparecem marcados — a falta de foto também vira tarefa, do mesmo
+        jeito que faltar material ou equipe.</li>
+    </ol>
+    <p>A foto é anexada no próprio Diário do dia (seção seguinte), não nesta tela.</p>
+  </div>
+
+  <div class="subsecao">
+    <h3>Cancelar uma obra</h3>
+    <p class="para-que-serve"><b>Para que serve:</b> encerrar uma obra que não vai ser
+    executada — cliente desistiu, a Manfac não vai executar, ou a OS foi aberta por
+    engano.</p>
+    <ol class="passos">
+      <li>Na ficha da obra, no fim do bloco <strong>Ciclo de vida da obra</strong>, clique
+        no botão <strong>Cancelar obra</strong>.</li>
+      <li>Escolha <strong>quem cancelou</strong>: Cancelado pelo Cliente ou Cancelado pela
+        Manfac.</li>
+      <li>Se quiser, escreva o que aconteceu (opcional).</li>
+      <li>Clique em <strong>Cancelar obra</strong> para confirmar.</li>
+    </ol>
+    <div class="caixa">
+      <b class="rotulo">Atenção</b>
+      Só é possível cancelar antes de a obra sair de campo (nas etapas "Aguardando
+      definição", "Levantamento", "Em andamento" ou "Paralisado"). Depois disso ela segue
+      até ser faturada — é decisão do cliente. Cancelar não apaga nada: diário, fotos,
+      tarefas e histórico continuam na ficha, e dá para desfazer a qualquer momento com o
+      botão <strong>Desfazer cancelamento</strong>, que aparece no selo "Cancelada" da
+      própria ficha.
+    </div>
+  </div>
+</section>
+
+<section class="secao">
+  <h2>Diário do dia</h2>
+  <p class="para-que-serve"><b>Para que serve:</b> responder, todo dia, se cada obra sob
+  sua responsabilidade andou.</p>
+  <p>Cada analista vê só as obras das quais é responsável. Administradores veem todas,
+  com um seletor para escolher de quem é a fila.</p>
+  <ol class="passos">
+    <li>Abra a aba <strong>Diário do dia</strong>.</li>
+    <li>Para cada obra da fila, responda <strong>Andou hoje?</strong> (Sim ou Não).</li>
+    <li>Se marcar <strong>Não</strong>, escolha <strong>Por que não andou?</strong> — esse
+      é o único campo obrigatório além da primeira pergunta.</li>
+    <li>Se quiser, marque <strong>Faltou algum item?</strong>, escreva uma observação e
+      anexe a foto do dia (obras em campo).</li>
+    <li>Clique em <strong>Salvar e sair da fila</strong>.</li>
+  </ol>
+  <div class="caixa dica">
+    <b class="rotulo">Dica</b>
+    Errou uma resposta? Na lista <strong>Já respondidas</strong>, use
+    <strong>Desfazer</strong> — a obra volta para a fila do dia.
+  </div>
+</section>
+
+<section class="secao">
+  <h2>Tarefas</h2>
+  <p class="para-que-serve"><b>Para que serve:</b> ver quem está com a bola quando alguma
+  coisa falta numa obra.</p>
+  <p>Ninguém cria tarefa nesta tela. Toda tarefa nasce sozinha quando um analista salva o
+  Diário e marca que faltou material, ferramenta, equipe, documento — ou quando a foto do
+  dia não veio.</p>
+  <ol class="passos">
+    <li>Abra a aba <strong>Tarefas</strong>.</li>
+    <li>As tarefas aparecem agrupadas por quem precisa resolver, com a mais antiga e a
+      vencida (em vermelho) primeiro.</li>
+    <li>Para fechar uma tarefa, clique em <strong>Marcar como respondida</strong>,
+      escreva em uma linha o que foi resolvido e confirme.</li>
+  </ol>
+  <div class="caixa">
+    <b class="rotulo">Atenção</b>
+    O prazo padrão é até o fim do dia em que a tarefa foi aberta. Uma tarefa vencida fica
+    marcada em vermelho, mas não é cobrada automaticamente por outro canal — quem
+    acompanha é quem abre esta tela.
+  </div>
+</section>
+
+<section class="secao">
+  <h2>Sincronização com o Field</h2>
+  <div class="admin-nota">Só administrador tem acesso a esta tela</div>
+</section>
+
+<section class="secao">
+  <h2>Dúvidas frequentes</h2>
+
+  <p><strong>A obra que acabei de ver no Field Control não apareceu na Base.</strong><br>
+  O sistema busca as OS do Field automaticamente, a cada poucos minutos. Espere um pouco
+  e atualize a página.</p>
+
+  <p><strong>Não sei em que etapa colocar a obra.</strong><br>
+  Abra a ficha e veja a esteira em "Ciclo de vida da obra" — ela mostra a etapa atual e
+  o que falta para avançar. Para avançar a obra, use <strong>Mudar a etapa desta obra</strong>. A única
+  exceção: se a obra está em "Executado - pendente aprovação OS" e você preenche <strong>OS aprovada
+  em</strong> no bloco Autorização, ela passa sozinha para "Fechar OS".</p>
+
+  <p><strong>Preciso mudar a data de início e não acho um botão "remarcar".</strong><br>
+  É o próprio campo <strong>Início planejado</strong>, no bloco Cronograma. Mudar essa
+  data já abre a janela pedindo o motivo.</p>
+
+  <p><strong>Sou responsável por obras, mas o Diário do dia aparece vazio.</strong><br>
+  Seu usuário pode não estar ligado ao seu nome de responsável. Avise um administrador para
+  conferir o seu cadastro.</p>
+
+  <p><strong>Respondi errado o Diário de hoje.</strong><br>
+  Na lista <strong>Já respondidas</strong>, use <strong>Desfazer</strong> — a obra volta
+  para a fila para você responder de novo.</p>
+
+  <p><strong>Cancelei uma obra por engano.</strong><br>
+  Abra a ficha dela e clique em <strong>Desfazer cancelamento</strong>, no selo
+  "Cancelada". Nada foi apagado.</p>
+</section>
+
+<footer class="rodape">Controle de Obras — Manual do usuário · Manfac · setembro/2026</footer>
+
+</body>
+</html>
