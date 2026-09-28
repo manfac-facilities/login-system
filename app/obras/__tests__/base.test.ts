@@ -105,6 +105,7 @@ describe('filtrar — Etapa da obra', () => {
     obra({ etapa: 'definir' }),
     obra({ etapa: 'andamento' }),
     obra({ etapa: 'fecharOS', desde_etapa: '2026-08-01' }),
+    obra({ etapa: 'pendFat', desde_etapa: '2026-08-11' }),
     obra({ etapa: 'faturado', desde_etapa: '2026-08-01' }),
   ]
 
@@ -116,15 +117,25 @@ describe('filtrar — Etapa da obra', () => {
     expect(filtrar(base, { ...FILTROS_PADRAO, etapa: 'fase:antes' })).toHaveLength(1)
   })
 
-  it('"Executadas, ainda na esteira" exclui a obra já faturada', () => {
-    const r = filtrar(base, { ...FILTROS_PADRAO, etapa: '__esteira' })
+  it('"Executadas, ainda no fechamento" traz só a fase fechamento, sem pendente faturamento nem faturada', () => {
+    const r = filtrar(base, { ...FILTROS_PADRAO, etapa: '__fechamento' })
     expect(r).toHaveLength(1)
     expect(r[0].etapa).toBe('fecharOS')
   })
 
-  it('as opções vêm agrupadas pelas quatro fases, com a esteira em destaque', () => {
+  it('"Pendente faturamento" traz só quem está na etapa pendFat', () => {
+    const r = filtrar(base, { ...FILTROS_PADRAO, etapa: '__pendfat' })
+    expect(r).toHaveLength(1)
+    expect(r[0].etapa).toBe('pendFat')
+  })
+
+  it('as opções vêm agrupadas pelas quatro fases, com fechamento e pendente faturamento em destaque', () => {
     const o = opcoesEtapa()
-    expect(o.soltas.map((x) => x.t)).toEqual(['Todas', 'Executadas, ainda na esteira'])
+    expect(o.soltas.map((x) => x.t)).toEqual([
+      'Todas',
+      'Executadas, ainda no fechamento',
+      'Pendente faturamento (aguardando pedido de compra)',
+    ])
     expect(o.grupos.map((g) => g.fase)).toEqual([
       'Antes de executar',
       'Executando',
@@ -207,17 +218,18 @@ describe('kpisDaBase', () => {
     obra({ etapa: 'andamento' }),
     obra({ etapa: 'paralisado' }),
     obra({ etapa: 'fecharOS', desde_etapa: '2026-08-01', os_aprovada: false, liberado_por: null }),
+    obra({ etapa: 'pendFat', desde_etapa: '2026-08-11' }),
   ]
 
-  it('devolve os oito indicadores do mockup, na ordem aprovada', () => {
+  it('devolve os nove indicadores do mockup, na ordem aprovada', () => {
     const k = kpisDaBase(base)
-    expect(k).toHaveLength(8)
+    expect(k).toHaveLength(9)
     expect(k[1].rotulo).toBe('em andamento')
     expect(k[2].rotulo).toBe('paralisadas')
-    expect(k[4].rotulo).toBe('sem OS aprovada no cliente')
-    expect(k[5].rotulo).toBe('sem cobertura — nem OS nem liberação')
-    expect(k[6].rotulo).toBe('aprovadas há mais de 60 dias')
-    expect(k[7].rotulo).toBe('passaram da duração planejada')
+    expect(k[5].rotulo).toBe('sem OS aprovada no cliente')
+    expect(k[6].rotulo).toBe('sem cobertura — nem OS nem liberação')
+    expect(k[7].rotulo).toBe('aprovadas há mais de 60 dias')
+    expect(k[8].rotulo).toBe('passaram da duração planejada')
   })
 
   it('conta aguardando definição com a idade da mais antiga', () => {
@@ -231,10 +243,12 @@ describe('kpisDaBase', () => {
     expect(k[0].rotulo).toBe('aguardando definição')
   })
 
-  it('conta a esteira com a mais parada', () => {
+  it('conta o fechamento e o pendente faturamento separados, cada um com a sua mais parada', () => {
     const k = kpisDaBase(base)
     expect(k[3].valor).toBe(1)
-    expect(k[3].rotulo).toBe('executadas, ainda na esteira · a mais parada há 30 dias')
+    expect(k[3].rotulo).toBe('executadas, ainda no fechamento · a mais parada há 30 dias')
+    expect(k[4].valor).toBe(1)
+    expect(k[4].rotulo).toBe('pendente faturamento · a mais parada há 20 dias')
   })
 
   it('OS INTEIRA, NUNCA O FILTRO: o KPI não muda quando a lista é filtrada', () => {
@@ -529,8 +543,8 @@ describe('cancelamento na Base (spec do cancelamento §7.1)', () => {
     expect(filtrar(base, { ...FILTROS_PADRAO, etapa: 'cancelado:manfac' })).toEqual([pelaManfac])
   })
 
-  it('"Executadas, ainda na esteira" e "fase:*" não trazem cancelada', () => {
-    for (const etapa of ['__esteira', 'fase:antes', 'fase:campo', 'fase:fechamento', 'fase:faturamento']) {
+  it('"Executadas, ainda no fechamento", "Pendente faturamento" e "fase:*" não trazem cancelada', () => {
+    for (const etapa of ['__fechamento', '__pendfat', 'fase:antes', 'fase:campo', 'fase:fechamento', 'fase:faturamento']) {
       expect(filtrar(base, { ...FILTROS_PADRAO, etapa }).some((o) => o.etapa === 'cancelado')).toBe(false)
     }
   })

@@ -52,7 +52,7 @@ export default async function BaseDeObrasPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-9">
         {kpis.map((k) => (
           <KPI key={k.rotulo} rotulo={k.rotulo} valor={k.valor} cor={k.cor} />
         ))}
