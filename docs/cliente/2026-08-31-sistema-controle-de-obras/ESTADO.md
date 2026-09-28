@@ -1,6 +1,16 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
-## ▶ Retomar aqui — 24/09/2026
+## ▶ Retomar aqui — 28/09/2026 (dia da entrega)
+
+- **Pendente faturamento, leitura B** (escolha do cliente, `docs/cliente/2026-09-28-escolha-pendente-faturamento.md`): spec `spec-pendente-faturamento-B-2026-09-28.md`, merge `9b46a12`, revisão independente APROVOU, backlog A38. **No GitHub, falta deploy.**
+- **Foto quebrada em "Evolução em fotos"** (achada pelo Duda na D5): causa = CSP `img-src` sem o Storage. Liberado só o host do projeto + signed URL 60→300s, no mesmo merge. Revisão APROVOU. Provavelmente conserta também fotos da Sofia (A39). **Falta deploy e conferir no navegador.**
+- **D5 fechada** pelo Duda (26/09); teste da OS sumida em duas varreduras adiado para depois de 28/09.
+- **D6 mockup** entregue pelo Duda (branch `duda/field-api-client` `0d15b7f`), publicado pela sessão principal com os cartões alinhados à B: https://claude.ai/artifact/WN7Bp4VDmM34PiNPuSNLUZ — aguardando aprovação do cliente (6 perguntas no fim da página).
+- Commits do Duda `6b2c4d2`/`1e6cfd9` no branch dele, **não revisados nem mergeados**.
+
+---
+
+## ▶ Retomar aqui — 24/09/2026 (histórico)
 
 **Prazo:** entrega final ao cliente em **28/09/2026, segunda**. Dias úteis restantes: 25/09 e 28/09.
 
