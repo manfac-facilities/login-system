@@ -71,7 +71,7 @@ export const COR_PRIORIDADE: Record<string, string> = {
 
 /** `todos` | `__sem` (ainda sem responsável) | o nome do responsável. */
 export type FiltroPcm = string
-/** `todas` | `__esteira` | `fase:<k>` | a chave da etapa. */
+/** `todas` | `__fechamento` | `__pendfat` | `fase:<k>` | a chave da etapa. */
 export type FiltroEtapa = string
 export type FiltroOs = 'todas' | 'sim' | 'nao' | 'liberada' | 'semcob'
 export type FiltroMau = 'todas' | 'sim' | 'nao'
@@ -146,8 +146,11 @@ export function temAlertaDeAusenciaField(
 
 /**
  * As opções do filtro "Etapa da obra". Segue a ordem do ciclo e agrupa por
- * fase — nove etapas soltas viram lista ilegível. "Executadas, ainda na
- * esteira" vem antes de tudo porque é a pergunta que motivou o projeto.
+ * fase — nove etapas soltas viram lista ilegível. "Executadas, ainda no
+ * fechamento" e "Pendente faturamento" vêm antes de tudo porque são a
+ * pergunta que motivou o projeto — separadas (spec-pendente-faturamento-B
+ * -2026-09-28, leitura B): o que ainda depende da Manfac (fechamento) do que
+ * já depende só do pedido de compra do cliente (pendente faturamento).
  */
 export type GrupoEtapa = { fase: string; opcoes: { v: string; t: string }[] }
 
@@ -162,7 +165,8 @@ export function opcoesEtapa(): { soltas: { v: string; t: string }[]; grupos: Gru
   return {
     soltas: [
       { v: 'todas', t: 'Todas' },
-      { v: '__esteira', t: 'Executadas, ainda na esteira' },
+      { v: '__fechamento', t: 'Executadas, ainda no fechamento' },
+      { v: '__pendfat', t: 'Pendente faturamento (aguardando pedido de compra)' },
     ],
     grupos: fases.map((f) => ({
       fase: nomes[f],
@@ -205,8 +209,10 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
     if (f.etapa === 'todas') {
       // "Todas" esconde as canceladas (spec do cancelamento §7.1).
       if (cancelada(o)) return false
-    } else if (f.etapa === '__esteira') {
-      if (!posCampo(o) || encerrada(o)) return false
+    } else if (f.etapa === '__fechamento') {
+      if (faseDe(o) !== 'fechamento' || encerrada(o)) return false
+    } else if (f.etapa === '__pendfat') {
+      if (o.etapa !== 'pendFat') return false
     } else if (f.etapa.startsWith('fase:')) {
       if (faseDe(o) !== f.etapa.slice(5)) return false
     } else if (f.etapa.startsWith('cancelado:')) {
@@ -377,9 +383,15 @@ export function kpisDaBase(todas: Obra[]): Kpi[] {
   const maisVelha = aDefinir.reduce((m, o) => Math.max(m, o.dias ?? 0), 0)
 
   // O indicador que não existia: obra já executada em campo e ainda presa numa
-  // etapa de papel. Na planilha inteira são 89 — é onde o dinheiro está parado.
-  const esteira = todas.filter((o) => posCampo(o) && !encerrada(o))
-  const esteiraVelha = esteira.reduce((m, o) => Math.max(m, o.paradaEtapa ?? 0), 0)
+  // etapa de papel. Na planilha inteira eram 89 — é onde o dinheiro está
+  // parado. Separado em dois (spec-pendente-faturamento-B-2026-09-28, leitura
+  // B): o que ainda depende da Manfac (fechamento) do que já depende só do
+  // pedido de compra do cliente (pendente faturamento).
+  const fechamento = todas.filter((o) => faseDe(o) === 'fechamento' && !encerrada(o))
+  const fechamentoVelha = fechamento.reduce((m, o) => Math.max(m, o.paradaEtapa ?? 0), 0)
+
+  const pendFat = todas.filter((o) => o.etapa === 'pendFat')
+  const pendFatVelha = pendFat.reduce((m, o) => Math.max(m, o.paradaEtapa ?? 0), 0)
 
   const semOS = todas.filter((o) => !o.os_aprovada && !encerrada(o)).length
   // O número que hoje ninguém consegue responder.
@@ -396,11 +408,18 @@ export function kpisDaBase(todas: Obra[]): Kpi[] {
     { valor: andamento, rotulo: 'em andamento', cor: OK },
     { valor: paralisadas, rotulo: 'paralisadas', cor: CRIT },
     {
-      valor: esteira.length,
-      rotulo: esteira.length
-        ? `executadas, ainda na esteira · a mais parada há ${esteiraVelha} dias`
-        : 'executadas, ainda na esteira',
+      valor: fechamento.length,
+      rotulo: fechamento.length
+        ? `executadas, ainda no fechamento · a mais parada há ${fechamentoVelha} dias`
+        : 'executadas, ainda no fechamento',
       cor: WARN,
+    },
+    {
+      valor: pendFat.length,
+      rotulo: pendFat.length
+        ? `pendente faturamento · a mais parada há ${pendFatVelha} dias`
+        : 'pendente faturamento',
+      cor: ACCENT,
     },
     { valor: semOS, rotulo: 'sem OS aprovada no cliente', cor: CRIT },
     { valor: semCob, rotulo: 'sem cobertura — nem OS nem liberação', cor: CRIT },
