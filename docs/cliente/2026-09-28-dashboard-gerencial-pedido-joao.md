@@ -60,3 +60,26 @@ Mensagem do João no chat, 28/09/2026, depois do mockup D6 do Duda
 > Meta faturamento: 60K
 >
 > Os outros clientes sao obras pontuais, ai nao tem como colocar meta neles
+
+## Retorno do cliente repassado pelo João (28/09/2026), literal
+
+> Ele gostou dessa tela
+
+Anexo: `2026-09-28-dashboard-gerencial-anexos/01-cliente-gostou-ritmo-do-campo.png` — seção "Ritmo do campo
+e respostas" do mockup D6 (Diário de hoje: Responderam / Não andou / Com foto; Tarefas: Abertas /
+Vencidas / Respondidas).
+
+> E falou que usa essa para ter esse status que gostaria de levar a um dashboard
+
+Anexo: `2026-09-28-dashboard-gerencial-anexos/02-planilha-resumo-status-geral.png` — tabela dinâmica
+"RESUMO STATUS GERAL" da planilha: STATUS MANFAC × SUM de VALOR TOTAL.
+Transcrição: EXECUTADO - APROVAR OS R$ 134.703,91; EXECUTAR R$ 215.854,86; EXECUTAR - APROVAR OS
+R$ 54.170,16; FECHAR OS R$ 111.296,73; PENDENTE FATURAMENTO R$ 378.051,10; Total geral R$ 894.076,76.
+
+## Fatos verificados pelo coordenador (28/09/2026)
+
+- `obras_obra.valor` existe no schema, mas **nenhum código grava** (sync não traz, ficha não edita).
+- API do Field: nas 100 OS "Atividade Spot" mais recentes (de 269), **0 têm `totalValue` > 0**.
+  O valor em R$ hoje só existe na planilha do cliente ("VALOR TOTAL").
+- Na mesma amostra há 4 clientes: 85 OS de um (DPSP), 13 de outro (D1000), 1 de cada um de outros dois.
+- `obras_obra` **não tem coluna de cliente**; a sincronização filtra só pelo tipo de OS.
