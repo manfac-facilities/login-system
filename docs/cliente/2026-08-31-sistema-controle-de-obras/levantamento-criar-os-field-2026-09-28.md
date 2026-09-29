@@ -313,3 +313,10 @@ Supabase devolveu 401 em 28/09 (precisa ser regravado com `C:\Users\joao-\gravar
 
 Lido como: a OS "TESTE HUB API 2809" aparece (no Field e/ou no hub). Cancelamento dela fica para
 depois do teste do formulário "Nova obra", que pode reaproveitá-la para conferir a ligação com a sync.
+
+Complemento do João, mesma conversa, literal:
+
+> Vi dentro do hub através do filtro
+
+**Ciclo completo provado em 28/09:** OS criada pela API no Field → entrou no hub pela sincronização
+automática → encontrada pela busca da Base.
