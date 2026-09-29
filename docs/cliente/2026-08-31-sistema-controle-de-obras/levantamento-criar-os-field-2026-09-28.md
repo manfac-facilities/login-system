@@ -306,3 +306,10 @@ O tipo "Atividade Spot" é compartilhado por DPSP e **D1000** na mesma conta Fie
 `app/obras/_lib/field/cliente.ts` / `sincronizar/` filtram só por `service_id` (nenhum filtro de
 `customer`). Obras do D1000 podem estar entrando no hub. **Não conferido no banco:** o PAT da
 Supabase devolveu 401 em 28/09 (precisa ser regravado com `C:\Users\joao-\gravar-pat.ps1`).
+
+## 11. Confirmação do João (28/09/2026), literal
+
+> Os de teste criada
+
+Lido como: a OS "TESTE HUB API 2809" aparece (no Field e/ou no hub). Cancelamento dela fica para
+depois do teste do formulário "Nova obra", que pode reaproveitá-la para conferir a ligação com a sync.
