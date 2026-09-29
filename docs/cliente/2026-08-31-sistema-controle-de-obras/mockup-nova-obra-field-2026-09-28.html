@@ -1,0 +1,448 @@
+<title>Nova Obra no Field</title>
+<style>
+  :root{
+    --bg:#0a1628;--panel:#0b1b36;--panel-2:#0d2050;--line:#1e3a5f;--line-soft:#162c4a;
+    --ink:#e9f0fa;--ink-dim:#94a3b8;--ink-faint:#64748b;
+    --accent:#f05a28;--accent-soft:rgba(240,90,40,.14);
+    --ok:#35c98a;--ok-soft:rgba(53,201,138,.13);--warn:#f4b73f;--warn-soft:rgba(244,183,63,.13);
+    --crit:#ff4d6d;--crit-soft:rgba(255,77,109,.14);--info:#5aa9f0;--info-soft:rgba(90,169,240,.13);
+    --mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    --r:8px;--r-sm:5px;color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{margin:0;font-family:var(--sans);font-size:14px;line-height:1.45;overflow-x:hidden}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pagina{max-width:900px;margin:0 auto;padding:0 14px 90px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- faixa de demonstração ---------- */
+  .demo-faixa{
+    position:sticky;top:0;z-index:20;margin:0 -14px 16px;padding:7px 14px;
+    background:repeating-linear-gradient(135deg,#3a2410,#3a2410 10px,#2c1c0c 10px,#2c1c0c 20px);
+    border-bottom:2px solid var(--accent);color:#ffd9c2;font-size:11.5px;font-weight:700;
+    letter-spacing:.05em;text-transform:uppercase;text-align:center
+  }
+  .demo-painel{
+    border:1px dashed var(--line);border-radius:var(--r);background:rgba(0,0,0,.2);
+    padding:9px 10px;margin:0 0 18px;display:flex;flex-direction:column;gap:7px
+  }
+  .demo-linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .demo-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin-right:2px;white-space:nowrap}
+  .demo-painel button{background:none;border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 10px;color:var(--ink-dim);font-size:12px}
+  .demo-painel button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .demo-painel button:hover:not([aria-pressed="true"]){color:var(--ink);border-color:#2b4f7d}
+
+  header.topo{padding:14px 0 6px}
+  .voltar{display:inline-flex;align-items:center;gap:4px;color:var(--ink-dim);font-size:12.5px;text-decoration:none;margin-bottom:8px}
+  h1.titulo{font-size:20px;margin:0 0 4px;letter-spacing:-.015em}
+  .subt{margin:0;color:var(--ink-dim);font-size:12.5px;max-width:70ch}
+
+  .sec{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
+  .sec-h{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .sec-h .tag{flex:none;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.03em;border-radius:var(--r-sm);padding:3px 9px;margin-top:1px}
+  .tag.field{color:var(--accent);border:1px solid rgba(240,90,40,.45);background:var(--accent-soft)}
+  .tag.hub{color:var(--info);border:1px solid rgba(90,169,240,.45);background:var(--info-soft)}
+  .sec-h h2{margin:0 0 3px;font-size:16px;letter-spacing:-.01em}
+  .sec-h p{margin:0;color:var(--ink-dim);font-size:12.5px;max-width:70ch}
+  .sec-h p b{color:var(--ink)}
+
+  .grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .campo.larga{grid-column:1/-1}
+  .campo .rot{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink);font-weight:600}
+  .campo .rot .opc{font-weight:500;font-size:10.5px;color:var(--ink-faint);text-transform:none;letter-spacing:0}
+  .campo .rot .obrig{color:var(--accent)}
+  .campo .dica{font-size:11px;color:var(--ink-faint);line-height:1.4}
+  .in{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:13px;color:var(--ink)}
+  .in:focus{border-color:var(--accent);outline:none}
+  .in:disabled{opacity:.6;cursor:not-allowed}
+  textarea.in{resize:vertical;min-height:58px}
+  .campo.invalido .in{border-color:var(--crit)}
+  .campo .msg-erro{font-size:11px;color:var(--crit);font-weight:600}
+
+  .endereco-preview{border:1px solid var(--line);background:var(--bg);border-radius:var(--r-sm);padding:8px 10px;font-size:12px;color:var(--ink-dim)}
+  .endereco-preview .t{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;font-weight:700}
+  .endereco-preview b{color:var(--ink);font-weight:500}
+  .endereco-preview.vazio{color:var(--ink-faint);font-style:italic}
+
+  .nota{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:9px 11px;font-size:12px;color:var(--ink-dim);display:flex;gap:8px;margin-top:16px}
+  .nota .ic{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid var(--ink-faint);display:grid;place-items:center;font-size:10px;color:var(--ink-faint);margin-top:1px;font-weight:700}
+  .nota b{color:var(--ink)}
+
+  .acoes{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:600;padding:9px 16px;border-radius:var(--r-sm);font-size:13.5px}
+  .btn:hover:not(:disabled){filter:brightness(1.08)}
+  .btn:disabled{background:transparent;color:var(--ink-faint);border-color:var(--line);cursor:not-allowed;filter:none}
+  .girando{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:gira .8s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes gira{to{transform:rotate(360deg)}}
+
+  .resultado{margin-top:14px}
+  .ok-box{border:1px solid rgba(53,201,138,.4);background:var(--ok-soft);border-left:4px solid var(--ok);border-radius:var(--r-sm);padding:12px 14px;font-size:12.5px;color:var(--ink-dim);display:flex;gap:10px}
+  .ok-box .ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#04231a;display:grid;place-items:center;font-size:12px;font-weight:800;margin-top:1px}
+  .ok-box b{color:var(--ok)}
+  .ok-box .os-num{font-family:var(--mono);font-size:14px;color:var(--ink);background:rgba(0,0,0,.25);border-radius:4px;padding:1px 6px}
+  .ok-box .link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:600}
+  .erro-box{border:1px solid rgba(255,77,109,.5);background:var(--crit-soft);border-left:4px solid var(--crit);border-radius:var(--r-sm);padding:12px 14px;font-size:12.5px;color:var(--ink-dim)}
+  .erro-box strong{display:block;color:var(--crit);font-size:13px;margin-bottom:4px}
+  .erro-box .acoes-erro{margin-top:10px;display:flex;gap:8px}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border-color:var(--line);font-weight:500;padding:6px 12px;font-size:12.5px}
+  .btn.ghost:hover{color:var(--ink);border-color:#2b4f7d}
+
+  @media (max-width:480px){
+    .grade{grid-template-columns:1fr}
+    .campo.larga{grid-column:auto}
+    .demo-linha{gap:5px}
+    .demo-painel button{padding:5px 8px;font-size:11.5px}
+  }
+</style>
+
+<div class="pagina">
+  <div class="demo-faixa">Demonstração — dados fictícios, nada aqui é enviado ao Field</div>
+
+  <div class="demo-painel">
+    <div class="demo-linha">
+      <span class="demo-lbl">Pular direto pro estado:</span>
+      <button type="button" data-estado="ocioso" aria-pressed="true">Formulário</button>
+      <button type="button" data-estado="enviando">Enviando</button>
+      <button type="button" data-estado="sucesso">Sucesso</button>
+      <button type="button" data-estado="erro">Erro do Field</button>
+      <button type="button" data-estado="validacao">Campo obrigatório vazio</button>
+    </div>
+    <div class="demo-linha">
+      <span class="demo-lbl">Ao clicar em "Criar obra" de verdade, simular:</span>
+      <button type="button" data-resultado="sucesso" aria-pressed="true">Sucesso</button>
+      <button type="button" data-resultado="erro">Erro do Field</button>
+    </div>
+  </div>
+
+  <header class="topo">
+    <a class="voltar" href="#">‹ Base de obras</a>
+    <h1 class="titulo">Nova obra</h1>
+    <p class="subt">Preenche os dois formulários de uma vez: o que abre a OS no Field e o que fica só no hub. Evita preencher a mesma obra em duas telas.</p>
+  </header>
+
+  <form id="form-nova-obra" novalidate>
+
+    <div class="sec">
+      <div class="sec-h">
+        <span class="tag field">Field</span>
+        <div>
+          <h2>Vai para o Field</h2>
+          <p>Vira a Ordem de Serviço lá — o número (<b>ex.: 0926-017450</b>) quem gera é o Field, não o hub.</p>
+        </div>
+      </div>
+
+      <div class="grade">
+        <div class="campo">
+          <label class="rot" for="f-cliente">Cliente</label>
+          <select id="f-cliente" class="in" onchange="popularLojas()">
+            <option value="dpsp" selected>DPSP</option>
+            <option value="d1000">D1000</option>
+            <option value="popeyes">Popeyes</option>
+            <option value="outro">Outro cliente do Field…</option>
+          </select>
+          <span class="dica">A lista vem do Field — o id do cliente vai junto por trás, nunca é digitado. Evita abrir a OS na conta errada mesmo com vários clientes na mesma tela.</span>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="f-loja">Loja <span class="obrig">*</span></label>
+          <select id="f-loja" class="in" onchange="atualizarEndereco()"></select>
+          <span class="dica">Vem do cadastro de lojas já sincronizado com o Field, filtrado pelo cliente escolhido.</span>
+        </div>
+
+        <div class="campo larga">
+          <div class="rot">Endereço que vai na OS <span class="opc">— vem da loja, não se digita</span></div>
+          <div id="endereco-preview" class="endereco-preview vazio">Escolha uma loja para ver o endereço.</div>
+        </div>
+
+        <div class="campo larga">
+          <label class="rot" for="f-descricao">Descrição do serviço <span class="obrig">*</span></label>
+          <textarea id="f-descricao" class="in" placeholder="ex.: Solicito reparo na porta automática da entrada principal"></textarea>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="f-data">Data agendada <span class="opc">— opcional</span></label>
+          <input id="f-data" type="date" class="in">
+          <span class="dica">Vazio: a atividade entra pendente, sem agendamento, na fila do Field.</span>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="f-tecnico">Técnico <span class="opc">— opcional</span></label>
+          <select id="f-tecnico" class="in">
+            <option value="">— sem técnico —</option>
+            <option>Carlos Andrade</option>
+            <option>Fernanda Lima</option>
+            <option>Rodrigo Souza</option>
+          </select>
+          <span class="dica">Pode ficar em branco e ser definido depois, direto no Field.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h">
+        <span class="tag hub">Hub</span>
+        <div>
+          <h2>Fica no hub</h2>
+          <p>É a mesma triagem que hoje se preenche depois que a obra chega pelo Field. Preenchendo os cinco agora, a obra já <b>nasce liberada para o diário</b>. Deixando em branco, ela nasce em <b>Aguardando definição</b> — igual às que vêm do Field hoje — e alguém completa depois na ficha.</p>
+        </div>
+      </div>
+
+      <div class="grade">
+        <div class="campo">
+          <label class="rot" for="h-resp">Responsável da obra <span class="opc">— para liberar direto</span></label>
+          <select id="h-resp" class="in">
+            <option value="">— escolher —</option>
+            <option>Marcos Tavares</option>
+            <option>Juliana Prado</option>
+            <option>Eduardo Ramos</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="h-equipe">Equipe / prestador <span class="opc">— para liberar direto</span></label>
+          <input id="h-equipe" class="in" list="equipes-demo" autocomplete="off" placeholder="Digite a equipe ou o prestador">
+          <datalist id="equipes-demo">
+            <option value="Equipe Manutenção 1">
+            <option value="Equipe Manutenção 2">
+            <option value="Prestador Elétrica RJ">
+          </datalist>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="h-prioridade">Prioridade <span class="opc">— para liberar direto</span></label>
+          <select id="h-prioridade" class="in">
+            <option value="">— escolher —</option>
+            <option>Normal</option>
+            <option>Urgente</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="h-inicio">Data de início <span class="opc">— para liberar direto</span></label>
+          <input id="h-inicio" type="date" class="in">
+          <span class="dica">quando a equipe entra na loja</span>
+        </div>
+
+        <div class="campo">
+          <label class="rot" for="h-duracao">Duração em dias <span class="opc">— para liberar direto</span></label>
+          <input id="h-duracao" type="number" min="1" max="180" class="in">
+          <span class="dica">a data final o sistema calcula</span>
+        </div>
+      </div>
+
+      <div class="nota">
+        <span class="ic">i</span>
+        <span>Nenhum dos cinco campos acima impede criar a obra e abrir a OS no Field. Eles só decidem se a obra <b>já entra pronta para o diário</b> ou se vai para a triagem, como acontece hoje com toda obra vinda do Field.</span>
+      </div>
+    </div>
+
+    <div class="nota">
+      <span class="ic">i</span>
+      <span>A OS criada por aqui <b>não volta duplicada</b> quando a sincronização automática com o Field rodar — o hub reconhece que essa obra já existe.</span>
+    </div>
+
+    <div class="acoes">
+      <button type="button" class="btn" id="btn-criar" onclick="criarObra()">Criar obra e abrir OS no Field</button>
+    </div>
+
+    <div id="resultado" class="resultado" aria-live="polite"></div>
+  </form>
+</div>
+
+<script>
+  var resultadoSimulado = 'sucesso';
+
+  var CAMPOS_FIELD = [
+    { id: 'f-loja', rotulo: 'Loja' },
+    { id: 'f-descricao', rotulo: 'Descrição do serviço' },
+  ];
+
+  function limparInvalidos() {
+    CAMPOS_FIELD.forEach(function (c) {
+      var campo = document.getElementById(c.id).closest('.campo');
+      campo.classList.remove('invalido');
+      var msg = campo.querySelector('.msg-erro');
+      if (msg) msg.remove();
+    });
+  }
+
+  function marcarInvalido(id, texto) {
+    var campo = document.getElementById(id).closest('.campo');
+    campo.classList.add('invalido');
+    var msg = document.createElement('span');
+    msg.className = 'msg-erro';
+    msg.textContent = texto;
+    campo.appendChild(msg);
+  }
+
+  var LOJAS_POR_CLIENTE = {
+    dpsp: [
+      { valor: 'dpsp-matriz', nome: 'DPSP Matriz', endereco: 'Avenida Manuel Bandeira, 291 — Vila Leopoldina — São Paulo/SP — 05317-020' },
+      { valor: 'dpsp-bt9', nome: 'DP Barra da Tijuca 9', endereco: 'Avenida das Américas, 7360 — Barra da Tijuca — Rio de Janeiro/RJ — 22793-081' },
+      { valor: 'dpsp-tq6', nome: 'DP Taquara 6', endereco: 'Estrada dos Bandeirantes, 5024 — Taquara — Rio de Janeiro/RJ — 22710-563' },
+      { valor: 'dpsp-nf3', nome: 'DP Nova Friburgo 3', endereco: 'Rua Mal. Floriano, 118 — Centro — Nova Friburgo/RJ — 28613-000' },
+      { valor: 'dpsp-cg4', nome: 'DP Campo Grande 4', endereco: 'Estrada do Monteiro, 890 — Campo Grande — Rio de Janeiro/RJ — 23052-070' },
+      { valor: 'dpsp-rec12', nome: 'DP Recreio 12', endereco: 'Avenida das Américas, 19019 — Recreio dos Bandeirantes — Rio de Janeiro/RJ — 22795-100' },
+    ],
+    d1000: [
+      { valor: 'd1000-central', nome: 'Depósito Central', endereco: 'Rua do Comércio, 450 — Centro — Rio de Janeiro/RJ — 20031-170' },
+      { valor: 'd1000-botafogo', nome: 'Filial Botafogo', endereco: 'Rua Voluntários da Pátria, 190 — Botafogo — Rio de Janeiro/RJ — 22270-000' },
+      { valor: 'd1000-niteroi', nome: 'Unidade Niterói', endereco: 'Rua Miguel de Frias, 77 — Icaraí — Niterói/RJ — 24220-000' },
+    ],
+    popeyes: [
+      { valor: 'popeyes-tijuca', nome: 'Popeyes Shopping Tijuca', endereco: 'Avenida Maracanã, 987 — Tijuca — Rio de Janeiro/RJ — 20271-900' },
+      { valor: 'popeyes-barra', nome: 'Popeyes Barra Point', endereco: 'Avenida das Américas, 4666 — Barra da Tijuca — Rio de Janeiro/RJ — 22640-102' },
+      { valor: 'popeyes-norte', nome: 'Popeyes Norte Shopping', endereco: 'Avenida Suburbana, 3215 — Del Castilho — Rio de Janeiro/RJ — 20765-000' },
+    ],
+    outro: [],
+  };
+
+  function popularLojas() {
+    var cliente = document.getElementById('f-cliente').value;
+    var lista = LOJAS_POR_CLIENTE[cliente] || [];
+    var sel = document.getElementById('f-loja');
+    sel.innerHTML = '';
+    if (!lista.length) {
+      sel.disabled = true;
+      var op = document.createElement('option');
+      op.value = '';
+      op.textContent = '— sem loja cadastrada nesta demonstração —';
+      sel.appendChild(op);
+    } else {
+      sel.disabled = false;
+      var vazio = document.createElement('option');
+      vazio.value = '';
+      vazio.textContent = '— escolher —';
+      sel.appendChild(vazio);
+      lista.forEach(function (l) {
+        var op = document.createElement('option');
+        op.value = l.valor;
+        op.textContent = l.nome;
+        sel.appendChild(op);
+      });
+    }
+    atualizarEndereco();
+  }
+
+  function atualizarEndereco() {
+    var cliente = document.getElementById('f-cliente').value;
+    var v = document.getElementById('f-loja').value;
+    var alvo = document.getElementById('endereco-preview');
+    var lista = LOJAS_POR_CLIENTE[cliente] || [];
+    var loja = null;
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i].valor === v) { loja = lista[i]; break; }
+    }
+    if (!loja) {
+      alvo.className = 'endereco-preview vazio';
+      alvo.textContent = cliente === 'outro'
+        ? 'Cliente pontual: nesta demonstração não há lista de lojas — no hub real viria do cadastro desse cliente já sincronizado com o Field.'
+        : 'Escolha uma loja para ver o endereço.';
+      return;
+    }
+    alvo.className = 'endereco-preview';
+    alvo.innerHTML = '<span class="t">Endereço da loja (Field)</span><b>' + loja.endereco + '</b>';
+  }
+
+  popularLojas();
+
+  function girarBotao(ligado) {
+    var btn = document.getElementById('btn-criar');
+    btn.disabled = ligado;
+    btn.innerHTML = ligado ? '<span class="girando"></span>Criando obra e abrindo OS…' : 'Criar obra e abrir OS no Field';
+  }
+
+  function renderSucesso() {
+    var agora = new Date();
+    var os = '0926-01' + (7000 + Math.floor(Math.random() * 999));
+    document.getElementById('resultado').innerHTML =
+      '<div class="ok-box">' +
+        '<span class="ic">&#10003;</span>' +
+        '<div>' +
+          '<b>Obra criada e OS aberta no Field.</b>' +
+          '<div style="margin-top:6px">Número da OS: <span class="os-num">' + os + '</span></div>' +
+          '<div style="margin-top:6px"><a class="link" href="#" onclick="return false">abrir a ficha da obra</a></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderErro() {
+    document.getElementById('resultado').innerHTML =
+      '<div class="erro-box">' +
+        '<strong>Não deu para abrir a OS no Field</strong>' +
+        '<p style="margin:0">O Field não respondeu (fora do ar ou recusou um dos campos enviados). <b>Nada foi criado</b> — nem a obra no hub, nem a OS no Field. O que você preencheu continua na tela.</p>' +
+        '<div class="acoes-erro">' +
+          '<button type="button" class="btn" onclick="criarObra()">Tentar de novo</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderValidacao() {
+    limparInvalidos();
+    marcarInvalido('f-loja', 'Escolha a loja antes de criar a obra.');
+    document.getElementById('resultado').innerHTML =
+      '<div class="erro-box">' +
+        '<strong>Faltam campos obrigatórios</strong>' +
+        '<p style="margin:0">Loja e Descrição do serviço precisam estar preenchidos para abrir a OS no Field. Nada foi enviado.</p>' +
+      '</div>';
+  }
+
+  function criarObra() {
+    limparInvalidos();
+    document.getElementById('resultado').innerHTML = '';
+
+    var loja = document.getElementById('f-loja').value;
+    var descricao = document.getElementById('f-descricao').value.trim();
+    var faltando = [];
+    if (!loja) faltando.push(['f-loja', 'Escolha a loja antes de criar a obra.']);
+    if (!descricao) faltando.push(['f-descricao', 'Descreva o serviço antes de criar a obra.']);
+
+    if (faltando.length) {
+      faltando.forEach(function (f) { marcarInvalido(f[0], f[1]); });
+      document.getElementById('resultado').innerHTML =
+        '<div class="erro-box">' +
+          '<strong>Faltam campos obrigatórios</strong>' +
+          '<p style="margin:0">Preencha os campos marcados abaixo. Nada foi enviado ao Field.</p>' +
+        '</div>';
+      return;
+    }
+
+    girarBotao(true);
+    setTimeout(function () {
+      girarBotao(false);
+      if (resultadoSimulado === 'sucesso') renderSucesso(); else renderErro();
+    }, 1200);
+  }
+
+  // ---------- controle de demonstração ----------
+  var botoesEstado = document.querySelectorAll('[data-estado]');
+  botoesEstado.forEach(function (b) {
+    b.addEventListener('click', function () {
+      botoesEstado.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      limparInvalidos();
+      girarBotao(false);
+      document.getElementById('resultado').innerHTML = '';
+      var estado = b.getAttribute('data-estado');
+      if (estado === 'enviando') girarBotao(true);
+      else if (estado === 'sucesso') renderSucesso();
+      else if (estado === 'erro') renderErro();
+      else if (estado === 'validacao') renderValidacao();
+    });
+  });
+
+  var botoesResultado = document.querySelectorAll('[data-resultado]');
+  botoesResultado.forEach(function (b) {
+    b.addEventListener('click', function () {
+      botoesResultado.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      resultadoSimulado = b.getAttribute('data-resultado');
+    });
+  });
+</script>
