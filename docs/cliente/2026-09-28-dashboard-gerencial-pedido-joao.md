@@ -33,3 +33,30 @@ Mensagem do João no chat, 28/09/2026, depois do mockup D6 do Duda
 > Visão Geral Historica de faturamento mês a mês e acumulado do ano
 >
 > Todas essas informações, precisam ter o filtro geral ou por cliente (dpsp, d1000, popeyes etc) os clientes la cadastrados
+
+## Complemento, mesma conversa (28/09/2026), literal
+
+> Obras que foram remarcadas ou atrasaram, do total das obras em andamento quantos % ta atrasado?
+>
+> Meta de carteira de obras: xxx
+> Meta de faturamento de obras: yyy
+>
+> A meta é por cliente, mas se filtrar todos soma as metas
+>
+> Carteira de obras = tudo que ta com a gente pra iniciar, em andamento, pendente faturamento
+>
+> Faturamento = td que foi efetivamente faturado, teve NF emitida
+>
+> Mes a mes
+>
+> Ai compara se cresceu ou diminui em relação ao mesmo período anterior
+>
+> DPSP
+> Meta carteira: 600K
+> Meta faturamento: 350K
+>
+> D1000
+> Meta carteira: 80K
+> Meta faturamento: 60K
+>
+> Os outros clientes sao obras pontuais, ai nao tem como colocar meta neles
