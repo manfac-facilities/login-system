@@ -1,5 +1,19 @@
 # Estado da frente — Sistema de Controle de Obras (COP)
 
+## ▶ Retomar aqui — 30/09/2026 (madrugada)
+
+**No ar (build 30/09 03:45:04 GMT):** painel gerencial `/obras/painel` + coluna `obras_obra.cliente` (migration aplicada 30/09, 6/6 OK) preenchida pela sync (a completa das 03:02 BRT preenche as existentes — CONFERIR: às 02:43 só 1/138 tinha cliente).
+
+**Painel com pouco dado (medido 30/09 02:43, 138 obras):** 72 sem valor; 0 faturadas (36 em pendFat, R$ 119.777,92); **0 registros de Diário, nunca** (sem dias/produtividade/paradas/início real); 26 com liberação, 56 com data de OS aprovada; 109 com início+duração. Ofertado ao João: lista de obras sem valor e das 36 pendFat + comunicado na faixa.
+
+**Esperando o João (ele vai tratar depois):**
+- Nova obra hub→Field: decisão dele = Field→hub continua; hub→Field com nº da OS validado no Field (existe → bloqueia; não → cria). Pergunta aberta: OS de manutenção (outro tipo, não "Atividade Spot") que vira obra não entra pela sync — A) botão "trazer esta OS para o hub" (recomendado) ou B) mudar o tipo no Field.
+- Proposta enviada: mockup https://claude.ai/artifact/UVKE2t3rjK8Qdxk93Maj2m; cliente perguntou o que acontece depois do "Não". Recomendado: botão de 1 clique "Marcar proposta como enviada" (grava quem/quando), sem etapa nova; opcional tarefa. Precisa de coluna nova.
+- Texto errado da ficha "Relatório de entrega" (A trocar texto / B sync mover).
+- OS de teste "TESTE HUB API 2809" ainda aberta no Field e no hub — cancelar depois.
+
+---
+
 ## ▶ Retomar aqui — 28/09/2026 (dia da entrega)
 
 - **Pendente faturamento, leitura B** (escolha do cliente, `docs/cliente/2026-09-28-escolha-pendente-faturamento.md`): spec `spec-pendente-faturamento-B-2026-09-28.md`, merge `9b46a12`, revisão independente APROVOU, backlog A38. **No GitHub, falta deploy.**
