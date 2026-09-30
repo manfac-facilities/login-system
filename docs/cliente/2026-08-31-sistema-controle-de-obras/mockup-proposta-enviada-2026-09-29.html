@@ -1,0 +1,529 @@
+<title>Proposta Enviada</title>
+<style>
+  :root{
+    --bg:#0a1628; --navy:#0d2050; --accent:#f05a28; --text:#e8eef7;
+    --muted:#94a3b8; --border:#1e3a5f; --crit:#ff4d6d; --warn:#f4b73f; --ok:#35c98a; --faint:#64748b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.45; overflow-x:hidden;
+  }
+  .faixa-demo{
+    background:repeating-linear-gradient(135deg,#f05a28,#f05a28 10px,#d94d20 10px,#d94d20 20px);
+    color:#fff; font-weight:700; font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    text-align:center; padding:6px 10px; position:sticky; top:0; z-index:30;
+  }
+  .barra-fase{
+    position:sticky; top:26px; z-index:29; background:#08111f; border-bottom:1px solid var(--border);
+    padding:10px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px;
+  }
+  .segcontrol{ display:inline-flex; border:1px solid var(--border); border-radius:9999px; padding:3px; background:var(--navy); }
+  .segcontrol button{
+    border:none; background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+    padding:6px 14px; border-radius:9999px; cursor:pointer; transition:.15s;
+  }
+  .segcontrol button.ativo{ background:var(--accent); color:#fff; }
+  .barra-fase .legenda{ font-size:11px; color:var(--muted); text-align:center; width:100%; }
+  .wrap{ max-width:980px; margin:0 auto; padding:20px 16px 60px; }
+  h1{ font-size:20px; margin:4px 0 2px; color:var(--text); }
+  .subtitulo{ color:var(--muted); font-size:12px; margin:0 0 22px; }
+  section.secao{ margin-top:34px; }
+  section.secao:first-of-type{ margin-top:10px; }
+  .secao-cabeca{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:14px; }
+  .secao-cabeca .num{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px;
+    border-radius:6px; background:var(--accent); color:#fff; font-size:12px; font-weight:700; flex:none;
+  }
+  .secao-cabeca h2{ font-size:15px; margin:0; color:var(--text); }
+  .secao-desc{ color:var(--muted); font-size:12px; margin:0 0 16px; max-width:640px; }
+
+  .box{ border-radius:10px; border:1px solid var(--border); background:var(--navy); overflow:hidden; }
+  .box-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--border); padding:10px 14px; flex-wrap:wrap; }
+  .box-h h3{ font-size:13px; font-weight:600; margin:0; color:var(--text); }
+  .box-h .extra{ font-size:11px; color:var(--muted); }
+  .box-b{ padding:12px 14px; }
+  .box-f{ border-top:1px solid var(--border); padding:6px 14px; font-size:11px; color:var(--faint); }
+
+  .pill{ display:inline-flex; align-items:center; gap:4px; border-radius:9999px; border:1px solid; padding:2px 8px; font-size:11px; font-weight:500; line-height:16px; white-space:nowrap; }
+  .pill-crit{ color:var(--crit); border-color:var(--crit); background:#ff4d6d2e; }
+  .pill-warn{ color:var(--warn); border-color:var(--warn); background:#f4b73f2e; }
+  .pill-ok{ color:var(--ok); border-color:var(--ok); background:#35c98a2e; }
+  .pill-neutro{ color:var(--muted); border-color:var(--muted); background:#94a3b82e; }
+  .pill-editando{ color:var(--warn); border-color:var(--warn); background:#f4b73f2e; }
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:8px; padding:7px 13px; font-size:12.5px; font-weight:500; border:none; cursor:pointer; transition:.15s; }
+  .btn-principal{ background:var(--accent); color:#fff; }
+  .btn-principal:hover{ background:#d94d20; }
+  .btn-secundario{ border:1px solid var(--border); background:transparent; color:var(--text); }
+  .btn-secundario:hover{ background:#132a52; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+  dl.campos{ display:grid; grid-template-columns:1fr; gap:10px 16px; margin:0; }
+  @media(min-width:560px){ dl.campos.c2{ grid-template-columns:1fr 1fr; } }
+  dl.campos dt{ font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); margin:0; }
+  dl.campos dd{ font-size:13px; margin:2px 0 0; color:var(--text); }
+
+  .nota{ margin-top:10px; font-size:11.5px; line-height:1.5; color:var(--muted); }
+
+  .campo-form{ min-width:0; }
+  .campo-form label{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); margin-bottom:4px; }
+  .campo-form select, .campo-form input[type=date]{
+    width:100%; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text);
+    padding:8px 9px; font-size:13px; outline:none;
+  }
+  .campo-form select:focus, .campo-form input:focus{ border-color:var(--accent); }
+  .campo-form .dica{ display:block; margin-top:4px; font-size:10.5px; line-height:1.4; color:var(--faint); }
+  .grade-form{ display:grid; grid-template-columns:1fr; gap:12px; }
+  @media(min-width:560px){ .grade-form{ grid-template-columns:1fr 1fr; } }
+  .larga{ grid-column:1/-1; }
+
+  .segbtns{ display:inline-flex; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .segbtns button{
+    border:none; background:var(--bg); color:var(--muted); font-size:12.5px; font-weight:600;
+    padding:8px 16px; cursor:pointer; border-right:1px solid var(--border); transition:.15s;
+  }
+  .segbtns button:last-child{ border-right:none; }
+  .segbtns button.sel-sim.ativo{ background:#35c98a2e; color:var(--ok); }
+  .segbtns button.sel-nao.ativo{ background:#ff4d6d2e; color:var(--crit); }
+
+  .alerta-caixa{ margin-top:10px; border-radius:8px; padding:9px 11px; font-size:12px; line-height:1.5; display:flex; flex-direction:column; gap:2px; }
+  .alerta-critico{ border:1px solid #ff4d6d66; background:#ff4d6d14; }
+  .alerta-critico strong{ color:var(--crit); }
+  .alerta-atencao{ border:1px solid #f4b73f66; background:#f4b73f14; }
+  .alerta-atencao strong{ color:var(--warn); }
+  .alerta-caixa span{ color:#cbd5e1; }
+
+  .proposta-linha{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); }
+  .proposta-linha .rotulo{ font-size:12.5px; color:var(--text); font-weight:500; }
+
+  .grid-cards{ display:grid; grid-template-columns:1fr; gap:12px; }
+  @media(min-width:640px){ .grid-cards.c2{ grid-template-columns:1fr 1fr; } }
+
+  .chip-estado{ border-radius:10px; border:1px solid var(--border); background:var(--navy); padding:12px 14px; }
+  .chip-estado .cab{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .chip-estado .loja{ font-size:12.5px; font-weight:600; }
+  .chip-estado .legenda-mock{ font-size:10.5px; color:var(--faint); margin-top:2px; }
+
+  table.tabela-mock{ width:100%; border-collapse:collapse; font-size:12px; }
+  table.tabela-mock th{ text-align:left; color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.02em; padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.tabela-mock td{ padding:8px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .tabela-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tabela-scroll table{ min-width:560px; }
+  .pills-cell{ display:flex; gap:5px; flex-wrap:wrap; }
+
+  .kpi{ border-radius:10px; border:1px solid var(--border); background:var(--navy); padding:10px 12px; }
+  .kpi .valor{ font-size:20px; font-weight:600; line-height:1.2; }
+  .kpi .rotulo{ margin-top:2px; font-size:11px; line-height:1.3; color:var(--muted); }
+  .kpi .nota{ margin-top:6px; font-size:10.5px; line-height:1.4; color:var(--faint); }
+  .kpi-row{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  @media(min-width:640px){ .kpi-row{ grid-template-columns:repeat(4,1fr); } }
+
+  .opcao-badge{ display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); border:1px solid var(--accent); border-radius:5px; padding:2px 6px; margin-bottom:8px; }
+  .opcoes-lado-a-lado{ display:grid; grid-template-columns:1fr; gap:14px; }
+  @media(min-width:700px){ .opcoes-lado-a-lado{ grid-template-columns:1fr 1fr; } }
+
+  select.filtro-mock{ width:100%; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:8px 9px; font-size:12.5px; }
+  .lista-opcoes{ margin-top:8px; display:flex; flex-direction:column; gap:4px; }
+  .linha-opcao{ display:flex; align-items:center; gap:8px; font-size:12px; padding:5px 8px; border-radius:6px; border:1px solid transparent; }
+  .linha-opcao.nova{ border-color:#f4b73f55; background:#f4b73f10; }
+  .tag-novo{ font-size:9px; font-weight:700; text-transform:uppercase; color:var(--bg); background:var(--warn); border-radius:4px; padding:1px 5px; }
+
+  .only-antes[data-vis], .only-depois[data-vis]{ display:none; }
+  body[data-fase="antes"] .only-depois{ display:none !important; }
+  body[data-fase="antes"] .only-antes{ display:revert; }
+  body[data-fase="depois"] .only-antes{ display:none !important; }
+  body[data-fase="depois"] .only-depois{ display:revert; }
+
+  .rodape-mockup{ margin-top:40px; padding-top:18px; border-top:1px solid var(--border); color:var(--faint); font-size:11px; text-align:center; }
+</style>
+
+<div class="faixa-demo">Demonstração — dados fictícios, nenhuma obra real</div>
+<div class="barra-fase">
+  <div class="segcontrol" role="group" aria-label="Alternar antes e depois">
+    <button type="button" data-fase-btn="antes" class="ativo" onclick="setFase('antes')">Antes (hoje)</button>
+    <button type="button" data-fase-btn="depois" onclick="setFase('depois')">Depois (proposto)</button>
+  </div>
+  <span class="legenda">Alterna a tela inteira entre o que existe hoje e a mudança proposta.</span>
+</div>
+
+<div class="wrap">
+  <h1>Pergunta "Tem proposta enviada?"</h1>
+  <p class="subtitulo">Mockup do pedido de 29/09/2026 — ver <code>docs/cliente/2026-09-29-pedido-lpu-enviada.md</code>. Três telas: Ficha, Triagem e Base.</p>
+
+  <!-- ============================================================ -->
+  <!-- 1. FICHA -->
+  <!-- ============================================================ -->
+  <section class="secao" id="ficha">
+    <div class="secao-cabeca"><span class="num">1</span><h2>Ficha da obra — bloco Autorização</h2></div>
+    <p class="secao-desc">
+      A pergunta só existe <b>enquanto a OS não está aprovada</b>. Assim que alguém preenche
+      "OS aprovada em", o campo some sozinho — a OS já é a autorização, a proposta deixou de ser a
+      pergunta em aberto.
+    </p>
+
+    <!-- Card interativo: leitura + edição -->
+    <div class="box">
+      <div class="box-h">
+        <h3>Autorização — DP Ipanema 3 · OS 0926-010550</h3>
+        <span id="f1-pill-editando" style="display:none"><span class="pill pill-editando">editando</span></span>
+        <button type="button" class="btn btn-secundario" id="f1-btn-editar" onclick="f1Editar()">Editar</button>
+      </div>
+      <div class="box-b">
+
+        <!-- leitura -->
+        <div id="f1-leitura">
+          <dl class="campos c2">
+            <div><dt>Origem</dt><dd>Telefone</dd></div>
+            <div><dt>Liberação</dt><dd>Liberado por <b>Marcos Dias</b> · 20/09/2026</dd></div>
+            <div style="grid-column:1/-1"><dt>OS do cliente</dt>
+              <dd><span style="color:var(--crit);font-weight:600">OS ainda não aprovada</span>
+                <span style="color:var(--muted)"> · esperando a aprovação da OS há 9 dias</span></dd>
+            </div>
+          </dl>
+          <p class="nota">
+            A execução acontece com o <b style="color:var(--text)">OK de Marcos Dias</b> (chegou por telefone),
+            que se comprometeu a aprovar a OS depois. Os dias esperando a aprovação da OS já somam
+            <b style="color:var(--text)">9 dias</b>, e é Marcos Dias quem a Manfac vai procurar.
+          </p>
+
+          <div class="proposta-linha" id="f1-bloco-proposta" data-bloco-proposta>
+            <span class="rotulo">Tem proposta enviada?</span>
+            <span class="pill pill-neutro" id="f1-pill" data-pill>Ainda não respondido</span>
+          </div>
+          <div class="alerta-caixa" id="f1-alerta" data-alerta style="display:none"></div>
+        </div>
+
+        <!-- formulário -->
+        <div id="f1-formulario" style="display:none">
+          <div class="grade-form">
+            <div class="campo-form">
+              <label>Origem</label>
+              <select disabled><option>Telefone</option></select>
+              <span class="dica">por onde chegou o OK para executar</span>
+            </div>
+            <div class="campo-form">
+              <label>Liberado por</label>
+              <select disabled><option>Marcos Dias</option></select>
+              <span class="dica">analista do cliente que deu o OK</span>
+            </div>
+            <div class="campo-form">
+              <label>Data da liberação</label>
+              <input type="date" value="2026-09-20" disabled>
+              <span class="dica">é outra data, não a da aprovação</span>
+            </div>
+            <div class="campo-form">
+              <label>OS aprovada em</label>
+              <input type="date" id="f1-input-aprov" onchange="f1MudouAprovacao(this.value)">
+              <span class="dica">Vazio: OS ainda não aprovada. Com data: a pergunta da proposta some.</span>
+            </div>
+            <div class="campo-form larga" id="f1-campo-proposta">
+              <label>Tem proposta enviada?</label>
+              <div class="segbtns">
+                <button type="button" class="sel-sim" id="f1-btn-sim" onclick="f1Escolher('sim')">Sim</button>
+                <button type="button" class="sel-nao" id="f1-btn-nao" onclick="f1Escolher('nao')">Não</button>
+              </div>
+              <span class="dica" id="f1-form-dica">Ainda não respondido. Só aparece porque a OS não está aprovada.</span>
+            </div>
+          </div>
+          <div style="margin-top:14px; display:flex; gap:8px;">
+            <button type="button" class="btn btn-principal" onclick="f1Salvar()">Salvar</button>
+            <button type="button" class="btn btn-secundario" onclick="f1Cancelar()">Cancelar</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="box-f">Autoria fictícia · exemplo interativo — clique em Editar</div>
+    </div>
+
+    <p class="nota only-depois" data-vis style="margin-top:18px;">
+      Outros estados possíveis, para comparar de uma vez (somente leitura, ilustrativos):
+    </p>
+    <div class="grid-cards c2 only-depois" data-vis style="margin-top:8px;">
+
+      <div class="chip-estado">
+        <div class="cab"><span class="loja">DP Catete 10 · Em andamento</span><span class="pill pill-crit">sem OS aprovada</span></div>
+        <div class="proposta-linha" style="margin-top:8px; padding-top:8px;">
+          <span class="rotulo">Tem proposta enviada?</span>
+          <span class="pill pill-crit">Proposta não enviada</span>
+        </div>
+        <div class="alerta-caixa alerta-critico">
+          <strong>Obra em execução sem proposta enviada</strong>
+          <span>a proposta vem antes da OS.</span>
+        </div>
+        <div class="legenda-mock">Em campo (Em andamento) + "Não" → alerta vermelho.</div>
+      </div>
+
+      <div class="chip-estado">
+        <div class="cab"><span class="loja">DP Tijuca 5 · Executado - pendente aprovação OS</span><span class="pill pill-crit">sem OS aprovada</span></div>
+        <div class="proposta-linha" style="margin-top:8px; padding-top:8px;">
+          <span class="rotulo">Tem proposta enviada?</span>
+          <span class="pill pill-neutro">Ainda não respondido</span>
+        </div>
+        <div class="alerta-caixa alerta-atencao">
+          <strong>Proposta ainda não respondida</strong>
+          <span>confirme quando souber — a obra já saiu de campo.</span>
+        </div>
+        <div class="legenda-mock">Já passou de campo, só não respondeu → alerta amarelo (mais brando).</div>
+      </div>
+
+      <div class="chip-estado">
+        <div class="cab"><span class="loja">DP Barra 12 · Paralisado</span><span class="pill pill-crit">sem OS aprovada</span></div>
+        <div class="proposta-linha" style="margin-top:8px; padding-top:8px;">
+          <span class="rotulo">Tem proposta enviada?</span>
+          <span class="pill pill-ok">Proposta enviada</span>
+        </div>
+        <div class="legenda-mock">Em campo, mas com "Sim" → sem alerta nenhum.</div>
+      </div>
+
+      <div class="chip-estado">
+        <div class="cab"><span class="loja">DP Leblon 8 · Fechar OS</span><span class="pill pill-ok">OS aprovada</span></div>
+        <p class="nota" style="margin-top:8px;">OS aprovada em 18/09/2026 (informada em Dados da obra).</p>
+        <div class="legenda-mock">OS aprovada → a pergunta some inteira, não fica nem cinza.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. TRIAGEM -->
+  <!-- ============================================================ -->
+  <section class="secao" id="triagem">
+    <div class="secao-cabeca"><span class="num">2</span><h2>Triagem — Autorização para executar</h2></div>
+    <p class="secao-desc">
+      Mesma pergunta, no mesmo lugar da Origem/Liberado por/Data da liberação — opcional, sem o
+      círculo numerado do checklist (não trava a liberação da obra).
+    </p>
+
+    <div class="box">
+      <div class="box-h"><h3>Autorização para executar — DP Marechal 7 (Aguardando definição)</h3></div>
+      <div class="box-b">
+        <p class="nota" style="margin-top:0">
+          Esta obra <b style="color:var(--accent)">ainda não tem OS aprovada</b>. Se o cliente autorizou
+          começar mesmo assim, registre por onde chegou o OK, quem deu e quando. Sem isso a obra vai para
+          campo sem ninguém nomeado que tenha autorizado.
+        </p>
+        <div class="grade-form">
+          <div class="campo-form">
+            <label>Origem</label>
+            <select><option>— não sei ainda —</option><option>Telefone</option></select>
+            <span class="dica">por onde chegou o OK para executar</span>
+          </div>
+          <div class="campo-form">
+            <label>Liberado por</label>
+            <select><option>— ninguém liberou —</option></select>
+            <span class="dica">analista do cliente que deu o OK</span>
+          </div>
+          <div class="campo-form">
+            <label>Data da liberação</label>
+            <input type="date">
+            <span class="dica">é outra data, não a da aprovação da OS</span>
+          </div>
+          <div class="campo-form only-depois" data-vis>
+            <label>Tem proposta enviada? <span style="text-transform:none;color:var(--faint)">(opcional)</span></label>
+            <div class="segbtns" id="t1-seg">
+              <button type="button" class="sel-sim" onclick="t1Escolher('sim')">Sim</button>
+              <button type="button" class="sel-nao" onclick="t1Escolher('nao')">Não</button>
+            </div>
+            <span class="dica" id="t1-dica">Ainda não respondido.</span>
+          </div>
+        </div>
+        <p class="nota only-depois" data-vis>
+          Como a obra ainda não foi liberada para o diário, isto é só um registro — o alerta vermelho
+          "chama atenção" só aparece na Ficha, quando ela estiver em campo sem essa resposta.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. BASE -->
+  <!-- ============================================================ -->
+  <section class="secao" id="base">
+    <div class="secao-cabeca"><span class="num">3</span><h2>Base de obras</h2></div>
+
+    <h3 style="font-size:13px;margin:0 0 6px;">(a) Indicador — duas opções, escolha uma</h3>
+    <p class="secao-desc">
+      Hoje o cartão "sem OS aprovada" só mostra um número. Duas formas de somar a proposta a ele —
+      lado a lado para comparar.
+    </p>
+
+    <div class="only-antes" data-vis>
+      <div class="kpi-row">
+        <div class="kpi"><div class="valor" style="color:var(--crit)">23</div><div class="rotulo">sem OS aprovada no cliente</div></div>
+        <div class="kpi"><div class="valor" style="color:var(--crit)">5</div><div class="rotulo">sem cobertura — nem OS nem liberação</div></div>
+        <div class="kpi"><div class="valor" style="color:var(--ok)">41</div><div class="rotulo">em andamento</div></div>
+        <div class="kpi"><div class="valor" style="color:var(--crit)">3</div><div class="rotulo">paralisadas</div></div>
+      </div>
+    </div>
+
+    <div class="only-depois opcoes-lado-a-lado" data-vis>
+      <div>
+        <span class="opcao-badge">Opção 1</span>
+        <div class="kpi" style="padding:14px;">
+          <div class="valor" style="color:var(--crit)">23</div>
+          <div class="rotulo">sem OS aprovada no cliente</div>
+          <div class="nota">
+            <span style="color:var(--ok);font-weight:600">proposta enviada 11</span> ·
+            <span style="color:var(--crit);font-weight:600">sem proposta 7</span> ·
+            <span style="color:var(--warn);font-weight:600">não respondido 5</span>
+          </div>
+        </div>
+        <p class="nota">O cartão que já existe ganha uma linha a mais. Não cresce a lista de indicadores.</p>
+      </div>
+      <div>
+        <span class="opcao-badge">Opção 2</span>
+        <div class="kpi" style="padding:14px;">
+          <div class="valor" style="color:var(--crit)">9</div>
+          <div class="rotulo">em execução sem proposta enviada</div>
+          <div class="nota">Levantamento, Em andamento ou Paralisado, sem "Sim" na proposta.</div>
+        </div>
+        <p class="nota">Cartão novo, separado. Só conta quem já está em campo — o recorte mais urgente.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:13px;margin:26px 0 6px;">(b) Etiqueta na linha da obra</h3>
+    <p class="secao-desc">Pílula vermelha "sem proposta" ao lado da de OS, só quando fizer sentido.</p>
+
+    <div class="box">
+      <div class="tabela-scroll">
+        <table class="tabela-mock">
+          <thead><tr><th>Nº OS</th><th>Loja</th><th>Etapa da obra</th><th>Autorização</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>0926-010550</td><td>DP Ipanema 3</td>
+              <td><span class="pill" style="color:#5aa9f0;border-color:#5aa9f0;background:#5aa9f02e">Levantamento</span></td>
+              <td class="pills-cell">
+                <span class="pill pill-crit">sem OS aprovada</span>
+                <span class="pill pill-crit only-depois" data-vis>sem proposta</span>
+              </td>
+            </tr>
+            <tr>
+              <td>0926-011002</td><td>DP Leblon 8</td>
+              <td><span class="pill" style="color:var(--ok);border-color:var(--ok);background:#35c98a2e">Em andamento</span></td>
+              <td class="pills-cell">
+                <span class="pill pill-crit">sem OS aprovada</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box-f">DP Leblon 8 já respondeu "Sim" à proposta — por isso não ganha a etiqueta nova, mesmo sem OS aprovada.</div>
+    </div>
+
+    <h3 style="font-size:13px;margin:26px 0 6px;">(c) Filtro "Autorização"</h3>
+    <p class="secao-desc">Duas opções novas na lista que já existe.</p>
+
+    <div class="box">
+      <div class="box-b">
+        <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:6px;">Autorização</label>
+        <select class="filtro-mock" id="filtro-autorizacao">
+          <option>Todas</option>
+          <option>Com OS aprovada</option>
+          <option>Sem OS aprovada</option>
+          <option>Liberadas, ainda sem OS</option>
+          <option>Sem cobertura — nem OS nem liberação</option>
+          <option class="only-depois-opt">Sem proposta enviada</option>
+          <option class="only-depois-opt">Proposta não respondida</option>
+        </select>
+        <div class="lista-opcoes only-depois" data-vis>
+          <div class="linha-opcao nova"><span class="tag-novo">novo</span> Sem proposta enviada</div>
+          <div class="linha-opcao nova"><span class="tag-novo">novo</span> Proposta não respondida</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <p class="rodape-mockup">Mockup para aprovação por seção — feedback pelo WhatsApp, como de costume. Nenhum dado real.</p>
+</div>
+
+<script>
+  function setFase(fase){
+    document.body.setAttribute('data-fase', fase);
+    document.querySelectorAll('[data-fase-btn]').forEach(function(b){
+      b.classList.toggle('ativo', b.getAttribute('data-fase-btn') === fase);
+    });
+    var sel = document.getElementById('filtro-autorizacao');
+    var opts = sel.querySelectorAll('.only-depois-opt');
+    opts.forEach(function(o){ o.style.display = (fase === 'depois') ? '' : 'none'; });
+    // O card 1 é interativo (JS controla o display do bloco de proposta direto,
+    // não só via CSS) — sem isto ele continuaria mostrando a pergunta mesmo
+    // com o toggle em "Antes (hoje)".
+    if (typeof f1Render === 'function') f1Render();
+  }
+
+  // ---- Card 1 (Ficha): leitura <-> edição, real ----
+  var f1 = { aprov: '', proposta: 'pendente' };
+
+  function f1Render(){
+    var bloco = document.getElementById('f1-bloco-proposta');
+    var pill = document.getElementById('f1-pill');
+    var alerta = document.getElementById('f1-alerta');
+    var campoProposta = document.getElementById('f1-campo-proposta');
+    // "Antes (hoje)": a pergunta nao existe no sistema atual, em obra nenhuma —
+    // isto e o que este mockup propoe. O card interativo tem que obedecer o
+    // toggle global, e nao so a regra "some quando a OS aprova".
+    var depois = document.body.getAttribute('data-fase') === 'depois';
+
+    if (!depois || f1.aprov){
+      bloco.style.display = 'none';
+      if (campoProposta) campoProposta.style.display = 'none';
+      alerta.style.display = 'none';
+      return;
+    }
+    bloco.style.display = '';
+    if (campoProposta) campoProposta.style.display = '';
+
+    pill.className = 'pill ' + (f1.proposta === 'sim' ? 'pill-ok' : f1.proposta === 'nao' ? 'pill-crit' : 'pill-neutro');
+    pill.textContent = f1.proposta === 'sim' ? 'Proposta enviada' : f1.proposta === 'nao' ? 'Proposta não enviada' : 'Ainda não respondido';
+
+    // Levantamento = etapa "em campo": alerta vermelho vale sempre que não for "sim".
+    var vermelho = f1.proposta !== 'sim';
+    if (vermelho){
+      alerta.style.display = '';
+      alerta.className = 'alerta-caixa alerta-critico';
+      alerta.innerHTML = '<strong>Obra em execução sem proposta enviada</strong><span>a proposta vem antes da OS.</span>';
+    } else {
+      alerta.style.display = 'none';
+    }
+
+    document.getElementById('f1-btn-sim').classList.toggle('ativo', f1.proposta === 'sim');
+    document.getElementById('f1-btn-nao').classList.toggle('ativo', f1.proposta === 'nao');
+    document.getElementById('f1-form-dica').textContent =
+      f1.proposta === 'pendente' ? 'Ainda não respondido. Só aparece porque a OS não está aprovada.' : 'Só aparece porque a OS não está aprovada.';
+  }
+
+  function f1Editar(){
+    document.getElementById('f1-leitura').style.display = 'none';
+    document.getElementById('f1-formulario').style.display = '';
+    document.getElementById('f1-btn-editar').style.display = 'none';
+    document.getElementById('f1-pill-editando').style.display = '';
+    document.getElementById('f1-input-aprov').value = f1.aprov;
+    f1Render();
+  }
+  function f1Cancelar(){
+    document.getElementById('f1-leitura').style.display = '';
+    document.getElementById('f1-formulario').style.display = 'none';
+    document.getElementById('f1-btn-editar').style.display = '';
+    document.getElementById('f1-pill-editando').style.display = 'none';
+  }
+  function f1Salvar(){ f1Cancelar(); f1Render(); }
+  function f1Escolher(v){ f1.proposta = v; f1Render(); }
+  function f1MudouAprovacao(v){ f1.aprov = v; f1Render(); }
+
+  // ---- Triagem: só troca o texto de apoio, sem alerta vermelho (obra ainda não liberada) ----
+  var t1proposta = 'pendente';
+  function t1Escolher(v){
+    t1proposta = v;
+    var seg = document.getElementById('t1-seg');
+    seg.querySelectorAll('button')[0].classList.toggle('ativo', v === 'sim');
+    seg.querySelectorAll('button')[1].classList.toggle('ativo', v === 'nao');
+    document.getElementById('t1-dica').textContent =
+      v === 'sim' ? 'Proposta enviada.' : v === 'nao' ? 'Proposta ainda não enviada.' : 'Ainda não respondido.';
+  }
+
+  document.body.setAttribute('data-fase', 'antes');
+  f1Render(); // estado inicial: sem isto o card 1 nasce mostrando a pergunta mesmo em "Antes".
+</script>
