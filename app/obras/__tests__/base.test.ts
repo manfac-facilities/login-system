@@ -36,6 +36,7 @@ function linha(over: Partial<ObraRow> = {}): ObraRow {
     id: Math.random().toString(36).slice(2),
     os: '0226-000001',
     loja: 'DP TESTE',
+    cliente: null,
     descricao: null,
     tipo: 'TELHADO',
     valor: null,

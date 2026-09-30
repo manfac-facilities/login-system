@@ -295,6 +295,8 @@ export type ObraRow = {
   id: string
   os: string | null
   loja: string | null
+  /** Nome do cliente dono da OS no Field ("DPSP", "D1000"), gravado pela sincronização. Spec de 29/09/2026. */
+  cliente: string | null
   descricao: string | null
   tipo: string | null
   valor: number | null

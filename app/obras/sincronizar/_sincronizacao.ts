@@ -13,6 +13,7 @@ export type ObraExistente = {
   id: string
   os: string | null
   loja: string | null
+  cliente: string | null
   descricao: string | null
   fonte: FonteObra | null
   field_id: string | null
@@ -23,6 +24,8 @@ export type ObraExistente = {
 export type ObraNovaDoField = {
   os: string
   loja: string | null
+  /** Nome do cliente no Field. Spec de 29/09/2026. */
+  cliente: string | null
   descricao: string | null
   fonte: FonteObra
   field_id: string
@@ -233,12 +236,23 @@ export function planejarSincronizacao(
     // ANTES de recarregar campos, mas a presença confirmada precisa limpar
     // uma ausência anterior mesmo quando a situação já não entra na carga.
     if (!entraNaCarga(vinda.situacao)) {
+      const camposDaRecusada: Record<string, unknown> = {}
+      let removeAlerta = false
       if (obraPeloId && (texto(obraPeloId.field_ausente_desde) || texto(obraPeloId.field_ausente_em))) {
-        const removeAlerta = texto(obraPeloId.field_ausente_em) !== null
+        removeAlerta = texto(obraPeloId.field_ausente_em) !== null
+        camposDaRecusada.field_ausente_desde = null
+        camposDaRecusada.field_ausente_em = null
+      }
+      // Única exceção ao "recusada não recarrega campos": o cliente, porque o
+      // painel mostra "faturado por cliente" e as faturadas são justamente as
+      // OS já concluídas no Field. Mesma regra de sempre: só preenche vazio.
+      const clienteDoField = texto(vinda.cliente)
+      if (obraPeloId && clienteDoField && vazio(obraPeloId.cliente)) camposDaRecusada.cliente = clienteDoField
+      if (obraPeloId && Object.keys(camposDaRecusada).length > 0) {
         atualizar.push({
           id: obraPeloId.id,
           os: texto(obraPeloId.os) ?? numero ?? '—',
-          campos: { field_ausente_desde: null, field_ausente_em: null },
+          campos: camposDaRecusada,
           ...(removeAlerta ? { removeAlerta: true } : {}),
         })
         if (removeAlerta) alertasRemovidos++
@@ -317,6 +331,7 @@ export function planejarSincronizacao(
       inserir.push({
         os: numero,
         loja: vinda.loja,
+        cliente: vinda.cliente,
         descricao: vinda.descricao,
         fonte: FONTE_FIELD,
         field_id: idField,
@@ -328,6 +343,7 @@ export function planejarSincronizacao(
     idsEncontrados.add(existente.id)
     const candidatos = camposParaAtualizar({
       loja: vinda.loja,
+      cliente: vinda.cliente,
       descricao: vinda.descricao,
       fonte: FONTE_FIELD,
       field_id: idField,

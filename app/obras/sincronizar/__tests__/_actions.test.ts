@@ -52,6 +52,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     os: '0226-014989',
     descricao: 'Forro do estoque caiu',
     loja: 'Av. Paulista, 1000',
+    cliente: null,
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
     criadoEm: null,
@@ -148,7 +149,7 @@ describe('sincronizarComFieldAction — chave da API', () => {
 
 describe('sincronizarComFieldAction — gravação', () => {
   it('insere a obra nova e conta no relatório', async () => {
-    listarOsNormalizadas.mockResolvedValue([osDoField()])
+    listarOsNormalizadas.mockResolvedValue([osDoField({ cliente: 'DPSP' })])
 
     const estado = await sincronizarComFieldAction()
 
@@ -156,6 +157,7 @@ describe('sincronizarComFieldAction — gravação', () => {
       {
         os: '0226-014989',
         loja: 'Av. Paulista, 1000',
+        cliente: 'DPSP',
         descricao: 'Forro do estoque caiu',
         fonte: 'field',
         field_id: 'ord-1',
@@ -198,7 +200,7 @@ describe('sincronizarComFieldAction — gravação', () => {
     const estado = await sincronizarComFieldAction()
 
     expect(selectMock).toHaveBeenCalledWith(
-      'id, os, loja, descricao, fonte, field_id, field_ausente_desde, field_ausente_em',
+      'id, os, loja, cliente, descricao, fonte, field_id, field_ausente_desde, field_ausente_em',
     )
     expect(updateMock).toHaveBeenCalledWith({ fonte: 'field', field_id: 'ord-1' })
     expect(estado.relatorio).toMatchObject({ novas: 0, atualizadas: 1, inalteradas: 0 })

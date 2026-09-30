@@ -12,6 +12,7 @@ function linha(over: Partial<ObraRow> = {}): ObraRow {
     id: 'o1',
     os: '0526-008102',
     loja: 'DP TESTE',
+    cliente: null,
     descricao: null,
     tipo: null,
     valor: null,

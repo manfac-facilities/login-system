@@ -24,6 +24,8 @@ const ABAS = [
   { href: '/obras/diario', label: 'Diário do dia' },
   { href: '/obras/tarefas', label: 'Tarefas' },
   { href: '/obras/base', label: 'Base de obras' },
+  // Painel gerencial (spec-painel-gerencial-2026-09-29): aba nova, depois da Base.
+  { href: '/obras/painel', label: 'Painel gerencial' },
 ]
 
 export default function ObrasLayout({ children }: { children: React.ReactNode }) {

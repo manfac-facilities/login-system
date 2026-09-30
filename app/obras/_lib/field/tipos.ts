@@ -78,6 +78,12 @@ export type LocalizacaoField = {
   name?: string | null
 }
 
+/** Cadastro do cliente (`GET /customers/:id`). Só o `name` interessa. Ver `cliente-da-obra.ts`. */
+export type CadastroDeClienteField = {
+  id: string
+  name?: string | null
+}
+
 /** Envelope de toda listagem: `items` e `totalCount` no nível raiz. */
 export type ListaField<T> = {
   items?: T[] | null
@@ -101,6 +107,8 @@ export type OsNormalizada = {
   os: string
   descricao: string | null
   loja: string | null
+  /** Nome do cliente dono da OS ("DPSP", "D1000"), de `GET /customers/:id`. Spec de 29/09/2026. */
+  cliente: string | null
   idField: string
   atualizadoEm: string | null
   /**

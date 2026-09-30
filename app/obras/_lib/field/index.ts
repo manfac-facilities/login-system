@@ -32,6 +32,9 @@ export type { ConsultaDaOrdemField, SituacaoDaOrdemField } from './consulta-orde
 export { criarResolvedorDeLoja, textoDoEndereco } from './loja'
 export type { EstrategiaDeLoja, ResolvedorDeLoja } from './loja'
 
+export { criarResolvedorDeCliente } from './cliente-da-obra'
+export type { ResolvedorDeCliente } from './cliente-da-obra'
+
 export { BASE_URL_FIELD, criarHttpField, montarQ, USER_AGENT_PADRAO } from './http'
 export type { FiltroQ, HttpField, OperadorQ, ParametrosDeBusca } from './http'
 
@@ -41,6 +44,7 @@ export type { Limitador } from './limitador'
 export { ErroDaApiField, ErroDeParametroInvalido, ErroDeRateLimit, ErroDeTipoDeOs } from './erros'
 
 export type {
+  CadastroDeClienteField,
   EnderecoField,
   ListaField,
   LocalizacaoField,
