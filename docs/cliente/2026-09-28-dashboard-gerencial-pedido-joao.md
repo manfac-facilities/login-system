@@ -83,3 +83,15 @@ R$ 54.170,16; FECHAR OS R$ 111.296,73; PENDENTE FATURAMENTO R$ 378.051,10; Total
   O valor em R$ hoje só existe na planilha do cliente ("VALOR TOTAL").
 - Na mesma amostra há 4 clientes: 85 OS de um (DPSP), 13 de outro (D1000), 1 de cada um de outros dois.
 - `obras_obra` **não tem coluna de cliente**; a sincronização filtra só pelo tipo de OS.
+
+## Respostas do cliente às perguntas de dado, repassadas pelo João (29/09/2026), literal
+
+> 1-Campo da ficha, 2- sim, 3-Etapa faturado
+
+Perguntas a que respondem (feitas pelo coordenador em 28/09):
+1. De onde vem o valor em R$ de cada obra → **campo na ficha** (sem carga de planilha mencionada).
+2. Criar a coluna "cliente" na obra, preenchida pela sincronização, trazendo todas as OS "Atividade Spot" de todos os clientes → **sim**.
+3. O que conta como faturado (NF emitida) e em que data → **a etapa Faturado** (data em que a obra foi levada a Faturado).
+4. (Escopo: tudo junto ou duas entregas) → sem resposta ainda.
+
+Feedback do cliente sobre o mockup do painel: anunciado pelo João, ainda não colado.
