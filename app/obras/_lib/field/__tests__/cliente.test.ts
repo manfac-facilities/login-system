@@ -367,6 +367,7 @@ describe('criarClienteField — normalização', () => {
       os: '0226-014989',
       descricao: 'Forro do estoque caiu',
       loja: 'Av. Paulista, 1000 - São Paulo/SP',
+      cliente: null,
       idField: 'ord-1',
       atualizadoEm: '2026-09-09T12:00:00Z',
       criadoEm: null,
@@ -434,6 +435,30 @@ describe('criarClienteField — normalização', () => {
     expect(os.loja).toBe('DP LEBLON 6')
   })
 
+  it('o cliente vem do name de /customers/:id, com UM GET por cliente distinto (spec 29/09/2026)', async () => {
+    const ordens = [
+      ordem({ id: 'o1', identifier: 'OS-1', customer: { id: 'cli-1' } }),
+      ordem({ id: 'o2', identifier: 'OS-2', customer: { id: 'cli-2' } }),
+      ordem({ id: 'o3', identifier: 'OS-3', customer: { id: 'cli-1' } }),
+      ordem({ id: 'o4', identifier: 'OS-4', customer: null }),
+    ]
+    const rede = httpDeMentira((caminho, parametros) => {
+      if (caminho === '/customers/cli-1') return { id: 'cli-1', name: 'DPSP' }
+      if (caminho === '/customers/cli-2') return { id: 'cli-2', name: 'D1000' }
+      if (caminho.includes('/locations/')) return { name: 'LOJA' }
+      return rotasCom(ordens)(caminho, parametros)
+    })
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas()
+
+    expect(os.map((o) => o.cliente)).toEqual(['DPSP', 'D1000', 'DPSP', null])
+    expect(rede.chamadas.filter((c) => /^\/customers\/[^/]+$/.test(c.caminho)).map((c) => c.caminho)).toEqual([
+      '/customers/cli-1',
+      '/customers/cli-2',
+    ])
+  })
+
   it('com a estratégia "localizacao", a loja vem do nome da localização', async () => {
     const rede = httpDeMentira((caminho, parametros) => {
       if (caminho === '/customers/cli-1/locations/loc-1') return { id: 'loc-1', name: 'DP BAIRRO DE FATIMA' }
@@ -489,10 +514,11 @@ describe('criarClienteField — o circuito fechado, com fetch injetado', () => {
     const os = await cliente.listarOsNormalizadas()
 
     expect(os).toHaveLength(3)
-    // /services, página 1, página 2, UMA localização (as 3 OS são da mesma
-    // loja, o cache segura as outras duas) e a situação de cada uma das 3 OS —
-    // um segundo entre cada, sem exceção: o limitador vale para tudo.
-    expect(instantes).toEqual([0, 1000, 2000, 3000, 4000, 5000, 6000])
+    // /services, página 1, página 2, UMA localização e UM cliente (as 3 OS são
+    // da mesma loja e do mesmo cliente, o cache segura as outras duas) e a
+    // situação de cada uma das 3 OS — um segundo entre cada, sem exceção: o
+    // limitador vale para tudo.
+    expect(instantes).toEqual([0, 1000, 2000, 3000, 4000, 5000, 6000, 7000])
   })
 })
 

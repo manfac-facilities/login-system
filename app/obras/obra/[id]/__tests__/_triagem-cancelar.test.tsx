@@ -24,6 +24,7 @@ function obraRow(over: Partial<ObraRow> = {}): ObraRow {
     id: 'o1',
     os: '0926-011702',
     loja: 'DP MAGE',
+    cliente: null,
     descricao: null,
     tipo: null,
     valor: null,

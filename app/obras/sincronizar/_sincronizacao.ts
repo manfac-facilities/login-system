@@ -13,6 +13,7 @@ export type ObraExistente = {
   id: string
   os: string | null
   loja: string | null
+  cliente: string | null
   descricao: string | null
   fonte: FonteObra | null
   field_id: string | null
@@ -23,6 +24,8 @@ export type ObraExistente = {
 export type ObraNovaDoField = {
   os: string
   loja: string | null
+  /** Nome do cliente no Field. Spec de 29/09/2026. */
+  cliente: string | null
   descricao: string | null
   fonte: FonteObra
   field_id: string
@@ -317,6 +320,7 @@ export function planejarSincronizacao(
       inserir.push({
         os: numero,
         loja: vinda.loja,
+        cliente: vinda.cliente,
         descricao: vinda.descricao,
         fonte: FONTE_FIELD,
         field_id: idField,
@@ -328,6 +332,7 @@ export function planejarSincronizacao(
     idsEncontrados.add(existente.id)
     const candidatos = camposParaAtualizar({
       loja: vinda.loja,
+      cliente: vinda.cliente,
       descricao: vinda.descricao,
       fonte: FONTE_FIELD,
       field_id: idField,
