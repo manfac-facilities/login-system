@@ -95,3 +95,10 @@ Perguntas a que respondem (feitas pelo coordenador em 28/09):
 4. (Escopo: tudo junto ou duas entregas) → sem resposta ainda.
 
 Feedback do cliente sobre o mockup do painel: anunciado pelo João, ainda não colado.
+
+## Feedback do cliente sobre o mockup do painel (29/09/2026), repassado pelo João, literal
+
+> sobre o dashboard ele mandou um print do "resumo por status" selecionando o botao "por etapa do sistema" e falou: Prefiro assim pelos status do sistema
+
+Leitura: o "Resumo por status" usa as **etapas do sistema** (não o formato STATUS MANFAC da planilha).
+O print não foi anexado ao chat.
