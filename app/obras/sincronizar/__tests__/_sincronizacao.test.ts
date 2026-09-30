@@ -20,6 +20,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     os: '0226-014989',
     descricao: 'Forro do estoque caiu',
     loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
+    cliente: null,
     idField: 'ord-1',
     atualizadoEm: '2026-09-11T12:00:00Z',
     criadoEm: null,
@@ -34,6 +35,7 @@ function obraNoBanco(over: Partial<ObraExistente> = {}): ObraExistente {
     id: 'obra-1',
     os: '0226-014989',
     loja: null,
+    cliente: null,
     descricao: null,
     fonte: 'field',
     field_id: 'ord-1',
@@ -51,6 +53,7 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
       {
         os: '0226-014989',
         loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
+        cliente: null,
         descricao: 'Forro do estoque caiu',
         fonte: 'field',
         field_id: 'ord-1',
@@ -69,12 +72,91 @@ describe('planejarSincronizacao — OS que ainda não existe', () => {
       {
         os: '0226-014989',
         loja: null,
+        cliente: null,
         descricao: null,
         fonte: 'field',
         field_id: 'ord-1',
         etapa: 'definir',
       },
     ])
+  })
+
+  it('grava o nome do cliente vindo do Field na obra nova (spec 29/09/2026)', () => {
+    const plano = planejarSincronizacao([osDoField({ cliente: 'D1000' })], [])
+
+    expect(plano.inserir).toHaveLength(1)
+    expect(plano.inserir[0].cliente).toBe('D1000')
+  })
+})
+
+describe('planejarSincronizacao — cliente em obra que já existe (spec 29/09/2026)', () => {
+  it('preenche o cliente quando a obra está sem ele', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ cliente: 'DPSP' })],
+      [obraNoBanco({ loja: 'DP LEBLON 6', descricao: 'Reforma', cliente: null })],
+    )
+
+    expect(plano.atualizar).toEqual([{ id: 'obra-1', os: '0226-014989', campos: { cliente: 'DPSP' } }])
+  })
+
+  it('NÃO sobrescreve cliente que já tem valor', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ cliente: 'D1000' })],
+      [obraNoBanco({ loja: 'DP LEBLON 6', descricao: 'Reforma', cliente: 'DPSP' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+    expect(plano.inalteradas).toBe(1)
+  })
+
+  it('OS recusada pelo critério (ex.: concluída) preenche o cliente da obra existente vazia — e SÓ ele', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done', cliente: 'DPSP', loja: 'LOJA NOVA', descricao: 'descrição nova' })],
+      [obraNoBanco({ loja: null, descricao: null, cliente: null, fonte: null })],
+    )
+
+    expect(plano.atualizar).toEqual([{ id: 'obra-1', os: '0226-014989', campos: { cliente: 'DPSP' } }])
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.ignoradas).toHaveLength(1)
+  })
+
+  it('OS recusada não mexe no cliente que já tem valor', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done', cliente: 'D1000' })],
+      [obraNoBanco({ cliente: 'DPSP' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+  })
+
+  it('OS recusada com cliente null do Field não gera atualização', () => {
+    const plano = planejarSincronizacao([osDoField({ situacao: 'done', cliente: null })], [obraNoBanco()])
+
+    expect(plano.atualizar).toHaveLength(0)
+  })
+
+  it('OS recusada que reaparece: limpa a ausência e preenche o cliente numa atualização só', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'canceled', cliente: 'DPSP' })],
+      [obraNoBanco({ cliente: null, field_ausente_desde: '2026-09-10T12:00:00Z' })],
+    )
+
+    expect(plano.atualizar).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-014989',
+        campos: { field_ausente_desde: null, field_ausente_em: null, cliente: 'DPSP' },
+      },
+    ])
+  })
+
+  it('cliente null do Field não apaga o que está no banco', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ cliente: null })],
+      [obraNoBanco({ loja: 'DP LEBLON 6', descricao: 'Reforma', cliente: 'DPSP' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
   })
 })
 
@@ -264,6 +346,7 @@ describe('planejarSincronizacao — ausência no Field', () => {
         os: `OS-${n}`,
         field_id: `ord-${n}`,
         loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP',
+        cliente: null,
         descricao: 'Forro do estoque caiu',
       })
     })

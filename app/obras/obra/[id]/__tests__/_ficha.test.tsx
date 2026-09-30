@@ -33,6 +33,7 @@ function obraRow(over: Partial<ObraRow> = {}): ObraRow {
     id: 'o1',
     os: '0226-014989',
     loja: 'DP BAIRRO DE FATIMA',
+    cliente: null,
     descricao: 'Forro do estoque caiu',
     tipo: 'TELHADO',
     valor: 28520.46,

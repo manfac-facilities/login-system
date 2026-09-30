@@ -14,6 +14,7 @@
 
 import { criarHttpField, montarQ, type BuscarHttp, type FiltroQ, type HttpField } from './http'
 import { criarResolvedorDeLoja, type EstrategiaDeLoja } from './loja'
+import { criarResolvedorDeCliente } from './cliente-da-obra'
 import { ErroDeTipoDeOs } from './erros'
 import { consultarSituacaoDaOrdemField, type ConsultaDaOrdemField } from './consulta-ordem'
 import { consultarSituacaoDaUltimaAtividade } from './situacao-da-os'
@@ -146,6 +147,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
     })
 
   const resolverLoja = criarResolvedorDeLoja(config.estrategiaDeLoja ?? 'localizacao', http)
+  const resolverCliente = criarResolvedorDeCliente(http)
 
   /**
    * Cache do id do tipo de OS. A spec pede explicitamente: "o id não muda com
@@ -207,6 +209,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         os: ordem.identifier,
         descricao: texto(ordem.description),
         loja: await resolverLoja(ordem),
+        cliente: await resolverCliente(ordem),
         idField: ordem.id,
         atualizadoEm: texto(ordem.updatedAt),
         criadoEm: texto(ordem.createdAt),

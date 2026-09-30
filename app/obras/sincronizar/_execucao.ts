@@ -25,7 +25,7 @@ const TAMANHO_DA_PAGINA = 1000
 const MARGEM_INCREMENTAL_MS = 10 * 60 * 1000
 const EXPIRACAO_DA_TRAVA_MS = 2 * 60 * 60 * 1000
 const COLUNAS_DA_RECONCILIACAO =
-  'id, os, loja, descricao, fonte, field_id, field_ausente_desde, field_ausente_em'
+  'id, os, loja, cliente, descricao, fonte, field_id, field_ausente_desde, field_ausente_em'
 
 // A tipagem gerada do banco ainda não existe neste projeto.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
