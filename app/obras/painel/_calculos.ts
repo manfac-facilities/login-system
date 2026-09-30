@@ -440,7 +440,7 @@ function montarSla(
 
 /** Pendente faturamento → NF: `marco_liberou_fat` → `marco_faturou`, das faturadas no mês. */
 function slaPendFat(obras: ObraPainel[], P: Periodo, hoje: string, nomes: Map<string, string>): Sla {
-  const dias = (o: ObraPainel) => diasDesde(o.marco_liberou_fat, o.marco_faturou)
+  const dias = (o: ObraPainel) => diasDesde(o.marco_liberou_fat, o.marco_faturou ?? '')
   const feitas = (a: string, b: string) => faturadasEntre(obras, a, b).filter((o) => dias(o) !== null)
   return montarSla(
     feitas(P.a, P.b).map((o) => ({ obra: resumo(o, nomes), dias: dias(o)! })),
@@ -460,7 +460,7 @@ function slaPendFat(obras: ObraPainel[], P: Periodo, hoje: string, nomes: Map<st
  * fica fora da média.
  */
 function slaAprovacaoOS(obras: ObraPainel[], P: Periodo, hoje: string, nomes: Map<string, string>): Sla {
-  const dias = (o: ObraPainel) => diasDesde(o.liberado_em, o.aprovacao)
+  const dias = (o: ObraPainel) => diasDesde(o.liberado_em, o.aprovacao ?? '')
   const feitas = (a: string, b: string) =>
     obras.filter((o) => !!o.aprovacao && o.aprovacao >= a && o.aprovacao <= b && (dias(o) ?? -1) >= 0)
   return montarSla(
