@@ -18,6 +18,7 @@ function obra(over: Partial<ObraRow> & { cliente?: string | null }): ObraPainel 
     id: Math.random().toString(36).slice(2),
     os: 'OS-1',
     loja: 'Loja',
+    cliente: null,
     descricao: null,
     tipo: null,
     valor: 1000,
