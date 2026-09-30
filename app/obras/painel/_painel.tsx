@@ -37,6 +37,7 @@ import {
   colunaValor,
   colunasObra,
   fd,
+  mesCurto,
 } from './_ui'
 import Cronograma from './_gantt'
 import Historico from './_historico'
@@ -212,7 +213,11 @@ function Metas({
           <Progresso
             valor={k.faturadoAno.valor}
             meta={k.faturadoAno.metaAcumulada}
-            rotuloMeta={metas.faturamento ? `meta ${P.mes}×${K(metas.faturamento)}` : undefined}
+            rotuloMeta={
+              metas.faturamento && k.faturadoAno.metaAcumulada && k.faturadoAno.metaDesde
+                ? `meta ${Math.round(k.faturadoAno.metaAcumulada / metas.faturamento)}×${K(metas.faturamento)} desde ${mesCurto(k.faturadoAno.metaDesde)}`
+                : undefined
+            }
           />
           <Delta
             atual={k.faturadoAno.valor}

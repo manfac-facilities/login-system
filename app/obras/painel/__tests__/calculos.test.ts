@@ -122,6 +122,8 @@ describe('carteira', () => {
       obra({ id: 'fatSet', etapa: 'faturado', marco_faturou: '2026-09-03' }),
       // faturada em agosto: fora
       obra({ id: 'fatAgo', etapa: 'faturado', marco_faturou: '2026-08-20' }),
+      // faturada sem data: não se sabe quando saiu, não pode inflar carteira passada
+      obra({ id: 'fatSemData', etapa: 'faturado', marco_faturou: null }),
       // cancelada em setembro: em agosto estava na carteira
       obra({ id: 'cancSet', etapa: 'cancelado', cancelado_em: '2026-09-10T12:00:00Z' }),
       // cancelada em agosto: fora
@@ -173,10 +175,14 @@ describe('metas', () => {
       carteira: null,
       faturamento: null,
     })
-    // meta acumulada do ano = meta mensal × meses
-    expect(montarPainel(entrada(obras), { ...TODOS, cliente: 'dpsp' }).kpis.faturadoAno.metaAcumulada).toBe(
-      350000 * 9
-    )
+    // meta acumulada conta a partir de set/2026 (início dos dados), não de janeiro
+    expect(montarPainel(entrada(obras), { ...TODOS, cliente: 'dpsp' }).kpis.faturadoAno).toMatchObject({
+      metaAcumulada: 350000,
+      metaDesde: '2026-09',
+    })
+    // no ano seguinte, volta a contar de janeiro
+    const em2027 = montarPainel({ ...entrada(obras), hoje: '2027-03-15' }, { cliente: 'dpsp', mes: '2027-03', cmp: 'prev' })
+    expect(em2027.kpis.faturadoAno).toMatchObject({ metaAcumulada: 350000 * 3, metaDesde: '2027-01' })
   })
 })
 
@@ -427,19 +433,39 @@ describe('cronograma', () => {
 })
 
 describe('histórico', () => {
-  it('12 meses até o mês escolhido, acumulado do ano recomeça em janeiro', () => {
+  it('12 meses até o mês escolhido; antes do sistema é "sem dado", não R$ 0', () => {
     const obras = [
       obra({ etapa: 'faturado', valor: 100, marco_faturou: '2025-12-15', cliente: 'DPSP' }),
-      obra({ etapa: 'faturado', valor: 10, marco_faturou: '2026-01-15', cliente: 'DPSP' }),
       obra({ etapa: 'faturado', valor: 20, marco_faturou: '2026-09-15', cliente: 'DPSP' }),
     ]
     const h = montarPainel(entrada(obras), TODOS).historico
     expect(h.meses).toHaveLength(12)
-    expect(h.meses[0].mes).toBe('2025-10')
-    expect(h.meses.at(-1)).toMatchObject({ mes: '2026-09', valor: 20, acumulado: 30, parcial: true, metaAcumulada: 350000 * 9 })
-    expect(h.meses.find((m) => m.mes === '2025-12')).toMatchObject({ valor: 100, acumulado: 100 })
-    expect(h.meses.find((m) => m.mes === '2026-01')).toMatchObject({ acumulado: 10 })
-    expect(h.melhor).toMatchObject({ mes: '2025-12', valor: 100 })
-    expect(h.mediaFechados).toBeCloseTo(110 / 11)
+    expect(h.meses[0]).toMatchObject({ mes: '2025-10', semDado: true })
+    expect(h.meses.find((m) => m.mes === '2026-08')).toMatchObject({ semDado: true })
+    expect(h.meses.at(-1)).toMatchObject({
+      mes: '2026-09',
+      semDado: false,
+      valor: 20,
+      parcial: true,
+      metaAcumulada: 350000,
+    })
+    // mês sem dado não conta como melhor mês nem entra na média
+    expect(h.melhor).toMatchObject({ mes: '2026-09', valor: 20 })
+    expect(h.fechados).toBe(0)
+    expect(h.mediaFechados).toBe(0)
+  })
+
+  it('acumulado do ano recomeça em janeiro depois do primeiro ano', () => {
+    const obras = [
+      obra({ etapa: 'faturado', valor: 5, marco_faturou: '2026-12-10', cliente: 'DPSP' }),
+      obra({ etapa: 'faturado', valor: 10, marco_faturou: '2027-01-15', cliente: 'DPSP' }),
+      obra({ etapa: 'faturado', valor: 20, marco_faturou: '2027-02-15', cliente: 'DPSP' }),
+    ]
+    const h = montarPainel({ ...entrada(obras), hoje: '2027-02-20' }, { ...TODOS, mes: '2027-02' }).historico
+    expect(h.meses.find((m) => m.mes === '2026-12')).toMatchObject({ acumulado: 5, semDado: false })
+    expect(h.meses.at(-1)).toMatchObject({ acumulado: 30, metaAcumulada: 350000 * 2 })
+    // fechados com dado: set, out, nov, dez/2026 e jan/2027
+    expect(h.fechados).toBe(5)
+    expect(h.mediaFechados).toBeCloseTo(15 / 5)
   })
 })

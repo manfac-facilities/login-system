@@ -22,6 +22,10 @@ export const R = (v: number) => 'R$ ' + nf0.format(Math.round(v))
 export const K = (v: number) => (v >= 1e6 ? nf1.format(v / 1e6) + ' mi' : nf0.format(Math.round(v / 1000)) + ' mil')
 export const N0 = (v: number) => nf0.format(v)
 export const N1 = (v: number) => nf1.format(v)
+/** `AAAA-MM` → `set/2026`. */
+export const mesCurto = (mes: string) =>
+  `${['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][Number(mes.slice(5, 7)) - 1]}/${mes.slice(0, 4)}`
+
 /** `AAAA-MM-DD` → `DD/MM`. */
 export const fd = (iso: string | null | undefined) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}` : '—')
 

@@ -113,6 +113,32 @@ export const MESES_LONGOS = [
   'Dezembro',
 ]
 
+/**
+ * Primeiro mês com dado no sistema. O Controle de Obras só passou a registrar
+ * as etapas (e o valor na ficha) em setembro/2026: antes disso não há
+ * faturamento gravado, e não "faturamento zero". Por isso a meta acumulada do
+ * ano conta a partir daqui (senão pareceria muito abaixo da meta) e o
+ * histórico mostra os meses anteriores como "sem dado".
+ */
+export const INICIO_DOS_DADOS = '2026-09'
+
+/**
+ * De que mês a meta acumulada do ano conta: janeiro, ou o início dos dados se
+ * o sistema começou no meio desse ano. Null quando o mês é anterior aos dados.
+ */
+export function inicioDaMeta(mes: string): string | null {
+  if (mes < INICIO_DOS_DADOS) return null
+  const janeiro = mes.slice(0, 4) + '-01'
+  return janeiro < INICIO_DOS_DADOS ? INICIO_DOS_DADOS : janeiro
+}
+
+/** Meta mensal × meses desde `inicioDaMeta` até `mes` (inclusive). */
+function metaAcumuladaAte(metaFat: number | null, mes: string): number | null {
+  const inicio = inicioDaMeta(mes)
+  if (!metaFat || !inicio) return null
+  return metaFat * (Number(mes.slice(5, 7)) - Number(inicio.slice(5, 7)) + 1)
+}
+
 export type Periodo = {
   ano: number
   mes: number
@@ -258,7 +284,9 @@ export function naCarteiraEm(o: ObraPainel, D: string, hoje: string): boolean {
   if (D >= hoje) return o.etapa !== 'cancelado' && o.etapa !== 'faturado'
   const entrou = dataSP(o.created_at)
   if (!entrou || entrou > D) return false
-  if (o.etapa === 'faturado' && o.marco_faturou && o.marco_faturou <= D) return false
+  // Faturada sem data: não se sabe quando saiu da carteira; mantê-la em toda
+  // data passada inflaria a carteira histórica e a comparação.
+  if (o.etapa === 'faturado' && (!o.marco_faturou || o.marco_faturou <= D)) return false
   if (o.etapa === 'cancelado') {
     const c = dataSP(o.cancelado_em ?? null)
     if (c === null || c <= D) return false
@@ -311,7 +339,8 @@ export type Kpis = {
     pendFat: number
   }
   faturamentoMes: { valor: number; anterior: number }
-  faturadoAno: { valor: number; anterior: number; metaAcumulada: number | null }
+  /** `metaDesde` = mês (`AAAA-MM`) de onde a meta acumulada começa a contar. */
+  faturadoAno: { valor: number; anterior: number; metaAcumulada: number | null; metaDesde: string | null }
   pendente: { valor: number; qtd: number; anterior: number }
 }
 
@@ -334,7 +363,8 @@ function kpisDe(obras: ObraPainel[], P: Periodo, hoje: string, metaFat: number |
     faturadoAno: {
       valor: faturadoEntre(obras, P.ya, P.b),
       anterior: faturadoEntre(obras, P.pya, P.pyb),
-      metaAcumulada: metaFat ? metaFat * P.mes : null,
+      metaAcumulada: metaAcumuladaAte(metaFat, P.a.slice(0, 7)),
+      metaDesde: inicioDaMeta(P.a.slice(0, 7)),
     },
     pendente: { valor: somaValor(pend), qtd: pend.length, anterior: somaValor(grupo(cartAnt, P.pb, 'pendFat')) },
   }
@@ -801,9 +831,14 @@ export type MesHistorico = {
   acumulado: number
   parcial: boolean
   metaAcumulada: number | null
+  /** Mês anterior a `INICIO_DOS_DADOS`: a tela mostra "sem dado", não R$ 0. */
+  semDado: boolean
 }
 
-/** Faturado mês a mês, 12 meses até o mês escolhido; o acumulado recomeça em janeiro. */
+/**
+ * Faturado mês a mês, 12 meses até o mês escolhido; o acumulado recomeça em
+ * janeiro. Mês sem dado fica fora da média e do "melhor mês".
+ */
 function historicoDe(obras: ObraPainel[], P: Periodo, hoje: string, metaFat: number | null) {
   const ultimo = P.a.slice(0, 7)
   const meses: MesHistorico[] = []
@@ -817,11 +852,13 @@ function historicoDe(obras: ObraPainel[], P: Periodo, hoje: string, metaFat: num
       valor: faturadoEntre(obras, iso(ano, m, 1), b),
       acumulado: faturadoEntre(obras, iso(ano, 1, 1), b),
       parcial: b < fim,
-      metaAcumulada: metaFat ? metaFat * m : null,
+      metaAcumulada: metaAcumuladaAte(metaFat, mes),
+      semDado: mes < INICIO_DOS_DADOS,
     })
   }
-  const fechados = meses.filter((m) => !m.parcial)
-  const melhor = meses.reduce((x, y) => (y.valor > x.valor ? y : x))
+  const comDado = meses.filter((m) => !m.semDado)
+  const fechados = comDado.filter((m) => !m.parcial)
+  const melhor = comDado.reduce((x, y) => (y.valor > x.valor ? y : x), meses[meses.length - 1])
   return {
     meses,
     mediaFechados: fechados.length ? soma(fechados, (m) => m.valor) / fechados.length : 0,

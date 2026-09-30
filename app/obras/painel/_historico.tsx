@@ -6,8 +6,8 @@
  */
 
 import { useState } from 'react'
-import { MESES_CURTOS, MESES_LONGOS, type Painel } from './_calculos'
-import { Card, Delta, K, Mini, N0, R, Secao, Seg } from './_ui'
+import { INICIO_DOS_DADOS, MESES_CURTOS, MESES_LONGOS, type Painel } from './_calculos'
+import { Card, Delta, K, Mini, N0, R, Secao, Seg, mesCurto } from './_ui'
 
 const kCurto = (v: number) => K(v).replace(' mil', 'k')
 
@@ -75,6 +75,20 @@ export default function Historico({
                   : abaixo
                     ? 'linear-gradient(180deg,#8a9bb5,#5c6f8d)'
                     : 'linear-gradient(180deg,#ff7849,#f05a28)'
+                // Antes do sistema não há faturamento gravado: barra vazia
+                // tracejada e "sem dado", nunca R$ 0.
+                if (m.semDado) {
+                  return (
+                    <div
+                      key={m.mes}
+                      title={`${MESES_CURTOS[mm - 1]}/${ano}: sem dado — antes do sistema`}
+                      className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end"
+                    >
+                      <span className="mb-1 hidden whitespace-nowrap text-[9.5px] text-[#64748b] sm:block">sem dado</span>
+                      <i className="block h-[18%] w-[78%] max-w-[34px] rounded-t-[5px] border border-b-0 border-dashed border-[#294b78]" />
+                    </div>
+                  )
+                }
                 return (
                   <button
                     key={m.mes}
@@ -165,12 +179,18 @@ export default function Historico({
               <span>Sem meta para este filtro — obras pontuais</span>
             )}
             {acum ? <span>Janeiro recomeça do zero</span> : null}
+            {meses.some((m) => m.semDado) ? (
+              <span>
+                <i className="mr-1.5 inline-block h-[9px] w-[18px] rounded-sm border border-dashed border-[#294b78] align-[-1px]" />
+                Sem dado: antes do sistema (começou em {mesCurto(INICIO_DOS_DADOS)})
+              </span>
+            ) : null}
           </div>
           <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <Mini rotulo={`Acumulado ${P.ano} até ${MESES_CURTOS[P.mes - 1]}`} valor={R(kpis.faturadoAno.valor)}>
               <div className="text-[11.5px] text-[#94a3b8]">
-                {kpis.faturadoAno.metaAcumulada
-                  ? `meta acumulada ${R(kpis.faturadoAno.metaAcumulada)} · ${N0((kpis.faturadoAno.valor / kpis.faturadoAno.metaAcumulada) * 100)}%`
+                {kpis.faturadoAno.metaAcumulada && kpis.faturadoAno.metaDesde
+                  ? `meta acumulada desde ${mesCurto(kpis.faturadoAno.metaDesde)}: ${R(kpis.faturadoAno.metaAcumulada)} · ${N0((kpis.faturadoAno.valor / kpis.faturadoAno.metaAcumulada) * 100)}%`
                   : 'sem meta'}
               </div>
               <Delta
@@ -181,7 +201,9 @@ export default function Historico({
               />
             </Mini>
             <Mini rotulo="Média mensal (meses fechados)" valor={R(h.mediaFechados)}>
-              <div className="text-[11.5px] text-[#94a3b8]">últimos {h.fechados} meses fechados</div>
+              <div className="text-[11.5px] text-[#94a3b8]">
+                {h.fechados ? `últimos ${h.fechados} meses fechados` : 'nenhum mês fechado desde o início do sistema'}
+              </div>
             </Mini>
             <Mini rotulo="Melhor mês" valor={R(h.melhor.valor)}>
               <div className="text-[11.5px] text-[#94a3b8]">
