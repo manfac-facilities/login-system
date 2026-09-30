@@ -109,6 +109,47 @@ describe('planejarSincronizacao — cliente em obra que já existe (spec 29/09/2
     expect(plano.inalteradas).toBe(1)
   })
 
+  it('OS recusada pelo critério (ex.: concluída) preenche o cliente da obra existente vazia — e SÓ ele', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done', cliente: 'DPSP', loja: 'LOJA NOVA', descricao: 'descrição nova' })],
+      [obraNoBanco({ loja: null, descricao: null, cliente: null, fonte: null })],
+    )
+
+    expect(plano.atualizar).toEqual([{ id: 'obra-1', os: '0226-014989', campos: { cliente: 'DPSP' } }])
+    expect(plano.inserir).toHaveLength(0)
+    expect(plano.ignoradas).toHaveLength(1)
+  })
+
+  it('OS recusada não mexe no cliente que já tem valor', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'done', cliente: 'D1000' })],
+      [obraNoBanco({ cliente: 'DPSP' })],
+    )
+
+    expect(plano.atualizar).toHaveLength(0)
+  })
+
+  it('OS recusada com cliente null do Field não gera atualização', () => {
+    const plano = planejarSincronizacao([osDoField({ situacao: 'done', cliente: null })], [obraNoBanco()])
+
+    expect(plano.atualizar).toHaveLength(0)
+  })
+
+  it('OS recusada que reaparece: limpa a ausência e preenche o cliente numa atualização só', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ situacao: 'canceled', cliente: 'DPSP' })],
+      [obraNoBanco({ cliente: null, field_ausente_desde: '2026-09-10T12:00:00Z' })],
+    )
+
+    expect(plano.atualizar).toEqual([
+      {
+        id: 'obra-1',
+        os: '0226-014989',
+        campos: { field_ausente_desde: null, field_ausente_em: null, cliente: 'DPSP' },
+      },
+    ])
+  })
+
   it('cliente null do Field não apaga o que está no banco', () => {
     const plano = planejarSincronizacao(
       [osDoField({ cliente: null })],
