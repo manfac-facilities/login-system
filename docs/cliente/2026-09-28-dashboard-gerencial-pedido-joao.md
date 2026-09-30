@@ -102,3 +102,9 @@ Feedback do cliente sobre o mockup do painel: anunciado pelo João, ainda não c
 
 Leitura: o "Resumo por status" usa as **etapas do sistema** (não o formato STATUS MANFAC da planilha).
 O print não foi anexado ao chat.
+
+Complemento do João, mesma conversa (29/09/2026), literal:
+
+> O restante ele gostou e disse que melhorou
+
+**Mockup aprovado pelo cliente**, com o ajuste do resumo por etapa do sistema.
