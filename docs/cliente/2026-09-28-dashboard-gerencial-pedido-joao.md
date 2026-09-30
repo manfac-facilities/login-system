@@ -78,7 +78,7 @@ R$ 54.170,16; FECHAR OS R$ 111.296,73; PENDENTE FATURAMENTO R$ 378.051,10; Total
 
 ## Fatos verificados pelo coordenador (28/09/2026)
 
-- `obras_obra.valor` existe no schema, mas **nenhum código grava** (sync não traz, ficha não edita).
+- ~~`obras_obra.valor` existe no schema, mas nenhum código grava~~ **ERRADO — corrigido em 29/09:** o campo "Valor (R$)" já é editável na ficha (bloco Identificação, `_bloco-identificacao.tsx`) e na triagem (`_triagem.tsx`) desde 20/09 e grava `valor` (`_actions.ts:222`). A verificação de 28/09 foi um grep com saída cortada. Quantas obras já têm valor: não conferido (PAT 401).
 - API do Field: nas 100 OS "Atividade Spot" mais recentes (de 269), **0 têm `totalValue` > 0**.
   O valor em R$ hoje só existe na planilha do cliente ("VALOR TOTAL").
 - Na mesma amostra há 4 clientes: 85 OS de um (DPSP), 13 de outro (D1000), 1 de cada um de outros dois.

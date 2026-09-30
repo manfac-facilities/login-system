@@ -21,3 +21,14 @@ Base do painel gerencial: todo número em R$ (carteira, faturamento, receita por
 
 ## Fora de escopo
 Painel, sync, schema, Base. Território de dinheiro: não arredondar silenciosamente — valor com 3+ casas é erro de validação.
+
+---
+
+## ❌ CANCELADA em 29/09/2026 — premissa falsa
+
+O campo já existe: "Valor (R$)" no bloco **Identificação** (`_bloco-identificacao.tsx`) e na **Triagem**
+(`_triagem.tsx`), gravando `obras_obra.valor` por `salvarIdentificacaoAction` (`_actions.ts:222`), com parser BR
+(`numeroBR`), validação (`validarIdentificacao`) e rótulo "Valor" no histórico (`historico.ts:55`), desde 20/09.
+Achado pelo subagente implementador antes de escrever código; confirmado pelo coordenador. Criar outro campo
+duplicaria a coluna em dois blocos com controle de versão separado. **Nada a fazer**: a resposta do cliente
+("1-Campo da ficha") já está atendida pelo campo existente.
