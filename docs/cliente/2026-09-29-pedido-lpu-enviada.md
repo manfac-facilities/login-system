@@ -13,3 +13,7 @@ Leitura do coordenador:
 - Só perguntado quando a OS **não** está aprovada.
 - Precisa **chamar atenção** para obra que começou (ou vai começar) **sem proposta enviada** — a regra do
   processo é: proposta primeiro, depois a etapa da OS.
+
+## Feedback do cliente sobre o mockup (30/09/2026), repassado pelo João, literal
+
+> Mano sobre o botão sim ou não beleza aqui tá tudo certo mas cê tem que pensar no seguinte também vamos supor ah beleza não tem proposta enviada o que que essa informação gera. entendeu aí ele vai ficar lá essa obra tá sem o S aprovado e sem proposta enviada  tá e quando a proposta for enviada o que que ele vai ter que fazer ele vai ter que editar lá e clicar em enviada ou isso vai gerar uma nova etapa dentro daquele fluxo né daquela daquele processo de obras onde vai ter lá enviar proposta e ele vai botar lá vai clicar no botão falando que enviou e vai atualizar tudo  entendeu.
