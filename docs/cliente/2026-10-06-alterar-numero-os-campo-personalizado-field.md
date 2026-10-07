@@ -14,3 +14,13 @@ No momento atual isso nao da pra alterar no field, nao lembro se da pra alterar 
 Mas oq eu vou fazer é criar um campo personalizado no field com o numero da OS do cliente... pq ai nesses casos se preencher esse campo atualizado com o numero correto da OS, o controle de obras puxa a atualização desse campo e muda o numero no controle de obras
 
 Vamos seguir assim ?
+
+## Resposta do João ao cliente (06/10/2026)
+
+O João perguntou ao cliente se um usuário com perfil de gestor conseguia editar o número da OS no
+Field, porque a sincronização já reconcilia pelo id interno do Field e atualiza `os` quando o
+`identifier` muda (`app/obras/sincronizar/_sincronizacao.ts:359`).
+
+## Retorno do cliente (06/10/2026), repassado pelo João, literal
+
+> o field bloqueia o numero da OS qnd cria, nao da pra alterar
