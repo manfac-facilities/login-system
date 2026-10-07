@@ -4,7 +4,7 @@ import { logoutAction } from './actions'
 import Logo from '@/components/ui/Logo'
 import Link from 'next/link'
 import { isAdmin } from '@/lib/auth/roles'
-import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { systemSlugsComAcesso } from '@/lib/auth/systemAccess'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -16,18 +16,22 @@ export default async function DashboardPage() {
 
   const fullName = user.user_metadata?.full_name as string | undefined
   const firstName = fullName?.trim().split(/\s+/)[0] ?? 'Colaborador'
-  // Administrador abre tudo, então nem consulta os acessos. Para os demais,
-  // as duas consultas vão juntas em vez de uma esperar a outra.
-  const admin = await isAdmin(supabase, user.email ?? '')
+  // Administrador abre tudo. Para os demais, uma consulta só traz os slugs com
+  // acesso, em paralelo com a do nível (antes eram 1 + 5 consultas, cada uma
+  // repetindo a do nível por dentro). Erro de consulta = nenhum acesso.
+  const [admin, slugs] = await Promise.all([
+    isAdmin(supabase, user.email ?? ''),
+    systemSlugsComAcesso(supabase, user.email ?? ''),
+  ])
   const [podeFrotas, podeConversor, podeManutencao, podeCrm, podeObras] = admin
-    ? [true, true, true, true, true]
-    : await Promise.all([
-        hasSystemAccess(supabase, user.email ?? '', 'sofia'),
-        hasSystemAccess(supabase, user.email ?? '', 'conversor-os'),
-        hasSystemAccess(supabase, user.email ?? '', 'dashboard-manutencao'),
-        hasSystemAccess(supabase, user.email ?? '', 'crm'),
-        hasSystemAccess(supabase, user.email ?? '', 'obras'),
-      ])
+    ?[true, true, true, true, true]
+    : [
+        slugs.has('sofia'),
+        slugs.has('conversor-os'),
+        slugs.has('dashboard-manutencao'),
+        slugs.has('crm'),
+        slugs.has('obras'),
+      ]
   const semNada =
     !podeFrotas && !podeConversor && !podeManutencao && !podeCrm && !podeObras && !admin
 
@@ -167,7 +171,7 @@ export default async function DashboardPage() {
           )}
           {podeObras && (
           <Link
-            href="/obras"
+            href="/obras/base"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
           >
             <span className="text-3xl">🏗️</span>

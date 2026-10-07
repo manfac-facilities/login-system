@@ -1,16 +1,15 @@
 /**
- * Testes da faixa "Novidade" (`_ui/faixa-comunicados.tsx`). As Server Actions
- * são mockadas — o que se testa aqui é o comportamento da tela.
+ * Testes da faixa "Novidade" (`_ui/faixa-comunicados.tsx`). Os comunicados
+ * chegam por prop (o layout os busca no servidor); a Server Action de marcar
+ * como lido é mockada — o que se testa aqui é o comportamento da tela.
  */
 
-import { act, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-const listarMock = jest.fn()
 const marcarMock = jest.fn()
 
 jest.mock('../../_comunicados-actions', () => ({
-  listarComunicadosNaoLidos: (...a: unknown[]) => listarMock(...a),
   marcarComunicadoLido: (...a: unknown[]) => marcarMock(...a),
 }))
 
@@ -30,21 +29,21 @@ const C2 = {
 }
 
 beforeEach(() => {
-  listarMock.mockReset()
   marcarMock.mockReset()
 })
 
-it('sem comunicado não renderiza nada', async () => {
-  listarMock.mockResolvedValue([])
-  const { container } = render(<FaixaComunicados />)
-  await act(async () => {})
-  expect(listarMock).toHaveBeenCalled()
+it('sem comunicado não renderiza nada', () => {
+  const { container } = render(<FaixaComunicados iniciais={[]} />)
   expect(container).toBeEmptyDOMElement()
 })
 
+it('já nasce com o conteúdo, sem esperar nenhuma busca no navegador', () => {
+  render(<FaixaComunicados iniciais={[C1]} />)
+  expect(screen.getByText(C1.titulo)).toBeInTheDocument()
+})
+
 it('1 comunicado: mostra título e texto curto, e expande o detalhe', async () => {
-  listarMock.mockResolvedValue([C1])
-  render(<FaixaComunicados />)
+  render(<FaixaComunicados iniciais={[C1]} />)
 
   expect(await screen.findByText(C1.titulo)).toBeInTheDocument()
   expect(screen.getByText('novidade')).toBeInTheDocument()
@@ -61,8 +60,7 @@ it('1 comunicado: mostra título e texto curto, e expande o detalhe', async () =
 })
 
 it('2 comunicados: chip "+1 novidade" abre o segundo', async () => {
-  listarMock.mockResolvedValue([C1, C2])
-  render(<FaixaComunicados />)
+  render(<FaixaComunicados iniciais={[C1, C2]} />)
 
   await screen.findByText(C1.titulo)
   expect(screen.queryByText(C2.titulo)).not.toBeInTheDocument()
@@ -73,15 +71,13 @@ it('2 comunicados: chip "+1 novidade" abre o segundo', async () => {
 })
 
 it('3 comunicados: chip no plural', async () => {
-  listarMock.mockResolvedValue([C1, C2, { ...C2, id: 'c3', titulo: 'Terceiro' }])
-  render(<FaixaComunicados />)
+  render(<FaixaComunicados iniciais={[C1, C2, { ...C2, id: 'c3', titulo: 'Terceiro' }]} />)
   expect(await screen.findByRole('button', { name: '+2 novidades' })).toBeInTheDocument()
 })
 
 it('"Entendi" com sucesso marca todos e esconde a faixa', async () => {
-  listarMock.mockResolvedValue([C1, C2])
   marcarMock.mockResolvedValue({ ok: true })
-  const { container } = render(<FaixaComunicados />)
+  const { container } = render(<FaixaComunicados iniciais={[C1, C2]} />)
 
   await screen.findByText(C1.titulo)
   await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
@@ -92,9 +88,8 @@ it('"Entendi" com sucesso marca todos e esconde a faixa', async () => {
 })
 
 it('"Entendi" com falha mantém a faixa e mostra o aviso', async () => {
-  listarMock.mockResolvedValue([C1, C2])
   marcarMock.mockImplementation(async (id: string) => ({ ok: id !== 'c2' }))
-  render(<FaixaComunicados />)
+  render(<FaixaComunicados iniciais={[C1, C2]} />)
 
   await screen.findByText(C1.titulo)
   await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
@@ -104,9 +99,8 @@ it('"Entendi" com falha mantém a faixa e mostra o aviso', async () => {
 })
 
 it('"Entendi" com a action lançando (rede) mantém a faixa e mostra o aviso', async () => {
-  listarMock.mockResolvedValue([C1])
   marcarMock.mockRejectedValue(new Error('Failed to fetch'))
-  render(<FaixaComunicados />)
+  render(<FaixaComunicados iniciais={[C1]} />)
 
   await screen.findByText(C1.titulo)
   await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
@@ -116,8 +110,9 @@ it('"Entendi" com a action lançando (rede) mantém a faixa e mostra o aviso', a
 })
 
 it('corpo com <b> aparece como texto literal', async () => {
-  listarMock.mockResolvedValue([{ ...C1, corpo: 'Linha com <b>negrito</b>\nDetalhe <b>x</b>' }])
-  const { container } = render(<FaixaComunicados />)
+  const { container } = render(
+    <FaixaComunicados iniciais={[{ ...C1, corpo: 'Linha com <b>negrito</b>\nDetalhe <b>x</b>' }]} />
+  )
 
   expect(await screen.findByText('Linha com <b>negrito</b>')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'ver o que mudou' }))

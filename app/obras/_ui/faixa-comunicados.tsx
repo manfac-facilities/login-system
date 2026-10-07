@@ -10,26 +10,23 @@
  * e é renderizado como texto, nunca como HTML.
  */
 
-import { useEffect, useState } from 'react'
-import {
-  listarComunicadosNaoLidos,
-  marcarComunicadoLido,
-  type Comunicado,
-} from '../_comunicados-actions'
+import { useState } from 'react'
+import { marcarComunicadoLido, type Comunicado } from '../_comunicados-actions'
 
 function linhas(corpo: string) {
   return corpo.split('\n').map((l) => l.trim()).filter(Boolean)
 }
 
-export default function FaixaComunicados() {
-  const [comunicados, setComunicados] = useState<Comunicado[]>([])
+/**
+ * Os não lidos chegam por prop: o layout os busca no servidor junto com a
+ * página (`faixa-comunicados-servidor.tsx`), em vez de o navegador pedir depois
+ * de hidratar.
+ */
+export default function FaixaComunicados({ iniciais }: { iniciais: Comunicado[] }) {
+  const [comunicados, setComunicados] = useState<Comunicado[]>(iniciais)
   const [expandido, setExpandido] = useState(false)
   const [demaisAbertas, setDemaisAbertas] = useState(false)
   const [erro, setErro] = useState(false)
-
-  useEffect(() => {
-    listarComunicadosNaoLidos().then(setComunicados)
-  }, [])
 
   if (comunicados.length === 0) return null
 

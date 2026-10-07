@@ -1,36 +1,26 @@
-'use client'
-
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import FaixaComunicados from './_ui/faixa-comunicados'
+import AbasObras from './_ui/abas-obras'
+import FaixaComunicadosServidor from './_ui/faixa-comunicados-servidor'
 
 /**
  * Esqueleto do módulo Controle de Obras.
  *
- * As três abas são as do mockup aprovado (`shellHTML`, mockup-obras.html:2415),
- * na mesma ordem: Diário do dia, Tarefas, Base de obras. A Ficha da obra NÃO é
- * aba — abre a partir de qualquer uma das três e volta para a origem. A Triagem
- * também não: é o modo da Ficha quando a etapa é "definir".
+ * As abas são as do mockup aprovado (`shellHTML`, mockup-obras.html:2415),
+ * na ordem: Diário do dia, Tarefas, Base de obras, Painel gerencial (em
+ * `_ui/abas-obras.tsx`). A Ficha da obra NÃO é aba — abre a partir de qualquer
+ * uma e volta para a origem. A Triagem também não: é o modo da Ficha quando a
+ * etapa é "definir".
  *
- * O layout é client component só por causa do `usePathname`, que marca a aba
- * atual. As páginas continuam sendo server components — elas chegam por
- * `children`.
+ * O layout é Server Component: só as abas são cliente (usePathname). A faixa de
+ * comunicados é buscada aqui no servidor, dentro de um Suspense sem fallback,
+ * para não atrasar a página.
  *
  * Tema: hex literal em classe Tailwind arbitrária, como no resto do hub. Não
  * existe tailwind.config neste projeto (Tailwind v4 por @import em globals.css).
  */
 
-const ABAS = [
-  { href: '/obras/diario', label: 'Diário do dia' },
-  { href: '/obras/tarefas', label: 'Tarefas' },
-  { href: '/obras/base', label: 'Base de obras' },
-  // Painel gerencial (spec-painel-gerencial-2026-09-29): aba nova, depois da Base.
-  { href: '/obras/painel', label: 'Painel gerencial' },
-]
-
 export default function ObrasLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <header className="border-b border-[#1e3a5f] bg-[#0d2050]">
@@ -43,31 +33,11 @@ export default function ObrasLayout({ children }: { children: React.ReactNode })
           </Link>
           <span className="text-white text-sm font-semibold">Gestão de Obras</span>
         </div>
-        <nav
-          aria-label="Seções da Gestão de Obras"
-          className="max-w-7xl mx-auto px-6 pb-3 flex gap-2 overflow-x-auto"
-        >
-          {ABAS.map((aba) => {
-            const atual = pathname === aba.href || pathname.startsWith(aba.href + '/')
-            return (
-              <Link
-                key={aba.href}
-                href={aba.href}
-                aria-current={atual ? 'page' : undefined}
-                className={
-                  'text-sm px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap ' +
-                  (atual
-                    ? 'bg-[#f05a28] border-[#f05a28] text-white font-semibold'
-                    : 'border-[#1e3a5f] text-[#94a3b8] hover:text-white hover:border-[#f05a28]')
-                }
-              >
-                {aba.label}
-              </Link>
-            )
-          })}
-        </nav>
+        <AbasObras />
       </header>
-      <FaixaComunicados />
+      <Suspense fallback={null}>
+        <FaixaComunicadosServidor />
+      </Suspense>
       <main>{children}</main>
     </div>
   )
