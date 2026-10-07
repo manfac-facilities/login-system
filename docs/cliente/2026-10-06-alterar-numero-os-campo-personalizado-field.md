@@ -33,3 +33,12 @@ Field, porque a sincronização já reconcilia pelo id interno do Field e atuali
 > antes da gente mudar o numero da OS no campo personalizado
 > o nome do campo é os cliente - preencher se foi aberto sem os
 > me avisa ai qnd for pra incluir o numero da OS nesse campo, pra ele identificar se alterou
+
+## Pergunta do cliente (07/10/2026), repassada pelo João, literal
+
+> Testou o campo personalizado?
+
+**Conferido na API do Field em 07/10:** a OS `123-TESTE` existe e o campo
+"OS Cliente - preencher se foi aberto sem OS" vem em `customFields` com `type: question` e
+`value: ""` — ainda vazio. O hub ainda não lê `customFields` (nenhuma referência em
+`app/obras/sincronizar/`).
