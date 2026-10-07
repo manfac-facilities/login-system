@@ -24,3 +24,12 @@ Field, porque a sincronização já reconcilia pelo id interno do Field e atuali
 ## Retorno do cliente (06/10/2026), repassado pelo João, literal
 
 > o field bloqueia o numero da OS qnd cria, nao da pra alterar
+
+## Cliente criou o campo e a OS de teste (06/10/2026), repassado pelo João, literal
+
+> 123-TESTE
+> Nome da OS que eu criei o campo personalizado
+> ve ai se o claude acha ela
+> antes da gente mudar o numero da OS no campo personalizado
+> o nome do campo é os cliente - preencher se foi aberto sem os
+> me avisa ai qnd for pra incluir o numero da OS nesse campo, pra ele identificar se alterou
