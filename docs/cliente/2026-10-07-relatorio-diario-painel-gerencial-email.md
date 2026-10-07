@@ -9,3 +9,5 @@ cria ai um formato para o gestao de obras disparar por email um relatorio do pai
 ## Mensagem do cliente (07/10/2026), repassada pelo João, literal
 
 > é coisa simples ta? só um print do painel gerencial... e tbm fazer a atualização da OS lá que falamos caso o campo OS Cliente seja preenchido
+
+**Contexto dado pelo João (07/10/2026), literal:** "sobre o print de perfoamnce enviado no email" — a mensagem acima é sobre o relatório por e-mail.
