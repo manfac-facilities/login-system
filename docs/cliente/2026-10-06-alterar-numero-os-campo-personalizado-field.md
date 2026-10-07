@@ -61,3 +61,7 @@ Prazo assumido: entregar a troca do número no ar até a madrugada de 07→08/10
 
 1. **Número já usado por outra obra do hub:** não troca, e a obra mostra um aviso.
 2. **Campo apagado depois de preenchido:** mantém o último número válido.
+
+## Requisito do João (07/10/2026), literal
+
+> o sistema deve contemplar o historico desse numero de os, para entender a trilha, o que foi feito, por qm
