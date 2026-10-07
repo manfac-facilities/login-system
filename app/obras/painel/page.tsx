@@ -20,6 +20,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../_lib/tipos'
 import { EstadoVazio } from '../_ui/primitivos'
+import { lerTodasAsLinhas } from '../_lib/ler-paginas'
 import {
   MESES_LONGOS,
   montarPainel,
@@ -33,8 +34,6 @@ import {
 import PainelGerencial from './_painel'
 
 export const dynamic = 'force-dynamic'
-
-const PAGINA = 1000
 
 type Props = { searchParams: Promise<{ cliente?: string; mes?: string; cmp?: string }> }
 
@@ -57,18 +56,15 @@ export default async function PainelPage({ searchParams }: Props) {
 
   /** Lê a tabela inteira em páginas estáveis (ordenadas por id). */
   async function lerTudo<T>(tabela: string, colunas: string): Promise<T[] | null> {
-    const linhas: T[] = []
-    for (let de = 0; ; de += PAGINA) {
-      const { data, error } = await supabase
+    const { data, error } = await lerTodasAsLinhas<T>(async (de, ate) => {
+      const r = await supabase
         .from(tabela)
         .select(colunas)
         .order('id', { ascending: true })
-        .range(de, de + PAGINA - 1)
-      if (error) return null
-      const pagina = (data ?? []) as T[]
-      linhas.push(...pagina)
-      if (pagina.length < PAGINA) return linhas
-    }
+        .range(de, ate)
+      return { data: r.data as T[] | null, error: r.error }
+    })
+    return error ? null : data
   }
 
   const [obras, diario, tarefas, remarcacoes] = await Promise.all([

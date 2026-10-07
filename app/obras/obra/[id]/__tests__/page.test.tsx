@@ -111,6 +111,7 @@ function mockRespostas(respostas: {
     chain.select = jest.fn(() => chain)
     chain.eq = jest.fn(() => chain)
     chain.order = jest.fn(() => chain)
+    chain.range = jest.fn(() => chain)
     chain.maybeSingle = jest.fn(async () => respostaObraPrincipal)
     chain.then = (resolve: (v: unknown) => unknown) =>
       Promise.resolve(porTabela[tabela] ?? OK).then(resolve)

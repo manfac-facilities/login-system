@@ -16,6 +16,7 @@ import { EstadoVazio, KPI } from '../_ui/primitivos'
 import { derivar, hojeISO, type ObraRow } from '../_lib/tipos'
 import VisaoBase from './_visao'
 import { kpisDaBase } from './_regras'
+import { lerTodasAsLinhas } from '../_lib/ler-paginas'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,10 +34,15 @@ export default async function BaseDeObrasPage() {
     )
   }
 
-  const { data, error } = await supabase.from('obras_obra').select('*')
+  // Em páginas: o PostgREST corta em 1.000 linhas sem avisar, e os KPIs abaixo
+  // contariam só as primeiras.
+  const { data, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
+    const q = supabase.from('obras_obra').select('*')
+    return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
+  })
 
   const hoje = hojeISO()
-  const obras = ((data ?? []) as ObraRow[]).map((o) => derivar(o, hoje))
+  const obras = (data ?? []).map((o) => derivar(o, hoje))
   // Quando a consulta falha, `obras` é uma lista vazia e os indicadores dariam
   // todos zero — "0 sem cobertura", "0 paralisadas" — em cima da caixa de erro.
   // Zero lido como dado é pior que indicador nenhum: passa a impressão de base
