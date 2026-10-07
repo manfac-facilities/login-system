@@ -93,7 +93,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Admin | `/admin/acessos` | Admin | — |
 | Controle de Obras | `/obras` | **Gestão de Obras** (renomeado em 06/10/2026) | `obras` |
 | CRM | `/crm` | CRM | `crm` |
-| Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit | `dashboard-manutencao` — **app separada** |
+| Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit | `dashboard-manutencao` — **app separada**, responsável: **Jose Guilherme** (`Josemanfac`) |
 | Financeiro | `/financeiro` | **Financeiro** | **sem slug, de propósito** — app separada |
 | Compras | `/compras` | **Compras** | **sem slug, de propósito** — app separada (`manfac-facilities/compras`, tabelas `cmp_*`), no ar desde 07/10/2026; mesmo conceito do Financeiro: qualquer pessoa logada solicita, papéis ficam no próprio módulo |
 
