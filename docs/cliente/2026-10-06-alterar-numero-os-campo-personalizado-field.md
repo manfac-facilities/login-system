@@ -50,3 +50,9 @@ Field, porque a sincronização já reconcilia pelo id interno do Field e atuali
 **Conferido na API do Field em 07/10:** a OS `123-TESTE` passou a ter `updatedAt: 2026-10-07T12:59:55Z`
 e o campo veio com `value: "0926-017378"`, texto puro e sem espaços. A OS no hub **não muda**,
 porque a sincronização ainda não lê `customFields`. A leitura chega ponta a ponta: o que falta é o código.
+
+## Resposta do João ao cliente (07/10/2026), literal
+
+> até mais tarde/madruga te mando tudo pronto e o que tem que fazer
+
+Prazo assumido: entregar a troca do número no ar até a madrugada de 07→08/10, com instrução de uso.
