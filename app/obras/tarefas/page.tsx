@@ -24,7 +24,12 @@ import {
   type ObraRow,
   type TarefaRow,
 } from '../_lib/tipos'
+import { lerTodasAsLinhas } from '../_lib/ler-paginas'
 import Lista, { type ObraDaTarefa, type PessoaDaTarefa } from './_lista'
+
+type TarefaComObra = TarefaRow & {
+  obras_obra: Pick<ObraRow, 'id' | 'os' | 'loja' | 'equipe' | 'pcm' | 'etapa'> | null
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -41,35 +46,38 @@ export default async function TarefasPage() {
 
   const hoje = hojeISO()
 
-  const { data: linhas, error } = await supabase
-    .from('obras_tarefa')
-    .select('*')
-    .order('aberta', { ascending: false })
-    .limit(500)
+  // Todas as tarefas, em páginas. Antes era `limit(500)` por `aberta desc`: a
+  // tarefa aberta há mais tempo — justamente a mais vencida — era a primeira a
+  // cair fora do corte, sem aviso. A obra de cada tarefa vem embutida (FK
+  // `obra_id`), em vez de um `.in('id', [centenas de UUIDs])` na URL.
+  // `obras_pessoa` não depende das tarefas: vai junto.
+  const [{ data: linhas, error }, { data: linhasPessoa }] = await Promise.all([
+    lerTodasAsLinhas<TarefaComObra>((de, ate, estavel) => {
+      const q = supabase
+        .from('obras_tarefa')
+        .select('*, obras_obra(id, os, loja, equipe, pcm, etapa)')
+        .order('aberta', { ascending: false })
+      return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
+    }),
+    supabase.from('obras_pessoa').select('chave, nome, area'),
+  ])
   if (error) return <Erro />
 
-  const tarefas = (linhas ?? []) as TarefaRow[]
-  const idsObra = Array.from(new Set(tarefas.map((t) => t.obra_id)))
-
+  const tarefas: TarefaRow[] = []
   const obras: Record<string, ObraDaTarefa> = {}
   const etapaDaObra: Record<string, Etapa> = {}
-  if (idsObra.length) {
-    const { data: linhasObra } = await supabase
-      .from('obras_obra')
-      .select('id, os, loja, equipe, pcm, etapa')
-      .in('id', idsObra)
-    for (const o of (linhasObra ?? []) as Pick<ObraRow, 'id' | 'os' | 'loja' | 'equipe' | 'pcm' | 'etapa'>[]) {
-      etapaDaObra[o.id] = o.etapa
-      obras[o.id] = {
-        id: o.id,
-        os: o.os,
-        loja: o.loja,
-        equipe: nomeDaEquipe(o),
-      }
+  for (const { obras_obra: o, ...tarefa } of linhas ?? []) {
+    tarefas.push(tarefa)
+    if (!o) continue
+    etapaDaObra[o.id] = o.etapa
+    obras[o.id] = {
+      id: o.id,
+      os: o.os,
+      loja: o.loja,
+      equipe: nomeDaEquipe(o),
     }
   }
 
-  const { data: linhasPessoa } = await supabase.from('obras_pessoa').select('chave, nome, area')
   const pessoas: Record<string, PessoaDaTarefa> = Object.fromEntries(
     ((linhasPessoa ?? []) as { chave: string; nome: string; area: string | null }[]).map((p) => [
       p.chave,

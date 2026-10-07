@@ -28,6 +28,7 @@ import {
 import Ficha, { type EdicoesPorBloco, type RemarcacaoNaFicha } from './_ficha'
 import Triagem from './_triagem'
 import type { LinhaHistorico } from '../../_lib/historico'
+import { lerTodasAsLinhas } from '../../_lib/ler-paginas'
 
 export const dynamic = 'force-dynamic'
 
@@ -128,7 +129,14 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
     supabase.from('obras_remarcacao').select('*').eq('obra_id', id).order('data', { ascending: true }),
     supabase.from('obras_tarefa').select('*').eq('obra_id', id),
     supabase.from('obras_pessoa').select('*'),
-    supabase.from('obras_obra').select('equipe, analista_cliente, cliente'),
+    // Em páginas: sem isso o PostgREST corta em 1.000 obras e as listas de
+    // opções ficariam incompletas sem aviso.
+    lerTodasAsLinhas<{ equipe: string | null; analista_cliente: string | null; cliente: string | null }>(
+      (de, ate, estavel) => {
+        const q = supabase.from('obras_obra').select('equipe, analista_cliente, cliente')
+        return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
+      }
+    ),
     // A lista padronizada de motivos de remarcação. A ORDEM É DO SERVIDOR
     // (`ordem, nome`): a janela de remarcação renderiza na ordem em que recebe,
     // e "Outro" tem ordem 900 justamente para ficar no fim.

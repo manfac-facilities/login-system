@@ -24,6 +24,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { derivar, hojeISO, type Etapa, type ObraRow, type Obra } from '../_lib/tipos'
 import { resolverChave } from './_pessoa'
+import { lerTodasAsLinhas } from '../_lib/ler-paginas'
 import Cartoes, { type RespostaDeHoje, type TarefaDeHoje } from './_cartoes'
 import type { Pessoa } from './_cartao'
 
@@ -48,7 +49,27 @@ export default async function DiarioPage({ searchParams }: Props) {
   if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return <SemPermissao />
 
   const hoje = hojeISO()
-  const minhaChave = await resolverChave(supabase, email)
+  // As três leituras abaixo não dependem uma da outra: vão juntas (antes eram
+  // idas ao banco em série).
+  //
+  // `obras_pessoa` é a tabela de quem pode ser dono de tarefa. É pequena (4
+  // linhas semeadas + as equipes da importação) e o cartão precisa dela para
+  // dizer PARA QUEM a tarefa vai antes de ela ir.
+  //
+  // O seletor do administrador só oferece quem tem obra em campo — lista de
+  // gente sem obra é lista que ninguém escolhe. Sem filtro ele sai das próprias
+  // obras lidas mais abaixo (mesmo recorte); só com filtro precisa de consulta
+  // à parte, porque aí as obras lidas são só as de um responsável.
+  const [minhaChave, { data: linhasPessoa }, { data: todosPcm }] = await Promise.all([
+    resolverChave(supabase, email),
+    supabase.from('obras_pessoa').select('chave, nome, area'),
+    admin && analista
+      ? lerTodasAsLinhas<{ pcm: string | null }>((de, ate, estavel) => {
+          const q = supabase.from('obras_obra').select('pcm').in('etapa', ETAPAS_FILA)
+          return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
+        })
+      : Promise.resolve({ data: null, error: null }),
+  ])
   // Administrador enxerga todo mundo e escolhe de quem é a fila; analista vê a
   // sua e só a sua. O filtro do não-admin vai no banco, não na memória.
   //
@@ -59,23 +80,22 @@ export default async function DiarioPage({ searchParams }: Props) {
   if (!admin && !minhaChave) return <SemPermissao />
   const filtroPcm = admin ? (analista || '') : minhaChave
 
-  let consulta = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA)
-  if (filtroPcm) consulta = consulta.eq('pcm', filtroPcm)
-  const { data: linhas, error } = await consulta
+  // Em páginas: o PostgREST corta em 1.000 linhas sem avisar.
+  const { data: linhas, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
+    let q = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA)
+    if (filtroPcm) q = q.eq('pcm', filtroPcm)
+    return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
+  })
 
   if (error) return <Erro />
 
-  const obras: Obra[] = ((linhas ?? []) as ObraRow[]).map((o) => derivar(o, hoje))
+  const obras: Obra[] = (linhas ?? []).map((o) => derivar(o, hoje))
   const ids = obras.map((o) => o.id)
 
   // Analista que não é `pcm` de obra nenhuma não tem diário — e é isso que o
   // mockup diz, com estas palavras. Administrador não cai aqui: ele vê todas.
   if (!admin && ids.length === 0) return <SemPermissao />
 
-  // `obras_pessoa` é a tabela de quem pode ser dono de tarefa. É pequena (4
-  // linhas semeadas + as equipes da importação) e o cartão precisa dela para
-  // dizer PARA QUEM a tarefa vai antes de ela ir.
-  const { data: linhasPessoa } = await supabase.from('obras_pessoa').select('chave, nome, area')
   const nomes = new Map<string, Pessoa>(
     ((linhasPessoa ?? []) as { chave: string; nome: string; area: string | null }[]).map((p) => [
       p.chave,
@@ -128,14 +148,10 @@ export default async function DiarioPage({ searchParams }: Props) {
     }
   }
 
-  // O seletor do administrador só oferece quem tem obra em campo — lista de
-  // gente sem obra é lista que ninguém escolhe.
   let responsaveis: string[] = []
   if (admin) {
-    const { data: todos } = await supabase.from('obras_obra').select('pcm').in('etapa', ETAPAS_FILA)
-    responsaveis = Array.from(
-      new Set(((todos ?? []) as { pcm: string | null }[]).map((o) => o.pcm).filter((p): p is string => !!p))
-    ).sort()
+    const fonte = analista ? (todosPcm ?? []) : (linhas ?? [])
+    responsaveis = Array.from(new Set(fonte.map((o) => o.pcm).filter((p): p is string => !!p))).sort()
   }
 
   return (
