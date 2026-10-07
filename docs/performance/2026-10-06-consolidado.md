@@ -30,3 +30,10 @@ Os itens marcados ✔ foram conferidos pela sessão principal em produção ou n
 - **Pacote 3, crescimento (código, M):** itens 2 e 7, com paginação, filtros no banco e janela de data no painel.
 - **Pacote 4, Cockpit:** item 8. A decisão é de quem cuida do Cockpit.
 - **Pacote 5, retenção:** item 9.
+
+## Execução (07/10/2026)
+- **Pacote 3** (leitura paginada, tarefas sem limit): no ar no build de 07/10 03:50 UTC.
+- **Pacote 2** (RLS initplan): aplicado em 07/10. Acesso idêntico antes/depois em 4 perfis;
+  `select * from obras_historico` como usuário 148 ms → 1,5 ms.
+- **Pacote 1** (loading, card, auth deduplicada, faixa no servidor): mergeado, aguardando deploy próprio.
+- Fora do escopo: Cockpit (responsável Jose Guilherme), refetch do painel por clique, paginação visível da Base.
