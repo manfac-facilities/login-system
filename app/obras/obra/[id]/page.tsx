@@ -44,7 +44,16 @@ export const dynamic = 'force-dynamic'
  * um `select` vazio impediria liberar qualquer obra no treinamento de terça.
  */
 const RESPONSAVEIS_PISO = ['YURI', 'AMANDA', 'LUANA']
-const ANALISTAS_PISO = ['AMANDA', 'LEANDRO', 'JUAN']
+/**
+ * Analistas por cliente — decisão do João em 06/10/2026
+ * (`docs/cliente/2026-10-06-bug-dml-58-analistas-d1000.md`). Cliente fora do
+ * mapa vê todos os nomes, como antes.
+ */
+const ANALISTAS_POR_CLIENTE: Record<string, string[]> = {
+  DPSP: ['AMANDA', 'LEANDRO', 'JUAN'],
+  D1000: ['LETICIA', 'FELIPE'],
+  PROFARMA: ['LETICIA', 'FELIPE'],
+}
 const EQUIPES_PISO = [
   'MANFAC-4',
   'MANFAC-6',
@@ -119,7 +128,7 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
     supabase.from('obras_remarcacao').select('*').eq('obra_id', id).order('data', { ascending: true }),
     supabase.from('obras_tarefa').select('*').eq('obra_id', id),
     supabase.from('obras_pessoa').select('*'),
-    supabase.from('obras_obra').select('equipe, analista_cliente'),
+    supabase.from('obras_obra').select('equipe, analista_cliente, cliente'),
     // A lista padronizada de motivos de remarcação. A ORDEM É DO SERVIDOR
     // (`ordem, nome`): a janela de remarcação renderiza na ordem em que recebe,
     // e "Outro" tem ordem 900 justamente para ficar no fim.
@@ -165,16 +174,22 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
   const listaPessoas = (pessoas ?? []) as PessoaRow[]
 
   const equipesDaBase = (outras ?? []).map((o) => (o as { equipe: string | null }).equipe)
-  const analistasDaBase = (outras ?? []).map(
-    (o) => (o as { analista_cliente: string | null }).analista_cliente
-  )
+  const clienteDaObra = ((linha as ObraRow).cliente ?? '').trim().toUpperCase()
+  const pisoDoCliente = ANALISTAS_POR_CLIENTE[clienteDaObra]
+  const analistasDaBase = (outras ?? [])
+    .map((o) => o as { analista_cliente: string | null; cliente: string | null })
+    .filter((o) => !pisoDoCliente || (o.cliente ?? '').trim().toUpperCase() === clienteDaObra)
+    .map((o) => o.analista_cliente)
 
   const responsaveis = unir(
     RESPONSAVEIS_PISO,
     listaPessoas.filter((p) => p.area === 'Obras').map((p) => p.chave)
   )
   const equipes = unir(EQUIPES_PISO, equipesDaBase)
-  const analistasCliente = unir(ANALISTAS_PISO, analistasDaBase)
+  const analistasCliente = unir(
+    pisoDoCliente ?? Object.values(ANALISTAS_POR_CLIENTE).flat(),
+    analistasDaBase
+  )
 
   const voltar = (
     <Link href="/obras/base" className="text-sm text-[#94a3b8] hover:text-[#f05a28]">

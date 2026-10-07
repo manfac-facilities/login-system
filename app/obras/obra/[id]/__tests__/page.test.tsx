@@ -181,3 +181,42 @@ describe('FichaDaObraPage — cancelamento (spec-cancelamento §6.1)', () => {
     expect(tipos).not.toContain(Triagem)
   })
 })
+
+describe('FichaDaObraPage — analistas por cliente (bug DML-58, 06/10/2026)', () => {
+  async function analistasPara(cliente: string | null) {
+    mockRespostas({
+      obra: { data: linhaObra({ cliente, analista_cliente: null }), error: null },
+      outras: {
+        data: [
+          { equipe: null, analista_cliente: 'LEANDRO', cliente: 'DPSP' },
+          { equipe: null, analista_cliente: 'MARIA', cliente: 'DPSP' },
+          { equipe: null, analista_cliente: 'JOANA', cliente: 'D1000' },
+        ],
+        error: null,
+      },
+    })
+    const el = (await FichaDaObraPage({ params })) as React.ReactElement<{ children: React.ReactElement[] }>
+    const ficha = el.props.children.find((c) => c?.type === Ficha) as React.ReactElement<{
+      analistasCliente: string[]
+    }>
+    return ficha.props.analistasCliente
+  }
+
+  it('obra D1000 mostra Leticia e Felipe e não os analistas da DPSP', async () => {
+    expect(await analistasPara('D1000')).toEqual(['FELIPE', 'JOANA', 'LETICIA'])
+  })
+
+  it('obra PROFARMA usa os mesmos analistas da D1000', async () => {
+    expect(await analistasPara('PROFARMA')).toEqual(['FELIPE', 'LETICIA'])
+  })
+
+  it('obra DPSP continua com os seus e os da base da DPSP', async () => {
+    expect(await analistasPara('DPSP')).toEqual(['AMANDA', 'JUAN', 'LEANDRO', 'MARIA'])
+  })
+
+  it('cliente fora do mapa vê todos os nomes', async () => {
+    expect(await analistasPara(null)).toEqual(
+      ['AMANDA', 'FELIPE', 'JOANA', 'JUAN', 'LEANDRO', 'LETICIA', 'MARIA']
+    )
+  })
+})
