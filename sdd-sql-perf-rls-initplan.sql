@@ -40,6 +40,9 @@
 
 begin;
 
+-- Revisão independente (O4): falhar rápido em vez de enfileirar atrás de consulta longa.
+set local lock_timeout = '5s';
+
 -- SEÇÃO 0 — pré-requisito: as funções existem e continuam STABLE, sem
 -- argumento. Se alguém tiver mudado isso, o embrulho deixa de ser neutro.
 do $$
