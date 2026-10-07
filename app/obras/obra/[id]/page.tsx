@@ -50,7 +50,7 @@ const RESPONSAVEIS_PISO = ['YURI', 'AMANDA', 'LUANA']
  * mapa vê todos os nomes, como antes.
  */
 const ANALISTAS_POR_CLIENTE: Record<string, string[]> = {
-  DPSP: ['AMANDA', 'LEANDRO', 'JUAN'],
+  DPSP: ['AMANDA', 'LEANDRO', 'JUAN', 'ALINE'],
   D1000: ['LETICIA', 'FELIPE'],
   PROFARMA: ['LETICIA', 'FELIPE'],
 }

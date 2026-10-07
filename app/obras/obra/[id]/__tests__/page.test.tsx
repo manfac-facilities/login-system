@@ -211,12 +211,12 @@ describe('FichaDaObraPage — analistas por cliente (bug DML-58, 06/10/2026)', (
   })
 
   it('obra DPSP continua com os seus e os da base da DPSP', async () => {
-    expect(await analistasPara('DPSP')).toEqual(['AMANDA', 'JUAN', 'LEANDRO', 'MARIA'])
+    expect(await analistasPara('DPSP')).toEqual(['ALINE', 'AMANDA', 'JUAN', 'LEANDRO', 'MARIA'])
   })
 
   it('cliente fora do mapa vê todos os nomes', async () => {
     expect(await analistasPara(null)).toEqual(
-      ['AMANDA', 'FELIPE', 'JOANA', 'JUAN', 'LEANDRO', 'LETICIA', 'MARIA']
+      ['ALINE', 'AMANDA', 'FELIPE', 'JOANA', 'JUAN', 'LEANDRO', 'LETICIA', 'MARIA']
     )
   })
 })

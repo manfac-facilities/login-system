@@ -21,3 +21,7 @@ Opções levadas ao João: (A) incluir os dois no piso global; (B) lista de anal
 > 01) opçao b, 02)Sim
 
 (01 = opção B, lista por cliente; 02 = a obra com cliente "PROFARMA" usa os mesmos analistas da D1000.)
+
+## Complemento do João após o deploy (06/10/2026), literal
+
+> a obra dpsp faltou a analista aline
