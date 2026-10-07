@@ -167,7 +167,7 @@ export default async function DashboardPage() {
           )}
           {podeObras && (
           <Link
-            href="/obras"
+            href="/obras/base"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
           >
             <span className="text-3xl">🏗️</span>
