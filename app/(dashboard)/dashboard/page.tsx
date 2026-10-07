@@ -79,6 +79,23 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          {/* Compras segue o Financeiro: qualquer pessoa logada no hub pode solicitar uma
+              compra (papéis do módulo ficam no próprio Compras), então o card aparece para
+              todos. App Next separada (basePath /compras) — <a> normal, fora do matcher. */}
+          <a
+            href="/compras"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">🛒</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Compras
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Solicitação de compras — cotação, aprovação e pedido no Omie
+              </p>
+            </div>
+          </a>
           {podeFrotas && (
           <Link
             href="/sofia"

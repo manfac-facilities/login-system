@@ -59,6 +59,8 @@ describe('DashboardPage', () => {
     // Qualquer pessoa logada no hub pode pedir um pagamento, então o Financeiro
     // não depende de liberação por sistema — aparece mesmo para quem não tem nada.
     expect(screen.getByText('Financeiro')).toBeInTheDocument()
+    // Compras segue o mesmo conceito: qualquer pessoa logada pode solicitar uma compra.
+    expect(screen.getByText('Compras').closest('a')).toHaveAttribute('href', '/compras')
     expect(screen.queryByText('Gestão de Frotas')).not.toBeInTheDocument()
     expect(screen.getByText(/dependem de liberação/i)).toBeInTheDocument()
   })

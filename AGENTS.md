@@ -82,7 +82,7 @@ Outros documentos, para abrir sob demanda:
 
 ## Os sistemas do hub
 
-**Nem todos são rotas deste projeto.** Cockpit e Financeiro são apps Next separadas, servidas pelo
+**Nem todos são rotas deste projeto.** Cockpit, Financeiro e Compras são apps Next separadas, servidas pelo
 proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **não entram no
 `matcher` do `middleware.ts`** — pôr lá quebra o acesso, porque a autorização delas é própria.
 
@@ -95,6 +95,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | CRM | `/crm` | CRM | `crm` |
 | Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit | `dashboard-manutencao` — **app separada** |
 | Financeiro | `/financeiro` | **Financeiro** | **sem slug, de propósito** — app separada |
+| Compras | `/compras` | **Compras** | **sem slug, de propósito** — app separada (`manfac-facilities/compras`, tabelas `cmp_*`), no ar desde 07/10/2026; mesmo conceito do Financeiro: qualquer pessoa logada solicita, papéis ficam no próprio módulo |
 
 **Financeiro sem slug é decisão, não esquecimento:** qualquer pessoa logada pode pedir um
 pagamento, e o porteiro do módulo só exige sessão. Por isso o card fica fora de `hasSystemAccess`
