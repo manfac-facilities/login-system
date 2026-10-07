@@ -13,3 +13,5 @@ cria ai um formato para o gestao de obras disparar por email um relatorio do pai
 **Contexto dado pelo João (07/10/2026), literal:** "sobre o print de perfoamnce enviado no email" — a mensagem acima é sobre o relatório por e-mail.
 
 **Correção do João (07/10/2026), literal:** "ele falou isso sobre o pedido; PRINT do painel operacional da gestao de obras"
+
+**Decisão do João (07/10/2026):** "painel operacional" = a aba **Painel gerencial** (`/obras/painel`). Não existe tela chamada painel operacional.
