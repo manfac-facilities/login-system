@@ -91,7 +91,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Sofia | `/sofia` | **Gestão de Frotas** | `sofia` |
 | Conversor de OS | `/conversor-os` | Conversor OS | `conversor-os` |
 | Admin | `/admin/acessos` | Admin | — |
-| Controle de Obras | `/obras` | **Controle de Obras** | `obras` |
+| Controle de Obras | `/obras` | **Gestão de Obras** (renomeado em 06/10/2026) | `obras` |
 | CRM | `/crm` | CRM | `crm` |
 | Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit | `dashboard-manutencao` — **app separada** |
 | Financeiro | `/financeiro` | **Financeiro** | **sem slug, de propósito** — app separada |

@@ -175,7 +175,7 @@ describe('R1 — toda action confere acesso no servidor antes de escrever', () =
   it.each(TODAS)('%s recusa quem não tem acesso, sem tocar no banco', async (_nome, chamar) => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await chamar()
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(rpcMock).not.toHaveBeenCalled()
     expect(fromMock).not.toHaveBeenCalled()
     expect(updateMock).not.toHaveBeenCalled()
@@ -208,7 +208,7 @@ describe('R1 — toda action confere acesso no servidor antes de escrever', () =
       async (_nome, chamar) => {
         ;(hasSystemAccess as jest.Mock).mockResolvedValue(resposta)
         const r = await chamar()
-        expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+        expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
         expect(rpcMock).not.toHaveBeenCalled()
         expect(fromMock).not.toHaveBeenCalled()
         expect(updateMock).not.toHaveBeenCalled()
@@ -1015,7 +1015,7 @@ describe('A1 — versão do bloco conferida no servidor', () => {
   it('R1 continua primeiro: sem acesso e versão errada → sem acesso', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     expect(await identificacaoComVersao('o1', IDENT_VAZIA, 'errada')).toEqual({
-      error: 'Sem acesso ao Controle de Obras',
+      error: 'Sem acesso à Gestão de Obras',
     })
     expect(fromMock).not.toHaveBeenCalled()
   })

@@ -100,7 +100,7 @@ describe('mudarEtapaAction', () => {
   it('recusa quem não tem acesso ao sistema, sem escrever nada', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await mudarEtapaAction('o1', 'andamento')
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(updateMock).not.toHaveBeenCalled()
   })
 
@@ -144,7 +144,7 @@ describe('liberarObraAction', () => {
   it('recusa quem não tem acesso ao sistema', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await liberarObraAction('o1', TRIAGEM_OK)
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(updateMock).not.toHaveBeenCalled()
   })
 

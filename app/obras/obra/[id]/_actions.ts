@@ -53,7 +53,7 @@ import {
 
 export type EstadoAcao = { error?: string; success?: boolean }
 
-const SEM_ACESSO = 'Sem acesso ao Controle de Obras'
+const SEM_ACESSO = 'Sem acesso à Gestão de Obras'
 const NAO_AUTENTICADO = 'Não autenticado'
 const OBRA_NAO_ENCONTRADA = 'Obra não encontrada'
 const CORRIDA_TRIAGEM = 'Esta obra já foi liberada por outra pessoa. Recarregue a página.'

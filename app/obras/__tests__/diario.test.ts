@@ -140,7 +140,7 @@ describe('salvarDiarioAction — autorização e a única trava', () => {
       obs: null,
       fotoPath: null,
     })
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(upsertDiarioMock).not.toHaveBeenCalled()
   })
 
@@ -407,7 +407,7 @@ describe('desfazerDiarioAction', () => {
   it('recusa quem não tem acesso', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await desfazerDiarioAction('obra-1')
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(rpcMock).not.toHaveBeenCalled()
   })
 
@@ -431,7 +431,7 @@ describe('obterUrlFotoAction', () => {
   it('recusa quem não tem acesso, sem assinar URL nenhuma', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await obterUrlFotoAction('obra-1/2026-09-05.jpg')
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(createSignedUrlMock).not.toHaveBeenCalled()
   })
 

@@ -77,7 +77,7 @@ describe('responderTarefaAction', () => {
   it('recusa quem não tem acesso ao módulo', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await responderTarefaAction('t1', 'comprei a massa')
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(updateMock).not.toHaveBeenCalled()
   })
 

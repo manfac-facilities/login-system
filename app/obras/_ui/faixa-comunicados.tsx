@@ -118,7 +118,7 @@ export default function FaixaComunicados() {
               </span>
               <span>
                 Não deu para salvar sua confirmação agora. A faixa continua aparecendo — tentaremos de
-                novo sozinhos na próxima vez que você abrir o Controle de Obras.
+                novo sozinhos na próxima vez que você abrir a Gestão de Obras.
               </span>
             </div>
           )}

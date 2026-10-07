@@ -48,7 +48,7 @@ export type EntradaDiario = {
   fotoPath: string | null
 }
 
-const SEM_ACESSO = 'Sem acesso ao Controle de Obras'
+const SEM_ACESSO = 'Sem acesso à Gestão de Obras'
 const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024
 
 /** A obra, com o mínimo que as regras precisam. */

@@ -41,10 +41,10 @@ export default function ObrasLayout({ children }: { children: React.ReactNode })
           >
             ← Voltar ao Hub
           </Link>
-          <span className="text-white text-sm font-semibold">Controle de Obras</span>
+          <span className="text-white text-sm font-semibold">Gestão de Obras</span>
         </div>
         <nav
-          aria-label="Seções do Controle de Obras"
+          aria-label="Seções da Gestão de Obras"
           className="max-w-7xl mx-auto px-6 pb-3 flex gap-2 overflow-x-auto"
         >
           {ABAS.map((aba) => {

@@ -68,7 +68,7 @@ export default function PainelGerencial({ painel, meses }: Props) {
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6">
       <header className="pb-4">
         <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#ff7849]">
-          Controle de Obras · uso interno
+          Gestão de Obras · uso interno
         </div>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#e8eef7] sm:text-4xl">Painel gerencial</h1>
         <p className="mt-2 max-w-3xl text-sm text-[#94a3b8]">

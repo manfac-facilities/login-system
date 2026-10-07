@@ -31,7 +31,7 @@ export async function responderTarefaAction(
   } = await supabase.auth.getUser()
   if (!user?.email) return { error: 'Não autenticado' }
   if (!(await hasSystemAccess(supabase, user.email, 'obras'))) {
-    return { error: 'Sem acesso ao Controle de Obras' }
+    return { error: 'Sem acesso à Gestão de Obras' }
   }
 
   const texto = resumo.trim()

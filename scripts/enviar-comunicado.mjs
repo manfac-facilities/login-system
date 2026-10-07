@@ -21,9 +21,9 @@ import { readFileSync } from 'node:fs'
 const PROJETO = 'iyytcavcgukfjnjjrerx'
 const CAMINHO_PAT = 'C:\\Users\\joao-\\.supabase-pat'
 const CAMINHO_RESEND = 'C:\\Users\\joao-\\.resend-key'
-const REMETENTE = 'Controle de Obras <avisos@manfac.com.br>'
+const REMETENTE = 'Gestão de Obras <avisos@manfac.com.br>'
 const LINK = 'https://hub.manfac.com.br/obras'
-const RODAPE = 'Você recebeu este e-mail porque tem acesso ao Controle de Obras no Hub Manfac.'
+const RODAPE = 'Você recebeu este e-mail porque tem acesso à Gestão de Obras no Hub Manfac.'
 
 // ---------------------------------------------------------------------------
 // Funções puras (testadas em scripts/__tests__/enviar-comunicado.test.ts)
@@ -59,7 +59,7 @@ export function renderizarHtml({ titulo, corpo }) {
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dde3ec;border-radius:8px;padding:20px">
 <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#0d2050">${escapar(titulo)}</p>
 <ul style="margin:0 0 18px;padding-left:20px;font-size:14px;line-height:1.5">${itens}</ul>
-<a href="${LINK}" style="display:inline-block;background:#f05a28;color:#ffffff;font-weight:bold;padding:11px 20px;border-radius:6px;font-size:14px;text-decoration:none">Abrir o Controle de Obras</a>
+<a href="${LINK}" style="display:inline-block;background:#f05a28;color:#ffffff;font-weight:bold;padding:11px 20px;border-radius:6px;font-size:14px;text-decoration:none">Abrir a Gestão de Obras</a>
 <p style="margin:20px 0 0;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">${RODAPE}</p>
 </div>
 </body></html>`
@@ -67,7 +67,7 @@ export function renderizarHtml({ titulo, corpo }) {
 
 export function renderizarTexto({ titulo, corpo }) {
   const itens = linhasDoCorpo(corpo).map((l) => `- ${l}`)
-  return [titulo, '', ...itens, '', `Abrir o Controle de Obras: ${LINK}`, '', RODAPE].join('\n')
+  return [titulo, '', ...itens, '', `Abrir a Gestão de Obras: ${LINK}`, '', RODAPE].join('\n')
 }
 
 /** O e-mail nunca sai antes da faixa: só comunicado publicado e já no passado. */

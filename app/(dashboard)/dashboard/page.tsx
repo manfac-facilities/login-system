@@ -173,7 +173,7 @@ export default async function DashboardPage() {
             <span className="text-3xl">🏗️</span>
             <div>
               <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
-                Controle de Obras
+                Gestão de Obras
               </p>
               <p className="text-[#4a6080] text-sm mt-1">
                 Diário do dia, tarefas e a base de obras de todos os clientes

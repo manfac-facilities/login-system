@@ -41,9 +41,9 @@ describe('renderizarHtml', () => {
     expect(html).not.toContain('<nova>')
   })
 
-  it('tem o botão para o Controle de Obras e uma linha por item', () => {
+  it('tem o botão para a Gestão de Obras e uma linha por item', () => {
     expect(html).toContain('href="https://hub.manfac.com.br/obras"')
-    expect(html).toContain('Abrir o Controle de Obras')
+    expect(html).toContain('Abrir a Gestão de Obras')
     expect(html.match(/<li>/g)).toHaveLength(2)
   })
 })
@@ -78,7 +78,7 @@ describe('montarEmail', () => {
   it('um destinatário por e-mail, remetente e assunto fixos pela spec', () => {
     const email = montarEmail(COMUNICADO, 'a@manfac.com.br')
     expect(email).toEqual({
-      from: 'Controle de Obras <avisos@manfac.com.br>',
+      from: 'Gestão de Obras <avisos@manfac.com.br>',
       to: ['a@manfac.com.br'],
       subject: COMUNICADO.titulo,
       html: renderizarHtml(COMUNICADO),

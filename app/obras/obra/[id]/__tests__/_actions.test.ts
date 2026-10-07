@@ -124,7 +124,7 @@ describe('mudarEtapaAction — acesso e etapa inválida (inalterado)', () => {
   it('recusa quem não tem acesso, sem tocar no banco', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await mudarEtapaAction('o1', 'relatorio')
-    expect(r).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(fromMock).not.toHaveBeenCalled()
   })
 
@@ -492,7 +492,7 @@ describe('corrigirDataFechamentoAction (ajuste 2, 23/09)', () => {
   it('sem acesso ao módulo não grava', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     expect(await corrigirDataFechamentoAction('o1', diasAtras(4))).toEqual({
-      error: 'Sem acesso ao Controle de Obras',
+      error: 'Sem acesso à Gestão de Obras',
     })
     expect(rpcMock).not.toHaveBeenCalled()
   })
@@ -584,7 +584,7 @@ const linhasCanc = () => linhasMarco() as LinhaComMotivo[]
 describe('cancelarObraAction', () => {
   it('recusa sem acesso, sem ler a obra', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
-    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(await cancelarObraAction('o1', { por: 'cliente' })).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(fromMock).not.toHaveBeenCalled()
     expect(rpcMock).not.toHaveBeenCalled()
   })
@@ -690,7 +690,7 @@ describe('desfazerCancelamentoAction', () => {
 
   it('recusa sem acesso, sem ler a obra', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
-    expect(await desfazerCancelamentoAction('o1')).toEqual({ error: 'Sem acesso ao Controle de Obras' })
+    expect(await desfazerCancelamentoAction('o1')).toEqual({ error: 'Sem acesso à Gestão de Obras' })
     expect(fromMock).not.toHaveBeenCalled()
   })
 
