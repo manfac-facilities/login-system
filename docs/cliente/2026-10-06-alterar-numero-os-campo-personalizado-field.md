@@ -56,3 +56,8 @@ porque a sincronização ainda não lê `customFields`. A leitura chega ponta a 
 > até mais tarde/madruga te mando tudo pronto e o que tem que fazer
 
 Prazo assumido: entregar a troca do número no ar até a madrugada de 07→08/10, com instrução de uso.
+
+## Decisões do João (07/10/2026)
+
+1. **Número já usado por outra obra do hub:** não troca, e a obra mostra um aviso.
+2. **Campo apagado depois de preenchido:** mantém o último número válido.
