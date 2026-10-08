@@ -63,7 +63,7 @@ function obra(over: Partial<ObraRow> & { cliente?: string | null }): ObraPainel 
   }
 }
 
-function montar() {
+function montar(ajuste?: (p: ReturnType<typeof montarPainel>) => void) {
   const obras = [
     obra({ os: 'OS-PARADA', loja: 'Loja Parada', etapa: 'paralisado', bloqueio: 'Clima', cliente: 'DPSP' }),
     obra({ os: 'OS-FAT', etapa: 'faturado', marco_liberou_fat: '2026-09-01', marco_faturou: '2026-09-05', cliente: 'DPSP' }),
@@ -73,6 +73,7 @@ function montar() {
     { obras, diario: [], tarefas: [], remarcacoes: [], hoje: HOJE },
     { cliente: null, mes: '2026-09', cmp: 'prev' }
   )
+  ajuste?.(painel)
   return render(<PainelGerencial painel={painel} meses={[{ v: '2026-09', nome: 'Setembro 2026 (atual)' }]} />)
 }
 
@@ -107,6 +108,17 @@ describe('PainelGerencial', () => {
     montar()
     await userEvent.click(screen.getByRole('button', { name: /Clima/ }))
     expect(screen.getAllByText('Loja Parada').length).toBeGreaterThan(0)
+  })
+
+  it.each([
+    [0, 'nenhum mês fechado desde o início do sistema'],
+    [1, 'último mês fechado'],
+    [2, 'últimos 2 meses fechados'],
+  ])('histórico com %i meses fechados mostra "%s"', (fechados, texto) => {
+    montar((p) => {
+      p.historico.fechados = fechados
+    })
+    expect(screen.getByText(texto)).toBeInTheDocument()
   })
 
   it('clicar num cliente leva o filtro para a URL', async () => {
