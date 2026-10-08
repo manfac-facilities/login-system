@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-mail do Painel</title>
+<style>
+:root{
+  --bg:#f1f4f9; --card:#ffffff; --ink:#0f1b2d; --mut:#5b6b82; --line:#d9e0ea; --acc:#f05a28; --accd:#c4461d;
+  --nav:#0d2050; --note:#fff7ed; --noteb:#f5c9a8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0b1220; --card:#121c30; --ink:#e8eef7; --mut:#9fb0c8; --line:#243350; --note:#2a1d12; --noteb:#6b4426; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0 0 6px}
+.lead{color:var(--mut);margin:0 0 12px}
+.judge{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px 34px;margin:0 0 16px}
+.judge li{margin:4px 0}
+.bar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin:0 0 14px}
+.bar label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);display:block;margin-bottom:4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:#fff;font-weight:700}
+.meter{font-size:13px;color:var(--mut);background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:6px 10px}
+.meter b{color:var(--ink)}
+.stage{display:flex;justify-content:center}
+/* caixa de entrada */
+.mailapp{width:100%;max-width:760px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mailapp.cel{max-width:380px;border-radius:28px;border:8px solid #1b2433}
+.inbox{border-bottom:1px solid var(--line)}
+.inbox .row{display:flex;gap:10px;align-items:center;padding:9px 14px;font-size:13.5px;border-bottom:1px solid var(--line);color:var(--mut)}
+.inbox .row.sel{background:rgba(240,90,40,.09);color:var(--ink)}
+.inbox .row b{min-width:150px}
+.inbox .row .sub{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inbox .row .hr{font-variant-numeric:tabular-nums}
+.cel .inbox .row{flex-wrap:wrap;gap:2px 8px}
+.cel .inbox .row b{min-width:0}
+.cel .inbox .row .sub{flex-basis:100%;order:3}
+.head{padding:12px 16px;border-bottom:1px solid var(--line)}
+.head .assunto{font-weight:700;font-size:16px}
+.head .de{color:var(--mut);font-size:13px;margin-top:2px}
+.email{background:#e9edf4;padding:18px 0}
+.email .col{margin:0 auto;width:600px;max-width:100%;background:#fff;color:#0f1b2d;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.email .top{padding:14px 20px;border-bottom:3px solid var(--acc);display:flex;justify-content:space-between;align-items:center}
+.email .brand{font-weight:800;letter-spacing:.14em;color:var(--acc);font-size:15px}
+.email .brand small{color:#5b6b82;letter-spacing:0;font-weight:600;margin-left:6px}
+.email .saud{padding:16px 20px 12px;font-size:15px}
+.email .imgbox{padding:0 20px}
+.shot{position:relative;width:100%;overflow:hidden;border-radius:6px;background:#0a1628}
+.email .cta{text-align:center;padding:18px 20px 8px}
+.email .cta a{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:8px;font-size:15px}
+.email .foot{padding:14px 20px 20px;font-size:12px;color:#5b6b82;line-height:1.55}
+.email .foot p{margin:4px 0}
+.cel .email{padding:10px 0}
+.cel .email .top,.cel .email .saud,.cel .email .foot,.cel .email .cta{padding-left:14px;padding-right:14px}
+.cel .email .imgbox{padding:0 8px}
+.cel .email .col{border-radius:0}
+.cel .email .cta a{display:block}
+/* nota de falha */
+.note{background:var(--note);border:1px solid var(--noteb);border-radius:12px;padding:16px 18px;max-width:760px;width:100%}
+.note h2{font-size:17px;margin:0 0 8px}
+.note ol{margin:8px 0 8px 18px;padding:0}
+.note li{margin:6px 0}
+.note .nao{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:14px}
+.note .q{margin-top:10px;font-size:14px}
+.hide{display:none!important}
+
+/* ===== A IMAGEM (1200px, só flex, para valer em satori) ===== */
+.img{width:1200px;background:#0a1628;color:#e8eef7;font-family:Inter,system-ui,sans-serif;transform-origin:0 0;padding:36px 40px 30px;font-size:19px;line-height:1.3}
+.img *{box-sizing:border-box}
+.img .f{display:flex}
+.img .col{display:flex;flex-direction:column}
+.img .mono{font-family:"JetBrains Mono","Roboto Mono",ui-monospace,Consolas,monospace}
+.img .eyebrow{font-size:16px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#ff7849}
+.img h1.t{font-size:46px;margin:6px 0 4px;color:#e8eef7;line-height:1.1}
+.img .sub{color:#94a3b8;font-size:18px}
+.img .ctx{margin-top:14px;border:1px solid #1e3a5f;border-radius:12px;background:#081426;padding:12px 18px;justify-content:space-between;align-items:center}
+.img .ctx b{font-size:20px}
+.img .sec{margin-top:34px}
+.img .sec h2{font-size:30px;margin:0;color:#e8eef7}
+.img .sec .s{color:#94a3b8;font-size:17px;margin:2px 0 12px}
+.img .pos{align-self:flex-start;border:1px solid #294b78;background:rgba(90,169,240,.09);color:#5aa9f0;font-weight:800;font-size:15px;border-radius:99px;padding:3px 12px;white-space:nowrap}
+.img .card{border:1px solid #1e3a5f;background:#0b1b36;border-radius:14px;overflow:hidden}
+.img .ch{padding:12px 18px;border-bottom:1px solid #1e3a5f}
+.img .ch h3{margin:0;font-size:22px;font-weight:600}
+.img .ch p{margin:2px 0 0;color:#64748b;font-size:16px}
+.img .pad{padding:16px 18px}
+.img .kpi{flex:1;min-width:0;border:1px solid #1e3a5f;background:#0d2050;border-radius:14px;padding:16px}
+.img .kpi .l{font-size:15px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8}
+.img .kpi .v{font-size:32px;font-weight:700;margin:8px 0 2px;white-space:nowrap}
+.img .kpi .d{font-size:16px;color:#94a3b8}
+.img .prog{height:12px;border-radius:99px;background:#071225;margin:12px 0 6px;overflow:hidden}
+.img .prog i{display:block;height:100%;border-radius:99px}
+.img .pl{font-size:15px;color:#64748b;justify-content:space-between;gap:8px}
+.img .pl b{color:#e8eef7}
+.img .dash{border:1px dashed #294b78;border-radius:8px;padding:5px 10px;font-size:15px;color:#64748b;margin:12px 0 6px}
+.img .delta{display:inline-flex;margin-top:10px;border-radius:99px;padding:3px 12px;font-size:16px;font-weight:700;align-items:center;gap:6px}
+.img .delta small{font-size:14px;font-weight:500;color:#64748b}
+.img .up{background:rgba(53,201,138,.1);color:#35c98a}.img .dn{background:rgba(255,77,109,.1);color:#ff4d6d}.img .eq{background:rgba(148,163,184,.1);color:#94a3b8}
+.img .chips{gap:14px;margin-top:10px;font-size:15px;color:#94a3b8;flex-wrap:wrap}
+.img .chips b{color:#e8eef7}
+.img .tr{display:flex;align-items:center;border-top:1px solid #1e3a5f;padding:9px 18px;font-size:19px}
+.img .tr.h{border-top:0;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;background:#0d2050}
+.img .tr.tot{font-weight:800;border-top:2px solid #294b78;background:rgba(13,32,80,.55)}
+.img .c{flex:1;min-width:0}.img .r{text-align:right;justify-content:flex-end}
+.img .mut{color:#64748b}
+.img .bar7{height:9px;border-radius:99px;background:#071225;overflow:hidden;width:100%}
+.img .bar7 i{display:block;height:100%;border-radius:99px}
+.img .mini{flex:1;min-width:0;border:1px solid #1e3a5f;background:rgba(13,32,80,.45);border-radius:12px;padding:12px 14px}
+.img .mini .l{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
+.img .mini .v{font-size:34px;font-weight:700;margin-top:6px}
+.img .mini .n{font-size:16px;color:#94a3b8}
+.img .mini .m{font-size:15px;color:#64748b;margin-top:4px}
+.img .faixa{align-items:center;gap:12px;font-size:16px;color:#94a3b8;margin-top:6px}
+.img .faixa .tr2{flex:1;height:12px;border-radius:99px;background:#071225;overflow:hidden}
+.img .faixa .tr2 i{display:block;height:100%;border-radius:99px}
+.img .espera{margin-top:14px;border-top:1px solid #1e3a5f;padding-top:10px;font-size:16px;color:#94a3b8}
+.img .espera b{color:#e8eef7}
+.img .tag{display:inline-block;border:1px solid;border-radius:99px;padding:0 8px;font-size:14px;font-weight:700;white-space:nowrap}
+.img .gap{gap:16px}
+.img .vazio{padding:18px;text-align:center;color:#64748b;font-size:18px}
+.img .aviso{margin-top:18px;border:1px dashed #294b78;border-radius:12px;padding:10px 16px;color:#94a3b8;font-size:17px}
+.img .aviso b{color:#e8eef7}
+.img .motivo{align-items:center;gap:12px;padding:8px 0;font-size:19px}
+.img .gantt{position:relative;border:1px solid #1e3a5f;border-radius:10px;overflow:hidden}
+.img .grow{position:relative;height:50px;border-top:1px solid rgba(30,58,95,.6);display:flex}
+.img .glab{width:250px;flex-shrink:0;border-right:1px solid #1e3a5f;background:#0b1b36;padding:5px 12px;overflow:hidden}
+.img .glab b{display:block;font-size:17px;white-space:nowrap;overflow:hidden}
+.img .glab span{display:block;font-size:14px;color:#64748b;white-space:nowrap;overflow:hidden}
+.img .gtl{position:relative;flex:1}
+.img .leg{margin-top:12px;gap:18px;flex-wrap:wrap;font-size:15px;color:#94a3b8}
+.img .leg i{display:inline-block;width:22px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.img .foot2{margin-top:30px;border-top:1px solid #1e3a5f;padding-top:14px;color:#64748b;font-size:16px;justify-content:space-between}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mockup — e-mail diário do Painel gerencial</h1>
+  <p class="lead">Gestão de Obras · todo dia às 8h (Brasília) · remetente manfac@manfac.com.br</p>
+  <ul class="judge">
+    <li><b>A imagem</b> traz os 8 blocos do painel, com os mesmos rótulos. Ela é uma recriação, não uma captura de tela. Confira se está completa demais ou de menos para quem abre às 8h.</li>
+    <li><b>Celular:</b> veja se os números ainda se leem. O medidor ao lado do alternador mostra o tamanho real do texto da tabela.</li>
+    <li><b>Painel quase vazio (b):</b> é a realidade de hoje, com 31 obras sem valor. Confira se o zero parece "ainda sem dado" e não "erro".</li>
+    <li><b>Falha (c):</b> ninguém recebe imagem quebrada ou número pela metade. Confira se aceita só registrar a falha, sem avisar ninguém.</li>
+    <li><b>Cabeçalho e rodapé claros</b> em volta da imagem escura. Confira o remetente, o assunto e os textos fixos.</li>
+  </ul>
+
+  <div class="bar">
+    <div><label>Aparelho</label>
+      <div class="seg" id="segDev"><button data-v="pc" aria-pressed="true">Computador</button><button data-v="cel" aria-pressed="false">Celular</button></div></div>
+    <div><label>Estado</label>
+      <div class="seg" id="segEst"><button data-v="a" aria-pressed="true">(a) Dia normal</button><button data-v="b" aria-pressed="false">(b) Quase vazio</button><button data-v="c" aria-pressed="false">(c) Falha</button></div></div>
+    <div class="meter" id="meter"></div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+</div>
+
+<script>
+(function(){
+/* ---------- formatadores (mesmos de _ui.tsx) ---------- */
+var nf0=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+var nf1=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1});
+function R(v){return 'R$ '+nf0.format(Math.round(v))}
+function K(v){return v>=1e6?nf1.format(v/1e6)+' mi':nf0.format(Math.round(v/1000))+' mil'}
+function kc(v){return K(v).replace(' mil','k')}
+function N0(v){return nf0.format(v)} function N1(v){return nf1.format(v)}
+var RL='vs 01/09–08/09';
+
+function delta(atual,ant,maior,rot){
+  if(!ant) return '<span class="delta eq">— <small>'+(rot||'')+': sem base</small></span>';
+  var p=(atual-ant)/ant*100, plano=Math.abs(p)<.5, bom=(p>=0)===maior;
+  var cls=plano?'eq':(bom?'up':'dn');
+  return '<span class="delta '+cls+'">'+(plano?'=':p>=0?'▲':'▼')+' '+N1(Math.abs(p))+'% '+(rot?'<small>'+rot+'</small>':'')+'</span>';
+}
+function prog(v,meta,rotMeta){
+  if(!meta) return '<div class="dash">Sem meta — obras pontuais</div>';
+  var pc=v/meta*100;
+  return '<div class="prog"><i style="width:'+Math.min(100,pc)+'%;background:'+(pc>=100?'#35c98a':'#f05a28')+'"></i></div>'+
+   '<div class="f pl"><span><b>'+N0(pc)+'%</b> da meta</span><span>'+(rotMeta||'meta '+R(meta))+'</span></div>';
+}
+function pcMeta(v,m){return m?'<span style="color:'+(v>=m?'#35c98a':'#94a3b8')+'">'+N0(v/m*100)+'%</span>':'<span class="mut">sem meta</span>'}
+function sec(t,s,pos,body){
+  return '<div class="sec"><div class="f" style="justify-content:space-between;align-items:flex-end;gap:12px"><div><h2>'+t+'</h2><div class="s">'+s+'</div></div>'+(pos?'<span class="pos">'+pos+'</span>':'')+'</div>'+body+'</div>';
+}
+function ch(t,s){return '<div class="ch"><h3>'+t+'</h3>'+(s?'<p>'+s+'</p>':'')+'</div>'}
+function mini(l,v,cor,n,m){return '<div class="mini"><div class="l">'+l+'</div><div class="v mono" style="color:'+(cor||'#e8eef7')+'">'+v+'</div>'+(n?'<div class="n">'+n+'</div>':'')+(m||'')+'</div>'}
+function tag(c,t){return '<span class="tag" style="color:'+c+';border-color:'+c+'73;background:'+c+'14">'+t+'</span>'}
+
+/* ---------- dados de exemplo ---------- */
+var D={};
+D.a={
+  hoje:'08/10', carteira:{v:4280000,q:47,sem:9,ant:3980000,ini:590000,and:2785000,pf:905000,meta:5000000},
+  fatMes:{v:612000,ant:540000,meta:1200000}, ano:{v:1662000,ant:0,meta:2400000},
+  pend:{v:905000,q:11,ant:942000},
+  clientes:[['DPSP',2950000,3500000,430000,800000,1180000,640000,7],['D1000',820000,1000000,120000,250000,340000,180000,3],['PROFARMA',510000,500000,62000,150000,142000,85000,1]],
+  total:['Todos',4280000,5000000,612000,1200000,1662000,905000,11],
+  etapas:[['Aguardando definição',5,180000],['Levantamento',6,410000],['Em andamento',14,1720000],['Paralisado',4,360000],['Relatório de entrega',3,270000],['Executado - pendente aprovação OS',2,190000],['Fechar OS',2,245000],['Pendente faturamento',11,905000]],
+  etTot:[47,4280000,'9 obras sem valor informado'],
+  sla1:{media:6.8,q:5,ant:8.3,pior:[14,'0926-017102','DP SAO GONCALO','DPSP',74000],f:[3,2,0,0],esp:[11,905000,[23,'0926-016877','DP ITABORAI']]},
+  sla2:{media:9.3,q:6,ant:8.6,pior:[27,'0926-016455','D1000 NITEROI','D1000',58000],f:[2,3,1,0],esp:[2,190000,[12,'0926-017220','PROFARMA TIJUCA']]},
+  eq:[['Equipe Alfa',270000,228000,3,10,27000,14],['Equipe Bravo',160000,176000,2,8,20000,12],['Equipe Delta',110000,106000,1,5,22000,9],['Equipe Charlie',0,0,0,0,null,6]],
+  eqTot:[540000,6,23,23478,41],
+  paradas:{q:4,v:360000,m:[['Aguardando material',2,190000],['Aguardando liberação da loja',1,110000],['Chuva',1,60000]]},
+  atr:{campo:18,late:5,rem:7,cat:[['No prazo','#35c98a',8],['Remarcada, no prazo','#f4b73f',5],['Atrasada','#ff4d6d',3],['Remarcada e atrasada','#b83b6e',2]]},
+  ritmo:{resp:12,esp:14,nao:3,foto:9,ab:17,venc:4,r7:22},
+  gantt:[
+   ['DP ITABORAI','0926-017378','Equipe Alfa','DPSP',8,14,10,17,'late',3,true],
+   ['DP SAO GONCALO','0926-017102','Equipe Bravo','DPSP',5,12,6,19,'late',5,false],
+   ['D1000 NITEROI','0926-017345','Equipe Delta','D1000',14,20,15,17,'camp',0,false],
+   ['PROFARMA TIJUCA','0926-017220','Equipe Alfa','PROFARMA',16,22,17,17,'parada',0,false],
+   ['DP NOVA IGUACU','0926-017401','Equipe Bravo','DPSP',20,26,null,null,'ini',0,false],
+   ['D1000 BARRA','0926-017388','Equipe Charlie','D1000',22,29,null,null,'ini',0,true],
+   ['DP DUQUE DE CAXIAS','0926-017190','Equipe Delta','DPSP',2,9,3,12,'fim',3,false]
+  ],
+  gTot:[7,0],
+  hist:{vals:[null,null,null,null,null,null,null,null,null,null,1050000,612000],meta:1200000,fech:1,media:1050000,melhor:['setembro',2026,1050000]},
+  lido:'07:59', banner:null
+};
+D.b={
+  hoje:'08/10', carteira:{v:1640000,q:47,sem:31,ant:1510000,ini:420000,and:1220000,pf:0,meta:5000000},
+  fatMes:{v:0,ant:0,meta:1200000}, ano:{v:180000,ant:0,meta:2400000},
+  pend:{v:0,q:3,ant:0},
+  clientes:[['DPSP',1180000,3500000,0,800000,150000,0,2],['D1000',330000,1000000,0,250000,30000,0,1],['PROFARMA',130000,500000,0,150000,0,0,0]],
+  total:['Todos',1640000,5000000,0,1200000,180000,0,3],
+  etapas:[['Aguardando definição',9,90000],['Levantamento',11,330000],['Em andamento',15,980000],['Paralisado',3,60000],['Relatório de entrega',3,110000],['Executado - pendente aprovação OS',2,70000],['Fechar OS',1,0],['Pendente faturamento',3,0]],
+  etTot:[47,1640000,'31 obras sem valor informado'],
+  sla1:{media:null,q:0,ant:null,pior:null,f:[0,0,0,0],esp:[3,0,[6,'0926-017377','DP ITABORAI']]},
+  sla2:{media:null,q:0,ant:null,pior:null,f:[0,0,0,0],esp:[2,70000,[9,'0926-017220','PROFARMA TIJUCA']]},
+  eq:[],eqTot:null,
+  paradas:{q:0,v:0,m:[]},
+  atr:{campo:18,late:0,rem:2,cat:[['No prazo','#35c98a',16],['Remarcada, no prazo','#f4b73f',2],['Atrasada','#ff4d6d',0],['Remarcada e atrasada','#b83b6e',0]]},
+  ritmo:{resp:2,esp:14,nao:0,foto:1,ab:3,venc:0,r7:0},
+  gantt:[
+   ['DP ITABORAI','0926-017378','Equipe Alfa','DPSP',8,14,10,17,'camp',0,false],
+   ['D1000 NITEROI','0926-017345','Equipe Delta','D1000',14,20,15,17,'camp',0,false],
+   ['DP NOVA IGUACU','0926-017401','Equipe Bravo','DPSP',20,26,null,null,'ini',0,false]
+  ],
+  gTot:[3,0],
+  hist:{vals:[null,null,null,null,null,null,null,null,null,null,180000,0],meta:1200000,fech:1,media:180000,melhor:['setembro',2026,180000]},
+  lido:'07:59',
+  banner:'31 das 47 obras ainda não têm valor em R$ no hub. Os totais em R$ crescem conforme o valor for preenchido nas fichas.'
+};
+
+/* ---------- a imagem ---------- */
+function build(d,e){
+  var c=d.carteira, fm=d.fatMes, an=d.ano, pd=d.pend, vazio=(e==='b');
+  var zero=function(v,txt){return v===0?'<span class="mut">'+txt+'</span>':R(v)};
+  var h='';
+  h+='<div class="eyebrow">Gestão de Obras · uso interno</div><h1 class="t">Painel gerencial</h1>'+
+     '<div class="sub">Metas, carteira, faturamento, prazos, equipes e obras paradas.</div>'+
+     '<div class="f ctx"><div><b>Todos os clientes · Outubro 2026</b><div class="sub" style="font-size:16px">01/10 a 08/10 (mês em curso) · comparando com 01/09–08/09</div></div><span class="pos" style="font-size:16px">Lido em 08/10/2026 às '+d.lido+'</span></div>';
+  if(d.banner) h+='<div class="aviso"><b>Atenção aos totais.</b> '+d.banner+'</div>';
+
+  /* 1 Metas */
+  var k='<div class="f gap">'+
+   '<div class="kpi"><div class="l">Carteira de obras</div><div class="v mono">'+R(c.v)+'</div><div class="d">'+c.q+' obras com a gente'+(c.sem?' · '+c.sem+' sem valor':'')+'</div>'+prog(c.v,c.meta)+delta(c.v,c.ant,true,RL)+
+     '<div class="f chips"><span>A iniciar <b class="mono">'+K(c.ini)+'</b></span><span>Andamento <b class="mono">'+K(c.and)+'</b></span><span>Pend. fat. <b class="mono">'+K(c.pf)+'</b></span></div></div>'+
+   '<div class="kpi"><div class="l">Faturamento do mês</div><div class="v mono"'+(fm.v===0?' style="color:#94a3b8"':'')+'>'+R(fm.v)+'</div><div class="d">'+(fm.v===0?'nenhuma NF emitida de 01/10 a 08/10':'NF emitida de 01/10 a 08/10')+'</div>'+prog(fm.v,fm.meta)+delta(fm.v,fm.ant,true,RL)+'</div>'+
+   '<div class="kpi"><div class="l">Faturado no ano</div><div class="v mono">'+R(an.v)+'</div><div class="d">acumulado jan–out/2026</div>'+prog(an.v,an.meta,'meta 2×1,2 mi desde set/2026')+delta(an.v,an.ant,true,'vs mesmo período de 2025')+'</div>'+
+   '<div class="kpi"><div class="l">Pendente faturamento</div><div class="v mono" style="color:'+(pd.v===0?'#94a3b8':'#f4b73f')+'">'+R(pd.v)+'</div><div class="d">'+pd.q+' obras liberadas, aguardando NF</div><div class="dash">Parte da carteira: '+N0(c.v?pd.v/c.v*100:0)+'% do total</div>'+delta(pd.v,pd.ant,false,RL)+'</div>'+
+  '</div>';
+  var rows=d.clientes.concat([d.total]).map(function(l,i,a){
+    var tot=i===a.length-1;
+    return '<div class="tr'+(tot?' tot':'')+'"><div class="c" style="flex:1.3"><b>'+l[0]+'</b></div><div class="c r mono">'+R(l[1])+'</div><div class="c r" style="flex:.6">'+pcMeta(l[1],l[2])+'</div><div class="c r mono">'+zero(l[3],'R$ 0')+'</div><div class="c r" style="flex:.6">'+pcMeta(l[3],l[4])+'</div><div class="c r mono">'+R(l[5])+'</div><div class="c r mono">'+R(l[6])+' <span class="mut" style="font-size:15px">&nbsp;('+l[7]+')</span></div></div>';
+  }).join('');
+  var tab='<div class="card" style="margin-top:14px">'+ch('Quanto cada cliente representa','A linha Todos é a soma, e as metas somam junto.')+
+   '<div class="tr h"><div class="c" style="flex:1.3">Cliente</div><div class="c r">Carteira</div><div class="c r" style="flex:.6">% meta</div><div class="c r">Fat. no mês</div><div class="c r" style="flex:.6">% meta</div><div class="c r">Fat. no ano</div><div class="c r">Pend. faturamento</div></div>'+rows+'</div>';
+  h+=sec('Metas: carteira e faturamento','Carteira é tudo que está com a gente. Faturamento é o que teve nota fiscal emitida.','Posição de hoje, 08/10',k+tab);
+
+  /* 2 Resumo por status */
+  var mx=d.etTot[1]||1;
+  var er=d.etapas.map(function(l){return '<div class="tr"><div class="c" style="flex:2.4">'+l[0]+'</div><div class="c r mono" style="flex:.5">'+l[1]+'</div><div class="c r mono" style="flex:1.1">'+R(l[2])+'</div><div class="c" style="flex:1.6;padding-left:22px"><div class="bar7"><i style="width:'+(l[2]/mx*100)+'%;background:#5aa9f0"></i></div></div></div>'}).join('');
+  h+=sec('Resumo por status','Quantidade e valor em cada etapa do sistema.','Posição de hoje, 08/10',
+   '<div class="card"><div class="tr h"><div class="c" style="flex:2.4">Etapa</div><div class="c r" style="flex:.5">Qtd</div><div class="c r" style="flex:1.1">Valor total</div><div class="c" style="flex:1.6;padding-left:22px">Participação</div></div>'+er+
+   '<div class="tr tot"><div class="c" style="flex:2.4">Total geral = carteira</div><div class="c r mono" style="flex:.5">'+d.etTot[0]+'</div><div class="c r mono" style="flex:1.1">'+R(d.etTot[1])+'</div><div class="c mut" style="flex:1.6;padding-left:22px;font-size:15px;font-weight:400">'+d.etTot[2]+'</div></div></div>');
+
+  /* 3 SLA */
+  function sla(t,s,x){
+    var mxf=Math.max.apply(null,[1].concat(x.f)), cores=['#35c98a','#5aa9f0','#f4b73f','#ff4d6d'], rot=['até 7 dias','8 a 15','16 a 30','mais de 30'];
+    var fx=x.f.map(function(q,i){return '<div class="f faixa"><span style="width:96px">'+rot[i]+'</span><div class="tr2"><i style="width:'+(q/mxf*100)+'%;background:'+cores[i]+'"></i></div><b class="mono" style="width:90px;text-align:right;color:#e8eef7">'+q+' obras</b></div>'}).join('');
+    var p=x.pior;
+    var esp=x.esp;
+    return '<div class="card" style="flex:1;min-width:0">'+ch(t,s)+'<div class="pad"><div class="f gap">'+
+     mini('Média',(x.media!==null?N1(x.media):'—')+' <span style="font-size:17px;color:#94a3b8">dias</span>',null,x.q+' obras concluíram a etapa no mês',x.media!==null&&x.ant?delta(x.media,x.ant,false,RL):'')+
+     mini('Pior caso',(p?p[0]:'—')+' <span style="font-size:17px;color:#94a3b8">dias</span>','#ff4d6d',p?'<span class="mono mut" style="font-size:15px">'+p[1]+'</span> · '+p[2]:'nenhuma obra no mês',p?'<div class="m">'+p[3]+' · '+R(p[4])+'</div>':'')+
+     '</div><div style="margin-top:14px">'+fx+'</div>'+
+     '<div class="espera">Ainda esperando hoje (08/10): <b>'+esp[0]+' obras · '+R(esp[1])+'</b>'+(esp[2]?' · a mais antiga espera há <b style="color:#ff4d6d">'+esp[2][0]+' dias</b> (<span class="mono mut" style="font-size:15px">'+esp[2][1]+'</span> · '+esp[2][2]+')':'')+'</div></div></div>';
+  }
+  h+=sec('Prazos de resposta (SLA)','Média e pior caso das obras que concluíram a etapa no mês, e o que ainda está esperando agora.',null,
+   '<div class="f gap">'+sla('Pendente faturamento → NF emitida','Dias entre a liberação para faturar e a emissão da nota',d.sla1)+sla('Liberação para executar → OS aprovada','Dias entre a obra ser liberada e o cliente aprovar a OS',d.sla2)+'</div>');
+
+  /* 4 Equipes */
+  var eqs=d.eq.slice().sort(function(a,b){return b[1]-a[1]});
+  var emx=Math.max.apply(null,[1].concat(eqs.map(function(x){return x[1]})));
+  var erows=eqs.map(function(x,i){
+    return '<div class="tr"><div class="c mono" style="flex:.3;font-weight:800;color:'+(i===0?'#ff7849':'#94a3b8')+'">'+(i+1)+'º</div><div class="c" style="flex:1.3"><b>'+x[0]+'</b></div><div class="c r mono" style="flex:1.2">'+R(x[1])+(x[1]||x[2]?'<br>'+delta(x[1],x[2],true,''):'')+'</div><div class="c r mono" style="flex:.7">'+x[3]+'</div><div class="c r mono" style="flex:.7">'+x[4]+'</div><div class="c r mono" style="flex:1"><b>'+(x[5]!==null?R(x[5]):'—')+'</b></div><div class="c r mono" style="flex:.7">'+x[6]+'</div><div class="c" style="flex:.9;padding-left:14px"><div class="bar7"><i style="width:'+(x[1]/emx*100)+'%;background:#f05a28"></i></div></div></div>';
+  }).join('');
+  var etot=d.eqTot?'<div class="tr tot"><div class="c" style="flex:.3"></div><div class="c" style="flex:1.3">Total</div><div class="c r mono" style="flex:1.2">'+R(d.eqTot[0])+'</div><div class="c r mono" style="flex:.7">'+d.eqTot[1]+'</div><div class="c r mono" style="flex:.7">'+d.eqTot[2]+'</div><div class="c r mono" style="flex:1">'+R(d.eqTot[3])+'</div><div class="c r mono" style="flex:.7">'+d.eqTot[4]+'</div><div class="c" style="flex:.9"></div></div>':'';
+  h+=sec('Equipes: receita, dias e produtividade','Ranking por receita no mês.',null,
+   '<div class="card"><div class="tr h"><div class="c" style="flex:.3">#</div><div class="c" style="flex:1.3">Equipe</div><div class="c r" style="flex:1.2">Receita (R$ exec.)</div><div class="c r" style="flex:.7">Obras concl.</div><div class="c r" style="flex:.7">Dias nelas</div><div class="c r" style="flex:1">Produt. (R$/dia)</div><div class="c r" style="flex:.7">Dias no mês</div><div class="c" style="flex:.9"></div></div>'+
+   (eqs.length?erows+etot:'<div class="vazio">Nenhuma equipe trabalhou para este filtro no mês.</div>')+
+   '<div class="pad"><div class="aviso" style="margin-top:0"><b>Como a conta é feita.</b> A receita de uma obra entra no mês em que a execução terminou. Produtividade = receita ÷ dias trabalhados nessas obras.</div></div></div>');
+
+  /* 5 Paradas e atrasos */
+  var p=d.paradas, pm=Math.max.apply(null,[1].concat(p.m.map(function(x){return x[2]})));
+  var prow=p.m.length?p.m.map(function(x){return '<div class="f motivo"><span style="flex:1.4">'+x[0]+'</span><div style="flex:1"><div class="bar7" style="height:11px"><i style="width:'+(x[2]/pm*100)+'%;background:#f4b73f"></i></div></div><span class="mono" style="width:40px;text-align:right">'+x[1]+'</span><span class="mono" style="width:96px;text-align:right;color:#94a3b8">'+K(x[2])+'</span></div>'}).join(''):'<div class="vazio">Nenhuma obra parada hoje.</div>';
+  var a=d.atr, tot=a.cat.reduce(function(s,x){return s+x[2]},0);
+  var seg=a.cat.filter(function(x){return x[2]}).map(function(x){return '<i style="flex:'+x[2]+';background:'+x[1]+';min-width:4px;display:block;height:100%"></i>'}).join('');
+  var chips=a.cat.map(function(x){return '<span style="border:1px solid #1e3a5f;background:#071225;border-radius:99px;padding:3px 12px;font-size:15px;color:#94a3b8"><i style="display:inline-block;width:10px;height:10px;border-radius:99px;background:'+x[1]+';margin-right:7px"></i>'+x[0]+' · '+x[2]+'</span>'}).join('');
+  h+=sec('Obras paradas e atrasadas','Por que as obras pararam, quanto valor está travado, e quanto das obras em andamento está fora do prazo.','Posição de hoje, 08/10',
+   '<div class="f gap"><div class="card" style="flex:1;min-width:0">'+ch('Paradas, por motivo',p.q+' obras paradas · '+R(p.v)+' travados')+'<div class="pad">'+prow+'</div></div>'+
+   '<div class="card" style="flex:1;min-width:0">'+ch('Atrasadas e remarcadas',a.campo+' obras em andamento (em execução ou paradas) hoje')+'<div class="pad"><div class="f" style="gap:12px">'+
+    mini('Atrasadas',N0(a.late/a.campo*100)+'%','#ff4d6d',a.late+' de '+a.campo+' passaram do fim previsto')+mini('Remarcadas',N0(a.rem/a.campo*100)+'%','#f4b73f',a.rem+' de '+a.campo+' tiveram remarcação')+
+    '</div><div class="f" style="height:20px;border-radius:99px;background:#071225;overflow:hidden;margin:16px 0 12px">'+seg+'</div><div class="f" style="flex-wrap:wrap;gap:8px">'+chips+'</div></div></div></div>');
+
+  /* 6 Ritmo */
+  var r=d.ritmo;
+  h+=sec('Ritmo do campo e respostas','Diário e tarefas mostram o que aconteceu e o que continua esperando alguém.','Sempre hoje',
+   '<div class="f gap"><div class="card" style="flex:1.55;min-width:0">'+ch('Diário de hoje','Somente obras que entram na fila do diário')+'<div class="pad f" style="gap:10px">'+
+     mini('Responderam',r.resp+'/'+r.esp,null,'registros esperados','<div class="m">'+Math.max(0,r.esp-r.resp)+' ainda aguardam resposta</div>')+mini('Não andou',r.nao,'#f4b73f','registros de hoje','<div class="m">motivo e responsável visíveis</div>')+mini('Com foto',r.foto,'#35c98a','registros de hoje','<div class="m">foto é evidência, não % de avanço</div>')+
+   '</div></div><div class="card" style="flex:.75;min-width:0">'+ch('Tarefas','Tarefas das obras do filtro')+'<div class="pad f" style="gap:10px">'+
+     mini('Abertas',r.ab,null,'aguardando resposta')+mini('Vencidas',r.venc,'#ff4d6d','prazo já passou')+mini('Respondidas',r.r7,'#35c98a','nos últimos 7 dias')+'</div></div></div>');
+
+  /* 7 Cronograma (versão resumida: recorte fixo) */
+  var DIAS=42, PXD=20, W=DIAS*PXD, hojeX=17*PXD, ticks='';
+  var mark=[[0,'21/09'],[7,'28/09'],[10,'out'],[14,'05/10'],[21,'12/10'],[28,'19/10'],[35,'26/10']];
+  mark.forEach(function(t){var m=t[1]==='out';ticks+='<div style="position:absolute;top:0;bottom:0;left:'+(t[0]*PXD)+'px;border-left:1px solid '+(m?'#294b78':'rgba(30,58,95,.55)')+'"><span class="mono" style="position:absolute;left:5px;top:'+(m?22:6)+'px;font-size:14px;color:'+(m?'#e8eef7':'#94a3b8')+';font-weight:'+(m?700:400)+'">'+t[1]+'</span></div>'});
+  var grade='';[0,7,10,14,21,28,35].forEach(function(t){grade+='<div style="position:absolute;top:0;bottom:0;left:'+(t*PXD)+'px;border-left:1px solid rgba(30,58,95,.5)"></div>'});
+  var gr=d.gantt.map(function(g){
+    var late=g[8]==='late', par=g[8]==='parada', fim=g[8]==='fim';
+    var cor=par?'repeating-linear-gradient(45deg,#f4b73f 0 5px,#b4841f 5px 10px)':late?'#ff4d6d':fim?'#8a4a5c':'#5aa9f0';
+    var pl='<div style="position:absolute;top:8px;height:13px;left:'+(g[4]*PXD)+'px;width:'+((g[5]-g[4])*PXD)+'px;border:2px dashed #7f95b5;border-radius:4px;background:rgba(127,149,181,.08)"></div>';
+    var re=g[6]!==null?'<div style="position:absolute;top:27px;height:14px;border-radius:4px;left:'+(g[6]*PXD)+'px;width:'+((g[7]-g[6]+1)*PXD)+'px;background:'+cor+'"></div>':'';
+    var tx=Math.min(W-170,(Math.max(g[5],g[7]||0)+1)*PXD+6);
+    var lab=(late?tag('#ff4d6d','atrasada '+g[9]+'d')+' ':'')+(fim?'<span class="mono mut" style="font-size:14px">terminou +'+g[9]+'d · </span>':'')+(g[10]?tag('#f4b73f','remarcada')+' ':'')+'<span class="mut" style="font-size:14px">'+(g[8]==='ini'?'A iniciar':par?'Paralisado':fim?'Executado':'Em andamento')+'</span>';
+    return '<div class="grow"><div class="glab"'+(late?' style="box-shadow:inset 3px 0 0 #ff4d6d"':'')+'><b>'+g[0]+'</b><span>'+g[1]+' · '+g[2]+' · '+g[3]+'</span></div><div class="gtl">'+grade+'<div style="position:absolute;top:0;bottom:0;left:'+hojeX+'px;width:2px;background:#f05a28"></div>'+pl+re+'<div style="position:absolute;top:22px;left:'+tx+'px;white-space:nowrap;display:flex;gap:6px;align-items:center;transform:translateY(-1px)"></div></div></div>';
+  }).join('');
+  var head='<div class="grow" style="height:46px;background:#0d2050;border-top:0"><div class="glab" style="background:#0d2050;font-size:14px;color:#94a3b8;display:flex;align-items:center;text-transform:uppercase;letter-spacing:.06em">Obra · '+d.gantt.length+'</div><div class="gtl">'+ticks+'<div style="position:absolute;top:0;bottom:0;left:'+hojeX+'px;width:2px;background:#f05a28"><span style="position:absolute;top:0;left:-46px;width:92px;text-align:center;background:#f05a28;color:#fff;font-size:13px;font-weight:700;border-radius:4px">hoje 08/10</span></div></div></div>';
+  // etiquetas de cada linha desenhadas depois, em posição própria
+  var gr2=d.gantt.map(function(g,i){
+    var late=g[8]==='late', fim=g[8]==='fim', par=g[8]==='parada';
+    var tx=Math.min(W-200,(Math.max(g[5],g[7]||0)+1)*PXD+6);
+    var lab=(late?tag('#ff4d6d','atrasada '+g[9]+'d')+' ':'')+(fim?'<span class="mono mut" style="font-size:14px">terminou +'+g[9]+'d&nbsp;</span>':'')+(g[10]?tag('#f4b73f','remarcada')+' ':'')+'<span class="mut" style="font-size:14px">'+(g[8]==='ini'?'A iniciar':par?'Paralisado':fim?'Executado':'Em andamento')+'</span>';
+    return '<div style="position:absolute;left:'+(250+tx)+'px;top:'+(46+i*50+16)+'px;white-space:nowrap">'+lab+'</div>';
+  }).join('');
+  h+=sec('Cronograma obra a obra','Recorte: as obras mais críticas (atrasadas, paradas e as próximas a iniciar). Planejado em cima, realizado embaixo; linha laranja = hoje.','Posição de hoje, 08/10',
+   '<div class="card"><div class="pad"><div class="gantt" style="height:'+(46+d.gantt.length*50)+'px">'+head+gr+gr2+'</div>'+
+   '<div class="f leg"><span><i style="border:2px dashed #7f95b5;height:11px"></i>Planejado</span><span><i style="background:#5aa9f0"></i>Realizado</span><span><i style="background:#ff4d6d"></i>Atrasada agora</span><span><i style="background:#8a4a5c"></i>Já terminou, com atraso</span><span><i style="background:repeating-linear-gradient(45deg,#f4b73f 0 4px,#b4841f 4px 8px)"></i>Parada agora</span><span><i style="background:#f05a28;width:4px"></i>Hoje</span></div>'+
+   '<div class="mut" style="margin-top:8px;font-size:15px">Mostrando '+d.gantt.length+' de 41 obras no cronograma completo. As demais estão no hub.</div></div></div>');
+
+  /* 8 Histórico */
+  var hv=d.hist, meses=['nov/25','dez/25','jan/26','fev/26','mar/26','abr/26','mai/26','jun/26','jul/26','ago/26','set/26','out/26'];
+  var topo=Math.max.apply(null,hv.vals.map(function(v){return v||0}).concat([hv.meta]))*1.12||1, pb=topo/4, mg=Math.pow(10,Math.floor(Math.log10(pb)));
+  var passo=[1,1.5,2,2.5,3,4,5,6,8,10].map(function(s){return s*mg}).filter(function(s){return s>=pb})[0]||pb, ymax=passo*4, CH=190;
+  var gl='';for(var i=0;i<5;i++){gl+='<div style="position:absolute;left:0;right:0;bottom:'+(i*25)+'%;border-top:1px dashed rgba(30,58,95,.8)"><span class="mono" style="position:absolute;left:-60px;top:-9px;width:52px;text-align:right;font-size:14px;color:#64748b">'+kc(passo*i)+'</span></div>'}
+  var bars=hv.vals.map(function(v,i){
+    if(v===null) return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><span style="font-size:13px;color:#64748b;margin-bottom:3px">sem dado</span><i style="display:block;height:18%;width:78%;max-width:56px;border:1px dashed #294b78;border-bottom:0;border-radius:6px 6px 0 0"></i></div>';
+    var parcial=i===11, abaixo=!parcial&&v<hv.meta;
+    var f=parcial?'repeating-linear-gradient(45deg,#f05a28 0 6px,#c4461d 6px 12px)':abaixo?'linear-gradient(180deg,#8a9bb5,#5c6f8d)':'linear-gradient(180deg,#ff7849,#f05a28)';
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><span class="mono" style="font-size:14px;color:#94a3b8;margin-bottom:3px">'+kc(v)+'</span><i style="display:block;width:78%;max-width:56px;height:'+Math.max(2,v/ymax*100)+'%;background:'+f+';border-radius:6px 6px 0 0'+(i===11?';outline:2px solid #fff;outline-offset:2px':'')+'"></i></div>';
+  }).join('');
+  var ml='<div style="position:absolute;left:0;right:0;bottom:'+(hv.meta/ymax*100)+'%;border-top:2px dashed #fff"></div>';
+  var lbl=meses.map(function(m){return '<span style="flex:1;text-align:center;font-size:14px;color:#94a3b8">'+m+'</span>'}).join('');
+  h+=sec('Histórico de faturamento','Faturado (NF emitida) mês a mês nos últimos 12 meses, com a linha da meta.',null,
+   '<div class="card"><div class="pad"><div style="position:relative;margin-left:64px;height:'+CH+'px;margin-top:6px">'+gl+'<div style="position:absolute;inset:0;display:flex;align-items:flex-end;gap:8px">'+bars+'</div>'+ml+'</div>'+
+   '<div class="f" style="margin-left:64px;margin-top:8px;gap:8px">'+lbl+'</div>'+
+   '<div class="f leg"><span><i style="background:#f05a28"></i>Faturado no mês</span><span><i style="background:#6f82a0"></i>Mês fechado abaixo da meta</span><span><i style="background:repeating-linear-gradient(45deg,#f05a28 0 4px,#c4461d 4px 8px)"></i>Mês em curso (parcial)</span><span>- - Meta mensal '+R(hv.meta)+'</span><span>Sem dado: antes do sistema (começou em set/2026)</span></div>'+
+   '<div class="f gap" style="margin-top:16px">'+
+    mini('Acumulado 2026 até out',R(an.v),null,'meta acumulada desde set/2026: '+R(an.meta)+' · '+N0(an.v/an.meta*100)+'%')+
+    mini('Média mensal (meses fechados)',R(hv.media),null,'últimos '+hv.fech+' meses fechados')+
+    mini('Melhor mês',R(hv.melhor[2]),null,'Setembro 2026')+
+   '</div></div></div>');
+
+  h+='<div class="f foot2"><span>Hub Manfac · hub.manfac.com.br/obras/painel</span><span>Dados lidos em 08/10/2026 às '+d.lido+'</span></div>';
+  return h;
+}
+
+/* ---------- moldura de e-mail ---------- */
+var st={dev:'pc',est:'a'};
+var stage=document.getElementById('stage'), meter=document.getElementById('meter');
+var assunto='Gestão de Obras — Painel gerencial de 08/10/2026';
+
+function nota(){
+  return '<div class="note"><h2>(c) Falha ao montar o relatório</h2>'+
+   '<div>Se o hub não conseguir ler os dados às 8h (banco fora do ar, leitura incompleta) ou não conseguir gerar a imagem, o fluxo é:</div>'+
+   '<ol><li><b>O e-mail não sai.</b> Ninguém recebe imagem quebrada, tela de erro ou número pela metade.</li>'+
+   '<li><b>O hub registra a falha</b> com data, hora e motivo, no registro de execuções do envio, para o administrador consultar.</li>'+
+   '<li><b>Amanhã às 8h</b> o envio roda normal. Não há reenvio automático do dia perdido.</li></ol>'+
+   '<div class="nao">Mesma regra do painel no hub: número zerado por falha de leitura é pior que número nenhum. Se qualquer uma das quatro leituras falhar, o relatório inteiro é descartado, em vez de sair com R$ 0 que pareça "não faturamos nada".</div>'+
+   '<div class="q"><b>Para você decidir:</b> basta registrar, ou os dois administradores devem receber um aviso curto de uma linha ("O relatório de hoje não saiu")? Recomendo só registrar no começo, porque aviso por e-mail é mais uma coisa que pode falhar.</div></div>';
+}
+
+function render(){
+  var cel=st.dev==='cel';
+  if(st.est==='c'){ stage.innerHTML=nota(); meter.innerHTML='Sem imagem neste estado.'; return; }
+  var d=D[st.est];
+  var inbox='<div class="inbox"><div class="row"><b>Compras</b><span class="sub">Solicitação aprovada</span><span class="hr">07:12</span></div>'+
+    '<div class="row sel"><b>Manfac</b><span class="sub"><b style="min-width:0">'+assunto+'</b> — Bom dia! Segue o Painel gerencial de hoje.</span><span class="hr">08:00</span></div>'+
+    '<div class="row"><b>Financeiro</b><span class="sub">Pagamento solicitado</span><span class="hr">ontem</span></div></div>';
+  var body='<div class="head"><div class="assunto">'+assunto+'</div><div class="de">De: Manfac &lt;manfac@manfac.com.br&gt; · Para: você · 08:00</div></div>'+
+   '<div class="email"><div class="col"><div class="top"><span class="brand">MANFAC<small>Gestão de Obras</small></span></div>'+
+   '<div class="saud">Bom dia! Segue o Painel gerencial de hoje.</div>'+
+   '<div class="imgbox"><div class="shot" id="shot"><div class="img" id="img">'+build(d,st.est)+'</div></div></div>'+
+   '<div class="cta"><a href="#" onclick="return false">Abrir o Painel no hub</a></div>'+
+   '<div class="foot"><p>Você recebe este e-mail porque tem acesso ao Gestão de Obras no hub Manfac.</p><p>Dados lidos em 08/10/2026 às '+d.lido+' (horário de Brasília).</p></div></div></div>';
+  stage.innerHTML='<div class="mailapp'+(cel?' cel':'')+'">'+inbox+body+'</div>';
+  fit();
+}
+function fit(){
+  var shot=document.getElementById('shot'), img=document.getElementById('img');
+  if(!shot||!img) return;
+  var w=shot.clientWidth, s=w/1200;
+  img.style.transform='scale('+s+')';
+  shot.style.height=Math.ceil(img.offsetHeight*s)+'px';
+  var body=19*s, small=14*s, big=32*s;
+  meter.innerHTML='Imagem exibida a <b>'+Math.round(w)+' px</b> (fator '+s.toFixed(2).replace('.',',')+'). Número grande: <b>'+big.toFixed(1).replace('.',',')+' px</b> · tabela: <b>'+body.toFixed(1).replace('.',',')+' px</b> · rótulo pequeno: <b>'+small.toFixed(1).replace('.',',')+' px</b>'+(body<9?' · <b style="color:#e11d48">tabela ilegível sem ampliar</b>':body<11?' · <b style="color:#b45309">no limite</b>':'');
+}
+function bind(id,key){
+  var el=document.getElementById(id);
+  el.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    st[key]=b.getAttribute('data-v');
+    Array.prototype.forEach.call(el.children,function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+    render();
+  });
+}
+bind('segDev','dev'); bind('segEst','est');
+window.addEventListener('resize',fit);
+render();
+})();
+</script>
+</body>
+</html>
