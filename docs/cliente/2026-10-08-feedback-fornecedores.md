@@ -35,3 +35,7 @@ Leitura: entrega única, sem fases e sem corte de escopo — inclui tudo das pla
 ## Resposta do cliente às perguntas de aprovação e Zeev (relatada pelo João, literal, 08/10/2026)
 
 > o cliente falou que nao entendeu a pergunta e disse que tudo isso já colocamos no organograma
+
+## Instrução do João sobre repositório e EasyPanel (literal, 08/10/2026)
+
+> lembrando, crie um repositorio especifico para esse projeto e faça o que tem que fazer nos outros projetos, mas tanto no github e easypanel tem que ter um projeto sendo apenas gestao de obras
