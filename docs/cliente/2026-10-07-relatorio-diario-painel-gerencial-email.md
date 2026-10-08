@@ -29,3 +29,7 @@ envio de e-mail do hub: relatório diário **e** comunicados. O Resend sai do ca
 
 A senha fica fora do repositório: o João grava com `C:\Users\joao-\gravar-locaweb.ps1` em
 `C:\Users\joao-\.locaweb-smtp`.
+
+## Destinatários (08/10/2026), literal
+
+> quem deve receber é todo mundo que tem acesso ao gestao de obras
