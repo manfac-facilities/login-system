@@ -21,3 +21,13 @@ Respondendo à seção de pendências do mockup (print em `2026-10-08-feedback-f
 > Mediçao ate dia 25 de cada mes, modelos de condição de pgto vou te mandar um arquivo de novo, modelo de doc de contrato nao tenho mas podemos gerar 1
 
 Mapeamento (meu, não do cliente): "dia 25" → pendência **b**; "arquivo de novo" → **c** (aguardando arquivo); "podemos gerar 1" → **d**. Sem resposta explícita: **a** (quem pode usar), **e** e **f**.
+
+## Decisão do João sobre fases de entrega (literal, 08/10/2026)
+
+Em resposta à minha proposta de deixar tabela fixa, retenção, homologação, Spot mensal consolidado e certidões
+para depois, e às 2 fases (Contratação / Medição+Financeiro) recomendadas em 07/10:
+
+> vamos entregar tudo junto pois na oquero que se perca informacoes nas etapas de entrega do projeto
+
+Leitura: entrega única, sem fases e sem corte de escopo — inclui tudo das planilhas Zeev
+(`2026-10-08-condicoes-pagamento-zeev.md`).
