@@ -244,6 +244,28 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
 .sign div{border-top:1px solid #0d2050;padding-top:5px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;background:var(--deep);border:1px solid var(--ok);color:var(--tx);border-radius:10px;padding:11px 16px;font-size:13px;z-index:100;box-shadow:0 12px 30px rgba(0,0,0,.5);max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ---------- condições, documentos, homologação ---------- */
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11.5px;background:var(--deep);border:1px solid var(--bd);border-radius:5px;padding:0 6px;color:#fdba74;white-space:nowrap;overflow-wrap:anywhere}
+.ccard{border:1px solid var(--bd);border-radius:10px;padding:11px 13px;background:var(--deep);display:flex;flex-direction:column;gap:3px;min-width:0}
+.ccard .cc-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.ccard .plist>div{padding:5px 0}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--bd)}
+.meta>div{padding:12px 16px;min-width:0;font-size:13px}
+.meta>div+div{border-left:1px solid var(--bd)}
+.meta .l{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.docs{display:flex;flex-direction:column;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.docs>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--bd);font-size:13px;flex-wrap:wrap}
+.docs>div:last-child{border-bottom:0}
+.chk{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-size:13px}
+.chk input{accent-color:var(--ac);width:16px;height:16px;margin:2px 0 0;flex:none}
+.homs{padding:12px 16px;border-bottom:1px solid var(--bd);background:color-mix(in srgb,var(--warn) 6%,var(--navy))}
+.homs .row{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:8px}
+.tabp{display:flex;flex-direction:column;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.tabp>div{display:grid;grid-template-columns:minmax(0,1fr) 92px 100px 26px;gap:6px;padding:6px 8px;border-bottom:1px solid var(--bd);align-items:center;font-size:12.5px}
+.tabp>div:last-child{border-bottom:0}
+.tabp .inp{padding:6px 8px}
+.atgrid{display:grid;grid-template-columns:140px minmax(0,1fr) 110px;gap:8px}
+.ok-t{color:var(--ok)}.warn-t{color:var(--warn)}
 .page{display:none}.page.on{display:block}
 .role-only{display:none}
 
@@ -281,6 +303,14 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
   .seg .lg{display:none}
   .paper{padding:18px 16px}
   .sign{grid-template-columns:1fr}
+  .meta{grid-template-columns:1fr 1fr}
+  .meta>div+div{border-left:0}
+  .meta>div:nth-child(n+3){border-top:1px solid var(--bd)}
+  .meta>div:nth-child(even){border-left:1px solid var(--bd)}
+  .atgrid{grid-template-columns:1fr}
+  .tabp>div{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 26px}
+  .tabp>div>:first-child{grid-column:1/-1}
+  .tabp>div.small>span:nth-child(n+2){display:none}
 }
 @media (min-width:861px){ .seg .sh{display:none} }
 </style>
@@ -293,7 +323,7 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
       <button data-act="page" data-p="contr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>Contratação<span class="badge" id="bdg-c" hidden></span></button>
       <button data-act="page" data-p="med"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Medição<span class="badge" id="bdg-m" hidden></span></button>
     </nav>
-    <div class="side-foot">Mockup · rodada 1 · dados de exemplo</div>
+    <div class="side-foot">Mockup · rodada 2 · dados de exemplo</div>
   </aside>
 
   <div class="main">
@@ -316,7 +346,7 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
     <main class="content">
       <!-- ================= CONTRATAÇÃO ================= -->
       <div class="page" id="pg-contr">
-        <nav class="subnav"><a href="#sec1">1. Lista de contratos</a><a href="#sec2">2. Novo contrato</a><a href="#sec3">3. Aprovação do contrato</a><a href="#sec4">4. Ficha do contrato</a><a href="#sec8">8. Suposições</a></nav>
+        <nav class="subnav"><a href="#sec1">1. Lista de contratos</a><a href="#sec2">2. Novo contrato</a><a href="#sec3">3. Aprovação do contrato</a><a href="#sec4">4. Ficha do contrato</a><a href="#sec8">8. Pendências</a></nav>
 
         <section class="sec" id="sec1">
           <div class="sec-h"><div><h2><span class="num">1</span>Lista de contratos</h2><p id="p1">Todos os contratos com fornecedores, com saldo e andamento das medições.</p></div><div class="viewsel" data-s="s1"></div></div>
@@ -324,27 +354,27 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
         </section>
 
         <section class="sec" id="sec2">
-          <div class="sec-h"><div><h2><span class="num">2</span>Novo contrato</h2><p>O fornecedor vem do cadastro do Omie. O número é gerado na hora, para controle interno.</p></div><div class="viewsel" data-s="s2"></div></div>
+          <div class="sec-h"><div><h2><span class="num">2</span>Novo contrato</h2><p>O fornecedor vem do cadastro do Omie. A condição de pagamento é sugerida pela faixa de valor e pode ser trocada.</p></div><div class="viewsel" data-s="s2"></div></div>
           <div class="box" id="b2"></div>
         </section>
 
         <section class="sec" id="sec3">
-          <div class="sec-h"><div><h2><span class="num">3</span>Aprovação do contrato</h2><p>Duas aprovações independentes: Eduardo aprova a contratação, José aprova as condições de pagamento.</p></div><div class="viewsel" data-s="s3"></div></div>
+          <div class="sec-h"><div><h2><span class="num">3</span>Aprovação do contrato</h2><p>Eduardo aprova a contratação, José aprova as condições de pagamento. Aditivo de condição vai só para o José. Fornecedor novo passa por homologação.</p></div><div class="viewsel" data-s="s3"></div></div>
           <div id="b3"></div>
         </section>
 
         <section class="sec" id="sec4">
-          <div class="sec-h"><div><h2><span class="num">4</span>Ficha do contrato</h2><p>Todo o histórico do contrato e da obra ligada a ele, num lugar só.</p></div><div class="viewsel" data-s="s4"></div></div>
+          <div class="sec-h"><div><h2><span class="num">4</span>Ficha do contrato</h2><p>Todo o histórico do contrato num lugar só: saldo, parcelas, aditivos de valor e de condição, aceite e linha do tempo.</p></div><div class="viewsel" data-s="s4"></div></div>
           <div class="box" id="b4"></div>
         </section>
       </div>
 
       <!-- ================= MEDIÇÃO ================= -->
       <div class="page" id="pg-med">
-        <nav class="subnav"><a href="#sec5">5. Nova medição</a><a href="#sec6">6. Fila de aprovação</a><a href="#sec7">7. Acompanhamento</a><a href="#sec8">8. Suposições</a></nav>
+        <nav class="subnav"><a href="#sec5">5. Nova medição</a><a href="#sec6">6. Fila de aprovação</a><a href="#sec7">7. Acompanhamento</a><a href="#sec8">8. Pendências</a></nav>
 
         <section class="sec" id="sec5">
-          <div class="sec-h"><div><h2><span class="num">5</span>Nova medição</h2><p>Mede um contrato aprovado, dentro do saldo. O sistema não deixa passar de 100%.</p></div><div class="viewsel" data-s="s5"></div></div>
+          <div class="sec-h"><div><h2><span class="num">5</span>Nova medição</h2><p>Mede um contrato aprovado, dentro do saldo, até o dia 25 de cada mês. O sistema não deixa passar de 100%.</p></div><div class="viewsel" data-s="s5"></div></div>
           <div class="box" id="b5"></div>
         </section>
 
@@ -359,16 +389,17 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
         </section>
       </div>
 
-      <!-- ================= SUPOSIÇÕES ================= -->
+      <!-- ================= PENDÊNCIAS ================= -->
       <section class="sec" id="sec8">
-        <div class="sec-h"><div><h2><span class="num">8</span>Suposições desta versão</h2><p>O que usamos para montar esta prévia e ainda precisa da confirmação da Manfac.</p></div></div>
+        <div class="sec-h"><div><h2><span class="num">8</span>Pendências desta versão</h2><p>O que a Manfac já respondeu e o que ainda precisa de confirmação.</p></div></div>
         <div class="box"><ul class="sup">
-          <li><span class="k">a</span><div><b>Quem pode usar</b>Qualquer pessoa com acesso ao Hub pode abrir um contrato ou pedir uma medição, como já acontece no Financeiro. Cada um vê os seus; Eduardo e José veem todos para aprovar.</div></li>
-          <li><span class="k">b</span><div><b>Prazo do Financeiro</b>A regra "medições enviadas até o dia 20 entram no pagamento do mês" é só um exemplo. Precisamos da regra real do Financeiro para mostrar o aviso certo.</div></li>
-          <li><span class="k">c</span><div><b>Modelos de condição de pagamento</b>"30/40/30 por etapa", "Mensal por medição" e "100% na entrega" são exemplos. Vamos montar a lista a partir da base modelo que a Manfac já usa.</div></li>
-          <li><span class="k">d</span><div><b>Modelo do documento de contrato</b>O documento gerado aqui é provisório. O modelo oficial de formalização da prestação de serviço será fornecido pela Manfac e entra no lugar deste.</div></li>
-          <li><span class="k">e</span><div><b>Ligação com o Financeiro</b>Ao aprovar uma medição, o pedido de pagamento é criado no módulo Financeiro que vocês já usam, e segue o caminho normal até o Omie. A data de pagamento mostrada aqui é a que o Omie registrar.</div></li>
-          <li><span class="k">f</span><div><b>Dados desta tela</b>Fornecedores, obras, valores e números são fictícios, só para ilustrar.</div></li>
+          <li><span class="k">a</span><div><b>Quem pode usar <span class="pill" style="--c:#f59e0b;margin-left:6px">a confirmar</span></b>Qualquer pessoa com acesso ao Hub pode abrir um contrato ou pedir uma medição, como já acontece no Financeiro. Cada um vê os seus; Eduardo e José veem todos para aprovar.</div></li>
+          <li><span class="k">b</span><div><b>Prazo de medição <span class="pill" style="--c:#22c55e;margin-left:6px">respondido</span></b>Até o dia 25 de cada mês. Já aparece na Nova medição (tela 5).</div></li>
+          <li><span class="k">c</span><div><b>Condições de pagamento <span class="pill" style="--c:#22c55e;margin-left:6px">respondido</span></b>As 12 condições padrão da planilha entraram no Novo contrato (tela 2). O sistema sugere a condição pela faixa de valor e deixa trocar; exceção exige justificativa.</div></li>
+          <li><span class="k">d</span><div><b>Documento de contrato <span class="pill" style="--c:#22c55e;margin-left:6px">respondido</span></b>O sistema gera o documento num modelo próprio (prévia no Novo contrato e na Ficha). O texto pode ser ajustado quando a Manfac quiser.</div></li>
+          <li><span class="k">e</span><div><b>Ligação com o Financeiro <span class="pill" style="--c:#f59e0b;margin-left:6px">a confirmar</span></b>Ao aprovar uma medição, o pedido de pagamento é criado no módulo Financeiro que vocês já usam, e segue o caminho normal até o Omie. A data de pagamento mostrada aqui é a que o Omie registrar.</div></li>
+          <li><span class="k">f</span><div><b>Homologação de fornecedor novo <span class="pill" style="--c:#f59e0b;margin-left:6px">a confirmar</span></b>Quem faz a validação cadastral (CNPJ, dados bancários e certidões)? Nesta prévia, Eduardo ou José marcam os três itens na aprovação do contrato (tela 3).</div></li>
+          <li><span class="k">g</span><div><b>Dados desta tela</b>Fornecedores, obras, valores e números são fictícios, só para ilustrar.</div></li>
         </ul></div>
       </section>
     </main>
@@ -382,85 +413,113 @@ dialog::backdrop{background:rgba(3,8,18,.72)}
 /* =================== dados de exemplo =================== */
 const ME='Carla Mendes';
 const HOJE_D=new Date(2026,9,8);
+const CORTE=25;
 const S={role:'sol',page:'contr',
   view:{s1:'dados',s2:'dados',s3:'dados',s4:'dados',s5:'dados',s6:'dados',s7:'dados'},
-  f1:{st:'todos',cl:'todas'}, f3:'mim', f7:'todas', ficha:'CT-0123', ok6:null, seq:{ct:127,md:43,fin:412}};
+  f1:{st:'todos',cl:'todas'}, f3:'mim', f7:'todas', ficha:'CT-0118', ok6:null, seq:{ct:127,md:44,fin:412}};
 const ROLES={
-  sol:{nome:ME,ini:'CM',desc:'Carla Mendes · Solicitante — cria contratos e medições e acompanha os seus.'},
-  edu:{nome:'Eduardo',ini:'ED',desc:'Eduardo · Aprovador — aprova contratações e medições.'},
-  jose:{nome:'José',ini:'JO',desc:'José · Financeiro — aprova as condições de pagamento dos contratos.'}
+  sol:{nome:ME,ini:'CM',desc:'Carla Mendes · Solicitante — cria contratos, aditivos e medições e acompanha os seus.'},
+  edu:{nome:'Eduardo',ini:'ED',desc:'Eduardo · Aprovador — aprova contratações, aditivos de valor e medições.'},
+  jose:{nome:'José',ini:'JO',desc:'José · Financeiro — aprova as condições de pagamento e os aditivos de condição.'}
 };
 const CST={rasc:['Rascunho','#94a3b8'],aguard:['Aguardando aprovação','#f59e0b'],apr:['Aprovado','#22c55e'],enc:['Encerrado','#60a5fa']};
-const CLS={spot:'Spot',manut:'Manutenção',obra:'Obra',global:'Contrato global'};
+const CLS={spot:'Spot',manut:'Manutenção',obra:'Obra',mat:'Material',emerg:'Emergencial'};
 const MST={sol:['Solicitada','#f59e0b'],pagto:['Pagamento solicitado','#60a5fa'],pago:['Pago','#22c55e'],dev:['Devolvida','#ef4444']};
-const MODELOS={
-  '304030':{nome:'30/40/30 por etapa',parc:[['Mobilização e assinatura',30],['Execução — 50% físico',40],['Entrega e aceite',30]]},
-  mensal:{nome:'Mensal por medição'},
-  entrega:{nome:'100% na entrega',parc:[['Entrega e aceite',100]]},
-  servico:{nome:'Por serviço executado (saldo global)'}
+const CCS=['4.01 · Obras','4.02 · Manutenção predial','4.03 · Facilities','4.04 · Serviços Spot','4.05 · Emergências'];
+/* As 12 condições padrão da planilha "Condições pagamento zeev.xlsx" (aba Condicoes de Pagamento).
+   parc: [gatilho, %, parcela final (exige aceite), retenção] */
+const COND={
+ OBRA_PEQUENA_UNICA_D7:{nome:'Obra pequena · pagamento único',faixa:'Até R$ 1.500',prazo:'D+7',parc:[['Após execução aprovada + documentação mínima',100,1]],pratica:'Mede uma vez; o Financeiro programa D+7.'},
+ OBRA_MEDIA_50_50:{nome:'Obra média · 50% / 50%',faixa:'R$ 1.500 a R$ 5.000',parc:[['Contrato aprovado + início/mobilização autorizada',50],['Conclusão aprovada + NF + evidências',50,1]],pratica:'A medição final libera a segunda parcela. Para quando há custo de mobilização.'},
+ OBRA_MEDIA_UNICA_D15:{nome:'Obra média baixo risco · único',faixa:'R$ 1.500 a R$ 5.000, baixo risco',prazo:'D+15',parc:[['Após conclusão aprovada + NF',100,1]],pratica:'Medição única; o Financeiro programa D+15. Para parceiros confiáveis e serviços rápidos.'},
+ OBRA_MAIOR_30_30_40:{nome:'Obra maior · 30% / 30% / 40%',faixa:'Acima de R$ 5.000',parc:[['Contrato aprovado + início/mobilização',30],['Medição parcial aprovada',30],['Conclusão + aceite final + NF',40,1]],pratica:'Cada medição fica vinculada ao contrato; o sistema controla o saldo.'},
+ OBRA_RETENCAO_10:{nome:'Obra crítica · 30% / 30% / 30% + 10% retido',faixa:'Acima de R$ 8.000 ou risco técnico',parc:[['Início/mobilização',30],['Medição parcial',30],['Conclusão aprovada',30,1],['Retenção · liberada após aceite final',10,1,1]],pratica:'Os últimos 10% só são pagos depois do aceite final.'},
+ OBRA_MEDICAO_MENSAL:{nome:'Obra contínua · medição mensal',faixa:'Contrato com medições recorrentes',mensal:1,gat:'Medição mensal aprovada + NF',pratica:'Cada medição mensal aprovada gera um pagamento.',glob:1},
+ SPOT_UNICO_D7:{nome:'Spot simples · único',faixa:'Atendimento avulso até R$ 1.500',prazo:'D+7',gat:'Atendimento concluído + evidência + NF',pratica:'Cada atendimento vira uma medição; o Financeiro programa D+7.',glob:1},
+ SPOT_UNICO_D15:{nome:'Spot padrão · único',faixa:'Atendimento avulso acima de R$ 1.500',prazo:'D+15',gat:'Atendimento concluído + NF aprovada',pratica:'Cada atendimento vira uma medição; o Financeiro programa D+15.',glob:1},
+ SPOT_MENSAL_CONSOLIDADO:{nome:'Spot recorrente · mensal consolidado',faixa:'Vários atendimentos no mês',cons:1,gat:'Fechamento mensal aprovado + NF consolidada',pratica:'Os atendimentos do mês se acumulam; o fechamento gera uma medição só.',glob:1,soGlob:1},
+ SPOT_TABELA_FIXA:{nome:'Spot com tabela de preço fixa',faixa:'Contrato global com tabela',tab:1,gat:'Serviço da tabela + evidência + NF',pratica:'Quem pede escolhe o serviço da tabela; o valor vem dela.',glob:1,soGlob:1},
+ MATERIAL_MEDIANTE_NF:{nome:'Material · mediante NF',faixa:'Compra/entrega de material',parc:[['Entrega comprovada + NF aprovada',100]],pratica:'Material fica separado da mão de obra no contrato e na medição.'},
+ EXCECAO_APROVACAO:{nome:'Exceção · fora do padrão',faixa:'Justificativa obrigatória',exc:1,gat:'Conforme aprovação',pratica:'Antecipação, condição especial ou urgência. Exige justificativa.',glob:1}
 };
 const OBRAS=['Reforma CD Cajamar','Manutenção Shopping Tamboré','Retrofit Loja Barueri','Ampliação Galpão Jundiaí','Facilities Sede Alphaville'];
 const OMIE=[
-  {razao:'Serralheria Aço Forte Ltda',cnpj:'33.215.880/0001-07',cid:'Jundiaí/SP'},
-  {razao:'Hidro Pipa Transportes Ltda',cnpj:'18.502.337/0001-91',cid:'Santana de Parnaíba/SP'},
-  {razao:'DesentupMax Serviços',cnpj:'27.664.120/0001-35',cid:'Osasco/SP'},
-  {razao:'Elétrica Paulista Instalações',cnpj:'09.871.442/0001-58',cid:'São Paulo/SP'},
-  {razao:'Climatiza Sul Refrigeração Ltda',cnpj:'14.390.226/0001-12',cid:'Barueri/SP'},
-  {razao:'Pinturas Horizonte Ltda',cnpj:'40.118.557/0001-84',cid:'Carapicuíba/SP'},
-  {razao:'Munck Forte Içamentos',cnpj:'22.947.031/0001-66',cid:'Cajamar/SP'},
-  {razao:'Gesso & Forro Alphaville',cnpj:'35.602.719/0001-20',cid:'Barueri/SP'},
-  {razao:'Dedetiza Já Controle de Pragas',cnpj:'21.448.903/0001-60',cid:'Cotia/SP'},
-  {razao:'Vidraçaria Tamboré ME',cnpj:'45.230.861/0001-03',cid:'Barueri/SP'},
-  {razao:'Limpeza Pós-Obra Prime',cnpj:'38.774.152/0001-49',cid:'São Paulo/SP'}
+  {razao:'Serralheria Aço Forte Ltda',cnpj:'33.215.880/0001-07',cid:'Jundiaí/SP',hom:true},
+  {razao:'Hidro Pipa Transportes Ltda',cnpj:'18.502.337/0001-91',cid:'Santana de Parnaíba/SP',hom:true},
+  {razao:'DesentupMax Serviços',cnpj:'27.664.120/0001-35',cid:'Osasco/SP',hom:true},
+  {razao:'Elétrica Paulista Instalações',cnpj:'09.871.442/0001-58',cid:'São Paulo/SP',hom:true},
+  {razao:'Climatiza Sul Refrigeração Ltda',cnpj:'14.390.226/0001-12',cid:'Barueri/SP',hom:true},
+  {razao:'Pinturas Horizonte Ltda',cnpj:'40.118.557/0001-84',cid:'Carapicuíba/SP',hom:true},
+  {razao:'Munck Forte Içamentos',cnpj:'22.947.031/0001-66',cid:'Cajamar/SP',hom:false},
+  {razao:'Gesso & Forro Alphaville',cnpj:'35.602.719/0001-20',cid:'Barueri/SP',hom:true},
+  {razao:'Dedetiza Já Controle de Pragas',cnpj:'21.448.903/0001-60',cid:'Cotia/SP',hom:true},
+  {razao:'Vidraçaria Tamboré ME',cnpj:'45.230.861/0001-03',cid:'Barueri/SP',hom:true},
+  {razao:'Limpeza Pós-Obra Prime',cnpj:'38.774.152/0001-49',cid:'São Paulo/SP',hom:true},
+  {razao:'Telhados Oeste Coberturas',cnpj:'29.384.610/0001-77',cid:'Itapevi/SP',hom:false}
 ];
 const forn=n=>OMIE.find(o=>o.razao===n);
-const ok=d=>({s:'ok',d}), pend=()=>({s:'pend'});
+const ok=d=>({s:'ok',d}), pend=()=>({s:'pend'}), na=()=>({s:'na'});
 
 let CTS=[
- {id:'CT-0112',forn:'Dedetiza Já Controle de Pragas',obra:'Manutenção Shopping Tamboré',classe:'global',valor:18000,ini:'01/06/2026',fim:'31/08/2026',modelo:'servico',status:'enc',edu:ok('28/05'),jose:ok('29/05'),por:'Rafael Souza',
-  escopo:'Dedetização e controle de pragas mensal nas áreas comuns, docas e casa de máquinas.',
+ {id:'CT-0112',forn:'Dedetiza Já Controle de Pragas',global:true,classe:'spot',cc:'4.04 · Serviços Spot',mo:18000,mat:0,ini:'01/06/2026',fim:'31/08/2026',cond:'SPOT_UNICO_D7',status:'enc',edu:ok('28/05'),jose:ok('29/05'),por:'Rafael Souza',docs:{prop:1,cert:1},
+  escopo:'Dedetização e controle de pragas sob demanda nas áreas comuns, docas e casas de máquinas.',
   tl:[['20/05','Contrato criado por Rafael Souza','criar'],['28/05','Contratação aprovada por Eduardo','ok'],['29/05','Condições de pagamento aprovadas por José','ok'],['31/08','Contrato encerrado — 100% medido e pago','fim']]},
- {id:'CT-0118',forn:'Elétrica Paulista Instalações',obra:'Reforma CD Cajamar',classe:'obra',valor:184500,ini:'25/08/2026',fim:'14/11/2026',modelo:'304030',status:'apr',edu:ok('20/08'),jose:ok('21/08'),por:ME,
-  escopo:'Substituição dos quadros de distribuição e adequação da iluminação do galpão 2 para LED, com laudo NR-10.',
-  parcelas:[{nome:'Mobilização e assinatura',pct:30,prev:'05/09'},{nome:'Execução — 50% físico',pct:40,prev:'30/09'},{nome:'Entrega e aceite',pct:30,prev:'30/10'}],
-  tl:[['18/08','Contrato criado por Carla Mendes','criar'],['20/08','Contratação aprovada por Eduardo','ok'],['21/08','Condições de pagamento aprovadas por José','ok'],['21/08','Documento do contrato gerado','doc']]},
- {id:'CT-0119',forn:'Hidro Pipa Transportes Ltda',obra:'Manutenção Shopping Tamboré',classe:'global',valor:60000,ini:'01/09/2026',fim:'31/08/2027',modelo:'servico',status:'apr',edu:ok('26/08'),jose:ok('27/08'),por:ME,
-  escopo:'Abastecimento de água potável por caminhão pipa (15 m³), sob demanda, para as obras e contratos de manutenção da região oeste.',
-  tl:[['25/08','Contrato criado por Carla Mendes','criar'],['26/08','Contratação aprovada por Eduardo','ok'],['27/08','Condições de pagamento aprovadas por José','ok']]},
- {id:'CT-0121',forn:'DesentupMax Serviços',obra:'Reforma CD Cajamar',classe:'global',valor:24000,ini:'05/09/2026',fim:'04/09/2027',modelo:'servico',status:'apr',edu:ok('03/09'),jose:ok('04/09'),por:'Rafael Souza',
+ {id:'CT-0118',forn:'Elétrica Paulista Instalações',global:false,obra:'Reforma CD Cajamar',classe:'obra',cc:'4.01 · Obras',mo:11200,mat:1200,ini:'25/08/2026',fim:'14/11/2026',cond:'OBRA_RETENCAO_10',condSug:'OBRA_RETENCAO_10',status:'apr',edu:ok('20/08'),jose:ok('21/08'),por:ME,docs:{prop:1,cert:1},prev:['05/09','30/09','31/10'],
+  escopo:'Troca do quadro de distribuição e da iluminação do galpão 2 para LED, com laudo NR-10. Cabos e luminárias como material, separados da mão de obra.',
+  tl:[['18/08','Contrato criado por Carla Mendes — condição sugerida OBRA_RETENCAO_10 (mão de obra acima de R$ 8.000)','criar'],['20/08','Contratação aprovada por Eduardo','ok'],['21/08','Condições de pagamento aprovadas por José','ok'],['21/08','Documento do contrato gerado','doc']]},
+ {id:'CT-0119',forn:'Hidro Pipa Transportes Ltda',global:true,classe:'spot',cc:'4.04 · Serviços Spot',mo:60000,mat:0,ini:'01/09/2026',fim:'31/08/2027',cond:'SPOT_TABELA_FIXA',status:'apr',edu:ok('26/08'),jose:ok('27/08'),por:ME,docs:{prop:1,cert:1},
+  tabela:[['Caminhão pipa 15 m³','viagem',700],['Caminhão pipa 10 m³','viagem',520]],
+  escopo:'Abastecimento de água potável por caminhão pipa, sob demanda, para as obras e contratos de manutenção da região oeste.',
+  tl:[['25/08','Contrato criado por Carla Mendes','criar'],['26/08','Contratação aprovada por Eduardo','ok'],['27/08','Condições e tabela de preços aprovadas por José','ok']]},
+ {id:'CT-0120',forn:'Vidraçaria Tamboré ME',global:false,obra:'Facilities Sede Alphaville',classe:'emerg',cc:'4.05 · Emergências',mo:2300,mat:0,ini:'02/10/2026',fim:'04/10/2026',cond:'EXCECAO_APROVACAO',condSug:'EXCECAO_APROVACAO',excTxt:'Pagamento à vista na conclusão',status:'apr',edu:ok('02/10'),jose:ok('02/10'),por:'Rafael Souza',docs:{prop:1,cert:0},
+  justEmerg:'Vidro da fachada quebrou no vendaval de 01/10; risco para quem passa na calçada.',justExc:'Único fornecedor disponível no mesmo dia; só atende emergência com pagamento à vista.',
+  escopo:'Troca emergencial de 2 painéis de vidro temperado da fachada.',
+  tl:[['02/10','Contrato emergencial criado por Rafael Souza, com justificativa','criar'],['02/10','Contratação aprovada por Eduardo','ok'],['02/10','Condição de exceção aprovada por José: pagamento à vista na conclusão','ok']]},
+ {id:'CT-0121',forn:'DesentupMax Serviços',global:true,classe:'spot',cc:'4.04 · Serviços Spot',mo:24000,mat:0,ini:'05/09/2026',fim:'04/09/2027',cond:'SPOT_MENSAL_CONSOLIDADO',status:'apr',edu:ok('03/09'),jose:ok('04/09'),por:'Rafael Souza',docs:{prop:1,cert:1},
+  atend:[{d:'02/10',desc:'Desentupimento de ralo — cozinha do refeitório, CD Cajamar',v:650},{d:'06/10',desc:'Hidrojateamento da rede de esgoto — galpão B',v:2100}],
   escopo:'Desentupimento, hidrojateamento e limpeza de caixas de gordura e redes de esgoto, sob demanda.',
   tl:[['02/09','Contrato criado por Rafael Souza','criar'],['03/09','Contratação aprovada por Eduardo','ok'],['04/09','Condições de pagamento aprovadas por José','ok']]},
- {id:'CT-0123',forn:'Climatiza Sul Refrigeração Ltda',obra:'Manutenção Shopping Tamboré',classe:'manut',valor:96000,ini:'01/07/2026',fim:'31/12/2026',modelo:'mensal',status:'apr',edu:ok('25/06'),jose:ok('26/06'),por:ME,
+ {id:'CT-0122',forn:'Limpeza Pós-Obra Prime',global:true,classe:'spot',cc:'4.04 · Serviços Spot',mo:15000,mat:0,ini:'20/08/2026',fim:'19/08/2027',cond:'SPOT_UNICO_D7',status:'apr',edu:ok('18/08'),jose:ok('18/08'),por:ME,docs:{prop:1,cert:1},
+  escopo:'Limpeza pós-obra sob demanda: remoção de entulho fino, limpeza de pisos, vidros e esquadrias.',
+  tl:[['15/08','Contrato criado por Carla Mendes','criar'],['18/08','Contratação aprovada por Eduardo','ok'],['18/08','Condições de pagamento aprovadas por José — pago 7 dias após cada atendimento','ok']]},
+ {id:'CT-0122-2',pai:'CT-0122',tipo:'cond',de:'SPOT_UNICO_D7',para:'SPOT_UNICO_D15',status:'aguard',edu:na(),jose:pend(),por:ME,motivo:'Fornecedor aceitou receber em 15 dias, alinhado ao calendário do Financeiro.',
+  tl:[['07/10','Aditivo de condição CT-0122-2 pedido por Carla Mendes: SPOT_UNICO_D7 → SPOT_UNICO_D15','adit']]},
+ {id:'CT-0123',forn:'Climatiza Sul Refrigeração Ltda',global:false,obra:'Manutenção Shopping Tamboré',classe:'manut',cc:'4.02 · Manutenção predial',mo:96000,mat:0,ini:'01/07/2026',fim:'31/12/2026',cond:'OBRA_MEDICAO_MENSAL',condSug:'OBRA_MEDICAO_MENSAL',status:'apr',edu:ok('25/06'),jose:ok('26/06'),por:ME,docs:{prop:1,cert:1},
   escopo:'Manutenção preventiva e corretiva do sistema de ar-condicionado central (PMOC), com visitas semanais e atendimento a chamados em até 4 horas.',
-  parcelas:[{nome:'Julho/2026',v:16000,prev:'31/07'},{nome:'Agosto/2026',v:16000,prev:'31/08'},{nome:'Setembro/2026',v:19600,prev:'30/09'},{nome:'Outubro/2026',v:19600,prev:'31/10'},{nome:'Novembro/2026',v:19600,prev:'30/11'},{nome:'Dezembro/2026',v:19600,prev:'31/12'}],
+  parcelas:[{nome:'Julho/2026',v:16000,prev:'31/07'},{nome:'Agosto/2026',v:16000,prev:'31/08'},{nome:'Setembro/2026',v:19600,prev:'30/09'},{nome:'Outubro/2026',v:19600,prev:'31/10'},{nome:'Novembro/2026',v:19600,prev:'30/11'},{nome:'Dezembro/2026',v:19600,prev:'31/12',fin:true}],
   tl:[['24/06','Contrato criado por Carla Mendes','criar'],['25/06','Contratação aprovada por Eduardo','ok'],['26/06','Condições de pagamento aprovadas por José','ok'],['26/06','Documento do contrato gerado','doc']]},
- {id:'CT-0123-2',pai:'CT-0123',valor:14400,status:'apr',edu:ok('14/09'),jose:ok('15/09'),por:ME,motivo:'Inclusão de 2 chillers do bloco C no plano de manutenção',
+ {id:'CT-0123-2',pai:'CT-0123',tipo:'valor',valor:14400,status:'apr',edu:ok('14/09'),jose:ok('15/09'),por:ME,motivo:'Inclusão de 2 chillers do bloco C no plano de manutenção',
   tl:[['12/09','Aditivo CT-0123-2 pedido: +R$ 14.400,00 — inclusão de 2 chillers do bloco C','adit'],['14/09','Aditivo CT-0123-2 aprovado por Eduardo','ok'],['15/09','Condições do aditivo aprovadas por José — novo total R$ 110.400,00','ok']]},
- {id:'CT-0124',forn:'Pinturas Horizonte Ltda',obra:'Retrofit Loja Barueri',classe:'spot',valor:18700,ini:'19/10/2026',fim:'20/11/2026',modelo:'entrega',status:'aguard',edu:ok('07/10'),jose:pend(),por:ME,
-  escopo:'Pintura interna da loja (paredes e teto, 640 m²) com massa corrida nos pontos danificados.',
-  parcelas:[{nome:'Entrega e aceite',pct:100,prev:'20/11'}],
-  tl:[['06/10','Contrato criado por Carla Mendes','criar'],['07/10','Contratação aprovada por Eduardo','ok']]},
- {id:'CT-0125',forn:'Munck Forte Içamentos',obra:'Reforma CD Cajamar',classe:'global',valor:45000,ini:'15/10/2026',fim:'14/10/2027',modelo:'servico',status:'aguard',edu:pend(),jose:pend(),por:'Rafael Souza',
-  escopo:'Locação de caminhão munck com operador para içamento de equipamentos e materiais, por diária.',
-  tl:[['07/10','Contrato criado por Rafael Souza','criar']]},
- {id:'CT-0126',forn:'Gesso & Forro Alphaville',obra:'Retrofit Loja Barueri',classe:'obra',valor:52300,ini:'26/10/2026',fim:'05/12/2026',modelo:'304030',status:'rasc',edu:pend(),jose:pend(),por:ME,
+ {id:'CT-0124',forn:'Pinturas Horizonte Ltda',global:false,obra:'Retrofit Loja Barueri',classe:'obra',cc:'4.01 · Obras',mo:4600,mat:900,ini:'19/10/2026',fim:'06/11/2026',cond:'OBRA_MEDIA_50_50',condSug:'OBRA_MEDIA_50_50',status:'aguard',edu:ok('07/10'),jose:pend(),por:ME,docs:{prop:1,cert:0},
+  escopo:'Pintura interna da área de vendas (paredes e teto, 140 m²), com massa corrida nos pontos danificados. Tinta e massa como material, separadas.',
+  tl:[['06/10','Contrato criado por Carla Mendes — condição sugerida OBRA_MEDIA_50_50 (mão de obra de R$ 4.600)','criar'],['07/10','Contratação aprovada por Eduardo','ok']]},
+ {id:'CT-0125',forn:'Munck Forte Içamentos',global:true,classe:'spot',cc:'4.04 · Serviços Spot',mo:45000,mat:0,ini:'15/10/2026',fim:'14/10/2027',cond:'SPOT_TABELA_FIXA',condSug:'SPOT_TABELA_FIXA',status:'aguard',edu:pend(),jose:pend(),por:'Rafael Souza',docs:{prop:1,cert:1},
+  hom:{cnpj:true,banco:false,cert:false},
+  tabela:[['Diária de munck 20 t com operador','diária',1450],['Meia diária de munck 20 t com operador','meia diária',850],['Hora extra do operador','hora',180]],
+  escopo:'Locação de caminhão munck com operador para içamento de equipamentos e materiais, sob demanda.',
+  tl:[['07/10','Contrato criado por Rafael Souza','criar'],['07/10','Fornecedor novo — homologação cadastral aberta','criar']]},
+ {id:'CT-0126',forn:'Gesso & Forro Alphaville',global:false,obra:'Retrofit Loja Barueri',classe:'obra',cc:'4.01 · Obras',mo:6900,mat:0,ini:'26/10/2026',fim:'05/12/2026',cond:'OBRA_MAIOR_30_30_40',condSug:'OBRA_MAIOR_30_30_40',status:'rasc',edu:pend(),jose:pend(),por:ME,docs:{prop:1,cert:0},
   escopo:'Forro de gesso acartonado e sancas na área de vendas.',devolvido:'Escopo sem a área do mezanino; revisar e reenviar.',
-  parcelas:[{nome:'Mobilização e assinatura',pct:30},{nome:'Execução — 50% físico',pct:40},{nome:'Entrega e aceite',pct:30}],
   tl:[['01/10','Contrato criado por Carla Mendes','criar'],['01/10','Enviado para aprovação','criar'],['03/10','Devolvido por Eduardo: "Escopo sem a área do mezanino; revisar e reenviar." Voltou para Rascunho','dev']]}
 ];
 let MEDS=[
- {id:'MD-0019',ct:'CT-0112',valor:9000,desc:'Dedetização de junho e julho',status:'pago',dSol:'10/07',dApr:'11/07',fin:'FIN-0288',dPago:'15/07',por:'Rafael Souza',anexo:'laudo-dedetizacao-jul.pdf'},
- {id:'MD-0024',ct:'CT-0123',valor:16000,desc:'Parcela de julho',status:'pago',dSol:'31/07',dApr:'01/08',fin:'FIN-0311',dPago:'10/08',por:ME,anexo:'relatorio-pmoc-jul.pdf'},
- {id:'MD-0027',ct:'CT-0112',valor:9000,desc:'Dedetização de agosto + reforço nas docas',status:'pago',dSol:'14/08',dApr:'15/08',fin:'FIN-0330',dPago:'20/08',por:'Rafael Souza',anexo:'laudo-dedetizacao-ago.pdf'},
- {id:'MD-0029',ct:'CT-0123',valor:16000,desc:'Parcela de agosto',status:'pago',dSol:'31/08',dApr:'01/09',fin:'FIN-0352',dPago:'10/09',por:ME,anexo:'relatorio-pmoc-ago.pdf'},
- {id:'MD-0031',ct:'CT-0118',valor:55350,desc:'Mobilização e assinatura',status:'pago',dSol:'04/09',dApr:'05/09',fin:'FIN-0367',dPago:'18/09',por:ME,anexo:'ordem-de-inicio.pdf'},
- {id:'MD-0033',ct:'CT-0119',valor:8400,desc:'Caminhão pipa 15 m³ — 12 viagens (setembro)',status:'pago',dSol:'15/09',dApr:'16/09',fin:'FIN-0371',dPago:'25/09',por:ME,anexo:'romaneio-viagens-set.pdf'},
- {id:'MD-0035',ct:'CT-0121',valor:7800,desc:'Desentupimento da rede de esgoto — galpão B',status:'pago',dSol:'12/09',dApr:'15/09',fin:'FIN-0369',dPago:'22/09',por:'Rafael Souza',anexo:'fotos-galpao-b.pdf'},
- {id:'MD-0037',ct:'CT-0121',valor:3000,desc:'Limpeza de caixa de gordura — refeitório',status:'dev',dSol:'26/09',dDev:'30/09',motivo:'Sem relatório fotográfico do serviço.',por:'Rafael Souza',anexo:null},
- {id:'MD-0038',ct:'CT-0118',valor:73800,desc:'Execução — 50% físico',status:'pagto',dSol:'30/09',dApr:'02/10',fin:'FIN-0398',por:ME,anexo:'relatorio-avanco-fisico.pdf'},
- {id:'MD-0039',ct:'CT-0121',valor:5400,desc:'Hidrojateamento das caixas de gordura',status:'sol',dSol:'29/09',por:'Rafael Souza',anexo:'relatorio-hidrojateamento.pdf'},
- {id:'MD-0040',ct:'CT-0119',valor:6300,desc:'Caminhão pipa 15 m³ — 9 viagens (1ª quinzena de outubro)',status:'pagto',dSol:'03/10',dApr:'05/10',fin:'FIN-0409',por:ME,anexo:'romaneio-viagens-out-1.pdf'},
- {id:'MD-0042',ct:'CT-0119',valor:4200,desc:'Caminhão pipa 15 m³ — 6 viagens (Shopping Tamboré)',status:'sol',dSol:'07/10',por:ME,anexo:'romaneio-viagens-out-2.pdf'}
+ {id:'MD-0019',ct:'CT-0112',valor:9000,desc:'Dedetização de junho e julho',status:'pago',dSol:'10/07',dApr:'11/07',fin:'FIN-0288',dPago:'15/07',por:'Rafael Souza',anexo:'laudo-dedetizacao-jul.pdf',aceite:1},
+ {id:'MD-0024',ct:'CT-0123',valor:16000,desc:'Julho/2026',status:'pago',dSol:'31/07',dApr:'01/08',fin:'FIN-0311',dPago:'10/08',por:ME,anexo:'relatorio-pmoc-jul.pdf'},
+ {id:'MD-0027',ct:'CT-0112',valor:9000,desc:'Dedetização de agosto + reforço nas docas',status:'pago',dSol:'14/08',dApr:'15/08',fin:'FIN-0330',dPago:'20/08',por:'Rafael Souza',anexo:'laudo-dedetizacao-ago.pdf',aceite:1},
+ {id:'MD-0029',ct:'CT-0123',valor:16000,desc:'Agosto/2026',status:'pago',dSol:'31/08',dApr:'01/09',fin:'FIN-0352',dPago:'10/09',por:ME,anexo:'relatorio-pmoc-ago.pdf'},
+ {id:'MD-0030',ct:'CT-0118',item:'mat',cond:'MATERIAL_MEDIANTE_NF',valor:1200,desc:'Cabos e luminárias LED entregues no galpão 2',status:'pago',dSol:'02/09',dApr:'03/09',fin:'FIN-0360',dPago:'12/09',por:ME,anexo:'canhoto-entrega-material.pdf'},
+ {id:'MD-0031',ct:'CT-0118',valor:3360,desc:'Início/mobilização',status:'pago',dSol:'04/09',dApr:'05/09',fin:'FIN-0367',dPago:'18/09',por:ME,anexo:'ordem-de-inicio.pdf'},
+ {id:'MD-0032',ct:'CT-0120',valor:2300,desc:'Troca dos 2 painéis de vidro da fachada',status:'pago',dSol:'03/10',dApr:'03/10',fin:'FIN-0401',dPago:'03/10',por:'Rafael Souza',anexo:'fotos-fachada.pdf',aceite:1},
+ {id:'MD-0033',ct:'CT-0119',valor:8400,desc:'Caminhão pipa 15 m³ — 12 × viagem (setembro)',status:'pago',dSol:'15/09',dApr:'16/09',fin:'FIN-0371',dPago:'25/09',por:ME,anexo:'romaneio-viagens-set.pdf',aceite:1},
+ {id:'MD-0035',ct:'CT-0121',valor:7800,desc:'Fechamento de setembro — 4 atendimentos',status:'pago',dSol:'25/09',dApr:'26/09',fin:'FIN-0390',dPago:'06/10',por:'Rafael Souza',anexo:'relatorio-atendimentos-set.pdf',aceite:1},
+ {id:'MD-0036',ct:'CT-0122',valor:1350,desc:'Limpeza pós-obra — Retrofit Loja Barueri, térreo',status:'pago',dSol:'15/09',dApr:'16/09',fin:'FIN-0372',dPago:'23/09',por:ME,anexo:'fotos-limpeza-barueri.pdf',aceite:1},
+ {id:'MD-0037',ct:'CT-0119',valor:1560,desc:'Caminhão pipa 10 m³ — 3 × viagem',status:'dev',dSol:'26/09',dDev:'30/09',motivo:'Sem romaneio assinado das viagens.',por:'Rafael Souza',anexo:null,aceite:1},
+ {id:'MD-0038',ct:'CT-0118',valor:3360,desc:'Medição parcial',status:'pagto',dSol:'30/09',dApr:'02/10',fin:'FIN-0398',por:ME,anexo:'relatorio-avanco-fisico.pdf'},
+ {id:'MD-0039',ct:'CT-0123',valor:19600,desc:'Setembro/2026',status:'sol',dSol:'29/09',por:ME,anexo:'relatorio-pmoc-set.pdf'},
+ {id:'MD-0040',ct:'CT-0119',valor:6300,desc:'Caminhão pipa 15 m³ — 9 × viagem (1ª quinzena de outubro)',status:'pagto',dSol:'03/10',dApr:'05/10',fin:'FIN-0409',por:ME,anexo:'romaneio-viagens-out-1.pdf',aceite:1},
+ {id:'MD-0041',ct:'CT-0122',valor:980,desc:'Limpeza pós-obra — sala técnica, CD Cajamar',status:'pagto',dSol:'05/10',dApr:'06/10',fin:'FIN-0410',por:ME,anexo:'fotos-sala-tecnica.pdf',aceite:1},
+ {id:'MD-0042',ct:'CT-0119',valor:4200,desc:'Caminhão pipa 15 m³ — 6 × viagem (Shopping Tamboré)',status:'sol',dSol:'07/10',por:ME,anexo:'romaneio-viagens-out-2.pdf',aceite:1},
+ {id:'MD-0043',ct:'CT-0122',valor:1100,desc:'Limpeza pós-obra — vestiários, Shopping Tamboré',status:'sol',dSol:'08/10',por:ME,anexo:'fotos-vestiarios.pdf',aceite:1}
 ];
 
 /* =================== utilidades =================== */
@@ -469,30 +528,80 @@ const brl=n=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const pc=n=>(Math.round(n*10)/10).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
 const pc2=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const toDate=d=>{const p=d.split('/');return new Date(p[2]?+p[2]:2026,+p[1]-1,+p[0])};
+const toDate=d=>{const p=String(d).split('/');return new Date(p[2]?+p[2]:2026,+p[1]-1,+p[0])};
 const dias=d=>Math.round((HOJE_D-toDate(d))/864e5);
-const parseBR=s=>{s=String(s).trim();if(!s)return 0;s=s.replace(/[^\d,.]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');return parseFloat(s)||0};
+const parseBR=s=>{s=String(s??'').trim();if(!s)return 0;s=s.replace(/[^\d,.]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');return parseFloat(s)||0};
 const isoBR=iso=>{if(!iso)return '';const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
 const pill=(t,c)=>`<span class="pill" style="--c:${c}">${t}</span>`;
 const stPill=c=>pill(CST[c.status][0],CST[c.status][1]);
 const ctById=id=>CTS.find(c=>c.id===id);
 const aditivos=c=>CTS.filter(a=>a.pai===c.id);
-const total=c=>c.valor+aditivos(c).filter(a=>a.status==='apr').reduce((s,a)=>s+a.valor,0);
+const moT=c=>(c.mo||0)+aditivos(c).filter(a=>a.tipo==='valor'&&a.status==='apr').reduce((s,a)=>s+a.valor,0);
+const matT=c=>c.mat||0;
+const total=c=>moT(c)+matT(c);
 const medsDe=c=>MEDS.filter(m=>m.ct===c.id);
+const medItem=(c,it)=>medsDe(c).filter(m=>m.status!=='dev'&&m.item===it).reduce((s,m)=>s+m.valor,0);
+const pagoItem=(c,it)=>medsDe(c).filter(m=>m.status==='pago'&&m.item===it).reduce((s,m)=>s+m.valor,0);
 const medido=c=>medsDe(c).filter(m=>m.status!=='dev').reduce((s,m)=>s+m.valor,0);
 const pago=c=>medsDe(c).filter(m=>m.status==='pago').reduce((s,m)=>s+m.valor,0);
+const itemT=(c,it)=>it==='mat'?matT(c):moT(c);
 const me=()=>ROLES[S.role].nome;
 const fornOf=c=>c.pai?ctById(c.pai).forn:c.forn;
+const homPend=c=>!!c.hom&&!(c.hom.cnpj&&c.hom.banco&&c.hom.cert);
+const condPendDe=c=>aditivos(c).find(a=>a.tipo==='cond'&&a.status==='aguard');
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* condições de pagamento */
+function mensais(ini,fim){
+  if(!ini||!fim)return [];
+  const [,m1,y1]=ini.split('/').map(Number),[,m2,y2]=fim.split('/').map(Number);
+  const n=(y2-y1)*12+(m2-m1)+1;if(!(n>=1&&n<=36))return [];
+  const base=Math.floor(10000/n)/100;const out=[];
+  for(let i=0;i<n;i++){const mm=(m1-1+i)%12,yy=y1+Math.floor((m1-1+i)/12);const last=new Date(yy,mm+1,0).getDate();
+    out.push({nome:`${MESES[mm]}/${yy}`,pct:i===n-1?Math.round((100-base*(n-1))*100)/100:base,prev:`${String(last).padStart(2,'0')}/${String(mm+1).padStart(2,'0')}${yy!==2026?'/'+yy:''}`,fin:i===n-1})}
+  return out;
+}
+function condParc(code,ini,fim,exc){
+  const C=COND[code];
+  if(C.parc)return C.parc.map(([n,p,f,r])=>({nome:n,pct:p,fin:!!f,ret:!!r}));
+  if(C.mensal)return mensais(ini,fim);
+  if(C.exc)return [{nome:exc||'Conforme condição aprovada',pct:100,fin:true}];
+  return [];
+}
+function condResumo(code){const C=COND[code];
+  if(C.parc)return `${C.parc.length} parcela${C.parc.length>1?'s':''} · ${C.parc.map(p=>p[1]+'%').join(' / ')}`;
+  if(C.mensal)return 'mensal · 100% do valor medido';
+  if(C.cons)return '1 por mês · 100% do consolidado';
+  if(C.tab)return '1 por serviço · 100% conforme tabela';
+  if(C.exc)return 'parcelas a definir';
+  return '1 por atendimento · 100%';
+}
+const prazoTxt=code=>COND[code].prazo?`O Financeiro programa ${COND[code].prazo}`:'O Financeiro programa pelo calendário financeiro';
+function condCard(code,opt={}){
+  const C=COND[code];
+  const gat=C.parc?`<div class="plist" style="margin-top:4px">${C.parc.map((p,i)=>`<div><span>${i+1}. ${esc(p[0])}</span><span class="mono">${p[1]}%</span></div>`).join('')}</div>`:`<div class="small" style="margin-top:4px"><span class="muted">Gatilho:</span> ${esc(C.gat)}</div>`;
+  return `<div class="ccard"><div class="cc-h"><span class="code">${code}</span>${opt.tag||''}</div><b>${esc(C.nome)}</b><div class="small muted">${esc(C.faixa)} · ${condResumo(code)} · ${prazoTxt(code)}</div>${opt.semGat?'':gat}<div class="small dim" style="margin-top:4px">${esc(C.pratica)}</div></div>`;
+}
+const condMini=code=>`<span class="code">${code}</span> <span class="small muted">${esc(COND[code].nome)}</span>`;
+function faixa(v){return v<=1500?['Pequena','até R$ 1.500','#22c55e']:v<=5000?['Média','R$ 1.500 a R$ 5.000','#60a5fa']:v<=8000?['Maior','acima de R$ 5.000','#f59e0b']:['Crítica','acima de R$ 8.000','#ef4444']}
+const clsPill=c=>pill(CLS[c.classe],c.classe==='emerg'?'#ef4444':c.classe==='mat'?'#38bdf8':'#94a3b8');
+const clsPills=c=>(c.global?pill('Global','#a78bfa')+' ':'')+clsPill(c);
+const docsLine=c=>`CNPJ ✓ · Dados bancários ✓ · Proposta ${c.docs&&c.docs.prop?'✓':'—'} · Certidões ${c.docs&&c.docs.cert?'✓':'não exigidas'}`;
+
+/* parcelas da mão de obra */
+CTS.forEach(c=>{if(!c.pai&&!c.global&&c.classe!=='mat'&&!c.parcelas)c.parcelas=condParc(c.cond,c.ini,c.fim,c.excTxt).map((p,i)=>({...p,prev:c.prev&&c.prev[i]?c.prev[i]:p.prev}))});
+MEDS.forEach(m=>{m.item=m.item||'mo';m.cond=m.cond||ctById(m.ct).cond;if(m.nf===undefined)m.nf='nf-'+m.id.slice(3)+'.pdf'});
 
 function parcelas(c){
-  if(c.classe==='global')return [];
-  const T=total(c),P=pago(c),M=medido(c);let acc=0;
+  if(c.global||c.classe==='mat')return [];
+  const T=moT(c),P=pagoItem(c,'mo'),M=medItem(c,'mo');let acc=0;
   return (c.parcelas||[]).map(p=>{
-    const v=p.v!=null?p.v:T*p.pct/100;acc+=v;
+    const v=p.v!=null?p.v:T*p.pct/100;const ini=acc;acc+=v;
     let st;
     if(P>=acc-0.01)st='Paga';else if(M>=acc-0.01)st='Medida';
+    else if(p.ret&&!c.aceiteFinal)st='Retida';
     else if(p.prev&&dias(p.prev)>0&&(c.status==='apr'))st='Em atraso';else st='Prevista';
-    return {nome:p.nome,v,pct:v/T*100,prev:p.prev,st};
+    return {nome:p.nome,v,pct:T?v/T*100:0,prev:p.prev,st,fin:!!p.fin,ret:!!p.ret,ini,fim:acc};
   });
 }
 function atrasos(c){
@@ -508,7 +617,7 @@ let DLG=null;
 function openDlg(o){
   DLG=o;$('#dlg-t').textContent=o.t;$('#dlg-b').innerHTML=o.body;
   $('#dlg').className=o.wide?'wide':'';
-  $('#dlg-f').innerHTML=(o.btns||[]).map((b,i)=>`<button class="btn ${b.cls||''}" data-act="dlgbtn" data-i="${i}">${b.l}</button>`).join('');
+  $('#dlg-f').innerHTML=(o.btns||[]).map((b,i)=>`<button class="btn ${b.cls||''}" data-act="dlgbtn" data-i="${i}" ${b.dis?'disabled':''}>${b.l}</button>`).join('');
   $('#dlg').showModal();
   if(o.onOpen)o.onOpen();
 }
@@ -533,7 +642,7 @@ function r1(){
   const T=ativos.reduce((s,c)=>s+total(c),0),M=ativos.reduce((s,c)=>s+medido(c),0),P=ativos.reduce((s,c)=>s+pago(c),0);
   const nAtr=base.filter(c=>atrasos(c).length).length;
   const cnt=k=>k==='todos'?base.length:base.filter(c=>c.status===k).length;
-  const match=c=>(S.f1.st==='todos'||c.status===S.f1.st)&&(S.f1.cl==='todas'||(c.pai?ctById(c.pai).classe:c.classe)===S.f1.cl);
+  const match=c=>{const p=c.pai?ctById(c.pai):c;return (S.f1.st==='todos'||c.status===S.f1.st)&&(S.f1.cl==='todas'||(S.f1.cl==='global'?p.global:p.classe===S.f1.cl))};
   const rows=[];
   base.forEach(c=>{if(match(c))rows.push(c);aditivos(c).forEach(a=>{if(match(a))rows.push(a)})});
   const cols='--cols:84px minmax(0,1.5fr) minmax(0,1.2fr) 124px 100px 124px 156px';
@@ -544,162 +653,250 @@ function r1(){
     <div class="kpi"><span>Saldo a medir</span><b>${brl(T-M)}</b></div>
     <div class="kpi ${nAtr?'warn':''}"><span>Com medição em atraso</span><b>${nAtr} contrato${nAtr===1?'':'s'}</b></div></div></div>
   <div class="filters"><div class="chips">${['todos','rasc','aguard','apr','enc'].map(k=>`<button class="chip ${S.f1.st===k?'on':''}" data-act="f1st" data-k="${k}">${k==='todos'?'Todos':CST[k][0]}<span class="n">${cnt(k)}</span></button>`).join('')}</div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select class="inp" style="width:auto" data-act="f1cl"><option value="todas">Todas as classificações</option>${Object.entries(CLS).map(([k,n])=>`<option value="${k}" ${S.f1.cl===k?'selected':''}>${n}</option>`).join('')}</select><button class="btn pri" data-act="goto" data-to="sec2">+ Novo contrato</button></div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select class="inp" style="width:auto" data-act="f1cl"><option value="todas">Todas as classificações</option><option value="global" ${S.f1.cl==='global'?'selected':''}>Só contratos globais</option>${Object.entries(CLS).map(([k,n])=>`<option value="${k}" ${S.f1.cl===k?'selected':''}>${n}</option>`).join('')}</select><button class="btn pri" data-act="goto" data-to="sec2">+ Novo contrato</button></div></div>
   <div class="tbl"><div class="tr head" style="${cols}"><div>Nº</div><div>Fornecedor</div><div>Obra · classificação</div><div class="r">Valor total</div><div>% medido</div><div class="r">Saldo</div><div>Status</div></div>`;
   if(!rows.length)h+=`<div class="state" style="padding:26px"><p>Nenhum contrato com esses filtros. <button class="btn sm" data-act="f1clear">Limpar filtros</button></p></div>`;
   rows.forEach(c=>{
     if(c.pai){
-      const p=ctById(c.pai);
-      h+=`<div class="tr click sub" style="${cols}" data-act="ficha" data-id="${p.id}"><div class="td mono" data-l="Nº">↳ <b>${c.id}</b></div><div class="td full" data-l="Aditivo de valor"><span class="muted small">Aditivo de valor de ${p.id}</span><div class="ell small">${esc(c.motivo)}</div></div><div class="td muted small"><div class="ell">${esc(p.obra)}</div></div><div class="td r mono" data-l="Valor">+ ${brl(c.valor)}</div><div class="td small dim" data-l="% medido">consolidado no ${p.id}</div><div class="td r dim">—</div><div class="td" data-l="Status">${stPill(c)}</div></div>`;
+      const p=ctById(c.pai),cd=c.tipo==='cond';
+      h+=`<div class="tr click sub" style="${cols}" data-act="ficha" data-id="${p.id}"><div class="td mono" data-l="Nº">↳ <b>${c.id}</b></div><div class="td full" data-l="${cd?'Aditivo de condição':'Aditivo de valor'}"><span class="muted small">${cd?'Aditivo de condição de pagamento':'Aditivo de valor'} de ${p.id}</span><div class="ell small">${cd?`${c.de} → ${c.para}`:esc(c.motivo)}</div></div><div class="td muted small"><div class="ell">${p.global?'— sem obra':esc(p.obra)}</div></div><div class="td r mono" data-l="Valor">${cd?'<span class="dim">—</span>':'+ '+brl(c.valor)}</div><div class="td small dim" data-l="% medido">${cd?'vale para medições não aprovadas':'consolidado no '+p.id}</div><div class="td r dim">—</div><div class="td" data-l="Status">${stPill(c)}</div></div>`;
       return;
     }
     const T=total(c),M=medido(c),pct=T?M/T*100:0,atr=atrasos(c);
     h+=`<div class="tr click ${atr.length?'late':''}" style="${cols}" data-act="ficha" data-id="${c.id}">
       <div class="td mono" data-l="Nº"><b>${c.id}</b></div>
-      <div class="td full" data-l="Fornecedor"><div><b>${esc(c.forn)}</b></div><div class="small dim">${forn(c.forn).cnpj}</div>${atr.map(a=>`<div class="alert">${esc(a)}</div>`).join('')}</div>
-      <div class="td" data-l="Obra · classificação"><div class="ell">${esc(c.obra)}</div><div style="margin-top:3px">${pill(CLS[c.classe],c.classe==='global'?'#a78bfa':'#94a3b8')}</div></div>
-      <div class="td r mono" data-l="Valor total">${brl(T)}${aditivos(c).some(a=>a.status==='apr')?'<div class="small dim">com aditivo</div>':''}</div>
+      <div class="td full" data-l="Fornecedor"><div><b>${esc(c.forn)}</b></div><div class="small dim">${forn(c.forn).cnpj}</div>${homPend(c)?`<div style="margin-top:3px">${pill('Fornecedor novo · homologação pendente','#f59e0b')}</div>`:''}${atr.map(a=>`<div class="alert">${esc(a)}</div>`).join('')}</div>
+      <div class="td" data-l="Obra · classificação"><div class="ell ${c.global?'dim':''}">${c.global?'— sem obra':esc(c.obra)}</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${clsPills(c)}</div><div class="small dim" style="margin-top:2px">CC ${esc(c.cc)}</div></div>
+      <div class="td r mono" data-l="Valor total">${brl(T)}${aditivos(c).some(a=>a.tipo==='valor'&&a.status==='apr')?'<div class="small dim">com aditivo</div>':''}${c.mat&&c.mo?`<div class="small dim">material ${brl(c.mat)}</div>`:''}</div>
       <div class="td" data-l="% medido"><span class="mono">${pc(pct)}</span><div class="mini"><i style="width:${Math.min(pct,100)}%"></i></div></div>
       <div class="td r mono" data-l="Saldo">${brl(T-M)}</div>
-      <div class="td" data-l="Status">${stPill(c)}${c.devolvido?'<div class="small" style="color:#fca5a5;margin-top:3px">devolvido — ajustar</div>':''}</div></div>`;
+      <div class="td" data-l="Status">${stPill(c)}${c.devolvido&&c.status==='rasc'?'<div class="small" style="color:#fca5a5;margin-top:3px">devolvido — ajustar</div>':''}</div></div>`;
   });
   el.innerHTML=h+'</div>';
 }
 
 /* =================== 2. Novo contrato =================== */
 let F2;
-function f2Blank(){return {forn:null,q:'',classe:'',obra:'',escopo:'',valor:'',ini:'',fim:'',modelo:'',err:[]}}
-function f2Cheio(){return {forn:OMIE[0],q:'',classe:'obra',obra:'Ampliação Galpão Jundiaí',escopo:'Fabricação e montagem de mezanino metálico de 180 m² com escada, guarda-corpo e piso em chapa xadrez, incluindo projeto executivo e ART.',valor:'78.900,00',ini:'2026-10-13',fim:'2026-11-20',modelo:'304030',err:[]}}
+function f2Blank(){return {forn:null,q:'',global:false,classe:'',obra:'',cc:'',escopo:'',mo:'',mat:'',ini:'',fim:'',cond:'',manual:false,justEmerg:'',justExc:'',excTxt:'',tabela:[['','','']],docs:{prop:false,cert:false},err:[]}}
+function f2Cheio(){return {forn:OMIE[0],q:'',global:false,classe:'obra',obra:'Ampliação Galpão Jundiaí',cc:'4.01 · Obras',escopo:'Fabricação e montagem de escada metálica e guarda-corpo do mezanino (12 m lineares), com pintura eletrostática e ART.',mo:'6.800,00',mat:'2.350,00',ini:'2026-10-13',fim:'2026-11-20',cond:'',manual:false,justEmerg:'',justExc:'',excTxt:'',tabela:[['','','']],docs:{prop:true,cert:false},err:[]}}
 F2=f2Cheio();
-function modeloParcelas(mod,ini,fim){
-  if(mod==='304030'||mod==='entrega')return MODELOS[mod].parc.map(([n,p])=>({nome:n,pct:p}));
-  if(mod==='mensal'){
-    if(!ini||!fim)return [];
-    const [y1,m1]=ini.split('-').map(Number),[y2,m2]=fim.split('-').map(Number);
-    const n=(y2-y1)*12+(m2-m1)+1;if(n<1||n>36)return [];
-    const MES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const base=Math.floor(10000/n)/100;const out=[];
-    for(let i=0;i<n;i++){const mm=(m1-1+i)%12,yy=y1+Math.floor((m1-1+i)/12);const last=new Date(yy,mm+1,0).getDate();
-      out.push({nome:`${MES[mm]}/${yy}`,pct:i===n-1?Math.round((100-base*(n-1))*100)/100:base,prev:`${String(last).padStart(2,'0')}/${String(mm+1).padStart(2,'0')}${yy!==2026?'/'+yy:''}`})}
-    return out;
-  }
-  return [];
+const condOk=(f,k)=>f.global?!!COND[k].glob:!COND[k].soGlob;
+function sugerir(f){
+  const v=parseBR(f.mo),dur=f.ini&&f.fim?(new Date(f.fim)-new Date(f.ini))/864e5:0;
+  if(f.classe==='emerg')return 'EXCECAO_APROVACAO';
+  if(f.global)return f.classe==='manut'?'OBRA_MEDICAO_MENSAL':'SPOT_TABELA_FIXA';
+  if(f.classe==='mat')return 'MATERIAL_MEDIANTE_NF';
+  if(f.classe==='spot')return v>1500?'SPOT_UNICO_D15':'SPOT_UNICO_D7';
+  if(f.classe==='manut'&&dur>45)return 'OBRA_MEDICAO_MENSAL';
+  return v<=1500?'OBRA_PEQUENA_UNICA_D7':v<=5000?'OBRA_MEDIA_50_50':v<=8000?'OBRA_MAIOR_30_30_40':'OBRA_RETENCAO_10';
+}
+const effCond=f=>f.manual&&f.cond&&condOk(f,f.cond)?f.cond:sugerir(f);
+function porque(f){
+  const v=parseBR(f.mo);
+  if(f.classe==='emerg')return 'Emergencial: o prazo é por exceção, com justificativa.';
+  if(f.global)return f.classe==='manut'?'Contrato global de manutenção: medição mensal.':'Contrato global Spot: a tabela de preço fixa evita renegociar a cada atendimento. Se não houver tabela, use o mensal consolidado.';
+  if(f.classe==='mat')return 'Compra de material: pago mediante entrega e NF.';
+  if(!v)return 'Informe o valor da mão de obra para a sugestão pela faixa.';
+  if(f.classe==='spot')return `Atendimento avulso de ${brl(v)} (${v>1500?'acima':'até'} de R$ 1.500).`;
+  if(sugerir(f)==='OBRA_MEDICAO_MENSAL')return 'Manutenção contínua (vigência acima de 45 dias): medição mensal.';
+  const [n,t]=faixa(v);
+  return `Mão de obra de ${brl(v)}: faixa ${n} (${t}).`;
 }
 function r2(){
   const el=$('#b2'),v=S.view.s2;
   const omieErr=v==='erro';
   const nextId='CT-0'+S.seq.ct;
   const f=F2,E=k=>f.err.includes(k)?'bad':'';
-  const modOpts=f.classe==='global'?['servico']:['304030','mensal','entrega'];
+  const novo=f.forn&&!f.forn.hom;
+  const money=(k)=>`<div class="inwrap"><input class="inp mono ${E('valor')}" data-f="${k}" inputmode="decimal" placeholder="0,00" value="${esc(f[k])}" style="padding-left:34px"><span class="suf" style="left:11px;right:auto">R$</span></div>`;
+  const valores=f.classe==='mat'?`<div class="fld"><label>Valor do material</label>${money('mat')}</div>`
+    :f.global?`<div class="fld"><label>Valor global (teto)</label>${money('mo')}<div class="hint">Saldo que as medições vão consumindo.</div></div>`
+    :`<div class="fld"><label>Mão de obra</label>${money('mo')}<div class="hint">Define a faixa da condição sugerida.</div></div><div class="fld"><label>Material <span style="text-transform:none;letter-spacing:0" class="dim">(opcional)</span></label>${money('mat')}<div class="hint">Separado da mão de obra; pago mediante entrega + NF.</div></div>`;
+  const docBtn=k=>f.docs[k]?`<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="file">📎 ${k==='prop'?'proposta-comercial.pdf':'certidoes-negativas.pdf'}</span><button class="btn sm" data-act="f2docx" data-k="${k}">Remover</button></span>`:`<button class="btn sm ${E(k)?'bad':''}" data-act="f2docx" data-k="${k}">+ Anexar</button>`;
+  const cls=f.global?['spot','manut']:Object.keys(CLS);
   el.innerHTML=`<div class="box-h"><h3>Novo contrato <span class="dim" style="font-weight:400">· nº ${nextId} (controle interno, gerado automaticamente)</span></h3>${pill('Rascunho','#94a3b8')}</div>
   <div class="form"><div class="stack">
     <div class="fld"><label>Fornecedor</label>
       ${omieErr?`<div class="banner bad"><span class="dot"></span><div><b>Não conseguimos consultar o cadastro do Omie agora.</b><div class="muted small">O formulário continua aberto e nada do que você preencheu se perde. Tente de novo em instantes.</div><button class="btn sm" style="margin-top:8px" data-act="retry" data-s="s2">Tentar de novo</button></div></div>`:
-      f.forn?`<div class="selforn"><div style="min-width:0"><b>${esc(f.forn.razao)}</b> <span class="pill omie">do Omie</span><div class="small muted">CNPJ ${f.forn.cnpj} · ${f.forn.cid}</div></div><button class="btn sm" data-act="f2troca">Trocar</button></div>`:
+      f.forn?`<div class="selforn"><div style="min-width:0"><b>${esc(f.forn.razao)}</b> <span class="pill omie">do Omie</span>${novo?' '+pill('fornecedor novo','#f59e0b'):''}<div class="small muted">CNPJ ${f.forn.cnpj} · ${f.forn.cid}</div></div><button class="btn sm" data-act="f2troca">Trocar</button></div>
+        ${novo?`<div class="banner warn" style="margin-top:6px"><span class="dot"></span><div><b>Fornecedor novo.</b> <span class="muted">Passa por homologação cadastral (CNPJ, dados bancários e certidões) antes de o contrato valer. As certidões viram obrigatórias.</span></div></div>`:''}`:
       `<div class="search"><input class="inp ${E('forn')}" id="f2q" placeholder="Busque por razão social ou CNPJ" value="${esc(f.q)}" autocomplete="off"><div id="f2dd"></div></div><div class="hint">A lista vem do cadastro de fornecedores do Omie. Se o fornecedor não estiver lá, ele precisa ser cadastrado no Omie primeiro.</div>`}
     </div>
-    <div class="fld"><label>Classificação</label><div class="chips">${Object.entries(CLS).map(([k,n])=>`<button class="chip ${f.classe===k?'on':''} ${E('classe')&&!f.classe?'':''}" data-act="f2cl" data-k="${k}">${n}</button>`).join('')}</div>
-      ${f.classe==='global'?'<div class="hint">Para serviços sob demanda (caminhão pipa, desentupimento, dedetização, munck): um valor global, e cada medição é um serviço executado dentro desse saldo.</div>':''}${E('classe')?'<div class="errtxt">Escolha a classificação.</div>':''}</div>
-    <div class="fld"><label>Obra vinculada</label><select class="inp ${E('obra')}" data-f="obra"><option value="">Selecione a obra</option>${OBRAS.map(o=>`<option ${f.obra===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="fld"><label>Tipo de contrato</label><div class="toggle" style="align-self:flex-start;flex-wrap:wrap"><button class="${!f.global?'on':''}" data-act="f2tipo" data-g="0">Específico de uma obra</button><button class="${f.global?'on':''}" data-act="f2tipo" data-g="1">Global (guarda-chuva)</button></div>
+      <div class="hint">${f.global?'Contrato global <b>não tem obra vinculada</b>. Serve para serviços sob demanda (caminhão pipa, desentupimento, dedetização, munck): um valor teto, e cada medição é um serviço dentro desse saldo.':'Contrato de uma obra específica: a obra é obrigatória.'}</div></div>
+    <div class="fld"><label>Classificação</label><div class="chips">${cls.map(k=>`<button class="chip ${f.classe===k?'on':''}" data-act="f2cl" data-k="${k}">${CLS[k]}</button>`).join('')}</div>${E('classe')?'<div class="errtxt">Escolha a classificação.</div>':''}
+      ${f.classe==='emerg'?`<div class="fld" style="margin-top:8px"><label>Justificativa da emergência (obrigatória)</label><textarea class="inp ${E('justEmerg')}" data-f="justEmerg" placeholder="O que aconteceu e por que não dá para seguir o fluxo normal">${esc(f.justEmerg)}</textarea></div>`:''}</div>
+    <div class="grid2">${f.global?'':`<div class="fld"><label>Obra vinculada</label><select class="inp ${E('obra')}" data-f="obra"><option value="">Selecione a obra</option>${OBRAS.map(o=>`<option ${f.obra===o?'selected':''}>${o}</option>`).join('')}</select></div>`}
+      <div class="fld"><label>Centro de custo</label><select class="inp ${E('cc')}" data-f="cc"><option value="">Selecione</option>${CCS.map(o=>`<option ${f.cc===o?'selected':''}>${o}</option>`).join('')}</select><div class="hint">Obrigatório em toda contratação.</div></div></div>
     <div class="fld"><label>Escopo do serviço</label><textarea class="inp ${E('escopo')}" data-f="escopo" placeholder="O que será feito, onde e com qual entrega">${esc(f.escopo)}</textarea></div>
-    <div class="grid3">
-      <div class="fld"><label>${f.classe==='global'?'Valor global':'Valor do contrato'}</label><div class="inwrap"><input class="inp mono ${E('valor')}" data-f="valor" inputmode="decimal" placeholder="0,00" value="${esc(f.valor)}" style="padding-left:34px"><span class="suf" style="left:11px;right:auto">R$</span></div></div>
-      <div class="fld"><label>Início</label><input type="date" class="inp ${E('ini')}" data-f="ini" value="${f.ini}"></div>
-      <div class="fld"><label>Fim</label><input type="date" class="inp ${E('fim')}" data-f="fim" value="${f.fim}"></div>
-    </div>
-    ${f.err.length?`<div class="errtxt">Faltam informações para enviar: ${f.err.map(k=>({forn:'fornecedor',classe:'classificação',obra:'obra',escopo:'escopo',valor:'valor',ini:'início',fim:'fim',modelo:'condição de pagamento',datas:'o fim precisa ser depois do início'}[k])).join(', ')}.</div>`:''}
+    <div class="grid2">${valores}</div>
+    <div class="grid2"><div class="fld"><label>Início</label><input type="date" class="inp ${E('ini')}" data-f="ini" value="${f.ini}"></div><div class="fld"><label>Fim</label><input type="date" class="inp ${E('fim')}" data-f="fim" value="${f.fim}"></div></div>
+    <div class="fld"><label>Documentos</label><div class="docs">
+      <div><span>CNPJ</span>${f.forn?`<span class="small ok-t">✓ do Omie</span>`:'<span class="small dim">vem com o fornecedor</span>'}</div>
+      <div><span>Dados bancários</span>${f.forn?'<span class="small ok-t">✓ do Omie</span>':'<span class="small dim">vem com o fornecedor</span>'}</div>
+      <div><span>Proposta comercial <span class="dim small">· obrigatória</span></span>${docBtn('prop')}</div>
+      <div><span>Certidões <span class="dim small">· ${novo?'obrigatórias (fornecedor novo)':'quando aplicável'}</span></span>${docBtn('cert')}</div>
+      <div><span>NF e evidência</span><span class="small dim">entram em cada medição</span></div></div></div>
+    ${f.err.length?`<div class="errtxt">Faltam informações para enviar: ${f.err.map(k=>ERRN[k]).join(', ')}.</div>`:''}
   </div>
-  <div class="stack">
-    <div class="fld"><label>Condição de pagamento (modelo padrão)</label><select class="inp ${E('modelo')}" data-f="modelo"><option value="">Escolha um modelo</option>${modOpts.map(k=>`<option value="${k}" ${f.modelo===k?'selected':''}>${MODELOS[k].nome}</option>`).join('')}</select>
-    <div class="hint">Só modelos padronizados. José confere as condições antes de o contrato valer.<span class="tag-ex">exemplos</span></div></div>
-    <div id="f2parc"></div>
-  </div></div>
+  <div class="stack" id="f2right"></div></div>
   <div class="actions"><button class="btn" data-act="f2rasc">Salvar rascunho</button><button class="btn" data-act="f2doc">Gerar documento</button><button class="btn pri" data-act="f2send">Enviar para aprovação</button></div>`;
+  r2right();
+}
+const ERRN={forn:'fornecedor',classe:'classificação',obra:'obra',cc:'centro de custo',escopo:'escopo',valor:'valor',ini:'início',fim:'fim',datas:'o fim precisa ser depois do início',justEmerg:'justificativa da emergência',excTxt:'condição proposta',justExc:'justificativa da exceção',tabela:'tabela de preços',prop:'proposta comercial',cert:'certidões do fornecedor novo'};
+function tabEditor(){
+  const E=F2.err.includes('tabela');
+  return `<div class="fld"><label>Tabela de preços do contrato</label><div class="tabp"><div class="small dim" style="background:var(--deep)"><span>SERVIÇO</span><span>UNIDADE</span><span class="r">PREÇO (R$)</span><span></span></div>${F2.tabela.map((r,i)=>`<div><input class="inp ${E&&!r[0]?'bad':''}" data-tb="${i},0" value="${esc(r[0])}" placeholder="Ex.: Caminhão pipa 15 m³"><input class="inp" data-tb="${i},1" value="${esc(r[1])}" placeholder="viagem"><input class="inp mono" data-tb="${i},2" value="${esc(r[2])}" placeholder="0,00" inputmode="decimal"><button class="x" data-act="tbrm" data-i="${i}" aria-label="Remover">×</button></div>`).join('')}</div>
+  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm" data-act="tbadd">+ Serviço</button><span class="hint">Na medição, quem pede escolhe o serviço e o valor vem daqui.</span></div>${E?'<div class="errtxt">Preencha ao menos um serviço com preço.</div>':''}</div>`;
+}
+function r2right(){
+  const el=$('#f2right');if(!el)return;
+  const f=F2,sug=sugerir(f),cur=effCond(f),C=COND[cur],E=k=>f.err.includes(k)?'bad':'';
+  const v=parseBR(f.mo),fx=(!f.global&&['obra','manut','emerg'].includes(f.classe)&&v)?faixa(v):null;
+  const opts=Object.keys(COND).filter(k=>condOk(f,k));
+  el.innerHTML=`<div class="fld"><label>Condição de pagamento</label>
+    ${f.classe?`<div class="banner" style="padding:9px 12px"><span class="dot" style="background:var(--ac)"></span><div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b>Sugerida:</b> <span class="code">${sug}</span>${fx?pill('Faixa '+fx[0],fx[2]):''}</div><div class="small muted" style="margin-top:3px">${porque(f)}</div></div></div>`:'<div class="hint">Escolha a classificação e o valor: o sistema sugere a condição padrão.</div>'}
+    <select class="inp" data-f="cond" style="margin-top:6px">${opts.map(k=>`<option value="${k}" ${k===cur?'selected':''}>${k}${k===sug?' (sugerida)':''} — ${COND[k].nome}</option>`).join('')}</select>
+    ${f.manual&&cur!==sug?`<div class="hint">Você trocou a sugerida (${sug}). <button class="btn sm" data-act="f2sug">Voltar à sugerida</button></div>`:'<div class="hint">Pode trocar se o caso pedir. José confere as condições antes de o contrato valer.</div>'}
+  </div>
+  ${condCard(cur,{tag:cur===sug?pill('sugerida','#22c55e'):pill('trocada','#f59e0b')})}
+  ${C.exc?`<div class="fld"><label>Condição proposta</label><input class="inp ${E('excTxt')}" data-f="excTxt" placeholder="Ex.: à vista na conclusão, ou 30 dias após a NF" value="${esc(f.excTxt)}"></div><div class="fld"><label>Justificativa da exceção (obrigatória)</label><textarea class="inp ${E('justExc')}" data-f="justExc" placeholder="Por que a condição padrão não serve neste caso">${esc(f.justExc)}</textarea></div>`:''}
+  ${C.tab&&f.global?tabEditor():''}
+  <div id="f2parc"></div>`;
   r2parc();
 }
 function r2parc(){
-  const el=$('#f2parc');if(!el)return;const f=F2,V=parseBR(f.valor);
-  if(f.classe==='global'||f.modelo==='servico'){el.innerHTML=`<div class="banner"><span class="dot"></span><div><b>Contrato global</b><div class="muted small">Não há parcelas fixas. Cada medição informa o serviço executado e o valor, e o sistema controla o saldo de ${V?brl(V):'—'}.</div></div></div>`;return}
-  const ps=modeloParcelas(f.modelo,f.ini,f.fim);
-  if(!f.modelo){el.innerHTML='<div class="hint">As parcelas aparecem aqui quando você escolher o modelo.</div>';return}
+  const el=$('#f2parc');if(!el)return;
+  const f=F2,cur=effCond(f),C=COND[cur],V=parseBR(f.mo),Mt=parseBR(f.mat);
+  if(f.global){el.innerHTML=`<div class="banner"><span class="dot"></span><div><b>Contrato global · sem parcelas fixas</b><div class="muted small">${C.cons?'Os atendimentos do mês se acumulam e o fechamento mensal gera uma medição.':C.tab?'Cada medição é um serviço da tabela, com o preço dela.':'Cada medição é um serviço executado.'} O sistema controla o saldo de ${V?brl(V):'—'}.</div></div></div>`;return}
+  if(f.classe==='mat'){el.innerHTML=`<div class="banner"><span class="dot"></span><div><b>Material</b><div class="muted small">Pago mediante entrega comprovada + NF aprovada${Mt?', até '+brl(Mt):''}.</div></div></div>`;return}
+  const ps=condParc(cur,isoBR(f.ini),isoBR(f.fim),f.excTxt);
   if(!ps.length){el.innerHTML='<div class="hint">Informe início e fim para calcular as parcelas mensais.</div>';return}
-  const sum=ps.reduce((s,p)=>s+p.pct,0);
-  el.innerHTML=`<div class="parc"><div class="small dim" style="background:var(--deep)"><span>PARCELA</span><span class="r">%</span><span class="r">VALOR</span></div>${ps.map(p=>`<div><span>${p.nome}${p.prev?` <span class="dim small">· até ${p.prev}</span>`:''}</span><span class="r mono">${pc2(p.pct)}</span><span class="r mono">${V?brl(V*p.pct/100):'—'}</span></div>`).join('')}
-  <div class="sum"><span>Total</span><span class="r mono ${Math.abs(sum-100)<0.01?'okc':''}">${pc2(sum)}</span><span class="r mono">${V?brl(V):'—'}</span></div></div>
-  <div class="hint" style="margin-top:6px">${Math.abs(sum-100)<0.01?'✓ As parcelas somam 100% do contrato.':'As parcelas precisam somar 100%.'}</div>`;
+  const sum=ps.reduce((s,p)=>s+p.pct,0),ret=ps.some(p=>p.ret);
+  el.innerHTML=`<div class="parc"><div class="small dim" style="background:var(--deep)"><span>PARCELA DA MÃO DE OBRA · GATILHO</span><span class="r">%</span><span class="r">VALOR</span></div>${ps.map(p=>`<div><span>${esc(p.nome)}${p.prev?` <span class="dim small">· até ${p.prev}</span>`:''}${p.ret?' <span class="tag-ex" style="border-color:#a78bfa;color:#c4b5fd">retida</span>':''}</span><span class="r mono">${pc2(p.pct)}</span><span class="r mono">${V?brl(V*p.pct/100):'—'}</span></div>`).join('')}
+  <div class="sum"><span>Total da mão de obra</span><span class="r mono ${Math.abs(sum-100)<0.01?'okc':''}">${pc2(sum)}</span><span class="r mono">${V?brl(V):'—'}</span></div></div>
+  ${Mt?`<div class="parc" style="margin-top:8px"><div><span>Material · <span class="code">MATERIAL_MEDIANTE_NF</span><div class="small dim">entrega comprovada + NF aprovada · medido à parte</div></span><span class="r mono">—</span><span class="r mono">${brl(Mt)}</span></div><div class="sum"><span>Total do contrato</span><span></span><span class="r mono">${brl(V+Mt)}</span></div></div>`:''}
+  <div class="hint" style="margin-top:6px">${Math.abs(sum-100)<0.01?'✓ As parcelas somam 100% da mão de obra.':'As parcelas precisam somar 100%.'} A parcela final só é paga com aceite operacional.${ret?' Os 10% retidos só são liberados depois do aceite final.':''}</div>`;
 }
 function f2dd(){
   const el=$('#f2dd');if(!el)return;const q=F2.q.trim().toLowerCase(),qd=q.replace(/\D/g,'');
   if(!q){el.innerHTML='';return}
   const r=OMIE.filter(o=>o.razao.toLowerCase().includes(q)||(qd&&o.cnpj.replace(/\D/g,'').includes(qd))).slice(0,6);
-  el.innerHTML=`<div class="dd">${r.length?r.map(o=>`<button data-act="f2pick" data-c="${o.cnpj}"><span style="min-width:0"><b>${esc(o.razao)}</b><div class="small muted">CNPJ ${o.cnpj} · ${o.cid}</div></span><span class="pill omie">do Omie</span></button>`).join(''):'<div style="padding:12px" class="muted small">Nenhum fornecedor com esse nome ou CNPJ no Omie.</div>'}</div>`;
+  el.innerHTML=`<div class="dd">${r.length?r.map(o=>`<button data-act="f2pick" data-c="${o.cnpj}"><span style="min-width:0"><b>${esc(o.razao)}</b><div class="small muted">CNPJ ${o.cnpj} · ${o.cid}</div></span><span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${o.hom?'':pill('novo','#f59e0b')}<span class="pill omie">do Omie</span></span></button>`).join(''):'<div style="padding:12px" class="muted small">Nenhum fornecedor com esse nome ou CNPJ no Omie.</div>'}</div>`;
 }
 function f2Validar(){
-  const f=F2,e=[];
-  if(!f.forn)e.push('forn');if(!f.classe)e.push('classe');if(!f.obra)e.push('obra');if(!f.escopo.trim())e.push('escopo');
-  if(!(parseBR(f.valor)>0))e.push('valor');if(!f.ini)e.push('ini');if(!f.fim)e.push('fim');
+  const f=F2,e=[],C=COND[effCond(f)];
+  if(!f.forn)e.push('forn');if(!f.classe)e.push('classe');if(!f.global&&!f.obra)e.push('obra');if(!f.cc)e.push('cc');if(!f.escopo.trim())e.push('escopo');
+  if(!(parseBR(f.classe==='mat'?f.mat:f.mo)>0))e.push('valor');if(!f.ini)e.push('ini');if(!f.fim)e.push('fim');
   if(f.ini&&f.fim&&f.fim<f.ini)e.push('datas');
-  if(f.classe!=='global'&&!f.modelo)e.push('modelo');
+  if(f.classe==='emerg'&&!f.justEmerg.trim())e.push('justEmerg');
+  if(C.exc){if(!f.excTxt.trim())e.push('excTxt');if(!f.justExc.trim())e.push('justExc')}
+  if(C.tab&&f.global&&!f.tabela.some(r=>r[0].trim()&&parseBR(r[2])>0))e.push('tabela');
+  if(!f.docs.prop)e.push('prop');if(f.forn&&!f.forn.hom&&!f.docs.cert)e.push('cert');
   return e;
 }
 function f2Criar(status){
-  const f=F2,id='CT-0'+S.seq.ct++;
-  const mod=f.classe==='global'?'servico':f.modelo;
-  const c={id,forn:f.forn.razao,obra:f.obra,classe:f.classe,valor:parseBR(f.valor),ini:isoBR(f.ini),fim:isoBR(f.fim),modelo:mod,status,edu:pend(),jose:pend(),por:me(),escopo:f.escopo,
-    parcelas:mod==='servico'?undefined:modeloParcelas(mod,f.ini,f.fim),tl:[['08/10',`Contrato criado por ${me()}`,'criar']]};
+  const f=F2,id='CT-0'+S.seq.ct++,cur=effCond(f),sug=sugerir(f),mat=f.classe==='mat';
+  const c={id,forn:f.forn.razao,global:f.global,obra:f.global?'':f.obra,classe:f.classe||'obra',cc:f.cc,mo:mat?0:parseBR(f.mo),mat:mat||!f.global?parseBR(f.mat):0,
+    ini:isoBR(f.ini),fim:isoBR(f.fim),cond:cur,condSug:sug,excTxt:f.excTxt,justEmerg:f.justEmerg,justExc:f.justExc,status,edu:pend(),jose:pend(),por:me(),escopo:f.escopo,
+    docs:{prop:f.docs.prop?1:0,cert:f.docs.cert?1:0},
+    tabela:f.global&&COND[cur].tab?f.tabela.filter(r=>r[0].trim()).map(r=>[r[0],r[1]||'un.',parseBR(r[2])]):undefined,
+    hom:f.forn.hom?undefined:{cnpj:false,banco:false,cert:false},
+    tl:[['08/10',`Contrato criado por ${me()} — condição ${cur}${cur!==sug?' (trocada da sugerida '+sug+')':' (sugerida)'}`,'criar']]};
+  c.parcelas=c.global||mat?[]:condParc(cur,c.ini,c.fim,c.excTxt);
   if(status==='aguard')c.tl.push(['08/10','Enviado para aprovação de Eduardo e José','criar']);
+  if(c.hom)c.tl.push(['08/10','Fornecedor novo — homologação cadastral aberta','criar']);
   CTS.push(c);return c;
 }
 function docHtml(d){
-  const ps=d.parcelas||[];const ex=v=>v?esc(v):'<i style="color:#94a3b8">[a preencher]</i>';
-  return `<div class="paper"><div class="wm">Prévia gerada a partir do modelo provisório. O modelo oficial da Manfac substitui este texto.</div>
+  const ex=v=>v?esc(v):'<i style="color:#94a3b8">[a preencher]</i>';const C=COND[d.cond]||{};
+  const ps=d.parcelas||[],V=d.mo||0;
+  return `<div class="paper"><div class="wm">Modelo provisório gerado pelo sistema. O texto pode ser ajustado pela Manfac quando quiser.</div>
   <div class="ph"><div><b>MAN<span class="o">FAC</span></b><div style="font-size:11px;color:#475569">Facilities · Manutenção · Obras</div></div><div style="text-align:right;font-size:12px"><b style="font-size:13px;letter-spacing:0">${d.id}</b><div>Controle interno</div><div>Emitido em 08/10/2026</div></div></div>
   <p style="text-align:center;font-weight:bold;font-size:15px;margin-bottom:12px">INSTRUMENTO PARTICULAR DE PRESTAÇÃO DE SERVIÇOS</p>
   <h5>Partes</h5><p><b>CONTRATANTE:</b> Manfac, CNPJ <i style="color:#94a3b8">[CNPJ da Manfac]</i>.</p>
-  <p><b>CONTRATADA:</b> ${ex(d.forn&&d.forn.razao)}, CNPJ ${ex(d.forn&&d.forn.cnpj)}, conforme cadastro de fornecedores.</p>
-  <h5>Cláusula 1 — Objeto</h5><p>${ex(d.escopo)}</p><p>Local de execução: ${ex(d.obra)}. Classificação: ${ex(CLS[d.classe])}.</p>
-  <h5>Cláusula 2 — Valor e prazo</h5><p>Valor ${d.classe==='global'?'global, consumido por serviço executado,':'total'} de ${d.valor?brl(d.valor):ex('')}. Vigência de ${ex(d.ini)} a ${ex(d.fim)}.</p>
-  <h5>Cláusula 3 — Condições de pagamento</h5>
-  ${d.classe==='global'?'<p>Pagamento por serviço executado e medido, até o limite do valor global.</p>':ps.length?`<table>${ps.map(p=>`<tr><td>${esc(p.nome)}</td><td style="text-align:right">${pc2(p.pct)}</td><td style="text-align:right">${d.valor?brl(d.valor*p.pct/100):''}</td></tr>`).join('')}</table>`:`<p>${ex('')}</p>`}
-  <p style="margin-top:6px">Cada pagamento depende de medição aprovada pela CONTRATANTE. A soma das medições não ultrapassa 100% do valor contratado.</p>
-  <h5>Cláusula 4 — Aditivos</h5><p>Alterações de valor serão formalizadas por aditivo numerado (${d.id}-2, ${d.id}-3…), sujeito às mesmas aprovações deste instrumento.</p>
+  <p><b>CONTRATADA:</b> ${ex(d.forn&&d.forn.razao)}, CNPJ ${ex(d.forn&&d.forn.cnpj)}, com dados bancários conforme o cadastro de fornecedores.</p>
+  <h5>Cláusula 1 — Objeto</h5><p>${ex(d.escopo)}</p><p>${d.global?'Contrato global (guarda-chuva), sem obra vinculada: os serviços são pedidos sob demanda.':'Local de execução: '+ex(d.obra)+'.'} Classificação: ${ex(CLS[d.classe])}. Centro de custo: ${ex(d.cc)}.</p>
+  ${d.justEmerg?`<p>Contratação emergencial. Justificativa: ${esc(d.justEmerg)}</p>`:''}
+  <h5>Cláusula 2 — Valor e prazo</h5><p>${d.classe==='mat'?'Valor de material':d.global?'Valor global (teto), consumido por serviço executado':'Valor de mão de obra'}: ${d.classe==='mat'?(d.mat?brl(d.mat):ex('')):V?brl(V):ex('')}.${d.mat&&d.classe!=='mat'?` Material, separado da mão de obra: ${brl(d.mat)}, pago mediante entrega comprovada e nota fiscal.`:''} Vigência de ${ex(d.ini)} a ${ex(d.fim)}.</p>
+  <h5>Cláusula 3 — Condições de pagamento</h5><p>Condição padrão <b>${d.cond||'[a definir]'}</b>${C.nome?' — '+esc(C.nome):''}.${C.prazo?' O pagamento é programado pelo Financeiro em '+C.prazo+'.':''}</p>
+  ${C.tab&&d.tabela&&d.tabela.length?`<table>${d.tabela.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td style="text-align:right">${brl(typeof r[2]==='number'?r[2]:parseBR(r[2]))}</td></tr>`).join('')}</table><p style="margin-top:6px">O valor de cada serviço é o desta tabela.</p>`:''}
+  ${C.cons?'<p>Os atendimentos do mês são acumulados e pagos em um fechamento mensal, com nota fiscal consolidada.</p>':''}
+  ${C.exc?`<p>Condição de exceção: ${ex(d.excTxt)}.${d.justExc?' Justificativa: '+esc(d.justExc):''}</p>`:''}
+  ${!d.global&&ps.length&&!C.exc&&d.classe!=='mat'?`<table>${ps.map(p=>`<tr><td>${esc(p.nome)}</td><td style="text-align:right">${pc2(p.pct)}</td><td style="text-align:right">${V?brl(V*p.pct/100):''}</td></tr>`).join('')}</table>`:''}
+  ${d.global&&!C.tab&&!C.cons?'<p>Pagamento por serviço executado e medido, até o limite do valor global.</p>':''}
+  <p style="margin-top:6px">Cada pagamento depende de medição aprovada pela CONTRATANTE, com nota fiscal e evidência do serviço. A soma das medições não ultrapassa 100% do valor contratado. Nenhum pagamento final é feito sem o aceite operacional do serviço.${ps.some(p=>p.ret)?' Os últimos 10% ficam retidos e só são pagos após o aceite final.':''}</p>
+  <h5>Cláusula 4 — Documentos</h5><p>A CONTRATADA apresenta CNPJ, dados bancários, proposta comercial e, quando aplicável, certidões negativas. Em cada medição: nota fiscal e evidência do serviço.</p>
+  <h5>Cláusula 5 — Aditivos</h5><p>Alterações de valor ou de condição de pagamento são formalizadas por aditivo numerado (${d.id}-2, ${d.id}-3…). O aditivo de condição vale para as medições ainda não aprovadas.</p>
   <div class="sign"><div>CONTRATANTE — Manfac</div><div>CONTRATADA — ${ex(d.forn&&d.forn.razao)}</div></div></div>`;
 }
 
 /* =================== 3. Aprovação =================== */
+function homBox(c){
+  const h=c.hom,can=(S.role==='edu'||S.role==='jose'),done=!homPend(c);
+  const it=[['cnpj','CNPJ ativo na Receita'],['banco','Dados bancários conferem com o CNPJ'],['cert','Certidões negativas válidas']];
+  return `<div class="homs"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>Homologação do fornecedor novo</b>${done?pill('Homologado em '+h.d,'#22c55e'):pill('Pendente','#f59e0b')}</div>
+   <div class="small muted" style="margin-top:2px">Validação cadastral antes de o contrato valer. ${done?'':can?'Marque o que já foi conferido.':'Feita por Eduardo ou José.'}</div>
+   <div class="row">${it.map(([k,n])=>`<label class="chk"><input type="checkbox" data-hom="${c.id}" data-k="${k}" ${h[k]?'checked':''} ${can&&!done?'':'disabled'}><span>${n}</span></label>`).join('')}</div></div>`;
+}
 function r3(){
   const el=$('#b3'),v=S.view.s3;
   if(v==='erro')return el.innerHTML='<div class="box">'+erroBox('Não conseguimos carregar as aprovações pendentes.','s3')+'</div>';
   let items=CTS.filter(c=>c.status==='aguard');
   if(S.role==='sol')items=items.filter(c=>c.por===ME);
-  const meu=c=>(S.role==='edu'&&c.edu.s!=='ok')||(S.role==='jose'&&c.jose.s!=='ok');
+  const meu=c=>(S.role==='edu'&&c.edu.s==='pend')||(S.role==='jose'&&c.jose.s==='pend')||((S.role==='edu'||S.role==='jose')&&homPend(c));
   const nMim=items.filter(meu).length;
   if(S.role!=='sol'&&S.f3==='mim')items=items.filter(meu);
   if(v==='vazio')items=[];
   let h='';
   if(S.role!=='sol')h+=`<div class="chips" style="margin-bottom:12px"><button class="chip ${S.f3==='mim'?'on':''}" data-act="f3" data-k="mim">Esperando por mim<span class="n">${v==='vazio'?0:nMim}</span></button><button class="chip ${S.f3==='todos'?'on':''}" data-act="f3" data-k="todos">Todos aguardando</button></div>`;
-  else h+=`<div class="banner" style="margin-bottom:12px"><span class="dot"></span><div>Você acompanha aqui os seus contratos em aprovação. Quem aprova são Eduardo (contratação) e José (condições de pagamento). <span class="muted">Use "Ver como" no topo para ver a tela deles.</span></div></div>`;
+  else h+=`<div class="banner" style="margin-bottom:12px"><span class="dot"></span><div>Você acompanha aqui os seus contratos e aditivos em aprovação. Quem aprova são Eduardo (contratação) e José (condições de pagamento). <span class="muted">Use "Ver como" no topo para ver a tela deles.</span></div></div>`;
   if(!items.length){
-    h+='<div class="box">'+vazioBox(S.role==='sol'?'Nenhum contrato seu aguardando aprovação':'Nada esperando por você','Quando um contrato for enviado para aprovação, ele aparece aqui.')+'</div>';
+    h+='<div class="box">'+vazioBox(S.role==='sol'?'Nenhum contrato seu aguardando aprovação':'Nada esperando por você','Quando um contrato ou aditivo for enviado para aprovação, ele aparece aqui.')+'</div>';
     return el.innerHTML=h;
   }
   items.forEach(c=>{
-    const ad=!!c.pai,p=ad?ctById(c.pai):c;
-    const ps=parcelas(ad?p:c);
+    const ad=!!c.pai,p=ad?ctById(c.pai):c,cd=ad&&c.tipo==='cond';
     const blk=(who,k,titulo,body)=>{
-      const a=c[k],can=S.role===who&&a.s!=='ok';
+      const a=c[k];
+      if(a.s==='na')return `<div style="padding:14px 16px"><div class="aprole"><b>${titulo}</b>${pill('Não se aplica','#64748b')}</div><div class="small muted">Aditivo de condição de pagamento vai só para o José.</div></div>`;
+      const can=S.role===who&&a.s!=='ok';
       return `<div class="${S.role===who?'mine':''}" style="padding:14px 16px"><div class="aprole"><b>${titulo}</b>${a.s==='ok'?pill('Aprovado em '+a.d,'#22c55e'):pill('Pendente','#f59e0b')}</div>${body}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${can?`<button class="btn ok sm" data-act="apr" data-id="${c.id}" data-k="${k}">Aprovar</button><button class="btn bad sm" data-act="dev" data-id="${c.id}" data-k="${k}">Devolver com motivo</button>`:a.s==='ok'?'':`<span class="small dim">Aguardando ${who==='edu'?'Eduardo':'José'}</span>`}</div></div>`;
     };
-    const novoT=ad?total(p)+c.valor:total(c);
-    const bEdu=ad?`<div class="small muted">Aditivo de valor do ${p.id}</div><div style="margin:4px 0"><b class="mono">+ ${brl(c.valor)}</b> → novo total <b class="mono">${brl(novoT)}</b></div><div class="small">${esc(c.motivo)}</div>`
-      :`<div class="small muted">Escopo</div><div style="margin:2px 0 8px">${esc(c.escopo)}</div><div class="small muted">Valor · prazo</div><div><b class="mono">${brl(c.valor)}</b> · ${c.ini} a ${c.fim}</div>`;
-    const bJose=(ad?`<div class="small muted">O aditivo segue a condição do contrato: ${MODELOS[p.modelo].nome}</div>`:`<div class="small muted">Modelo: ${MODELOS[c.modelo].nome}</div>`)+
-      (c.modelo==='servico'||(ad&&p.modelo==='servico')?'<div style="margin-top:6px" class="small">Pagamento por serviço executado, até o limite do valor global.</div>':
-      `<div class="plist" style="margin-top:6px">${ps.map(x=>`<div><span>${esc(x.nome)}</span><span class="mono">${pc2(x.pct)} · ${brl(ad?novoT*x.pct/100:x.v)}</span></div>`).join('')}</div>`);
-    h+=`<div class="apcard"><div class="aphead"><div><h4>${c.id} · ${esc(fornOf(c))} ${ad?pill('Aditivo de valor','#a78bfa'):''}</h4><div class="small muted">${esc(p.obra)} · ${CLS[p.classe]} · enviado por ${esc(c.por)}</div></div><div>${stPill(c)}</div></div>
-      <div class="apgrid">${blk('edu','edu','Contratação · Eduardo',bEdu)}${blk('jose','jose','Condições de pagamento · José',bJose)}</div>
-      <div class="apfoot">${c.edu.s==='ok'&&c.jose.s==='ok'?'':'O '+(ad?'aditivo':'contrato')+' só fica <b>Aprovado</b> com as duas aprovações. Falta: '+[c.edu.s!=='ok'?'Eduardo':null,c.jose.s!=='ok'?'José':null].filter(Boolean).join(' e ')+'.'}</div></div>`;
+    let bEdu='',bJose,tag='';
+    if(cd){
+      tag=pill('Aditivo de condição','#a78bfa');
+      const ms=medsDe(p),naoApr=ms.filter(m=>m.status==='sol'),noFin=ms.filter(m=>m.status==='pagto'||m.status==='pago');
+      bJose=`<div class="ba"><div style="text-align:left"><span>Antes</span>${condMini(c.de)}</div><span class="dim">→</span><div style="text-align:left"><span>Depois</span>${condMini(c.para)}${c.excTxt?`<div class="small">${esc(c.excTxt)}</div>`:''}</div></div>
+       <div class="small muted">Motivo</div><div style="margin-bottom:8px">${esc(c.motivo)}</div>${c.justExc?`<div class="small muted">Justificativa da exceção</div><div style="margin-bottom:8px">${esc(c.justExc)}</div>`:''}
+       <div class="small"><b>Passa a valer para:</b> ${naoApr.length?naoApr.map(m=>m.id).join(', ')+' (ainda não aprovada'+(naoApr.length>1?'s':'')+') e as próximas':'as próximas medições'}.</div>
+       <div class="small" style="margin-top:3px"><b>Continuam em ${c.de}:</b> ${noFin.length?noFin.map(m=>m.id).join(', ')+' — já viraram solicitação no Financeiro':'nenhuma medição já enviada ao Financeiro'}.</div>`;
+    }else if(ad){
+      tag=pill('Aditivo de valor','#a78bfa');
+      const novoT=moT(p)+c.valor;
+      bEdu=`<div class="small muted">Aditivo de valor do ${p.id}</div><div style="margin:4px 0"><b class="mono">+ ${brl(c.valor)}</b> → novo total <b class="mono">${brl(total(p)+c.valor)}</b></div><div class="small">${esc(c.motivo)}</div>`;
+      bJose=`<div class="small muted">O aditivo segue a condição do contrato:</div><div style="margin-top:3px">${condMini(p.cond)}</div>`+(p.global?'<div style="margin-top:6px" class="small">Pagamento por serviço executado, até o limite do valor global.</div>':
+        `<div class="plist" style="margin-top:6px">${parcelas(p).map(x=>`<div><span>${esc(x.nome)}</span><span class="mono">${pc2(x.pct)} · ${brl(novoT*x.pct/100)}</span></div>`).join('')}</div>`);
+    }else{
+      bEdu=`<div class="small muted">Escopo</div><div style="margin:2px 0 8px">${esc(c.escopo)}</div>
+        <div class="small muted">${c.global?'Tipo':'Obra'} · centro de custo</div><div style="margin:2px 0 8px">${c.global?'Contrato global — sem obra':esc(c.obra)} · ${esc(c.cc)}</div>
+        <div class="small muted">Valor · prazo</div><div><b class="mono">${brl(c.mo+c.mat)}</b>${c.mat&&c.mo?` <span class="small dim">(mão de obra ${brl(c.mo)} + material ${brl(c.mat)})</span>`:''} · ${c.ini} a ${c.fim}</div>
+        ${c.justEmerg?`<div class="banner warn" style="margin-top:8px"><span class="dot"></span><div><b>Emergencial.</b> ${esc(c.justEmerg)}</div></div>`:''}
+        <div class="small muted" style="margin-top:8px">Documentos</div><div class="small">${docsLine(c)}</div>`;
+      const ps=parcelas(c),C=COND[c.cond];
+      bJose=condCard(c.cond,{tag:c.condSug&&c.condSug!==c.cond?pill('trocada da sugerida '+c.condSug,'#f59e0b'):pill('sugerida pela faixa','#22c55e'),semGat:!!ps.length&&!C.exc})+
+        (ps.length&&!C.exc?`<div class="plist" style="margin-top:6px">${ps.map(x=>`<div><span>${esc(x.nome)}</span><span class="mono">${pc2(x.pct)} · ${brl(x.v)}</span></div>`).join('')}</div>`:'')+
+        (c.mat&&c.mo?`<div class="small" style="margin-top:6px">Material à parte: <span class="code">MATERIAL_MEDIANTE_NF</span> · ${brl(c.mat)}</div>`:'')+
+        (c.excTxt?`<div class="small" style="margin-top:6px"><b>Condição proposta:</b> ${esc(c.excTxt)}</div>`:'')+(c.justExc?`<div class="small"><b>Justificativa:</b> ${esc(c.justExc)}</div>`:'')+
+        (c.tabela?`<div class="small muted" style="margin-top:8px">Tabela de preços</div><div class="plist">${c.tabela.map(r=>`<div><span>${esc(r[0])} <span class="dim">/ ${esc(r[1])}</span></span><span class="mono">${brl(r[2])}</span></div>`).join('')}</div>`:'');
+    }
+    const falta=[c.edu.s==='pend'?'Eduardo':null,c.jose.s==='pend'?'José':null,homPend(c)?'a homologação do fornecedor':null].filter(Boolean);
+    const fl=falta.length>1?falta.slice(0,-1).join(', ')+' e '+falta[falta.length-1]:falta[0];
+    h+=`<div class="apcard"><div class="aphead"><div><h4>${c.id} · ${esc(fornOf(c))} ${tag}</h4><div class="small muted">${p.global?'Contrato global — sem obra':esc(p.obra)} · ${CLS[p.classe]} · enviado por ${esc(c.por)}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start">${homPend(c)?pill('Fornecedor novo','#f59e0b'):''}${stPill(c)}</div></div>
+      ${c.hom?homBox(c):''}
+      <div class="apgrid">${blk('edu','edu','Contratação · Eduardo',bEdu)}${blk('jose','jose',cd?'Aditivo de condição · José':'Condições de pagamento · José',bJose)}</div>
+      <div class="apfoot">${falta.length?`O ${ad?'aditivo':'contrato'} só fica <b>Aprovado</b> com ${cd?'a aprovação do José':'as duas aprovações'+(c.hom?' e a homologação':'')}. Falta: ${fl}.`:''}</div></div>`;
   });
   el.innerHTML=h;
 }
@@ -710,8 +907,8 @@ function timeline(c){
   c.tl.forEach(([d,t,k])=>ev.push({d,t,k}));
   aditivos(c).forEach(a=>a.tl.forEach(([d,t,k])=>ev.push({d,t,k})));
   medsDe(c).forEach(m=>{
-    ev.push({d:m.dSol,t:`Medição ${m.id} solicitada — ${brl(m.valor)} · ${esc(m.desc)}`,k:'med'});
-    if(m.dApr)ev.push({d:m.dApr,t:`Medição ${m.id} aprovada por Eduardo · solicitação ${m.fin} criada no Financeiro`,k:'ok'});
+    ev.push({d:m.dSol,t:`Medição ${m.id}${m.item==='mat'?' (material)':''} solicitada — ${brl(m.valor)} · ${esc(m.desc)}`,k:'med'});
+    if(m.dApr)ev.push({d:m.dApr,t:`Medição ${m.id} aprovada por Eduardo · solicitação ${m.fin} criada no Financeiro (${m.cond})`,k:'ok'});
     if(m.dPago)ev.push({d:m.dPago,t:`Pagamento ${m.fin} registrado — pago em ${m.dPago} (data do Omie)`,k:'pago'});
     if(m.dDev)ev.push({d:m.dDev,t:`Medição ${m.id} devolvida por Eduardo: "${esc(m.motivo)}"`,k:'dev'});
   });
@@ -726,74 +923,145 @@ function r4(){
   const c=v==='vazio'?null:ctById(S.ficha);
   const sel=`<select class="inp" style="width:auto;max-width:100%" data-act="fsel"><option value="">Escolha um contrato</option>${lista.map(x=>`<option value="${x.id}" ${c&&c.id===x.id?'selected':''}>${x.id} · ${esc(x.forn)}</option>`).join('')}</select>`;
   if(!c)return el.innerHTML=`<div class="box-h"><h3>Ficha</h3>${sel}</div>`+vazioBox('Nenhum contrato selecionado','Clique num contrato da lista (seção 1) ou escolha acima para ver a ficha completa.');
-  const T=total(c),M=medido(c),P=pago(c),ads=aditivos(c),adApr=ads.filter(a=>a.status==='apr').reduce((s,a)=>s+a.valor,0);
-  const ps=parcelas(c),atr=atrasos(c);
+  const T=total(c),M=medido(c),P=pago(c),ads=aditivos(c),adsV=ads.filter(a=>a.tipo==='valor'),adApr=adsV.filter(a=>a.status==='apr').reduce((s,a)=>s+a.valor,0);
+  const ps=parcelas(c),atr=atrasos(c),C=COND[c.cond],cp=condPendDe(c);
   const ini=toDate(c.ini),fim=toDate(c.fim),tempo=Math.max(0,Math.min(100,(HOJE_D-ini)/(fim-ini)*100));
-  const PST={'Paga':'#22c55e','Medida':'#60a5fa','Em atraso':'#ef4444','Prevista':'#94a3b8'};
+  const PST={'Paga':'#22c55e','Medida':'#60a5fa','Em atraso':'#ef4444','Prevista':'#94a3b8','Retida':'#a78bfa'};
   const pctOf=x=>T?x/T*100:0;
+  const isRet=ps.some(p=>p.ret),moPct=moT(c)?medItem(c,'mo')/moT(c)*100:0;
+  const medsMat=medsDe(c).filter(m=>m.item==='mat');
+  const svcList=medsDe(c).length?`<div class="plist">${medsDe(c).map(m=>`<div><span>${esc(m.desc)}<div class="small dim">${m.id} · ${m.dSol} · <span class="code">${m.cond}</span></div></span><span style="text-align:right"><span class="mono">${brl(m.valor)}</span><div>${pill(MST[m.status][0],MST[m.status][1])}</div></span></div>`).join('')}</div>`:'<div class="muted small">Nenhum serviço medido ainda.</div>';
+  let left;
+  if(c.global){
+    left='';
+    if(C.tab&&c.tabela)left+=`<h4>Tabela de preços</h4><div class="plist" style="margin-bottom:16px">${c.tabela.map(r=>`<div><span>${esc(r[0])} <span class="dim small">/ ${esc(r[1])}</span></span><span class="mono">${brl(r[2])}</span></div>`).join('')}</div>`;
+    if(C.cons){const at=c.atend||[],sum=at.reduce((s,a)=>s+a.v,0);
+      left+=`<h4>Atendimentos de ${MESES[HOJE_D.getMonth()].toLowerCase()} em aberto</h4><div class="plist">${at.length?at.map(a=>`<div><span>${esc(a.desc)}<div class="small dim">${a.d}</div></span><span class="mono">${brl(a.v)}</span></div>`).join(''):'<div><span class="muted small">Nenhum atendimento registrado este mês.</span><span></span></div>'}<div><b>Acumulado do mês</b><b class="mono">${brl(sum)}</b></div></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 16px"><span class="hint">O fechamento do mês vira uma medição só, até o dia ${CORTE}.</span>${c.status==='apr'?`<button class="btn sm" data-act="medir" data-id="${c.id}">Registrar atendimento ou fechar o mês</button>`:''}</div>`}
+    left+=`<h4>Serviços medidos neste contrato global</h4>${svcList}`;
+  }else if(c.classe==='mat'){
+    left=`<h4>Entregas de material medidas</h4>${svcList}`;
+  }else{
+    left=`<h4>Parcelas da mão de obra · <span class="code">${c.cond}</span></h4>
+    <div class="plist">${ps.map(p=>`<div><span>${esc(p.nome)}<div class="small dim">${pc2(p.pct)}${p.prev?' · prevista até '+p.prev:p.ret?' · após o aceite final':' · por etapa'}${p.fin&&!p.ret?' · exige aceite operacional':''}</div></span><span style="text-align:right"><span class="mono">${brl(p.v)}</span><div>${pill(p.st,PST[p.st])}</div></span></div>`).join('')}</div>
+    ${c.mat?`<h4 style="margin-top:16px">Material · <span class="code">MATERIAL_MEDIANTE_NF</span></h4><div class="plist"><div><span>Material contratado<div class="small dim">medido à parte · entrega comprovada + NF</div></span><span class="mono">${brl(c.mat)}</span></div>${medsMat.map(m=>`<div><span>${esc(m.desc)}<div class="small dim">${m.id} · ${m.dSol}</div></span><span style="text-align:right"><span class="mono">${brl(m.valor)}</span><div>${pill(MST[m.status][0],MST[m.status][1])}</div></span></div>`).join('')}</div>`:''}`;
+  }
   el.innerHTML=`<div class="box-h"><h3 class="small muted" style="font-weight:500">Contrato selecionado</h3>${sel}</div>
-  <div class="fhead"><div style="min-width:0"><h3>${c.id} · ${esc(c.forn)}</h3><div class="muted small">${esc(c.obra)} · ${CLS[c.classe]} · ${c.ini} a ${c.fim} · criado por ${esc(c.por)}</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${stPill(c)} ${pill(MODELOS[c.modelo].nome,'#94a3b8')}</div></div>
-   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start"><button class="btn" data-act="fdoc">Ver documento</button>${c.status==='apr'?`<button class="btn pri" data-act="adit">+ Novo aditivo de valor</button>`:''}</div></div>
+  <div class="fhead"><div style="min-width:0"><h3>${c.id} · ${esc(c.forn)}</h3><div class="muted small">${c.global?'Contrato global — sem obra vinculada':esc(c.obra)} · ${c.ini} a ${c.fim} · criado por ${esc(c.por)}</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${stPill(c)} ${clsPills(c)} ${homPend(c)?pill('Homologação pendente','#f59e0b'):''}</div></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start"><button class="btn" data-act="fdoc">Ver documento</button>${c.status==='apr'?`<button class="btn" data-act="aditc" ${cp?'disabled title="Já existe um aditivo de condição aguardando o José"':''}>+ Aditivo de condição</button><button class="btn pri" data-act="adit">+ Aditivo de valor</button>`:''}${isRet&&c.status==='apr'&&!c.aceiteFinal?`<button class="btn ok" data-act="aceite" ${moPct<90-0.01?'disabled title="Disponível quando 90% da mão de obra estiver medida"':''}>Registrar aceite final</button>`:''}</div></div>
   ${c.devolvido&&c.status==='rasc'?`<div class="box-b" style="border-bottom:1px solid var(--bd)"><div class="banner bad"><span class="dot"></span><div><b>Devolvido para ajuste.</b> ${esc(c.devolvido)}</div></div></div>`:''}
   ${atr.length?`<div class="box-b" style="border-bottom:1px solid var(--bd)"><div class="banner bad"><span class="dot"></span><div><b>Medição em atraso.</b> ${atr.map(esc).join(' · ')}</div></div></div>`:''}
-  <div class="fk"><div><span>Valor contratado</span><b>${brl(c.valor)}</b></div><div><span>Aditivos</span><b>${adApr?'+ '+brl(adApr):'—'}</b><div class="small dim">${ads.map(a=>`${a.id} ${a.status==='apr'?'':'('+CST[a.status][0].toLowerCase()+')'}`).join(' · ')||'nenhum'}</div></div><div><span>Total</span><b>${brl(T)}</b></div></div>
+  ${cp?`<div class="box-b" style="border-bottom:1px solid var(--bd)"><div class="banner warn"><span class="dot"></span><div><b>Aditivo de condição ${cp.id} aguardando José:</b> <span class="code">${cp.de}</span> → <span class="code">${cp.para}</span>. Até a aprovação, vale a condição atual.</div></div></div>`:''}
+  <div class="fk"><div><span>Valor contratado</span><b>${brl(c.mo+c.mat)}</b>${c.mat&&c.mo?`<div class="small dim">mão de obra ${brl(c.mo)} · material ${brl(c.mat)}</div>`:''}</div><div><span>Aditivos de valor</span><b>${adApr?'+ '+brl(adApr):'—'}</b><div class="small dim">${adsV.map(a=>`${a.id} ${a.status==='apr'?'':'('+CST[a.status][0].toLowerCase()+')'}`).join(' · ')||'nenhum'}</div></div><div><span>Total</span><b>${brl(T)}</b></div></div>
+  <div class="meta">
+    <div><span class="l">Condição de pagamento</span>${condMini(c.cond)}<div class="small dim" style="margin-top:3px">${prazoTxt(c.cond)}${c.condAdit?` · alterada pelo aditivo ${c.condAdit}`:''}</div>${c.excTxt&&C.exc?`<div class="small">${esc(c.excTxt)}</div>`:''}</div>
+    <div><span class="l">Centro de custo</span>${esc(c.cc)}<div class="small dim" style="margin-top:3px">${c.global?'Contrato global — sem obra':esc(c.obra)}</div></div>
+    <div><span class="l">Documentos</span><div class="small">${docsLine(c)}</div>${c.hom?`<div class="small ${homPend(c)?'warn-t':'ok-t'}" style="margin-top:3px">${homPend(c)?'Homologação do fornecedor pendente':'Fornecedor homologado em '+c.hom.d}</div>`:''}</div>
+    <div><span class="l">Aceite</span>${isRet?(c.aceiteFinal?`<span class="ok-t">Aceite final em ${c.aceiteFinal.d}</span><div class="small dim">por ${esc(c.aceiteFinal.por)} · retenção liberada</div>`:`<span class="warn-t">Aceite final pendente</span><div class="small dim">10% retidos até o aceite</div>`):`<span>Aceite operacional</span><div class="small dim">exigido ${c.global?'em cada serviço':'no pagamento final'}</div>`}</div>
+  </div>
+  ${c.justEmerg||c.justExc?`<div class="box-b" style="border-bottom:1px solid var(--bd)"><div class="banner warn"><span class="dot"></span><div>${c.justEmerg?`<div><b>Emergencial:</b> ${esc(c.justEmerg)}</div>`:''}${c.justExc?`<div><b>Exceção de pagamento:</b> ${esc(c.justExc)}</div>`:''}</div></div></div>`:''}
   <div class="box-b"><div class="bar"><i style="width:${pctOf(P)}%;background:var(--ok)"></i><i style="width:${pctOf(M-P)}%;background:var(--info)"></i></div>
    <div class="legend"><span><i style="background:var(--ok)"></i>Pago <b class="mono">${brl(P)}</b> (${pc(pctOf(P))})</span><span><i style="background:var(--info)"></i>Medido, aguardando pagamento <b class="mono">${brl(M-P)}</b></span><span><i style="background:var(--deep);border:1px solid var(--bd)"></i>Saldo a medir <b class="mono">${brl(T-M)}</b> (${pc(100-pctOf(M))})</span></div></div>
-  <div class="fcols"><div><h4>${c.classe==='global'?'Serviços medidos neste contrato global':'Parcelas da condição de pagamento'}</h4>
-    ${c.classe==='global'?(medsDe(c).length?`<div class="plist">${medsDe(c).map(m=>`<div><span>${esc(m.desc)}<div class="small dim">${m.id} · ${m.dSol}</div></span><span style="text-align:right"><span class="mono">${brl(m.valor)}</span><div>${pill(MST[m.status][0],MST[m.status][1])}</div></span></div>`).join('')}</div>`:'<div class="muted small">Nenhum serviço medido ainda.</div>')
-    :`<div class="plist">${ps.map(p=>`<div><span>${esc(p.nome)}<div class="small dim">${pc2(p.pct)}${p.prev?' · prevista até '+p.prev:' · por etapa'}</div></span><span style="text-align:right"><span class="mono">${brl(p.v)}</span><div>${pill(p.st,PST[p.st])}</div></span></div>`).join('')}</div>`}
-  </div><div><h4>Linha do tempo</h4><ul class="tl">${timeline(c)}</ul></div></div>
+  <div class="fcols"><div>${left}</div><div><h4>Linha do tempo</h4><ul class="tl">${timeline(c)}</ul></div></div>
   ${c.status==='apr'?`<div class="insight"><span>Leitura rápida:</span><span>prazo decorrido <b style="color:var(--tx)">${pc(tempo)}</b></span><span>·</span><span>medido <b style="color:var(--tx)">${pc(pctOf(M))}</b></span><span>·</span><span>${pctOf(M)+10<tempo?'<b style="color:#fca5a5">medição abaixo do ritmo do prazo</b>':'medição acompanhando o prazo'}</span></div>`:''}`;
 }
 
 /* =================== 5. Nova medição =================== */
-let F5={ct:'CT-0118',modo:'pct',val:'30',desc:'',dserv:'',anexo:true};
+const f5reset=ct=>({ct,item:'mo',modo:'pct',val:'',desc:'',dserv:'',nf:false,anexo:false,aceite:false,svc:0,qtd:''});
+let F5={ct:'CT-0118',item:'mo',modo:'pct',val:'30',desc:'',dserv:'',nf:true,anexo:true,aceite:false,svc:0,qtd:''};
 function r5(){
   const el=$('#b5'),v=S.view.s5;
   if(v==='erro')return el.innerHTML=erroBox('Não conseguimos carregar os contratos para medição.','s5');
   let opts=CTS.filter(c=>!c.pai&&c.status==='apr'&&(S.role!=='sol'||c.por===ME));
   if(v==='vazio'||!opts.length)return el.innerHTML=vazioBox('Nenhum contrato aprovado para medir','Só contratos aprovados por Eduardo e José podem receber medição. Assim que um for aprovado, ele aparece aqui.','<button class="btn" data-act="page" data-p="contr">Ir para Contratação</button>');
-  if(!opts.find(c=>c.id===F5.ct))F5.ct=opts[0].id;
-  const c=ctById(F5.ct),G=c.classe==='global';
-  if(G)F5.modo='valor';
-  const prox=parcelas(c).find(p=>p.st==='Em atraso'||p.st==='Prevista');
-  el.innerHTML=`<div class="mform"><div class="stack">
-    <div class="fld"><label>Contrato</label><select class="inp" data-f5="ct">${opts.map(o=>`<option value="${o.id}" ${o.id===c.id?'selected':''}>${o.id} · ${esc(o.forn)} — ${CLS[o.classe]}</option>`).join('')}</select><div class="hint">Só aparecem contratos aprovados${S.role==='sol'?' criados por você':''}.</div></div>
-    <div class="saldo"><div><span>Valor total</span><b>${brl(total(c))}</b></div><div><span>Já medido</span><b>${pc(medido(c)/total(c)*100)}</b><div class="small dim mono">${brl(medido(c))}</div></div><div><span>Saldo disponível</span><b style="color:var(--ok)">${brl(total(c)-medido(c))}</b></div></div>
-    ${G?`<div class="banner"><span class="dot"></span><div><b>Contrato global.</b> <span class="muted">Informe o serviço executado e o valor; ele é descontado do saldo global.</span></div></div>
-      <div class="fld"><label>Serviço executado</label><input class="inp" data-f5="desc" placeholder="Ex.: Caminhão pipa 15 m³ — 4 viagens para a obra X" value="${esc(F5.desc)}"></div>
-      <div class="fld"><label>Data do serviço</label><input type="date" class="inp" data-f5="dserv" value="${F5.dserv}"></div>`
-     :`<div class="banner"><span class="dot"></span><div>Condição: <b>${MODELOS[c.modelo].nome}</b>.${prox?` Próxima parcela: <b>${esc(prox.nome)}</b> — ${pc2(prox.pct)} (${brl(prox.v)}). <button class="btn sm" style="margin-left:4px" data-act="f5usar">Usar este valor</button>`:''}</div></div>`}
-    <div class="fld"><label>${G?'Valor desta medição':'Quanto medir agora'}</label>
-      ${G?'':`<div class="toggle" style="margin-bottom:6px;align-self:flex-start"><button class="${F5.modo==='pct'?'on':''}" data-act="f5modo" data-m="pct">Em %</button><button class="${F5.modo==='valor'?'on':''}" data-act="f5modo" data-m="valor">Em R$</button></div>`}
+  if(!opts.find(c=>c.id===F5.ct))F5=f5reset(opts[0].id);
+  const c=ctById(F5.ct),G=c.global,C=COND[c.cond];
+  if(c.classe==='mat')F5.item='mat';else if(G||!c.mat)F5.item='mo';
+  const isMat=F5.item==='mat';
+  if(G||isMat||C.exc)F5.modo='valor';
+  const T=itemT(c,F5.item),M=medItem(c,F5.item);
+  const prox=!G&&!isMat?parcelas(c).find(p=>p.st!=='Paga'&&p.st!=='Medida'):null;
+  const cp=condPendDe(c);
+  const valFld=(lbl,tog)=>`<div class="fld"><label>${lbl}</label>
+      ${tog?`<div class="toggle" style="margin-bottom:6px;align-self:flex-start"><button class="${F5.modo==='pct'?'on':''}" data-act="f5modo" data-m="pct">Em %</button><button class="${F5.modo==='valor'?'on':''}" data-act="f5modo" data-m="valor">Em R$</button></div>`:''}
       <div class="inwrap"><input class="inp mono" id="f5val" data-f5="val" inputmode="decimal" value="${esc(F5.val)}" placeholder="${F5.modo==='pct'?'0':'0,00'}" style="font-size:16px;${F5.modo==='valor'?'padding-left:34px':''}"><span class="suf" style="${F5.modo==='valor'?'left:11px;right:auto':''}">${F5.modo==='pct'?'%':'R$'}</span></div>
-      <div id="f5msg"></div></div>
-    <div class="fld"><label>Evidência do serviço</label>${F5.anexo?`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="file">📎 ${G?'romaneio-servico.pdf':'relatorio-fotografico-out.pdf'}</span><button class="btn sm" data-act="f5anexo">Remover</button></div>`:`<div><button class="btn sm" data-act="f5anexo">+ Anexar foto ou relatório</button></div>`}<div class="hint">Ajuda o Eduardo a conferir o que foi executado.</div></div>
+      <div id="f5msg"></div></div>`;
+  let mid='';
+  if(G&&C.tab){
+    const r=c.tabela[F5.svc]||c.tabela[0];
+    mid=`<div class="banner"><span class="dot"></span><div><b>Tabela de preço fixa.</b> <span class="muted">Escolha o serviço e a quantidade; o valor vem da tabela do contrato.</span></div></div>
+    <div class="grid2"><div class="fld"><label>Serviço da tabela</label><select class="inp" data-f5="svc">${c.tabela.map((x,i)=>`<option value="${i}" ${+F5.svc===i?'selected':''}>${esc(x[0])} — ${brl(x[2])} / ${esc(x[1])}</option>`).join('')}</select></div>
+    <div class="fld"><label>Quantidade (${esc(r[1])})</label><input class="inp mono" id="f5val" data-f5="qtd" inputmode="numeric" value="${esc(F5.qtd)}" placeholder="0" style="font-size:16px"></div></div>
+    <div class="fld"><label>Data do serviço</label><input type="date" class="inp" data-f5="dserv" value="${F5.dserv}"></div><div id="f5msg"></div>`;
+  }else if(G&&C.cons){
+    const at=c.atend||[],sum=at.reduce((s,a)=>s+a.v,0);
+    mid=`<div class="banner"><span class="dot"></span><div><b>Spot mensal consolidado.</b> <span class="muted">Registre cada atendimento quando acontecer. No fechamento, os atendimentos do mês viram uma medição só, com uma NF consolidada.</span></div></div>
+    <div class="fld"><label>Atendimentos de ${MESES[HOJE_D.getMonth()].toLowerCase()} em aberto</label><div class="parc">${at.length?at.map((a,i)=>`<div style="grid-template-columns:46px minmax(0,1fr) 96px 26px"><span class="dim small">${a.d}</span><span>${esc(a.desc)}</span><span class="r mono">${brl(a.v)}</span><button class="x" data-act="f5atrm" data-i="${i}" aria-label="Remover">×</button></div>`).join(''):'<div style="grid-template-columns:1fr"><span class="muted small">Nenhum atendimento registrado este mês.</span></div>'}<div class="sum" style="grid-template-columns:1fr 110px"><span>Total do mês</span><span class="r mono">${brl(sum)}</span></div></div></div>
+    <div class="fld"><label>Registrar atendimento</label><div class="atgrid"><input type="date" class="inp" id="atd"><input class="inp" id="atds" placeholder="O que foi feito e onde"><input class="inp mono" id="atv" placeholder="0,00" inputmode="decimal"></div><div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn sm" data-act="f5at">+ Registrar atendimento</button></div><div id="aterr"></div></div>
+    <div id="f5msg"></div>`;
+  }else if(G){
+    mid=`<div class="banner"><span class="dot"></span><div><b>Contrato global.</b> <span class="muted">Informe o serviço executado e o valor; ele é descontado do saldo global.</span></div></div>
+      <div class="fld"><label>Serviço executado</label><input class="inp" data-f5="desc" placeholder="Ex.: limpeza pós-obra do vestiário da obra X" value="${esc(F5.desc)}"></div>
+      <div class="fld"><label>Data do serviço</label><input type="date" class="inp" data-f5="dserv" value="${F5.dserv}"></div>${valFld('Valor desta medição',false)}`;
+  }else if(isMat){
+    mid=`<div class="banner"><span class="dot"></span><div>Material · <span class="code">MATERIAL_MEDIANTE_NF</span> <span class="muted">— entrega comprovada + NF aprovada.</span></div></div>
+      <div class="fld"><label>Material entregue</label><input class="inp" data-f5="desc" placeholder="Ex.: cabos e luminárias entregues no galpão 2" value="${esc(F5.desc)}"></div>${valFld('Valor do material entregue',false)}`;
+  }else{
+    mid=`<div class="banner"><span class="dot"></span><div>Condição: <span class="code">${c.cond}</span> ${esc(C.nome)}.${prox?` Próxima parcela: <b>${esc(prox.nome)}</b> — ${pc2(prox.pct)} (${brl(prox.v)})${prox.ret&&!c.aceiteFinal?' <span class="small" style="color:#c4b5fd">· retida até o aceite final</span>':''}. <button class="btn sm" style="margin-left:4px" data-act="f5usar">Usar este valor</button>`:''}</div></div>${valFld('Quanto medir agora',!C.exc)}`;
+  }
+  const docB=(k,lbl,file,btn)=>`<div class="fld"><label>${lbl}</label>${F5[k]?`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="file">📎 ${file}</span><button class="btn sm" data-act="f5doc" data-k="${k}">Remover</button></div>`:`<div><button class="btn sm" data-act="f5doc" data-k="${k}">${btn}</button></div>`}</div>`;
+  el.innerHTML=`<div class="mform"><div class="stack">
+    <div class="fld"><label>Contrato</label><select class="inp" data-f5="ct">${opts.map(o=>`<option value="${o.id}" ${o.id===c.id?'selected':''}>${o.id} · ${esc(o.forn)} — ${o.global?'Global · ':''}${CLS[o.classe]}</option>`).join('')}</select><div class="hint">Só aparecem contratos aprovados${S.role==='sol'?' criados por você':''}.</div></div>
+    ${!G&&c.mat&&c.mo?`<div class="fld"><label>O que está sendo medido</label><div class="toggle" style="align-self:flex-start"><button class="${!isMat?'on':''}" data-act="f5item" data-i="mo">Mão de obra</button><button class="${isMat?'on':''}" data-act="f5item" data-i="mat">Material</button></div><div class="hint">Material e mão de obra têm saldos separados.</div></div>`:''}
+    <div class="saldo"><div><span>${isMat?'Material contratado':c.mat&&c.mo?'Mão de obra':'Valor total'}</span><b>${brl(T)}</b></div><div><span>Já medido</span><b>${pc(T?M/T*100:0)}</b><div class="small dim mono">${brl(M)}</div></div><div><span>Saldo disponível</span><b style="color:var(--ok)">${brl(T-M)}</b></div></div>
+    ${mid}
+    ${docB('nf','Nota fiscal',isMat?'nf-material.pdf':G&&C.cons?'nf-consolidada-outubro.pdf':'nf-servico.pdf','+ Anexar NF')}
+    ${docB('anexo',isMat?'Comprovante de entrega':'Evidência do serviço',isMat?'canhoto-entrega.pdf':G?'romaneio-ou-fotos.pdf':'relatorio-fotografico-out.pdf','+ Anexar foto ou relatório')}
+    <div id="f5ace"></div>
   </div>
-  <div class="stack"><div class="fld"><label>Acumulado do contrato</label><div id="f5prev"></div></div>
-    <div class="banner warn"><span class="dot"></span><div><b>Prazo do Financeiro</b> <span class="tag-ex">exemplo a confirmar</span><div class="small" style="margin-top:3px">Medições enviadas até o dia 20 entram no pagamento do mês. Enviadas depois, ficam para o mês seguinte.</div></div></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:auto"><button class="btn pri" id="f5send" data-act="f5send">Enviar para aprovação</button></div>
+  <div class="stack"><div class="fld"><label>Acumulado ${c.mat&&c.mo?(isMat?'do material':'da mão de obra'):'do contrato'}</label><div id="f5prev"></div></div>
+    <div class="banner warn"><span class="dot"></span><div><b>Prazo de medição: até o dia ${CORTE} de cada mês</b><div class="small" style="margin-top:3px">Medições enviadas até o dia ${CORTE} entram no pagamento do mês; depois disso, ficam para o mês seguinte. Faltam <b>${CORTE-HOJE_D.getDate()} dias</b> para o corte de ${MESES[HOJE_D.getMonth()].toLowerCase()}.</div></div></div>
+    <div class="fld"><label>Condição desta medição</label><div>${condMini(isMat?'MATERIAL_MEDIANTE_NF':c.cond)}</div><div class="hint">${prazoTxt(isMat?'MATERIAL_MEDIANTE_NF':c.cond)} depois da aprovação do Eduardo.${cp&&!isMat?` O aditivo ${cp.id} (→ ${cp.para}) está com o José: se ele aprovar antes desta medição ser aprovada, ela já segue a nova condição.`:''}</div></div>
+    <div style="margin-top:auto"><div id="f5why" class="hint" style="margin-bottom:6px;text-align:right"></div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn pri" id="f5send" data-act="f5send">${G&&C.cons?`Fechar ${MESES[HOJE_D.getMonth()].toLowerCase()} e enviar medição`:'Enviar para aprovação'}</button></div></div>
   </div></div>`;
   u5();
 }
 function f5calc(){
-  const c=ctById(F5.ct),T=total(c),M=medido(c);
-  const n=parseBR(F5.val);const v=F5.modo==='pct'?T*n/100:n;
-  return {c,T,M,v,after:M+v,over:M+v>T+0.005,livre:T-M};
+  const c=ctById(F5.ct),C=COND[c.cond],it=F5.item,T=itemT(c,it),M=medItem(c,it);
+  let v;
+  if(c.global&&C.tab){const r=c.tabela[F5.svc]||c.tabela[0];v=(parseBR(F5.qtd)||0)*r[2]}
+  else if(c.global&&C.cons)v=(c.atend||[]).reduce((s,a)=>s+a.v,0);
+  else{const n=parseBR(F5.val);v=F5.modo==='pct'?T*n/100:n}
+  const after=M+v,over=after>T+0.005;
+  let needAceite=false,retBlock=false,retIni=T;
+  if(it==='mo'){
+    if(c.global)needAceite=v>0;
+    else parcelas(c).forEach(p=>{
+      if(p.fin&&M<p.fim-0.01&&after>=p.fim-0.01)needAceite=true;
+      if(p.ret&&!c.aceiteFinal){retIni=p.ini;if(after>p.ini+0.01)retBlock=true}
+    });
+  }
+  return {c,C,T,M,v,after,over,livre:T-M,needAceite,retBlock,retIni};
 }
 function u5(){
-  const k=f5calc(),{T,M,v,after,over,livre}=k,G=k.c.classe==='global';
-  const inp=$('#f5val');if(!inp)return;
-  inp.classList.toggle('bad',over);
-  $('#f5msg').innerHTML=over?`<div class="errtxt" style="margin-top:6px"><b>Passa de 100% do contrato.</b> Este contrato ainda pode medir no máximo <b>${pc2(livre/T*100)}</b> (${brl(livre)}). Ajuste o valor desta medição.</div>`
-    :v>0?`<div class="hint" style="margin-top:6px">Esta medição: <b class="mono" style="color:var(--tx)">${F5.modo==='pct'?brl(v):pc2(v/T*100)}</b>${G?' do valor global':''}.</div>`:'';
-  const pA=M/T*100,pD=after/T*100;
+  const k=f5calc(),{c,C,T,M,v,after,over,livre,needAceite,retBlock,retIni}=k,G=c.global,isMat=F5.item==='mat';
+  const inp=$('#f5val');if(inp)inp.classList.toggle('bad',over||(retBlock&&!over));
+  const msg=$('#f5msg');
+  if(msg)msg.innerHTML=over?`<div class="errtxt" style="margin-top:6px"><b>Passa de 100% ${isMat?'do material':'do contrato'}.</b> Ainda dá para medir no máximo <b>${pc2(T?livre/T*100:0)}</b> (${brl(livre)}). Ajuste o valor desta medição.</div>`
+    :retBlock?`<div class="errtxt" style="margin-top:6px"><b>Os 10% retidos ainda não podem ser medidos.</b> Eles só são liberados depois do aceite final, registrado na ficha do contrato (seção 4). Agora dá para medir até <b>${pc2(Math.max(0,(retIni-M)/T*100))}</b> (${brl(Math.max(0,retIni-M))}).</div>`
+    :v>0?`<div class="hint" style="margin-top:6px">Esta medição: <b class="mono" style="color:var(--tx)">${G&&C.tab?brl(v)+'</b> pela tabela':G&&C.cons?brl(v)+'</b> (soma dos atendimentos)':F5.modo==='pct'?brl(v)+'</b>':pc2(T?v/T*100:0)+'</b>'+(G?' do valor global':'')}.</div>`:'';
+  const pA=T?M/T*100:0,pD=T?after/T*100:0;
   $('#f5prev').innerHTML=`<div class="ba"><div><span>Antes</span><b>${pc(pA)}</b><div class="small dim mono">${brl(M)}</div></div><span class="dim">→</span><div class="${over?'over':''}"><span>Depois</span><b>${pc(pD)}</b><div class="small dim mono">${brl(after)}</div></div></div>
-   <div class="bar"><i style="width:${Math.min(pA,100)}%;background:var(--mut)"></i><i style="width:${Math.max(0,Math.min(pD,100)-pA)}%;background:${over?'var(--err)':'var(--ac)'}"></i></div>
-   <div class="legend"><span><i style="background:var(--mut)"></i>Já medido</span><span><i style="background:${over?'var(--err)':'var(--ac)'}"></i>Esta medição</span><span class="dim">Limite: 100% = ${brl(T)}</span></div>`;
-  const b=$('#f5send');const falta=G&&!F5.desc.trim();
-  b.disabled=over||!(v>0)||falta;
-  b.title=over?'Valor acima do saldo do contrato':falta?'Descreva o serviço executado':'';
+   <div class="bar"><i style="width:${Math.min(pA,100)}%;background:var(--mut)"></i><i style="width:${Math.max(0,Math.min(pD,100)-pA)}%;background:${over||retBlock?'var(--err)':'var(--ac)'}"></i></div>
+   <div class="legend"><span><i style="background:var(--mut)"></i>Já medido</span><span><i style="background:${over||retBlock?'var(--err)':'var(--ac)'}"></i>Esta medição</span><span class="dim">Limite: 100% = ${brl(T)}</span></div>`;
+  $('#f5ace').innerHTML=needAceite?`<div class="fld"><label>Aceite operacional</label><label class="chk"><input type="checkbox" data-f5="aceite" ${F5.aceite?'checked':''}><span>Confirmo que o serviço foi conferido e aceito no local${G?'':' — esta medição paga a parcela final'}.</span></label><div class="hint">Nenhum pagamento final sai sem aceite operacional.</div></div>`:'';
+  const falta=[];
+  if(!(v>0))falta.push(G&&C.cons?'registrar ao menos um atendimento':G&&C.tab?'informar a quantidade':'informar o valor');
+  if((G&&!C.tab&&!C.cons||isMat)&&!F5.desc.trim())falta.push(isMat?'descrever o material':'descrever o serviço');
+  if(!F5.nf)falta.push('anexar a NF');if(!F5.anexo)falta.push(isMat?'anexar o comprovante de entrega':'anexar a evidência');
+  if(needAceite&&!F5.aceite)falta.push('marcar o aceite operacional');
+  const b=$('#f5send');b.disabled=over||retBlock||falta.length>0;
+  $('#f5why').textContent=over||retBlock||!falta.length?'':'Para enviar: '+falta.join(', ')+'.';
 }
 
 /* =================== 6. Fila de medições =================== */
@@ -807,15 +1075,15 @@ function r6(){
   if(S.ok6)h+=`<div class="banner ok" style="margin-bottom:12px"><span class="dot"></span><div><b>${S.ok6.md} aprovada.</b> Solicitação <span class="fin">${S.ok6.fin}</span> criada no Financeiro · aguardando pagamento. <span class="muted">Ela segue o fluxo normal do Financeiro até o Omie.</span></div></div>`;
   if(S.role!=='edu')h+=`<div class="banner" style="margin-bottom:12px"><span class="dot"></span><div>${S.role==='sol'?'Suas medições aguardando aprovação.':'Visão de consulta.'} Quem aprova medições é o <b>Eduardo</b>.</div></div>`;
   if(!items.length)return el.innerHTML=h+'<div class="box">'+vazioBox('Nenhuma medição aguardando aprovação','Quando alguém pedir uma medição, ela aparece aqui para conferência.')+'</div>';
-  const cols='--cols:minmax(0,1.5fr) 150px 170px minmax(0,1fr) 220px';
-  h+=`<div class="box"><div class="tbl"><div class="tr head" style="${cols}"><div>Medição · contrato</div><div class="r">Pedido</div><div>Acumulado</div><div>Evidência</div><div></div></div>`;
+  const cols='--cols:minmax(0,1.5fr) 130px 160px minmax(0,1.1fr) 220px';
+  h+=`<div class="box"><div class="tbl"><div class="tr head" style="${cols}"><div>Medição · contrato</div><div class="r">Pedido</div><div>Acumulado</div><div>Documentos</div><div></div></div>`;
   items.forEach(m=>{
-    const c=ctById(m.ct),T=total(c),M=medido(c),antes=M-m.valor,late=dias(m.dSol)>5;
+    const c=ctById(m.ct),T=itemT(c,m.item),M=medItem(c,m.item),antes=M-m.valor,late=dias(m.dSol)>5;
     h+=`<div class="tr ${late?'late':''}" style="${cols}">
-     <div class="td full" data-l="Medição · contrato"><b>${m.id}</b> · ${c.id} <span class="muted">${esc(c.forn)}</span><div class="small">${esc(m.desc)}</div><div class="small dim">pedida por ${esc(m.por)} em ${m.dSol}</div>${late?`<div class="alert">parada há ${dias(m.dSol)} dias</div>`:''}</div>
+     <div class="td full" data-l="Medição · contrato"><b>${m.id}</b> · ${c.id} <span class="muted">${esc(c.forn)}</span><div class="small">${esc(m.desc)}</div><div class="small dim">${m.item==='mat'?'Material · ':''}<span class="code">${m.cond}</span> · pedida por ${esc(m.por)} em ${m.dSol}</div>${late?`<div class="alert">parada há ${dias(m.dSol)} dias</div>`:''}</div>
      <div class="td r" data-l="Pedido"><b class="mono">${pc2(m.valor/T*100)}</b><div class="small mono muted">${brl(m.valor)}</div></div>
-     <div class="td" data-l="Acumulado"><span class="mono">${pc(antes/T*100)} → <b>${pc(M/T*100)}</b></span><div class="mini"><i style="width:${M/T*100}%"></i></div></div>
-     <div class="td" data-l="Evidência">${m.anexo?`<span class="file" style="max-width:100%"><span class="ell">📎 ${esc(m.anexo)}</span></span>`:'<span class="dim small">sem anexo</span>'}</div>
+     <div class="td" data-l="Acumulado"><span class="mono">${pc(antes/T*100)} → <b>${pc(M/T*100)}</b></span><div class="mini"><i style="width:${M/T*100}%"></i></div>${m.item==='mat'?'<div class="small dim">do material</div>':''}</div>
+     <div class="td" data-l="Documentos">${m.nf?'<div class="small ok-t">✓ NF anexada</div>':'<div class="small" style="color:#fca5a5">sem NF</div>'}${m.anexo?`<span class="file" style="max-width:100%;margin-top:3px"><span class="ell">📎 ${esc(m.anexo)}</span></span>`:'<div class="dim small">sem evidência</div>'}${m.aceite?'<div class="small ok-t" style="margin-top:3px">✓ aceite operacional</div>':''}${m.atend?`<div class="small dim">${m.atend.length} atendimentos consolidados</div>`:''}</div>
      <div class="td full" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">${S.role==='edu'?`<button class="btn ok sm" data-act="mapr" data-id="${m.id}">Aprovar</button><button class="btn bad sm" data-act="mdev" data-id="${m.id}">Devolver com motivo</button>`:'<span class="small dim">Aguardando Eduardo</span>'}</div></div>`;
   });
   el.innerHTML=h+'</div></div>';
@@ -840,6 +1108,7 @@ function r7(){
   if(!rows.length)h+=`<div class="state" style="padding:24px"><p>Nenhuma medição neste filtro.</p></div>`;
   rows.forEach(m=>{
     const c=ctById(m.ct);
+    const antiga=m.item==='mo'&&m.cond!==c.cond;
     const step=(lbl,sub,state)=>`<div class="st ${state}"><i>${state==='done'?'✓':state==='bad'?'!':''}</i><span>${lbl}${sub?`<small>${sub}</small>`:''}</span></div>`;
     let steps;
     if(m.status==='dev')steps=step('Solicitada',m.dSol,'done')+'<div class="ln done"></div>'+step('Devolvida',m.dDev+' · '+esc(m.motivo),'bad');
@@ -851,8 +1120,8 @@ function r7(){
         step('Pago',m.dPago?m.dPago+' (data do Omie)':'',s>=2?'done':s===1?'cur':'');
     }
     h+=`<div class="tr ${late(m)?'late':''}" style="${cols}">
-      <div class="td full" data-l="Medição"><b>${m.id}</b> · <a href="#" data-act="ficha" data-id="${c.id}" style="text-decoration:none">${c.id}</a> ${pill(MST[m.status][0],MST[m.status][1])}<div class="small ell">${esc(c.forn)} — ${esc(m.desc)}</div>${late(m)?`<div class="alert">parada há ${dias(m.dSol)} dias aguardando aprovação</div>`:''}</div>
-      <div class="td r" data-l="Valor"><b class="mono">${brl(m.valor)}</b><div class="small dim">${pc2(m.valor/total(c)*100)}</div></div>
+      <div class="td full" data-l="Medição"><b>${m.id}</b> · <a href="#" data-act="ficha" data-id="${c.id}" style="text-decoration:none">${c.id}</a> ${pill(MST[m.status][0],MST[m.status][1])}<div class="small ell">${esc(c.forn)} — ${esc(m.desc)}</div><div class="small dim">${m.item==='mat'?'Material · ':''}<span class="code">${m.cond}</span>${antiga?' · condição anterior ao aditivo (já estava no Financeiro)':''}</div>${late(m)?`<div class="alert">parada há ${dias(m.dSol)} dias aguardando aprovação</div>`:''}</div>
+      <div class="td r" data-l="Valor"><b class="mono">${brl(m.valor)}</b><div class="small dim">${pc2(m.valor/itemT(c,m.item)*100)}${m.item==='mat'?' do material':''}</div></div>
       <div class="td full" data-l="Andamento"><div class="steps">${steps}</div>${m.status==='pagto'?`<button class="btn ghost sm" style="margin-top:8px" data-act="simpago" data-id="${m.id}" title="Só nesta prévia: simula o retorno do Omie">simular: Omie registrou o pagamento</button>`:''}</div></div>`;
   });
   el.innerHTML=h+'</div>';
@@ -865,7 +1134,7 @@ function renderChrome(){
   $('#pg-contr').classList.toggle('on',S.page==='contr');$('#pg-med').classList.toggle('on',S.page==='med');
   $('#ttl').textContent=S.page==='contr'?'Contratação':'Medição';
   const R=ROLES[S.role];$('#roledesc').innerHTML=`<span class="av">${R.ini}</span>${R.desc}`;
-  const bc=S.role==='edu'?CTS.filter(c=>c.status==='aguard'&&c.edu.s!=='ok').length:S.role==='jose'?CTS.filter(c=>c.status==='aguard'&&c.jose.s!=='ok').length:0;
+  const bc=S.role==='edu'?CTS.filter(c=>c.status==='aguard'&&(c.edu.s==='pend'||homPend(c))).length:S.role==='jose'?CTS.filter(c=>c.status==='aguard'&&(c.jose.s==='pend'||homPend(c))).length:0;
   const bm=S.role==='edu'?MEDS.filter(m=>m.status==='sol').length:0;
   [['#bdg-c',bc],['#bdg-c2',bc],['#bdg-m',bm],['#bdg-m2',bm]].forEach(([s,n])=>{const e=$(s);e.hidden=!n;e.textContent=n});
   document.querySelectorAll('.viewsel').forEach(w=>{const k=w.dataset.s;w.innerHTML='ver:'+['dados','vazio','erro'].map(x=>`<button class="${S.view[k]===x?'on':''}" data-act="view" data-s="${k}" data-v="${x}">${x==='dados'?'com dados':x}</button>`).join('')});
@@ -878,17 +1147,31 @@ function goto(id){
 }
 
 /* =================== ações =================== */
+function aplicaCond(a){
+  const p=ctById(a.pai);
+  const keep=medsDe(p).filter(m=>m.item==='mo'&&(m.status==='pagto'||m.status==='pago')).map(m=>m.id),mov=medsDe(p).filter(m=>m.item==='mo'&&m.status==='sol');
+  p.cond=a.para;if(a.excTxt)p.excTxt=a.excTxt;p.condAdit=a.id;
+  mov.forEach(m=>m.cond=a.para);
+  if(!p.global&&p.classe!=='mat')p.parcelas=condParc(a.para,p.ini,p.fim,p.excTxt);
+  a.tl.push(['08/10',`Aditivo ${a.id} aprovado por José — condição ${a.de} → ${a.para}. Vale para ${mov.length?mov.map(m=>m.id).join(', ')+' e as próximas medições':'as próximas medições'}${keep.length?'; '+keep.join(', ')+' continuam em '+a.de+' (já estavam no Financeiro)':''}`,'ok']);
+}
+function liberaSePronto(c){
+  if(!((c.edu.s==='ok'||c.edu.s==='na')&&c.jose.s==='ok'&&!homPend(c)))return false;
+  c.status='apr';
+  if(c.pai&&c.tipo==='cond')aplicaCond(c);
+  else c.tl.push(['08/10',c.pai?`Aditivo ${c.id} aprovado — novo total ${brl(total(ctById(c.pai)))}`:'Contrato aprovado — liberado para medição','ok']);
+  return true;
+}
 function aprovarContrato(id,k){
-  const c=ctById(id),outro=k==='edu'?'jose':'edu',ad=!!c.pai;
-  const fica=c[outro].s==='ok';
-  openDlg({t:k==='edu'?`Aprovar contratação — ${id}`:`Aprovar condições de pagamento — ${id}`,
-    body:`<div class="conseq">${fica?`Com esta aprovação, o ${ad?'aditivo':'contrato'} fica <b>Aprovado</b>${ad?' e o novo total passa a valer no '+c.pai:' e já pode receber medições'}.`:`Sua aprovação fica registrada. O ${ad?'aditivo':'contrato'} continua aguardando ${outro==='edu'?'Eduardo (contratação)':'José (condições de pagamento)'}.`}</div><div class="muted small">${esc(fornOf(c))} · ${brl(c.valor)}</div>`,
+  const c=ctById(id),outro=k==='edu'?'jose':'edu',ad=!!c.pai,cd=ad&&c.tipo==='cond';
+  const faltaraO=[c[outro].s==='pend'?(outro==='edu'?'Eduardo (contratação)':'José (condições de pagamento)'):null,homPend(c)?'a homologação do fornecedor':null].filter(Boolean);
+  openDlg({t:cd?`Aprovar aditivo de condição — ${id}`:k==='edu'?`Aprovar contratação — ${id}`:`Aprovar condições de pagamento — ${id}`,
+    body:`<div class="conseq">${!faltaraO.length?`Com esta aprovação, o ${ad?'aditivo':'contrato'} fica <b>Aprovado</b>${cd?' e a nova condição passa a valer para as medições ainda não aprovadas. As que já estão no Financeiro mantêm a condição antiga':ad?' e o novo total passa a valer no '+c.pai:' e já pode receber medições'}.`:`Sua aprovação fica registrada. O ${ad?'aditivo':'contrato'} continua aguardando ${faltaraO.join(' e ')}.`}</div><div class="muted small">${esc(fornOf(c))}${cd?` · ${c.de} → ${c.para}`:' · '+brl(ad?c.valor:c.mo+c.mat)}</div>`,
     btns:[{l:'Cancelar'},{l:'Aprovar',cls:'pri',fn:()=>{
       c[k]=ok('08/10');
       const quem=k==='edu'?'Eduardo':'José';
-      const tlTarget=c;
-      tlTarget.tl.push(['08/10',k==='edu'?`${ad?'Aditivo '+c.id:'Contratação'} aprovad${ad?'o':'a'} por Eduardo`:`Condições de pagamento ${ad?'do aditivo ':''}aprovadas por José`,'ok']);
-      if(c.edu.s==='ok'&&c.jose.s==='ok'){c.status='apr';tlTarget.tl.push(['08/10',ad?`Aditivo ${c.id} aprovado — novo total ${brl(total(ctById(c.pai)))}`:'Contrato aprovado — liberado para medição','ok']);toast(`${id} aprovado. ${ad?'Novo total já vale na ficha.':'Já pode receber medições.'}`)}
+      if(!cd)c.tl.push(['08/10',k==='edu'?`${ad?'Aditivo '+c.id:'Contratação'} aprovad${ad?'o':'a'} por Eduardo`:`Condições de pagamento ${ad?'do aditivo ':''}aprovadas por José`,'ok']);
+      if(liberaSePronto(c))toast(`${id} aprovado. ${cd?'A nova condição já vale na ficha.':ad?'Novo total já vale na ficha.':'Já pode receber medições.'}`);
       else toast(`Aprovação de ${quem} registrada em ${id}.`);
       renderAll();
     }}]});
@@ -896,13 +1179,13 @@ function aprovarContrato(id,k){
 function devolverContrato(id,k){
   const c=ctById(id),ad=!!c.pai;
   openDlg({t:`Devolver ${ad?'aditivo':'contrato'} — ${id}`,
-    body:`<div class="conseq">${ad?'O aditivo volta para o solicitante como <b>Rascunho</b> e o total do contrato não muda.':'Volta para o solicitante como <b>Rascunho</b>.'} As aprovações já dadas são descartadas e, ao reenviar, passa de novo pelas duas aprovações.</div>
+    body:`<div class="conseq">${ad?(c.tipo==='cond'?'O aditivo volta para o solicitante como <b>Rascunho</b> e a condição do contrato não muda.':'O aditivo volta para o solicitante como <b>Rascunho</b> e o total do contrato não muda.'):'Volta para o solicitante como <b>Rascunho</b>.'} As aprovações já dadas são descartadas e, ao reenviar, passa de novo pelas aprovações.</div>
       <div class="fld"><label>Motivo (o solicitante vai ver)</label><textarea class="inp" id="dmot" placeholder="Ex.: rever o prazo de entrega"></textarea><div id="dmerr"></div></div>`,
     btns:[{l:'Cancelar'},{l:'Devolver',cls:'pri',fn:()=>{
       const mot=$('#dmot').value.trim();if(!mot){$('#dmot').classList.add('bad');$('#dmerr').innerHTML='<div class="errtxt">Escreva o motivo para o solicitante saber o que ajustar.</div>';return false}
       const quem=k==='edu'?'Eduardo':'José';
-      c.status='rasc';c.edu=pend();c.jose=pend();c.devolvido=mot;
-      c.tl.push(['08/10',`Devolvido por ${quem}: "${esc(mot)}" — voltou para Rascunho`,'dev']);
+      c.status='rasc';c.edu=c.edu.s==='na'?na():pend();c.jose=pend();c.devolvido=mot;
+      c.tl.push(['08/10',`${ad?'Aditivo '+c.id+' devolvido':'Devolvido'} por ${quem}: "${esc(mot)}" — voltou para Rascunho`,'dev']);
       toast(`${id} devolvido para ${c.por}.`);renderAll();
     }}],onOpen:()=>$('#dmot').focus()});
 }
@@ -917,15 +1200,40 @@ function novoAditivo(){
     btns:[{l:'Cancelar'},{l:`Gerar ${nid} e enviar para aprovação`,cls:'pri',fn:()=>{
       const val=parseBR($('#adv').value),mot=$('#adm').value.trim();
       if(!(val>0)||!mot){$('#aderr').innerHTML='<div class="errtxt">Informe o valor e o motivo do aditivo.</div>';return false}
-      CTS.push({id:nid,pai:c.id,valor:val,status:'aguard',edu:pend(),jose:pend(),por:me(),motivo:mot,tl:[['08/10',`Aditivo ${nid} pedido: +${brl(val)} — ${esc(mot)}`,'adit']]});
+      CTS.push({id:nid,pai:c.id,tipo:'valor',valor:val,status:'aguard',edu:pend(),jose:pend(),por:me(),motivo:mot,tl:[['08/10',`Aditivo ${nid} pedido: +${brl(val)} — ${esc(mot)}`,'adit']]});
       toast(`${nid} criado e enviado para Eduardo e José.`);renderAll();
     }}]});
 }
+function novoAditivoCond(){
+  const c=ctById(S.ficha),n=aditivos(c).length+2,nid=`${c.id}-${n}`;
+  const opts=Object.keys(COND).filter(k=>k!==c.cond&&(c.global?COND[k].glob:!COND[k].soGlob));
+  const def=opts.includes('SPOT_UNICO_D15')?'SPOT_UNICO_D15':opts[0];
+  const ms=medsDe(c).filter(m=>m.item==='mo'),naoApr=ms.filter(m=>m.status==='sol'),noFin=ms.filter(m=>m.status==='pagto'||m.status==='pago');
+  const extra=k=>COND[k].exc?`<div class="grid2" style="margin-top:10px"><div class="fld"><label>Condição proposta</label><input class="inp" id="acx" placeholder="Ex.: à vista, ou 30 dias após a NF"></div><div class="fld"><label>Justificativa (obrigatória)</label><textarea class="inp" id="acj" placeholder="Por que a condição padrão não serve" style="min-height:42px"></textarea></div></div>`:'';
+  openDlg({t:`Aditivo de condição de pagamento — ${c.id}`,wide:true,
+    body:`<div class="conseq">Gera o aditivo <b>${nid}</b>, que vai para aprovação do <b>José</b>. Até ele aprovar, a condição atual continua valendo.</div>
+     <div class="grid2"><div class="fld"><label>Condição atual</label>${condCard(c.cond,{semGat:true})}</div>
+      <div class="fld"><label>Nova condição</label><select class="inp" id="acn">${opts.map(k=>`<option value="${k}" ${k===def?'selected':''}>${k} — ${COND[k].nome}</option>`).join('')}</select><div id="acprev" style="margin-top:6px">${condCard(def,{semGat:true})}</div>
+      <div class="hint" style="margin-top:6px">À vista ou 30 dias não estão entre as 12 condições padrão: escolha <b>EXCECAO_APROVACAO</b> e descreva a condição.</div></div></div>
+     <div id="acxw">${extra(def)}</div>
+     <div class="fld" style="margin-top:10px"><label>Motivo</label><textarea class="inp" id="acm" placeholder="Ex.: fornecedor aceitou receber em 15 dias"></textarea></div>
+     <div class="banner" style="margin-top:12px"><span class="dot"></span><div class="small"><div><b>Passa para a nova condição:</b> ${naoApr.length?naoApr.map(m=>m.id).join(', ')+' (ainda não aprovada'+(naoApr.length>1?'s':'')+') e':''} as próximas medições.</div><div style="margin-top:3px"><b>Continuam na condição atual:</b> ${noFin.length?noFin.map(m=>`${m.id} (${MST[m.status][0].toLowerCase()})`).join(', ')+' — já viraram solicitação no Financeiro.':'nenhuma; ainda não há medição enviada ao Financeiro.'}</div>${!c.global&&c.classe!=='mat'?'<div style="margin-top:3px">As parcelas ainda não medidas são recalculadas pela nova condição.</div>':''}<div style="margin-top:3px" class="muted">O antes → depois, quem pediu e quem aprovou ficam na linha do tempo da ficha.</div></div></div>
+     <div id="acerr"></div>`,
+    onOpen:()=>{$('#acn').addEventListener('change',e=>{const k=e.target.value;$('#acprev').innerHTML=condCard(k,{semGat:true});$('#acxw').innerHTML=extra(k)})},
+    btns:[{l:'Cancelar'},{l:`Gerar ${nid} e enviar ao José`,cls:'pri',fn:()=>{
+      const para=$('#acn').value,mot=$('#acm').value.trim(),exc=COND[para].exc;
+      const xt=exc?$('#acx').value.trim():'',xj=exc?$('#acj').value.trim():'';
+      if(!mot||(exc&&(!xt||!xj))){$('#acerr').innerHTML=`<div class="errtxt" style="margin-top:8px">Informe o motivo${exc?', a condição proposta e a justificativa da exceção':''}.</div>`;return false}
+      CTS.push({id:nid,pai:c.id,tipo:'cond',de:c.cond,para,excTxt:xt,justExc:xj,status:'aguard',edu:na(),jose:pend(),por:me(),motivo:mot,
+        tl:[['08/10',`Aditivo de condição ${nid} pedido por ${me()}: ${c.cond} → ${para}${xt?' ('+esc(xt)+')':''}`,'adit']]});
+      toast(`${nid} criado e enviado ao José.`);renderAll();
+    }}]});
+}
 function aprovarMedicao(id){
-  const m=MEDS.find(x=>x.id===id),c=ctById(m.ct),T=total(c),M=medido(c);
+  const m=MEDS.find(x=>x.id===id),c=ctById(m.ct),T=itemT(c,m.item),M=medItem(c,m.item);
   const fin='FIN-0'+S.seq.fin;
   openDlg({t:`Aprovar medição ${id}`,
-    body:`<div class="conseq">Você confirma que o serviço do ${c.id} está executado até <b>${pc(M/T*100)}</b> acumulado. Ao aprovar, o sistema cria a solicitação de pagamento <b>${fin}</b> no Financeiro, no valor de <b>${brl(m.valor)}</b>.</div><div class="small muted">${esc(c.forn)} · ${esc(m.desc)}</div>`,
+    body:`<div class="conseq">Você confirma que ${m.item==='mat'?'o material do '+c.id+' foi entregue':'o serviço do '+c.id+' está executado'} até <b>${pc(M/T*100)}</b> acumulado. Ao aprovar, o sistema cria a solicitação de pagamento <b>${fin}</b> no Financeiro, no valor de <b>${brl(m.valor)}</b>, na condição <span class="code">${m.cond}</span>.</div><div class="small muted">${esc(c.forn)} · ${esc(m.desc)}</div>`,
     btns:[{l:'Cancelar'},{l:'Aprovar e criar solicitação',cls:'pri',fn:()=>{
       S.seq.fin++;m.status='pagto';m.dApr='08/10';m.fin=fin;S.ok6={md:id,fin};
       toast(`Solicitação ${fin} criada no Financeiro.`);renderAll();
@@ -957,24 +1265,45 @@ document.addEventListener('click',e=>{
     case 'f1st':S.f1.st=t.dataset.k;r1();break;
     case 'f1clear':S.f1={st:'todos',cl:'todas'};r1();break;
     case 'ficha':S.ficha=t.dataset.id;S.view.s4='dados';r4();goto('sec4');break;
-    case 'f2cl':F2.classe=t.dataset.k;if(F2.classe==='global')F2.modelo='servico';else if(F2.modelo==='servico')F2.modelo='';F2.err=F2.err.filter(x=>x!=='classe');r2();break;
+    case 'f2tipo':F2.global=t.dataset.g==='1';F2.manual=false;if(F2.global&&!['spot','manut'].includes(F2.classe))F2.classe='spot';F2.err=F2.err.filter(x=>x!=='obra');r2();break;
+    case 'f2cl':F2.classe=t.dataset.k;F2.manual=false;F2.err=F2.err.filter(x=>x!=='classe');r2();break;
+    case 'f2sug':F2.manual=false;F2.cond='';r2right();break;
+    case 'f2docx':F2.docs[t.dataset.k]=!F2.docs[t.dataset.k];F2.err=F2.err.filter(x=>x!==t.dataset.k);r2();break;
+    case 'tbadd':F2.tabela.push(['','','']);r2right();break;
+    case 'tbrm':F2.tabela.splice(+t.dataset.i,1);if(!F2.tabela.length)F2.tabela.push(['','','']);r2right();break;
     case 'f2troca':F2.forn=null;F2.q='';r2();$('#f2q')&&$('#f2q').focus();break;
     case 'f2pick':F2.forn=OMIE.find(o=>o.cnpj===t.dataset.c);F2.err=F2.err.filter(x=>x!=='forn');r2();break;
-    case 'f2doc':{const f=F2,mod=f.classe==='global'?'servico':f.modelo;
-      openDlg({t:'Prévia do documento',wide:true,body:docHtml({id:'CT-0'+S.seq.ct,forn:f.forn,obra:f.obra,classe:f.classe,escopo:f.escopo,valor:parseBR(f.valor),ini:isoBR(f.ini),fim:isoBR(f.fim),parcelas:modeloParcelas(mod,f.ini,f.fim)}),btns:[{l:'Fechar'},{l:'Baixar PDF',cls:'pri',fn:()=>toast('Nesta prévia o download não é gerado.')}]});break}
+    case 'f2doc':{const f=F2,cur=effCond(f);
+      openDlg({t:'Prévia do documento',wide:true,body:docHtml({id:'CT-0'+S.seq.ct,forn:f.forn,global:f.global,obra:f.obra,classe:f.classe,cc:f.cc,escopo:f.escopo,mo:f.classe==='mat'?0:parseBR(f.mo),mat:parseBR(f.mat),ini:isoBR(f.ini),fim:isoBR(f.fim),cond:cur,excTxt:f.excTxt,justEmerg:f.justEmerg,justExc:f.justExc,tabela:f.tabela.filter(r=>r[0].trim()),parcelas:f.global?[]:condParc(cur,isoBR(f.ini),isoBR(f.fim),f.excTxt)}),btns:[{l:'Fechar'},{l:'Baixar PDF',cls:'pri',fn:()=>toast('Nesta prévia o download não é gerado.')}]});break}
     case 'f2rasc':{if(!F2.forn){F2.err=['forn'];r2();break}const c=f2Criar('rasc');F2=f2Blank();toast(`${c.id} salvo como rascunho.`);renderAll();break}
     case 'f2send':{const e=f2Validar();F2.err=e;if(e.length){r2();break}const c=f2Criar('aguard');F2=f2Blank();S.ficha=c.id;S.f3='todos';toast(`${c.id} enviado para aprovação de Eduardo e José.`);renderAll();goto('sec3');break}
     case 'f3':S.f3=t.dataset.k;r3();break;
     case 'apr':aprovarContrato(t.dataset.id,t.dataset.k);break;
     case 'dev':devolverContrato(t.dataset.id,t.dataset.k);break;
-    case 'fdoc':{const c=ctById(S.ficha);openDlg({t:`Documento — ${c.id}`,wide:true,body:docHtml({...c,forn:forn(c.forn),valor:total(c),parcelas:parcelas(c)}),btns:[{l:'Fechar'}]});break}
+    case 'fdoc':{const c=ctById(S.ficha);openDlg({t:`Documento — ${c.id}`,wide:true,body:docHtml({...c,forn:forn(c.forn),mo:moT(c),parcelas:parcelas(c)}),btns:[{l:'Fechar'}]});break}
     case 'adit':novoAditivo();break;
+    case 'aditc':novoAditivoCond();break;
+    case 'aceite':{const c=ctById(S.ficha),r=parcelas(c).find(p=>p.ret);
+      openDlg({t:`Registrar aceite final — ${c.id}`,body:`<div class="conseq">Registra que o serviço foi entregue e aceito no local. A retenção de ${pc2(r.pct)} (${brl(r.v)}) fica liberada para medição.</div><div class="small muted">${esc(c.forn)} · ${esc(c.obra)}</div>`,
+        btns:[{l:'Cancelar'},{l:'Registrar aceite final',cls:'pri',fn:()=>{c.aceiteFinal={d:'08/10',por:me()};c.tl.push(['08/10',`Aceite final registrado por ${me()} — retenção de 10% liberada para medição`,'ok']);toast('Aceite final registrado. A retenção já pode ser medida.');renderAll()}}]});break}
+    case 'medir':F5=f5reset(t.dataset.id);r5();goto('sec5');break;
+    case 'f5item':F5={...f5reset(F5.ct),item:t.dataset.i,nf:F5.nf,anexo:F5.anexo};r5();break;
     case 'f5modo':{const k=f5calc();F5.val=t.dataset.m==='pct'?(k.v?String(Math.round(k.v/k.T*10000)/100).replace('.',','):''):(k.v?k.v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'');F5.modo=t.dataset.m;r5();break}
-    case 'f5usar':{const c=ctById(F5.ct),p=parcelas(c).find(p=>p.st==='Em atraso'||p.st==='Prevista');F5.modo='pct';F5.val=String(Math.round(p.pct*100)/100).replace('.',',');r5();break}
-    case 'f5anexo':F5.anexo=!F5.anexo;r5();break;
-    case 'f5send':{const k=f5calc();if(k.over||!(k.v>0))break;const id='MD-00'+S.seq.md++;
-      MEDS.push({id,ct:F5.ct,valor:Math.round(k.v*100)/100,desc:k.c.classe==='global'?F5.desc.trim():(parcelas(k.c).find(p=>p.st==='Em atraso'||p.st==='Prevista')||{nome:'Medição'}).nome,status:'sol',dSol:'08/10',por:me(),anexo:F5.anexo?'relatorio-fotografico-out.pdf':null});
-      F5={ct:F5.ct,modo:'pct',val:'',desc:'',dserv:'',anexo:false};S.ok6=null;toast(`Medição ${id} enviada para aprovação do Eduardo.`);renderAll();goto('sec6');break}
+    case 'f5usar':{const c=ctById(F5.ct),p=parcelas(c).find(p=>p.st!=='Paga'&&p.st!=='Medida');F5.modo='pct';F5.val=String(Math.round(p.pct*100)/100).replace('.',',');r5();break}
+    case 'f5doc':F5[t.dataset.k]=!F5[t.dataset.k];r5();break;
+    case 'f5at':{const d=$('#atd').value,ds=$('#atds').value.trim(),vv=parseBR($('#atv').value);
+      if(!d||!ds||!(vv>0)){$('#aterr').innerHTML='<div class="errtxt">Informe data, descrição e valor do atendimento.</div>';break}
+      const c=ctById(F5.ct);(c.atend=c.atend||[]).push({d:isoBR(d).slice(0,5),desc:ds,v:vv});toast('Atendimento registrado no mês.');r5();r4();break}
+    case 'f5atrm':{const c=ctById(F5.ct);c.atend.splice(+t.dataset.i,1);r5();r4();break}
+    case 'f5send':{const k=f5calc();if($('#f5send').disabled)break;
+      const c=k.c,C=k.C,G=c.global,id='MD-00'+S.seq.md++;let desc;
+      if(G&&C.tab){const r=c.tabela[F5.svc]||c.tabela[0];desc=`${r[0]} — ${parseBR(F5.qtd)} × ${r[1]}`}
+      else if(G&&C.cons)desc=`Fechamento de ${MESES[HOJE_D.getMonth()].toLowerCase()} — ${c.atend.length} atendimento${c.atend.length>1?'s':''}`;
+      else if(G||F5.item==='mat')desc=F5.desc.trim();
+      else desc=(parcelas(c).find(p=>p.st!=='Paga'&&p.st!=='Medida')||{nome:'Medição'}).nome;
+      MEDS.push({id,ct:c.id,item:F5.item,valor:Math.round(k.v*100)/100,desc,status:'sol',dSol:'08/10',por:me(),anexo:F5.anexo?(F5.item==='mat'?'canhoto-entrega.pdf':'relatorio-fotografico-out.pdf'):null,nf:F5.nf?'nf-'+id.slice(3)+'.pdf':null,aceite:k.needAceite?1:null,cond:F5.item==='mat'?'MATERIAL_MEDIANTE_NF':c.cond,atend:G&&C.cons?c.atend.slice():undefined});
+      if(G&&C.cons)c.atend=[];
+      F5=f5reset(c.id);S.ok6=null;toast(`Medição ${id} enviada para aprovação do Eduardo.`);renderAll();goto('sec6');break}
     case 'mapr':aprovarMedicao(t.dataset.id);break;
     case 'mdev':devolverMedicao(t.dataset.id);break;
     case 'f7':S.f7=t.dataset.k;r7();break;
@@ -987,16 +1316,25 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.act==='f1cl'){S.f1.cl=t.value;r1()}
   else if(t.dataset.act==='fsel'){if(t.value){S.ficha=t.value;S.view.s4='dados'}r4()}
-  else if(t.dataset.f==='obra'||t.dataset.f==='modelo'){F2[t.dataset.f]=t.value;F2.err=F2.err.filter(x=>x!==t.dataset.f);t.classList.remove('bad');r2parc()}
-  else if(t.dataset.f==='ini'||t.dataset.f==='fim'){F2[t.dataset.f]=t.value;r2parc()}
-  else if(t.dataset.f5==='ct'){F5={ct:t.value,modo:'pct',val:'',desc:'',dserv:'',anexo:false};r5()}
+  else if(t.dataset.hom){const c=ctById(t.dataset.hom);c.hom[t.dataset.k]=t.checked;
+    if(!homPend(c)){c.hom.d='08/10';c.hom.por=me();forn(c.forn).hom=true;c.tl.push(['08/10',`Fornecedor homologado por ${me()} — CNPJ, dados bancários e certidões conferidos`,'ok']);
+      toast(liberaSePronto(c)?`${c.id} aprovado. Já pode receber medições.`:'Fornecedor homologado.');}
+    renderAll()}
+  else if(t.dataset.f==='obra'||t.dataset.f==='cc'){F2[t.dataset.f]=t.value;F2.err=F2.err.filter(x=>x!==t.dataset.f);t.classList.remove('bad')}
+  else if(t.dataset.f==='cond'){F2.cond=t.value;F2.manual=t.value!==sugerir(F2);F2.err=F2.err.filter(x=>!['excTxt','justExc','tabela'].includes(x));r2right()}
+  else if(t.dataset.f==='ini'||t.dataset.f==='fim'){F2[t.dataset.f]=t.value;r2right()}
+  else if(t.dataset.f5==='ct'){F5=f5reset(t.value);r5()}
+  else if(t.dataset.f5==='svc'){F5.svc=+t.value;r5()}
   else if(t.dataset.f5==='dserv'){F5.dserv=t.value}
+  else if(t.dataset.f5==='aceite'){F5.aceite=t.checked;u5()}
 });
 document.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='f2q'){F2.q=t.value;f2dd()}
-  else if(t.dataset.f==='escopo'||t.dataset.f==='valor'){F2[t.dataset.f]=t.value;t.classList.remove('bad');if(t.dataset.f==='valor')r2parc()}
-  else if(t.dataset.f5==='val'){F5.val=t.value;u5()}
+  else if(t.dataset.tb){const [i,j]=t.dataset.tb.split(',');F2.tabela[+i][+j]=t.value}
+  else if(['escopo','justEmerg','justExc','excTxt'].includes(t.dataset.f)){F2[t.dataset.f]=t.value;t.classList.remove('bad')}
+  else if(t.dataset.f==='mo'||t.dataset.f==='mat'){F2[t.dataset.f]=t.value;t.classList.remove('bad');if(t.dataset.f==='mo')r2right();else r2parc()}
+  else if(t.dataset.f5==='val'||t.dataset.f5==='qtd'){F5[t.dataset.f5]=t.value;u5()}
   else if(t.dataset.f5==='desc'){F5.desc=t.value;u5()}
 });
 document.addEventListener('click',e=>{if(!e.target.closest('.search')){const d=$('#f2dd');if(d)d.innerHTML=''}},true);
