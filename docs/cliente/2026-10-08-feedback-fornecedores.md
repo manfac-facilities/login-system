@@ -39,3 +39,18 @@ Leitura: entrega única, sem fases e sem corte de escopo — inclui tudo das pla
 ## Instrução do João sobre repositório e EasyPanel (literal, 08/10/2026)
 
 > lembrando, crie um repositorio especifico para esse projeto e faça o que tem que fazer nos outros projetos, mas tanto no github e easypanel tem que ter um projeto sendo apenas gestao de obras
+
+## Respostas do cliente às perguntas 1–8 (literal, colado pelo João em 08/10/2026)
+
+Perguntas enviadas: 1 obra = Gestão de Obras; 2 fornecedores do Omie já homologados; 3 José homologa;
+4 Eduardo aprova o que abriu; 5 emergencial passa pelo diretor?; 6 incluir "à vista" e "30 dias";
+7 NF e fotos ficam na medição, Financeiro recebe link; 8 José Guilherme autoriza consulta diária ao Omie.
+
+> 1-sim
+> 2-sim
+> 3-sim
+> 4-sim
+> 5-normal
+> 6-depende das condições de pgto, mandei exemplos em excel
+> 7-ok, a grande maioria nem nf tem
+> 8-sim
