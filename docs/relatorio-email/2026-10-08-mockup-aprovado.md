@@ -30,3 +30,21 @@ Mais as três correções que o Claude apontou e entram junto:
 Decisões anteriores: `docs/cliente/2026-10-07-relatorio-diario-painel-gerencial-email.md`
 (Locaweb, não Resend; remetente; destinatários = slug `obras` + administradores; 8h BRT).
 Levantamento técnico: `docs/relatorio-email/2026-10-07-levantamento-e-estado.md`.
+
+## Respostas do João após a spec (08/10/2026), literal
+
+> E sim, eu autorizo o agendamento para as 8h01, como você falou. E eu posso fazer o deploy, é só você me falar quando.
+
+> Pode testar a rota mandando só para mim esse e-mail para eu ver como é que ele vai ficar na prática.
+
+> Prossiga com a opção a
+
+Opção A = sem tabela de registro; a falha fica só na resposta do pg_net e no log do servidor.
+
+## Achado do Claude (08/10/2026): variáveis do Compras
+
+`manfac-facilities/compras` (`lib/avisos/configuracao.ts`) já manda e-mail pela Locaweb com
+nodemailer e lê `SMTP_HOST`, `SMTP_PORTA` (padrão 465), `SMTP_USUARIO`, `SMTP_SENHA`,
+`SMTP_REMETENTE`. O hub passa a usar **os mesmos nomes** ("mesmo critério de Compras e
+Financeiro"): o João copia essas linhas do Environment do app `compras` para o
+`manfac-login-system`, e host/porta deixam de ser incógnita.
