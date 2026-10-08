@@ -536,7 +536,7 @@ function r1(){
   const match=c=>(S.f1.st==='todos'||c.status===S.f1.st)&&(S.f1.cl==='todas'||(c.pai?ctById(c.pai).classe:c.classe)===S.f1.cl);
   const rows=[];
   base.forEach(c=>{if(match(c))rows.push(c);aditivos(c).forEach(a=>{if(match(a))rows.push(a)})});
-  const cols='--cols:96px minmax(0,1.6fr) minmax(0,1.25fr) 128px 128px 108px 124px 168px';
+  const cols='--cols:84px minmax(0,1.5fr) minmax(0,1.2fr) 124px 100px 124px 156px';
   let h=`<div class="box-b" style="padding-bottom:4px"><div class="kpis">
     <div class="kpi"><span>Contratado (ativos)</span><b>${brl(T)}</b></div>
     <div class="kpi"><span>Medido</span><b>${brl(M)}</b></div>
@@ -545,20 +545,19 @@ function r1(){
     <div class="kpi ${nAtr?'warn':''}"><span>Com medição em atraso</span><b>${nAtr} contrato${nAtr===1?'':'s'}</b></div></div></div>
   <div class="filters"><div class="chips">${['todos','rasc','aguard','apr','enc'].map(k=>`<button class="chip ${S.f1.st===k?'on':''}" data-act="f1st" data-k="${k}">${k==='todos'?'Todos':CST[k][0]}<span class="n">${cnt(k)}</span></button>`).join('')}</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select class="inp" style="width:auto" data-act="f1cl"><option value="todas">Todas as classificações</option>${Object.entries(CLS).map(([k,n])=>`<option value="${k}" ${S.f1.cl===k?'selected':''}>${n}</option>`).join('')}</select><button class="btn pri" data-act="goto" data-to="sec2">+ Novo contrato</button></div></div>
-  <div class="tbl"><div class="tr head" style="${cols}"><div>Nº</div><div>Fornecedor</div><div>Obra</div><div>Classificação</div><div class="r">Valor total</div><div>% medido</div><div class="r">Saldo</div><div>Status</div></div>`;
+  <div class="tbl"><div class="tr head" style="${cols}"><div>Nº</div><div>Fornecedor</div><div>Obra · classificação</div><div class="r">Valor total</div><div>% medido</div><div class="r">Saldo</div><div>Status</div></div>`;
   if(!rows.length)h+=`<div class="state" style="padding:26px"><p>Nenhum contrato com esses filtros. <button class="btn sm" data-act="f1clear">Limpar filtros</button></p></div>`;
   rows.forEach(c=>{
     if(c.pai){
       const p=ctById(c.pai);
-      h+=`<div class="tr click sub" style="${cols}" data-act="ficha" data-id="${p.id}"><div class="td mono" data-l="Nº">↳ <b>${c.id}</b></div><div class="td full" data-l="Aditivo de valor"><span class="muted small">Aditivo de valor de ${p.id}</span><div class="ell small">${esc(c.motivo)}</div></div><div class="td muted small">${esc(p.obra)}</div><div class="td">${pill(CLS[p.classe],'#94a3b8')}</div><div class="td r mono" data-l="Valor">+ ${brl(c.valor)}</div><div class="td small dim" data-l="% medido">consolidado no ${p.id}</div><div class="td r dim">—</div><div class="td" data-l="Status">${stPill(c)}</div></div>`;
+      h+=`<div class="tr click sub" style="${cols}" data-act="ficha" data-id="${p.id}"><div class="td mono" data-l="Nº">↳ <b>${c.id}</b></div><div class="td full" data-l="Aditivo de valor"><span class="muted small">Aditivo de valor de ${p.id}</span><div class="ell small">${esc(c.motivo)}</div></div><div class="td muted small"><div class="ell">${esc(p.obra)}</div></div><div class="td r mono" data-l="Valor">+ ${brl(c.valor)}</div><div class="td small dim" data-l="% medido">consolidado no ${p.id}</div><div class="td r dim">—</div><div class="td" data-l="Status">${stPill(c)}</div></div>`;
       return;
     }
     const T=total(c),M=medido(c),pct=T?M/T*100:0,atr=atrasos(c);
     h+=`<div class="tr click ${atr.length?'late':''}" style="${cols}" data-act="ficha" data-id="${c.id}">
       <div class="td mono" data-l="Nº"><b>${c.id}</b></div>
-      <div class="td full" data-l="Fornecedor"><div class="ell"><b>${esc(c.forn)}</b></div><div class="small dim">${forn(c.forn).cnpj}</div>${atr.map(a=>`<div class="alert">${esc(a)}</div>`).join('')}</div>
-      <div class="td" data-l="Obra"><div class="ell">${esc(c.obra)}</div></div>
-      <div class="td" data-l="Classificação">${pill(CLS[c.classe],c.classe==='global'?'#a78bfa':'#94a3b8')}</div>
+      <div class="td full" data-l="Fornecedor"><div><b>${esc(c.forn)}</b></div><div class="small dim">${forn(c.forn).cnpj}</div>${atr.map(a=>`<div class="alert">${esc(a)}</div>`).join('')}</div>
+      <div class="td" data-l="Obra · classificação"><div class="ell">${esc(c.obra)}</div><div style="margin-top:3px">${pill(CLS[c.classe],c.classe==='global'?'#a78bfa':'#94a3b8')}</div></div>
       <div class="td r mono" data-l="Valor total">${brl(T)}${aditivos(c).some(a=>a.status==='apr')?'<div class="small dim">com aditivo</div>':''}</div>
       <div class="td" data-l="% medido"><span class="mono">${pc(pct)}</span><div class="mini"><i style="width:${Math.min(pct,100)}%"></i></div></div>
       <div class="td r mono" data-l="Saldo">${brl(T-M)}</div>
