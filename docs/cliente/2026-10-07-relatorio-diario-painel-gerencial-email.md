@@ -22,3 +22,10 @@ cria ai um formato para o gestao de obras disparar por email um relatorio do pai
 
 Dita logo após o Claude mencionar que o comunicado da equipe dependia do Resend. Vale para todo
 envio de e-mail do hub: relatório diário **e** comunicados. O Resend sai do caminho.
+
+## Caixa remetente (08/10/2026), literal
+
+> manfac@manfac.com.br esse é o email, como te mostro a senha
+
+A senha fica fora do repositório: o João grava com `C:\Users\joao-\gravar-locaweb.ps1` em
+`C:\Users\joao-\.locaweb-smtp`.
