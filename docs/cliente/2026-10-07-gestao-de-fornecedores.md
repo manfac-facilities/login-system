@@ -63,3 +63,11 @@ Transcrição literal do texto dos PDFs, na ordem do fluxo.
 - Medição → pagamento: **opção A** — "A, conecta com o Financeiro" (a medição aprovada cria a solicitação de pagamento no Financeiro, que segue para o Omie).
 - Fala literal: "e depois o financeiro conecta com o gestao de obras, mas falamos disso melhor depois, o cliente reclamou que demoramos pra começar ese projeto de gestao de parceiros entao temos que demonstrar progresso"
 - Contexto: "esse é o novo projeto apos o gestao de obras, que ainda estou fazendo ajustes finos"
+
+---
+
+# Publicados para o cliente (08/10/2026)
+
+- Organograma: https://claude.ai/artifact/PS7uEVwGYEycSNWYp9Q1yw — cópia em `2026-10-07-gestao-de-fornecedores/organograma-fornecedores.html`
+- Mockup interativo (rodada 1): https://claude.ai/artifact/YX9ne7eH7i1GsgPLDhxwFm — cópia em `2026-10-07-gestao-de-fornecedores/mockup-fornecedores.html`
+- João: "gostei do mockup do sistema na pratica" — liberou para compartilhar com o cliente. Aprovação do cliente por seção ainda pendente (vem pelo WhatsApp).

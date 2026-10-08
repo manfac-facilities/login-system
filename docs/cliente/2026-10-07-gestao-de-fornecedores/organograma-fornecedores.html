@@ -1,0 +1,223 @@
+<title>Organograma Gestão de Fornecedores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: árvore de cima para baixo — sistema → menus → telas; depois papéis e conexões. Paleta do hub Manfac. */
+:root{
+  --bg:#f4f6fa; --surface:#ffffff; --surface-2:#eaf0f8; --fg:#0d2050; --muted:#4a6080;
+  --line:#c3d0e2; --accent:#f05a28; --accent-soft:#fde3d9; --ok:#1f8a5b; --ok-soft:#dcf2e7;
+  --info:#2c64c9; --info-soft:#e0eafb; --future:#7b6aa8; --future-soft:#ece8f6;
+  --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a1628; --surface:#0d2050; --surface-2:#10264f; --fg:#e8eef8; --muted:#94a3b8;
+  --line:#1e3a5f; --accent:#f05a28; --accent-soft:#3a2016; --ok:#4cc38a; --ok-soft:#12382a;
+  --info:#7aa7f5; --info-soft:#14284d; --future:#b3a5e0; --future-soft:#251f3d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1628; --surface:#0d2050; --surface-2:#10264f; --fg:#e8eef8; --muted:#94a3b8;
+  --line:#1e3a5f; --accent:#f05a28; --accent-soft:#3a2016; --ok:#4cc38a; --ok-soft:#12382a;
+  --info:#7aa7f5; --info-soft:#14284d; --future:#b3a5e0; --future-soft:#251f3d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;margin:0;padding:32px 16px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:48px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--muted);max-width:68ch;margin:8px 0 0}
+section{display:grid;gap:18px}
+.sec-head{display:grid;gap:4px}
+.sec-head p{margin:0;color:var(--muted);max-width:70ch}
+
+/* ---------- árvore ---------- */
+.tree-scroll{overflow-x:auto;padding-bottom:8px}
+.tree{min-width:980px;display:grid;justify-items:center}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.root{background:var(--accent);color:#fff;border:none;padding:16px 28px;text-align:center}
+.root strong{font-family:var(--display);font-size:20px;display:block}
+.root span{font-size:13px;opacity:.9}
+.v{width:2px;height:24px;background:var(--line)}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:28px;width:100%;position:relative;padding-top:24px}
+.branches::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--line)}
+.branch{display:grid;justify-items:center;position:relative}
+.branch::before{content:"";position:absolute;top:-24px;left:50%;width:2px;height:24px;background:var(--line)}
+.menu{background:var(--surface-2);border:2px solid var(--fg);text-align:center;padding:12px 22px;min-width:260px}
+.menu strong{font-family:var(--display);font-size:18px;display:block}
+.menu span{font-size:13px;color:var(--muted)}
+.screens{display:grid;gap:10px;width:100%;margin-top:0}
+.screen{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.num{font-family:var(--mono);font-size:13px;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.screen h3{font-size:15px;font-weight:700}
+.screen p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--fg);border:1px solid var(--line)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.tag.info{background:var(--info-soft);color:var(--info);border-color:transparent}
+.tag.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+
+/* ---------- papéis ---------- */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.role{display:grid;gap:10px;align-content:start}
+.role .who{display:flex;gap:10px;align-items:center}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;color:#fff;background:var(--muted);flex:none}
+.avatar.e{background:var(--accent)} .avatar.j{background:var(--info)}
+.role h3{font-size:16px}
+.role small{color:var(--muted);font-size:13px;display:block}
+.role ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+
+/* ---------- fluxo ---------- */
+.flow{display:grid;gap:14px}
+.lane{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.lane-label{font-family:var(--display);font-weight:700;font-size:15px}
+.steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px}
+.step b{display:block;font-size:11px;font-family:var(--mono);color:var(--muted);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.step.gate{border-color:var(--accent)}
+.step.ext{border-style:dashed}
+.arrow{color:var(--muted);font-family:var(--mono)}
+
+/* ---------- conexões ---------- */
+.systems{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+.sys{display:grid;gap:6px;align-content:start}
+.sys h3{font-size:16px}
+.sys p{margin:0;font-size:13.5px;color:var(--muted)}
+.sys.main{border:2px solid var(--accent)}
+.sys.future{border-style:dashed;background:var(--future-soft)}
+.sys .badge{justify-self:start}
+.tag.fut{background:var(--future-soft);color:var(--future);border-color:var(--future)}
+.links{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.links li{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.links li .mid{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center}
+.links li .r{text-align:right}
+.links li.fut{border-style:dashed}
+
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px;max-width:80ch}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend span{display:flex;gap:6px;align-items:center}
+.sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);background:var(--surface)}
+.sw.acc{border:2px solid var(--accent)} .sw.dash{border:1px dashed var(--muted)}
+
+@media (max-width:820px){
+  .roles,.systems{grid-template-columns:1fr}
+  .lane{grid-template-columns:1fr;gap:6px}
+  .links li{grid-template-columns:1fr;text-align:left}
+  .links li .mid,.links li .r{text-align:left}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Manfac · sistema novo · 08/10/2026</div>
+    <h1>Gestão de Fornecedores</h1>
+    <p class="lede">Como o sistema se organiza: os dois menus e as telas de cada um, quem faz o quê, o caminho de um contrato até o pagamento e com quais sistemas ele conversa.</p>
+  </header>
+
+  <!-- 1. Estrutura -->
+  <section aria-labelledby="s1">
+    <div class="sec-head">
+      <div class="eyebrow">1 · Estrutura</div>
+      <h2 id="s1">Menus e telas</h2>
+      <p>Dois itens no menu. Os números das telas são os mesmos do mockup, para facilitar o retorno por seção.</p>
+    </div>
+    <div class="tree-scroll">
+      <div class="tree">
+        <div class="node root"><strong>Gestão de Fornecedores</strong><span>app própria · entra com o login do hub</span></div>
+        <div class="v"></div>
+        <div class="branches">
+          <div class="branch">
+            <div class="node menu"><strong>Contratação</strong><span>do fornecedor ao contrato aprovado</span></div>
+            <div class="v"></div>
+            <div class="screens">
+              <div class="node screen"><div class="num">1</div><div><h3>Lista de contratos</h3><p>Todos os CTs com obra, classificação, valor, % medido e saldo.</p><div class="tags"><span class="tag">Spot</span><span class="tag">Manutenção</span><span class="tag">Obra</span><span class="tag">Contrato global</span></div></div></div>
+              <div class="node screen"><div class="num">2</div><div><h3>Novo contrato</h3><p>Fornecedor do cadastro do Omie, escopo, prazos e condição de pagamento padrão. Gera o documento pelo template.</p><div class="tags"><span class="tag info">Fornecedor via Omie</span><span class="tag">Nº interno CT-0123</span></div></div></div>
+              <div class="node screen"><div class="num">3</div><div><h3>Aprovação do contrato</h3><p>Duas aprovações separadas. O contrato só vale com as duas.</p><div class="tags"><span class="tag acc">Eduardo: contratação</span><span class="tag acc">José: condições de pgto</span></div></div></div>
+              <div class="node screen"><div class="num">4</div><div><h3>Ficha do contrato</h3><p>Medido × pago × saldo, parcelas, medições em atraso e a linha do tempo completa ligada à obra.</p><div class="tags"><span class="tag">Aditivo de valor → CT-0123-2</span></div></div></div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="node menu"><strong>Medição</strong><span>do serviço executado ao pagamento</span></div>
+            <div class="v"></div>
+            <div class="screens">
+              <div class="node screen"><div class="num">5</div><div><h3>Nova medição</h3><p>Escolhe o contrato e informa o % ou o valor executado. Respeita a condição de pagamento e o SLA do financeiro.</p><div class="tags"><span class="tag acc">Trava em 100% do contratado</span><span class="tag">Contrato global: mede por serviço</span></div></div></div>
+              <div class="node screen"><div class="num">6</div><div><h3>Aprovação da medição</h3><p>Eduardo confere se o % acumulado foi de fato executado.</p><div class="tags"><span class="tag ok">Aprovou → cria a solicitação no Financeiro</span></div></div></div>
+              <div class="node screen"><div class="num">7</div><div><h3>Acompanhamento</h3><p>Cada medição de Solicitada até Paga, com a data real de pagamento que vem do Omie.</p><div class="tags"><span class="tag">Atrasadas em destaque</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Papéis -->
+  <section aria-labelledby="s2">
+    <div class="sec-head">
+      <div class="eyebrow">2 · Pessoas</div>
+      <h2 id="s2">Quem faz o quê</h2>
+    </div>
+    <div class="roles">
+      <div class="node role">
+        <div class="who"><div class="avatar">S</div><div><h3>Solicitante</h3><small>quem está na obra ou na operação</small></div></div>
+        <ul><li>Cadastra o contrato com o fornecedor</li><li>Pede o aditivo de valor</li><li>Abre as medições</li><li>Acompanha até o pagamento</li></ul>
+      </div>
+      <div class="node role">
+        <div class="who"><div class="avatar e">E</div><div><h3>Eduardo</h3><small>aprovador</small></div></div>
+        <ul><li>Aprova a contratação</li><li>Aprova cada medição</li><li>Devolve com motivo quando algo não confere</li></ul>
+      </div>
+      <div class="node role">
+        <div class="who"><div class="avatar j">J</div><div><h3>José · Financeiro</h3><small>aprovador das condições</small></div></div>
+        <ul><li>Aprova as condições de pagamento do contrato</li><li>Recebe as solicitações de pagamento no módulo Financeiro, que já usa hoje</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Fluxo -->
+  <section aria-labelledby="s3">
+    <div class="sec-head">
+      <div class="eyebrow">3 · Caminho</div>
+      <h2 id="s3">Do contrato ao pagamento</h2>
+    </div>
+    <div class="legend"><span><i class="sw acc"></i>precisa de aprovação</span><span><i class="sw dash"></i>acontece em outro sistema</span></div>
+    <div class="flow">
+      <div class="lane"><div class="lane-label">Contratação</div>
+        <div class="steps">
+          <div class="step"><b>Solicitante</b>Cadastra o contrato</div><span class="arrow">→</span>
+          <div class="step gate"><b>Eduardo</b>Aprova a contratação</div><span class="arrow">+</span>
+          <div class="step gate"><b>José</b>Aprova as condições</div><span class="arrow">→</span>
+          <div class="step"><b>Sistema</b>Contrato ativo, saldo controlado</div>
+        </div>
+      </div>
+      <div class="lane"><div class="lane-label">Medição</div>
+        <div class="steps">
+          <div class="step"><b>Solicitante</b>Pede a medição (ex.: 30%)</div><span class="arrow">→</span>
+          <div class="step gate"><b>Eduardo</b>Aprova a medição</div><span class="arrow">→</span>
+          <div class="step ext"><b>Financeiro</b>Solicitação de pagamento</div><span class="arrow">→</span>
+          <div class="step ext"><b>Omie</b>Parcela lançada e paga</div><span class="arrow">→</span>
+          <div class="step"><b>Sistema</b>Registra pago, com a data do Omie</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Conexões -->
+  <section aria-labelledby="s4">
+    <div class="sec-head">
+      <div class="eyebrow">4 · Conexões</div>
+      <h2 id="s4">Com quem o sistema conversa</h2>
+      <p>O sistema tem endereço e publicação próprios. Publicar uma atualização nele não mexe nos outros sistemas do hub, e vice-versa.</p>
+    </div>
+    <div class="systems">
+      <div class="node sys main"><span class="tag acc badge">este sistema</span><h3>Gestão de Fornecedores</h3><p>Contratos, aditivos, medições e saldo.</p></div>
+      <div class="node sys"><span class="tag badge">já no ar</span><h3>Hub Manfac</h3><p>Login único e o card de entrada no painel.</p></div>
+      <div class="node sys"><span class="tag badge">já no ar</span><h3>Financeiro</h3><p>Recebe a solicitação de pagamento e leva ao Omie.</p></div>
+      <div class="node sys"><span class="tag badge">externo</span><h3>Omie</h3><p>Cadastro de fornecedores e pagamento real.</p></div>
+    </div>
+    <ul class="links">
+      <li><span>Hub Manfac</span><span class="mid">login</span><span class="r">Gestão de Fornecedores</span></li>
+      <li><span>Omie</span><span class="mid">cadastro de fornecedores</span><span class="r">Gestão de Fornecedores</span></li>
+      <li><span>Gestão de Fornecedores</span><span class="mid">medição aprovada vira solicitação</span><span class="r">Financeiro</span></li>
+      <li><span>Financeiro → Omie</span><span class="mid">data real de pagamento</span><span class="r">Gestão de Fornecedores</span></li>
+      <li class="fut"><span>Financeiro</span><span class="mid"><span class="tag fut">próxima etapa</span></span><span class="r">Gestão de Obras</span></li>
+    </ul>
+    <p class="note">A ligação entre Financeiro e Gestão de Obras aparece só como próxima etapa. Ela ainda vai ser conversada e não entra nesta primeira versão.</p>
+  </section>
+</div>
