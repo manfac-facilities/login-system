@@ -15,3 +15,10 @@ cria ai um formato para o gestao de obras disparar por email um relatorio do pai
 **Correção do João (07/10/2026), literal:** "ele falou isso sobre o pedido; PRINT do painel operacional da gestao de obras"
 
 **Decisão do João (07/10/2026):** "painel operacional" = a aba **Painel gerencial** (`/obras/painel`). Não existe tela chamada painel operacional.
+
+## Decisão do João (08/10/2026), literal
+
+> lembrando que nao é pra usar o resend e sim o locaweb
+
+Dita logo após o Claude mencionar que o comunicado da equipe dependia do Resend. Vale para todo
+envio de e-mail do hub: relatório diário **e** comunicados. O Resend sai do caminho.
