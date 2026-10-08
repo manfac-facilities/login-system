@@ -55,3 +55,11 @@ Transcrição literal do texto dos PDFs, na ordem do fluxo.
 - a aprovação será feita pelo Eduardo nesse primeiro momento
 
 **4. Registrar esse pagamento na base, de acordo com a data de pagamento real do Omie**
+
+---
+
+# Decisões e falas do João no chat (08/10/2026)
+
+- Medição → pagamento: **opção A** — "A, conecta com o Financeiro" (a medição aprovada cria a solicitação de pagamento no Financeiro, que segue para o Omie).
+- Fala literal: "e depois o financeiro conecta com o gestao de obras, mas falamos disso melhor depois, o cliente reclamou que demoramos pra começar ese projeto de gestao de parceiros entao temos que demonstrar progresso"
+- Contexto: "esse é o novo projeto apos o gestao de obras, que ainda estou fazendo ajustes finos"
