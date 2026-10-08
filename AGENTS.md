@@ -96,6 +96,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Cockpit Manutenção Predial | `/cockpit-manutencao` | Cockpit | `dashboard-manutencao` — **app separada**, responsável: **Jose Guilherme** (`Josemanfac`) |
 | Financeiro | `/financeiro` | **Financeiro** | **sem slug, de propósito** — app separada |
 | Compras | `/compras` | **Compras** | **sem slug, de propósito** — app separada (`manfac-facilities/compras`, tabelas `cmp_*`), no ar desde 07/10/2026; mesmo conceito do Financeiro: qualquer pessoa logada solicita, papéis ficam no próprio módulo |
+| Gestão de Fornecedores | `/fornecedores` | **Gestão de Fornecedores** | **em construção desde 08/10/2026** — app separada (`manfac-facilities/fornecedores`), padrão Compras. Decisão do João: o deploy dela **não pode** atualizar nenhum outro sistema. Fonte: `docs/cliente/2026-10-0{7,8}-*fornecedores*` |
 
 **Financeiro sem slug é decisão, não esquecimento:** qualquer pessoa logada pode pedir um
 pagamento, e o porteiro do módulo só exige sessão. Por isso o card fica fora de `hasSystemAccess`
@@ -122,7 +123,8 @@ e o sistema não entra em `lib/sistemas.ts`. Usa o mesmo banco, com tabelas `fin
   pedindo autorização do João, não falha de credencial.** Não saia investigando token.
 - **Não há webhook de auto-deploy.** Push não sobe nada; alguém precisa clicar em Deploy.
 - **Nunca confie no painel para saber se subiu** — confira o `Last-Modified` dos chunks.
-- Colaboradores: `Josemanfac` (admin), `Mainsis` (admin), `daduu27` (write — é o Duda).
+- Colaboradores: `Josemanfac` (admin), `Mainsis` (admin), `daduu27` (write — é o Duda). Desde
+  08/10/2026 `Mainsis` é **membro admin da organização** e vê todos os repositórios dela.
 
 ## Banco de dados — o mínimo, o resto em `.claude/rules/sql.md`
 

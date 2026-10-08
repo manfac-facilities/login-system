@@ -13,8 +13,10 @@ investigação para ser descoberto. O `AGENTS.md` mantém o resumo e aponta para
   logado no Chrome, a extensão abre o painel por ali (EasyPanel v2.35.0). Todos os apps estão **num
   único projeto `manfac`**: `compras`, `crm-manfac`, `dashboard-manutencao`, `financeiro`,
   `manfac-login-system`, `manfac-site`. O `financeiro` é construído de
-  **`manfac-facilities/financeiro`**, branch `main` (aba Fonte). A conta `Mainsis` desta máquina não
-  enxerga esse repositório.
+  **`manfac-facilities/financeiro`**, branch `main` (aba Fonte). Desde 08/10/2026 a conta `Mainsis` desta máquina é **membro admin da
+  organização `manfac-facilities`** e enxerga todos os repositórios: `login-system`, `compras`,
+  `financeiro`, `crm-manfac`, `dashboard-manutencao` e `fornecedores` (criado em 08/10/2026, vazio,
+  para a app Gestão de Fornecedores).
 - **Não há acesso SSH funcional:** a chave `~/.ssh/manfac_vps` recebe `Permission denied (publickey)`.
 - **Quem clica em Deploy é o João, não o Claude.** Abrir a URL pela extensão do Chrome cai na tela
   de login do EasyPanel — a sessão do João não chega nesse contexto, e digitar senha é proibido.
