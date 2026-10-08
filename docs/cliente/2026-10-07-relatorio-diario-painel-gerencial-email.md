@@ -33,3 +33,10 @@ A senha fica fora do repositório: o João grava com `C:\Users\joao-\gravar-loca
 ## Destinatários (08/10/2026), literal
 
 > quem deve receber é todo mundo que tem acesso ao gestao de obras
+
+## Decisão do João sobre administradores (08/10/2026), literal
+
+> isso, mande so para quem gestao de obras marcado e os adms (o adm do hub sou eu e o cliente)
+
+Ou seja: destinatários = quem tem o slug `obras` com `has_access = true` **mais** todos os
+administradores do hub (`hub_user_roles`). Hoje os administradores são o João e o cliente.
