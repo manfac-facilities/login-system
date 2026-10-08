@@ -65,3 +65,11 @@ Prazo assumido: entregar a troca do número no ar até a madrugada de 07→08/10
 ## Requisito do João (07/10/2026), literal
 
 > o sistema deve contemplar o historico desse numero de os, para entender a trilha, o que foi feito, por qm
+
+## Decisão do João (08/10/2026), literal
+
+> por hora ignore a parte
+
+Referindo-se a duas linhas da tabela que o Claude apresentou: "Histórico: o que mudou, de qual
+número para qual, quando e por quem" e "'Te mando tudo pronto e o que tem que fazer' (sua promessa)".
+Ou seja: histórico do número da OS e instrução de uso ao cliente ficam fora desta entrega, por ora.
