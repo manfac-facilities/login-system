@@ -31,3 +31,7 @@ para depois, e às 2 fases (Contratação / Medição+Financeiro) recomendadas e
 
 Leitura: entrega única, sem fases e sem corte de escopo — inclui tudo das planilhas Zeev
 (`2026-10-08-condicoes-pagamento-zeev.md`).
+
+## Resposta do cliente às perguntas de aprovação e Zeev (relatada pelo João, literal, 08/10/2026)
+
+> o cliente falou que nao entendeu a pergunta e disse que tudo isso já colocamos no organograma
