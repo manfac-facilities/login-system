@@ -48,3 +48,15 @@ nodemailer e lê `SMTP_HOST`, `SMTP_PORTA` (padrão 465), `SMTP_USUARIO`, `SMTP_
 `SMTP_REMETENTE`. O hub passa a usar **os mesmos nomes** ("mesmo critério de Compras e
 Financeiro"): o João copia essas linhas do Environment do app `compras` para o
 `manfac-login-system`, e host/porta deixam de ser incógnita.
+
+## Teste real e decisões (09/10/2026), literal
+
+> Achei que o print está sem resolução
+> Principalmente dando zooom
+
+(Resposta: imagem passou a sair em 2x — 1800 px — `0dd9ab5` no branch `relatorio-email`.)
+
+> ficou bom, mantém as 28 e aprova a nova tentativa
+
+= e-mail de teste aprovado; bloco Equipes com todas as equipes (28 hoje); se a Locaweb recusar
+um envio, uma nova tentativa automática depois de 1 minuto.
