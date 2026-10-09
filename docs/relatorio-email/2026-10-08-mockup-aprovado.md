@@ -60,3 +60,9 @@ Financeiro"): o João copia essas linhas do Environment do app `compras` para o
 
 = e-mail de teste aprovado; bloco Equipes com todas as equipes (28 hoje); se a Locaweb recusar
 um envio, uma nova tentativa automática depois de 1 minuto.
+
+## Deploy e disparo extra (09/10/2026), literal
+
+> cliquei em deploy
+
+> depois de ligar o agendamento quero que faça um disparo as 11:10 para cobrir o dia de hoje, e nos próximos o disparo acontece normalmente
