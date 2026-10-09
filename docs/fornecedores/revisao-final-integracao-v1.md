@@ -188,3 +188,64 @@ O que foi conferido e está correto:
   §1.2 e está correto pela regra, mas tira o duplo controle se o cliente juntar os papéis.
 - O código de pagamento (linha do boleto ou copia-e-cola) é texto livre do solicitante. Quem confere o beneficiário é o
   Financeiro, como no fluxo direto de lá.
+
+---
+
+## Delta c1bed12 (b706cd8..c1bed12, revisão de 09/10/2026)
+
+**Veredito do delta: APROVAR. Nenhum bloqueante.** B-1 e B-2 do laudo acima estão resolvidos.
+
+**Checks (em série):** lint ok (130 arquivos) · `tsc` sem erros · vitest **34 arquivos, 579 testes, todos passando**.
+
+### 006: carga inicial (B-1)
+- **Ambiente:** `ambiente = 'producao'` está fixo no SQL e não depende de `FRN_AMBIENTE_CATALOGO`. Entram só os
+  fornecedores `ativo` com documento de 11 ou 14 dígitos. O catálogo de teste nunca entra.
+- **Sobrescrita:** a carga usa `on conflict do nothing` sem alvo, o que cobre as duas unicidades (`omie_codigo` e
+  `documento`). Quem já existe como `primeiro_uso` (não homologado) **continua não homologado**. Não há `update`. Fora
+  de `frn_fornecedores`, só lê `fin_catalogo_fornecedores` e cria uma tabela temporária da sessão.
+- **Rodar de novo:** o arquivo não faz nada se já existir alguma linha `carga_inicial`. Assim, rodar de novo depois do
+  go-live não homologa quem entrou depois.
+- **Nada bloqueante.** Dois cuidados de operação:
+  - **D-1 (baixa):** a trava de "já rodou" é a existência de linha `carga_inicial`. Se a primeira execução carregar
+    **zero** fornecedores (catálogo de produção vazio ou fora de sincronia naquele momento), não fica marca nenhuma, e a
+    verificação ainda dá OK. Uma segunda execução, semanas depois, homologaria todo mundo que entrou no Omie nesse
+    intervalo.
+    **Correção:** abortar com `raise exception` quando carregar 0, ou gravar a marca numa tabela. Na operação: conferir
+    o NOTICE "N fornecedor(es) carregado(s)" e só aceitar N > 0.
+  - **D-2 (operação):** "quem está no Omie no go-live" vale para o momento em que a 006 roda. Ela precisa rodar junto
+    com a instalação, não depois. Fornecedor que entra no Omie entre o go-live e a 006, e ainda não foi usado, nasce
+    homologado.
+
+### Prazo da exceção (B-2)
+- **Burla pelo navegador: não achei.** O prazo do contrato só é gravado em `rascunho` e pelo dono
+  (`frn_salvar_contrato`). O envio exige 0–120 dias (`frn_enviar_contrato`, e o CHECK nas três tabelas). A tela de
+  aprovação mostra o prazo ao José antes de ele aprovar (`_cartao.tsx`).
+  - Na medição, o prazo é tirado do **contrato no banco** (`case when k.modo = 'excecao' then c.excecao_dias`). Nunca
+    vem do corpo da action.
+  - No aditivo, o prazo vem da tela, mas a função valida 0–120, e ele só vale depois da aprovação do José, que vê o
+    prazo no cartão.
+- **Medição já aprovada não muda.** O aditivo de condição só atualiza `condicao_codigo` e `excecao_dias` das medições
+  `solicitada`. As que estão `aprovada`, `pagamento_solicitado` ou `paga` mantêm o prazo.
+- **Integração:** `deLinha` lê `excecao_dias` **da medição** quando o modo é `excecao`. É a mesma fonte que a SQL
+  `frn_dias_pagamento(m.condicao_codigo, m.excecao_dias)` usa.
+
+### Trava nova em `frn_registrar_solicitacao_fin`
+- **Não bloqueia envio legítimo.** O TS manda `max(data_SP(aprovado_em) + dias, primeira janela)`, sempre maior ou
+  igual à trava do banco, `data_SP(aprovado_em) + coalesce(dias, 0)`:
+  - mesmo fuso dos dois lados (`America/Sao_Paulo`);
+  - mesma fonte de dias;
+  - o timestamp com microssegundos é lido corretamente pelo `Date`.
+- **Casos de borda:**
+  - D+0 e envio depois das 17h só empurram o TS **para frente** (janela seguinte).
+  - Reenvio dias depois recalcula para uma data maior.
+  - Medição `aprovada` antes do delta, com exceção e `excecao_dias` NULL: dá `coalesce` 0, que é a trava antiga.
+
+### Achados novos (backlog)
+- **D-3 (verificar antes de aplicar):** as colunas `excecao_dias` entraram dentro do `create table if not exists` de
+  003/004. Num banco onde 003/004 **já rodaram** na versão b706cd8, a coluna **não é criada**, e
+  `frn_salvar_contrato`/`frn_solicitar_medicao` passam a falhar quando executadas (falha fechada, sem gravar nada).
+  Não achei registro de aplicação em produção. Se algum banco (produção ou homologação) já tiver recebido a b706cd8,
+  acrescentar `alter table … add column if not exists excecao_dias …` antes da 005.
+- **D-4 (baixa, funcional):** não dá para mudar só o prazo de uma exceção (7 → 30 dias) por aditivo, porque o CHECK
+  `frn_ad_cond` exige `condicao_de <> condicao_para`. Hoje é preciso passar por outra condição. Pode ser o caso exato do
+  cliente ("contrato global … mudar pra pagar à vista ou com 30 dias"), se o contrato já estiver em exceção.
