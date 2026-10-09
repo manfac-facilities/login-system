@@ -1,5 +1,5 @@
 -- Relatório diário do Painel gerencial por e-mail.
--- ESTADO: NÃO APLICADO.
+-- ESTADO: APLICADO em 09/10/2026 ~10:55 BRT (4/4 OK). Disparo extra único às 11:10 de 09/10 (job obras-relatorio-extra-0910, se auto-remove).
 -- Spec: docs/relatorio-email/2026-10-08-spec.md (§9)
 -- Plano: docs/relatorio-email/2026-10-08-plano.md (T6, T14)
 --

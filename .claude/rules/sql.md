@@ -135,6 +135,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 | `obras-fonte` | aplicado em 2026-09-14 (frente **D1 do Duda**, commit `1c23dd3`). Coluna `fonte` nullable, sem default, com o check `obras_obra_fonte_check` aceitando só `'field'` |
 | `obras-field-reconciliacao` | aplicado em 2026-09-14 (frente **D2 do Duda**). Colunas `field_id`, `field_ausente_desde` e `field_ausente_em`; índice `obras_obra_field_id_unico` (parcial); checks `obras_obra_field_id_nao_vazio` e `obras_obra_alerta_field_tem_suspeita` |
 | `obras-sync-execucao` | aplicado em 2026-09-14 (frente **D3 do Duda**), função `obras_iniciar_sync_execucao`; os dois jobs de cron (arquivo `sdd-sql-obras-cron-jobs.sql`) entraram em 2026-09-16 |
+| `obras-relatorio-diario-cron` | aplicado em 2026-10-09 (4/4 OK): job `obras-relatorio-diario` (`1 11 * * *` = 08:01 BRT) → `POST /api/obras/relatorio-diario`, arquivo `sdd-sql-obras-relatorio-diario-cron.sql` |
 | `obras-historico` | **aplicado em 2026-09-20.** Tabela `obras_historico` + RPC `obras_aplicar_alteracao` |
 | `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** RPC `obras_remarcar_inicio`, colunas `detalhe` e `registrado_por` em `obras_remarcacao`. Verificação devolveu 18 linhas, todas `OK` |
 | `obras-desfazer-diario-atomico` | **aplicado em 2026-09-21.** RPC `obras_desfazer_diario` (security invoker, depende da RLS `obras access`). Verificação 3/3 `OK`; testada com rollback: sem acesso levanta e não apaga, dia sem diário preserva a tarefa, com acesso apaga diário e tarefa aberta e preserva a respondida |
@@ -148,7 +149,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 O banco tem `field-sync-every-5-min`, `financeiro-producao-catalogo` e
 `financeiro-producao-lancamento`. **Não mexa** sem saber de quem são.
 
-Os nossos são `obras-field-incremental` (`*/5 * * * *`) e `obras-field-completa` (`2 6 * * *`).
+Os nossos são `obras-field-incremental` (`*/5 * * * *`), `obras-field-completa` (`2 6 * * *`) e `obras-relatorio-diario` (`1 11 * * *`, 08:01 BRT — e-mail do Painel gerencial pela Locaweb).
 A completa saiu de `5 6` em 20/09/2026 porque colidia com a incremental, perdia a trava e morria
 em silêncio — não rodou nenhuma vez entre 17 e 20/09. **Ao agendar job novo, não use um minuto
 múltiplo de 5.**
