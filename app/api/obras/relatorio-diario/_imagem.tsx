@@ -1484,13 +1484,22 @@ export async function carregarFontes() {
   ]
 }
 
+/** Pixels por px de layout: o e-mail mostra a imagem a ~600 px, e a 1x ela borra com zoom ou em tela retina. */
+export const ESCALA = 2
+
 /** PNG do painel. Qualquer erro (inclusive dentro do stream) rejeita a promessa. */
 export async function gerarPng(painel: Painel, lidoEm: string): Promise<Buffer> {
   const fonts = await carregarFontes()
-  const res = new ImageResponse(ImagemDoPainel({ painel, lidoEm }), {
-    width: LARGURA,
-    height: alturaDaImagem(painel),
-    fonts,
-  })
+  const altura = alturaDaImagem(painel)
+  const res = new ImageResponse(
+    (
+      <div style={{ display: 'flex', width: LARGURA * ESCALA, height: altura * ESCALA }}>
+        <div style={{ display: 'flex', width: LARGURA, height: altura, transform: `scale(${ESCALA})`, transformOrigin: 'top left', flexShrink: 0 }}>
+          {ImagemDoPainel({ painel, lidoEm })}
+        </div>
+      </div>
+    ),
+    { width: LARGURA * ESCALA, height: altura * ESCALA, fonts }
+  )
   return Buffer.from(await res.arrayBuffer())
 }

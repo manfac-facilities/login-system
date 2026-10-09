@@ -1,7 +1,7 @@
 /**
  * Prévia da imagem do e-mail diário (spec §11.1): gera os PNGs de verdade, com
  * o `ImageResponse` de `next/og`, nos painéis fictícios "dia normal", "quase
- * vazio" e "valor grande", e confere assinatura PNG + IHDR (900 × alturaDaImagem).
+ * vazio" e "valor grande", e confere assinatura PNG + IHDR (900·ESCALA × alturaDaImagem·ESCALA).
  *
  * Existe porque o render não roda dentro do jest: o `next/og` carrega o
  * `@vercel/og` por `import()` dinâmico de um módulo ESM, e o jest (CommonJS)
@@ -37,11 +37,11 @@ for (const [nome, painel] of [
   const ihdr = png.subarray(12, 16).toString('latin1') === 'IHDR'
   const largura = png.readUInt32BE(16)
   const altura = png.readUInt32BE(20)
-  const esperada = img.alturaDaImagem(painel)
-  const ok = assinatura && ihdr && largura === 900 && altura === esperada
+  const esperada = img.alturaDaImagem(painel) * img.ESCALA
+  const ok = assinatura && ihdr && largura === 900 * img.ESCALA && altura === esperada
   if (!ok) falhou = true
   await writeFile(join(saida, nome), png)
-  console.log(`${ok ? 'OK ' : 'FALHOU'} ${nome}: ${largura} × ${altura} (esperado 900 × ${esperada}), ${png.length} bytes`)
+  console.log(`${ok ? 'OK ' : 'FALHOU'} ${nome}: ${largura} × ${altura} (esperado ${900 * img.ESCALA} × ${esperada}), ${png.length} bytes`)
 }
 console.log(`PNGs em ${saida}`)
 process.exit(falhou ? 1 : 0)
