@@ -22,7 +22,7 @@ Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — na
 
 | # | Etapa | Quem | Tempo |
 |---|---|---|---|
-| 1 | Liberar a permissão de banco de produção no Claude Code (o auto mode bloqueia leitura/escrita e até o script de aplicação) | João | 5 min |
+| 1 | Liberar a permissão de banco de produção no Claude Code (o auto mode bloqueia leitura/escrita e até o script de aplicação). Como: **Shift+Tab** para sair do auto mode e aprovar cada comando (~10) com um clique. Confirmar também se o João ainda tem acesso ao EasyPanel (código estava com o cliente) | João | 5–15 min |
 | 2 | Aplicar em `iyytcavcgukfjnjjrerx`: fornecedores `supabase/hub-install/001…006` (007 é o cron, desligado) + financeiro 023 e 024 (025 é o cron, desligado). Conferir OK/FALHOU; a 006 roda UMA vez e precisa carregar N > 0 fornecedores. Teste de concorrência (CA-5.2) com dados de teste apagados depois. Atualizar a tabela de migrations em `.claude/rules/sql.md` | Claude | ~1 h |
 | 3 | Financeiro: merge #1 → #2 → #3 na `main`; Environment `FORNECEDORES_INTEGRACAO_SECRET` (≥ 32, gerado na hora); Deploy só do financeiro | João clica, Claude confere | ~30 min |
 | 4 | Fornecedores: merge #1 e #2 na `main`; criar a app no EasyPanel pelo roteiro (HTTPS ligado, porta 80, caminho `/fornecedores`, variáveis da tabela + `FRN_CRON_SECRET`); Deploy | João ou cliente | 30–60 min |
