@@ -150,3 +150,11 @@ Isso **não** é borda improvável: é o caminho normal de qualquer obra que ter
 **Feito em 21/09/2026** (ver B1 marcado ✅ acima): `mudarEtapaAction` passou a gravar os cinco
 marcos ao trocar de etapa, e o backfill para as obras já paradas está escrito (não aplicado) em
 `docs/obras/2026-09-21-preencher-marcos-retroativos.sql`.
+
+## Relatório diário por e-mail (08/10/2026) — backlog da revisão independente
+
+- `app/api/obras/relatorio-diario/route.ts`: `SMTP_PORTA` não numérica vira `NaN` → 502 em todos os envios (falha fechada, sem validação explícita).
+- `route.ts`: transporte sem `pool`; com muitos destinatários o envio pode passar dos 60 s do `pg_net` (os e-mails saem, o registro fica `timed_out`). Se acontecer: `pool: true` ou timeout maior no SQL.
+- `route.ts`: resposta 502 lista os e-mails que falharam; fica em `net._http_response` (só legível com acesso ao banco).
+- A rota lê com service role, a tela com a sessão (RLS). Números só batem se a RLS de `obras_*` não esconder linhas de quem tem `obras` — não medido.
+- Locaweb devolveu `451` temporário no 1º envio de teste (08/10, local); o 2º passou. Sem retry por decisão de escopo — aguardando o João sobre uma nova tentativa.

@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // A imagem do relatório diário lê os TTF em runtime (`readFile` em `_imagem.tsx`);
+  // o rastreio de arquivos não enxerga esse caminho sozinho.
+  outputFileTracingIncludes: {
+    '/api/obras/relatorio-diario': ['./app/api/obras/relatorio-diario/_fontes/*.ttf'],
+  },
   async headers() {
     return [
       {

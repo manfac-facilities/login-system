@@ -7,12 +7,8 @@
  * monta o painel inteiro em `montarPainel` (função pura, testada) e entrega o
  * resultado pronto à tela. Cliente, mês e comparação chegam pela URL.
  *
- * Leituras (sem N+1): obras, diário, tarefas e remarcações — cada uma inteira,
- * em páginas, porque o PostgREST corta a resposta em 1.000 linhas e o diário
- * passa disso em poucas semanas.
- *
- * `select('*')` nas obras DE PROPÓSITO: a coluna `cliente` vem de outra frente
- * e pode ainda não existir no banco. Pedir a coluna pelo nome derrubaria a tela.
+ * A leitura das quatro tabelas (paginada, com `select('*')` nas obras de
+ * propósito) vive em `_leitura.ts`, compartilhada com o relatório por e-mail.
  */
 
 import { createClient } from '@/lib/supabase/server'
@@ -20,17 +16,8 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../_lib/tipos'
 import { EstadoVazio } from '../_ui/primitivos'
-import { lerTodasAsLinhas } from '../_lib/ler-paginas'
-import {
-  MESES_LONGOS,
-  montarPainel,
-  somaMeses,
-  type Comparacao,
-  type LinhaDiario,
-  type LinhaRemarcacao,
-  type LinhaTarefa,
-  type ObraPainel,
-} from './_calculos'
+import { MESES_LONGOS, montarPainel, somaMeses, type Comparacao } from './_calculos'
+import { lerEntradaDoPainel } from './_leitura'
 import PainelGerencial from './_painel'
 
 export const dynamic = 'force-dynamic'
@@ -54,29 +41,8 @@ export default async function PainelPage({ searchParams }: Props) {
     )
   }
 
-  /** Lê a tabela inteira em páginas estáveis (ordenadas por id). */
-  async function lerTudo<T>(tabela: string, colunas: string): Promise<T[] | null> {
-    const { data, error } = await lerTodasAsLinhas<T>(async (de, ate) => {
-      const r = await supabase
-        .from(tabela)
-        .select(colunas)
-        .order('id', { ascending: true })
-        .range(de, ate)
-      return { data: r.data as T[] | null, error: r.error }
-    })
-    return error ? null : data
-  }
-
-  const [obras, diario, tarefas, remarcacoes] = await Promise.all([
-    lerTudo<ObraPainel>('obras_obra', '*'),
-    lerTudo<LinhaDiario>('obras_diario', 'obra_id, data, andou, motivo, foto_path'),
-    lerTudo<LinhaTarefa>('obras_tarefa', 'obra_id, situacao, prazo, resposta_em'),
-    lerTudo<LinhaRemarcacao>('obras_remarcacao', 'obra_id, data, de, para, created_at'),
-  ])
-
-  // Um número zerado por falha de leitura é pior que número nenhum: passaria
-  // por "não faturamos nada". Qualquer leitura que falhe derruba o painel todo.
-  if (!obras || !diario || !tarefas || !remarcacoes) {
+  const entrada = await lerEntradaDoPainel(supabase)
+  if (!entrada.ok) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <EstadoVazio>
@@ -98,7 +64,7 @@ export default async function PainelPage({ searchParams }: Props) {
   const cmp: Comparacao = params.cmp === 'yoy' ? 'yoy' : 'prev'
 
   const painel = montarPainel(
-    { obras, diario, tarefas, remarcacoes, hoje },
+    { obras: entrada.obras, diario: entrada.diario, tarefas: entrada.tarefas, remarcacoes: entrada.remarcacoes, hoje },
     { cliente: params.cliente || null, mes, cmp }
   )
 
