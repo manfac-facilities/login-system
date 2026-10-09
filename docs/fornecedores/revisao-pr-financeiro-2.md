@@ -56,3 +56,27 @@ Não achei cenário alcançável de dano a dado ou dinheiro, de acesso indevido 
 
 ## Backlog (não volta ao dev como bloqueio)
 B1 trava entre execuções · B2 `cNatureza` estrito · B3 soma × máximo de `nValPago` (medir) · B4 divergência com o teto · B5 código não único · B6 `on delete cascade` · B7 observar 07:15/07:17 · B8 lint barrando.
+
+## Delta bcd82c8/302f4f5 (revisão de 09/10/2026)
+
+Veredito do delta: **APROVADO, sem bloqueante.** Os dois PRs passaram no CI: financeiro run 37916454164 no head bcd82c8, e fornecedores com os 2 jobs `verificar` passando no head 302f4f5.
+
+### financeiro bcd82c8: natureza P estrita e trava
+
+**Natureza:**
+- `sincronizar.ts` agora usa `d.cNatureza?.trim().toUpperCase() !== "P"`, então linha sem natureza ou com outra natureza é ignorada.
+- `registrar` só recebe o que passa por `mapearMovimento`. Não existe outro caminho que grave sem P. Isso fecha o B2.
+
+**Trava:**
+- **Duas execuções ao mesmo tempo:** a trava é um `insert ... on conflict (ambiente) do update ... where t.ate <= now()`, feito numa instrução só. Com dois pedidos simultâneos, o segundo espera o lock da linha, reavalia o `where` com o prazo já renovado e recebe 0 linhas, ou seja, `false`. Duas execuções não pegam a trava juntas.
+- **Trava presa para sempre:** não acontece. A trava é um arrendamento com prazo, e `p_minutos` só aceita valores de 1 a 60 (o código usa 10). O `destravar` roda num `finally`. Se o processo morrer, a trava vence sozinha no prazo. A tabela só é escrita pelas duas funções.
+- **Grants e search_path:** tabela com RLS ligada, sem policy e com `revoke all` de anon e authenticated. As duas funções têm `revoke` de public, anon e authenticated e `grant` só para `service_role`, com `set search_path = public, pg_temp`. Não são `security definer`. A verificação final cobre isso em 2 linhas novas, que somam 15 com as 13 anteriores.
+- **Backlog B9: a trava pode vencer antes de a rodada acabar.** O pior caso é 10 chamadas × timeout de 60 s do cliente (`tentativas: 1`, mais a pausa de 350 ms), um pouco mais de 10 minutos, maior que a trava de 10 minutos. Além disso, `destravar` libera sem conferir quem é o dono. Com o Omie pendurado, a execução A pode passar do prazo, a B pega a trava, e o `destravar` de A libera a trava de B. No máximo duas rodadas se sobrepõem, o que dá 20 chamadas, o mesmo pior caso de antes do delta. Correção barata: trava de 15 minutos, ou `timeoutMs` menor, mais um token do dono no `destravar`.
+
+### fornecedores 302f4f5: 003/004 reaplicáveis
+
+Nenhum CHECK ficou mais frouxo:
+- `frn_ad_cond` e `frn_md_fin_coerente` foram recriados com texto idêntico ao que estava dentro do `create table` no commit anterior. O `frn_ad_cond` relaxado, que aceita a mesma condição quando há `excecao_dias`, já era a versão vigente antes do commit.
+- A lista de tipos de `frn_eventos_tipo_check` é idêntica: comparei normalizando espaços. O nome bate com o nome automático que o Postgres dá à check de coluna, então o `drop ... if exists` remove a versão antiga.
+- As colunas acrescentadas com `add column if not exists` levam as mesmas checks e o mesmo `unique` do `create table`.
+- **Observação B10:** sobre uma base antiga com uma medição já solicitada (`fin_ref` preenchido), recriar `frn_md_fin_coerente` falha, porque as colunas novas chegam nulas, e a transação desfaz tudo. Isso trava a aplicação, não afrouxa a regra. Ressalva: se uma base antiga já tiver alguma dessas colunas criada à mão sem check, o `add column if not exists` pula e a check não entra. Não é o caso conhecido.
