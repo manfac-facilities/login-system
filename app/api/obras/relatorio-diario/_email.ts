@@ -1,4 +1,4 @@
-import { R, fd } from '../../../obras/painel/_ui'
+import { R } from '../../../obras/painel/_ui'
 
 export const LINK_PAINEL = 'https://hub.manfac.com.br/obras/painel'
 export const CID_IMAGEM = 'painel-gerencial@manfac'
