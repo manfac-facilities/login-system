@@ -29,10 +29,11 @@ import {
 import { gerarPng } from './_imagem'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 180
 
 const LOG = '[relatorio-diario]'
 const TIMEOUT_SMTP_MS = 15_000
+export const ESPERA_NOVA_TENTATIVA_MS = 60_000
 
 function erro(status: number, corpo: Record<string, unknown>, motivo: string) {
   console.error(`${LOG} ${status} ${motivo}`)
@@ -170,16 +171,30 @@ export async function POST(request: Request) {
     ],
   }
 
-  // Um e-mail por destinatário (ninguém vê a lista), em sequência, sem retry.
+  // Um e-mail por destinatário (ninguém vê a lista), em sequência. Quem falhou ganha UMA nova
+  // tentativa 1 minuto depois: a Locaweb já devolveu 451 temporário num teste (decisão do João, 09/10).
   const destinos = somentePara !== null ? [somentePara] : destinatarios
   let enviados = 0
-  const falhas: { para: string; erro: string }[] = []
+  let falhas: { para: string; erro: string }[] = []
   for (const para of destinos) {
     try {
       await transporte.sendMail({ ...mensagemBase, to: para })
       enviados++
     } catch (e) {
       falhas.push({ para, erro: codigoDoErroSmtp(e) })
+    }
+  }
+  if (falhas.length > 0) {
+    await new Promise((r) => setTimeout(r, ESPERA_NOVA_TENTATIVA_MS))
+    const pendentes = falhas
+    falhas = []
+    for (const { para } of pendentes) {
+      try {
+        await transporte.sendMail({ ...mensagemBase, to: para })
+        enviados++
+      } catch (e) {
+        falhas.push({ para, erro: codigoDoErroSmtp(e) })
+      }
     }
   }
 

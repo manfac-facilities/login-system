@@ -6,7 +6,7 @@
 -- 1 11 * * * = 08:01 em Brasília (pg_cron em UTC; Brasil sem horário de verão desde 2019).
 -- Minuto 1 (não 0) por decisão do João em 08/10/2026 (ajuste do coordenador, item 2).
 -- Não disputa trava com a sincronização (rota e tabelas diferentes, a rota só LÊ).
--- timeout 60 s: a rota é síncrona de propósito — o status e o corpo da resposta
+-- timeout 180 s (render ~15 s + envio sequencial + 1 nova tentativa após 60 s): a rota é síncrona de propósito — o status e o corpo da resposta
 -- ficam em net._http_response e são o registro do envio (ver spec §3.5).
 -- PRÉ-REQUISITO: OBRAS_CRON_SECRET no Vault (já existe desde 16/09) e as
 -- variáveis SMTP_* no EasyPanel com deploy feito. Sem SMTP a rota responde 503.
@@ -38,7 +38,7 @@ select cron.schedule(
         'Authorization', 'Bearer ' || decrypted_secret
       ),
       body := '{}'::jsonb,
-      timeout_milliseconds := 60000
+      timeout_milliseconds := 180000
     )
     from vault.decrypted_secrets
     where name = 'OBRAS_CRON_SECRET'

@@ -290,19 +290,52 @@ describe('envio', () => {
     nadaEnviado()
   })
 
-  it('falha no meio: os outros saem, 502 só com o código do erro, sem retry', async () => {
+  it('falha no meio duas vezes: os outros saem, 1 nova tentativa após 1 min, 502 só com o código', async () => {
+    const espera = jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void) => {
+      fn()
+      return 0 as unknown as NodeJS.Timeout
+    }) as typeof setTimeout)
     const erroSmtp = Object.assign(new Error(`Invalid login: 535 ${SENHA} mensagem crua do servidor`), {
       code: 'EAUTH',
       responseCode: 535,
     })
-    sendMailMock.mockResolvedValueOnce({}).mockRejectedValueOnce(erroSmtp).mockResolvedValueOnce({})
+    sendMailMock
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(erroSmtp)
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(erroSmtp)
     const r = await POST(requisicao())
+    expect(espera).toHaveBeenCalledWith(expect.any(Function), 60_000)
+    espera.mockRestore()
     expect(r.status).toBe(502)
     const corpo = await r.json()
     expect(corpo).toEqual({ status: 'parcial', enviados: 2, falhas: [{ para: 'ana@manfac.com.br', erro: 'EAUTH 535' }] })
-    expect(sendMailMock).toHaveBeenCalledTimes(3)
+    expect(sendMailMock).toHaveBeenCalledTimes(4)
+    expect(sendMailMock.mock.calls[3][0].to).toBe('ana@manfac.com.br')
     const logado = consoleError.mock.calls.flat().map(String).join('\n')
     expect(logado).toContain('[relatorio-diario]')
     expect(logado).not.toContain('mensagem crua')
+  })
+
+  it('451 temporário na 1ª tentativa e sucesso na 2ª: 200, todos enviados', async () => {
+    const espera = jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void) => {
+      fn()
+      return 0 as unknown as NodeJS.Timeout
+    }) as typeof setTimeout)
+    const erro451 = Object.assign(new Error('temporário'), { code: 'EMESSAGE', responseCode: 451 })
+    sendMailMock.mockResolvedValueOnce({}).mockRejectedValueOnce(erro451).mockResolvedValueOnce({}).mockResolvedValueOnce({})
+    const r = await POST(requisicao())
+    espera.mockRestore()
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({ status: 'enviado', enviados: 3, falhas: [] })
+    expect(sendMailMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('sem falha não espera', async () => {
+    const espera = jest.spyOn(global, 'setTimeout')
+    const r = await POST(requisicao())
+    expect(r.status).toBe(200)
+    expect(espera).not.toHaveBeenCalledWith(expect.any(Function), 60_000)
+    espera.mockRestore()
   })
 })
