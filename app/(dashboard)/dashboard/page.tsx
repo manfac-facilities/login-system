@@ -100,6 +100,23 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          {/* Gestão de Fornecedores segue o Compras: qualquer pessoa logada abre contrato ou
+              medição (papéis no próprio módulo). App Next separada (basePath /fornecedores) —
+              <a> normal, fora do matcher. */}
+          <a
+            href="/fornecedores"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">🤝</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Gestão de Fornecedores
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Contratos e medições de fornecedores — aprovação e pagamento pelo Financeiro
+              </p>
+            </div>
+          </a>
           {podeFrotas && (
           <Link
             href="/sofia"

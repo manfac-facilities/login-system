@@ -91,6 +91,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Financeiro')).toBeInTheDocument()
     // Compras segue o mesmo conceito: qualquer pessoa logada pode solicitar uma compra.
     expect(screen.getByText('Compras').closest('a')).toHaveAttribute('href', '/compras')
+    // Gestão de Fornecedores também: qualquer pessoa logada abre contrato ou medição.
+    expect(screen.getByText('Gestão de Fornecedores').closest('a')).toHaveAttribute('href', '/fornecedores')
     expect(screen.queryByText('Gestão de Frotas')).not.toBeInTheDocument()
     expect(screen.getByText(/dependem de liberação/i)).toBeInTheDocument()
   })
