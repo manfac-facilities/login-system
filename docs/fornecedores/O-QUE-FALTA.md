@@ -26,7 +26,11 @@ conversa. O `FORNECEDORES_INTEGRACAO_SECRET` foi **trocado na hora** (conferido:
 até cada um ser atualizado. **Decisão pendente do João** (território de autenticação: não vai para `DIVIDAS.md`).
 Regra para log do EasyPanel: colar só as linhas do erro, nunca a linha `Command failed … --build-arg`.
 
-**Falta:** etapas 5 a 7 abaixo.
+**11/10/2026 — card no hub antecipado a pedido do cliente:** login-system #1 mergeado (`d83eef2`) e hub no ar com
+build de 11/10 21:18 UTC; fornecedores com o menu lateral (`d9821ff`) redeployado junto. O teste completo (etapa 5)
+passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: aprovar medição cria pedido real no Financeiro.
+
+**Falta:** etapas 5 e 7 abaixo (a 6 foi feita antes da 5, por pedido do cliente).
 
 **Estado:** código completo, revisado por agentes independentes (sem bloqueante) e com testes verdes no GitHub Actions.
 Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — nada depende desta máquina.
