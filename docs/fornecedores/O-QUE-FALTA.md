@@ -53,7 +53,7 @@ Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — na
 
 ## Riscos
 
-1. **Acesso ao EasyPanel** está com o cliente desde 20/09 — combinar horário.
+1. ~~Acesso ao EasyPanel com o cliente~~ — **corrigido em 10/10: o João tem acesso pleno.**
 2. **Primeiro deploy de app nova** pode surpreender (o Compras caiu no portal do hub com HTTPS desligado) — 1–2 h de folga.
 3. **Projeto próprio no EasyPanel:** não verificado se aceita o mesmo domínio vindo de outro projeto; se não, app no projeto `manfac` (deploy continua isolado).
 4. **Máquina local:** pouca memória e disco C cheio — rodar testes no GitHub Actions; clones de trabalho em `D:\fornecedores-work`.
