@@ -15,7 +15,18 @@
   `023_fin_integracao_medicoes.sql`, nosso, aplicado hoje). Só o número colide. O deploy do financeiro leva junto o
   commit `e31d0ae` do José (categorias por totalizadora) — confirmar com ele se já está no ar.
 
-**Falta:** etapas 3 a 7 abaixo — todas dependem do acesso ao EasyPanel (com o cliente).
+**Etapas 3 e 4 concluídas (10/10, noite):** financeiro na versão nova (rotas `/api/integracoes/medicoes` e
+`/api/tarefas/pagamentos` respondendo 401 sem credencial); app `fornecedores` criada no projeto `manfac` do EasyPanel,
+`/fornecedores/api/health` = `ok`, sem sessão cai no `/login` do hub; hub, Compras, Cockpit, Obras e Sofia abrindo.
+Armadilha nova: o campo do arquivo de build veio como `dockerfile` (minúsculo) e o build falhou — tem de ser `Dockerfile`.
+
+⚠️ **Segredos expostos no chat em 10/10:** o log de erro do EasyPanel imprime todos os `--build-arg`, e foi colado na
+conversa. O `FORNECEDORES_INTEGRACAO_SECRET` foi **trocado na hora** (conferido: o antigo dá 401, o novo passa). A
+**`SUPABASE_SERVICE_ROLE_KEY` NÃO foi trocada** — trocar derruba hub, Sofia, Compras, Financeiro, Cockpit e Fornecedores
+até cada um ser atualizado. **Decisão pendente do João** (território de autenticação: não vai para `DIVIDAS.md`).
+Regra para log do EasyPanel: colar só as linhas do erro, nunca a linha `Command failed … --build-arg`.
+
+**Falta:** etapas 5 a 7 abaixo.
 
 **Estado:** código completo, revisado por agentes independentes (sem bloqueante) e com testes verdes no GitHub Actions.
 Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — nada depende desta máquina.
