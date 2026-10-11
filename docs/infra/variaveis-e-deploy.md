@@ -66,6 +66,11 @@ O `dockerfile` da raiz builda o `manfac-site/`, **não** o hub.
 | `SUPABASE_SERVICE_ROLE_KEY` | **só** `app/admin/_actions.ts` | Sem ela, `createAdminClient()` lança e `/admin/acessos` inteira cai com erro genérico de Server Component. Ausente no `.env.production` e no `DEPLOY.md`, que estão desatualizados |
 | `FIELD_API_KEY` | `app/obras/sincronizar/_execucao.ts` | Header `X-Api-Key` do Field Control. **Segredo: só pelo painel**, nunca no `.env.production` versionado. Sem ela a tela não quebra — a action devolve erro dizendo que a chave falta |
 | `OBRAS_CRON_SECRET` | `app/api/obras/sincronizar/route.ts` | Protege a rota chamada pelo `pg_cron`. Fica no Vault do Supabase e no Environment do EasyPanel; nunca em arquivo versionado |
+| `SMTP_HOST` | `app/api/obras/relatorio-diario/route.ts` (e-mail do relatório diário) | Servidor SMTP da Locaweb. **Mesma do app `compras`**: pode ser copiada do Environment dele |
+| `SMTP_PORTA` | mesma rota | Padrão 465 (TLS direto); outra porta, como 587, usa STARTTLS. **Mesma do app `compras`**: copiar do Environment dele |
+| `SMTP_USUARIO` | mesma rota | Usuário de autenticação SMTP. **Mesma do app `compras`**: copiar do Environment dele |
+| `SMTP_SENHA` | mesma rota | **Segredo: só pelo painel**, nunca no `.env.production` nem no `.env.local.example` com valor. **Mesma do app `compras`**: copiar do Environment dele |
+| `SMTP_REMETENTE` | mesma rota | Endereço e nome do remetente do relatório diário. **Mesmo valor do app `compras`**: copiar do Environment dele |
 
 Ao adicionar variável nova, atualize `.env.local.example` **e** esta tabela.
 

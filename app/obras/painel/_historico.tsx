@@ -202,7 +202,11 @@ export default function Historico({
             </Mini>
             <Mini rotulo="Média mensal (meses fechados)" valor={R(h.mediaFechados)}>
               <div className="text-[11.5px] text-[#94a3b8]">
-                {h.fechados ? `últimos ${h.fechados} meses fechados` : 'nenhum mês fechado desde o início do sistema'}
+                {h.fechados === 1
+                  ? 'último mês fechado'
+                  : h.fechados
+                    ? `últimos ${h.fechados} meses fechados`
+                    : 'nenhum mês fechado desde o início do sistema'}
               </div>
             </Mini>
             <Mini rotulo="Melhor mês" valor={R(h.melhor.valor)}>

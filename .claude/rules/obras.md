@@ -97,3 +97,14 @@ obra (merge `fed48eb`; migration `obras-cancelamento` já aplicada em 23/09) e a
 "Esteira · Etapa" no Histórico), auto-avanço da Autorização carimba os marcos, liberação da
 Triagem valida datas no servidor, e os três blocos detectam edição concorrente pela versão do
 bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5, B7 fechadas; bordas novas em A31–A36.
+
+## Relatório diário por e-mail (no ar desde 09/10/2026)
+
+`app/api/obras/relatorio-diario/route.ts` — chamada pelo pg_cron `obras-relatorio-diario` às 08:01 BRT
+com `OBRAS_CRON_SECRET`. Lê o painel (`app/obras/painel/_leitura.ts` + `montarPainel`) com service role,
+gera PNG 2x com `next/og` (`_imagem.tsx`, **sem `overflow: hidden`** — o render passa de 5 min) e envia
+pela Locaweb (`SMTP_*`, mesmas do Compras; `email-ssl.com.br:465`) um e-mail por destinatário: slug
+`obras` com `has_access = true` + administradores. Falha de leitura/imagem → ninguém recebe; falha de
+envio → 1 nova tentativa após 60 s. Registro = `net._http_response` (some em ~6 h). Corpo
+`{"previa":true}` devolve o PNG; `{"somentePara":"<e-mail da lista>"}` manda a uma pessoa só.
+Docs: `docs/relatorio-email/`.

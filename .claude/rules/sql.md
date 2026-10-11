@@ -135,6 +135,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 | `obras-fonte` | aplicado em 2026-09-14 (frente **D1 do Duda**, commit `1c23dd3`). Coluna `fonte` nullable, sem default, com o check `obras_obra_fonte_check` aceitando só `'field'` |
 | `obras-field-reconciliacao` | aplicado em 2026-09-14 (frente **D2 do Duda**). Colunas `field_id`, `field_ausente_desde` e `field_ausente_em`; índice `obras_obra_field_id_unico` (parcial); checks `obras_obra_field_id_nao_vazio` e `obras_obra_alerta_field_tem_suspeita` |
 | `obras-sync-execucao` | aplicado em 2026-09-14 (frente **D3 do Duda**), função `obras_iniciar_sync_execucao`; os dois jobs de cron (arquivo `sdd-sql-obras-cron-jobs.sql`) entraram em 2026-09-16 |
+| `obras-relatorio-diario-cron` | aplicado em 2026-10-09 (4/4 OK): job `obras-relatorio-diario` (`1 11 * * *` = 08:01 BRT) → `POST /api/obras/relatorio-diario`, arquivo `sdd-sql-obras-relatorio-diario-cron.sql` |
 | `obras-historico` | **aplicado em 2026-09-20.** Tabela `obras_historico` + RPC `obras_aplicar_alteracao` |
 | `obras-motivos-remarcacao` | **aplicado em 2026-09-20.** RPC `obras_remarcar_inicio`, colunas `detalhe` e `registrado_por` em `obras_remarcacao`. Verificação devolveu 18 linhas, todas `OK` |
 | `obras-desfazer-diario-atomico` | **aplicado em 2026-09-21.** RPC `obras_desfazer_diario` (security invoker, depende da RLS `obras access`). Verificação 3/3 `OK`; testada com rollback: sem acesso levanta e não apaga, dia sem diário preserva a tarefa, com acesso apaga diário e tarefa aberta e preserva a respondida |
@@ -142,13 +143,15 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 | `obras-cancelamento` | **aplicado em 2026-09-23** (aprovado pelo João; revisão independente sem bloqueante). Etapa `cancelado` no CHECK, 5 colunas `cancelado_*`, CHECK `obras_obra_cancelamento_coerente`, trigger `obras_obra_transicao_cancelamento`, bloco `Cancelamento` no histórico, RPC `obras_aplicar_alteracao` com as 5 colunas. Verificação 11/11 `OK`; teste de comportamento 11/11 `OK`, nada gravado (0 canceladas, 0 histórico). Rollback: restaurar a RPC ANTES de dropar colunas |
 | `obras-cliente` | **aplicado em 2026-09-30** (autorizado pelo João; revisão independente sem bloqueante). Coluna `obras_obra.cliente text` (nullable, sem default, sem índice), preenchida pela sync a partir do Field (`GET /customers/:id`). Verificação 6/6 `OK` (RLS e policy `obras access` inalteradas, sem GRANT de coluna). Rollback: `alter table public.obras_obra drop column if exists cliente` — só depois de reverter o código que faz select dela |
 | `perf-rls-initplan` | **aplicado em 2026-10-07** (autorizado pelo João; revisão independente sem bloqueante). 32 `ALTER POLICY` (11 `obras_*`, 3 `obras fotos*` em storage.objects, 18 `sofia access`): funções de acesso e `auth.jwt()` embrulhadas em `(select ...)` para avaliar uma vez por consulta. Texto conferido 32/32 contra produção logo antes de aplicar; verificação 5/5 `OK`; contagens por perfil (obras, sofia, sem acesso, admin) idênticas antes/depois; `select * from obras_historico` como usuário: 148 ms → 1,5 ms. Rollback: `sdd-sql-perf-rls-initplan-ROLLBACK.sql`. Cockpit (`dashboard_manutencao_has_access`) e `hub_comunicados*` ficaram de fora |
+| Fornecedores `001`–`006` (repo `fornecedores`, `supabase/hub-install/`, branch `feat/reenvio` `302f4f5`) | **aplicado em 2026-10-10** (autorizado pelo João). Tabelas `frn_*`, funções, bucket `fornecedores-anexos` (privado). Verificação 001 6/6, 002 7/7, 003 4/4, 004 6/6, 005 12/12, 006 2/2 `OK`. A 006 carregou **1.226** fornecedores do catálogo Omie (origem `carga_inicial`, homologados) e **não roda de novo**. **`007` (cron de pagamentos) NÃO aplicado** — espera as chaves do Omie |
+| Financeiro `023` e `024` (repo `financeiro`, `supabase/hub-install/`, branch `integracao/reenvio` `a64753e`) | **aplicado em 2026-10-10.** Antes de aplicar, conferido que nenhuma tabela/função criada já existia. 023 (`fin_solicitacao_integracoes` + `fin_criar_solicitacao_integrada`) não tem bloco de verificação próprio; 024 15/15 `OK` (`fin_solicitacoes` intacta). **`025` (cron Omie) NÃO aplicado.** Atenção: aplicado a partir de PRs ainda abertos — merge #1→#2→#3 na `main` do financeiro |
 
 ## Jobs de cron que não são deste repositório
 
 O banco tem `field-sync-every-5-min`, `financeiro-producao-catalogo` e
 `financeiro-producao-lancamento`. **Não mexa** sem saber de quem são.
 
-Os nossos são `obras-field-incremental` (`*/5 * * * *`) e `obras-field-completa` (`2 6 * * *`).
+Os nossos são `obras-field-incremental` (`*/5 * * * *`), `obras-field-completa` (`2 6 * * *`) e `obras-relatorio-diario` (`1 11 * * *`, 08:01 BRT — e-mail do Painel gerencial pela Locaweb).
 A completa saiu de `5 6` em 20/09/2026 porque colidia com a incremental, perdia a trava e morria
 em silêncio — não rodou nenhuma vez entre 17 e 20/09. **Ao agendar job novo, não use um minuto
 múltiplo de 5.**
