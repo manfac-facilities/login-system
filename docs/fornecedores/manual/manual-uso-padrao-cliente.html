@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Gestão de Fornecedores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --navy: #0a1628;
+    --laranja: #f05a28;
+    --texto: #1a2433;
+    --suave: #5b6b82;
+    --linha: #e3e8ef;
+    --fundo: #f4f6f9;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Source Serif 4", Georgia, serif; color: var(--texto); font-size: 10pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pagina { width: 210mm; height: 297mm; overflow: hidden; padding: 18mm 20mm 20mm; page-break-after: always; position: relative; }
+  .pagina:last-child { page-break-after: auto; }
+  .capa { background: var(--navy); color: #fff; display: flex; flex-direction: column; justify-content: space-between; height: 297mm; padding: 24mm 20mm 22mm; }
+  .capa img { width: 52mm; }
+  .capa h1 { font-family: Archivo, sans-serif; font-weight: 700; font-size: 30pt; line-height: 1.1; margin: 0 0 4mm; letter-spacing: -0.01em; }
+  .capa .sub { color: var(--laranja); font-family: Archivo, sans-serif; font-size: 11pt; font-weight: 500; }
+  .capa .meta { margin-top: 12mm; border-top: 1px solid #1e3352; padding-top: 5mm; display: flex; gap: 10mm; font-family: Archivo, sans-serif; font-size: 7.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: #9fb0c6; }
+  .capa .meta b { color: #fff; font-weight: 600; }
+  .rotulo { font-family: Archivo, sans-serif; font-size: 7.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); display: flex; align-items: center; gap: 6px; margin: 0 0 3mm; }
+  .rotulo::before { content: ""; width: 6px; height: 6px; background: var(--laranja); transform: rotate(45deg); display: inline-block; }
+  h2 { font-family: Archivo, sans-serif; font-weight: 700; font-size: 17pt; margin: 0 0 5mm; color: var(--navy); letter-spacing: -0.01em; }
+  h2.linha { border-bottom: 1.5px solid var(--navy); padding-bottom: 3mm; }
+  h3 { font-family: Archivo, sans-serif; font-weight: 600; font-size: 11pt; margin: 5.5mm 0 2mm; color: var(--navy); }
+  p { margin: 0 0 3mm; }
+  .lead { font-size: 11.5pt; color: #3b4a5f; }
+  strong { font-weight: 600; color: var(--navy); }
+  ul { margin: 0 0 3mm; padding-left: 0; list-style: none; }
+  ul li { position: relative; padding-left: 5mm; margin-bottom: 1.6mm; }
+  ul li::before { content: "•"; color: var(--laranja); position: absolute; left: 0.5mm; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.8pt; }
+  th { font-family: Archivo, sans-serif; font-size: 7pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); text-align: left; padding: 2.2mm 3mm 2.2mm 0; border-bottom: 1.5px solid var(--navy); }
+  td { padding: 1.8mm 3mm 1.8mm 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  td.em { font-style: italic; color: #47566b; }
+  td.n { font-family: Archivo, sans-serif; font-weight: 700; color: var(--laranja); width: 7mm; }
+  .nota { background: var(--fundo); border-left: 3px solid var(--laranja); padding: 3mm 5mm; margin: 3mm 0; font-size: 9.8pt; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--linha); margin: 2mm 0 6mm; }
+  .duas > div { padding: 4mm 5mm 4mm 0; }
+  .duas > div + div { border-left: 1px solid var(--linha); padding-left: 5mm; }
+  .duas .num { font-family: Archivo, sans-serif; font-size: 7.5pt; font-weight: 600; letter-spacing: 0.1em; color: var(--laranja); text-transform: uppercase; margin-bottom: 2mm; }
+  .duas h4 { font-family: Archivo, sans-serif; font-size: 11.5pt; margin: 0 0 2mm; color: var(--navy); }
+  .formula { font-family: Archivo, sans-serif; font-weight: 600; font-size: 10pt; color: var(--navy); background: var(--fundo); padding: 3mm 4mm; margin: 2mm 0 4mm; text-align: center; }
+  .formula span { color: var(--laranja); }
+  .fluxo { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1.5mm; margin: 3mm 0 5mm; }
+  .fluxo div { background: var(--fundo); border-top: 3px solid var(--navy); padding: 2.5mm 2mm; font-family: Archivo, sans-serif; font-size: 7.5pt; line-height: 1.3; color: var(--navy); font-weight: 600; min-height: 17mm; }
+  .fluxo div small { display: block; font-weight: 500; color: var(--suave); margin-top: 1mm; font-size: 6.8pt; }
+  .fluxo div.fim { border-top-color: var(--laranja); }
+  .chips { display: flex; flex-wrap: wrap; gap: 2mm; margin: 2mm 0 4mm; }
+  .chips span { font-family: Archivo, sans-serif; font-size: 7.5pt; border: 1px solid #cdd5e0; background: var(--fundo); padding: 1.2mm 2.5mm; color: #3b4a5f; }
+  .chips span.on { border-color: var(--laranja); color: var(--laranja); background: #fff4ef; }
+  .rodape { position: absolute; left: 20mm; right: 20mm; bottom: 10mm; display: flex; justify-content: space-between; border-top: 1px solid var(--linha); padding-top: 2.5mm; font-family: Archivo, sans-serif; font-size: 6.8pt; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
+  .pergunta { margin-bottom: 4mm; }
+  .pergunta b { display: block; font-family: Archivo, sans-serif; font-weight: 600; color: var(--navy); font-size: 10pt; margin-bottom: 0.8mm; }
+</style>
+</head>
+<body>
+
+<section class="pagina capa">
+  <img src="data:image/png;base64,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" alt="Manfac engenharia">
+  <div>
+    <h1>Gestão de Fornecedores</h1>
+    <div class="sub">Manual de uso — hub Manfac</div>
+    <div class="meta">
+      <span>Onde fica · <b>hub.manfac.com.br</b></span>
+      <span>Card · <b>Gestão de Fornecedores</b></span>
+      <span>Pagamento · <b>direto no Financeiro</b></span>
+    </div>
+  </div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Para começar</div>
+  <h2>Quem pode usar, e o que muda</h2>
+  <p class="lead">Qualquer pessoa com login no hub pode abrir um contrato e pedir uma medição. Não precisa de liberação nem de cadastro extra.</p>
+  <p>A Gestão de Fornecedores é o lugar onde a Manfac registra o contrato com cada fornecedor, controla quanto já foi medido e acompanha o pagamento. O que muda é que a medição aprovada vira, sozinha, uma solicitação de pagamento no Financeiro — ninguém precisa digitar de novo.</p>
+  <h3>O que tem neste manual</h3>
+  <ul>
+    <li><strong>As duas coisas</strong> que fazem a sua medição chegar ao pagamento sem voltar.</li>
+    <li><strong>O caminho de um fornecedor</strong>, do contrato ao pagamento, com quem está em cada etapa.</li>
+    <li><strong>Passo a passo</strong>: criar contrato, aprovar, homologar fornecedor novo, aditivos, aceite final, medição.</li>
+    <li><strong>O elo com o Financeiro</strong>: o que acontece quando a medição é aprovada.</li>
+    <li><strong>Como acompanhar</strong>, os <strong>avisos</strong>, <strong>quem faz o quê</strong> e as <strong>mensagens</strong> que podem aparecer.</li>
+  </ul>
+  <h3>Como entrar</h3>
+  <p>Não existe senha separada. Basta estar logado no hub e abrir o card <strong>Gestão de Fornecedores</strong>. O menu lateral tem dois grupos: <strong>Contratação</strong> (Contratos e Aprovações) e <strong>Medição</strong> (Nova medição, Fila de aprovação e Acompanhamento).</p>
+  <h3>Palavras que aparecem na tela</h3>
+  <table>
+    <tr><th>Palavra</th><th>O que quer dizer</th></tr>
+    <tr><td><strong>Contrato específico</strong></td><td>Contrato de uma obra. A obra é obrigatória.</td></tr>
+    <tr><td><strong>Contrato global</strong></td><td>Contrato sem obra, para serviços avulsos (Spot) ou de manutenção. Tem um valor teto, que as medições vão consumindo.</td></tr>
+    <tr><td><strong>Medição</strong></td><td>O pedido de pagamento de uma parte do contrato.</td></tr>
+    <tr><td><strong>Aditivo</strong></td><td>Mudança num contrato já aprovado: aumentar o valor ou trocar a condição de pagamento.</td></tr>
+    <tr><td><strong>Homologação</strong></td><td>Conferência cadastral de um fornecedor que a Manfac nunca usou.</td></tr>
+    <tr><td><strong>Aceite final e retenção</strong></td><td>Em obra crítica, os 10% finais só são medidos depois do aceite final.</td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Leia isto, se for ler só uma parte</div>
+  <h2 class="linha">As duas coisas que fazem a sua medição chegar ao pagamento</h2>
+  <div class="duas">
+    <div>
+      <div class="num">01 · Prazo</div>
+      <h4>Peça a medição até o dia 25</h4>
+      <p>Medição enviada <strong>até o dia 25</strong> entra no pagamento do mês. Do dia 26 em diante, fica para o mês seguinte. O sistema não impede o envio depois do 25; só avisa, e a tela mostra quantos dias faltam para o corte.</p>
+    </div>
+    <div>
+      <div class="num">02 · Documentos e dados</div>
+      <h4>Evidência anexada e dados de pagamento certos</h4>
+      <p>A <strong>evidência</strong> do serviço (ou o comprovante de entrega, no material) é obrigatória. Boleto, guia e PIX QR code pedem o <strong>código de pagamento</strong>. Dado errado é o motivo mais comum de o Financeiro recusar.</p>
+    </div>
+  </div>
+
+  <h3>O corte do dia 25</h3>
+  <table>
+    <tr><th>Quando você envia</th><th>Entra no pagamento de</th></tr>
+    <tr><td>Até o dia 25 (inclusive)</td><td><strong>O mês atual</strong></td></tr>
+    <tr><td>Do dia 26 em diante</td><td><strong>O mês seguinte</strong></td></tr>
+  </table>
+  <div class="nota"><strong>Depois de aprovada, quem paga é o Financeiro.</strong> A medição aprovada vira uma solicitação lá, com as mesmas regras de quem pede pela tela do Financeiro: o vencimento respeita a condição de pagamento do contrato e nunca é antes da primeira janela de pagamento do Financeiro.</div>
+
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Antes de enviar</div>
+  <h2>Dados de pagamento e descrição</h2>
+  <h3>Os dados de pagamento</h3>
+  <table>
+    <tr><th>Forma</th><th>O que pede</th></tr>
+    <tr><td><strong>Boleto ou guia</strong></td><td>Linha digitável / código de pagamento (obrigatório)</td></tr>
+    <tr><td><strong>PIX QR code</strong></td><td>Código "copia e cola" (obrigatório)</td></tr>
+    <tr><td><strong>PIX chave</strong></td><td>Nada: usa a chave do fornecedor no cadastro do Omie (a tela mostra o tipo e o final). Se o fornecedor não tem chave no Omie, o envio fica bloqueado — escolha outra forma ou peça o cadastro da chave.</td></tr>
+  </table>
+  <p>Além da forma, escolha sempre a <strong>categoria</strong>, o <strong>tipo de documento</strong> e o <strong>centro de custo</strong>. A nota fiscal é opcional; se existir, anexe e informe o número.</p>
+
+  <h3>Descreva o que foi feito como quem vai conferir</h3>
+  <table>
+    <tr><th>Em vez de</th><th>Escreva</th></tr>
+    <tr><td class="em">Serviço feito</td><td>Troca do quadro de distribuição e cabeamento do Galpão 2, conforme proposta</td></tr>
+    <tr><td class="em">Material entregue</td><td>12 rolos de cabo flexível 2,5 mm² azul, conforme nota fiscal</td></tr>
+    <tr><td class="em">Manutenção</td><td>Desentupimento da rede de esgoto, bloco B, atendimento de 10/10</td></tr>
+  </table>
+  <div class="nota"><strong>Anexos:</strong> PDF, JPG ou PNG, até <strong>10 MB</strong> cada. Fotos, relatório ou comprovante de entrega ajudam o Eduardo a aprovar na primeira.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">O fluxo</div>
+  <h2>O caminho de um fornecedor</h2>
+  <div class="fluxo">
+    <div>1 · Contrato<small>Solicitante</small></div>
+    <div>2 · Aprovação<small>Eduardo e José</small></div>
+    <div>3 · Medição<small>Solicitante</small></div>
+    <div>4 · Aprova a medição<small>Eduardo</small></div>
+    <div>5 · Pedido no Financeiro<small>Automático</small></div>
+    <div>6 · Pagamento<small>Financeiro</small></div>
+    <div class="fim">7 · Encerrado<small>100% medido e pago</small></div>
+  </div>
+  <h3>Cada etapa, com quem está</h3>
+  <table>
+    <tr><th></th><th>Etapa</th><th>Com quem está</th><th>Para sair dela</th></tr>
+    <tr><td class="n">1</td><td><strong>Rascunho</strong></td><td>Solicitante</td><td>Clicar em Enviar para aprovação</td></tr>
+    <tr><td class="n">2</td><td><strong>Aguardando aprovação</strong></td><td>Eduardo (contratação) e José (condições); José também homologa fornecedor novo</td><td>As duas aprovações, em qualquer ordem</td></tr>
+    <tr><td class="n">3</td><td><strong>Aprovado</strong> — liberado para medição</td><td>Solicitante</td><td>Pedir a medição</td></tr>
+    <tr><td class="n">4</td><td><strong>Solicitada</strong></td><td>Eduardo</td><td>Aprovar ou devolver</td></tr>
+    <tr><td class="n">5</td><td><strong>Pagamento solicitado</strong></td><td>Financeiro</td><td>Validar e lançar</td></tr>
+    <tr><td class="n">6</td><td><strong>Pago</strong></td><td>—</td><td>—</td></tr>
+    <tr><td class="n">7</td><td><strong>Encerrado</strong></td><td>—</td><td>Automático, quando chega a 100% medido e pago; ou pelo Eduardo</td></tr>
+  </table>
+  <p>Saem do caminho antes do fim: <strong>Devolvido</strong> (contrato ou aditivo que voltou com motivo), <strong>Devolvida</strong> (medição que voltou com motivo; o saldo volta ao contrato) e <strong>Cancelado</strong> (rascunho cancelado).</p>
+  <p><strong>Sem prazo fixo, mas com alerta:</strong> medição que fica mais de <strong>5 dias</strong> esperando o Eduardo aparece marcada como "parada há N dias", e parcela que passou da data prevista sem medição aparece como "em atraso".</p>
+  <h3>Etiquetas</h3>
+  <div class="chips"><span class="on">Fornecedor novo</span><span>Global</span><span>Emergencial</span><span>Retenção 10%</span><span>Aditivo de valor</span><span>Aditivo de condição</span></div>
+  <p><strong>Fornecedor novo</strong>: ainda não homologado; o José precisa conferir. Fornecedores que já estavam no Omie entram homologados. <strong>Global</strong>: contrato sem obra.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Do contrato à aprovação</h2>
+  <h3>1. Você cria o contrato</h3>
+  <p>Todo contrato nasce como rascunho: dá para salvar e voltar depois. Em <strong>Contratação › Contratos</strong>, clique em <strong>+ Novo contrato</strong>.</p>
+  <table>
+    <tr><th></th><th>Específico</th><th>Global</th></tr>
+    <tr><td><strong>Para quê</strong></td><td>Serviço de uma obra</td><td>Serviço avulso (Spot) ou manutenção contínua</td></tr>
+    <tr><td><strong>Obra</strong></td><td>Obrigatória</td><td>Não existe: o campo some</td></tr>
+    <tr><td><strong>Classificação</strong></td><td>Obra, Material, Spot, Manutenção ou Emergencial</td><td>Só Spot ou Manutenção</td></tr>
+    <tr><td><strong>Material</strong></td><td>Pode ter, separado da mão de obra</td><td>Não tem</td></tr>
+    <tr><td><strong>Valor</strong></td><td>Mão de obra (e material, se houver)</td><td>"Valor global (teto)"</td></tr>
+  </table>
+  <ul>
+    <li>Busque o <strong>fornecedor</strong> por razão social ou CNPJ. CNPJ e dados bancários vêm do Omie; você não digita.</li>
+    <li>Escolha tipo, classificação, centro de custo, escopo, valor e datas de início e fim. Em <strong>Emergencial</strong>, escreva a justificativa.</li>
+    <li>Anexe a <strong>proposta comercial</strong>. Se o fornecedor for novo, anexe também as <strong>certidões</strong>.</li>
+    <li>Confira a <strong>condição de pagamento sugerida</strong> (pelo valor e pelo tipo) e troque se precisar. São 12 condições do padrão da Manfac.</li>
+    <li>Escolha entre <strong>Salvar rascunho</strong>, <strong>Gerar documento</strong> (modelo provisório do contrato) e <strong>Enviar para aprovação</strong>.</li>
+  </ul>
+  <div class="nota"><strong>Pagar à vista ou em 30 dias:</strong> use a condição <strong>Exceção</strong>. Você escreve a condição proposta, o <strong>prazo em dias</strong> (0 a 120; 0 é à vista) e a justificativa. Quem aprova é o José. Se o contrato tiver <strong>tabela de preço</strong>, cadastre cada serviço com unidade e preço: na medição o valor vem da tabela.</div>
+  <h3>2. Eduardo e José aprovam</h3>
+  <p>O contrato só fica liberado para medição quando as duas partes aprovam, em qualquer ordem. Em <strong>Contratação › Aprovações</strong>, a aba <strong>Esperando por mim</strong> mostra o que é seu, e o número ao lado do menu conta quantos itens esperam.</p>
+  <ul>
+    <li><strong>Eduardo</strong> confere a contratação: escopo, obra ou centro de custo, valor, prazo e documentos.</li>
+    <li><strong>José</strong> confere as condições de pagamento: parcelas e valores.</li>
+    <li>Cada um clica em <strong>Aprovar</strong> ou em <strong>Devolver com motivo</strong>. Ao devolver, o contrato volta ao solicitante como rascunho e as aprovações já dadas se perdem; ao reenviar, os dois aprovam de novo.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Homologar e mudar um contrato</h2>
+  <h3>3. José homologa o fornecedor novo</h3>
+  <p>Só passa por aqui fornecedor cadastrado depois do início do sistema. No cartão do contrato, com a etiqueta <strong>Fornecedor novo</strong>, José marca o que conferiu — <strong>CNPJ ativo na Receita</strong>, <strong>dados bancários conferem</strong> e <strong>certidões negativas válidas</strong> — e clica em <strong>Salvar homologação</strong>. Com as três marcadas, o fornecedor fica homologado e os contratos dele que já têm as duas aprovações ficam Aprovados. Com menos de três, fica registrado o que foi conferido e a homologação continua pendente.</p>
+  <h3>Mudar um contrato aprovado: aditivos e aceite final</h3>
+  <p>Contrato aprovado <strong>não se edita</strong>. Mudança só por aditivo, aceite final ou encerramento (este, na lista de contratos, mais adiante), nos botões da ficha do contrato.</p>
+  <h3>Aditivo de valor</h3>
+  <p>Para o contrato ficar maior. Quem criou o contrato, o Eduardo ou o José pedem; <strong>Eduardo e José aprovam</strong>. Na ficha, clique em <strong>+ Aditivo de valor</strong>, escolha o item (mão de obra ou material), informe o valor a acrescentar e o motivo. O sistema mostra o novo total e gera um número como <strong>CT-0118-2</strong>. O valor original não muda: o aditivo soma por cima e as parcelas são recalculadas. Se for devolvido, ele termina ali; para tentar de novo, peça outro.</p>
+  <h3>Aditivo de condição</h3>
+  <p>Para trocar a condição de pagamento (por exemplo, de 7 dias para 30 dias). Quem criou, Eduardo ou José pedem; <strong>só o José aprova</strong>. Clique em <strong>+ Aditivo de condição</strong>, escolha a nova condição (para à vista ou 30 dias, use Exceção, com o prazo em dias e a justificativa) e escreva o motivo. A tela mostra quais medições passam para a nova condição e quais ficam como estão.</p>
+  <ul>
+    <li>A nova condição vale para as medições <strong>ainda não aprovadas</strong>. As já aprovadas ou pagas mantêm a antiga.</li>
+    <li>Enquanto houver um aditivo de condição esperando o José, o botão fica desabilitado.</li>
+  </ul>
+  <h3>Aceite final e retenção de 10%</h3>
+  <p>Nas obras críticas (acima de R$ 8.000 ou de risco técnico), o contrato é pago em 30% / 30% / 30%, e os últimos <strong>10% ficam retidos</strong> até o aceite final.</p>
+  <ul>
+    <li>Meça normalmente até 90%. Com 90% da mão de obra medida, o botão <strong>Registrar aceite final</strong> fica disponível na ficha (para quem criou o contrato ou para o Eduardo).</li>
+    <li>Confirme que o serviço foi entregue e aceito no local. O aceite fica registrado com seu nome e a data.</li>
+    <li>Agora dá para pedir a medição dos 10% restantes. Antes do aceite, o sistema não deixa passar de 90%.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Da medição ao pedido de pagamento</h2>
+  <h3>1. Você pede a medição</h3>
+  <p>Em <strong>Medição › Nova medição</strong>, escolha o contrato (só aparecem os aprovados). O quadro mostra valor total, já medido e saldo. O sistema <strong>não deixa passar de 100%</strong> do contrato.</p>
+  <ul>
+    <li>Se o contrato tem mão de obra e material, escolha qual dos dois você está medindo: os saldos são separados.</li>
+    <li>Informe o valor em % ou em reais. No <strong>Spot</strong>, informe o serviço executado, a data e o valor. Em contrato com <strong>tabela de preço</strong>, escolha o serviço e a quantidade: o valor vem da tabela. No <strong>mensal consolidado</strong>, registre cada atendimento no dia em que acontece e, no fim do mês, clique em <strong>Fechar o mês e enviar medição</strong>.</li>
+    <li>Anexe a <strong>evidência</strong> (obrigatória) e, se houver, a nota fiscal.</li>
+    <li>Preencha os <strong>dados de pagamento</strong> (forma, código, categoria, tipo de documento e centro de custo).</li>
+    <li>Se aparecer o <strong>aceite operacional</strong>, marque: ele é pedido na parcela final e em todo serviço de contrato global.</li>
+    <li>Clique em <strong>Enviar medição para aprovação</strong>. Se faltar algo, o botão fica desabilitado e a tela lista o que falta em "Para enviar: …".</li>
+  </ul>
+  <h3>2. O Eduardo aprova</h3>
+  <p>Em <strong>Medição › Fila de aprovação</strong>, cada linha mostra o valor, o acumulado (antes → depois), a evidência e a NF (clique para abrir) e o aceite. O Eduardo clica em <strong>Aprovar</strong> ou em <strong>Devolver com motivo</strong>.</p>
+  <ul>
+    <li><strong>Aprovar:</strong> a solicitação de pagamento nasce no Financeiro na hora, e a tela mostra o aviso verde com o número (por exemplo, FIN-0412).</li>
+    <li><strong>Devolver:</strong> o motivo é obrigatório, o saldo volta ao contrato e nada vai ao Financeiro. Quem pediu faz uma nova medição.</li>
+  </ul>
+  <div class="nota"><strong>Aprovar duas vezes não duplica nada.</strong> Enviar de novo a mesma medição ao Financeiro não cria um segundo pedido.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">O elo com o Financeiro</div>
+  <h2>O que acontece quando a medição é aprovada</h2>
+  <p class="lead">A medição aprovada pelo Eduardo vira, sozinha, uma solicitação de pagamento no Financeiro, com as mesmas regras de quem pede pela tela do Financeiro.</p>
+  <table>
+    <tr><th>Ponto</th><th>Como funciona</th></tr>
+    <tr><td><strong>Quem é o solicitante</strong></td><td>Quem abriu a medição. Por isso essa pessoa precisa ter login no hub.</td></tr>
+    <tr><td><strong>Para onde vai</strong></td><td>Toda medição aprovada entra em <strong>Aguardando financeiro</strong>. A Gestão de Fornecedores nunca envia o pedido como emergencial.</td></tr>
+    <tr><td><strong>E-mails</strong></td><td>Os mesmos e-mails de aviso do Financeiro são enviados.</td></tr>
+    <tr><td><strong>Anexos</strong></td><td><strong>NF e evidência não vão automaticamente.</strong> Depois que a solicitação aparece no Financeiro, quem pediu a medição anexa os documentos lá, na tela do Financeiro.</td></tr>
+    <tr><td><strong>Número</strong></td><td>A medição passa a mostrar <strong>Pagamento solicitado</strong>, com o número da solicitação no Financeiro.</td></tr>
+    <tr><td><strong>Data do pagamento</strong></td><td>A data real em que o fornecedor foi pago <strong>ainda não aparece</strong> na Gestão de Fornecedores. Ela é a próxima etapa do sistema; por enquanto, consulte o Financeiro.</td></tr>
+  </table>
+  <h3>Se o Financeiro recusar ou cancelar</h3>
+  <p>A medição continua aprovada: não é preciso pedir outra nem passar de novo pelo Eduardo. <strong>Hoje</strong>, a Gestão de Fornecedores não fica sabendo da recusa sozinha: quem abriu a medição recebe o e-mail do Financeiro <strong>"Sua solicitação nº X foi recusada"</strong>, com o motivo. Enquanto isso, a medição continua mostrando Pagamento solicitado.</p>
+  <ul>
+    <li>Fale com o Eduardo e com o financeiro sobre o que foi apontado (por exemplo, o código de pagamento).</li>
+  </ul>
+  <div class="nota"><strong>Próxima etapa:</strong> quando a checagem diária estiver ligada, a medição passará a mostrar <strong>Recusada no Financeiro</strong> com o motivo e o botão <strong>Reenviar ao Financeiro</strong> (para quem abriu a medição ou o Eduardo), sem pedir tudo de novo. Isso ainda não está funcionando.</div>
+  <h3>Se a solicitação não for criada</h3>
+  <p>Se o Financeiro não responder na hora da aprovação, a medição fica <strong>Aprovada</strong> com o aviso "a solicitação no Financeiro ainda não foi criada". Na <strong>Fila de aprovação</strong>, o Eduardo clica em <strong>Tentar criar solicitação de novo</strong>. Nada é gravado pela metade e nenhum pedido sai duplicado.</p>
+  <div class="nota">Se a medição pagar o último valor do contrato, o contrato é encerrado sozinho.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Acompanhamento</div>
+  <h2>Como acompanhar o seu contrato e as suas medições</h2>
+  <p><strong>No menu</strong>, um número ao lado de <strong>Aprovações</strong> e de <strong>Fila de aprovação</strong> mostra quantos itens esperam por você (só aparece para quem aprova).</p>
+  <p><strong>Em Contratos</strong>, todos os seus contratos, com valor, % medido, saldo e situação. Filtre por situação (Rascunho, Aguardando, Aprovado, Encerrado) e por classificação.</p>
+  <p><strong>Na ficha do contrato</strong> (código CT-0001, CT-0002…):</p>
+  <table>
+    <tr><th>O que aparece</th><th>Para que serve</th></tr>
+    <tr><td><strong>Valor contratado, aditivos e total</strong></td><td>Quanto o contrato vale hoje</td></tr>
+    <tr><td><strong>Barra pago, medido e saldo</strong></td><td>Quanto já foi pago, quanto aguarda pagamento e quanto falta medir</td></tr>
+    <tr><td><strong>Parcelas e medições</strong></td><td>Cada parcela da condição, com a situação (prevista, medida, paga, em atraso, retida)</td></tr>
+    <tr><td><strong>Condição, documentos e aceite</strong></td><td>A condição de pagamento, a proposta e certidões, e o aceite final quando há retenção</td></tr>
+    <tr><td><strong>Linha do tempo</strong></td><td>Quem fez o quê e quando, com motivos</td></tr>
+  </table>
+  <p><strong>Em Medição › Acompanhamento</strong>, cada medição mostra a trilha <strong>Solicitada → Aprovada → Pagamento solicitado</strong> (com o número do Financeiro). Use os filtros: Todas, Solicitada, Pagamento solicitado, Pago, Devolvida e Em atraso. No topo, um aviso lista as parcelas que já passaram da data prevista sem medição, com o botão <strong>Abrir ficha</strong>.</p>
+  <h3>O que você pode fazer</h3>
+  <table>
+    <tr><th>Ação</th><th>Quem e até quando</th></tr>
+    <tr><td><strong>Editar o rascunho / cancelar o rascunho</strong></td><td>Quem criou, até enviar para aprovação</td></tr>
+    <tr><td><strong>Pedir aditivo</strong></td><td>Quem criou o contrato, Eduardo ou José, com o contrato aprovado</td></tr>
+    <tr><td><strong>Registrar aceite final</strong></td><td>Quem criou o contrato ou o Eduardo, com 90% medido</td></tr>
+    <tr><td><strong>Reenviar ao Financeiro</strong></td><td>Ainda não disponível: virá com a checagem diária</td></tr>
+    <tr><td><strong>Ver documento</strong> / <strong>Baixar PDF</strong></td><td>Na ficha. O modelo do contrato é provisório</td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Notificações</div>
+  <h2>Avisos por e-mail</h2>
+  <p>A Gestão de Fornecedores <strong>não envia e-mails próprios</strong>. Quem avisa é o menu, com o número de itens esperando por você, e o <strong>Financeiro</strong>, depois que a solicitação de pagamento é criada.</p>
+  <h3>No menu</h3>
+  <table>
+    <tr><th>Número ao lado de</th><th>O que conta</th><th>Quem vê</th></tr>
+    <tr><td><strong>Aprovações</strong></td><td>Contratos, aditivos e homologações esperando a sua parte</td><td>Eduardo e José</td></tr>
+    <tr><td><strong>Fila de aprovação</strong></td><td>Medições solicitadas esperando aprovação</td><td>Eduardo</td></tr>
+  </table>
+  <h3>No Financeiro</h3>
+  <p>Depois que a medição aprovada vira solicitação no Financeiro, os <strong>mesmos e-mails de aviso do Financeiro</strong> são enviados. Eles seguem as regras de lá, como se você tivesse pedido o pagamento pela tela do Financeiro:</p>
+  <ul>
+    <li>solicitação <strong>devolvida</strong>, <strong>recusada</strong> ou <strong>lançada no Omie</strong>: aviso a quem pediu;</li>
+    <li>aguardando validação ou falha no lançamento: aviso ao financeiro;</li>
+  </ul>
+  <div class="nota">Não há lembrete automático por e-mail na Gestão de Fornecedores. Para não esquecer, olhe o número no menu e o aviso de <strong>parcelas previstas sem medição</strong> no Acompanhamento.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Responsáveis</div>
+  <h2>Quem faz o quê</h2>
+  <table>
+    <tr><th>Papel</th><th>O que faz</th></tr>
+    <tr><td><strong>Solicitante</strong><br><span style="color:var(--suave);font-size:9pt">qualquer pessoa do hub</span></td><td>Cria contrato, pede aditivo e medição, anexa os documentos, registra o aceite final dos seus contratos. Vê apenas o que ela mesma criou</td></tr>
+    <tr><td><strong>Eduardo Maia</strong></td><td>Aprova a contratação, o aditivo de valor e cada medição. Registra aceite final e encerra contratos. Vê todos os contratos</td></tr>
+    <tr><td><strong>José Guilherme</strong></td><td>Aprova as condições de pagamento, o aditivo de condição e a homologação de fornecedor novo. Vê todos os contratos</td></tr>
+    <tr><td><strong>Admin do hub</strong></td><td>Só consulta: vê tudo, mas não aprova nada</td></tr>
+  </table>
+  <p>O Eduardo pode aprovar o que ele mesmo abriu; fica registrado na linha do tempo. Quem não tem papel é solicitante.</p>
+
+  <div class="rotulo" style="margin-top:9mm">Serviços sob demanda</div>
+  <h2>Contrato global</h2>
+  <p>Para serviço avulso ou manutenção contínua (caminhão pipa, desentupimento, dedetização), o contrato é <strong>global</strong>: não tem obra, e o valor é um <strong>teto</strong> que cada serviço medido vai consumindo.</p>
+  <ul>
+    <li>Só pode ser classificado como <strong>Spot</strong> ou <strong>Manutenção</strong>, e não tem material.</li>
+    <li>Cada medição é um serviço dentro do saldo, e o <strong>aceite operacional</strong> é pedido em todas.</li>
+    <li>Se o contrato é de <strong>tabela de preço</strong>, o valor da medição é o preço da tabela vezes a quantidade.</li>
+    <li>No <strong>mensal consolidado</strong>, os atendimentos do mês viram uma medição só, enviada até o dia 25.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Análise</div>
+  <h2>A lista de contratos e o encerramento</h2>
+  <p>Em <strong>Contratação › Contratos</strong>, o topo da lista traz os números do que você pode ver (quem não é Eduardo nem José vê só os seus contratos).</p>
+  <table>
+    <tr><th>Número</th><th>O que mostra</th></tr>
+    <tr><td><strong>Contratado (ativos)</strong></td><td>Soma dos valores dos contratos em andamento</td></tr>
+    <tr><td><strong>Medido</strong></td><td>Quanto já foi medido</td></tr>
+    <tr><td><strong>Pago</strong></td><td>Quanto já foi pago</td></tr>
+    <tr><td><strong>Saldo a medir</strong></td><td>Quanto ainda pode ser medido</td></tr>
+    <tr><td><strong>Com medição em atraso</strong></td><td>Contratos com parcela prevista sem medição ou medição parada há mais de 5 dias</td></tr>
+  </table>
+  <p>Abaixo, os filtros por situação (Todos, Rascunho, Aguardando, Aprovado, Encerrado) e por classificação (incluindo "Só contratos globais"). Cada linha mostra fornecedor, obra, valor, % medido, saldo e situação; os aditivos aparecem logo abaixo do contrato.</p>
+  <h3>Encerrar um contrato</h3>
+  <p>Contrato que chega a 100% medido e pago se encerra sozinho. O <strong>Encerrar</strong> manual, só do <strong>Eduardo</strong>, serve para fechar um contrato que não será usado até o fim: escreva o motivo e confirme. Só encerra sem pendência (nenhuma medição esperando aprovação ou pagamento e nenhum aditivo esperando). Nada é apagado: o histórico continua na ficha.</p>
+  <div class="nota">Contrato com medição em atraso aparece destacado, com o motivo escrito na própria linha.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Dúvidas</div>
+  <h2>Perguntas que costumam aparecer</h2>
+  <div class="pergunta"><b>Posso editar um contrato depois de aprovado?</b>Não. Contrato aprovado só muda por aditivo de valor ou de condição.</div>
+  <div class="pergunta"><b>Contrato global pode ter obra?</b>Não. Contrato global nunca tem obra, nem material.</div>
+  <div class="pergunta"><b>Fornecedor que já está no Omie precisa de homologação?</b>Não. Os que já estão no Omie entram homologados. Só os cadastrados depois passam pela homologação do José.</div>
+  <div class="pergunta"><b>A nota fiscal é obrigatória na medição?</b>Não, é opcional. A evidência do serviço (ou o comprovante de entrega) é obrigatória.</div>
+  <div class="pergunta"><b>Como pagar à vista ou em 30 dias?</b>Use a condição Exceção, com o prazo em dias e a justificativa. Quem aprova é o José.</div>
+  <div class="pergunta"><b>Até que dia posso pedir a medição do mês?</b>Até o dia 25. Depois disso, entra no pagamento do mês seguinte.</div>
+  <div class="pergunta"><b>Posso medir mais de 100%?</b>Não. O sistema trava no saldo. Para mais, peça um aditivo de valor.</div>
+  <div class="pergunta"><b>Anexei a NF e a evidência. Preciso anexar de novo no Financeiro?</b>Sim. Os anexos não vão automaticamente: depois que a solicitação aparece no Financeiro, anexe os documentos lá.</div>
+  <div class="pergunta"><b>Onde vejo a data em que o fornecedor foi pago?</b>Por enquanto, no Financeiro. A data real de pagamento ainda não aparece na Gestão de Fornecedores.</div>
+  <div class="pergunta"><b>O Financeiro recusou. Preciso pedir a medição de novo?</b>Você recebe o e-mail do Financeiro com o motivo. Hoje a Gestão de Fornecedores não mostra a recusa nem tem o botão de reenviar (próxima etapa): fale com o Eduardo e com o financeiro.</div>
+  <div class="pergunta"><b>Aprovei a medição e o pedido não apareceu no Financeiro.</b>A medição fica Aprovada com um aviso. O Eduardo clica em Tentar criar solicitação de novo na Fila de aprovação.</div>
+  <div class="pergunta"><b>Vejo contratos de outras pessoas?</b>Só se for o Eduardo ou o José. Os demais veem apenas o que criaram.</div>
+
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Quando algo dá errado</div>
+  <h2>Mensagens que podem aparecer</h2>
+  <table>
+    <tr><th>Na tela</th><th>O que fazer</th></tr>
+    <tr><td>Faltam informações para enviar: …</td><td>Preencha os campos citados e envie de novo; o que você digitou não se perde</td></tr>
+    <tr><td>Anexe a proposta comercial / Fornecedor novo: anexe as certidões</td><td>Anexe o arquivo (PDF, JPG ou PNG, até 10 MB) e envie</td></tr>
+    <tr><td>Exceção exige condição proposta, prazo em dias e justificativa</td><td>Escreva a condição, o prazo (0 a 120) e o motivo</td></tr>
+    <tr><td>Passa de 100% do contrato. Ainda dá para medir no máximo …</td><td>Reduza o valor. Para mais, peça aditivo de valor</td></tr>
+    <tr><td>Os 10% retidos só são liberados depois do aceite final</td><td>Registre o aceite final na ficha do contrato</td></tr>
+    <tr><td>Este fornecedor não tem chave PIX cadastrada no Omie</td><td>Escolha boleto, guia ou PIX QR code, ou peça o cadastro da chave</td></tr>
+    <tr><td>Não conseguimos consultar o cadastro do Omie agora</td><td>Aguarde alguns instantes; o formulário continua aberto</td></tr>
+  </table>
+  <div class="nota">Se aparecer algo que este manual não explica, fale com o suporte do hub <strong>antes de repetir o pedido</strong> — repetir pode gerar medição ou contrato duplicado.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+</body>
+</html>
