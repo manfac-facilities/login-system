@@ -1,5 +1,22 @@
 # Gestão de Fornecedores — o que falta para o cliente testar (09/10/2026)
 
+## Atualização 10/10/2026 — etapas 1 e 2 concluídas, merges feitos
+
+- **Banco aplicado** (frn 001–006, fin 023–024; 007/025 desligados) — 1.226 fornecedores na carga inicial; laudo
+  independente sem divergência em `revisao-banco-producao-2026-10-10.md`. Detalhe em `.claude/rules/sql.md`.
+- **CA-5.2 testado em produção e aprovado:** duas sessões presas na mesma trava (comprovado: 2 em `pg_stat_activity`);
+  ao soltar, B gravou 60% e A foi recusada com "Passa de 100%. Ainda dá para medir no máximo R$ 400,00." Conferência 9/9
+  OK; limpeza 6/6 OK (tudo apagado, trigger de imutabilidade religada, numeração reposta: o primeiro contrato real nasce
+  CT-0001). Scripts revisados antes de rodar; ficaram no scratchpad da sessão.
+- **Merges:** financeiro #1–#3 e fornecedores #1–#2 na `main` (conferido: SQL da main = SQL aplicado). Nenhum dos dois
+  repositórios tem auto-deploy — nada subiu.
+- **Segredo da integração** gerado em `C:\Users\joao-\fornecedores-integracao-secret.txt` (48 caracteres; nunca no chat).
+- ⚠️ A `main` do financeiro tem **dois arquivos 023** (`023_fin_catalogo_categoria_grupo.sql`, do José, já aplicado; e
+  `023_fin_integracao_medicoes.sql`, nosso, aplicado hoje). Só o número colide. O deploy do financeiro leva junto o
+  commit `e31d0ae` do José (categorias por totalizadora) — confirmar com ele se já está no ar.
+
+**Falta:** etapas 3 a 7 abaixo — todas dependem do acesso ao EasyPanel (com o cliente).
+
 **Estado:** código completo, revisado por agentes independentes (sem bloqueante) e com testes verdes no GitHub Actions.
 Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — nada depende desta máquina.
 
