@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Melhorias Fornecedores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --deep:#081226; --orange:#f05a28; --muted:#94a3b8; --dim:#64748b;
+  --label:#4a6080; --border:#1e3a5f; --text:#ffffff;
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --info:#60a5fa; --global:#a78bfa;
+  --paper:#ffffff; --ink:#0f172a;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark; } }
+:root[data-theme="dark"]{ color-scheme:dark; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+.mono{font-family:"Geist Mono",ui-monospace,Consolas,monospace}
+button{font:inherit;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.page{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 16px;max-width:820px}
+.judge{border:1px solid var(--border);background:var(--navy);border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.judge h2,.sect h2.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--label);margin:0 0 8px}
+.judge ol{margin:0;padding-left:20px;font-size:14px}
+.judge li{margin:3px 0}
+.judge p{margin:10px 0 0;font-size:13px;color:var(--muted)}
+
+/* controles do mockup */
+.controls{display:flex;flex-wrap:wrap;gap:12px 22px;margin-bottom:12px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl>span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;color:var(--muted);border:0;padding:8px 13px;font-size:13px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button:hover{background:var(--border);color:#fff}
+.seg button[aria-pressed="true"]{background:var(--orange);color:#fff}
+.reset{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+.reset:hover{background:var(--border);color:#fff}
+.jump{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.jump button{background:var(--deep);border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer}
+.jump button:hover{color:#fff;border-color:var(--muted)}
+.jump button b{color:var(--orange);margin-right:4px}
+.hint{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;border:1px dashed var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.hint b{color:#fff}
+.hint .st{display:flex;gap:8px;align-items:center}
+.hint .st>span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}
+.sup{display:inline-flex;align-items:center;border:1px solid var(--warn);color:var(--warn);background:rgba(245,158,11,.1);border-radius:999px;padding:0 8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;line-height:18px;vertical-align:middle}
+.sup:hover{background:rgba(245,158,11,.22)}
+
+/* moldura do app */
+.stage{display:flex;justify-content:center}
+.frame{position:relative;display:flex;width:100%;max-width:1180px;height:700px;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.frame.mobile{max-width:390px;height:760px}
+.side{width:250px;flex:none;background:var(--navy);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;z-index:3}
+.side-head{padding:20px 16px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.side-head h3{margin:0;font-size:16px;font-weight:700}
+.back{display:inline-block;margin-top:6px;color:var(--muted);font-size:12px;text-decoration:none}
+.close{display:none;background:none;border:0;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}
+nav{flex:1;overflow-y:auto;padding:12px 8px}
+.ghead{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--label);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 8px;border-radius:6px;cursor:pointer;text-align:left}
+.ghead:hover{background:var(--border);color:var(--muted)}
+.arrow{display:inline-block;width:10px;transition:transform .2s;font-size:10px}
+.group.open .arrow{transform:rotate(90deg)}
+.gname{flex:1}
+.new{font-size:9.5px;letter-spacing:.06em;color:var(--orange);border:1px solid var(--orange);border-radius:999px;padding:0 6px}
+.badge{background:var(--orange);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;letter-spacing:0}
+.items{display:none}
+.group.open .items{display:block}
+.item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:0;color:var(--muted);font-size:14px;padding:9px 12px;border-radius:8px;cursor:pointer;text-align:left;margin-top:2px}
+.item:hover{background:var(--border);color:#fff}
+.item[aria-current="page"]{background:var(--orange);color:#fff;font-weight:600}
+.item[aria-current="page"] .badge{background:#fff;color:var(--orange)}
+.side-foot{border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.who{min-width:0}
+.who b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:none;align-items:center;gap:12px;padding:10px 12px;background:var(--navy);border-bottom:1px solid var(--border)}
+.burger{background:none;border:1px solid var(--border);border-radius:8px;width:40px;height:40px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.burger i{display:block;width:18px;height:2px;background:#fff;border-radius:1px}
+.content{flex:1;overflow:auto;padding:28px 32px}
+.overlay{display:none}
+.frame.mobile .side{position:absolute;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .25s}
+.frame.mobile.drawer .side{transform:none}
+.frame.mobile .close{display:block}
+.frame.mobile .topbar{display:flex}
+.frame.mobile .content{padding:18px 16px}
+.frame.mobile .overlay{display:block;position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:2}
+.frame.mobile.drawer .overlay{opacity:1;pointer-events:auto}
+
+/* componentes (iguais aos da app: components/ui/ui.css) */
+.ph{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.ph h2{margin:0;font-size:21px}
+.ph p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.pill{--c:var(--muted);display:inline-flex;align-items:center;gap:5px;border:1px solid var(--c);color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:500;white-space:nowrap;line-height:18px}
+.btn{cursor:pointer;border:1px solid var(--border);background:transparent;border-radius:8px;padding:8px 14px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.bad{border-color:rgba(239,68,68,.7);color:#fca5a5}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none}
+.box{background:var(--navy);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.pad{padding:14px 16px}
+.state{padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.state h4{margin:0;font-size:15px}
+.state p{margin:0;max-width:440px;color:var(--muted);font-size:13px}
+.state .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--deep);border:1px solid var(--border);color:var(--muted);font-size:18px}
+.state.err{background:color-mix(in srgb,var(--err) 7%,var(--navy))}
+.state.err .ico{border-color:var(--err);color:var(--err)}
+.state.lock .ico{border-color:var(--warn);color:var(--warn)}
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:11px 14px;background:var(--deep);font-size:13px;margin-bottom:14px}
+.banner .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--muted)}
+.banner.ok{border-color:rgba(34,197,94,.6);background:color-mix(in srgb,var(--ok) 9%,var(--navy))}
+.banner.warn{border-color:rgba(245,158,11,.55);background:color-mix(in srgb,var(--warn) 8%,var(--navy))}
+.banner.bad{border-color:rgba(239,68,68,.6);background:color-mix(in srgb,var(--err) 9%,var(--navy))}
+.banner.info{border-color:rgba(96,165,250,.5);background:color-mix(in srgb,var(--info) 8%,var(--navy))}
+.banner.ok .dot{background:var(--ok)}.banner.warn .dot{background:var(--warn)}.banner.bad .dot{background:var(--err)}.banner.info .dot{background:var(--info)}
+.banner p{margin:0}
+.banner p+p{margin-top:4px;color:var(--muted)}
+.campo{width:100%;background:var(--deep);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:#fff;font:inherit;font-size:13.5px}
+.campo:focus{outline:none;border-color:var(--orange)}
+.campo[aria-invalid="true"]{border-color:var(--err)}
+.rotulo{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:4px}
+.erro{color:#fca5a5;font-size:12.5px;margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{background:transparent;border:1px solid var(--border);border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer;color:#fff}
+.chip small{color:var(--muted);margin-left:5px}
+.chip[aria-pressed="true"]{border-color:var(--orange);background:rgba(240,90,40,.14)}
+
+/* lista de contratos */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:11px 14px}
+.kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kpi b{font-size:17px}
+.busca{position:relative;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.busca .in{position:relative;flex:1;min-width:220px;max-width:520px}
+.busca input{padding-left:34px;padding-right:34px;height:40px}
+.busca .lupa{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.busca .lim{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px}
+.busca .cnt{font-size:12.5px;color:var(--muted)}
+.frame.mobile .busca .in{min-width:100%}
+.tr{display:grid;grid-template-columns:var(--cols);gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+.tr:last-child{border-bottom:0}
+.tr.head .td{font-size:11px}
+.tr.head{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);padding-top:9px;padding-bottom:9px;background:var(--deep)}
+.tr.link{cursor:pointer}
+.tr.link:hover{background:rgba(30,58,95,.45)}
+.td{min-width:0;font-size:13.5px}
+.td.r{text-align:right}
+.td .sm{display:block;font-size:12px;color:var(--muted)}
+.td.mono{white-space:nowrap;font-size:12.5px}
+.td,.cond-box,.mail,.supc,.dl dd,.banner,.waiting,.modal-b,.hint,.sub{overflow-wrap:anywhere}
+.td .pills{display:flex;gap:5px;flex-wrap:wrap;margin:3px 0}
+.minibar{height:4px;background:var(--deep);border-radius:2px;margin-top:4px;overflow:hidden}
+.minibar i{display:block;height:100%;background:var(--orange)}
+mark{background:rgba(240,90,40,.35);color:#fff;border-radius:2px;padding:0 1px}
+.frame.mobile .kpis{grid-template-columns:1fr 1fr}
+.frame.mobile .tr.head{display:none}
+.frame.mobile .tr{grid-template-columns:1fr 1fr !important;gap:8px 14px}
+.frame.mobile .td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:1px}
+.frame.mobile .td.full{grid-column:1/-1}
+.frame.mobile .td.r{text-align:left}
+
+/* aprovações / ficha */
+.card{background:var(--navy);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.card-h h3{margin:0;font-size:15px}
+.card-h .sm{color:var(--muted);font-size:12.5px}
+.card-b{padding:14px 16px}
+.card-f{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px;margin:0}
+.dl div{min-width:0}
+.dl dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim)}
+.dl dd{margin:1px 0 0;font-size:13.5px}
+.steps{display:flex;gap:0;align-items:stretch;flex-wrap:wrap;margin:10px 0 2px}
+.step{flex:1;min-width:110px;display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--border);background:var(--deep);font-size:12.5px;color:var(--muted)}
+.step+.step{border-left:0}
+.step:first-child{border-radius:8px 0 0 8px}
+.step:last-child{border-radius:0 8px 8px 0}
+.step .n{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;border:1px solid var(--dim);flex:none}
+.step.done{color:#fff}
+.step.done .n{background:var(--ok);border-color:var(--ok);color:#06210f}
+.step.cur{color:#fff;background:rgba(240,90,40,.14);border-color:var(--orange)}
+.step.cur .n{background:var(--orange);border-color:var(--orange);color:#fff;animation:pulse 1.8s infinite}
+.step.bad{color:#fca5a5;border-color:rgba(239,68,68,.6)}
+.step.bad .n{background:var(--err);border-color:var(--err);color:#fff}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,90,40,.6)}70%{box-shadow:0 0 0 7px rgba(240,90,40,0)}100%{box-shadow:0 0 0 0 rgba(240,90,40,0)}}
+.frame.mobile .steps{flex-direction:column}
+.frame.mobile .step+.step{border-left:1px solid var(--border);border-top:0}
+.frame.mobile .step:first-child{border-radius:8px 8px 0 0}
+.frame.mobile .step:last-child{border-radius:0 0 8px 8px}
+.etapa{border:1px solid var(--orange);background:linear-gradient(180deg,rgba(240,90,40,.12),rgba(240,90,40,.03));border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.etapa.ok{border-color:rgba(34,197,94,.6);background:linear-gradient(180deg,rgba(34,197,94,.1),rgba(34,197,94,.02))}
+.etapa.bad{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg,rgba(239,68,68,.1),rgba(239,68,68,.02))}
+.etapa.neu{border-color:var(--border);background:var(--navy)}
+.etapa .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);font-weight:700}
+.etapa.ok .k{color:var(--ok)} .etapa.bad .k{color:#fca5a5} .etapa.neu .k{color:var(--muted)}
+.etapa .t{font-size:19px;font-weight:700;margin:2px 0}
+.etapa .s{font-size:13px;color:var(--muted)}
+.etapa-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+.frame.mobile .grid2{grid-template-columns:minmax(0,1fr)}
+.sec-t{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:500}
+.docs .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);font-size:14px}
+.docs .row:last-child{border-bottom:0}
+.docs .row small{color:var(--muted);font-size:12.5px}
+.omie{color:var(--ok);font-size:13px}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{position:relative;padding:0 0 13px 22px;font-size:13px}
+.tl li::before{content:"";position:absolute;left:5px;top:6px;bottom:-6px;width:1px;background:var(--border)}
+.tl li:last-child::before{display:none}
+.tl li::after{content:"";position:absolute;left:1px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--k,var(--muted));box-shadow:0 0 0 3px var(--navy)}
+.tl time{display:block;font-size:11.5px;color:var(--dim)}
+.tl li.now{color:var(--orange);font-weight:600}
+.tl li.now::after{animation:pulse 1.8s infinite}
+.cond-box{border:1px solid var(--border);border-radius:10px;background:var(--deep);padding:12px 14px}
+.cond-box .nm{font-weight:600}
+.cond-box .cd{font-size:12px;color:var(--muted)}
+.parc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.parc span{font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 8px;background:var(--navy)}
+.parc span.ret{border-color:rgba(245,158,11,.6)}
+.diff{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;margin-top:12px}
+.diff .arr{display:grid;place-items:center;color:var(--orange);font-size:20px}
+.diff .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:4px}
+.diff .depois .cond-box{border-color:var(--orange)}
+.frame.mobile .diff{grid-template-columns:1fr}
+.frame.mobile .diff .arr{transform:rotate(90deg)}
+.peditor{display:grid;gap:6px;margin-top:10px}
+.peditor .pr{display:grid;grid-template-columns:1fr 88px;gap:8px;align-items:center;font-size:13px}
+.peditor .pr .g{color:var(--muted)}
+.pct{position:relative}
+.pct input{text-align:right;padding-right:24px}
+.pct::after{content:"%";position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px}
+.soma{font-size:12.5px;margin-top:4px}
+.soma.ok{color:var(--ok)} .soma.bad{color:#fca5a5}
+.waiting{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--border);border-radius:10px;padding:12px 14px;color:var(--muted);font-size:13px;background:var(--deep)}
+.waiting b{color:#fff}
+
+/* configurações */
+.cfg-tbl{--cols:2.1fr 1.3fr 1.5fr .8fr .9fr .9fr 1.2fr}
+.off{opacity:.55}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.editor-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.frame.mobile .editor-wrap{grid-template-columns:minmax(0,1fr)}
+.campos{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.campos button{background:var(--deep);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer;color:#cbd5e1;font-family:"Geist Mono",monospace}
+.campos button:hover{border-color:var(--orange);color:#fff}
+textarea.campo{min-height:420px;resize:vertical;font-family:"Geist Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55}
+.papel{background:var(--paper);color:var(--ink);border-radius:8px;padding:22px 24px;font-family:Georgia,"Times New Roman",serif;font-size:13px;line-height:1.55;white-space:pre-wrap;max-height:470px;overflow:auto}
+.papel .f{background:#fff1e6;border-bottom:1px dashed #f05a28;padding:0 2px}
+.papel .bad{background:#fee2e2;color:#b91c1c;border-bottom:1px dashed #b91c1c;padding:0 2px}
+
+/* modal e toast dentro da moldura */
+.modal-bg{position:absolute;inset:0;background:rgba(3,8,18,.72);z-index:10;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--navy);border:1px solid var(--border);border-radius:14px;width:min(600px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal-h{padding:16px 18px;border-bottom:1px solid var(--border)}
+.modal-h h3{margin:0;font-size:15.5px}
+.modal-b{padding:16px 18px;overflow:auto;font-size:13.5px}
+.modal-f{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.modal-b ul{margin:6px 0 0;padding-left:20px}
+.modal-b li{margin:4px 0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgrid .full{grid-column:1/-1}
+.frame.mobile .fgrid{grid-template-columns:1fr}
+.chk{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#052e16;border:1px solid var(--ok);color:#dcfce7;border-radius:10px;padding:10px 16px;font-size:13px;z-index:20;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+/* seções fora da moldura */
+.sect{margin-top:36px}
+.sect>h2{font-size:19px;margin:0 0 4px}
+.sect>p{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:860px}
+.mails{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:14px}
+.mail{background:var(--navy);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.mail .mh{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12.5px}
+.mail .mh .when{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--orange);font-weight:700;margin-bottom:6px}
+.mail .mh div{margin:2px 0;color:var(--muted)}
+.mail .mh div b{color:#fff;font-weight:500}
+.mail .subj{font-weight:600;color:#fff;margin-top:6px;font-size:13.5px}
+.mail .mb{padding:14px;background:#f8fafc;color:#0f172a;font-size:13px;flex:1}
+.mail .mb p{margin:0 0 8px}
+.mail .mb .cta{display:inline-block;background:#f05a28;color:#fff;border-radius:6px;padding:6px 12px;font-weight:600;font-size:12.5px;margin-top:4px}
+.mail .mb .tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 10px}
+.mail .mb .tbl td{padding:3px 0;vertical-align:top}
+.mail .mb .tbl td:first-child{color:#64748b;width:42%}
+.mail .mb .chg{background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:8px;margin:6px 0 10px}
+.mail.flash{border-color:var(--orange);box-shadow:0 0 0 2px rgba(240,90,40,.3)}
+.log{margin-top:16px}
+.log li{font-size:13px;color:var(--muted);margin:3px 0}
+.log li b{color:#fff;font-weight:500}
+.sups{display:grid;gap:12px}
+.supc{background:var(--navy);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:6px 14px;align-items:start}
+.supc .num{font-size:20px;font-weight:700;color:var(--warn);line-height:1.1}
+.supc h3{margin:0;font-size:15px}
+.supc p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.supc p b{color:#cbd5e1;font-weight:500}
+.supc .go{align-self:center}
+.supc.extra{border-left-color:var(--info)}
+.supc.extra .num{color:var(--info)}
+@media (max-width:700px){
+  .supc{grid-template-columns:auto 1fr}
+  .supc .go{grid-column:1/-1;justify-self:start}
+  .frame{height:760px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Melhorias no Gestão de Fornecedores</h1>
+  <p class="sub">Desenho das mudanças pedidas em 12/10: busca na lista, aprovação em ordem (Eduardo, depois José), José ajustando as condições em vez de devolver, etapa atual na linha do tempo, e-mail a cada etapa, a nova área de Configurações e a proposta comercial opcional. Tudo aqui é simulação: clique à vontade, nada é gravado.</p>
+
+  <div class="judge">
+    <h2>O que julgar</h2>
+    <ol>
+      <li><b>Ordem da aprovação:</b> troque o papel no topo entre Eduardo e José e veja quem pode aprovar o CT-0001 em cada momento.</li>
+      <li><b>José ajustando condições:</b> como José, abra Aprovações, use "Alterar condições" no CT-0002 e aprove.</li>
+      <li><b>Etapa atual</b> no alto da ficha do contrato e na coluna Status da lista.</li>
+      <li><b>Busca</b> na lista de Contratos (nome, CNPJ ou nº).</li>
+      <li><b>Configurações</b> (só aparece para o José): condições de pagamento e modelo de contrato.</li>
+      <li>Os <b>e-mails</b> de cada etapa e as <b>suposições</b> no fim da página, que precisam do seu ok.</li>
+    </ol>
+    <p>O que ignorar: os outros contratos e números são exemplos. Só o CT-0001 é real. As telas de Medição não mudam.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctl"><span>Ver como</span>
+      <div class="seg" id="segRole">
+        <button type="button" data-v="sol" aria-pressed="false">Solicitante</button>
+        <button type="button" data-v="ed" aria-pressed="false">Eduardo</button>
+        <button type="button" data-v="jose" aria-pressed="true">José</button>
+        <button type="button" data-v="adm" aria-pressed="false">Admin</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Tela</span>
+      <div class="seg" id="segDev">
+        <button type="button" data-v="desk" aria-pressed="true">Computador</button>
+        <button type="button" data-v="mob" aria-pressed="false">Celular</button>
+      </div>
+    </div>
+    <button type="button" class="reset" id="reset">Reiniciar simulação</button>
+  </div>
+
+  <div class="jump" id="jump">
+    <button type="button" data-jump="contratos"><b>A</b>Busca na lista</button>
+    <button type="button" data-jump="aprovacoes"><b>B</b>Aprovação em ordem</button>
+    <button type="button" data-jump="ficha"><b>C</b>Ficha e etapa atual</button>
+    <button type="button" data-jump="#emails"><b>D</b>E-mails por etapa</button>
+    <button type="button" data-jump="cfg-cond"><b>E1</b>Condições de pagamento</button>
+    <button type="button" data-jump="cfg-modelo"><b>E2</b>Modelo de contrato</button>
+    <button type="button" data-jump="novo"><b>F</b>Proposta comercial opcional</button>
+    <button type="button" data-jump="#suposicoes"><b>G</b>Suposições</button>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <div class="stage" id="stage">
+    <div class="frame" id="frame">
+      <aside class="side" id="side" aria-label="Menu lateral">
+        <div class="side-head">
+          <div>
+            <h3>Gestão de Fornecedores</h3>
+            <a class="back" href="#" onclick="return false">← Voltar ao Hub</a>
+          </div>
+          <button type="button" class="close" id="closeBtn" aria-label="Fechar menu">×</button>
+        </div>
+        <nav id="nav"></nav>
+        <div class="side-foot">
+          <div class="who"><b id="whoName"></b><small id="whoSub"></small></div>
+          <button type="button" class="btn sm">Sair</button>
+        </div>
+      </aside>
+      <div class="overlay" id="overlay"></div>
+      <div class="main">
+        <div class="topbar">
+          <button type="button" class="burger" id="burger" aria-label="Abrir menu"><i></i><i></i><i></i></button>
+          <b>Gestão de Fornecedores</b>
+        </div>
+        <div class="content" id="content"></div>
+      </div>
+      <div id="modalRoot"></div>
+      <div id="toastRoot"></div>
+    </div>
+  </div>
+
+  <section class="sect" id="emails">
+    <h2 class="k">D · E-mails por etapa</h2>
+    <h2>Quem recebe e-mail, e quando</h2>
+    <p>Cada etapa avisa o próximo aprovador e quem abriu o contrato. Abaixo, o e-mail de cada etapa com os dados do CT-0001 (no e-mail 3, o CT-0002, que é de obra). <span class="sup" data-sup="5">Suposição 5</span> <span class="sup" data-sup="4">Suposição 4</span></p>
+    <div class="mails" id="mails"></div>
+    <div class="box pad log">
+      <div class="sec-t">E-mails disparados nesta simulação</div>
+      <ul id="mailLog" style="margin:0;padding-left:18px"></ul>
+    </div>
+  </section>
+
+  <section class="sect" id="suposicoes">
+    <h2 class="k">G · Suposições que precisam do ok do cliente</h2>
+    <h2>O que o desenho assume e ainda não foi confirmado</h2>
+    <p>São recomendações nossas. Se alguma estiver errada, a tela correspondente muda. Use "Ver na tela" para conferir cada uma.</p>
+    <div class="sups" id="sups"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ---------------- dados ---------------- */
+var ROLES={
+  sol:{nome:'Solicitante',sub:'quem abre o contrato'},
+  ed:{nome:'Eduardo Maia',sub:'Aprova a contratação'},
+  jose:{nome:'José Guilherme',sub:'Aprova as condições'},
+  adm:{nome:'Admin do hub',sub:'vê tudo · não aprova'}
+};
+var ED_MAIL='Eduardo Maia';
+var JO_MAIL='José Guilherme';
+var SOL_MAIL='Solicitante (quem abriu o contrato)';
+
+/* frn_condicoes — as 12 do seed 002_frn_cadastros.sql */
+var CONDS0=[
+ {codigo:'OBRA_PEQUENA_UNICA_D7',nome:'Obra pequena · pagamento único',faixa:'Até R$ 1.500',modo:'parcelas',parcelas:[{g:'Após execução aprovada + documentação mínima',pct:100}],dias:7,glob:false,soGlob:false,just:false,pratica:'Mede uma vez; o Financeiro programa D+7.'},
+ {codigo:'OBRA_MEDIA_50_50',nome:'Obra média · 50% / 50%',faixa:'R$ 1.500 a R$ 5.000',modo:'parcelas',parcelas:[{g:'Contrato aprovado + início/mobilização autorizada',pct:50},{g:'Conclusão aprovada + NF + evidências',pct:50}],dias:null,glob:false,soGlob:false,just:false,pratica:'A medição final libera a segunda parcela. Para quando há custo de mobilização.'},
+ {codigo:'OBRA_MEDIA_UNICA_D15',nome:'Obra média baixo risco · único',faixa:'R$ 1.500 a R$ 5.000, baixo risco',modo:'parcelas',parcelas:[{g:'Após conclusão aprovada + NF',pct:100}],dias:15,glob:false,soGlob:false,just:false,pratica:'Medição única; o Financeiro programa D+15. Para parceiros confiáveis e serviços rápidos.'},
+ {codigo:'OBRA_MAIOR_30_30_40',nome:'Obra maior · 30% / 30% / 40%',faixa:'Acima de R$ 5.000',modo:'parcelas',parcelas:[{g:'Contrato aprovado + início/mobilização',pct:30},{g:'Medição parcial aprovada',pct:30},{g:'Conclusão + aceite final + NF',pct:40}],dias:null,glob:false,soGlob:false,just:false,pratica:'Cada medição fica vinculada ao contrato; o sistema controla o saldo.'},
+ {codigo:'OBRA_RETENCAO_10',nome:'Obra crítica · 30% / 30% / 30% + 10% retido',faixa:'Acima de R$ 8.000 ou risco técnico',modo:'parcelas',parcelas:[{g:'Início/mobilização',pct:30},{g:'Medição parcial',pct:30},{g:'Conclusão aprovada',pct:30},{g:'Retenção · liberada após aceite final',pct:10,ret:true}],dias:null,glob:false,soGlob:false,just:false,pratica:'Os últimos 10% só são pagos depois do aceite final.'},
+ {codigo:'OBRA_MEDICAO_MENSAL',nome:'Obra contínua · medição mensal',faixa:'Contrato com medições recorrentes',modo:'mensal',gatilho:'Medição mensal aprovada + NF',dias:null,glob:true,soGlob:false,just:false,pratica:'Cada medição mensal aprovada gera um pagamento.'},
+ {codigo:'SPOT_UNICO_D7',nome:'Spot simples · único',faixa:'Atendimento avulso até R$ 1.500',modo:'por_servico',gatilho:'Atendimento concluído + evidência + NF',dias:7,glob:true,soGlob:false,just:false,pratica:'Cada atendimento vira uma medição; o Financeiro programa D+7.'},
+ {codigo:'SPOT_UNICO_D15',nome:'Spot padrão · único',faixa:'Atendimento avulso acima de R$ 1.500',modo:'por_servico',gatilho:'Atendimento concluído + NF aprovada',dias:15,glob:true,soGlob:false,just:false,pratica:'Cada atendimento vira uma medição; o Financeiro programa D+15.'},
+ {codigo:'SPOT_MENSAL_CONSOLIDADO',nome:'Spot recorrente · mensal consolidado',faixa:'Vários atendimentos no mês',modo:'consolidado',gatilho:'Fechamento mensal aprovado + NF consolidada',dias:null,glob:true,soGlob:true,just:false,pratica:'Os atendimentos do mês se acumulam; o fechamento gera uma medição só.'},
+ {codigo:'SPOT_TABELA_FIXA',nome:'Spot com tabela de preço fixa',faixa:'Contrato global com tabela',modo:'tabela',gatilho:'Serviço da tabela + evidência + NF',dias:null,glob:true,soGlob:true,just:false,pratica:'Quem pede escolhe o serviço da tabela; o valor vem dela.'},
+ {codigo:'MATERIAL_MEDIANTE_NF',nome:'Material · mediante NF',faixa:'Compra/entrega de material',modo:'parcelas',parcelas:[{g:'Entrega comprovada + NF aprovada',pct:100}],dias:null,glob:false,soGlob:false,just:false,pratica:'Material fica separado da mão de obra no contrato e na medição.'},
+ {codigo:'EXCECAO_APROVACAO',nome:'Exceção · fora do padrão',faixa:'Justificativa obrigatória',modo:'excecao',gatilho:'Conforme aprovação',dias:null,glob:true,soGlob:false,just:true,pratica:'Antecipação, condição especial ou urgência. Exige justificativa.'}
+];
+var MODOS={parcelas:'Parcelas',mensal:'Medição mensal',por_servico:'Por atendimento',consolidado:'Mensal consolidado',tabela:'Tabela de preços',excecao:'Exceção'};
+var CLS={spot:'Spot',manutencao:'Manutenção',obra:'Obra',material:'Material',emergencial:'Emergencial'};
+
+function CTS0(){return [
+ {num:'CT-0001',forn:'DAVI CRISTIANO SILVA DE SOUZA 10416346766',doc:'32.542.450/0001-00',tipo:'global',cls:'manutencao',obra:null,cc:'CC DPSP - MANUTENÇÃO PREDIAL',valor:200000,medido:0,cond:'OBRA_MEDICAO_MENSAL',parcelas:null,inicio:'01/10/2026',fim:'30/09/2027',
+  escopo:'Manutenção predial preventiva e corretiva sob demanda (elétrica, hidráulica e civil) nas unidades atendidas pelo centro de custo DPSP.',proposta:false,gerado:false,
+  stage:'eduardo',desde:'09/10/2026 14:20',hist:[{t:'09/10/2026 14:12',k:'criado',x:'Contrato criado por Solicitante'},{t:'09/10/2026 14:20',k:'enviado',x:'Enviado para aprovação do Eduardo'}]},
+ {num:'CT-0002',forn:'CLIMATIZA AR CONDICIONADO LTDA',doc:'41.208.377/0001-62',tipo:'especifico',cls:'obra',obra:'OB-0142 · Reforma da loja Pinheiros',cc:'CC OBRAS - REFORMAS',valor:12800,medido:0,cond:'OBRA_MAIOR_30_30_40',parcelas:null,inicio:'20/10/2026',fim:'30/11/2026',
+  escopo:'Fornecimento e instalação de 4 splits 24.000 BTU com infraestrutura elétrica e de dreno.',proposta:true,gerado:false,
+  stage:'jose',desde:'10/10/2026 09:41',hist:[{t:'08/10/2026 16:02',k:'criado',x:'Contrato criado por Solicitante'},{t:'08/10/2026 16:05',k:'enviado',x:'Enviado para aprovação do Eduardo'},{t:'10/10/2026 09:41',k:'aprov',x:'Contratação aprovada por Eduardo Maia'}]},
+ {num:'CT-0003',forn:'PIPA FORTE TRANSPORTE DE ÁGUA LTDA',doc:'27.615.904/0001-38',tipo:'global',cls:'spot',obra:null,cc:'CC DPSP - MANUTENÇÃO PREDIAL',valor:36000,medido:8100,cond:'SPOT_TABELA_FIXA',parcelas:null,inicio:'01/09/2026',fim:'31/08/2027',
+  escopo:'Abastecimento por caminhão pipa sob demanda, com preços da tabela anexa.',proposta:true,gerado:true,
+  stage:'aprovado',desde:'02/09/2026 11:30',hist:[{t:'29/08/2026 10:15',k:'criado',x:'Contrato criado por Solicitante'},{t:'29/08/2026 10:20',k:'enviado',x:'Enviado para aprovação do Eduardo'},{t:'01/09/2026 15:04',k:'aprov',x:'Contratação aprovada por Eduardo Maia'},{t:'02/09/2026 11:30',k:'aprov',x:'Condições de pagamento aprovadas por José Guilherme'},{t:'02/09/2026 11:30',k:'aprov',x:'Contrato aprovado — liberado para medição'}]},
+ {num:'CT-0004',forn:'HIDROTEC INSTALAÇÕES HIDRÁULICAS LTDA',doc:'19.884.512/0001-07',tipo:'especifico',cls:'obra',obra:'OB-0139 · Adequação hidráulica CD Barueri',cc:'CC OBRAS - REFORMAS',valor:4300,medido:0,cond:'OBRA_MEDIA_50_50',parcelas:null,inicio:'15/10/2026',fim:'31/10/2026',
+  escopo:'Troca de prumada de água fria e recomposição de alvenaria.',proposta:false,gerado:false,devPor:'ed',motivo:'Escopo sem a lista de pontos hidráulicos. Anexar o levantamento feito na visita.',
+  stage:'devolvido',desde:'11/10/2026 10:02',hist:[{t:'10/10/2026 17:40',k:'criado',x:'Contrato criado por Solicitante'},{t:'10/10/2026 17:44',k:'enviado',x:'Enviado para aprovação do Eduardo'},{t:'11/10/2026 10:02',k:'devol',x:'Devolvido por Eduardo Maia: Escopo sem a lista de pontos hidráulicos. Anexar o levantamento feito na visita.'}]},
+ {num:'CT-0005',forn:'ELETROMAX MATERIAIS ELÉTRICOS LTDA',doc:'08.731.226/0001-90',tipo:'especifico',cls:'material',obra:'OB-0142 · Reforma da loja Pinheiros',cc:'CC OBRAS - REFORMAS',valor:9870,medido:0,cond:'MATERIAL_MEDIANTE_NF',parcelas:null,inicio:'20/10/2026',fim:'20/11/2026',
+  escopo:'Cabos, disjuntores e quadro de distribuição para a reforma.',proposta:false,gerado:false,
+  stage:'rascunho',desde:'12/10/2026 08:55',hist:[{t:'12/10/2026 08:55',k:'criado',x:'Contrato criado por Solicitante'}]}
+];}
+
+var STAGE={
+  rascunho:['Rascunho','#94a3b8'],
+  eduardo:['Aguardando Eduardo','#f59e0b'],
+  jose:['Aguardando José','#f59e0b'],
+  devolvido:['Devolvido','#ef4444'],
+  aprovado:['Aprovado','#22c55e'],
+  encerrado:['Encerrado','#60a5fa']
+};
+var GRUPO_STATUS={todos:'Todos',rascunho:'Rascunho',aguardando:'Aguardando',devolvido:'Devolvido',aprovado:'Aprovado',encerrado:'Encerrado'};
+var TEMPLATE0='INSTRUMENTO PARTICULAR DE PRESTAÇÃO DE SERVIÇOS\nContrato {{numero}} · emitido em {{data_emissao}}\n\nPARTES\nCONTRATANTE: Manfac, CNPJ [CNPJ da Manfac].\nCONTRATADA: {{fornecedor}}, CNPJ {{cnpj}}, com dados bancários conforme o cadastro de fornecedores.\n\nCLÁUSULA 1 — OBJETO\n{{escopo}}\nLocal de execução: {{obra}}. Classificação: {{classificacao}}. Centro de custo: {{centro_custo}}.\n\nCLÁUSULA 2 — VALOR E PRAZO\nValor: {{valor}}.\nVigência de {{inicio}} a {{fim}}.\n\nCLÁUSULA 3 — CONDIÇÕES DE PAGAMENTO\nCondição: {{condicao}}.\n{{parcelas}}\nO pagamento depende de medição aprovada e nota fiscal.\n\nCLÁUSULA 4 — DISPOSIÇÕES GERAIS\nAlterações de valor ou de condição de pagamento só valem por aditivo aprovado.\n';
+var CAMPOS=['numero','fornecedor','cnpj','valor','condicao','parcelas','inicio','fim','escopo','obra','classificacao','centro_custo','data_emissao'];
+
+/* ---------------- estado ---------------- */
+var S;
+function reset(keepRole){
+  var role=keepRole&&S?S.role:'jose', mobile=S?S.mobile:false;
+  S={role:role,mobile:mobile,page:'contratos',sel:'CT-0001',open:{c:true},
+     q:'',fStatus:'todos',fCls:'todas',listaEstado:'normal',cfgEstado:'normal',
+     cts:CTS0(),conds:CONDS0.map(function(c){var o=JSON.parse(JSON.stringify(c));o.ativo=true;return o;}),
+     condFiltro:'ativas',edit:{},tpl:TEMPLATE0,tplSalvo:TEMPLATE0,tplData:'09/10/2026',docModo:'depois',mails:[]};
+  document.getElementById('frame').classList.remove('drawer');
+}
+
+/* ---------------- utilidades ---------------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function brl(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function norm(s){return Array.from(String(s)).map(function(ch){var n=ch.normalize('NFD').replace(/[̀-ͯ]/g,'');return n.length===1?n:ch;}).join('').toLowerCase();}
+function pill(txt,cor){return '<span class="pill" style="--c:'+cor+'">'+esc(txt)+'</span>';}
+function stPill(c){var s=STAGE[c.stage];return pill(s[0],s[1]);}
+function ct(n){for(var i=0;i<S.cts.length;i++)if(S.cts[i].num===n)return S.cts[i];}
+function cond(cod){for(var i=0;i<S.conds.length;i++)if(S.conds[i].codigo===cod)return S.conds[i];}
+function agora(){var d=new Date();return '12/10/2026 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function parcOf(c){return c.parcelas||(cond(c.cond)&&cond(c.cond).parcelas)||null;}
+function resumoCond(k,parcelas){
+  if(!k)return '—';
+  if(k.modo==='parcelas'){var p=parcelas||k.parcelas;return p.map(function(x){return x.pct+'%'+(x.ret?' retido':'');}).join(' / ')+(k.dias!=null?' · D+'+k.dias:'');}
+  return k.gatilho+(k.dias!=null?' · D+'+k.dias:'');
+}
+function condBox(cod,parcelas,extra){
+  var k=cond(cod);if(!k)return '<div class="cond-box">—</div>';
+  var p='';
+  if(k.modo==='parcelas'){p='<div class="parc">'+(parcelas||k.parcelas).map(function(x,i){return '<span class="'+(x.ret?'ret':'')+'">'+(i+1)+'ª · <b>'+x.pct+'%</b> — '+esc(x.g)+'</span>';}).join('')+'</div>';}
+  else p='<div class="parc"><span>'+esc(MODOS[k.modo])+' — '+esc(k.gatilho)+'</span></div>';
+  return '<div class="cond-box"><div class="nm">'+esc(k.nome)+'</div><div class="cd mono">'+k.codigo+(k.dias!=null?' · Financeiro programa D+'+k.dias:'')+'</div>'+p+(extra||'')+'</div>';
+}
+function usos(cod){return S.cts.filter(function(c){return c.cond===cod;});}
+function canCfg(r){return r==='jose'||r==='adm';}
+function toast(msg){var r=document.getElementById('toastRoot');r.innerHTML='<div class="toast" role="status">'+msg+'</div>';clearTimeout(toast.t);toast.t=setTimeout(function(){r.innerHTML='';},4200);}
+function supTag(n){return '<span class="sup" data-sup="'+n+'" title="Ver a suposição '+n+'">Suposição '+n+'</span>';}
+
+/* ---------------- e-mails ---------------- */
+function tabelaCt(c){
+  return '<table class="tbl"><tr><td>Contrato</td><td><b>'+c.num+'</b></td></tr><tr><td>Fornecedor</td><td>'+esc(c.forn)+'</td></tr><tr><td>Tipo</td><td>'+(c.tipo==='global'?'Global':'Específico')+' · '+CLS[c.cls]+'</td></tr><tr><td>Valor</td><td>'+brl(c.valor)+'</td></tr><tr><td>Centro de custo</td><td>'+esc(c.cc)+'</td></tr></table>';
+}
+function mkMail(kind,c,x){
+  x=x||{};var k=cond(c.cond),link='<span class="cta">Abrir o contrato no Hub</span>';
+  if(kind==='enviado')return {kind:kind,when:'1 · Enviado para aprovação',para:ED_MAIL,cc:'—',
+    assunto:'[Fornecedores] '+c.num+' aguarda sua aprovação — '+c.forn,
+    corpo:'<p>Eduardo, o contrato abaixo foi enviado para aprovação e está com você.</p>'+tabelaCt(c)+'<p>Condição proposta: <b>'+esc(k.nome)+'</b>.</p><p>Você aprova a contratação. Depois disso, o contrato segue para o José validar as condições de pagamento.</p>'+link};
+  if(kind==='ed_aprovou')return {kind:kind,when:'2 · Eduardo aprovou a contratação',para:JO_MAIL,cc:SOL_MAIL,
+    assunto:'[Fornecedores] '+c.num+': contratação aprovada — aguarda as condições',
+    corpo:'<p>O Eduardo aprovou a contratação do '+c.num+'. Agora o contrato está com o José, que valida as condições de pagamento.</p>'+tabelaCt(c)+'<p>Condição proposta: <b>'+esc(k.nome)+'</b> ('+esc(resumoCond(k,c.parcelas))+').</p><p>José: você pode aprovar, ajustar a condição e aprovar, ou devolver.</p>'+link};
+  if(kind==='jose_alterou')return {kind:kind,when:'3 · José alterou as condições e aprovou',para:SOL_MAIL,cc:ED_MAIL,
+    assunto:'[Fornecedores] '+c.num+' aprovado com condição de pagamento alterada',
+    corpo:'<p>O José aprovou o '+c.num+' e alterou a condição de pagamento. O contrato está liberado para medição.</p><div class="chg"><b>Antes:</b> '+esc(x.de)+'<br><b>Depois:</b> '+esc(x.para)+'</div>'+tabelaCt(c)+'<p>Eduardo: este e-mail é só um aviso. Não é preciso aprovar de novo.</p>'+link};
+  if(kind==='jose_aprovou')return {kind:kind,when:'3b · José aprovou sem alterar',para:SOL_MAIL,cc:ED_MAIL,
+    assunto:'[Fornecedores] '+c.num+' aprovado — liberado para medição',
+    corpo:'<p>O José aprovou as condições de pagamento do '+c.num+'. O contrato está liberado para medição.</p>'+tabelaCt(c)+link};
+  if(kind==='devolvido')return {kind:kind,when:'4 · Devolvido',para:SOL_MAIL,cc:'—',
+    assunto:'[Fornecedores] '+c.num+' devolvido para ajuste',
+    corpo:'<p>O '+c.num+' foi devolvido por <b>'+esc(x.por)+'</b>.</p><div class="chg"><b>Motivo:</b> '+esc(x.motivo)+'</div>'+tabelaCt(c)+'<p>Ajuste o que foi pedido e envie de novo. O contrato volta para o Eduardo.</p>'+link};
+}
+function mailHtml(m,flash){
+  return '<article class="mail'+(flash?' flash':'')+'"><div class="mh"><div class="when">'+m.when+'</div><div>Para: <b>'+m.para+'</b></div><div>Cópia: <b>'+m.cc+'</b></div><div class="subj">'+esc(m.assunto)+'</div></div><div class="mb">'+m.corpo+'</div></article>';
+}
+function enviar(kind,c,x){var m=mkMail(kind,c,x);m.t=agora();m.num=c.num;S.mails.unshift(m);S.lastMail=kind;}
+function renderMails(){
+  var c=JSON.parse(JSON.stringify(ct('CT-0001')||CTS0()[0]));c.cond='OBRA_MEDICAO_MENSAL';c.parcelas=null;
+  var c2=JSON.parse(JSON.stringify(CTS0()[1]));c2.cond='OBRA_RETENCAO_10';
+  var list=[mkMail('enviado',c),mkMail('ed_aprovou',c),
+    mkMail('jose_alterou',c2,{de:'Obra maior · 30% / 30% / 40% (OBRA_MAIOR_30_30_40)',para:'Obra crítica · 30% / 30% / 30% + 10% retido (OBRA_RETENCAO_10)'}),
+    mkMail('devolvido',c,{por:'Eduardo Maia',motivo:'Falta definir o teto por atendimento no escopo.'})];
+  var k={enviado:0,ed_aprovou:1,jose_alterou:2,jose_aprovou:2,devolvido:3};
+  document.getElementById('mails').innerHTML=list.map(function(m,i){return mailHtml(m,S.lastMail&&k[S.lastMail]===i);}).join('')+
+    '<p style="grid-column:1/-1;margin:0;font-size:13px;color:var(--muted)">Se o José aprovar <b>sem</b> alterar, vai o e-mail 3 sem o bloco "Antes/Depois", com o assunto "aprovado — liberado para medição". O Eduardo também recebe a devolução quando quem devolve é o José.</p>';
+  var log=document.getElementById('mailLog');
+  log.innerHTML=S.mails.length?S.mails.map(function(m){return '<li><b>'+m.t.slice(11)+'</b> · '+m.num+' · '+esc(m.when.replace(/^\S+ · /,''))+' → para '+m.para+(m.cc!=='—'?' · cópia '+m.cc:'')+'</li>';}).join(''):'<li>Nenhum ainda. Aprove ou devolva um contrato na simulação e o e-mail aparece aqui.</li>';
+}
+
+/* ---------------- menu ---------------- */
+function grupos(){
+  var r=S.role, nEd=S.cts.filter(function(c){return c.stage==='eduardo';}).length, nJo=S.cts.filter(function(c){return c.stage==='jose';}).length;
+  var n=r==='ed'?nEd:r==='jose'?nJo:0;
+  var g=[{id:'c',name:'Contratação',items:[{id:'contratos',label:'Contratos'},{id:'aprovacoes',label:'Aprovações',n:n}]},
+         {id:'m',name:'Medição',items:[{id:'med1',label:'Nova medição'},{id:'med2',label:'Fila de aprovação'},{id:'med3',label:'Acompanhamento'}]}];
+  if(canCfg(r))g.push({id:'cfg',name:'Configurações',novo:true,items:[{id:'cfg-cond',label:'Condições de pagamento'},{id:'cfg-modelo',label:'Modelo de contrato'}]});
+  return g;
+}
+function activeItem(){return {ficha:'contratos',novo:'contratos'}[S.page]||S.page;}
+function renderNav(){
+  var nav=document.getElementById('nav'),h='',act=activeItem();
+  grupos().forEach(function(g){
+    var open=!!S.open[g.id],sum=0;g.items.forEach(function(i){sum+=i.n||0;});
+    h+='<div class="group'+(open?' open':'')+'"><button type="button" class="ghead" data-grp="'+g.id+'" aria-expanded="'+open+'"><span class="arrow" aria-hidden="true">▸</span><span class="gname">'+g.name+'</span>'+(g.novo?'<span class="new">NOVO</span>':'')+(!open&&sum?'<span class="badge">'+sum+'</span>':'')+'</button><div class="items">';
+    g.items.forEach(function(i){h+='<button type="button" class="item" data-go="'+i.id+'"'+(i.id===act?' aria-current="page"':'')+'><span>'+i.label+'</span>'+(i.n?'<span class="badge">'+i.n+'</span>':'')+'</button>';});
+    h+='</div></div>';
+  });
+  nav.innerHTML=h;
+  document.getElementById('whoName').textContent=ROLES[S.role].nome;
+  document.getElementById('whoSub').textContent=ROLES[S.role].sub;
+}
+
+/* ---------------- A. lista ---------------- */
+function grupoDe(c){return c.stage==='eduardo'||c.stage==='jose'?'aguardando':c.stage;}
+function filtrar(){
+  var q=norm(S.q.trim()),dig=S.q.replace(/\D/g,'');
+  return S.cts.filter(function(c){
+    if(S.fStatus!=='todos'&&grupoDe(c)!==S.fStatus)return false;
+    if(S.fCls==='global'&&c.tipo!=='global')return false;
+    if(S.fCls!=='todas'&&S.fCls!=='global'&&c.cls!==S.fCls)return false;
+    if(!q)return true;
+    if(/^ct[-\s]?\d*$/.test(q))return norm(c.num).indexOf(q.replace(/\s/,'-'))>=0;
+    if(norm(c.forn).indexOf(q)>=0||norm(c.num).indexOf(q)>=0)return true;
+    if(/^[\d.\/\s-]+$/.test(q)){if(dig.length>=5)return c.doc.replace(/\D/g,'').indexOf(dig)>=0;return dig.length>0&&c.num.replace(/\D/g,'').indexOf(dig)>=0;}
+    return false;
+  });
+}
+function hl(txt){
+  var q=S.q.trim();if(!q)return esc(txt);
+  var n=norm(txt),nq=norm(q),i=n.indexOf(nq);
+  if(i<0)return esc(txt);
+  return esc(txt.slice(0,i))+'<mark>'+esc(txt.slice(i,i+q.length))+'</mark>'+esc(txt.slice(i+q.length));
+}
+function pageContratos(){
+  var h='<div class="ph"><div><h2>Contratos</h2></div><button type="button" class="btn pri" data-go="novo">+ Novo contrato</button></div>';
+  if(S.listaEstado==='erro'){
+    return h+'<div class="box"><div class="state err"><div class="ico">!</div><h4>Não conseguimos carregar os contratos.</h4><p>Pode ser instabilidade de conexão. Tente de novo em instantes; se continuar, avise o suporte do Hub.</p><button type="button" class="btn" data-act="retry-lista">Tentar de novo</button></div></div>';
+  }
+  var vazia=S.listaEstado==='vazia', cts=vazia?[]:S.cts;
+  var ativos=cts.filter(function(c){return c.stage==='aprovado';}),tot=0,med=0;
+  ativos.forEach(function(c){tot+=c.valor;med+=c.medido;});
+  h+='<div class="kpis"><div class="kpi"><span>Contratado (ativos)</span><b class="mono">'+brl(tot)+'</b></div><div class="kpi"><span>Medido</span><b class="mono">'+brl(med)+'</b></div><div class="kpi"><span>Pago</span><b class="mono">'+brl(0)+'</b></div><div class="kpi"><span>Saldo a medir</span><b class="mono">'+brl(tot-med)+'</b></div><div class="kpi"><span>Com medição em atraso</span><b>0 contratos</b></div></div>';
+  if(vazia){
+    return h+'<div class="box"><div class="state"><div class="ico">＋</div><h4>Nenhum contrato ainda</h4><p>Os contratos criados aparecem aqui. A busca aparece quando houver o que buscar.</p><button type="button" class="btn pri" data-go="novo">+ Novo contrato</button></div></div>';
+  }
+  h+='<div class="busca"><div class="in"><span class="lupa" aria-hidden="true">⌕</span><input id="q" class="campo" type="search" autocomplete="off" placeholder="Buscar por fornecedor, CNPJ ou nº do contrato" aria-label="Buscar contratos" value="'+esc(S.q)+'"><button type="button" class="lim" id="qLimpa" aria-label="Limpar busca"'+(S.q?'':' hidden')+'>×</button></div><span class="cnt" id="qCnt"></span></div>';
+  h+='<div class="chips" role="group" aria-label="Filtrar por status">';
+  Object.keys(GRUPO_STATUS).forEach(function(k){var n=k==='todos'?S.cts.length:S.cts.filter(function(c){return grupoDe(c)===k;}).length;h+='<button type="button" class="chip" data-fst="'+k+'" aria-pressed="'+(S.fStatus===k)+'">'+GRUPO_STATUS[k]+'<small>'+n+'</small></button>';});
+  h+='</div><div class="chips" role="group" aria-label="Filtrar por classificação">';
+  [['todas','Todas as classificações'],['global','Só contratos globais'],['spot','Spot'],['manutencao','Manutenção'],['obra','Obra'],['material','Material'],['emergencial','Emergencial']].forEach(function(o){h+='<button type="button" class="chip" data-fcl="'+o[0]+'" aria-pressed="'+(S.fCls===o[0])+'">'+o[1]+'</button>';});
+  h+='</div><div id="lista"></div>';
+  return h;
+}
+function renderLista(){
+  var el=document.getElementById('lista');if(!el)return;
+  var rows=filtrar(),cols="--cols:.55fr 1.8fr 1.5fr 1.05fr .65fr 1.05fr minmax(148px,auto)";
+  document.getElementById('qCnt').textContent=S.q.trim()||S.fStatus!=='todos'||S.fCls!=='todas'?rows.length+' de '+S.cts.length+' contratos':S.cts.length+' contratos';
+  document.getElementById('qLimpa').hidden=!S.q;
+  if(!rows.length){
+    var busca=S.q.trim();
+    el.innerHTML='<div class="box"><div class="state"><div class="ico">⌕</div>'+(busca?
+      '<h4>Nenhum contrato encontrado para “'+esc(busca)+'”</h4><p>Confira a grafia, ou busque pelo CNPJ (só os números já servem) ou pelo nº do contrato, como CT-0001.'+(S.fStatus!=='todos'||S.fCls!=='todas'?' Há filtros ligados que também podem estar escondendo o contrato.':'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button type="button" class="btn" data-act="limpa-q">Limpar busca</button>'+(S.fStatus!=='todos'||S.fCls!=='todas'?'<button type="button" class="btn" data-act="limpa-tudo">Limpar busca e filtros</button>':'')+'</div>':
+      '<h4>Nenhum contrato com esses filtros</h4><p>Nenhum contrato nesse status e classificação.</p><button type="button" class="btn" data-act="limpa-tudo">Limpar filtros</button>')+'</div></div>';
+    return;
+  }
+  var h='<div class="box"><div class="tr head" style="'+cols+'"><div>Nº</div><div>Fornecedor</div><div>Obra · classificação</div><div class="td r">Valor total</div><div>% medido</div><div class="td r">Saldo</div><div>Status</div></div>';
+  rows.forEach(function(c){
+    var pct=c.valor?c.medido/c.valor*100:0;
+    h+='<div class="tr link" style="'+cols+'" data-ficha="'+c.num+'" tabindex="0" role="link" aria-label="Abrir '+c.num+'">'+
+      '<div class="td mono" data-l="Nº"><b>'+hl(c.num)+'</b></div>'+
+      '<div class="td full" data-l="Fornecedor"><b>'+hl(c.forn)+'</b><span class="sm">'+hl(c.doc)+'</span></div>'+
+      '<div class="td full" data-l="Obra · classificação"><span class="sm" style="color:#cbd5e1">'+(c.obra?esc(c.obra):'— sem obra')+'</span><span class="pills">'+(c.tipo==='global'?pill('Global','var(--global)'):'')+pill(CLS[c.cls],c.cls==='material'?'#38bdf8':'#94a3b8')+'</span><span class="sm">'+esc(c.cc)+'</span></div>'+
+      '<div class="td r mono" data-l="Valor total">'+brl(c.valor)+'</div>'+
+      '<div class="td mono" data-l="% medido">'+pct.toFixed(2).replace('.',',')+'%<div class="minibar"><i style="width:'+pct+'%"></i></div></div>'+
+      '<div class="td r mono" data-l="Saldo">'+brl(c.valor-c.medido)+'</div>'+
+      '<div class="td" data-l="Status">'+stPill(c)+'</div></div>';
+  });
+  el.innerHTML=h+'</div>';
+}
+
+/* ---------------- B. aprovações ---------------- */
+function steps(c){
+  var st=c.stage,lab=['Criado','Contratação · Eduardo','Condições · José','Aprovado'],cls=['','','',''];
+  var idx={rascunho:0,eduardo:1,jose:2,aprovado:4,encerrado:4,devolvido:-1}[st];
+  for(var i=0;i<4;i++){cls[i]=i<idx?'done':i===idx?'cur':'';}
+  if(st==='rascunho'){cls[0]='cur';lab[0]='Rascunho';}
+  if(st==='aprovado'||st==='encerrado')cls=['done','done','done','done'];
+  if(st==='devolvido'){cls[0]='done';var b=c.devPor==='jose'?2:1;if(b===2)cls[1]='done';cls[b]='bad';lab[b]+=' · devolveu';}
+  return '<div class="steps" aria-label="Etapas da aprovação">'+lab.map(function(l,i){return '<div class="step '+cls[i]+'"'+(cls[i]==='cur'?' aria-current="step"':'')+'><span class="n">'+(cls[i]==='done'?'✓':cls[i]==='bad'?'!':i+1)+'</span>'+esc(l)+'</div>';}).join('')+'</div>';
+}
+function pageAprovacoes(){
+  var r=S.role, fila=S.cts.filter(function(c){return c.stage==='eduardo'||c.stage==='jose';});
+  var h='<div class="ph"><div><h2>Aprovações</h2><p>Contratos em aprovação. A ordem é sempre: Eduardo aprova a contratação, depois José valida as condições.</p></div></div>';
+  if(r==='sol')h+='<div class="banner info"><span class="dot"></span><div><p>Você acompanha aqui, mas não aprova. Seus contratos mostram a etapa atual na lista e na ficha.</p></div></div>';
+  if(r==='adm')h+='<div class="banner info"><span class="dot"></span><div><p>Admin do hub vê tudo e não aprova nada (como hoje).</p></div></div>';
+  if(S.done){h+='<div class="banner ok"><span class="dot"></span><div><p>'+S.done+'</p></div></div>';}
+  if(!fila.length)return h+'<div class="box"><div class="state"><div class="ico">✓</div><h4>Nada aguardando aprovação</h4><p>Quando um contrato for enviado, ele aparece aqui na etapa de quem precisa decidir.</p><button type="button" class="btn" data-act="reset-sim">Reiniciar simulação</button></div></div>';
+  var minha=fila.filter(function(c){return (r==='ed'&&c.stage==='eduardo')||(r==='jose'&&c.stage==='jose');});
+  var outras=fila.filter(function(c){return minha.indexOf(c)<0;});
+  if(r==='ed'||r==='jose'){
+    h+='<div class="sec-t">Com você ('+minha.length+')</div>';
+    h+=minha.length?minha.map(cardAprov).join(''):'<div class="box pad" style="color:var(--muted);font-size:13px;margin-bottom:16px">Nada esperando a sua decisão agora.</div>';
+    if(outras.length)h+='<div class="sec-t" style="margin-top:8px">Em andamento, com outra pessoa ('+outras.length+')</div>'+outras.map(cardAprov).join('');
+  } else h+=fila.map(cardAprov).join('');
+  return h;
+}
+function cardAprov(c){
+  var r=S.role,k=cond(c.cond),e=S.edit[c.num];
+  var h='<article class="card"><div class="card-h"><div><h3><span class="mono">'+c.num+'</span> · '+esc(c.forn)+'</h3><div class="sm">'+(c.tipo==='global'?'Global':'Específico')+' · '+CLS[c.cls]+' · '+esc(c.obra||'sem obra')+' · '+esc(c.cc)+'</div></div><div style="text-align:right"><div class="mono" style="font-weight:600">'+brl(c.valor)+'</div>'+stPill(c)+'</div></div><div class="card-b">';
+  h+=steps(c);
+  h+='<dl class="dl" style="margin-top:12px"><div><dt>Escopo</dt><dd>'+esc(c.escopo)+'</dd></div><div><dt>Vigência</dt><dd>'+c.inicio+' a '+c.fim+'</dd></div><div><dt>Documentos</dt><dd>CNPJ e dados bancários ✓ do Omie · Proposta comercial: '+(c.proposta?'anexada':'<span style="color:var(--muted)">não anexada (opcional)</span>')+'</dd></div></dl>';
+  /* condição */
+  if(r==='jose'&&c.stage==='jose'){
+    h+='<div style="margin-top:14px"><div class="sec-t">Condição de pagamento</div>';
+    if(!e||!e.open){
+      h+=condBox(c.cond,c.parcelas)+'<div style="margin-top:8px"><button type="button" class="btn" data-act="alt-open" data-ct="'+c.num+'">✎ Alterar condições</button> <span style="font-size:12.5px;color:var(--muted)">em vez de devolver, ajuste aqui e aprove</span></div>';
+    } else h+=editorCond(c,e);
+    h+='</div>';
+  } else {
+    h+='<div style="margin-top:14px"><div class="sec-t">Condição proposta</div>'+condBox(c.cond,c.parcelas)+'</div>';
+  }
+  h+='</div>';
+  /* ações */
+  if(c.stage==='eduardo'){
+    if(r==='ed')h+='<div class="card-f"><button type="button" class="btn bad" data-act="devolver" data-ct="'+c.num+'">Devolver</button><button type="button" class="btn pri" data-act="aprov-ed" data-ct="'+c.num+'">Aprovar contratação</button></div>';
+    else if(r==='jose')h+='<div class="card-b" style="padding-top:0"><div class="waiting"><span>⏳</span><div><b>Aguardando o Eduardo.</b> Ele aprova primeiro, porque é quem confirma se a contratação vai acontecer. Assim que ele aprovar, o contrato chega para você validar as condições e você recebe um e-mail.</div></div></div>';
+    else h+='<div class="card-b" style="padding-top:0"><div class="waiting"><span>⏳</span><div><b>Aguardando o Eduardo</b> aprovar a contratação.</div></div></div>';
+  } else {
+    if(r==='jose'){
+      var mud=e&&e.open&&mudou(c,e),val=e&&e.open?validaEdit(c,e):'';
+      h+='<div class="card-f"><button type="button" class="btn bad" data-act="devolver" data-ct="'+c.num+'">Devolver</button><button type="button" class="btn pri" data-act="aprov-jo" data-ct="'+c.num+'"'+(val?' disabled':'')+'>'+(mud?'Aprovar com a condição alterada':'Aprovar condições')+'</button></div>';
+    } else if(r==='ed')h+='<div class="card-b" style="padding-top:0"><div class="waiting"><span>✓</span><div><b>Você já aprovou a contratação.</b> Agora está com o José, que valida as condições. Se ele alterar a condição, você recebe um e-mail de aviso, sem precisar aprovar de novo. '+supTag(4)+'</div></div></div>';
+    else h+='<div class="card-b" style="padding-top:0"><div class="waiting"><span>⏳</span><div><b>Aguardando o José</b> validar as condições de pagamento.</div></div></div>';
+  }
+  return h+'</article>';
+}
+function opcoesCond(c){return S.conds.filter(function(k){if(!k.ativo&&k.codigo!==c.cond)return false;if(c.tipo==='global')return k.glob;if(k.soGlob)return false;if(c.cls==='material')return k.codigo==='MATERIAL_MEDIANTE_NF'||k.modo==='excecao';return k.codigo!=='MATERIAL_MEDIANTE_NF';});}
+function editorCond(c,e){
+  var k=cond(e.cond),h='<div class="cond-box" style="border-color:var(--orange)"><div class="fgrid"><label class="full"><span class="rotulo">Nova condição</span><select class="campo" data-edit="cond" data-ct="'+c.num+'">';
+  opcoesCond(c).forEach(function(o){h+='<option value="'+o.codigo+'"'+(o.codigo===e.cond?' selected':'')+'>'+esc(o.nome)+' — '+esc(o.faixa)+'</option>';});
+  h+='</select></label></div>';
+  if(k.modo==='parcelas'){
+    var soma=e.parcelas.reduce(function(a,p){return a+(Number(p.pct)||0);},0);
+    h+='<div class="peditor"><span class="rotulo" style="margin:6px 0 0">Ajustar parcelas (só neste contrato)</span>'+e.parcelas.map(function(p,i){return '<div class="pr"><span class="g">'+(i+1)+'ª — '+esc(p.g)+'</span><span class="pct"><input class="campo mono" type="number" min="0" max="100" step="1" inputmode="numeric" value="'+p.pct+'" data-edit="pct" data-i="'+i+'" data-ct="'+c.num+'" aria-label="Percentual da parcela '+(i+1)+'"></span></div>';}).join('')+
+      '<div class="soma '+(soma===100?'ok':'bad')+'" id="soma-'+c.num+'">'+(soma===100?'Soma 100% ✓':'As parcelas somam '+soma+'%. Precisam somar 100%.')+'</div></div>';
+  } else if(k.modo==='excecao'){
+    h+='<div class="fgrid" style="margin-top:10px"><label><span class="rotulo">Prazo de pagamento em dias (0 = à vista)</span><input class="campo mono" type="number" min="0" max="120" value="'+esc(e.dias)+'" data-edit="dias" data-ct="'+c.num+'" placeholder="Ex.: 30"></label><label class="full"><span class="rotulo">Justificativa (obrigatória)</span><input class="campo" value="'+esc(e.just)+'" data-edit="just" data-ct="'+c.num+'" placeholder="Ex.: fornecedor aceitou receber em 15 dias"></label></div>';
+  } else h+='<p style="margin:10px 0 0;font-size:12.5px;color:var(--muted)">Esta condição não tem parcelas: '+esc(k.pratica)+'</p>';
+  var v=validaEdit(c,e);if(v)h+='<div class="erro" id="val-'+c.num+'">'+v+'</div>';
+  h+='</div>';
+  if(mudou(c,e))h+='<div class="diff"><div><div class="lab">Antes</div>'+condBox(c.cond,c.parcelas)+'</div><div class="arr">→</div><div class="depois"><div class="lab">Depois</div>'+condBox(e.cond,k.modo==='parcelas'?e.parcelas:null,k.modo==='excecao'&&e.dias!==''?'<div class="parc"><span>Prazo: '+esc(e.dias)+' dias</span></div>':'')+'</div></div>';
+  h+='<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-act="alt-cancel" data-ct="'+c.num+'">Desfazer alteração</button></div>';
+  return h;
+}
+function mudou(c,e){
+  if(e.cond!==c.cond)return true;
+  var orig=parcOf(c);if(!orig||!e.parcelas)return false;
+  return e.parcelas.some(function(p,i){return Number(p.pct)!==orig[i].pct;});
+}
+function validaEdit(c,e){
+  var k=cond(e.cond);
+  if(k.modo==='parcelas'){var s=e.parcelas.reduce(function(a,p){return a+(Number(p.pct)||0);},0);if(s!==100)return 'Ajuste as parcelas até somarem 100% para aprovar.';}
+  if(k.modo==='excecao'){if(e.dias===''||e.dias<0||e.dias>120)return 'Informe o prazo em dias (0 a 120).';if(String(e.just).trim().length<5)return 'Escreva a justificativa da exceção.';}
+  return '';
+}
+function descCond(cod,parcelas,dias){
+  var k=cond(cod);
+  if(k.modo==='excecao'&&dias!==''&&dias!=null)return k.nome+' (prazo de '+dias+' dias)';
+  if(parcelas&&k.parcelas&&parcelas.some(function(p,i){return Number(p.pct)!==k.parcelas[i].pct;}))return k.nome+', com parcelas ajustadas para '+resumoCond(k,parcelas);
+  return k.nome;
+}
+
+/* ---------------- C. ficha ---------------- */
+function etapaInfo(c){
+  switch(c.stage){
+    case 'rascunho':return ['neu','Rascunho — ainda não enviado para aprovação','Criado em '+c.desde+'. Quando o solicitante enviar, vai primeiro para o Eduardo.'];
+    case 'eduardo':return ['','Aguardando aprovação do Eduardo','Desde '+c.desde+'. Depois do Eduardo, segue para o José.'];
+    case 'jose':return ['','Aguardando aprovação do José','Desde '+c.desde+'. O Eduardo já aprovou a contratação.'];
+    case 'devolvido':return ['bad','Devolvido para ajuste — com o solicitante','Devolvido por '+(c.devPor==='jose'?'José Guilherme':'Eduardo Maia')+' em '+c.desde+'. Motivo: '+c.motivo];
+    case 'aprovado':return ['ok','Aprovado — liberado para medição','Desde '+c.desde+'.'];
+    default:return ['neu','Encerrado',''];
+  }
+}
+var TL_COR={criado:'#94a3b8',enviado:'#60a5fa',aprov:'#22c55e',alt:'#f05a28',devol:'#ef4444'};
+function docsBlock(c,modo){
+  var depois=modo!=='antes',falta=!depois&&!c.proposta;
+  return '<div class="sec-t">Documentos</div><div class="box docs"><div class="row"><span>CNPJ</span><span class="omie">✓ do Omie</span></div><div class="row"><span>Dados bancários</span><span class="omie">✓ do Omie</span></div>'+
+    '<div class="row"><span>Proposta comercial <small>· '+(depois?'opcional':'obrigatória')+'</small></span>'+(c.proposta?'<span class="omie">✓ proposta.pdf</span>':'<button type="button" class="btn sm"'+(falta?' style="border-color:rgba(239,68,68,.7);color:#fca5a5"':'')+'>+ Anexar</button>')+'</div>'+
+    '<div class="row"><span>Certidões <small>· quando aplicável</small></span><button type="button" class="btn sm">+ Anexar</button></div><div class="row"><span>NF e evidência</span><small>entram em cada medição</small></div></div>'+
+    (falta?'<p class="erro" style="margin-top:8px">Faltam informações para enviar: proposta comercial.</p>':'');
+}
+function pageFicha(){
+  var c=ct(S.sel),r=S.role,e=etapaInfo(c);
+  var h='<button type="button" class="btn sm" data-go="contratos" style="margin-bottom:14px">← Contratos</button>';
+  h+='<div class="ph"><div><h2><span class="mono">'+c.num+'</span> · '+esc(c.forn)+'</h2><p class="mono">'+c.doc+'</p></div>'+stPill(c)+'</div>';
+  var acao='';
+  if((c.stage==='eduardo'&&r==='ed')||(c.stage==='jose'&&r==='jose'))acao='<button type="button" class="btn pri" data-go="aprovacoes">Abrir aprovação</button>';
+  if(r==='sol'&&(c.stage==='devolvido'||c.stage==='rascunho'))acao='<button type="button" class="btn pri" data-act="enviar" data-ct="'+c.num+'">'+(c.stage==='devolvido'?'Ajustar e reenviar':'Enviar para aprovação')+'</button>';
+  h+='<div class="etapa '+e[0]+'"><div class="etapa-row"><div><div class="k">Etapa atual</div><div class="t">'+esc(e[1])+'</div><div class="s">'+esc(e[2])+'</div></div>'+acao+'</div>'+steps(c)+'</div>';
+  if(c.stage==='devolvido')h+='<div class="banner info"><span class="dot"></span><div><p>Ao reenviar, o contrato recomeça pelo Eduardo. '+supTag(7)+'</p></div></div>';
+  var k=cond(c.cond);
+  h+='<div class="grid2"><div><div class="sec-t">Dados do contrato</div><div class="box pad" style="margin-bottom:16px"><dl class="dl"><div><dt>Tipo</dt><dd>'+(c.tipo==='global'?'Global':'Específico')+' · '+CLS[c.cls]+'</dd></div><div><dt>Obra</dt><dd>'+esc(c.obra||'Contrato global — sem obra')+'</dd></div><div><dt>Centro de custo</dt><dd>'+esc(c.cc)+'</dd></div><div><dt>Valor contratado</dt><dd class="mono">'+brl(c.valor)+'</dd></div><div><dt>Vigência</dt><dd>'+c.inicio+' a '+c.fim+'</dd></div><div style="grid-column:1/-1"><dt>Escopo</dt><dd>'+esc(c.escopo)+'</dd></div></dl><div style="margin-top:12px"><div class="sec-t">Condição de pagamento</div>'+condBox(c.cond,c.parcelas)+'</div></div>'+docsBlock(c,'depois');
+  if(c.stage==='aprovado')h+='<div class="sec-t" style="margin-top:16px">Aditivos</div><div class="box pad" style="font-size:13px"><p style="margin:0 0 6px">Mudar este contrato depois de aprovado continua sendo por <b>aditivo</b>:</p><ul style="margin:0;padding-left:18px;color:var(--muted)"><li><b style="color:#fff">Aditivo de valor</b>: mesma ordem, Eduardo e depois José. '+supTag(6)+'</li><li><b style="color:#fff">Aditivo de condição de pagamento</b>: só o José, como hoje.</li></ul><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm">Aditivo de valor</button><button type="button" class="btn sm">Aditivo de condição</button></div></div>';
+  h+='</div><div><div class="sec-t">Linha do tempo</div><div class="box pad"><ul class="tl">';
+  c.hist.forEach(function(x){h+='<li style="--k:'+TL_COR[x.k]+'"><time>'+x.t+'</time>'+esc(x.x)+'</li>';});
+  var now={rascunho:'Agora: rascunho, ainda não enviado',eduardo:'Agora: aguardando aprovação do Eduardo',jose:'Agora: aguardando aprovação do José',devolvido:'Agora: com o solicitante para ajuste'}[c.stage];
+  if(now)h+='<li class="now" style="--k:#f05a28"><time>agora</time>'+now+'</li>';
+  h+='</ul></div></div></div>';
+  return h;
+}
+
+/* ---------------- F. novo contrato (só o bloco de documentos) ---------------- */
+function pageNovo(){
+  var antes=S.docModo==='antes',c={proposta:false};
+  var h='<button type="button" class="btn sm" data-go="contratos" style="margin-bottom:14px">← Contratos</button><div class="ph"><div><h2>Novo contrato</h2><p>Só o bloco que muda. O resto do formulário fica como está.</p></div></div>';
+  h+='<div class="chips" role="group" aria-label="Comparar"><button type="button" class="chip" data-doc="antes" aria-pressed="'+antes+'">Como é hoje</button><button type="button" class="chip" data-doc="depois" aria-pressed="'+!antes+'">Como fica</button></div>';
+  h+='<div style="max-width:620px">'+docsBlock(c,S.docModo)+'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn">Salvar rascunho</button><button type="button" class="btn pri"'+(antes?' disabled':'')+' data-act="novo-enviar">Enviar para aprovação</button></div>';
+  if(!antes)h+='<div class="banner info" style="margin-top:14px"><span class="dot"></span><div><p>Sem proposta, o contrato é enviado normalmente.</p><p>Na aprovação, o Eduardo e o José veem "Proposta comercial: não anexada (opcional)". Se houver proposta, anexar continua igual.</p></div></div>';
+  return h+'</div>';
+}
+
+/* ---------------- E. configurações ---------------- */
+function semPermissao(){
+  return '<div class="box"><div class="state lock"><div class="ico">🔒</div><h4>Você não tem acesso às Configurações</h4><p>Condições de pagamento e modelo de contrato são alterados só pelo José e por quem ele indicar. Se precisar de uma mudança, fale com ele.</p><button type="button" class="btn" data-go="contratos">Voltar aos contratos</button></div></div>'+
+    '<p style="margin-top:12px;font-size:12.5px;color:var(--muted)">Para você, o grupo "Configurações" nem aparece no menu. Esta tela só aparece se alguém abrir o link direto. '+supTag(1)+'</p>';
+}
+function cfgErro(o){return '<div class="box"><div class="state err"><div class="ico">!</div><h4>Não conseguimos carregar '+o+'.</h4><p>Nada foi alterado. Tente de novo em instantes; se continuar, avise o suporte do Hub.</p><button type="button" class="btn" data-act="retry-cfg">Tentar de novo</button></div></div>';}
+function pageCond(){
+  if(!canCfg(S.role))return '<div class="ph"><h2>Condições de pagamento</h2></div>'+semPermissao();
+  var ro=S.role!=='jose';
+  var h='<div class="ph"><div><h2>Condições de pagamento</h2><p>As condições que aparecem para escolher ao criar um contrato.</p></div>'+(ro?'':'<button type="button" class="btn pri" data-act="cond-nova">+ Nova condição</button>')+'</div>';
+  if(S.cfgEstado==='erro')return h+cfgErro('as condições de pagamento');
+  if(ro)h+='<div class="banner info"><span class="dot"></span><div><p>Você vê as condições, mas não altera. Só o José (e quem ele indicar) altera. '+supTag(1)+'</p></div></div>';
+  h+='<div class="banner warn"><span class="dot"></span><div><p><b>Mudança aqui vale só para contratos novos.</b> '+supTag(2)+'</p><p>Contrato já aprovado mantém a condição com que foi aprovado. Para mudar um contrato aprovado, continua sendo por aditivo.</p></div></div>';
+  var at=S.conds.filter(function(k){return k.ativo;}),off=S.conds.filter(function(k){return !k.ativo;});
+  h+='<div class="chips"><button type="button" class="chip" data-cf="ativas" aria-pressed="'+(S.condFiltro==='ativas')+'">Ativas<small>'+at.length+'</small></button><button type="button" class="chip" data-cf="desativadas" aria-pressed="'+(S.condFiltro==='desativadas')+'">Desativadas<small>'+off.length+'</small></button><button type="button" class="chip" data-cf="todas" aria-pressed="'+(S.condFiltro==='todas')+'">Todas<small>'+S.conds.length+'</small></button></div>';
+  var rows=S.condFiltro==='ativas'?at:S.condFiltro==='desativadas'?off:S.conds;
+  if(!rows.length)return h+'<div class="box"><div class="state"><div class="ico">–</div><h4>'+(S.condFiltro==='desativadas'?'Nenhuma condição desativada':'Nenhuma condição ativa')+'</h4><p>'+(S.condFiltro==='desativadas'?'Condições desativadas aparecem aqui e podem ser reativadas a qualquer momento.':'Sem condição ativa, ninguém consegue criar contrato. Reative ou crie uma.')+'</p></div></div>';
+  h+='<div class="box cfg-tbl"><div class="tr head"><div>Condição</div><div>Faixa</div><div>Como paga</div><div>Global</div><div>Em uso</div><div>Situação</div><div></div></div>';
+  rows.forEach(function(k){
+    var u=usos(k.codigo).length;
+    h+='<div class="tr'+(k.ativo?'':' off')+'"><div class="td full" data-l="Condição"><b>'+esc(k.nome)+'</b><span class="sm mono">'+k.codigo+'</span></div><div class="td" data-l="Faixa">'+esc(k.faixa)+'</div><div class="td" data-l="Como paga"><span class="sm" style="color:#cbd5e1">'+esc(MODOS[k.modo])+'</span><span class="sm">'+esc(resumoCond(k))+'</span></div><div class="td" data-l="Global">'+(k.soGlob?'Só global':k.glob?'Sim':'Não')+'</div><div class="td" data-l="Em uso">'+u+' contrato'+(u===1?'':'s')+'</div><div class="td" data-l="Situação">'+(k.ativo?pill('Ativa','#22c55e'):pill('Desativada','#64748b'))+'</div><div class="td full"><div class="acts">'+
+      (ro?'':'<button type="button" class="btn sm" data-act="cond-edit" data-cod="'+k.codigo+'">Editar</button>'+(k.ativo?'<button type="button" class="btn sm bad" data-act="cond-off" data-cod="'+k.codigo+'">Desativar</button>':'<button type="button" class="btn sm" data-act="cond-on" data-cod="'+k.codigo+'">Reativar</button>'))+'</div></div></div>';
+  });
+  return h+'</div><p style="font-size:12.5px;color:var(--muted);margin-top:10px">Não existe "excluir": condição desativada some da escolha em contratos novos, mas continua valendo para quem já a usa.</p>';
+}
+function condForm(k,novo){
+  var p=k.parcelas||[],soma=p.reduce(function(a,x){return a+(Number(x.pct)||0);},0),u=novo?[]:usos(k.codigo);
+  var h='<div class="fgrid"><label class="full"><span class="rotulo">Nome</span><input class="campo" data-cf-f="nome" value="'+esc(k.nome)+'"'+(S.cfErr&&!k.nome.trim()?' aria-invalid="true"':'')+'></label>'+
+    '<label><span class="rotulo">Código</span><input class="campo mono" value="'+esc(k.codigo||'gerado ao salvar')+'" disabled></label>'+
+    '<label><span class="rotulo">Faixa de uso</span><input class="campo" data-cf-f="faixa" value="'+esc(k.faixa)+'" placeholder="Ex.: Acima de R$ 5.000"></label>'+
+    '<label><span class="rotulo">Como paga</span><select class="campo" data-cf-f="modo">'+Object.keys(MODOS).map(function(m){return '<option value="'+m+'"'+(m===k.modo?' selected':'')+'>'+MODOS[m]+'</option>';}).join('')+'</select></label>'+
+    '<label><span class="rotulo">Prazo do Financeiro (dias)</span><input class="campo mono" type="number" min="0" max="120" data-cf-f="dias" value="'+(k.dias==null?'':k.dias)+'" placeholder="vazio = calendário do Financeiro"></label></div>';
+  if(k.modo==='parcelas'){
+    h+='<div style="margin-top:12px"><span class="rotulo">Parcelas</span><div class="peditor" style="margin-top:0">'+p.map(function(x,i){return '<div class="pr" style="grid-template-columns:1fr 88px 30px"><input class="campo" data-cf-p="g" data-i="'+i+'" value="'+esc(x.g)+'" aria-label="Quando paga a parcela '+(i+1)+'"><span class="pct"><input class="campo mono" type="number" min="0" max="100" data-cf-p="pct" data-i="'+i+'" value="'+x.pct+'" aria-label="Percentual da parcela '+(i+1)+'"></span><button type="button" class="btn sm" data-act="cf-rm" data-i="'+i+'" aria-label="Remover parcela '+(i+1)+'"'+(p.length<2?' disabled':'')+'>×</button></div>';}).join('')+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><button type="button" class="btn sm" data-act="cf-add">+ Parcela</button><span class="soma '+(soma===100?'ok':'bad')+'" id="cfSoma">'+(soma===100?'Soma 100% ✓':'Soma '+soma+'%: precisa dar 100%')+'</span></div></div></div>';
+  } else h+='<label style="display:block;margin-top:12px"><span class="rotulo">Quando paga</span><input class="campo" data-cf-f="gatilho" value="'+esc(k.gatilho||'')+'" placeholder="Ex.: Medição mensal aprovada + NF"></label>';
+  h+='<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px"><label class="chk"><input type="checkbox" data-cf-f="glob"'+(k.glob?' checked':'')+'> Pode ser usada em contrato global</label><label class="chk"><input type="checkbox" data-cf-f="just"'+(k.just?' checked':'')+'> Exige justificativa</label></div>';
+  h+='<label style="display:block;margin-top:12px"><span class="rotulo">Explicação para quem escolhe</span><input class="campo" data-cf-f="pratica" value="'+esc(k.pratica)+'"></label>';
+  if(!novo&&u.length)h+='<div class="banner warn" style="margin:14px 0 0"><span class="dot"></span><div><p>'+u.length+' contrato'+(u.length>1?'s usam':' usa')+' esta condição ('+u.map(function(c){return c.num;}).join(', ')+').</p><p>Eles continuam exatamente como estão. A mudança vale só para contratos criados depois de salvar.</p></div></div>';
+  if(S.cfErr)h+='<div class="erro" style="margin-top:10px">'+S.cfErr+'</div>';
+  return h;
+}
+function pageModelo(){
+  if(!canCfg(S.role))return '<div class="ph"><h2>Modelo de contrato</h2></div>'+semPermissao();
+  var ro=S.role!=='jose',sujo=S.tpl!==S.tplSalvo;
+  var h='<div class="ph"><div><h2>Modelo de contrato</h2><p>O texto usado para gerar o documento do contrato. Os campos entre chaves são preenchidos sozinhos. '+supTag(3)+'</p></div>'+
+    (ro?'':'<div style="display:flex;gap:8px"><button type="button" class="btn" data-act="tpl-desc"'+(sujo?'':' disabled')+'>Descartar alterações</button><button type="button" class="btn pri" data-act="tpl-save"'+(sujo?'':' disabled')+'>Salvar modelo</button></div>')+'</div>';
+  if(S.cfgEstado==='erro')return h+cfgErro('o modelo de contrato');
+  if(ro)h+='<div class="banner info"><span class="dot"></span><div><p>Você vê o modelo, mas não altera. Só o José (e quem ele indicar) altera. '+supTag(1)+'</p></div></div>';
+  var gerados=S.cts.filter(function(c){return c.gerado;}).map(function(c){return c.num;});
+  h+='<div class="banner warn"><span class="dot"></span><div><p><b>Contratos já gerados não mudam.</b> O novo modelo vale para os documentos gerados depois de salvar.</p><p>Já gerado'+(gerados.length>1?'s':'')+' com o modelo atual: '+(gerados.join(', ')||'nenhum')+'. Última alteração do modelo: '+S.tplData+'.</p></div></div>';
+  h+='<div class="editor-wrap"><div><div class="sec-t">Texto do modelo</div>'+(ro?'':'<div class="campos" aria-label="Inserir campo automático">'+CAMPOS.map(function(f){return '<button type="button" data-ins="'+f+'" title="Inserir {{'+f+'}}">{{'+f+'}}</button>';}).join('')+'</div>')+
+    '<textarea class="campo" id="tpl" aria-label="Texto do modelo de contrato"'+(ro?' readonly':'')+'>'+esc(S.tpl)+'</textarea>'+(sujo?'<p style="font-size:12.5px;color:var(--warn);margin:6px 0 0">Alterações não salvas.</p>':'')+'</div>'+
+    '<div><div class="sec-t">Pré-visualização com o CT-0001</div><div class="papel" id="prev"></div><div id="prevWarn"></div></div></div>';
+  return h;
+}
+function valores(){
+  var c=ct('CT-0001'),k=cond(c.cond),p=parcOf(c);
+  return {numero:c.num,fornecedor:c.forn,cnpj:c.doc,valor:brl(c.valor),condicao:k.nome,parcelas:k.modo==='parcelas'?p.map(function(x,i){return (i+1)+'ª parcela: '+x.pct+'% — '+x.g;}).join('\n'):'Pagamento: '+k.gatilho+'.',
+    inicio:c.inicio,fim:c.fim,escopo:c.escopo,obra:c.obra||'contrato global, sem obra vinculada',classificacao:CLS[c.cls],centro_custo:c.cc,data_emissao:'12/10/2026'};
+}
+function renderPrev(){
+  var el=document.getElementById('prev');if(!el)return;
+  var v=valores(),bad=[];
+  el.innerHTML=esc(S.tpl).replace(/\{\{\s*([a-z_]+)\s*\}\}/gi,function(m,f){f=f.toLowerCase();if(v[f]!=null)return '<span class="f">'+esc(v[f])+'</span>';bad.push(f);return '<span class="bad">{{'+esc(f)+'}}</span>';});
+  document.getElementById('prevWarn').innerHTML=bad.length?'<p class="erro">Campo desconhecido: '+bad.map(function(b){return '{{'+esc(b)+'}}';}).join(', ')+'. Ele sai assim no contrato. Use um dos campos da lista.</p>':'<p style="font-size:12.5px;color:var(--muted);margin:6px 0 0">Em laranja, o que foi preenchido sozinho.</p>';
+}
+
+/* ---------------- modal ---------------- */
+function modal(t,body,foot){document.getElementById('modalRoot').innerHTML='<div class="modal-bg" data-act="mclose-bg"><div class="modal" role="dialog" aria-modal="true" aria-label="'+esc(t)+'"><div class="modal-h"><h3>'+esc(t)+'</h3></div><div class="modal-b">'+body+'</div><div class="modal-f">'+foot+'</div></div></div>';var f=document.querySelector('#modalRoot textarea,#modalRoot input,#modalRoot .modal-f .btn');if(f)f.focus();}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';S.cf=null;S.cfErr='';}
+
+/* ---------------- render ---------------- */
+var HINTS={
+  contratos:['<b>A · Busca.</b> Digite parte do nome (ex.: "davi"), do CNPJ ("32542") ou o nº ("0004"). A coluna Status diz a etapa. Clique numa linha para abrir a ficha.','lista'],
+  aprovacoes:['<b>B · Aprovação em ordem.</b> Como José: o CT-0001 aparece sem botão (aguardando o Eduardo) e o CT-0002 permite alterar as condições. Troque para Eduardo e aprove o CT-0001 para ver ele chegar ao José.',null],
+  ficha:['<b>C · Ficha.</b> A etapa atual fica no topo; a linha do tempo mostra o histórico, inclusive "condições alteradas por José".',null],
+  novo:['<b>F · Proposta comercial opcional.</b> Compare "Como é hoje" e "Como fica".',null],
+  'cfg-cond':['<b>E1 · Condições de pagamento.</b> Só José e Admin veem o grupo Configurações no menu (Admin só lê). Troque para Solicitante ou Eduardo para ver a tela sem permissão.','cfg'],
+  'cfg-modelo':['<b>E2 · Modelo de contrato.</b> Clique num campo para inserir no cursor; a pré-visualização usa o CT-0001. Escreva {{teste}} para ver o aviso de campo desconhecido.','cfg'],
+  med:['As telas de Medição não mudam nesta rodada.',null]
+};
+function renderHint(){
+  var k=S.page.indexOf('med')===0?'med':S.page,hd=HINTS[k],h='<div>'+hd[0]+'</div>';
+  if(hd[1]){
+    var cur=hd[1]==='lista'?S.listaEstado:S.cfgEstado,ops=hd[1]==='lista'?[['normal','Com contratos'],['vazia','Lista vazia'],['erro','Erro de carregamento']]:[['normal','Normal'],['erro','Erro de carregamento']];
+    h+='<div class="st"><span>Estado da tela</span><div class="seg">'+ops.map(function(o){return '<button type="button" data-est="'+hd[1]+':'+o[0]+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>';}).join('')+'</div></div>';
+  }
+  document.getElementById('hint').innerHTML=h;
+}
+function render(){
+  renderNav();
+  var c=document.getElementById('content'),p=S.page,h;
+  if(p==='contratos')h=pageContratos();
+  else if(p==='aprovacoes')h=pageAprovacoes();
+  else if(p==='ficha')h=pageFicha();
+  else if(p==='novo')h=pageNovo();
+  else if(p==='cfg-cond')h=pageCond();
+  else if(p==='cfg-modelo')h=pageModelo();
+  else h='<div class="ph"><h2>'+{med1:'Nova medição',med2:'Fila de aprovação',med3:'Acompanhamento'}[p]+'</h2></div><div class="box"><div class="state"><div class="ico">=</div><h4>Sem mudança nesta rodada</h4><p>As telas de Medição continuam como estão hoje.</p></div></div>';
+  c.innerHTML=h;
+  if(p==='contratos')renderLista();
+  if(p==='cfg-modelo')renderPrev();
+  renderHint();renderMails();
+  [].forEach.call(document.querySelectorAll('#segRole button'),function(b){b.setAttribute('aria-pressed',b.dataset.v===S.role);});
+}
+function go(p){
+  S.page=p;S.done=null;
+  var g={contratos:'c',aprovacoes:'c',ficha:'c',novo:'c','cfg-cond':'cfg','cfg-modelo':'cfg',med1:'m',med2:'m',med3:'m'}[p];
+  if(g)S.open[g]=true;
+  document.getElementById('frame').classList.remove('drawer');
+  render();document.getElementById('content').scrollTop=0;
+}
+
+/* ---------------- ações ---------------- */
+function aprovarEd(n){
+  var c=ct(n),t=agora();c.stage='jose';c.desde=t;c.hist.push({t:t,k:'aprov',x:'Contratação aprovada por Eduardo Maia'});
+  enviar('ed_aprovou',c);S.done=n+': contratação aprovada. Seguiu para o José, que recebeu e-mail (com cópia para o solicitante).';
+}
+function aprovarJo(n){
+  var c=ct(n),e=S.edit[n],t=agora(),alt=e&&e.open&&mudou(c,e);
+  if(alt){
+    var de=descCond(c.cond,c.parcelas),k=cond(e.cond),para=descCond(e.cond,k.modo==='parcelas'?e.parcelas:null,e.dias);
+    c.hist.push({t:t,k:'alt',x:'Condições alteradas por José Guilherme: '+de+' → '+para+(k.modo==='excecao'&&e.just?'. Justificativa: '+e.just:'')});
+    var orig=k.parcelas;
+    c.parcelas=(k.modo==='parcelas'&&e.parcelas.some(function(p,i){return Number(p.pct)!==orig[i].pct;}))?e.parcelas.map(function(p){return {g:p.g,pct:Number(p.pct),ret:p.ret};}):null;
+    c.cond=e.cond;
+    enviar('jose_alterou',c,{de:de,para:para});
+  } else enviar('jose_aprovou',c);
+  c.hist.push({t:t,k:'aprov',x:'Condições de pagamento aprovadas por José Guilherme'});
+  c.hist.push({t:t,k:'aprov',x:'Contrato aprovado — liberado para medição'});
+  c.stage='aprovado';c.desde=t;delete S.edit[n];
+  S.done=n+' aprovado'+(alt?' com a condição alterada':'')+'. E-mail para o solicitante, com cópia para o Eduardo'+(alt?' (só aviso, ele não aprova de novo)':'')+'. <button type="button" class="btn sm" data-ficha="'+n+'">Ver ficha</button>';
+}
+document.addEventListener('click',function(ev){
+  var t=ev.target.closest('[data-sup],[data-go],[data-grp],[data-ficha],[data-act],[data-fst],[data-fcl],[data-est],[data-jump],[data-cf],[data-doc],[data-ins]');
+  if(!t)return;
+  var d=t.dataset;
+  if(d.sup){var el=document.getElementById('sup-'+d.sup);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.borderColor='var(--orange)';setTimeout(function(){el.style.borderColor='';},1600);}return;}
+  if(d.jump){
+    if(d.jump.charAt(0)==='#'){document.querySelector(d.jump).scrollIntoView({behavior:'smooth'});return;}
+    if(d.jump==='ficha')S.sel='CT-0001';
+    go(d.jump);document.getElementById('hint').scrollIntoView({behavior:'smooth'});return;
+  }
+  if(d.go){go(d.go);return;}
+  if(d.grp){S.open[d.grp]=!S.open[d.grp];renderNav();var b=document.querySelector('[data-grp="'+d.grp+'"]');if(b)b.focus();return;}
+  if(d.ficha){S.sel=d.ficha;closeModal();go('ficha');return;}
+  if(d.fst){S.fStatus=d.fst;render();return;}
+  if(d.fcl){S.fCls=d.fcl;render();return;}
+  if(d.cf){S.condFiltro=d.cf;render();return;}
+  if(d.doc){S.docModo=d.doc;render();return;}
+  if(d.est){var a=d.est.split(':');if(a[0]==='lista')S.listaEstado=a[1];else S.cfgEstado=a[1];render();return;}
+  if(d.ins){var ta=document.getElementById('tpl');if(!ta)return;var s=ta.selectionStart,e2=ta.selectionEnd,ins='{{'+d.ins+'}}';S.tpl=ta.value.slice(0,s)+ins+ta.value.slice(e2);render();var nt=document.getElementById('tpl');nt.focus();nt.selectionStart=nt.selectionEnd=s+ins.length;return;}
+  var act=d.act,n=d.ct;
+  switch(act){
+    case 'retry-lista':S.listaEstado='normal';render();break;
+    case 'retry-cfg':S.cfgEstado='normal';render();break;
+    case 'limpa-q':S.q='';render();break;
+    case 'limpa-tudo':S.q='';S.fStatus='todos';S.fCls='todas';render();break;
+    case 'reset-sim':reset(true);render();break;
+    case 'aprov-ed':
+      var c1=ct(n);
+      modal('Aprovar a contratação do '+n+'?','<p style="margin:0">Você confirma que a contratação de <b>'+esc(c1.forn)+'</b> vai acontecer, no valor de <b class="mono">'+brl(c1.valor)+'</b>.</p><ul><li>O contrato segue para o <b>José</b>, que valida as condições de pagamento.</li><li>Ele recebe um e-mail; o solicitante recebe cópia.</li><li>Se o José alterar a condição, você é avisado por e-mail e não precisa aprovar de novo. '+supTag(4)+'</li></ul>',
+        '<button type="button" class="btn" data-act="mclose">Cancelar</button><button type="button" class="btn pri" data-act="ok-ed" data-ct="'+n+'">Aprovar contratação</button>');break;
+    case 'ok-ed':aprovarEd(n);closeModal();render();break;
+    case 'aprov-jo':
+      var c2=ct(n),e=S.edit[n],alt=e&&e.open&&mudou(c2,e),body;
+      if(alt){var k2=cond(e.cond);body='<p style="margin:0">Você vai aprovar o '+n+' <b>com a condição alterada</b>:</p><div class="diff"><div><div class="lab">Antes</div>'+condBox(c2.cond,c2.parcelas)+'</div><div class="arr">→</div><div class="depois"><div class="lab">Depois</div>'+condBox(e.cond,k2.modo==='parcelas'?e.parcelas:null)+'</div></div><ul><li>O contrato fica <b>aprovado e liberado para medição</b> já com a nova condição.</li><li>A alteração entra na linha do tempo com o antes e o depois.</li><li>Solicitante e Eduardo recebem e-mail. O Eduardo <b>não</b> precisa aprovar de novo. '+supTag(4)+'</li></ul>';}
+      else body='<p style="margin:0">Você aprova a condição <b>'+esc(cond(c2.cond).nome)+'</b> do '+n+'.</p><ul><li>O contrato fica aprovado e liberado para medição.</li><li>Solicitante e Eduardo recebem e-mail.</li></ul>';
+      modal(alt?'Aprovar com a condição alterada?':'Aprovar as condições do '+n+'?',body,'<button type="button" class="btn" data-act="mclose">Voltar</button><button type="button" class="btn pri" data-act="ok-jo" data-ct="'+n+'">'+(alt?'Aprovar com a condição alterada':'Aprovar condições')+'</button>');break;
+    case 'ok-jo':aprovarJo(n);closeModal();render();break;
+    case 'devolver':
+      var quem=S.role==='ed'?'Eduardo':'José';
+      modal('Devolver o '+n+'?','<p style="margin:0 0 10px">O contrato volta para o solicitante ajustar. Ao reenviar, recomeça pelo Eduardo. '+supTag(7)+'</p><label><span class="rotulo">Motivo (obrigatório)</span><textarea class="campo" id="motivo" rows="3" placeholder="Ex.: incluir a lista de pontos no escopo" style="min-height:80px"></textarea></label><div class="erro" id="motErr" hidden>Escreva o motivo (pelo menos 5 letras). Ele vai no e-mail para o solicitante.</div><p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">E-mail vai para o solicitante'+(quem==='José'?', com cópia para o Eduardo':'')+'.</p>',
+        '<button type="button" class="btn" data-act="mclose">Cancelar</button><button type="button" class="btn bad" data-act="ok-dev" data-ct="'+n+'">Devolver</button>');break;
+    case 'ok-dev':
+      var mot=document.getElementById('motivo').value.trim();
+      if(mot.length<5){document.getElementById('motErr').hidden=false;document.getElementById('motivo').setAttribute('aria-invalid','true');document.getElementById('motivo').focus();break;}
+      var c3=ct(n),tt=agora(),por=S.role==='ed'?'Eduardo Maia':'José Guilherme';
+      c3.stage='devolvido';c3.desde=tt;c3.devPor=S.role;c3.motivo=mot;c3.hist.push({t:tt,k:'devol',x:'Devolvido por '+por+': '+mot});delete S.edit[n];
+      enviar('devolvido',c3,{por:por,motivo:mot});closeModal();
+      S.done=n+' devolvido ao solicitante, com e-mail. <button type="button" class="btn sm" data-ficha="'+n+'">Ver ficha</button>';render();break;
+    case 'enviar':
+      var c4=ct(n),t4=agora();c4.stage='eduardo';c4.desde=t4;c4.hist.push({t:t4,k:'enviado',x:(c4.devPor?'Reenviado':'Enviado')+' para aprovação do Eduardo'});
+      enviar('enviado',c4);render();toast(n+' enviado. O Eduardo recebeu e-mail.');break;
+    case 'novo-enviar':toast('Na simulação, o envio vale como o CT-0001: segue para o Eduardo, sem exigir proposta.');break;
+    case 'alt-open':var c5=ct(n),p5=parcOf(c5);S.edit[n]={open:true,cond:c5.cond,parcelas:p5?p5.map(function(p){return {g:p.g,pct:p.pct,ret:p.ret};}):null,dias:'',just:''};render();break;
+    case 'alt-cancel':delete S.edit[n];render();break;
+    case 'mclose':closeModal();break;
+    case 'mclose-bg':if(ev.target===t)closeModal();break;
+    case 'tpl-save':
+      var ger=S.cts.filter(function(c){return c.gerado;}).map(function(c){return c.num;});
+      S.tplSalvo=S.tpl;S.tplData='12/10/2026';render();toast('Modelo salvo. Vale para os documentos gerados a partir de agora. '+(ger.length?ger.join(', ')+' não muda.':''));break;
+    case 'tpl-desc':S.tpl=S.tplSalvo;render();break;
+    case 'cond-nova':S.cf={novo:true,k:{codigo:'',nome:'',faixa:'',modo:'parcelas',parcelas:[{g:'',pct:100}],dias:null,glob:false,soGlob:false,just:false,pratica:'',ativo:true}};abrirCf();break;
+    case 'cond-edit':S.cf={novo:false,k:JSON.parse(JSON.stringify(cond(d.cod)))};abrirCf();break;
+    case 'cf-add':syncCf();S.cf.k.parcelas.push({g:'',pct:0});abrirCf();break;
+    case 'cf-rm':syncCf();S.cf.k.parcelas.splice(+d.i,1);abrirCf();break;
+    case 'cf-save':salvarCf();break;
+    case 'cond-off':
+      var k3=cond(d.cod),u=usos(d.cod),apr=u.filter(function(c){return c.stage==='aprovado'||c.stage==='encerrado';}),and=u.filter(function(c){return c.stage!=='aprovado'&&c.stage!=='encerrado';});
+      modal('Desativar "'+k3.nome+'"?','<p style="margin:0">O que acontece ao desativar:</p><ul>'+
+        '<li><b>Some da lista de escolha</b> em contratos novos. Ninguém consegue criar contrato novo com ela.</li>'+
+        '<li><b>Contratos aprovados que usam esta condição: '+apr.length+'</b>'+(apr.length?' ('+apr.map(function(c){return c.num;}).join(', ')+')':'')+'. Continuam com ela, inclusive medições e pagamentos. Mudar um deles continua sendo aditivo.</li>'+
+        '<li><b>Contratos ainda não aprovados com ela: '+and.length+'</b>'+(and.length?' ('+and.map(function(c){return c.num+' · '+STAGE[c.stage][0];}).join(', ')+')':'')+'. Seguem com ela; na aprovação, o José pode manter ou trocar.</li>'+
+        '<li><b>Nada é apagado.</b> Dá para reativar quando quiser, e ela volta à lista como estava.</li></ul>',
+        '<button type="button" class="btn" data-act="mclose">Cancelar</button><button type="button" class="btn bad" data-act="ok-off" data-cod="'+d.cod+'">Desativar condição</button>');break;
+    case 'ok-off':cond(d.cod).ativo=false;closeModal();render();toast('Condição desativada. Não aparece mais em contratos novos.');break;
+    case 'cond-on':cond(d.cod).ativo=true;render();toast('Condição reativada. Volta a aparecer em contratos novos.');break;
+  }
+});
+function abrirCf(){
+  var f=S.cf;
+  modal(f.novo?'Nova condição de pagamento':'Editar condição',condForm(f.k,f.novo)+'<p style="font-size:12.5px;color:var(--muted);margin:12px 0 0">Vale só para contratos novos. '+supTag(2)+'</p>',
+    '<button type="button" class="btn" data-act="mclose">Cancelar</button><button type="button" class="btn pri" data-act="cf-save">'+(f.novo?'Criar condição':'Salvar alterações')+'</button>');
+}
+function syncCf(){
+  var k=S.cf.k;
+  [].forEach.call(document.querySelectorAll('[data-cf-f]'),function(i){var f=i.dataset.cfF;if(i.type==='checkbox')k[f]=i.checked;else if(f==='dias')k.dias=i.value===''?null:Number(i.value);else k[f]=i.value;});
+  [].forEach.call(document.querySelectorAll('[data-cf-p]'),function(i){var p=k.parcelas[+i.dataset.i];if(i.dataset.cfP==='pct')p.pct=Number(i.value)||0;else p.g=i.value;});
+}
+function salvarCf(){
+  syncCf();var k=S.cf.k;
+  if(!k.nome.trim()){S.cfErr='Dê um nome à condição.';abrirCf();return;}
+  if(k.modo==='parcelas'){
+    if(k.parcelas.some(function(p){return !p.g.trim();})){S.cfErr='Diga quando paga cada parcela.';abrirCf();return;}
+    var s=k.parcelas.reduce(function(a,p){return a+p.pct;},0);if(s!==100){S.cfErr='As parcelas somam '+s+'%. Precisam somar 100%.';abrirCf();return;}
+  } else k.parcelas=undefined;
+  if(S.cf.novo){
+    k.codigo=norm(k.nome).toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30)||'NOVA';
+    S.conds.push(k);S.condFiltro='ativas';closeModal();render();toast('Condição criada: '+k.codigo+'. Já aparece para escolher em contratos novos.');
+  } else {
+    for(var i=0;i<S.conds.length;i++)if(S.conds[i].codigo===k.codigo)S.conds[i]=k;
+    closeModal();render();toast('Condição salva. Vale para contratos novos; os que já usam continuam como estavam.');
+  }
+}
+document.addEventListener('input',function(ev){
+  var t=ev.target;
+  if(t.id==='q'){S.q=t.value;renderLista();return;}
+  if(t.id==='tpl'){var was=S.tpl===S.tplSalvo;S.tpl=t.value;renderPrev();if(was!==(S.tpl===S.tplSalvo)){var pos=t.selectionStart;render();var nt=document.getElementById('tpl');nt.focus();nt.selectionStart=nt.selectionEnd=pos;}return;}
+  if(t.dataset.edit){
+    var e=S.edit[t.dataset.ct],c=ct(t.dataset.ct);
+    if(t.dataset.edit==='pct'){e.parcelas[+t.dataset.i].pct=t.value===''?0:Number(t.value);}
+    else if(t.dataset.edit==='dias')e.dias=t.value===''?'':Number(t.value);
+    else if(t.dataset.edit==='just')e.just=t.value;
+    else return;
+    var id=t.getAttribute('data-edit')+(t.dataset.i||''),pos2=t.selectionStart;
+    render();
+    var back=document.querySelector('[data-edit="'+t.dataset.edit+'"][data-ct="'+c.num+'"]'+(t.dataset.i?'[data-i="'+t.dataset.i+'"]':''));
+    if(back){back.focus();try{back.selectionStart=back.selectionEnd=pos2;}catch(x){}}
+    return;
+  }
+  if(t.dataset.cfP==='pct'&&S.cf){syncCf();var s=S.cf.k.parcelas.reduce(function(a,p){return a+p.pct;},0),el=document.getElementById('cfSoma');if(el){el.className='soma '+(s===100?'ok':'bad');el.textContent=s===100?'Soma 100% ✓':'Soma '+s+'%: precisa dar 100%';}}
+});
+document.addEventListener('change',function(ev){
+  var t=ev.target;
+  if(t.dataset.edit==='cond'){var e=S.edit[t.dataset.ct],k=cond(t.value),c=ct(t.dataset.ct);e.cond=t.value;
+    e.parcelas=k.modo==='parcelas'?(t.value===c.cond?parcOf(c):k.parcelas).map(function(p){return {g:p.g,pct:p.pct,ret:p.ret};}):null;render();}
+  if(t.dataset.cfF==='modo'&&S.cf){syncCf();if(S.cf.k.modo==='parcelas'&&!S.cf.k.parcelas)S.cf.k.parcelas=[{g:'',pct:100}];abrirCf();}
+});
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){if(document.getElementById('modalRoot').innerHTML)closeModal();else document.getElementById('frame').classList.remove('drawer');}
+  if((ev.key==='Enter'||ev.key===' ')&&ev.target.dataset&&ev.target.dataset.ficha&&ev.target.classList.contains('tr')){ev.preventDefault();ev.target.click();}
+});
+
+/* ---------------- suposições ---------------- */
+var SUPS=[
+ [1,'Só o José (e quem ele indicar) acessa as Configurações.','Condição de pagamento e modelo de contrato mexem em dinheiro e em documento assinado. O Admin do hub vê, mas não altera, como já é hoje com as aprovações.','Se outras pessoas também puderem alterar, a gente lista quem, e o grupo aparece no menu delas.','cfg-cond','jose'],
+ [2,'Mudança numa condição vale só para contratos novos.','Contrato aprovado foi aprovado com aquela condição. Mudar por trás mudaria pagamento já combinado com o fornecedor. Para mudar um contrato aprovado, continua sendo aditivo.','Se a mudança tiver que atingir contratos em andamento, cada um precisaria de um aditivo, e a tela passa a listar quais seriam afetados.','cfg-cond','jose'],
+ [3,'O modelo de contrato é um texto livre com campos automáticos.','É o jeito mais simples de vocês ajustarem cláusulas sem depender de nós. Os campos ({{fornecedor}}, {{valor}}...) são preenchidos sozinhos.','Se preferirem subir um arquivo Word como modelo, a tela muda para upload e a pré-visualização fica limitada.','cfg-modelo','jose'],
+ [4,'Quando o José altera as condições, o Eduardo não aprova de novo.','O Eduardo valida se vai contratar; condição de pagamento é a parte do José. O Eduardo só é avisado por e-mail.','Se o Eduardo precisar reaprovar, a alteração do José devolve o contrato à etapa do Eduardo, e o fluxo fica mais longo.','aprovacoes','jose'],
+ [5,'O e-mail vai para o próximo aprovador e para quem abriu o contrato.','Cada pessoa recebe só o que pede ação dela ou o que diz respeito ao contrato dela.','Se mais gente precisar receber (Compras, Financeiro), basta dizer quem e em quais etapas.','#emails',null],
+ [6,'Aditivo de valor segue a mesma ordem: Eduardo, depois José.','Aumentar valor é decisão de contratação (Eduardo) e de condição (José). Aditivo só de condição de pagamento continua indo só para o José, como hoje.','Se aditivo de valor puder ir só para um dos dois, o fluxo do aditivo muda.','ficha3','jose']
+];
+var EXTRA=[[7,'Contrato devolvido, quando reenviado, recomeça pelo Eduardo.','Esta não estava na lista, mas o desenho precisou decidir. Recomendamos recomeçar pelo Eduardo porque o ajuste pode mudar escopo ou valor.','Se o reenvio puder voltar direto para quem devolveu, a etapa do Eduardo é pulada quando foi o José que devolveu.','ficha4','sol']];
+function renderSups(){
+  document.getElementById('sups').innerHTML=SUPS.concat(EXTRA).map(function(s){
+    return '<div class="supc'+(s[0]===7?' extra':'')+'" id="sup-'+s[0]+'"><div class="num">'+s[0]+'</div><div><h3>'+esc(s[1]).replace(/\{\{/g,'{{')+'</h3><p><b>Por que recomendamos:</b> '+esc(s[2])+'</p><p><b>Se a resposta for não:</b> '+esc(s[3])+'</p>'+(s[0]===7?'<p><b>Observação:</b> suposição extra, além das seis.</p>':'')+'</div><button type="button" class="btn sm go" data-ver="'+s[4]+'" data-role="'+(s[5]||'')+'">Ver na tela →</button></div>';
+  }).join('');
+}
+document.getElementById('sups').addEventListener('click',function(ev){
+  var b=ev.target.closest('[data-ver]');if(!b)return;
+  var v=b.dataset.ver;
+  if(v.charAt(0)==='#'){document.querySelector(v).scrollIntoView({behavior:'smooth'});return;}
+  if(b.dataset.role)S.role=b.dataset.role;
+  if(v==='ficha3'){S.sel='CT-0003';v='ficha';}
+  if(v==='ficha4'){S.sel='CT-0004';v='ficha';}
+  go(v);document.getElementById('hint').scrollIntoView({behavior:'smooth'});
+});
+
+/* ---------------- controles ---------------- */
+function seg(id,fn){var s=document.getElementById(id);s.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;[].forEach.call(s.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b);});fn(b.dataset.v);});}
+seg('segRole',function(v){S.role=v;S.done=null;closeModal();render();});
+seg('segDev',function(v){S.mobile=v==='mob';applyMode();});
+function applyMode(){var f=document.getElementById('frame'),m=S.mobile||window.innerWidth<700;f.classList.toggle('mobile',m);if(!m)f.classList.remove('drawer');}
+document.getElementById('reset').onclick=function(){reset(true);render();toast('Simulação reiniciada.');};
+document.getElementById('burger').onclick=function(){document.getElementById('frame').classList.add('drawer');};
+document.getElementById('closeBtn').onclick=function(){document.getElementById('frame').classList.remove('drawer');};
+document.getElementById('overlay').onclick=function(){document.getElementById('frame').classList.remove('drawer');};
+window.addEventListener('resize',applyMode);
+reset(false);applyMode();renderSups();render();
+})();
+</script>
+</body>
+</html>
