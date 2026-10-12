@@ -32,6 +32,34 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
 
 **Falta:** etapas 5 e 7 abaixo (a 6 foi feita antes da 5, por pedido do cliente).
 
+## PONTO DE RETOMADA — 12/10/2026
+
+**Feito em 11–12/10:**
+- Manual no padrão visual do cliente (Compras/Financeiro): `manual/manual-uso-padrao-cliente.{html,md}` + PDF
+  `manual/Manual de Uso - HubManfac - Gestão de Fornecedores.pdf` (15 p.). Revisado contra o código. Artifact privado:
+  https://claude.ai/artifact/BZQFSWtXYcu5k6BNMcSAzm. João pediu o PDF (= aprovado).
+- Fatos do elo com o Financeiro, conferidos no código: medição aprovada vira solicitação na hora, em nome de quem abriu,
+  sempre em "Aguardando financeiro" (nunca emergencial — `emergencialManual:false`); NF/anexos NÃO vão junto; recusa no
+  Financeiro HOJE só chega por e-mail do Financeiro (o Fornecedores só fica sabendo com o cron 007, desligado).
+- Feedback do cliente (José) salvo literal: `docs/cliente/2026-10-12-feedback-fornecedores.md` + prints.
+- **Proposta comercial opcional NO AR:** PR fornecedores #4 (`017e0d9`), migration `008` aplicada (2/2 OK), deploy
+  clicado 12/10 ~11h17. **Falta o João conferir na tela** (+ Novo contrato → "Proposta comercial · opcional").
+- **Mockup das melhorias** publicado: https://claude.ai/artifact/7jC6nMH8HuUdNDhsrrC6Cw (cópia em
+  `mockup-melhorias-2026-10-12.html`). Cobre busca, aprovação em ordem Eduardo→José com José alterando condições, etapa
+  atual na lista/linha do tempo, e-mails por etapa, Configurações (condições + modelo de contrato) e 7 suposições.
+  Custo real: aprovação em ordem e condições editáveis mudam schema e regras (condições hoje fixas no seed/código) —
+  ~1 semana; recomendado entregar em 2 partes (Configurações por último).
+
+**Decisões/ações com o João:**
+1. Compartilhar o mockup com o cliente (Share) + mensagem; trazer as respostas dos 7 pontos pelo WhatsApp. Nada de código das melhorias antes disso.
+2. Entrega única ou em 2 partes (recomendado 2).
+3. Data de pagamento do Omie (pedido do cliente, literal em `docs/cliente/2026-10-11-pedido-manual-e-fluxo-fornecedores.md`):
+   ok do José para UMA consulta de teste + `C:\Users\joao-\omie-chaves.txt` (criado, 4 linhas VAZIAS: OMIE_APP_KEY,
+   OMIE_APP_SECRET, FIN_CRON_SECRET, FRN_CRON_SECRET). Depois: leitura medida (roteiro no PR financeiro #2), cofre, crons 025+007.
+   Ligar o 007 também traz a recusa para dentro do Fornecedores → atualizar o manual.
+4. Trocar ou não a `SUPABASE_SERVICE_ROLE_KEY` (exposta no chat em 10/10).
+5. CT-0001 (DAVI CRISTIANO…, global, R$ 200 mil) aguarda só a aprovação do Eduardo.
+
 **Estado:** código completo, revisado por agentes independentes (sem bloqueante) e com testes verdes no GitHub Actions.
 Nada aplicado no banco de produção, nenhum deploy. Tudo está no GitHub — nada depende desta máquina.
 
