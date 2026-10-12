@@ -358,6 +358,10 @@ export type ObraRow = {
   cancelado_em?: string | null
   cancelado_quem?: string | null
   cancelado_etapa_anterior?: EtapaCiclo | null
+  /** Rastro do faturamento, gravado só pelo Financeiro (`obras_marcar_faturada`). Opcional: obra lida antes da migration não traz. */
+  fat_nfse?: string | null
+  fat_pedido?: string | null
+  fat_folhas?: string | null
 }
 
 /** `obras_diario`. `motivo` é obrigatório quando `andou = false` (decisão C). */

@@ -129,6 +129,30 @@ describe('Histórico de alterações (item 1 da revisão de 20/09)', () => {
   })
 })
 
+describe('Esteira — faturamento (NFS-e, pedido e folhas)', () => {
+  it('obra faturada mostra NFS-e, pedido e folhas do faturamento', () => {
+    render(
+      <Ficha
+        {...fichaProps({
+          etapa: 'faturado',
+          marco_faturou: '2026-10-20',
+          fat_nfse: '1481',
+          fat_pedido: '4500742666',
+          fat_folhas: '1000678401/1000678402',
+        })}
+      />,
+    )
+    expect(
+      screen.getByText('NFS-e 1481 · Pedido 4500742666 · Folha(s) 1000678401/1000678402'),
+    ).toBeInTheDocument()
+  })
+
+  it('obra sem faturamento não mostra a linha', () => {
+    render(<Ficha {...fichaProps({ etapa: 'pendFat' })} />)
+    expect(screen.queryByText(/NFS-e/)).not.toBeInTheDocument()
+  })
+})
+
 describe('Esteira — selo "a obra está aqui" (item 7 da revisão de 20/09)', () => {
   // As duas obras destes testes já saíram de campo (`marco_exec_fim`
   // preenchido): isola a contagem no PASSO ZERO ("Execução em campo", que é

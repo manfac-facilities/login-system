@@ -233,7 +233,7 @@ export function filtrar(obras: Obra[], f: Filtros): Obra[] {
 
     const q = normalizarBusca(f.q)
     if (q) {
-      const achou = [o.loja, o.os, o.descricao].some((campo) => normalizarBusca(campo).includes(q))
+      const achou = [o.loja, o.os, o.descricao, o.fat_nfse, o.fat_pedido, o.fat_folhas].some((campo) => normalizarBusca(campo).includes(q))
       if (!achou) return false
     }
 

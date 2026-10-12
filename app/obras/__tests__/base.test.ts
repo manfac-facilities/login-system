@@ -438,6 +438,16 @@ describe('sufixoDias — o selo diz de onde está contando', () => {
   })
 })
 
+describe('filtrar — busca pelo faturamento', () => {
+  it('acha a obra pela NFS-e, pelo pedido e pela folha do faturamento', () => {
+    const faturada = obra({ id: 'f1', etapa: 'faturado', fat_nfse: '1481', fat_pedido: '4500742666', fat_folhas: '1000678401/1000678402' })
+    const outra = obra({ id: 'o1' })
+    for (const q of ['1481', '4500742666', '1000678402']) {
+      expect(filtrar([faturada, outra], { ...FILTROS_PADRAO, q }).map((o) => o.id)).toEqual(['f1'])
+    }
+  })
+})
+
 describe('filtrar — busca (q), spec-busca-base-2026-09-24', () => {
   const ipanema = obra({ loja: 'DP IPANEMA 3', os: '0926-010550', descricao: 'Forro de gesso' })
   const pracaDoO = obra({ loja: 'DP PRAÇA DO Ó', os: '0226-011320', descricao: 'Impermeabilização' })

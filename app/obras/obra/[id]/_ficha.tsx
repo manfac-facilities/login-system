@@ -350,6 +350,19 @@ function Esteira({
               </p>
             ) : null}
 
+            {/* Rastro do faturamento: gravado só pelo Financeiro. */}
+            {k === 'faturado' && obra.fat_nfse ? (
+              <p className="text-[#94a3b8]">
+                {[
+                  `NFS-e ${obra.fat_nfse}`,
+                  obra.fat_pedido ? `Pedido ${obra.fat_pedido}` : null,
+                  obra.fat_folhas ? `Folha(s) ${obra.fat_folhas}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            ) : null}
+
             {/* Fechar OS concluído: a data e o "corrigir data" (ajuste 2 de 23/09). */}
             {k === 'fecharOS' && estado === 'feito' && data ? (
               <CorrigirFechamento
