@@ -64,7 +64,7 @@ Spec/plano/revisões: `spec-melhorias-2026-10.md`, `plano-melhorias-2026-10.md`,
 | F modelo | **interrompida** no início, alterações sem commit | `D:\fornecedores-work\melhorias-f` |
 | G configurações | **interrompida**, alterações sem commit | `D:\fornecedores-work\melhorias-g` |
 
-Para retomar: relançar A, B, E, F, G com o mesmo brief, dizendo para **continuar do estado do clone** (conferir
+Tudo está no GitHub (commits "wip:" de 13/10; clones em `D:ornecedores-workmelhorias-<letra>`). Para retomar: relançar A, B, E, F, G com o mesmo brief, dizendo para **continuar do commit WIP do branch** (conferir
 `git status`/`git log` antes; não recomeçar do zero). Rodar no máximo 4–5 por vez (máquina com ~2 GB livres).
 Depois: revisão de cada uma, merges em `feat/melhorias`, rodada de ajustes, aplicar 009–012 em produção pelo roteiro
 do plano, deploy (+ `SMTP_*` e `NEXT_PUBLIC_APP_URL` no EasyPanel).
