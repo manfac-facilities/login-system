@@ -58,13 +58,14 @@ Spec/plano/revisões: `spec-melhorias-2026-10.md`, `plano-melhorias-2026-10.md`,
 | H e-mail | pronta + revisada (aprovada) | PR #6 (base 0) |
 | D ficha | pronta + revisada (aprovada) | PR #7 (base 0) |
 | C lista | pronta + revisada (aprovada) | PR #8 (base 0) |
-| A banco 009–012 | **interrompida no meio**, nada pushado | só local: `D:\fornecedores-work\melhorias-a` (alterações sem commit) |
-| B condições/integração | **interrompida**; 3 commits locais (B1 corrigido) + alterações sem commit, nada pushado | `D:\fornecedores-work\melhorias-b` (base `feat/melhorias-h-email`) |
-| E aprovações | **interrompida**, alterações sem commit | `D:\fornecedores-work\melhorias-e` (base `feat/melhorias-h-email`) |
-| F modelo | **interrompida** no início, alterações sem commit | `D:\fornecedores-work\melhorias-f` |
-| G configurações | **interrompida**, alterações sem commit | `D:\fornecedores-work\melhorias-g` |
+| A banco 009–012 | **interrompida no meio** (009–012, rollback e testes escritos, não verificados) | branch `feat/melhorias-a-banco` (WIP `0cb4219`) |
+| B condições/integração | **interrompida** (B1 corrigido em commit próprio `be8401c`) | branch `feat/melhorias-b-condicoes` (WIP `a716149`, base `feat/melhorias-h-email`) |
+| E aprovações | **interrompida** | branch `feat/melhorias-e-aprovacoes` (WIP `0c9bb97`, base `feat/melhorias-h-email`) |
+| F modelo | **interrompida** no início | branch `feat/melhorias-f-modelo` (WIP `51e91a2`) |
+| G configurações | **interrompida** | branch `feat/melhorias-g-configuracoes` (WIP `88a2387`) |
 
-Tudo está no GitHub (commits "wip:" de 13/10; clones em `D:ornecedores-workmelhorias-<letra>`). Para retomar: relançar A, B, E, F, G com o mesmo brief, dizendo para **continuar do commit WIP do branch** (conferir
+Tudo está no GitHub (commits "wip:" de 13/10, conferidos: remoto = local; clones em `D:\fornecedores-work\melhorias-<letra>`).
+Commits WIP NÃO passaram por lint/teste. Para retomar: relançar A, B, E, F, G com o mesmo brief, dizendo para **continuar do commit WIP do branch** (conferir
 `git status`/`git log` antes; não recomeçar do zero). Rodar no máximo 4–5 por vez (máquina com ~2 GB livres).
 Depois: revisão de cada uma, merges em `feat/melhorias`, rodada de ajustes, aplicar 009–012 em produção pelo roteiro
 do plano, deploy (+ `SMTP_*` e `NEXT_PUBLIC_APP_URL` no EasyPanel).
