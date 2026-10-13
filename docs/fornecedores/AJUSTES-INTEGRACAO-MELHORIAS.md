@@ -19,3 +19,4 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | B | Varredura final: nenhum `condicaoPorCodigo(` sem catálogo em `_lista.ts` (C), `documento/*` (F, repassado), `aprovacoes/_lib/condicao.ts` (E, repassado) | fazer na integração |
 | B | `lib/regras/aditivo.ts` com `CONDICOES` como padrão: tornar o catálogo obrigatório depois da E | fazer |
 | D/G | Pulso animado do "agora" na linha do tempo: nenhuma frente fez (CSS em `ui.css`) | fazer na integração |
+| E | Tirar o padrão `CONDICOES` de `nomeDaCondicao`/`prazoDaCondicao`/`condicaoDe`/`parcelasDoContrato` depois que `contratos/[numero]/page.tsx:187,189` (D), `_ficha/acoes.tsx:365,371,377` e `_ficha/calculo.ts:107` (B) passarem o catálogo; conferir se `calculo.ts:107` envolve valor | fazer na integração |
