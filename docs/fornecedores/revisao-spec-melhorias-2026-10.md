@@ -125,3 +125,33 @@ booleanos nunca `NULL`) está preservado e o mockup foi coberto.
   de regras reais do banco e da suposição 1.
 - As regras do `AGENTS.md` (RLS, escrita só por função `service_role`, sem `NULL` em guarda, nenhum dado apagado,
   migration com seção 0 e verificação pós-commit) estão respeitadas.
+
+---
+
+## Reconferência (spec com §8 + `plano-melhorias-2026-10.md`)
+
+**Veredito: AJUSTAR** (B1 e B2 fechados; dois ajustes de plano, sem risco novo de dinheiro, RLS ou migration).
+
+### 1. B1 e B2 fechados, sem problema novo
+- **B1:** fechado. Spec §1.5 (Hoje e item 7), §4 Frente B, CA-E3 [TS] e risco 4 citam `lib/integracoes/financeiro.ts:448,456`.
+  O plano (Frente B, passo 1) começa por esse teste e prevê o plano B (select separado) se o embed pela FK composta não funcionar.
+- **B2:** fechado. `frn_salvar_contrato` e `frn_devolver_contrato` zeram `parcelas_ajustadas`; o aditivo de condição também.
+  O check `frn_ct_parcelas_ajustadas` (status e tamanho 1–10) entra no passo 3 da 009 (depois do preenchimento).
+  `frn_parcelas_mo` levanta exceção em tamanho incoerente (melhor que ignorar). CA-B13 cobre o caminho que apontei.
+  O zerar na devolução tem de ocorrer no mesmo `UPDATE` que muda o status para `rascunho`, senão o check barra a devolução. O texto implica isso; vale o teste dizer.
+- Correções de melhorias conferidas: ordem 1→2→3 na 009, revoke/grant e verificação por função, sugestão não permitida, flag derivada do modo, `frn_ct_ordem` `not valid`. Nenhuma abre RLS, grant ou falha de migration que eu enxergue.
+  D3 (modo editável) é seguro porque tudo que é dinheiro lê a versão pinada; o aviso na tela cobre rascunhos.
+
+### 2. Sobreposição de arquivos no plano
+- **Uma sobreposição real: `lib/avisos/porta.ts`** é criado pela Frente 0 e editado pela H. É sequencial (a 0 termina antes de a H começar), mas viola "um dono só". Atribuir à H a troca por reexport ou deixar a porta com a 0 e `avisar.ts` fora dela.
+- Sem sobreposição em: `package.json` e lock (só H), `lib/tipos.ts`, `lib/tipos-db.ts`, `lib/regras/condicoes.ts` (só 0), `layout.tsx` (só G), testes (`tests/regras/condicoes.test.ts` é da 0 no plano; a spec ainda o lista na B, o plano está certo), `tests/contratos/*` (B: form/actions; C: lista; F: documento).
+- Dependência de forma, não de arquivo: `_ficha/dados.ts` é da B e `[numero]/page.tsx` (D) o consome. D precisa do formato que a B vai entregar.
+
+### 3. Roteiro de produção
+- Confirma o ref (GET do projeto `iyytcavcgukfjnjjrerx` + nome), confere 001–008 aplicadas e 009 não, para se houver outro contrato, aditivo ou medição, tem antes/depois com hash (inclui `frn_parcelas_mo` do CT-0001), para em qualquer `FALHOU`, tem rollback sem apagar dado e atualiza `sql.md`. Aprovado.
+- **Ressalva de redação:** a 009 faz `update frn_contratos set condicao_versao = 1` no CT-0001 (só a coluna nova, sem tocar `atualizado_em`). É necessário e o hash do plano exclui a coluna, mas o plano e a §2.2 dizem "nenhuma escrita no CT-0001". Escrever "nenhuma escrita nas colunas existentes".
+
+### 4. Frente 0 suficiente?
+- Quase. Entrega etapa, `condicaoDaVersao`, tipos, `PillEtapa`, papéis e a porta de e-mail: A, E, G e H podem começar sem esperar.
+- **Falta o carregador de versões.** C, D, E e F precisam ler a versão pinada da condição, e `lib/condicoes/servidor.ts` (`carregarCatalogo`, `versoesDe`) é da B. O passo final do plano (grep de `from("frn_condicoes")` fora de `servidor.ts`) pressupõe que todos o usem. Sem isso, ou esperam a B, ou cada um reimplementa.
+  **Ajuste:** mover `servidor.ts` (e o tipo do dado da ficha, o formato de `_ficha/dados.ts` que o D consome) para a Frente 0, ou declarar que C/D/E/F usam o embed `frn_condicoes_versoes` nos próprios selects e a B só cuida dos seus.

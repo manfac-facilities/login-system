@@ -497,8 +497,7 @@ O caso "e-mail só com `configurador` não vê tudo" é testado no pglite, não 
 - `frn_eventos_tipo_check` (`004:170-179`) recriado com os tipos de hoje + `condicoes_alteradas`.
 - Constraint `frn_ct_ordem` em `frn_contratos`:
   `check (status <> 'aguardando' or contratacao_aprovada_em is not null or condicoes_aprovadas_em is null)`,
-  criada **`not valid` e mantida assim** (decisão D1: o CT-0001 tem a aprovação do José anterior à do Eduardo e não
-  é tocado). Vale para toda escrita nova; todos os caminhos de escrita sobre o CT-0001 (Eduardo aprova, devolve)
+  criada **`not valid` e mantida assim** (decisão D1: o CT-0001 tem a aprovação do José anterior à do Eduardo; as colunas existentes dele não são alteradas — a 009 só preenche `condicao_versao = 1`). Vale para toda escrita nova; todos os caminhos de escrita sobre o CT-0001 (Eduardo aprova, devolve)
   a satisfazem (conferido na revisão).
 
 **Funções alteradas:**
@@ -517,7 +516,7 @@ O caso "e-mail só com `configurador` não vê tudo" é testado no pglite, não 
 | `frn_etapa(c frn_contratos) → text` | a etapa de §1.3 (espelho de `lib/regras/etapa.ts`); usada na verificação e nos testes; só service_role |
 | `frn_alterar_e_aprovar_condicoes(p_ator, p_id, p jsonb) → boolean` | `p = {condicao_codigo, parcelas_pct?: int[], excecao_dias?, excecao_justificativa?}`. Papel `aprovador_financeiro`; `for update`; `aguardando`, contratação aprovada, condições pendentes. Valida §1.2 item 3 (permitida ou a atual; % inteiros 1–100, **mesma quantidade de parcelas da versão atual da condição escolhida**, soma 100; exceção 0–120 + justificativa 5–1.000; `tabela` exige linhas). Recusa se nada mudou ("Nada foi alterado. Use Aprovar condições."). Grava `condicao_codigo`, `condicao_versao` (atual), `parcelas_ajustadas` (`null` se os % forem os da versão). Exceção: `excecao_dias`, `excecao_justificativa` e `excecao_condicao` = "Pagamento em N dias após a aprovação da medição" / "Pagamento à vista". Saindo de exceção: `excecao_* = null`. Evento `condicoes_alteradas` com `dados = {antes:{codigo,versao,parcelas,excecao_dias,excecao_justificativa}, depois:{…}, justificativa}` e texto da §1.3 item 5. Depois faz o mesmo que a aprovação de `condicoes` e chama `frn__liberar_contrato`. Devolve se liberou |
 
-**CT-0001 (decisão D1 do João, 13/10): nenhuma escrita.** Pelo §1.3 ele já está na etapa `eduardo`
+**CT-0001 (decisão D1 do João, 13/10): nenhuma escrita nas colunas existentes do CT-0001 (a 009 só preenche `condicao_versao = 1`).** Pelo §1.3 ele já está na etapa `eduardo`
 (contratação nula). A aprovação do José de 11/10 vale: quando o Eduardo aprovar, `frn__liberar_contrato` libera
 (homologado = true). E-mail 3b para o solicitante (José), cópia Eduardo.
 
@@ -645,8 +644,13 @@ frentes A–H rodam em paralelo depois dela. Detalhe de passos, branches e ordem
 - `lib/tipos.ts` (`EVENTO_TIPOS` + `condicoes_alteradas`), `lib/tipos-db.ts` (colunas novas).
 - `components/ui/pill.tsx`: `PillEtapa`.
 - `lib/auth/papeis.ts`: `configurador`, admin via `frn_sou_admin()`, `podeConfigurar`, `veConfiguracoes`.
-- `lib/avisos/porta.ts` (novo): só as assinaturas `avisarContrato`/`avisarAditivo` e o tipo dos eventos, com
-  implementação vazia (`async () => {}`), para B e E chamarem antes de a H terminar.
+- `lib/tipos.ts` também recebe **só os tipos** do aviso: `EventoAvisoContrato`, `EventoAvisoAditivo` e os tipos das
+  funções `AvisarContrato`/`AvisarAditivo`. A **porta** (`lib/avisos/porta.ts`) é inteira da Frente H.
+- `lib/condicoes/servidor.ts` (novo): carregador do catálogo atual (`carregarCatalogo`) e das versões pinadas
+  (`versoesDe(pares (codigo, versao))`, `condicaoDoContrato`), para C, D, E e F lerem a condição sem esperar a B.
+- `app/(modulo)/contratos/[numero]/_ficha/tipos.ts` (novo): os tipos `FichaDados` e `Ficha` (o formato que
+  `_ficha/dados.ts` entrega e `[numero]/page.tsx` consome), já com os campos novos (etapa, condição da versão
+  pinada, `parcelasAjustadas`, `modeloVersao`). `calculo.ts` (B) passa a importar daqui.
 
 ### Frente A — banco
 - `supabase/hub-install/009…012` (novos).
@@ -656,7 +660,7 @@ frentes A–H rodam em paralelo depois dela. Detalhe de passos, branches e ordem
   paridade usar.
 
 ### Frente B — catálogo de condições versionado no app (+ integração Financeiro)
-- `lib/condicoes/servidor.ts` (novo), `lib/regras/parcelas.ts`, `lib/regras/aditivo.ts`.
+- `lib/regras/parcelas.ts`, `lib/regras/aditivo.ts` (o carregador `lib/condicoes/servidor.ts` é da Frente 0).
 - **`lib/integracoes/financeiro.ts`** (B1: `carregarMedicaoDoBanco` lê a versão pinada).
 - `app/(modulo)/contratos/novo/{_catalogo.ts,_contrato.ts,_condicao.tsx,_form.tsx,_ler.ts,_actions.ts,page.tsx}`.
 - `app/(modulo)/contratos/[numero]/_ficha/{calculo.ts,dados.ts,_actions.ts,acoes.tsx}`.
@@ -692,9 +696,10 @@ frentes A–H rodam em paralelo depois dela. Detalhe de passos, branches e ordem
 - Testes: `tests/menu-lateral.test.tsx`, `tests/app-shell.test.tsx`, `tests/configuracoes/*` (novo).
 
 ### Frente H — e-mail
-- `lib/avisos/{configuracao,smtp,tentativas,mensagens,avisar}.ts` (novos) e `lib/avisos/porta.ts` **depois** de a
-  Frente 0 estar no `feat/melhorias` (troca os stubs por reexport de `avisar.ts`; não é edição simultânea: a 0 já
-  terminou quando a H começa).
+- `lib/avisos/{porta,configuracao,smtp,tentativas,mensagens,avisar}.ts` (novos). **A porta é só da H**: exporta
+  `avisarContrato`/`avisarAditivo` com os tipos definidos pela Frente 0 em `lib/tipos.ts`. Como B e E chamam a
+  porta, a **H entra no `feat/melhorias` logo depois da A**, e B e E fazem o passo das chamadas `after()` por
+  último, depois de atualizar o branch com a H.
 - `package.json`, `package-lock.json`, `.env.example`.
 - Testes: `tests/avisos/{mensagens,tentativas,configuracao}.test.ts` (novos).
 
@@ -820,7 +825,7 @@ no banco/tela depois do deploy.
 
 | # | Decisão | O que vale |
 |---|---|---|
-| **D1** | Aprovação do José de 11/10 no CT-0001 | **Vale.** Quando o Eduardo aprovar, o CT-0001 fica aprovado. **Nenhuma escrita no CT-0001** (a 009 só preenche a coluna nova `condicao_versao`); `frn_ct_ordem` fica `not valid` |
+| **D1** | Aprovação do José de 11/10 no CT-0001 | **Vale.** Quando o Eduardo aprovar, o CT-0001 fica aprovado. **Nenhuma escrita nas colunas existentes do CT-0001** (a 009 só preenche `condicao_versao = 1`); `frn_ct_ordem` fica `not valid` |
 | **D2** | Faixa de uso | **Só texto.** Limites da sugestão fixos no código; a tela diz quais são |
 | **D3** | "Como paga" (modo) de condição existente | **Editável, como no mockup.** O versionamento garante que contrato enviado/aprovado e medição não mudam. Exceções: `MATERIAL_MEDIANTE_NF` e `EXCECAO_APROVACAO` (regras do sistema, §1.5 item 6) |
 | **D4** | E-mail nas etapas de aditivo | **Sim** (tabela A1–A5 de §1.4) |

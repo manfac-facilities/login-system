@@ -55,7 +55,8 @@ coordenador. Toda frente segue TDD: escrever o teste, ver falhar, implementar, v
 ### Frente 0 — contratos compartilhados (sequencial, antes de tudo)
 
 **Arquivos (exclusivos):** `lib/regras/etapa.ts` (novo), `lib/regras/condicoes.ts`, `lib/tipos.ts`,
-`lib/tipos-db.ts`, `components/ui/pill.tsx`, `lib/auth/papeis.ts`, `lib/avisos/porta.ts` (novo),
+`lib/tipos-db.ts`, `components/ui/pill.tsx`, `lib/auth/papeis.ts`, `lib/condicoes/servidor.ts` (novo),
+`app/(modulo)/contratos/[numero]/_ficha/tipos.ts` (novo), `tests/condicoes/servidor.test.ts` (novo),
 `tests/regras/etapa.test.ts` (novo), `tests/regras/condicoes.test.ts`, `tests/ui/componentes.test.tsx`,
 `tests/porteiro.test.ts` (só se `lerPapeis` quebrar algo ali).
 
@@ -68,7 +69,12 @@ coordenador. Toda frente segue TDD: escrever o teste, ver falhar, implementar, v
 4. `PillEtapa` em `pill.tsx` + teste de componente.
 5. `lerPapeis`: `frn_sou_admin()` no lugar de `frn_e_admin` (`lib/auth/papeis.ts:27`), papel `configurador`,
    `podeConfigurar`, `veConfiguracoes`; teste com fake de Supabase (admin vira true; erro = tudo false).
-6. `lib/avisos/porta.ts`: tipos `EventoContrato`/`EventoAditivo` e `avisarContrato`/`avisarAditivo` vazios.
+6. `lib/tipos.ts`: só os **tipos** do aviso (`EventoAvisoContrato`, `EventoAvisoAditivo`, `AvisarContrato`,
+   `AvisarAditivo`). A porta `lib/avisos/porta.ts` é da Frente H.
+6a. `lib/condicoes/servidor.ts`: `carregarCatalogo(supabase)`, `versoesDe(supabase, pares)` e
+   `condicaoDoContrato(linha)` (lê a versão pinada + `parcelas_ajustadas` via `condicaoDaVersao`); teste com fake.
+6b. `_ficha/tipos.ts`: `FichaDados` e `Ficha` com os campos novos (etapa, condição pinada, `parcelasAjustadas`,
+   `modeloVersao`), movidos de `_ficha/calculo.ts:32-84` sem mudar os campos de hoje.
 7. `npm run lint && npx tsc --noEmit && npx vitest run --no-file-parallelism`.
 
 **Fecha:** CA-C1 (parte TS), base de CA-E1. **Revisão:** coordenador confere as assinaturas antes do merge (são o
@@ -105,7 +111,7 @@ contrato das outras frentes).
 
 ### Frente B — catálogo versionado no app + integração Financeiro
 
-**Arquivos:** `lib/condicoes/servidor.ts` (novo), `lib/regras/parcelas.ts`, `lib/regras/aditivo.ts`,
+**Arquivos:** `lib/regras/parcelas.ts`, `lib/regras/aditivo.ts`,
 `lib/integracoes/financeiro.ts`, `app/(modulo)/contratos/novo/{_catalogo.ts,_contrato.ts,_condicao.tsx,_form.tsx,
 _ler.ts,_actions.ts,page.tsx}`, `app/(modulo)/contratos/[numero]/_ficha/{calculo.ts,dados.ts,_actions.ts,
 acoes.tsx}`, `app/(modulo)/medicoes/_dados.ts`, testes `tests/regras/{parcelas,aditivo}.test.ts`,
@@ -118,7 +124,8 @@ acoes.tsx}`, `app/(modulo)/medicoes/_dados.ts`, testes `tests/regras/{parcelas,a
    (`condicao:frn_condicoes_versoes!<fk>(dias_pagamento, modo)`; se o embed composto não funcionar, select separado
    por `(codigo, versao)`). Rodar todos os testes de integração.
 2. `parcelasMo` com `parcelasAjustadas` (teste: ajuste usado; tamanho errado lança, igual ao SQL).
-3. `lib/condicoes/servidor.ts`: `carregarCatalogo(supabase)` (atuais) e `versoesDe(pares)`; teste com fake.
+3. Usar `lib/condicoes/servidor.ts` (da Frente 0) em todos os pontos abaixo; `_ficha/calculo.ts` importa os tipos
+   de `_ficha/tipos.ts` (da Frente 0).
 4. Novo contrato: catálogo por prop (`_catalogo.ts` → `page.tsx` → `_form.tsx`); `condicoesPermitidas` e
    `condicaoEfetiva` com catálogo e sugestão não permitida → `null` (CA-E6 TS); campos de exceção e tabela pelo
    **modo** (troca das constantes `EXCECAO`/`TABELA_FIXA`, `_contrato.ts:17-18`, `_form.tsx:421,468`).
@@ -127,7 +134,8 @@ acoes.tsx}`, `app/(modulo)/medicoes/_dados.ts`, testes `tests/regras/{parcelas,a
 6. `medicoes/_dados.ts`: condição da versão do contrato (`:85-92`). Testes de medição de hoje passam sem mudar
    expectativa (CA-M3).
 7. E-mails: `after(() => avisarContrato("enviado", id))` em `enviarParaAprovacaoAction` e
-   `after(() => avisarAditivo("aditivo_pedido", id))` na ação de pedir aditivo, importando de `lib/avisos/porta.ts`.
+   `after(() => avisarAditivo("aditivo_pedido", id))` na ação de pedir aditivo, importando de `lib/avisos/porta.ts`
+   (da H). **Último passo**, depois de atualizar o branch com o `feat/melhorias` que já tem a H.
    Teste: a action chama a porta depois do sucesso e não chama no erro.
 
 **Fecha:** CA-E3 (TS), E4 (TS), E6 (TS), CA-M3 (TS), parte de CA-D3.
@@ -171,7 +179,8 @@ barra de etapas, "desde" e botão por papel (§1.3 item 2); banner de reenvio; b
 4. Página e cartão no layout do mockup (§1.2 itens 5–7, 9); diálogos.
 5. E-mails pela porta, em `after()`: aprovar contrato (2 ou "aprovado"), alterar e aprovar ("aprovado_alterado" se
    liberou), devolver (4), homologar (aprovado por contrato liberado), aprovar/devolver aditivo (A3–A5). Testes: a
-   porta é chamada só depois do sucesso.
+   porta é chamada só depois do sucesso. **Último passo**, depois de atualizar o branch com o `feat/melhorias` que já
+   tem a H (a porta é da H).
 
 **Fecha:** CA-B1–B4, B7–B11 (TS), CA-C2 (pill nas aprovações), parte de CA-D3.
 
@@ -208,8 +217,8 @@ modal de desativar com contagens (aprovados/enviados × rascunhos); actions → 
 
 ### Frente H — e-mail
 
-**Arquivos:** `lib/avisos/{configuracao,smtp,tentativas,mensagens,avisar}.ts` (novos), `lib/avisos/porta.ts` (troca
-os stubs por reexport de `avisar.ts`), `package.json`, `package-lock.json`, `.env.example`,
+**Arquivos:** `lib/avisos/{porta,configuracao,smtp,tentativas,mensagens,avisar}.ts` (novos; a porta é só da H e
+exporta `avisarContrato`/`avisarAditivo` com os tipos de `lib/tipos.ts`), `package.json`, `package-lock.json`, `.env.example`,
 `tests/avisos/{mensagens,tentativas,configuracao,avisar}.test.ts` (novos).
 
 **Passos:** copiar `configuracao.ts`, `smtp.ts`, `tentativas.ts` do Financeiro (`D:\fornecedores-work\
@@ -225,7 +234,8 @@ testes de `destinatarios` para os 10 eventos (CA-D1), sem repetição, e de `mon
 
 1. **Frente 0** → `feat/melhorias` (revisão do coordenador).
 2. Frentes **A–H em paralelo**, cada uma com PR para `feat/melhorias`. Ordem sugerida de merge (sem conflito de
-   arquivo; é ordem de dependência de execução): **A → B → H → E → C → D → F → G**.
+   arquivo; é ordem de dependência de execução): **A → H → B → E → C → D → F → G**. A H entra cedo porque B e E
+   importam a porta dela (o passo das chamadas `after()` é o último de B e de E).
 3. Depois de cada merge: CI verde em `feat/melhorias`.
 4. Na integração final (coordenador ou frente designada, sem dono de arquivo novo):
    - conferir paridade TS×SQL (`tests/sql/paridade.test.ts`) com A e B juntas;
@@ -241,6 +251,7 @@ testes de `destinatarios` para os 10 eventos (CA-D1), sem repetição, e de `mon
 **Quem:** a sessão principal, com autorização explícita do João para escrita em produção. **Quando:** com o PR
 final aprovado, logo antes do deploy (risco 1 da spec: CT-0001 real esperando o Eduardo).
 
+0. **CT-0001:** nenhuma escrita nas colunas existentes do CT-0001 (a 009 só preenche `condicao_versao = 1`); a conferência do passo 5 prova isso pelo hash.
 1. **Confirmar o ref** (o PAT vê mais de um projeto):
    ```bash
    TOKEN=$(tr -d '\r\n' < /c/Users/joao-/.supabase-pat)
