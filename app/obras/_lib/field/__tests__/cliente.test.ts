@@ -373,7 +373,55 @@ describe('criarClienteField — normalização', () => {
       criadoEm: null,
       archived: null,
       situacao: 'pending',
+      osCliente: null,
     })
+  })
+
+  it('lê o campo personalizado "OS Cliente" de customFields pelo nome, não pela posição', async () => {
+    const rede = httpDeMentira(
+      rotasCom([
+        ordem({
+          customFields: [
+            { name: 'Outro campo', type: 'question', value: 'nada a ver' },
+            { name: 'OS Cliente - preencher se foi aberto sem OS', type: 'question', value: '0926-017378' },
+          ],
+        }),
+      ]),
+    )
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const [os] = await cliente.listarOsNormalizadas()
+
+    expect(os.osCliente).toBe('0926-017378')
+  })
+
+  it('reconhece o nome do campo sem diferenciar maiúscula', async () => {
+    const rede = httpDeMentira(
+      rotasCom([ordem({ customFields: [{ name: 'os cliente - preencher se foi aberto sem os', value: 'X-1' }] })]),
+    )
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const [os] = await cliente.listarOsNormalizadas()
+
+    expect(os.osCliente).toBe('X-1')
+  })
+
+  it('"OS Cliente" vazio, só espaços, ausente ou não-texto vira null; preenchido vem sem as bordas', async () => {
+    const rede = httpDeMentira(
+      rotasCom([
+        ordem({ id: 'a', identifier: 'A', customFields: [{ name: 'OS Cliente', value: '' }] }),
+        ordem({ id: 'b', identifier: 'B', customFields: [{ name: 'OS Cliente', value: '   ' }] }),
+        ordem({ id: 'c', identifier: 'C', customFields: [] }),
+        ordem({ id: 'd', identifier: 'D' }),
+        ordem({ id: 'e', identifier: 'E', customFields: [{ name: 'OS Cliente', value: 123 as never }] }),
+        ordem({ id: 'f', identifier: 'F', customFields: [{ name: 'OS Cliente', value: '  0926-1  ' }] }),
+      ]),
+    )
+    const cliente = criarClienteField({ chaveApi: CHAVE, http: rede.http })
+
+    const os = await cliente.listarOsNormalizadas()
+
+    expect(os.map((o) => o.osCliente)).toEqual([null, null, null, null, null, '0926-1'])
   })
 
   it('leva archived booleano da listagem até a OS normalizada', async () => {

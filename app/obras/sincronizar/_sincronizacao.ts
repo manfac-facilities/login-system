@@ -191,9 +191,21 @@ export function planejarSincronizacao(
     if (idField) porFieldId.set(idField, obra)
     if (numero) porOs.set(numero, obra)
   }
+  // Troca do número pelo campo "OS Cliente" (pedido de 06/10/2026). O número é
+  // único no banco (`obras_obra_os_uniq`), então antes de trocar é preciso
+  // saber quem mais, NESTA varredura, pede ou carrega o mesmo número.
+  const pedidosPorNumero = new Map<string, number>()
+  const idsFieldPorIdentificador = new Map<string, string[]>()
   for (const vinda of doField) {
     const idField = texto(vinda.idField)
     if (idField) vindasPorFieldId.set(idField, vinda)
+    if (!idField || vinda.archived === true) continue
+    const identificador = texto(vinda.os)
+    const pedido = texto(vinda.osCliente)
+    if (identificador) {
+      idsFieldPorIdentificador.set(identificador, [...(idsFieldPorIdentificador.get(identificador) ?? []), idField])
+    }
+    if (pedido && pedido !== identificador) pedidosPorNumero.set(pedido, (pedidosPorNumero.get(pedido) ?? 0) + 1)
   }
 
   const inserir: ObraNovaDoField[] = []
@@ -207,6 +219,34 @@ export function planejarSincronizacao(
   const numerosTratados = new Set<string>()
   let alertasRemovidos = 0
   let inalteradas = 0
+
+  /**
+   * Número que a obra deve passar a ter pelo campo "OS Cliente", ou `null`
+   * para não mexer. Campo vazio nunca mexe: o identifier é imutável no Field,
+   * e voltar a ele desfaria a troca (decisão do João, 07/10/2026). Número que
+   * já é de outra obra — no banco ou nesta mesma varredura — não troca e vira
+   * aviso, sem derrubar a sincronização das outras obras.
+   */
+  function numeroPeloCampo(
+    vinda: OsNormalizada,
+    idField: string,
+    numeroAtual: string | null,
+    obraId: string | null,
+  ): string | null {
+    const alvo = texto(vinda.osCliente)
+    if (!alvo || alvo === numeroAtual) return null
+    const dono = porOs.get(alvo)
+    const outraOsComEsseNumero = (idsFieldPorIdentificador.get(alvo) ?? []).some((id) => id !== idField)
+    const motivo =
+      (pedidosPorNumero.get(alvo) ?? 0) > 1
+        ? 'preenchido em mais de uma OS do Field'
+        : (dono && dono.id !== obraId) || outraOsComEsseNumero
+          ? 'já é de outra obra'
+          : null
+    if (!motivo) return alvo
+    avisos.push(`OS ${texto(vinda.os) ?? idField}: número ${alvo} ${motivo}, não trocado`)
+    return null
+  }
 
   for (const vinda of doField) {
     const numero = texto(vinda.os)
@@ -248,6 +288,21 @@ export function planejarSincronizacao(
       // OS já concluídas no Field. Mesma regra de sempre: só preenche vazio.
       const clienteDoField = texto(vinda.cliente)
       if (obraPeloId && clienteDoField && vazio(obraPeloId.cliente)) camposDaRecusada.cliente = clienteDoField
+      // Segunda exceção, pelo mesmo motivo: a OS real do cliente costuma ser
+      // aberta quando a obra já terminou no Field.
+      const numeroAnteriorDaRecusada = texto(obraPeloId?.os)
+      const novoNumeroDaRecusada = obraPeloId
+        ? numeroPeloCampo(vinda, idField, numeroAnteriorDaRecusada, obraPeloId.id)
+        : null
+      if (obraPeloId && novoNumeroDaRecusada) {
+        camposDaRecusada.os = novoNumeroDaRecusada
+        numerosDeOsAlterados.push({
+          obraId: obraPeloId.id,
+          idField,
+          anterior: numeroAnteriorDaRecusada ?? '—',
+          atual: novoNumeroDaRecusada,
+        })
+      }
       if (obraPeloId && Object.keys(camposDaRecusada).length > 0) {
         atualizar.push({
           id: obraPeloId.id,
@@ -329,7 +384,7 @@ export function planejarSincronizacao(
     const existente = peloId ?? peloNumero
     if (!existente) {
       inserir.push({
-        os: numero,
+        os: numeroPeloCampo(vinda, idField, numero, null) ?? numero,
         loja: vinda.loja,
         cliente: vinda.cliente,
         descricao: vinda.descricao,
@@ -354,14 +409,17 @@ export function planejarSincronizacao(
     }
     if (historicoHerdado) campos.field_id = idField
 
+    // O número só muda pelo campo "OS Cliente". Diferença entre `os` e o
+    // identifier, com o campo vazio, é troca anterior e fica como está.
     const numeroAnterior = texto(existente.os)
-    if (peloId && numeroAnterior !== numero) {
-      campos.os = numero
+    const novoNumero = numeroPeloCampo(vinda, idField, numeroAnterior, existente.id)
+    if (novoNumero) {
+      campos.os = novoNumero
       numerosDeOsAlterados.push({
         obraId: existente.id,
         idField,
         anterior: numeroAnterior ?? '—',
-        atual: numero,
+        atual: novoNumero,
       })
     }
 

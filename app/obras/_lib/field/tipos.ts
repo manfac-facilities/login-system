@@ -57,6 +57,15 @@ export type OrdemField = {
   archived?: boolean | null
   createdAt?: string | null
   updatedAt?: string | null
+  /** Campos personalizados da OS. Vem na listagem (conferido na API real em 28/09 e 07/10/2026). */
+  customFields?: CampoPersonalizadoField[] | null
+}
+
+/** Um campo personalizado. Na API real: `{ name, type: "question", value: "<texto>" }`. */
+export type CampoPersonalizadoField = {
+  name?: string | null
+  type?: string | null
+  value?: unknown
 }
 
 /**
@@ -124,4 +133,12 @@ export type OsNormalizada = {
    * sincronizar/_criterio-de-entrada.ts e o feedback 20 de 15/09/2026.
    */
   situacao: string | null
+  /**
+   * Valor do campo personalizado "OS Cliente - preencher se foi aberto sem OS"
+   * (o nome começa com "OS Cliente", sem diferenciar maiúscula), já sem bordas.
+   * `null` quando o campo não existe, está vazio ou não é texto. É o número
+   * real da OS quando a obra foi aberta no Field com número fictício — o
+   * `identifier` não pode ser editado lá. Pedido de 06/10/2026.
+   */
+  osCliente: string | null
 }

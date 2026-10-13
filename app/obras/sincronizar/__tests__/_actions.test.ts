@@ -58,6 +58,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     criadoEm: null,
     archived: false,
     situacao: 'pending',
+    osCliente: null,
     ...over,
   }
 }
@@ -220,8 +221,8 @@ describe('sincronizarComFieldAction — gravação', () => {
     expect(estado.relatorio).toMatchObject({ novas: 0, atualizadas: 0, inalteradas: 1 })
   })
 
-  it('atualiza o número da mesma obra pelo field_id e relata a correção', async () => {
-    listarOsNormalizadas.mockResolvedValue([osDoField({ os: '0226-999999' })])
+  it('troca o número da obra pelo campo "OS Cliente" e relata a correção', async () => {
+    listarOsNormalizadas.mockResolvedValue([osDoField({ osCliente: '0226-999999' })])
     selectRangeMock.mockResolvedValue({
       data: [
         {
@@ -251,6 +252,36 @@ describe('sincronizarComFieldAction — gravação', () => {
       },
     ])
     expect(estado.relatorio?.novosAlertasDeAusencia).toBe(0)
+  })
+
+  it('número do "OS Cliente" já é de outra obra: não troca, grava o aviso no histórico e a execução segue com sucesso', async () => {
+    listarOsNormalizadas.mockResolvedValue([
+      osDoField({ osCliente: '0926-017378' }),
+      osDoField({ os: 'OS-NOVA', idField: 'ord-3' }),
+    ])
+    selectRangeMock.mockResolvedValue({
+      data: [
+        { id: 'obra-1', os: '0226-014989', loja: 'DROGARIA SP', descricao: 'Reforma', fonte: 'field', field_id: 'ord-1', field_ausente_desde: null, field_ausente_em: null },
+        { id: 'obra-2', os: '0926-017378', loja: 'DROGARIA SP', descricao: 'Reforma', fonte: 'field', field_id: 'ord-2', field_ausente_desde: null, field_ausente_em: null },
+      ],
+      error: null,
+    })
+
+    const estado = await sincronizarComFieldAction()
+
+    expect(estado.error).toBeUndefined()
+    expect(updateMock).not.toHaveBeenCalledWith(expect.objectContaining({ os: '0926-017378' }))
+    expect(insertMock).toHaveBeenCalledWith([expect.objectContaining({ os: 'OS-NOVA' })])
+    expect(estado.relatorio?.avisos).toEqual([
+      'OS 0226-014989: número 0926-017378 já é de outra obra, não trocado',
+    ])
+    expect(execucaoUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'sucesso',
+        avisos: 1,
+        erro: 'OS 0226-014989: número 0926-017378 já é de outra obra, não trocado',
+      }),
+    )
   })
 
   it('consulta a ordem antiga e herda o histórico quando ela está arquivada', async () => {
