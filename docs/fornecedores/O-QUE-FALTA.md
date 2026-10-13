@@ -32,6 +32,14 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
 
 **Falta:** etapas 5 e 7 abaixo (a 6 foi feita antes da 5, por pedido do cliente).
 
+## Atualização 13/10/2026 — cliente aprovou o mockup de melhorias
+
+- Retorno literal: `docs/cliente/2026-10-12-retorno-mockup-melhorias-fornecedores.md` ("prosseguir"; 7 suposições aceitas).
+- Decisões do João: **entrega única** (não em 2 partes); schema liberado (migrations frn 009+, aplicadas após revisão
+  independente); **CT-0001 segue no fluxo novo** (posicionado na etapa do Eduardo, sem perder dado).
+- Em andamento: spec em `docs/fornecedores/spec-melhorias-2026-10.md` → revisão independente → plano → código.
+  Clone de trabalho: `D:\fornecedores-work\fornecedores-melhorias`.
+
 ## PONTO DE RETOMADA — 12/10/2026
 
 **Feito em 11–12/10:**
