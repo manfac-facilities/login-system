@@ -47,7 +47,28 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
-## ⏸ PAUSADO A PEDIDO DO JOÃO — 13/10/2026 (PONTO DE RETOMADA ATUAL)
+## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (PONTO DE RETOMADA ATUAL)
+
+João pausou porque os agentes travavam o PC (~1,4 GB livres). **Agentes: de dia (João no PC) no máximo 2; à noite, sem limite** (decisão do João, 13/10).
+Commits de documentação: usar a cópia `D:\fornecedores-work\hub-docs` (a pasta principal do hub está sendo usada por
+outra sessão no branch `fix/obras-tabela-scroll-visivel`; não commitar lá). Repo `manfac-facilities/fornecedores`:
+
+| Parte | Estado | PR / branch | Falta |
+|---|---|---|---|
+| 0 base | aprovada | PR #5 → `feat/melhorias` | **merge: João clica** (auto mode bloqueia "Merge Without Review") |
+| H e-mail | aprovada | PR #6 | — |
+| D ficha | aprovada | PR #7 | — |
+| C lista | aprovada | PR #8 | — |
+| G configurações | aprovada (`revisao-frente-g.md`) | PR #11 | — |
+| A banco 009–012 | aprovada (`revisao-frente-a.md`) | PR #9; reforços M1/M2/M4/M3 em andamento, WIP `5c427c6` (255 testes de SQL verdes, faltava formatar 2 testes) | terminar reforços, CI |
+| B condições/Financeiro | **AJUSTAR** (`revisao-frente-b.md`) | PR #10 (`296a24b`); correção B-1 nem começou | B-1: diálogo de aditivo pelo catálogo (`_ficha/acoes.tsx`), `calculo.ts:107`, rascunho com catálogo falho |
+| E aprovações | pronta, CI verde | PR #12 | **revisão foi interrompida — refazer** |
+| F modelo | quase pronta, sem PR | branch `feat/melhorias-f-modelo` (`875c329`, já com condição pinada no documento) | conferir, CI, abrir PR, revisar |
+
+Depois: merges em `feat/melhorias`, rodada de `AJUSTES-INTEGRACAO-MELHORIAS.md` (I-1 é obrigatório antes do deploy),
+aplicar 009–012 em produção pelo roteiro do plano, deploy (+ `SMTP_*` e `NEXT_PUBLIC_APP_URL` no EasyPanel).
+
+### (pausa anterior, 13/10 manhã — histórico)
 
 Spec/plano/revisões: `spec-melhorias-2026-10.md`, `plano-melhorias-2026-10.md`, `BRIEF-FRENTES-MELHORIAS.md`,
 `AJUSTES-INTEGRACAO-MELHORIAS.md`, laudos `revisao-*.md`. Repo `manfac-facilities/fornecedores`:
