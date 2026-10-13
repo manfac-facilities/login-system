@@ -73,3 +73,13 @@ Prazo assumido: entregar a troca do número no ar até a madrugada de 07→08/10
 Referindo-se a duas linhas da tabela que o Claude apresentou: "Histórico: o que mudou, de qual
 número para qual, quando e por quem" e "'Te mando tudo pronto e o que tem que fazer' (sua promessa)".
 Ou seja: histórico do número da OS e instrução de uso ao cliente ficam fora desta entrega, por ora.
+
+## Cobrança do cliente (13/10/2026)
+
+Literal em `docs/cliente/2026-10-13-obras-scroll-tabela-e-troca-os.md`. O João, no chat: "O mais importante é a
+troca de os que ficamos de fazer e não fizemos". Conferido em 13/10: nenhum código lê `customFields` em nenhum branch.
+
+## Decisão do João (13/10/2026)
+
+Colisão (número já usado por outra obra): **não troca, e o aviso aparece na tela Sincronizar** (histórico da
+sincronização), sem mudança de schema. Opção "aviso na própria obra" (coluna nova) recusada por ora.
