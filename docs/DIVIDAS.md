@@ -158,3 +158,12 @@ marcos ao trocar de etapa, e o backfill para as obras já paradas está escrito 
 - `route.ts`: resposta 502 lista os e-mails que falharam; fica em `net._http_response` (só legível com acesso ao banco).
 - A rota lê com service role, a tela com a sessão (RLS). Números só batem se a RLS de `obras_*` não esconder linhas de quem tem `obras` — não medido.
 - Locaweb devolveu `451` temporário no 1º envio de teste (08/10, local); o 2º passou. Sem retry por decisão de escopo — aguardando o João sobre uma nova tentativa.
+
+## 13/10/2026 — troca do nº da OS pelo campo "OS Cliente" (merge 4b5be3f)
+
+Backlog da revisão independente; nenhum bloqueia.
+- Aviso de colisão aparece só no histórico da tela Sincronizar, não na obra (decisão do João de 13/10; reabrir se ele pedir).
+- O mesmo aviso de colisão se repete a cada execução do cron enquanto o campo seguir preenchido.
+- Execução que falha perde os avisos daquela rodada (`erro` guarda só a falha).
+- Campo achado pelo início do nome "os cliente"; outro campo com o mesmo início pegaria o primeiro do array.
+- Colisão no insert (obra nova, lote de 100) derruba a execução inteira; sem dano, a próxima rodada vira aviso. Comportamento anterior a este commit.
