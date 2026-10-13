@@ -53,7 +53,7 @@ describe('maiorMarcaDagua — considera createdAt além de updatedAt', () => {
   function os(over: Partial<OsNormalizada>): OsNormalizada {
     return {
       os: 'X', descricao: null, loja: null, cliente: null, idField: 'ord-1',
-      atualizadoEm: null, criadoEm: null, archived: false, situacao: 'scheduled',
+      atualizadoEm: null, criadoEm: null, archived: false, situacao: 'scheduled', osCliente: null,
       ...over,
     }
   }

@@ -89,6 +89,18 @@ function texto(valor: string | null | undefined): string | null {
 }
 
 /**
+ * Valor do campo personalizado "OS Cliente - preencher se foi aberto sem OS".
+ * Achado pelo começo do nome, sem diferenciar maiúscula — nunca pela posição
+ * no array, que muda se o cliente criar outro campo.
+ */
+function osDoCliente(ordem: OrdemField): string | null {
+  const campo = (ordem.customFields ?? []).find(
+    (c) => typeof c?.name === 'string' && c.name.trim().toLowerCase().startsWith('os cliente'),
+  )
+  return typeof campo?.value === 'string' ? texto(campo.value) : null
+}
+
+/**
  * Escolhe UM tipo de OS entre os candidatos devolvidos por `/services`.
  *
  * POR QUE ISSO É MAIS QUE `items[0]`: a documentação **não diz** se o filtro
@@ -219,6 +231,7 @@ export function criarClienteField(config: ConfigDoClienteField): ClienteField {
         // varredura para impedir sucesso com marca d'água após pular uma OS.
 
         situacao: (await consultarSituacaoDaUltimaAtividade(http, ordem.id)).situacao,
+        osCliente: osDoCliente(ordem),
       })
     }
     return normalizadas

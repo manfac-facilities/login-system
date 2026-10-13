@@ -170,7 +170,10 @@ async function finalizarExecucao(
     .update({
       status: estado.status,
       finalizada_em: new Date().toISOString(),
-      erro: estado.erro ?? null,
+      // Sem coluna própria para o texto dos avisos (decisão de 13/10/2026: sem
+      // schema), a execução com sucesso leva os avisos em `erro`. É o que o
+      // histórico da tela Sincronizar mostra para as execuções do cron.
+      erro: estado.erro ?? (estado.relatorio?.avisos.length ? estado.relatorio.avisos.join('\n') : null),
       marca_dagua_nova: estado.status === 'sucesso' ? estado.marca ?? null : null,
       ...contagens(estado.relatorio),
     })

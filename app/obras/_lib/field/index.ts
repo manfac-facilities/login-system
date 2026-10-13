@@ -45,6 +45,7 @@ export { ErroDaApiField, ErroDeParametroInvalido, ErroDeRateLimit, ErroDeTipoDeO
 
 export type {
   CadastroDeClienteField,
+  CampoPersonalizadoField,
   EnderecoField,
   ListaField,
   LocalizacaoField,

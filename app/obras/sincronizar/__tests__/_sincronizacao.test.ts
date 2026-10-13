@@ -26,6 +26,7 @@ function osDoField(over: Partial<OsNormalizada> = {}): OsNormalizada {
     criadoEm: null,
     archived: false,
     situacao: 'pending',
+    osCliente: null,
     ...over,
   }
 }
@@ -211,7 +212,10 @@ describe('planejarSincronizacao — OS que já existe', () => {
     ])
   })
 
-  it('corrige o número pelo field_id sem duplicar nem abrir alerta de sumiço', () => {
+  it('acha a obra pelo field_id mesmo com número diferente, sem duplicar, sem abrir alerta e sem mexer no número', () => {
+    // O identifier é imutável no Field (cliente, 06/10/2026). Número diferente
+    // aqui é o que fica depois de uma troca pelo campo "OS Cliente": com o
+    // campo vazio, a sincronização NÃO reverte para o identifier.
     const plano = planejarSincronizacao(
       [osDoField({ os: '0226-999999', idField: 'ord-1' })],
       [
@@ -232,20 +236,12 @@ describe('planejarSincronizacao — OS que já existe', () => {
         id: 'obra-1',
         os: '0226-999999',
         campos: {
-          os: '0226-999999',
           field_ausente_desde: null,
           field_ausente_em: null,
         },
       },
     ])
-    expect(plano.numerosDeOsAlterados).toEqual([
-      {
-        obraId: 'obra-1',
-        idField: 'ord-1',
-        anterior: '0226-014989',
-        atual: '0226-999999',
-      },
-    ])
+    expect(plano.numerosDeOsAlterados).toEqual([])
   })
 
   it('nunca sobrescreve uma procedência já preenchida', () => {
@@ -693,10 +689,9 @@ describe('planejarSincronizacao — OS reaberta com o mesmo número', () => {
     const plano = planejarSincronizacao([antigaRenumerada, reaberta], [antiga])
 
     expect(plano.atualizar).toHaveLength(1)
-    expect(plano.atualizar[0]).toMatchObject({
-      id: 'obra-1',
-      campos: { os: 'OS-300' },
-    })
+    expect(plano.atualizar[0]).toMatchObject({ id: 'obra-1' })
+    // Identifier diferente com "OS Cliente" vazio não troca o número (06/10/2026).
+    expect(plano.atualizar[0].campos).not.toHaveProperty('os')
     expect(plano.atualizar[0].historicoHerdado).toBeUndefined()
     expect(plano.ignoradas.some((item) => /veio na mesma varredura/i.test(item.motivo))).toBe(true)
   })
@@ -882,5 +877,170 @@ describe('invariante: o Field nunca escreve o que a ficha editável grava', () =
       'loja' in l.campos ? [l.campos.loja] : [],
     )
     expect(lojasEscritas).toEqual([])
+  })
+})
+
+// ============================================================
+// Troca do número da OS pelo campo personalizado "OS Cliente" do Field.
+// Pedido do cliente e decisões do João em
+// docs/cliente/2026-10-06-alterar-numero-os-campo-personalizado-field.md.
+// ============================================================
+describe('troca do número da OS pelo campo "OS Cliente"', () => {
+  const obraTeste = obraNoBanco({ id: 'obra-teste', os: '123-TESTE', field_id: 'ord-1', loja: 'L', descricao: 'D' })
+
+  it('campo preenchido e número livre: a obra passa a ter o número do campo', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' })],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar).toEqual([
+      { id: 'obra-teste', os: '123-TESTE', campos: { os: '0926-017378' } },
+    ])
+    expect(plano.numerosDeOsAlterados).toEqual([
+      { obraId: 'obra-teste', idField: 'ord-1', anterior: '123-TESTE', atual: '0926-017378' },
+    ])
+    expect(plano.avisos).toEqual([])
+  })
+
+  it('obra já trocada e campo igual: nada a escrever', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' })],
+      [{ ...obraTeste, os: '0926-017378' }],
+    )
+
+    expect(plano.atualizar).toEqual([])
+    expect(plano.inalteradas).toBe(1)
+    expect(plano.numerosDeOsAlterados).toEqual([])
+  })
+
+  it('campo vazio ou apagado depois de preenchido: mantém o último número, não reverte ao identifier', () => {
+    for (const osCliente of [null, '', '   ']) {
+      const plano = planejarSincronizacao(
+        [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente })],
+        [{ ...obraTeste, os: '0926-017378' }],
+      )
+
+      expect(plano.atualizar).toEqual([])
+      expect(plano.inalteradas).toBe(1)
+      expect(plano.numerosDeOsAlterados).toEqual([])
+    }
+  })
+
+  it('campo com espaços nas bordas: usa o valor sem as bordas', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '  0926-017378  ' })],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar[0].campos).toEqual({ os: '0926-017378' })
+  })
+
+  it('obra nova com o campo preenchido já nasce com o número do campo', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' })],
+      [],
+    )
+
+    expect(plano.inserir).toHaveLength(1)
+    expect(plano.inserir[0].os).toBe('0926-017378')
+    expect(plano.inserir[0].field_id).toBe('ord-1')
+    expect(plano.avisos).toEqual([])
+  })
+
+  it('número já é de outra obra do hub: não troca, avisa, e as outras obras sincronizam normalmente', () => {
+    const outra = obraNoBanco({ id: 'obra-outra', os: '0926-017378', field_id: 'ord-2', loja: 'L', descricao: 'D' })
+    const plano = planejarSincronizacao(
+      [
+        osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' }),
+        osDoField({ os: 'NOVA-1', idField: 'ord-3' }),
+      ],
+      [{ ...obraTeste, loja: null }, outra],
+    )
+
+    // A obra continua recebendo o resto do que o Field pode preencher.
+    expect(plano.atualizar).toEqual([
+      { id: 'obra-teste', os: '123-TESTE', campos: { loja: 'Av. Paulista, 1000 - Bela Vista - São Paulo/SP' } },
+    ])
+    expect(plano.numerosDeOsAlterados).toEqual([])
+    expect(plano.inserir.map((o) => o.os)).toEqual(['NOVA-1'])
+    expect(plano.avisos).toEqual(['OS 123-TESTE: número 0926-017378 já é de outra obra, não trocado'])
+  })
+
+  it('número já é de outra obra e a obra não tem mais nada a mudar: conta como inalterada', () => {
+    const outra = obraNoBanco({ id: 'obra-outra', os: '0926-017378', field_id: 'ord-2', loja: 'L', descricao: 'D' })
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' })],
+      [obraTeste, outra],
+    )
+
+    expect(plano.atualizar).toEqual([])
+    expect(plano.inalteradas).toBe(1)
+    expect(plano.avisos).toHaveLength(1)
+  })
+
+  it('obra nova cujo campo aponta para número de outra obra: nasce com o identifier e avisa', () => {
+    const outra = obraNoBanco({ id: 'obra-outra', os: '0926-017378', field_id: 'ord-2' })
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' })],
+      [outra],
+    )
+
+    expect(plano.inserir.map((o) => o.os)).toEqual(['123-TESTE'])
+    expect(plano.avisos).toEqual(['OS 123-TESTE: número 0926-017378 já é de outra obra, não trocado'])
+  })
+
+  it('duas OS do Field com o mesmo número no campo, na mesma varredura: nenhuma troca, as duas avisam', () => {
+    const plano = planejarSincronizacao(
+      [
+        osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' }),
+        osDoField({ os: 'NOVA-2', idField: 'ord-5', osCliente: '0926-017378' }),
+      ],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar).toEqual([])
+    expect(plano.numerosDeOsAlterados).toEqual([])
+    expect(plano.inserir.map((o) => o.os)).toEqual(['NOVA-2'])
+    expect(plano.avisos).toEqual([
+      'OS 123-TESTE: número 0926-017378 preenchido em mais de uma OS do Field, não trocado',
+      'OS NOVA-2: número 0926-017378 preenchido em mais de uma OS do Field, não trocado',
+    ])
+  })
+
+  it('campo aponta para o número de uma OS que entra nova na mesma varredura: não troca e avisa', () => {
+    const plano = planejarSincronizacao(
+      [
+        osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378' }),
+        osDoField({ os: '0926-017378', idField: 'ord-7' }),
+      ],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar).toEqual([])
+    expect(plano.inserir.map((o) => o.os)).toEqual(['0926-017378'])
+    expect(plano.avisos).toEqual(['OS 123-TESTE: número 0926-017378 já é de outra obra, não trocado'])
+  })
+
+  it('OS que não entra na carga (já concluída) mas tem obra no hub também troca o número', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378', situacao: 'done' })],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar).toEqual([
+      { id: 'obra-teste', os: '123-TESTE', campos: { os: '0926-017378' } },
+    ])
+    expect(plano.numerosDeOsAlterados).toHaveLength(1)
+  })
+
+  it('OS arquivada no Field nunca troca o número', () => {
+    const plano = planejarSincronizacao(
+      [osDoField({ os: '123-TESTE', idField: 'ord-1', osCliente: '0926-017378', archived: true })],
+      [obraTeste],
+    )
+
+    expect(plano.atualizar).toEqual([])
+    expect(plano.numerosDeOsAlterados).toEqual([])
   })
 })

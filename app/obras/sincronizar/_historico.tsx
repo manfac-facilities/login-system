@@ -61,9 +61,19 @@ export default function HistoricoSincronizacao({ execucoes }: { execucoes: Execu
                       {execucao.status}
                     </td>
                     <td className="py-2 text-[#94a3b8]">
-                      {execucao.erro
-                        ? execucao.erro
-                        : `${execucao.total_field} lidas · ${execucao.novas} novas · ${execucao.atualizadas} atualizadas · ${execucao.ignoradas} ignoradas`}
+                      {execucao.status === 'falhou' && execucao.erro ? (
+                        execucao.erro
+                      ) : (
+                        <>
+                          {`${execucao.total_field} lidas · ${execucao.novas} novas · ${execucao.atualizadas} atualizadas · ${execucao.ignoradas} ignoradas`}
+                          {/* Em execução com sucesso, `erro` guarda os avisos (ver _execucao.ts). */}
+                          {execucao.erro?.split('\n').map((aviso, idx) => (
+                            <span key={idx} className="mt-1 block text-[#f4b73f]">
+                              {aviso}
+                            </span>
+                          ))}
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
