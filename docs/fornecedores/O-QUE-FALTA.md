@@ -39,6 +39,13 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   independente); **CT-0001 segue no fluxo novo** (posicionado na etapa do Eduardo, sem perder dado).
 - Em andamento: spec em `docs/fornecedores/spec-melhorias-2026-10.md` → revisão independente → plano → código.
   Clone de trabalho: `D:\fornecedores-work\fornecedores-melhorias`.
+- Decisões pendentes da spec, respondidas pelo João (13/10):
+  - **D1 CT-0001:** literal "como dito, o eduardo aprova o contrato e o josé as condiçoes do contrato" → lido como:
+    a aprovação de condições do José (11/10) vale; quando o Eduardo aprovar, o contrato fica aprovado; nenhuma escrita no CT-0001.
+  - **D2:** faixa de uso só texto; sugestão automática segue com os limites fixos (recomendação adotada, não perguntada).
+  - **D3:** "Como paga" de condição existente **editável, como no mockup** (contrato aprovado continua preso à versão dele).
+  - **D4:** e-mail também nas etapas de aditivo.
+  - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
 ## PONTO DE RETOMADA — 12/10/2026
 
