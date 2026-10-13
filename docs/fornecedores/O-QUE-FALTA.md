@@ -49,7 +49,7 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
 
 ## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (PONTO DE RETOMADA ATUAL)
 
-João pausou porque os agentes travavam o PC (~1,4 GB livres). **Retomar com no máximo 2 agentes por vez.**
+João pausou porque os agentes travavam o PC (~1,4 GB livres). **Agentes: de dia (João no PC) no máximo 2; à noite, sem limite** (decisão do João, 13/10).
 Commits de documentação: usar a cópia `D:\fornecedores-work\hub-docs` (a pasta principal do hub está sendo usada por
 outra sessão no branch `fix/obras-tabela-scroll-visivel`; não commitar lá). Repo `manfac-facilities/fornecedores`:
 
