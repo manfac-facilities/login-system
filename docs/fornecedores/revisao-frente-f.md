@@ -101,3 +101,49 @@ O ideal é o SQL gravar a versão recebida, mas isso muda assinatura e passa pel
    "Pedido inválido". Isso não grava nada.
 5. Desvio declarado: `lib/modelo/dados.ts` e os testes extras estão fora da lista do plano. É apoio da própria F,
    ninguém mais é dono deles. **Aceito.**
+
+---
+
+## Rerrevisão (1173e5f)
+
+**Head:** `1173e5f`, que traz F-1 em `8e5a6d1` e F-2 em `1173e5f`. Mesmo clone, sem commit.
+**Verificação:** `vitest run tests/modelo tests/contratos` = 74 testes passando; `tsc --noEmit` = 0 erros. Refiz o
+render lado a lado com o perfil real do CT-0001 (teste temporário, já apagado).
+
+### Veredito: APROVAR
+
+**F-1 — resolvido.** As duas frases que faltavam agora saem na v1, junto com a do material:
+
+| Antigo | Novo (v1) |
+|---|---|
+| Contrato global (guarda-chuva), sem obra vinculada: os serviços são pedidos sob demanda. | Local de execução: contrato global (guarda-chuva), sem obra vinculada: os serviços são pedidos sob demanda. |
+| Valor global (teto), consumido por serviço executado: R$ 200.000,00. | Valor: R$ 200.000,00, valor global (teto), consumido por serviço executado. |
+
+Os rótulos "Local de execução:" e "Valor:" **não violam o CA-E13**. O critério pede que o texto *contenha* todas as
+frases das cláusulas, e contém. O sentido também não muda: continua dizendo que não há obra vinculada, que o
+serviço é sob demanda e que o valor é teto. A redação sai diferente porque o seed da Frente A reestruturou o texto
+(títulos em caixa alta, "Valor:"), e isso a spec já aceitou no Apêndice A. Não há o que corrigir. Se o João
+quisesse o texto idêntico byte a byte, a mudança seria no seed (`011`, Frente A) e no Apêndice A da spec, não na F.
+
+**F-2 — resolvido, sem buraco que cause dano.** Fazer a checagem só quando `modelo_versao` é nulo está certo pelos
+motivos abaixo:
+- Contrato **já pinado**: a página renderiza a versão pinada, e o SQL não grava de novo, porque exige
+  `documento_gerado_em is null` (`011:134`). Não há divergência possível.
+- Contrato **não pinado**: a versão exibida é comparada com a atual. Se forem diferentes, a impressão é recusada e a
+  página recarrega. Sobra a janela de milissegundos entre a checagem e o `max(versao)` do SQL; está declarada e é
+  aceitável.
+- Contrato **em rascunho ou aguardando**: o SQL não pina nada, mas a checagem roda igual. O efeito é só uma recusa
+  desnecessária seguida de recarregar a página. É inofensivo.
+- Se o registro falhar sem ser recusa, a página imprime sem pinar, como antes. A próxima impressão pina a versão
+  que estiver na tela naquele momento.
+
+**Regressões:** nenhuma. O acesso continua passando pelo `frn_registrar_documento`, que revalida com
+`frn__pode_operar`. A versão exibida é validada com zod, o escape não mudou e a condição continua pinada.
+
+### Não bloqueantes novos
+1. **Global com material separado perde o "teto"** (`campos.ts:101-102`): o ramo `mat > 0` vem antes do ramo do
+   global. No render com R$ 5 mil de material, o novo omite "valor global (teto), consumido por serviço executado".
+   Pelas telas e pelo mockup, o CT-0001 não tem material (R$ 200.000,00). Não conferi no banco.
+2. **Leitura antes da autorização** (`documento/_actions.ts`): a chave de serviço lê `frn_contratos.modelo_versao`
+   pelo id antes de o SQL checar o acesso. O dado não volta para o usuário, só a recusa. Para usar isso, alguém
+   precisaria conhecer o UUID de um contrato alheio.

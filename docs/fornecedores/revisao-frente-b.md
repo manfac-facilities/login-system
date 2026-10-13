@@ -103,3 +103,36 @@ e exigir que nenhuma chamada sem catálogo ou versão sobre contrato enviado ou 
 `lib/regras/aditivo.ts` mantém `CONDICOES` como padrão (`e.catalogo ?? CONDICOES`). O chamador é da Frente E. A
 validação real do aditivo de condição neste PR passa pelo catálogo do banco (`_ficha/_actions.ts:101-108`) e pelo SQL.
 **Condição para fechar o conjunto:** a Frente E precisa passar o catálogo.
+
+---
+
+## Rerrevisão (60f92f4)
+
+**Data:** 13/10/2026 · **Clone novo:** `D:\fornecedores-work\revisao-b2` · **Diffs conferidos:** `296a24b..60f92f4`
+(`3a68356`, `60f92f4`) · **Testes:** `vitest run tests/ficha tests/contratos` = 8 arquivos, 110 testes, todos passando.
+
+### Veredito: APROVAR
+
+- **B-1 fechado, com teste.** `acoes.tsx` não importa mais `aprovacoes/_lib/condicao` nem `CONDICOES`. Nome, prazo
+  (`prazoDoAditivo`, espelho de `prazoDaCondicao` sobre o `Condicao` do catálogo) e `ehExcecao` (`modo === "excecao"`)
+  saem de `condicoesParaAditivo: Condicao[]`, que `montarFicha` filtra do catálogo do banco (`calculo.ts:154`). O nome
+  da condição atual vem da versão pinada (`page.tsx:101`, `f.condicao?.nome`). `tests/ficha/acoes.test.tsx` cobre
+  a versão editada (D+20, não D+15), a condição criada nas Configurações, a exceção pelo modo com código qualquer,
+  e uma varredura de fonte que impede `CONDICOES` e `aprovacoes/_lib/condicao` nos arquivos do aditivo.
+- **Melhoria 1 (rascunho) feita.** `_contrato.ts:191-197`: com o catálogo vazio, a escolhida vai como está, e o banco
+  revalida. Antes ia `null` e o banco gravava a sugerida. O teste confirma que a exceção e `excecaoDias = 0` são
+  preservadas, que o envio fica barrado (`faltas(..., [])` contém "condicao") e que o caso de material continua `null`.
+- **Falha fechada.** Com o catálogo vazio, a lista do aditivo fica vazia e o botão não habilita (`para === ""`).
+  Se o catálogo falha na ação, ela devolve erro sem gravar. Se falha na ficha, a ficha inteira cai (melhoria 2,
+  que segue no backlog e é segura). Não existe caminho que grave uma condição errada.
+- **Sem regressão no aditivo.** Uma condição desativada sai da lista (`condicaoPermitida` exige `ativo`) e é recusada
+  no servidor (`k.ativo !== true`) e no SQL. A atual pinada numa versão antiga aparece pelo nome pinado e não entra
+  na lista (mesmo código), salvo exceção→exceção (D-4), que ainda exige um prazo diferente. O prazo enviado é o
+  digitado só quando o modo é `excecao`. O servidor decide pelo modo do catálogo atual, o mesmo usado na tela.
+- **Integração com C–G.** `git merge-tree` de B com cada um dos branches remotos C, D, E, F e G deu **zero conflitos**.
+  Nenhum deles mexe em `_ficha/tipos.ts`, `calculo.ts`, `acoes.tsx` ou `tests/ficha`. Só D altera `page.tsx`, e no
+  merge `AcoesFicha` recebe `nomeCondicaoAtual` e `condicoesParaAditivo={f.condicoesParaAditivo}`, coerentes com o
+  novo tipo. Não há outro consumidor de `condicoesParaAditivo` como `string[]`. Não rodei `tsc` nos merges, por
+  causa da RAM: a conferência foi textual.
+- **Continua aberto, sem bloquear o #10:** I-1 (`page.tsx:187-190`, `_lista.ts:114`, `documento/*`, `cartoes.ts`
+  ainda leem a cópia fixa, e cada um é de outra frente) e as melhorias 2 a 6.

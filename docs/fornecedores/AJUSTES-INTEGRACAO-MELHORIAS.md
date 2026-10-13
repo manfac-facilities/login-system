@@ -30,3 +30,6 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | E-rev | Alteração do José sem concorrência otimista (precisa mudar assinatura SQL da A); `avisarLiberados` pode duplicar e-mail em cenário remoto | DIVIDAS |
 | F-rev | Detalhes de robustez da tela do modelo (laudo `revisao-frente-f.md`) | fazer se couber |
 | F-rev | 1ª impressão: janela residual de ms entre a checagem da versão exibida e o pino no SQL | DIVIDAS |
+| F-rev2 | Contrato global com material separado perde o "teto" no texto (`campos.ts:101-102`) | fazer (texto de contrato) |
+| F-rev2 | Rótulos "Local de execução:"/"Valor:" no CT-0001 vêm do seed da 011 (frases batem; não é byte a byte) | aceito; só muda se o João pedir |
+| F-rev2 | Action do documento lê `modelo_versao` com service role antes do SQL checar acesso (nada vaza além da recusa) | DIVIDAS |
