@@ -15,3 +15,6 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | D | Remover cast e fallback `SPOT_MENSAL_CONSOLIDADO` depois da B | fazer |
 | D | Cancelado sem "desde"; banner de reenvio em tom aviso (mockup: info) | DIVIDAS |
 | D | Pulso animado do "agora" (CSS fora da frente D) | conferir se a G fez |
+| B | Diálogo de aditivo (`acoes.tsx`): nome/prazo de condição nova vêm da cópia fixa (aparece só o código, prazo "—"); `page.tsx` passar o catálogo | fazer (só exibição) — repassado à E |
+| B | Varredura final: nenhum `condicaoPorCodigo(` sem catálogo em `_lista.ts` (C), `documento/*` (F, repassado), `aprovacoes/_lib/condicao.ts` (E, repassado) | fazer na integração |
+| B | `lib/regras/aditivo.ts` com `CONDICOES` como padrão: tornar o catálogo obrigatório depois da E | fazer |
