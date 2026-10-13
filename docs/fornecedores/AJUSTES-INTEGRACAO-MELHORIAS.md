@@ -21,3 +21,7 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | D/G | Pulso animado do "agora" na linha do tempo: nenhuma frente fez (CSS em `ui.css`) | fazer na integração |
 | E | Tirar o padrão `CONDICOES` de `nomeDaCondicao`/`prazoDaCondicao`/`condicaoDe`/`parcelasDoContrato` depois que `contratos/[numero]/page.tsx:187,189` (D), `_ficha/acoes.tsx:365,371,377` e `_ficha/calculo.ts:107` (B) passarem o catálogo; conferir se `calculo.ts:107` envolve valor | fazer na integração |
 | B-rev | **I-1 (bloqueia o deploy):** depois de juntar tudo, nenhum prazo/parcela/texto de contrato aprovado pode sair da cópia fixa: conferir `[numero]/page.tsx:187-189` (usar `f.condicao` pinado), `aprovacoes/_lib/cartoes.ts`, `_lista.ts:114`, `documento/*` | obrigatório antes do deploy |
+| G | Configurador vê nº e status de contratos alheios em "Em uso" (conflita com §1.7 "não vê contrato alheio"): mostrar só a contagem a quem não é José/admin | fazer (acesso) |
+| G | Erro de desativar/reativar aparece atrás do modal | fazer |
+| G | Banner do modal de editar: avisar que rascunhos usam a versão nova no envio | fazer se couber |
+| G | G e F sobem juntas (link "Modelo de contrato" daria 404) | entrega única já garante |
