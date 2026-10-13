@@ -18,3 +18,4 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | B | Diálogo de aditivo (`acoes.tsx`): nome/prazo de condição nova vêm da cópia fixa (aparece só o código, prazo "—"); `page.tsx` passar o catálogo | fazer (só exibição) — repassado à E |
 | B | Varredura final: nenhum `condicaoPorCodigo(` sem catálogo em `_lista.ts` (C), `documento/*` (F, repassado), `aprovacoes/_lib/condicao.ts` (E, repassado) | fazer na integração |
 | B | `lib/regras/aditivo.ts` com `CONDICOES` como padrão: tornar o catálogo obrigatório depois da E | fazer |
+| D/G | Pulso animado do "agora" na linha do tempo: nenhuma frente fez (CSS em `ui.css`) | fazer na integração |
