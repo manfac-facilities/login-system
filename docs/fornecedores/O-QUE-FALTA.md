@@ -47,6 +47,28 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
+## ⏸ PAUSADO A PEDIDO DO JOÃO — 13/10/2026 (PONTO DE RETOMADA ATUAL)
+
+Spec/plano/revisões: `spec-melhorias-2026-10.md`, `plano-melhorias-2026-10.md`, `BRIEF-FRENTES-MELHORIAS.md`,
+`AJUSTES-INTEGRACAO-MELHORIAS.md`, laudos `revisao-*.md`. Repo `manfac-facilities/fornecedores`:
+
+| Frente | Estado | Onde |
+|---|---|---|
+| 0 base | pronta, CI verde, conferida | PR #5 → `feat/melhorias` — **merge bloqueado pelo auto mode ("Merge Without Review"): João clica ou libera** |
+| H e-mail | pronta + revisada (aprovada) | PR #6 (base 0) |
+| D ficha | pronta + revisada (aprovada) | PR #7 (base 0) |
+| C lista | pronta + revisada (aprovada) | PR #8 (base 0) |
+| A banco 009–012 | **interrompida no meio**, nada pushado | só local: `D:\fornecedores-work\melhorias-a` (alterações sem commit) |
+| B condições/integração | **interrompida**; 3 commits locais (B1 corrigido) + alterações sem commit, nada pushado | `D:\fornecedores-work\melhorias-b` (base `feat/melhorias-h-email`) |
+| E aprovações | **interrompida**, alterações sem commit | `D:\fornecedores-work\melhorias-e` (base `feat/melhorias-h-email`) |
+| F modelo | **interrompida** no início, alterações sem commit | `D:\fornecedores-work\melhorias-f` |
+| G configurações | **interrompida**, alterações sem commit | `D:\fornecedores-work\melhorias-g` |
+
+Para retomar: relançar A, B, E, F, G com o mesmo brief, dizendo para **continuar do estado do clone** (conferir
+`git status`/`git log` antes; não recomeçar do zero). Rodar no máximo 4–5 por vez (máquina com ~2 GB livres).
+Depois: revisão de cada uma, merges em `feat/melhorias`, rodada de ajustes, aplicar 009–012 em produção pelo roteiro
+do plano, deploy (+ `SMTP_*` e `NEXT_PUBLIC_APP_URL` no EasyPanel).
+
 ## PONTO DE RETOMADA — 12/10/2026
 
 **Feito em 11–12/10:**
