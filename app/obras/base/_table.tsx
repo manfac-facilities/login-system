@@ -121,7 +121,9 @@ export default function TabelaBase({
       </ul>
 
       {/* ---------- tela grande: a tabela do mockup ---------- */}
-      <div className="hidden overflow-x-auto rounded-lg border border-[#1e3a5f] sm:block">
+      {/* Altura limitada à tela: a barra de rolagem horizontal fica sempre à vista
+          (pedido do cliente, 13/10) em vez de lá no fim da lista. */}
+      <div className="hidden max-h-[calc(100dvh-8rem)] overflow-auto rounded-lg border border-[#1e3a5f] sm:block">
         <table className="w-full min-w-[1100px] border-collapse text-sm">
           <thead>
             <tr className="bg-[#0d2050]">
@@ -129,7 +131,7 @@ export default function TabelaBase({
                 <th
                   key={c.k}
                   scope="col"
-                  className="border-b border-[#1e3a5f] px-2 py-2 text-left align-bottom"
+                  className="sticky top-0 z-10 border-b border-[#1e3a5f] bg-[#0d2050] px-2 py-2 text-left align-bottom"
                 >
                   <button
                     type="button"
