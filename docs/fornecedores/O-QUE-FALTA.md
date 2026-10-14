@@ -47,7 +47,19 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
-## PONTO DE RETOMADA ATUAL — 14/10/2026, madrugada
+## PONTO DE RETOMADA ATUAL — 14/10/2026, dia
+
+- **PR #16 MERGEADO** em `main` (`9db2c40`, 14/10, João tirou o auto mode). O código das melhorias está na `main`.
+- **Baseline do deploy atual (antes do Deploy):** chunks com `Last-Modified: Mon, 12 Oct 2026 14:17:46 GMT` (deploy de
+  12/10). Depois do Deploy, todos os chunks têm de mostrar data posterior. `/api/health` = ok. O comando do roteiro §6
+  passo 4 foi corrigido: HEAD (`curl -I`) leva 307 para o login, só o GET devolve o `Last-Modified`.
+- **Falta (João):** `SMTP_*` do Compras no Environment do `fornecedores` + conferir `NEXT_PUBLIC_APP_URL` → Deploy.
+  Depois: conferência §6 passos 4–7 (Claude) → CT-0001 com o Eduardo.
+- **Rascunho do comunicado:** `comunicado-melhorias-2026-10-14.md` (João aprova; enviar só depois do Deploy conferido).
+- PDF do manual: sendo regenerado a partir de `manual-uso-padrao-cliente.html`.
+- Continua aberto e é do João: redação do "teto" do contrato global com material separado (N2).
+
+## Retomada anterior — 14/10/2026, madrugada
 
 - **Banco 009–012 APLICADO em produção** (14/10, autorizado pelo João): Pré 1–5 OK, verificações 12+6+6+4 = 28/28 OK,
   Pós 2 22/22 OK, foto antes = depois (10 tabelas); CT-0001 só ganhou `condicao_versao = 1`, etapa `eduardo`. Registro em

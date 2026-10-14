@@ -576,7 +576,7 @@ aprova a contratação primeiro."
    curl -s https://hub.manfac.com.br/fornecedores/api/health          # ok
    html=$(curl -s https://hub.manfac.com.br/fornecedores/sem-acesso)  # única página sem sessão (porteiro libera /sem-acesso)
    echo "$html" | grep -o '/fornecedores/_next/static/chunks/[a-zA-Z0-9._-]*\.js' | sort -u | head -10 | \
-     while read c; do curl -sI "https://hub.manfac.com.br$c" | grep -i '^last-modified'; done
+     while read c; do curl -s -D - -o /dev/null "https://hub.manfac.com.br$c" | grep -i '^last-modified'; done   # GET: HEAD (-I) leva 307 para o login
    ```
    Todos com o **mesmo** timestamp, posterior ao clique em Deploy. Pelo log do app, nenhum erro de variável.
 5. **Nada caiu:** hub, Compras, Financeiro, Cockpit, Obras e Sofia abrindo (CA-M4).
