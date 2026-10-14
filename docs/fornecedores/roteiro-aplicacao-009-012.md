@@ -4,12 +4,13 @@
 **Quem executa:** a sessão principal (coordenador), com autorização explícita do João para escrita em produção.
 **Fontes:** plano `plano-melhorias-2026-10.md` §4–§6, `revisao-frente-a.md` (rerrevisão, M1 e M5), `.claude/rules/sql.md`,
 `deploy-easypanel.md`, `docs/infra/variaveis-e-deploy.md` e os arquivos do repo `manfac-facilities/fornecedores`, branch
-`feat/melhorias` em **`72cd044`** (clone em `D:\fornecedores-work\roteiro-banco`).
+`feat/melhorias` em **`72cd044`** (clone em `D:\fornecedores-work\roteiro-banco`). **Revisado contra o merge do PR #15**
+(009–012 iguais, rollback novo): ver §0, §4 e "Revisão independente" no fim.
 
 **Como os SQLs abaixo foram conferidos:** pré e pós-checagens rodaram no PGlite 0.3.16 sobre a imitação do Supabase
 (`tests/sql/stubs/supabase-minimo.sql`): instalação 001→008, depois um contrato igual ao CT-0001 (global/manutenção,
 `OBRA_MEDICAO_MENSAL`, enviado, condições aprovadas pelo José, contratação pendente), e então 009→012. Resultado: 28/28
-linhas de verificação `OK`, foto antes = depois, pós-checagens 21/21 `OK`. A única diferença é a linha "006: carga inicial",
+linhas de verificação `OK`, foto antes = depois, pós-checagens 21/21 `OK` (22/22 depois da revisão independente, que acrescentou uma linha). A única diferença é a linha "006: carga inicial",
 porque o stub tem 2 fornecedores e não 1.226. **Isso foi conferido no PGlite, não no banco real.** No banco real, o texto de
 `pg_policies.qual` pode vir formatado de outro jeito. Se só a formatação mudar, compare o sentido.
 
@@ -17,30 +18,42 @@ porque o stub tem 2 fornecedores e não 1.226. **Isso foi conferido no PGlite, n
 
 ## 0. Antes de tudo: o que será aplicado
 
-| Ordem | Arquivo (no repo `fornecedores`) | Blob git em `72cd044` | Transação |
+| Ordem | Arquivo (no repo `fornecedores`) | Blob git (merge do PR #15) | Transação |
 |---|---|---|---|
 | 1 | `supabase/hub-install/009_frn_condicoes_versoes.sql` | `02f67404` | `begin;` … `commit;` (seção 0 de pré-requisitos dentro), verificação **depois** do commit: 12 linhas |
 | 2 | `supabase/hub-install/010_frn_fluxo_em_ordem.sql` | `3f79e643` | idem, 6 linhas |
 | 3 | `supabase/hub-install/011_frn_modelo_contrato.sql` | `35a9473c` | idem, 6 linhas |
 | 4 | `supabase/hub-install/012_frn_avisos.sql` | `9c338e33` | idem, 4 linhas |
-| — | `supabase/rollback/009-012-ROLLBACK.sql` (só se for preciso, §4) | `1acfe55f` | idem, 7 linhas |
+| — | `supabase/rollback/009-012-ROLLBACK.sql` (só se for preciso, §4) | **`efc16e7a`** (era `1acfe55f` em `72cd044`) | idem, 7 linhas |
+
+**Atualizado na revisão independente (13/10):** a execução parte do **merge do PR #15** (`feat/melhorias-ajustes`, head
+`c79a6e3`) em `feat/melhorias`. Conferido: `git diff 72cd044 origin/feat/melhorias-ajustes -- supabase/hub-install/` é
+vazio (009–012 idênticos, blobs acima iguais aos de `72cd044`), e só o rollback mudou (`1acfe55f` → `efc16e7a`: trava M1
+tolerante a aplicação parcial, §4). O merge foi simulado com `git merge-tree` (`origin/feat/melhorias` + PR #15): sem
+conflito, os cinco blobs saem exatamente como na tabela. Até a hora da revisão o PR #15 estava **aberto** (`mergedAt: null`).
 
 **Não aplicar o `007_frn_cron_pagamentos.sql`.** Ele continua desligado, à espera das chaves do Omie. Rodá-lo não agenda
 nada, mas também não faz parte desta entrega.
 
-**Fixar o commit.** A rodada `feat/melhorias-ajustes` (I-1) ainda vai entrar em `feat/melhorias`. Antes de aplicar, compare
-o blob de cada arquivo no commit final:
+**Fixar o commit.** Só aplique depois que o PR #15 (`feat/melhorias-ajustes`) estiver mergeado em `feat/melhorias`, com CI
+verde no commit do merge. Anote o SHA desse commit em `C` e use **o mesmo `C`** em todas as chamadas da §2 e no registro da
+§5 (nunca `HEAD`, que pode andar entre uma chamada e outra):
 
 ```bash
 REPO=/d/fornecedores-work/roteiro-banco
-git -C $REPO fetch -q origin && git -C $REPO checkout -q origin/feat/melhorias   # ou o merge final aprovado
+git -C $REPO fetch -q origin
+C=$(git -C $REPO rev-parse origin/feat/melhorias); echo "C=$C"       # anotar; deve conter o PR #15
+git -C $REPO merge-base --is-ancestor c79a6e3 $C && echo "PR #15 dentro" || echo "*** PR #15 AUSENTE: PARAR ***"
 for f in hub-install/009_frn_condicoes_versoes.sql hub-install/010_frn_fluxo_em_ordem.sql \
          hub-install/011_frn_modelo_contrato.sql hub-install/012_frn_avisos.sql rollback/009-012-ROLLBACK.sql; do
-  echo "$(git -C $REPO rev-parse HEAD:supabase/$f | cut -c1-8) $f"; done
+  echo "$(git -C $REPO rev-parse $C:supabase/$f | cut -c1-8) $f"; done
 ```
 
-Se algum blob for diferente da tabela, os resultados esperados abaixo **deixam de valer**. Nesse caso, rode de novo a
-conferência no PGlite (`npx vitest run tests/sql --no-file-parallelism` ou o CI) e reveja este roteiro antes de aplicar.
+**Esperado:** `PR #15 dentro` e os cinco blobs da tabela (rollback `efc16e7a`). Rollback `1acfe55f` = PR #15 não entrou:
+**parar** (o rollback velho aborta com aplicação parcial, §4). Se o PR for mergeado por squash/rebase, a linha do
+`merge-base` acusa ausente mesmo com o conteúdo dentro; aí quem decide são os cinco blobs. Se algum blob for diferente da tabela, os resultados esperados
+abaixo **deixam de valer**. Nesse caso, rode de novo a conferência no PGlite (`npx vitest run tests/sql --no-file-parallelism`
+ou o CI) e reveja este roteiro antes de aplicar.
 
 ### ⚠️ Aplicar a partir do blob do git (LF), nunca do arquivo do working tree
 
@@ -147,11 +160,18 @@ from (values
    (pg_get_constraintdef((select oid from pg_constraint where conname = 'frn_papeis_papel_valido'
       and conrelid = 'public.frn_papeis'::regclass)) ~ 'configurador')::text, 'false'),
   ('gatilhos do rollback (frn_*_rb_versao) ausentes',
-   (select count(*) from pg_trigger where not tgisinternal and tgname like 'frn\_%rb\_versao')::text, '0')
+   (select count(*) from pg_trigger where not tgisinternal and tgname like 'frn\_%rb\_versao')::text, '0'),
+  ('gatilhos nas tabelas frn_ (só os 2 da 004): nenhum gatilho de fora mexe na linha do CT-0001',
+   (select coalesce(string_agg(c.relname || '.' || t.tgname, ',' order by c.relname, t.tgname), '')
+      from pg_trigger t join pg_class c on c.oid = t.tgrelid
+     where not t.tgisinternal and c.relnamespace = 'public'::regnamespace and c.relname like 'frn\_%'),
+   'frn_eventos.frn_eventos_imutavel,frn_eventos.frn_eventos_imutavel_truncate')
 ) as x(checagem, valor, esperado);
 ```
 
-**Esperado:** 6 linhas, todas `OK`. Se tabela, coluna ou função nova já existir, alguém aplicou parte antes: **parar** e
+**Esperado:** 7 linhas, todas `OK`. A 7ª linha foi acrescentada na revisão independente: a 009 faz `update` em
+`frn_contratos`, e um gatilho que exista só em produção (fora do repo) poderia mexer em `atualizado_em` ou outra coluna. A
+foto da Pós 1 pegaria isso, mas **depois** do commit; esta linha pega antes. Se tabela, coluna ou função nova já existir, alguém aplicou parte antes: **parar** e
 descobrir o que rodou. As migrations são idempotentes, mas os resultados esperados abaixo partem do zero.
 
 ### Pré 4 — estado do CT-0001 (para comparar depois)
@@ -176,7 +196,7 @@ do José, `condicoes_aprovadas_em` em 11/10, `aprovado_em`, `devolvido_em` e `do
 **Parar e falar com o João** (plano §5.3) se houver qualquer um destes:
 - outro contrato além do CT-0001;
 - CT-0001 em outro status (por exemplo, o Eduardo aprovou nesse meio-tempo e ele ficou `aprovado`);
-- aditivo ou medição (as contagens da Pré 5 não podem ser zero).
+- aditivo ou medição (na Pré 5, `frn_aditivos` e `frn_medicoes` têm de vir com 0 linhas; qualquer número acima disso é parada).
 
 A migration funcionaria do mesmo jeito, mas os resultados esperados abaixo mudariam.
 
@@ -242,8 +262,11 @@ Um arquivo por chamada, nesta ordem, **cada um só depois de ler todas as linhas
 TOKEN=$(tr -d '\r\n' < /c/Users/joao-/.supabase-pat)
 S="C:/Users/joao-/AppData/Local/Temp/claude/<pasta da sessão>/scratchpad"
 REPO=/d/fornecedores-work/roteiro-banco
+C=<SHA anotado na §0>                                               # o mesmo nas quatro chamadas
 N=009; F=supabase/hub-install/009_frn_condicoes_versoes.sql      # depois 010, 011, 012
-git -C $REPO show HEAD:$F > "$S/$N.sql"                             # blob LF (ver §0)
+git -C $REPO show $C:$F > "$S/$N.sql"                               # blob LF (ver §0)
+echo "$(git -C $REPO hash-object --no-filters "$S/$N.sql" | cut -c1-8) == blob da tabela da §0?"   # tem de bater
+# --no-filters é obrigatório: com autocrlf=true, o hash-object "limpa" o CR e um arquivo CRLF daria o mesmo hash (medido)
 node -e 'const fs=require("fs");fs.writeFileSync(process.argv[2],JSON.stringify({query:fs.readFileSync(process.argv[1],"utf8")}))' "$S/$N.sql" "$S/q.json"
 curl -s -X POST "https://api.supabase.com/v1/projects/iyytcavcgukfjnjjrerx/database/query" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary @"$S/q.json" > "$S/$N-resp.json"
@@ -302,6 +325,13 @@ from (values
       from information_schema.role_table_grants
      where table_schema = 'public' and grantee in ('anon','authenticated')
        and table_name in ('frn_condicoes_versoes','frn_modelos_contrato','frn_avisos')),
+   'frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT'),
+  ('privilégio efetivo de anon/authenticated nas novas (has_table_privilege, independe de quem concedeu)',
+   (select coalesce(string_agg(t || ':' || r || ':' || p, ' | ' order by t, r, p), '')
+      from unnest(array['frn_condicoes_versoes','frn_modelos_contrato','frn_avisos']) t,
+           unnest(array['anon','authenticated']) r,
+           unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p
+     where has_table_privilege(r, 'public.' || t, p)),
    'frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT'),
   ('gatilhos de imutabilidade (2 por tabela de versão)',
    (select count(*) from pg_trigger where not tgisinternal and tgname in ('frn_condicoes_versoes_imutavel',
@@ -414,7 +444,7 @@ from (values
 ) as x(checagem, valor, esperado);
 ```
 
-**Esperado:** 21 linhas, todas `OK`. Elas cobrem:
+**Esperado:** 22 linhas, todas `OK` (a linha `has_table_privilege` foi acrescentada na revisão independente). Elas cobrem:
 - **tabelas:** 3 novas, com RLS ligada;
 - **policies:** só SELECT para `authenticated`. Em `frn_avisos` a policy é `using (false)` e não há grant;
 - **grants de tabela:** `authenticated` só com SELECT, e só nas duas tabelas de versão. `anon` sem nada;
@@ -456,30 +486,38 @@ um destes:
 
 | Situação | Estado do banco | Ação |
 |---|---|---|
-| Erro na **009** | nada gravado (transação desfeita) | Conferir com a Pré 3, que tem de seguir 6/6 OK. Investigar a mensagem. Não há rollback a fazer. |
-| Erro na 010, 011 ou 012 | as anteriores **gravadas**, a que falhou não | **Não rodar o rollback** (ver o defeito abaixo). Banco "só 009" ou "009+010" funciona com o app velho: as funções que o app de `main` chama mantêm a assinatura, e a `frn_dias_pagamento(text,int)` removida só era chamada dentro do SQL, pela `frn_registrar_solicitacao_fin`, que a 009 recria. Corrigir e reaplicar o arquivo que falhou; as migrations são idempotentes. |
-| `FALHOU` depois de 009–012 todas aplicadas, **app novo ainda não deployado** | tudo gravado | Rollback: `supabase/rollback/009-012-ROLLBACK.sql` (blob LF, mesmo comando da §2), só com o João avisado. Esperado: **7/7 OK**. Ele recria as funções de 001/005/008, dropa as 10 funções novas e a `frn_ct_ordem`, e liga 3 gatilhos de versão. **Não apaga tabela, coluna nem dado.** |
+| Erro na **009** | nada gravado (transação desfeita) | Conferir com a Pré 3, que tem de seguir **7/7** OK. Investigar a mensagem. Não há rollback a fazer (rodá-lo aborta com `A 009 não foi aplicada`, sem mexer em nada — medido). |
+| Erro na 010, 011 ou 012 | as anteriores **gravadas**, a que falhou não | **Preferir corrigir para frente**: banco "só 009", "009+010" ou "009–011" funciona com o app velho (as funções que o app de `main` chama mantêm a assinatura, e a `frn_dias_pagamento(text,int)` removida só era chamada dentro do SQL, pela `frn_registrar_solicitacao_fin`, que a 009 recria). Corrigir e reaplicar o arquivo que falhou; as migrations são idempotentes. Se o João decidir voltar, o rollback do PR #15 **funciona com aplicação parcial** (tabela abaixo): esperado **7/7 OK**. |
+| `FALHOU` depois de 009–012 todas aplicadas, **app novo ainda não deployado** | tudo gravado | Rollback: `supabase/rollback/009-012-ROLLBACK.sql` (blob LF `efc16e7a`, mesmo comando da §2, com `F=supabase/rollback/009-012-ROLLBACK.sql` e `N=rollback`), só com o João avisado. Esperado: **7/7 OK**. Ele recria as funções de 001/005/008, dropa as 10 funções novas e a `frn_ct_ordem`, e liga 3 gatilhos de versão. **Não apaga tabela, coluna nem dado.** Depois dele, rode a foto (Pré 5): tem de sair igual à foto antes (medido no PGlite). |
 | App novo **já deployado** | — | O rollback do banco **sozinho** quebra o app novo, que chama funções que ele dropa. Primeiro volte o app (redeploy de um `main` revertido), depois o banco. |
-| Rollback responde `O app novo já foi usado (condição editada, % ajustados pelo José ou modelo novo)…` | nada mudou (aborta na seção 0) | É a **trava M1**. Ela dispara se existir `frn_condicoes_versoes.versao > 1`, `frn_contratos.parcelas_ajustadas` não nulo ou mais de 1 linha em `frn_modelos_contrato`. Rodar o rollback nesse estado mudaria parcela e prazo de contrato aprovado. **Não contornar: corrigir para frente**, com o João. Uma condição só **desativada** (v2) já basta para travar, e isso é de propósito. |
+| Rollback responde `O app novo já foi usado (condição editada, % ajustados pelo José ou modelo novo)…` | nada mudou (aborta na seção 0) | É a **trava M1**. Ela dispara se existir `frn_condicoes_versoes.versao > 1`, `frn_contratos.parcelas_ajustadas` não nulo ou mais de 1 linha em `frn_modelos_contrato` (esta última só é lida se a tabela existir, ou seja, com a 011 aplicada). Rodar o rollback nesse estado mudaria parcela e prazo de contrato aprovado. **Não contornar: corrigir para frente**, com o João. Uma condição só **desativada** (v2) já basta para travar, e isso é de propósito. |
+| Rollback com qualquer outra mensagem de erro, ou verificação ≠ 7/7 OK | erro: nada mudou (transação desfeita); `FALHOU`: **já gravado** | Parar e falar com o João. Não reaplicar nem tentar de novo às cegas. |
 
-### ⚠️ Defeito do rollback encontrado nesta preparação (conferido no PGlite)
+**Erro no meio de um arquivo e a sessão do banco.** O texto vai num único pedido com `begin;` explícito. Se a resposta
+seguinte (por exemplo, a Pré 3 de conferência) vier com `current transaction is aborted` (`25P02`), a conexão ficou com a
+transação falhada aberta: mande só `rollback;` e repita a leitura. No PGlite isso acontece sempre (mesma conexão); na
+Management API não foi possível verificar se a conexão é reaproveitada.
 
-A seção 0 do rollback lê `public.frn_modelos_contrato`. Essa tabela só existe depois da 011. Com só a 009, ou só 009+010,
-aplicadas, o rollback **aborta com `relation "public.frn_modelos_contrato" does not exist`**. Isso acontece no PL/pgSQL
-porque a expressão inteira do `if` é preparada antes de rodar, então o `or` não protege. Medido:
+### Rollback com aplicação parcial — corrigido no PR #15 (conferido no PGlite na revisão independente)
 
-| Aplicado até | Rollback |
-|---|---|
-| 009 | ERRO `relation "public.frn_modelos_contrato" does not exist` |
-| 010 | o mesmo ERRO |
-| 011 | roda; 6/7 OK. "nada apagado" sai `FALHOU` só porque `frn_avisos` (012) não existe; isso é esperado |
-| 012 | roda, 7/7 OK |
+O rollback de `72cd044` (`1acfe55f`) abortava com `relation "public.frn_modelos_contrato" does not exist` quando só a 009,
+ou 009+010, estavam aplicadas. O do PR #15 (`efc16e7a`) só lê `frn_modelos_contrato` se a tabela existir (`execute`
+dinâmico dentro de `if to_regclass(...) is not null`), e a linha "nada apagado" da verificação passou a conferir as coisas da
+011 só quando existem (tabela e coluna `modelo_versao` andam juntas) e não confere mais `frn_avisos`. Rodado no PGlite, com
+o merge simulado (`origin/feat/melhorias` + PR #15), a partir de 001→006+008 e do CT-0001:
 
-Não há dano: o rollback aborta antes de mexer em qualquer coisa. Mas o caminho "009 aplicada, 010 falhou → reverter" não
-existe hoje. **Recomendação:** antes de aplicar, corrigir no `feat/melhorias-ajustes`, com teste no `rollback.test.ts`
-(rollback depois de 009 e depois de 010). A correção é ler `frn_modelos_contrato` só quando a tabela existir, por
-`execute` dinâmico dentro de um `if to_regclass('public.frn_modelos_contrato') is not null`. Se não corrigir, vale a linha
-"Erro na 010, 011 ou 012" da tabela acima: o estado parcial funciona com o app velho, e o caminho é reaplicar para frente.
+| Aplicado até | Rollback (`efc16e7a`) | Foto depois do rollback | Reaplicar 009→012 depois |
+|---|---|---|---|
+| nada (009 falhou) | aborta: `A 009 não foi aplicada`; nada muda | — | — |
+| 009 | **7/7 OK** | = foto antes | 28/28 OK |
+| 009+010 | **7/7 OK** | = foto antes | 28/28 OK |
+| 009–011 | **7/7 OK** (antes: 6/7) | = foto antes | 28/28 OK |
+| 009–012 | **7/7 OK** | = foto antes | 28/28 OK |
+| 009 + condição v2 | trava M1 (aborta, nada muda) | — | — |
+| 009–012 + modelo v2 | trava M1 (aborta, nada muda) | — | — |
+
+**Critério de parada do rollback:** qualquer coisa diferente de **7/7 OK** (ou da mensagem da trava M1, que não muda nada)
+é parada.
 
 ---
 
@@ -553,3 +591,49 @@ aprova a contratação primeiro."
    `falhou` com `EENVELOPE 453` = remetente diferente da caixa. `EMESSAGE 451` = recusa temporária, depois de novas
    tentativas. `sem_configuracao` = as `SMTP_*` não chegaram ao processo.
 8. Atualizar o manual e escrever o comunicado curto ao cliente (só o que muda na tela; o João aprova antes de enviar).
+
+---
+
+## Revisão independente
+
+**13/10/2026, revisor sem acesso ao banco de produção nem ao PAT.** Clone novo em `D:\fornecedores-work\revisao-roteiro`,
+branch `feat/melhorias-ajustes` (head `c79a6e3`, PR #15 aberto, CI `verificar` verde).
+
+**Veredito: PRONTO**, com uma condição: **o PR #15 tem de estar mergeado em `feat/melhorias` antes da aplicação**, conferido
+pelo bloco da §0 (rollback `efc16e7a`). Sem ele, o rollback volta a abortar com aplicação parcial.
+
+O que foi conferido:
+1. **Migrations iguais.** `git diff 72cd044 origin/feat/melhorias-ajustes -- supabase/hub-install/` vazio; os blobs 009–012
+   (`02f67404`, `3f79e643`, `35a9473c`, `9c338e33`) são os mesmos. O merge simulado (`git merge-tree`) não tem conflito e
+   produz esses blobs mais o rollback `efc16e7a`. Os cinco blobs têm 0 `\r` e nenhum BOM.
+2. **Rodado de novo no PGlite**, com o SQL **extraído deste roteiro** (Pré 2–5, Pós 2–3) e os arquivos do merge simulado,
+   sobre 001→006+008 (sem a 007, como em produção) e um CT-0001 igual ao de produção: Pré 2 7/7 (só a linha da carga
+   inicial difere, 3 ≠ 1226, esperado no stub), Pré 3 **7/7**, verificações 12+6+6+4 = **28/28 OK**, foto depois = antes
+   (10 linhas), Pós 2 **22/22 OK**, Pós 3 `condicao_versao = 1`, demais colunas novas nulas, etapa `eduardo`.
+3. **Rollback novo:** 7/7 OK depois de 009, 009+010, 009–011 e 009–012; foto igual à de antes em todos os casos; reaplicar
+   009→012 depois dá 28/28 OK. A trava M1 dispara com só a 009 (condição v2) e com 009–012 (modelo v2), sem mudar nada.
+   Sem a 009, aborta com `A 009 não foi aplicada`.
+4. **Escrita em dado de cliente:** só `frn_contratos.condicao_versao = 1` (e o mesmo em medições/aditivos, que estão vazios),
+   além das sementes em tabelas novas e do `default 1` da coluna nova `frn_condicoes.versao`. Nenhum gatilho das tabelas
+   `frn_` dispara nesse `update` (só `frn_eventos` tem gatilho), e a foto prova que `atualizado_em` não mudou.
+5. **Ordem e transação:** cada arquivo é `begin;`…`commit;` com seção 0 que aborta, e um único `select` de verificação depois
+   do commit (é o que a Management API devolve). Ordem 009→010→011→012 casa com as seções 0 de cada um.
+
+Correções feitas direto neste roteiro:
+- **§0:** hash do rollback (`1acfe55f` → `efc16e7a`), execução a partir do merge do PR #15, SHA fixado em `C` e usado em
+  todas as chamadas (antes era `HEAD`), checagem de que o PR #15 está dentro.
+- **§2:** conferência do hash do arquivo gerado com `git hash-object --no-filters`. Sem `--no-filters`, com
+  `core.autocrlf=true`, um arquivo CRLF dá o **mesmo** hash do blob LF (medido: `35a9473c` nos dois casos), e a conferência
+  não pegaria o CR do modelo.
+- **Pré 3:** nova 7ª linha, lista de gatilhos das tabelas `frn_`. Um gatilho só de produção em `frn_contratos` mudaria a
+  linha do CT-0001 no `update` da 009 e só seria visto depois do commit. Testado: com um gatilho intruso a linha dá `PARAR`.
+- **Pré 4:** o critério "as contagens da Pré 5 não podem ser zero" estava invertido; aditivos e medições têm de ser **0**.
+- **Pós 2:** nova linha com `has_table_privilege` (privilégio efetivo de `anon`/`authenticated` nas 3 tabelas novas). A linha
+  de `information_schema.role_table_grants` só mostra concessões feitas ou recebidas por papéis do usuário atual; a nova
+  não depende de quem concedeu. Total passa de 21 para 22.
+- **§4:** tabela de ações refeita para o rollback novo (aplicação parcial agora tem rollback; preferência continua sendo
+  corrigir para frente), critério de parada do rollback, nota sobre `25P02` depois de erro, e a seção do "defeito" virou o
+  registro da correção com os resultados medidos.
+
+Não verificável daqui: formato do `pg_policies.qual` no Postgres 17 de produção (o roteiro já manda comparar o sentido),
+se a Management API reaproveita conexão depois de erro, e o estado real do banco (Pré 1–5 existem para isso).
