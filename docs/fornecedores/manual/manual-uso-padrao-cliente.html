@@ -88,10 +88,11 @@
     <li><strong>O caminho de um fornecedor</strong>, do contrato ao pagamento, com quem está em cada etapa.</li>
     <li><strong>Passo a passo</strong>: criar contrato, aprovar, homologar fornecedor novo, aditivos, aceite final, medição.</li>
     <li><strong>O elo com o Financeiro</strong>: o que acontece quando a medição é aprovada.</li>
+    <li><strong>Novidades</strong>: aprovação em ordem, busca na lista, etapa atual, e-mails por etapa e as <strong>Configurações</strong>.</li>
     <li><strong>Como acompanhar</strong>, os <strong>avisos</strong>, <strong>quem faz o quê</strong> e as <strong>mensagens</strong> que podem aparecer.</li>
   </ul>
   <h3>Como entrar</h3>
-  <p>Não existe senha separada. Basta estar logado no hub e abrir o card <strong>Gestão de Fornecedores</strong>. O menu lateral tem dois grupos: <strong>Contratação</strong> (Contratos e Aprovações) e <strong>Medição</strong> (Nova medição, Fila de aprovação e Acompanhamento).</p>
+  <p>Não existe senha separada. Basta estar logado no hub e abrir o card <strong>Gestão de Fornecedores</strong>. O menu lateral tem dois grupos: <strong>Contratação</strong> (Contratos e Aprovações) e <strong>Medição</strong> (Nova medição, Fila de aprovação e Acompanhamento). Para o José e para quem ele indicar, há um terceiro grupo, <strong>Configurações</strong> (Condições de pagamento e Modelo de contrato).</p>
   <h3>Palavras que aparecem na tela</h3>
   <table>
     <tr><th>Palavra</th><th>O que quer dizer</th></tr>
@@ -160,7 +161,7 @@
   <h2>O caminho de um fornecedor</h2>
   <div class="fluxo">
     <div>1 · Contrato<small>Solicitante</small></div>
-    <div>2 · Aprovação<small>Eduardo e José</small></div>
+    <div>2 · Aprovação<small>Eduardo, depois José</small></div>
     <div>3 · Medição<small>Solicitante</small></div>
     <div>4 · Aprova a medição<small>Eduardo</small></div>
     <div>5 · Pedido no Financeiro<small>Automático</small></div>
@@ -171,14 +172,14 @@
   <table>
     <tr><th></th><th>Etapa</th><th>Com quem está</th><th>Para sair dela</th></tr>
     <tr><td class="n">1</td><td><strong>Rascunho</strong></td><td>Solicitante</td><td>Clicar em Enviar para aprovação</td></tr>
-    <tr><td class="n">2</td><td><strong>Aguardando aprovação</strong></td><td>Eduardo (contratação) e José (condições); José também homologa fornecedor novo</td><td>As duas aprovações, em qualquer ordem</td></tr>
+    <tr><td class="n">2</td><td><strong>Aguardando aprovação</strong></td><td>Primeiro o Eduardo (<strong>Aguardando Eduardo</strong>: contratação); depois o José (<strong>Aguardando José</strong>: condições, e homologação de fornecedor novo)</td><td>As duas aprovações, nessa ordem</td></tr>
     <tr><td class="n">3</td><td><strong>Aprovado</strong> — liberado para medição</td><td>Solicitante</td><td>Pedir a medição</td></tr>
     <tr><td class="n">4</td><td><strong>Solicitada</strong></td><td>Eduardo</td><td>Aprovar ou devolver</td></tr>
     <tr><td class="n">5</td><td><strong>Pagamento solicitado</strong></td><td>Financeiro</td><td>Validar e lançar</td></tr>
     <tr><td class="n">6</td><td><strong>Pago</strong></td><td>—</td><td>—</td></tr>
     <tr><td class="n">7</td><td><strong>Encerrado</strong></td><td>—</td><td>Automático, quando chega a 100% medido e pago; ou pelo Eduardo</td></tr>
   </table>
-  <p>Saem do caminho antes do fim: <strong>Devolvido</strong> (contrato ou aditivo que voltou com motivo), <strong>Devolvida</strong> (medição que voltou com motivo; o saldo volta ao contrato) e <strong>Cancelado</strong> (rascunho cancelado).</p>
+  <p>Saem do caminho antes do fim: <strong>Devolvido</strong> (contrato ou aditivo que voltou com motivo; ao reenviar, o contrato recomeça pelo Eduardo), <strong>Devolvida</strong> (medição que voltou com motivo; o saldo volta ao contrato) e <strong>Cancelado</strong> (rascunho cancelado).</p>
   <p><strong>Sem prazo fixo, mas com alerta:</strong> medição que fica mais de <strong>5 dias</strong> esperando o Eduardo aparece marcada como "parada há N dias", e parcela que passou da data prevista sem medição aparece como "em atraso".</p>
   <h3>Etiquetas</h3>
   <div class="chips"><span class="on">Fornecedor novo</span><span>Global</span><span>Emergencial</span><span>Retenção 10%</span><span>Aditivo de valor</span><span>Aditivo de condição</span></div>
@@ -203,17 +204,42 @@
     <li>Busque o <strong>fornecedor</strong> por razão social ou CNPJ. CNPJ e dados bancários vêm do Omie; você não digita.</li>
     <li>Escolha tipo, classificação, centro de custo, escopo, valor e datas de início e fim. Em <strong>Emergencial</strong>, escreva a justificativa.</li>
     <li>Anexe a <strong>proposta comercial</strong>. Se o fornecedor for novo, anexe também as <strong>certidões</strong>.</li>
-    <li>Confira a <strong>condição de pagamento sugerida</strong> (pelo valor e pelo tipo) e troque se precisar. São 12 condições do padrão da Manfac.</li>
-    <li>Escolha entre <strong>Salvar rascunho</strong>, <strong>Gerar documento</strong> (modelo provisório do contrato) e <strong>Enviar para aprovação</strong>.</li>
+    <li>Confira a <strong>condição de pagamento sugerida</strong> (pelo valor e pelo tipo) e troque se precisar. As condições são o padrão da Manfac, mantido pelo José em Configurações.</li>
+    <li>Escolha entre <strong>Salvar rascunho</strong>, <strong>Gerar documento</strong> (usa o modelo de contrato vigente) e <strong>Enviar para aprovação</strong>.</li>
   </ul>
   <div class="nota"><strong>Pagar à vista ou em 30 dias:</strong> use a condição <strong>Exceção</strong>. Você escreve a condição proposta, o <strong>prazo em dias</strong> (0 a 120; 0 é à vista) e a justificativa. Quem aprova é o José. Se o contrato tiver <strong>tabela de preço</strong>, cadastre cada serviço com unidade e preço: na medição o valor vem da tabela.</div>
-  <h3>2. Eduardo e José aprovam</h3>
-  <p>O contrato só fica liberado para medição quando as duas partes aprovam, em qualquer ordem. Em <strong>Contratação › Aprovações</strong>, a aba <strong>Esperando por mim</strong> mostra o que é seu, e o número ao lado do menu conta quantos itens esperam.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Aprovação em ordem</h2>
+  <h3>2. Eduardo e José aprovam, nesta ordem</h3>
+  <p>Em <strong>Contratação › Aprovações</strong>, a página mostra <strong>Com você</strong> (o que espera a sua aprovação) e <strong>Em andamento, com outra pessoa</strong>. O número ao lado do menu conta quantos itens esperam por você.</p>
   <ul>
-    <li><strong>Eduardo</strong> confere a contratação: escopo, obra ou centro de custo, valor, prazo e documentos.</li>
-    <li><strong>José</strong> confere as condições de pagamento: parcelas e valores.</li>
-    <li>Cada um clica em <strong>Aprovar</strong> ou em <strong>Devolver com motivo</strong>. Ao devolver, o contrato volta ao solicitante como rascunho e as aprovações já dadas se perdem; ao reenviar, os dois aprovam de novo.</li>
+    <li><strong>Primeiro o Eduardo</strong> aprova a contratação: escopo, obra ou centro de custo, valor, prazo e documentos.</li>
+    <li><strong>Depois o José</strong> valida as condições de pagamento (parcelas e valores) e, se o fornecedor for novo, homologa.</li>
+    <li>Cada um clica em <strong>Aprovar</strong> ou <strong>Devolver com motivo</strong>, e só na sua etapa. Antes do Eduardo, o José vê "O Eduardo aprova a contratação primeiro."; quem está esperando vê "Aguardando o Eduardo" ou "Aguardando o José".</li>
+    <li>Ao devolver, o contrato volta ao solicitante como rascunho e as aprovações já dadas se perdem. Na ficha, <strong>Ajustar e reenviar</strong>: o contrato <strong>recomeça pelo Eduardo</strong>.</li>
   </ul>
+  <p>Quem só pediu o contrato acompanha por aqui, mas não aprova. O admin do hub vê tudo e não aprova nada.</p>
+  <h3>O José pode alterar a condição ao aprovar</h3>
+  <p>Na etapa dele, em vez de devolver o contrato, o José pode <strong>alterar a condição de pagamento e aprovar</strong>.</p>
+  <table>
+    <tr><th>O que ele pode fazer</th><th>Regra</th></tr>
+    <tr><td><strong>Trocar a condição</strong></td><td>Por outra condição permitida para aquele contrato</td></tr>
+    <tr><td><strong>Ajustar as parcelas</strong></td><td>Só os percentuais, só naquele contrato: números inteiros de 1 a 100, somando 100</td></tr>
+    <tr><td><strong>Exceção</strong></td><td>Prazo em dias (0 a 120; 0 é à vista) e justificativa</td></tr>
+    <tr><td><strong>Tabela de preço</strong></td><td>Só se o contrato já tiver a tabela. Senão, o José devolve ao solicitante para incluí-la</td></tr>
+  </table>
+  <ul>
+    <li>A tela mostra o <strong>Antes → Depois</strong>. O botão passa a ser <strong>Aprovar com a condição alterada</strong> e só habilita quando a soma é 100 e o prazo e a justificativa estão preenchidos.</li>
+    <li><strong>Desfazer alteração</strong> volta ao que estava. Se nada mudou, use o <strong>Aprovar</strong> comum.</li>
+    <li>A alteração fica na linha do tempo, com o antes e o depois.</li>
+  </ul>
+  <div class="nota"><strong>O Eduardo não aprova de novo.</strong> Ele recebe um e-mail avisando o que mudou, com o Antes e o Depois.</div>
+  <h3>Aditivos seguem a mesma ordem</h3>
+  <p>No <strong>aditivo de valor</strong>, o Eduardo aprova primeiro e depois o José; enquanto o Eduardo não aprovou, o José vê "Aguardando o Eduardo". O <strong>aditivo de condição</strong> continua indo só ao José.</p>
   <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
 </section>
 
@@ -225,9 +251,9 @@
   <h3>Mudar um contrato aprovado: aditivos e aceite final</h3>
   <p>Contrato aprovado <strong>não se edita</strong>. Mudança só por aditivo, aceite final ou encerramento (este, na lista de contratos, mais adiante), nos botões da ficha do contrato.</p>
   <h3>Aditivo de valor</h3>
-  <p>Para o contrato ficar maior. Quem criou o contrato, o Eduardo ou o José pedem; <strong>Eduardo e José aprovam</strong>. Na ficha, clique em <strong>+ Aditivo de valor</strong>, escolha o item (mão de obra ou material), informe o valor a acrescentar e o motivo. O sistema mostra o novo total e gera um número como <strong>CT-0118-2</strong>. O valor original não muda: o aditivo soma por cima e as parcelas são recalculadas. Se for devolvido, ele termina ali; para tentar de novo, peça outro.</p>
+  <p>Para o contrato ficar maior. Quem criou o contrato, o Eduardo ou o José pedem; <strong>Eduardo e José aprovam, nessa ordem</strong> (primeiro o Eduardo). Na ficha, clique em <strong>+ Aditivo de valor</strong>, escolha o item (mão de obra ou material), informe o valor a acrescentar e o motivo. O sistema mostra o novo total e gera um número como <strong>CT-0118-2</strong>. O valor original não muda: o aditivo soma por cima e as parcelas são recalculadas. Se for devolvido, ele termina ali; para tentar de novo, peça outro.</p>
   <h3>Aditivo de condição</h3>
-  <p>Para trocar a condição de pagamento (por exemplo, de 7 dias para 30 dias). Quem criou, Eduardo ou José pedem; <strong>só o José aprova</strong>. Clique em <strong>+ Aditivo de condição</strong>, escolha a nova condição (para à vista ou 30 dias, use Exceção, com o prazo em dias e a justificativa) e escreva o motivo. A tela mostra quais medições passam para a nova condição e quais ficam como estão.</p>
+  <p>Para trocar a condição de pagamento (por exemplo, de 7 dias para 30 dias). Quem criou, Eduardo ou José pedem; <strong>só o José aprova</strong> (não passa pelo Eduardo). Clique em <strong>+ Aditivo de condição</strong>, escolha a nova condição (para à vista ou 30 dias, use Exceção, com o prazo em dias e a justificativa) e escreva o motivo. A tela mostra quais medições passam para a nova condição e quais ficam como estão.</p>
   <ul>
     <li>A nova condição vale para as medições <strong>ainda não aprovadas</strong>. As já aprovadas ou pagas mantêm a antiga.</li>
     <li>Enquanto houver um aditivo de condição esperando o José, o botão fica desabilitado.</li>
@@ -294,7 +320,7 @@
   <div class="rotulo">Acompanhamento</div>
   <h2>Como acompanhar o seu contrato e as suas medições</h2>
   <p><strong>No menu</strong>, um número ao lado de <strong>Aprovações</strong> e de <strong>Fila de aprovação</strong> mostra quantos itens esperam por você (só aparece para quem aprova).</p>
-  <p><strong>Em Contratos</strong>, todos os seus contratos, com valor, % medido, saldo e situação. Filtre por situação (Rascunho, Aguardando, Aprovado, Encerrado) e por classificação.</p>
+  <p><strong>Em Contratos</strong>, todos os seus contratos, com valor, % medido, saldo e <strong>etapa</strong>. Use a <strong>busca</strong> e filtre por situação (Rascunho, Aguardando, Devolvido, Aprovado, Encerrado) e por classificação.</p>
   <p><strong>Na ficha do contrato</strong> (código CT-0001, CT-0002…):</p>
   <table>
     <tr><th>O que aparece</th><th>Para que serve</th></tr>
@@ -302,7 +328,7 @@
     <tr><td><strong>Barra pago, medido e saldo</strong></td><td>Quanto já foi pago, quanto aguarda pagamento e quanto falta medir</td></tr>
     <tr><td><strong>Parcelas e medições</strong></td><td>Cada parcela da condição, com a situação (prevista, medida, paga, em atraso, retida)</td></tr>
     <tr><td><strong>Condição, documentos e aceite</strong></td><td>A condição de pagamento, a proposta e certidões, e o aceite final quando há retenção</td></tr>
-    <tr><td><strong>Linha do tempo</strong></td><td>Quem fez o quê e quando, com motivos</td></tr>
+    <tr><td><strong>Etapa atual e linha do tempo</strong></td><td>A etapa em destaque no topo; quem fez o quê e quando, com motivos, terminando num item "Agora"</td></tr>
   </table>
   <p><strong>Em Medição › Acompanhamento</strong>, cada medição mostra a trilha <strong>Solicitada → Aprovada → Pagamento solicitado</strong> (com o número do Financeiro). Use os filtros: Todas, Solicitada, Pagamento solicitado, Pago, Devolvida e Em atraso. No topo, um aviso lista as parcelas que já passaram da data prevista sem medição, com o botão <strong>Abrir ficha</strong>.</p>
   <h3>O que você pode fazer</h3>
@@ -312,7 +338,8 @@
     <tr><td><strong>Pedir aditivo</strong></td><td>Quem criou o contrato, Eduardo ou José, com o contrato aprovado</td></tr>
     <tr><td><strong>Registrar aceite final</strong></td><td>Quem criou o contrato ou o Eduardo, com 90% medido</td></tr>
     <tr><td><strong>Reenviar ao Financeiro</strong></td><td>Ainda não disponível: virá com a checagem diária</td></tr>
-    <tr><td><strong>Ver documento</strong> / <strong>Baixar PDF</strong></td><td>Na ficha. O modelo do contrato é provisório</td></tr>
+    <tr><td><strong>Ajustar e reenviar</strong></td><td>Quem criou o contrato devolvido; o contrato recomeça pelo Eduardo</td></tr>
+    <tr><td><strong>Ver documento</strong> / <strong>Baixar PDF</strong></td><td>Na ficha. O texto segue o modelo de contrato das Configurações</td></tr>
   </table>
   <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
 </section>
@@ -320,7 +347,16 @@
 <section class="pagina">
   <div class="rotulo">Notificações</div>
   <h2>Avisos por e-mail</h2>
-  <p>A Gestão de Fornecedores <strong>não envia e-mails próprios</strong>. Quem avisa é o menu, com o número de itens esperando por você, e o <strong>Financeiro</strong>, depois que a solicitação de pagamento é criada.</p>
+  <p>A cada etapa do contrato, a Gestão de Fornecedores <strong>envia e-mail</strong> para quem precisa agir e para quem pediu o contrato. O assunto começa com <strong>[Fornecedores]</strong>, e o e-mail traz os dados do contrato e o link <strong>Abrir o contrato no Hub</strong>. Se um e-mail falhar, o que você fez no sistema não é desfeito.</p>
+  <table>
+    <tr><th>Quando</th><th>Quem recebe</th><th>Em cópia</th></tr>
+    <tr><td>Contrato enviado ou reenviado</td><td>Eduardo</td><td>—</td></tr>
+    <tr><td>Eduardo aprovou a contratação</td><td>José</td><td>Quem abriu o contrato</td></tr>
+    <tr><td>Contrato aprovado</td><td>Quem abriu o contrato</td><td>Eduardo</td></tr>
+    <tr><td>Aprovado com a condição alterada pelo José (mostra o Antes e o Depois)</td><td>Quem abriu o contrato</td><td>Eduardo</td></tr>
+    <tr><td>Contrato devolvido (com o motivo)</td><td>Quem abriu o contrato</td><td>Eduardo, se o José devolveu</td></tr>
+  </table>
+  <p>Os <strong>aditivos</strong> têm avisos no mesmo modelo: aditivo pedido (ao Eduardo, se for de valor; ao José, se for de condição), valor aprovado pelo Eduardo (ao José), aditivo aprovado e aditivo devolvido (a quem pediu, com cópia ao dono do contrato). Ninguém recebe o mesmo e-mail duas vezes.</p>
   <h3>No menu</h3>
   <table>
     <tr><th>Número ao lado de</th><th>O que conta</th><th>Quem vê</th></tr>
@@ -328,12 +364,8 @@
     <tr><td><strong>Fila de aprovação</strong></td><td>Medições solicitadas esperando aprovação</td><td>Eduardo</td></tr>
   </table>
   <h3>No Financeiro</h3>
-  <p>Depois que a medição aprovada vira solicitação no Financeiro, os <strong>mesmos e-mails de aviso do Financeiro</strong> são enviados. Eles seguem as regras de lá, como se você tivesse pedido o pagamento pela tela do Financeiro:</p>
-  <ul>
-    <li>solicitação <strong>devolvida</strong>, <strong>recusada</strong> ou <strong>lançada no Omie</strong>: aviso a quem pediu;</li>
-    <li>aguardando validação ou falha no lançamento: aviso ao financeiro;</li>
-  </ul>
-  <div class="nota">Não há lembrete automático por e-mail na Gestão de Fornecedores. Para não esquecer, olhe o número no menu e o aviso de <strong>parcelas previstas sem medição</strong> no Acompanhamento.</div>
+  <p>Depois que a medição aprovada vira solicitação no Financeiro, os <strong>mesmos e-mails de aviso do Financeiro</strong> são enviados, com as regras de lá: solicitação <strong>devolvida</strong>, <strong>recusada</strong> ou <strong>lançada no Omie</strong> avisa quem pediu; aguardando validação ou falha no lançamento avisa o financeiro.</p>
+  <div class="nota">Não há lembrete automático por e-mail. Para não esquecer, olhe o número no menu e o aviso de <strong>parcelas previstas sem medição</strong> no Acompanhamento.</div>
   <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
 </section>
 
@@ -343,9 +375,9 @@
   <table>
     <tr><th>Papel</th><th>O que faz</th></tr>
     <tr><td><strong>Solicitante</strong><br><span style="color:var(--suave);font-size:9pt">qualquer pessoa do hub</span></td><td>Cria contrato, pede aditivo e medição, anexa os documentos, registra o aceite final dos seus contratos. Vê apenas o que ela mesma criou</td></tr>
-    <tr><td><strong>Eduardo Maia</strong></td><td>Aprova a contratação, o aditivo de valor e cada medição. Registra aceite final e encerra contratos. Vê todos os contratos</td></tr>
-    <tr><td><strong>José Guilherme</strong></td><td>Aprova as condições de pagamento, o aditivo de condição e a homologação de fornecedor novo. Vê todos os contratos</td></tr>
-    <tr><td><strong>Admin do hub</strong></td><td>Só consulta: vê tudo, mas não aprova nada</td></tr>
+    <tr><td><strong>Eduardo Maia</strong></td><td>Aprova a contratação (primeiro), o aditivo de valor e cada medição. Registra aceite final e encerra contratos. Vê todos os contratos</td></tr>
+    <tr><td><strong>José Guilherme</strong></td><td>Depois do Eduardo, aprova (ou altera e aprova) as condições de pagamento; aprova o aditivo de condição e a homologação de fornecedor novo. Mantém as Configurações e pode indicar quem também as mantém. Vê todos os contratos</td></tr>
+    <tr><td><strong>Admin do hub</strong></td><td>Só consulta: vê tudo (inclusive as Configurações), mas não aprova nem altera nada</td></tr>
   </table>
   <p>O Eduardo pode aprovar o que ele mesmo abriu; fica registrado na linha do tempo. Quem não tem papel é solicitante.</p>
 
@@ -373,10 +405,77 @@
     <tr><td><strong>Saldo a medir</strong></td><td>Quanto ainda pode ser medido</td></tr>
     <tr><td><strong>Com medição em atraso</strong></td><td>Contratos com parcela prevista sem medição ou medição parada há mais de 5 dias</td></tr>
   </table>
-  <p>Abaixo, os filtros por situação (Todos, Rascunho, Aguardando, Aprovado, Encerrado) e por classificação (incluindo "Só contratos globais"). Cada linha mostra fornecedor, obra, valor, % medido, saldo e situação; os aditivos aparecem logo abaixo do contrato.</p>
+  <p>Abaixo, os filtros por situação (Todos, Rascunho, Aguardando, <strong>Devolvido</strong>, Aprovado, Encerrado) e por classificação (incluindo "Só contratos globais"). Cada linha mostra fornecedor, obra, valor, % medido, saldo e a <strong>etapa</strong>; os aditivos aparecem logo abaixo do contrato.</p>
   <h3>Encerrar um contrato</h3>
   <p>Contrato que chega a 100% medido e pago se encerra sozinho. O <strong>Encerrar</strong> manual, só do <strong>Eduardo</strong>, serve para fechar um contrato que não será usado até o fim: escreva o motivo e confirme. Só encerra sem pendência (nenhuma medição esperando aprovação ou pagamento e nenhum aditivo esperando). Nada é apagado: o histórico continua na ficha.</p>
   <div class="nota">Contrato com medição em atraso aparece destacado, com o motivo escrito na própria linha.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Novidades</div>
+  <h2>Buscar na lista e ver a etapa atual</h2>
+  <h3>Buscar na lista de contratos</h3>
+  <p>Acima dos filtros há um campo de busca ("Buscar por fornecedor, CNPJ ou nº do contrato"). Ele filtra <strong>enquanto você digita</strong>, e o trecho encontrado fica destacado.</p>
+  <table>
+    <tr><th>Para achar por</th><th>Digite</th></tr>
+    <tr><td><strong>Fornecedor</strong></td><td>Parte do nome, sem se preocupar com maiúsculas ou acentos ("joao" acha "João")</td></tr>
+    <tr><td><strong>Número do contrato</strong></td><td>"CT-0001", "ct 1" ou só "0001"</td></tr>
+    <tr><td><strong>CNPJ ou CPF</strong></td><td>Com pontos ou sem; a busca por documento pede 5 números ou mais ("32.542" ou "32542450")</td></tr>
+  </table>
+  <ul>
+    <li>A busca funciona <strong>junto</strong> com os filtros, e o contador mostra "N de M contratos". Se o contrato casar, os aditivos dele aparecem abaixo.</li>
+    <li>O botão <strong>×</strong> limpa a busca. Se nada for encontrado, a tela diz o que foi buscado e oferece <strong>Limpar busca</strong> (ou <strong>Limpar busca e filtros</strong>). O campo só aparece quando já existe algum contrato.</li>
+  </ul>
+  <h3>A etapa atual</h3>
+  <p>Em vez de só "Aguardando aprovação", a lista e a ficha mostram em que etapa o contrato está:</p>
+  <table>
+    <tr><th>Etapa</th><th>Quer dizer</th></tr>
+    <tr><td><strong>Rascunho</strong></td><td>Ainda não foi enviado</td></tr>
+    <tr><td><strong>Aguardando Eduardo</strong></td><td>Espera a aprovação da contratação</td></tr>
+    <tr><td><strong>Aguardando José</strong></td><td>O Eduardo aprovou; espera as condições de pagamento</td></tr>
+    <tr><td><strong>Aguardando José · homologação</strong></td><td>As duas aprovações foram dadas, mas o fornecedor novo ainda não foi homologado</td></tr>
+    <tr><td><strong>Devolvido</strong></td><td>Voltou ao solicitante, com o motivo, para ajustar</td></tr>
+    <tr><td><strong>Aprovado, Encerrado, Cancelado</strong></td><td>Como já eram</td></tr>
+  </table>
+  <p>Na ficha, a caixa <strong>Etapa atual</strong> diz desde quando e o que vem depois, e traz o botão da ação: <strong>Abrir aprovação</strong>, <strong>Ajustar e reenviar</strong> ou <strong>Enviar para aprovação</strong>. A <strong>linha do tempo</strong> termina com um item <strong>Agora</strong> ("Agora: aguardando aprovação do Eduardo"); ele só mostra o momento e não é um registro. Contrato aprovado não tem o "Agora".</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Novidades</div>
+  <h2>Configurações: condições de pagamento</h2>
+  <p class="lead">O grupo <strong>Configurações</strong> aparece no menu para o <strong>José</strong> e para <strong>quem ele indicar</strong>. O admin do hub vê as telas, só para consulta. Para os demais o grupo não aparece; quem abrir o link direto vê "Você não tem acesso às Configurações".</p>
+  <p>Em <strong>Configurações › Condições de pagamento</strong> ficam as condições oferecidas na hora de criar um contrato. A tabela mostra nome, faixa de uso, como paga, se vale para contrato global, <strong>em quantos contratos está em uso</strong> e a situação (Ativa ou Desativada), com filtros Ativas, Desativadas e Todas.</p>
+  <div class="nota"><strong>Mudança aqui vale só para contratos novos.</strong> Contrato já enviado ou aprovado, e as medições dele, continuam exatamente como estavam. Para mudar um contrato aprovado, o caminho continua sendo o aditivo.</div>
+  <table>
+    <tr><th>Ação</th><th>O que acontece</th></tr>
+    <tr><td><strong>Editar</strong></td><td>Nome, faixa (texto), como paga, prazo do Financeiro em dias (vazio segue o calendário; 0 a 120), parcelas (quando paga e percentual, somando 100) e se vale para contrato global. O código não muda. A tela avisa quantos contratos usam a condição. Cada salvamento cria uma <strong>versão nova</strong>; as anteriores ficam guardadas</td></tr>
+    <tr><td><strong>Nova condição</strong></td><td>Os mesmos campos. Entra no fim da lista, já ativa</td></tr>
+    <tr><td><strong>Desativar</strong></td><td>Some da escolha em contratos novos. Contratos enviados ou aprovados seguem com ela. <strong>Rascunhos e devolvidos</strong> com ela precisam escolher outra antes de enviar. A tela mostra quantos são</td></tr>
+    <tr><td><strong>Reativar</strong></td><td>Devolve a condição como estava</td></tr>
+  </table>
+  <ul>
+    <li><strong>Não existe excluir:</strong> nada é apagado.</li>
+    <li>Duas condições são usadas pelo próprio sistema (<strong>material mediante NF</strong> e <strong>exceção</strong>): o modo delas não muda e elas não podem ser desativadas.</li>
+    <li>Se outra pessoa alterou a condição enquanto você editava, o sistema avisa e pede para abrir de novo.</li>
+    <li>A <strong>sugestão automática</strong> segue faixas fixas (até R$ 1.500; até R$ 5.000; até R$ 8.000; acima disso; manutenção com mais de 45 dias = mensal). Editar o texto da faixa não muda essa sugestão.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
+  <div class="rotulo">Novidades</div>
+  <h2>Configurações: modelo de contrato</h2>
+  <p>Em <strong>Configurações › Modelo de contrato</strong> fica o texto do contrato que sai em <strong>Ver documento</strong> e <strong>Baixar PDF</strong>. É um texto livre, com <strong>campos automáticos</strong> entre chaves duplas, que o sistema troca pelos dados do contrato.</p>
+  <div class="chips"><span>{{numero}}</span><span>{{fornecedor}}</span><span>{{cnpj}}</span><span>{{valor}}</span><span>{{condicao}}</span><span>{{parcelas}}</span><span>{{inicio}}</span><span>{{fim}}</span><span>{{escopo}}</span><span>{{obra}}</span><span>{{classificacao}}</span><span>{{centro_custo}}</span><span>{{data_emissao}}</span></div>
+  <ul>
+    <li>Botões inserem o campo onde está o cursor, e a <strong>pré-visualização</strong> ao lado mostra o texto com os dados de um contrato real. Os campos preenchidos aparecem em laranja.</li>
+    <li>Campo escrito errado aparece em vermelho, com o aviso "Campo desconhecido". Dá para salvar assim, mas ele sai literalmente no contrato. Campo sem dado sai como "[a preencher]".</li>
+    <li><strong>Descartar alterações</strong> volta ao texto salvo; <strong>Salvar modelo</strong> cria uma versão nova.</li>
+    <li>O cabeçalho (MANFAC, número, data) e o bloco de assinaturas são fixos.</li>
+  </ul>
+  <div class="nota"><strong>Contratos já gerados não mudam.</strong> Cada contrato guarda o modelo da primeira vez em que o documento dele foi gerado; antes disso, usa o modelo atual.</div>
   <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
 </section>
 
@@ -400,10 +499,25 @@
 </section>
 
 <section class="pagina">
+  <div class="rotulo">Dúvidas</div>
+  <h2>Perguntas sobre as novidades</h2>
+  <div class="pergunta"><b>Quem aprova primeiro, o Eduardo ou o José?</b>O Eduardo aprova a contratação; depois o José valida as condições. O José não consegue aprovar antes.</div>
+  <div class="pergunta"><b>O José achou a condição errada. Precisa devolver?</b>Não. Na etapa dele, ele pode alterar a condição e aprovar. O Eduardo recebe um e-mail de aviso e não precisa aprovar de novo.</div>
+  <div class="pergunta"><b>Devolveram meu contrato. Quando reenvio, quem aprova primeiro?</b>Sempre recomeça pelo Eduardo. Use o botão Ajustar e reenviar na ficha.</div>
+  <div class="pergunta"><b>Alterei uma condição em Configurações. Os contratos antigos mudam?</b>Não. A mudança vale só para contratos novos; os já enviados ou aprovados ficam com a condição de antes.</div>
+  <div class="pergunta"><b>Como acho um contrato na lista?</b>Digite no campo de busca o nome do fornecedor, o CNPJ ou o número do contrato (por exemplo, CT-0001).</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina">
   <div class="rotulo">Quando algo dá errado</div>
   <h2>Mensagens que podem aparecer</h2>
   <table>
     <tr><th>Na tela</th><th>O que fazer</th></tr>
+    <tr><td>O Eduardo aprova a contratação primeiro</td><td>O José só aprova depois do Eduardo; aguarde</td></tr>
+    <tr><td>Este contrato não está na sua etapa</td><td>Cada pessoa aprova ou devolve só a sua etapa; veja em "Etapa atual" com quem está</td></tr>
+    <tr><td>Esta condição foi alterada por outra pessoa. Abra de novo para ver a versão atual</td><td>Abra a condição de novo e refaça a alteração</td></tr>
+    <tr><td>Esta condição precisa da tabela de preços. Devolva ao solicitante para incluir</td><td>Devolva o contrato com o motivo; o solicitante inclui a tabela e reenvia</td></tr>
     <tr><td>Faltam informações para enviar: …</td><td>Preencha os campos citados e envie de novo; o que você digitou não se perde</td></tr>
     <tr><td>Anexe a proposta comercial / Fornecedor novo: anexe as certidões</td><td>Anexe o arquivo (PDF, JPG ou PNG, até 10 MB) e envie</td></tr>
     <tr><td>Exceção exige condição proposta, prazo em dias e justificativa</td><td>Escreva a condição, o prazo (0 a 120) e o motivo</td></tr>
@@ -416,5 +530,14 @@
   <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Fornecedores</span><span>Manual de uso</span></div>
 </section>
 
+<!--
+NOTAS DE DIVERGENCIA ENTRE O MOCKUP E A SPEC (interno, nao e para o cliente; vale a spec):
+1. Exige justificativa: o mockup mostrava um checkbox na edicao da condicao; a spec o torna automatico (so a condicao Exceção exige justificativa). O manual nao fala do checkbox.
+2. Desativar condicao: o mockup diz que rascunhos seguem com ela e o José pode manter ou trocar na aprovação; a spec diz que rascunhos e devolvidos precisam escolher outra antes de enviar. O manual segue a spec.
+3. Quem acessa as Configurações: o mockup diz só José e Admin; a spec acrescenta o papel configurador (quem o José indicar). O manual segue a spec.
+4. Chip Devolvido: a spec define que ele não mostra aditivos devolvidos e que Rascunho passa a contar só os não devolvidos; o manual só cita o chip.
+5. E-mails de aditivo (A1 a A5) e as duas condições do sistema (material mediante NF e exceção, travadas) existem na spec e não estão no mockup; entram resumidos.
+6. Modo de pagamento editável e faixa só como texto (D2 e D3 da spec): o mockup não distingue; o manual segue a spec.
+-->
 </body>
 </html>
