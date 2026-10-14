@@ -47,7 +47,20 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
-## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (PONTO DE RETOMADA ATUAL)
+## PONTO DE RETOMADA ATUAL — 13/10/2026, noite
+
+- **Frentes 0, A–H mergeadas em `feat/melhorias`** (PRs #5–#13, liberado pelo João às ~21h). Todas com revisão
+  independente aprovada (A, B e F com rerrevisão). CI verde em `feat/melhorias` (1027 testes + build). PR #14
+  (integração) fechado: árvore idêntica.
+- **Em andamento:** rodada de `AJUSTES-INTEGRACAO-MELHORIAS.md` (I-1 obrigatório) em `feat/melhorias-ajustes`,
+  PR com base `feat/melhorias`; depois revisão independente. Roteiro do banco: `roteiro-aplicacao-009-012.md`.
+  Manual sendo atualizado (rascunho, sem PDF).
+- **Depende do João:** liberar escrita no banco de produção para 009–012; `SMTP_*` e `NEXT_PUBLIC_APP_URL` no
+  EasyPanel; Deploy; teste do CT-0001 com o Eduardo.
+- Ordem final: ajustes aprovados → merge em `feat/melhorias` → banco 009–012 → merge `feat/melhorias` → `main` →
+  variáveis → Deploy → teste.
+
+## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (superado pela seção acima)
 
 João pausou porque os agentes travavam o PC (~1,4 GB livres). **Agentes: de dia (João no PC) no máximo 2; à noite, sem limite** (decisão do João, 13/10).
 Commits de documentação: usar a cópia `D:\fornecedores-work\hub-docs` (a pasta principal do hub está sendo usada por
