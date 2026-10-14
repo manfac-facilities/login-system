@@ -116,8 +116,8 @@ Todo contrato nasce como rascunho. Em **Contratação › Contratos**, clique em
   do Omie.
 - Escolha tipo, classificação, centro de custo, escopo, valor e datas. Em
   **Emergencial**, escreva a justificativa.
-- Anexe a **proposta comercial**. Se o fornecedor for novo, anexe também as
-  **certidões**.
+- Se tiver, anexe a **proposta comercial** (opcional). Se o fornecedor for novo,
+  anexe também as **certidões** (obrigatórias).
 - Confira a **condição de pagamento sugerida** (as condições do padrão da
   Manfac, que o José mantém em Configurações) e troque se precisar.
 - Escolha entre **Salvar rascunho**, **Gerar documento** (usa o modelo de
@@ -139,7 +139,7 @@ quantos itens esperam por você.
 2. **Depois o José** valida as condições de pagamento (parcelas e valores) e, se o
    fornecedor for novo, homologa.
 
-Cada um clica em **Aprovar** ou **Devolver com motivo**, e só na sua etapa. O
+Cada um clica no botão da sua parte (**Aprovar contratação**, o Eduardo; **Aprovar condições**, o José) ou em **Devolver**, que pede o motivo, e só na sua etapa. O
 José só consegue agir depois do Eduardo (antes disso, o sistema avisa "O Eduardo
 aprova a contratação primeiro."), e o Eduardo não devolve o que já está com o
 José ("Este contrato não está na sua etapa."). Quem está esperando vê a
@@ -316,7 +316,7 @@ contratos", mais abaixo).
   "Agora" que diz com quem o contrato está.
 
 **Em Medição › Acompanhamento**, cada medição mostra a trilha **Solicitada →
-Aprovada → Pagamento solicitado** (com o número do Financeiro). Filtros: Todas,
+Aprovada → Pagamento solicitado → Pago** (com o número do Financeiro). Filtros: Todas,
 Solicitada, Pagamento solicitado, Pago, Devolvida e Em atraso. No topo, um aviso
 lista as parcelas que passaram da data prevista sem medição.
 
@@ -352,8 +352,8 @@ desfeito.
 
 Os **aditivos** têm avisos no mesmo modelo: aditivo pedido (para o Eduardo, se for
 de valor; para o José, se for de condição), valor aprovado pelo Eduardo (para o
-José), aditivo aprovado e aditivo devolvido (para quem pediu, com cópia ao dono
-do contrato). Ninguém recebe o mesmo e-mail duas vezes.
+José), aditivo aprovado (para quem pediu, com cópia ao dono do contrato e ao Eduardo)
+e aditivo devolvido (para quem pediu, com cópia ao dono do contrato e, se o José devolveu, ao Eduardo). Ninguém recebe o mesmo e-mail duas vezes.
 
 O menu continua mostrando um número ao lado de **Aprovações** e de **Fila de
 aprovação**:
@@ -478,7 +478,7 @@ vale para contrato global, **em quantos contratos está em uso** e a situação
 (Ativa ou Desativada). Há filtros Ativas, Desativadas e Todas.
 
 > **Mudança aqui vale só para contratos novos.** Contrato que já foi enviado ou
-> aprovado, e as medições dele, continuam exatamente como estavam. Para mudar um
+> aprovado, e as medições dele, continuam exatamente como estavam. Rascunhos ainda não enviados passam a usar a versão nova quando forem salvos ou enviados. Para mudar um
 > contrato aprovado, o caminho continua sendo o aditivo.
 
 - **Editar:** nome, faixa (texto), como paga, prazo do Financeiro em dias (vazio
@@ -517,8 +517,8 @@ entre chaves duplas, que o sistema troca pelos dados do contrato: `{{numero}}`,
 - Campo sem dado sai como "[a preencher]".
 - **Descartar alterações** volta ao texto salvo; **Salvar modelo** cria uma versão
   nova.
-- **Contratos já gerados não mudam.** Cada contrato guarda o modelo da primeira
-  vez em que o documento dele foi gerado; antes disso, usa o modelo atual.
+- **Contratos já gerados não mudam.** Depois que o contrato é aprovado, o modelo
+  fica gravado nele na primeira vez em que alguém clica em **Baixar PDF**; antes disso, o documento usa o modelo atual.
 - O cabeçalho (MANFAC, número, data) e o bloco de assinaturas são fixos.
 
 ---
@@ -538,7 +538,7 @@ Sempre recomeça pelo Eduardo. Use o botão **Ajustar e reenviar** na ficha.
 
 **Alterei uma condição em Configurações. Os contratos antigos mudam?**
 Não. A mudança vale só para contratos novos; os já enviados ou aprovados ficam
-com a condição de antes.
+com a condição de antes. Só os rascunhos ainda não enviados pegam a versão nova.
 
 **Posso editar um contrato depois de aprovado?**
 Não. Só por aditivo de valor ou de condição.
@@ -593,8 +593,9 @@ Só se for o Eduardo ou o José. Os demais veem apenas o que criaram.
 | Esta condição foi alterada por outra pessoa. Abra de novo para ver a versão atual | Abra a condição de novo e refaça a alteração |
 | Esta condição precisa da tabela de preços. Devolva ao solicitante para incluir | Devolva o contrato com o motivo; o solicitante inclui a tabela e reenvia |
 | Faltam informações para enviar: … | Preencha os campos citados e envie de novo; o que você digitou não se perde |
-| Anexe a proposta comercial / Fornecedor novo: anexe as certidões | Anexe o arquivo (PDF, JPG ou PNG, até 10 MB) e envie |
-| Exceção exige condição proposta, prazo em dias e justificativa | Escreva a condição, o prazo (0 a 120) e o motivo |
+| Fornecedor novo: anexe as certidões | Anexe o arquivo (PDF, JPG ou PNG, até 10 MB) e envie |
+| Exceção exige condição proposta e justificativa | Escreva a condição proposta e o motivo |
+| Exceção exige o prazo em dias (0 a 120; 0 = à vista) | Informe o prazo em dias |
 | Passa de 100% do contrato. Ainda dá para medir no máximo … | Reduza o valor. Para mais, peça aditivo de valor |
 | Os 10% retidos só são liberados depois do aceite final | Registre o aceite final na ficha do contrato |
 | Este fornecedor não tem chave PIX cadastrada no Omie | Escolha boleto, guia ou PIX QR code, ou peça o cadastro da chave |
