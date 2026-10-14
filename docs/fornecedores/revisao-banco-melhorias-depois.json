@@ -1,0 +1,319 @@
+{
+ "verificacao_009": [
+  {
+   "invariante": "009 RLS ligada em frn_condicoes_versoes, com policy de SELECT",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 frn_condicoes_versoes: authenticated só SELECT; anon nada",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 toda condição tem a versão 1",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 cada condição é igual à sua versão atual, campo a campo (na 1ª aplicação, a v1)",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 todo contrato com condição tem versão; toda medição e aditivo de condição também",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 FKs e checks de versão presentes e validados",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 parcelas_ajustadas só fora do rascunho e com o tamanho da versão pinada",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 frn_condicoes_versoes com trigger de imutabilidade",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 frn_dias_pagamento(text,int) não existe; a de 3 argumentos lê a versão",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 frn_pode_configurar(NULL) e frn_tem_algum_papel(NULL) são false",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 papel configurador aceito em frn_papeis",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "009 funções criadas/alteradas: nenhuma executável por anon/authenticated",
+   "resultado": "OK"
+  }
+ ],
+ "verificacao_010": [
+  {
+   "invariante": "010 frn_ct_ordem existe e está NOT VALID (D1: CT-0001 intocado)",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "010 frn_eventos aceita condicoes_alteradas",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "010 funções criadas/alteradas: nenhuma executável por anon/authenticated",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "010 frn_etapa: aguardando com contratação pendente = eduardo (é o CT-0001 em produção; só leitura)",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "010 frn_enviar_contrato sem \"Anexe a proposta\" e com \"anexe as certidões\" (008)",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "010 frn__nome sem cadastro cai na parte antes do @",
+   "resultado": "OK"
+  }
+ ],
+ "verificacao_011": [
+  {
+   "invariante": "011 RLS ligada em frn_modelos_contrato, com policy de SELECT",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "011 frn_modelos_contrato: authenticated só SELECT; anon nada",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "011 frn_modelos_contrato com trigger de imutabilidade",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "011 versão 1 do modelo = seed 011, com os campos do Apêndice A",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "011 versão do modelo só em contrato com documento gerado; FK presente",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "011 frn_salvar_modelo/frn_registrar_documento não executáveis por anon/authenticated",
+   "resultado": "OK"
+  }
+ ],
+ "verificacao_012": [
+  {
+   "invariante": "012 RLS ligada em frn_avisos",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "012 frn_avisos sem nenhum privilégio para anon/authenticated (nem SELECT)",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "012 frn_avisos: a única policy nega tudo",
+   "resultado": "OK"
+  },
+  {
+   "invariante": "012 frn_registrar_aviso só service_role",
+   "resultado": "OK"
+  }
+ ],
+ "pos1_foto": [
+  {
+   "tabela": "frn_contratos",
+   "linhas": 1,
+   "hash": "e0afcfc61e2ad50ee6c583319d16d494"
+  },
+  {
+   "tabela": "frn_condicoes",
+   "linhas": 12,
+   "hash": "6c82717ebb27f381ae24a389afb0377c"
+  },
+  {
+   "tabela": "frn_medicoes",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_aditivos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_eventos",
+   "linhas": 3,
+   "hash": "c4590e28a90b230d8711b2baeede57d4"
+  },
+  {
+   "tabela": "frn_anexos",
+   "linhas": 1,
+   "hash": "fe60e11919d0c1f582671ecb96d8cb10"
+  },
+  {
+   "tabela": "frn_papeis",
+   "linhas": 2,
+   "hash": "11046d0862d5dc72fab4b425fb348c40"
+  },
+  {
+   "tabela": "frn_atendimentos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_tabela_precos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_parcelas_mo(CT-0001)",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  }
+ ],
+ "pos2": [
+  {
+   "checagem": "tabelas novas existem (3)",
+   "valor": "3",
+   "esperado": "3",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "RLS ligada nas 3 tabelas novas",
+   "valor": "3",
+   "esperado": "3",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "policies das tabelas novas (nome:comando:papel:using)",
+   "valor": "frn_avisos_nada:SELECT:authenticated:false | frn_condicoes_versoes_select:SELECT:authenticated:(( SELECT frn_email() AS frn_email) IS NOT NULL) | frn_modelos_contrato_select:SELECT:authenticated:(( SELECT frn_email() AS frn_email) IS NOT NULL)",
+   "esperado": "frn_avisos_nada:SELECT:authenticated:false | frn_condicoes_versoes_select:SELECT:authenticated:(( SELECT frn_email() AS frn_email) IS NOT NULL) | frn_modelos_contrato_select:SELECT:authenticated:(( SELECT frn_email() AS frn_email) IS NOT NULL)",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "grants de tabela para anon/authenticated nas novas (tabela:papel:privilégio)",
+   "valor": "frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT",
+   "esperado": "frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "privilégio efetivo de anon/authenticated nas novas (has_table_privilege, independe de quem concedeu)",
+   "valor": "frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT",
+   "esperado": "frn_condicoes_versoes:authenticated:SELECT | frn_modelos_contrato:authenticated:SELECT",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "gatilhos de imutabilidade (2 por tabela de versão)",
+   "valor": "4",
+   "esperado": "4",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "gatilhos do rollback ausentes",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "colunas novas com o tipo certo (tabela.coluna:tipo:nulável)",
+   "valor": "frn_aditivos.condicao_para_versao:integer:YES | frn_condicoes.atualizado_em:timestamp with time zone:YES | frn_condicoes.atualizado_por:text:YES | frn_condicoes.versao:integer:NO | frn_contratos.condicao_versao:integer:YES | frn_contratos.modelo_versao:integer:YES | frn_contratos.parcelas_ajustadas:jsonb:YES | frn_medicoes.condicao_versao:integer:YES",
+   "esperado": "frn_aditivos.condicao_para_versao:integer:YES | frn_condicoes.atualizado_em:timestamp with time zone:YES | frn_condicoes.atualizado_por:text:YES | frn_condicoes.versao:integer:NO | frn_contratos.condicao_versao:integer:YES | frn_contratos.modelo_versao:integer:YES | frn_contratos.parcelas_ajustadas:jsonb:YES | frn_medicoes.condicao_versao:integer:YES",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "constraints novas validadas (9 da 009 + 2 da 011)",
+   "valor": "11",
+   "esperado": "11",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_ct_ordem existe e está NOT VALID (D1: CT-0001 intocado)",
+   "valor": "1",
+   "esperado": "1",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_papeis aceita configurador; frn_eventos aceita condicoes_alteradas",
+   "valor": "true",
+   "esperado": "true",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_dias_pagamento: só a de 3 argumentos",
+   "valor": "true",
+   "esperado": "true",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "24 funções novas/alteradas existem",
+   "valor": "24",
+   "esperado": "24",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "nenhuma das 24 executável por anon ou authenticated",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "as 23 chamáveis (todas menos frn__imutavel) executáveis por service_role",
+   "valor": "23",
+   "esperado": "23",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "security definer sem search_path fixo entre as frn_* (deve ser nenhuma)",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_pode_configurar(NULL) e frn_tem_algum_papel(NULL) são false (nunca NULL)",
+   "valor": "true",
+   "esperado": "true",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_condicoes_versoes: 12 linhas, todas versão 1, acao seed, criado_por \"seed 009\"",
+   "valor": "12/12",
+   "esperado": "12/12",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_condicoes: todas na versão 1, sem atualizado_por/atualizado_em",
+   "valor": "12",
+   "esperado": "12",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_modelos_contrato: 1 linha (versão 1, seed 011)",
+   "valor": "1:1:seed 011",
+   "esperado": "1:1:seed 011",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "modelo v1 sem CR (o arquivo foi aplicado com LF, como no CI)",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "frn_avisos vazia",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  }
+ ],
+ "pos3": [
+  {
+   "numero": "CT-0001",
+   "status": "aguardando",
+   "condicao_codigo": "OBRA_MEDICAO_MENSAL",
+   "condicao_versao": 1,
+   "parcelas_ajustadas": null,
+   "modelo_versao": null,
+   "etapa": "eduardo"
+  }
+ ]
+}

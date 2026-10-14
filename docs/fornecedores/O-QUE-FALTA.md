@@ -47,7 +47,22 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
-## PONTO DE RETOMADA ATUAL — 13/10/2026, noite
+## PONTO DE RETOMADA ATUAL — 14/10/2026, madrugada
+
+- **Banco 009–012 APLICADO em produção** (14/10, autorizado pelo João): Pré 1–5 OK, verificações 12+6+6+4 = 28/28 OK,
+  Pós 2 22/22 OK, foto antes = depois (10 tabelas); CT-0001 só ganhou `condicao_versao = 1`, etapa `eduardo`. Registro em
+  `revisao-banco-melhorias-{antes,depois}.json` e na tabela do `sql.md`.
+- **Código:** PR #15 (ajustes, revisão APROVAR) mergeado em `feat/melhorias` (`58d073b`). **PR #16 `feat/melhorias` → `main`
+  aberto, CI verde, MERGEABLE — o merge foi bloqueado pelo auto mode: o João clica.** Até lá, o app no ar (main velho) roda
+  sobre o banco novo, o que o roteiro conferiu como compatível; o José aprovando antes do Eduardo recebe a mensagem nova.
+- **Falta (João):** merge do #16 → `SMTP_*` do Compras no Environment do `fornecedores` (`NEXT_PUBLIC_APP_URL` já existe;
+  só conferir) → Deploy → conferência pelo roteiro §6 (passos 4–7) → CT-0001 com o Eduardo.
+- **Decisões para a próxima rodada (nada foi feito sobre elas):** N2 da revisão dos ajustes — com material separado, o
+  "teto" do contrato global pode ser lido como valendo para mão de obra + material; redação é do João. Rótulos
+  "Local de execução:"/"Valor:" no CT-0001 (aceitos; só mudam se ele pedir). Manual conferido contra o código: falta o PDF e o
+  comunicado curto ao cliente (eu escrevo, João aprova).
+
+## Retomada anterior — 13/10/2026, noite
 
 - **Frentes 0, A–H mergeadas em `feat/melhorias`** (PRs #5–#13, liberado pelo João às ~21h). Todas com revisão
   independente aprovada (A, B e F com rerrevisão). CI verde em `feat/melhorias` (1027 testes + build). PR #14

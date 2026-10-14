@@ -1,0 +1,173 @@
+{
+ "aplicado_em": "2026-10-14 (madrugada)",
+ "commit": "58d073b05dca9ea4ce14189304e757e725bec121",
+ "pre1": {
+  "id": "iyytcavcgukfjnjjrerx",
+  "name": "(projeto de producao)",
+  "region": "us-east-1",
+  "status": "ACTIVE_HEALTHY",
+  "version": "17.6.1.127"
+ },
+ "pre2": [
+  {
+   "checagem": "001–004: as 10 tabelas frn_ existem",
+   "valor": "10",
+   "esperado": "10",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "002: 12 condições no catálogo (pré-requisito da 009)",
+   "valor": "12",
+   "esperado": "12",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "004: bucket fornecedores-anexos privado",
+   "valor": "1",
+   "esperado": "1",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "005: frn_dias_pagamento(text,int) existe (a 009 troca pela de 3 argumentos)",
+   "valor": "true",
+   "esperado": "true",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "006: carga inicial do Omie presente",
+   "valor": "1226",
+   "esperado": "1226",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "008: frn_enviar_contrato sem \"Anexe a proposta comercial\" e com \"anexe as certidões\" (pré-requisito da 009)",
+   "valor": "true",
+   "esperado": "true",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "auth.users.raw_user_meta_data existe (pré-requisito da 010)",
+   "valor": "1",
+   "esperado": "1",
+   "resultado": "OK"
+  }
+ ],
+ "pre3": [
+  {
+   "checagem": "tabelas novas: frn_condicoes_versoes, frn_modelos_contrato, frn_avisos",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "colunas novas (8)",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "funções novas (10 nomes) + frn_dias_pagamento de 3 argumentos",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "constraints novas (9 da 009, frn_ct_ordem da 010, 2 da 011)",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "papel configurador ainda não aceito em frn_papeis",
+   "valor": "false",
+   "esperado": "false",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "gatilhos do rollback (frn_*_rb_versao) ausentes",
+   "valor": "0",
+   "esperado": "0",
+   "resultado": "OK"
+  },
+  {
+   "checagem": "gatilhos nas tabelas frn_ (só os 2 da 004): nenhum gatilho de fora mexe na linha do CT-0001",
+   "valor": "frn_eventos.frn_eventos_imutavel,frn_eventos.frn_eventos_imutavel_truncate",
+   "esperado": "frn_eventos.frn_eventos_imutavel,frn_eventos.frn_eventos_imutavel_truncate",
+   "resultado": "OK"
+  }
+ ],
+ "pre4": [
+  {
+   "numero": "CT-0001",
+   "status": "aguardando",
+   "tipo": "global",
+   "classificacao": "manutencao",
+   "condicao_codigo": "OBRA_MEDICAO_MENSAL",
+   "excecao_dias": null,
+   "enviado_em": "2026-10-11 23:46:42.393131+00",
+   "contratacao_aprovada_por": null,
+   "contratacao_aprovada_em": null,
+   "condicoes_aprovadas_por": "***@manfac.com.br",
+   "condicoes_aprovadas_em": "2026-10-11 23:47:07.792424+00",
+   "aprovado_em": null,
+   "devolvido_em": null,
+   "documento_gerado_em": null,
+   "atualizado_em": "2026-10-11 23:47:07.792424+00",
+   "fornecedor_homologado": true,
+   "eventos": 3,
+   "anexos": 1
+  }
+ ],
+ "pre5_foto": [
+  {
+   "tabela": "frn_contratos",
+   "linhas": 1,
+   "hash": "e0afcfc61e2ad50ee6c583319d16d494"
+  },
+  {
+   "tabela": "frn_condicoes",
+   "linhas": 12,
+   "hash": "6c82717ebb27f381ae24a389afb0377c"
+  },
+  {
+   "tabela": "frn_medicoes",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_aditivos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_eventos",
+   "linhas": 3,
+   "hash": "c4590e28a90b230d8711b2baeede57d4"
+  },
+  {
+   "tabela": "frn_anexos",
+   "linhas": 1,
+   "hash": "fe60e11919d0c1f582671ecb96d8cb10"
+  },
+  {
+   "tabela": "frn_papeis",
+   "linhas": 2,
+   "hash": "11046d0862d5dc72fab4b425fb348c40"
+  },
+  {
+   "tabela": "frn_atendimentos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_tabela_precos",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+   "tabela": "frn_parcelas_mo(CT-0001)",
+   "linhas": 0,
+   "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  }
+ ]
+}
