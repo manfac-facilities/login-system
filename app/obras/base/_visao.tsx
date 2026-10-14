@@ -13,10 +13,11 @@
 
 import { useMemo, useState } from 'react'
 import { EstadoVazio } from '../_ui/primitivos'
-import type { Obra } from '../_lib/tipos'
+import { hojeISO, type Obra } from '../_lib/tipos'
 import FiltrosBase from './_filtros'
 import TabelaBase from './_table'
 import KanbanBase from './_kanban'
+import { baixarExcelObras } from './_exportar'
 import {
   FILTROS_PADRAO,
   ORDEM_PADRAO,
@@ -33,6 +34,7 @@ export default function VisaoBase({ obras }: { obras: Obra[] }) {
   const [vis, setVis] = useState<'tabela' | 'kanban'>('tabela')
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_PADRAO)
   const [ordem, setOrdem] = useState<Ordem>(ORDEM_PADRAO)
+  const [exportando, setExportando] = useState(false)
 
   const responsaveis = useMemo(() => responsaveisDaBase(obras), [obras])
   const lista = useMemo(() => filtrar(obras, filtros), [obras, filtros])
@@ -67,10 +69,28 @@ export default function VisaoBase({ obras }: { obras: Obra[] }) {
             {botao('tabela', 'Tabela')}
             {botao('kanban', 'Kanban')}
           </div>
-          <span className="text-xs text-[#94a3b8]">
-            <b className="text-[#e8eef7]">{lista.length}</b> obras nesta visão · base completa:{' '}
-            <b className="text-[#e8eef7]">{obras.length}</b>
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-[#94a3b8]">
+              <b className="text-[#e8eef7]">{lista.length}</b> obras nesta visão · base completa:{' '}
+              <b className="text-[#e8eef7]">{obras.length}</b>
+            </span>
+            {/* Exporta a lista da tela: mesmos filtros, mesma ordem — em Tabela ou Kanban. */}
+            <button
+              type="button"
+              disabled={lista.length === 0 || exportando}
+              onClick={async () => {
+                setExportando(true)
+                try {
+                  await baixarExcelObras(listaOrdenada, hojeISO())
+                } finally {
+                  setExportando(false)
+                }
+              }}
+              className="rounded-md border border-[#1e3a5f] px-3 py-1.5 text-sm font-medium text-[#e8eef7] transition hover:border-[#f05a28] hover:text-[#f05a28] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[#1e3a5f] disabled:hover:text-[#e8eef7]"
+            >
+              {exportando ? 'Gerando…' : 'Exportar Excel'}
+            </button>
+          </div>
         </div>
         <FiltrosBase filtros={filtros} responsaveis={responsaveis} onChange={setFiltros} />
       </div>
