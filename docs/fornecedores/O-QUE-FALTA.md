@@ -47,7 +47,47 @@ passa a ser o primeiro uso real, com Eduardo e José. Aviso dado ao cliente: apr
   - **D4:** e-mail também nas etapas de aditivo.
   - **D5 (ação do João no deploy):** confirmar mesma caixa/`SMTP_*` do Compras e pôr as 5 variáveis no EasyPanel do `fornecedores`.
 
-## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (PONTO DE RETOMADA ATUAL)
+## PONTO DE RETOMADA ATUAL — 14/10/2026, dia
+
+- **PR #16 MERGEADO** em `main` (`9db2c40`, 14/10, João tirou o auto mode). O código das melhorias está na `main`.
+- **Baseline do deploy atual (antes do Deploy):** chunks com `Last-Modified: Mon, 12 Oct 2026 14:17:46 GMT` (deploy de
+  12/10). Depois do Deploy, todos os chunks têm de mostrar data posterior. `/api/health` = ok. O comando do roteiro §6
+  passo 4 foi corrigido: HEAD (`curl -I`) leva 307 para o login, só o GET devolve o `Last-Modified`.
+- **Falta (João):** `SMTP_*` do Compras no Environment do `fornecedores` + conferir `NEXT_PUBLIC_APP_URL` → Deploy.
+  Depois: conferência §6 passos 4–7 (Claude) → CT-0001 com o Eduardo.
+- **Rascunho do comunicado:** `comunicado-melhorias-2026-10-14.md` (João aprova; enviar só depois do Deploy conferido).
+- PDF do manual: sendo regenerado a partir de `manual-uso-padrao-cliente.html`.
+- Continua aberto e é do João: redação do "teto" do contrato global com material separado (N2).
+
+## Retomada anterior — 14/10/2026, madrugada
+
+- **Banco 009–012 APLICADO em produção** (14/10, autorizado pelo João): Pré 1–5 OK, verificações 12+6+6+4 = 28/28 OK,
+  Pós 2 22/22 OK, foto antes = depois (10 tabelas); CT-0001 só ganhou `condicao_versao = 1`, etapa `eduardo`. Registro em
+  `revisao-banco-melhorias-{antes,depois}.json` e na tabela do `sql.md`.
+- **Código:** PR #15 (ajustes, revisão APROVAR) mergeado em `feat/melhorias` (`58d073b`). **PR #16 `feat/melhorias` → `main`
+  aberto, CI verde, MERGEABLE — o merge foi bloqueado pelo auto mode: o João clica.** Até lá, o app no ar (main velho) roda
+  sobre o banco novo, o que o roteiro conferiu como compatível; o José aprovando antes do Eduardo recebe a mensagem nova.
+- **Falta (João):** merge do #16 → `SMTP_*` do Compras no Environment do `fornecedores` (`NEXT_PUBLIC_APP_URL` já existe;
+  só conferir) → Deploy → conferência pelo roteiro §6 (passos 4–7) → CT-0001 com o Eduardo.
+- **Decisões para a próxima rodada (nada foi feito sobre elas):** N2 da revisão dos ajustes — com material separado, o
+  "teto" do contrato global pode ser lido como valendo para mão de obra + material; redação é do João. Rótulos
+  "Local de execução:"/"Valor:" no CT-0001 (aceitos; só mudam se ele pedir). Manual conferido contra o código: falta o PDF e o
+  comunicado curto ao cliente (eu escrevo, João aprova).
+
+## Retomada anterior — 13/10/2026, noite
+
+- **Frentes 0, A–H mergeadas em `feat/melhorias`** (PRs #5–#13, liberado pelo João às ~21h). Todas com revisão
+  independente aprovada (A, B e F com rerrevisão). CI verde em `feat/melhorias` (1027 testes + build). PR #14
+  (integração) fechado: árvore idêntica.
+- **Em andamento:** rodada de `AJUSTES-INTEGRACAO-MELHORIAS.md` (I-1 obrigatório) em `feat/melhorias-ajustes`,
+  PR com base `feat/melhorias`; depois revisão independente. Roteiro do banco: `roteiro-aplicacao-009-012.md`.
+  Manual sendo atualizado (rascunho, sem PDF).
+- **Depende do João:** liberar escrita no banco de produção para 009–012; `SMTP_*` e `NEXT_PUBLIC_APP_URL` no
+  EasyPanel; Deploy; teste do CT-0001 com o Eduardo.
+- Ordem final: ajustes aprovados → merge em `feat/melhorias` → banco 009–012 → merge `feat/melhorias` → `main` →
+  variáveis → Deploy → teste.
+
+## ⏸ PAUSADO DE NOVO — 13/10/2026 à tarde (superado pela seção acima)
 
 João pausou porque os agentes travavam o PC (~1,4 GB livres). **Agentes: de dia (João no PC) no máximo 2; à noite, sem limite** (decisão do João, 13/10).
 Commits de documentação: usar a cópia `D:\fornecedores-work\hub-docs` (a pasta principal do hub está sendo usada por

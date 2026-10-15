@@ -86,3 +86,36 @@ por `conrelid` nas quatro tabelas.
   subir **com a Frente B** (B1) junto, senão a primeira edição muda o prazo enviado ao Financeiro.
 - **O3 —** `frn_condicoes_versoes.criado_por` expõe o e-mail de quem editou para qualquer logado. É dado interno
   e já acontece com `frn_contratos`; registro só para constar.
+
+## Rerrevisão dos reforços (5b695fb)
+
+**Data:** 13/10/2026 · **Revisor:** subagente independente (não executou os reforços) · **Conferido:** `git diff
+5b695fb^ 5b695fb` num clone novo (`D:\fornecedores-work\revisao-a2`); o head do PR #9 é `5b695fb` e o CI
+(`verificar`) está verde. Banco de produção **não** acessado.
+
+### Veredito: **APROVAR**
+
+| Reforço | Está correto? | Tem teste? |
+|---|---|---|
+| **M1** trava no rollback | Sim. O `do $$` da seção 0 roda depois do `begin;` e antes de qualquer `create`/`drop`. Ele aborta se existir versão > 1, `parcelas_ajustadas` não nulo ou mais de um modelo. O `%%` no `raise` sem argumento sai como `%` literal. Numa instalação 001→012 sem uso, nada dispara a trava: o seed da 009 só cria a v1 e o da 011 só cria um modelo. | Sim. `rollback.test.ts` testa os três gatilhos da trava (% ajustados, v2 por desativação e modelo novo), confere que a foto fica igual e que `frn_etapa` continua lá. O fluxo normal segue revertendo, com a verificação 7/7. |
+| **M2** repin no envio | Sim, e a opção escolhida foi repinar. `k` passa a ser a versão vigente e as validações rodam contra ela. O `update` só alcança rascunho, porque o `status <> 'rascunho'` aborta antes. Contrato sem condição recebe `null` nos dois campos, o que respeita `frn_ct_condicao_versao`. | Sim. O teste cobre v1→v2 com o % novo e a condição desativada recusada sem mudar o rascunho. |
+| **M3** texto com versão | Sim. O sufixo só entra quando o código é o mesmo e a versão mudou. Com `condicao_versao` nulo a condição dá NULL e nada muda. | Sim. O teste confere o texto exato do evento e os % novos. |
+| **M4** soma ≠ 100 | Sim. A soma é feita em `numeric` e um `pct` ausente reduz a soma, o que leva ao erro (falha fechada). O único gravador já exige soma 100. | Sim. Escrita direta com 30/30/30 → "Parcelas ajustadas incoerentes". |
+| **M5** aviso de reaplicação | Sim: comentário no cabeçalho da 009. A linha no `sql.md` fica para quando a aplicação for registrada, como o laudo previa. | Não se aplica (é comentário). |
+| **M6** `conrelid` | Sim. Os 9 nomes estão em `frn_condicoes_versoes`, `frn_condicoes`, `frn_contratos`, `frn_medicoes` e `frn_aditivos`, as cinco tabelas do filtro. | A verificação da 009 roda na instalação e na reaplicação, com CI verde. |
+
+### Regressão procurada
+
+- **CT-0001 (aguardando):** o repin não o alcança, porque o envio recusa o que não é rascunho e
+  `frn_alterar_e_aprovar_condicoes` não foi alterada fora do texto do evento. O M4 só pesa quando
+  `parcelas_ajustadas` não é nulo, e o CT-0001 não tem esse campo. O teste da linha inteira do CT-0001
+  continua verde. Nenhuma coluna existente é reescrita.
+- **Rollback abortando quando não devia:** não acontece no caminho previsto (009→012 aplicadas e app novo
+  fora do ar). Um ponto é conservador, mas não causa dano: uma condição **só desativada** (v2, sem mudar %
+  nem prazo) já basta para travar o rollback. Isso é aceitável, porque a desativação só acontece com o app
+  novo no ar, e aí o rollback já não é o caminho previsto.
+- **Repin com sobra no rascunho:** se a versão vigente trocou o modo de `excecao` para outro, o
+  `excecao_dias` antigo fica no rascunho. Não causa dano, porque `frn_dias_pagamento` só lê esse campo
+  quando o modo é `excecao`.
+
+Nenhum bloqueante.

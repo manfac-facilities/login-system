@@ -7,7 +7,6 @@ export interface Sistema {
 // o `label` é o nome que o cliente usa.
 export const SISTEMAS: Sistema[] = [
   { slug: 'sofia', label: 'Gestão de Frotas' },
-  { slug: 'conversor-os', label: 'Conversor OS' },
   { slug: 'dashboard-manutencao', label: 'Cockpit Manutenção Predial' },
   { slug: 'crm', label: 'CRM' },
   { slug: 'obras', label: 'Gestão de Obras' },

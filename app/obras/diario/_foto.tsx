@@ -12,7 +12,7 @@
  * POR QUE O UPLOAD É NO NAVEGADOR, e não dentro da Server Action: o corpo de
  * uma Server Action tem limite de 1 MB por padrão no Next, e foto de celular
  * passa disso com folga. Mandar o arquivo direto do navegador para o Storage é
- * o mesmo caminho que `app/conversor-os/_form.tsx` já usa neste hub.
+ * o caminho padrão para arquivo grande no Next.
  *
  * A REDUÇÃO ANTES DE SUBIR NÃO É ENFEITE: esta tela vai ser preenchida no
  * celular, dentro da obra, no 4G que houver. 4 MB viram ~200 KB e a resposta

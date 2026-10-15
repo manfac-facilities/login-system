@@ -1,7 +1,7 @@
 /**
  * Testes das Server Actions da Ficha (`app/obras/obra/[id]/_actions.ts`).
  *
- * Padrão de mocks de `app/conversor-os/__tests__/_actions.test.ts`: Supabase,
+ * Padrão de mocks de `app/admin/__tests__/_actions.test.ts`: Supabase,
  * `next/cache` e `lib/auth/systemAccess` mockados. **Nunca bate em Supabase
  * real** — a migration `sdd-sql-obras-v0.sql` ainda não foi aplicada em banco
  * nenhum, então não haveria contra o que testar.

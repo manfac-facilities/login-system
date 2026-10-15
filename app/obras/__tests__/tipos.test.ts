@@ -3,7 +3,7 @@
  *
  * Nada é mockado aqui de propósito: tipos.ts não importa Supabase, next/cache
  * nem lib/auth — é função pura sobre linha de banco. O padrão de mocks de
- * app/conversor-os/__tests__/_actions.test.ts vale para as _actions.ts das
+ * app/admin/__tests__/_actions.test.ts vale para as _actions.ts das
  * frentes B, C e D, não para este arquivo.
  *
  * `hoje` é sempre passado explicitamente (2026-08-31, o HOJE do mockup) para o

@@ -100,7 +100,7 @@ describe('systemSlugsComAcesso', () => {
           { system_slug: 'sofia', has_access: true },
           { system_slug: 'crm', has_access: false },
           { system_slug: 'obras', has_access: true },
-          { system_slug: 'conversor-os', has_access: null },
+          { system_slug: 'dashboard-manutencao', has_access: null },
         ],
       },
     })

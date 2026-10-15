@@ -385,7 +385,7 @@ describe('convidarUsuarioAction', () => {
   })
 
   it('invites, records the level and grants the chosen systems', async () => {
-    expect(await convidarUsuarioAction('Nova@Manfac.com.br', 'analista', ['conversor-os'])).toEqual({
+    expect(await convidarUsuarioAction('Nova@Manfac.com.br', 'analista', ['sofia'])).toEqual({
       success: true,
     })
 
@@ -398,7 +398,7 @@ describe('convidarUsuarioAction', () => {
       expect.arrayContaining([
         expect.objectContaining({
           user_email: 'nova@manfac.com.br',
-          system_slug: 'conversor-os',
+          system_slug: 'sofia',
           has_access: true,
         }),
       ]),

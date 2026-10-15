@@ -25,3 +25,11 @@ Melhorias não bloqueantes apontadas nas revisões das frentes. Entram depois qu
 | G | Erro de desativar/reativar aparece atrás do modal | fazer |
 | G | Banner do modal de editar: avisar que rascunhos usam a versão nova no envio | fazer se couber |
 | G | G e F sobem juntas (link "Modelo de contrato" daria 404) | entrega única já garante |
+| E-rev | Editor do José trava quando a versão pinada ≠ atual (`condicao.ts:135,189`; `_cartao.tsx:109,293`): acontece se as Configurações mudarem entre o envio e a aprovação. Nada grava errado | fazer (uso) |
+| E-rev | Comentário desatualizado `_actions.ts:354`; limite de 10 parcelas em 3 lugares | fazer se couber |
+| E-rev | Alteração do José sem concorrência otimista (precisa mudar assinatura SQL da A); `avisarLiberados` pode duplicar e-mail em cenário remoto | DIVIDAS |
+| F-rev | Detalhes de robustez da tela do modelo (laudo `revisao-frente-f.md`) | fazer se couber |
+| F-rev | 1ª impressão: janela residual de ms entre a checagem da versão exibida e o pino no SQL | DIVIDAS |
+| F-rev2 | Contrato global com material separado perde o "teto" no texto (`campos.ts:101-102`) | fazer (texto de contrato) |
+| F-rev2 | Rótulos "Local de execução:"/"Valor:" no CT-0001 vêm do seed da 011 (frases batem; não é byte a byte) | aceito; só muda se o João pedir |
+| F-rev2 | Action do documento lê `modelo_versao` com service role antes do SQL checar acesso (nada vaza além da recusa) | DIVIDAS |

@@ -5,8 +5,10 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { derivar, type ObraRow } from '../../_lib/tipos'
 import VisaoBase from '../_visao'
+import { baixarExcelObras } from '../_exportar'
 
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('../_exportar', () => ({ baixarExcelObras: jest.fn(() => Promise.resolve()) }))
 
 function linha(over: Partial<ObraRow> = {}): ObraRow {
   return {
@@ -139,5 +141,24 @@ describe('busca — vazio com texto buscado (spec-busca-base-2026-09-24 §5)', (
 
     expect(presente('LOJA A1')).toBe(true)
     expect(campo).toHaveValue('')
+  })
+})
+
+describe('exportar para Excel', () => {
+  test('exporta só as obras da visão, na ordem da tela', async () => {
+    const u = userEvent.setup()
+    render(<VisaoBase obras={[ativa('LOJA A1'), ativa('LOJA B2'), canc('LOJA C1', 'cliente')]} />)
+
+    await u.type(screen.getByLabelText('Buscar loja ou OS'), 'b2')
+    await u.click(screen.getByRole('button', { name: 'Exportar Excel' }))
+
+    const mock = baixarExcelObras as jest.Mock
+    expect(mock).toHaveBeenCalledTimes(1)
+    expect(mock.mock.calls[0][0].map((o: { loja: string }) => o.loja)).toEqual(['LOJA B2'])
+  })
+
+  test('desabilitado quando a visão está vazia', () => {
+    render(<VisaoBase obras={[]} />)
+    expect(screen.getByRole('button', { name: 'Exportar Excel' })).toBeDisabled()
   })
 })

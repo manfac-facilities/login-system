@@ -23,17 +23,16 @@ export default async function DashboardPage() {
     isAdmin(supabase, user.email ?? ''),
     systemSlugsComAcesso(supabase, user.email ?? ''),
   ])
-  const [podeFrotas, podeConversor, podeManutencao, podeCrm, podeObras] = admin
-    ?[true, true, true, true, true]
+  const [podeFrotas, podeManutencao, podeCrm, podeObras] = admin
+    ?[true, true, true, true]
     : [
         slugs.has('sofia'),
-        slugs.has('conversor-os'),
         slugs.has('dashboard-manutencao'),
         slugs.has('crm'),
         slugs.has('obras'),
       ]
   const semNada =
-    !podeFrotas && !podeConversor && !podeManutencao && !podeCrm && !podeObras && !admin
+    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -129,22 +128,6 @@ export default async function DashboardPage() {
               </p>
               <p className="text-[#4a6080] text-sm mt-1">
                 Operação de frota — KM, checklist, multas
-              </p>
-            </div>
-          </Link>
-          )}
-          {podeConversor && (
-          <Link
-            href="/conversor-os"
-            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
-          >
-            <span className="text-3xl">📋</span>
-            <div>
-              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
-                Conversor OS
-              </p>
-              <p className="text-[#4a6080] text-sm mt-1">
-                Converte planilhas de OS para o Field Control
               </p>
             </div>
           </Link>
