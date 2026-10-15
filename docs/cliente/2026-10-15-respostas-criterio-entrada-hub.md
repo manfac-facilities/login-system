@@ -121,3 +121,16 @@ Anexo: `2026-10-15-atualizacao-hub-cliente.xlsx` (nome original `ATUALIZAÇÃO H
  tomada 110
  tomada 220 | 1 | 2007.48 | Aguardando Aprovação | 1595 | ELETRICA | EFM OBRAS |  |  | N | EFM OBRAS ENGENHARIA | EFM OBRAS ENGENHARIA | ATIVARIO CLIM. RJ ZONA SUL | ATIVARIO CLIM. RJ ZONA SUL | ATIVARIO CLIM. RJ ZONA SUL | Aguardando Aprovação | 2026-08-24 | 2026-09-22 | 2026-07-30 | Amanda | #N/A | 1879.88 | #N/A | RJ NITEROI | PROGRAMADA | 0726-018684Aguardando Aprovação
 ```
+
+## Decisão (15/10, João)
+
+Medição no Field antes de decidir: Manutenção Corretiva 5.805 OS, Emergencial 232, Atividade Spot 463. Puxar Corretiva/Emergencial automaticamente traria ~6 mil chamados de manutenção comum.
+
+João escolheu **carga única + botão**:
+1. Carga única agora das 65 OS da Lista B que existem no Field (fica de fora a linha "SEM OS"), na etapa informada pelo cliente: PENDENTE FATURAMENTO→pendFat, FECHAR OS→fecharOS, EXECUTADO - APROVAR OS→aprovarOS, EXECUTAR→definir (a equipe escolhe entre levantamento e andamento). Spot entra com `fonte='field'`; Corretiva/Emergencial com `fonte` nula, para a varredura completa (que só lista Spot) não marcar "Fora do Field".
+2. Depois, mockup de um botão "Trazer OS do Field" na Base de obras: busca pelo número, aceita qualquer tipo e situação, e a pessoa escolhe a etapa.
+
+Ficam de fora da carga, por enquanto:
+- As 6 de tomada para geladeira (0726-017515, 017712, 018624, 018684, 018710, 018834): atividade arquivada no Field. Pergunta enviada ao cliente pelo João.
+- 0526-019295 e 0626-003845: não existem no Field.
+- 0726-017988: já entrou no hub em 15/10 (etapa definir).
