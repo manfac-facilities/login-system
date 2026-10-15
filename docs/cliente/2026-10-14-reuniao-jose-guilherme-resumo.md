@@ -7,12 +7,13 @@ Fonte: transcrição literal em `docs/cliente/2026-10-14-reuniao-jose-guilherme.
 **Diagnóstico geral:** acabou a fase de entregar tudo às pressas. Agora a ideia é melhorar e
 padronizar o que já existe.
 
-- **Gestão de Obras:** a análise está fraca. Faltam tendências e um modelo de IA. Os números não
-  batem: aparecem R$ 24 mil faturados, R$ 311 mil pendentes de faturamento e R$ 138 mil "para
-  fechar" que incluem obras já fechadas. A causa é que a equipe não atualiza o sistema: o Yuri vive
-  na rua e colocaram outra pessoa para ajudar. **O José não vai mexer nos indicadores enquanto os
-  dados não estiverem em dia.** Depois disso, a prioridade são as **tarefas**: uma obra com
-  levantamento agendado sai do diário de obras.
+- **Gestão de Obras:** **a prioridade é criar a parte de tarefas.** Exemplo: uma obra em
+  levantamento ganha uma tarefa com data marcada e sai do diário de obras, que passa a mostrar só o
+  que está acontecendo de fato. **A análise fica para um segundo momento:** hoje ela está fraca
+  (faltam tendências e um modelo de IA) e os números não batem (R$ 24 mil faturados, R$ 311 mil
+  pendentes de faturamento, R$ 138 mil "para fechar" incluindo obras já fechadas), porque a equipe
+  não atualiza o sistema em dia: o Yuri vive na rua e colocaram outra pessoa para ajudar. Os
+  indicadores só serão mexidos com os dados em dia.
 - **Cockpit:** é a referência de layout e gráficos. Vai ganhar um agente de IA que encontra
   problemas repetidos por loja (ex.: 10 chamados de tampa de vaso em 3 meses), para mostrar ao
   cliente.
@@ -21,7 +22,7 @@ padronizar o que já existe.
   frota escreve os processos e problemas dele. Ideia para depois: um agente no WhatsApp que cobra
   km e foto das equipes.
 - **Conversor de OS:** sai do hub, porque não vai ser usado.
-- **RH:** sistema novo, separado do de Fornecedores. Um agente avisaria o candidato aprovado pelo
+- **RH:** sistema novo, **em definição**, separado do de Fornecedores. Um agente avisaria o candidato aprovado pelo
   WhatsApp e pediria os documentos. Espera a responsável escrever o processo.
 - **Financeiro/Orçamento:** os saldos não batem. O José quer um sistema de orçamento trimestral
   projetado para o ano, comparando orçado com realizado e apontando centro de custo e obra que
@@ -48,7 +49,7 @@ padronizar o que já existe.
 2. **Mandar ao José o resumo do que foi combinado.**
 3. **Dar visibilidade do andamento** ao José, por exemplo com um status curto e frequente no grupo
    das pendências.
-4. **Almoxarifado:** é candidato à próxima frente do João, mas **ainda não está decidido**. Espera
+4. **Almoxarifado (sistema em definição):** é candidato à próxima frente do João, mas **ainda não está decidido**. Espera
    o José conversar com o almoxarife e o contexto que ele vai mandar.
 5. **Estudar a plataforma base do Natan:** o que aproveitar para padronizar layout e acessos (só
    estudar, não é para executar agora).
@@ -63,13 +64,14 @@ padronizar o que já existe.
 5. **Pedir ao responsável pela frota** a lista de processos e problemas.
 6. **Esperar a responsável do RH** escrever o processo.
 7. **Mentoria com o Natan** (15/10, 19h) sobre a estrutura de agentes.
-8. **Garantir que a equipe atualize a Gestão de Obras**, condição para mexer nos indicadores.
+8. **Garantir que a equipe atualize a Gestão de Obras**, condição para a etapa de análise, que vem
+   depois das tarefas.
 
 ### Combinado para depois (sem dono agora)
 
+- Tarefas e diário de obras na Gestão de Obras (prioridade).
 - Remover o Conversor de OS do hub.
 - Gestão de Frotas nova.
-- Tarefas e diário de obras na Gestão de Obras.
-- Indicadores e tendências da Gestão de Obras, depois que os dados estiverem em dia.
+- Análise e tendências da Gestão de Obras, depois das tarefas e com os dados em dia.
 - Padronização de layout e papéis no hub inteiro.
 - Agentes de IA (cobrança no WhatsApp e o "cérebro").
