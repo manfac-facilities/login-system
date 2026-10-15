@@ -9,7 +9,10 @@ padronizar o que já existe.
 
 - **Gestão de Obras:** **a prioridade é criar a parte de tarefas.** Exemplo: uma obra em
   levantamento ganha uma tarefa com data marcada e sai do diário de obras, que passa a mostrar só o
-  que está acontecendo de fato. **A análise fica para um segundo momento:** hoje ela está fraca
+  que está acontecendo de fato. **Junto com as tarefas, uma trava temporária do diário:** se a
+  obra está parada por um motivo e o levantamento desse motivo fica para a semana que vem, a obra
+  entra em pausa até essa data e o analista não precisa responder o diário de obras enquanto ela
+  estiver em levantamento de material. **A análise fica para um segundo momento:** hoje ela está fraca
   (faltam tendências e um modelo de IA) e os números não batem (R$ 24 mil faturados, R$ 311 mil
   pendentes de faturamento, R$ 138 mil "para fechar" incluindo obras já fechadas), porque a equipe
   não atualiza o sistema em dia: o Yuri vive na rua e colocaram outra pessoa para ajudar. Os
@@ -69,9 +72,19 @@ padronizar o que já existe.
 
 ### Combinado para depois (sem dono agora)
 
-- Tarefas e diário de obras na Gestão de Obras (prioridade).
+- Tarefas e trava temporária do diário de obras na Gestão de Obras (prioridade).
 - Remover o Conversor de OS do hub.
 - Gestão de Frotas nova.
 - Análise e tendências da Gestão de Obras, depois das tarefas e com os dados em dia.
 - Padronização de layout e papéis no hub inteiro.
 - Agentes de IA (cobrança no WhatsApp e o "cérebro").
+
+---
+
+## Complementos do João (texto literal, 14/10/2026)
+
+> corrija: no gestao de obras a prioridade é criar a questao das tarefas, para segundo momento fica a analise
+
+> rh e almoxarifado é sistema em definição
+
+> inclui também além da tarefa e analise a parte de (exemplo: a obra ta parada por x motivo e o levantamento desse motivo vai ser semana que vem - nisso criar um tipo de trava temporaria que o analista nao precisa respodner o diario de obra já que a obra esta em levantamento de material até o dia x)
