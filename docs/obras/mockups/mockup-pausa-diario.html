@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agendar e Pausar Diário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --org:#f05a28; --org-h:#d94d20; --mut:#94a3b8; --mut2:#64748b;
+  --bd:#1e3a5f; --tx:#e8eef7; --inp:#0f1f3d; --ok:#35c98a; --warn:#f4b73f; --err:#ff4d6d; --blue:#5aa9f0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.45;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+b{font-weight:600}
+.wrap{max-width:56rem;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0;font-weight:600}
+h2{font-size:14px;margin:0;font-weight:600}
+p{margin:0}
+.mut{color:var(--mut)} .mut2{color:var(--mut2)} .sm{font-size:12px} .xs{font-size:11px}
+.btn{min-height:44px;border-radius:6px;border:1px solid var(--bd);background:transparent;padding:8px 14px;cursor:pointer;font-weight:500;color:var(--tx)}
+.btn:hover{border-color:var(--org)}
+.btn.pri{background:var(--org);border-color:var(--org);color:#fff}
+.btn.pri:hover{background:var(--org-h)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:12px;color:var(--mut)}
+.btn.sm:hover{color:var(--tx)}
+.chip{min-height:44px;border-radius:999px;border:1px solid var(--bd);background:transparent;color:var(--mut);padding:8px 14px;cursor:pointer;font-weight:500}
+.chip:hover{border-color:var(--org)}
+.chip[aria-pressed=true]{background:var(--org);border-color:var(--org);color:#fff}
+.chip.sim[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#06231a}
+.chip.nao[aria-pressed=true]{background:var(--warn);border-color:var(--warn);color:#2b1d02}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.lbl{display:block;margin-top:12px;font-size:13px;font-weight:500;color:var(--mut)}
+.box{border:1px solid var(--bd);background:var(--navy);border-radius:8px}
+.boxh{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.boxb{padding:12px 14px}
+.pill{display:inline-block;border:1px solid var(--bd);border-radius:999px;padding:1px 9px;font-size:11px;color:var(--mut)}
+
+/* barra de demonstracao */
+.demo{background:#071020;border-bottom:1px dashed var(--bd)}
+.demo .wrap{padding-top:10px;padding-bottom:10px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.demo .t{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--org);width:100%}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.seg button{min-height:40px;padding:6px 12px;border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--org);color:#fff}
+.dg{display:flex;flex-direction:column;gap:3px}
+.dg>span{font-size:11px;color:var(--mut)}
+.dsel{min-height:40px;border:1px solid var(--bd);background:var(--inp);border-radius:8px;padding:6px 10px;font-size:13px}
+.dchk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);min-height:40px}
+
+/* topo do hub */
+.top{background:var(--navy);border-bottom:1px solid var(--bd)}
+.top .wrap{padding-top:10px;padding-bottom:0}
+.brand{font-weight:600}
+.tabs{display:flex;gap:2px;margin-top:8px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 12px;color:var(--mut);cursor:pointer;white-space:nowrap;font-weight:500;min-height:44px}
+.tab[aria-selected=true]{color:var(--tx);border-bottom-color:var(--org)}
+.tab:disabled{opacity:.5;cursor:default}
+
+/* diario */
+.barra{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 16px}
+.barra .n{font-size:24px;font-weight:600;line-height:1}
+.prog{flex:1;min-width:90px;height:6px;border-radius:999px;background:var(--bg);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--org);border-radius:999px}
+.linkbtn{background:none;border:0;padding:0;color:var(--org);cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px}
+.card{border:1px solid var(--bd);background:var(--navy);border-radius:8px;border-left-width:3px;padding:14px 16px;margin-top:16px}
+.card.volta{box-shadow:0 0 0 1px var(--org)}
+.cab{display:flex;flex-direction:column;gap:8px}
+@media(min-width:640px){.cab{flex-direction:row;justify-content:space-between}}
+.os{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.loja{font-size:16px;font-weight:600;margin-top:2px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--mut);margin-top:8px}
+.meta b{color:var(--tx)}
+.pend{margin-top:8px;border:1px solid var(--bd);background:var(--bg);border-radius:4px;padding:8px 12px;font-size:12px;color:var(--mut)}
+.cont{margin-top:8px;border:1px solid #f4b73f66;background:#f4b73f14;color:var(--warn);border-radius:4px;padding:8px 12px;font-size:12px}
+.etapa{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:999px;padding:2px 10px;font-size:12px}
+.etapa i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.voltou{margin-top:10px;border:1px solid var(--org);background:#f05a2818;border-radius:6px;padding:8px 12px;font-size:13px}
+.voltou b{color:var(--org)}
+.acoes{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+@media(min-width:640px){.acoes{flex-direction:row;align-items:center;flex-wrap:wrap}}
+.agendar{border-style:dashed;color:var(--tx)}
+.hint{font-size:12px;color:var(--mut)}
+.hint.w{color:var(--warn)}
+.sep{border-top:1px solid var(--bd);margin-top:14px;padding-top:12px}
+.vazio{border:1px dashed var(--bd);border-radius:8px;padding:20px 16px;text-align:center;color:var(--mut);margin-top:16px}
+.suc{margin-top:16px;border:1px solid var(--ok);background:#35c98a14;border-radius:8px;padding:20px 16px;text-align:center}
+.feita{border:1px solid var(--bd);background:var(--navy);border-radius:8px;padding:10px 12px;margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+
+/* agendadas */
+.agl{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.ag{border:1px solid var(--bd);background:var(--bg);border-radius:6px;padding:10px 12px;border-left:3px solid var(--blue)}
+.ag.hoje{border-left-color:var(--org);background:#f05a2814}
+.ag .l1{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.ag .do{font-weight:500}
+.ag.hoje .do{color:var(--org);font-weight:600;font-size:15px}
+
+/* dialogo */
+.ov{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;justify-content:center;z-index:50}
+@media(min-width:640px){.ov{align-items:center}}
+.dlg{background:var(--navy);border:1px solid var(--bd);border-radius:12px 12px 0 0;width:100%;max-width:34rem;max-height:92vh;overflow:auto;padding:16px}
+@media(min-width:640px){.dlg{border-radius:12px}}
+.inp{width:100%;min-height:44px;border:1px solid var(--bd);background:var(--inp);border-radius:6px;padding:8px 12px;color:var(--tx)}
+.inp:focus{outline:none;border-color:var(--org)}
+.conseq{margin-top:14px;border:1px solid var(--bd);background:var(--bg);border-radius:6px;padding:10px 12px;font-size:13px}
+.conseq ul{margin:6px 0 0;padding-left:18px}
+.conseq li{margin-top:3px}
+.erro{margin-top:12px;border:1px solid var(--err);background:#ff4d6d14;border-radius:6px;padding:10px 12px;font-size:13px}
+.err-t{color:var(--err);font-weight:600}
+.toast{position:fixed;left:16px;right:16px;bottom:16px;max-width:30rem;margin:0 auto;background:var(--navy);border:1px solid var(--ok);border-radius:8px;padding:10px 14px;z-index:60;font-size:13px}
+
+/* tarefas */
+.kpis{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+@media(min-width:640px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kpi{border:1px solid var(--bd);background:var(--navy);border-radius:8px;padding:12px 14px}
+.kpi b{display:block;font-size:24px;line-height:1.1}
+.tl{border:1px solid var(--bd);background:var(--bg);border-radius:6px;padding:8px 12px;margin-top:8px}
+.badge-novo{background:var(--org);color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-left:6px;vertical-align:middle}
+
+/* email */
+.mail{background:#fff;color:#1b2430;border-radius:8px;overflow:hidden;max-width:34rem}
+.mail .h{background:#0d2050;color:#fff;padding:10px 14px;font-size:12px}
+.mail .b{padding:14px}
+.mail .big{font-size:22px;font-weight:700}
+.mail .gr{color:#5b6677;font-size:12px}
+.mail .pb{height:8px;border-radius:99px;background:#e3e8ef;margin:8px 0;overflow:hidden}
+.mail .pb i{display:block;height:100%;background:#f05a28}
+
+ol.sup{padding-left:20px;margin:10px 0 0}
+ol.sup li{margin-top:10px}
+.footer{padding-bottom:48px}
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <div class="wrap">
+    <div class="t">Controles da demonstração (não fazem parte da tela)</div>
+    <div class="dg"><span>Papel</span>
+      <div class="seg" id="segPapel">
+        <button data-papel="analista" aria-pressed="true">Analista (PCM da obra)</button>
+        <button data-papel="admin" aria-pressed="false">Admin</button>
+      </div></div>
+    <div class="dg"><span>Data simulada</span>
+      <div class="seg" id="segHoje">
+        <button data-hoje="2026-10-15" aria-pressed="true">Hoje 15/10</button>
+        <button data-hoje="2026-10-22" aria-pressed="false">Chegou o dia 22/10</button>
+      </div></div>
+    <div class="dg"><span>Cenário</span>
+      <select class="dsel" id="selCen">
+        <option value="normal">Diário com obras e 3 agendadas</option>
+        <option value="vazio">Diário vazio</option>
+        <option value="semag">Nenhuma agendada</option>
+      </select></div>
+    <label class="dchk"><input type="checkbox" id="chkErro"> Simular erro ao salvar o agendamento</label>
+  </div>
+</div>
+
+<div class="top">
+  <div class="wrap">
+    <div class="brand">Gestão de Obras <span class="mut sm" id="quem"></span></div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" disabled>Base</button>
+      <button class="tab" role="tab" data-view="diario" aria-selected="true">Diário</button>
+      <button class="tab" role="tab" data-view="tarefas" aria-selected="false">Tarefas</button>
+      <button class="tab" role="tab" data-view="email" aria-selected="false">Painel e e-mail das 8h</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="app"></main>
+
+<section class="wrap footer" id="sup">
+  <div class="box"><div class="boxh"><h2>Suposições que precisam do seu sim</h2><span class="xs mut">responda por número no WhatsApp</span></div>
+  <div class="boxb">
+    <ol class="sup">
+      <li><b>Quem pode agendar:</b> o analista responsável pela obra (o PCM) e o administrador. O dono do agendamento na tela Tarefas é quem agendou. Está certo, ou qualquer pessoa com acesso à Gestão de Obras deve poder?</li>
+      <li><b>Motivo obrigatório:</b> ninguém tira a obra do diário sem escolher um motivo (a lista curta do desenho, mais "Outro" com texto). Sim?</li>
+      <li><b>Máximo de 30 dias:</b> se o levantamento é daqui a 45 dias, a pessoa agenda de novo quando chegar a hora. Aceita 30, ou prefere outro limite?</li>
+      <li><b>Volta sozinha na data:</b> no dia marcado a obra reaparece no diário de manhã, sem ninguém precisar liberar. Se o levantamento atrasar, o analista agenda de novo. Sim?</li>
+      <li><b>Quais obras podem ser agendadas:</b> só as que estão em levantamento ou paralisadas, ou também as em andamento? Neste desenho o botão aparece em todas as que estão no diário.</li>
+      <li><b>Obra agendada não conta no "Responderam X/Y"</b> do painel e do e-mail das 8h. O e-mail mostra uma linha à parte: "3 agendadas (não contam)". Sim?</li>
+      <li><b>A tela Tarefas atual continua como está:</b> as tarefas que nascem do diário (faltou material, ferramenta, foto) não mudam. A seção "Agendadas" é nova e fica acima delas.</li>
+      <li><b>Extra que coloquei por conta própria:</b> no dia marcado a linha em Tarefas ganha o botão "Marcar como feito", que tira o agendamento da lista (a obra já voltou ao diário sozinha). Quer isso, ou o agendamento some sozinho depois do dia?</li>
+    </ol>
+  </div></div>
+</section>
+
+<script>
+/* ---------- dados ---------- */
+const ITENS=['Não faltou','Material','Ferramenta','Equipe','Documento / ART','Outro'];
+const BLOQ=['Clima','Cliente / loja','Disponibilidade de equipe','Contratação de prestador','Falta de material','Sem bloqueio'];
+const MOTIVOS=['Aguardando levantamento de material','Aguardando material','Aguardando cliente / liberação da loja','Outro'];
+const OQUE=['Levantamento de material','Levantamento de medidas','Visita técnica'];
+const lojasY=['DP Moema','DP Pinheiros','DP Tatuapé','DP Santana','DP Lapa','DP Vila Mariana','DP Itaim','DP Mooca','DP Butantã','DP Santo Amaro','DP Ipiranga','DP Perdizes','DP Brooklin','DP Saúde','DP Penha','DP Jabaquara','DP Campo Belo','DP Vila Olímpia','DP Liberdade','DP Bela Vista','DP Higienópolis','DP Consolação','DP Cambuci','DP Aclimação','DP Pompeia','DP Freguesia','DP Casa Verde','DP Vila Prudente','DP Interlagos','DP Morumbi','DP Tucuruvi','DP Cursino'];
+const lojasR=['DP Osasco Centro','DP Barueri','DP Guarulhos Centro','DP Santo André','DP São Bernardo','DP Diadema','DP São Caetano','DP Taboão'];
+const tipos=['Reforma','Adequação','Manutenção','Fachada','Climatização'];
+const descs=['Troca de piso da área de vendas','Adequação do balcão de atendimento','Reforma do forro e iluminação','Pintura e comunicação visual da fachada','Instalação de nova condensadora','Ajuste do depósito e prateleiras','Troca de portas automáticas'];
+const equipes=['Equipe Norte','Equipe Sul','Equipe Leste','Equipe Oeste'];
+const analistas=['Marina Alves','Rafael Dias','Camila Rocha'];
+const etapas=['andamento','levantamento','paralisado','andamento','andamento','levantamento'];
+let seq=7524;
+function mk(lojas,pcm,pref){return lojas.map((l,i)=>({id:pref+(i+1),loja:l,pcm,os:'1026-'+String(seq++).padStart(6,'0'),tipo:tipos[i%5],desc:descs[i%7],equipe:equipes[i%4],analista:analistas[i%3],etapa:etapas[i%6],dias:((i*7+3)%38)+4,prazo:'0'+(1+i%9)+'/11',seguidos:i%5===0?3:0,pend:i%4===1?'Confirmar material com o fornecedor':''}))}
+const OBRAS=[...mk(lojasY,'YURI','y'),...mk(lojasR,'ROBERTA','r')];
+const NOME={YURI:'Yuri',ROBERTA:'Roberta'};
+const COR={levantamento:'#5aa9f0',andamento:'#f05a28',paralisado:'#f4b73f'};
+const NET={levantamento:'Levantamento',andamento:'Em andamento',paralisado:'Paralisado'};
+function seed(){return [
+ {id:1,obra:'y3',oque:'Levantamento de material',motivo:'Aguardando levantamento de material',ate:'2026-10-22',por:'Yuri',pcm:'YURI',em:'2026-10-14',fim:false,cancel:false},
+ {id:2,obra:'y9',oque:'Levantamento de medidas',motivo:'Aguardando cliente / liberação da loja',ate:'2026-10-22',por:'Yuri',pcm:'YURI',em:'2026-10-14',fim:false,cancel:false},
+ {id:3,obra:'y14',oque:'Levantamento de material',motivo:'Aguardando material',ate:'2026-10-29',por:'Yuri',pcm:'YURI',em:'2026-10-13',fim:false,cancel:false},
+ {id:4,obra:'r3',oque:'Visita técnica',motivo:'Aguardando cliente / liberação da loja',ate:'2026-10-17',por:'Roberta',pcm:'ROBERTA',em:'2026-10-14',fim:false,cancel:false}
+]}
+['y3','y9','y14','r3'].forEach(id=>{const o=OBRAS.find(x=>x.id===id);o.etapa=id==='y14'?'paralisado':'levantamento'});
+
+/* ---------- estado ---------- */
+const S={papel:'analista',hoje:'2026-10-15',view:'diario',cen:'normal',ag:seed(),resp:{},cs:{},mostrar:4,abre:false,filtro:'',erro:false,nextId:10};
+
+/* ---------- utilitarios ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const D=iso=>new Date(iso+'T12:00:00Z');
+const iso=d=>d.toISOString().slice(0,10);
+const add=(i,n)=>{const d=D(i);d.setUTCDate(d.getUTCDate()+n);return iso(d)};
+const dm=i=>i.slice(8,10)+'/'+i.slice(5,7);
+const br=i=>dm(i)+'/'+i.slice(0,4);
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+const obraDe=id=>OBRAS.find(o=>o.id===id);
+const admin=()=>S.papel==='admin';
+function visiveis(){
+  if(S.cen==='vazio')return [];
+  return OBRAS.filter(o=>admin()?(!S.filtro||o.pcm===S.filtro):o.pcm==='YURI');
+}
+const pausaAtiva=a=>!a.fim&&!a.cancel&&S.hoje<a.ate;
+const voltou=a=>!a.fim&&!a.cancel&&S.hoje>=a.ate;
+function agDe(obraId){return S.ag.find(a=>a.obra===obraId&&!a.fim&&!a.cancel)}
+function agVisiveis(){return S.ag.filter(a=>pausaAtiva(a)&&(admin()?(!S.filtro||a.pcm===S.filtro):a.pcm==='YURI'))}
+function fila(){const pausadas=new Set(S.ag.filter(pausaAtiva).map(a=>a.obra));return visiveis().filter(o=>!pausadas.has(o.id))}
+
+/* ---------- views ---------- */
+function vDiario(){
+  const F=fila(), ags=agVisiveis();
+  const feitas=F.filter(o=>S.resp[o.id]), pend=F.filter(o=>!S.resp[o.id]);
+  pend.sort((a,b)=>(voltou(agDe(b.id)||{ate:'9'})?1:0)-(voltou(agDe(a.id)||{ate:'9'})?1:0)||b.dias-a.dias);
+  let h=`<h1>Diário do dia</h1><p class="mut" style="margin-top:4px">Uma obra por vez: responde, salva, ela sai da fila. Dá para parar no meio — hoje é ${br(S.hoje)}.</p>`;
+  if(admin()){
+    h+=`<div class="box" style="margin-top:16px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><label for="selAn" class="sm mut">Diário de quem</label>
+    <select id="selAn" class="inp" style="width:auto;min-width:11rem"><option value="">Todos os responsáveis</option><option value="YURI"${S.filtro==='YURI'?' selected':''}>YURI</option><option value="ROBERTA"${S.filtro==='ROBERTA'?' selected':''}>ROBERTA</option></select>
+    <span class="xs mut2">Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.</span></div>`;
+  }
+  if(F.length===0&&ags.length===0){
+    return h+`<div class="vazio" style="margin-top:16px"><b style="color:var(--tx)">Nenhuma obra para responder hoje</b><p class="sm" style="margin-top:4px">Não há obras em levantamento, andamento ou paralisadas neste diário.</p></div>`;
+  }
+  const pct=F.length?Math.round(feitas.length/F.length*100):0, z=pend.length===0;
+  h+=`<div class="box barra" style="margin-top:16px"><span class="n" style="color:${z?'var(--ok)':'var(--tx)'}">${pend.length}</span>
+    <span class="mut">${pend.length===1?'obra para responder hoje':'obras para responder hoje'}</span>
+    <span class="mut">·</span><button class="linkbtn" id="btnAg" aria-expanded="${S.abre}">${ags.length} ${ags.length===1?'agendada':'agendadas'} ${S.abre?'▴':'▾'}</button>
+    <span class="prog"><i style="width:${pct}%;${z?'background:var(--ok)':''}"></i></span><span class="mut">${feitas.length} de ${F.length} respondidas</span></div>`;
+  if(S.abre)h+=blocoAgendadas(ags);
+  if(pend.length===0&&F.length>0){
+    const and=feitas.filter(o=>S.resp[o.id].andou==='Sim').length;
+    h+=`<div class="suc"><div style="font-size:24px;color:var(--ok)">✓</div><h2 style="margin-top:4px;font-size:16px">Diário de hoje fechado</h2><p class="mut" style="margin-top:4px">As ${F.length} obras foram respondidas${ags.length?`. ${ags.length} ${ags.length===1?'agendada não conta':'agendadas não contam'} até a data de volta`:''}.</p><p class="mut" style="margin-top:8px"><b style="color:var(--tx)">${and}</b> andaram · <b style="color:var(--tx)">${F.length-and}</b> não andaram</p></div>`;
+  } else if(F.length===0){
+    h+=`<div class="vazio"><b style="color:var(--tx)">Nenhuma obra para responder hoje</b><p class="sm" style="margin-top:4px">Todas as obras deste diário estão agendadas. Elas voltam sozinhas nas datas marcadas.</p></div>`;
+  } else {
+    pend.slice(0,S.mostrar).forEach(o=>h+=cartao(o));
+    if(pend.length>S.mostrar)h+=`<div style="margin-top:16px;text-align:center"><button class="btn" id="btnMais">Mostrar mais obras (${pend.length-S.mostrar} na fila)</button><p class="xs mut2" style="margin-top:6px">Só para a demonstração não ficar enorme: na tela real todas as ${pend.length} aparecem em sequência.</p></div>`;
+  }
+  if(feitas.length){h+=`<section style="margin-top:24px"><h2>Já respondidas</h2>`;feitas.forEach(o=>{const r=S.resp[o.id];h+=`<div class="feita"><span style="color:var(--ok)">✓</span><b>${esc(o.loja)}</b><span class="sm mut">${r.andou==='Sim'?'Andou hoje':'Não andou hoje · '+esc(r.motivo)}${r.item!=='Não faltou'?' · faltou '+esc(r.item.toLowerCase()):''}</span><button class="btn sm" style="margin-left:auto" data-desfaz="${o.id}">Desfazer</button></div>`});h+=`</section>`}
+  return h;
+}
+function blocoAgendadas(ags){
+  let h=`<div class="box" style="margin-top:8px"><div class="boxh"><h2>Agendadas — fora do diário até a data</h2><span class="xs mut">voltam sozinhas no dia</span></div><div class="boxb">`;
+  if(!ags.length)return h+`<p class="mut">Nenhuma obra agendada. Quando alguém tirar uma obra do diário por causa de um levantamento, ela aparece aqui.</p></div></div>`;
+  h+=`<div class="agl" style="margin-top:0">`;
+  ags.forEach(a=>{const o=obraDe(a.obra);h+=`<div class="ag"><div class="l1"><b>${esc(o.loja)}</b><span class="xs mut">OS ${o.os}</span><span class="pill" style="margin-left:auto">volta em ${dm(a.ate)}</span></div>
+   <p class="do" style="margin-top:2px">${esc(a.oque)}</p><p class="sm mut">Motivo: ${esc(a.motivo)} · agendou <b style="color:var(--tx)">${esc(a.por)}</b> em ${dm(a.em)}</p>
+   ${(admin()||a.pcm==='YURI')?`<button class="btn sm" style="margin-top:8px" data-volta="${a.id}">Trazer de volta agora</button>`:''}</div>`});
+  return h+`</div></div></div>`;
+}
+function cartao(o){
+  const c=S.cs[o.id]||(S.cs[o.id]={andou:null,item:'Não faltou',motivo:null});
+  const a=agDe(o.id), vt=a&&voltou(a);
+  const prob=!c.andou?'Responda se a obra andou hoje.':(c.andou==='Não'&&!c.motivo?'Diga por que não andou.':null);
+  let hint=prob||(c.andou==='Sim'?`Ao salvar: a obra sai da fila e hoje (${dm(S.hoje)}) entra na ficha dela como dia que andou.`:`Ao salvar: a obra sai da fila e hoje (${dm(S.hoje)}) entra na ficha dela como dia parado por ${esc(c.motivo.toLowerCase())}.`);
+  const chips=(rot,ops,val,key,cls)=>`<span class="lbl">${rot}</span><div class="chips" role="group" aria-label="${rot}">${ops.map(v=>`<button class="chip ${cls&&v==='Sim'?'sim':''} ${cls&&v==='Não'?'nao':''}" aria-pressed="${val===v}" data-c="${o.id}" data-k="${key}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>`;
+  return `<article class="card${vt?' volta':''}" style="border-left-color:${COR[o.etapa]}">
+  <div class="cab"><div><div class="os">OS ${o.os} · ${o.tipo}</div><div class="loja">${esc(o.loja)}</div><p class="mut" style="margin-top:4px">${esc(o.desc)}</p>
+  <div class="meta"><span>Equipe <b>${o.equipe}</b></span><span>Analista <b>${o.analista}</b></span>${admin()&&!S.filtro?`<span>Responsável <b>${o.pcm}</b></span>`:''}<span>Prazo <b>${o.prazo}</b></span></div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-shrink:0"><span class="etapa"><i style="background:${COR[o.etapa]}"></i>${NET[o.etapa]}</span><span class="sm mut"><b style="color:var(--tx)">${o.dias}</b> dias em aberto</span></div></div>
+  ${vt?`<div class="voltou"><b>Voltou do agendamento:</b> ${esc(lc(a.oque))} previsto para ${a.ate===S.hoje?'hoje':dm(a.ate)}.<div class="xs mut" style="margin-top:2px">Agendado por ${esc(a.por)} · motivo: ${esc(a.motivo)}</div></div>`:''}
+  ${o.pend?`<p class="pend"><b style="color:var(--tx)">Pendência:</b> ${esc(o.pend)}</p>`:''}
+  ${o.seguidos?`<div class="cont">${o.seguidos} dias seguidos sem andar<div class="mut" style="margin-top:4px">Registre e siga: o contador continua correndo até a obra andar.</div></div>`:''}
+  ${chips('Andou hoje?',['Sim','Não'],c.andou,'andou',true)}
+  ${chips('Faltou algum item?',ITENS,c.item,'item')}
+  ${c.andou==='Não'?chips('Por que não andou?',BLOQ,c.motivo,'motivo'):''}
+  <div class="acoes"><button class="btn pri" data-salvar="${o.id}" ${prob?'disabled':''}>Salvar e sair da fila</button><span class="hint ${prob&&c.andou?'w':''}">${hint}</span></div>
+  <div class="sep"><button class="btn agendar" data-agendar="${o.id}">📅 Agendar e tirar do diário</button>
+  <span class="hint" style="display:block;margin-top:6px">Para obra que só será levantada mais tarde: ela sai do diário até a data que você escolher.</span></div>
+  </article>`;
+}
+function vTarefas(){
+  const ags=S.ag.filter(a=>!a.fim&&!a.cancel&&(admin()?(!S.filtro||a.pcm===S.filtro):a.pcm==='YURI')).sort((a,b)=>a.ate.localeCompare(b.ate));
+  let h=`<h1>Tarefas</h1><p class="mut" style="margin-top:4px">Toda falta registrada no diário vira tarefa com dono e prazo. Ninguém digita tarefa aqui: ela nasce no instante em que o analista salva a resposta do dia.</p>`;
+  h+=`<div class="box" style="margin-top:16px;border-color:var(--org)"><div class="boxh"><h2>Agendadas <span class="badge-novo">novo</span></h2><span class="xs mut">${ags.length} ${ags.length===1?'obra fora':'obras fora'} do diário</span></div><div class="boxb">
+  <p class="sm mut">Obras que saíram do diário até a data do levantamento. No dia marcado elas voltam sozinhas.</p>`;
+  if(!ags.length)h+=`<div class="vazio" style="margin-top:10px;padding:14px">Nenhuma obra agendada. Quando alguém tirar uma obra do diário por causa de um levantamento, ela aparece aqui.</div>`;
+  else{h+=`<div class="agl">`;ags.forEach(a=>{const o=obraDe(a.obra),hj=S.hoje>=a.ate;
+    h+=`<div class="ag${hj?' hoje':''}"><div class="l1"><span class="do">${hj?`Hoje: ${esc(lc(a.oque))} na ${esc(o.loja)}`:esc(a.oque)}</span>${hj?'':`<span class="pill" style="margin-left:auto">${dm(a.ate)}</span>`}</div>
+    <p class="sm mut" style="margin-top:2px">${hj?'':`<b style="color:var(--tx)">${esc(o.loja)}</b> · `}OS ${o.os} · dono <b style="color:var(--tx)">${esc(a.por)}</b> · motivo: ${esc(a.motivo)}</p>
+    ${hj?`<p class="sm" style="margin-top:4px;color:var(--org)">A obra já voltou ao diário${a.ate!==S.hoje?` desde ${dm(a.ate)}`:''}.</p><button class="btn sm" style="margin-top:6px" data-feito="${a.id}">Marcar como feito</button>`:''}</div>`});h+=`</div>`}
+  h+=`</div></div>`;
+  h+=`<p class="xs mut2" style="margin-top:20px">Abaixo: a tela de hoje, sem nenhuma mudança (suposição 7).</p>
+  <div class="kpis"><div class="kpi"><b style="color:var(--org)">3</b><span class="sm mut">tarefas abertas agora</span></div><div class="kpi"><b style="color:var(--warn)">1</b><span class="sm mut">passou do prazo</span></div><div class="kpi"><b>2</b><span class="sm mut">faltas viraram tarefa hoje</span></div></div>
+  <h2 style="margin-top:20px">Na mão de quem, e há quantos dias</h2>
+  <div class="box" style="margin-top:10px"><div class="boxh"><h2>Obras · Yuri</h2><span class="xs mut">2 tarefas</span></div><div class="boxb">
+   <div class="tl" style="border-left:3px solid var(--err)"><b>Faltou equipe</b> <span class="xs mut">OS 1026-007531 · DP Santana</span><p class="xs mut">prazo fim do dia 13/10 · há 2 dia(s) na mão · sem resposta há 2 dias</p></div>
+   <div class="tl" style="border-left:3px solid var(--org)"><b>Faltou ferramenta</b> <span class="xs mut">OS 1026-007539 · DP Pompeia</span><p class="xs mut">prazo fim do dia 15/10 · esperando resposta</p></div></div></div>
+  <div class="box" style="margin-top:12px"><div class="boxh"><h2>Almoxarifado · Roberta</h2><span class="xs mut">1 tarefa</span></div><div class="boxb">
+   <div class="tl" style="border-left:3px solid var(--org)"><b>Faltou material</b> <span class="xs mut">OS 1026-007545 · DP Osasco Centro</span><p class="xs mut">prazo fim do dia 15/10 · esperando resposta</p></div></div></div>`;
+  return h;
+}
+function vEmail(){
+  const F=fila(), ags=agVisiveis(), fe=F.filter(o=>S.resp[o.id]).length, tot=F.length, pct=tot?Math.round(fe/tot*100):0;
+  const sem=tot+ags.length;
+  return `<h1>Painel e e-mail das 8h</h1><p class="mut" style="margin-top:4px">Como o contador "Responderam X/Y" fica. A obra agendada sai do total. Os números abaixo acompanham a tela do Diário.</p>
+  <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"><button class="btn" id="btnSim12">Simular manhã: 12 já responderam</button><button class="btn" id="btnLimpa">Zerar respostas</button></div>
+  <div class="mail" style="margin-top:16px"><div class="h">Gestão de Obras · Relatório diário · 08:01</div><div class="b">
+  <div class="gr">RITMO DO DIÁRIO${admin()?(S.filtro?' · '+S.filtro:' · todos'):' · YURI'}</div>
+  <div class="big">Responderam ${fe}/${tot}</div><div class="pb"><i style="width:${pct}%"></i></div>
+  <div style="font-size:13px">${tot-fe} ainda aguardam resposta</div>
+  <div style="font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid #e3e8ef"><b>${ags.length} ${ags.length===1?'agendada':'agendadas'}</b> <span class="gr">(não contam)</span></div>
+  ${ags.map(a=>`<div class="gr" style="margin-top:2px">${esc(obraDe(a.obra).loja)} · ${esc(lc(a.oque))} · volta em ${dm(a.ate)}</div>`).join('')}
+  </div></div>
+  <p class="sm mut" style="margin-top:12px">Sem o agendamento o e-mail diria <b style="color:var(--tx)">${fe}/${sem}</b> e "${sem-fe} aguardam resposta" — com obras que ninguém consegue responder.</p>`;
+}
+
+/* ---------- dialogo ---------- */
+function abrirDialogo(obraId){
+  const o=obraDe(obraId), amanha=add(S.hoje,1), max=add(S.hoje,30);
+  const f={oque:OQUE[0],motivo:null,outro:'',data:''};
+  const ov=document.createElement('div');ov.className='ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Agendar e tirar do diário');
+  ov.innerHTML=`<div class="dlg">
+   <div class="os">OS ${o.os} · ${o.tipo}</div><h2 style="font-size:17px;margin-top:2px">Agendar e tirar do diário</h2><p class="mut">${esc(o.loja)} · ${esc(o.desc)}</p>
+   <span class="lbl">O que vai acontecer?</span>
+   <input class="inp" id="fOque" maxlength="80" value="${OQUE[0]}" style="margin-top:6px" aria-label="O que vai acontecer">
+   <div class="chips">${OQUE.map(v=>`<button type="button" class="chip" style="min-height:36px;font-size:12px" data-sug="${esc(v)}">${v}</button>`).join('')}</div>
+   <span class="lbl">Por que a obra está parada?</span>
+   <div class="chips" id="fMot">${MOTIVOS.map(v=>`<button type="button" class="chip" aria-pressed="false" data-mot="${esc(v)}">${v}</button>`).join('')}</div>
+   <input class="inp" id="fOutro" maxlength="100" placeholder="Escreva o motivo em uma linha" style="margin-top:8px;display:none" aria-label="Outro motivo">
+   <span class="lbl">Até quando? (a obra volta ao diário nesse dia)</span>
+   <input class="inp" id="fData" type="date" min="${amanha}" max="${max}" style="margin-top:6px;max-width:14rem" aria-label="Até quando">
+   <p class="xs mut2" style="margin-top:4px">Entre ${dm(amanha)} e ${dm(max)} (máximo de 30 dias).</p>
+   <div class="conseq" id="fCons"></div>
+   <div id="fErr"></div>
+   <div style="display:flex;flex-direction:column-reverse;gap:8px;margin-top:16px" id="fBtns"><button class="btn" id="fCan">Cancelar</button><button class="btn pri" id="fOk" disabled>Agendar e tirar do diário</button></div>
+   <p class="hint" id="fHint" style="margin-top:6px"></p></div>`;
+  document.body.appendChild(ov);
+  const q=s=>ov.querySelector(s);
+  function upd(){
+    const motOk=f.motivo&&(f.motivo!=='Outro'||f.outro.trim());
+    const dOk=f.data&&f.data>=amanha&&f.data<=max;
+    const oOk=f.oque.trim().length>0;
+    const mot=f.motivo==='Outro'?(f.outro.trim()||'Outro'):(f.motivo||'—');
+    const d=dOk?dm(f.data):'__/__';
+    q('#fCons').innerHTML=`<b>O que acontece quando você confirmar</b><ul>
+     <li>A obra sai do diário até <b>${d}</b>. Ninguém precisa responder o diário dela até lá.</li>
+     <li>No dia <b>${d}</b> ela volta sozinha para o diário.</li>
+     <li>O agendamento aparece em Tarefas, com <b>${admin()?'você (admin)':'você'}</b> como dono.</li>
+     <li>Ela deixa de contar no "Responderam X/Y" do painel e do e-mail das 8h.</li></ul>`;
+    q('#fOk').disabled=!(motOk&&dOk&&oOk);
+    q('#fHint').textContent=!oOk?'Diga o que vai acontecer.':!f.motivo?'Escolha o motivo da parada.':!motOk?'Escreva o motivo.':!dOk?'Escolha uma data entre amanhã e 30 dias.':'';
+  }
+  q('#fOque').oninput=e=>{f.oque=e.target.value;upd()};
+  ov.querySelectorAll('[data-sug]').forEach(b=>b.onclick=()=>{f.oque=b.dataset.sug;q('#fOque').value=f.oque;upd()});
+  ov.querySelectorAll('[data-mot]').forEach(b=>b.onclick=()=>{f.motivo=b.dataset.mot;ov.querySelectorAll('[data-mot]').forEach(x=>x.setAttribute('aria-pressed',x===b));q('#fOutro').style.display=f.motivo==='Outro'?'block':'none';upd()});
+  q('#fOutro').oninput=e=>{f.outro=e.target.value;upd()};
+  q('#fData').oninput=e=>{f.data=e.target.value;upd()};
+  const fechar=()=>ov.remove();
+  q('#fCan').onclick=fechar; ov.onclick=e=>{if(e.target===ov)fechar()};
+  q('#fOk').onclick=()=>{
+    const btn=q('#fOk');btn.disabled=true;btn.textContent='salvando…';
+    setTimeout(()=>{
+      if(S.erro){
+        q('#fErr').innerHTML=`<div class="erro" role="alert"><div class="err-t">Não deu para agendar</div>A conexão falhou na hora de salvar. <b>Nada mudou:</b> a obra continua no diário e nenhuma tarefa foi criada. Tente de novo; se continuar, avise o suporte da Manfac.</div>`;
+        btn.textContent='Tentar de novo';btn.disabled=false;return;
+      }
+      S.ag.push({id:S.nextId++,obra:o.id,oque:f.oque.trim(),motivo:f.motivo==='Outro'?'Outro: '+f.outro.trim():f.motivo,ate:f.data,por:admin()?'Admin (João)':'Yuri',pcm:o.pcm,em:S.hoje,fim:false,cancel:false});
+      fechar();toast(`Obra agendada. Sai do diário até ${dm(f.data)} e volta sozinha nesse dia.`);render();
+    },450);
+  };
+  upd();q('#fOque').focus();
+}
+function toast(t){const e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),4200)}
+
+/* ---------- render e eventos ---------- */
+function render(){
+  document.getElementById('quem').textContent=admin()?'· Admin':'· Yuri (PCM)';
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===S.view));
+  document.getElementById('app').innerHTML=S.view==='diario'?vDiario():S.view==='tarefas'?vTarefas():vEmail();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  const d=t.dataset;
+  if(d.papel){S.papel=d.papel;S.filtro='';document.querySelectorAll('#segPapel button').forEach(b=>b.setAttribute('aria-pressed',b===t));S.mostrar=4;render()}
+  else if(d.hoje){S.hoje=d.hoje;document.querySelectorAll('#segHoje button').forEach(b=>b.setAttribute('aria-pressed',b===t));render()}
+  else if(d.view){S.view=d.view;render();window.scrollTo(0,0)}
+  else if(t.id==='btnAg'){S.abre=!S.abre;render()}
+  else if(t.id==='btnMais'){S.mostrar+=8;render()}
+  else if(d.c){const c=S.cs[d.c];c[d.k]=d.v;if(d.k==='andou'&&d.v==='Sim')c.motivo=null;render()}
+  else if(d.salvar){const c=S.cs[d.salvar];S.resp[d.salvar]={...c};render()}
+  else if(d.desfaz){delete S.resp[d.desfaz];render()}
+  else if(d.agendar){abrirDialogo(d.agendar)}
+  else if(d.volta){const a=S.ag.find(x=>x.id==d.volta);a.cancel=true;toast(`${obraDe(a.obra).loja} voltou para o diário.`);render()}
+  else if(d.feito){const a=S.ag.find(x=>x.id==d.feito);a.fim=true;render()}
+  else if(t.id==='btnSim12'){fila().filter(o=>!S.resp[o.id]).slice(0,12).forEach(o=>S.resp[o.id]={andou:'Sim',item:'Não faltou',motivo:null});render()}
+  else if(t.id==='btnLimpa'){S.resp={};render()}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='selAn'){S.filtro=e.target.value;S.mostrar=4;render()}
+  else if(e.target.id==='selCen'){S.cen=e.target.value;S.ag=e.target.value==='normal'?seed():[];S.resp={};S.cs={};render()}
+  else if(e.target.id==='chkErro'){S.erro=e.target.checked}
+});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Botões Compra e Medição</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --orange:#f05a28; --muted:#94a3b8; --border:#1e3a5f;
+  --text:#e8eef7; --dim:#64748b; --green:#35c98a; --amber:#f4b73f; --red:#ff4d6d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5;overflow-x:hidden}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+h1,h2,h3,p{margin:0}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+/* alternador */
+.switch{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px}
+.switch .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.seg{display:grid;grid-template-columns:1fr;gap:6px}
+@media(min-width:700px){.seg{grid-template-columns:repeat(4,1fr)}}
+.seg button{background:var(--bg);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.seg button[aria-pressed=true]{border-color:var(--orange);color:var(--text);background:rgba(240,90,40,.12)}
+.seg button:focus-visible,.btn:focus-visible,.item:focus-visible,.xbtn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* ficha */
+.box{background:var(--navy);border:1px solid var(--border);border-radius:10px;margin-bottom:16px}
+.boxh{padding:10px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.boxh small{font-weight:400;color:var(--dim);font-size:11px}
+.boxb{padding:14px 16px}
+header.fh{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+header.fh h2{font-size:20px;font-weight:600}
+header.fh .os{font-size:12px;color:var(--muted);margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{border:1px solid var(--border);border-radius:999px;padding:1px 9px;font-size:11px;color:var(--muted)}
+.tag.o{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+
+/* barra de ações */
+.acoes{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+.acoes .titulo{width:100%;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bw{position:relative;flex:1 1 100%}
+@media(min-width:700px){.bw{flex:0 1 280px}}
+.btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:11px 14px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;border:1px solid var(--border)}
+.btn.prim{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.sec{background:transparent;color:var(--text);border-color:var(--orange)}
+.btn.prim:hover{filter:brightness(1.08)} .btn.sec:hover{background:rgba(240,90,40,.12)}
+.btn[aria-disabled=true]{background:transparent;color:var(--dim);border:1px dashed var(--border);cursor:not-allowed}
+.btn[aria-disabled=true]:hover{filter:none;background:transparent}
+.ext{font-size:12px;opacity:.85}
+.nota{margin-top:6px;font-size:12px;color:var(--muted)}
+.nota.aviso{color:var(--amber)}
+.menu{margin-top:6px;background:var(--bg);border:1px solid var(--orange);border-radius:8px;overflow:hidden}
+.menu .mh{padding:8px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
+.item{display:block;width:100%;text-align:left;background:transparent;color:var(--text);border:0;border-bottom:1px solid var(--border);padding:10px 12px;font:inherit;cursor:pointer;min-height:44px}
+.item:last-child{border-bottom:0}
+.item:hover{background:rgba(240,90,40,.12)}
+.item b{font-family:"JetBrains Mono",monospace;font-weight:500;color:var(--orange)}
+.item span{display:block;font-size:12px;color:var(--muted)}
+
+/* blocos de apoio da ficha */
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(min-width:700px){.grid4{grid-template-columns:repeat(4,1fr)}}
+.k{font-size:11px;color:var(--dim)} .v{font-size:13px}
+.skel{height:10px;border-radius:5px;background:var(--border);margin:8px 0;opacity:.6}
+
+/* nova aba simulada */
+.ov{position:fixed;inset:0;background:rgba(5,10,20,.8);display:none;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;z-index:10}
+.ov.on{display:flex}
+.win{width:100%;max-width:760px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:auto 0}
+.tabbar{background:#07101f;display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tabbar .t{background:var(--bg);border:1px solid var(--border);border-bottom:0;border-radius:6px 6px 0 0;padding:4px 10px;white-space:nowrap}
+.tabbar .t.dim{opacity:.6;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.tabbar .sp{flex:1}
+.xbtn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;min-height:36px}
+.url{background:#07101f;padding:6px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.url b{color:var(--text);font-weight:500}
+.app{padding:16px}
+.app h3{font-size:17px;margin-bottom:2px}
+.fld{margin-top:14px}
+.fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.inp{width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font:inherit;font-size:13px;min-height:42px}
+.inp.fill{border-color:rgba(53,201,138,.5)}
+.inp.todo{border-style:dashed;border-color:var(--orange);color:var(--muted)}
+.chip{display:inline-block;font-size:10px;border-radius:999px;padding:0 7px;margin-left:6px}
+.chip.g{background:rgba(53,201,138,.15);color:var(--green)}
+.chip.o{background:rgba(240,90,40,.15);color:var(--orange)}
+.row2{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:600px){.row2{grid-template-columns:1fr 1fr}}
+.rodape-app{margin-top:16px;font-size:12px;color:var(--dim)}
+
+/* suposições */
+.sup{margin-top:24px}
+.sup h2{font-size:18px;margin-bottom:4px}
+.sup ol{padding:0;margin:12px 0 0;list-style:none;counter-reset:s;display:grid;gap:10px}
+.sup li{counter-increment:s;background:var(--navy);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:12px 14px 12px 44px;position:relative}
+.sup li::before{content:counter(s);position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.sup li b{display:block;margin-bottom:2px}
+.sup li span{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="switch" role="group" aria-label="Estado da obra no mockup">
+    <div class="lbl">Mockup: troque o estado da obra</div>
+    <div class="seg" id="seg">
+      <button data-e="antiga" aria-pressed="false">Obra antiga (antes do corte)</button>
+      <button data-e="semcontrato" aria-pressed="false">Obra nova sem contrato</button>
+      <button data-e="um" aria-pressed="true">Obra nova com 1 contrato</button>
+      <button data-e="dois" aria-pressed="false">Obra nova com 2 contratos</button>
+    </div>
+  </div>
+
+  <header class="fh">
+    <div>
+      <h2 id="loja">Drogaria São Paulo 0412 – Moema</h2>
+      <p class="os mono" id="osline">OS 1026-007524 · Pintura e reparo de forro · R$ 18.450,00</p>
+      <div class="tags">
+        <span class="tag o">Execução em campo</span>
+        <span class="tag">OS aprovada</span>
+        <span class="tag" id="criada">criada em 18/11/2026</span>
+      </div>
+    </div>
+
+    <div class="acoes" aria-label="Pedir a outros sistemas">
+      <div class="titulo">Pedir a partir desta obra</div>
+      <div class="bw" id="bw-compra"></div>
+      <div class="bw" id="bw-med"></div>
+    </div>
+  </header>
+
+  <div class="box">
+    <div class="boxh">Ciclo de vida da obra <small>onde ela está, de quem é a vez e há quanto tempo</small></div>
+    <div class="boxb">
+      <div class="grid4">
+        <div><div class="k">Etapa atual</div><div class="v">Execução em campo</div></div>
+        <div><div class="k">Dono da etapa</div><div class="v">Equipe Sul 2</div></div>
+        <div><div class="k">Prazo</div><div class="v">3 dias restantes</div></div>
+        <div><div class="k">Caminho</div><div class="v">direto, a OS já estava aprovada</div></div>
+      </div>
+      <div class="skel" style="width:90%;margin-top:16px"></div>
+      <div class="skel" style="width:70%"></div>
+    </div>
+  </div>
+  <div class="box">
+    <div class="boxh">Autorização · Identificação · Cronograma <small>demais blocos da ficha, sem mudança</small></div>
+    <div class="boxb"><div class="skel" style="width:85%"></div><div class="skel" style="width:60%"></div><div class="skel" style="width:75%"></div></div>
+  </div>
+
+  <section class="sup" aria-labelledby="sup-t">
+    <h2 id="sup-t">Suposições que precisam do seu sim</h2>
+    <p style="color:var(--muted);font-size:13px">Respondam pelo WhatsApp, pelo número. Enquanto não houver resposta, o mockup segue o que está escrito abaixo.</p>
+    <ol>
+      <li><b>Data de corte: 01/11/2026 (valor provisório).</b><span>A data de corte vale só para a medição, porque obra antiga não tem contrato. "Solicitar compra" funciona em qualquer obra, já que o Compras não depende de contrato. Qual data vale de verdade? Obs.: a data é a de entrada da obra no sistema, não a do início do serviço.</span></li>
+      <li><b>O "pop-up" vira uma nova aba do navegador.</b><span>O clique abre o Compras ou o Gestão de Fornecedores em outra aba, já com a obra escolhida, e a ficha continua aberta. Um pop-up de verdade dentro da tela exigiria mexer na segurança dos dois sistemas. Nova aba serve?</span></li>
+      <li><b>Quem pode pedir medição.</b><span>Hoje só consegue pedir medição quem criou o contrato ou tem papel no Gestão de Fornecedores. Quem tem acesso a Obras, mas não está nessa lista, clica e a tela diz que não achou o contrato. Essa pessoa deve conseguir pedir medição também?</span></li>
+      <li><b>Obra antiga: botão escondido ou desligado com aviso?</b><span>No desenho, o botão de medição aparece apagado com a frase "Disponível só para obras criadas a partir de 01/11/2026". A alternativa é não mostrar nada. Qual prefere?</span></li>
+    </ol>
+  </section>
+</div>
+
+<!-- nova aba simulada -->
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Simulação de nova aba">
+  <div class="win">
+    <div class="tabbar">
+      <span class="t dim">Ficha da obra</span>
+      <span class="t" id="tabnome">Compras</span>
+      <span class="sp"></span>
+      <button class="xbtn" id="fechar">Fechar aba (volta à ficha)</button>
+    </div>
+    <div class="url mono" id="url"></div>
+    <div class="app" id="app"></div>
+  </div>
+</div>
+
+<script>
+var OBRA = {id:"3f9a1c2e-7b44-4d0e-9a61-0c5d2e8b7a10", loja:"Drogaria São Paulo 0412 – Moema", os:"1026-007524",
+  desc:"Pintura e reparo de forro na área de vendas"};
+var CORTE = "01/11/2026";
+var ESTADOS = {
+  antiga:{criada:"criada em 14/05/2026", antiga:true, cts:[]},
+  semcontrato:{criada:"criada em 18/11/2026", antiga:false, cts:[]},
+  um:{criada:"criada em 18/11/2026", antiga:false, cts:[{id:"CT-0003",nome:"Pintura",forn:"Tintas & Reformas Alvorada Ltda."}]},
+  dois:{criada:"criada em 18/11/2026", antiga:false, cts:[{id:"CT-0003",nome:"Pintura",forn:"Tintas & Reformas Alvorada Ltda."},{id:"CT-0007",nome:"Elétrica",forn:"Eletro Norte Instalações"}]}
+};
+var estado = "um", menuAberto = false, ultimoFoco = null;
+var $ = function(id){return document.getElementById(id)};
+
+function render(){
+  var e = ESTADOS[estado];
+  $("criada").textContent = e.criada;
+  document.querySelectorAll("#seg button").forEach(function(b){b.setAttribute("aria-pressed", String(b.dataset.e===estado))});
+  var c = $("bw-compra"), m = $("bw-med");
+
+  // Solicitar compra
+  {
+    c.innerHTML = '<button class="btn prim" id="b-compra">Solicitar compra <span class="ext" aria-hidden="true">↗</span></button><p class="nota">Abre o Compras em nova aba, com esta obra.</p>';
+    $("b-compra").onclick = function(ev){ultimoFoco=ev.currentTarget;abrirCompra()};
+  }
+
+  // Solicitar medição
+  var n = e.cts.length;
+  if(e.antiga){
+    m.innerHTML = '<button class="btn" aria-disabled="true">Solicitar medição</button><p class="nota">Disponível só para obras criadas a partir de '+CORTE+'</p>';
+  } else if(n===0){
+    m.innerHTML = '<button class="btn" aria-disabled="true" aria-describedby="n-med">Solicitar medição</button><p class="nota aviso" id="n-med">Esta obra ainda não tem contrato aprovado no Gestão de Fornecedores</p>';
+  } else if(n===1){
+    m.innerHTML = '<button class="btn sec" id="b-med">Solicitar medição <span class="ext" aria-hidden="true">↗</span></button><p class="nota">Contrato <span class="mono">'+e.cts[0].id+'</span> · '+e.cts[0].nome+'. Abre o Gestão de Fornecedores em nova aba.</p>';
+    $("b-med").onclick = function(ev){ultimoFoco=ev.currentTarget;abrirMedicao(e.cts[0])};
+  } else {
+    var h = '<button class="btn sec" id="b-med" aria-haspopup="true" aria-expanded="'+menuAberto+'">Solicitar medição <span class="ext" aria-hidden="true">'+(menuAberto?'▴':'▾')+'</span></button>';
+    if(menuAberto){
+      h += '<div class="menu" role="menu"><div class="mh">Esta obra tem '+n+' contratos aprovados. De qual é a medição?</div>';
+      e.cts.forEach(function(ct,i){h += '<button class="item" role="menuitem" data-i="'+i+'"><b>'+ct.id+'</b> '+ct.nome+' – '+ct.forn.split(" ").slice(0,2).join(" ")+'<span>'+ct.forn+'</span></button>'});
+      h += '</div>';
+    } else h += '<p class="nota">'+n+' contratos aprovados nesta obra. Escolha o contrato ao clicar.</p>';
+    m.innerHTML = h;
+    $("b-med").onclick = function(){menuAberto=!menuAberto;render();if(menuAberto){var f=document.querySelector(".item");if(f)f.focus()}};
+    m.querySelectorAll(".item").forEach(function(it){it.onclick=function(){menuAberto=false;ultimoFoco=null;abrirMedicao(e.cts[+it.dataset.i]);render()}});
+  }
+}
+
+function abrir(nome,url,html){
+  $("tabnome").textContent = nome;
+  $("url").innerHTML = 'hub.manfac.com.br<b>'+url+'</b>';
+  $("app").innerHTML = html;
+  $("ov").classList.add("on");
+  $("fechar").focus();
+}
+function abrirCompra(){
+  abrir("Compras","/compras/solicitacoes/nova?obra="+OBRA.id,
+   '<h3>Nova solicitação de compra</h3><p style="color:var(--muted);font-size:13px">A obra já veio escolhida pela ficha.</p>'+
+   '<div class="fld"><label>Obra <span class="chip g">preenchida pela ficha</span></label><div class="inp fill"><span class="mono">OS '+OBRA.os+'</span> · '+OBRA.loja+'<br><span style="color:var(--muted);font-size:12px">'+OBRA.desc+'</span></div></div>'+
+   '<div class="fld"><label>Centro de custo <span class="chip o">você escolhe</span></label><div class="inp todo">Selecione o centro de custo…</div></div>'+
+   '<div class="row2"><div class="fld"><label>Tipo</label><div class="inp todo">Selecione…</div></div><div class="fld"><label>Prazo necessário</label><div class="inp todo">dd/mm/aaaa</div></div></div>'+
+   '<div class="fld"><label>Motivo</label><div class="inp todo" style="min-height:64px">Explique por que precisa (mínimo 10 letras)…</div></div>'+
+   '<div class="fld"><label>Itens</label><div class="inp todo">Adicionar item…</div></div>'+
+   '<p class="rodape-app">Telas do Compras, só para mostrar o que chega preenchido. O restante do formulário é o que já existe lá.</p>');
+}
+function abrirMedicao(ct){
+  abrir("Gestão de Fornecedores","/fornecedores/medicoes/nova?contrato="+ct.id,
+   '<h3>Nova medição</h3><p style="color:var(--muted);font-size:13px">O contrato já veio escolhido pela ficha.</p>'+
+   '<div class="fld"><label>Contrato <span class="chip g">preenchido pela ficha</span></label><div class="inp fill"><span class="mono">'+ct.id+'</span> · '+ct.nome+'<br><span style="color:var(--muted);font-size:12px">'+ct.forn+'</span></div></div>'+
+   '<div class="fld"><label>Obra <span class="chip g">herdada do contrato</span></label><div class="inp fill"><span class="mono">OS '+OBRA.os+'</span> · '+OBRA.loja+'</div></div>'+
+   '<div class="row2"><div class="fld"><label>Valor</label><div class="inp todo">R$ 0,00</div></div><div class="fld"><label>Data do serviço</label><div class="inp todo">dd/mm/aaaa</div></div></div>'+
+   '<div class="fld"><label>Descrição do serviço</label><div class="inp todo" style="min-height:64px">Descreva o que foi executado…</div></div>'+
+   '<div class="fld"><label>Evidência (anexo)</label><div class="inp todo">Anexar arquivo…</div></div>'+
+   '<p class="rodape-app">Telas do Gestão de Fornecedores, só para mostrar o que chega preenchido. O restante é o que já existe lá.</p>');
+}
+function fechar(){
+  $("ov").classList.remove("on");
+  if(ultimoFoco&&document.body.contains(ultimoFoco))ultimoFoco.focus();
+}
+$("fechar").onclick = fechar;
+$("ov").onclick = function(ev){if(ev.target===$("ov"))fechar()};
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape"){ if($("ov").classList.contains("on"))fechar(); else if(menuAberto){menuAberto=false;render()} }
+});
+document.querySelectorAll("#seg button").forEach(function(b){b.onclick=function(){estado=b.dataset.e;menuAberto=false;fechar();render()}});
+render();
+</script>
+</body>
+</html>
