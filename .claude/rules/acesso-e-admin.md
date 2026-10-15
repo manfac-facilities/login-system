@@ -21,7 +21,7 @@ Duas tabelas guardam autorização, e as duas só têm policy de leitura (`authe
 read`, SELECT) — escrita é assunto da seção seguinte:
 
 - **`hub_system_access`** (`user_email`, `system_slug`, `has_access`, `granted_by`),
-  criada em `sdd-sql-conversor-os.sql`.
+  criada em `sdd-sql-conversor-os.sql` (arquivo histórico do tempo do Conversor de OS).
 - **`hub_user_roles`** (`user_email` UNIQUE, `nivel` em `analista`|`administrador`,
   `granted_by`). Criada e semeada em produção em 2026-08-07, migration
   `admin_usuarios_hub_user_roles`.
@@ -53,8 +53,8 @@ Não "corrija" essa ausência.
 
 ## `app/crm/page.tsx` repete a checagem que o middleware já fez — não remova
 
-O CRM (`/crm`) existe desde a Frente B do site — slug `crm` em `lib/sistemas.ts:12`,
-rota no `matcher` em `middleware.ts:131`. Lista os leads capturados em
+O CRM (`/crm`) existe desde a Frente B do site — slug `crm` em `lib/sistemas.ts:11`,
+rota no `matcher` em `middleware.ts:119`. Lista os leads capturados em
 `manfac.com.br` (tabela `site_leads`). **Esse sistema faltou na documentação até
 20/09/2026** — quem lesse só o `AGENTS.md` antigo não saberia que ele existe.
 
@@ -69,9 +69,9 @@ reordenação/refactor futuro e a exposição de dado de cliente direto pela que
 essa checagem "porque já tem no middleware" é o tipo de simplificação que parece
 correta e não é — mantenha a duplicação.
 
-**Outros dois sistemas deste hub, para referência:** Conversor de OS (`/conversor-os`)
-converte planilhas de OS para o Field Control; Admin (`/admin/acessos`) é a tela de
-contas e acessos — o João chama de "módulo de login".
+**Outro sistema deste hub, para referência:** Admin (`/admin/acessos`) é a tela de contas e
+acessos — o João chama de "módulo de login". O Conversor de OS (`/conversor-os`) foi removido
+do hub em 14/10/2026; a tabela `conversor_os_imports` permanece no banco.
 
 ## Escrita em `hub_system_access` e `hub_user_roles` só pela service role
 

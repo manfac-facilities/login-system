@@ -11,7 +11,7 @@ jest.mock('../_actions', () => ({
 
 const sistemas = [
   { slug: 'sofia', label: 'Gestão de Frotas' },
-  { slug: 'conversor-os', label: 'Conversor OS' },
+  { slug: 'crm', label: 'CRM' },
 ]
 
 describe('RemoverDialog', () => {
@@ -68,7 +68,7 @@ describe('ConvidarDialog', () => {
   it('lists a toggle for every system', () => {
     render(<ConvidarDialog aberto sistemas={sistemas} onFechar={jest.fn()} />)
     expect(screen.getByLabelText('Gestão de Frotas')).toBeInTheDocument()
-    expect(screen.getByLabelText('Conversor OS')).toBeInTheDocument()
+    expect(screen.getByLabelText('CRM')).toBeInTheDocument()
   })
 
   it('sends the chosen level and systems', async () => {
@@ -80,11 +80,11 @@ describe('ConvidarDialog', () => {
       target: { value: 'nova@manfac.com.br' },
     })
     fireEvent.change(screen.getByLabelText(/nível/i), { target: { value: 'administrador' } })
-    fireEvent.click(screen.getByLabelText('Conversor OS'))
+    fireEvent.click(screen.getByLabelText('CRM'))
     fireEvent.click(screen.getByRole('button', { name: /enviar convite/i }))
 
     expect(convidarMock).toHaveBeenCalledWith('nova@manfac.com.br', 'administrador', [
-      'conversor-os',
+      'crm',
     ])
     await waitFor(() => expect(onFechar).toHaveBeenCalled())
   })

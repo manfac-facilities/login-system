@@ -7,7 +7,7 @@
  * ação do usuário dispara trabalho para outra pessoa sem ninguém digitar nada.
  * Se isso quebrar em silêncio, o sistema vira um formulário de registro.
  *
- * Supabase é 100% mockado (padrão de app/conversor-os/__tests__/_actions.test.ts).
+ * Supabase é 100% mockado (padrão de app/admin/__tests__/_actions.test.ts).
  * A migration `sdd-sql-obras-v0.sql` ainda NÃO foi aplicada em produção — nenhum
  * teste daqui pode depender de banco.
  */

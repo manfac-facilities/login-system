@@ -124,7 +124,7 @@ Conferido no banco em **20/09/2026**. Atualize esta tabela no mesmo commit em qu
 
 | Arquivo | Estado |
 |---|---|
-| `passo1`–`passo4`, `v03`, `audit-log`, `autorizacao`, `feedback-cliente`, `conversor-os` | aplicados |
+| `passo1`–`passo4`, `v03`, `audit-log`, `autorizacao`, `feedback-cliente`, `conversor-os` | aplicados (o app do Conversor saiu do hub em 14/10/2026; a tabela `conversor_os_imports` e o arquivo `.sql` permanecem) |
 | `v04` | aplicado por inteiro; o índice `veiculos_equipe_ativo_uniq` entrou em 2026-08-10 |
 | `track-b` | aplicado |
 | `track-c-integridade` | aplicado em 2026-08-10 |

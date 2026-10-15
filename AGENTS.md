@@ -89,7 +89,6 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Sistema | Rota | Nome na UI | Slug |
 |---|---|---|---|
 | Sofia | `/sofia` | **Gestão de Frotas** | `sofia` |
-| Conversor de OS | `/conversor-os` | Conversor OS | `conversor-os` |
 | Admin | `/admin/acessos` | Admin | — |
 | Controle de Obras | `/obras` | **Gestão de Obras** (renomeado em 06/10/2026) | `obras` |
 | CRM | `/crm` | CRM | `crm` |
@@ -155,7 +154,7 @@ npm run lint     # eslint
 Node 20 (`.nvmrc`).
 
 > ⚠️ `npm test` na raiz varre também `manfac-site/`, que tem `node_modules` próprio: **7 suites
-> falham por resolução de módulo e não são do hub.** O número que importa são as outras 82.
+> falham por resolução de módulo e não são do hub.** O número que importa são as outras 106 (medido em 14/10/2026, após remover o Conversor).
 
 ---
 
