@@ -17,3 +17,13 @@ Print anexado: `2026-10-15-divergencias-os-hub-x-field.jpg`. Transcrição da ta
 | 0926-014930 | #N/D | HUB |
 | 0526-014042 | #N/D | HUB |
 | 0726-019256 | #N/D | HUB |
+
+## Mensagens seguintes do João (literal)
+
+> OS nem no HUB e nem no Field
+
+> OS no Field e não no HUB
+
+> O feedback acabou, pode atuar
+
+As duas mensagens acima vieram com um print anexado que é **o mesmo arquivo** do primeiro (md5 idêntico, 4d08250c…). As listas "nem no HUB nem no Field" e "no Field e não no HUB" não chegaram, e o João vai ser avisado.
