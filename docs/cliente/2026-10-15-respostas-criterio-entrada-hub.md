@@ -134,3 +134,7 @@ Ficam de fora da carga, por enquanto:
 - As 6 de tomada para geladeira (0726-017515, 017712, 018624, 018684, 018710, 018834): atividade arquivada no Field. Pergunta enviada ao cliente pelo João.
 - 0526-019295 e 0626-003845: não existem no Field.
 - 0726-017988: já entrou no hub em 15/10 (etapa definir).
+
+## Carga aplicada (15/10)
+
+SQL revisado por subagente independente e aplicado em produção: `docs/obras/2026-10-15-carga-os-faltantes.sql`. Resultado conferido: 65 obras inseridas (obras_obra 262 → 327), 65 linhas no histórico (`quem = carga-15-10 ...`). pendFat 50, aprovarOS 10, fecharOS 4, definir 1; fonte field 51, nula 14.
