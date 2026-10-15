@@ -44,3 +44,9 @@ As 7 existem no hub (`fonte = field`, com `field_id`) **e** no Field, ativas (`a
 
 Causa raiz das 6 primeiras: comportamento pedido em 06/10 e no ar desde 13/10. O hub mostra o número do campo "OS Cliente" e o Field continua com o `identifier` curto. Um PROCV pelo número da OS não acha a obra. Não é falha de sincronização.
 0626-014071: a OS existe com o mesmo número, mas a atividade foi arquivada no Field. Um relatório do Field por atividades não a mostra. No hub ela está em pendFat.
+
+## Retorno do cliente à mensagem de explicação (literal, repassado pelo João)
+
+> o ciente nao entendeu e disse, deovlve a planilha com as consideraçoes, fica mais facil do cliente enviar ao colaborador
+
+Resposta: planilha `.xlsx` com as mesmas colunas do print (OS | FIELD | LOCAL) e as considerações por linha, em `docs/cliente/2026-10-15-divergencias-os-devolutiva.xlsx`.
