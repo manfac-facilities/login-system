@@ -143,3 +143,5 @@ Três prints: `2026-10-15-divergencias-os-lista-b.jpg` (66 linhas), `2026-10-15-
 | 0726-018710 | #N/D | EXECUTADO - APROVAR OS | CLIENTE |
 | 0726-017712 | #N/D | EXECUTADO - APROVAR OS | CLIENTE |
 | 0726-018684 | #N/D | EXECUTADO - APROVAR OS | CLIENTE |
+
+> foi o que o cliente falou da planilah que enviamos
