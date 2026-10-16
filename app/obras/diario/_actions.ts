@@ -16,6 +16,17 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { isAdmin } from '@/lib/auth/roles'
+import { gravarComHistorico } from '../_lib/historico'
+import {
+  ERRO_AGENDAR,
+  ETAPAS_FILA_DIARIO,
+  agendadaForaDoDiario,
+  agendamentoVoltou,
+  ddmm,
+  validarAgendamento,
+  type EntradaAgendamento,
+} from '../_lib/agendamento'
 import {
   CHAVE_EQUIPE,
   chaveDaEquipe,
@@ -29,6 +40,7 @@ import {
   prazoPadrao,
   BLOQUEIOS,
   contadoresDoDiario,
+  br,
   type Etapa,
   type RegistroDiario,
 } from '../_lib/tipos'
@@ -298,4 +310,137 @@ async function recalcularContadores(
     .from('obras_obra')
     .update(contadoresDoDiario((data ?? []) as RegistroDiario[]))
     .eq('id', obraId)
+}
+
+/**
+ * "Agendar e tirar do diário" (spec 16/10/2026 §6). A regra "PCM da obra ou
+ * administrador" mora aqui e não na RLS — ver docs/DIVIDAS.md.
+ */
+const COLUNAS_AGENDAMENTO = [
+  'diario_agendado_ate',
+  'diario_agendado_oque',
+  'diario_agendado_motivo',
+  'diario_agendado_por',
+  'diario_agendado_em',
+] as const
+
+const SO_PCM_OU_ADMIN = 'Só o responsável pela obra ou o administrador pode agendar.'
+
+type ObraAgendavel = { id: string; etapa: Etapa; pcm: string | null; diario_agendado_ate: string | null }
+
+function revalidarAgendamento(obraId: string) {
+  revalidatePath('/obras/diario')
+  revalidatePath('/obras/tarefas')
+  revalidatePath('/obras/painel')
+  revalidatePath(`/obras/obra/${obraId}`)
+}
+
+/** Chave vazia nunca casa: a guarda falha fechada. */
+async function podeMexerNoAgendamento(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  email: string,
+  pcm: string | null
+): Promise<boolean> {
+  if (await isAdmin(supabase, email)) return true
+  const chave = await resolverChave(supabase, email)
+  return !!chave && chave === pcm
+}
+
+export async function agendarDiarioAction(entrada: EntradaAgendamento): Promise<EstadoDiario> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Não autenticado' }
+  if (!(await hasSystemAccess(supabase, user.email, 'obras'))) return { error: SEM_ACESSO }
+
+  // Um só instante: o `hoje` da validação e o `em` gravado concordam com o CHECK do banco.
+  const agora = new Date()
+  const hoje = hojeISO(agora)
+  const v = validarAgendamento(entrada, hoje)
+  if ('error' in v) return { error: v.error }
+
+  const { data: obra, error: erroObra } = await supabase
+    .from('obras_obra')
+    .select('id, etapa, pcm, diario_agendado_ate')
+    .eq('id', entrada.obraId)
+    .maybeSingle<ObraAgendavel>()
+  if (erroObra || !obra) return { error: 'Obra não encontrada' }
+
+  if (!(await podeMexerNoAgendamento(supabase, user.email, obra.pcm))) return { error: SO_PCM_OU_ADMIN }
+  if (!ETAPAS_FILA_DIARIO.includes(obra.etapa)) return { error: 'Só obra que está no diário pode ser agendada.' }
+  if (agendadaForaDoDiario(obra, hoje)) {
+    return { error: `Esta obra já está agendada até ${ddmm(obra.diario_agendado_ate!)}. Recarregue a página.` }
+  }
+
+  const { ate, oque, motivo } = v.campos
+  const { error } = await gravarComHistorico(supabase, {
+    obraId: obra.id,
+    campos: {
+      diario_agendado_ate: ate,
+      diario_agendado_oque: oque,
+      diario_agendado_motivo: motivo,
+      diario_agendado_por: user.email,
+      diario_agendado_em: agora.toISOString(),
+    },
+    linhas: [
+      {
+        bloco: 'Agendamento',
+        campo: 'diario_agendado_ate',
+        de: obra.diario_agendado_ate ? br(obra.diario_agendado_ate) : null,
+        para: br(ate),
+        motivo: `${oque} — ${motivo}`,
+      },
+    ],
+  })
+  if (error) return { error: ERRO_AGENDAR }
+
+  revalidarAgendamento(obra.id)
+  return { success: true }
+}
+
+export async function encerrarAgendamentoAction(obraId: string, como: 'volta' | 'feito'): Promise<EstadoDiario> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Não autenticado' }
+  if (!(await hasSystemAccess(supabase, user.email, 'obras'))) return { error: SEM_ACESSO }
+
+  const { data: obra, error: erroObra } = await supabase
+    .from('obras_obra')
+    .select('id, etapa, pcm, diario_agendado_ate')
+    .eq('id', obraId)
+    .maybeSingle<ObraAgendavel>()
+  if (erroObra || !obra) return { error: 'Obra não encontrada' }
+
+  if (!(await podeMexerNoAgendamento(supabase, user.email, obra.pcm))) return { error: SO_PCM_OU_ADMIN }
+  if (!obra.diario_agendado_ate) return { error: 'Esta obra não está agendada. Recarregue a página.' }
+
+  const hoje = hojeISO()
+  if (como === 'volta' && !agendadaForaDoDiario(obra, hoje)) {
+    return { error: 'Esta obra já voltou ao diário. Recarregue a página.' }
+  }
+  if (como === 'feito' && !agendamentoVoltou(obra, hoje)) {
+    return { error: 'O agendamento ainda não chegou na data. Use "Trazer de volta agora" no diário.' }
+  }
+
+  const { error } = await gravarComHistorico(supabase, {
+    obraId: obra.id,
+    campos: Object.fromEntries(COLUNAS_AGENDAMENTO.map((c) => [c, null])),
+    linhas: [
+      {
+        bloco: 'Agendamento',
+        campo: 'diario_agendado_ate',
+        de: br(obra.diario_agendado_ate),
+        para: null,
+        motivo: como === 'volta' ? 'Trazido de volta ao diário' : 'Marcado como feito',
+      },
+    ],
+  })
+  if (error) return { error: 'Não deu para salvar. Nada mudou — tente de novo.' }
+
+  revalidarAgendamento(obra.id)
+  return { success: true }
 }

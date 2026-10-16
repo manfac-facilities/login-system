@@ -92,3 +92,12 @@ export function nomeDeQuemAgendou(email: string, pessoas: { email?: string | nul
 export function textoAgendadas(n: number): string {
   return n === 1 ? '1 agendada' : `${n} agendadas`
 }
+
+/** `AAAA-MM-DD` -> `DD/MM`. */
+export function ddmm(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+}
+
+/** Texto do mockup para qualquer falha de gravação ao agendar. */
+export const ERRO_AGENDAR =
+  'A conexão falhou na hora de salvar. Nada mudou: a obra continua no diário e nenhuma tarefa foi criada. Tente de novo; se continuar, avise o suporte da Manfac.'
