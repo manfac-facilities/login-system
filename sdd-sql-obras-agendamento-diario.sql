@@ -4,8 +4,8 @@
 -- Plano: docs/superpowers/plans/2026-10-16-obras-agendar-tirar-do-diario.md
 -- Mockup: docs/obras/mockups/mockup-pausa-diario.html (8 suposições, seguidas como escritas)
 -- ============================================================
--- ESTADO: NÃO APLICADO. Projeto de produção iyytcavcgukfjnjjrerx (confirme o
--- ref antes — AGENTS.md). Aplicar ANTES do deploy do código do agendamento.
+-- ESTADO: APLICADO EM PRODUÇÃO em 16/10/2026 pelo coordenador (Management API): PASSO 0 igual ao esperado,
+-- PARTE 2 13/13 OK, PARTE 3 "RESUMO: 12/12 OK", nenhuma fixture sobrou. Projeto iyytcavcgukfjnjjrerx.
 -- O código que está no ar hoje continua funcionando com esta migration
 -- aplicada: as colunas novas nascem vazias, nenhuma obra fica agendada até
 -- alguém usar o botão novo, e a RPC só GANHA colunas aceitas (nenhuma sai).
