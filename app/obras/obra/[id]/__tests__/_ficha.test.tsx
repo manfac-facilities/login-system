@@ -97,6 +97,39 @@ function fichaProps(overObra: Partial<ObraRow> = {}, historico: LinhaHistorico[]
   }
 }
 
+describe('Botão "Solicitar compra" (spec 16/10/2026 §4.7)', () => {
+  it('obra ativa: link para o Compras com a obra, em nova aba, e as notas do mockup', () => {
+    const { container } = render(<Ficha {...fichaProps()} />)
+    const link = screen.getByRole('link', { name: 'Solicitar compra' })
+    expect(link).toHaveAttribute('href', '/compras/solicitacoes/nova?obra=o1')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link.getAttribute('rel')).toContain('noopener')
+    expect(container).toHaveTextContent('Pedir a partir desta obra')
+    expect(container).toHaveTextContent('Abre o Compras em nova aba, com esta obra.')
+  })
+
+  it('obra cancelada: o link não existe', () => {
+    render(
+      <Ficha
+        {...fichaProps({
+          etapa: 'cancelado',
+          cancelado_por: 'cliente',
+          cancelado_obs: 'Loja suspendeu a reforma.',
+          cancelado_em: '2026-09-23T13:42:00Z',
+          cancelado_quem: 'rafael.souza@manfac.com.br',
+          cancelado_etapa_anterior: 'andamento',
+        })}
+      />
+    )
+    expect(screen.queryByRole('link', { name: 'Solicitar compra' })).not.toBeInTheDocument()
+  })
+
+  it('não existe botão de medição', () => {
+    const { container } = render(<Ficha {...fichaProps()} />)
+    expect(container).not.toHaveTextContent('Solicitar medição')
+  })
+})
+
 describe('Histórico de alterações (item 1 da revisão de 20/09)', () => {
   it('a ficha renderiza o bloco de histórico com as linhas recebidas por prop', () => {
     const linhas: LinhaHistorico[] = [

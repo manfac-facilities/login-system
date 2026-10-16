@@ -125,6 +125,27 @@ describe('Historico', () => {
     expect(screen.getByText(/Motivo: Cancelado pelo Cliente — loja suspensa/)).toBeInTheDocument()
   })
 
+  it('filtro "Agendamento" mostra só as linhas do agendamento', async () => {
+    const user = userEvent.setup()
+    const linhas = [
+      {
+        id: '1', obra_id: 'o1', bloco: 'Cronograma' as const, campo: 'prioridade' as const,
+        de: 'Normal', para: 'Urgente', motivo: null, quem: 'y@manfac.com.br', created_at: '2026-08-01T09:00:00Z',
+      },
+      {
+        id: '2', obra_id: 'o1', bloco: 'Agendamento' as const, campo: 'diario_agendado_ate' as const,
+        de: null, para: '22/10/2026', motivo: 'Levantamento de material — Aguardando material',
+        quem: 'y@manfac.com.br', created_at: '2026-10-15T13:42:00Z',
+      },
+    ]
+    render(<Historico linhas={linhas} entrada={{ data: '2026-06-30', fonte: 'field' }} />)
+
+    await user.click(screen.getByRole('button', { name: 'Agendamento' }))
+
+    expect(screen.queryByText('Urgente')).not.toBeInTheDocument()
+    expect(screen.getByText('22/10/2026')).toBeInTheDocument()
+  })
+
   it('rótulo ausente no dicionário cai para a própria chave, não "undefined" (M10)', () => {
     const linhas = [
       {

@@ -9,7 +9,7 @@ describe('ROTULO_CAMPO', () => {
       'tipo', 'valor', 'origem', 'analista_cliente', 'mau_uso',
       'etapa',
       'marco_exec_fim', 'marco_relatorio', 'marco_fechou_os',
-      'marco_liberou_fat', 'marco_faturou',
+      'marco_liberou_fat', 'marco_faturou', 'diario_agendado_ate',
     ]
     for (const c of campos) {
       expect(ROTULO_CAMPO[c]).toBeTruthy()
@@ -44,7 +44,33 @@ describe('ROTULO_CAMPO', () => {
       marco_fechou_os: 'Data de fechamento da OS',
       marco_liberou_fat: 'Data do faturamento liberado',
       marco_faturou: 'Data de faturamento',
+      diario_agendado_ate: 'Agendamento do diário (volta em)',
     })
+  })
+})
+
+describe('agendamento do diário', () => {
+  it('linhasDeAlteracao formata a data do agendamento no bloco Agendamento', () => {
+    expect(
+      linhasDeAlteracao({ diario_agendado_ate: null }, { diario_agendado_ate: '2026-10-22' }, 'Agendamento')
+    ).toEqual([
+      { bloco: 'Agendamento', campo: 'diario_agendado_ate', de: null, para: '22/10/2026', motivo: null },
+    ])
+  })
+
+  it('gravarComHistorico trava diario_agendado_ate sem linha, mas aceita colunas de apoio sozinhas', async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: { id: 'o1' }, error: null })
+    const supabase = { rpc } as unknown as Parameters<typeof gravarComHistorico>[0]
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { diario_agendado_ate: '2026-10-22' }, linhas: [] })
+    ).rejects.toThrow(/diario_agendado_ate/)
+    expect(rpc).not.toHaveBeenCalled()
+
+    await expect(
+      gravarComHistorico(supabase, { obraId: 'o1', campos: { diario_agendado_oque: 'x' }, linhas: [] })
+    ).resolves.toBeDefined()
+    expect(rpc).toHaveBeenCalledTimes(1)
   })
 })
 

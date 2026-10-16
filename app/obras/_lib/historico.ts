@@ -19,6 +19,7 @@ export type BlocoHistorico =
   | 'Cronograma'
   | 'Esteira'
   | 'Cancelamento'
+  | 'Agendamento'
 
 export type CampoHistorico =
   | 'pcm'
@@ -40,6 +41,7 @@ export type CampoHistorico =
   | 'marco_fechou_os'
   | 'marco_liberou_fat'
   | 'marco_faturou'
+  | 'diario_agendado_ate'
 
 /** Rótulo de tela para cada campo rastreado. Ver spec §7. */
 export const ROTULO_CAMPO: Record<CampoHistorico, string> = {
@@ -62,6 +64,7 @@ export const ROTULO_CAMPO: Record<CampoHistorico, string> = {
   marco_fechou_os: 'Data de fechamento da OS',
   marco_liberou_fat: 'Data do faturamento liberado',
   marco_faturou: 'Data de faturamento',
+  diario_agendado_ate: 'Agendamento do diário (volta em)',
 }
 
 /** Uma linha ainda não gravada — o formato que a RPC espera em `p_linhas`. */
@@ -84,7 +87,7 @@ export type LinhaHistorico = LinhaHistoricoNova & {
 const CAMPOS_DATA: ReadonlySet<CampoHistorico> = new Set([
   'inicio_plan', 'liberado_em', 'os_aprovada_em',
   'marco_exec_fim', 'marco_relatorio', 'marco_fechou_os',
-  'marco_liberou_fat', 'marco_faturou',
+  'marco_liberou_fat', 'marco_faturou', 'diario_agendado_ate',
 ])
 
 function formatarValor(campo: CampoHistorico, v: string | number | boolean | null): string | null {
@@ -191,6 +194,7 @@ const COLUNA_PARA_CAMPO: Partial<Record<string, CampoHistorico>> = {
   marco_fechou_os: 'marco_fechou_os',
   marco_liberou_fat: 'marco_liberou_fat',
   marco_faturou: 'marco_faturou',
+  diario_agendado_ate: 'diario_agendado_ate',
 }
 
 /**

@@ -21,18 +21,37 @@ jest.mock('../_lista', () => ({
     return null
   },
 }))
+jest.mock('../_agendadas', () => ({
+  __esModule: true,
+  default: (props: AgendadasProps) => {
+    agendadasProps = props
+    return null
+  },
+}))
+jest.mock('../../diario/_pessoa', () => ({ resolverChave: jest.fn() }))
 
 import { render } from '@testing-library/react'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
+import { resolverChave } from '../../diario/_pessoa'
 import TarefasPage from '../page'
 
 type ListaProps = {
   tarefas: ({ id: string } & Record<string, unknown>)[]
   obras: Record<string, { id: string; os: string; loja: string; equipe: string }>
 }
+type AgendadasProps = { obras: { id: string }[]; pessoasPorEmail: { email: string; nome: string }[] }
 let listaProps: ListaProps | null = null
+let agendadasProps: AgendadasProps | null = null
+
+/** Chamadas da leitura de agendadas em `obras_obra`. */
+const selectObra = jest.fn()
+const notObra = jest.fn()
+const inObra = jest.fn()
+let agendadasNoBanco: { id: string; pcm: string | null }[] = []
+let erroAgendadas: unknown = null
+let pessoasNoBanco: unknown[] = []
 
 const selectTarefa = jest.fn()
 const orderTarefa = jest.fn()
@@ -84,7 +103,12 @@ const tarefa = (id: string, obra_id: string, situacao: 'aberta' | 'respondida', 
 
 beforeEach(() => {
   listaProps = null
-  for (const m of [selectTarefa, orderTarefa, inTarefa, rangeTarefa]) m.mockClear()
+  agendadasProps = null
+  agendadasNoBanco = []
+  erroAgendadas = null
+  pessoasNoBanco = []
+  for (const m of [selectTarefa, orderTarefa, inTarefa, rangeTarefa, selectObra, notObra, inObra]) m.mockClear()
+  ;(resolverChave as jest.Mock).mockResolvedValue('YURI')
   banco = [
     tarefa('t1', 'A', 'aberta', OBRA_A),
     tarefa('t2', 'A', 'respondida', OBRA_A),
@@ -96,8 +120,26 @@ beforeEach(() => {
     auth: { getUser: jest.fn(async () => ({ data: { user: { email: 'a@manfac.com.br' } } })) },
     from: jest.fn((tabela: string) => {
       if (tabela === 'obras_tarefa') return builderTarefas()
+      if (tabela === 'obras_obra') {
+        const q: Record<string, unknown> = {}
+        q.select = jest.fn((cols: string) => {
+          selectObra(cols)
+          return q
+        })
+        q.not = jest.fn((...a: unknown[]) => {
+          notObra(...a)
+          return q
+        })
+        q.in = jest.fn((...a: unknown[]) => {
+          inObra(...a)
+          return Promise.resolve(
+            erroAgendadas ? { data: null, error: erroAgendadas } : { data: agendadasNoBanco, error: null }
+          )
+        })
+        return q
+      }
       // obras_pessoa
-      return { select: jest.fn(async () => ({ data: [], error: null })) }
+      return { select: jest.fn(async () => ({ data: pessoasNoBanco, error: null })) }
     }),
   })
 })
@@ -142,4 +184,48 @@ test('mais de 1000 tarefas: lê tudo, inclusive a mais antiga (sem limit(500))',
   expect(listaProps!.tarefas.map((t) => t.id)).toContain('t1000')
   // recomeçou ordenado por id para paginar sem repetir nem pular
   expect(orderTarefa).toHaveBeenCalledWith('id', { ascending: true })
+})
+
+// ---- seção "Agendadas" (spec 16/10/2026 §7) ----
+
+test('lê as obras agendadas: data não nula e só etapas do diário', async () => {
+  render(await TarefasPage())
+  expect(selectObra).toHaveBeenCalledTimes(1)
+  expect(selectObra.mock.calls[0][0]).toContain('diario_agendado_ate')
+  expect(notObra).toHaveBeenCalledWith('diario_agendado_ate', 'is', null)
+  expect(inObra).toHaveBeenCalledWith('etapa', ['levantamento', 'andamento', 'paralisado'])
+})
+
+test('admin recebe todas as agendadas; não-admin só as do seu pcm; sem chave, nenhuma', async () => {
+  agendadasNoBanco = [
+    { id: 'x1', pcm: 'YURI' },
+    { id: 'x2', pcm: 'ROBERTA' },
+  ]
+  ;(isAdmin as jest.Mock).mockResolvedValue(true)
+  render(await TarefasPage())
+  expect(agendadasProps!.obras.map((o) => o.id)).toEqual(['x1', 'x2'])
+
+  ;(isAdmin as jest.Mock).mockResolvedValue(false)
+  render(await TarefasPage())
+  expect(agendadasProps!.obras.map((o) => o.id)).toEqual(['x1'])
+
+  ;(resolverChave as jest.Mock).mockResolvedValue('')
+  render(await TarefasPage())
+  expect(agendadasProps!.obras).toEqual([])
+})
+
+test('a seção recebe as pessoas com e-mail', async () => {
+  pessoasNoBanco = [
+    { chave: 'YURI', nome: 'Yuri Moreira', area: null, email: 'yuri.moreira@manfac.com.br' },
+    { chave: 'EQ_1', nome: 'Equipe 1', area: null, email: null },
+  ]
+  render(await TarefasPage())
+  expect(agendadasProps!.pessoasPorEmail).toEqual([{ email: 'yuri.moreira@manfac.com.br', nome: 'Yuri Moreira' }])
+})
+
+test('falha na leitura das agendadas mostra a tela de erro', async () => {
+  erroAgendadas = { message: 'x' }
+  render(await TarefasPage())
+  expect(listaProps).toBeNull()
+  expect(agendadasProps).toBeNull()
 })

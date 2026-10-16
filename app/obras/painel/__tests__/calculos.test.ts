@@ -406,6 +406,41 @@ describe('ritmo do campo (hoje)', () => {
       abertas: 2,
       vencidas: 1,
       respondidas7: 1,
+      agendadas: 0,
+    })
+  })
+
+  describe('obras agendadas (spec 16/10/2026)', () => {
+    const ritmoDeObras = (obras: ObraPainel[], diario: LinhaDiario[] = []) =>
+      montarPainel(entrada(obras, { diario }), TODOS).ritmo
+
+    it('agendada fora do diário sai da fila e vira "agendadas"', () => {
+      const obras = [
+        obra({ id: 'a1', etapa: 'andamento' }),
+        obra({ id: 'a2', etapa: 'andamento' }),
+        obra({ id: 'a3', etapa: 'andamento', diario_agendado_ate: '2026-09-30' }),
+      ]
+      const r = ritmoDeObras(obras)
+      expect(r.esperados).toBe(2)
+      expect(r.agendadas).toBe(1)
+    })
+
+    it('agendada respondida hoje não conta em "responderam"', () => {
+      const obras = [obra({ id: 'a1', etapa: 'andamento', diario_agendado_ate: '2026-10-05' })]
+      const r = ritmoDeObras(obras, [{ obra_id: 'a1', data: HOJE, andou: true, motivo: null, foto_path: null }])
+      expect(r.responderam).toBe(0)
+      expect(r.esperados).toBe(0)
+    })
+
+    it('data de volta = hoje conta em "esperados" e não em "agendadas"', () => {
+      const r = ritmoDeObras([obra({ id: 'a1', etapa: 'andamento', diario_agendado_ate: HOJE })])
+      expect(r.esperados).toBe(1)
+      expect(r.agendadas).toBe(0)
+    })
+
+    it('agendada em relatório não conta em "agendadas"', () => {
+      const r = ritmoDeObras([obra({ id: 'a1', etapa: 'relatorio', diario_agendado_ate: '2026-10-05' })])
+      expect(r.agendadas).toBe(0)
     })
   })
 })

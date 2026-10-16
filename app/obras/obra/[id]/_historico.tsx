@@ -14,7 +14,7 @@ import { ROTULO_CAMPO, type BlocoHistorico, type LinhaHistorico } from '../../_l
 import { Box, BoxB, BoxH, EstadoVazio } from '../../_ui/primitivos'
 
 const FILTROS: ('Todos' | BlocoHistorico)[] = [
-  'Todos', 'Triagem', 'Autorização', 'Identificação', 'Cronograma', 'Esteira', 'Cancelamento',
+  'Todos', 'Triagem', 'Autorização', 'Identificação', 'Cronograma', 'Esteira', 'Cancelamento', 'Agendamento',
 ]
 
 export default function Historico({

@@ -35,8 +35,10 @@ import {
   type Obra,
 } from '../_lib/tipos'
 import { Pill, PillEtapa, Botao } from '../_ui/primitivos'
+import { agendamentoVoltou, ddmm, nomeDeQuemAgendou } from '../_lib/agendamento'
 import BotaoFoto from './_foto'
-import { salvarDiarioAction } from './_actions'
+import DialogoAgendar from './_dialogo-agendar'
+import { agendarDiarioAction, salvarDiarioAction } from './_actions'
 
 export type Pessoa = { nome: string; area: string | null }
 
@@ -73,6 +75,12 @@ export function textoAcao(d: Resposta, hoje: string, pessoas: Record<string, Pes
     ).toLowerCase()}.${extra}`
   }
   return ''
+}
+
+/** `lc()` do mockup: primeira letra minúscula. */
+function minuscula(s: string | null | undefined): string {
+  const t = s ?? ''
+  return t.charAt(0).toLowerCase() + t.slice(1)
 }
 
 /** `notaAlerta(mockup:1908)` — UMA nota por obra, nunca duas. */
@@ -137,14 +145,21 @@ export default function Cartao({
   hoje,
   pessoas,
   mostrarResponsavel,
+  admin,
+  pessoasPorEmail,
   aoSalvar,
+  aoAgendar,
 }: {
   obra: Obra
   hoje: string
   pessoas: Record<string, Pessoa>
   mostrarResponsavel?: boolean
+  admin: boolean
+  pessoasPorEmail: { email: string; nome: string }[]
   aoSalvar: () => void
+  aoAgendar: (ate: string) => void
 }) {
+  const [agendando, setAgendando] = useState(false)
   const [andou, setAndou] = useState<'Sim' | 'Não' | null>(null)
   const [item, setItem] = useState<string>(NAO_FALTOU)
   const [motivo, setMotivo] = useState<string | null>(null)
@@ -230,6 +245,16 @@ export default function Cartao({
           </div>
         </div>
 
+        {agendamentoVoltou(obra, hoje) ? (
+          <p className="mt-2 rounded border border-[#35c98a66] bg-[#35c98a14] px-3 py-2 text-[12px] text-[#35c98a]">
+            {`Voltou do agendamento: ${minuscula(obra.diario_agendado_oque)} previsto para ${
+              obra.diario_agendado_ate === hoje ? 'hoje' : ddmm(obra.diario_agendado_ate!)
+            }. Agendado por ${nomeDeQuemAgendou(obra.diario_agendado_por ?? '', pessoasPorEmail)} · motivo: ${
+              obra.diario_agendado_motivo ?? ''
+            }`}
+          </p>
+        ) : null}
+
         {nota ? <p className="mt-2 text-[12px] text-[#f4b73f]">{nota}</p> : null}
 
         {obra.pendencia ? (
@@ -307,7 +332,34 @@ export default function Cartao({
             {hint}
           </span>
         </div>
+
+        <div className="mt-3 flex flex-col gap-2 border-t border-[#1e3a5f] pt-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={() => setAgendando(true)}
+            disabled={saindo}
+            className="min-h-11 rounded-md border border-dashed border-[#1e3a5f] px-3 py-2 text-sm font-medium text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
+          >
+            📅 Agendar e tirar do diário
+          </button>
+          <span className="text-[12px] text-[#94a3b8]">
+            Para obra que só será levantada mais tarde: ela sai do diário até a data que você escolher.
+          </span>
+        </div>
       </div>
+      {agendando ? (
+        <DialogoAgendar
+          obra={obra}
+          hoje={hoje}
+          admin={admin}
+          agendar={agendarDiarioAction}
+          aoFechar={() => setAgendando(false)}
+          aoAgendar={(ate) => {
+            setAgendando(false)
+            aoAgendar(ate)
+          }}
+        />
+      ) : null}
     </article>
   )
 }

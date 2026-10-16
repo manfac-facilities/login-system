@@ -20,10 +20,11 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { br, NAO_FALTOU, pedeFoto, type Obra } from '../_lib/tipos'
+import { br, hojeISO, NAO_FALTOU, pedeFoto, type Obra } from '../_lib/tipos'
+import { agendamentoVoltou, ddmm, nomeDeQuemAgendou, textoAgendadas } from '../_lib/agendamento'
 import { EstadoVazio } from '../_ui/primitivos'
 import Cartao, { type Pessoa } from './_cartao'
-import { desfazerDiarioAction, obterUrlFotoAction } from './_actions'
+import { desfazerDiarioAction, encerrarAgendamentoAction, obterUrlFotoAction } from './_actions'
 
 export type RespostaDeHoje = {
   obra_id: string
@@ -44,6 +45,8 @@ export type TarefaDeHoje = {
 
 export default function Cartoes({
   obras,
+  agendadas,
+  pessoasPorEmail,
   respostas,
   tarefas,
   pessoas,
@@ -53,6 +56,8 @@ export default function Cartoes({
   analistaSelecionado,
 }: {
   obras: Obra[]
+  agendadas: Obra[]
+  pessoasPorEmail: { email: string; nome: string }[]
   respostas: Record<string, RespostaDeHoje>
   tarefas: Record<string, TarefaDeHoje[]>
   pessoas: Record<string, Pessoa>
@@ -62,11 +67,29 @@ export default function Cartoes({
   analistaSelecionado: string
 }) {
   const router = useRouter()
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [agendadasAbertas, setAgendadasAbertas] = useState(false)
 
+  // Quem voltou de agendamento vai primeiro; depois a ordem de sempre.
   const pendentes = obras
     .filter((o) => !respostas[o.id])
-    .sort((a, b) => (b.diasAlerta ?? 0) - (a.diasAlerta ?? 0))
+    .sort(
+      (a, b) =>
+        Number(agendamentoVoltou(b, hoje)) - Number(agendamentoVoltou(a, hoje)) ||
+        (b.diasAlerta ?? 0) - (a.diasAlerta ?? 0)
+    )
   const feitas = obras.filter((o) => respostas[o.id])
+  const blocoAgendadas = agendadasAbertas ? (
+    <Agendadas
+      obras={agendadas}
+      pessoasPorEmail={pessoasPorEmail}
+      aoVoltar={(o) => {
+        setAviso(`${o.loja ?? 'Obra sem loja'} voltou para o diário.`)
+        router.refresh()
+      }}
+    />
+  ) : null
+  const alternarAgendadas = () => setAgendadasAbertas((a) => !a)
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
@@ -82,14 +105,39 @@ export default function Cartoes({
         <SeletorAnalista responsaveis={responsaveis} selecionado={analistaSelecionado} />
       ) : null}
 
-      {obras.length === 0 ? (
+      {aviso ? (
+        <p role="status" className="mb-3 rounded-md border border-[#35c98a] bg-[#35c98a14] px-3 py-2 text-sm text-[#35c98a]">
+          {aviso}
+        </p>
+      ) : null}
+
+      {obras.length === 0 && agendadas.length === 0 ? (
         <EstadoVazio>Nenhuma obra em campo para responder hoje.</EstadoVazio>
+      ) : obras.length === 0 ? (
+        <>
+          <div className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-5 text-center">
+            <h2 className="text-base font-semibold text-[#e8eef7]">Nenhuma obra para responder hoje</h2>
+            <p className="mt-1 text-sm text-[#94a3b8]">
+              Todas as obras deste diário estão agendadas. Elas voltam sozinhas nas datas marcadas.
+            </p>
+            <BotaoAgendadas n={agendadas.length} aberto={agendadasAbertas} onClick={alternarAgendadas} />
+          </div>
+          {blocoAgendadas}
+        </>
       ) : (
         <>
-          <Barra pendentes={pendentes.length} feitas={feitas.length} total={obras.length} />
+          <Barra
+            pendentes={pendentes.length}
+            feitas={feitas.length}
+            total={obras.length}
+            agendadas={agendadas.length}
+            agendadasAbertas={agendadasAbertas}
+            onAgendadas={alternarAgendadas}
+          />
+          {blocoAgendadas}
 
           {pendentes.length === 0 ? (
-            <Sucesso obras={feitas} respostas={respostas} />
+            <Sucesso obras={feitas} respostas={respostas} agendadas={agendadas.length} />
           ) : (
             <div className="mt-4 flex flex-col gap-4">
               {pendentes.map((o) => (
@@ -99,7 +147,13 @@ export default function Cartoes({
                   hoje={hoje}
                   pessoas={pessoas}
                   mostrarResponsavel={admin && !analistaSelecionado}
+                  admin={admin}
+                  pessoasPorEmail={pessoasPorEmail}
                   aoSalvar={() => router.refresh()}
+                  aoAgendar={(ate) => {
+                    setAviso(`Obra agendada. Sai do diário até ${ddmm(ate)} e volta sozinha nesse dia.`)
+                    router.refresh()
+                  }}
                 />
               ))}
             </div>
@@ -146,14 +200,111 @@ function SeletorAnalista({
         ))}
       </select>
       <span className="text-[11px] text-[#64748b]">
-        Você é administrador do hub — cada analista vê só as obras dele.
+        Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.
       </span>
     </div>
   )
 }
 
 /** `barraHTML(mockup:2824)`. */
-function Barra({ pendentes, feitas, total }: { pendentes: number; feitas: number; total: number }) {
+function BotaoAgendadas({ n, aberto, onClick }: { n: number; aberto: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={aberto}
+      className="min-h-9 rounded-md px-2 py-1 text-sm text-[#94a3b8] underline-offset-4 hover:text-[#e8eef7] hover:underline"
+    >
+      {`· ${textoAgendadas(n)} ${aberto ? '▴' : '▾'}`}
+    </button>
+  )
+}
+
+/** Bloco "Agendadas — fora do diário até a data" (spec §4.3). */
+function Agendadas({
+  obras,
+  pessoasPorEmail,
+  aoVoltar,
+}: {
+  obras: Obra[]
+  pessoasPorEmail: { email: string; nome: string }[]
+  aoVoltar: (o: Obra) => void
+}) {
+  const [pendente, iniciar] = useTransition()
+  const [erro, setErro] = useState<string | null>(null)
+
+  function trazer(o: Obra) {
+    setErro(null)
+    iniciar(async () => {
+      const r = await encerrarAgendamentoAction(o.id, 'volta')
+      if (r.error) {
+        setErro(r.error)
+        return
+      }
+      aoVoltar(o)
+    })
+  }
+
+  return (
+    <section className="mt-3 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-3">
+      <h2 className="text-sm font-semibold text-[#e8eef7]">
+        Agendadas — fora do diário até a data{' '}
+        <span className="text-[12px] font-normal text-[#94a3b8]">voltam sozinhas no dia</span>
+      </h2>
+      {obras.length === 0 ? (
+        <p className="mt-2 text-sm text-[#94a3b8]">
+          Nenhuma obra agendada. Quando alguém tirar uma obra do diário por causa de um levantamento, ela aparece
+          aqui.
+        </p>
+      ) : (
+        <ul className="mt-2 flex flex-col gap-2">
+          {obras.map((o) => (
+            <li key={o.id} className="flex flex-wrap items-start gap-x-3 gap-y-1 border-t border-[#1e3a5f] pt-2 first:border-t-0 first:pt-0">
+              <div className="min-w-0 flex-1 text-[12px] text-[#94a3b8]">
+                <div>
+                  <b className="text-sm text-[#e8eef7]">{o.loja ?? 'Obra sem loja'}</b> · OS {o.os ?? '—'} ·{' '}
+                  <span>{`volta em ${ddmm(o.diario_agendado_ate!)}`}</span>
+                </div>
+                <div className="text-[#e8eef7]">{o.diario_agendado_oque}</div>
+                <div>
+                  {`Motivo: ${o.diario_agendado_motivo} · agendou ${nomeDeQuemAgendou(
+                    o.diario_agendado_por ?? '',
+                    pessoasPorEmail
+                  )} em ${o.diario_agendado_em ? ddmm(hojeISO(new Date(o.diario_agendado_em))) : '—'}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={pendente}
+                onClick={() => trazer(o)}
+                className="min-h-9 rounded-md border border-[#1e3a5f] px-2.5 py-1.5 text-[12px] text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
+              >
+                Trazer de volta agora
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {erro ? <p className="mt-2 text-[12px] text-[#ff4d6d]">{erro}</p> : null}
+    </section>
+  )
+}
+
+function Barra({
+  pendentes,
+  feitas,
+  total,
+  agendadas,
+  agendadasAbertas,
+  onAgendadas,
+}: {
+  pendentes: number
+  feitas: number
+  total: number
+  agendadas: number
+  agendadasAbertas: boolean
+  onAgendadas: () => void
+}) {
   const pct = total ? Math.round((feitas / total) * 100) : 0
   const zerado = pendentes === 0
   return (
@@ -167,6 +318,7 @@ function Barra({ pendentes, feitas, total }: { pendentes: number; feitas: number
       <span className="text-sm text-[#94a3b8]">
         {pendentes === 1 ? 'obra para responder hoje' : 'obras para responder hoje'}
       </span>
+      <BotaoAgendadas n={agendadas} aberto={agendadasAbertas} onClick={onAgendadas} />
       <span className="h-1.5 min-w-24 flex-1 overflow-hidden rounded-full bg-[#0a1628]">
         <i
           className="block h-full rounded-full"
@@ -184,9 +336,11 @@ function Barra({ pendentes, feitas, total }: { pendentes: number; feitas: number
 function Sucesso({
   obras,
   respostas,
+  agendadas,
 }: {
   obras: Obra[]
   respostas: Record<string, RespostaDeHoje>
+  agendadas: number
 }) {
   const total = obras.length
   const andaram = obras.filter((o) => respostas[o.id]?.andou).length
@@ -196,8 +350,11 @@ function Sucesso({
       <div className="text-2xl text-[#35c98a]">✓</div>
       <h2 className="mt-1 text-base font-semibold text-[#e8eef7]">Diário de hoje fechado</h2>
       <p className="mt-1 text-sm text-[#94a3b8]">
-        As {total} obras foram respondidas. A base de obras já está atualizada e quem precisa cobrar
-        alguma coisa hoje sabe o que é.
+        As {total} obras foram respondidas.
+        {agendadas > 0
+          ? ` ${textoAgendadas(agendadas)} ${agendadas === 1 ? 'não conta' : 'não contam'} até a data de volta.`
+          : ''}{' '}
+        A base de obras já está atualizada e quem precisa cobrar alguma coisa hoje sabe o que é.
       </p>
       <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm text-[#94a3b8]">
         <span>
