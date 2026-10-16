@@ -53,6 +53,8 @@ export default function Cartoes({
   analistaSelecionado,
 }: {
   obras: Obra[]
+  agendadas: Obra[]
+  pessoasPorEmail: { email: string; nome: string }[]
   respostas: Record<string, RespostaDeHoje>
   tarefas: Record<string, TarefaDeHoje[]>
   pessoas: Record<string, Pessoa>

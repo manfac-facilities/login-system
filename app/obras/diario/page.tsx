@@ -22,14 +22,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { derivar, hojeISO, type Etapa, type ObraRow, type Obra } from '../_lib/tipos'
+import { derivar, hojeISO, type ObraRow, type Obra } from '../_lib/tipos'
+import { ETAPAS_FILA_DIARIO, agendadaForaDoDiario, naFilaDoDiario } from '../_lib/agendamento'
 import { resolverChave } from './_pessoa'
 import { lerTodasAsLinhas } from '../_lib/ler-paginas'
 import Cartoes, { type RespostaDeHoje, type TarefaDeHoje } from './_cartoes'
 import type { Pessoa } from './_cartao'
-
-/** As três etapas em que faz sentido perguntar "andou hoje?". */
-const ETAPAS_FILA: Etapa[] = ['levantamento', 'andamento', 'paralisado']
 
 export const dynamic = 'force-dynamic'
 
@@ -62,10 +60,10 @@ export default async function DiarioPage({ searchParams }: Props) {
   // à parte, porque aí as obras lidas são só as de um responsável.
   const [minhaChave, { data: linhasPessoa }, { data: todosPcm }] = await Promise.all([
     resolverChave(supabase, email),
-    supabase.from('obras_pessoa').select('chave, nome, area'),
+    supabase.from('obras_pessoa').select('chave, nome, area, email'),
     admin && analista
       ? lerTodasAsLinhas<{ pcm: string | null }>((de, ate, estavel) => {
-          const q = supabase.from('obras_obra').select('pcm').in('etapa', ETAPAS_FILA)
+          const q = supabase.from('obras_obra').select('pcm').in('etapa', ETAPAS_FILA_DIARIO)
           return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
         })
       : Promise.resolve({ data: null, error: null }),
@@ -82,19 +80,23 @@ export default async function DiarioPage({ searchParams }: Props) {
 
   // Em páginas: o PostgREST corta em 1.000 linhas sem avisar.
   const { data: linhas, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
-    let q = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA)
+    let q = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA_DIARIO)
     if (filtroPcm) q = q.eq('pcm', filtroPcm)
     return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
   })
 
   if (error) return <Erro />
 
-  const obras: Obra[] = (linhas ?? []).map((o) => derivar(o, hoje))
+  const todas: Obra[] = (linhas ?? []).map((o) => derivar(o, hoje))
+  // A regra da fila mora em _lib/agendamento.ts (a mesma do Painel e do e-mail).
+  const obras = todas.filter((o) => naFilaDoDiario(o, hoje))
+  const agendadas = todas.filter((o) => agendadaForaDoDiario(o, hoje))
   const ids = obras.map((o) => o.id)
 
   // Analista que não é `pcm` de obra nenhuma não tem diário — e é isso que o
   // mockup diz, com estas palavras. Administrador não cai aqui: ele vê todas.
-  if (!admin && ids.length === 0) return <SemPermissao />
+  // Conta as agendadas: analista com tudo agendado tem diário (vazio), não cai aqui.
+  if (!admin && todas.length === 0) return <SemPermissao />
 
   const nomes = new Map<string, Pessoa>(
     ((linhasPessoa ?? []) as { chave: string; nome: string; area: string | null }[]).map((p) => [
@@ -103,6 +105,9 @@ export default async function DiarioPage({ searchParams }: Props) {
     ])
   )
   const pessoas: Record<string, Pessoa> = Object.fromEntries(nomes)
+  const pessoasPorEmail = ((linhasPessoa ?? []) as { nome: string; email?: string | null }[])
+    .filter((p): p is { nome: string; email: string } => !!p.email)
+    .map((p) => ({ email: p.email, nome: p.nome }))
 
   // Quem já respondeu hoje, e as tarefas que essas respostas abriram.
   let respostas: Record<string, RespostaDeHoje> = {}
@@ -157,6 +162,8 @@ export default async function DiarioPage({ searchParams }: Props) {
   return (
     <Cartoes
       obras={obras}
+      agendadas={agendadas}
+      pessoasPorEmail={pessoasPorEmail}
       respostas={respostas}
       tarefas={tarefas}
       pessoas={pessoas}
