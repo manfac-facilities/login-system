@@ -25,7 +25,10 @@ import {
   type TarefaRow,
 } from '../_lib/tipos'
 import { lerTodasAsLinhas } from '../_lib/ler-paginas'
+import { ETAPAS_FILA_DIARIO } from '../_lib/agendamento'
+import { resolverChave } from '../diario/_pessoa'
 import Lista, { type ObraDaTarefa, type PessoaDaTarefa } from './_lista'
+import Agendadas, { type ObraAgendada } from './_agendadas'
 
 type TarefaComObra = TarefaRow & {
   obras_obra: Pick<ObraRow, 'id' | 'os' | 'loja' | 'equipe' | 'pcm' | 'etapa'> | null
@@ -51,7 +54,7 @@ export default async function TarefasPage() {
   // cair fora do corte, sem aviso. A obra de cada tarefa vem embutida (FK
   // `obra_id`), em vez de um `.in('id', [centenas de UUIDs])` na URL.
   // `obras_pessoa` não depende das tarefas: vai junto.
-  const [{ data: linhas, error }, { data: linhasPessoa }] = await Promise.all([
+  const [{ data: linhas, error }, { data: linhasPessoa }, agendadasLidas, minhaChave] = await Promise.all([
     lerTodasAsLinhas<TarefaComObra>((de, ate, estavel) => {
       const q = supabase
         .from('obras_tarefa')
@@ -59,9 +62,24 @@ export default async function TarefasPage() {
         .order('aberta', { ascending: false })
       return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
     }),
-    supabase.from('obras_pessoa').select('chave, nome, area'),
+    supabase.from('obras_pessoa').select('chave, nome, area, email'),
+    // Obras agendadas para fora do diário (spec 16/10/2026 §7): poucas linhas.
+    supabase
+      .from('obras_obra')
+      .select('id, os, loja, pcm, etapa, diario_agendado_ate, diario_agendado_oque, diario_agendado_motivo, diario_agendado_por')
+      .not('diario_agendado_ate', 'is', null)
+      .in('etapa', ETAPAS_FILA_DIARIO),
+    admin ? Promise.resolve('') : resolverChave(supabase, email),
   ])
-  if (error) return <Erro />
+  if (error || agendadasLidas.error) return <Erro />
+
+  // Admin vê todas; os demais, só as obras em que são PCM (chave vazia nunca casa).
+  const agendadas = ((agendadasLidas.data ?? []) as ObraAgendada[]).filter(
+    (o) => admin || (!!minhaChave && o.pcm === minhaChave)
+  )
+  const pessoasPorEmail = ((linhasPessoa ?? []) as { nome: string; email?: string | null }[])
+    .filter((p): p is { nome: string; email: string } => !!p.email)
+    .map((p) => ({ email: p.email, nome: p.nome }))
 
   const tarefas: TarefaRow[] = []
   const obras: Record<string, ObraDaTarefa> = {}
@@ -88,12 +106,17 @@ export default async function TarefasPage() {
   // Cancelamento de obra (spec-cancelamento §8): a tarefa ABERTA de obra
   // cancelada sai da lista; volta sozinha se o cancelamento for desfeito.
   return (
-    <Lista
-      tarefas={tarefas.filter((t) => tarefaVisivelNaLista(t, etapaDaObra[t.obra_id]))}
-      obras={obras}
-      pessoas={pessoas}
-      hoje={hoje}
-    />
+    <>
+      <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6">
+        <Agendadas obras={agendadas} pessoasPorEmail={pessoasPorEmail} hoje={hoje} />
+      </div>
+      <Lista
+        tarefas={tarefas.filter((t) => tarefaVisivelNaLista(t, etapaDaObra[t.obra_id]))}
+        obras={obras}
+        pessoas={pessoas}
+        hoje={hoje}
+      />
+    </>
   )
 }
 
