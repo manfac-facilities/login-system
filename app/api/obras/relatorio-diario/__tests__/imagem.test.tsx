@@ -142,6 +142,32 @@ describe('conteúdo', () => {
   })
 })
 
+describe('obras agendadas no ritmo do campo (spec 16/10/2026)', () => {
+  const comAgendadas = (n: number): Painel => {
+    const p = painelDiaNormal()
+    return { ...p, ritmo: { ...p.ritmo, agendadas: n } }
+  }
+
+  it('com agendadas, "N agendadas (não contam)" sai em linha à parte, depois de "aguardam resposta"', () => {
+    const caixa = todos(arvore(comAgendadas(3))).find((e) => {
+      const f = filhos(e)
+      return f.length === 2 && textos(f[1]).join('') === '3 agendadas (não contam)'
+    })!
+    expect(textos(filhos(caixa)[0]).join('')).toMatch(/^\d+ ainda aguardam resposta$/)
+    expect(tudo(comAgendadas(3))).not.toContain(' · 3 agendadas')
+  })
+
+  it('com 1, singular; com 0, o texto não aparece', () => {
+    expect(tudo(comAgendadas(1))).toContain('1 agendada (não contam)')
+    expect(tudo(comAgendadas(0))).not.toContain('(não contam)')
+  })
+
+  it('a seção cresce duas linhas (30 px) só quando há agendadas', () => {
+    expect(alturaDaImagem(comAgendadas(3)) - alturaDaImagem(comAgendadas(0))).toBe(30)
+    expect(alturaDaImagem(comAgendadas(0))).toBe(alturaDaImagem(painelDiaNormal()))
+  })
+})
+
 describe('carregarFontes', () => {
   it('lê as 3 fontes estáticas de _fontes/', async () => {
     const f = await carregarFontes()

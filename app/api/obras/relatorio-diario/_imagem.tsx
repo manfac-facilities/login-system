@@ -24,6 +24,7 @@ import { ImageResponse } from 'next/og'
 import { diasDesde, somaDias } from '../../../obras/_lib/tipos'
 import { MESES_CURTOS, MESES_LONGOS, INICIO_DOS_DADOS, type Painel, type Sla } from '../../../obras/painel/_calculos'
 import { K, N0, N1, R, fd, mesCurto } from '../../../obras/painel/_ui'
+import { textoAgendadas } from '../../../obras/_lib/agendamento'
 import { recorteDoCronograma } from './_recorte'
 
 // ============================================================
@@ -298,7 +299,13 @@ function mini(x: Mini): ReactElement {
         )
       ) : null}
       {x.m !== undefined ? (
-        <div style={{ marginTop: 3, fontSize: 11.25, lineHeight: '15px', height: (x.linhasM ?? 1) * 15, color: C.mut2 }}>
+        <div
+          style={
+            typeof x.m === 'string'
+              ? { marginTop: 3, fontSize: 11.25, lineHeight: '15px', height: (x.linhasM ?? 1) * 15, color: C.mut2 }
+              : col({ marginTop: 3, fontSize: 11.25, lineHeight: '15px', height: (x.linhasM ?? 1) * 15, color: C.mut2 })
+          }
+        >
           {x.m}
         </div>
       ) : null}
@@ -976,12 +983,18 @@ function paradasEAtrasos(painel: Painel): Bloco {
   )
 }
 
-const MINI_RITMO_E: Pick<Mini, 'n' | 'm' | 'linhasM'> = { n: '', m: '', linhasM: 2 }
-const RITMO_H = 2 + CARDH + 12 + alturaMini(MINI_RITMO_E) + 12
+// Com obras agendadas, "N agendadas (não contam)" entra em linha à parte no mini
+// "Responderam". O mini tem ~126 px úteis: "N ainda aguardam resposta" ocupa 2
+// linhas e "N agendadas (não contam)" também (medido na prévia do PNG), então a
+// caixa passa de 2 para 4 linhas (30 px a mais) nos três minis da fileira.
+const ritmoH = (linhasM: number) => 2 + CARDH + 12 + alturaMini({ n: '', m: '', linhasM }) + 12
 function ritmo(painel: Painel): Bloco {
   const r = painel.ritmo
-  const m = (rotulo: string, valor: string | number, cor: string | undefined, n: string, mm?: string) =>
-    mini({ rotulo, valor: String(valor), cor, n, m: mm, linhasM: 2, padX: 7.5 })
+  const linhasM = r.agendadas > 0 ? 4 : 2
+  const RITMO_H = ritmoH(linhasM)
+  const m = (rotulo: string, valor: string | number, cor: string | undefined, n: string, mm?: ReactNode) =>
+    mini({ rotulo, valor: String(valor), cor, n, m: mm, linhasM, padX: 7.5 })
+  const aguardam = `${Math.max(0, r.esperados - r.responderam)} ainda aguardam resposta`
   return secao('Ritmo do campo e respostas', 'Diário e tarefas mostram o que aconteceu e o que continua esperando alguém.', 1, 'Sempre hoje', {
     h: RITMO_H,
     el: (
@@ -989,7 +1002,20 @@ function ritmo(painel: Painel): Bloco {
         <div style={{ ...CARD, flex: 1.3, minWidth: 0 }}>
           {cardH('Diário de hoje', 'Somente obras que entram na fila do diário')}
           <div style={flex({ padding: '12px 13.5px', gap: 7.5, height: RITMO_H - 2 - CARDH })}>
-            {m('Responderam', `${r.responderam}/${r.esperados}`, undefined, 'registros esperados', `${Math.max(0, r.esperados - r.responderam)} ainda aguardam resposta`)}
+            {m(
+              'Responderam',
+              `${r.responderam}/${r.esperados}`,
+              undefined,
+              'registros esperados',
+              r.agendadas > 0 ? (
+                <div style={col()}>
+                  <div>{aguardam}</div>
+                  <div>{`${textoAgendadas(r.agendadas)} (não contam)`}</div>
+                </div>
+              ) : (
+                aguardam
+              )
+            )}
             {m('Não andou', r.naoAndou, C.amb, 'registros de hoje', 'motivo e responsável visíveis')}
             {m('Com foto', r.comFoto, C.verde, 'registros de hoje', 'foto é evidência, não % de avanço')}
           </div>
