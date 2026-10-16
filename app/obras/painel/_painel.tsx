@@ -14,6 +14,7 @@ import { Fragment, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Painel, Sla } from './_calculos'
 import { MESES_CURTOS, MESES_LONGOS } from './_calculos'
+import { textoAgendadas } from '../_lib/agendamento'
 import {
   Barra,
   Card,
@@ -839,6 +840,7 @@ function Ritmo({ painel }: { painel: Painel }) {
             <Mini rotulo="Responderam" valor={`${r.responderam}/${r.esperados}`}>
               <div className={n}>registros esperados</div>
               <div className={d}>{Math.max(0, r.esperados - r.responderam)} ainda aguardam resposta</div>
+              {r.agendadas > 0 ? <div className={d}>{`${textoAgendadas(r.agendadas)} (não contam)`}</div> : null}
             </Mini>
             <Mini rotulo="Não andou" valor={r.naoAndou} cor="#f4b73f">
               <div className={n}>registros de hoje</div>

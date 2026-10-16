@@ -121,6 +121,21 @@ describe('PainelGerencial', () => {
     expect(screen.getByText(texto)).toBeInTheDocument()
   })
 
+  it.each([
+    [3, '3 agendadas (não contam)'],
+    [1, '1 agendada (não contam)'],
+  ])('com %i agendadas o mini "Responderam" mostra "%s"', (n, texto) => {
+    montar((p) => {
+      p.ritmo.agendadas = n
+    })
+    expect(screen.getByText(texto)).toBeInTheDocument()
+  })
+
+  it('sem agendadas o texto não aparece', () => {
+    montar()
+    expect(screen.queryByText(/agendadas? \(não contam\)/)).not.toBeInTheDocument()
+  })
+
   it('clicar num cliente leva o filtro para a URL', async () => {
     montar()
     const grupo = screen.getByRole('group', { name: 'Cliente' })
