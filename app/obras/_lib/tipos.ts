@@ -336,6 +336,13 @@ export type ObraRow = {
   marco_liberou_fat: string | null
   marco_faturou: string | null
 
+  /** "Agendar e tirar do diário" (spec 16/10/2026): as cinco vêm juntas ou nenhuma. */
+  diario_agendado_ate?: string | null
+  diario_agendado_oque?: string | null
+  diario_agendado_motivo?: string | null
+  diario_agendado_por?: string | null
+  diario_agendado_em?: string | null
+
   pendencia: string | null
   pend_resp: string | null
   pend_prazo: string | null
