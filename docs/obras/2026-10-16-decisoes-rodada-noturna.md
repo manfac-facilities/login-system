@@ -17,3 +17,6 @@ manualmente"
 
 ## Pergunta para o cliente (WhatsApp)
 Ver o texto pronto na mensagem do Claude de 16/10; quando a resposta chegar, salvar literal em `docs/cliente/`.
+
+## Mockup "Trazer OS do Field" (16/10)
+Publicado: https://claude.ai/artifact/5bGaUN9WCfq4vRhXJyCPEX (cópia em `mockups/mockup-trazer-os-do-field.html`). Aguarda veredito do cliente nas 8 suposições.
