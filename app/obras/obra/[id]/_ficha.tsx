@@ -593,6 +593,24 @@ export default function Ficha({
           <EtiquetaCobertura obra={obra} />
           <BadgeDias obra={obra} />
         </div>
+        {cancelada(obra) ? null : (
+          <div
+            aria-label="Pedir a outros sistemas"
+            className="w-full rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-3 sm:w-auto sm:min-w-64"
+          >
+            <div className="text-[11px] uppercase tracking-wider text-[#94a3b8]">Pedir a partir desta obra</div>
+            {/* <a> e não <Link>: o Compras é app separada no mesmo domínio (AGENTS.md). */}
+            <a
+              href={`/compras/solicitacoes/nova?obra=${obra.id}`}
+              target="_blank"
+              rel="noopener"
+              className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#f05a28] px-3.5 py-2.5 text-sm font-semibold text-white hover:brightness-110"
+            >
+              Solicitar compra <span aria-hidden="true" className="text-xs opacity-85">↗</span>
+            </a>
+            <p className="mt-1.5 text-xs text-[#94a3b8]">Abre o Compras em nova aba, com esta obra.</p>
+          </div>
+        )}
       </header>
 
       {/* ---------- obra cancelada: o selo, com o desfazer ---------- */}
