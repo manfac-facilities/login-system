@@ -36,6 +36,7 @@ import {
   type RemarcacaoRow,
   type TarefaRow,
 } from '../_lib/tipos'
+import { agendadaForaDoDiario, naFilaDoDiario } from '../_lib/agendamento'
 
 // ============================================================
 // Entradas
@@ -705,11 +706,10 @@ function atrasosDe(obras: ObraPainel[], remarcacoes: Map<string, string>, hoje: 
   }
 }
 
-/** As etapas em que a obra entra na fila do Diário (`ETAPAS_FILA` de `diario/page.tsx`). */
-const ETAPAS_FILA_DIARIO: Etapa[] = ['levantamento', 'andamento', 'paralisado']
-
 export type Ritmo = {
   esperados: number
+  /** Agendadas fora do diário: não entram em esperados nem em responderam. */
+  agendadas: number
   responderam: number
   naoAndou: number
   comFoto: number
@@ -724,13 +724,15 @@ export type Ritmo = {
  * sai (`tarefaVisivelNaLista`).
  */
 function ritmoDe(obras: ObraPainel[], diario: LinhaDiario[], tarefas: LinhaTarefa[], hoje: string): Ritmo {
-  const fila = new Set(obras.filter((o) => ETAPAS_FILA_DIARIO.includes(o.etapa)).map((o) => o.id))
+  // A regra da fila é a mesma da tela do Diário (`_lib/agendamento.ts`).
+  const fila = new Set(obras.filter((o) => naFilaDoDiario(o, hoje)).map((o) => o.id))
   const deHoje = diario.filter((d) => d.data === hoje && fila.has(d.obra_id))
   const etapa = new Map(obras.map((o) => [o.id, o.etapa]))
   const ts = tarefas.filter((t) => etapa.has(t.obra_id) && tarefaVisivelNaLista(t, etapa.get(t.obra_id)))
   const sit = (t: LinhaTarefa) => sitTarefa(t, hoje)
   return {
     esperados: fila.size,
+    agendadas: obras.filter((o) => agendadaForaDoDiario(o, hoje)).length,
     responderam: deHoje.length,
     naoAndou: deHoje.filter((d) => !d.andou).length,
     comFoto: deHoje.filter((d) => !!d.foto_path).length,
