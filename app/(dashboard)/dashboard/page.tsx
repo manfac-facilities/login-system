@@ -116,6 +116,37 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          {/* Orçamento e RH seguem o Compras: apps Next separadas (basePath /orcamento e
+              /rh), papéis no próprio módulo, <a> normal e fora do matcher. O card aparece
+              para todos; quem não tem papel vê o aviso de acesso do próprio módulo. */}
+          <a
+            href="/orcamento"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">📊</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Orçamento
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Orçado × realizado por PEF, indicadores e gestão do passivo
+              </p>
+            </div>
+          </a>
+          <a
+            href="/rh"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">👥</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                RH
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Cadastro de colaboradores e rateio por departamento
+              </p>
+            </div>
+          </a>
           {podeFrotas && (
           <Link
             href="/sofia"
