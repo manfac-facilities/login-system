@@ -109,7 +109,7 @@ begin
   if v_antes.etapa = 'faturado' then
     raise exception 'obra já faturada' using errcode = '22023';
   end if;
-  if v_antes.fat_enviado_em is not null or v_antes.etapa = 'pendFat' then
+  if v_antes.fat_enviado_em is not null then
     raise exception 'obra já enviada para faturamento' using errcode = '22023';
   end if;
   if nullif(btrim(v_antes.cliente), '') is null then
@@ -135,7 +135,8 @@ begin
   where o.id = p_obra_id;
 
   -- Histórico no formato de app/obras/_lib/historico.ts: etapa pelo nome de tela,
-  -- datas dd/mm/aaaa, uma linha por campo que mudou.
+  -- datas dd/mm/aaaa, uma linha por campo que mudou. A linha do marco sai sempre: com a obra
+  -- já em pendFat a linha da etapa some (de = para) e o motivo só chega ao histórico por ela.
   insert into public.obras_historico (obra_id, bloco, campo, de, para, motivo, quem, created_at)
   select p_obra_id, 'Esteira', x.campo, x.de, x.para, v_motivo, v_quem, v_quando
     from (values
@@ -153,7 +154,7 @@ begin
         'Pendente faturamento'),
       ('marco_liberou_fat', to_char(v_antes.marco_liberou_fat, 'DD/MM/YYYY'), to_char(v_hoje, 'DD/MM/YYYY'))
     ) as x(campo, de, para)
-   where x.de is distinct from x.para;
+   where x.de is distinct from x.para or x.campo = 'marco_liberou_fat';
 
   return jsonb_build_object('ok', true);
 end;
@@ -220,7 +221,7 @@ begin
         end),
       ('marco_liberou_fat', to_char(v_antes.marco_liberou_fat, 'DD/MM/YYYY'), null)
     ) as x(campo, de, para)
-   where x.de is distinct from x.para;
+   where x.de is distinct from x.para or x.campo = 'marco_liberou_fat';
 
   return jsonb_build_object('analista', v_antes.fat_enviado_por, 'os', v_antes.os, 'loja', v_antes.loja);
 end;

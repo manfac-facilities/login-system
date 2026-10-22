@@ -59,6 +59,19 @@ describe('sdd-sql-obras-enviar-faturamento.sql', () => {
     expect(f).toMatch(/left\(nullif\(btrim\(p_obs\), ''\), 500\)/i)
   })
 
+  it('enviar: a recusa de já enviada não depende de etapa = pendFat (obra em pendFat ainda não enviada pode ser enviada)', () => {
+    const f = corpo('obras_enviar_para_faturamento')
+    expect(f).toMatch(/if v_antes\.fat_enviado_em is not null then\s+raise exception 'obra já enviada para faturamento'/i)
+    expect(f).not.toMatch(/etapa = 'pendFat' then/i)
+    expect(f).toMatch(/fat_enviado_etapa_anterior = v_antes\.etapa/i)
+  })
+
+  it('histórico: a linha do marco sai sempre, para o motivo chegar ao histórico mesmo com a etapa inalterada', () => {
+    for (const n of ['obras_enviar_para_faturamento', 'obras_devolver_faturamento']) {
+      expect(corpo(n)).toMatch(/where x.de is distinct from x.para or x.campo = 'marco_liberou_fat'/i)
+    }
+  })
+
   it('devolver: só service_role, recusa sem envio ou fora de pendFat, motivo obrigatório, volta à etapa anterior e limpa', () => {
     const f = corpo('obras_devolver_faturamento')
     expect(f).toMatch(/\(p_obra_id uuid, p_motivo text, p_quem text\)/i)
