@@ -74,6 +74,7 @@ import BlocoCronograma from './_bloco-cronograma'
 import Historico from './_historico'
 import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fechamento'
 import FaixaCancelar from './_cancelar-obra'
+import EnviarParaFaturamento from './_enviar-faturamento'
 import SeloCancelada from './_cancelamento'
 import type { LinhaHistorico } from '../../_lib/historico'
 import {
@@ -81,6 +82,7 @@ import {
   cancelarObraAction,
   corrigirDataFechamentoAction,
   desfazerCancelamentoAction,
+  enviarParaFaturamentoAction,
   salvarAutorizacaoAction,
   salvarCronogramaAction,
   salvarIdentificacaoAction,
@@ -743,6 +745,7 @@ export default function Ficha({
               hoje={hoje}
               referenciaFechamento={{ relatorio: obra.marco_relatorio, aprovacao: obra.aprovacao }}
             />
+            <EnviarParaFaturamento obra={obra} enviar={enviarParaFaturamentoAction} />
             {/* Cancelamento (spec-cancelamento §6.2): só até sair de campo (2B). */}
             {podeCancelar(obra) ? (
               <>
