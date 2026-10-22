@@ -362,6 +362,13 @@ export async function mudarEtapaAction(
   const obra = leitura.obra as ObraRow
   if (cancelada(obra)) return { error: CANCELADA_NAO_MUDA_ETAPA }
 
+  // "Trocar" pendFat -> pendFat apagaria `marco_liberou_fat` (o passo pendFat
+  // tem índice >= N) e desfaria o "Enviar para faturamento". Só neste caso a
+  // mesma etapa é recusada; nas outras ela segue reconciliando marcos.
+  if (etapa === 'pendFat' && obra.etapa === 'pendFat' && obra.marco_liberou_fat) {
+    return { error: 'A obra já está nessa etapa.' }
+  }
+
   const hoje = hojeISO()
 
   // Marcos calculados ANTES do update (função pura): a data de fechamento da
@@ -1109,4 +1116,41 @@ export async function cadastrarMotivoRemarcacaoAction(
   }
 
   return { motivo: data as { id: string; nome: string }, jaExistia: false }
+}
+
+const ERROS_ENVIAR_FATURAMENTO: [string, string][] = [
+  ['cliente libera por e-mail', 'Essa obra é de cliente que libera por e-mail; o faturamento chega por lá.'],
+  ['obra já enviada para faturamento', 'Essa obra já foi enviada para faturamento. Recarregue a página.'],
+  ['obra cancelada', 'Essa obra está cancelada.'],
+  ['obra já faturada', 'Essa obra já foi faturada.'],
+  ['obra sem cliente', 'Essa obra ainda não tem cliente no Gestão de Obras.'],
+]
+
+/**
+ * "Enviar para faturamento": o PCM avisa o Financeiro de que a obra está
+ * liberada. A regra e a gravação (carimbo, marco e histórico) são da RPC
+ * `obras_enviar_para_faturamento`; aqui só sessão, tradução do erro e revalidação.
+ */
+export async function enviarParaFaturamentoAction(
+  obraId: string,
+  observacao: string | null
+): Promise<EstadoAcao> {
+  const sessao = await abrirSessao()
+  if (sessao.error) return { error: sessao.error }
+  const supabase = sessao.supabase as Cliente
+
+  const obs = observacao?.trim() || null
+  const { error } = await supabase.rpc('obras_enviar_para_faturamento', {
+    p_obra_id: obraId,
+    p_obs: obs,
+  })
+  if (error) {
+    const msg = error.message ?? ''
+    const conhecido = ERROS_ENVIAR_FATURAMENTO.find(([trecho]) => msg.includes(trecho))
+    return { error: conhecido ? conhecido[1] : 'Não deu para enviar. Tente de novo.' }
+  }
+
+  revalidatePath(`/obras/obra/${obraId}`)
+  revalidatePath('/obras/base')
+  return { success: true }
 }

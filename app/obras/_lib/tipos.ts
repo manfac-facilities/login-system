@@ -369,6 +369,11 @@ export type ObraRow = {
   fat_nfse?: string | null
   fat_pedido?: string | null
   fat_folhas?: string | null
+  /** "Enviar para faturamento" (`obras_enviar_para_faturamento`). Opcionais: obra lida antes da migration não traz. */
+  fat_enviado_em?: string | null
+  fat_enviado_por?: string | null
+  fat_enviado_obs?: string | null
+  fat_enviado_etapa_anterior?: string | null
 }
 
 /** `obras_diario`. `motivo` é obrigatório quando `andou = false` (decisão C). */

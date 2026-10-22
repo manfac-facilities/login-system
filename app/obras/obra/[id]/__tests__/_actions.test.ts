@@ -52,6 +52,7 @@ import {
   cancelarObraAction,
   corrigirDataFechamentoAction,
   desfazerCancelamentoAction,
+  enviarParaFaturamentoAction,
   mudarEtapaAction,
 } from '../_actions'
 
@@ -750,5 +751,62 @@ describe('desfazerCancelamentoAction', () => {
     expect(await desfazerCancelamentoAction('o1')).toEqual({
       error: 'Não deu para desfazer o cancelamento. Nada mudou — tente de novo.',
     })
+  })
+})
+
+describe('enviarParaFaturamentoAction', () => {
+  it('sem sessão: devolve erro e não chama a RPC', async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } })
+    const r = await enviarParaFaturamentoAction('o1', null)
+    expect(r.error).toBeTruthy()
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('sem acesso a obras: devolve erro e não chama a RPC', async () => {
+    ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
+    const r = await enviarParaFaturamentoAction('o1', null)
+    expect(r).toEqual({ error: 'Sem acesso à Gestão de Obras' })
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('ok: chama a RPC com a observação e revalida', async () => {
+    rpcMock.mockResolvedValue({ data: {}, error: null })
+    const r = await enviarParaFaturamentoAction('o1', 'liberou por telefone')
+    expect(r).toEqual({ success: true })
+    expect(rpcMock).toHaveBeenCalledWith('obras_enviar_para_faturamento', {
+      p_obra_id: 'o1',
+      p_obs: 'liberou por telefone',
+    })
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/obra/o1')
+    expect(revalidatePath).toHaveBeenCalledWith('/obras/base')
+  })
+
+  it('observação só com espaços vira null', async () => {
+    rpcMock.mockResolvedValue({ data: {}, error: null })
+    await enviarParaFaturamentoAction('o1', '  ')
+    expect(rpcMock).toHaveBeenCalledWith('obras_enviar_para_faturamento', { p_obra_id: 'o1', p_obs: null })
+  })
+
+  it.each([
+    ['cliente libera por e-mail', 'Essa obra é de cliente que libera por e-mail; o faturamento chega por lá.'],
+    ['obra já enviada para faturamento', 'Essa obra já foi enviada para faturamento. Recarregue a página.'],
+    ['obra cancelada', 'Essa obra está cancelada.'],
+    ['obra já faturada', 'Essa obra já foi faturada.'],
+    ['obra sem cliente', 'Essa obra ainda não tem cliente no Gestão de Obras.'],
+    ['connection refused xpto', 'Não deu para enviar. Tente de novo.'],
+  ])('erro do banco "%s" vira mensagem amigável', async (msg, esperado) => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: `ERROR: ${msg}` } })
+    const r = await enviarParaFaturamentoAction('o1', null)
+    expect(r).toEqual({ error: esperado })
+    expect(revalidatePath).not.toHaveBeenCalled()
+  })
+})
+
+describe('mudarEtapaAction — mesma etapa pendFat depois de enviada', () => {
+  it('recusa pendFat -> pendFat com marco_liberou_fat preenchido, sem escrever', async () => {
+    obraAtual = obra({ etapa: 'pendFat', marco_liberou_fat: '2026-10-20' })
+    const r = await mudarEtapaAction('o1', 'pendFat')
+    expect(r).toEqual({ error: 'A obra já está nessa etapa.' })
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 })
