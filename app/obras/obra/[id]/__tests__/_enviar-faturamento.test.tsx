@@ -50,6 +50,15 @@ test('erro devolvido aparece na tela', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Não deu para enviar.')
 })
 
+test('action que lança exceção mostra mensagem genérica', async () => {
+  const u = userEvent.setup()
+  const enviar = jest.fn().mockRejectedValue(new Error('boom'))
+  render(<EnviarParaFaturamento obra={obra()} enviar={enviar} />)
+  await u.click(screen.getByRole('button', { name: 'Enviar para faturamento' }))
+  await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Enviar' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não deu para enviar. Tente de novo.')
+})
+
 test('obra enviada: sem botão, com a linha de quando e quem (horário de Brasília)', () => {
   render(
     <EnviarParaFaturamento

@@ -44,10 +44,10 @@ describe('sdd-sql-obras-enviar-faturamento.sql', () => {
     expect(f).toMatch(/etapa = 'pendFat'/i)
     expect(f).toMatch(/\(now\(\) at time zone 'America\/Sao_Paulo'\)::date/i)
     expect(f).toMatch(/marco_liberou_fat = v_hoje/i)
-    expect(f).toMatch(/desde_etapa = v_hoje/i)
+    expect(f).toMatch(/desde_etapa = case when v_antes\.etapa = 'pendFat' then o\.desde_etapa else v_hoje end/i)
     expect(f).toMatch(/atualizacao = v_hoje/i)
-    expect(f).toMatch(/etapa_por = v_quem/i)
-    expect(f).toMatch(/etapa_em = v_quando/i)
+    expect(f).toMatch(/etapa_por = case when v_antes\.etapa = 'pendFat' then o\.etapa_por else v_quem end/i)
+    expect(f).toMatch(/etapa_em = case when v_antes\.etapa = 'pendFat' then o\.etapa_em else v_quando end/i)
     for (const c of ['fat_enviado_em', 'fat_enviado_por', 'fat_enviado_obs', 'fat_enviado_etapa_anterior']) {
       expect(f).toMatch(new RegExp(`${c} =`, 'i'))
     }
@@ -62,7 +62,7 @@ describe('sdd-sql-obras-enviar-faturamento.sql', () => {
   it('enviar: a recusa de já enviada não depende de etapa = pendFat (obra em pendFat ainda não enviada pode ser enviada)', () => {
     const f = corpo('obras_enviar_para_faturamento')
     expect(f).toMatch(/if v_antes\.fat_enviado_em is not null then\s+raise exception 'obra já enviada para faturamento'/i)
-    expect(f).not.toMatch(/etapa = 'pendFat' then/i)
+    expect(f).not.toMatch(/\bif\s[^;]*etapa = 'pendFat' then/i)
     expect(f).toMatch(/fat_enviado_etapa_anterior = v_antes\.etapa/i)
   })
 
@@ -89,8 +89,9 @@ describe('sdd-sql-obras-enviar-faturamento.sql', () => {
     for (const c of ['fat_enviado_em', 'fat_enviado_por', 'fat_enviado_obs', 'fat_enviado_etapa_anterior']) {
       expect(f).toMatch(new RegExp(`${c} = null`, 'i'))
     }
-    expect(f).toMatch(/desde_etapa = v_hoje/i)
-    expect(f).toMatch(/etapa_por = v_quem/i)
+    expect(f).toMatch(/desde_etapa = case when v_volta = v_antes\.etapa then o\.desde_etapa else v_hoje end/i)
+    expect(f).toMatch(/etapa_por = case when v_volta = v_antes\.etapa then o\.etapa_por else v_quem end/i)
+    expect(f).toMatch(/etapa_em = case when v_volta = v_antes\.etapa then o\.etapa_em else v_quando end/i)
     expect(f).toMatch(/'Devolvida pelo financeiro: '/)
     expect(f).toMatch(/insert into public\.obras_historico/i)
     expect(f).toMatch(/'analista'/)

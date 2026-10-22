@@ -44,8 +44,12 @@ export default function EnviarParaFaturamento({ obra, enviar }: { obra: Obra; en
   function confirmar() {
     setErro(null)
     iniciar(async () => {
-      const r = await enviar(obra.id, obs.trim() === '' ? null : obs.trim())
-      if (r.error) setErro(r.error)
+      try {
+        const r = await enviar(obra.id, obs.trim() === '' ? null : obs.trim())
+        if (r.error) setErro(r.error)
+      } catch {
+        setErro('Não deu para enviar. Tente de novo.')
+      }
     })
   }
 

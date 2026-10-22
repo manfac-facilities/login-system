@@ -123,10 +123,11 @@ begin
 
   update public.obras_obra o set
     etapa = 'pendFat',
-    desde_etapa = v_hoje,
+    -- já em pendFat: a etapa não muda, então não reinicia o relógio da etapa
+    desde_etapa = case when v_antes.etapa = 'pendFat' then o.desde_etapa else v_hoje end,
     atualizacao = v_hoje,
-    etapa_por = v_quem,
-    etapa_em = v_quando,
+    etapa_por = case when v_antes.etapa = 'pendFat' then o.etapa_por else v_quem end,
+    etapa_em = case when v_antes.etapa = 'pendFat' then o.etapa_em else v_quando end,
     marco_liberou_fat = v_hoje,
     fat_enviado_em = v_quando,
     fat_enviado_por = v_quem,
@@ -194,10 +195,11 @@ begin
 
   update public.obras_obra o set
     etapa = v_volta,
-    desde_etapa = v_hoje,
+    -- destino igual à etapa atual: a etapa não muda, mantém o relógio dela
+    desde_etapa = case when v_volta = v_antes.etapa then o.desde_etapa else v_hoje end,
     atualizacao = v_hoje,
-    etapa_por = v_quem,
-    etapa_em = v_quando,
+    etapa_por = case when v_volta = v_antes.etapa then o.etapa_por else v_quem end,
+    etapa_em = case when v_volta = v_antes.etapa then o.etapa_em else v_quando end,
     marco_liberou_fat = null,
     fat_enviado_em = null,
     fat_enviado_por = null,
@@ -261,8 +263,8 @@ commit;
 -- ============================================================
 select item, case when ok then 'OK' else '*** FALHOU ***' end as resultado from (values
   (1, 'colunas fat_enviado_* (4)', (select count(*) from information_schema.columns where table_schema='public' and table_name='obras_obra' and column_name in ('fat_enviado_em','fat_enviado_por','fat_enviado_obs','fat_enviado_etapa_anterior')) = 4),
-  (2, 'enviar existe e é invoker', exists (select 1 from pg_proc where proname='obras_enviar_para_faturamento' and not prosecdef)),
-  (3, 'devolver existe e é invoker', exists (select 1 from pg_proc where proname='obras_devolver_faturamento' and not prosecdef)),
+  (2, 'enviar existe e é invoker', exists (select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname='obras_enviar_para_faturamento' and not prosecdef)),
+  (3, 'devolver existe e é invoker', exists (select 1 from pg_proc where pronamespace = 'public'::regnamespace and proname='obras_devolver_faturamento' and not prosecdef)),
   (4, 'authenticated executa enviar', has_function_privilege('authenticated', 'public.obras_enviar_para_faturamento(uuid, text)', 'execute')),
   (5, 'anon não executa enviar', not has_function_privilege('anon', 'public.obras_enviar_para_faturamento(uuid, text)', 'execute')),
   (6, 'authenticated não executa devolver', not has_function_privilege('authenticated', 'public.obras_devolver_faturamento(uuid, text, text)', 'execute')),
