@@ -188,7 +188,8 @@ describe('ciclo de vida', () => {
     expect(donoDa(obraRow({ etapa: 'levantamento', pcm: null }))).toBe('Responsável a definir')
     expect(donoDa(obraRow({ etapa: 'definir', analista_cliente: 'LEANDRO' }))).toBe('Analista LEANDRO')
     expect(donoDa(obraRow({ etapa: 'andamento' }))).toBe('Equipe em campo')
-    expect(donoDa(obraRow({ etapa: 'pendFat' }))).toBe('Cliente DPSP')
+    expect(donoDa(obraRow({ etapa: 'pendFat' }))).toBe('Cliente')
+    expect(donoDa(obraRow({ etapa: 'aprovarOS' }))).toBe('Cliente')
   })
 
   it('devolve os nomes aprovados de etapa e fase', () => {
