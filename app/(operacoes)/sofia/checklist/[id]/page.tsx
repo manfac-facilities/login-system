@@ -19,7 +19,7 @@ export default async function ChecklistDetalhePage({ params }: { params: Promise
   const supabase = await createClient()
 
   const [{ data: checklist }, { data: fotos }] = await Promise.all([
-    supabase.from('checklist').select('*, equipes(codigo), veiculos(placa, modelo), motoristas(nome)').eq('id', id).single(),
+    supabase.from('checklist').select('*, equipes!equipe_id(codigo), veiculos(placa, modelo), motoristas!motorista_id(nome)').eq('id', id).single(),
     supabase.from('checklist_fotos').select('*').eq('checklist_id', id),
   ])
 
