@@ -12,11 +12,9 @@ export default function TratativaForm({ sinistro }: { sinistro: Sinistro }) {
   const selectRef = useRef<HTMLSelectElement>(null)
 
   useEffect(() => {
-    if (state.success) {
-      // o reset do <form action> do React 19 devolve o select ao valor inicial; reaplica o escolhido
-      if (selectRef.current) selectRef.current.value = status
-      router.refresh()
-    }
+    // o reset do <form action> do React 19 devolve o select ao valor inicial, mesmo com erro; reaplica o escolhido
+    if (selectRef.current) selectRef.current.value = status
+    if (state.success) router.refresh()
   }, [state, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
