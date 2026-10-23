@@ -172,3 +172,9 @@ Backlog da revisão independente; nenhum bloqueia.
 - Execução que falha perde os avisos daquela rodada (`erro` guarda só a falha).
 - Campo achado pelo início do nome "os cliente"; outro campo com o mesmo início pegaria o primeiro do array.
 - Colisão no insert (obra nova, lote de 100) derruba a execução inteira; sem dano, a próxima rodada vira aviso. Comportamento anterior a este commit.
+
+## 23/10/2026 — Frotas: correção de B1/B3/B7 (merge fix/frotas-bugs-b1-b3-b7)
+
+Backlog da revisão independente; nenhum bloqueia.
+- `checklist/page.tsx:18` e `checklist/[id]/page.tsx:21` ignoram o `error` da consulta: outro erro de query volta a mostrar a lista vazia / 404 em vez de avisar.
+- `atualizarTratativaSinistroAction`: se a RLS negar o update, o Supabase devolve 0 linhas sem erro e a tela mostra "Alterações salvas" sem ter gravado. Anterior a este merge.
