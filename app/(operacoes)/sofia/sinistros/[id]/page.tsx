@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import TratativaForm from './_form'
 import GaleriaFotos, { type FotoItem } from '@/components/sofia/GaleriaFotos'
 
@@ -28,7 +29,10 @@ export default async function SinistroDetalhePage({ params }: { params: Promise<
 
   return (
     <div className="p-8 max-w-2xl">
-      <div className="mb-8">
+      <Link href="/sofia/sinistros" className="text-[#4a6080] text-sm hover:text-white transition-colors">
+        ← Voltar para sinistros
+      </Link>
+      <div className="mb-8 mt-4">
         <h1 className="text-2xl font-bold text-white">{sinistro.veiculos?.placa ?? 'Sem veículo'}</h1>
         <p className="text-[#4a6080] text-sm mt-1">
           {new Date(sinistro.data).toLocaleDateString('pt-BR')} · {sinistro.motoristas?.nome ?? 'sem motorista'}
