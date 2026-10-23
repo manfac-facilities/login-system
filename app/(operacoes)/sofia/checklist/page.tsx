@@ -17,7 +17,7 @@ export default async function ChecklistPage() {
   const supabase = await createClient()
   const { data: checklists } = await supabase
     .from('checklist')
-    .select('*, equipes(codigo), veiculos(placa), motoristas(nome)')
+    .select('*, equipes!equipe_id(codigo), veiculos(placa), motoristas!motorista_id(nome)')
     .order('created_at', { ascending: false })
     .limit(50)
 
