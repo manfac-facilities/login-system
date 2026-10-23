@@ -39,3 +39,16 @@ Visão geral nova [05:09]; bases em tabela com exportar (abastecimento, KM, moto
 
 - D1 — Trava do checklist para trocar carro da equipe: José quer tirar [05:42]; João defendeu manter [06:56]; Igor faz checklist sempre e quer histórico [08:18].
 - D2 — O que o Igor (gestor de frotas, não-admin) pode editar: José pediu "revisa as permissões dele, me manda, eu valido" [18:03].
+
+## Cruzamento com o documento do Igor (Word, 14 processos)
+
+Fonte: `docs/cliente/2026-10-20-processos-de-frota/PROCESSOS_DE_FROTA_SISTEMA_DE_GESTAO_DE_FROTAS.md`, seções "Oportunidades de Melhoria".
+O documento é um mapa de processos e de melhorias, **não uma lista de bugs**. Na reunião o José pediu para não sair fazendo tudo dele [00:01].
+
+Itens do documento que já estão nesta triagem (entram junto com a frente de bugs):
+- 4.7.2 histórico do vínculo motorista × veículo × equipe → F1 / extrato [26:28]
+- 9.12.3 detalhe do que foi feito em cada revisão → B6
+- 11.10.4 e 11.10.6 histórico de checklist, trazer o último na troca → B3 + D1
+- 2.12.5 alerta de revisão pelo KM previsto → B5
+
+Todo o resto fica na segunda bateria, agrupado por processo: Ticketlog automático e saldo pré-pago (1, 8, 10); avisos de foto faltando no KM (2.13); contratos das outras locadoras (3); endereço/e-mail do motorista e desligamento × 30% da rescisão (4.7.3–4.7.4); higienização (5); assinatura remota e prazo de indicação de multa (6); SLA de sinistro (7); boletos e rateio automático (10); checklist periódico com comparação automática e indicadores de avaria (11); ocorrências fora do horário (12); escala de plantão (13); indicadores consolidados (14).
