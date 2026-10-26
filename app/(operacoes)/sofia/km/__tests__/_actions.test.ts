@@ -14,6 +14,7 @@ let tableResults: Record<string, TableResult>
 let currentUserEmail: string | null = null
 let chains: Record<string, ReturnType<typeof makeChainable>> = {}
 const rpcMock = jest.fn()
+const podeGerirMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -26,16 +27,17 @@ jest.mock('@/lib/supabase/server', () => ({
       if (!chains[table]) chains[table] = makeChainable(tableResults[table])
       return chains[table]
     }),
-    rpc: rpcMock,
+    // sofia_pode_gerir (gate) fica separado do rpcMock (lancar_km_atomico)
+    rpc: jest.fn((fn: string, args?: unknown) =>
+      fn === 'sofia_pode_gerir' ? podeGerirMock() : rpcMock(fn, args)
+    ),
   })),
 }))
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/sofia/auditLog', () => ({ logAudit: jest.fn() }))
-jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import { lancarKmAction, deletarKmAction, upsertKmExcedidoStatusAction, atualizarAutorizacaoKmExcedidoAction } from '../_actions'
-import { isAdmin } from '@/lib/auth/roles'
 
 function buildFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
@@ -43,11 +45,15 @@ function buildFormData(fields: Record<string, string>): FormData {
   return fd
 }
 
-const NON_ADMIN_EMAIL = 'operador@manfac.com.br'
+const USER_EMAIL = 'operador@manfac.com.br'
+const MSG = 'Apenas administradores ou gestores de frotas podem executar esta ação'
+const PODE = { data: true, error: null }
+const NAO_PODE = { data: false, error: null }
+const ERRO_RPC = { data: true, error: { message: 'x' } }
 
 beforeEach(() => {
-  ;(isAdmin as jest.Mock).mockReset()
-  ;(isAdmin as jest.Mock).mockResolvedValue(false)
+  podeGerirMock.mockReset()
+  podeGerirMock.mockResolvedValue(NAO_PODE)
 })
 
 describe('lancarKmAction — via lancar_km_atomico', () => {
@@ -131,18 +137,29 @@ describe('upsertKmExcedidoStatusAction', () => {
   beforeEach(() => {
     tableResults = { km_excedido_desconto: { error: null } }
     chains = { km_excedido_desconto: makeChainable(tableResults.km_excedido_desconto) }
-    currentUserEmail = NON_ADMIN_EMAIL
+    currentUserEmail = USER_EMAIL
   })
-
-  it('não grava quando o usuário não é admin', async () => {
-    const fd = buildFormData({
+  const fd = () =>
+    buildFormData({
       veiculo_id: 'veiculo-1',
       mes: '2026-07-01',
       km_contratual: '1000',
       km_realizado: '1200',
       status: 'autorizado',
     })
-    await upsertKmExcedidoStatusAction(fd)
+
+  it('gestor de frotas grava', async () => {
+    podeGerirMock.mockResolvedValue(PODE)
+    await upsertKmExcedidoStatusAction(fd())
+    expect(chains.km_excedido_desconto.upsert).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['não pode gerir', NAO_PODE],
+    ['erro na RPC', ERRO_RPC],
+  ])('não grava quando %s', async (_n, resposta) => {
+    podeGerirMock.mockResolvedValue(resposta)
+    await upsertKmExcedidoStatusAction(fd())
     expect(chains.km_excedido_desconto.upsert).not.toHaveBeenCalled()
   })
 })
@@ -151,15 +168,23 @@ describe('deletarKmAction', () => {
   beforeEach(() => {
     tableResults = { km_diario: { error: null } }
     chains = { km_diario: makeChainable(tableResults.km_diario) }
-    currentUserEmail = NON_ADMIN_EMAIL
+    currentUserEmail = USER_EMAIL
   })
 
-  it('não exclui quando o usuário não é admin', async () => {
-    const fd = buildFormData({ id: 'km-1' })
+  it('gestor de frotas exclui', async () => {
+    podeGerirMock.mockResolvedValue(PODE)
+    const result = await deletarKmAction({}, buildFormData({ id: 'km-1' }))
+    expect(result).toEqual({ success: true })
+    expect(chains.km_diario.delete).toHaveBeenCalledTimes(1)
+  })
 
-    const result = await deletarKmAction({}, fd)
-
-    expect(result).toEqual({ error: 'Apenas administradores podem executar esta ação' })
+  it.each([
+    ['não pode gerir', NAO_PODE],
+    ['erro na RPC', ERRO_RPC],
+  ])('não exclui quando %s', async (_n, resposta) => {
+    podeGerirMock.mockResolvedValue(resposta)
+    const result = await deletarKmAction({}, buildFormData({ id: 'km-1' }))
+    expect(result).toEqual({ error: MSG })
     expect(chains.km_diario.delete).not.toHaveBeenCalled()
   })
 })
@@ -168,12 +193,21 @@ describe('atualizarAutorizacaoKmExcedidoAction', () => {
   beforeEach(() => {
     tableResults = { km_excedido_desconto: { error: null } }
     chains = { km_excedido_desconto: makeChainable(tableResults.km_excedido_desconto) }
-    currentUserEmail = NON_ADMIN_EMAIL
+    currentUserEmail = USER_EMAIL
   })
 
-  it('não atualiza quando o usuário não é admin', async () => {
-    const fd = buildFormData({ status: 'autorizado' })
-    await atualizarAutorizacaoKmExcedidoAction('km-1', fd)
+  it('gestor de frotas atualiza', async () => {
+    podeGerirMock.mockResolvedValue(PODE)
+    await atualizarAutorizacaoKmExcedidoAction('km-1', buildFormData({ status: 'autorizado' }))
+    expect(chains.km_excedido_desconto.update).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['não pode gerir', NAO_PODE],
+    ['erro na RPC', ERRO_RPC],
+  ])('não atualiza quando %s', async (_n, resposta) => {
+    podeGerirMock.mockResolvedValue(resposta)
+    await atualizarAutorizacaoKmExcedidoAction('km-1', buildFormData({ status: 'autorizado' }))
     expect(chains.km_excedido_desconto.update).not.toHaveBeenCalled()
   })
 })

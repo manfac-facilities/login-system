@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validateKmAtual } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 type State = { error?: string; success?: boolean }
@@ -131,8 +131,8 @@ export async function deletarKmAction(
   if (!id) return { error: 'ID inválido' }
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return { error: erroAdmin }
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
 
   const { error } = await supabase.from('km_diario').delete().eq('id', id)
 
@@ -153,8 +153,8 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
   if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = {
     veiculo_id,
@@ -180,8 +180,8 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   if (!id || !isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()

@@ -1,10 +1,14 @@
 const insertMock = jest.fn()
 const deleteEqMock = jest.fn()
 const getUserMock = jest.fn()
+const podeGerirMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
+    rpc: jest.fn((fn: string) =>
+      fn === 'sofia_pode_gerir' ? podeGerirMock() : Promise.reject(new Error(`rpc inesperada: ${fn}`))
+    ),
     from: jest.fn(() => ({
       insert: insertMock,
       delete: jest.fn(() => ({ eq: deleteEqMock })),
@@ -16,10 +20,7 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }))
 
-jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
-
 import { lancarAbastecimentoAction, deletarAbastecimentoAction } from '../_actions'
-import { isAdmin } from '@/lib/auth/roles'
 
 function buildFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData()
@@ -81,22 +82,41 @@ describe('lancarAbastecimentoAction', () => {
 })
 
 describe('deletarAbastecimentoAction', () => {
+  const MSG = 'Apenas administradores ou gestores de frotas podem executar esta ação'
+  function fdId() {
+    const fd = new FormData()
+    fd.set('id', 'abast-1')
+    return fd
+  }
+
   beforeEach(() => {
     deleteEqMock.mockReset()
     deleteEqMock.mockResolvedValue({ error: null })
+    insertMock.mockReset()
+    insertMock.mockResolvedValue({ error: null })
     getUserMock.mockReset()
-    ;(isAdmin as jest.Mock).mockReset()
-    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    getUserMock.mockResolvedValue({ data: { user: { email: 'operador@manfac.com.br' } } })
+    podeGerirMock.mockReset()
   })
 
-  it('rejeita usuário não-admin', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: 'operador@manfac.com.br' } } })
-    const fd = new FormData()
-    fd.set('id', 'abast-1')
+  it('gestor de frotas (sofia_pode_gerir = true) exclui', async () => {
+    podeGerirMock.mockResolvedValue({ data: true, error: null })
+    const result = await deletarAbastecimentoAction({}, fdId())
+    expect(result).toEqual({ success: true })
+    expect(deleteEqMock).toHaveBeenCalledWith('id', 'abast-1')
+  })
 
-    const result = await deletarAbastecimentoAction({}, fd)
+  it('rejeita quem não pode gerir frotas', async () => {
+    podeGerirMock.mockResolvedValue({ data: false, error: null })
+    const result = await deletarAbastecimentoAction({}, fdId())
+    expect(result).toEqual({ error: MSG })
+    expect(deleteEqMock).not.toHaveBeenCalled()
+  })
 
-    expect(result).toEqual({ error: 'Apenas administradores podem executar esta ação' })
+  it('nega quando a RPC sofia_pode_gerir dá erro', async () => {
+    podeGerirMock.mockResolvedValue({ data: true, error: { message: 'x' } })
+    const result = await deletarAbastecimentoAction({}, fdId())
+    expect(result).toEqual({ error: MSG })
     expect(deleteEqMock).not.toHaveBeenCalled()
   })
 })

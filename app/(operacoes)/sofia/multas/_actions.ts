@@ -2,8 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { isAdmin } from '@/lib/auth/roles'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { podeGerirFrotas, requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 type State = { error?: string; success?: boolean }
@@ -41,8 +40,8 @@ export async function criarMultaAction(_prev: State, formData: FormData): Promis
 
 export async function enviarParaDescontoEmMassaAction(ids: string[]) {
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
   const { error } = await supabase
     .from('multas')
     .update({ status: 'validada' })
@@ -61,8 +60,8 @@ export async function excluirMultaAction(_prev: State, formData: FormData): Prom
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await isAdmin(supabase, user.email)))
-    return { error: 'Apenas administradores podem excluir multas' }
+  if (!user?.email || !(await podeGerirFrotas(supabase)))
+    return { error: 'Apenas administradores ou gestores de frotas podem excluir multas' }
 
   const { data: multa, error } = await supabase.from('multas').delete().eq('id', id).select().single()
   if (error) return { error: 'Erro ao excluir multa' }
@@ -79,8 +78,8 @@ export async function excluirMultasEmMassaAction(ids: string[]) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await isAdmin(supabase, user.email)))
-    throw new Error('Apenas administradores podem excluir multas')
+  if (!user?.email || !(await podeGerirFrotas(supabase)))
+    throw new Error('Apenas administradores ou gestores de frotas podem excluir multas')
 
   // O delete e o audit log de cada multa acontecem na mesma transação dentro
   // da function. Antes o loop de logAudit rodava depois do delete já commitado:
@@ -98,8 +97,8 @@ export async function atualizarAutorizacaoMultaAction(id: string, formData: Form
   if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()

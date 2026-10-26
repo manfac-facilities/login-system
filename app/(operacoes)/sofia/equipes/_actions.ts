@@ -1,8 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isAdmin } from '@/lib/auth/roles'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { podeGerirFrotas, requireGestorFrotas } from '@/lib/sofia/permissoes'
 
 type State = { error?: string; success?: boolean }
 
@@ -31,8 +30,8 @@ export async function criarEquipeAction(
 
 export async function toggleEquipeAction(id: string, ativo: boolean) {
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
   await supabase.from('equipes').update({ ativo }).eq('id', id)
   revalidatePath('/sofia/equipes')
 }
@@ -48,8 +47,8 @@ export async function desativarEquipeAction(
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await isAdmin(supabase, user.email)))
-    return { error: 'Apenas administradores podem desativar equipes' }
+  if (!user?.email || !(await podeGerirFrotas(supabase)))
+    return { error: 'Apenas administradores ou gestores de frotas podem desativar equipes' }
 
   const { error } = await supabase.from('equipes').update({ ativo: false }).eq('id', id)
   if (error) return { error: 'Erro ao desativar equipe' }
