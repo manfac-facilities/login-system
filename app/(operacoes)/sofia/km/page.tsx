@@ -1,6 +1,6 @@
 import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal, getKmExcedidoDescontos } from '@/lib/sofia/queries'
 import { createClient } from '@/lib/supabase/server'
-import { isAdmin } from '@/lib/auth/roles'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import KmForm from './_form'
 import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
@@ -9,8 +9,7 @@ import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 
 export default async function KmPage() {
   const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  const admin = await isAdmin(supabase, userData.user?.email ?? '')
+  const podeGerir = await podeGerirFrotas(supabase)
   const [equipes, veiculos, motoristas, historico, resumoMensal, excedidos] = await Promise.all([
     getEquipes(),
     getVeiculos(),
@@ -126,7 +125,7 @@ export default async function KmPage() {
                               status={authSt}
                               solicitadoEm={excEntry?.autorizacao_solicitado_em ?? null}
                               action={upsertKmExcedidoStatusAction}
-                              showActions={excedido && admin}
+                              showActions={excedido && podeGerir}
                               hiddenFields={{
                                 veiculo_id: r.veiculo_id,
                                 mes: r.mes + '-01',

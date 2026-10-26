@@ -2,7 +2,7 @@ import { getEquipes, getVeiculos, getMotoristas, getChecklistsRecentes } from '@
 import { ultimoTipoPorVeiculo, statusEquipe, type StatusEquipe } from '@/lib/sofia/equipes'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { isAdmin } from '@/lib/auth/roles'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import { toggleEquipeAction, desativarEquipeAction } from './_actions'
 import FilterSelect from '@/components/sofia/FilterSelect'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
@@ -35,8 +35,7 @@ export default async function EquipesPage({
 }) {
   const { q, status, limit } = await searchParams
   const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  const admin = await isAdmin(supabase, userData.user?.email ?? '')
+  const podeGerir = await podeGerirFrotas(supabase)
   const [equipes, veiculos, motoristas, checklists] = await Promise.all([
     getEquipes(),
     getVeiculos(),
@@ -125,7 +124,7 @@ export default async function EquipesPage({
               </div>
             </div>
             <div className="mt-3 flex items-center justify-end gap-3">
-              {!equipe.ativo && admin && (
+              {!equipe.ativo && podeGerir && (
                 <form action={toggleEquipeAction.bind(null, equipe.id, true)}>
                   <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                     Ativar
