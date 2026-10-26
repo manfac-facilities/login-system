@@ -66,3 +66,48 @@ export async function deletarAbastecimentoAction(
   await logAudit('abastecimentos', 'excluiu', id, 'Abastecimento excluído')
   return { success: true }
 }
+
+/**
+ * F3 — corrige litros, valor e KM via RPC corrigir_abastecimento (valida o KM
+ * com a linha travada e grava antes/depois no audit_log na mesma transação;
+ * sem logAudit). NÃO mexe em veiculos.km_atual: quem define é o KM diário.
+ */
+export async function corrigirAbastecimentoAction(
+  _prev: State,
+  formData: FormData
+): Promise<State> {
+  const id = formData.get('id') as string
+  const litrosRaw = ((formData.get('litros') as string | null) ?? '').trim()
+  const valorRaw = ((formData.get('valor') as string | null) ?? '').trim()
+  const kmRaw = ((formData.get('km') as string | null) ?? '').trim()
+  const motivo = ((formData.get('motivo') as string) ?? '').trim() || null
+  if (!id) return { error: 'ID inválido' }
+
+  const litros = Number(litrosRaw)
+  if (litrosRaw === '' || Number.isNaN(litros) || litros < 0) return { error: 'Informe os litros abastecidos.' }
+  const valor = Number(valorRaw)
+  if (valorRaw === '' || Number.isNaN(valor) || valor < 0) return { error: 'Informe o valor do abastecimento.' }
+  let km: number | null = null
+  if (kmRaw !== '') {
+    km = Number(kmRaw)
+    if (Number.isNaN(km) || km < 0 || !Number.isInteger(km)) return { error: 'KM inválido.' }
+  }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  const { error } = await supabase.rpc('corrigir_abastecimento', {
+    p_abastecimento_id: id,
+    p_litros: litros,
+    p_valor: valor,
+    p_km: km,
+    p_motivo: motivo,
+  })
+  if (error) return { error: error.code === 'SOF01' ? error.message : 'Erro ao corrigir o abastecimento' }
+
+  revalidatePath('/sofia/abastecimento')
+  revalidatePath('/sofia/custos')
+  revalidatePath('/sofia/audit')
+  return { success: true }
+}
