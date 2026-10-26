@@ -321,3 +321,36 @@ export async function getKmResumoMensal(): Promise<KmResumoMensal[]> {
     .map((g) => ({ ...g, km_rodados: g.km_fim - g.km_inicio }))
     .sort((a, b) => b.mes.localeCompare(a.mes))
 }
+
+/**
+ * F2/F3 — correções gravadas pelas funções corrigir_km_atomico /
+ * corrigir_abastecimento (audit_log, operacao 'corrigiu'), só dos registros
+ * pedidos. Busca por registro_id (revisão B10), em lotes para não estourar o
+ * tamanho da URL do PostgREST — e não pelas N mais recentes do log geral.
+ */
+export async function getCorrecoes(
+  tabela: 'km_diario' | 'abastecimentos',
+  registroIds: string[]
+): Promise<{ registro_id: string; created_at: string; dados: unknown }[]> {
+  if (registroIds.length === 0) return []
+  const supabase = await createClient()
+  const LOTE = 100
+  const lotes: string[][] = []
+  for (let i = 0; i < registroIds.length; i += LOTE) lotes.push(registroIds.slice(i, i + LOTE))
+  const resultados = await Promise.all(
+    lotes.map((ids) =>
+      supabase
+        .from('audit_log')
+        .select('registro_id, created_at, dados')
+        .eq('operacao', 'corrigiu')
+        .eq('tabela', tabela)
+        .in('registro_id', ids)
+    )
+  )
+  const out: { registro_id: string; created_at: string; dados: unknown }[] = []
+  for (const { data, error } of resultados) {
+    if (error) throwQueryError('getCorrecoes', error)
+    out.push(...((data ?? []) as { registro_id: string; created_at: string; dados: unknown }[]))
+  }
+  return out
+}
