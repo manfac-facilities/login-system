@@ -192,3 +192,62 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   revalidatePath('/sofia/descontos')
   revalidatePath('/sofia/pendencias')
 }
+
+export type CorrecaoKmState = State & { placa?: string; kmVeiculo?: number; aviso?: string }
+
+/**
+ * F2 — corrige um lançamento de KM via RPC corrigir_km_atomico, que valida o
+ * intervalo entre os vizinhos, recalcula veiculos.km_atual com o veículo
+ * travado e grava o antes/depois no audit_log na mesma transação (sem logAudit).
+ */
+export async function corrigirKmAction(
+  _prev: CorrecaoKmState,
+  formData: FormData
+): Promise<CorrecaoKmState> {
+  const id = formData.get('id') as string
+  const kmRaw = ((formData.get('km_novo') as string) ?? '').trim()
+  const motivo = ((formData.get('motivo') as string) ?? '').trim() || null
+  if (!id) return { error: 'ID inválido' }
+  if (kmRaw === '') return { error: 'Informe o KM correto.' }
+  const kmNovo = Number(kmRaw)
+  const erroKm = validateKmAtual(kmNovo)
+  if (erroKm) return { error: erroKm }
+  // revisão B4: a coluna é integer; 1050.5 viraria erro genérico no banco
+  if (!Number.isInteger(kmNovo)) return { error: 'O KM precisa ser um número inteiro, sem vírgula ou ponto.' }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  const { data, error } = await supabase.rpc('corrigir_km_atomico', {
+    p_km_id: id,
+    p_km_novo: kmNovo,
+    p_motivo: motivo,
+  })
+  if (error) return { error: error.code === 'SOF01' ? error.message : 'Erro ao corrigir o KM' }
+
+  revalidatePath('/sofia/km')
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/audit')
+
+  const r = data as { placa: string; veiculo_id: string; data: string; km_veiculo_depois: number }
+
+  // KM excedido (dinheiro): a correção NÃO altera km_excedido_desconto — a
+  // regra depende do João (spec §8, pergunta 1). Mas nunca fica em silêncio:
+  // se o mês do lançamento tem registro, a mensagem de sucesso avisa
+  // (correção obrigatória da revisão de 26/10).
+  let aviso: string | undefined
+  const { data: excedido, error: erroExcedido } = await supabase
+    .from('km_excedido_desconto')
+    .select('id')
+    .eq('veiculo_id', r.veiculo_id)
+    .eq('mes', `${r.data.slice(0, 7)}-01`)
+    .maybeSingle()
+  if (erroExcedido) {
+    aviso = `Não foi possível conferir se este mês tem registro de KM excedido para o ${r.placa}. Confira em Descontos.`
+  } else if (excedido) {
+    aviso = `Este mês tem registro de KM excedido para o ${r.placa}. A correção não altera esse registro — confira em Descontos.`
+  }
+
+  return { success: true, placa: r.placa, kmVeiculo: r.km_veiculo_depois, aviso }
+}
