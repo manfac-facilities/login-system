@@ -23,3 +23,13 @@ Mensagem literal: "igor tem acesso total ao frotas, mas nao aos outros sistemas"
 Leitura: equivale a "sim" nos 15 itens de `2026-10-23-diagnostico-permissoes.md` §5, inclusive os de desconto em
 salário (11 a 13) e exclusões, **restrito ao Gestão de Frotas** — opção B do §4 (papel "gestor de frotas" só no
 Sofia), não a opção A (administrador do hub). Substitui a validação item a item que estava pedida ao José.
+
+## Mockup da rodada 2 — APROVADO pelo João, 26/10/2026
+
+Mensagem literal: "prossiga, mockup aprovado"
+
+Mockup: https://claude.ai/artifact/D8qNHTksGDkjztteE6vFy3 (versão 1). Cópia versionada: `docs/frotas/2026-10-26-mockup-rodada2.html`.
+Aprovação vale para as 4 seções, incluindo as suposições que o mockup declarou: "vence em breve" não vira pendência
+(aparece na lista e como aviso no painel); campo editável da equipe é o `codigo`; trocar motorista avisa que a equipe
+anterior fica sem motorista; corrigir abastecimento não mexe em `veiculos.km_atual`; correção grava antes/depois na
+Auditoria com motivo opcional.

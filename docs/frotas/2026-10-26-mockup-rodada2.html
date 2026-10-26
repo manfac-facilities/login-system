@@ -1,0 +1,812 @@
+<title>Frotas — rodada 2</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0a1628; --navy:#0d2050; --orange:#f05a28; --orange-h:#d94e22;
+  --muted:#94a3b8; --border:#1e3a5f; --dim:#4a6080; --input:#0f1f3d; --white:#fff;
+  --g-bg:#14532d; --g-tx:#86efac; --b-bg:#1e3a8a; --b-tx:#93c5fd;
+  --r-bg:#7f1d1d; --r-tx:#fca5a5; --a-bg:#78350f; --a-tx:#fcd34d;
+  --warn-bg:#451a03; --warn-bd:#d97706; --warn-tx:#fcd34d;
+  --err-bg:#450a0a; --err-bd:#dc2626; --err-tx:#fca5a5;
+  --ok-bg:#052e16; --ok-bd:#16a34a; --ok-tx:#86efac;
+  --note:#c4b5fd; --note-bg:#1e1b4b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--white);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.45;overflow-x:hidden}
+button,input,select,textarea{font:inherit}
+a{color:inherit}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+
+/* ---------- cabeçalho do mockup ---------- */
+.mk-head{max-width:1200px;margin:0 auto;padding:32px 16px 8px}
+.mk-head h1{margin:0 0 4px;font-size:26px}
+.mk-head p{margin:0;color:var(--muted)}
+.mk-index{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.mk-index a{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--navy);text-decoration:none;color:var(--muted);font-size:13px}
+.mk-index a b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff;font-size:13px}
+
+/* ---------- seção ---------- */
+.sec{max-width:1200px;margin:0 auto;padding:40px 16px 8px}
+.sec-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:12px}
+.sec-num{flex:none;width:56px;height:56px;border-radius:14px;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:30px;font-weight:800}
+.sec-top h2{margin:2px 0 4px;font-size:21px}
+.sec-top .tag{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle;font-weight:500}
+.mudou{background:var(--navy);border:1px solid var(--border);border-left:4px solid var(--orange);border-radius:10px;padding:12px 14px;color:#dbe4ef;margin:0 0 14px}
+.mudou strong{color:#fff}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px}
+.ctrl-lbl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-right:6px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#081222}
+.seg button{background:transparent;border:0;color:var(--muted);padding:7px 12px;cursor:pointer;font-size:13px;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#1e3a5f;color:#fff}
+.seg.role button.on{background:var(--orange);color:#fff}
+
+/* nota do mockup (não faz parte do sistema) */
+.note{border:1px dashed var(--note);background:var(--note-bg);color:#e0e7ff;border-radius:10px;padding:10px 12px;font-size:13px;margin:0 0 12px}
+.note::before{content:"NOTA DO MOCKUP";display:block;font-size:10px;letter-spacing:.1em;color:var(--note);font-weight:700;margin-bottom:2px}
+.note.pend{border-color:#fbbf24;background:#2a1d02;color:#fde68a}
+.note.pend::before{content:"PENDENTE";color:#fbbf24}
+
+/* ---------- moldura do app ---------- */
+.app{position:relative;display:flex;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--bg);min-height:560px}
+.side{width:236px;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px}
+.side .brand{padding:0 8px;margin-bottom:22px}
+.side .brand b{display:block;font-size:17px}
+.side .brand span{font-size:12px;color:var(--muted)}
+.side .grp{margin-bottom:20px}
+.side .grp-t{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:0 8px;margin-bottom:6px}
+.side .it{display:block;padding:7px 8px;border-radius:6px;color:var(--muted);font-size:13.5px;margin-bottom:2px}
+.side .it.on{background:var(--orange);color:#fff}
+.mtop{display:none}
+.main{flex:1;min-width:0;padding:28px}
+.drawer-bg{display:none}
+
+@media (max-width:820px){
+  .app{flex-direction:column}
+  .side{display:none;position:absolute;inset:0 auto 0 0;z-index:5;width:240px;overflow-y:auto}
+  .app.menu .side{display:block}
+  .app.menu .drawer-bg{display:block;position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:4}
+  .mtop{display:flex;align-items:center;justify-content:space-between;background:var(--navy);border-bottom:1px solid var(--border);padding:10px 14px}
+  .mtop b{display:block;font-size:17px}
+  .mtop span{font-size:12px;color:var(--muted)}
+  .mtop button{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 9px;cursor:pointer}
+  .main{padding:18px 14px}
+  .sec-num{width:46px;height:46px;font-size:24px}
+}
+
+/* ---------- componentes do sistema ---------- */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.ph h1{margin:0;font-size:23px;font-weight:700}
+.ph p{margin:4px 0 0;color:var(--dim);font-size:13.5px}
+.btn{display:inline-block;border:0;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none}
+.btn-o{background:var(--orange);color:#fff}
+.btn-o:hover{background:var(--orange-h)}
+.btn-o:disabled{opacity:.45;cursor:not-allowed}
+.btn-g{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-g:hover{border-color:var(--muted)}
+.btn-full{flex:1;padding:10px}
+.lnk{background:none;border:0;padding:0;color:var(--dim);font-size:13.5px;cursor:pointer}
+.lnk:hover{color:#fff}
+.lnk-o{background:none;border:0;padding:0;color:var(--orange);cursor:pointer;font-size:13px}
+.lnk-o:hover{text-decoration:underline}
+.x{background:none;border:0;color:#f87171;font-size:12px;cursor:pointer}
+
+.tw{border:1px solid var(--border);border-radius:12px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--navy);color:var(--dim);font-weight:500;text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--navy)}
+tr.click{cursor:pointer}
+tr.click:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
+td.w{color:#fff}
+td.r,th.r{text-align:right}
+.sub{display:block;font-size:12px;margin-top:2px}
+.t-red{color:#f87171}.t-amb{color:#fbbf24}.t-dim{color:var(--dim)}.t-grn{color:#4ade80}
+.chip{display:inline-block;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:500;white-space:nowrap}
+.c-g{background:var(--g-bg);color:var(--g-tx)}.c-b{background:var(--b-bg);color:var(--b-tx)}
+.c-r{background:var(--r-bg);color:var(--r-tx)}.c-a{background:var(--a-bg);color:var(--a-tx)}
+.c-n{background:var(--border);color:var(--dim)}
+.pill{border-radius:999px;padding:3px 10px}
+.empty{padding:48px 14px;text-align:center;color:var(--dim)}
+
+.banner{border:1px solid;border-radius:8px;padding:11px 14px;font-size:13.5px;font-weight:500;margin-bottom:10px}
+.b-warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-tx)}
+.b-err{background:var(--err-bg);border-color:var(--err-bd);color:var(--err-tx)}
+.b-ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-tx)}
+.b-info{background:#172554;border-color:#2563eb;color:#93c5fd}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.stat{border:1px solid var(--border);background:var(--navy);border-radius:12px;padding:16px}
+.stat.acc{border-color:var(--orange);background:#1a0a00}
+.stat .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.stat .v{font-size:26px;font-weight:700;margin-top:2px}
+.stat.acc .v{color:var(--orange)}
+.stat .s{font-size:12px;color:var(--dim);margin-top:2px}
+@media (max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.errbox{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 20px;text-align:center}
+.errbox .ic{width:56px;height:56px;border-radius:50%;background:#3a1a1a;border:1px solid #5f1e1e;display:grid;place-items:center;font-size:24px}
+.errbox h3{margin:0;font-size:18px}
+.errbox p{margin:0;color:var(--muted);max-width:440px}
+
+.form{display:flex;flex-direction:column;gap:15px;max-width:440px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:13.5px;color:var(--muted)}
+.fld .hint{font-size:12px;color:var(--dim)}
+.inp{padding:10px 12px;border-radius:8px;background:var(--input);border:1px solid var(--border);color:#fff;font-size:13.5px;width:100%}
+.inp:focus{outline:none;border-color:var(--orange)}
+.inp.bad{border-color:#dc2626}
+textarea.inp{resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.new-field{position:relative;border:1px dashed var(--orange);border-radius:10px;padding:10px;margin:-4px -10px}
+.new-field::after{content:"NOVO";position:absolute;top:-9px;right:10px;background:var(--orange);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;padding:1px 6px;border-radius:4px}
+.locked{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:8px;background:#0b1830;border:1px solid var(--border);color:var(--muted)}
+.locked .v{color:#fff;display:flex;align-items:center;gap:8px}
+.locked-help{font-size:12.5px;color:var(--muted);margin-top:4px}
+
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid var(--border);background:var(--navy);border-radius:12px;padding:18px}
+.card:hover{border-color:var(--orange)}
+.card .k{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.card .n{font-size:19px;font-weight:700;margin-top:1px}
+.card .rows{border-top:1px solid var(--border);margin-top:14px;padding-top:12px;display:flex;flex-direction:column;gap:7px}
+.card .row{display:flex;justify-content:space-between;gap:8px}
+.card .row span:first-child{color:var(--dim);font-size:12px}
+.card .act{margin-top:12px;display:flex;justify-content:flex-end;gap:14px;align-items:center}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px}
+@media (max-width:1000px){.two{grid-template-columns:1fr}}
+.h2s{font-size:12.5px;font-weight:500;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px}
+.kmrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:9px;background:var(--navy);margin-bottom:8px}
+.kmrow.hl{border-color:#d97706}
+.kmrow .rt{display:flex;gap:12px;align-items:flex-start}
+.kmrow p{margin:0}
+.fix{background:transparent;border:1px solid var(--orange);color:var(--orange);border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer;white-space:nowrap}
+.fix:hover{background:var(--orange);color:#fff}
+.corr{display:inline-block;font-size:11px;background:#1e3a5f;color:#bfdbfe;border-radius:4px;padding:0 6px;margin-left:6px}
+
+.dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.dl div{background:var(--navy);padding:12px 14px}
+.dl dt{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:3px}
+.dl dd{margin:0;color:#fff}
+.dl .full{grid-column:1/-1}
+@media (max-width:560px){.dl{grid-template-columns:1fr}}
+.pecas{white-space:pre-line}
+.box{border:1px solid var(--border);background:var(--navy);border-radius:12px;padding:14px;margin-bottom:20px}
+
+/* ---------- diálogo ---------- */
+.ov{position:fixed;inset:0;background:rgba(2,6,16,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}
+.ov.open{display:flex}
+.dlg{width:100%;max-width:520px;max-height:calc(100vh - 32px);overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px}
+.dlg h3{margin:0 0 4px;font-size:18px}
+.dlg .dsub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.conseq{border:1px solid var(--border);background:var(--navy);border-radius:10px;padding:12px 14px;margin:14px 0}
+.conseq b.t{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:6px}
+.conseq ul{margin:0;padding-left:18px;color:#dbe4ef}
+.conseq li{margin:4px 0}
+.ferr{color:#fca5a5;font-size:12.5px;margin-top:2px}
+.dlg .btns{display:flex;gap:10px;margin-top:16px}
+.diff{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.diff s{color:var(--dim)}
+.diff b{color:#fff}
+.mk-foot{max-width:1200px;margin:0 auto;padding:40px 16px 60px;color:var(--dim);font-size:12.5px}
+</style>
+
+
+
+<header class="mk-head">
+  <h1>Gestão de Frotas — rodada 2</h1>
+  <p>Mockup para aprovação · 26/10/2026 · Os dados são de exemplo. Tudo é clicável: linhas, botões e diálogos. Responda por número de seção.</p>
+  <nav class="mk-index">
+    <a href="#s1"><b>1</b> Revisões: alerta por KM</a>
+    <a href="#s2"><b>2</b> Detalhe da revisão e peças trocadas</a>
+    <a href="#s3"><b>3</b> Editar equipe</a>
+    <a href="#s4"><b>4</b> Corrigir KM diário e abastecimento</a>
+  </nav>
+</header>
+
+<!-- ================= SEÇÃO 1 ================= -->
+<section class="sec" id="s1">
+  <div class="sec-top"><div class="sec-num">1</div><div>
+    <h2>Revisões: alerta por KM</h2>
+  </div></div>
+  <p class="mudou"><strong>O que mudou:</strong> até hoje o sistema só avisava revisão atrasada pela <strong>data</strong>. Agora ele também compara o <strong>KM previsto da próxima revisão</strong> com o KM atual do carro (o do KM diário). Faltando 1.000 km ou menos, a revisão aparece como <strong>"Vence em breve"</strong>; passou do KM, fica <strong>"Atrasada por KM"</strong>. A lista mostra quanto falta ou quanto passou, e o aviso nas Pendências e no painel inicial diz se o atraso é por KM ou por data.</p>
+  <div class="ctrls">
+    <div><span class="ctrl-lbl">Tela</span><div class="seg" data-sec="1" data-key="view">
+      <button data-val="revisoes" class="on">Revisões</button><button data-val="pendencias">Pendências</button><button data-val="painel">Painel inicial</button>
+    </div></div>
+    <div id="s1-state"><span class="ctrl-lbl">Estado</span><div class="seg" data-sec="1" data-key="state">
+      <button data-val="dados" class="on">Com dados</button><button data-val="vazio">Vazio</button><button data-val="erro">Erro ao carregar</button>
+    </div></div>
+  </div>
+  <div class="app" id="f1"></div>
+</section>
+
+<!-- ================= SEÇÃO 2 ================= -->
+<section class="sec" id="s2">
+  <div class="sec-top"><div class="sec-num">2</div><div>
+    <h2>Detalhe da revisão e peças trocadas</h2>
+  </div></div>
+  <p class="mudou"><strong>O que mudou:</strong> a linha da lista de revisões agora <strong>abre</strong> (clique em qualquer linha na seção 1). O detalhe mostra tudo o que foi registrado, inclusive as observações, que antes eram gravadas mas não apareciam em lugar nenhum. Entrou um campo novo, <strong>"Peças trocadas"</strong>, em texto livre, no formulário e no detalhe. Revisões antigas, lançadas antes do campo existir, mostram que não há peças registradas.</p>
+  <div class="ctrls">
+    <div><span class="ctrl-lbl">Tela</span><div class="seg" data-sec="2" data-key="view">
+      <button data-val="pecas" class="on">Detalhe com peças</button><button data-val="antiga">Revisão antiga (sem peças)</button><button data-val="form">Registrar revisão</button><button data-val="naoencontrada">Revisão não encontrada</button>
+    </div></div>
+  </div>
+  <div class="app" id="f2"></div>
+</section>
+
+<!-- ================= SEÇÃO 3 ================= -->
+<section class="sec" id="s3">
+  <div class="sec-top"><div class="sec-num">3</div><div>
+    <h2>Editar equipe</h2>
+  </div></div>
+  <p class="mudou"><strong>O que mudou:</strong> cada equipe ganha o botão <strong>Editar</strong>. O <strong>código da equipe</strong> e o <strong>motorista</strong> se trocam direto, sem checklist. O <strong>carro</strong> continua travado: trocar o carro exige o checklist de troca, porque é ele que registra em que estado o carro foi entregue. O botão "Trocar carro" leva direto ao checklist já preenchido.</p>
+  <div class="ctrls">
+    <div><span class="ctrl-lbl">Estado</span><div class="seg" data-sec="3" data-key="state">
+      <button data-val="dados" class="on">Com dados</button><button data-val="vazio">Vazio</button><button data-val="erro">Erro ao carregar</button>
+    </div></div>
+  </div>
+  <div class="app" id="f3"></div>
+</section>
+
+<!-- ================= SEÇÃO 4 ================= -->
+<section class="sec" id="s4">
+  <div class="sec-top"><div class="sec-num">4</div><div>
+    <h2>Corrigir KM diário e abastecimento</h2>
+  </div></div>
+  <p class="mudou"><strong>O que mudou:</strong> hoje, um KM digitado a mais trava todos os dias seguintes, e apagar o lançamento não devolve o KM do carro. No lugar de apagar e relançar, entra o botão <strong>Corrigir</strong>. Antes de salvar, a tela mostra tudo o que vai acontecer: o novo valor, o KM atual do carro recalculado (de quanto para quanto) e o registro no histórico de quem corrigiu, quando, e o valor antes e depois. Nada se perde. Vale também para o abastecimento (litros, KM e valor).</p>
+  <div class="ctrls">
+    <div><span class="ctrl-lbl">Quem está usando</span><div class="seg role" data-sec="4" data-key="role">
+      <button data-val="admin" class="on">Administrador</button><button data-val="gestor">Gestor de frotas (Igor)</button><button data-val="comum">Usuário comum (sem papel no Frotas)</button>
+    </div></div>
+    <div><span class="ctrl-lbl">Tela</span><div class="seg" data-sec="4" data-key="view">
+      <button data-val="km" class="on">KM Diário</button><button data-val="abast">Abastecimento</button><button data-val="hist">Histórico de correções</button>
+    </div></div>
+    <div><span class="ctrl-lbl">Estado</span><div class="seg" data-sec="4" data-key="state">
+      <button data-val="dados" class="on">Com dados</button><button data-val="vazio">Vazio</button><button data-val="erro">Erro ao carregar</button>
+    </div></div>
+  </div>
+  <div id="s4-pend"></div>
+  <div class="app" id="f4"></div>
+</section>
+
+<p class="mk-foot">Mockup de interface: nada aqui grava dados. Cores, menu e textos seguem a tela atual do Gestão de Frotas.</p>
+
+<div class="ov" id="ov"><div class="dlg" id="dlg" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+const HOJE = '2026-10-26';
+const $ = (id) => document.getElementById(id);
+const km = (n) => Number(n).toLocaleString('pt-BR');
+const brl = (n) => 'R$ ' + Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const dt = (s) => { if(!s) return '—'; const [y,m,d]=s.split('-'); return d+'/'+m+'/'+y; };
+const dd = (s) => dt(s).slice(0,5);
+const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dias = (a,b) => Math.round((new Date(b)-new Date(a))/86400000);
+
+/* ---------------- dados de exemplo ---------------- */
+const veiculos = {
+  'RTE-4F21':{modelo:'Fiat Fiorino', equipe:'MANFAC-03', km_atual:48360},
+  'PLW-3E07':{modelo:'Fiat Strada', equipe:'MANFAC-05', km_atual:49230},
+  'QXB-7J58':{modelo:'Fiat Strada', equipe:'MANFAC-07', km_atual:61230},
+  'FHT-5A12':{modelo:'VW Saveiro', equipe:'MANFAC-09', km_atual:28110},
+  'SGU-2C93':{modelo:'Renault Kangoo', equipe:'MANFAC-11', km_atual:22410},
+  'RJN-8D46':{modelo:'VW Saveiro', equipe:'MANFAC-14', km_atual:35120},
+  'KZD-1B64':{modelo:'Fiat Fiorino', equipe:null, km_atual:12480},
+};
+const revisoes = [
+  {id:'r1', placa:'QXB-7J58', motorista:'Marcos Oliveira', tipo:'preventiva', fornecedor:'Auto Center Pinheiros', valor:684.50, data:'2026-04-18', km_real:50120, prox_data:'2027-04-18', prox_km:60000,
+   obs:'Revisão dos 50 mil. Motorista relatou barulho na suspensão dianteira; oficina não encontrou folga, pediu para observar.', pecas:'Óleo 5W30 (4 litros)\nFiltro de óleo\nFiltro de ar\nFiltro de combustível\nPastilhas de freio dianteiras'},
+  {id:'r2', placa:'SGU-2C93', motorista:'Ana Paula Ferreira', tipo:'preventiva', fornecedor:'Oficina Mecânica Vila Mariana', valor:512.00, data:'2025-10-15', km_real:20150, prox_data:'2026-10-15', prox_km:30150,
+   obs:'Revisão anual.', pecas:'Óleo 5W30 (3,5 litros)\nFiltro de óleo\nFiltro de cabine'},
+  {id:'r3', placa:'RTE-4F21', motorista:'Carlos Henrique Souza', tipo:'preventiva', fornecedor:'Auto Center Pinheiros', valor:739.90, data:'2026-03-02', km_real:39020, prox_data:null, prox_km:49000,
+   obs:'Correia dentada conferida, troca recomendada na próxima.', pecas:'Óleo 5W30 (4 litros)\nFiltro de óleo\nVelas de ignição (4)'},
+  {id:'r4', placa:'RJN-8D46', motorista:'João Pedro Lima', tipo:'preventiva', fornecedor:'Centro Automotivo Ipiranga', valor:598.00, data:'2026-08-12', km_real:35010, prox_data:'2027-08-12', prox_km:45010,
+   obs:'', pecas:'Óleo 5W30 (4 litros)\nFiltro de óleo\nFiltro de ar'},
+  {id:'r5', placa:'FHT-5A12', motorista:'Thiago Martins', tipo:'corretiva', fornecedor:'Funilaria e Mecânica Santo Amaro', valor:1240.00, data:'2026-06-03', km_real:27840, prox_data:null, prox_km:null,
+   obs:'Troca do kit de embreagem após falha em rota. Carro ficou 2 dias na oficina.', pecas:null},
+];
+
+function situacao(r){
+  const v = veiculos[r.placa]; const atual = v ? v.km_atual : null;
+  const atrasKm = r.prox_km!=null && atual!=null && atual >= r.prox_km;
+  const atrasData = r.prox_data && r.prox_data < HOJE;
+  const falta = (r.prox_km!=null && atual!=null) ? r.prox_km - atual : null;
+  let k, label, cls;
+  if (atrasKm && atrasData){k='atr';label='Atrasada por KM e data';cls='c-r';}
+  else if (atrasKm){k='atrkm';label='Atrasada por KM';cls='c-r';}
+  else if (atrasData){k='atrdata';label='Atrasada por data';cls='c-r';}
+  else if (falta!=null && falta<=1000){k='breve';label='Vence em breve';cls='c-a';}
+  else {k='emdia';label='Em dia';cls='c-g';}
+  return {k,label,cls,falta,atual,atrasData,atrasKm};
+}
+function kmHint(r,s){
+  const out=[];
+  if (s.atrasKm) out.push('<span class="sub t-red">passou '+km(-s.falta)+' km</span>');
+  else if (s.falta!=null) out.push('<span class="sub '+(s.k==='breve'?'t-amb':'t-dim')+'">faltam '+km(s.falta)+' km</span>');
+  if (s.atrasData) out.push('<span class="sub t-red">venceu há '+dias(r.prox_data,HOJE)+' dias</span>');
+  return out.join('');
+}
+function proxTxt(r){
+  const p=[]; if(r.prox_km!=null) p.push(km(r.prox_km)+' km'); if(r.prox_data) p.push(dt(r.prox_data));
+  return p.length ? p.join(' ou ') : '—';
+}
+
+/* ---------------- moldura ---------------- */
+const nav = [
+  ['Operação',['Visão Geral','Equipes','Veículos','Motoristas','KM Diário','Checklist']],
+  ['Ocorrências',['Multas','Sinistros','Descontos']],
+  ['Manutenção & Documentos',['Revisões','Documentos','Abastecimento']],
+  ['Gestão',['Custos','Disponibilidade','Pendências','Auditoria']],
+];
+function frame(fid, active, main){
+  const side = nav.map(([t,items]) => '<div class="grp"><div class="grp-t">'+t+'</div>'+items.map(i=>'<span class="it'+(i===active?' on':'')+'">'+i+'</span>').join('')+'</div>').join('');
+  $(fid).className='app';
+  $(fid).innerHTML =
+    '<div class="mtop"><div><b>GF</b><span>← Voltar ao Hub</span></div><button data-act="menu" data-f="'+fid+'" aria-label="Abrir menu">☰</button></div>'+
+    '<div class="drawer-bg" data-act="menu" data-f="'+fid+'"></div>'+
+    '<aside class="side"><div class="brand"><b>Gestão de Frotas</b><span>← Voltar ao Hub</span></div>'+side+'</aside>'+
+    '<main class="main">'+main+'</main>';
+}
+const errScreen = '<div class="errbox"><div class="ic">⚠️</div><div><h3>Não foi possível carregar os dados</h3><p>Ocorreu um erro ao buscar as informações do sistema. Se o problema persistir, avise o suporte.</p></div><button class="btn btn-o">Tentar novamente</button></div>';
+
+/* ---------------- estado ---------------- */
+const S = {
+  1:{view:'revisoes', state:'dados', detail:null},
+  2:{view:'pecas', created:null, err:''},
+  3:{state:'dados', screen:'lista', editId:null, flash:null, err:''},
+  4:{role:'admin', view:'km', state:'dados', flash:null, kmTry:'48340', kmMsg:null},
+};
+
+/* ================= SEÇÃO 1 ================= */
+function detailHTML(r, backAct){
+  const v = veiculos[r.placa]; const s = situacao(r);
+  const pecas = r.pecas ? '<dd class="pecas">'+esc(r.pecas)+'</dd>' : '<dd class="t-dim">Nenhuma peça registrada nesta revisão. <span class="sub">Revisão lançada antes de existir o campo "Peças trocadas".</span></dd>';
+  return '<button class="lnk" data-act="'+backAct+'">← Voltar para revisões</button>'+
+    '<div style="margin:16px 0 22px"><h1 style="margin:0;font-size:23px" class="mono">'+r.placa+'</h1>'+
+    '<p style="margin:4px 0 0;color:var(--dim)">'+(v?v.modelo:'')+' · '+(r.tipo==='preventiva'?'Preventiva':'Corretiva')+' · '+dt(r.data)+' · '+esc(r.motorista)+'</p></div>'+
+    '<dl class="dl">'+
+      '<div><dt>Veículo</dt><dd class="mono">'+r.placa+' <span class="t-dim" style="font-family:inherit">· '+(v?v.modelo:'')+'</span></dd></div>'+
+      '<div><dt>Tipo</dt><dd>'+(r.tipo==='preventiva'?'Preventiva':'Corretiva')+'</dd></div>'+
+      '<div><dt>Realizada em</dt><dd>'+dt(r.data)+'</dd></div>'+
+      '<div><dt>KM na revisão</dt><dd>'+(r.km_real!=null?km(r.km_real)+' km':'—')+'</dd></div>'+
+      '<div><dt>Fornecedor</dt><dd>'+esc(r.fornecedor||'—')+'</dd></div>'+
+      '<div><dt>Valor</dt><dd>'+(r.valor!=null?brl(r.valor):'—')+'</dd></div>'+
+      '<div class="full"><dt>Peças trocadas</dt>'+pecas+'</div>'+
+      '<div class="full"><dt>Observações</dt><dd'+(r.obs?'':' class="t-dim"')+'>'+(r.obs?esc(r.obs):'Sem observações.')+'</dd></div>'+
+    '</dl>'+
+    '<h2 class="h2s">Próxima revisão</h2>'+
+    '<div class="box" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">'+
+      '<div><div style="color:#fff">'+proxTxt(r)+'</div>'+
+      (r.prox_km!=null||r.prox_data ? kmHint(r,s)+(s.atual!=null&&r.prox_km!=null?'<span class="sub t-dim">KM atual do veículo: '+km(s.atual)+' km</span>':'') : '<span class="sub t-dim">Sem próxima revisão prevista.</span>')+
+      '</div>'+(r.prox_km!=null||r.prox_data?'<span class="chip '+s.cls+'">'+s.label+'</span>':'')+
+    '</div>';
+}
+function r1(){
+  const st=S[1];
+  $('s1-state').style.display = st.view==='revisoes' ? '' : 'none';
+  if (st.view==='revisoes'){
+    if (st.detail){ frame('f1','Revisões', detailHTML(revisoes.find(r=>r.id===st.detail),'s1-back')); return; }
+    if (st.state==='erro'){ frame('f1','Revisões', errScreen); return; }
+    const list = st.state==='vazio' ? [] : revisoes;
+    const sits = list.map(situacao);
+    const nAtr = sits.filter(s=>s.k.startsWith('atr')).length, nBr = sits.filter(s=>s.k==='breve').length;
+    const subt = list.length ? (nAtr+' manutenç'+(nAtr!==1?'ões':'ão')+' atrasada'+(nAtr!==1?'s':'')+(nBr?' · '+nBr+' vence'+(nBr!==1?'m':'')+' em breve':'')) : '0 manutenções atrasadas';
+    const rows = list.map((r,i)=>{ const s=sits[i];
+      return '<tr class="click" data-act="s1-open" data-id="'+r.id+'" title="Abrir detalhe">'+
+        '<td class="w mono">'+r.placa+'</td><td>'+esc(r.motorista)+'</td><td>'+(r.tipo==='preventiva'?'Preventiva':'Corretiva')+'</td>'+
+        '<td>'+esc(r.fornecedor)+'</td><td class="w r">'+brl(r.valor)+'</td><td>'+dt(r.data)+'</td>'+
+        '<td>'+proxTxt(r)+kmHint(r,s)+'</td>'+
+        '<td>'+(r.prox_km!=null||r.prox_data?'<span class="chip '+s.cls+'">'+s.label+'</span>':'<span class="chip c-g">Em dia</span>')+'</td>'+
+        '<td class="r"><button class="x" data-act="noop" title="Excluir">✕</button></td></tr>';
+    }).join('');
+    frame('f1','Revisões',
+      '<div class="ph"><div><h1>Revisões</h1><p>'+subt+'</p></div><button class="btn btn-o" data-act="goto-form">+ Registrar Revisão</button></div>'+
+      '<div class="tw"><table><thead><tr><th>Veículo</th><th>Motorista</th><th>Tipo</th><th>Fornecedor</th><th class="r">Valor</th><th>Realizada em</th><th>Próxima prevista</th><th>Status</th><th></th></tr></thead><tbody>'+
+      (rows || '<tr><td colspan="9" class="empty">Nenhuma revisão registrada.</td></tr>')+'</tbody></table></div>'+
+      (list.length?'<p style="color:var(--dim);font-size:12px;margin-top:8px">Clique em uma linha para ver o detalhe. "Vence em breve" = faltam 1.000 km ou menos, comparando com o KM atual do veículo (KM diário).</p>':''));
+    return;
+  }
+  if (st.view==='pendencias'){
+    const pend = [
+      ['Manutenção atrasada por KM: QXB-7J58 — passou 1.230 km do previsto','Manutenção','—','<span class="t-red">60.000 km</span>','—','aberta'],
+      ['Manutenção atrasada por data: SGU-2C93 — prevista para 15/10/2026','Manutenção','—','<span class="t-red">15/10/2026</span>','—','aberta'],
+      ['Documento (CRLV) vencendo','Documentação','—','10/11/2026','—','aberta'],
+      ['Termo de uso não assinado: Diego Santos','Termo de uso','—','—','—','aberta'],
+      ['Agendar troca de pneus do FHT-5A12','Manual','Igor','30/10/2026','Cotar com 2 borracharias','em_andamento'],
+    ];
+    const chip = {aberta:'<span class="chip c-r">Aberta</span>', em_andamento:'<span class="chip c-a">Em andamento</span>'};
+    frame('f1','Pendências',
+      '<div class="ph"><div><h1>Pendências &amp; Plano de Ação</h1><p>5 pendências no total</p></div></div>'+
+      '<div class="stats"><div class="stat acc"><div class="l">Total Pendente</div><div class="v">5</div></div><div class="stat"><div class="l">Urgência Alta</div><div class="v">2</div><div class="s">Prazos vencidos</div></div><div class="stat"><div class="l">Aguardando Terceiros</div><div class="v">1</div><div class="s">Itens em andamento</div></div><div class="stat"><div class="l">Resolvidos (Hoje)</div><div class="v">0</div><div class="s">Eficiência 0%</div></div></div>'+
+      '<div class="tw"><table><thead><tr><th>Descrição</th><th>Origem</th><th>Responsável</th><th>Prazo</th><th>Próxima ação</th><th>Status</th></tr></thead><tbody>'+
+      pend.map(p=>'<tr><td class="w">'+p[0]+'</td><td>'+p[1]+'</td><td>'+p[2]+'</td><td>'+p[3]+'</td><td>'+p[4]+'</td><td>'+chip[p[5]]+'</td></tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="note" style="margin-top:14px">Antes, a pendência dizia só "Manutenção atrasada". Agora diz se é por KM ou por data, com a placa. Na de KM, o prazo mostra o KM previsto. Revisão que só "vence em breve" não entra aqui: aparece na tela de Revisões e no painel inicial.</div>');
+    return;
+  }
+  frame('f1','Visão Geral',
+    '<div class="ph"><div><h1>Visão Geral da Frota</h1><p>segunda-feira, 26 de outubro de 2026</p></div></div>'+
+    '<div class="banner b-warn">CNH de Thiago Martins vence em 14/11/2026 — providencie a renovação</div>'+
+    '<div class="banner b-err">2 manutenções atrasadas (1 por KM, 1 por data) — veja em Revisões</div>'+
+    '<div class="banner b-warn" style="margin-bottom:22px">1 revisão vence em breve: RTE-4F21, faltam 640 km — veja em Revisões</div>'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="l">Equipes ativas</div><div class="v">6</div><div class="s">de 6 cadastradas</div></div>'+
+      '<div class="stat"><div class="l">Veículos ativos</div><div class="v">6</div><div class="s">de 7 cadastrados</div></div>'+
+      '<div class="stat"><div class="l">Motoristas ativos</div><div class="v">8</div></div>'+
+      '<div class="stat acc"><div class="l">Multas pendentes</div><div class="v">R$ 391.17</div><div class="s">2 multas</div></div>'+
+      '<div class="stat"><div class="l">Disponibilidade</div><div class="v">86%</div><div class="s">6 de 7 disponíveis</div></div>'+
+      '<div class="stat"><div class="l">Sinistros abertos</div><div class="v">0</div></div>'+
+      '<div class="stat acc"><div class="l">Documentos vencendo</div><div class="v">1</div><div class="s">próximos 30 dias</div></div>'+
+      '<div class="stat acc"><div class="l">Pendências críticas</div><div class="v">1</div></div>'+
+    '</div>'+
+    '<div class="note">O aviso vermelho já existia, mas só contava atraso por data. Agora separa KM e data. O aviso amarelo de "vence em breve" é novo.</div>');
+}
+
+/* ================= SEÇÃO 2 ================= */
+function r2(){
+  const st=S[2];
+  if (st.view==='pecas'){ frame('f2','Revisões', detailHTML(st.created || revisoes[0],'noop')); return; }
+  if (st.view==='antiga'){ frame('f2','Revisões', detailHTML(revisoes[4],'noop')); return; }
+  if (st.view==='naoencontrada'){ frame('f2','Revisões', '<button class="lnk" data-act="noop">← Voltar para revisões</button><div class="errbox"><div class="ic">🔍</div><div><h3>Revisão não encontrada</h3><p>Ela pode ter sido excluída por um administrador. Volte para a lista de revisões.</p></div></div>'); return; }
+  const opts = Object.keys(veiculos).map(p=>'<option value="'+p+'">'+p+' · '+veiculos[p].modelo+'</option>').join('');
+  frame('f2','Revisões',
+    '<h1 style="margin:0 0 6px;font-size:23px">Registrar Revisão</h1><p style="margin:0 0 26px;color:var(--dim)">Manutenção preventiva ou corretiva</p>'+
+    '<form class="form" id="frm-rev" onsubmit="return false">'+
+    (st.err?'<div class="banner b-err" style="margin:0">'+st.err+'</div>':'')+
+    '<div class="fld"><label>Veículo *</label><select class="inp" name="placa"><option value="">Selecione</option>'+opts+'</select></div>'+
+    '<div class="fld"><label>Motorista responsável</label><select class="inp" name="motorista"><option value="">Selecione ou auto-preenchido</option><option>Carlos Henrique Souza</option><option>Bruno Almeida</option><option>Marcos Oliveira</option><option>Thiago Martins</option><option>Ana Paula Ferreira</option><option>João Pedro Lima</option></select></div>'+
+    '<div class="fld"><label>Tipo *</label><select class="inp" name="tipo"><option value="preventiva">Preventiva</option><option value="corretiva">Corretiva</option></select></div>'+
+    '<div class="fld"><label>Fornecedor</label><input class="inp" name="fornecedor" placeholder="Nome da oficina/fornecedor" value="Auto Center Pinheiros"></div>'+
+    '<div class="fld"><label>Valor (R$)</label><input class="inp" name="valor" type="number" step="0.01" placeholder="0.00" value="455.00"></div>'+
+    '<div class="g2"><div class="fld"><label>Data realizada</label><input class="inp" name="data" type="date" value="2026-10-26" style="color-scheme:dark"></div><div class="fld"><label>KM realizada</label><input class="inp" name="km_real" type="number" placeholder="0" value="48360"></div></div>'+
+    '<div class="g2"><div class="fld"><label>Próxima data prevista</label><input class="inp" name="prox_data" type="date" style="color-scheme:dark"></div><div class="fld"><label>Próxima KM prevista</label><input class="inp" name="prox_km" type="number" placeholder="0" value="58360"></div></div>'+
+    '<div class="fld new-field"><label>Peças trocadas</label><textarea class="inp" name="pecas" rows="4" placeholder="Ex.: óleo 5W30 (4 litros), filtro de óleo, filtro de ar">Óleo 5W30 (4 litros)\nFiltro de óleo\nCorreia dentada\nTensor da correia</textarea><span class="hint">Opcional. Escreva do jeito que vier na nota da oficina, uma peça por linha.</span></div>'+
+    '<div class="fld"><label>Observações</label><textarea class="inp" name="obs" rows="2"></textarea></div>'+
+    '<div style="display:flex;gap:12px;margin-top:6px"><button type="button" class="btn btn-g btn-full" data-act="noop">Cancelar</button><button type="button" class="btn btn-o btn-full" data-act="s2-save">Registrar Revisão</button></div>'+
+    '</form>');
+}
+function s2save(btn){
+  const f = $('frm-rev'); const g = (n)=>f.elements[n].value;
+  if (!g('placa')){ S[2].err='Selecione o veículo'; r2(); return; }
+  btn.disabled=true; btn.textContent='Salvando...';
+  setTimeout(()=>{
+    S[2].err='';
+    S[2].created = {id:'novo', placa:g('placa'), motorista:g('motorista')||'—', tipo:g('tipo'), fornecedor:g('fornecedor'), valor:g('valor')?Number(g('valor')):null,
+      data:g('data')||null, km_real:g('km_real')?Number(g('km_real')):null, prox_data:g('prox_data')||null, prox_km:g('prox_km')?Number(g('prox_km')):null, obs:g('obs'), pecas:g('pecas').trim()||null};
+    S[2].view='pecas'; setSeg(2,'view','pecas'); r2();
+    const m = $('f2').querySelector('.main'); m.insertAdjacentHTML('afterbegin','<div class="banner b-ok">Revisão registrada.</div>');
+  },600);
+}
+
+/* ================= SEÇÃO 3 ================= */
+const motoristas = [
+  {nome:'Carlos Henrique Souza', equipe:'MANFAC-03'},
+  {nome:'Bruno Almeida', equipe:'MANFAC-05'},
+  {nome:'Marcos Oliveira', equipe:'MANFAC-07'},
+  {nome:'Thiago Martins', equipe:'MANFAC-09'},
+  {nome:'Ana Paula Ferreira', equipe:'MANFAC-11'},
+  {nome:'João Pedro Lima', equipe:'MANFAC-14'},
+  {nome:'Rafael Souza', equipe:null},
+  {nome:'Diego Santos', equipe:null},
+];
+const equipes = [
+  {id:'e3', codigo:'MANFAC-03', placa:'RTE-4F21', status:'em_rota'},
+  {id:'e5', codigo:'MANFAC-05', placa:'PLW-3E07', status:'em_rota'},
+  {id:'e7', codigo:'MANFAC-07', placa:'QXB-7J58', status:'manutencao'},
+  {id:'e9', codigo:'MANFAC-09', placa:'FHT-5A12', status:'disponivel'},
+  {id:'e11', codigo:'MANFAC-11', placa:'SGU-2C93', status:'em_rota'},
+  {id:'e14', codigo:'MANFAC-14', placa:'RJN-8D46', status:'disponivel'},
+];
+const eqStatus = {em_rota:['Em Rota','c-b'], disponivel:['Disponível','c-g'], manutencao:['Em Manutenção','c-a'], inativa:['Inativa','c-n']};
+const motDe = (cod) => motoristas.find(m=>m.equipe===cod);
+
+function r3(){
+  const st=S[3];
+  if (st.state==='erro'){ frame('f3','Equipes', errScreen); return; }
+  if (st.screen==='editar') return r3edit();
+  if (st.screen==='checklist') return r3check();
+  const list = st.state==='vazio' ? [] : equipes;
+  const cards = list.map(e=>{ const m=motDe(e.codigo); const s=eqStatus[e.status];
+    return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div class="k">Equipe</div><div class="n">'+esc(e.codigo)+'</div></div><span class="chip pill '+s[1]+'">'+s[0]+'</span></div>'+
+      '<div class="rows"><div class="row"><span>Veículo</span><span>'+e.placa+'</span></div><div class="row"><span>Motorista</span><span'+(m?'':' class="t-dim" style="font-style:italic"')+'>'+(m?m.nome:'Não atribuído')+'</span></div></div>'+
+      '<div class="act"><button class="lnk-o" data-act="s3-edit" data-id="'+e.id+'">Editar</button><button class="x" data-act="noop">Desativar</button></div></div>';
+  }).join('');
+  frame('f3','Equipes',
+    (st.flash?'<div class="banner b-ok">'+st.flash+'</div>':'')+
+    '<div class="ph" style="margin-bottom:6px"><h1>Gestão de Equipes</h1><button class="btn btn-o" data-act="noop">+ Nova Equipe</button></div>'+
+    '<p style="color:var(--dim);margin:0 0 18px">Aqui estão suas '+list.length+' equipes. Cada uma com o veículo vinculado e o status.</p>'+
+    '<input class="inp" placeholder="Buscar por código, placa ou motorista..." style="margin-bottom:18px">'+
+    (list.length ? '<div class="cards">'+cards+'</div>' : '<p class="empty" style="border:1px solid var(--border);border-radius:12px">Nenhuma equipe encontrada. <span style="color:var(--orange)">Criar primeira equipe →</span></p>'));
+}
+function r3edit(){
+  const st=S[3]; const e=equipes.find(x=>x.id===st.editId); const m=motDe(e.codigo); const v=veiculos[e.placa];
+  const opts = '<option value="">Sem motorista</option>'+motoristas.map(x=>{
+    const onde = x.equipe===e.codigo ? ' (atual)' : x.equipe ? ' — hoje na '+x.equipe : ' — sem equipe';
+    return '<option value="'+esc(x.nome)+'"'+(m&&m.nome===x.nome?' selected':'')+'>'+esc(x.nome)+onde+'</option>';
+  }).join('');
+  frame('f3','Equipes',
+    '<button class="lnk" data-act="s3-back">← Voltar para equipes</button>'+
+    '<h1 style="margin:16px 0 6px;font-size:23px">Editar equipe '+esc(e.codigo)+'</h1><p style="margin:0 0 26px;color:var(--dim)">Código e motorista mudam na hora. O carro só muda pelo checklist.</p>'+
+    '<form class="form" id="frm-eq" onsubmit="return false">'+
+    (st.err?'<div class="banner b-err" style="margin:0">'+st.err+'</div>':'')+
+    '<div class="fld"><label>Código da equipe *</label><input class="inp" name="codigo" value="'+esc(e.codigo)+'"></div>'+
+    '<div class="fld"><label>Motorista</label><select class="inp" name="motorista" id="sel-mot">'+opts+'</select><span class="hint" id="mot-hint"></span></div>'+
+    '<div class="fld"><label>Veículo</label>'+
+      '<div class="locked"><span class="v"><span aria-hidden="true">🔒</span><span class="mono">'+e.placa+'</span><span class="t-dim">· '+v.modelo+'</span></span>'+
+      '<button type="button" class="fix" data-act="s3-check">Trocar carro → fazer checklist</button></div>'+
+      '<span class="locked-help">Trocar o carro exige o checklist de troca: é ele que registra fotos e o estado do carro na entrega.</span></div>'+
+    '<div style="display:flex;gap:12px;margin-top:6px"><button type="button" class="btn btn-g btn-full" data-act="s3-back">Cancelar</button><button type="button" class="btn btn-o btn-full" data-act="s3-save">Salvar alterações</button></div>'+
+    '</form>');
+  const upd = ()=>{ const val=$('sel-mot').value; const x=motoristas.find(y=>y.nome===val);
+    $('mot-hint').innerHTML = x && x.equipe && x.equipe!==e.codigo ? '<span class="t-amb">'+esc(x.nome)+' hoje está na '+x.equipe+'. Ao salvar, ele passa para a '+esc(e.codigo)+' e a '+x.equipe+' fica sem motorista.</span>' : ''; };
+  $('sel-mot').addEventListener('change',upd); upd();
+}
+function r3check(){
+  const st=S[3]; const e=equipes.find(x=>x.id===st.editId);
+  const livres = Object.keys(veiculos).filter(p=>p!==e.placa).map(p=>'<option'+(p==='KZD-1B64'?' selected':'')+'>'+p+' · '+veiculos[p].modelo+(veiculos[p].equipe?' — hoje na '+veiculos[p].equipe:' — sem equipe')+'</option>').join('');
+  frame('f3','Checklist',
+    '<button class="lnk" data-act="s3-backedit">← Voltar para editar equipe '+esc(e.codigo)+'</button>'+
+    '<div class="note" style="margin-top:14px">Esta é a tela de checklist que já existe hoje. A única diferença é que ela chega preenchida com o tipo "Troca de Responsável" e a equipe de destino. O resto do checklist (fotos, itens, confirmação do motorista) segue igual.</div>'+
+    '<h1 style="margin:6px 0 6px;font-size:23px">Novo Checklist</h1><p style="margin:0 0 22px;color:var(--dim)">Troca do carro da equipe '+esc(e.codigo)+'</p>'+
+    '<div class="form">'+
+    '<div class="fld"><label>Tipo *</label><select class="inp"><option>Troca de Responsável</option></select></div>'+
+    '<div class="fld"><label>Veículo *</label><select class="inp">'+livres+'</select></div>'+
+    '<div class="fld"><label>Equipe de destino *</label><select class="inp"><option>'+esc(e.codigo)+'</option></select></div>'+
+    '<div class="box t-dim" style="margin:0">… fotos e itens do checklist, como hoje …</div>'+
+    '</div>');
+}
+function s3save(){
+  const st=S[3]; const e=equipes.find(x=>x.id===st.editId); const f=$('frm-eq');
+  const codigo=f.elements.codigo.value.trim(); const motNome=f.elements.motorista.value;
+  if (!codigo){ st.err='Informe o código da equipe'; r3(); return; }
+  if (equipes.some(x=>x.id!==e.id && x.codigo.toLowerCase()===codigo.toLowerCase())){ st.err='Já existe uma equipe com o código '+esc(codigo)+'.'; r3edit(); f.elements; return; }
+  const atual=motDe(e.codigo); const novo=motoristas.find(m=>m.nome===motNome)||null;
+  const mudancas=[];
+  if (codigo!==e.codigo) mudancas.push('<li><span class="diff">Código: <s>'+esc(e.codigo)+'</s> → <b>'+esc(codigo)+'</b></span></li>');
+  if ((atual&&atual.nome)!==(novo&&novo.nome)){
+    mudancas.push('<li><span class="diff">Motorista: <s>'+(atual?esc(atual.nome):'sem motorista')+'</s> → <b>'+(novo?esc(novo.nome):'sem motorista')+'</b></span></li>');
+    if (atual) mudancas.push('<li>'+esc(atual.nome)+' fica sem equipe.</li>');
+    if (novo && novo.equipe) mudancas.push('<li>'+esc(novo.nome)+' sai da '+novo.equipe+', que fica sem motorista.</li>');
+  }
+  if (!mudancas.length){ st.err='Nada foi alterado.'; r3edit(); return; }
+  st.err='';
+  openDlg('<h3>Salvar alterações da equipe?</h3><p class="dsub">'+esc(e.codigo)+' · carro '+e.placa+' (não muda)</p>'+
+    '<div class="conseq"><b class="t">O que vai mudar</b><ul>'+mudancas.join('')+'<li>A alteração fica registrada na Auditoria.</li></ul></div>'+
+    '<div class="btns"><button class="btn btn-g btn-full" data-act="close">Voltar</button><button class="btn btn-o btn-full" id="ok-eq">Salvar</button></div>');
+  $('ok-eq').onclick=()=>{
+    const antigo=e.codigo;
+    if (atual) atual.equipe=null;
+    if (novo) novo.equipe=codigo;
+    motoristas.forEach(m=>{ if(m.equipe===antigo) m.equipe=codigo; });
+    e.codigo=codigo;
+    closeDlg(); st.screen='lista'; st.flash='Equipe '+esc(codigo)+' atualizada.'; r3();
+  };
+}
+
+/* ================= SEÇÃO 4 ================= */
+let kmList = [
+  {id:'k6', data:'2026-10-24', equipe:'MANFAC-03', placa:'RTE-4F21', km:48360, mot:'Carlos Henrique Souza'},
+  {id:'k5', data:'2026-10-23', equipe:'MANFAC-05', placa:'PLW-3E07', km:49230, mot:'Bruno Almeida', suspeito:true},
+  {id:'k4', data:'2026-10-23', equipe:'MANFAC-03', placa:'RTE-4F21', km:48250, mot:'Carlos Henrique Souza'},
+  {id:'k3', data:'2026-10-22', equipe:'MANFAC-05', placa:'PLW-3E07', km:48110, mot:'Bruno Almeida'},
+  {id:'k2', data:'2026-10-21', equipe:'MANFAC-05', placa:'PLW-3E07', km:47995, mot:'Bruno Almeida'},
+  {id:'k1', data:'2026-10-20', equipe:'MANFAC-05', placa:'PLW-3E07', km:47880, mot:'Bruno Almeida'},
+];
+let abList = [
+  {id:'a4', data:'2026-10-25', placa:'PLW-3E07', litros:423.0, valor:253.38, km:48305, posto:'Posto Shell Av. Ricardo Jafet'},
+  {id:'a3', data:'2026-10-22', placa:'RTE-4F21', litros:38.6, valor:231.22, km:48100, posto:'Posto Ipiranga Vergueiro'},
+  {id:'a2', data:'2026-10-18', placa:'PLW-3E07', litros:40.1, valor:240.20, km:47720, posto:'Posto Shell Av. Ricardo Jafet'},
+  {id:'a1', data:'2026-10-15', placa:'SGU-2C93', litros:35.0, valor:209.65, km:22150, posto:'Auto Posto Santa Cruz'},
+];
+let hist = [
+  {quando:'12/10/2026 14:32', quem:'Patrícia Ramos (administrador)', oque:'KM diário · MANFAC-03 · RTE-4F21 · lançamento de 10/10', antes:'47.904 km', depois:'47.409 km', kmv:'KM atual do veículo recalculado: 47.904 → 47.409 km', motivo:'Digitou 9 no lugar de 4'},
+  {quando:'06/10/2026 09:10', quem:'Igor (gestor de frotas)', oque:'Abastecimento · SGU-2C93 · 05/10', antes:'3,8 L', depois:'38,0 L', kmv:'', motivo:''},
+];
+const SEMPERM = '<div class="banner b-info">Somente administrador ou gestor de frotas pode corrigir.</div>';
+const quemCorrige = () => S[4].role==='gestor' ? 'Igor (gestor de frotas)' : 'Patrícia Ramos (administrador)';
+const kmAtualDe = (placa) => Math.max(...kmList.filter(k=>k.placa===placa).map(k=>k.km));
+
+function r4(){
+  const st=S[4];
+  $('s4-pend').innerHTML = '';
+  const active = st.view==='abast' ? 'Abastecimento' : st.view==='hist' ? 'Auditoria' : 'KM Diário';
+  if (st.state==='erro'){ frame('f4', active, errScreen); return; }
+  if (st.view==='km') return r4km();
+  if (st.view==='abast') return r4ab();
+  r4hist();
+}
+function r4km(){
+  const st=S[4]; const admin=st.role!=='comum'; const list = st.state==='vazio'?[]:kmList.slice().sort((a,b)=>b.data.localeCompare(a.data)||b.km-a.km);
+  const kmPLW = st.state==='vazio' ? null : kmAtualDe('PLW-3E07');
+  const rows = list.map(k=>'<div class="kmrow'+(k.suspeito&&!k.corr?' hl':'')+'"><div><p class="w" style="color:#fff;font-weight:500">'+k.equipe+'</p><p class="mono t-dim" style="font-size:12px">'+k.placa+'</p><p class="t-dim" style="font-size:12px">'+dt(k.data)+'</p></div>'+
+    '<div class="rt"><div style="text-align:right"><p class="mono" style="color:#fff">'+km(k.km)+' km'+(k.corr?'<span class="corr">corrigido</span>':'')+'</p>'+(k.corr?'<p class="t-dim" style="font-size:12px">era '+km(k.corr)+' km</p>':'')+'<p class="t-dim" style="font-size:12px">'+esc(k.mot)+'</p></div>'+
+    (admin?'<button class="fix" data-act="s4-fixkm" data-id="'+k.id+'">Corrigir</button>':'')+
+    '<button class="x" data-act="noop" title="Excluir">✕</button></div></div>').join('');
+  let msg='';
+  if (st.kmMsg==='erro') msg='<div class="banner b-err" style="margin:0">KM não pode ser menor que a última KM registrada ('+km(kmPLW)+' km)'+
+     '<span class="sub" style="font-weight:400">'+(admin?'Se o último lançamento estiver errado, use "Corrigir" no histórico ao lado.':'Se o último lançamento estiver errado, peça a um administrador ou gestor de frotas para corrigir.')+'</span></div>';
+  if (st.kmMsg==='ok') msg='<div class="banner b-ok" style="margin:0">KM lançado: '+km(st.kmTry)+' km no PLW-3E07.</div>';
+  frame('f4','KM Diário',
+    (st.flash?'<div class="banner b-ok">'+st.flash+'</div>':'')+
+    '<div class="ph"><div><h1>KM Diário</h1><p>Segunda-feira, 26 de outubro</p></div></div>'+
+    '<div class="two"><div><form class="form" onsubmit="return false">'+msg+
+      '<div class="fld"><label>Data</label><input class="inp" type="date" value="2026-10-26" style="color-scheme:dark"></div>'+
+      '<div class="fld"><label>Equipe *</label><select class="inp"><option>MANFAC-05</option></select>'+
+      (kmPLW!=null?'<span class="hint">Veículo: <span class="mono">PLW-3E07</span> · Motorista: Bruno Almeida · Último KM: '+km(kmPLW)+' km</span>':'')+'</div>'+
+      '<div class="fld"><label>KM Atual *</label><input class="inp" id="km-try" type="number" value="'+esc(st.kmTry)+'"></div>'+
+      '<div class="fld"><label>Observações</label><textarea class="inp" rows="2"></textarea></div>'+
+      '<button type="button" class="btn btn-o" style="padding:11px" data-act="s4-lancar">Lançar KM</button>'+
+    '</form></div>'+
+    '<div><h2 class="h2s">Histórico de lançamentos</h2>'+(!admin&&list.length?SEMPERM:'')+(rows||'<p class="t-dim">Nenhum lançamento ainda.</p>')+
+      (list.length&&admin?'<p class="t-dim" style="font-size:12px">O lançamento destacado (23/10, PLW-3E07) foi digitado a mais: 49.230 em vez de 48.230. É ele que está travando o lançamento de hoje. Clique em "Corrigir".</p>':'')+
+    '</div></div>');
+}
+function r4ab(){
+  const st=S[4]; const admin=st.role!=='comum'; const list = st.state==='vazio'?[]:abList;
+  const mes = list.filter(a=>a.data>='2026-10-01');
+  const por = {}; mes.forEach(a=>{ por[a.placa]=por[a.placa]||{l:0,v:0}; por[a.placa].l+=a.litros; por[a.placa].v+=a.valor; });
+  const fmtL = (n)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const rel = Object.keys(por).map(p=>'<tr><td class="w mono">'+p+'</td><td class="r">'+fmtL(por[p].l)+'</td><td class="w r">'+brl(por[p].v)+'</td></tr>').join('');
+  frame('f4','Abastecimento',
+    (st.flash?'<div class="banner b-ok">'+st.flash+'</div>':'')+
+    '<div class="ph"><div><h1>Abastecimento</h1><p>Lançamento manual + consumo do mês</p></div></div>'+
+    '<div style="margin-bottom:28px"><h2 class="h2s">Consumo do mês</h2>'+(rel?'<div class="tw" style="max-width:560px"><table><thead><tr><th>Placa</th><th class="r">Litros</th><th class="r">Valor</th></tr></thead><tbody>'+rel+'</tbody></table></div>':'<p class="t-dim">Nenhum abastecimento lançado neste mês.</p>')+'</div>'+
+    '<h2 class="h2s">Histórico de lançamentos</h2>'+(!admin&&list.length?SEMPERM:'')+
+    (list.length?'<div class="tw"><table><thead><tr><th>Data</th><th>Placa</th><th class="r">Litros</th><th class="r">KM</th><th class="r">Valor</th><th class="r">Posto</th><th></th></tr></thead><tbody>'+
+      list.map(a=>'<tr><td>'+dt(a.data)+'</td><td class="w mono">'+a.placa+'</td><td class="r'+(a.id==='a4'&&!a.corr?' t-amb':'')+'">'+fmtL(a.litros)+(a.corr?'<span class="corr">corrigido</span>':'')+'</td><td class="r">'+(a.km!=null?km(a.km):'—')+'</td><td class="w r">'+brl(a.valor)+'</td><td class="r">'+esc(a.posto)+'</td>'+
+        '<td class="r" style="white-space:nowrap">'+(admin?'<button class="fix" data-act="s4-fixab" data-id="'+a.id+'">Corrigir</button> ':'')+'<button class="x" data-act="noop" title="Excluir">✕</button></td></tr>').join('')+
+      '</tbody></table></div>'+(admin?'<p class="t-dim" style="font-size:12px;margin-top:8px">Exemplo: o abastecimento de 25/10 do PLW-3E07 foi lançado com 423,0 litros em vez de 42,3.</p>':'')
+    :'<p class="t-dim">Nenhum abastecimento registrado ainda.</p>')+
+    '<div class="note" style="margin-top:14px">A coluna KM é nova no histórico: o dado já era gravado, mas não aparecia, e sem ela não dá para conferir o que está sendo corrigido.</div>');
+}
+function r4hist(){
+  const st=S[4]; const list = st.state==='vazio'?[]:hist;
+  frame('f4','Auditoria',
+    '<div class="ph"><div><h1>Histórico de correções</h1><p>Toda correção de KM diário e de abastecimento fica aqui, com o valor de antes e o de depois.</p></div></div>'+
+    '<div class="tw"><table><thead><tr><th>Quando</th><th>Quem</th><th>O que foi corrigido</th><th>Antes</th><th>Depois</th><th>Motivo</th></tr></thead><tbody>'+
+    (list.length? list.map(h=>'<tr><td style="white-space:nowrap">'+h.quando+'</td><td class="w">'+esc(h.quem)+'</td><td>'+esc(h.oque)+(h.kmv?'<span class="sub t-dim">'+esc(h.kmv)+'</span>':'')+'</td><td><s class="t-dim">'+esc(h.antes)+'</s></td><td class="w">'+esc(h.depois)+'</td><td>'+(h.motivo?esc(h.motivo):'<span class="t-dim">—</span>')+'</td></tr>').join('')
+      : '<tr><td colspan="6" class="empty">Nenhuma correção feita até agora.</td></tr>')+
+    '</tbody></table></div>'+
+    '<div class="note" style="margin-top:14px">Sugestão: este histórico fica dentro de Auditoria (menu Gestão), que já registra as outras ações do sistema.</div>');
+}
+
+function s4fixkm(id){
+  const k = kmList.find(x=>x.id===id);
+  const mesmos = kmList.filter(x=>x.placa===k.placa).sort((a,b)=>a.data.localeCompare(b.data));
+  const i = mesmos.indexOf(k); const ant = mesmos[i-1], prox = mesmos[i+1];
+  const atualV = kmAtualDe(k.placa);
+  const sugest = k.suspeito && !k.corr ? 48230 : k.km;
+  openDlg('<h3>Corrigir lançamento de KM</h3><p class="dsub">'+k.equipe+' · <span class="mono">'+k.placa+'</span> · '+dt(k.data)+' · '+esc(k.mot)+'</p>'+
+    '<div class="g2"><div class="fld"><label>KM lançado</label><input class="inp" value="'+km(k.km)+' km" disabled style="opacity:.7"></div>'+
+    '<div class="fld"><label>KM correto *</label><input class="inp" id="fx-km" type="number" value="'+sugest+'"></div></div>'+
+    '<p class="t-dim" style="font-size:12.5px;margin:8px 0 0">Precisa ficar entre '+(ant?km(ant.km)+' km (lançamento de '+dd(ant.data)+')':'0')+' e '+(prox?km(prox.km)+' km (lançamento de '+dd(prox.data)+')':'qualquer valor maior (não há lançamento depois deste)')+'.</p>'+
+    '<div id="fx-err"></div>'+
+    '<div class="fld" style="margin-top:12px"><label>Motivo (opcional)</label><input class="inp" id="fx-mot" placeholder="Ex.: digitou 9 no lugar de 8"></div>'+
+    '<div class="conseq" id="fx-cons"></div>'+
+    '<div class="btns"><button class="btn btn-g btn-full" data-act="close">Cancelar</button><button class="btn btn-o btn-full" id="fx-ok">Salvar correção</button></div>');
+  const upd = ()=>{
+    const v = Number($('fx-km').value); let err='';
+    if (!$('fx-km').value) err='Informe o KM correto.';
+    else if (ant && v < ant.km) err='O KM não pode ser menor que o lançamento anterior: '+km(ant.km)+' km em '+dt(ant.data)+'.';
+    else if (prox && v > prox.km) err='O KM não pode ser maior que o lançamento seguinte: '+km(prox.km)+' km em '+dt(prox.data)+'.';
+    else if (v===k.km) err='O valor é igual ao lançado. Nada a corrigir.';
+    $('fx-err').innerHTML = err?'<p class="ferr">'+err+'</p>':''; $('fx-km').classList.toggle('bad',!!err && !!$('fx-km').value && v!==k.km);
+    $('fx-ok').disabled=!!err;
+    if (err){ $('fx-cons').innerHTML='<b class="t">O que acontece ao salvar</b><p class="t-dim" style="margin:0">Corrija o valor para ver as consequências.</p>'; return; }
+    const novoAtual = Math.max(...mesmos.map(x=>x===k?v:x.km));
+    $('fx-cons').innerHTML='<b class="t">O que acontece ao salvar</b><ul>'+
+      '<li><span class="diff">Lançamento de '+dd(k.data)+': <s>'+km(k.km)+' km</s> → <b>'+km(v)+' km</b></span></li>'+
+      '<li><span class="diff">KM atual do veículo '+k.placa+': '+(novoAtual!==atualV?'<s>'+km(atualV)+' km</s> → <b>'+km(novoAtual)+' km</b>':'continua <b>'+km(atualV)+' km</b>')+'</span></li>'+
+      '<li>Os próximos lançamentos passam a ser comparados com '+km(novoAtual)+' km.</li>'+
+      '<li>O valor anterior ('+km(k.km)+' km) fica no histórico de correções, com seu nome, a data e a hora.</li></ul>';
+  };
+  $('fx-km').addEventListener('input',upd); upd();
+  $('fx-ok').onclick=()=>{
+    const v=Number($('fx-km').value); const novoAtual = Math.max(...mesmos.map(x=>x===k?v:x.km));
+    hist.unshift({quando:'26/10/2026 agora', quem:quemCorrige(), oque:'KM diário · '+k.equipe+' · '+k.placa+' · lançamento de '+dd(k.data), antes:km(k.km)+' km', depois:km(v)+' km', kmv:'KM atual do veículo recalculado: '+km(atualV)+' → '+km(novoAtual)+' km', motivo:$('fx-mot').value.trim()});
+    if (!k.corr) k.corr=k.km; k.km=v; if (k.corr===v) delete k.corr;
+    closeDlg(); S[4].kmMsg=null; S[4].flash='KM corrigido. O KM atual do '+k.placa+' agora é '+km(novoAtual)+' km. A correção foi para o histórico.'; r4();
+  };
+}
+function s4fixab(id){
+  const a = abList.find(x=>x.id===id);
+  const mesmos = abList.filter(x=>x.placa===a.placa).sort((p,q)=>p.data.localeCompare(q.data));
+  const i = mesmos.indexOf(a); const ant=mesmos[i-1], prox=mesmos[i+1];
+  const litrosMes = (litros)=> mesmos.filter(x=>x.data>='2026-10-01').reduce((s,x)=>s+(x===a?litros:x.litros),0);
+  const valorMes = (valor)=> mesmos.filter(x=>x.data>='2026-10-01').reduce((s,x)=>s+(x===a?valor:x.valor),0);
+  const fmtL = (n)=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const sug = a.id==='a4'&&!a.corr ? 42.3 : a.litros;
+  openDlg('<h3>Corrigir abastecimento</h3><p class="dsub"><span class="mono">'+a.placa+'</span> · '+dt(a.data)+' · '+esc(a.posto)+'</p>'+
+    '<div class="g2"><div class="fld"><label>Litros *</label><input class="inp" id="ab-l" type="number" step="0.1" value="'+sug+'"><span class="hint">Lançado: '+fmtL(a.litros)+'</span></div>'+
+    '<div class="fld"><label>Valor (R$) *</label><input class="inp" id="ab-v" type="number" step="0.01" value="'+a.valor.toFixed(2)+'"><span class="hint">Lançado: '+brl(a.valor)+'</span></div></div>'+
+    '<div class="fld" style="margin-top:12px"><label>KM no momento</label><input class="inp" id="ab-k" type="number" value="'+(a.km??'')+'"><span class="hint">Lançado: '+(a.km!=null?km(a.km)+' km':'—')+'. Precisa ficar entre '+(ant?km(ant.km)+' km (abastecimento de '+dd(ant.data)+')':'0')+' e '+(prox?km(prox.km)+' km (abastecimento de '+dd(prox.data)+')':'qualquer valor maior')+'.</span></div>'+
+    '<div id="ab-err"></div>'+
+    '<div class="fld" style="margin-top:12px"><label>Motivo (opcional)</label><input class="inp" id="ab-m" placeholder="Ex.: vírgula no lugar errado"></div>'+
+    '<div class="conseq" id="ab-cons"></div>'+
+    '<div class="btns"><button class="btn btn-g btn-full" data-act="close">Cancelar</button><button class="btn btn-o btn-full" id="ab-ok">Salvar correção</button></div>');
+  const upd=()=>{
+    const L=Number($('ab-l').value), V=Number($('ab-v').value), K=$('ab-k').value===''?null:Number($('ab-k').value); let err='';
+    if ($('ab-l').value===''||L<0) err='Informe os litros abastecidos.';
+    else if ($('ab-v').value===''||V<0) err='Informe o valor do abastecimento.';
+    else if (K!=null && ant && ant.km!=null && K<ant.km) err='O KM não pode ser menor que o do abastecimento anterior: '+km(ant.km)+' km em '+dt(ant.data)+'.';
+    else if (K!=null && prox && prox.km!=null && K>prox.km) err='O KM não pode ser maior que o do abastecimento seguinte: '+km(prox.km)+' km em '+dt(prox.data)+'.';
+    else if (L===a.litros && V===a.valor && K===a.km) err='Nada foi alterado.';
+    $('ab-err').innerHTML=err?'<p class="ferr">'+err+'</p>':''; $('ab-ok').disabled=!!err;
+    if (err){ $('ab-cons').innerHTML='<b class="t">O que acontece ao salvar</b><p class="t-dim" style="margin:0">Corrija os valores para ver as consequências.</p>'; return; }
+    const li=[];
+    if (L!==a.litros) li.push('<li><span class="diff">Litros: <s>'+fmtL(a.litros)+'</s> → <b>'+fmtL(L)+'</b></span></li>');
+    if (V!==a.valor) li.push('<li><span class="diff">Valor: <s>'+brl(a.valor)+'</s> → <b>'+brl(V)+'</b></span></li>');
+    if (K!==a.km) li.push('<li><span class="diff">KM: <s>'+(a.km!=null?km(a.km):'—')+'</s> → <b>'+(K!=null?km(K):'—')+'</b></span></li>');
+    if (L!==a.litros||V!==a.valor) li.push('<li><span class="diff">Consumo do mês do '+a.placa+': '+(L!==a.litros?'<s>'+fmtL(litrosMes(a.litros))+' L</s> → <b>'+fmtL(litrosMes(L))+' L</b>':fmtL(litrosMes(L))+' L')+(V!==a.valor?' · <s>'+brl(valorMes(a.valor))+'</s> → <b>'+brl(valorMes(V))+'</b>':'')+'</span></li>');
+    li.push('<li>O KM atual do veículo <b>não muda</b>: quem define o KM atual é o KM diário.</li>');
+    li.push('<li>Os valores anteriores ficam no histórico de correções, com seu nome, a data e a hora.</li>');
+    $('ab-cons').innerHTML='<b class="t">O que acontece ao salvar</b><ul>'+li.join('')+'</ul>';
+  };
+  ['ab-l','ab-v','ab-k'].forEach(x=>$(x).addEventListener('input',upd)); upd();
+  $('ab-ok').onclick=()=>{
+    const L=Number($('ab-l').value), V=Number($('ab-v').value), K=$('ab-k').value===''?null:Number($('ab-k').value);
+    const antes=[],depois=[];
+    if (L!==a.litros){antes.push(fmtL(a.litros)+' L');depois.push(fmtL(L)+' L');}
+    if (V!==a.valor){antes.push(brl(a.valor));depois.push(brl(V));}
+    if (K!==a.km){antes.push((a.km!=null?km(a.km):'—')+' km');depois.push((K!=null?km(K):'—')+' km');}
+    hist.unshift({quando:'26/10/2026 agora', quem:quemCorrige(), oque:'Abastecimento · '+a.placa+' · '+dd(a.data), antes:antes.join(' · '), depois:depois.join(' · '), kmv:'', motivo:$('ab-m').value.trim()});
+    a.litros=L; a.valor=V; a.km=K; a.corr=true;
+    closeDlg(); S[4].flash='Abastecimento corrigido. A correção foi para o histórico.'; r4();
+  };
+}
+function s4lancar(){
+  const st=S[4]; const v=Number($('km-try').value); st.kmTry=$('km-try').value; st.flash=null;
+  st.kmMsg = v < kmAtualDe('PLW-3E07') ? 'erro' : 'ok'; r4();
+}
+
+/* ---------------- diálogo ---------------- */
+function openDlg(html){ $('dlg').innerHTML=html; $('ov').classList.add('open'); const f=$('dlg').querySelector('input:not([disabled])'); if(f) f.focus(); }
+function closeDlg(){ $('ov').classList.remove('open'); $('dlg').innerHTML=''; }
+$('ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeDlg(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDlg(); });
+
+/* ---------------- controles ---------------- */
+function setSeg(sec,key,val){ document.querySelectorAll('.seg[data-sec="'+sec+'"][data-key="'+key+'"] button').forEach(b=>b.classList.toggle('on',b.dataset.val===val)); }
+const R = {1:r1,2:r2,3:r3,4:r4};
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  const seg=b.parentElement; const sec=+seg.dataset.sec, key=seg.dataset.key;
+  S[sec][key]=b.dataset.val; setSeg(sec,key,b.dataset.val);
+  if (sec===1) S[1].detail=null;
+  if (sec===2) { if (b.dataset.val!=='pecas') S[2].created=null; S[2].err=''; }
+  if (sec===3) { S[3].screen='lista'; S[3].flash=null; }
+  if (sec===4) { S[4].flash=null; S[4].kmMsg=null; }
+  R[sec]();
+}));
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t) return;
+  const a=t.dataset.act;
+  if (a==='noop'){ e.stopPropagation(); return; }
+  if (a==='menu'){ $(t.dataset.f).classList.toggle('menu'); return; }
+  if (a==='close'){ closeDlg(); return; }
+  if (a==='s1-open'){ S[1].detail=t.dataset.id; r1(); $('s1').scrollIntoView({behavior:'smooth'}); return; }
+  if (a==='s1-back'){ S[1].detail=null; r1(); return; }
+  if (a==='goto-form'){ S[2].view='form'; S[2].created=null; setSeg(2,'view','form'); r2(); $('s2').scrollIntoView({behavior:'smooth'}); return; }
+  if (a==='s2-save'){ s2save(t); return; }
+  if (a==='s3-edit'){ S[3].editId=t.dataset.id; S[3].screen='editar'; S[3].flash=null; S[3].err=''; r3(); return; }
+  if (a==='s3-back'){ S[3].screen='lista'; S[3].err=''; r3(); return; }
+  if (a==='s3-check'){ S[3].screen='checklist'; r3(); return; }
+  if (a==='s3-backedit'){ S[3].screen='editar'; r3(); return; }
+  if (a==='s3-save'){ s3save(); return; }
+  if (a==='s4-fixkm'){ s4fixkm(t.dataset.id); return; }
+  if (a==='s4-fixab'){ s4fixab(t.dataset.id); return; }
+  if (a==='s4-lancar'){ s4lancar(); return; }
+});
+
+S[4].kmMsg='erro';
+r1(); r2(); r3(); r4();
+})();
+</script>
+
+
