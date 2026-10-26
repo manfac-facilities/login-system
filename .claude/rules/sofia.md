@@ -108,3 +108,28 @@ o que deixaria a guarda falhar aberta):
 
 `execute` foi **revogado de `public` e `anon`** nas três, no fim do arquivo — só
 `authenticated` chama.
+
+## Functions de correção (F1–F3) — security INVOKER
+
+Em `sdd-sql-sofia-correcoes-f1-f3.sql` (**NÃO APLICADO**; depende do SQL do gestor), as três
+guardadas por `sofia_pode_gerir() is not true` e **security invoker** — a RLS `sofia access`
+continua valendo e a guarda só estreita para admin/gestor:
+
+- `corrigir_km_atomico(p_km_id, p_km_novo, p_motivo)` — KM entre o lançamento anterior e o
+  seguinte do mesmo veículo; recalcula `veiculos.km_atual` = maior lançamento. Trava veículo
+  antes do lançamento (mesma ordem de `lancar_km_atomico`). Devolve `{placa, veiculo_id, data,
+  km_veiculo_antes, km_veiculo_depois}`. **Não mexe em `km_excedido_desconto`**: a action
+  `corrigirKmAction` só avisa quando o mês tem registro (regra pendente do João, `docs/DIVIDAS.md`).
+- `corrigir_abastecimento(p_abastecimento_id, p_litros, p_valor, p_km, p_motivo)` — KM só é
+  comparado com o vizinho mais próximo **que tem KM** quando muda; não mexe em `km_atual`.
+- `editar_equipe_atomico(p_equipe_id, p_codigo, p_motorista_id)` — código e motorista; no máximo
+  um motorista ativo por equipe depois de salvar; fecha/reabre `veiculo_responsabilidade_historico`;
+  **nunca** troca o carro (só o checklist troca). Trava veículos → equipe → motoristas.
+
+Nenhuma das três usa `logAudit`: o antes/depois vai em `audit_log.dados` (jsonb, `operacao =
+'corrigiu'` ou `'atualizou'`) na mesma transação. A aba "Histórico de correções" de `/sofia/audit`
+e o chip "corrigido"/"era X km" leem dali (`lib/sofia/correcoes.ts`, `getCorrecoes`).
+
+**Mensagem pós-ação pela URL:** só id + código fixo (`?corrigido=<veiculo_id>&aviso=registro`,
+`?editada=<equipe_id>`, `?corrigido=1`); o texto e os números são relidos do banco. Nunca
+renderizar texto livre de `searchParams` — link forjado mostraria mensagem falsa dentro do sistema.
