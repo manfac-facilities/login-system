@@ -188,3 +188,12 @@ Backlog da revisão independente; nenhum bloqueia.
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
 - Indentação do JSX em `multas/_table.tsx` nos blocos `{isAdmin && (`.
+
+## 26/10/2026 — Frotas: papel gestor de frotas (branch feat/frotas-gestor)
+
+Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-gestor-frotas.md` §1.4/§3.2/§6 e revisão `docs/frotas/2026-10-26-revisao-spec-gestor-frotas.md`). Nenhum bloqueia.
+- Concessão do papel só por SQL (spec §1.4); tela em `/admin/acessos` adiada até haver um segundo gestor ou pedido do João (UI + action com `exigirAdmin` + service role + testes).
+- `softDeleteVeiculoAction` (`app/(operacoes)/sofia/veiculos/_actions.ts`) segue sem trava: qualquer um com o slug `sofia` desativa veículo. Anterior a este branch; trava nova é outra decisão.
+- Reconvite após remoção (linha de `sofia_gestores` apagada por `apagarLinhasDoUsuario`) só provado no jest mockado (`app/admin/__tests__/_actions.test.ts`), não no banco.
+- Vetor `auth.updateUser({ email })` para o e-mail de um gestor órfão (linha deixada por remoção feita direto no painel do Supabase): o risco já existia igual com `hub_user_roles`/`hub_system_access`.
+- Itens 7 e 9 do diagnóstico (corrigir KM / corrigir abastecimento) não existem para ninguém; quando F2/F3 forem feitas, a action nasce com `requireGestorFrotas` e a função de banco com a guarda `sofia_pode_gerir() is not true` (se restrita).

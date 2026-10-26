@@ -22,10 +22,11 @@ cliente e a UI dizem **Gestão de Frotas**. É o mesmo sistema — já causou co
   ao lado do código testado, nome = arquivo testado + `.test.ts` (ou
   `.<recorte>.test.ts` quando há mais de um teste para o mesmo arquivo, ex.:
   `_actions.criar.test.ts` em sinistros).
-- **Subrotas sem teste de `_actions.ts`:** `documentos`, `motoristas`, `pendencias`,
-  `revisoes`, `disponibilidade`, `audit`. São as ações escritas antes do
+- **Subrotas sem teste de `_actions.ts`:** `documentos`, `pendencias`,
+  `disponibilidade`, `audit`. São as ações escritas antes do
   `v04-seguranca` (anterior a 2026-08) — não há garantia de cobertura indireta via
-  outro teste.
+  outro teste. `motoristas`, `revisoes` (e `checklist`) têm só a action de
+  exclusão/desativação coberta, em `_actions.exclusao.test.ts` (26/10/2026).
 
 ## A pegadinha do re-export
 
@@ -37,13 +38,38 @@ Quem procurar a validação de KM pelo nome do arquivo acha uma casca vazia. A l
 verdade (checar `NaN` e valor negativo) está em `lib/sofia/kmValidation.ts`. Ao mexer em
 validação de KM, edite lá — o arquivo em `km/` não deve ganhar lógica própria.
 
+## Quem pode gerir frotas: `sofia_pode_gerir()` — nunca o admin do hub direto
+
+Desde 26/10/2026 (branch `feat/frotas-gestor`, decisão D2 em
+`docs/frotas/2026-10-26-decisoes-joao.md`; spec e revisão em `docs/frotas/2026-10-26-*gestor*`)
+existe o papel **gestor de frotas**: pode, só dentro do Sofia, tudo o que o administrador do hub
+pode (inclusive desconto em salário e exclusões), e nada fora dele.
+
+- **Regra, num lugar só:** função `public.sofia_pode_gerir()` = admin do hub **OU** (linha em
+  `public.sofia_gestores` **E** `hub_system_access` `sofia`/`has_access = true`). Sempre
+  `true`/`false`. Tirar o slug `sofia` em `/admin/acessos` tira o papel junto.
+- **App:** toda ação restrita do Sofia pergunta `requireGestorFrotas`/`podeGerirFrotas`
+  (`lib/sofia/permissoes.ts`), que chama a RPC `sofia_pode_gerir` — a mesma função dos triggers,
+  então app e banco não divergem. Falha fechado: só `data === true` libera. As 5 telas que
+  escondem ação (Multas, Equipes, KM, Sinistros, Descontos) usam o mesmo helper.
+- **Proibido** importar `@/lib/auth/requireAdmin` ou `@/lib/auth/roles` em qualquer `.ts`/`.tsx`
+  do Sofia — `lib/sofia/__tests__/sem-admin-do-hub.test.ts` falha. Action nova restrita nasce com
+  `requireGestorFrotas`.
+- **Conceder/retirar:** só SQL como `postgres` (PAT ou SQL Editor), comandos na spec §1.4. A tabela
+  não tem policy nem grant para `anon`/`authenticated` — nunca criar policy de escrita.
+- **Estado:** `sdd-sql-sofia-gestor-frotas.sql` **NÃO APLICADO** (ver `.claude/rules/sql.md`). O
+  app novo depende da função: **SQL antes do deploy**, senão a RPC falha e até o admin perde as
+  ações do Sofia.
+
 ## Autorização e os triggers que bloqueiam escrita
 
 As 18 tabelas do Sofia têm policy `sofia access` (`using (sofia_has_access())`), lida
 por `lib/auth/roles.ts`. Além da RLS, há **triggers `before` que rodam para qualquer
 role**, inclusive `service_role`/`postgres` — porque são `security definer` e leem
 `auth.jwt()`, que é NULL fora de uma sessão de usuário real. Editar as colunas abaixo
-pelo SQL Editor ou pela Management API **falha** com "Apenas administradores...".
+pelo SQL Editor ou pela Management API **falha** com "Apenas administradores..." (depois da
+migration do gestor de frotas: "Apenas administradores ou gestores de frotas...", e os triggers
+passam a checar `sofia_pode_gerir() is not true`).
 Contorno documentado: `alter table ... disable trigger ...`, corrigir, reabilitar.
 
 - `sofia_bloquear_autorizacao_nao_admin` (definida em `sdd-sql-v04-seguranca.sql`):
@@ -75,7 +101,8 @@ o que deixaria a guarda falhar aberta):
 
 - `lancar_km_atomico(...)` — guardada por `sofia_has_access() is not true`.
 - `atribuir_responsabilidade_veiculo(...)` — mesma guarda.
-- `excluir_multas_em_massa(uuid[])` — guardada por `sofia_is_admin() is not true`; usa
+- `excluir_multas_em_massa(uuid[])` — guardada por `sofia_is_admin() is not true` (depois de
+  `sdd-sql-sofia-gestor-frotas.sql`: `sofia_pode_gerir() is not true`); usa
   `auth.uid()` do JWT internamente, não parâmetro (é `security definer`, então ignora
   RLS por definição — a guarda dentro da function é a única proteção).
 
