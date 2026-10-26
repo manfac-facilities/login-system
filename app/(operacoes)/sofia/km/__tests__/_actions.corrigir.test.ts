@@ -112,7 +112,7 @@ describe('corrigirKmAction — chamada e retorno', () => {
   it('gestor: chama corrigir_km_atomico com os parâmetros; motivo só espaços vira null', async () => {
     const r = await corrigirKmAction({}, fd({ id: 'k5', km_novo: '48230', motivo: '   ' }))
     expect(rpcMock).toHaveBeenCalledWith('corrigir_km_atomico', { p_km_id: 'k5', p_km_novo: 48230, p_motivo: null })
-    expect(r).toEqual({ success: true, placa: 'PLW-3E07', kmVeiculo: 48230, aviso: undefined })
+    expect(r).toEqual({ success: true, placa: 'PLW-3E07', veiculoId: 'v1', kmVeiculo: 48230, aviso: undefined })
     expect(revalidatePath).toHaveBeenCalledWith('/sofia/km')
     expect(revalidatePath).toHaveBeenCalledWith('/sofia/veiculos')
     expect(revalidatePath).toHaveBeenCalledWith('/sofia/audit')
@@ -146,9 +146,7 @@ describe('corrigirKmAction — KM excedido: nunca em silêncio, nunca altera', (
     tableResults.km_excedido_desconto = { data: { id: 'ke1' }, error: null }
     const r = await corrigirKmAction({}, fd({ id: 'k5', km_novo: '48230' }))
     expect(r.success).toBe(true)
-    expect(r.aviso).toBe(
-      'Este mês tem registro de KM excedido para o PLW-3E07. A correção não altera esse registro — confira em Descontos.'
-    )
+    expect(r.aviso).toBe('registro')
     const ch = chains.km_excedido_desconto as Record<string, jest.Mock>
     expect(ch.eq).toHaveBeenCalledWith('veiculo_id', 'v1')
     expect(ch.eq).toHaveBeenCalledWith('mes', '2026-10-01')
@@ -162,9 +160,7 @@ describe('corrigirKmAction — KM excedido: nunca em silêncio, nunca altera', (
     tableResults.km_excedido_desconto = { data: null, error: { message: 'timeout' } }
     const r = await corrigirKmAction({}, fd({ id: 'k5', km_novo: '48230' }))
     expect(r.success).toBe(true)
-    expect(r.aviso).toBe(
-      'Não foi possível conferir se este mês tem registro de KM excedido para o PLW-3E07. Confira em Descontos.'
-    )
+    expect(r.aviso).toBe('falha')
   })
 
   it('mês sem registro: sem aviso e sem escrita (não cria excesso)', async () => {

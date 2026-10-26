@@ -47,8 +47,9 @@ function DialogoCorrigirKm({ lancamento: k, contexto, kmVeiculoAtual, onFechar }
   const [motivo, setMotivo] = useState('')
 
   useEffect(() => {
-    if (state.success && state.placa != null && state.kmVeiculo != null) {
-      const q = new URLSearchParams({ corrigido: state.placa, km: String(state.kmVeiculo) })
+    if (state.success && state.veiculoId) {
+      // só id + código: a página relê placa e KM atual do banco
+      const q = new URLSearchParams({ corrigido: state.veiculoId })
       if (state.aviso) q.set('aviso', state.aviso)
       onFechar()
       router.push(`/sofia/km?${q.toString()}`)

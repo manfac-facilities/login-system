@@ -6,6 +6,7 @@ import {
   validarCorrecaoAbastecimento,
   valorOriginalKm,
   linhaHistoricoCorrecao,
+  bannersCorrecaoKm,
   fmtKm,
   fmtLitros,
   fmtBrl,
@@ -164,6 +165,29 @@ describe('valorOriginalKm', () => {
   it('pega o antes da 1ª correção', () => expect(valorOriginalKm(correcoes, 'k3', 1150)).toBe(2100))
   it('null se voltou ao original', () => expect(valorOriginalKm(correcoes, 'k3', 2100)).toBeNull())
   it('null se nunca foi corrigido', () => expect(valorOriginalKm(correcoes, 'k1', 1000)).toBeNull())
+})
+
+describe('bannersCorrecaoKm — nada de texto livre da URL', () => {
+  const veiculos = [{ id: 'v1', placa: 'PLW-3E07', km_atual: 48230 }]
+
+  it('id de veículo + código: textos constantes com placa e KM do banco', () => {
+    expect(bannersCorrecaoKm({ corrigido: 'v1', aviso: 'registro' }, veiculos)).toEqual({
+      sucesso: 'KM corrigido. O KM atual do PLW-3E07 agora é 48.230 km. A correção foi para o histórico.',
+      aviso: 'Este mês tem registro de KM excedido para o PLW-3E07. A correção não altera esse registro — confira em Descontos.',
+    })
+    expect(bannersCorrecaoKm({ corrigido: 'v1', aviso: 'falha' }, veiculos)?.aviso).toBe(
+      'Não foi possível conferir se este mês tem registro de KM excedido para o PLW-3E07. Confira em Descontos.'
+    )
+  })
+
+  it('id inexistente ou texto forjado: não mostra nada', () => {
+    expect(bannersCorrecaoKm({ corrigido: 'Seu desconto foi aprovado' }, veiculos)).toBeNull()
+    expect(bannersCorrecaoKm({}, veiculos)).toBeNull()
+  })
+
+  it('aviso desconhecido é ignorado', () => {
+    expect(bannersCorrecaoKm({ corrigido: 'v1', aviso: 'Desconto de R$ 900 aprovado' }, veiculos)?.aviso).toBeNull()
+  })
 })
 
 describe('linhaHistoricoCorrecao', () => {

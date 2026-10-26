@@ -5,6 +5,7 @@ import { validateKmAtual } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
+import type { AvisoKmExcedido } from '@/lib/sofia/correcoes'
 
 type State = { error?: string; success?: boolean }
 
@@ -193,7 +194,13 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   revalidatePath('/sofia/pendencias')
 }
 
-export type CorrecaoKmState = State & { placa?: string; kmVeiculo?: number; aviso?: string }
+export type CorrecaoKmState = State & {
+  placa?: string
+  veiculoId?: string
+  kmVeiculo?: number
+  /** código fixo; o texto vem de mensagemAvisoKmExcedido (lib/sofia/correcoes) */
+  aviso?: AvisoKmExcedido
+}
 
 /**
  * F2 — corrige um lançamento de KM via RPC corrigir_km_atomico, que valida o
@@ -236,18 +243,15 @@ export async function corrigirKmAction(
   // regra depende do João (spec §8, pergunta 1). Mas nunca fica em silêncio:
   // se o mês do lançamento tem registro, a mensagem de sucesso avisa
   // (correção obrigatória da revisão de 26/10).
-  let aviso: string | undefined
+  let aviso: AvisoKmExcedido | undefined
   const { data: excedido, error: erroExcedido } = await supabase
     .from('km_excedido_desconto')
     .select('id')
     .eq('veiculo_id', r.veiculo_id)
     .eq('mes', `${r.data.slice(0, 7)}-01`)
     .maybeSingle()
-  if (erroExcedido) {
-    aviso = `Não foi possível conferir se este mês tem registro de KM excedido para o ${r.placa}. Confira em Descontos.`
-  } else if (excedido) {
-    aviso = `Este mês tem registro de KM excedido para o ${r.placa}. A correção não altera esse registro — confira em Descontos.`
-  }
+  if (erroExcedido) aviso = 'falha'
+  else if (excedido) aviso = 'registro'
 
-  return { success: true, placa: r.placa, kmVeiculo: r.km_veiculo_depois, aviso }
+  return { success: true, placa: r.placa, veiculoId: r.veiculo_id, kmVeiculo: r.km_veiculo_depois, aviso }
 }

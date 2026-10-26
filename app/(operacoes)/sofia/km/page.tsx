@@ -1,7 +1,7 @@
 import { getEquipes, getVeiculos, getMotoristas, getKmDiarioHistorico, getKmResumoMensal, getKmExcedidoDescontos, getCorrecoes } from '@/lib/sofia/queries'
 import { createClient } from '@/lib/supabase/server'
 import { podeGerirFrotas } from '@/lib/sofia/permissoes'
-import { contextosCorrecaoKm, valorOriginalKm, fmtKm, type CorrecaoAudit } from '@/lib/sofia/correcoes'
+import { contextosCorrecaoKm, valorOriginalKm, bannersCorrecaoKm, fmtKm, type CorrecaoAudit } from '@/lib/sofia/correcoes'
 import KmForm from './_form'
 import CorrigirKmButton from './_corrigir'
 import { deletarKmAction, upsertKmExcedidoStatusAction } from './_actions'
@@ -12,9 +12,9 @@ import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 export default async function KmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ corrigido?: string; km?: string; aviso?: string }>
+  searchParams: Promise<{ corrigido?: string; aviso?: string }>
 }) {
-  const { corrigido, km: kmCorrigido, aviso } = await searchParams
+  const { corrigido, aviso } = await searchParams
   const supabase = await createClient()
   const podeGerir = await podeGerirFrotas(supabase)
   const [equipes, veiculos, motoristas, historico, resumoMensal, excedidos] = await Promise.all([
@@ -28,6 +28,8 @@ export default async function KmPage({
   const correcoes = (await getCorrecoes('km_diario', historico.map((k) => k.id))) as CorrecaoAudit[]
   const contextos = contextosCorrecaoKm(historico)
   const kmVeiculo = new Map(veiculos.map((v) => [v.id, v.km_atual]))
+  // URL só traz id do veículo + código do aviso; textos e números vêm do banco
+  const banners = bannersCorrecaoKm({ corrigido, aviso }, veiculos)
 
   const excedidoMap = new Map(excedidos.map(e => (`${e.veiculo_id}::${e.mes}`))
     .map((k, i) => [k, excedidos[i]]))
@@ -40,14 +42,14 @@ export default async function KmPage({
 
   return (
     <div className="p-8">
-      {corrigido && kmCorrigido && (
+      {banners && (
         <div className="mb-6 px-4 py-3 rounded-lg border border-green-600 bg-green-950 text-green-300 text-sm">
-          KM corrigido. O KM atual do {corrigido} agora é {fmtKm(Number(kmCorrigido))} km. A correção foi para o histórico.
+          {banners.sucesso}
         </div>
       )}
-      {corrigido && aviso && (
+      {banners?.aviso && (
         <div className="mb-6 px-4 py-3 rounded-lg border border-amber-600 bg-amber-950 text-amber-300 text-sm">
-          {aviso}
+          {banners.aviso}
         </div>
       )}
       <div className="mb-8">

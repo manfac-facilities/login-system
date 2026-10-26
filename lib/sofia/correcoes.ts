@@ -26,6 +26,39 @@ const round2 = (n: number) => Math.round(n * 100) / 100
 
 // ---------------------------------------------------------------- KM diário
 
+/**
+ * Aviso depois de corrigir um KM cujo mês tem registro em km_excedido_desconto
+ * (correção obrigatória da revisão). Código fixo → texto constante: a página
+ * nunca mostra texto livre vindo da URL; a placa é relida do banco.
+ */
+export type AvisoKmExcedido = 'registro' | 'falha'
+
+export function mensagemAvisoKmExcedido(aviso: string | undefined, placa: string): string | null {
+  if (aviso === 'registro')
+    return `Este mês tem registro de KM excedido para o ${placa}. A correção não altera esse registro — confira em Descontos.`
+  if (aviso === 'falha')
+    return `Não foi possível conferir se este mês tem registro de KM excedido para o ${placa}. Confira em Descontos.`
+  return null
+}
+
+/**
+ * Banners da página de KM depois de uma correção. A URL só carrega o id do
+ * veículo e o código do aviso; placa e KM atual vêm do banco. Id que não é de
+ * um veículo carregado = nada é mostrado.
+ */
+export function bannersCorrecaoKm(
+  params: { corrigido?: string; aviso?: string },
+  veiculos: { id: string; placa: string; km_atual: number }[]
+): { sucesso: string; aviso: string | null } | null {
+  if (!params.corrigido) return null
+  const v = veiculos.find((x) => x.id === params.corrigido)
+  if (!v) return null
+  return {
+    sucesso: `KM corrigido. O KM atual do ${v.placa} agora é ${fmtKm(v.km_atual)} km. A correção foi para o histórico.`,
+    aviso: mensagemAvisoKmExcedido(params.aviso, v.placa),
+  }
+}
+
 export interface LancamentoKm {
   id: string
   veiculo_id: string
