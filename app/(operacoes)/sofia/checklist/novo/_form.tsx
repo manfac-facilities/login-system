@@ -26,14 +26,17 @@ interface Props {
   equipes: Equipe[]
   veiculos: Veiculo[]
   motoristas: Motorista[]
+  /** vindo de "Trocar carro" na edição de equipe */
+  tipoInicial?: 'troca'
+  equipeDestinoInicial?: { id: string; codigo: string }
 }
 
-export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) {
+export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInicial, equipeDestinoInicial }: Props) {
   const [state, formAction, isPending] = useActionState(criarChecklistAction, {})
   const [, startTransition] = useTransition()
   const router = useRouter()
   const [checklistId] = useState(() => crypto.randomUUID())
-  const [tipo, setTipo] = useState('')
+  const [tipo, setTipo] = useState<string>(tipoInicial ?? '')
   const [equipeId, setEquipeId] = useState('')
   const [veiculoIdManual, setVeiculoIdManual] = useState('')
   const veiculoExplicito = tipo === 'troca' || tipo === 'recebimento' || tipo === 'finalizacao_contrato'
@@ -103,9 +106,19 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
 
   return (
     <div className="p-8 max-w-2xl">
+      {equipeDestinoInicial && (
+        <Link
+          href={`/sofia/equipes/${equipeDestinoInicial.id}/editar`}
+          className="inline-block mb-4 text-sm text-[#94a3b8] hover:text-white"
+        >
+          ← Voltar para editar equipe {equipeDestinoInicial.codigo}
+        </Link>
+      )}
       <h1 className="text-2xl font-bold text-white mb-2">Novo Checklist</h1>
       <p className="text-[#4a6080] text-sm mb-8">
-        Registre a condição do veículo com fotos
+        {equipeDestinoInicial
+          ? `Troca do carro da equipe ${equipeDestinoInicial.codigo}`
+          : 'Registre a condição do veículo com fotos'}
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -242,6 +255,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas }: Props) 
               <select
                 name="equipe_destino_id"
                 required={tipo === 'troca'}
+                defaultValue={equipeDestinoInicial?.id ?? ''}
                 className="px-3 py-2.5 rounded-lg bg-[#0a1628] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm"
               >
                 <option value="">Selecione</option>
