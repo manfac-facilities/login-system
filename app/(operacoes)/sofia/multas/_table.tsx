@@ -72,7 +72,7 @@ export default function MultasTable({
 
   return (
     <>
-      {selecionadas.size > 0 && (
+      {isAdmin && selecionadas.size > 0 && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2 rounded-lg border border-[#1e3a5f] bg-[#0d2050]">
           <span className="text-sm text-[#94a3b8]">{selecionadas.size} selecionada(s)</span>
           <button
@@ -101,12 +101,14 @@ export default function MultasTable({
           <thead>
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
               <th className="px-4 py-3">
+                {isAdmin && (
                 <input
                   type="checkbox"
                   checked={selecionadas.size === multas.length && multas.length > 0}
                   onChange={toggleTodas}
                   className="accent-[#f05a28]"
                 />
+                )}
               </th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data</th>
               <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data de recebimento</th>
@@ -125,12 +127,14 @@ export default function MultasTable({
             {multas.map((m) => (
               <tr key={m.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                 <td className="px-4 py-3">
-                  <input
+                  {isAdmin && (
+                    <input
                     type="checkbox"
                     checked={selecionadas.has(m.id)}
                     onChange={() => toggleUma(m.id)}
                     className="accent-[#f05a28]"
                   />
+                  )}
                 </td>
                 <td className="px-4 py-3 text-[#94a3b8]">{new Date(m.data).toLocaleDateString('pt-BR')}</td>
                 <td className="px-4 py-3 text-[#94a3b8]">
@@ -151,6 +155,7 @@ export default function MultasTable({
                     status={m.autorizacao_status ?? 'sem_solicitacao'}
                     solicitadoEm={m.autorizacao_solicitado_em ?? null}
                     action={atualizarAutorizacaoMultaAction.bind(null, m.id)}
+                    showActions={isAdmin}
                   />
                 </td>
                 <td className="px-4 py-3">

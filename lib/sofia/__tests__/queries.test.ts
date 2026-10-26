@@ -105,6 +105,40 @@ describe('getRevisoesAtrasadas', () => {
 
     expect(result).toEqual([])
   })
+
+  it('flags por KM quando km_atual do veículo >= proxima_km, informando km_passados', async () => {
+    const rows = [
+      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: 10250 } },
+    ]
+    fromMock = jest.fn(() => makeChainable({ data: rows }))
+
+    const result = await getRevisoesAtrasadas()
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ id: 'r1', motivo: 'km', km_passados: 250 })
+    expect(result[0]).not.toHaveProperty('veiculos')
+  })
+
+  it('não flaga por KM quando km_atual é nulo ou ainda não chegou', async () => {
+    const rows = [
+      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: null } },
+      { id: 'r2', veiculo_id: 'v2', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: 9999 } },
+    ]
+    fromMock = jest.fn(() => makeChainable({ data: rows }))
+
+    expect(await getRevisoesAtrasadas()).toEqual([])
+  })
+
+  it('data vencida e KM vencido: motivo data, km_passados preenchido', async () => {
+    const rows = [
+      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: '2020-01-01', proxima_km: 10000, veiculos: { km_atual: 10000 } },
+    ]
+    fromMock = jest.fn(() => makeChainable({ data: rows }))
+
+    const result = await getRevisoesAtrasadas()
+
+    expect(result[0]).toMatchObject({ motivo: 'data', km_passados: 0 })
+  })
 })
 
 describe('getResponsabilidadesAtuais', () => {
