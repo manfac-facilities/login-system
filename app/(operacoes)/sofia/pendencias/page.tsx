@@ -66,7 +66,7 @@ export default async function PendenciasPage({
   const automaticas = mapAutomaticPendencias({
     multas: (multasNaoDescontadas ?? []).map((m) => ({ id: m.id, status: m.status, autorizacao_assinada: m.autorizacao_assinada, data: m.data, descricao: m.descricao })),
     sinistros: sinistros.map((s) => ({ id: s.id, status: s.status, data: s.data, descricao: s.descricao })),
-    revisoesAtrasadas: revisoesAtrasadas.map((r) => ({ id: r.id, proxima_data: r.proxima_data })),
+    revisoesAtrasadas: revisoesAtrasadas.map((r) => ({ id: r.id, proxima_data: r.proxima_data, motivo: r.motivo })),
     documentosVencendo: documentosVencendo.map((d) => ({ id: d.id, tipo: d.tipo, vencimento: d.vencimento })),
     termosNaoAssinados: termosNaoAssinados.map((m) => ({ id: m.id, nome: m.nome })),
   })

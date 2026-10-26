@@ -5,6 +5,7 @@ import type {
   MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia, Checklist,
   KmExcedidoDesconto,
 } from './types'
+import { classificarRevisao, type RevisaoMotivo } from './revisaoStatus'
 
 /**
  * Loga o erro do Supabase com o nome da função de origem e propaga uma
@@ -112,22 +113,31 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
   return data ?? []
 }
 
-export async function getRevisoesAtrasadas(): Promise<Revisao[]> {
+// motivo: 'data' quando a data prevista passou (mesmo que o km também tenha passado); 'km' só por km.
+// km_passados: quantos km passaram do previsto, preenchido sempre que o km venceu.
+export type RevisaoAtrasada = Revisao & { motivo: RevisaoMotivo; km_passados: number | null }
+
+export async function getRevisoesAtrasadas(): Promise<RevisaoAtrasada[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('revisoes')
-    .select('*')
+    .select('*, veiculos(km_atual)')
     .order('created_at', { ascending: false })
   if (error) throwQueryError('getRevisoesAtrasadas', error)
   const hoje = new Date().toISOString().split('T')[0]
-  const maisRecentePorVeiculoETipo = new Map<string, Revisao>()
+  const maisRecentePorVeiculoETipo = new Map<string, Revisao & { veiculos?: { km_atual: number | null } | null }>()
   for (const r of data ?? []) {
     const chave = `${r.veiculo_id}::${r.tipo}`
     if (!maisRecentePorVeiculoETipo.has(chave)) maisRecentePorVeiculoETipo.set(chave, r)
   }
-  return Array.from(maisRecentePorVeiculoETipo.values()).filter(
-    (r) => r.proxima_data != null && r.proxima_data < hoje
-  )
+  const atrasadas: RevisaoAtrasada[] = []
+  for (const { veiculos, ...r } of maisRecentePorVeiculoETipo.values()) {
+    const c = classificarRevisao(r, veiculos?.km_atual, hoje)
+    if (c.situacao === 'atrasada') {
+      atrasadas.push({ ...r, motivo: c.motivos.includes('data') ? 'data' : 'km', km_passados: c.kmPassados })
+    }
+  }
+  return atrasadas
 }
 
 export async function getDocumentosVeiculo(veiculoId?: string): Promise<DocumentoVeiculo[]> {

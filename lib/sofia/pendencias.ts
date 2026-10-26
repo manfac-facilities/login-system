@@ -1,7 +1,7 @@
 interface AutomaticInputs {
   multas: { id: string; status: string; autorizacao_assinada: boolean; data: string; descricao: string | null }[]
   sinistros: { id: string; status: string; data: string; descricao: string }[]
-  revisoesAtrasadas: { id: string; proxima_data: string | null }[]
+  revisoesAtrasadas: { id: string; proxima_data: string | null; motivo?: 'data' | 'km' }[]
   documentosVencendo: { id: string; tipo: string; vencimento: string }[]
   termosNaoAssinados: { id: string; nome: string }[]
 }
@@ -30,7 +30,7 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
     }
   }
   for (const r of inputs.revisoesAtrasadas) {
-    result.push({ descricao: 'Manutenção atrasada', origem: 'manutencao', prazo: r.proxima_data })
+    result.push({ descricao: r.motivo === 'km' ? 'Manutenção atrasada por KM' : 'Manutenção atrasada', origem: 'manutencao', prazo: r.proxima_data })
   }
   for (const d of inputs.documentosVencendo) {
     result.push({ descricao: `Documento (${d.tipo}) vencendo`, origem: 'documento', prazo: d.vencimento })

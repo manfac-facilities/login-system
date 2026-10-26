@@ -1,6 +1,17 @@
 import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos } from '../pendencias'
 
 describe('mapAutomaticPendencias', () => {
+  it('diz "por KM" só quando o motivo da revisão atrasada é KM', () => {
+    const result = mapAutomaticPendencias({
+      multas: [], sinistros: [], documentosVencendo: [], termosNaoAssinados: [],
+      revisoesAtrasadas: [
+        { id: 'a', proxima_data: null, motivo: 'km' },
+        { id: 'b', proxima_data: '2020-01-01', motivo: 'data' },
+      ],
+    })
+    expect(result.map((p) => p.descricao)).toEqual(['Manutenção atrasada por KM', 'Manutenção atrasada'])
+  })
+
   it('flags a multa pendente without signed authorization', () => {
     const result = mapAutomaticPendencias({
       multas: [{ id: '1', status: 'pendente', autorizacao_assinada: false, data: '2026-06-01', descricao: 'Excesso de velocidade' }],
