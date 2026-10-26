@@ -16,6 +16,7 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
   const proxima_data = (formData.get('proxima_data') as string) || null
   const proxima_km = formData.get('proxima_km') ? Number(formData.get('proxima_km')) : null
   const observacoes = (formData.get('observacoes') as string).trim() || null
+  const pecas_trocadas = ((formData.get('pecas_trocadas') as string) ?? '').trim() || null
 
   if (!veiculo_id || !tipo) return { error: 'Veículo e tipo são obrigatórios' }
 
@@ -24,7 +25,7 @@ export async function criarRevisaoAction(_prev: State, formData: FormData): Prom
 
   const supabase = await createClient()
   const { error } = await supabase.from('revisoes').insert({
-    veiculo_id, motorista_id, tipo, fornecedor, valor, data_realizada, km_realizada, proxima_data, proxima_km, status, observacoes,
+    veiculo_id, motorista_id, tipo, fornecedor, valor, data_realizada, km_realizada, proxima_data, proxima_km, status, observacoes, pecas_trocadas,
   })
 
   if (error) return { error: 'Erro ao registrar revisão' }

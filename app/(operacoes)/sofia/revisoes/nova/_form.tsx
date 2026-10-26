@@ -103,6 +103,12 @@ export default function NovaRevisaoForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-[#94a3b8]">Peças trocadas</label>
+          <textarea name="pecas_trocadas" rows={4} placeholder="Ex.: óleo 5W30 (4 litros), filtro de óleo, filtro de ar" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm resize-none" />
+          <span className="text-xs text-[#4a6080]">Opcional. Escreva do jeito que vier na nota da oficina, uma peça por linha.</span>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm text-[#94a3b8]">Observações</label>
           <textarea name="observacoes" rows={2} className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm resize-none" />
         </div>

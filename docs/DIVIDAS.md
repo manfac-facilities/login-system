@@ -188,3 +188,9 @@ Backlog da revisão independente; nenhum bloqueia.
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
 - Indentação do JSX em `multas/_table.tsx` nos blocos `{isAdmin && (`.
+
+## 26/10/2026 — Frotas: B5/B6 (branch feat/frotas-revisoes-b5-b6)
+
+- Detalhe da revisão (`revisoes/[id]`) classifica pela previsão da própria revisão, mesmo quando ela já foi substituída por uma mais nova do mesmo veículo+tipo; na lista só a mais recente é classificada. Chip de revisão antiga no detalhe pode divergir da lista.
+- `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
+- Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
