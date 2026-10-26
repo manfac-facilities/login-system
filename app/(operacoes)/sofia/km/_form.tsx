@@ -7,9 +7,12 @@ interface Props {
   equipes: Equipe[]
   veiculos: Veiculo[]
   motoristas: Motorista[]
+  podeGerir: boolean
 }
 
-export default function KmForm({ equipes, veiculos, motoristas }: Props) {
+const MSG_KM_MENOR = 'KM não pode ser menor que a última KM registrada'
+
+export default function KmForm({ equipes, veiculos, motoristas, podeGerir }: Props) {
   const [state, action, isPending] = useActionState(lancarKmAction, {})
   const [equipeId, setEquipeId] = useState('')
   const hoje = new Date().toISOString().split('T')[0]
@@ -22,6 +25,13 @@ export default function KmForm({ equipes, veiculos, motoristas }: Props) {
       {state.error && (
         <div className="px-4 py-3 rounded-lg border border-red-600 bg-red-950 text-red-300 text-sm">
           {state.error}
+          {state.error.startsWith(MSG_KM_MENOR) && (
+            <span className="block mt-1 text-red-200">
+              {podeGerir
+                ? 'Se o último lançamento estiver errado, use "Corrigir" no histórico ao lado.'
+                : 'Se o último lançamento estiver errado, peça a um administrador ou gestor de frotas para corrigir.'}
+            </span>
+          )}
         </div>
       )}
       {state.success && (
