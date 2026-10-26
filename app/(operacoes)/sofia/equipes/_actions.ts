@@ -55,3 +55,36 @@ export async function desativarEquipeAction(
   revalidatePath('/sofia/equipes')
   return { success: true }
 }
+
+/**
+ * F1 — edita código e motorista da equipe via RPC editar_equipe_atomico (tudo
+ * ou nada: código, motoristas, históricos de responsabilidade e audit_log na
+ * mesma transação; sem logAudit). O VEÍCULO não muda por aqui — só pelo checklist.
+ */
+export async function editarEquipeAction(
+  _prev: State,
+  formData: FormData
+): Promise<State & { codigo?: string }> {
+  const id = formData.get('id') as string
+  const codigo = ((formData.get('codigo') as string) ?? '').trim().toUpperCase()
+  const motorista_id = (formData.get('motorista_id') as string) || null
+  if (!id) return { error: 'ID inválido' }
+  if (!codigo) return { error: 'Informe o código da equipe' }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  const { data, error } = await supabase.rpc('editar_equipe_atomico', {
+    p_equipe_id: id,
+    p_codigo: codigo,
+    p_motorista_id: motorista_id,
+  })
+  if (error) return { error: error.code === 'SOF01' ? error.message : 'Erro ao salvar a equipe' }
+
+  revalidatePath('/sofia/equipes')
+  revalidatePath('/sofia/motoristas')
+  revalidatePath('/sofia/disponibilidade')
+  revalidatePath('/sofia/audit')
+  return { success: true, codigo: (data as { codigo: string }).codigo }
+}
