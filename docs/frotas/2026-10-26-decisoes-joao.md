@@ -15,3 +15,11 @@ Respostas dadas no chat, em perguntas de múltipla escolha. Texto das opções e
 
 Instrução do mesmo dia: "irei trabalhar o dia todo em outro projeto e quero que você fique tocando o gestão de frotas,
 deixe as decisões estratégicas para quando terminar a parte operacional".
+
+## Permissões do Igor (D2) — decidido pelo João, 26/10/2026
+
+Mensagem literal: "igor tem acesso total ao frotas, mas nao aos outros sistemas"
+
+Leitura: equivale a "sim" nos 15 itens de `2026-10-23-diagnostico-permissoes.md` §5, inclusive os de desconto em
+salário (11 a 13) e exclusões, **restrito ao Gestão de Frotas** — opção B do §4 (papel "gestor de frotas" só no
+Sofia), não a opção A (administrador do hub). Substitui a validação item a item que estava pedida ao José.
