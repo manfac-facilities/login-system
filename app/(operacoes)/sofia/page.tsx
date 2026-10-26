@@ -1,6 +1,7 @@
 import StatCard from '@/components/sofia/StatCard'
 import AlertBanner from '@/components/sofia/AlertBanner'
 import Link from 'next/link'
+import { formatarKm } from '@/lib/sofia/revisaoStatus'
 import {
   getEquipes,
   getVeiculos,
@@ -10,11 +11,12 @@ import {
   getSinistrosAbertos,
   getDocumentosVencendo,
   getRevisoesAtrasadas,
+  getRevisoesVenceEmBreve,
   getPendenciasManuais,
 } from '@/lib/sofia/queries'
 
 export default async function SofiaPage() {
-  const [equipes, veiculos, motoristas, cnhVencendo, multasPendentes, sinistrosAbertos, documentosVencendo, revisoesAtrasadas, pendencias] =
+  const [equipes, veiculos, motoristas, cnhVencendo, multasPendentes, sinistrosAbertos, documentosVencendo, revisoesAtrasadas, revisoesVenceEmBreve, pendencias] =
     await Promise.all([
       getEquipes(),
       getVeiculos(),
@@ -24,9 +26,12 @@ export default async function SofiaPage() {
       getSinistrosAbertos(),
       getDocumentosVencendo(),
       getRevisoesAtrasadas(),
+      getRevisoesVenceEmBreve(),
       getPendenciasManuais(),
     ])
 
+  const atrasadasPorKm = revisoesAtrasadas.filter((r) => r.motivo === 'km').length
+  const atrasadasPorData = revisoesAtrasadas.length - atrasadasPorKm
   const veiculosAtivos = veiculos.filter((v) => v.status === 'ativo').length
   const multasPendentesTotal = multasPendentes.reduce(
     (sum, m) => sum + m.valor,
@@ -63,7 +68,21 @@ export default async function SofiaPage() {
 
       {revisoesAtrasadas.length > 0 && (
         <div className="mb-6">
-          <AlertBanner type="error" message={`${revisoesAtrasadas.length} manutenção(ões) atrasada(s) — veja em Revisões`} />
+          <AlertBanner
+            type="error"
+            message={`${revisoesAtrasadas.length} manutenç${revisoesAtrasadas.length !== 1 ? 'ões' : 'ão'} atrasada${revisoesAtrasadas.length !== 1 ? 's' : ''} (${atrasadasPorKm} por KM, ${atrasadasPorData} por data) — veja em Revisões`}
+          />
+        </div>
+      )}
+
+      {revisoesVenceEmBreve.length > 0 && (
+        <div className="mb-6">
+          <AlertBanner
+            type="warning"
+            message={`${revisoesVenceEmBreve.length === 1 ? '1 revisão vence' : `${revisoesVenceEmBreve.length} revisões vencem`} em breve: ${revisoesVenceEmBreve
+              .map((r) => `${r.placa ?? 'veículo sem placa'}, faltam ${formatarKm(r.km_restantes)} km`)
+              .join('; ')} — veja em Revisões`}
+          />
         </div>
       )}
 
