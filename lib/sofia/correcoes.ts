@@ -14,7 +14,7 @@ export interface Vizinho {
 
 export const fmtKm = (n: number) => Math.round(n).toLocaleString('pt-BR')
 export const fmtLitros = (n: number) =>
-  n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 })
 export const fmtBrl = (n: number) =>
   'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 /** '2026-10-10' -> '10/10/2026' */

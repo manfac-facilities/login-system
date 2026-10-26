@@ -23,6 +23,7 @@ describe('formatação pt-BR', () => {
   it('km, litros e reais', () => {
     expect(fmtKm(47904)).toBe('47.904')
     expect(fmtLitros(3.8)).toBe('3,8')
+    expect(fmtLitros(42.35)).toBe('42,35')
     expect(fmtBrl(22.8)).toBe('R$ 22,80')
   })
 })

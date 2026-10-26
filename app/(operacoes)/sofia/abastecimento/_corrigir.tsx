@@ -101,7 +101,7 @@ function DialogoCorrigirAbastecimento({
             <input
               name="litros"
               type="number"
-              step="0.1"
+              step="0.01"
               autoFocus
               value={litros}
               onChange={(e) => setLitros(e.target.value)}
