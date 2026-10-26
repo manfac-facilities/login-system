@@ -336,8 +336,23 @@ describe('removerUsuarioAction', () => {
     deleteUserMock.mockResolvedValue({ error: null })
     expect(await removerUsuarioAction('Ana@Manfac.com.br')).toEqual({ success: true })
     expect(deleteUserMock).toHaveBeenCalledWith('id-da-ana')
-    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
+    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access', 'sofia_gestores'])
     expect(deleteRowsMock).toHaveBeenCalledWith('user_email', 'ana@manfac.com.br')
+    // sofia_gestores com o e-mail normalizado (o CHECK da tabela exige minúsculo)
+    expect(deleteRowsMock).toHaveBeenNthCalledWith(3, 'user_email', 'ana@manfac.com.br')
+  })
+
+  it('warns when only the fleet-manager row survives, so the role does not come back on re-invite', async () => {
+    deleteUserMock.mockResolvedValue({ error: null })
+    deleteRowsMock.mockImplementation(async () =>
+      tabelasApagadas[tabelasApagadas.length - 1] === 'sofia_gestores'
+        ? { error: { message: 'boom' } }
+        : { error: null }
+    )
+    expect(await removerUsuarioAction('ana@manfac.com.br')).toEqual({
+      error:
+        'Conta apagada, mas sobraram registros de nível ou de acesso. Remova-os no Supabase antes de convidar esse e-mail de novo.',
+    })
   })
 
   it('warns when a row survives the deletion, so it is not silently reused', async () => {
@@ -487,7 +502,20 @@ describe('ações de convite e senha', () => {
     deleteUserMock.mockResolvedValue({ error: null })
     expect(await cancelarConviteAction('Nova@Manfac.com.br')).toEqual({ success: true })
     expect(deleteUserMock).toHaveBeenCalledWith('id-da-nova')
-    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access'])
+    expect(tabelasApagadas).toEqual(['hub_user_roles', 'hub_system_access', 'sofia_gestores'])
+  })
+
+  it('cancelarConviteAction warns when the fleet-manager row survives', async () => {
+    deleteUserMock.mockResolvedValue({ error: null })
+    deleteRowsMock.mockImplementation(async () =>
+      tabelasApagadas[tabelasApagadas.length - 1] === 'sofia_gestores'
+        ? { error: { message: 'boom' } }
+        : { error: null }
+    )
+    expect(await cancelarConviteAction('nova@manfac.com.br')).toEqual({
+      error:
+        'Conta apagada, mas sobraram registros de nível ou de acesso. Remova-os no Supabase antes de convidar esse e-mail de novo.',
+    })
   })
 
   it('enviarResetSenhaAction rejects non-admins', async () => {
