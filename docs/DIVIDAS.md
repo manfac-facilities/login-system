@@ -210,3 +210,10 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - **R4 / pergunta 1 do §8 (dinheiro) — pré-requisito do deploy (C16):** a correção de KM **não altera** `km_excedido_desconto`; só avisa na mensagem de sucesso quando o mês tem registro ("Este mês tem registro de KM excedido para o {placa}. A correção não altera esse registro — confira em Descontos."; se a consulta falhar, avisa que não conseguiu conferir). Casos aguardando a regra do João: (a) correção cria excesso sem linha no mês; (b) correção tira o excesso com status `sem_solicitacao` (apagar a linha e fechar a pendência — apaga dado de cliente — ou manter e avisar; `descontos/page.tsx:168` mostraria "+-N km"); (c) `solicitado`/`autorizado`: não mexer e avisar.
 - `editar_equipe_atomico` recusa com "Os dados da equipe mudaram enquanto você editava…" se o motorista novo trocar de equipe entre a leitura e a trava, e `corrigir_km_atomico` recusa se o veículo do lançamento mudar (B3). Nenhum dos dois é coberto pelo teste SQL (exige duas sessões simultâneas).
 - `getCorrecoes` (`lib/sofia/queries.ts`) consulta o `audit_log` em lotes de 100 ids para todos os lançamentos exibidos (as listas de KM e de abastecimento não têm paginação); o custo cresce com o histórico.
+/^>>>>>>> feat/frotas-revisoes-b5-b6$/d
+## 26/10/2026 — Frotas: B5/B6 (branch feat/frotas-revisoes-b5-b6)
+
+- Detalhe da revisão (`revisoes/[id]`) classifica pela previsão da própria revisão, mesmo quando ela já foi substituída por uma mais nova do mesmo veículo+tipo; na lista só a mais recente é classificada. Chip de revisão antiga no detalhe pode divergir da lista.
+- `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
+- Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
+>>>>>>> feat/frotas-revisoes-b5-b6
