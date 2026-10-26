@@ -1,18 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
-import { getVeiculos, getEquipes, getAbastecimentoHistorico } from '@/lib/sofia/queries'
+import { getVeiculos, getEquipes, getAbastecimentoHistorico, getCorrecoes } from '@/lib/sofia/queries'
 import type { Abastecimento } from '@/lib/sofia/types'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import { contextosCorrecaoAbastecimento, fmtKm } from '@/lib/sofia/correcoes'
 import AbastecimentoForm from './_form'
+import CorrigirAbastecimentoButton from './_corrigir'
 import { deletarAbastecimentoAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 
 type AbastecimentoComVeiculo = Abastecimento & { veiculos: { placa: string } | null }
 
-export default async function AbastecimentoPage() {
+export default async function AbastecimentoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ corrigido?: string }>
+}) {
+  const { corrigido } = await searchParams
   const [veiculos, equipes, historico] = await Promise.all([
     getVeiculos(),
     getEquipes(),
     getAbastecimentoHistorico(),
   ])
+  const podeGerir = await podeGerirFrotas(await createClient())
+  const corrigidos = new Set(
+    (await getCorrecoes('abastecimentos', historico.map((a) => a.id))).map((c) => c.registro_id)
+  )
+  const contextos = contextosCorrecaoAbastecimento(historico)
 
   const hoje = new Date()
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]
@@ -62,6 +75,11 @@ export default async function AbastecimentoPage() {
 
   return (
     <div className="p-8">
+      {corrigido === '1' && (
+        <div className="mb-6 px-4 py-3 rounded-lg border border-green-600 bg-green-950 text-green-300 text-sm">
+          Abastecimento corrigido. A correção foi para o histórico.
+        </div>
+      )}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Abastecimento</h1>
         <p className="text-[#4a6080] text-sm mt-1">Lançamento manual + consumo do mês</p>
@@ -109,6 +127,11 @@ export default async function AbastecimentoPage() {
         <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">
           Histórico de lançamentos
         </h2>
+        {!podeGerir && historico.length > 0 && (
+          <div className="mb-3 px-4 py-3 rounded-lg border border-[#1e3a5f] bg-[#0d2050] text-[#94a3b8] text-sm">
+            Somente administrador ou gestor de frotas pode corrigir.
+          </div>
+        )}
         {historico.length === 0 ? (
           <p className="text-[#4a6080] text-sm">Nenhum abastecimento registrado ainda.</p>
         ) : (
@@ -119,6 +142,7 @@ export default async function AbastecimentoPage() {
                   <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data</th>
                   <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Placa</th>
                   <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Litros</th>
+                  <th className="text-right px-4 py-3 text-[#4a6080] font-medium">KM</th>
                   <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
                   <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Posto</th>
                   <th className="px-4 py-3"></th>
@@ -133,12 +157,36 @@ export default async function AbastecimentoPage() {
                     <td className="px-4 py-3 text-white font-mono">{a.veiculos?.placa ?? '—'}</td>
                     <td className="px-4 py-3 text-[#94a3b8] text-right">
                       {a.litros != null ? Number(a.litros).toFixed(1) : '—'}
+                      {corrigidos.has(a.id) && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded bg-blue-900 text-blue-300 text-[10px] align-middle">
+                          corrigido
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-[#94a3b8] text-right">
+                      {a.km != null ? fmtKm(Number(a.km)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-white text-right font-medium">
                       R$ {Number(a.valor).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-[#94a3b8] text-right">{a.posto ?? '—'}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {podeGerir && contextos.has(a.id) && (
+                        <span className="mr-3">
+                          <CorrigirAbastecimentoButton
+                            abastecimento={{
+                              id: a.id,
+                              data: a.data,
+                              placa: a.veiculos?.placa ?? '—',
+                              posto: a.posto,
+                              litros: a.litros,
+                              valor: a.valor,
+                              km: a.km,
+                            }}
+                            contexto={contextos.get(a.id)!}
+                          />
+                        </span>
+                      )}
                       <DeleteConfirmButton action={deletarAbastecimentoAction} id={a.id} itemLabel={`abastecimento de ${a.veiculos?.placa ?? 'veículo sem placa'} — R$ ${Number(a.valor).toFixed(2)}`} />
                     </td>
                   </tr>
