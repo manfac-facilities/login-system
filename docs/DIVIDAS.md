@@ -188,3 +188,9 @@ Backlog da revisão independente; nenhum bloqueia.
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
 - Indentação do JSX em `multas/_table.tsx` nos blocos `{isAdmin && (`.
+
+## 27/10/2026 — Diário para todos (branch `feat/obras-diario-para-todos`), não bloqueantes do review
+
+- Rótulo "Respondido por" de quem não está em `obras_pessoa` quebra o e-mail só no `.` (`ana_paula@` vira "Ana_paula"); `chaveDoUsuario` quebra em `.-_+`. Cosmético.
+- `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
+- "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.
