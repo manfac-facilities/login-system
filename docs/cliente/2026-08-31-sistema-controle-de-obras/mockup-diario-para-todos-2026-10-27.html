@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Obras — Diário do dia liberado para todos</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html{scroll-behavior:smooth}
+  body{background:#0a1628;color:#e8eef7;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .secao-n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9999px;background:#f05a28;color:#fff;font-weight:700;font-size:14px;flex:none}
+  .demo-btn{min-height:40px;border:1px solid #1e3a5f;border-radius:8px;padding:6px 12px;font-size:13px;color:#94a3b8;background:#0f1f3d}
+  .demo-btn:hover{border-color:#f05a28;color:#e8eef7}
+  .demo-btn.on{background:#f05a28;border-color:#f05a28;color:#fff}
+  .tela{border:1px dashed #1e3a5f;border-radius:12px;padding:8px 0;background:#0a1628}
+  select{color-scheme:dark}
+</style>
+</head>
+<body>
+
+<!-- CONTROLE DE DEMO (fora da tela real) -->
+<div class="sticky top-0 z-30 border-b border-[#f05a28] bg-[#08111f]/95 backdrop-blur px-4 py-2.5">
+  <div class="mx-auto max-w-4xl">
+    <div class="text-[11px] uppercase tracking-wider text-[#f05a28] font-semibold">Controle de demonstração — não faz parte da tela</div>
+    <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span class="text-[12px] text-[#94a3b8]">Quem está logado:</span>
+      <div id="demo-pessoas" class="flex flex-wrap gap-1.5"></div>
+    </div>
+    <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span class="text-[12px] text-[#94a3b8]">Forçar estado:</span>
+      <div id="demo-estados" class="flex flex-wrap gap-1.5"></div>
+      <button class="demo-btn" onclick="zerar()">Zerar demonstração</button>
+    </div>
+  </div>
+</div>
+
+<main class="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+
+  <header class="mb-6">
+    <div class="text-[11px] uppercase tracking-wider text-[#94a3b8]">Gestão de Obras · mockup para aprovação · 27/10/2026</div>
+    <h1 class="mt-1 text-2xl font-semibold">Diário do dia liberado para todos</h1>
+    <p class="mt-2 text-sm text-[#94a3b8]">A tela do diário continua a mesma. Muda <b class="text-[#e8eef7]">quem pode abrir</b> e passa a aparecer <b class="text-[#e8eef7]">quem respondeu</b>. Use o controle laranja no topo para trocar a pessoa logada. Responda um cartão e veja o resultado. Para dar retorno, cite o número da seção.</p>
+    <nav class="mt-3 flex flex-wrap gap-2 text-[13px]">
+      <a href="#s1" class="rounded-full border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:text-[#e8eef7]">1 · O que muda</a>
+      <a href="#s2" class="rounded-full border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:text-[#e8eef7]">2 · A tela do diário</a>
+      <a href="#s3" class="rounded-full border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:text-[#e8eef7]">3 · Quem respondeu</a>
+      <a href="#s4" class="rounded-full border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:text-[#e8eef7]">4 · Vazio, erro e sem acesso</a>
+    </nav>
+  </header>
+
+  <!-- 1 -->
+  <section id="s1" class="mb-10 scroll-mt-40">
+    <h2 class="flex items-center gap-2.5 text-lg font-semibold"><span class="secao-n">1</span>O que muda</h2>
+    <div class="mt-3 overflow-hidden rounded-lg border border-[#1e3a5f] bg-[#0d2050]">
+      <div class="hidden sm:grid grid-cols-[1fr_1fr_1fr] gap-px bg-[#1e3a5f] text-[12px] uppercase tracking-wide text-[#94a3b8]">
+        <div class="bg-[#0a1628] px-3 py-2"></div><div class="bg-[#0a1628] px-3 py-2">Hoje</div><div class="bg-[#0a1628] px-3 py-2 text-[#f05a28]">Depois da mudança</div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-px bg-[#1e3a5f] text-sm">
+        <div class="bg-[#0d2050] px-3 py-2.5 font-medium">Quem abre o diário</div>
+        <div class="bg-[#0d2050] px-3 py-2.5 text-[#94a3b8]"><span class="sm:hidden text-[11px] uppercase">Hoje: </span>Só quem é responsável por alguma obra, e o administrador.</div>
+        <div class="bg-[#0d2050] px-3 py-2.5"><span class="sm:hidden text-[11px] uppercase text-[#f05a28]">Depois: </span>Qualquer pessoa com acesso a Gestão de Obras.</div>
+
+        <div class="bg-[#0d2050] px-3 py-2.5 font-medium">Filtro por responsável</div>
+        <div class="bg-[#0d2050] px-3 py-2.5 text-[#94a3b8]"><span class="sm:hidden text-[11px] uppercase">Hoje: </span>Só o administrador tem o seletor.</div>
+        <div class="bg-[#0d2050] px-3 py-2.5"><span class="sm:hidden text-[11px] uppercase text-[#f05a28]">Depois: </span>Todos têm. Quem é responsável abre nas <b>suas</b> obras; quem não é abre em <b>Todos os responsáveis</b>.</div>
+
+        <div class="bg-[#0d2050] px-3 py-2.5 font-medium">Autoria da resposta</div>
+        <div class="bg-[#0d2050] px-3 py-2.5 text-[#94a3b8]"><span class="sm:hidden text-[11px] uppercase">Hoje: </span>Não aparece na tela.</div>
+        <div class="bg-[#0d2050] px-3 py-2.5"><span class="sm:hidden text-[11px] uppercase text-[#f05a28]">Depois: </span>“Respondido por Marcos em nome de Yuri às 10:02”.</div>
+
+        <div class="bg-[#0d2050] px-3 py-2.5 font-medium">Tela “sem permissão”</div>
+        <div class="bg-[#0d2050] px-3 py-2.5 text-[#94a3b8]"><span class="sm:hidden text-[11px] uppercase">Hoje: </span>Para quem não é responsável de nenhuma obra.</div>
+        <div class="bg-[#0d2050] px-3 py-2.5"><span class="sm:hidden text-[11px] uppercase text-[#f05a28]">Depois: </span>Só para quem não tem acesso ao módulo.</div>
+      </div>
+    </div>
+    <p class="mt-3 text-[13px] text-[#94a3b8]">Perguntas, motivos e tarefas do cartão não mudam.</p>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2" class="mb-10 scroll-mt-40">
+    <h2 class="flex items-center gap-2.5 text-lg font-semibold"><span class="secao-n">2</span>A tela do diário, por pessoa</h2>
+    <p class="mt-2 text-sm text-[#94a3b8]">Troque a pessoa logada no topo: o filtro padrão e a lista de obras mudam. Escolha outro responsável no seletor. Responda como Marcos uma obra da Amanda ou da Luana, e como Yuri uma obra do Yuri, para ver o rótulo.</p>
+    <div id="quem-sou" class="mt-3 rounded-md border border-[#1e3a5f] bg-[#0d2050] px-3 py-2 text-[13px] text-[#94a3b8]"></div>
+    <div class="tela mt-3"><div id="tela"></div></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3" class="mb-10 scroll-mt-40">
+    <h2 class="flex items-center gap-2.5 text-lg font-semibold"><span class="secao-n">3</span>Quem respondeu — o rótulo no cartão já respondido</h2>
+    <p class="mt-2 text-sm text-[#94a3b8]">Marcos é quem clicou. Yuri é o responsável da obra. A hora é a de quando salvou.</p>
+    <div class="mt-3 flex flex-col gap-4" id="exemplos"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4" class="mb-10 scroll-mt-40">
+    <h2 class="flex items-center gap-2.5 text-lg font-semibold"><span class="secao-n">4</span>Vazio, erro de carregamento e sem acesso</h2>
+    <p class="mt-2 text-sm text-[#94a3b8]">Três situações diferentes. Para ver cada uma dentro da tela da seção 2, use “Forçar estado” no topo.</p>
+    <div class="mt-3 flex flex-col gap-5" id="estados"></div>
+  </section>
+
+</main>
+
+<script>
+const HOJE = '27/10';
+const ITENS = ['Não faltou','Material','Ferramenta','Equipe','Documento / ART','Outro'];
+const BLOQUEIOS = ['Clima','Cliente / loja','Disponibilidade de equipe','Contratação de prestador','Falta de material','Sem bloqueio'];
+
+const OBRAS = [
+  {id:'o1', os:'0226-014989', tipo:'Reforma', loja:'DP BAIRRO DE FATIMA', descricao:'Troca do piso da área de vendas e pintura', equipe:'Equipe Rio 1', analista:'Carla M.', pcm:'Yuri', prazo:'06/11', etapa:'Em andamento', dias:12, cor:'#35c98a', naoAndou:0},
+  {id:'o2', os:'0226-005730', tipo:'Adequação', loja:'DP BARRA DE SAO JOAO', descricao:'Adequação elétrica do balcão de atendimento', equipe:'Equipe Rio 2', analista:'Carla M.', pcm:'Yuri', prazo:'30/10', etapa:'Paralisado', dias:34, cor:'#ff4d6d', naoAndou:3, bloqueio:'Falta de material', bloqueadaDias:5, pendencia:'Aguardando entrega dos quadros elétricos', pendResp:'Compras'},
+  {id:'o3', os:'0526-013724', tipo:'Reforma', loja:'DP NILOPOLIS 5', descricao:'Reforma da fachada e troca do letreiro', equipe:'Equipe Baixada', analista:'Paulo R.', pcm:'Amanda', prazo:'14/11', etapa:'Em andamento', dias:21, cor:'#f4b73f', naoAndou:0},
+  {id:'o4', os:'0826-004428', tipo:'Manutenção', loja:'DP PETROPOLIS 5', descricao:'Impermeabilização da laje', equipe:'Equipe Serra', analista:'Paulo R.', pcm:'Amanda', prazo:'05/11', etapa:'Em andamento', dias:9, cor:'#35c98a', naoAndou:0},
+  {id:'o5', os:'0526-013745', tipo:'Adequação', loja:'DP LUCIO COSTA', descricao:'Novo layout do estoque e prateleiras', equipe:'Equipe Barra', analista:'Joana S.', pcm:'Luana', prazo:'12/11', etapa:'Levantamento', dias:15, cor:'#f4b73f', naoAndou:2},
+  {id:'o6', os:'0526-013772', tipo:'Reforma', loja:'DP PRACA DO O', descricao:'Troca de forro e iluminação', equipe:'Equipe Centro', analista:'Joana S.', pcm:'Luana', prazo:'09/11', etapa:'Em andamento', dias:18, cor:'#f4b73f', naoAndou:0},
+  {id:'o7', os:'0526-013743', tipo:'Manutenção', loja:'DP PEDRA DE GUARATIBA', descricao:'Reparo do piso da entrada', equipe:'Equipe Oeste', analista:'Carla M.', pcm:'Yuri', prazo:'03/11', etapa:'Em andamento', dias:7, cor:'#35c98a', naoAndou:0},
+];
+const RESPONSAVEIS = ['Amanda','Luana','Yuri'];
+
+const PESSOAS = {
+  yuri:   {rotulo:'Yuri (responsável)', nome:'Yuri', acesso:true, admin:false, resp:true,  padrao:'Yuri', explica:'Yuri é responsável por obras: abre vendo as dele. Pode trocar para “Todos os responsáveis” ou para outra pessoa.'},
+  marcos: {rotulo:'Marcos (cuida do diário, não é responsável)', nome:'Marcos', acesso:true, admin:false, resp:false, padrao:'', explica:'Marcos não é responsável por nenhuma obra: abre em “Todos os responsáveis”. Hoje ele cairia na tela de sem permissão.'},
+  admin:  {rotulo:'Admin', nome:'Admin', acesso:true, admin:true, resp:false, padrao:'', explica:'Administrador: abre em “Todos os responsáveis”, como já é hoje.'},
+  sem:    {rotulo:'Pessoa sem acesso ao módulo', nome:'—', acesso:false, admin:false, resp:false, padrao:'', explica:'Quem não tem acesso a Gestão de Obras.'},
+};
+
+let cur = 'marcos', estado = 'normal';
+let filtro = {};      // por pessoa
+let rascunhos = {};   // por obra
+let respostas = {};   // por obra
+let agora = null;
+
+function semente(){
+  respostas = {
+    o7: {andou:true, item:'Não faltou', motivo:null, obs:null, por:'Yuri', hora:'09:14'},
+    o4: {andou:false, item:'Material', motivo:'Clima', obs:'Chuva forte desde cedo', por:'Marcos', hora:'10:02'},
+  };
+  rascunhos = {};
+}
+function zerar(){ semente(); filtro = {}; estado='normal'; cur='marcos'; montarDemo(); render(); }
+
+function hhmm(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pcmDe(id){ return OBRAS.find(o=>o.id===id).pcm; }
+function filtroAtual(){ return cur in filtro ? filtro[cur] : PESSOAS[cur].padrao; }
+
+/* ---------- rótulo de autoria ---------- */
+function rotuloAutoria(por, responsavel, hora){
+  const base = por===responsavel
+    ? `Respondido por <b class="text-[#e8eef7]">${esc(por)}</b>`
+    : `Respondido por <b class="text-[#e8eef7]">${esc(por)}</b> em nome de <b class="text-[#f05a28]">${esc(responsavel)}</b>`;
+  return `${base} às ${hora}`;
+}
+
+/* ---------- blocos de tela ---------- */
+function blocoErro(){ return `
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div class="rounded-lg border border-[#ff4d6d] bg-[#0d2050] px-4 py-5">
+      <h3 class="text-base font-semibold text-[#e8eef7]">Não deu para carregar o diário de hoje</h3>
+      <p class="mt-2 text-sm text-[#94a3b8]">A lista de obras não chegou. <b class="text-[#e8eef7]">Nada do que você já respondeu foi perdido</b> — o que estava salvo continua salvo.</p>
+      <p class="mt-2 text-sm text-[#94a3b8]">Tente de novo. Se continuar assim por mais de alguns minutos, avise o suporte da Manfac e responda hoje pelo WhatsApp.</p>
+      <a href="#s2" onclick="estado='normal';montarDemo();render();return false" class="mt-4 inline-flex items-center justify-center rounded-md bg-[#f05a28] px-3 py-2 text-sm font-medium text-white hover:bg-[#d94d20]">Tentar de novo</a>
+    </div>
+  </div>`; }
+
+function blocoSemAcesso(){ return `
+  <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div class="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-5">
+      <h3 class="text-base font-semibold text-[#e8eef7]">Você não tem acesso a Gestão de Obras</h3>
+      <p class="mt-2 text-sm text-[#94a3b8]">Seu acesso não inclui este módulo, por isso o diário do dia não aparece para você.</p>
+      <p class="mt-2 text-sm text-[#94a3b8]">Se você precisa dele, peça ao administrador para incluir seu acesso.</p>
+    </div>
+  </div>`; }
+
+function blocoVazio(){ return `
+  <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    ${cabecalhoTela()}
+    <div class="mt-2 rounded-lg border border-dashed border-[#1e3a5f] px-4 py-8 text-center text-sm text-[#94a3b8]">Nenhuma obra em campo para responder hoje.</div>
+  </div>`; }
+
+function cabecalhoTela(){ return `
+  <div class="mb-4">
+    <h3 class="text-xl font-semibold text-[#e8eef7]">Diário do dia</h3>
+    <p class="mt-1 text-sm text-[#94a3b8]">Uma obra por vez: responde, salva, ela sai da fila. Dá para parar no meio — hoje é ${HOJE}/2026.</p>
+  </div>`; }
+
+function seletor(){
+  const p = PESSOAS[cur], sel = filtroAtual();
+  const nota = p.admin
+    ? 'Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.'
+    : 'Você vê as obras de todos os responsáveis e pode responder no lugar deles. Fica registrado quem respondeu.';
+  return `
+  <div class="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 py-2.5">
+    <label for="analista" class="text-[12px] text-[#94a3b8]">Diário de quem</label>
+    <select id="analista" onchange="trocarFiltro(this.value)" class="min-h-11 rounded-md border border-[#1e3a5f] bg-[#0f1f3d] px-3 py-2 text-sm text-[#e8eef7] focus:border-[#f05a28] focus:outline-none">
+      <option value="">Todos os responsáveis</option>
+      ${RESPONSAVEIS.map(r=>`<option value="${r}" ${r===sel?'selected':''}>${r}</option>`).join('')}
+    </select>
+    <span class="text-[11px] text-[#64748b]">${nota}</span>
+  </div>`;
+}
+
+function chips(rotulo, opcoes, valor, fn, cores){
+  return `<div class="mt-3"><span class="block text-[13px] font-medium text-[#94a3b8]">${rotulo}</span>
+  <div class="mt-1.5 flex flex-wrap gap-2" role="group" aria-label="${rotulo}">${opcoes.map(v=>{
+    const ativo = valor===v;
+    let cor='border-[#1e3a5f] text-[#94a3b8]';
+    if(ativo) cor='border-[#f05a28] bg-[#f05a28] text-white';
+    if(ativo&&cores&&v==='Sim') cor='border-[#35c98a] bg-[#35c98a] text-[#06231a]';
+    if(ativo&&cores&&v==='Não') cor='border-[#f4b73f] bg-[#f4b73f] text-[#2b1d02]';
+    return `<button type="button" aria-pressed="${ativo}" onclick="${fn}" data-v="${esc(v)}" class="min-h-11 rounded-full border px-3.5 py-2 text-sm font-medium transition hover:border-[#f05a28] ${cor}">${v}</button>`;
+  }).join('')}</div></div>`;
+}
+
+function cartao(o, mostrarResp){
+  const r = rascunhos[o.id] || {andou:null,item:'Não faltou',motivo:null,obs:'',obsAberta:false};
+  const problema = !r.andou ? 'Responda se a obra andou hoje.' : (r.andou==='Não'&&!r.motivo ? 'Diga por que não andou.' : null);
+  let acao='';
+  if(r.andou==='Sim') acao=`Ao salvar: a obra sai da fila e hoje (${HOJE}) entra na ficha dela como dia que andou.`;
+  if(r.andou==='Não') acao=`Ao salvar: a obra sai da fila e hoje (${HOJE}) entra na ficha dela como dia parado por ${(r.motivo||'').toLowerCase()}.`;
+  const hint = problema || acao;
+  const amarelo = problema && r.andou;
+  const contador = [];
+  if(o.naoAndou>=2) contador.push(`${o.naoAndou} dias seguidos sem andar`);
+  if(o.bloqueadaDias>=3) contador.push(`${o.bloqueadaDias} dias no mesmo bloqueio · ${o.bloqueio}`);
+  const salvarOff = !!problema;
+  return `
+  <article class="overflow-hidden rounded-lg border border-[#1e3a5f] bg-[#0d2050]" style="border-left:3px solid ${o.cor}">
+   <div class="px-4 py-3.5">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <div class="text-[11px] uppercase tracking-wide text-[#94a3b8]">OS ${o.os} · ${o.tipo}</div>
+        <a href="#s2" onclick="return false" class="mt-0.5 block text-base font-semibold text-[#e8eef7] underline-offset-4 hover:text-[#f05a28] hover:underline">${o.loja}</a>
+        <p class="mt-1 text-sm text-[#94a3b8]">${o.descricao}</p>
+        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[#94a3b8]">
+          <span>Equipe <b class="text-[#e8eef7]">${o.equipe}</b></span>
+          <span>Analista <b class="text-[#e8eef7]">${o.analista}</b></span>
+          ${mostrarResp?`<span>Responsável <b class="text-[#e8eef7]">${o.pcm}</b></span>`:''}
+          <span>Prazo <b class="text-[#e8eef7]">${o.prazo}</b></span>
+        </div>
+      </div>
+      <div class="flex shrink-0 flex-wrap items-center gap-2">
+        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium" style="border-color:${o.cor};color:${o.cor}">${o.etapa}</span>
+        <span class="text-[12px] text-[#94a3b8]"><b class="text-[#e8eef7]">${o.dias}</b> dias em aberto</span>
+      </div>
+    </div>
+    ${o.pendencia?`<p class="mt-2 rounded border border-[#1e3a5f] bg-[#0a1628] px-3 py-2 text-[12px] text-[#94a3b8]"><b class="text-[#e8eef7]">Pendência:</b> ${o.pendencia} · responsável <b class="text-[#e8eef7]">${o.pendResp}</b></p>`:''}
+    ${contador.length?`<div class="mt-2 rounded border border-[#f4b73f66] bg-[#f4b73f14] px-3 py-2 text-[12px] text-[#f4b73f]">${contador.map(p=>`<div>${p}</div>`).join('')}<div class="mt-1 text-[#94a3b8]">Registre e siga: o contador continua correndo até a obra andar.</div></div>`:''}
+    ${chips('Andou hoje?',['Sim','Não'],r.andou,`rasc('${o.id}','andou',this.dataset.v)`,true)}
+    ${chips('Faltou algum item?',ITENS,r.item,`rasc('${o.id}','item',this.dataset.v)`)}
+    ${r.andou==='Não'?chips('Por que não andou?',BLOQUEIOS,r.motivo,`rasc('${o.id}','motivo',this.dataset.v)`):''}
+    <div class="mt-3 flex flex-wrap items-start gap-2">
+      ${r.obsAberta?'':`<button type="button" onclick="rasc('${o.id}','obsAberta',true)" class="min-h-11 rounded-md border border-[#1e3a5f] px-3 py-2 text-sm text-[#94a3b8] hover:border-[#f05a28] hover:text-[#e8eef7]">+ observação</button>`}
+    </div>
+    ${r.obsAberta?`<input type="text" maxlength="120" value="${esc(r.obs)}" oninput="obsDigitada('${o.id}',this.value)" placeholder="Uma linha, se quiser" aria-label="Observação" class="mt-2 w-full rounded-md border border-[#1e3a5f] bg-[#0f1f3d] px-3 py-2.5 text-sm text-[#e8eef7] placeholder:text-[#4a6080] focus:border-[#f05a28] focus:outline-none">`:''}
+    <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <button type="button" onclick="salvar('${o.id}')" ${salvarOff?'disabled':''} class="min-h-11 rounded-md bg-[#f05a28] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d94d20] disabled:opacity-45 disabled:cursor-not-allowed">Salvar e sair da fila</button>
+      <span class="text-[12px] ${amarelo?'text-[#f4b73f]':'text-[#94a3b8]'}">${hint}</span>
+    </div>
+    <div class="mt-3 flex flex-col gap-2 border-t border-[#1e3a5f] pt-3 sm:flex-row sm:items-center">
+      <button type="button" onclick="alert('Demonstração: o agendamento não foi desenhado aqui, ele não muda.')" class="min-h-11 rounded-md border border-dashed border-[#1e3a5f] px-3 py-2 text-sm font-medium text-[#e8eef7] hover:border-[#f05a28]">📅 Agendar e tirar do diário</button>
+      <span class="text-[12px] text-[#94a3b8]">Para obra que só será levantada mais tarde: ela sai do diário até a data que você escolher.</span>
+    </div>
+   </div>
+  </article>`;
+}
+
+function feitaHTML(o, resp, desfazer){
+  let resumo = resp.andou ? 'Andou hoje' : `Não andou hoje · ${resp.motivo||''}`;
+  if(resp.item && resp.item!=='Não faltou') resumo += ` · faltou ${resp.item.toLowerCase()}`;
+  return `
+  <div class="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 py-2.5">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span class="text-[#35c98a]">✓</span>
+      <a href="#s2" onclick="return false" class="text-sm font-medium text-[#e8eef7] underline-offset-4 hover:text-[#f05a28] hover:underline">${o.loja}</a>
+      <span class="text-[12px] text-[#94a3b8]">${resumo}</span>
+      ${desfazer?`<button type="button" onclick="desfazer('${o.id}')" class="ml-auto min-h-9 rounded-md border border-[#1e3a5f] px-2.5 py-1.5 text-[12px] text-[#94a3b8] hover:border-[#f05a28] hover:text-[#e8eef7]">Desfazer</button>`:''}
+    </div>
+    <p class="mt-1 text-[12px] text-[#94a3b8]">${rotuloAutoria(resp.por, o.pcm, resp.hora)}</p>
+    ${resp.obs?`<p class="mt-1 text-[12px] text-[#64748b]">${esc(resp.obs)}</p>`:''}
+  </div>`;
+}
+
+/* ---------- tela completa ---------- */
+function telaHTML(){
+  const p = PESSOAS[cur];
+  if(!p.acesso) return blocoSemAcesso();
+  if(estado==='erro') return blocoErro();
+  const f = filtroAtual();
+  let lista = OBRAS.filter(o=>!f||o.pcm===f);
+  if(estado==='vazio') lista = [];
+  const cab = cabecalhoTela() + seletor();
+  if(!lista.length) return `<div class="mx-auto max-w-4xl px-4 py-6 sm:px-6">${cab}<div class="rounded-lg border border-dashed border-[#1e3a5f] px-4 py-8 text-center text-sm text-[#94a3b8]">Nenhuma obra em campo para responder hoje.</div></div>`;
+  const pend = lista.filter(o=>!respostas[o.id]).sort((a,b)=>b.dias-a.dias);
+  const feitas = lista.filter(o=>respostas[o.id]);
+  const pct = Math.round(feitas.length/lista.length*100);
+  const zerado = pend.length===0;
+  const barra = `
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-3">
+    <span class="text-2xl font-semibold leading-none" style="color:${zerado?'#35c98a':'#e8eef7'}">${pend.length}</span>
+    <span class="text-sm text-[#94a3b8]">${pend.length===1?'obra para responder hoje':'obras para responder hoje'}</span>
+    <span class="h-1.5 min-w-24 flex-1 overflow-hidden rounded-full bg-[#0a1628]"><i class="block h-full rounded-full" style="width:${pct}%;background:${zerado?'#35c98a':'#f05a28'}"></i></span>
+    <span class="text-sm text-[#94a3b8]">${feitas.length} de ${lista.length} respondidas</span>
+  </div>`;
+  let corpo;
+  if(zerado){
+    const andaram = feitas.filter(o=>respostas[o.id].andou).length;
+    corpo = `<div class="mt-4 rounded-lg border border-[#35c98a] bg-[#35c98a14] px-4 py-5 text-center">
+      <div class="text-2xl text-[#35c98a]">✓</div>
+      <h4 class="mt-1 text-base font-semibold text-[#e8eef7]">Diário de hoje fechado</h4>
+      <p class="mt-1 text-sm text-[#94a3b8]">As ${lista.length} obras foram respondidas. A base de obras já está atualizada e quem precisa cobrar alguma coisa hoje sabe o que é.</p>
+      <div class="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm text-[#94a3b8]"><span><b class="text-[#e8eef7]">${andaram}</b> andaram</span><span><b class="text-[#e8eef7]">${lista.length-andaram}</b> não andaram</span></div>
+    </div>`;
+  } else {
+    corpo = `<div class="mt-4 flex flex-col gap-4">${pend.map(o=>cartao(o, !f)).join('')}</div>`;
+  }
+  const rodape = feitas.length ? `<section class="mt-6"><h4 class="text-sm font-semibold text-[#e8eef7]">Já respondidas</h4><div class="mt-2 flex flex-col gap-2">${feitas.map(o=>feitaHTML(o,respostas[o.id],true)).join('')}</div></section>` : '';
+  return `<div class="mx-auto max-w-4xl px-4 py-6 sm:px-6">${cab}${barra}${corpo}${rodape}</div>`;
+}
+
+/* ---------- ações ---------- */
+function rasc(id,campo,v){
+  const r = rascunhos[id] || (rascunhos[id]={andou:null,item:'Não faltou',motivo:null,obs:'',obsAberta:false});
+  r[campo]=v;
+  if(campo==='andou' && v==='Sim') r.motivo=null;
+  render();
+}
+function obsDigitada(id,v){ rascunhos[id].obs=v; }
+function salvar(id){
+  const r = rascunhos[id]; if(!r||!r.andou) return;
+  if(r.andou==='Não'&&!r.motivo) return;
+  respostas[id] = {andou:r.andou==='Sim', item:r.item, motivo:r.andou==='Não'?r.motivo:null, obs:(r.obs||'').trim()||null, por:PESSOAS[cur].nome, hora:hhmm()};
+  delete rascunhos[id];
+  render();
+}
+function desfazer(id){ delete respostas[id]; render(); }
+function trocarFiltro(v){ filtro[cur]=v; render(); }
+function setPessoa(k){ cur=k; montarDemo(); render(); }
+function setEstado(k){ estado=k; montarDemo(); render(); }
+
+/* ---------- montagem ---------- */
+function montarDemo(){
+  document.getElementById('demo-pessoas').innerHTML = Object.entries(PESSOAS).map(([k,p])=>`<button class="demo-btn ${k===cur?'on':''}" onclick="setPessoa('${k}')">${p.rotulo}</button>`).join('');
+  const est = [['normal','Com dados'],['vazio','Vazio'],['erro','Erro de carregamento']];
+  document.getElementById('demo-estados').innerHTML = est.map(([k,t])=>`<button class="demo-btn ${k===estado?'on':''}" onclick="setEstado('${k}')">${t}</button>`).join('');
+}
+function render(){
+  document.getElementById('tela').innerHTML = telaHTML();
+  const p = PESSOAS[cur];
+  document.getElementById('quem-sou').innerHTML = `<b class="text-[#e8eef7]">Logado como ${p.rotulo}.</b> ${p.explica}`;
+}
+function montarFixas(){
+  const ex = (titulo, corpo)=>`<div><div class="mb-1.5 text-[13px] font-medium text-[#e8eef7]">${titulo}</div>${corpo}</div>`;
+  const yuri = OBRAS.find(o=>o.id==='o1'), ama = OBRAS.find(o=>o.id==='o3');
+  document.getElementById('exemplos').innerHTML =
+    ex('3a · O próprio responsável respondeu', feitaHTML(yuri,{andou:true,item:'Não faltou',motivo:null,obs:null,por:'Yuri',hora:'09:14'},false)) +
+    ex('3b · Outra pessoa respondeu pelo responsável', feitaHTML(ama,{andou:false,item:'Não faltou',motivo:'Clima',obs:'Chuva forte desde cedo',por:'Marcos',hora:'10:02'},false)) +
+    ex('3c · A resposta foi corrigida por outra pessoa depois — vale quem salvou por último',
+      `<div class="rounded-lg border border-[#1e3a5f] bg-[#0a1628] p-3 flex flex-col gap-2">
+        <div class="text-[12px] text-[#94a3b8]">09:14 — Yuri responde: “Andou”.</div>
+        <div class="text-[12px] text-[#94a3b8]">11:40 — Marcos corrige para “Não andou · Falta de material”.</div>
+        <div class="text-[11px] uppercase tracking-wide text-[#f05a28]">O que aparece no cartão</div>
+        ${feitaHTML(yuri,{andou:false,item:'Material',motivo:'Falta de material',obs:null,por:'Marcos',hora:'11:40'},false)}
+       </div>`);
+  document.getElementById('estados').innerHTML =
+    ex('4a · Vazio — nenhuma obra em campo para o filtro escolhido (não é erro: está tudo certo, só não há o que responder)',
+      `<div class="tela">${blocoVazio()}</div>`) +
+    ex('4b · Erro de carregamento — a lista não chegou (borda vermelha, botão “Tentar de novo”)',
+      `<div class="tela">${blocoErro().replace('onclick="estado=\'normal\';montarDemo();render();return false"','onclick="return false"')}</div>`) +
+    ex('4c · Sem acesso ao módulo — só para quem não tem acesso a Gestão de Obras (texto novo, não cita “responsável”)',
+      `<div class="tela">${blocoSemAcesso()}</div>`);
+}
+
+semente(); montarDemo(); render(); montarFixas();
+</script>
+</body>
+</html>
