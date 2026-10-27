@@ -125,6 +125,9 @@ export async function salvarDiarioAction(entrada: EntradaDiario): Promise<Estado
       obs: obs || null,
       foto_path: entrada.fotoPath || null,
       registrado_por: user.id,
+      // Autoria (spec 27/10/2026): corrigir sobrescreve — vale quem salvou por último.
+      registrado_por_email: user.email,
+      atualizado_em: new Date().toISOString(),
     },
     { onConflict: 'obra_id,data' }
   )
