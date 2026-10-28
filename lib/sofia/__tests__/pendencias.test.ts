@@ -86,6 +86,14 @@ describe('calcularKpisPendencias', () => {
     expect(result.resolvidosHoje).toBe(1)
   })
 
+  it('revisão atrasada só por KM (prazoKm, sem data) conta como urgência alta', () => {
+    const todas = [
+      { prazo: null, prazoKm: 60000, status: 'aberta', updated_at: '' },
+      { prazo: '2026-07-01', status: 'aberta', updated_at: '' }, // futuro, não urgente
+    ]
+    expect(calcularKpisPendencias(todas, hoje).urgenciaAlta).toBe(1)
+  })
+
   it('computes 0 efficiency when nothing was resolved today and nothing is open', () => {
     const result = calcularKpisPendencias([], hoje)
     expect(result.eficiencia).toBe(0)

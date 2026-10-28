@@ -183,7 +183,6 @@ Backlog da revisão independente; nenhum bloqueia.
 
 Backlog da revisão independente; nenhum bloqueia.
 - "Vence em breve" (≤1.000 km) e `km_passados` existem só em `lib/sofia/revisaoStatus.ts`/`getRevisoesAtrasadas`; nenhuma tela exibe ainda (espera o mockup da rodada 2).
-- Pendência de revisão atrasada só por KM usa `prazo = proxima_data` (nulo ou futuro), então não entra em "urgência alta".
 - `revisoes/page.tsx:67` mostra "atrasada" na revisão mais recente mesmo com status `realizada` (já era assim por data; agora também por KM).
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
