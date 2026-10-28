@@ -15,7 +15,7 @@ const FIXTURE = fs.readFileSync(path.join(__dirname, 'fixtures', 'ticketlog-anon
 
 const CAB = ['CODIGO TRANSACAO', 'DATA TRANSACAO', 'NOME MOTORISTA', 'NUMERO CARTAO', 'VALOR EMISSAO', 'SERVICO',
   'LITROS', 'VL/LITRO', 'HODOMETRO OU HORIMETRO', 'NOME ESTABELECIMENTO', 'CIDADE', 'PLACA']
-const LINHA = [111, new Date(Date.UTC(2026, 9, 5, 14, 3, 9)), 'FULANO - EQUIPE 1', '6000000000000009', 50.5,
+const LINHA: unknown[] = [111, new Date(Date.UTC(2026, 9, 5, 14, 3, 9)), 'FULANO - EQUIPE 1', '6000000000000009', 50.5,
   'Abastecimento', 10.123, 4.989, 1234, 'POSTO X', 'RIO DE JANEIRO', 'ZZZ9Z99']
 
 async function xlsx(linhas: unknown[][], aba = 'Transações'): Promise<Buffer> {

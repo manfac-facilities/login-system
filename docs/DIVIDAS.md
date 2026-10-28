@@ -216,3 +216,9 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - Detalhe da revisão (`revisoes/[id]`) classifica pela previsão da própria revisão, mesmo quando ela já foi substituída por uma mais nova do mesmo veículo+tipo; na lista só a mais recente é classificada. Chip de revisão antiga no detalhe pode divergir da lista.
 - `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
 - Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
+
+## 28/10/2026 — Frotas: backend dos extratos Ticketlog/Veloe (branch feat/frotas-extratos-backend)
+
+- Envio de arquivo passa pelo limite padrão de 1 MB do corpo de Server Action (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/serverActions.md`); `next.config.ts` não foi mexido. A amostra Veloe de 27 dias tem 155 KB (Ticketlog 51 KB): a carga desde 01/08 cabe; um .csv de mais de ~5 meses estoura com erro genérico do Next. A tela (quando vier) deve avisar pelo tamanho antes de enviar.
+- O .csv da Veloe é lido com divisão por `;` e aspas simples (`lib/sofia/extratos/veloe.ts`, `campos`); quebra de linha dentro de campo entre aspas não é tratada. A amostra real não tem aspas.
+- `lib/sofia/extratos/__tests__/amostras-reais.test.ts` é pulado em quem não tem as amostras (fora do Git por dado pessoal) — a conferência 206/26 e 403/27 só roda na máquina do João.
