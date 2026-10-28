@@ -12,7 +12,7 @@ const getUserMock = jest.fn()
 const podeGerirMock = jest.fn()
 const registrarMock = jest.fn()
 const insertMock = jest.fn()
-const fromMock = jest.fn((_tabela: string) => ({ insert: insertMock }))
+const fromMock = jest.fn((tabela: string) => ({ tabela, insert: insertMock }))
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
