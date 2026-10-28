@@ -112,8 +112,9 @@ o que deixaria a guarda falhar aberta):
 ## Extratos Ticketlog/Veloe (Etapas 2 e 3) — só inserção, centro de custo na leitura
 
 Design `docs/superpowers/specs/2026-10-28-frotas-extratos-cadastros-design.md` (E1–E4); SQL
-`sdd-sql-sofia-extratos.sql` (**NÃO APLICADO**, ver `.claude/rules/sql.md`). Telas ainda não existem
-(esperam mockup); backend em `lib/sofia/extratos/` (leitura pura dos arquivos) e
+`sdd-sql-sofia-extratos.sql` (**NÃO APLICADO**, ver `.claude/rules/sql.md`). Telas em
+`app/(operacoes)/sofia/extratos/{cadastros,enviar,gastos,sem-centro-custo,historico}` (mockup aprovado 28/10; leituras em
+`lib/sofia/extratos/leituras.ts`, funções puras em `agrupar.ts`); backend em `lib/sofia/extratos/` (leitura pura dos arquivos) e
 `app/(operacoes)/sofia/extratos/_actions.ts`.
 
 - **Nada é atualizado nem apagado.** Linha de extrato: `ON CONFLICT (plataforma, codigo_transacao) DO
