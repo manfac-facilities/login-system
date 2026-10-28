@@ -43,6 +43,16 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: 'Extratos e cadastros',
+    items: [
+      { label: 'Cadastros', href: '/sofia/extratos/cadastros' },
+      { label: 'Enviar extrato', href: '/sofia/extratos/enviar' },
+      { label: 'Lista de gastos', href: '/sofia/extratos/gastos' },
+      { label: 'Sem centro de custo', href: '/sofia/extratos/sem-centro-custo' },
+      { label: 'Histórico de envios', href: '/sofia/extratos/historico' },
+    ],
+  },
+  {
     title: 'Gestão',
     items: [
       { label: 'Custos', href: '/sofia/custos' },

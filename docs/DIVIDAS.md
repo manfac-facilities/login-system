@@ -216,8 +216,23 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
 - Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
 
+## 28/10/2026 — Frotas: backend dos extratos Ticketlog/Veloe (branch feat/frotas-extratos-backend)
+
+- Envio de arquivo passa pelo limite padrão de 1 MB do corpo de Server Action (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/serverActions.md`); `next.config.ts` não foi mexido. A amostra Veloe de 27 dias tem 155 KB (Ticketlog 51 KB): a carga desde 01/08 cabe; um .csv de mais de ~5 meses estoura com erro genérico do Next. A tela (quando vier) deve avisar pelo tamanho antes de enviar.
+- O .csv da Veloe é lido com divisão por `;` e aspas simples (`lib/sofia/extratos/veloe.ts`, `campos`); quebra de linha dentro de campo entre aspas não é tratada. A amostra real não tem aspas.
+- `lib/sofia/extratos/__tests__/amostras-reais.test.ts` é pulado em quem não tem as amostras (fora do Git por dado pessoal) — a conferência 206/26 e 403/27 só roda na máquina do João.
+
 ## 27/10/2026 — Diário para todos (branch `feat/obras-diario-para-todos`), não bloqueantes do review
 
 - Rótulo "Respondido por" de quem não está em `obras_pessoa` quebra o e-mail só no `.` (`ana_paula@` vira "Ana_paula"); `chaveDoUsuario` quebra em `.-_+`. Cosmético.
 - `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
 - "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.
+
+## 28/10/2026 — Frotas: telas dos extratos (branch feat/frotas-extratos-telas)
+
+- **D2 (decisão do João):** o histórico de envios mostra o e-mail de quem enviou e o saldo digitado a **todo o Frotas** (RLS `sofia_extrato_ler` = `sofia_has_access`). Contraria a recomendação de restringir a gestor/admin/financeiro. O e-mail de quem enviou fica exposto a todo o Frotas.
+- **D3 (encerrar ligação) NÃO implementado:** `sofia_extrato_ligacoes.equipe_id` é `not null` e a view `sofia_extrato_consumo` não conhece "encerrada". Precisa de schema (equipe_id nulo = ligação encerrada, ou coluna `encerrada_em`, e a view tratar) — decisão e SQL do coordenador. Hoje o único jeito de "soltar" um cartão é ligá-lo a outra equipe.
+- **D4 (divergência no reenvio)** é feita no app: `enviarExtratoAction` lê `sofia_extrato_linhas` antes da RPC e compara o valor. Uma linha gravada por outro envio entre a leitura e a RPC não aparece como divergente (a RPC ignora, nada é sobrescrito). Se quiser à prova de corrida, a RPC precisa devolver as divergentes.
+- Lista de gastos, "sem centro de custo" e cadastros leem a view inteira (paginando de 1000 em 1000) e agrupam/somam no servidor; com dezenas de milhares de linhas isso pesa e vira agregação no banco.
+- Telas de leitura (cadastros, gastos, sem centro de custo, histórico) abrem para qualquer pessoa com acesso ao Sofia; só os botões de gravar exigem gestor/admin (a action e a RLS reforçam). O mockup mostrava "sem permissão" para quem não é gestor; D2 prevaleceu.
+- Sem teste de componente/página (o projeto não tem teste de UI para as páginas do Sofia); a lógica está em `lib/sofia/extratos/__tests__/agrupar.test.ts` e na action.

@@ -109,6 +109,26 @@ o que deixaria a guarda falhar aberta):
 `execute` foi **revogado de `public` e `anon`** nas três, no fim do arquivo — só
 `authenticated` chama.
 
+## Extratos Ticketlog/Veloe (Etapas 2 e 3) — só inserção, centro de custo na leitura
+
+Design `docs/superpowers/specs/2026-10-28-frotas-extratos-cadastros-design.md` (E1–E4); SQL
+`sdd-sql-sofia-extratos.sql` (**NÃO APLICADO**, ver `.claude/rules/sql.md`). Telas em
+`app/(operacoes)/sofia/extratos/{cadastros,enviar,gastos,sem-centro-custo,historico}` (mockup aprovado 28/10; leituras em
+`lib/sofia/extratos/leituras.ts`, funções puras em `agrupar.ts`); backend em `lib/sofia/extratos/` (leitura pura dos arquivos) e
+`app/(operacoes)/sofia/extratos/_actions.ts`.
+
+- **Nada é atualizado nem apagado.** Linha de extrato: `ON CONFLICT (plataforma, codigo_transacao) DO
+  NOTHING`. Ligação cartão/tag→equipe e equipe→centro de custo: linha nova com `vigente_desde`; na
+  mesma data, a registrada por último vale (é assim que se corrige).
+- **Equipe e centro de custo não são gravados na linha** (E2): a view `sofia_extrato_consumo` resolve
+  na data de uso e diz o motivo (`sem_equipe` | `sem_centro_custo`). Mover um cartão de equipe não muda
+  o passado dele.
+- **Placa da Ticketlog não serve** (vem errada); a chave é o cartão. Na Veloe a chave é a `VeloeTag`.
+  Data de uso da Veloe é a de **utilização**, nunca a de processamento.
+- **Nome de motorista, CPF/CNPJ e matrícula não são lidos** — não existe coluna para eles.
+- O financeiro lê só pelas views `sofia_extrato_*_financeiro` (funções definer, guarda
+  `sofia_extrato_pode_ler()`); as tabelas ficam com a RLS do Sofia.
+
 ## Functions de correção (F1–F3) — security INVOKER
 
 Em `sdd-sql-sofia-correcoes-f1-f3.sql` (**NÃO APLICADO**; depende do SQL do gestor), as três
