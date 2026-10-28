@@ -57,7 +57,7 @@ pode (inclusive desconto em salário e exclusões), e nada fora dele.
   `requireGestorFrotas`.
 - **Conceder/retirar:** só SQL como `postgres` (PAT ou SQL Editor), comandos na spec §1.4. A tabela
   não tem policy nem grant para `anon`/`authenticated` — nunca criar policy de escrita.
-- **Estado:** `sdd-sql-sofia-gestor-frotas.sql` **NÃO APLICADO** (ver `.claude/rules/sql.md`). O
+- **Estado:** `sdd-sql-sofia-gestor-frotas.sql` **aplicado em 28/10/2026** (ver `.claude/rules/sql.md`). O
   app novo depende da função: **SQL antes do deploy**, senão a RPC falha e até o admin perde as
   ações do Sofia.
 

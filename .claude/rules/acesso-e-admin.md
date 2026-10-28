@@ -27,7 +27,7 @@ read`, SELECT) — escrita é assunto da seção seguinte:
   `admin_usuarios_hub_user_roles`.
 
 **Terceira tabela, só do Sofia — `sofia_gestores`** (`user_email` PK normalizado, `granted_by`,
-`created_at`; `sdd-sql-sofia-gestor-frotas.sql`, **NÃO APLICADO** em 26/10/2026). Dá o papel
+`created_at`; `sdd-sql-sofia-gestor-frotas.sql`, **aplicado em 28/10/2026**). Dá o papel
 "gestor de frotas" (pode tudo no Sofia, nada fora dele) e só vale junto com o slug `sofia`
 em `hub_system_access`. **Sem nenhuma policy e sem grant para `anon`/`authenticated`** — nem de
 leitura (o app pergunta à função `sofia_pode_gerir()`, security definer). Nunca criar policy de
