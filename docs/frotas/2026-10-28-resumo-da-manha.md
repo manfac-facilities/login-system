@@ -39,3 +39,20 @@ Depois do mockup aprovado: telas das Etapas 2 e 3 (~1 dia) e aplicação do SQL 
 
 Às 02h o disco estava com 250 MB livres (chegou a 0 durante a noite). Apaguei só caches de build que se recriam.
 O resto do espaço não é meu — vale olhar quando puder, porque build e testes falham com disco cheio.
+
+## Atualização 28/10 08:20 — deploy feito, PC desligado
+
+- João clicou Deploy; **build novo confirmado** pelo `Last-Modified` dos chunks: `Wed, 28 Oct 2026 11:19:38 GMT`
+  (08:19 BRT). `/login` responde 200.
+- Esse build é do `master` `610b6b4`: leva o **diário de Obras para todos** ("em nome de", migration já aplicada em
+  27/10). **Não** leva a Etapa 1 do Frotas — ela continua só em `frotas/rodada2-integracao` (`84fef2c`), de propósito,
+  porque depende dos SQLs que ainda não foram aplicados.
+- **Próxima sessão começa daqui**, nesta ordem:
+  1. autorização escrita do João para os SQLs (frase no passo 1 acima);
+  2. aplicar SQLs (`scratchpad/r2/` da sessão anterior — se o scratchpad sumiu, os arquivos estão no branch
+     `frotas/rodada2-integracao` na raiz);
+  3. merge da integração no master, push, João clica Deploy, conferir chunks;
+  4. e-mail do Igor → papel de gestor; mensagens ao cliente; decisões E5 e as 3 do mockup.
+- A mensagem ao cliente sobre o diário de Obras **já pode ser enviada** (o deploy subiu).
+- Disco C: e memória RAM estavam no limite na madrugada; uma tarefa de medição foi morta por falta de memória e não
+  foi reiniciada.
