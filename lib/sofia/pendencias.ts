@@ -62,6 +62,8 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
 
 interface PendenciaKpiRow {
   prazo: string | null
+  // Presente só em revisão atrasada por KM: já está vencida, conta como urgência alta.
+  prazoKm?: number
   status: string
   updated_at: string
 }
@@ -76,7 +78,7 @@ export interface KpisPendencias {
 
 export function calcularKpisPendencias(todas: PendenciaKpiRow[], hoje: string): KpisPendencias {
   const abertas = todas.filter((p) => p.status !== 'concluida')
-  const urgenciaAlta = abertas.filter((p) => !!p.prazo && p.prazo < hoje).length
+  const urgenciaAlta = abertas.filter((p) => p.prazoKm != null || (!!p.prazo && p.prazo < hoje)).length
   const aguardandoTerceiros = abertas.filter((p) => p.status === 'em_andamento').length
   const resolvidosHoje = todas.filter((p) => p.status === 'concluida' && p.updated_at.startsWith(hoje)).length
   const denom = resolvidosHoje + abertas.length
