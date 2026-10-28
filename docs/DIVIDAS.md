@@ -183,7 +183,6 @@ Backlog da revisão independente; nenhum bloqueia.
 
 Backlog da revisão independente; nenhum bloqueia.
 - "Vence em breve" (≤1.000 km) e `km_passados` existem só em `lib/sofia/revisaoStatus.ts`/`getRevisoesAtrasadas`; nenhuma tela exibe ainda (espera o mockup da rodada 2).
-- Pendência de revisão atrasada só por KM usa `prazo = proxima_data` (nulo ou futuro), então não entra em "urgência alta".
 - `revisoes/page.tsx:67` mostra "atrasada" na revisão mais recente mesmo com status `realizada` (já era assim por data; agora também por KM).
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
@@ -222,3 +221,9 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - Envio de arquivo passa pelo limite padrão de 1 MB do corpo de Server Action (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/serverActions.md`); `next.config.ts` não foi mexido. A amostra Veloe de 27 dias tem 155 KB (Ticketlog 51 KB): a carga desde 01/08 cabe; um .csv de mais de ~5 meses estoura com erro genérico do Next. A tela (quando vier) deve avisar pelo tamanho antes de enviar.
 - O .csv da Veloe é lido com divisão por `;` e aspas simples (`lib/sofia/extratos/veloe.ts`, `campos`); quebra de linha dentro de campo entre aspas não é tratada. A amostra real não tem aspas.
 - `lib/sofia/extratos/__tests__/amostras-reais.test.ts` é pulado em quem não tem as amostras (fora do Git por dado pessoal) — a conferência 206/26 e 403/27 só roda na máquina do João.
+
+## 27/10/2026 — Diário para todos (branch `feat/obras-diario-para-todos`), não bloqueantes do review
+
+- Rótulo "Respondido por" de quem não está em `obras_pessoa` quebra o e-mail só no `.` (`ana_paula@` vira "Ana_paula"); `chaveDoUsuario` quebra em `.-_+`. Cosmético.
+- `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
+- "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.
