@@ -22,4 +22,4 @@ Em `docs/superpowers/specs/2026-10-28-frotas-extratos-cadastros-design.md`.
 - Merge da rodada 2 no master só depois do SQL aplicado (deploy com código novo sem SQL quebra o Frotas).
 
 ## Estado (atualizar a cada passo — é daqui que se retoma se a sessão cair)
-- [ ] A  - [ ] SQL aplicado  - [ ] B  - [ ] C  - [ ] D  - [ ] merge  - [ ] deploy (João)
+- [x] A (compatível nos 4 passos; build do master ok)  - [ ] SQL aplicado — BARRADO pela trava de permissão às ~20h; fica para a manhã, logo antes do Deploy. Arquivos prontos no scratchpad r2/, ordem: peças → gestor (+teste) → correções (+teste) → revoke audit_log  - [ ] B  - [ ] C  - [ ] D  - [ ] merge  - [ ] deploy (João)
