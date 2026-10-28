@@ -2,7 +2,7 @@ import { getSinistros } from '@/lib/sofia/queries'
 import type { Sinistro, AutorizacaoStatus } from '@/lib/sofia/types'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { isAdmin } from '@/lib/auth/roles'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import { atualizarAutorizacaoSinistroAction, excluirSinistroAction } from './_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
@@ -34,8 +34,7 @@ const tipoLabel: Record<string, string> = {
 export default async function SinistrosPage() {
   const sinistros = await getSinistros()
   const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  const admin = await isAdmin(supabase, userData.user?.email ?? '')
+  const podeGerir = await podeGerirFrotas(supabase)
 
   const totalAberto = (sinistros as SinistroComRelacoes[])
     .filter((s) => s.status !== 'encerrado')
@@ -95,7 +94,7 @@ export default async function SinistrosPage() {
                         status={st}
                         solicitadoEm={sinistroTyped.autorizacao_solicitado_em ?? null}
                         action={atualizarAutorizacaoSinistroAction.bind(null, s.id)}
-                        showActions={admin}
+                        showActions={podeGerir}
                       />
                     )
                   })()}

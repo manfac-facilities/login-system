@@ -1,4 +1,4 @@
-import { classificarRevisao } from '../revisaoStatus'
+import { classificarRevisao, situacaoRevisaoView } from '../revisaoStatus'
 
 const HOJE = '2026-10-26'
 const rev = (proxima_data: string | null, proxima_km: number | null) => ({ proxima_data, proxima_km })
@@ -46,5 +46,37 @@ describe('classificarRevisao', () => {
 
   it('data igual a hoje não é atrasada', () => {
     expect(classificarRevisao(rev(HOJE, null), null, HOJE).situacao).toBe('em_dia')
+  })
+})
+
+describe('situacaoRevisaoView', () => {
+  it('em dia mostra quanto falta, em tom neutro', () => {
+    expect(situacaoRevisaoView(rev('2027-01-01', 60000), 48360, HOJE)).toEqual({
+      label: 'Em dia', tom: 'verde', dicas: [{ texto: 'faltam 11.640 km', tom: 'neutro' }],
+    })
+  })
+  it('vence em breve: faltam <= 1.000 km', () => {
+    expect(situacaoRevisaoView(rev(null, 49000), 48360, HOJE)).toEqual({
+      label: 'Vence em breve', tom: 'ambar', dicas: [{ texto: 'faltam 640 km', tom: 'ambar' }],
+    })
+  })
+  it('atrasada por KM', () => {
+    expect(situacaoRevisaoView(rev(null, 60000), 61230, HOJE)).toEqual({
+      label: 'Atrasada por KM', tom: 'vermelho', dicas: [{ texto: 'passou 1.230 km', tom: 'vermelho' }],
+    })
+  })
+  it('atrasada por data, com singular e plural de dias', () => {
+    const v = situacaoRevisaoView(rev('2026-10-15', null), null, HOJE)
+    expect(v.label).toBe('Atrasada por data')
+    expect(v.dicas).toEqual([{ texto: 'venceu há 11 dias', tom: 'vermelho' }])
+    expect(situacaoRevisaoView(rev('2026-10-25', null), null, HOJE).dicas[0].texto).toBe('venceu há 1 dia')
+  })
+  it('atrasada por KM e data', () => {
+    const v = situacaoRevisaoView(rev('2026-10-15', 30150), 31000, HOJE)
+    expect(v.label).toBe('Atrasada por KM e data')
+    expect(v.dicas.map((d) => d.texto)).toEqual(['passou 850 km', 'venceu há 11 dias'])
+  })
+  it('sem km atual e sem data vencida: em dia sem dicas', () => {
+    expect(situacaoRevisaoView(rev(null, 50000), null, HOJE)).toEqual({ label: 'Em dia', tom: 'verde', dicas: [] })
   })
 })

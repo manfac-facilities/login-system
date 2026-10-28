@@ -12,7 +12,7 @@ import { atualizarAutorizacaoMultaAction } from '../multas/_actions'
 import { atualizarAutorizacaoSinistroAction } from '../sinistros/_actions'
 import { atualizarAutorizacaoKmExcedidoAction } from '../km/_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
-import { isAdmin } from '@/lib/auth/roles'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro' | 'km_excedido'
@@ -44,8 +44,7 @@ const proximoStatus: Record<string, string> = {
 
 export default async function DescontosPage() {
   const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  const admin = await isAdmin(supabase, userData.user?.email ?? '')
+  const podeGerir = await podeGerirFrotas(supabase)
 
   const [{ data: multas }, { data: sinistros }, { data: excedidos }] = await Promise.all([
     supabase.from('multas').select('*, veiculos(placa), motoristas(nome)').order('data', { ascending: false }),
@@ -173,7 +172,7 @@ export default async function DescontosPage() {
                       status={l.autorizacao_status}
                       solicitadoEm={l.autorizacao_solicitado_em}
                       action={autorizacaoAction.bind(null, l.id)}
-                      showActions={admin}
+                      showActions={podeGerir}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -186,21 +185,21 @@ export default async function DescontosPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {admin && l.origem !== 'km_excedido' && proximoStatus[l.status] && (
+                    {podeGerir && l.origem !== 'km_excedido' && proximoStatus[l.status] && (
                       <form action={avancarAction.bind(null, l.id, proximoStatus[l.status])}>
                         <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           → {proximoStatus[l.status]}
                         </button>
                       </form>
                     )}
-                    {admin && l.origem !== 'km_excedido' && l.status === 'descontada' && (
+                    {podeGerir && l.origem !== 'km_excedido' && l.status === 'descontada' && (
                       <form action={desfazerAction.bind(null, l.id)} className="mt-1">
                         <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           desfazer desconto
                         </button>
                       </form>
                     )}
-                    {admin && l.origem !== 'km_excedido' && l.status === 'validada' && (
+                    {podeGerir && l.origem !== 'km_excedido' && l.status === 'validada' && (
                       <details className="mt-1">
                         <summary className="text-xs text-[#f05a28] cursor-pointer hover:underline">desconto</summary>
                         <form

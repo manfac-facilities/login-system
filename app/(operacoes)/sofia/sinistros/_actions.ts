@@ -1,8 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isAdmin } from '@/lib/auth/roles'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { podeGerirFrotas, requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { AUTORIZACAO_STATUS, SINISTRO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 export async function atualizarAutorizacaoSinistroAction(id: string, formData: FormData): Promise<void> {
@@ -10,8 +9,8 @@ export async function atualizarAutorizacaoSinistroAction(id: string, formData: F
   if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
@@ -88,8 +87,8 @@ export async function excluirSinistroAction(_prev: State, formData: FormData): P
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await isAdmin(supabase, user.email)))
-    return { error: 'Apenas administradores podem excluir sinistros' }
+  if (!user?.email || !(await podeGerirFrotas(supabase)))
+    return { error: 'Apenas administradores ou gestores de frotas podem excluir sinistros' }
 
   const { error } = await supabase.from('sinistros').delete().eq('id', id)
   if (error) return { error: 'Erro ao excluir sinistro' }

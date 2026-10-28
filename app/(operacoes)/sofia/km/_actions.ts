@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validateKmAtual } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { AUTORIZACAO_STATUS, isValidEnum } from '@/lib/sofia/enums'
+import type { AvisoKmExcedido } from '@/lib/sofia/correcoes'
 
 type State = { error?: string; success?: boolean }
 
@@ -131,8 +132,8 @@ export async function deletarKmAction(
   if (!id) return { error: 'ID inválido' }
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return { error: erroAdmin }
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
 
   const { error } = await supabase.from('km_diario').delete().eq('id', id)
 
@@ -153,8 +154,8 @@ export async function upsertKmExcedidoStatusAction(formData: FormData): Promise<
   if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = {
     veiculo_id,
@@ -180,8 +181,8 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   if (!id || !isValidEnum(AUTORIZACAO_STATUS, status)) return
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) return
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return
 
   const update: Record<string, unknown> = { autorizacao_status: status }
   if (status === 'solicitado') update.autorizacao_solicitado_em = new Date().toISOString()
@@ -191,4 +192,66 @@ export async function atualizarAutorizacaoKmExcedidoAction(id: string, formData:
   revalidatePath('/sofia/km')
   revalidatePath('/sofia/descontos')
   revalidatePath('/sofia/pendencias')
+}
+
+export type CorrecaoKmState = State & {
+  placa?: string
+  veiculoId?: string
+  kmVeiculo?: number
+  /** código fixo; o texto vem de mensagemAvisoKmExcedido (lib/sofia/correcoes) */
+  aviso?: AvisoKmExcedido
+}
+
+/**
+ * F2 — corrige um lançamento de KM via RPC corrigir_km_atomico, que valida o
+ * intervalo entre os vizinhos, recalcula veiculos.km_atual com o veículo
+ * travado e grava o antes/depois no audit_log na mesma transação (sem logAudit).
+ */
+export async function corrigirKmAction(
+  _prev: CorrecaoKmState,
+  formData: FormData
+): Promise<CorrecaoKmState> {
+  const id = formData.get('id') as string
+  const kmRaw = ((formData.get('km_novo') as string) ?? '').trim()
+  const motivo = ((formData.get('motivo') as string) ?? '').trim() || null
+  if (!id) return { error: 'ID inválido' }
+  if (kmRaw === '') return { error: 'Informe o KM correto.' }
+  const kmNovo = Number(kmRaw)
+  const erroKm = validateKmAtual(kmNovo)
+  if (erroKm) return { error: erroKm }
+  // revisão B4: a coluna é integer; 1050.5 viraria erro genérico no banco
+  if (!Number.isInteger(kmNovo)) return { error: 'O KM precisa ser um número inteiro, sem vírgula ou ponto.' }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  const { data, error } = await supabase.rpc('corrigir_km_atomico', {
+    p_km_id: id,
+    p_km_novo: kmNovo,
+    p_motivo: motivo,
+  })
+  if (error) return { error: error.code === 'SOF01' ? error.message : 'Erro ao corrigir o KM' }
+
+  revalidatePath('/sofia/km')
+  revalidatePath('/sofia/veiculos')
+  revalidatePath('/sofia/audit')
+
+  const r = data as { placa: string; veiculo_id: string; data: string; km_veiculo_depois: number }
+
+  // KM excedido (dinheiro): a correção NÃO altera km_excedido_desconto — a
+  // regra depende do João (spec §8, pergunta 1). Mas nunca fica em silêncio:
+  // se o mês do lançamento tem registro, a mensagem de sucesso avisa
+  // (correção obrigatória da revisão de 26/10).
+  let aviso: AvisoKmExcedido | undefined
+  const { data: excedido, error: erroExcedido } = await supabase
+    .from('km_excedido_desconto')
+    .select('id')
+    .eq('veiculo_id', r.veiculo_id)
+    .eq('mes', `${r.data.slice(0, 7)}-01`)
+    .maybeSingle()
+  if (erroExcedido) aviso = 'falha'
+  else if (excedido) aviso = 'registro'
+
+  return { success: true, placa: r.placa, veiculoId: r.veiculo_id, kmVeiculo: r.km_veiculo_depois, aviso }
 }

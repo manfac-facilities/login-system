@@ -20,10 +20,10 @@ const statusStyle: Record<string, string> = {
 
 export default function MultasTable({
   multas,
-  isAdmin,
+  podeGerir,
 }: {
   multas: MultaComRelacoes[]
-  isAdmin: boolean
+  podeGerir: boolean
 }) {
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
@@ -72,7 +72,7 @@ export default function MultasTable({
 
   return (
     <>
-      {isAdmin && selecionadas.size > 0 && (
+      {podeGerir && selecionadas.size > 0 && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2 rounded-lg border border-[#1e3a5f] bg-[#0d2050]">
           <span className="text-sm text-[#94a3b8]">{selecionadas.size} selecionada(s)</span>
           <button
@@ -82,7 +82,7 @@ export default function MultasTable({
           >
             Enviar para desconto
           </button>
-          {isAdmin && (
+          {podeGerir && (
             <button
               onClick={handleExcluirSelecionadas}
               disabled={isPending}
@@ -101,7 +101,7 @@ export default function MultasTable({
           <thead>
             <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
               <th className="px-4 py-3">
-                {isAdmin && (
+                {podeGerir && (
                 <input
                   type="checkbox"
                   checked={selecionadas.size === multas.length && multas.length > 0}
@@ -127,7 +127,7 @@ export default function MultasTable({
             {multas.map((m) => (
               <tr key={m.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
                 <td className="px-4 py-3">
-                  {isAdmin && (
+                  {podeGerir && (
                     <input
                     type="checkbox"
                     checked={selecionadas.has(m.id)}
@@ -155,7 +155,7 @@ export default function MultasTable({
                     status={m.autorizacao_status ?? 'sem_solicitacao'}
                     solicitadoEm={m.autorizacao_solicitado_em ?? null}
                     action={atualizarAutorizacaoMultaAction.bind(null, m.id)}
-                    showActions={isAdmin}
+                    showActions={podeGerir}
                   />
                 </td>
                 <td className="px-4 py-3">
@@ -164,7 +164,7 @@ export default function MultasTable({
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {isAdmin && (
+                  {podeGerir && (
                     <DeleteConfirmButton action={excluirMultaAction} id={m.id} label="Excluir" itemLabel={`multa de ${m.veiculos?.placa ?? 'veículo sem placa'} — R$ ${Number(m.valor).toFixed(2)}`} />
                   )}
                 </td>

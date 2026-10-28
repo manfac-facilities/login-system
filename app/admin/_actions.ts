@@ -142,8 +142,16 @@ async function apagarLinhasDoUsuario(
     .from('hub_system_access')
     .delete()
     .eq('user_email', alvo)
+  // Papel de gestor de frotas (sdd-sql-sofia-gestor-frotas.sql): órfão aqui
+  // devolveria desconto em salário e exclusões no Sofia assim que o slug
+  // sofia fosse religado para o mesmo e-mail. `alvo` já vem normalizado,
+  // igual ao CHECK da tabela.
+  const { error: erroGestor } = await admin
+    .from('sofia_gestores')
+    .delete()
+    .eq('user_email', alvo)
 
-  if (erroNivel || erroAcessos) {
+  if (erroNivel || erroAcessos || erroGestor) {
     return 'Conta apagada, mas sobraram registros de nível ou de acesso. Remova-os no Supabase antes de convidar esse e-mail de novo.'
   }
   return null

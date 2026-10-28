@@ -1,15 +1,26 @@
 import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos } from '../pendencias'
 
 describe('mapAutomaticPendencias', () => {
-  it('diz "por KM" só quando o motivo da revisão atrasada é KM', () => {
+  it('revisão atrasada por KM cita a placa, quanto passou e guarda o KM previsto como prazo', () => {
     const result = mapAutomaticPendencias({
       multas: [], sinistros: [], documentosVencendo: [], termosNaoAssinados: [],
-      revisoesAtrasadas: [
-        { id: 'a', proxima_data: null, motivo: 'km' },
-        { id: 'b', proxima_data: '2020-01-01', motivo: 'data' },
-      ],
+      revisoesAtrasadas: [{ id: 'a', placa: 'QXB-7J58', proxima_data: null, proxima_km: 60000, km_passados: 1230, motivo: 'km' }],
     })
-    expect(result.map((p) => p.descricao)).toEqual(['Manutenção atrasada por KM', 'Manutenção atrasada'])
+    expect(result).toEqual([{
+      descricao: 'Manutenção atrasada por KM: QXB-7J58 — passou 1.230 km do previsto',
+      origem: 'manutencao', prazo: null, prazoKm: 60000,
+    }])
+  })
+
+  it('revisão atrasada por data cita a placa e a data prevista, sem prazoKm', () => {
+    const result = mapAutomaticPendencias({
+      multas: [], sinistros: [], documentosVencendo: [], termosNaoAssinados: [],
+      revisoesAtrasadas: [{ id: 'b', placa: 'SGU-2C93', proxima_data: '2026-10-15', proxima_km: 30150, km_passados: null, motivo: 'data' }],
+    })
+    expect(result).toEqual([{
+      descricao: 'Manutenção atrasada por data: SGU-2C93 — prevista para 15/10/2026',
+      origem: 'manutencao', prazo: '2026-10-15',
+    }])
   })
 
   it('flags a multa pendente without signed authorization', () => {
@@ -73,6 +84,14 @@ describe('calcularKpisPendencias', () => {
     expect(result.urgenciaAlta).toBe(1)
     expect(result.aguardandoTerceiros).toBe(1)
     expect(result.resolvidosHoje).toBe(1)
+  })
+
+  it('revisão atrasada só por KM (prazoKm, sem data) conta como urgência alta', () => {
+    const todas = [
+      { prazo: null, prazoKm: 60000, status: 'aberta', updated_at: '' },
+      { prazo: '2026-07-01', status: 'aberta', updated_at: '' }, // futuro, não urgente
+    ]
+    expect(calcularKpisPendencias(todas, hoje).urgenciaAlta).toBe(1)
   })
 
   it('computes 0 efficiency when nothing was resolved today and nothing is open', () => {

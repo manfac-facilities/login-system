@@ -26,6 +26,15 @@ read`, SELECT) — escrita é assunto da seção seguinte:
   `granted_by`). Criada e semeada em produção em 2026-08-07, migration
   `admin_usuarios_hub_user_roles`.
 
+**Terceira tabela, só do Sofia — `sofia_gestores`** (`user_email` PK normalizado, `granted_by`,
+`created_at`; `sdd-sql-sofia-gestor-frotas.sql`, **NÃO APLICADO** em 26/10/2026). Dá o papel
+"gestor de frotas" (pode tudo no Sofia, nada fora dele) e só vale junto com o slug `sofia`
+em `hub_system_access`. **Sem nenhuma policy e sem grant para `anon`/`authenticated`** — nem de
+leitura (o app pergunta à função `sofia_pode_gerir()`, security definer). Nunca criar policy de
+escrita nela. Concessão só por SQL por enquanto; `apagarLinhasDoUsuario`
+(`app/admin/_actions.ts`) apaga a linha junto com as outras duas na remoção/cancelamento.
+Não muda `isAdmin`, `middleware.ts`, Obras nem CRM: gestor continua `analista` lá.
+
 Admins vêm do banco, lidos por `lib/auth/roles.ts` (`getNivel`, `isAdmin`). **Promover
 ou rebaixar é feito na tela `/admin/acessos`, sem deploy.** Acesso por sistema é
 `lib/auth/systemAccess.ts` → `hasSystemAccess()`, aplicado no `middleware.ts`.
