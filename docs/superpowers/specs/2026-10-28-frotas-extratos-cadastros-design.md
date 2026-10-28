@@ -55,3 +55,14 @@ Cruzar com RH/orçamento/PEF, notas fiscais, Ticketlog pós-pago, qualquer escri
   histórico dele. Resolução na leitura: ligação cartão/tag vigente na data de uso → equipe → centro de custo vigente na
   data de uso. "Sem centro de custo" passa a ter dois motivos: (a) cartão/tag sem equipe na data; (b) equipe sem centro
   de custo na data.
+
+## Decisões do João sobre o mockup (28/10/2026, manhã) — mockup aprovado
+
+- **E5 confirmada:** cartão/tag com data de início (vigência); trocar de equipe não muda o passado.
+- **D2. Visibilidade:** envios e saldos digitados ficam visíveis para **todos do Frotas** (como está no backend, incluindo
+  o e-mail de quem enviou). Contraria a recomendação do coordenador (restringir a gestor/admin/financeiro); decisão do
+  João. Registrar em `docs/DIVIDAS.md` que o e-mail de quem enviou fica exposto a todo o Frotas.
+- **D3. Encerrar ligação:** a tela de cadastro ganha a ação "encerrar ligação" com data; gasto posterior fica sem equipe
+  e aparece como "sem centro de custo" (motivo a: cartão/tag sem equipe na data).
+- **D4. Divergência no reenvio:** o resultado do envio lista as transações repetidas com valor diferente; nada é
+  sobrescrito.
