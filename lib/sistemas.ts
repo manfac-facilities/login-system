@@ -10,4 +10,5 @@ export const SISTEMAS: Sistema[] = [
   { slug: 'dashboard-manutencao', label: 'Cockpit Manutenção Predial' },
   { slug: 'crm', label: 'CRM' },
   { slug: 'obras', label: 'Gestão de Obras' },
+  { slug: 'orcamento', label: 'Orçamento' },
 ]

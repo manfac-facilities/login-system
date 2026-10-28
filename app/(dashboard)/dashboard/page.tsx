@@ -23,16 +23,17 @@ export default async function DashboardPage() {
     isAdmin(supabase, user.email ?? ''),
     systemSlugsComAcesso(supabase, user.email ?? ''),
   ])
-  const [podeFrotas, podeManutencao, podeCrm, podeObras] = admin
-    ?[true, true, true, true]
+  const [podeFrotas, podeManutencao, podeCrm, podeObras, podeOrcamento] = admin
+    ?[true, true, true, true, true]
     : [
         slugs.has('sofia'),
         slugs.has('dashboard-manutencao'),
         slugs.has('crm'),
         slugs.has('obras'),
+        slugs.has('orcamento'),
       ]
   const semNada =
-    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !admin
+    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !podeOrcamento && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -116,9 +117,10 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
-          {/* Orçamento e RH seguem o Compras: apps Next separadas (basePath /orcamento e
-              /rh), papéis no próprio módulo, <a> normal e fora do matcher. O card aparece
-              para todos; quem não tem papel vê o aviso de acesso do próprio módulo. */}
+          {/* Orçamento: app Next separada (basePath /orcamento), <a> normal e fora do
+              matcher. Depende de liberação (slug 'orcamento' em /admin/acessos), como o
+              Cockpit; o próprio módulo confere o slug de novo e, dentro dele, os papéis. */}
+          {podeOrcamento && (
           <a
             href="/orcamento"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
@@ -133,6 +135,10 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          )}
+          {/* RH segue o Compras: app Next separada (basePath /rh), papéis no próprio
+              módulo, <a> normal e fora do matcher. O card aparece para todos; quem não tem
+              papel vê o aviso de acesso do próprio módulo. */}
           <a
             href="/rh"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"

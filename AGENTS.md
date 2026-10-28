@@ -96,7 +96,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Financeiro | `/financeiro` | **Financeiro** | **sem slug, de propósito** — app separada |
 | Compras | `/compras` | **Compras** | **sem slug, de propósito** — app separada (`manfac-facilities/compras`, tabelas `cmp_*`), no ar desde 07/10/2026; mesmo conceito do Financeiro: qualquer pessoa logada solicita, papéis ficam no próprio módulo |
 | Gestão de Fornecedores | `/fornecedores` | **Gestão de Fornecedores** | **em construção desde 08/10/2026** — app separada (`manfac-facilities/fornecedores`), padrão Compras. Decisão do João: o deploy dela **não pode** atualizar nenhum outro sistema. Fonte: `docs/cliente/2026-10-0{7,8}-*fornecedores*` |
-| Orçamento | `/orcamento` | **Orçamento** | **sem slug, de propósito** — app separada (`manfac-facilities/orcamento`, tabelas `orc_*`), em implantação desde 17/10/2026; papéis no próprio módulo (`/orcamento/papeis`) |
+| Orçamento | `/orcamento` | **Orçamento** | `orcamento` — app separada (`manfac-facilities/orcamento`, tabelas `orc_*`), fora do matcher; o card e o próprio módulo exigem a liberação (desde 27/10/2026); papéis no próprio módulo (`/orcamento/papeis`) |
 | RH | `/rh` | **RH** | **sem slug, de propósito** — app separada (`manfac-facilities/rh`, tabelas `rh_*`), em implantação desde 17/10/2026; começa pelo cadastro de colaboradores e rateio; papéis em `/rh/papeis` |
 
 **Financeiro sem slug é decisão, não esquecimento:** qualquer pessoa logada pode pedir um

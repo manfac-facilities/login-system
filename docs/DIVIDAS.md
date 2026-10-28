@@ -215,3 +215,9 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - Detalhe da revisão (`revisoes/[id]`) classifica pela previsão da própria revisão, mesmo quando ela já foi substituída por uma mais nova do mesmo veículo+tipo; na lista só a mais recente é classificada. Chip de revisão antiga no detalhe pode divergir da lista.
 - `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
 - Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
+
+## 27/10/2026 — Diário para todos (branch `feat/obras-diario-para-todos`), não bloqueantes do review
+
+- Rótulo "Respondido por" de quem não está em `obras_pessoa` quebra o e-mail só no `.` (`ana_paula@` vira "Ana_paula"); `chaveDoUsuario` quebra em `.-_+`. Cosmético.
+- `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
+- "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.

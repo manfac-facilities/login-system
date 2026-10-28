@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Frotas - Extratos e cadastros (mockup)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html,body{background:#0a1628;color:#e2e8f0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  *{scrollbar-color:#1e3a5f #0a1628}
+  input,select{color-scheme:dark}
+  .fld{width:100%;padding:.6rem .8rem;border-radius:.5rem;background:#0f1f3d;border:1px solid #1e3a5f;color:#fff;font-size:.875rem}
+  .fld:focus{outline:none;border-color:#f05a28}
+  .fld::placeholder{color:#4a6080}
+  .btn{padding:.55rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:500;transition:.15s;cursor:pointer}
+  .btn-p{background:#f05a28;color:#fff}.btn-p:hover{background:#d94e22}
+  .btn-s{border:1px solid #1e3a5f;color:#94a3b8}.btn-s:hover{border-color:#94a3b8;color:#fff}
+  .card{border:1px solid #1e3a5f;background:#0d2050;border-radius:.75rem}
+  .lbl{display:block;font-size:.75rem;color:#94a3b8;margin-bottom:.3rem}
+  .chip{display:inline-block;padding:.15rem .6rem;border-radius:9999px;font-size:.7rem;font-weight:500}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:1.5rem;height:1.5rem;border-radius:9999px;background:#f05a28;color:#fff;font-size:.75rem;font-weight:700;margin-right:.5rem}
+  .tab{padding:.5rem .9rem;border-radius:.5rem;font-size:.85rem;color:#94a3b8;border:1px solid #1e3a5f;cursor:pointer;white-space:nowrap}
+  .tab.on{background:#f05a28;border-color:#f05a28;color:#fff}
+  .navi{display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;border-radius:.5rem;font-size:.875rem;color:#94a3b8;cursor:pointer;width:100%;text-align:left}
+  .navi:hover{background:#0a1628;color:#fff}.navi.on{background:#f05a28;color:#fff}
+  .navi.dim{opacity:.45;cursor:default}
+  table{border-collapse:collapse;width:100%}
+  th{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#4a6080;text-align:left;padding:.55rem .75rem;border-bottom:1px solid #1e3a5f;white-space:nowrap}
+  td{padding:.6rem .75rem;border-bottom:1px solid #12294d;font-size:.85rem;color:#cbd5e1}
+  .mono{font-variant-numeric:tabular-nums}
+  @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .toast{animation:pop .2s ease-out}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md pointer-events-none"></div>
+
+<script>
+/* ============ utilidades ============ */
+const $ = s => document.querySelector(s);
+const fmtBRL = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const d2 = n => String(n).padStart(2,'0');
+const fmtDate = iso => iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4);
+const fmtDT = iso => fmtDate(iso)+' '+iso.slice(11,16);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R = rng(2810);
+const pick = a => a[Math.floor(R()*a.length)];
+const teamName = i => 'EQUIPE ' + d2(i);
+const TODAY = '2026-10-28';
+
+/* ============ dados de demonstração ============ */
+const CCS = [
+ ['1.01.003','Obra Drogasil Pinheiros'],['1.01.007','Obra Drogasil Moema'],['1.02.001','Contrato Raia Vila Mariana'],
+ ['1.02.004','Contrato Raia Santana'],['1.03.002','Manutenção Predial Itaim'],['1.03.005','Obra Pague Menos Tatuapé'],
+ ['1.04.001','Contrato Shopping Ibirapuera'],['1.04.003','Contrato Shopping Eldorado'],['1.05.002','Obra Drogasil Santo André'],
+ ['1.05.006','Obra Drogasil Osasco'],['1.06.001','Manutenção Predial Berrini'],['1.06.004','Contrato Raia Guarulhos']
+];
+const ccLinks = {};   // equipeId -> [{code,name,desde}] ordenado por desde
+for(let i=1;i<=25;i++){const c=CCS[(i*5)%CCS.length];ccLinks[i]=[{code:c[0],name:c[1],desde:'2026-08-01'}]}
+ccLinks[4]=[{code:'1.02.001',name:'Contrato Raia Vila Mariana',desde:'2026-08-01'},{code:'1.01.007',name:'Obra Drogasil Moema',desde:'2026-09-15'}];
+ccLinks[12]=[{code:'1.05.006',name:'Obra Drogasil Osasco',desde:'2026-10-15'}];   // so tem vigencia a partir de 15/10
+ccLinks[17]=[{code:'1.03.005',name:'Obra Pague Menos Tatuapé',desde:'2026-08-01'},{code:'1.04.003',name:'Contrato Shopping Eldorado',desde:'2026-10-05'}];
+ccLinks[26]=[];  // sem centro de custo
+
+const maskCard = n => n.slice(0,4)+' '+n.slice(4,6)+'** **** '+n.slice(12,16);
+// 16 digitos: 6037 98NN XXXX XXXX
+const CARDS = Array.from({length:26},(_,i)=>('603798'+d2(10+i)+String(4000+i*131).slice(-4)+String(1200+i*17).padStart(4,'0').slice(-2)).slice(0,16).padEnd(16,'0'));
+const cardLink = {}; CARDS.forEach((c,i)=>{ if(i!==22 && i!==23) cardLink[c]=[{eq:i+1,desde:'2026-08-01'}] });   // 2 cartoes sem equipe
+cardLink[CARDS[4]]=[{eq:5,desde:'2026-08-01'},{eq:9,desde:'2026-10-12'}];   // cartao que mudou de equipe em 12/10
+
+const TAGS = Array.from({length:27},(_,i)=>'0381'+String(22900000+i*7919).padStart(10,'0'));
+const PLACA_OK = Array.from({length:27},(_,i)=>{const L='ABCDEFGHJKLMNPRSTUVWXYZ';return L[(i*3)%L.length]+L[(i*5+2)%L.length]+L[(i*7+1)%L.length]+'-'+(1+(i*3)%9)+L[(i*11)%L.length]+d2((i*13)%100)});
+const tagLink = {}; TAGS.forEach((t,i)=>{ if(i<24) tagLink[t]={placa:PLACA_OK[i],L:[{eq:i+1,desde:'2026-08-01'}]} });
+tagLink[TAGS[2]].L.push({eq:14,desde:'2026-10-08'});   // tag que mudou de equipe em 08/10
+const tagPlaca = {}; TAGS.forEach((t,i)=>tagPlaca[t]=PLACA_OK[i]);
+
+const POSTOS = [['AUTO POSTO IPIRANGA MARGINAL TIETÊ','São Paulo'],['POSTO SHELL AV. DO ESTADO','São Paulo'],['REDE POSTO BR RODOVIA ANCHIETA','São Bernardo do Campo'],
+ ['AUTO POSTO PETROBRÁS BARUERI','Barueri'],['POSTO IPIRANGA DUTRA KM 224','Guarulhos'],['AUTO POSTO ALE OSASCO','Osasco'],['POSTO SHELL AV. DOS AUTONOMISTAS','Osasco'],['AUTO POSTO BR SANTO ANDRÉ','Santo André']];
+const PRACAS = [['Rodoanel Mário Covas - Praça Norte','São Paulo'],['Rod. dos Bandeirantes km 41','Caieiras'],['Rod. Ayrton Senna km 32','Guarulhos'],
+ ['Rod. Anhanguera km 24','São Paulo'],['Rod. dos Imigrantes km 40','São Bernardo do Campo'],['Rod. Castelo Branco km 34','Barueri'],['Estacionamento Shopping Eldorado','São Paulo'],['Estacionamento Shopping Ibirapuera','São Paulo']];
+
+const TX = [];
+for(let day=1;day<=27;day++){
+  const date='2026-10-'+d2(day);
+  const nTL=2+Math.floor(R()*3), nVL=3+Math.floor(R()*3);
+  for(let k=0;k<nTL;k++){
+    const ci = (day*7+k*5+Math.floor(R()*26))%26;
+    const valor = Math.round((140+R()*300)*100)/100; const vl = Math.round((5.79+R()*0.6)*100)/100;
+    const p=pick(POSTOS);
+    TX.push({id:'TL-'+(8830100+TX.length*13),p:'TL',src:CARDS[ci],dt:date+'T'+d2(6+Math.floor(R()*13))+':'+d2(Math.floor(R()*60)),valor,litros:Math.round(valor/vl*100)/100,vl,estab:p[0],cidade:p[1]});
+  }
+  for(let k=0;k<nVL;k++){
+    const ti=(day*3+k*7+Math.floor(R()*27))%27;
+    const r=R(); const tipo = r<.78?'Passagem':r<.93?'Estadia':'REENVIO DENTRO SLA';
+    const pr = tipo==='Estadia'?pick(PRACAS.slice(6)):pick(PRACAS.slice(0,6));
+    const valor = tipo==='Estadia'?Math.round((12+R()*28)*100)/100:Math.round((5.6+R()*14)*100)/100;
+    TX.push({id:'VL-'+(2026102000+TX.length*17),p:'VL',src:TAGS[ti],dt:date+'T'+d2(5+Math.floor(R()*15))+':'+d2(Math.floor(R()*60)),valor,tipo,estab:pr[0],cidade:pr[1]});
+  }
+}
+TX.forEach(t=>t.loaded = t.dt.slice(0,10) <= '2026-10-20');   // ate 20/10 ja foram enviados
+TX.sort((a,b)=>b.dt.localeCompare(a.dt));
+
+const loadedTL = TX.filter(t=>t.loaded&&t.p==='TL'), loadedVL = TX.filter(t=>t.loaded&&t.p==='VL');
+const cut = (arr,max)=>arr.filter(t=>t.dt.slice(0,10)<=max).length;
+const HIST = [
+ {p:'TL',quem:'Igor (gestor de frotas)',quando:'2026-10-14T16:20',arq:'RFCV_MANFAC_20261014_1608.xlsx',saldo:11340.80,novas:cut(loadedTL,'2026-10-13'),ign:0,de:'2026-10-01',ate:'2026-10-13'},
+ {p:'VL',quem:'Igor (gestor de frotas)',quando:'2026-10-14T16:31',arq:'ExtratoVeloe_20261014.csv',saldo:2105.40,novas:cut(loadedVL,'2026-10-13'),ign:0,de:'2026-10-01',ate:'2026-10-13'},
+ {p:'TL',quem:'Igor (gestor de frotas)',quando:'2026-10-21T17:42',arq:'RFCV_MANFAC_20261021_1730.xlsx',saldo:8420.15,novas:loadedTL.length-cut(loadedTL,'2026-10-13'),ign:cut(loadedTL,'2026-10-13'),de:'2026-10-01',ate:'2026-10-20'},
+ {p:'VL',quem:'Admin',quando:'2026-10-21T17:55',arq:'ExtratoVeloe_20261021.csv',saldo:1688.90,novas:loadedVL.length-cut(loadedVL,'2026-10-13'),ign:cut(loadedVL,'2026-10-13'),de:'2026-10-01',ate:'2026-10-20'}
+];
+
+/* ============ estado ============ */
+const S = {
+  role:'igor', page:'cad', tab:'cartoes', empty:false, navOpen:false,
+  fGastos:{p:'',de:'',ate:'',eq:'',cc:'',lim:25},
+  up:{p:'TL',file:null,saldo:'',result:null,error:null},
+  openHist:{}, qCad:''
+};
+const WHO = {igor:'Igor (gestor de frotas)',admin:'Admin',none:'Pessoa sem papel'};
+const canUse = () => S.role!=='none';
+
+/* ============ resolução na leitura ============ */
+function vigente(eq,date){let r=null;(ccLinks[eq]||[]).forEach(l=>{if(l.desde<=date)r=l});return r}
+function eqAt(L,date){let r=null;(L||[]).forEach(l=>{if(l.desde<=date)r=l.eq});return r}
+function srcL(p,k){return p==='TL'?(cardLink[k]||[]):((tagLink[k]||{}).L||[])}
+function curEq(p,k){const L=srcL(p,k);return L.length?L[L.length-1]:null}
+function firstDate(p,k){let m='9';TX.forEach(t=>{if(t.p===p&&t.src===k&&t.loaded&&t.dt<m)m=t.dt});return m==='9'?TODAY:m.slice(0,10)}
+function resolve(t){
+  const eq = eqAt(srcL(t.p,t.src),t.dt.slice(0,10));
+  if(!eq) return {eq:null,cc:null,why:'sem_equipe'};
+  const cc = vigente(eq,t.dt.slice(0,10));
+  return cc ? {eq,cc,why:null} : {eq,cc:null,why:'sem_cc'};
+}
+const visibleTX = () => S.empty ? [] : TX.filter(t=>t.loaded);
+const semCC = () => visibleTX().filter(t=>resolve(t).cc===null);
+
+/* ============ componentes ============ */
+function plat(p){return p==='TL'?'<span class="chip bg-orange-900/50 text-orange-300">Ticketlog</span>':'<span class="chip bg-sky-900/60 text-sky-300">Veloe</span>'}
+function ccTxt(c){return c?esc(c.code+' - '+c.name):'<span class="text-amber-400">sem centro de custo</span>'}
+function head(n,title,sub){return `<div class="mb-6"><h1 class="text-xl md:text-2xl font-bold text-white flex items-center"><span class="num">${n}</span>${title}</h1><p class="text-[#94a3b8] text-sm mt-1">${sub}</p></div>`}
+function empty(msg,extra=''){return `<div class="px-4 py-12 text-center text-[#94a3b8] rounded-xl border border-dashed border-[#1e3a5f]">${msg}${extra}</div>`}
+function toast(msg,ok=true){const el=document.createElement('div');el.className='toast pointer-events-auto mb-2 rounded-lg px-4 py-3 text-sm shadow-lg border '+(ok?'bg-[#0d2050] border-green-700 text-green-200':'bg-[#2a1010] border-red-700 text-red-200');el.textContent=msg;$('#toast').appendChild(el);setTimeout(()=>el.remove(),4500)}
+
+function nav(){
+  const dim = ['Visão Geral','Equipes','Veículos','Motoristas','KM Diário','Checklist','Multas','Sinistros','Descontos','Revisões','Documentos','Abastecimento'];
+  const gestao = ['Custos','Disponibilidade','Pendências','Auditoria'];
+  const item=(id,label,n)=>`<button class="navi ${S.page===id?'on':''}" data-act="go" data-v="${id}"><span>${label}</span>${id==='sem'&&canUse()?`<span class="chip ${S.page==='sem'?'bg-white/20 text-white':'bg-amber-900/60 text-amber-300'}">${new Set(semCC().map(t=>t.src)).size}</span>`:''}</button>`;
+  return `<div class="text-[#4a6080] text-xs uppercase tracking-wide font-semibold px-2 mb-2">Operação</div>
+  <div class="mb-5">${dim.slice(0,6).map(l=>`<div class="navi dim"><span>${l}</span></div>`).join('')}</div>
+  <div class="text-[#4a6080] text-xs uppercase tracking-wide font-semibold px-2 mb-2">Gestão</div>
+  <div class="mb-5">${gestao.map(l=>`<div class="navi dim"><span>${l}</span></div>`).join('')}</div>
+  <div class="text-[#f05a28] text-xs uppercase tracking-wide font-semibold px-2 mb-2">Extratos e cadastros (novo)</div>
+  <div class="mb-5">
+    ${item('cad','1. Cadastros')}${item('env','2. Enviar extrato')}${item('gastos','3. Lista de gastos')}${item('sem','4. Sem centro de custo')}${item('hist','5. Histórico de envios')}${item('est','6. Estados')}
+  </div>`;
+}
+
+function shell(content){
+  return `
+  <div class="bg-amber-500/10 border-b border-amber-700/50 text-amber-200 text-xs px-4 py-2 sticky top-0 z-[60] backdrop-blur">
+    <div class="max-w-[1400px] mx-auto flex flex-wrap items-center gap-x-4 gap-y-2">
+      <b>MOCKUP interativo</b>
+      <label class="flex items-center gap-2">Visão de:
+        <select class="fld !w-auto !py-1 !text-xs" data-act="role">
+          <option value="igor" ${S.role==='igor'?'selected':''}>Igor (gestor de frotas)</option>
+          <option value="admin" ${S.role==='admin'?'selected':''}>Admin</option>
+          <option value="none" ${S.role==='none'?'selected':''}>Pessoa sem papel</option>
+        </select></label>
+      <label class="flex items-center gap-2"><input type="checkbox" data-act="empty" ${S.empty?'checked':''}> Simular sistema sem nenhum extrato (vazio)</label>
+    </div>
+  </div>
+  <div class="md:hidden w-full flex items-center justify-between bg-[#0d2050] border-b border-[#1e3a5f] px-4 py-3 sticky top-[88px] z-30">
+    <div class="flex flex-col"><span class="text-white font-bold text-lg leading-tight">GF</span><span class="text-[#94a3b8] text-xs">← Voltar ao Hub</span></div>
+    <button data-act="menu" aria-label="Abrir menu" class="p-2 rounded-lg border border-[#1e3a5f] text-[#94a3b8]"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h14M3 10h14M3 15h14" stroke-linecap="round"/></svg></button>
+  </div>
+  ${S.navOpen?'<div class="md:hidden fixed inset-0 bg-black/60 z-40" data-act="menu"></div>':''}
+  <div class="flex flex-col md:flex-row min-h-screen max-w-[1400px] mx-auto">
+    <aside class="fixed md:static inset-y-0 left-0 z-50 w-64 shrink-0 bg-[#0d2050] border-r border-[#1e3a5f] min-h-screen p-4 overflow-y-auto transition-transform duration-200 ${S.navOpen?'translate-x-0':'-translate-x-full'} md:translate-x-0">
+      <div class="flex items-center justify-between mb-6 px-2"><div class="flex flex-col"><span class="text-white font-bold text-lg leading-tight">Gestão de Frotas</span><span class="text-[#94a3b8] text-xs">← Voltar ao Hub</span></div>
+      <button data-act="menu" class="md:hidden text-[#94a3b8] text-xl leading-none" aria-label="Fechar menu">×</button></div>
+      ${nav()}
+      <div class="border-t border-[#1e3a5f] pt-3 px-2 text-xs text-[#94a3b8]">Logado como<br><span class="text-white">${WHO[S.role]}</span></div>
+    </aside>
+    <main class="flex-1 min-w-0 p-4 md:p-8">${canUse()||S.page==='est'?content:noPerm()}</main>
+  </div>`;
+}
+
+function noPerm(){return `<div class="max-w-md mx-auto mt-16 text-center card p-8">
+  <div class="text-4xl mb-3">🔒</div><h2 class="text-white text-lg font-bold mb-2">Você não tem permissão para esta área</h2>
+  <p class="text-[#94a3b8] text-sm mb-5">Enviar extratos, ver os gastos e mexer nos cadastros de cartão, tag e centro de custo é só para o <b>gestor de frotas</b> e para o <b>admin</b>. Se você precisa de acesso, peça a um admin em Admin &rarr; Acessos.</p>
+  <button class="btn btn-s" data-act="role-set" data-v="igor">Voltar ao Hub</button></div>`}
+
+/* ============ 1. Cadastros ============ */
+function pageCad(){
+  const tabs = [['cartoes','a. Cartões Ticketlog'],['tags','b. Tags Veloe'],['cc','c. Equipe → centro de custo']];
+  let body='';
+  if(S.tab==='cartoes') body=cadCartoes(); else if(S.tab==='tags') body=cadTags(); else body=cadCC();
+  return head(1,'Etapa 2 — Cadastros','Ligações que dizem de qual equipe e de qual centro de custo do Omie é cada gasto.')+
+   `<div class="rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-4 mb-5 text-sm"><div class="text-white font-semibold mb-2">Decisões a confirmar</div><ol class="list-decimal pl-5 space-y-1 text-[#94a3b8]"><li>Cartão e tag também têm vigência: trocar de equipe vale a partir de uma data e o passado continua na equipe antiga <span class="text-amber-300">(decisão provisória do coordenador)</span>.</li><li>A Veloe liga pela <b class="text-[#cbd5e1]">tag</b>; a placa é só informativa.</li></ol></div>`+
+   `<div class="flex gap-2 overflow-x-auto pb-2 mb-4">${tabs.map(t=>`<button class="tab ${S.tab===t[0]?'on':''}" data-act="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>`+body;
+}
+function seenSrc(p){const m={};visibleTX().filter(t=>t.p===p).forEach(t=>{m[t.src]=m[t.src]||{n:0,v:0,last:''};m[t.src].n++;m[t.src].v+=t.valor;if(t.dt>m[t.src].last)m[t.src].last=t.dt});return m}
+function unlinkedBox(p){
+  const seen=seenSrc(p), link=p==='TL'?cardLink:tagLink;
+  const un=Object.keys(seen).filter(k=>!link[k]);
+  if(!un.length) return `<div class="rounded-xl border border-green-800 bg-green-900/20 text-green-300 text-sm px-4 py-3 mb-4">Todos os ${p==='TL'?'cartões':'tags'} que aparecem nos extratos já têm equipe.</div>`;
+  return `<div class="rounded-xl border border-amber-700 bg-amber-900/20 p-4 mb-4">
+    <p class="text-amber-300 text-sm font-semibold mb-1">${un.length} ${p==='TL'?'cartão(ões)':'tag(s)'} apareceram nos extratos e ainda não têm equipe</p>
+    <p class="text-[#94a3b8] text-xs mb-3">Os gastos deles ficam na lista “Sem centro de custo” até você ligar a uma equipe.</p>
+    <div class="flex flex-col gap-2">${un.map(k=>`<div class="flex flex-wrap items-center justify-between gap-2 bg-[#0a1628]/60 rounded-lg px-3 py-2">
+      <div><span class="mono text-white text-sm">${p==='TL'?maskCard(k):esc(k)}</span>${p==='VL'?`<span class="text-[#94a3b8] text-xs ml-2">placa no extrato: ${tagPlaca[k]}</span>`:''}<div class="text-[#94a3b8] text-xs">${seen[k].n} gastos · ${fmtBRL(seen[k].v)} · último em ${fmtDate(seen[k].last.slice(0,10))}</div></div>
+      <button class="btn btn-p !py-1.5" data-act="dlg-link" data-p="${p}" data-v="${k}">Ligar a uma equipe</button></div>`).join('')}</div></div>`;
+}
+function linkCell(p,k){const L=srcL(p,k),c=L[L.length-1];return `<span class="chip bg-[#1e3a5f] text-white">${teamName(c.eq)}</span><span class="text-xs text-[#94a3b8]">desde ${fmtDate(c.desde)}</span>${L.length>1?`<button class="text-xs text-[#94a3b8] hover:text-white" data-act="hist-link" data-v="${p}${k}">${S.openHist[p+k]?'Ocultar':'Ver'} histórico (${L.length})</button>`:''}<button class="text-xs text-[#94a3b8] hover:text-white" data-act="dlg-link" data-p="${p}" data-v="${k}" data-edit="1">Trocar equipe</button>`}
+function linkHist(p,k){const L=srcL(p,k);if(!S.openHist[p+k]||L.length<2)return '</div>';const r=[...L].reverse();return `<div class="mt-2 ml-1 border-l-2 border-[#1e3a5f] pl-3 text-xs text-[#94a3b8] space-y-1">${r.map((l,ix)=>`<div>${fmtDate(l.desde)} → ${ix===0?'hoje':'até '+fmtDate(prevDay(r[ix-1].desde))}: <span class="text-[#cbd5e1]">${teamName(l.eq)}</span></div>`).join('')}</div></div>`}
+function searchBox(ph){return `<input class="fld mb-3 max-w-md" placeholder="${ph}" value="${esc(S.qCad)}" data-act="qcad">`}
+function cadCartoes(){
+  const q=S.qCad.toLowerCase(); const keys=Object.keys(cardLink).filter(k=>!q||maskCard(k).includes(q)||teamName(curEq('TL',k).eq).toLowerCase().includes(q));
+  return unlinkedBox('TL')+`<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h2 class="text-white font-semibold">Cartões ligados (${Object.keys(cardLink).length})</h2>
+    <button class="btn btn-p" data-act="dlg-card">+ Novo cartão</button></div>${searchBox('Buscar por final do cartão ou equipe...')}
+    ${S.empty?empty('Nenhum cartão cadastrado ainda.'):`<div class="card divide-y divide-[#12294d]">${keys.map(k=>`<div class="px-4 py-3"><div class="flex flex-wrap items-center justify-between gap-2">
+      <div><div class="mono text-white">${maskCard(k)}</div><div class="text-xs text-[#94a3b8]">Cartão Ticketlog</div></div>
+      <div class="flex items-center gap-3 flex-wrap">${linkCell('TL',k)}</div></div>${linkHist('TL',k)}`).join('')||'<div class="p-4 text-sm text-[#94a3b8]">Nada encontrado.</div>'}</div>`}`;
+}
+function cadTags(){
+  const q=S.qCad.toLowerCase(); const keys=Object.keys(tagLink).filter(k=>!q||k.includes(q)||tagLink[k].placa.toLowerCase().includes(q)||teamName(curEq('VL',k).eq).toLowerCase().includes(q));
+  return unlinkedBox('VL')+`<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h2 class="text-white font-semibold">Tags ligadas (${Object.keys(tagLink).length})</h2>
+    <button class="btn btn-p" data-act="dlg-tag">+ Nova tag</button></div>${searchBox('Buscar por tag, placa ou equipe...')}
+    ${S.empty?empty('Nenhuma tag cadastrada ainda.'):`<div class="card divide-y divide-[#12294d]">${keys.map(k=>`<div class="px-4 py-3"><div class="flex flex-wrap items-center justify-between gap-2">
+      <div><div class="mono text-white">${esc(k)}</div><div class="text-xs text-[#94a3b8]">Placa (só informativa): ${esc(tagLink[k].placa||'—')}</div></div>
+      <div class="flex items-center gap-3 flex-wrap">${linkCell('VL',k)}</div></div>${linkHist('VL',k)}`).join('')||'<div class="p-4 text-sm text-[#94a3b8]">Nada encontrado.</div>'}</div>`}
+    <p class="text-xs text-[#4a6080] mt-3">A placa é só para o gestor reconhecer o veículo. Quem manda é a tag.</p>`;
+}
+function cadCC(){
+  const semCcEq=Object.keys(ccLinks).filter(i=>!ccLinks[i].length);
+  return (semCcEq.length?`<div class="rounded-xl border border-amber-700 bg-amber-900/20 p-4 mb-4 text-sm text-amber-300">${semCcEq.length} equipe(s) sem centro de custo: ${semCcEq.map(i=>teamName(i)).join(', ')}. Os gastos delas ficam em “Sem centro de custo”.</div>`:'')+
+  `<h2 class="text-white font-semibold mb-1">Centro de custo do Omie por equipe</h2><p class="text-xs text-[#94a3b8] mb-3">Trocar o centro de custo cria uma linha nova com a data de início. A linha anterior não é apagada, e os gastos antigos continuam no centro de custo que valia na data de uso.</p>
+  ${searchBox('Buscar equipe ou centro de custo...')}
+  <div class="card divide-y divide-[#12294d]">${Array.from({length:26},(_,i)=>i+1).filter(i=>{const q=S.qCad.toLowerCase();if(!q)return true;const cur=ccLinks[i].slice(-1)[0];return teamName(i).toLowerCase().includes(q)||(cur&&(cur.code+cur.name).toLowerCase().includes(q))}).map(i=>{
+    const L=ccLinks[i], cur=L[L.length-1], open=S.openHist[i];
+    return `<div class="px-4 py-3"><div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="min-w-0"><div class="text-white font-semibold">${teamName(i)}</div>
+      <div class="text-sm ${cur?'text-[#cbd5e1]':''}">${cur?esc(cur.code+' - '+cur.name)+`<span class="text-[#94a3b8] text-xs"> · vigente desde ${fmtDate(cur.desde)}</span>`:'<span class="text-amber-400">sem centro de custo</span>'}</div></div>
+      <div class="flex items-center gap-2">${L.length>1?`<button class="text-xs text-[#94a3b8] hover:text-white" data-act="hist-cc" data-v="${i}">${open?'Ocultar':'Ver'} histórico (${L.length})</button>`:''}
+      <button class="btn btn-s !py-1 !text-xs" data-act="dlg-cc" data-v="${i}">${cur?'Trocar':'Definir'}</button></div></div>
+      ${open?`<div class="mt-2 ml-1 border-l-2 border-[#1e3a5f] pl-3 text-xs text-[#94a3b8] space-y-1">${[...L].reverse().map((l,ix)=>`<div>${fmtDate(l.desde)} → ${ix===0?'hoje':'até '+fmtDate(prevDay([...L].reverse()[ix-1].desde))}: <span class="text-[#cbd5e1]">${esc(l.code+' - '+l.name)}</span></div>`).join('')}</div>`:''}
+    </div>`}).join('')}</div>`;
+}
+function prevDay(iso){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)}
+
+/* ============ diálogos ============ */
+function eqOptions(sel){return Array.from({length:26},(_,i)=>i+1).map(i=>{const c=vigente(i,TODAY);return `<option value="${i}" ${sel==i?'selected':''}>${teamName(i)} — ${c?esc(c.code):'sem centro de custo'}</option>`}).join('')}
+function modal(title,body,foot){
+  $('#modal').innerHTML=`<div class="fixed inset-0 z-[65] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4" data-act="close-bg">
+    <div class="w-full sm:max-w-md bg-[#0d2050] border border-[#1e3a5f] sm:rounded-xl rounded-t-xl p-5 max-h-[92vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between mb-4"><h3 class="text-white font-bold">${title}</h3><button data-act="close" class="text-[#94a3b8] text-xl leading-none" aria-label="Fechar">×</button></div>
+      <div id="dlgbody">${body}</div><p id="dlgerr" class="text-red-400 text-xs mt-2 hidden"></p>
+      <div class="flex justify-end gap-2 mt-5"><button class="btn btn-s" data-act="close">Cancelar</button>${foot}</div></div></div>`;
+}
+const closeModal=()=>{$('#modal').innerHTML=''};
+function dlgErr(m){const e=$('#dlgerr');e.textContent=m;e.classList.remove('hidden')}
+function dlgCard(){modal('Novo cartão Ticketlog',`<label class="lbl">Número do cartão (16 dígitos)</label><input id="f_num" class="fld mono mb-3" inputmode="numeric" maxlength="19" placeholder="6037 9800 0000 0000">
+  <label class="lbl">Equipe</label><select id="f_eq" class="fld mb-3">${eqOptions(0)}</select><label class="lbl">A partir de</label><input id="f_desde" type="date" class="fld" value="2026-08-01">`,`<button class="btn btn-p" data-act="save-card">Salvar</button>`)}
+function dlgTag(){modal('Nova tag Veloe',`<label class="lbl">Número da tag (VeloeTag)</label><input id="f_num" class="fld mono mb-3" inputmode="numeric" placeholder="0381 0000 0000">
+  <label class="lbl">Placa (opcional — só informativa)</label><input id="f_placa" class="fld mb-3" placeholder="ABC-1D23" maxlength="8">
+  <label class="lbl">Equipe</label><select id="f_eq" class="fld mb-3">${eqOptions(0)}</select><label class="lbl">A partir de</label><input id="f_desde" type="date" class="fld" value="2026-08-01">`,`<button class="btn btn-p" data-act="save-tag">Salvar</button>`)}
+function dlgLink(p,key,edit,desdeSug){
+  const cur = (curEq(p,key)||{}).eq;
+  const name = p==='TL'?maskCard(key):key;
+  modal((edit?'Editar equipe de ':'Ligar a uma equipe: ')+(p==='TL'?'cartão':'tag'),
+   `<div class="mono text-white mb-1">${esc(name)}</div>${p==='VL'?`<div class="text-xs text-[#94a3b8] mb-3">Placa no extrato: ${tagPlaca[key]||'—'}</div>`:'<div class="mb-3"></div>'}
+    <label class="lbl">Equipe</label><select id="f_eq" class="fld mb-3">${eqOptions(cur||0)}</select>
+    <label class="lbl">A partir de</label><input id="f_desde" type="date" class="fld" value="${desdeSug||(edit?TODAY:firstDate(p,key))}">
+    <p class="text-xs text-[#94a3b8] mt-3">${edit?'Cria uma linha nova a partir desta data. Gastos anteriores continuam na equipe antiga; a linha antiga fica no histórico.':'Gastos deste '+(p==='TL'?'cartão':'tag')+' a partir desta data entram na equipe escolhida. Sugerimos a data do primeiro gasto que apareceu no extrato.'}</p>`,
+   `<button class="btn btn-p" data-act="save-link" data-p="${p}" data-v="${key}">Salvar ligação</button>`)}
+function dlgCC(eq,desdeSug){
+  const cur=vigente(eq,TODAY);
+  modal((cur?'Trocar':'Definir')+' centro de custo — '+teamName(eq),
+   `${cur?`<div class="text-xs text-[#94a3b8] mb-3">Hoje: ${esc(cur.code+' - '+cur.name)} (desde ${fmtDate(cur.desde)}). Esta linha continua no histórico.</div>`:''}
+    <label class="lbl">Centro de custo do Omie</label><input id="f_cc" list="cclist" class="fld mb-3" placeholder="Comece a digitar o código ou o nome...">
+    <datalist id="cclist">${CCS.map(c=>`<option value="${c[0]} - ${c[1]}">`).join('')}</datalist>
+    <label class="lbl">Vigente desde</label><input id="f_desde" type="date" class="fld" value="${desdeSug||TODAY}">
+    <p class="text-xs text-[#94a3b8] mt-2">Gastos com data de uso a partir desta data usam o novo centro de custo.</p>`,
+   `<button class="btn btn-p" data-act="save-cc" data-v="${eq}">Salvar</button>`)}
+
+/* ============ 2. Enviar extrato ============ */
+const SAMPLES={TL:{name:'RFCV_MANFAC_20261027_0912.xlsx',size:'118 KB'},VL:{name:'ExtratoVeloe_20261027.csv',size:'74 KB'}};
+function pageEnv(){
+  const u=S.up, ext=u.p==='TL'?'.xlsx':'.csv';
+  return head(2,'Etapa 3 — Enviar extrato','Pode enviar a qualquer hora, quantas vezes quiser, com períodos que se sobrepõem. Linha repetida é ignorada.')+
+  `<div class="grid lg:grid-cols-2 gap-6 items-start"><div class="card p-5">
+    <label class="lbl">1. Plataforma</label>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      ${[['TL','Ticketlog','extrato .xlsx (aba “Transações”)'],['VL','Veloe','extrato .csv (separado por ;)']].map(o=>`<button class="text-left rounded-lg border p-3 ${u.p===o[0]?'border-[#f05a28] bg-[#f05a28]/10':'border-[#1e3a5f] hover:border-[#94a3b8]'}" data-act="plat" data-v="${o[0]}"><div class="text-white font-semibold text-sm">${o[1]}</div><div class="text-xs text-[#94a3b8]">${o[2]}</div></button>`).join('')}
+    </div>
+    <label class="lbl">2. Arquivo (${ext})</label>
+    <label class="block rounded-lg border-2 border-dashed border-[#1e3a5f] hover:border-[#f05a28] p-5 text-center cursor-pointer mb-1">
+      <input type="file" id="file" class="hidden" accept=".xlsx,.csv" data-act="file">
+      ${u.file?`<div class="text-white text-sm">${esc(u.file.name)}</div><div class="text-xs text-[#94a3b8]">${u.file.size} · clique para trocar</div>`:`<div class="text-[#94a3b8] text-sm">Clique para escolher o arquivo ${ext}</div>`}
+    </label>
+    <div class="text-xs text-[#4a6080] mb-5">No mockup o arquivo não é lido de verdade. <button class="underline hover:text-white" data-act="sample" data-v="ok">usar arquivo de exemplo</button> · <button class="underline hover:text-white" data-act="sample" data-v="wrong">simular arquivo errado</button> · <button class="underline hover:text-white" data-act="sample" data-v="missing">simular coluna faltando</button></div>
+    <label class="lbl">3. Saldo atual na plataforma (obrigatório)</label>
+    <div class="relative mb-1"><span class="absolute left-3 top-2.5 text-[#94a3b8] text-sm">R$</span><input id="saldo" class="fld !pl-9 mono" inputmode="decimal" placeholder="0,00" value="${esc(u.saldo)}" data-act="saldo"></div>
+    <p class="text-xs text-[#94a3b8] mb-5">Digite o saldo que a ${u.p==='TL'?'Ticketlog':'Veloe'} mostra agora no portal. O extrato não traz saldo, e o financeiro usa esse número para conferir a conta corrente.</p>
+    <button class="btn btn-p w-full" data-act="send">Enviar extrato</button>
+  </div>
+  <div>${u.error?errPanel(u.error):''}${u.result?resPanel(u.result):''}${!u.error&&!u.result?`<div class="card p-5 text-sm text-[#94a3b8]"><div class="text-white font-semibold mb-2">O que acontece ao enviar</div>
+   <ul class="list-disc pl-5 space-y-1.5"><li>Cada linha é guardada pelo código da transação. Código que já existe é ignorado.</li><li>A data usada é a data de uso (Veloe: não a de processamento).</li><li>Se o cartão ou a tag não tem equipe, a linha entra mesmo assim e aparece em “Sem centro de custo”.</li><li>Se o arquivo estiver errado, nada é gravado, nem o saldo.</li></ul></div>`:''}</div></div>`;
+}
+function errPanel(e){return `<div class="rounded-xl border border-red-700 bg-red-900/20 p-5 mb-4"><div class="text-red-300 font-semibold mb-1">Não foi possível ler o arquivo</div><p class="text-sm text-red-200">${e.msg}</p><p class="text-xs text-[#94a3b8] mt-3">Nada foi gravado: nem as linhas nem o saldo digitado. ${e.hint}</p></div>`}
+function resPanel(r){return `<div class="rounded-xl border border-green-700 bg-green-900/15 p-5 mb-4"><div class="text-green-300 font-semibold mb-3">Extrato ${r.p==='TL'?'Ticketlog':'Veloe'} processado</div>
+  <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="bg-[#0a1628] rounded-lg p-3 text-center"><div class="text-2xl font-bold ${r.novas?'text-white':'text-[#94a3b8]'}">${r.novas}</div><div class="text-xs text-[#94a3b8]">novas</div></div>
+    <div class="bg-[#0a1628] rounded-lg p-3 text-center"><div class="text-2xl font-bold text-white">${r.ign}</div><div class="text-xs text-[#94a3b8]">já existiam (ignoradas)</div></div>
+    <div class="bg-[#0a1628] rounded-lg p-3 text-center"><div class="text-2xl font-bold ${r.semcc?'text-amber-400':'text-white'}">${r.semcc}</div><div class="text-xs text-[#94a3b8]">sem centro de custo</div></div></div>
+  <dl class="text-sm space-y-1"><div class="flex justify-between gap-3"><dt class="text-[#94a3b8]">Período coberto</dt><dd class="text-white">${fmtDate(r.de)} a ${fmtDate(r.ate)}</dd></div>
+  <div class="flex justify-between gap-3"><dt class="text-[#94a3b8]">Saldo registrado</dt><dd class="text-white mono">${fmtBRL(r.saldo)}</dd></div>
+  <div class="flex justify-between gap-3"><dt class="text-[#94a3b8]">Arquivo</dt><dd class="text-white truncate">${esc(r.arq)}</dd></div></dl>
+  ${r.novas===0?'<p class="text-xs text-green-200 mt-3">Nenhuma linha nova: este arquivo já tinha sido enviado. O saldo digitado foi guardado mesmo assim.</p>':''}
+  <div class="flex flex-wrap gap-2 mt-4">${r.semcc?`<button class="btn btn-p !py-1.5" data-act="go" data-v="sem">Resolver “sem centro de custo”</button>`:''}<button class="btn btn-s !py-1.5" data-act="go" data-v="gastos">Ver gastos</button><button class="btn btn-s !py-1.5" data-act="send">Enviar o mesmo arquivo de novo</button></div></div>`}
+function parseBRL(s){const t=String(s).trim().replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.');const n=Number(t);return t!==''&&isFinite(n)&&n>=0?n:null}
+function doSend(){
+  const u=S.up; u.result=null;u.error=null;
+  if(!u.file){u.error={msg:'Escolha o arquivo do extrato antes de enviar.',hint:''};return render()}
+  const saldo=parseBRL(u.saldo);
+  if(saldo===null){u.error={msg:'Digite o saldo atual da plataforma (ex.: 8.420,15). Sem ele o envio não é feito.',hint:''};return render()}
+  const ext=u.p==='TL'?'xlsx':'csv', nm=u.file.name.toLowerCase();
+  if(u.file.kind==='wrong'||!nm.endsWith('.'+ext)){
+    u.error=u.p==='TL'?{msg:'Este arquivo não parece um extrato da Ticketlog: esperado um <b>.xlsx</b> com a aba <b>“Transações”</b>. O arquivo enviado é <b>'+esc(u.file.name)+'</b>'+(nm.endsWith('.csv')?' (um .csv, parece ser da Veloe)':'')+'.',hint:'Baixe de novo o relatório de transações no portal da Ticketlog e envie.'}
+      :{msg:'Este arquivo não parece um extrato da Veloe: esperado um <b>.csv</b> separado por <b>;</b>. O arquivo enviado é <b>'+esc(u.file.name)+'</b>'+(nm.endsWith('.xlsx')?' (um .xlsx, parece ser da Ticketlog)':'')+'.',hint:'Baixe de novo o extrato no portal da Veloe e envie.'};
+    return render()}
+  if(u.file.kind==='missing'||nm.includes('falta')){
+    u.error={msg:'Coluna obrigatória não encontrada: <b>'+(u.p==='TL'?'NUMERO CARTAO':'VeloeTag')+'</b> '+(u.p==='TL'?'(aba “Transações”, linha 1)':'(linha de cabeçalho)')+'. Sem ela não dá para saber de qual equipe é o gasto.',hint:'Confira se o relatório foi exportado completo, sem apagar colunas.'};return render()}
+  const inFile=TX.filter(t=>t.p===u.p&&t.dt.slice(0,10)>='2026-10-15');
+  const novas=inFile.filter(t=>!t.loaded); novas.forEach(t=>t.loaded=true);
+  const semcc=novas.filter(t=>resolve(t).cc===null).length;
+  const r={p:u.p,novas:novas.length,ign:inFile.length-novas.length,semcc,de:inFile[inFile.length-1].dt.slice(0,10),ate:inFile[0].dt.slice(0,10),saldo,arq:u.file.name};
+  HIST.push({p:u.p,quem:WHO[S.role],quando:TODAY+'T'+new Date().toTimeString().slice(0,5),arq:u.file.name,saldo,novas:r.novas,ign:r.ign,de:r.de,ate:r.ate});
+  u.result=r; render();
+}
+
+/* ============ 3. Gastos ============ */
+function filtered(){
+  const f=S.fGastos;
+  return visibleTX().filter(t=>{const rs=resolve(t);
+    if(f.p&&t.p!==f.p)return false; if(f.de&&t.dt.slice(0,10)<f.de)return false; if(f.ate&&t.dt.slice(0,10)>f.ate)return false;
+    if(f.eq&&String(rs.eq)!==f.eq)return false;
+    if(f.cc==='__none'&&rs.cc)return false; if(f.cc&&f.cc!=='__none'&&(!rs.cc||rs.cc.code!==f.cc))return false; return true});
+}
+function pageGastos(){
+  const f=S.fGastos, list=filtered(), total=list.reduce((a,t)=>a+t.valor,0), shown=list.slice(0,f.lim);
+  const row=t=>{const rs=resolve(t);return {rs,det:t.p==='TL'?`${t.litros.toLocaleString('pt-BR',{minimumFractionDigits:2})} L <span class="text-[#4a6080]">(${fmtBRL(t.vl)}/L)</span>`:esc(t.tipo)}};
+  return head(3,'Lista de gastos','Consumo de combustível (Ticketlog) e pedágio/estacionamento (Veloe), já com a equipe e o centro de custo que valia na data de uso.')+
+  `<div class="card p-4 mb-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
+    <div><label class="lbl">Plataforma</label><select class="fld" data-act="f" data-k="p"><option value="">Todas</option><option value="TL" ${f.p==='TL'?'selected':''}>Ticketlog</option><option value="VL" ${f.p==='VL'?'selected':''}>Veloe</option></select></div>
+    <div><label class="lbl">Equipe</label><select class="fld" data-act="f" data-k="eq"><option value="">Todas</option>${Array.from({length:26},(_,i)=>`<option value="${i+1}" ${f.eq==i+1?'selected':''}>${teamName(i+1)}</option>`).join('')}</select></div>
+    <div class="col-span-2 lg:col-span-1"><label class="lbl">Centro de custo</label><select class="fld" data-act="f" data-k="cc"><option value="">Todos</option><option value="__none" ${f.cc==='__none'?'selected':''}>Sem centro de custo</option>${CCS.map(c=>`<option value="${c[0]}" ${f.cc===c[0]?'selected':''}>${c[0]} - ${c[1]}</option>`).join('')}</select></div>
+    <div><label class="lbl">De</label><input type="date" class="fld" value="${f.de}" data-act="f" data-k="de"></div>
+    <div><label class="lbl">Até</label><input type="date" class="fld" value="${f.ate}" data-act="f" data-k="ate"></div>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3 text-sm"><span class="text-[#94a3b8]">${list.length} gastos · total <b class="text-white mono">${fmtBRL(total)}</b></span>
+   ${(f.p||f.eq||f.cc||f.de||f.ate)?'<button class="text-xs text-[#f05a28] hover:underline" data-act="fclear">Limpar filtros</button>':''}</div>
+  ${!list.length?empty(S.empty?'Nenhum extrato foi enviado ainda.':'Nenhum gasto com esses filtros.',S.empty?'<div class="mt-3"><button class="btn btn-p" data-act="go" data-v="env">Enviar o primeiro extrato</button></div>':''):`
+  <div class="hidden md:block card overflow-x-auto"><table><thead><tr><th>Data de uso</th><th>Plataforma</th><th class="text-right">Valor</th><th>Equipe</th><th>Centro de custo</th><th>Estabelecimento / cidade</th><th>Litros / tipo</th></tr></thead><tbody>
+  ${shown.map(t=>{const {rs,det}=row(t);return `<tr><td class="mono whitespace-nowrap">${fmtDT(t.dt)}</td><td>${plat(t.p)}</td><td class="text-right mono text-white">${fmtBRL(t.valor)}</td><td>${rs.eq?teamName(rs.eq):'<span class="text-amber-400">sem equipe</span>'}</td><td>${ccTxt(rs.cc)}</td><td>${esc(t.estab)}<div class="text-xs text-[#4a6080]">${esc(t.cidade)}</div></td><td class="whitespace-nowrap">${det}</td></tr>`}).join('')}</tbody></table></div>
+  <div class="md:hidden space-y-3">${shown.map(t=>{const {rs,det}=row(t);return `<div class="card p-4"><div class="flex justify-between items-start gap-2"><div>${plat(t.p)}<div class="text-xs text-[#94a3b8] mt-1 mono">${fmtDT(t.dt)}</div></div><div class="text-white font-bold mono">${fmtBRL(t.valor)}</div></div>
+    <div class="mt-2 text-sm text-[#cbd5e1]">${esc(t.estab)}<span class="text-[#4a6080]"> · ${esc(t.cidade)}</span></div>
+    <div class="mt-2 text-xs text-[#94a3b8]">${t.p==='TL'?'Litros':'Tipo'}: <span class="text-[#cbd5e1]">${det}</span></div>
+    <div class="mt-2 border-t border-[#1e3a5f] pt-2 text-xs"><span class="text-[#94a3b8]">${rs.eq?teamName(rs.eq):'<span class="text-amber-400">sem equipe</span>'}</span> · ${ccTxt(rs.cc)}</div></div>`}).join('')}</div>
+  ${shown.length<list.length?`<div class="flex justify-center mt-5"><button class="btn btn-s" data-act="more">Carregar mais (${list.length-shown.length} restantes)</button></div>`:''}`}
+  <p class="text-xs text-[#4a6080] mt-4">Esta tela não mostra nome de motorista.</p>`;
+}
+
+/* ============ 4. Sem centro de custo ============ */
+function pageSem(){
+  const rows=semCC(), g={};
+  rows.forEach(t=>{const rs=resolve(t);const k=t.p+'|'+t.src+'|'+rs.why;g[k]=g[k]||{p:t.p,src:t.src,why:rs.why,eq:rs.eq,n:0,v:0,min:'9',max:'0'};const o=g[k];o.n++;o.v+=t.valor;if(t.dt<o.min)o.min=t.dt;if(t.dt>o.max)o.max=t.dt});
+  const gs=Object.values(g).sort((a,b)=>b.v-a.v);
+  return head(4,'Sem centro de custo',`Gastos que entraram mas não têm centro de custo. Ao resolver a ligação, as linhas somem daqui sozinhas (o centro de custo é calculado na leitura).`)+
+  (!gs.length?`<div class="rounded-xl border border-green-800 bg-green-900/20 text-green-300 px-4 py-10 text-center">${S.empty?'Nenhum extrato enviado ainda, então nada pendente.':'Tudo resolvido. Nenhum gasto está sem centro de custo.'}</div>`:
+  `<div class="flex flex-wrap gap-3 mb-4 text-sm"><span class="chip bg-amber-900/60 text-amber-300 !text-sm !px-3 !py-1">${rows.length} gastos</span><span class="chip bg-[#1e3a5f] text-white !text-sm !px-3 !py-1">${gs.length} grupos</span><span class="chip bg-[#1e3a5f] text-white !text-sm !px-3 !py-1">${fmtBRL(rows.reduce((a,t)=>a+t.valor,0))}</span></div>
+  <div class="space-y-3">${gs.map(o=>`<div class="card p-4"><div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0"><div class="flex items-center gap-2 mb-1">${plat(o.p)}<span class="mono text-white">${o.p==='TL'?maskCard(o.src):esc(o.src)}</span></div>
+    <div class="text-xs text-[#94a3b8]">${o.p==='VL'?`Placa no extrato: ${tagPlaca[o.src]} · `:''}${o.n} gasto(s) · ${fmtBRL(o.v)} · de ${fmtDate(o.min.slice(0,10))} a ${fmtDate(o.max.slice(0,10))}</div>
+    <div class="mt-2 text-xs ${o.why==='sem_equipe'?'text-amber-300':'text-orange-300'}">${o.why==='sem_equipe'?'Motivo: <b>Cartão/tag sem equipe nessa data</b>.':`Motivo: <b>Equipe sem centro de custo nessa data</b> (${teamName(o.eq)}).`}</div></div>
+    ${o.why==='sem_equipe'?`<button class="btn btn-p" data-act="dlg-link" data-p="${o.p}" data-v="${o.src}" data-desde="${o.min.slice(0,10)}">Ligar a uma equipe</button>`:`<button class="btn btn-p" data-act="dlg-cc" data-v="${o.eq}" data-desde="${o.min.slice(0,10)}">Definir centro de custo de ${teamName(o.eq)}</button>`}
+  </div></div>`).join('')}</div>`);
+}
+
+/* ============ 5. Histórico ============ */
+function pageHist(){
+  const H=S.empty?[]:[...HIST].reverse();
+  return head(5,'Histórico de envios e saldos digitados','Cada envio fica registrado com quem enviou, quando e o saldo que a pessoa digitou. O financeiro só lê.')+
+  (!H.length?empty('Nenhum envio ainda.','<div class="mt-3"><button class="btn btn-p" data-act="go" data-v="env">Enviar o primeiro extrato</button></div>'):`
+  <div class="hidden md:block card overflow-x-auto"><table><thead><tr><th>Quando</th><th>Quem</th><th>Plataforma</th><th>Arquivo</th><th>Período</th><th class="text-right">Saldo digitado</th><th class="text-right">Linhas novas</th><th class="text-right">Ignoradas</th></tr></thead><tbody>
+  ${H.map(h=>`<tr><td class="mono whitespace-nowrap">${fmtDT(h.quando)}</td><td>${esc(h.quem)}</td><td>${plat(h.p)}</td><td class="text-xs">${esc(h.arq)}</td><td class="whitespace-nowrap">${fmtDate(h.de)} a ${fmtDate(h.ate)}</td><td class="text-right mono text-white">${fmtBRL(h.saldo)}</td><td class="text-right mono ${h.novas?'text-white':'text-[#4a6080]'}">${h.novas}</td><td class="text-right mono">${h.ign}</td></tr>`).join('')}</tbody></table></div>
+  <div class="md:hidden space-y-3">${H.map(h=>`<div class="card p-4"><div class="flex justify-between items-start">${plat(h.p)}<span class="text-xs text-[#94a3b8] mono">${fmtDT(h.quando)}</span></div>
+   <div class="text-white font-bold mono mt-2">${fmtBRL(h.saldo)} <span class="text-xs font-normal text-[#94a3b8]">saldo digitado</span></div>
+   <div class="text-xs text-[#94a3b8] mt-1">${esc(h.quem)} · ${h.novas} novas, ${h.ign} ignoradas</div><div class="text-xs text-[#4a6080] mt-1">${fmtDate(h.de)} a ${fmtDate(h.ate)} · ${esc(h.arq)}</div></div>`).join('')}</div>`);
+}
+
+/* ============ 6. Estados ============ */
+function pageEst(){
+  return head(6,'Estados da tela','Como cada situação aparece. Para ver ao vivo: o seletor “Visão de” e a caixa “vazio” no topo, e os links “simular” em Enviar extrato.')+
+  `<div class="grid lg:grid-cols-2 gap-6">
+   <div><h3 class="text-white font-semibold mb-2">a. Vazio (nenhum extrato enviado)</h3>${empty('Nenhum extrato foi enviado ainda.','<div class="mt-3"><button class="btn btn-p">Enviar o primeiro extrato</button></div>')}</div>
+   <div><h3 class="text-white font-semibold mb-2">b. Erro: arquivo errado</h3>${errPanel({msg:'Este arquivo não parece um extrato da Ticketlog: esperado um <b>.xlsx</b> com a aba <b>“Transações”</b>. O arquivo enviado é <b>ExtratoVeloe_20261027.csv</b> (um .csv, parece ser da Veloe).',hint:'Baixe de novo o relatório de transações no portal da Ticketlog e envie.'})}</div>
+   <div><h3 class="text-white font-semibold mb-2">c. Erro: coluna faltando</h3>${errPanel({msg:'Coluna obrigatória não encontrada: <b>VeloeTag</b> (linha de cabeçalho). Sem ela não dá para saber de qual equipe é o gasto.',hint:'Confira se o relatório foi exportado completo, sem apagar colunas.'})}</div>
+   <div><h3 class="text-white font-semibold mb-2">d. Sem permissão</h3>${noPerm()}</div>
+   <div><h3 class="text-white font-semibold mb-2">e. Envio repetido (0 novas)</h3>${resPanel({p:'TL',novas:0,ign:52,semcc:0,de:'2026-10-15',ate:'2026-10-27',saldo:8420.15,arq:'RFCV_MANFAC_20261027_0912.xlsx'})}</div>
+  </div>`;
+}
+
+/* ============ render e eventos ============ */
+function render(){
+  const pages={cad:pageCad,env:pageEnv,gastos:pageGastos,sem:pageSem,hist:pageHist,est:pageEst};
+  const keep=document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.act;
+  $('#app').innerHTML=shell(pages[S.page]());
+  if(keep==='qcad'||keep==='saldo'){const el=document.querySelector(`[data-act="${keep}"]`);if(el){el.focus();el.setSelectionRange&&el.setSelectionRange(el.value.length,el.value.length)}}
+}
+function unresolvedCount(){return semCC().length}
+document.addEventListener('input',e=>{const a=e.target.dataset&&e.target.dataset.act;
+  if(a==='qcad'){S.qCad=e.target.value;render()}
+  if(a==='saldo'){S.up.saldo=e.target.value}
+});
+document.addEventListener('change',e=>{const el=e.target,a=el.dataset&&el.dataset.act;
+  if(a==='role'){S.role=el.value;render()}
+  if(a==='empty'){S.empty=el.checked;render()}
+  if(a==='f'){S.fGastos[el.dataset.k]=el.value;S.fGastos.lim=25;render()}
+  if(a==='file'){const f=el.files[0];if(f){S.up.file={name:f.name,size:Math.max(1,Math.round(f.size/1024))+' KB',kind:'real'};S.up.result=null;S.up.error=null;render()}}
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b||b.tagName==='INPUT'||b.tagName==='SELECT')return;
+  const a=b.dataset.act,v=b.dataset.v;
+  switch(a){
+    case 'go': S.page=v;S.navOpen=false;closeModal();render();window.scrollTo(0,0);break;
+    case 'menu': S.navOpen=!S.navOpen;render();break;
+    case 'role-set': S.role=v;render();break;
+    case 'tab': S.tab=v;S.qCad='';render();break;
+    case 'plat': S.up={p:v,file:null,saldo:S.up.saldo,result:null,error:null};render();break;
+    case 'sample': {const u=S.up;const s=SAMPLES[u.p];
+      u.file = v==='ok'?{name:s.name,size:s.size,kind:'ok'}: v==='wrong'?{name:u.p==='TL'?SAMPLES.VL.name:SAMPLES.TL.name,size:'74 KB',kind:'wrong'}:{name:u.p==='TL'?'RFCV_MANFAC_sem_cartao.xlsx':'ExtratoVeloe_sem_tag.csv',size:'60 KB',kind:'missing'};
+      u.result=null;u.error=null;render();break;}
+    case 'send': doSend();break;
+    case 'more': S.fGastos.lim+=25;render();break;
+    case 'fclear': S.fGastos={p:'',de:'',ate:'',eq:'',cc:'',lim:25};render();break;
+    case 'hist-cc': S.openHist[v]=!S.openHist[v];render();break;
+    case 'close': case 'close-bg': closeModal();break;
+    case 'dlg-card': dlgCard();break;
+    case 'dlg-tag': dlgTag();break;
+    case 'dlg-link': dlgLink(b.dataset.p,v,!!b.dataset.edit,b.dataset.desde);break;
+    case 'hist-link': S.openHist[v]=!S.openHist[v];render();break;
+    case 'dlg-cc': dlgCC(Number(v),b.dataset.desde);break;
+    case 'save-card': {const n=$('#f_num').value.replace(/\D/g,'');if(n.length!==16)return dlgErr('O número do cartão tem 16 dígitos.');if(cardLink[n])return dlgErr('Este cartão já está cadastrado (equipe '+teamName(curEq('TL',n).eq)+'). Use “Trocar equipe”.');
+      const eq=Number($('#f_eq').value);if(!eq)return dlgErr('Escolha a equipe.');const ds=$('#f_desde').value;if(!ds)return dlgErr('Informe a data de início.');cardLink[n]=[{eq,desde:ds}];closeModal();render();toast('Cartão cadastrado e ligado a '+teamName(eq)+'.');break;}
+    case 'save-tag': {const n=$('#f_num').value.replace(/\s/g,'');if(n.length<8)return dlgErr('Informe o número da tag.');if(tagLink[n])return dlgErr('Esta tag já está cadastrada.');
+      const eq=Number($('#f_eq').value);if(!eq)return dlgErr('Escolha a equipe.');const ds=$('#f_desde').value;if(!ds)return dlgErr('Informe a data de início.');tagLink[n]={placa:$('#f_placa').value.toUpperCase(),L:[{eq,desde:ds}]};closeModal();render();toast('Tag cadastrada e ligada a '+teamName(eq)+'.');break;}
+    case 'save-link': {const eq=Number($('#f_eq').value);if(!eq)return dlgErr('Escolha a equipe.');const ds=$('#f_desde').value;if(!ds)return dlgErr('Informe a data de início.');
+      if(srcL(b.dataset.p,v).some(l=>l.desde===ds))return dlgErr('Já existe uma linha com início em '+fmtDate(ds)+'.');const before=unresolvedCount();
+      if(b.dataset.p==='TL'){cardLink[v]=cardLink[v]||[];cardLink[v].push({eq,desde:ds});cardLink[v].sort((x,y)=>x.desde.localeCompare(y.desde))}
+      else{tagLink[v]=tagLink[v]||{placa:tagPlaca[v]||'',L:[]};tagLink[v].L.push({eq,desde:ds});tagLink[v].L.sort((x,y)=>x.desde.localeCompare(y.desde))}
+      S.openHist[b.dataset.p+v]=true;
+      closeModal();render();const gone=before-unresolvedCount();
+      toast(gone>0?`Ligado a ${teamName(eq)} desde ${fmtDate(ds)}. ${gone} linhas saíram de “Sem centro de custo”.`:`Ligado a ${teamName(eq)} desde ${fmtDate(ds)}, mas a equipe não tem centro de custo nessa data. As linhas continuam na lista.`,gone>0);break;}
+    case 'save-cc': {const eq=Number(v),raw=$('#f_cc').value.trim(),desde=$('#f_desde').value;
+      const m=CCS.find(c=>raw===c[0]+' - '+c[1])||(raw.match(/^(\d\.\d{2}\.\d{3})\s*-\s*(.+)$/)?[RegExp.$1,RegExp.$2]:null);
+      if(!m)return dlgErr('Informe no formato “código - nome”, por exemplo 1.01.003 - Obra Drogasil Pinheiros.');
+      if(!desde)return dlgErr('Informe a data de início.');if(ccLinks[eq].some(l=>l.desde===desde))return dlgErr('Já existe uma linha com início em '+fmtDate(desde)+'.');
+      const before=unresolvedCount();ccLinks[eq].push({code:m[0],name:m[1],desde});ccLinks[eq].sort((x,y)=>x.desde.localeCompare(y.desde));S.openHist[eq]=true;
+      closeModal();render();const gone=before-unresolvedCount();toast(`Centro de custo de ${teamName(eq)} registrado desde ${fmtDate(desde)}.`+(gone>0?` ${gone} linhas saíram de “Sem centro de custo”.`:''));break;}
+  }
+});
+render();
+</script>
+</body>
+</html>
