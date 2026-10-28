@@ -22,6 +22,7 @@ import { lerTicketlog } from '@/lib/sofia/extratos/ticketlog'
 import { lerVeloe } from '@/lib/sofia/extratos/veloe'
 import { ErroExtrato, type LinhaExtrato, type Plataforma } from '@/lib/sofia/extratos/tipos'
 import { codigoNumerico, dataIso, decimalDeTexto } from '@/lib/sofia/extratos/comum'
+import { acharDivergencias, type Divergencia } from '@/lib/sofia/extratos/agrupar'
 
 type ResultadoEnvio = {
   linhas: number
@@ -29,6 +30,9 @@ type ResultadoEnvio = {
   existentes: number
   semCentroCusto: number
   periodo: { inicio: string; fim: string }
+  saldo: string
+  /** D4: código já gravado com valor diferente do arquivo (nada foi sobrescrito) */
+  divergentes: Divergencia[]
 }
 type EstadoEnvio = { error?: string; resultado?: ResultadoEnvio }
 type Estado = { error?: string; success?: boolean }
@@ -87,6 +91,20 @@ export async function enviarExtratoAction(_prev: EstadoEnvio, formData: FormData
     return { error: 'Não deu para ler o arquivo. Nada foi gravado.' }
   }
 
+  // D4: lê o que já está gravado ANTES de enviar, para listar os repetidos com valor diferente.
+  // Só leitura; se falhar, nada é enviado.
+  const gravadas: { codigo_transacao: string; valor: string | number }[] = []
+  for (let i = 0; i < linhas.length; i += 100) {
+    const { data: lote, error: erroLeitura } = await supabase
+      .from('sofia_extrato_linhas')
+      .select('codigo_transacao, valor')
+      .eq('plataforma', plataforma)
+      .in('codigo_transacao', linhas.slice(i, i + 100).map((l) => l.codigo_transacao))
+    if (erroLeitura) return { error: 'Não deu para conferir os códigos já gravados. Nada foi gravado.' }
+    gravadas.push(...(lote ?? []))
+  }
+  const divergentes = acharDivergencias(linhas, gravadas)
+
   const { data, error } = await supabase.rpc('sofia_registrar_extrato', {
     p_plataforma: plataforma,
     p_arquivo: arquivo.name,
@@ -111,6 +129,8 @@ export async function enviarExtratoAction(_prev: EstadoEnvio, formData: FormData
       existentes,
       semCentroCusto: sem,
       periodo: { inicio: r.periodo_inicio, fim: r.periodo_fim },
+      saldo,
+      divergentes,
     },
   }
 }

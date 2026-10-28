@@ -12,7 +12,13 @@ const getUserMock = jest.fn()
 const podeGerirMock = jest.fn()
 const registrarMock = jest.fn()
 const insertMock = jest.fn()
-const fromMock = jest.fn((tabela: string) => ({ tabela, insert: insertMock }))
+const gravadasMock = jest.fn()
+const inMock = jest.fn((_col: string, codigos: string[]) => gravadasMock(codigos))
+const fromMock = jest.fn((tabela: string) => ({
+  tabela,
+  insert: insertMock,
+  select: () => ({ eq: () => ({ in: inMock }) }),
+}))
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -60,6 +66,7 @@ beforeEach(() => {
     error: null,
   })
   insertMock.mockResolvedValue({ error: null })
+  gravadasMock.mockResolvedValue({ data: [], error: null })
 })
 
 describe('enviarExtratoAction — permissão (falha fechada)', () => {
@@ -75,11 +82,37 @@ describe('enviarExtratoAction — permissão (falha fechada)', () => {
   })
 })
 
+describe('enviarExtratoAction — divergência no reenvio (D4)', () => {
+  it('lista o código já gravado com valor diferente e ainda manda o envio (a RPC ignora a linha)', async () => {
+    let primeiro = ''
+    registrarMock.mockImplementation((args: { p_linhas: { codigo_transacao: string }[] }) => {
+      primeiro = args.p_linhas[0].codigo_transacao
+      return Promise.resolve({
+        data: { envio_id: 'e', linhas: 5, novas: 0, existentes: 5, sem_centro_custo: 0, periodo_inicio: '2026-10-01', periodo_fim: '2026-10-01' },
+        error: null,
+      })
+    })
+    gravadasMock.mockImplementation(async (codigos: string[]) => ({
+      data: [{ codigo_transacao: codigos[0], valor: 0.01 }], error: null,
+    }))
+    const r = await enviarExtratoAction({}, fdEnvio())
+    expect(r.resultado?.divergentes).toHaveLength(1)
+    expect(r.resultado?.divergentes[0]).toMatchObject({ codigo: primeiro, valorGravado: '0.01' })
+    expect(insertMock).not.toHaveBeenCalled()
+  })
+
+  it('falha ao conferir os já gravados: nada é enviado', async () => {
+    gravadasMock.mockResolvedValue({ data: null, error: { message: 'x' } })
+    expect(await enviarExtratoAction({}, fdEnvio())).toEqual({ error: 'Não deu para conferir os códigos já gravados. Nada foi gravado.' })
+    expect(registrarMock).not.toHaveBeenCalled()
+  })
+})
+
 describe('enviarExtratoAction — envio', () => {
   it('Ticketlog: lê o .xlsx e manda as linhas, o saldo e o nome do arquivo numa chamada só', async () => {
     const r = await enviarExtratoAction({}, fdEnvio())
     expect(r).toEqual({
-      resultado: { linhas: 5, novas: 3, existentes: 2, semCentroCusto: 1, periodo: { inicio: '2026-10-01', fim: '2026-10-01' } },
+      resultado: { linhas: 5, novas: 3, existentes: 2, semCentroCusto: 1, periodo: { inicio: '2026-10-01', fim: '2026-10-01' }, saldo: '1234.56', divergentes: [] },
     })
     expect(registrarMock).toHaveBeenCalledTimes(1)
     const args = registrarMock.mock.calls[0][0]
