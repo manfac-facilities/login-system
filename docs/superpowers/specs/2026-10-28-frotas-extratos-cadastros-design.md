@@ -47,3 +47,11 @@ Valores em `numeric(12,2)`, nunca float.
 ## Fora
 
 Cruzar com RH/orçamento/PEF, notas fiscais, Ticketlog pós-pago, qualquer escrita no Omie, mudar a tela Custos.
+
+## Decisão provisória do coordenador (28/10, madrugada) — confirmar com o João
+
+- E5. **Cartão Ticketlog → equipe e tag Veloe → equipe também têm vigência** (`vigente_desde`, histórico; trocar cria
+  linha nova). Achado do mockup: sem isso, mover um cartão de equipe muda retroativamente o centro de custo de todo o
+  histórico dele. Resolução na leitura: ligação cartão/tag vigente na data de uso → equipe → centro de custo vigente na
+  data de uso. "Sem centro de custo" passa a ter dois motivos: (a) cartão/tag sem equipe na data; (b) equipe sem centro
+  de custo na data.
