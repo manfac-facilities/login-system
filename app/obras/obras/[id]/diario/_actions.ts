@@ -267,11 +267,12 @@ const MAX_BYTES_FOTO = 1_500_000
 
 /**
  * 1. só o engenheiro da obra (com acesso `obras`) ou admin;
- * 2. RDO do dia em rascunho → aplica o avanço em `obras_atividade_exec` e
- *    valida. RDO já validado (envio anterior falhou) → só reenvia;
+ * 2. RDO do dia em rascunho → aplica o avanço em `obras_atividade_exec` (nunca
+ *    para trás) e valida. RDO validado/enviado → só manda a quem ainda não recebeu;
  * 3. até 6 fotos por CID (baixadas com a service role);
  * 4. um e-mail por destinatário ativo com tipo `diario`, por lado;
- * 5. um `obras_envio` por lado; RDO `enviado` se algum lado saiu.
+ * 5. um `obras_envio` por lado (destinatarios = quem recebeu; detalhe = quem
+ *    falhou); RDO `enviado` quando o lado cliente teve ao menos um sucesso.
  * Sem destinatário do cliente: valida e não envia nada.
  */
 export async function validarEEnviarAction(
@@ -305,7 +306,7 @@ export async function validarEEnviarAction(
   if (errR) return erroBanco('ler o diário', errR)
   if (!rdoL) return falha(RDO_NAO_ENCONTRADO)
   const rdo = rdoL as Linha
-  if (rdo.estado === 'enviado') return falha(JA_ENVIADO)
+  let estado = rdo.estado as string
 
   const [avR, foR] = await Promise.all([
     supabase.from('obras_rdo_avanco').select('*').eq('rdo_id', rdo.id),
@@ -323,31 +324,40 @@ export async function validarEEnviarAction(
   let validadoPor = (rdo.validado_por as string | null) ?? email
   let validadoEm = (rdo.validado_em as string | null) ?? new Date().toISOString()
 
-  if (rdo.estado === 'rascunho') {
-    // Aplica o "para" do diário na execução (spec §7.2) ANTES de validar: se
-    // falhar no meio, o RDO segue rascunho e repetir reaplica os mesmos valores.
+  if (estado === 'rascunho') {
+    // Aplica o diário na execução (spec §7.2) ANTES de validar: se falhar no
+    // meio, o RDO segue rascunho e repetir reaplica os mesmos valores.
+    // Nunca para trás (ruling do controlador): percentual = max(atual, para);
+    // atividade já concluída fica concluída. O rastro é obras_rdo_avanco +
+    // atualizado_por/em da execução (sem linha em obras_historico).
     const agora = new Date().toISOString()
+    const execDe = (n: number) => exec.find((e) => e.numero === n)
+    // A trava concluída neste mesmo diário libera as que dependem dela.
+    const concluidasHoje = new Set(rdo.sem_execucao ? [] : avancos.filter((a) => a.concluida).map((a) => a.numero))
+    const execParaTrava = exec.map((e) => (concluidasHoje.has(e.numero) ? { ...e, status: 'concluido' as const } : e))
+    if (obra.atividade_trava !== null && concluidasHoje.has(obra.atividade_trava) && !execDe(obra.atividade_trava)) {
+      execParaTrava.push({ numero: obra.atividade_trava, status: 'concluido', percentual: 1, inicioReal: null, fimReal: null })
+    }
     const linhas: Linha[] = []
     for (const a of rdo.sem_execucao ? [] : avancos) {
-      const atual = exec.find((e) => e.numero === a.numero)
+      const atual = execDe(a.numero)
+      if (atual?.status === 'concluido') continue
       const antes = atual?.percentual ?? 0
-      const para = a.concluida ? 1 : a.para
-      if (!a.concluida && para === antes && atual?.status !== 'concluido') continue
-      if (a.concluida || para > antes) {
-        const trava = podeIniciar(a.numero, plano, exec, obra.atividade_trava ?? null)
-        if (!trava.ok) return falha(`Atividade ${a.numero}: ${trava.motivo.charAt(0).toLowerCase()}${trava.motivo.slice(1)}`)
-      }
+      const percentual = a.concluida ? 1 : Math.max(antes, a.para)
+      if (!a.concluida && percentual === antes) continue
+      const trava = podeIniciar(a.numero, plano, execParaTrava, obra.atividade_trava ?? null)
+      if (!trava.ok) return falha(`Atividade ${a.numero}: ${trava.motivo.charAt(0).toLowerCase()}${trava.motivo.slice(1)}`)
       let status: string
       if (a.concluida) status = 'concluido'
       else if (atual?.status === 'bloqueado') status = 'bloqueado'
-      else status = para > 0 ? 'em_andamento' : 'nao_iniciado'
+      else status = 'em_andamento'
       linhas.push({
         obra_id: obraId,
         numero: a.numero,
         status,
-        percentual: para,
-        inicio_real: atual?.inicioReal ?? (para > 0 ? data : null),
-        fim_real: a.concluida ? (atual?.fimReal ?? data) : null,
+        percentual,
+        inicio_real: atual?.inicioReal ?? data,
+        fim_real: a.concluida ? (atual?.fimReal ?? data) : (atual?.fimReal ?? null),
         atualizado_em: agora,
       })
     }
@@ -366,25 +376,42 @@ export async function validarEEnviarAction(
       .maybeSingle()
     if (errV) return errV.code === '42501' ? falha(SO_ENGENHEIRO) : erroBanco('validar o diário', errV)
     if (!validado) return falha(JA_VALIDADO) // outra pessoa validou no meio do caminho
+    estado = 'validado'
     validadoPor = ((validado as Linha).validado_por as string | null) ?? email
     validadoEm = ((validado as Linha).validado_em as string | null) ?? agora
     revalidar(obraId)
   }
 
-  const { data: destL, error: errDest } = await supabase
-    .from('obras_destinatario')
-    .select('email, lado')
-    .eq('obra_id', obraId)
-    .eq('ativo', true)
-    .contains('tipos', ['diario'])
-  if (errDest) return falha(`${VALIDADO_MAS}: não deu para ler os destinatários (${errDest.message})`)
+  const [destR, envR] = await Promise.all([
+    supabase
+      .from('obras_destinatario')
+      .select('email, lado')
+      .eq('obra_id', obraId)
+      .eq('ativo', true)
+      .contains('tipos', ['diario']),
+    supabase.from('obras_envio').select('lado, destinatarios').eq('rdo_id', rdo.id),
+  ])
+  if (destR.error) return falha(`${VALIDADO_MAS}: não deu para ler os destinatários (${destR.error.message})`)
+  if (envR.error) return falha(`${VALIDADO_MAS}: não deu para ler os envios anteriores (${envR.error.message})`)
+  // Quem já recebeu este diário (destinatarios de obras_envio = só os aceitos).
+  const jaRecebeu = (lado: string) =>
+    new Set(
+      ((envR.data ?? []) as Linha[])
+        .filter((e) => e.lado === lado)
+        .flatMap((e) => ((e.destinatarios ?? []) as string[]).map((x) => x.trim().toLowerCase())),
+    )
   const doLado = (lado: string) =>
-    ((destL ?? []) as Linha[])
+    ((destR.data ?? []) as Linha[])
       .filter((d) => d.lado === lado)
       .map((d) => String(d.email ?? '').trim())
       .filter(Boolean)
-  const lados = { cliente: doLado('cliente'), interno: doLado('interno') }
-  if (!lados.cliente.length) return falha(SEM_DESTINATARIO_CLIENTE)
+  const cadastrados = { cliente: doLado('cliente'), interno: doLado('interno') }
+  if (!cadastrados.cliente.length) return falha(SEM_DESTINATARIO_CLIENTE)
+  const pendentes = {
+    cliente: cadastrados.cliente.filter((x) => !jaRecebeu('cliente').has(x.toLowerCase())),
+    interno: cadastrados.interno.filter((x) => !jaRecebeu('interno').has(x.toLowerCase())),
+  }
+  if (!pendentes.cliente.length && !pendentes.interno.length) return { ok: true, enviados: 0 }
 
   // Leitura de novo: o e-mail mostra o cronograma já com o avanço do dia.
   const relida = await lerObraGrande(supabase, obraId, data)
@@ -422,16 +449,20 @@ export async function validarEEnviarAction(
   const diaN = diasUteisEntre(obra.data_base ?? data, data, relida.dados.feriados)
 
   let enviados = 0
+  let clienteRecebeu = false
+  const falhas: string[] = []
   const erros: string[] = []
   for (const lado of ['cliente', 'interno'] as const) {
-    const para = lados[lado]
+    const para = pendentes[lado]
     if (!para.length) continue
     const msg = montarEmailDiario({
       lado, obra: relida.dados, rdo: rdoCompleto, validadoPor, validadoEm, diaN, fotosCid, fotosOmitidas,
     })
     const r = await enviarEmail({ para, ...msg, anexos })
-    if (r.ok) enviados += para.length
-    else erros.push(`${lado}: ${r.erro}`)
+    enviados += r.aceitos.length
+    if (lado === 'cliente' && r.aceitos.length) clienteRecebeu = true
+    const detalhe = r.falhas.length ? `Falhou: ${r.falhas.map((f) => `${f.para} (${f.erro})`).join(', ')}` : null
+    if (detalhe) falhas.push(`${lado} — ${detalhe}`)
     // enviado_por vem do JWT (trigger obras_envio_autor).
     const { error } = await supabase.from('obras_envio').insert({
       obra_id: obraId,
@@ -439,14 +470,14 @@ export async function validarEEnviarAction(
       referencia: data,
       rdo_id: rdo.id,
       lado,
-      destinatarios: para,
-      resultado: r.ok ? 'ok' : 'falha',
-      detalhe: r.ok ? null : r.erro,
+      destinatarios: r.aceitos,
+      resultado: r.falhas.length ? 'falha' : 'ok',
+      detalhe,
     })
     if (error) erros.push(`registro do envio (${lado}) falhou: ${error.message}`)
   }
 
-  if (enviados > 0) {
+  if (clienteRecebeu && estado === 'validado') {
     const { error } = await supabase
       .from('obras_rdo')
       .update({ estado: 'enviado', atualizado_em: new Date().toISOString() })
@@ -456,7 +487,10 @@ export async function validarEEnviarAction(
   }
   revalidar(obraId)
 
-  if (enviados === 0) return falha(`${VALIDADO_MAS}: ${erros.join(' · ')}`)
-  if (erros.length) return { ok: false, erro: `Enviado em parte (${enviados} destinatário(s)): ${erros.join(' · ')}`, enviados }
+  const problemas = [...falhas, ...erros]
+  if (enviados === 0) return falha(`${VALIDADO_MAS}: ${problemas.join(' · ')}`)
+  if (problemas.length) {
+    return { ok: false, erro: `Enviado a ${enviados} destinatário(s), mas: ${problemas.join(' · ')}`, enviados }
+  }
   return { ok: true, enviados }
 }

@@ -129,8 +129,20 @@ export default async function DiarioObraPage({
   // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).
   const podeValidar =
     admin || (!!obra.engenheiro_email && obra.engenheiro_email.trim().toLowerCase() === email)
+  // Já enviado: o botão só volta se algum destinatário ainda não recebeu.
+  let pendentes: number | null = null
+  if (rdo && podeValidar && rdo.estado === 'enviado') {
+    const [dR, eR] = await Promise.all([
+      supabase.from('obras_destinatario').select('email, lado').eq('obra_id', id).eq('ativo', true).contains('tipos', ['diario']),
+      supabase.from('obras_envio').select('lado, destinatarios').eq('rdo_id', rdo.id),
+    ])
+    const recebeu = new Set(
+      ((eR.data ?? []) as Linha[]).flatMap((e) => ((e.destinatarios ?? []) as string[]).map((x) => e.lado + ':' + x.trim().toLowerCase())),
+    )
+    pendentes = ((dR.data ?? []) as Linha[]).filter((d) => !recebeu.has(d.lado + ':' + String(d.email).trim().toLowerCase())).length
+  }
   let previaHtml: string | null = null
-  if (rdo && podeValidar && (rdo.estado === 'rascunho' || rdo.estado === 'validado')) {
+  if (rdo && podeValidar && (rdo.estado === 'rascunho' || rdo.estado === 'validado' || (pendentes ?? 0) > 0)) {
     const comUrl = fotos.slice(0, 6).filter((f) => f.url)
     let html = montarEmailDiario({
       lado: 'cliente',
@@ -222,7 +234,7 @@ export default async function DiarioObraPage({
       />
 
       {previaHtml !== null ? (
-        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} />
+        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} pendentes={pendentes} />
       ) : null}
     </div>
   )

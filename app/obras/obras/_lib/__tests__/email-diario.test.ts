@@ -164,4 +164,26 @@ describe('montarEmailDiario', () => {
     expect(r.texto).toContain('2 fotos omitidas')
     expect(r.html).toContain('2 fotos omitidas')
   })
+  it('orientações à loja do dia: cliente vê as exibíveis, interno vê todas', () => {
+    const impedimentos = [
+      ...IMPEDIMENTOS,
+      imp({ id: 'o1', categoria: 'orientacao', tipo: null, responsavel: null, atividadeNumero: null,
+        descricao: 'Não molhar o piso por 72h', pessoaCliente: 'Carla (gerente)', exibirAoCliente: true,
+        abertoEm: '2026-10-29', criadoEm: '2026-10-29T17:15:00Z' }),
+      imp({ id: 'o2', categoria: 'orientacao', tipo: null, responsavel: null, atividadeNumero: null,
+        descricao: 'Orientação interna da equipe', exibirAoCliente: false, abertoEm: '2026-10-29' }),
+      imp({ id: 'o3', categoria: 'orientacao', tipo: null, responsavel: null, atividadeNumero: null,
+        descricao: 'Orientação de ontem', exibirAoCliente: true, abertoEm: '2026-10-28' }),
+    ]
+    const cli = montar('cliente', { impedimentos })
+    expect(cli.html).toContain('Orientações à loja')
+    expect(cli.html).toContain('Não molhar o piso por 72h — recebida por Carla (gerente) às 14:15')
+    expect(cli.texto).toContain('Não molhar o piso por 72h')
+    expect(cli.html).not.toContain('Orientação interna da equipe')
+    expect(cli.html).not.toContain('Orientação de ontem')
+    const int = montar('interno', { impedimentos })
+    expect(int.html).toContain('Orientação interna da equipe (não foi ao cliente)')
+    expect(int.html).not.toContain('Orientação de ontem')
+    expect(montar('cliente').html).not.toContain('Orientações à loja')
+  })
 })

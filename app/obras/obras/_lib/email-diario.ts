@@ -38,6 +38,9 @@ const diaSemana = (iso: string) => {
 const hora = (ts: string) =>
   new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ts))
 
+const diaLocal = (ts: string) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts))
+
 const RESP: Record<Responsavel, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiro: 'Terceiro', clima: 'Clima' }
 const ATRASO_DE: Record<Responsavel, string> = {
   cliente: 'do cliente', manfac: 'da Manfac', terceiro: 'de terceiros', clima: 'do clima',
@@ -137,6 +140,16 @@ export function montarEmailDiario(p: {
   }
   const ocultos: Item[] = lado === 'interno' ? abertos.filter((i) => !i.exibirAoCliente).map(itemDe) : []
 
+  // 4b. Orientações à loja registradas no dia (spec §5.3 item 4: saem no diário daquele dia).
+  const orientacoes: string[] = og.impedimentos
+    .filter((i) => i.categoria === 'orientacao' && i.abertoEm === rdo.data && (lado === 'interno' || i.exibirAoCliente))
+    .map((o) => {
+      const quando = o.criadoEm && diaLocal(o.criadoEm) === rdo.data ? ' às ' + hora(o.criadoEm) : ''
+      const quem = o.pessoaCliente?.trim() ? ' — recebida por ' + o.pessoaCliente.trim() : ''
+      const oculta = lado === 'interno' && !o.exibirAoCliente ? ' (não foi ao cliente)' : ''
+      return o.descricao + quem + quando + oculta
+    })
+
   // 5. O que a Manfac fez hoje
   const feitos = rdo.semExecucao
     ? []
@@ -211,6 +224,7 @@ ${numeros
 </tr></table></td></tr>
 ${secao('Onde está travado', travados.length ? travados.map(caixa).join('') : '<div style="font-size:14px;color:#64748b">Nada travado hoje.</div>')}
 ${ocultos.length ? secao('Só interno · Não foi ao cliente', ocultos.map(caixa).join('')) : ''}
+${orientacoes.length ? secao('Orientações à loja', orientacoes.map((t) => '<div style="border-left:3px solid #2563eb;background:#eff6ff;padding:6px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">' + esc(t) + '</div>').join('')) : ''}
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
 <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
@@ -230,6 +244,7 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     'ONDE ESTÁ TRAVADO',
     ...(travados.length ? travados.map((it) => `- ${it.rotulo}: ${it.corpo}`) : ['Nada travado hoje.']),
     ...(ocultos.length ? ['', 'SÓ INTERNO · NÃO FOI AO CLIENTE', ...ocultos.map((it) => `- ${it.rotulo}: ${it.corpo}`)] : []),
+    ...(orientacoes.length ? ['', 'ORIENTAÇÕES À LOJA', ...orientacoes.map((t) => `- ${t}`)] : []),
     '',
     'O QUE A MANFAC FEZ HOJE',
     ...(semExecucao ? [semExecucao] : feitos.length ? feitos : ['Nenhuma atividade avançou hoje.']),

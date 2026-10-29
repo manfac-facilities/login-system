@@ -102,7 +102,7 @@ function dadosObra() {
       plano,
       exec: plano.map((p) => ({
         numero: p.numero, status: p.numero === 6 ? 'em_andamento' : 'nao_iniciado',
-        percentual: p.numero === 6 ? 0.5 : 0, inicioReal: p.numero === 6 ? '2026-10-27' : null, fimReal: null,
+        percentual: p.numero === 6 ? 0.5 : 0, inicioReal: p.numero === 6 ? '2026-10-27' : null, fimReal: null as string | null,
       })),
       impedimentos: [
         {
@@ -185,9 +185,75 @@ describe('validarEEnviarAction', () => {
     expect(sendMail).not.toHaveBeenCalled()
   })
 
-  it('diário já enviado → erro', async () => {
+  it('diário enviado e todos já receberam → nada a enviar', async () => {
     db.obras_rdo[0].estado = 'enviado'
-    expect(await validarEEnviarAction(OBRA, DIA)).toEqual({ ok: false, erro: 'Diário já enviado' })
+    db.obras_envio = [
+      { obra_id: OBRA, rdo_id: 'r1', lado: 'cliente', destinatarios: ['ana@dpsp.com.br', 'bia@dpsp.com.br'], resultado: 'ok' },
+      { obra_id: OBRA, rdo_id: 'r1', lado: 'interno', destinatarios: ['interno@manfac.com.br'], resultado: 'ok' },
+    ]
+    expect(await validarEEnviarAction(OBRA, DIA)).toEqual({ ok: true, enviados: 0 })
+    expect(sendMail).not.toHaveBeenCalled()
+    expect(db.obras_envio).toHaveLength(2)
+  })
+
+  it('falha parcial: registra só quem recebeu, detalha quem falhou, conta os aceitos', async () => {
+    sendMail.mockImplementation(async (m: { to: string }) => {
+      if (m.to === 'bia@dpsp.com.br') throw Object.assign(new Error('x'), { responseCode: 451 })
+      return {}
+    })
+    const r = await validarEEnviarAction(OBRA, DIA)
+    expect(r.ok).toBe(false)
+    expect(r).toMatchObject({ enviados: 2 })
+    const cli = db.obras_envio.find((e) => e.lado === 'cliente')!
+    expect(cli).toMatchObject({ resultado: 'falha', destinatarios: ['ana@dpsp.com.br'] })
+    expect(String(cli.detalhe)).toContain('bia@dpsp.com.br (451)')
+    expect(db.obras_envio.find((e) => e.lado === 'interno')).toMatchObject({ resultado: 'ok', destinatarios: ['interno@manfac.com.br'], detalhe: null })
+    // cliente teve ao menos um sucesso → enviado
+    expect(db.obras_rdo[0].estado).toBe('enviado')
+  })
+
+  it('enviar de novo manda só a quem ainda não recebeu (também com o RDO já enviado)', async () => {
+    sendMail.mockImplementation(async (m: { to: string }) => {
+      if (m.to === 'bia@dpsp.com.br') throw Object.assign(new Error('x'), { responseCode: 451 })
+      return {}
+    })
+    await validarEEnviarAction(OBRA, DIA)
+    sendMail.mockReset()
+    sendMail.mockResolvedValue({})
+    const r = await validarEEnviarAction(OBRA, DIA)
+    expect(r).toEqual({ ok: true, enviados: 1 })
+    expect(sendMail).toHaveBeenCalledTimes(1)
+    expect(sendMail.mock.calls[0][0].to).toBe('bia@dpsp.com.br')
+    expect(db.obras_envio).toHaveLength(3)
+    expect(db.obras_envio[2]).toMatchObject({ lado: 'cliente', resultado: 'ok', destinatarios: ['bia@dpsp.com.br'] })
+    expect(db.obras_rdo[0].estado).toBe('enviado')
+  })
+
+  it('nunca para trás: atividade concluída continua concluída e percentual não cai', async () => {
+    const dados = dadosObra()
+    dados.dados.exec = dados.dados.exec.map((e) =>
+      e.numero === 6 ? { ...e, status: 'concluido', percentual: 1, fimReal: '2026-10-28' }
+        : e.numero === 7 ? { ...e, status: 'em_andamento', percentual: 0.5, inicioReal: '2026-10-28' } : e,
+    )
+    lerObraGrandeMock.mockImplementation(async () => dados)
+    db.obras_rdo_avanco = [
+      { rdo_id: 'r1', numero: 6, de: 0.5, para: 0.8, concluida: false, causa: null },
+      { rdo_id: 'r1', numero: 7, de: 0.5, para: 0.3, concluida: false, causa: 'cliente' },
+      { rdo_id: 'r1', numero: 8, de: 0, para: 0.4, concluida: false, causa: null },
+    ]
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_exec).toEqual([
+      expect.objectContaining({ numero: 8, percentual: 0.4, status: 'em_andamento', inicio_real: DIA, fim_real: null }),
+    ])
+  })
+
+  it('conclui a trava e avança a dependente no mesmo diário', async () => {
+    db.obras_rdo_avanco = [
+      { rdo_id: 'r1', numero: 6, de: 0.5, para: 1, concluida: true, causa: null },
+      { rdo_id: 'r1', numero: 11, de: 0, para: 0.2, concluida: false, causa: null },
+    ]
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_exec.map((e) => e.numero).sort()).toEqual([11, 6])
   })
 
   it('sucesso: aplica o avanço, valida, um e-mail por destinatário, 2 obras_envio, marca enviado', async () => {

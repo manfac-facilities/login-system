@@ -1,11 +1,14 @@
 /**
  * Envio de e-mail pela Locaweb (mesmo SMTP/remetente do relatório diário,
  * `app/api/obras/relatorio-diario/route.ts`). Um e-mail por destinatário —
- * ninguém vê a lista. Sem env completa → erro, sem tentar enviar.
+ * ninguém vê a lista. Resultado por destinatário (quem recebeu e quem falhou).
+ * Sem env completa → todos falham, sem tentar enviar.
  */
 import { createTransport } from 'nodemailer'
 
 const TIMEOUT_SMTP_MS = 15_000
+
+export type ResultadoEnvio = { ok: boolean; aceitos: string[]; falhas: { para: string; erro: string }[] }
 
 /** Só o código do erro SMTP — nunca a mensagem crua do servidor. */
 function codigoDoErroSmtp(e: unknown): string {
@@ -20,7 +23,7 @@ export async function enviarEmail(p: {
   html: string
   texto: string
   anexos: { cid: string; nome: string; conteudo: Buffer }[]
-}): Promise<{ ok: true } | { ok: false; erro: string }> {
+}): Promise<ResultadoEnvio> {
   const smtp = {
     host: process.env.SMTP_HOST ?? '',
     usuario: process.env.SMTP_USUARIO ?? '',
@@ -30,8 +33,10 @@ export async function enviarEmail(p: {
   const faltando = Object.entries({
     SMTP_HOST: smtp.host, SMTP_USUARIO: smtp.usuario, SMTP_SENHA: smtp.senha, SMTP_REMETENTE: smtp.remetente,
   }).find(([, v]) => !v.trim())
-  if (faltando) return { ok: false, erro: `${faltando[0]} não configurado` }
-  if (!p.para.length) return { ok: false, erro: 'Sem destinatários' }
+  if (faltando) {
+    const erro = `${faltando[0]} não configurado`
+    return { ok: false, aceitos: [], falhas: p.para.map((para) => ({ para, erro })) }
+  }
 
   const porta = Number(process.env.SMTP_PORTA?.trim() || 465)
   const transporte = createTransport({
@@ -58,14 +63,15 @@ export async function enviarEmail(p: {
     })),
   }
 
-  const falhas: string[] = []
+  const aceitos: string[] = []
+  const falhas: { para: string; erro: string }[] = []
   for (const para of p.para) {
     try {
       await transporte.sendMail({ ...base, to: para })
+      aceitos.push(para)
     } catch (e) {
-      falhas.push(`${para} (${codigoDoErroSmtp(e)})`)
+      falhas.push({ para, erro: codigoDoErroSmtp(e) })
     }
   }
-  if (falhas.length) return { ok: false, erro: `Falhou para ${falhas.length} de ${p.para.length}: ${falhas.join(', ')}` }
-  return { ok: true }
+  return { ok: falhas.length === 0, aceitos, falhas }
 }

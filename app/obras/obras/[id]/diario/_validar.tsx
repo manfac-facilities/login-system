@@ -15,11 +15,14 @@ export default function ValidarDiario({
   data,
   estado,
   previaHtml,
+  pendentes = null,
 }: {
   obraId: string
   data: string
   estado: EstadoRdo
   previaHtml: string
+  /** Já enviado: quantos destinatários ainda não receberam. */
+  pendentes?: number | null
 }) {
   const router = useRouter()
   const [previa, setPrevia] = useState(false)
@@ -33,8 +36,9 @@ export default function ValidarDiario({
     setAviso(null)
     try {
       const r = await validarEEnviarAction(obraId, data)
-      if (r.ok) setAviso(`Diário enviado para ${r.enviados ?? 0} destinatário(s).`)
-      else setErro(r.erro)
+      if (r.ok) {
+        setAviso(r.enviados ? `Diário enviado para ${r.enviados} destinatário(s).` : 'Nada pendente: todos os destinatários já receberam.')
+      } else setErro(r.erro)
       router.refresh()
     } catch {
       setErro('Não deu para validar e enviar. Confira a conexão e tente de novo.')
@@ -51,8 +55,10 @@ export default function ValidarDiario({
       <div>
         <h3 className="font-bold text-white">Validar e enviar</h3>
         <p className="text-sm text-[#94a3b8]">
-          {estado === 'validado'
-            ? 'Diário já validado, mas o e-mail não saiu. Você pode tentar enviar de novo.'
+          {estado === 'enviado'
+            ? `Diário enviado, mas ${pendentes ?? 0} destinatário(s) ainda não receberam. Enviar de novo manda só para eles.`
+            : estado === 'validado'
+            ? 'Diário já validado, mas o e-mail não saiu. Enviar de novo manda só para quem ainda não recebeu.'
             : 'Ao validar, o avanço do dia vai para o cronograma e o diário não pode mais ser alterado. Salve o rascunho antes.'}
         </p>
       </div>
@@ -65,7 +71,7 @@ export default function ValidarDiario({
           {previa ? 'Fechar prévia' : 'Ver prévia'}
         </button>
         <button type="button" onClick={enviar} disabled={enviando} className={`${botao} bg-[#f05a28] text-white`}>
-          {enviando ? 'Enviando…' : estado === 'validado' ? 'Enviar de novo' : 'Validar e enviar'}
+          {enviando ? 'Enviando…' : estado === 'rascunho' ? 'Validar e enviar' : 'Enviar de novo'}
         </button>
       </div>
       {erro ? (
