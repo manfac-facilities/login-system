@@ -1,7 +1,7 @@
 'use client'
 import { useActionState, useCallback, useEffect, useState } from 'react'
 import Dialogo from '@/components/sofia/Dialogo'
-import { criarLigacaoAction, novaVigenciaCentroCustoAction } from './_actions'
+import { criarLigacaoAction, encerrarLigacaoAction, novaVigenciaCentroCustoAction } from './_actions'
 
 export interface EquipeOpcao {
   id: string
@@ -44,7 +44,17 @@ function Botao({
   )
 }
 
-function Rodape({ erro, pendente, onFechar }: { erro?: string; pendente: boolean; onFechar: () => void }) {
+function Rodape({
+  erro,
+  pendente,
+  onFechar,
+  rotuloSalvar = 'Salvar',
+}: {
+  erro?: string
+  pendente: boolean
+  onFechar: () => void
+  rotuloSalvar?: string
+}) {
   return (
     <>
       {erro && (
@@ -57,7 +67,7 @@ function Rodape({ erro, pendente, onFechar }: { erro?: string; pendente: boolean
           Cancelar
         </button>
         <button type="submit" disabled={pendente} className={btnP}>
-          {pendente ? 'Salvando...' : 'Salvar'}
+          {pendente ? 'Salvando...' : rotuloSalvar}
         </button>
       </div>
     </>
@@ -145,6 +155,49 @@ export function BotaoLigacao({
   return (
     <Botao rotulo={rotulo} classe={primario ? btnP : 'text-xs text-[#94a3b8] hover:text-white'}>
       {(fechar) => <DialogoLigacao {...resto} onFechar={fechar} />}
+    </Botao>
+  )
+}
+
+type PropsEncerrar = {
+  plataforma: 'ticketlog' | 'veloe'
+  identificador: string
+  mascara: string
+  equipe: string
+  desdeSugerida: string
+}
+
+function DialogoEncerrar({ plataforma, identificador, mascara, equipe, desdeSugerida, onFechar }: PropsEncerrar & { onFechar: () => void }) {
+  const [state, formAction, pendente] = useActionState(encerrarLigacaoAction, {})
+  useEffect(() => {
+    if (state.success) onFechar()
+  }, [state, onFechar])
+  return (
+    <Dialogo titulo={plataforma === 'ticketlog' ? 'Encerrar ligação: cartão' : 'Encerrar ligação: tag'} subtitulo={mascara} onFechar={onFechar}>
+      <form action={formAction}>
+        <input type="hidden" name="plataforma" value={plataforma} />
+        <input type="hidden" name="identificador" value={identificador} />
+        <p className="text-sm text-[#cbd5e1] mb-3">
+          Hoje ligado à equipe <strong className="text-white">{equipe}</strong>. Depois de encerrar, os gastos dessa data
+          em diante ficam em “Sem centro de custo” até você ligar a uma equipe de novo.
+        </p>
+        <label className={lbl} htmlFor="enc-em">
+          Encerrar em
+        </label>
+        <input id="enc-em" name="encerrada_em" type="date" defaultValue={desdeSugerida} className={fld} required />
+        <p className="text-xs text-[#94a3b8] mt-3">
+          Nada é apagado: fica uma linha de encerramento no histórico, e gastos anteriores continuam na equipe de antes.
+        </p>
+        <Rodape erro={state.error} pendente={pendente} onFechar={onFechar} rotuloSalvar="Encerrar ligação" />
+      </form>
+    </Dialogo>
+  )
+}
+
+export function BotaoEncerrar(props: PropsEncerrar) {
+  return (
+    <Botao rotulo="Encerrar ligação" classe="text-xs text-red-400 hover:text-red-300">
+      {(fechar) => <DialogoEncerrar {...props} onFechar={fechar} />}
     </Botao>
   )
 }
