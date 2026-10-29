@@ -10,7 +10,7 @@
  */
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
-import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
+import { atrasoPorResponsavel, diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
 export type RdoCompleto = {
@@ -83,9 +83,20 @@ export function montarEmailDiario(p: {
       : calc.desvioPP > 0
         ? `${num(calc.desvioPP)} p.p. acima do previsto`
         : 'em linha com o previsto'
+  // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
+  const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
+  const atraso =
+    lado === 'interno' || !og.atraso || !og.terminoBase || !og.calc
+      ? og.atraso
+      : atrasoPorResponsavel({
+          terminoBase: og.terminoBase,
+          terminoProjetado: og.calc.terminoProjetado,
+          impacto: diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados),
+          feriados,
+        })
   let quebra = ''
-  if (og.atraso && og.atraso.total > 0) {
-    const a = og.atraso
+  if (atraso && atraso.total > 0) {
+    const a = atraso
     const partes = (['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
       .filter((r) => a[r] > 0)
       .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`)
@@ -94,7 +105,7 @@ export function montarEmailDiario(p: {
   const previsao = `Entrega prevista: ${dataBr(calc.terminoProjetado)}${quebra}`
 
   // 3. Três números
-  const impactoCliente = diasDeImpacto(impedimentosCalcDe(og.impedimentos), rdo.data, feriados).cliente
+  const impactoCliente = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados).cliente
   const numeros: [string, string][] = [
     [pct(calc.previsto), 'previsto'],
     [pct(calc.realizado), 'realizado'],

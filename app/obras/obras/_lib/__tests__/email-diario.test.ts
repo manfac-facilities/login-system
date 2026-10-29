@@ -102,6 +102,32 @@ describe('montarEmailDiario', () => {
     expect(html).toContain('Não foi ao cliente')
   })
 
+  describe('dias de impacto só de impedimentos visíveis ao cliente (M1)', () => {
+    const impactos = [
+      imp({ id: 'v', responsavel: 'cliente', descricao: 'Visível', travaAtividade: false, impactoDias: 2, exibirAoCliente: true, abertoEm: '2026-10-27' }),
+      imp({ id: 'h', responsavel: 'cliente', descricao: 'Escondido', travaAtividade: false, impactoDias: 3, exibirAoCliente: false, abertoEm: '2026-10-27' }),
+    ]
+    const extra = {
+      impedimentos: impactos,
+      calc: { atividades: [], previsto: 0.08, realizado: 0.06, desvioPP: -2, terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-19' },
+      atraso: { total: 5, cliente: 5, manfac: 0, terceiro: 0, clima: 0 },
+    } as Partial<ObraGrande>
+
+    it('cliente: números e quebra não incluem o impedimento oculto', () => {
+      const { html } = montar('cliente', extra)
+      expect(html).toContain('>2 d<')
+      expect(html).not.toContain('>5 d<')
+      expect(html).toContain('2 do cliente')
+      expect(html).not.toContain('5 do cliente')
+    })
+
+    it('interno: conta todos os impedimentos', () => {
+      const { html } = montar('interno', extra)
+      expect(html).toContain('>5 d<')
+      expect(html).toContain('5 do cliente')
+    })
+  })
+
   it('cabeçalho com validado por e hora de Brasília', () => {
     const { html } = montar('cliente')
     expect(html).toContain('MANFAC · DIÁRIO DE OBRA')
@@ -120,6 +146,7 @@ describe('montarEmailDiario', () => {
   it('sinal vermelho mostra "Atrasado" e a quebra do atraso por responsável', () => {
     const { html, texto } = montar('cliente', {
       sinal: 'vermelho',
+      impedimentos: [imp({ id: 'x', travaAtividade: false, impactoDias: 4, abertoEm: '2026-10-27' })],
       atraso: { total: 5, cliente: 4, manfac: 1, terceiro: 0, clima: 0 },
       calc: { atividades: [], previsto: 0.2, realizado: 0.1, desvioPP: -10, terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-19' },
     })
