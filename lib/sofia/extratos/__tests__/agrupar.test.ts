@@ -33,12 +33,18 @@ describe('agruparSemCentroCusto', () => {
 })
 
 describe('ligacaoVigente', () => {
-  const l = (eq: string, d: string, c: string) => ({ plataforma: 'ticketlog', identificador: '1', equipe_id: eq, vigente_desde: d, criado_em: c })
+  const l = (eq: string | null, d: string, c: string) => ({ plataforma: 'ticketlog', identificador: '1', equipe_id: eq, vigente_desde: d, criado_em: c })
   it('ignora vigência futura e desempata pela última registrada', () => {
     const h = [l('a', '2026-08-01', '1'), l('b', '2026-10-12', '2'), l('c', '2026-10-12', '3'), l('d', '2026-12-01', '4')]
     expect(ligacaoVigente(h, '2026-10-28')?.equipe_id).toBe('c')
     expect(ligacaoVigente(h, '2026-09-01')?.equipe_id).toBe('a')
     expect(ligacaoVigente(h, '2026-07-01')).toBeNull()
+  })
+  it('encerramento (equipe nula) vale a partir da data; religar depois volta a valer', () => {
+    const h = [l('a', '2026-08-01', '1'), l(null, '2026-10-15', '2')]
+    expect(ligacaoVigente(h, '2026-10-14')?.equipe_id).toBe('a')
+    expect(ligacaoVigente(h, '2026-10-15')?.equipe_id).toBeNull()
+    expect(ligacaoVigente([...h, l('b', '2026-10-18', '3')], '2026-10-20')?.equipe_id).toBe('b')
   })
 })
 

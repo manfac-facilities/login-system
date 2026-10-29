@@ -81,7 +81,8 @@ export function agruparSemCentroCusto(linhas: LinhaSemCC[]): GrupoSemCC[] {
 export type Ligacao = {
   plataforma: string
   identificador: string
-  equipe_id: string
+  /** null = ligação ENCERRADA em vigente_desde (D3) */
+  equipe_id: string | null
   vigente_desde: string
   criado_em: string
 }

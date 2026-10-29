@@ -22,7 +22,7 @@ import { lerTicketlog } from '@/lib/sofia/extratos/ticketlog'
 import { lerVeloe } from '@/lib/sofia/extratos/veloe'
 import { ErroExtrato, type LinhaExtrato, type Plataforma } from '@/lib/sofia/extratos/tipos'
 import { codigoNumerico, dataIso, decimalDeTexto } from '@/lib/sofia/extratos/comum'
-import { acharDivergencias, type Divergencia } from '@/lib/sofia/extratos/agrupar'
+import { acharDivergencias, ligacaoVigente, type Divergencia, type Ligacao } from '@/lib/sofia/extratos/agrupar'
 
 type ResultadoEnvio = {
   linhas: number
@@ -156,6 +156,42 @@ export async function criarLigacaoAction(_prev: Estado, formData: FormData): Pro
     .from('sofia_extrato_ligacoes')
     .insert({ plataforma, identificador, equipe_id, vigente_desde })
   if (error) return { error: error.code === '23503' ? 'Equipe não encontrada.' : 'Erro ao salvar a ligação' }
+
+  revalidatePath(ROTA)
+  return { success: true }
+}
+
+/**
+ * D3: encerra a ligação de um cartão/tag a partir de uma data. Não apaga nada: insere uma linha
+ * nova com equipe_id nulo; a view passa a dar 'sem_equipe' para gastos dessa data em diante.
+ * Só encerra se há ligação com equipe vigente na data (falha fechada em qualquer dúvida).
+ */
+export async function encerrarLigacaoAction(_prev: Estado, formData: FormData): Promise<Estado> {
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  const plataforma = plataformaDe(formData.get('plataforma'))
+  if (!plataforma) return { error: 'Escolha a plataforma: Ticketlog ou Veloe.' }
+  const identificador = codigoNumerico(textoDe(formData.get('identificador')))
+  if (!identificador) return { error: 'Informe o número do cartão ou da tag.' }
+  const vigente_desde = dataDe(formData.get('encerrada_em'))
+  if (!vigente_desde) return { error: 'Informe a data do encerramento.' }
+
+  const { data, error: erroLeitura } = await supabase
+    .from('sofia_extrato_ligacoes')
+    .select('plataforma, identificador, equipe_id, vigente_desde, criado_em')
+    .eq('plataforma', plataforma)
+    .eq('identificador', identificador)
+  if (erroLeitura || !data) return { error: 'Não deu para conferir a ligação. Nada foi gravado.' }
+  const vigente = ligacaoVigente(data as Ligacao[], vigente_desde)
+  if (!vigente) return { error: 'Não há ligação vigente nessa data para encerrar.' }
+  if (vigente.equipe_id === null) return { error: 'Essa ligação já está encerrada nessa data.' }
+
+  const { error } = await supabase
+    .from('sofia_extrato_ligacoes')
+    .insert({ plataforma, identificador, equipe_id: null, vigente_desde })
+  if (error) return { error: 'Erro ao encerrar a ligação' }
 
   revalidatePath(ROTA)
   return { success: true }

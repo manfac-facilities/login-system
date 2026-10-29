@@ -12,7 +12,7 @@ import {
   rotuloCentroCusto,
 } from '@/lib/sofia/extratos/leituras'
 import { agruparSemCentroCusto, brl, dataBR, ligacaoVigente, mascararCartao, type Ligacao } from '@/lib/sofia/extratos/agrupar'
-import { BotaoCentroCusto, BotaoLigacao } from '../_form'
+import { BotaoCentroCusto, BotaoEncerrar, BotaoLigacao } from '../_form'
 
 const ABAS = [
   ['cartoes', 'Cartões Ticketlog'],
@@ -87,7 +87,7 @@ async function AbaLigacoes({
     getEquipesExtrato(),
     getOpcoesEquipe(),
   ])
-  const nomeEquipe = (id: string) => equipes.find((e) => e.id === id)?.codigo ?? '—'
+  const nomeEquipe = (id: string | null) => (id ? (equipes.find((e) => e.id === id)?.codigo ?? '—') : '—')
   const mostra = (id: string) => (ehCartao ? mascararCartao(id) : id)
 
   // Identificadores vistos nos extratos sem equipe na data de uso
@@ -184,7 +184,11 @@ async function AbaLigacoes({
                   )}
                 </div>
                 <div className="flex items-center gap-3 flex-wrap text-sm">
-                  {i.atual ? (
+                  {i.atual && i.atual.equipe_id === null ? (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#1e3a5f] text-[#94a3b8] text-xs">
+                      Encerrada em {dataBR(i.atual.vigente_desde)}
+                    </span>
+                  ) : i.atual ? (
                     <>
                       <span className="px-2.5 py-0.5 rounded-full bg-[#1e3a5f] text-white text-xs">{nomeEquipe(i.atual.equipe_id)}</span>
                       <span className="text-xs text-[#94a3b8]">desde {dataBR(i.atual.vigente_desde)}</span>
@@ -192,14 +196,23 @@ async function AbaLigacoes({
                   ) : (
                     <span className="text-xs text-amber-300">ainda não vigente</span>
                   )}
+                  {podeGerir && i.atual && i.atual.equipe_id !== null && (
+                    <BotaoEncerrar
+                      plataforma={plataforma}
+                      identificador={i.id}
+                      mascara={mostra(i.id)}
+                      equipe={nomeEquipe(i.atual.equipe_id)}
+                      desdeSugerida={hoje}
+                    />
+                  )}
                   {podeGerir && (
                     <BotaoLigacao
-                      rotulo="Trocar equipe"
+                      rotulo={i.atual && i.atual.equipe_id === null ? 'Religar a uma equipe' : 'Trocar equipe'}
                       plataforma={plataforma}
                       identificador={i.id}
                       mascara={mostra(i.id)}
                       equipes={opcoes}
-                      equipeAtualId={i.atual?.equipe_id}
+                      equipeAtualId={i.atual?.equipe_id ?? undefined}
                       desdeSugerida={hoje}
                     />
                   )}
@@ -211,7 +224,8 @@ async function AbaLigacoes({
                   <ul className="mt-1 ml-1 border-l-2 border-[#1e3a5f] pl-3 space-y-1">
                     {[...i.historico].reverse().map((l) => (
                       <li key={l.vigente_desde + l.criado_em}>
-                        a partir de {dataBR(l.vigente_desde)}: <span className="text-[#cbd5e1]">{nomeEquipe(l.equipe_id)}</span>
+                        a partir de {dataBR(l.vigente_desde)}:{' '}
+                        <span className="text-[#cbd5e1]">{l.equipe_id === null ? 'ligação encerrada' : nomeEquipe(l.equipe_id)}</span>
                       </li>
                     ))}
                   </ul>
