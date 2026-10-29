@@ -4,6 +4,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../_ui/primitivos'
 import { hojeISO } from '../../_lib/tipos'
 import { lerObraGrande } from '../_lib/leitura'
+import { ultimosDiariosEnviados } from '../_lib/ultimo-diario'
 import PainelObra, { type EstadoDiario } from '../_ui/painel'
 
 export const dynamic = 'force-dynamic'
@@ -28,14 +29,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
 
   const [rdoR, envioR] = await Promise.all([
     supabase.from('obras_rdo').select('estado').eq('obra_id', id).eq('data', hoje).maybeSingle(),
-    supabase
-      .from('obras_envio')
-      .select('referencia')
-      .eq('obra_id', id)
-      .eq('tipo', 'diario')
-      .order('referencia', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    ultimosDiariosEnviados(supabase, [id]),
   ])
   if (rdoR.error || envioR.error) {
     return <EstadoVazio>Não deu para carregar o diário da obra. Recarregue a página em alguns instantes.</EstadoVazio>
@@ -47,7 +41,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
       dados={r.dados}
       hoje={hoje}
       estadoDiario={estado}
-      ultimoEnvio={(envioR.data?.referencia as string | null) ?? null}
+      ultimoEnvio={envioR.ultimo.get(id) ?? null}
     />
   )
 }

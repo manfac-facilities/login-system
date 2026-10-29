@@ -5,6 +5,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../_ui/primitivos'
 import { hojeISO, type ObraRow } from '../_lib/tipos'
 import { lerObraGrande } from './_lib/leitura'
+import { ultimosDiariosEnviados } from './_lib/ultimo-diario'
 import SeloSinal from './_ui/sinal'
 
 export const dynamic = 'force-dynamic'
@@ -40,14 +41,9 @@ export default async function ListaObrasPage() {
   const ids = obras.map((o) => o.id)
   const [leituras, enviosR] = await Promise.all([
     Promise.all(obras.map((o) => lerObraGrande(supabase, o.id, hoje))),
-    ids.length
-      ? supabase.from('obras_envio').select('obra_id, referencia').eq('tipo', 'diario').in('obra_id', ids)
-      : Promise.resolve({ data: [], error: null }),
+    ultimosDiariosEnviados(supabase, ids),
   ])
-  const ultimo = new Map<string, string>()
-  for (const e of (enviosR.data ?? []) as { obra_id: string; referencia: string | null }[]) {
-    if (e.referencia && e.referencia > (ultimo.get(e.obra_id) ?? '')) ultimo.set(e.obra_id, e.referencia)
-  }
+  const ultimo = enviosR.ultimo
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6">
@@ -89,7 +85,13 @@ export default async function ListaObrasPage() {
                     <td className="px-3 py-2">{o.os ?? '—'}</td>
                     <td className="px-3 py-2">{o.cliente ?? '—'}</td>
                     <td className="px-3 py-2">
-                      {d?.calc ? <SeloSinal sinal={d.sinal} /> : <span className="text-[#94a3b8]">sem cronograma</span>}
+                      {d?.calc ? (
+                        <SeloSinal sinal={d.sinal} />
+                      ) : (
+                        <span className={l.ok ? 'text-[#94a3b8]' : 'text-red-400'}>
+                          {l.ok ? 'sem cronograma' : 'erro ao ler o cronograma'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2">{d?.calc ? `${pct(d.calc.previsto)} × ${pct(d.calc.realizado)}` : '—'}</td>
                     <td className="px-3 py-2">{d?.calc ? dataBR(d.calc.terminoProjetado) : '—'}</td>
