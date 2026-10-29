@@ -35,6 +35,11 @@
 --           obras_atividade_exec -> OBRAS_TRAVA.
 --       Sem JWT (service role, seed, SQL Editor) tudo passa, como nos
 --       triggers de sdd-sql-obras-modalidade-obra.sql.
+--   I1b. Update de objeto também barra nome com obras_foto_rdo_congelada = true.
+--        obras_rdo_foto.path tem de ser '<rdo.obra_id>/rdo/<rdo.data>/<uuid>.jpg'
+--        e obras_impedimento.foto_path '<obra_id>/impedimento/<uuid>.jpg'
+--        (triggers, com ou sem JWT; em UPDATE só quando o caminho muda).
+--   I2b. obras_envio: com JWT, só engenheiro da obra ou administrador insere.
 --
 -- COMO RODAR — em DOIS passos (o SQL Editor só mostra o último resultado):
 --   PASSO 1  do `begin;` até o `commit;`;
@@ -58,6 +63,9 @@
 --   drop trigger if exists obras_atividade_guarda on public.obras_atividade;
 --   drop trigger if exists obras_atividade_exec_guarda on public.obras_atividade_exec;
 --   drop trigger if exists obras_atividade_exec_trava on public.obras_atividade_exec;
+--   drop trigger if exists obras_rdo_foto_caminho on public.obras_rdo_foto;
+--   drop trigger if exists obras_impedimento_foto_caminho on public.obras_impedimento;
+--   drop trigger if exists obras_envio_guarda on public.obras_envio;
 --   drop policy if exists "obras fotos delete" on storage.objects;
 --   alter policy "obras fotos update" on storage.objects
 --     using (((bucket_id = 'obras-fotos'::text) AND (select obras_has_access())))
@@ -248,9 +256,11 @@ grant execute on function public.obras_foto_rdo_congelada(text) to authenticated
 drop policy if exists "obras fotos update" on storage.objects;
 create policy "obras fotos update" on storage.objects for update to authenticated
   using (bucket_id = 'obras-fotos' and (select public.obras_has_access())
-         and name not like '%/rdo/%')
+         and name not like '%/rdo/%'
+         and public.obras_foto_rdo_congelada(name) is not true)
   with check (bucket_id = 'obras-fotos' and (select public.obras_has_access())
-              and name not like '%/rdo/%');
+              and name not like '%/rdo/%'
+              and public.obras_foto_rdo_congelada(name) is not true);
 
 -- Delete: só foto de RDO ainda não validado. Fora de /rdo/ continua sem
 -- policy de delete (negado), como antes.
@@ -482,6 +492,104 @@ create trigger obras_atividade_exec_trava
   after insert or update on public.obras_atividade_exec
   for each row execute function public.obras_atividade_exec_trava();
 
+-- ============================================================
+-- 4. Caminho canônico das fotos (com ou sem JWT; o app só grava este formato).
+--    obras_rdo_foto.path   = '<rdo.obra_id>/rdo/<rdo.data YYYY-MM-DD>/<uuid>.jpg'
+--    obras_impedimento.foto_path (quando não nulo) = '<obra_id>/impedimento/<uuid>.jpg'
+--    Sem isso uma linha do navegador aponta para qualquer objeto do bucket, que
+--    a validação baixaria com service role e anexaria ao e-mail do cliente.
+--    Em UPDATE só confere quando o caminho (ou o dono) muda: linha antiga não
+--    trava edição de outros campos.
+-- ============================================================
+create or replace function public.obras_rdo_foto_caminho() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_prefixo text;
+begin
+  if tg_op = 'UPDATE' then
+    if new.path is not distinct from old.path and new.rdo_id is not distinct from old.rdo_id then
+      return new;
+    end if;
+  end if;
+
+  select r.obra_id::text || '/rdo/' || to_char(r.data, 'YYYY-MM-DD') || '/' into v_prefixo
+    from public.obras_rdo r where r.id = new.rdo_id;
+
+  if v_prefixo is null
+     or new.path is null
+     or new.path !~ '^[0-9a-f-]{36}/rdo/\d{4}-\d{2}-\d{2}/[0-9a-f-]{36}\.jpg$'
+     or left(new.path, length(v_prefixo)) <> v_prefixo then
+    raise exception 'OBRAS_FOTO_CAMINHO: foto do diário fora do caminho {obra_id}/rdo/{data}/{uuid}.jpg do RDO'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_rdo_foto_caminho() from public, anon, authenticated;
+
+drop trigger if exists obras_rdo_foto_caminho on public.obras_rdo_foto;
+create trigger obras_rdo_foto_caminho
+  before insert or update on public.obras_rdo_foto
+  for each row execute function public.obras_rdo_foto_caminho();
+
+create or replace function public.obras_impedimento_foto_caminho() returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $$
+begin
+  if new.foto_path is null then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' then
+    if new.foto_path is not distinct from old.foto_path and new.obra_id is not distinct from old.obra_id then
+      return new;
+    end if;
+  end if;
+  if new.foto_path !~ ('^' || new.obra_id::text || '/impedimento/[0-9a-f-]{36}\.jpg$') then
+    raise exception 'OBRAS_FOTO_CAMINHO: foto do impedimento fora do caminho {obra_id}/impedimento/{uuid}.jpg'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_impedimento_foto_caminho() from public, anon, authenticated;
+
+drop trigger if exists obras_impedimento_foto_caminho on public.obras_impedimento;
+create trigger obras_impedimento_foto_caminho
+  before insert or update on public.obras_impedimento
+  for each row execute function public.obras_impedimento_foto_caminho();
+
+-- ============================================================
+-- 5. obras_envio: numa sessão de usuário, só o engenheiro da obra ou
+--    administrador registra envio (o único que grava é validarEEnviarAction,
+--    já restrito a eles). Sem JWT passa.
+-- ============================================================
+create or replace function public.obras_envio_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  if nullif(lower(trim(auth.jwt() ->> 'email')), '') is null then
+    return new;
+  end if;
+  if public.obras_engenheiro_ou_admin(new.obra_id) is not true then
+    raise exception 'OBRAS_ENVIO: só o engenheiro da obra ou administrador registra envio'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_envio_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_envio_guarda on public.obras_envio;
+create trigger obras_envio_guarda
+  before insert on public.obras_envio
+  for each row execute function public.obras_envio_guarda();
+
 commit;
 
 -- ============================================================
@@ -510,8 +618,9 @@ from (values
   (6, 'storage: policies obras fotos = delete, read, update, upload', 'obras fotos delete,obras fotos read,obras fotos update,obras fotos upload',
       (select string_agg(policyname, ',' order by policyname) from pg_policies
         where schemaname = 'storage' and tablename = 'objects' and policyname like 'obras fotos%')),
-  (7, 'storage: update barra /rdo/ no using e no with check', 'true',
-      (select (qual like '%/rdo/%' and with_check like '%/rdo/%')::text from pg_policies
+  (7, 'storage: update barra /rdo/ e foto congelada no using e no with check', 'true',
+      (select (qual like '%/rdo/%' and with_check like '%/rdo/%'
+               and qual like '%obras_foto_rdo_congelada%' and with_check like '%obras_foto_rdo_congelada%')::text from pg_policies
         where schemaname = 'storage' and tablename = 'objects' and policyname = 'obras fotos update')),
   (8, 'storage: delete só /rdo/ e consulta obras_foto_rdo_congelada', 'DELETE|true',
       (select cmd || '|' || (qual like '%/rdo/%' and qual like '%obras_foto_rdo_congelada%')::text from pg_policies
@@ -530,11 +639,12 @@ from (values
               'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor',
               'obras_rdo_estado','obras_obra_parametros_guarda')
           and not tgisinternal)),
-  (12, 'funções novas são security definer (6)', '6',
+  (12, 'funções novas security definer (8)', '8',
       (select count(*)::text from pg_proc
         where pronamespace = 'public'::regnamespace and prosecdef
           and proname in ('obras_foto_rdo_congelada','obras_engenheiro_ou_admin','obras_versao_guarda',
-                          'obras_atividade_guarda','obras_atividade_exec_guarda','obras_atividade_exec_trava'))),
+                          'obras_atividade_guarda','obras_atividade_exec_guarda','obras_atividade_exec_trava',
+                          'obras_rdo_foto_caminho','obras_envio_guarda'))),
   (13, 'obras_foto_rdo_congelada: authenticated executa, anon não', 'true',
       (select (has_function_privilege('authenticated', 'public.obras_foto_rdo_congelada(text)', 'EXECUTE')
            and not has_function_privilege('anon', 'public.obras_foto_rdo_congelada(text)', 'EXECUTE'))::text)),
@@ -543,6 +653,16 @@ from (values
             or has_function_privilege('anon', 'public.obras_engenheiro_ou_admin(uuid)', 'EXECUTE'))::text)),
   (15, 'nenhuma foto de RDO validado/enviado aponta fora de /rdo/ (premissa do I1)', '0',
       (select count(*)::text from public.obras_rdo_foto f join public.obras_rdo r on r.id = f.rdo_id
-        where r.estado <> 'rascunho' and f.path not like '%/rdo/%'))
+        where r.estado <> 'rascunho' and f.path not like '%/rdo/%')),
+  (16, 'triggers de caminho de foto e de envio existem e estão ligados', '3',
+      (select count(*)::text from pg_trigger
+        where tgname in ('obras_rdo_foto_caminho','obras_impedimento_foto_caminho','obras_envio_guarda')
+          and not tgisinternal and tgenabled = 'O')),
+  (17, 'fotos de RDO já gravadas fora do caminho canônico (só aviso: editar o path delas passa a falhar)', '0',
+      (select count(*)::text from public.obras_rdo_foto f join public.obras_rdo r on r.id = f.rdo_id
+        where f.path !~ ('^' || r.obra_id::text || '/rdo/' || to_char(r.data, 'YYYY-MM-DD') || '/[0-9a-f-]{36}\.jpg$'))),
+  (18, 'fotos de impedimento já gravadas fora do caminho canônico (só aviso)', '0',
+      (select count(*)::text from public.obras_impedimento i
+        where i.foto_path is not null and i.foto_path !~ ('^' || i.obra_id::text || '/impedimento/[0-9a-f-]{36}\.jpg$')))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

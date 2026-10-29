@@ -384,17 +384,123 @@ begin
   insert into public.obras_rdo (id, obra_id, data, estado)
   values ('00000000-0000-4000-8000-00000000c001', '00000000-0000-4000-8000-00000000a002', date '2026-10-29', 'rascunho');
   insert into public.obras_rdo_foto (rdo_id, path)
-  values ('00000000-0000-4000-8000-00000000c001', '00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/teste.jpg');
-  v_antes := public.obras_foto_rdo_congelada('00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/teste.jpg');
+  values ('00000000-0000-4000-8000-00000000c001', '00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/00000000-0000-4000-8000-00000000d001.jpg');
+  v_antes := public.obras_foto_rdo_congelada('00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/00000000-0000-4000-8000-00000000d001.jpg');
   update public.obras_rdo set estado = 'validado', validado_por = 'teste'
    where id = '00000000-0000-4000-8000-00000000c001';
-  v_depois := public.obras_foto_rdo_congelada('00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/teste.jpg');
+  v_depois := public.obras_foto_rdo_congelada('00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/00000000-0000-4000-8000-00000000d001.jpg');
   v_fora := public.obras_foto_rdo_congelada('00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/outra.jpg');
   raise exception 'congelada: rascunho=% validado=% sem_linha=%', v_antes, v_depois, v_fora;
 exception when others then
   raise notice 'resultado: %', sqlerrm;
   perform pg_temp.reg(26, 'obras_foto_rdo_congelada: false no rascunho, true validado, false sem linha',
                       'congelada: rascunho=false validado=true sem_linha=false', sqlerrm);
+end $$;
+
+-- ============================================================
+-- I1b — caminho canônico das fotos (RDO 2026-10-30 em rascunho, criado em cada bloco)
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_rdo (id, obra_id, data, estado)
+  values ('00000000-0000-4000-8000-00000000c002', '00000000-0000-4000-8000-00000000a002', date '2026-10-30', 'rascunho');
+  insert into public.obras_rdo_foto (rdo_id, path)
+  values ('00000000-0000-4000-8000-00000000c002',
+          '00000000-0000-4000-8000-00000000a002/rdo/2026-10-29/00000000-0000-4000-8000-00000000d002.jpg');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(27, 'foto do RDO com data diferente da do RDO -> barrada', 'OBRAS_FOTO_CAMINHO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_rdo (id, obra_id, data, estado)
+  values ('00000000-0000-4000-8000-00000000c002', '00000000-0000-4000-8000-00000000a002', date '2026-10-30', 'rascunho');
+  insert into public.obras_rdo_foto (rdo_id, path)
+  values ('00000000-0000-4000-8000-00000000c002',
+          'a6271663-d342-4669-8c32-f9dd97e8aa7c/rdo/2026-10-30/00000000-0000-4000-8000-00000000d002.jpg');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(28, 'foto do RDO apontando para outra obra -> barrada', 'OBRAS_FOTO_CAMINHO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_rdo (id, obra_id, data, estado)
+  values ('00000000-0000-4000-8000-00000000c002', '00000000-0000-4000-8000-00000000a002', date '2026-10-30', 'rascunho');
+  insert into public.obras_rdo_foto (rdo_id, path)
+  values ('00000000-0000-4000-8000-00000000c002',
+          '00000000-0000-4000-8000-00000000a002/rdo/2026-10-30/../../outra/x.jpg');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(29, 'foto do RDO com ../ e nome fora do formato -> barrada', 'OBRAS_FOTO_CAMINHO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_rdo (id, obra_id, data, estado)
+  values ('00000000-0000-4000-8000-00000000c002', '00000000-0000-4000-8000-00000000a002', date '2026-10-30', 'rascunho');
+  insert into public.obras_rdo_foto (id, rdo_id, path)
+  values ('00000000-0000-4000-8000-00000000e001', '00000000-0000-4000-8000-00000000c002',
+          '00000000-0000-4000-8000-00000000a002/rdo/2026-10-30/00000000-0000-4000-8000-00000000d002.jpg');
+  update public.obras_rdo_foto set legenda = 'só a legenda'
+   where id = '00000000-0000-4000-8000-00000000e001';
+  raise exception 'OK_SEM_ERRO';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(30, 'foto do RDO no caminho canônico (e editar a legenda) -> passa', 'OK_SEM_ERRO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_impedimento (obra_id, categoria, descricao, exibir_ao_cliente, aberto_em, foto_path)
+  values ('00000000-0000-4000-8000-00000000a002', 'orientacao', 'teste', false, date '2026-10-29',
+          'a6271663-d342-4669-8c32-f9dd97e8aa7c/impedimento/00000000-0000-4000-8000-00000000d003.jpg');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(31, 'foto de impedimento de outra obra -> barrada', 'OBRAS_FOTO_CAMINHO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_impedimento (obra_id, categoria, descricao, exibir_ao_cliente, aberto_em, foto_path)
+  values ('00000000-0000-4000-8000-00000000a002', 'orientacao', 'teste', false, date '2026-10-29',
+          '00000000-0000-4000-8000-00000000a002/impedimento/00000000-0000-4000-8000-00000000d003.jpg'),
+         ('00000000-0000-4000-8000-00000000a002', 'orientacao', 'sem foto', false, date '2026-10-29', null);
+  raise exception 'OK_SEM_ERRO';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(32, 'impedimento com foto canônica ou sem foto -> passa', 'OK_SEM_ERRO', sqlerrm);
+end $$;
+
+-- ============================================================
+-- I2b — obras_envio só pelo engenheiro da obra ou administrador
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt('outro@teste.invalid');
+  insert into public.obras_envio (obra_id, tipo, referencia, lado, destinatarios, resultado)
+  values ('00000000-0000-4000-8000-00000000a002', 'diario', date '2026-10-29', 'cliente', array['x@teste.invalid'], 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(33, 'outro usuário registra envio -> barrado', 'OBRAS_ENVIO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_envio (obra_id, tipo, referencia, lado, destinatarios, resultado)
+  values ('00000000-0000-4000-8000-00000000a002', 'diario', date '2026-10-29', 'cliente', array['x@teste.invalid'], 'ok');
+  perform pg_temp.jwt(null);
+  insert into public.obras_envio (obra_id, tipo, referencia, lado, destinatarios, resultado)
+  values ('00000000-0000-4000-8000-00000000a002', 'diario', date '2026-10-29', 'interno', array['y@teste.invalid'], 'ok');
+  raise exception 'OK_SEM_ERRO';
+exception when others then
+  raise notice 'resultado: %', sqlerrm;
+  perform pg_temp.reg(34, 'engenheiro e sem JWT registram envio -> passa', 'OK_SEM_ERRO', sqlerrm);
 end $$;
 
 -- ============================================================
@@ -415,10 +521,10 @@ begin
            filter (where obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 26 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 26 testes rodaram';
+  if v_total <> 34 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 34 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/26 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/34 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
