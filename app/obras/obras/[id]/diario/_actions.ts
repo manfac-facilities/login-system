@@ -421,7 +421,19 @@ export async function validarEEnviarAction(
     cliente: cadastrados.cliente.filter((x) => !jaRecebeu('cliente').has(x.toLowerCase())),
     interno: cadastrados.interno.filter((x) => !jaRecebeu('interno').has(x.toLowerCase())),
   }
-  if (!pendentes.cliente.length && !pendentes.interno.length) return { ok: true, enviados: 0 }
+  if (!pendentes.cliente.length && !pendentes.interno.length) {
+    // Tudo já entregue, mas o RDO ficou em 'validado' (ex.: envio do cliente ok e RDO não atualizado): fecha.
+    if (estado === 'validado' && jaRecebeu('cliente').size > 0) {
+      const { error } = await supabase
+        .from('obras_rdo')
+        .update({ estado: 'enviado', atualizado_em: new Date().toISOString() })
+        .eq('id', rdo.id)
+        .eq('estado', 'validado')
+      if (error) return falha(`${VALIDADO_MAS}: não deu para marcar o diário como enviado (${error.message})`)
+      revalidar(obraId)
+    }
+    return { ok: true, enviados: 0 }
+  }
 
   // Leitura de novo: o e-mail mostra o cronograma já com o avanço do dia.
   const relida = await lerObraGrande(supabase, obraId, data)

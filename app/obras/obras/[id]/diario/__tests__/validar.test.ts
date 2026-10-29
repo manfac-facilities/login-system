@@ -196,6 +196,17 @@ describe('validarEEnviarAction', () => {
     expect(db.obras_envio).toHaveLength(2)
   })
 
+  it('RDO validado, cliente já recebeu e nada pendente → marca enviado sem reenviar', async () => {
+    db.obras_rdo[0].estado = 'validado'
+    db.obras_envio = [
+      { obra_id: OBRA, rdo_id: 'r1', lado: 'cliente', destinatarios: ['ana@dpsp.com.br', 'bia@dpsp.com.br'], resultado: 'ok' },
+      { obra_id: OBRA, rdo_id: 'r1', lado: 'interno', destinatarios: ['interno@manfac.com.br'], resultado: 'ok' },
+    ]
+    expect(await validarEEnviarAction(OBRA, DIA)).toEqual({ ok: true, enviados: 0 })
+    expect(sendMail).not.toHaveBeenCalled()
+    expect(db.obras_rdo[0].estado).toBe('enviado')
+  })
+
   it('falha parcial: registra só quem recebeu, detalha quem falhou, conta os aceitos', async () => {
     sendMail.mockImplementation(async (m: { to: string }) => {
       if (m.to === 'bia@dpsp.com.br') throw Object.assign(new Error('x'), { responseCode: 451 })
