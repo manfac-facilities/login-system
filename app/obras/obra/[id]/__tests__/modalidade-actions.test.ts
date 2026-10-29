@@ -60,6 +60,10 @@ describe('alterarModalidadeAction', () => {
     expect(rpcMock).toHaveBeenCalledTimes(1)
     const [nome, args] = rpcMock.mock.calls[0]
     expect(nome).toBe('obras_aplicar_alteracao')
+    // Dependência: a RPC obras_aplicar_alteracao só aceita colunas da whitelist;
+    // 'modalidade' entra nela em sdd-sql-obras-modalidade-obra-2.sql. Se mandarmos
+    // qualquer outra chave, a RPC responde 22023.
+    expect(Object.keys(args.p_campos)).toEqual(['modalidade'])
     expect(args.p_campos).toEqual({ modalidade: 'obra' })
     expect(args.p_linhas).toEqual([
       expect.objectContaining({ bloco: 'Classificação', campo: 'modalidade', de: 'spot', para: 'obra' }),
