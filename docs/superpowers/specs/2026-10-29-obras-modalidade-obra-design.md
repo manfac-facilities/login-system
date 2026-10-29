@@ -125,6 +125,8 @@ Sinal, % previsto × realizado, desvio, previsão de término, atividades atrasa
 - **Página de configuração da obra (só admin do hub):** e-mails dos destinatários do cliente e internos (nome, função, lado, tipos de relatório), engenheiro responsável, data-base. Os admins cadastram; o cliente não se cadastra.
 - **Remetente:** o mesmo SMTP/remetente atual (`manfac@manfac…`, variável `SMTP_REMETENTE`).
 
+- **Classificação SPOT/OBRA com transferência pelo sistema (29/10, substitui a chamada da seção 5.1 sobre a aba Base):** a aba Base/visão SPOT passa a mostrar **só SPOTs**; OBRAs só aparecem na aba OBRAS. As obras grandes que já estão no hub (praticamente finalizadas — Telhado CD Profarma, PLK etc.) são transferidas **pelo código**, sem exigir cronograma, diário ou qualquer preenchimento: uma OBRA sem cronograma aparece na aba OBRAS como "sem cronograma" e não cobra diário. Admin reclassifica pela ficha ("Tornar OBRA" / "Voltar para SPOT"), registrado no histórico; a carga inicial vai por lista de OS no SQL. A obra continua em `obras_obra` com a mesma etapa, faturamento e conciliação.
+
 ## 7.2 Chamadas minhas após a revisão do builder (José pode vetar)
 - **% do diário vai para o cronograma só na validação.** O diário guarda, por atividade, de→para % (e concluída); ao validar, aplica no cronograma. Painel e e-mail usam o validado. Se o engenheiro editar o cronograma no mesmo dia, a validação aplica o "para" do diário e registra no histórico.
 - **Dias de impacto:** impedimento marcado "trava a atividade" conta os dias úteis em que ficou aberto; impedimento parcial conta a estimativa digitada (ex.: 0,5).
