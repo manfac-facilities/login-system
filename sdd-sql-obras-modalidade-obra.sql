@@ -423,11 +423,26 @@ begin
     return new;
   end if;
 
+  if new.obra_id is distinct from old.obra_id or new.data is distinct from old.data then
+    raise exception 'OBRAS_RDO_ESTADO: obra_id e data do RDO são imutáveis' using errcode = 'P0001';
+  end if;
+
   if new.estado is distinct from old.estado
      and not ((old.estado = 'rascunho' and new.estado = 'validado')
            or (old.estado = 'validado' and new.estado = 'enviado')) then
     raise exception 'OBRAS_RDO_ESTADO: transição % -> % não permitida', old.estado, new.estado
       using errcode = 'P0001';
+  end if;
+
+  -- Toda mudança de estado (validar e enviar), numa sessão de usuário, é do
+  -- engenheiro da obra ou de administrador.
+  if v_email is not null and new.estado is distinct from old.estado then
+    select o.engenheiro_email into v_eng from public.obras_obra o where o.id = new.obra_id;
+    if not (public.obras_is_admin()
+            or (v_eng is not null and v_email = lower(trim(v_eng)))) then
+      raise exception 'OBRAS_RDO_ESTADO: só o engenheiro da obra ou administrador muda o estado do RDO'
+        using errcode = '42501';
+    end if;
   end if;
 
   if old.estado is distinct from 'rascunho' then
@@ -447,12 +462,6 @@ begin
   -- old.estado = 'rascunho'
   if new.estado = 'validado' then
     if v_email is not null then
-      select o.engenheiro_email into v_eng from public.obras_obra o where o.id = new.obra_id;
-      if not (public.obras_is_admin()
-              or (v_eng is not null and v_email = lower(trim(v_eng)))) then
-        raise exception 'OBRAS_RDO_ESTADO: só o engenheiro da obra ou administrador valida o RDO'
-          using errcode = '42501';
-      end if;
       new.validado_por := v_email;
     end if;
     new.validado_em := now();
@@ -469,6 +478,38 @@ revoke execute on function public.obras_rdo_estado() from public, anon, authenti
 drop trigger if exists obras_rdo_estado on public.obras_rdo;
 create trigger obras_rdo_estado before insert or update on public.obras_rdo
   for each row execute function public.obras_rdo_estado();
+
+-- ============================================================
+-- 3d. Colunas de parâmetro da modalidade OBRA em obras_obra: a policy
+-- "obras access" deixa qualquer usuário com acesso atualizar a linha, então
+-- estas 4 colunas (engenheiro_email decide quem valida o RDO) só mudam por
+-- administrador numa sessão de usuário. Sem JWT (service role: sync do
+-- Field, seed, SQL Editor) passa. O trigger só dispara quando uma dessas
+-- colunas está no SET, então ficha/sync/RPC não são afetados.
+-- ============================================================
+create or replace function public.obras_obra_parametros_guarda() returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $$
+begin
+  if nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
+     and (new.modalidade is distinct from old.modalidade
+          or new.data_base is distinct from old.data_base
+          or new.engenheiro_email is distinct from old.engenheiro_email
+          or new.atividade_trava is distinct from old.atividade_trava)
+     and not public.obras_is_admin() then
+    raise exception 'OBRAS_PARAMETROS: só administrador altera modalidade, data base, engenheiro e atividade-trava'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_obra_parametros_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_obra_parametros_guarda on public.obras_obra;
+create trigger obras_obra_parametros_guarda
+  before update of modalidade, data_base, engenheiro_email, atividade_trava on public.obras_obra
+  for each row execute function public.obras_obra_parametros_guarda();
 
 -- ============================================================
 -- 4. RLS
@@ -740,9 +781,9 @@ from (
            where modalidade='obra'
              and (id='a6271663-d342-4669-8c32-f9dd97e8aa7c' or os in ('PLK-NORTESHOP','CDRJ-TELHADO')))
   union all select 10, 'triggers de imutabilidade existem',
-         (select count(*) = 8 from pg_trigger
+         (select count(*) = 9 from pg_trigger
            where tgname in ('obras_atividade_imutavel','obras_versao_imutavel','obras_envio_autor',
-             'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor','obras_rdo_estado')
+             'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor','obras_rdo_estado','obras_obra_parametros_guarda')
              and not tgisinternal)
 ) t
 order by n;

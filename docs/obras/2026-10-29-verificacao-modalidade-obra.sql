@@ -113,3 +113,21 @@ begin;
   update public.obras_rdo set validado_por = 'x' where data = date '2099-01-02';   -- deve falhar (fora da validação)
 rollback;
 -- (validação por engenheiro/admin com JWT: testar pelo app na Task do RDO)
+
+-- 10. Fix round 3
+-- 10a. trigger de parâmetros em obras_obra (esperado 1 linha)
+select tgname from pg_trigger where tgname = 'obras_obra_parametros_guarda' and not tgisinternal;
+
+-- 10b. obra_id e data do RDO imutáveis (esperado ERRO OBRAS_RDO_ESTADO; rollback desfaz)
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-03');
+  update public.obras_rdo set data = date '2099-01-04' where data = date '2099-01-03';   -- deve falhar
+rollback;
+
+-- 10c. (só com JWT, testar pelo app/teste de integração) usuário comum não altera engenheiro_email/modalidade/
+--      data_base/atividade_trava (erro OBRAS_PARAMETROS); admin altera; validado->enviado exige engenheiro/admin.
+--      Como postgres (sem JWT) a mudança abaixo passa; rollback desfaz.
+begin;
+  update public.obras_obra set engenheiro_email = 'teste@exemplo.com'
+   where id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c';   -- ok sem JWT
+rollback;
