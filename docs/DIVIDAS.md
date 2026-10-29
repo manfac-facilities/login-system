@@ -194,3 +194,9 @@ Backlog da revisão independente; nenhum bloqueia.
 - Rótulo "Respondido por" de quem não está em `obras_pessoa` quebra o e-mail só no `.` (`ana_paula@` vira "Ana_paula"); `chaveDoUsuario` quebra em `.-_+`. Cosmético.
 - `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
 - "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.
+
+## 29/10/2026 — Diário de obra da OBRA (Task 8, branch `feat/obras-modalidade-obra`)
+
+- "Tirar" foto do rascunho apaga só a linha de `obras_rdo_foto`; o arquivo fica em `obras-fotos` (o bucket não tem policy de delete). Mesmo destino de RDO rascunho apagado (já anotado na Task 1).
+- Foto que sobe ao bucket e falha no `registrarFotoAction` vira arquivo órfão.
+- `salvarRascunhoAction` não é atômico: o RDO pode ser gravado e o avanço falhar; a tela mostra o erro e um novo "Salvar" completa. A substituição do avanço grava antes de apagar, então não há janela de perda.
