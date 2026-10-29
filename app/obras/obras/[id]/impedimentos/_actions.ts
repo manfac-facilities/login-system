@@ -60,6 +60,20 @@ async function validarObra(supabase: SupabaseClient, obraId: string): Promise<Er
   return null
 }
 
+/** Diário a que o registro se liga: da mesma obra e ainda em rascunho. */
+async function resolverRdo(
+  supabase: SupabaseClient,
+  obraId: string,
+  rdoId: string | null | undefined,
+): Promise<Erro | { rdoId: string | null; data: string | null }> {
+  if (!rdoId) return { rdoId: null, data: null }
+  const { data, error } = await supabase.from('obras_rdo').select('obra_id, estado, data').eq('id', rdoId).maybeSingle()
+  if (error) return erroBanco('ler o diário', error)
+  if (!data || data.obra_id !== obraId) return falha('Diário inválido')
+  if (data.estado !== 'rascunho') return falha('Diário já validado — registre sem vincular ao diário')
+  return { rdoId, data: data.data as string }
+}
+
 /** Campos comuns; devolve erro ou o que vai ao banco. */
 function validarComum(
   obraId: string,
@@ -91,6 +105,8 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
 
   const naoObra = await validarObra(supabase, obraId)
   if (naoObra) return naoObra
+  const rdo = await resolverRdo(supabase, obraId, i.rdoId)
+  if ('ok' in rdo) return rdo
 
   const { data, error } = await supabase
     .from('obras_impedimento')
@@ -106,8 +122,8 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
       trava_atividade: i.travaAtividade === true,
       impacto_dias: i.impactoDias,
       exibir_ao_cliente: i.exibirAoCliente ?? exibirAoClientePadrao(i.responsavel),
-      aberto_em: comum.abertoEm,
-      rdo_id: i.rdoId ?? null,
+      aberto_em: rdo.data ?? comum.abertoEm,
+      rdo_id: rdo.rdoId,
     })
     .select('id')
     .single()
@@ -147,6 +163,8 @@ export async function registrarOrientacaoAction(obraId: string, o: NovaOrientaca
   if ('ok' in comum) return comum
   const naoObra = await validarObra(supabase, obraId)
   if (naoObra) return naoObra
+  const rdo = await resolverRdo(supabase, obraId, o.rdoId)
+  if ('ok' in rdo) return rdo
 
   const { data, error } = await supabase
     .from('obras_impedimento')
@@ -162,8 +180,8 @@ export async function registrarOrientacaoAction(obraId: string, o: NovaOrientaca
       trava_atividade: false,
       impacto_dias: null,
       exibir_ao_cliente: o.exibirAoCliente ?? true,
-      aberto_em: comum.abertoEm,
-      rdo_id: o.rdoId ?? null,
+      aberto_em: rdo.data ?? comum.abertoEm,
+      rdo_id: rdo.rdoId,
     })
     .select('id')
     .single()

@@ -42,11 +42,14 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
 export default function FormImpedimento({
   obraId,
   rdoId = null,
+  dataDiario,
   atividades,
   orientacoes,
 }: {
   obraId: string
   rdoId?: string | null
+  /** Data do diário de onde se registra; sem ela, vale hoje. */
+  dataDiario?: string
   atividades: AtividadeOpcao[]
   orientacoes: OrientacaoOpcao[]
 }) {
@@ -97,6 +100,7 @@ export default function FormImpedimento({
         fotoPath,
         exibirAoCliente: exibirEfetivo,
         rdoId,
+        abertoEm: dataDiario,
       }
       if (modo === 'orientacao') {
         const r = await registrarOrientacaoAction(obraId, comum)

@@ -120,6 +120,38 @@ describe('abrirImpedimentoAction', () => {
   })
 })
 
+describe('vínculo com o diário (rdoId)', () => {
+  beforeEach(() => {
+    db.obras_rdo = [
+      { id: 'r1', obra_id: OBRA, estado: 'rascunho', data: '2026-10-15' },
+      { id: 'r2', obra_id: OBRA, estado: 'validado', data: '2026-10-14' },
+      { id: 'r3', obra_id: 'outra', estado: 'rascunho', data: '2026-10-15' },
+    ]
+  })
+  it('rdo inexistente ou de outra obra -> Diário inválido', async () => {
+    expect(await abrirImpedimentoAction(OBRA, novo({ rdoId: 'nada' }))).toEqual({ ok: false, erro: 'Diário inválido' })
+    expect(await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r3' }))).toEqual({ ok: false, erro: 'Diário inválido' })
+    const o = await registrarOrientacaoAction(OBRA, { descricao: 'x', pessoaCliente: null, atividadeNumero: null, fotoPath: null, rdoId: 'r3' })
+    expect(o).toEqual({ ok: false, erro: 'Diário inválido' })
+    expect(db.obras_impedimento).toHaveLength(0)
+  })
+  it('rdo fora de rascunho -> erro', async () => {
+    const r = await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r2' }))
+    expect(r).toEqual({ ok: false, erro: 'Diário já validado — registre sem vincular ao diário' })
+    const o = await registrarOrientacaoAction(OBRA, { descricao: 'x', pessoaCliente: null, atividadeNumero: null, fotoPath: null, rdoId: 'r2' })
+    expect(o.ok).toBe(false)
+    expect(db.obras_impedimento).toHaveLength(0)
+  })
+  it('com rdo válido, aberto_em é a data do diário e rdo_id é gravado', async () => {
+    await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r1', abertoEm: '2026-10-29' }))
+    await registrarOrientacaoAction(OBRA, { descricao: 'x', pessoaCliente: null, atividadeNumero: null, fotoPath: null, rdoId: 'r1' })
+    expect(db.obras_impedimento.map((l) => [l.rdo_id, l.aberto_em])).toEqual([
+      ['r1', '2026-10-15'],
+      ['r1', '2026-10-15'],
+    ])
+  })
+})
+
 describe('encerrarImpedimentoAction', () => {
   it('data anterior à abertura -> erro', async () => {
     await abrirImpedimentoAction(OBRA, novo())

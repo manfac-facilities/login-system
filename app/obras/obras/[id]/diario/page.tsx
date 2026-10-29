@@ -181,6 +181,7 @@ export default async function DiarioObraPage({
             <FormImpedimento
               obraId={id}
               rdoId={rdo?.id ?? null}
+              dataDiario={data}
               atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
               orientacoes={r.dados.impedimentos
                 .filter((i) => i.categoria === 'orientacao')
