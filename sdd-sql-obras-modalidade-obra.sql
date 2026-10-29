@@ -483,7 +483,8 @@ create trigger obras_rdo_estado before insert or update on public.obras_rdo
 -- 3d. Colunas de parâmetro da modalidade OBRA em obras_obra: a policy
 -- "obras access" deixa qualquer usuário com acesso atualizar a linha, então
 -- estas 4 colunas (engenheiro_email decide quem valida o RDO) só mudam por
--- administrador numa sessão de usuário. Sem JWT (service role: sync do
+-- administrador numa sessão de usuário (INSERT: usuário comum só cria SPOT
+-- sem os parâmetros). Sem JWT (service role: sync do
 -- Field, seed, SQL Editor) passa. O trigger só dispara quando uma dessas
 -- colunas está no SET, então ficha/sync/RPC não são afetados.
 -- ============================================================
@@ -492,6 +493,20 @@ language plpgsql
 set search_path = pg_catalog, public
 as $$
 begin
+  -- INSERT com JWT de usuário comum: nasce como SPOT, sem os parâmetros.
+  if tg_op = 'INSERT' then
+    if nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
+       and (new.engenheiro_email is not null
+            or new.data_base is not null
+            or new.atividade_trava is not null
+            or new.modalidade is distinct from 'spot')
+       and not public.obras_is_admin() then
+      raise exception 'OBRAS_PARAMETROS: só administrador cria obra com modalidade, data base, engenheiro ou atividade-trava'
+        using errcode = '42501';
+    end if;
+    return new;
+  end if;
+
   if nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
      and (new.modalidade is distinct from old.modalidade
           or new.data_base is distinct from old.data_base
@@ -508,7 +523,7 @@ revoke execute on function public.obras_obra_parametros_guarda() from public, an
 
 drop trigger if exists obras_obra_parametros_guarda on public.obras_obra;
 create trigger obras_obra_parametros_guarda
-  before update of modalidade, data_base, engenheiro_email, atividade_trava on public.obras_obra
+  before insert or update of modalidade, data_base, engenheiro_email, atividade_trava on public.obras_obra
   for each row execute function public.obras_obra_parametros_guarda();
 
 -- ============================================================

@@ -131,3 +131,7 @@ begin;
   update public.obras_obra set engenheiro_email = 'teste@exemplo.com'
    where id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c';   -- ok sem JWT
 rollback;
+
+-- 11. Fix round 4 — o trigger de parâmetros também cobre INSERT (esperado: 1 linha, tgtype com bit INSERT (4) e UPDATE (16) => tgtype & 20 = 20)
+select tgname, (tgtype & 20) = 20 as cobre_insert_e_update
+  from pg_trigger where tgname = 'obras_obra_parametros_guarda' and not tgisinternal;
