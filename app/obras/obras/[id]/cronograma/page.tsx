@@ -3,8 +3,8 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { Box, BoxB, BoxH, Campo, Campos, EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
-import { lerObraGrande } from '../../_lib/leitura'
-import { calcularCronograma, type AtividadePlano, type ImpedimentoCalc, type Responsavel } from '../../_lib/cronograma'
+import { impedimentosCalcDe, lerObraGrande, planoDe } from '../../_lib/leitura'
+import { calcularCronograma } from '../../_lib/cronograma'
 import TabelaCronograma, { type LinhaTabela } from './_tabela'
 
 export const dynamic = 'force-dynamic'
@@ -47,31 +47,9 @@ export default async function CronogramaPage({ params }: { params: Promise<{ id:
   if (rascunho && versaoVigente) {
     const { data: at, error } = await supabase.from('obras_atividade').select('*').eq('versao_id', rascunho.id)
     if (error) return <EstadoVazio>Não deu para carregar a revisão. Recarregue a página.</EstadoVazio>
-    const plano: AtividadePlano[] = ((at ?? []) as Linha[])
-      .map((a) => ({
-        numero: a.numero,
-        etapa: a.etapa ?? '',
-        descricao: a.descricao ?? '',
-        pred1: a.pred1 ?? null,
-        pred2: a.pred2 ?? null,
-        duracao: a.duracao,
-        bloqueiaPorTrava: !!a.bloqueia_por_trava,
-        pesoValor: Number(a.peso_valor ?? 0),
-      }))
-      .sort((a, b) => a.numero - b.numero)
-    const imps: ImpedimentoCalc[] = impedimentos
-      .filter((i) => i.categoria === 'impedimento' && i.responsavel)
-      .map((i) => ({
-        atividadeNumero: i.atividadeNumero,
-        responsavel: i.responsavel as Responsavel,
-        travaAtividade: i.travaAtividade,
-        abertoEm: i.abertoEm,
-        encerradoEm: i.encerradoEm,
-        impactoDias: i.impactoDias,
-      }))
     exibida = calcularCronograma({
-      plano, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
-      atividadeTrava: obra.atividade_trava, impedimentos: imps,
+      plano: planoDe((at ?? []) as Linha[], rascunho.id), exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
+      atividadeTrava: obra.atividade_trava, impedimentos: impedimentosCalcDe(impedimentos),
     })
   }
 

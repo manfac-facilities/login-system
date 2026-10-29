@@ -64,22 +64,48 @@ const versaoInfo = (v: Linha): VersaoInfo => ({
   id: v.id, numero: v.numero, salvaEm: v.salva_em ?? null, motivo: v.motivo ?? null,
 })
 
-const planoDe = (linhas: Linha[], versaoId: string): AtividadePlano[] =>
+/** Linha de `obras_atividade` → plano do motor. */
+export const atividadePlanoDe = (a: Linha): AtividadePlano => ({
+  numero: a.numero,
+  etapa: a.etapa ?? '',
+  descricao: a.descricao ?? '',
+  pred1: a.pred1 ?? null,
+  pred2: a.pred2 ?? null,
+  duracao: a.duracao,
+  bloqueiaPorTrava: !!a.bloqueia_por_trava,
+  pesoValor: Number(a.peso_valor ?? 0),
+})
+
+/** Linha de `obras_atividade_exec` → execução do motor. */
+export const atividadeExecDe = (e: Linha): AtividadeExec => ({
+  numero: e.numero,
+  status: e.status as StatusAtividade,
+  percentual: Number(e.percentual ?? 0),
+  inicioReal: e.inicio_real ?? null,
+  fimReal: e.fim_real ?? null,
+})
+
+/** Impedimentos (já convertidos) → entrada do motor; orientação e sem responsável ficam de fora. */
+export const impedimentosCalcDe = (impedimentos: ImpedimentoRow[]): ImpedimentoCalc[] =>
+  impedimentos
+    .filter((i) => i.categoria === 'impedimento' && i.responsavel)
+    .map((i) => ({
+      atividadeNumero: i.atividadeNumero,
+      responsavel: i.responsavel as Responsavel,
+      travaAtividade: i.travaAtividade,
+      abertoEm: i.abertoEm,
+      encerradoEm: i.encerradoEm,
+      impactoDias: i.impactoDias,
+    }))
+
+/** Plano de uma versão, ordenado por número. */
+export const planoDe = (linhas: Linha[], versaoId: string): AtividadePlano[] =>
   linhas
     .filter((a) => a.versao_id === versaoId)
-    .map((a) => ({
-      numero: a.numero,
-      etapa: a.etapa ?? '',
-      descricao: a.descricao ?? '',
-      pred1: a.pred1 ?? null,
-      pred2: a.pred2 ?? null,
-      duracao: a.duracao,
-      bloqueiaPorTrava: !!a.bloqueia_por_trava,
-      pesoValor: Number(a.peso_valor ?? 0),
-    }))
+    .map(atividadePlanoDe)
     .sort((a, b) => a.numero - b.numero)
 
-const impedimentoRow = (i: Linha): ImpedimentoRow => ({
+export const impedimentoRow = (i: Linha): ImpedimentoRow => ({
   id: i.id,
   obraId: i.obra_id,
   categoria: i.categoria,
@@ -133,24 +159,9 @@ export async function lerObraGrande(
   }
 
   const feriados = new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string))
-  const exec: AtividadeExec[] = ((execR.data ?? []) as Linha[]).map((e) => ({
-    numero: e.numero,
-    status: e.status as StatusAtividade,
-    percentual: Number(e.percentual ?? 0),
-    inicioReal: e.inicio_real ?? null,
-    fimReal: e.fim_real ?? null,
-  }))
+  const exec: AtividadeExec[] = ((execR.data ?? []) as Linha[]).map(atividadeExecDe)
   const impedimentos = ((impR.data ?? []) as Linha[]).map(impedimentoRow)
-  const imps: ImpedimentoCalc[] = impedimentos
-    .filter((i) => i.categoria === 'impedimento' && i.responsavel)
-    .map((i) => ({
-      atividadeNumero: i.atividadeNumero,
-      responsavel: i.responsavel as Responsavel,
-      travaAtividade: i.travaAtividade,
-      abertoEm: i.abertoEm,
-      encerradoEm: i.encerradoEm,
-      impactoDias: i.impactoDias,
-    }))
+  const imps = impedimentosCalcDe(impedimentos)
 
   const plano = usada ? planoDe(atividades, usada.id) : []
   const calcular = (p: AtividadePlano[]) =>

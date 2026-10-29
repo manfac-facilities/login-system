@@ -25,6 +25,7 @@ import {
   type AtividadePlano,
   type StatusAtividade,
 } from '../../_lib/cronograma'
+import { atividadeExecDe, atividadePlanoDe } from '../../_lib/leitura'
 import type { CamposExecucao, LinhaPlano, Resultado } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
@@ -91,17 +92,7 @@ const inteiroPositivo = (n: unknown) => typeof n === 'number' && Number.isIntege
 const dataISO = (s: unknown) =>
   typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + 'T00:00:00Z'))
 
-const planoDe = (linhas: Linha[]): AtividadePlano[] =>
-  linhas.map((a) => ({
-    numero: a.numero,
-    etapa: a.etapa ?? '',
-    descricao: a.descricao ?? '',
-    pred1: a.pred1 ?? null,
-    pred2: a.pred2 ?? null,
-    duracao: a.duracao,
-    bloqueiaPorTrava: !!a.bloqueia_por_trava,
-    pesoValor: Number(a.peso_valor ?? 0),
-  }))
+const planoDe = (linhas: Linha[]): AtividadePlano[] => linhas.map(atividadePlanoDe)
 
 export async function salvarLinhaRascunhoAction(
   obraId: string,
@@ -298,13 +289,7 @@ export async function atualizarExecucaoAction(
   const plano = planoDe((atR.data ?? []) as Linha[])
   if (!plano.some((a) => a.numero === numero)) return falha(`Atividade ${numero} não existe no cronograma`)
 
-  const exec: AtividadeExec[] = ((exR.data ?? []) as Linha[]).map((e) => ({
-    numero: e.numero,
-    status: e.status,
-    percentual: Number(e.percentual ?? 0),
-    inicioReal: e.inicio_real ?? null,
-    fimReal: e.fim_real ?? null,
-  }))
+  const exec: AtividadeExec[] = ((exR.data ?? []) as Linha[]).map(atividadeExecDe)
   const atual = exec.find((e) => e.numero === numero) ?? {
     numero, status: 'nao_iniciado' as StatusAtividade, percentual: 0, inicioReal: null, fimReal: null,
   }
