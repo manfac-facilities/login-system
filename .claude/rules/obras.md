@@ -108,3 +108,29 @@ pela Locaweb (`SMTP_*`, mesmas do Compras; `email-ssl.com.br:465`) um e-mail por
 envio → 1 nova tentativa após 60 s. Registro = `net._http_response` (some em ~6 h). Corpo
 `{"previa":true}` devolve o PNG; `{"somentePara":"<e-mail da lista>"}` manda a uma pessoa só.
 Docs: `docs/relatorio-email/`.
+
+## OBRAS (modalidade obra) — desde 29/10/2026
+
+`obras_obra.modalidade` ('spot' default | 'obra'). Cronograma, diário (RDO), impedimentos e e-mail ao cliente.
+
+- **Código:** `app/obras/obras/` (lista, cronograma, diário, impedimentos, comunicação).
+  `_lib/`: `calendario.ts` (dias úteis/feriados), `cronograma.ts` (plano, de/para, atraso), `leitura.ts`
+  (leitura única das tabelas), `email-diario.ts` (monta o e-mail, lado cliente × interno), `enviar.ts`
+  (envio por destinatário), `ultimo-diario.ts` (último envio ao cliente com destinatário).
+- **Tabelas:** `obras_cronograma_versao`, `obras_atividade`, `obras_atividade_exec`, `obras_rdo` (+`_avanco`,
+  `_foto`), `obras_impedimento`, `obras_destinatario`, `obras_envio`, `obras_feriado`. Colunas novas em
+  `obras_obra`: `modalidade`, `data_base`, `engenheiro_email`, `atividade_trava`.
+- **Regras que mordem (todas no banco, não só no app):**
+  - Versão salva do cronograma é imutável; mudança = revisão v2, v3… (o rascunho é reaproveitado).
+  - Diário: `rascunho → validado → enviado`, máquina de estados forçada por trigger.
+  - Só engenheiro da obra ou admin grava cronograma/execução/`obras_envio`; sem JWT (service role, cron) passa.
+  - Os 4 parâmetros da obra (`modalidade`, `data_base`, `engenheiro_email`, `atividade_trava`) só admin.
+  - Caminho de foto é canônico (`<obra>/rdo/<data>/<uuid>.jpg`, `<obra>/impedimento/<uuid>.jpg`) e a foto
+    congela após a validação (storage write-once em `/rdo/`).
+  - E-mail do cliente nunca mostra R$, peso nem item oculto; impedimento oculto vira "outros fatores".
+  - Base SPOT, diário/tarefas, painel gerencial e e-mail das 08:01 filtram `modalidade='spot'`.
+- **SQL:** `sdd-sql-obras-modalidade-obra.sql` aplicado em 29/10/2026; `sdd-sql-obras-modalidade-obra-2.sql`
+  (RPC com `modalidade`, guardas de engenheiro/admin, storage e caminhos canônicos) **pendente até o José aplicar**;
+  sem ele "Tornar OBRA" falha. Ver `.claude/rules/sql.md`.
+- **Fora de escopo (ver `docs/DIVIDAS.md`):** clima, ronda/mapa (Fase 4), semanal/PPC/curva S/Gantt (Fase 2),
+  página do cliente (Fase 3).

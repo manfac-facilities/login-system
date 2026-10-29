@@ -159,3 +159,5 @@ Os nossos são `obras-field-incremental` (`*/5 * * * *`), `obras-field-completa`
 A completa saiu de `5 6` em 20/09/2026 porque colidia com a incremental, perdia a trava e morria
 em silêncio — não rodou nenhuma vez entre 17 e 20/09. **Ao agendar job novo, não use um minuto
 múltiplo de 5.**
+| `obras-modalidade-obra` (`sdd-sql-obras-modalidade-obra.sql`) | **aplicado em 2026-10-29** pelo José. 10 tabelas/RLS do cronograma e diário da OBRA, `obras_obra.modalidade` e demais colunas; conferido: 28 atividades, 10 feriados, 3 OBRAs |
+| `obras-modalidade-obra-2` (`sdd-sql-obras-modalidade-obra-2.sql`) | **NÃO APLICADO até o José aplicar** (escrito em 29/10/2026). Recria `obras_aplicar_alteracao` com `modalidade` (guarda md5), guardas de engenheiro/admin, fotos do RDO imutáveis no storage, caminhos canônicos. Sem ele "Tornar OBRA"/"Voltar para SPOT" falha |

@@ -200,3 +200,32 @@ Backlog da revisão independente; nenhum bloqueia.
 - "Tirar" foto do rascunho apaga só a linha de `obras_rdo_foto`; o arquivo fica em `obras-fotos` (o bucket não tem policy de delete). Mesmo destino de RDO rascunho apagado (já anotado na Task 1).
 - Foto que sobe ao bucket e falha no `registrarFotoAction` vira arquivo órfão.
 - `salvarRascunhoAction` não é atômico: o RDO pode ser gravado e o avanço falhar; a tela mostra o erro e um novo "Salvar" completa. A substituição do avanço grava antes de apagar, então não há janela de perda.
+
+## 29/10/2026 — Modalidade OBRA, Fase 1 (branch `feat/obras-modalidade-obra`), deixado de propósito
+
+Fora de escopo da Fase 1 (âncora: `.superpowers/sdd/2026-10-29-obras-modalidade-obra-fase1/`):
+
+- Clima automático no diário: o campo é manual.
+- Ronda de pontos fixos / mapa: Fase 4.
+- Semanal, PPC, curva S e Gantt: Fase 2.
+- Página do cliente: Fase 3 (hoje o cliente só recebe o e-mail).
+
+Bordas conhecidas, não tratadas (Task 9b, `diario/_actions.ts`, `_lib/enviar.ts`):
+
+- Fotos vão ao e-mail sem redimensionar: cap de 6 e foto >1,5 MB é omitida.
+- Sem trava contra reenvio simultâneo em duas abas (o envio é por destinatário, mas a janela existe).
+- Avanço + validação sem transação: falha no meio deixa o RDO gravado sem validar; novo clique completa.
+- `page.tsx` do diário não checa erro ao calcular pendentes.
+- `sdd-sql-obras-modalidade-obra.sql` (verificação 1) para no 1º erro esperado no SQL Editor; o `-2` já não.
+- Trava de atividade (`atividade_trava`) bloqueia correção só de status quando o % > 0.
+- Regex de path de foto no banco aceita só minúsculas (uuid em maiúsculas é recusado).
+
+Menores dos reviews por tarefa, não confirmados como corrigidos na leva final (conferir antes de dar por fechados):
+
+- Lista de obras faz N+1 de leituras do cronograma (Task 6).
+- Causa de impedimento continua gravada quando a atividade avança (`diario/_actions.ts`); `de` defasado ao reabrir rascunho (`page.tsx`, `_preenchimento.ts`), afeta o de→para do e-mail (Task 8).
+- Encerrar impedimento não confere categoria nem data futura; form do passo 4 aparece em diário já validado (a action recusa) (Task 9a).
+- Update de id inexistente devolve ok; rótulos crus de tipo de envio (usar `TIPOS_ENVIO`); engenheiro inalterado sem acesso trava os outros campos (Task 10).
+- Cronograma: `n` negativo/não inteiro vira 0 em silêncio; sem validação de data malformada; faltam testes a==b, início em fim de semana e virada de ano (Task 2).
+- Apagar RDO rascunho deixa fotos órfãs no storage; sem botão "Tornar OBRA" na Triagem; sem teste obra→spot (Tasks 1 e 5).
+- SQL 1: `create table if not exists` não acrescenta o check de/para se a tabela já existir; verificação 8e pode devolver `OBRAS_VERSAO_SALVA` em vez de 23514 (Task 1).
