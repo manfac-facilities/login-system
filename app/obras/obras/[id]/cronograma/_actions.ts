@@ -170,6 +170,10 @@ export async function salvarVersaoAction(
 
   const m = (motivo ?? '').trim() || null
   if (versao.numero > 1 && !m) return falha('Informe o motivo da revisão')
+  // Sem data-base a leitura usa "hoje" e a base desliza todo dia; depois de salva, não dá para corrigir.
+  if (versao.numero === 1 && !ctx.obra.data_base) {
+    return falha('Defina a data-base na aba Comunicação antes de salvar a base')
+  }
 
   const campos: Linha = { salva_em: new Date().toISOString(), salva_por: ctx.email }
   if (m) campos.motivo = m

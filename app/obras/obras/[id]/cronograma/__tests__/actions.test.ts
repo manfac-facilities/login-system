@@ -233,6 +233,15 @@ describe('salvarLinhaRascunhoAction', () => {
 })
 
 describe('salvarVersaoAction', () => {
+  it('base (v1) sem data_base: recusa e não grava', async () => {
+    db.obras_obra[0].data_base = null
+    expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({
+      ok: false,
+      erro: 'Defina a data-base na aba Comunicação antes de salvar a base',
+    })
+    expect(db.obras_cronograma_versao.find((v) => v.id === 'v1')?.salva_em).toBeFalsy()
+  })
+
   it('salva a base (v1) sem motivo', async () => {
     expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({ ok: true })
     expect(db.obras_cronograma_versao[0].salva_em).toEqual(expect.any(String))
