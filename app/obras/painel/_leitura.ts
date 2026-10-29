@@ -26,11 +26,11 @@ export type EntradaDoPainel =
 
 export async function lerEntradaDoPainel(supabase: SupabaseClient): Promise<EntradaDoPainel> {
   /** Lê a tabela inteira em páginas estáveis (ordenadas por id). */
-  async function lerTudo<T>(tabela: string, colunas: string) {
+  async function lerTudo<T>(tabela: string, colunas: string, soSpot = false) {
     const { data, error } = await lerTodasAsLinhas<T>(async (de, ate) => {
-      const r = await supabase
-        .from(tabela)
-        .select(colunas)
+      const base = supabase.from(tabela).select(colunas)
+      // OBRA não cobra diário SPOT: fora da fila, dos "esperados" e do e-mail das 08:01.
+      const r = await (soSpot ? base.eq('modalidade', 'spot') : base)
         .order('id', { ascending: true })
         .range(de, ate)
       return { data: r.data as T[] | null, error: r.error }
@@ -39,7 +39,7 @@ export async function lerEntradaDoPainel(supabase: SupabaseClient): Promise<Entr
   }
 
   const leituras = await Promise.all([
-    lerTudo<ObraPainel>('obras_obra', '*'),
+    lerTudo<ObraPainel>('obras_obra', '*', true),
     lerTudo<LinhaDiario>('obras_diario', 'obra_id, data, andou, motivo, foto_path'),
     lerTudo<LinhaTarefa>('obras_tarefa', 'obra_id, situacao, prazo, resposta_em'),
     lerTudo<LinhaRemarcacao>('obras_remarcacao', 'obra_id, data, de, para, created_at'),

@@ -8,12 +8,13 @@ type Falha = { message: string } | null
 
 function fakeSupabase(falhas: Record<string, Falha> = {}) {
   const colunasPedidas: Record<string, string> = {}
+  const filtros: Record<string, unknown[][]> = {}
   const supabase = {
     from(tabela: string) {
       return {
         select(colunas: string) {
           colunasPedidas[tabela] = colunas
-          return {
+          const fim = {
             order: () => ({
               range: async () => ({
                 data: falhas[tabela] ? null : [{ tabela }],
@@ -21,11 +22,15 @@ function fakeSupabase(falhas: Record<string, Falha> = {}) {
               }),
             }),
           }
+          return {
+            ...fim,
+            eq: (c: string, v: unknown) => ((filtros[tabela] ??= []).push([c, v]), fim),
+          }
         },
       }
     },
   }
-  return { supabase: supabase as never, colunasPedidas }
+  return { supabase: supabase as never, colunasPedidas, filtros }
 }
 
 describe('lerEntradaDoPainel', () => {
@@ -45,6 +50,12 @@ describe('lerEntradaDoPainel', () => {
       tarefas: [{ tabela: 'obras_tarefa' }],
       remarcacoes: [{ tabela: 'obras_remarcacao' }],
     })
+  })
+
+  it('lê só obras SPOT (OBRA não entra na fila do diário SPOT)', async () => {
+    const { supabase, filtros } = fakeSupabase()
+    await lerEntradaDoPainel(supabase)
+    expect(filtros).toEqual({ obras_obra: [['modalidade', 'spot']] })
   })
 
   it.each(['obras_obra', 'obras_diario', 'obras_tarefa', 'obras_remarcacao'])(
