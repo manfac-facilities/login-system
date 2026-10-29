@@ -7,6 +7,8 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
+import FormImpedimento from '../impedimentos/_form'
+import ListaImpedimentos from '../impedimentos/_lista'
 import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -173,6 +175,19 @@ export default async function DiarioObraPage({
         inicial={inicial}
         atividades={atividades}
         fotos={fotos}
+        impedimentos={
+          <div className="flex flex-col gap-4">
+            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} feriados={feriados} somenteAbertos />
+            <FormImpedimento
+              obraId={id}
+              rdoId={rdo?.id ?? null}
+              atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
+              orientacoes={r.dados.impedimentos
+                .filter((i) => i.categoria === 'orientacao')
+                .map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}
+            />
+          </div>
+        }
       />
     </div>
   )
