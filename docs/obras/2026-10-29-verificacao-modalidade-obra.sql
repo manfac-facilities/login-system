@@ -81,3 +81,35 @@ begin;
   insert into public.obras_rdo_avanco (rdo_id, numero, de, para)
     select id, 1, 0, 1.5 from public.obras_rdo where data = date '2099-01-01';   -- deve falhar
 rollback;
+
+-- 9. Fix round 2 — máquina de estados do RDO (tudo em begin/rollback; sem JWT, como postgres)
+-- 9a. trigger e policy de delete (esperado 1 linha cada)
+select tgname from pg_trigger where tgname = 'obras_rdo_estado' and not tgisinternal;
+select policyname, qual from pg_policies
+ where schemaname = 'public' and tablename = 'obras_rdo' and cmd = 'DELETE';   -- qual contém 'rascunho'
+
+-- 9b. fluxo feliz + travas (esperado: ERRO "OBRAS_RDO_ESTADO" no primeiro update marcado "deve falhar")
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-02');
+  update public.obras_rdo set estado = 'enviado' where data = date '2099-01-02';   -- deve falhar (pulo)
+rollback;
+
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-02');
+  update public.obras_rdo set estado = 'validado', validado_por = 'teste' where data = date '2099-01-02';   -- ok
+  select estado, validado_por, validado_em is not null as tem_validado_em
+    from public.obras_rdo where data = date '2099-01-02';   -- validado | teste | true
+  update public.obras_rdo set efetivo = 99 where data = date '2099-01-02';   -- deve falhar (conteúdo imutável)
+rollback;
+
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-02');
+  update public.obras_rdo set estado = 'validado' where data = date '2099-01-02';
+  update public.obras_rdo set estado = 'rascunho' where data = date '2099-01-02';   -- deve falhar (volta)
+rollback;
+
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-02');
+  update public.obras_rdo set validado_por = 'x' where data = date '2099-01-02';   -- deve falhar (fora da validação)
+rollback;
+-- (validação por engenheiro/admin com JWT: testar pelo app na Task do RDO)

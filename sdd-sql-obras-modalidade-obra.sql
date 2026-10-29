@@ -325,12 +325,8 @@ begin
   if v_email is not null then
     if tg_op = 'INSERT' then
       new.registrado_por := v_email;
-      if new.validado_por is not null then new.validado_por := v_email; end if;
     else
       new.registrado_por := old.registrado_por;
-      if new.validado_por is not null and new.validado_por is distinct from old.validado_por then
-        new.validado_por := v_email;
-      end if;
     end if;
   end if;
   return new;
@@ -398,6 +394,83 @@ create trigger obras_atividade_exec_autor before insert or update on public.obra
   for each row execute function public.obras_atividade_exec_autor();
 
 -- ============================================================
+-- 3c. Máquina de estados do RDO (obras_rdo).
+--   rascunho -> validado -> enviado; sem volta, sem pulo.
+--   Fora de rascunho o conteúdo é imutável (só estado -> enviado e
+--   atualizado_em mudam).
+--   rascunho -> validado, numa sessão de usuário: só o engenheiro da obra
+--   (obras_obra.engenheiro_email) ou administrador; validado_por := e-mail
+--   da sessão e validado_em := now(). Sem JWT (service role) o validado_por
+--   informado fica, validado_em := now() também.
+--   validado_por/validado_em não mudam fora dessa transição.
+--   Em INSERT, sessão de usuário só cria rascunho limpo.
+-- security definer: lê engenheiro_email por cima da RLS (guarda fecha).
+-- ============================================================
+create or replace function public.obras_rdo_estado() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+  v_eng   text;
+begin
+  if tg_op = 'INSERT' then
+    if v_email is not null and (new.estado is distinct from 'rascunho'
+        or new.validado_por is not null or new.validado_em is not null) then
+      raise exception 'OBRAS_RDO_ESTADO: RDO novo nasce como rascunho' using errcode = 'P0001';
+    end if;
+    return new;
+  end if;
+
+  if new.estado is distinct from old.estado
+     and not ((old.estado = 'rascunho' and new.estado = 'validado')
+           or (old.estado = 'validado' and new.estado = 'enviado')) then
+    raise exception 'OBRAS_RDO_ESTADO: transição % -> % não permitida', old.estado, new.estado
+      using errcode = 'P0001';
+  end if;
+
+  if old.estado is distinct from 'rascunho' then
+    if row(new.id, new.obra_id, new.data, new.sem_execucao, new.motivo_sem_execucao,
+           new.efetivo, new.equipe_texto, new.clima, new.programacao_amanha,
+           new.registrado_por, new.validado_por, new.validado_em)
+       is distinct from
+       row(old.id, old.obra_id, old.data, old.sem_execucao, old.motivo_sem_execucao,
+           old.efetivo, old.equipe_texto, old.clima, old.programacao_amanha,
+           old.registrado_por, old.validado_por, old.validado_em) then
+      raise exception 'OBRAS_RDO_ESTADO: RDO % não pode ter o conteúdo alterado', old.estado
+        using errcode = 'P0001';
+    end if;
+    return new;
+  end if;
+
+  -- old.estado = 'rascunho'
+  if new.estado = 'validado' then
+    if v_email is not null then
+      select o.engenheiro_email into v_eng from public.obras_obra o where o.id = new.obra_id;
+      if not (public.obras_is_admin()
+              or (v_eng is not null and v_email = lower(trim(v_eng)))) then
+        raise exception 'OBRAS_RDO_ESTADO: só o engenheiro da obra ou administrador valida o RDO'
+          using errcode = '42501';
+      end if;
+      new.validado_por := v_email;
+    end if;
+    new.validado_em := now();
+  elsif new.validado_por is distinct from old.validado_por
+     or new.validado_em is distinct from old.validado_em then
+    raise exception 'OBRAS_RDO_ESTADO: validado_por/validado_em só mudam na validação'
+      using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_rdo_estado() from public, anon, authenticated;
+
+drop trigger if exists obras_rdo_estado on public.obras_rdo;
+create trigger obras_rdo_estado before insert or update on public.obras_rdo
+  for each row execute function public.obras_rdo_estado();
+
+-- ============================================================
 -- 4. RLS
 -- ============================================================
 -- select/insert/update com obras_has_access() nas tabelas operacionais.
@@ -423,8 +496,12 @@ begin
 end
 $$;
 
--- Delete de atividade (o trigger barra versão salva). Impedimento, versão,
--- RDO e envio não têm delete.
+-- Delete de atividade (o trigger barra versão salva). Impedimento, versão
+-- e envio não têm delete.
+-- Delete de RDO: só rascunho (avanço e foto saem junto, em cascata).
+drop policy if exists "obras delete" on public.obras_rdo;
+create policy "obras delete" on public.obras_rdo for delete to authenticated
+  using ((select public.obras_has_access()) and estado = 'rascunho');
 drop policy if exists "obras delete" on public.obras_atividade;
 create policy "obras delete" on public.obras_atividade for delete to authenticated
   using ((select public.obras_has_access()));
@@ -663,9 +740,9 @@ from (
            where modalidade='obra'
              and (id='a6271663-d342-4669-8c32-f9dd97e8aa7c' or os in ('PLK-NORTESHOP','CDRJ-TELHADO')))
   union all select 10, 'triggers de imutabilidade existem',
-         (select count(*) = 7 from pg_trigger
+         (select count(*) = 8 from pg_trigger
            where tgname in ('obras_atividade_imutavel','obras_versao_imutavel','obras_envio_autor',
-             'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor')
+             'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor','obras_rdo_estado')
              and not tgisinternal)
 ) t
 order by n;
