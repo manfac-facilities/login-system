@@ -89,12 +89,9 @@ function construtor(tabela: string) {
 const getUserMock = jest.fn()
 const lerObraGrandeMock = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
+  createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t), storage: { from: (b: string) => ({ remove: (p: string[]) => removerStorageMock(b, p) }) } })),
 }))
 const removerStorageMock = jest.fn()
-jest.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({ storage: { from: (b: string) => ({ remove: (p: string[]) => removerStorageMock(b, p) }) } }),
-}))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
@@ -332,6 +329,14 @@ describe('fotos', () => {
     removerStorageMock.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
     expect(await removerFotoAction('f1')).toEqual({ ok: true })
     expect(db.obras_rdo_foto).toHaveLength(0)
+  })
+
+  it('caminho fora do prefixo do RDO ou com ..: remove a linha mas não toca no bucket', async () => {
+    db.obras_rdo_foto.push({ id: 'f1', rdo_id: 'r1', path: `outra/rdo/${DIA}/${UUID}.jpg`, legenda: null, ordem: 1 })
+    db.obras_rdo_foto.push({ id: 'f2', rdo_id: 'r1', path: `${OBRA}/rdo/${DIA}/../x.jpg`, legenda: null, ordem: 2 })
+    expect(await removerFotoAction('f1')).toEqual({ ok: true })
+    expect(await removerFotoAction('f2')).toEqual({ ok: true })
+    expect(removerStorageMock).not.toHaveBeenCalled()
   })
 
   it('RDO validado: não toca no bucket', async () => {

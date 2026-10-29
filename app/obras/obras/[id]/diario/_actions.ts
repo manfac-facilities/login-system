@@ -225,7 +225,7 @@ export async function registrarFotoAction(
 }
 
 /**
- * Tira a foto do diário (rascunho) e apaga o arquivo do bucket `obras-fotos`.
+ * Tira a foto do diário (rascunho) e apaga o arquivo do bucket `obras-fotos` (com a sessão do usuário).
  * Falha ao apagar o arquivo (inclusive "não encontrado") não desfaz a remoção.
  */
 export async function removerFotoAction(fotoId: string): Promise<Resultado> {
@@ -250,10 +250,12 @@ export async function removerFotoAction(fotoId: string): Promise<Resultado> {
   if (error) return erroBanco('tirar a foto', error)
   if (!apagadas?.length) return falha(JA_VALIDADO) // RLS barrou em silêncio: o RDO saiu de rascunho.
 
+  // Sessão do usuário (não service role): a policy de delete do bucket vale. Só caminho do próprio RDO.
   const caminho = (foto as Linha).path as string | null
-  if (caminho) {
+  const prefixo = `${rdo.obra_id}/rdo/${String(rdo.data).slice(0, 10)}/`
+  if (caminho && caminho.startsWith(prefixo) && !caminho.split('/').includes('..')) {
     try {
-      const { error: errS } = await createAdminClient().storage.from('obras-fotos').remove([caminho])
+      const { error: errS } = await supabase.storage.from('obras-fotos').remove([caminho])
       if (errS && !/not.?found/i.test(errS.message)) console.warn(`[diario-obra] arquivo ${caminho} ficou no bucket: ${errS.message}`)
     } catch (e) {
       console.warn(`[diario-obra] arquivo ${caminho} ficou no bucket: ${e instanceof Error ? e.message : e}`)
