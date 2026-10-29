@@ -121,6 +121,14 @@ describe('montarEmailDiario', () => {
       expect(html).not.toContain('5 do cliente')
     })
 
+    it('cliente: dias de impedimento oculto do cliente vão para "outros fatores", não para a Manfac', () => {
+      const { html, texto } = montar('cliente', extra)
+      for (const t of [html, texto]) {
+        expect(t).toContain('2 do cliente, 3 em outros fatores')
+        expect(t).not.toContain('da Manfac')
+      }
+    })
+
     it('interno: conta todos os impedimentos', () => {
       const { html } = montar('interno', extra)
       expect(html).toContain('>5 d<')

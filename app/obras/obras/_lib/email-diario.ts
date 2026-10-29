@@ -10,7 +10,7 @@
  */
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
-import { atrasoPorResponsavel, diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
+import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
 export type RdoCompleto = {
@@ -85,21 +85,34 @@ export function montarEmailDiario(p: {
         : 'em linha com o previsto'
   // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
-  const atraso =
-    lado === 'interno' || !og.atraso || !og.terminoBase || !og.calc
-      ? og.atraso
-      : atrasoPorResponsavel({
-          terminoBase: og.terminoBase,
-          terminoProjetado: og.calc.terminoProjetado,
-          impacto: diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados),
-          feriados,
-        })
+  type Quebra = { total: number; outros: number } & Record<Responsavel, number>
+  let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
+  if (lado === 'cliente' && og.atraso) {
+    // Dias de impedimento oculto que não são da Manfac vão para "outros fatores", nunca para "da Manfac".
+    const vis = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados)
+    const ocultosNaoManfac = og.impedimentos.filter((i) => !i.exibirAoCliente && i.responsavel !== 'manfac')
+    const oc = diasDeImpacto(impedimentosCalcDe(ocultosNaoManfac), rdo.data, feriados)
+    let restante = og.atraso.total
+    const parte = (v: number) => {
+      const x = Math.min(restante, Math.max(v, 0))
+      restante -= x
+      return x
+    }
+    const cliente = parte(vis.cliente)
+    const clima = parte(vis.clima)
+    const terceiro = parte(vis.terceiro)
+    const outros = parte(oc.cliente + oc.clima + oc.terceiro)
+    atraso = { total: og.atraso.total, cliente, clima, terceiro, outros, manfac: restante }
+  }
   let quebra = ''
   if (atraso && atraso.total > 0) {
     const a = atraso
-    const partes = (['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
-      .filter((r) => a[r] > 0)
-      .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`)
+    const partes = [
+      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
+        .filter((r) => a[r] > 0)
+        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
+      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
+    ]
     quebra = ` (+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''})`
   }
   const previsao = `Entrega prevista: ${dataBr(calc.terminoProjetado)}${quebra}`
