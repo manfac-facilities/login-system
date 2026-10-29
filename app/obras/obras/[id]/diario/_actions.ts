@@ -225,8 +225,8 @@ export async function registrarFotoAction(
 }
 
 /**
- * Tira a foto do diário. O arquivo fica no bucket: não há policy de delete em
- * `obras-fotos` (dívida registrada no relatório da Task 8).
+ * Tira a foto do diário (rascunho) e apaga o arquivo do bucket `obras-fotos`.
+ * Falha ao apagar o arquivo (inclusive "não encontrado") não desfaz a remoção.
  */
 export async function removerFotoAction(fotoId: string): Promise<Resultado> {
   const auth = await autorizar()
@@ -235,7 +235,7 @@ export async function removerFotoAction(fotoId: string): Promise<Resultado> {
 
   const { data: foto, error: errF } = await supabase
     .from('obras_rdo_foto')
-    .select('id, rdo_id')
+    .select('id, rdo_id, path')
     .eq('id', fotoId)
     .maybeSingle()
   if (errF) return erroBanco('ler a foto', errF)
@@ -249,6 +249,16 @@ export async function removerFotoAction(fotoId: string): Promise<Resultado> {
   const { data: apagadas, error } = await supabase.from('obras_rdo_foto').delete().eq('id', fotoId).select('id')
   if (error) return erroBanco('tirar a foto', error)
   if (!apagadas?.length) return falha(JA_VALIDADO) // RLS barrou em silêncio: o RDO saiu de rascunho.
+
+  const caminho = (foto as Linha).path as string | null
+  if (caminho) {
+    try {
+      const { error: errS } = await createAdminClient().storage.from('obras-fotos').remove([caminho])
+      if (errS && !/not.?found/i.test(errS.message)) console.warn(`[diario-obra] arquivo ${caminho} ficou no bucket: ${errS.message}`)
+    } catch (e) {
+      console.warn(`[diario-obra] arquivo ${caminho} ficou no bucket: ${e instanceof Error ? e.message : e}`)
+    }
+  }
 
   revalidar(rdo.obra_id as string)
   return { ok: true }

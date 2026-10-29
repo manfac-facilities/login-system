@@ -91,6 +91,10 @@ const lerObraGrandeMock = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
 }))
+const removerStorageMock = jest.fn()
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => ({ storage: { from: (b: string) => ({ remove: (p: string[]) => removerStorageMock(b, p) }) } }),
+}))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
@@ -317,8 +321,24 @@ describe('fotos', () => {
 
   it('remove a foto do rascunho', async () => {
     db.obras_rdo_foto.push({ id: 'f1', rdo_id: 'r1', path, legenda: null, ordem: 1 })
+    removerStorageMock.mockResolvedValue({ data: [], error: null })
     expect(await removerFotoAction('f1')).toEqual({ ok: true })
     expect(db.obras_rdo_foto).toHaveLength(0)
+    expect(removerStorageMock).toHaveBeenCalledWith('obras-fotos', [path])
+  })
+
+  it('arquivo já ausente no bucket (not found): remove a foto mesmo assim', async () => {
+    db.obras_rdo_foto.push({ id: 'f1', rdo_id: 'r1', path, legenda: null, ordem: 1 })
+    removerStorageMock.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
+    expect(await removerFotoAction('f1')).toEqual({ ok: true })
+    expect(db.obras_rdo_foto).toHaveLength(0)
+  })
+
+  it('RDO validado: não toca no bucket', async () => {
+    db.obras_rdo_foto.push({ id: 'f1', rdo_id: 'r1', path, legenda: null, ordem: 1 })
+    db.obras_rdo[0].estado = 'validado'
+    await removerFotoAction('f1')
+    expect(removerStorageMock).not.toHaveBeenCalled()
   })
 
   it('sem acesso → recusa', async () => {
