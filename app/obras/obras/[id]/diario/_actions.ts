@@ -4,8 +4,9 @@
  * Server Actions do diário de obra (RDO) da modalidade OBRA — spec §5.3.
  *
  * Quem preenche: qualquer usuário com acesso `obras` (ou administrador). Guarda
- * falha fechada. Só mexe em rascunho: validar/enviar é da Task 9b, e aplicar o
- * avanço em `obras_atividade_exec` acontece na validação, não aqui.
+ * falha fechada. O rascunho só mexe no RDO; aplicar o avanço em
+ * `obras_atividade_exec` acontece na validação (`validarEEnviarAction`, só o
+ * engenheiro da obra ou admin).
  *
  * O banco é a segunda barreira (trigger OBRAS_RDO_ESTADO: conteúdo fora de
  * rascunho é imutável; RLS de avanço/foto: só com o RDO pai em rascunho). A
@@ -22,6 +23,10 @@ import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
 import { podeIniciar } from '../../_lib/cronograma'
+import { diasUteisEntre } from '../../_lib/calendario'
+import { montarEmailDiario } from '../../_lib/email-diario'
+import { enviarEmail } from '../../_lib/enviar'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { AvancoRdo, CausaNaoAndou, Clima, RascunhoRdo, Resultado } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
@@ -247,4 +252,211 @@ export async function removerFotoAction(fotoId: string): Promise<Resultado> {
 
   revalidar(rdo.obra_id as string)
   return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Validar e enviar (Task 9b, spec §5.3 "Validar e enviar", §5.4, §5.5, §7.2)
+// ---------------------------------------------------------------------------
+
+const SO_ENGENHEIRO = 'Só o engenheiro responsável da obra ou um administrador valida o diário'
+const SEM_DESTINATARIO_CLIENTE = 'Cadastre os destinatários na aba Comunicação'
+const VALIDADO_MAS = 'Diário validado, mas o e-mail não saiu'
+const MAX_FOTOS = 6
+/** Sem biblioteca de imagem no projeto: foto acima disso fica fora do e-mail. */
+const MAX_BYTES_FOTO = 1_500_000
+
+/**
+ * 1. só o engenheiro da obra (com acesso `obras`) ou admin;
+ * 2. RDO do dia em rascunho → aplica o avanço em `obras_atividade_exec` e
+ *    valida. RDO já validado (envio anterior falhou) → só reenvia;
+ * 3. até 6 fotos por CID (baixadas com a service role);
+ * 4. um e-mail por destinatário ativo com tipo `diario`, por lado;
+ * 5. um `obras_envio` por lado; RDO `enviado` se algum lado saiu.
+ * Sem destinatário do cliente: valida e não envia nada.
+ */
+export async function validarEEnviarAction(
+  obraId: string,
+  data: string,
+): Promise<Resultado & { enviados?: number }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const email = user?.email?.trim().toLowerCase()
+  if (!email) return falha(NAO_AUTENTICADO)
+  const admin = await isAdmin(supabase, email)
+  if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return falha(SEM_ACESSO)
+  if (!ISO.test(data)) return falha('Data inválida')
+
+  const lida = await lerObraGrande(supabase, obraId, data)
+  if (!lida.ok) return lida
+  const { obra, versaoBase, plano, exec } = lida.dados
+  if (obra.modalidade !== 'obra') return falha('Obra não encontrada')
+  const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
+  if (!admin && !(engenheiro !== '' && engenheiro === email)) return falha(SO_ENGENHEIRO)
+  if (!versaoBase?.salvaEm) return falha(SEM_BASE)
+
+  const { data: rdoL, error: errR } = await supabase
+    .from('obras_rdo')
+    .select('*')
+    .eq('obra_id', obraId)
+    .eq('data', data)
+    .maybeSingle()
+  if (errR) return erroBanco('ler o diário', errR)
+  if (!rdoL) return falha(RDO_NAO_ENCONTRADO)
+  const rdo = rdoL as Linha
+  if (rdo.estado === 'enviado') return falha(JA_ENVIADO)
+
+  const [avR, foR] = await Promise.all([
+    supabase.from('obras_rdo_avanco').select('*').eq('rdo_id', rdo.id),
+    supabase.from('obras_rdo_foto').select('*').eq('rdo_id', rdo.id).order('ordem'),
+  ])
+  if (avR.error) return erroBanco('ler o avanço', avR.error)
+  if (foR.error) return erroBanco('ler as fotos', foR.error)
+  const avancos = ((avR.data ?? []) as Linha[]).map((a) => ({
+    numero: Number(a.numero),
+    de: Number(a.de ?? 0),
+    para: Number(a.para ?? 0),
+    concluida: !!a.concluida,
+  }))
+
+  let validadoPor = (rdo.validado_por as string | null) ?? email
+  let validadoEm = (rdo.validado_em as string | null) ?? new Date().toISOString()
+
+  if (rdo.estado === 'rascunho') {
+    // Aplica o "para" do diário na execução (spec §7.2) ANTES de validar: se
+    // falhar no meio, o RDO segue rascunho e repetir reaplica os mesmos valores.
+    const agora = new Date().toISOString()
+    const linhas: Linha[] = []
+    for (const a of rdo.sem_execucao ? [] : avancos) {
+      const atual = exec.find((e) => e.numero === a.numero)
+      const antes = atual?.percentual ?? 0
+      const para = a.concluida ? 1 : a.para
+      if (!a.concluida && para === antes && atual?.status !== 'concluido') continue
+      if (a.concluida || para > antes) {
+        const trava = podeIniciar(a.numero, plano, exec, obra.atividade_trava ?? null)
+        if (!trava.ok) return falha(`Atividade ${a.numero}: ${trava.motivo.charAt(0).toLowerCase()}${trava.motivo.slice(1)}`)
+      }
+      let status: string
+      if (a.concluida) status = 'concluido'
+      else if (atual?.status === 'bloqueado') status = 'bloqueado'
+      else status = para > 0 ? 'em_andamento' : 'nao_iniciado'
+      linhas.push({
+        obra_id: obraId,
+        numero: a.numero,
+        status,
+        percentual: para,
+        inicio_real: atual?.inicioReal ?? (para > 0 ? data : null),
+        fim_real: a.concluida ? (atual?.fimReal ?? data) : null,
+        atualizado_em: agora,
+      })
+    }
+    if (linhas.length) {
+      const { error } = await supabase.from('obras_atividade_exec').upsert(linhas, { onConflict: 'obra_id,numero' })
+      if (error) return erroBanco('aplicar o avanço no cronograma', error)
+    }
+
+    // validado_por/validado_em: o trigger OBRAS_RDO_ESTADO grava (e-mail da sessão, now()).
+    const { data: validado, error: errV } = await supabase
+      .from('obras_rdo')
+      .update({ estado: 'validado', atualizado_em: agora })
+      .eq('id', rdo.id)
+      .eq('estado', 'rascunho')
+      .select('validado_por, validado_em')
+      .maybeSingle()
+    if (errV) return errV.code === '42501' ? falha(SO_ENGENHEIRO) : erroBanco('validar o diário', errV)
+    if (!validado) return falha(JA_VALIDADO) // outra pessoa validou no meio do caminho
+    validadoPor = ((validado as Linha).validado_por as string | null) ?? email
+    validadoEm = ((validado as Linha).validado_em as string | null) ?? agora
+    revalidar(obraId)
+  }
+
+  const { data: destL, error: errDest } = await supabase
+    .from('obras_destinatario')
+    .select('email, lado')
+    .eq('obra_id', obraId)
+    .eq('ativo', true)
+    .contains('tipos', ['diario'])
+  if (errDest) return falha(`${VALIDADO_MAS}: não deu para ler os destinatários (${errDest.message})`)
+  const doLado = (lado: string) =>
+    ((destL ?? []) as Linha[])
+      .filter((d) => d.lado === lado)
+      .map((d) => String(d.email ?? '').trim())
+      .filter(Boolean)
+  const lados = { cliente: doLado('cliente'), interno: doLado('interno') }
+  if (!lados.cliente.length) return falha(SEM_DESTINATARIO_CLIENTE)
+
+  // Leitura de novo: o e-mail mostra o cronograma já com o avanço do dia.
+  const relida = await lerObraGrande(supabase, obraId, data)
+  if (!relida.ok) return falha(`${VALIDADO_MAS}: ${relida.erro}`)
+
+  // Fotos por CID (URL assinada expira; spec §5.4). Admin só para baixar do bucket.
+  const linhasFoto = ((foR.data ?? []) as Linha[]).slice(0, MAX_FOTOS)
+  const anexos: { cid: string; nome: string; conteudo: Buffer }[] = []
+  const fotosCid: { cid: string; legenda: string | null }[] = []
+  let fotosOmitidas = 0
+  if (linhasFoto.length) {
+    const bucket = createAdminClient().storage.from('obras-fotos')
+    for (const [i, f] of linhasFoto.entries()) {
+      const { data: blob, error } = await bucket.download(String(f.path))
+      const conteudo = blob && !error ? Buffer.from(await blob.arrayBuffer()) : null
+      if (!conteudo || conteudo.length > MAX_BYTES_FOTO) {
+        console.warn(`[diario-obra] foto omitida ${f.path}: ${error?.message ?? `${conteudo?.length ?? 0} bytes`}`)
+        fotosOmitidas++
+        continue
+      }
+      const cid = `foto${i + 1}.${rdo.id}@manfac`
+      anexos.push({ cid, nome: `foto-${i + 1}.jpg`, conteudo })
+      fotosCid.push({ cid, legenda: (f.legenda as string | null) ?? null })
+    }
+  }
+
+  const rdoCompleto = {
+    id: String(rdo.id),
+    data,
+    semExecucao: !!rdo.sem_execucao,
+    motivoSemExecucao: (rdo.motivo_sem_execucao as string | null) ?? null,
+    programacaoAmanha: (rdo.programacao_amanha as string | null) ?? null,
+    avancos,
+  }
+  const diaN = diasUteisEntre(obra.data_base ?? data, data, relida.dados.feriados)
+
+  let enviados = 0
+  const erros: string[] = []
+  for (const lado of ['cliente', 'interno'] as const) {
+    const para = lados[lado]
+    if (!para.length) continue
+    const msg = montarEmailDiario({
+      lado, obra: relida.dados, rdo: rdoCompleto, validadoPor, validadoEm, diaN, fotosCid, fotosOmitidas,
+    })
+    const r = await enviarEmail({ para, ...msg, anexos })
+    if (r.ok) enviados += para.length
+    else erros.push(`${lado}: ${r.erro}`)
+    // enviado_por vem do JWT (trigger obras_envio_autor).
+    const { error } = await supabase.from('obras_envio').insert({
+      obra_id: obraId,
+      tipo: 'diario',
+      referencia: data,
+      rdo_id: rdo.id,
+      lado,
+      destinatarios: para,
+      resultado: r.ok ? 'ok' : 'falha',
+      detalhe: r.ok ? null : r.erro,
+    })
+    if (error) erros.push(`registro do envio (${lado}) falhou: ${error.message}`)
+  }
+
+  if (enviados > 0) {
+    const { error } = await supabase
+      .from('obras_rdo')
+      .update({ estado: 'enviado', atualizado_em: new Date().toISOString() })
+      .eq('id', rdo.id)
+      .eq('estado', 'validado')
+    if (error) erros.push(`não deu para marcar o diário como enviado (${error.message})`)
+  }
+  revalidar(obraId)
+
+  if (enviados === 0) return falha(`${VALIDADO_MAS}: ${erros.join(' · ')}`)
+  if (erros.length) return { ok: false, erro: `Enviado em parte (${enviados} destinatário(s)): ${erros.join(' · ')}`, enviados }
+  return { ok: true, enviados }
 }

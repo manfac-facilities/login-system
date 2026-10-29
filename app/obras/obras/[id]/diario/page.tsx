@@ -7,6 +7,9 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
+import ValidarDiario from './_validar'
+import { montarEmailDiario } from '../../_lib/email-diario'
+import { diasUteisEntre } from '../../_lib/calendario'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
 import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
@@ -42,8 +45,8 @@ export default async function DiarioObraPage({
     data: { user },
   } = await supabase.auth.getUser()
   const email = user?.email?.trim().toLowerCase() ?? ''
-  const permitido =
-    !!email && ((await hasSystemAccess(supabase, email, 'obras')) || (await isAdmin(supabase, email)))
+  const admin = !!email && (await isAdmin(supabase, email))
+  const permitido = admin || (!!email && (await hasSystemAccess(supabase, email, 'obras')))
   if (!permitido) return <EstadoVazio>Esta tela é de quem é responsável pelas obras</EstadoVazio>
 
   const hoje = hojeISO()
@@ -123,6 +126,33 @@ export default async function DiarioObraPage({
     ultimo,
   })
 
+  // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).
+  const podeValidar =
+    admin || (!!obra.engenheiro_email && obra.engenheiro_email.trim().toLowerCase() === email)
+  let previaHtml: string | null = null
+  if (rdo && podeValidar && (rdo.estado === 'rascunho' || rdo.estado === 'validado')) {
+    const comUrl = fotos.slice(0, 6).filter((f) => f.url)
+    let html = montarEmailDiario({
+      lado: 'cliente',
+      obra: r.dados,
+      rdo: {
+        id: rdo.id,
+        data,
+        semExecucao: !!rdo.sem_execucao,
+        motivoSemExecucao: rdo.motivo_sem_execucao ?? null,
+        programacaoAmanha: rdo.programacao_amanha ?? null,
+        avancos: avancosSalvos,
+      },
+      validadoPor: rdo.validado_por ?? email,
+      validadoEm: rdo.validado_em ?? new Date().toISOString(),
+      diaN: diasUteisEntre(obra.data_base ?? data, data, feriados),
+      fotosCid: comUrl.map((f) => ({ cid: f.id, legenda: f.legenda })),
+    }).html
+    // Na prévia, a foto vem pela URL assinada no lugar do CID.
+    for (const f of comUrl) html = html.split(`cid:${f.id}`).join(f.url!.replace(/&/g, '&amp;'))
+    previaHtml = html
+  }
+
   const base = `/obras/obras/${id}/diario`
   const navLink =
     'flex min-h-11 items-center rounded-lg border border-[#1e3a5f] px-3 text-sm text-[#e8eef7] hover:border-[#f05a28]'
@@ -190,6 +220,10 @@ export default async function DiarioObraPage({
           </div>
         }
       />
+
+      {previaHtml !== null ? (
+        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} />
+      ) : null}
     </div>
   )
 }
