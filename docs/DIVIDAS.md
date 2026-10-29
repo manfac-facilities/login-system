@@ -236,3 +236,11 @@ Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-
 - Lista de gastos, "sem centro de custo" e cadastros leem a view inteira (paginando de 1000 em 1000) e agrupam/somam no servidor; com dezenas de milhares de linhas isso pesa e vira agregação no banco.
 - Telas de leitura (cadastros, gastos, sem centro de custo, histórico) abrem para qualquer pessoa com acesso ao Sofia; só os botões de gravar exigem gestor/admin (a action e a RLS reforçam). O mockup mostrava "sem permissão" para quem não é gestor; D2 prevaleceu.
 - Sem teste de componente/página (o projeto não tem teste de UI para as páginas do Sofia); a lógica está em `lib/sofia/extratos/__tests__/agrupar.test.ts` e na action.
+
+## 29/10/2026 — Frotas: D3 encerrar ligação, não bloqueantes da revisão
+
+- Encerramento com data passada tira gastos já enviados do centro de custo sem aviso (views do financeiro mudam junto, são calculadas na hora). Falta aviso/limite de data retroativa no diálogo.
+- Encerramento com data futura é aceito; até a data a tela segue mostrando a equipe e o botão "Encerrar" (a linha futura só aparece no histórico).
+- Gasto de cartão encerrado cai na caixa "ainda não têm equipe" — texto um pouco enganoso nesse caso.
+- `ligacaoVigente` desempata por `criado_em`; a view por `criado_em, id`. Só diverge com `criado_em` idêntico.
+- Teste da action não cobre não-gestor recusado (coberto pela RLS e pelo teste SQL u1); teste SQL não cobre encerrar no mesmo dia de uma ligação existente.
