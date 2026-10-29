@@ -20,6 +20,7 @@ export type BlocoHistorico =
   | 'Esteira'
   | 'Cancelamento'
   | 'Agendamento'
+  | 'Classificação'
 
 export type CampoHistorico =
   | 'pcm'
@@ -42,6 +43,7 @@ export type CampoHistorico =
   | 'marco_liberou_fat'
   | 'marco_faturou'
   | 'diario_agendado_ate'
+  | 'modalidade'
 
 /** Rótulo de tela para cada campo rastreado. Ver spec §7. */
 export const ROTULO_CAMPO: Record<CampoHistorico, string> = {
@@ -65,6 +67,7 @@ export const ROTULO_CAMPO: Record<CampoHistorico, string> = {
   marco_liberou_fat: 'Data do faturamento liberado',
   marco_faturou: 'Data de faturamento',
   diario_agendado_ate: 'Agendamento do diário (volta em)',
+  modalidade: 'Modalidade',
 }
 
 /** Uma linha ainda não gravada — o formato que a RPC espera em `p_linhas`. */
@@ -195,6 +198,7 @@ const COLUNA_PARA_CAMPO: Partial<Record<string, CampoHistorico>> = {
   marco_liberou_fat: 'marco_liberou_fat',
   marco_faturou: 'marco_faturou',
   diario_agendado_ate: 'diario_agendado_ate',
+  modalidade: 'modalidade',
 }
 
 /**

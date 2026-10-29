@@ -34,6 +34,7 @@ let cartoes: CartoesProps | null = null
 /** Chamadas de `select` em `obras_obra`, na ordem. */
 const selecoesObra: string[] = []
 const eqPcm = jest.fn()
+const eqModalidade = jest.fn()
 const order = jest.fn()
 const selecoesOutras: { tabela: string; cols: string }[] = []
 const inOutras: { tabela: string; ids: unknown }[] = []
@@ -52,9 +53,12 @@ function mockBanco() {
           return q
         })
         q.in = jest.fn(() => q)
-        q.eq = jest.fn((_c: string, v: string) => {
-          eqPcm(v)
-          pcm = v
+        q.eq = jest.fn((c: string, v: string) => {
+          if (c === 'modalidade') eqModalidade(v)
+          else {
+            eqPcm(v)
+            pcm = v
+          }
           return q
         })
         q.order = jest.fn((...a: unknown[]) => {
@@ -93,6 +97,7 @@ beforeEach(() => {
   inOutras.length = 0
   pessoasNoBanco = []
   eqPcm.mockClear()
+  eqModalidade.mockClear()
   order.mockClear()
   ;(isAdmin as jest.Mock).mockResolvedValue(true)
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
@@ -113,6 +118,8 @@ test('admin com filtro: lista de responsáveis continua completa (consulta à pa
   expect(cartoes!.obras.map((o) => o.id)).toEqual(['o1'])
   expect(cartoes!.responsaveis).toEqual(['AMANDA', 'YURI'])
   expect([...selecoesObra].sort()).toEqual(['*', 'pcm'])
+  expect(eqModalidade).toHaveBeenCalledTimes(2)
+  expect(eqModalidade).toHaveBeenCalledWith('spot')
 })
 
 test('mais de 1000 obras em campo: nenhuma é cortada', async () => {

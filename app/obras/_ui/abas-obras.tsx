@@ -11,7 +11,8 @@ import { usePathname } from 'next/navigation'
 const ABAS = [
   { href: '/obras/diario', label: 'Diário do dia' },
   { href: '/obras/tarefas', label: 'Tarefas' },
-  { href: '/obras/base', label: 'Base de obras' },
+  { href: '/obras/base', label: 'Base SPOT' },
+  { href: '/obras/obras', label: 'OBRAS' },
   // Painel gerencial (spec-painel-gerencial-2026-09-29): aba nova, depois da Base.
   { href: '/obras/painel', label: 'Painel gerencial' },
 ]

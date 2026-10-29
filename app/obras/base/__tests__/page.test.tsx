@@ -20,6 +20,7 @@ import BaseDeObrasPage from '../page'
 
 let visaoProps: { obras: { id: string }[] } | null = null
 const order = jest.fn()
+const eq = jest.fn()
 const range = jest.fn()
 let banco: unknown[] = []
 let erroNaPagina: number | null = null
@@ -30,6 +31,10 @@ function mockBanco() {
     from: jest.fn(() => {
       const q: Record<string, unknown> = {}
       q.select = jest.fn(() => q)
+      q.eq = jest.fn((...a: unknown[]) => {
+        eq(...a)
+        return q
+      })
       q.order = jest.fn((...a: unknown[]) => {
         order(...a)
         return q
@@ -62,6 +67,7 @@ test('até 999 obras: uma consulta só, sem order (igual a antes)', async () => 
   render(await BaseDeObrasPage())
   expect(visaoProps!.obras).toHaveLength(241)
   expect(range).toHaveBeenCalledTimes(1)
+  expect(eq).toHaveBeenCalledWith('modalidade', 'spot')
   expect(order).not.toHaveBeenCalled()
 })
 

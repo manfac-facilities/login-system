@@ -63,7 +63,7 @@ export default async function DiarioPage({ searchParams }: Props) {
     supabase.from('obras_pessoa').select('chave, nome, area, email'),
     admin && analista
       ? lerTodasAsLinhas<{ pcm: string | null }>((de, ate, estavel) => {
-          const q = supabase.from('obras_obra').select('pcm').in('etapa', ETAPAS_FILA_DIARIO)
+          const q = supabase.from('obras_obra').select('pcm').eq('modalidade', 'spot').in('etapa', ETAPAS_FILA_DIARIO)
           return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
         })
       : Promise.resolve({ data: null, error: null }),
@@ -80,7 +80,7 @@ export default async function DiarioPage({ searchParams }: Props) {
 
   // Em páginas: o PostgREST corta em 1.000 linhas sem avisar.
   const { data: linhas, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
-    let q = supabase.from('obras_obra').select('*').in('etapa', ETAPAS_FILA_DIARIO)
+    let q = supabase.from('obras_obra').select('*').eq('modalidade', 'spot').in('etapa', ETAPAS_FILA_DIARIO)
     if (filtroPcm) q = q.eq('pcm', filtroPcm)
     return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
   })

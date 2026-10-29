@@ -37,7 +37,7 @@ export default async function BaseDeObrasPage() {
   // Em páginas: o PostgREST corta em 1.000 linhas sem avisar, e os KPIs abaixo
   // contariam só as primeiras.
   const { data, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
-    const q = supabase.from('obras_obra').select('*')
+    const q = supabase.from('obras_obra').select('*').eq('modalidade', 'spot')
     return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
   })
 

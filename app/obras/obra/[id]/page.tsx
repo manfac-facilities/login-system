@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../_ui/primitivos'
 import {
   dataSP,
@@ -259,6 +260,7 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
         hoje={hojeISO()}
         edicoes={ultimasEdicoes((historico ?? []) as LinhaHistorico[])}
         historico={(historico ?? []) as LinhaHistorico[]}
+        admin={await isAdmin(supabase, user.email)}
       />
     </div>
   )

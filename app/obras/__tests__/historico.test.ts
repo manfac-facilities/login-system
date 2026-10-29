@@ -23,7 +23,7 @@ describe('ROTULO_CAMPO', () => {
     expect(ROTULO_CAMPO.etapa).toBe('Etapa')
   })
 
-  it('bate exatamente com a tabela de rótulos da spec §6 (todos os 19, não só amostra)', () => {
+  it('bate exatamente com a tabela de rótulos da spec §6 (todos os 20, não só amostra)', () => {
     expect(ROTULO_CAMPO).toEqual({
       pcm: 'Responsável da obra',
       equipe: 'Equipe / prestador',
@@ -45,6 +45,7 @@ describe('ROTULO_CAMPO', () => {
       marco_liberou_fat: 'Data do faturamento liberado',
       marco_faturou: 'Data de faturamento',
       diario_agendado_ate: 'Agendamento do diário (volta em)',
+      modalidade: 'Modalidade',
     })
   })
 })

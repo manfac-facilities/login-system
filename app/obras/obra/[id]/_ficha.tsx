@@ -76,8 +76,10 @@ import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fec
 import FaixaCancelar from './_cancelar-obra'
 import EnviarParaFaturamento from './_enviar-faturamento'
 import SeloCancelada from './_cancelamento'
+import Classificacao from './_classificacao'
 import type { LinhaHistorico } from '../../_lib/historico'
 import {
+  alterarModalidadeAction,
   cadastrarMotivoRemarcacaoAction,
   cancelarObraAction,
   corrigirDataFechamentoAction,
@@ -552,6 +554,7 @@ export default function Ficha({
   hoje,
   edicoes = {},
   historico,
+  admin = false,
 }: {
   obra: Obra
   diario: DiarioRow[]
@@ -571,6 +574,8 @@ export default function Ficha({
   edicoes?: EdicoesPorBloco
   /** As linhas de `obras_historico` desta obra, mais novas primeiro (item 1). */
   historico: LinhaHistorico[]
+  /** Administrador vê o botão de reclassificar SPOT/OBRA. */
+  admin?: boolean
 }) {
   const ultimos = diario.slice(-8)
   const comFoto = ultimos.filter((d) => !!d.foto_path).length
@@ -586,6 +591,9 @@ export default function Ficha({
           <p className="mt-0.5 font-mono text-xs text-[#94a3b8]">
             OS {obra.os ?? '—'} · {obra.tipo ?? '—'} · {moeda(obra.valor)}
           </p>
+          <div className="mt-1">
+            <Classificacao obraId={obra.id} modalidade={obra.modalidade ?? 'spot'} admin={admin} alterar={alterarModalidadeAction} />
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <EtiquetaEtapa obra={obra} />

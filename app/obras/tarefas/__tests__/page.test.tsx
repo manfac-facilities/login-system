@@ -47,6 +47,7 @@ let agendadasProps: AgendadasProps | null = null
 
 /** Chamadas da leitura de agendadas em `obras_obra`. */
 const selectObra = jest.fn()
+const eqObra = jest.fn()
 const notObra = jest.fn()
 const inObra = jest.fn()
 let agendadasNoBanco: { id: string; pcm: string | null }[] = []
@@ -126,6 +127,10 @@ beforeEach(() => {
           selectObra(cols)
           return q
         })
+        q.eq = jest.fn((...a: unknown[]) => {
+          eqObra(...a)
+          return q
+        })
         q.not = jest.fn((...a: unknown[]) => {
           notObra(...a)
           return q
@@ -192,6 +197,7 @@ test('lê as obras agendadas: data não nula e só etapas do diário', async () 
   render(await TarefasPage())
   expect(selectObra).toHaveBeenCalledTimes(1)
   expect(selectObra.mock.calls[0][0]).toContain('diario_agendado_ate')
+  expect(eqObra).toHaveBeenCalledWith('modalidade', 'spot')
   expect(notObra).toHaveBeenCalledWith('diario_agendado_ate', 'is', null)
   expect(inObra).toHaveBeenCalledWith('etapa', ['levantamento', 'andamento', 'paralisado'])
 })

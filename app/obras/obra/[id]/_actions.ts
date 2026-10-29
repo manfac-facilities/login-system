@@ -16,6 +16,7 @@ import { revalidatePath } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
+import { isAdmin } from '@/lib/auth/roles'
 import {
   CANCELADO_POR,
   CICLO,
@@ -1153,4 +1154,36 @@ export async function enviarParaFaturamentoAction(
   revalidatePath(`/obras/obra/${obraId}`)
   revalidatePath('/obras/base')
   return { success: true }
+}
+
+/**
+ * Reclassifica a obra entre SPOT e OBRA. Só administrador (o trigger do banco
+ * também barra). Devolve `{ ok }` em vez de `{ error }` por contrato da Task 5.
+ */
+export async function alterarModalidadeAction(
+  obraId: string,
+  modalidade: 'spot' | 'obra'
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  if (modalidade !== 'spot' && modalidade !== 'obra') return { ok: false, erro: 'Modalidade inválida' }
+
+  const sessao = await abrirSessao()
+  if (sessao.error) return { ok: false, erro: sessao.error }
+  const supabase = sessao.supabase as Cliente
+  if ((await isAdmin(supabase, sessao.email as string)) !== true) {
+    return { ok: false, erro: 'Só administrador reclassifica' }
+  }
+
+  const leitura = await lerObra(supabase, obraId)
+  if (leitura.error) return { ok: false, erro: leitura.error }
+  const obra = leitura.obra as ObraRow
+  if (obra.modalidade === modalidade) return { ok: true }
+
+  const linhas = linhasDeAlteracao({ modalidade: obra.modalidade }, { modalidade }, 'Classificação')
+  const { error } = await gravarComHistorico(supabase, { obraId, campos: { modalidade }, linhas })
+  if (error) return { ok: false, erro: error }
+
+  revalidatePath('/obras/base')
+  revalidatePath('/obras/obras')
+  revalidatePath(`/obras/obra/${obraId}`)
+  return { ok: true }
 }
