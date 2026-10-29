@@ -146,8 +146,8 @@ create table if not exists public.obras_rdo (
 create table if not exists public.obras_rdo_avanco (
   rdo_id uuid not null references public.obras_rdo(id) on delete cascade,
   numero int not null,
-  de numeric(5,4),
-  para numeric(5,4),
+  de numeric(5,4) check (de between 0 and 1),
+  para numeric(5,4) check (para between 0 and 1),
   concluida boolean not null default false,
   causa text check (causa in ('cliente','material','equipe','clima','projeto','outro')),
   primary key (rdo_id, numero)
@@ -247,6 +247,15 @@ begin
       using errcode = 'P0001';
   end if;
 
+  -- obra_id da atividade tem que ser o da versão dela.
+  if tg_op <> 'DELETE' then
+    if new.obra_id is distinct from
+       (select v.obra_id from public.obras_cronograma_versao v where v.id = new.versao_id) then
+      raise exception 'obras_atividade.obra_id difere do obra_id da versão'
+        using errcode = '23514';
+    end if;
+  end if;
+
   if tg_op = 'DELETE' then
     return old;
   end if;
@@ -271,10 +280,15 @@ begin
       raise exception 'OBRAS_VERSAO_SALVA: versão de cronograma já salva não pode ser apagada'
         using errcode = 'P0001';
     end if;
-    if new.salva_em is distinct from old.salva_em then
-      raise exception 'OBRAS_VERSAO_SALVA: versão de cronograma já salva não pode voltar a rascunho'
+    if row(new.*) is distinct from row(old.*) then
+      raise exception 'OBRAS_VERSAO_SALVA: versão de cronograma já salva não pode ser alterada'
         using errcode = 'P0001';
     end if;
+  end if;
+  if tg_op = 'UPDATE' and (new.obra_id is distinct from old.obra_id
+                           or new.numero is distinct from old.numero) then
+    raise exception 'obras_cronograma_versao: obra_id e numero são imutáveis'
+      using errcode = '23514';
   end if;
   if tg_op = 'DELETE' then
     return old;
@@ -290,6 +304,100 @@ create trigger obras_versao_imutavel
   for each row execute function public.obras_versao_imutavel();
 
 -- ============================================================
+-- 3b. Autoria não falsificável. Numa sessão de usuário (JWT com e-mail), as
+-- colunas de autoria são sobrescritas com o e-mail da sessão. Sem JWT
+-- (service role, SQL Editor, seed) o valor informado fica. Uma função por
+-- tabela (sem trigger compartilhada — sql.md, armadilha 2).
+-- ============================================================
+create or replace function public.obras_envio_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if v_email is not null then new.enviado_por := v_email; end if;
+  return new;
+end;
+$$;
+
+create or replace function public.obras_rdo_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if v_email is not null then
+    if tg_op = 'INSERT' then
+      new.registrado_por := v_email;
+      if new.validado_por is not null then new.validado_por := v_email; end if;
+    else
+      new.registrado_por := old.registrado_por;
+      if new.validado_por is not null and new.validado_por is distinct from old.validado_por then
+        new.validado_por := v_email;
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.obras_impedimento_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if v_email is not null then
+    if tg_op = 'INSERT' then new.criado_por := v_email; else new.criado_por := old.criado_por; end if;
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.obras_versao_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if v_email is not null then
+    if tg_op = 'INSERT' then
+      new.criada_por := v_email;
+      if new.salva_em is not null then new.salva_por := v_email; end if;
+    else
+      new.criada_por := old.criada_por;
+      if new.salva_em is not null and (old.salva_em is null
+                                       or new.salva_por is distinct from old.salva_por) then
+        new.salva_por := v_email;
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.obras_atividade_exec_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if v_email is not null then new.atualizado_por := v_email; end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.obras_envio_autor(), public.obras_rdo_autor(),
+  public.obras_impedimento_autor(), public.obras_versao_autor(),
+  public.obras_atividade_exec_autor() from public, anon, authenticated;
+
+drop trigger if exists obras_envio_autor on public.obras_envio;
+create trigger obras_envio_autor before insert or update on public.obras_envio
+  for each row execute function public.obras_envio_autor();
+drop trigger if exists obras_rdo_autor on public.obras_rdo;
+create trigger obras_rdo_autor before insert or update on public.obras_rdo
+  for each row execute function public.obras_rdo_autor();
+drop trigger if exists obras_impedimento_autor on public.obras_impedimento;
+create trigger obras_impedimento_autor before insert or update on public.obras_impedimento
+  for each row execute function public.obras_impedimento_autor();
+drop trigger if exists obras_versao_autor on public.obras_cronograma_versao;
+create trigger obras_versao_autor before insert or update on public.obras_cronograma_versao
+  for each row execute function public.obras_versao_autor();
+drop trigger if exists obras_atividade_exec_autor on public.obras_atividade_exec;
+create trigger obras_atividade_exec_autor before insert or update on public.obras_atividade_exec
+  for each row execute function public.obras_atividade_exec_autor();
+
+-- ============================================================
 -- 4. RLS
 -- ============================================================
 -- select/insert/update com obras_has_access() nas tabelas operacionais.
@@ -298,9 +406,8 @@ declare
   t text;
 begin
   foreach t in array array[
-    'obras_feriado','obras_cronograma_versao','obras_atividade',
-    'obras_atividade_exec','obras_rdo','obras_rdo_avanco','obras_rdo_foto',
-    'obras_impedimento'
+    'obras_cronograma_versao','obras_atividade',
+    'obras_atividade_exec','obras_rdo','obras_impedimento'
   ] loop
     execute format('alter table public.%I enable row level security', t);
 
@@ -316,18 +423,44 @@ begin
 end
 $$;
 
--- Delete: só onde a edição de rascunho precisa (atividade — o trigger barra
--- versão salva —, avanço e foto do RDO). Impedimento, versão, RDO e envio
--- não têm delete.
+-- Delete de atividade (o trigger barra versão salva). Impedimento, versão,
+-- RDO e envio não têm delete.
 drop policy if exists "obras delete" on public.obras_atividade;
 create policy "obras delete" on public.obras_atividade for delete to authenticated
   using ((select public.obras_has_access()));
-drop policy if exists "obras delete" on public.obras_rdo_avanco;
-create policy "obras delete" on public.obras_rdo_avanco for delete to authenticated
+-- Avanço e foto do RDO: só mexe enquanto o RDO pai é rascunho.
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['obras_rdo_avanco','obras_rdo_foto'] loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists "obras select" on public.%I', t);
+    execute format('create policy "obras select" on public.%I for select to authenticated using ((select public.obras_has_access()))', t);
+    execute format('drop policy if exists "obras insert" on public.%I', t);
+    execute format('create policy "obras insert" on public.%I for insert to authenticated with check ((select public.obras_has_access()) and exists (select 1 from public.obras_rdo r where r.id = rdo_id and r.estado = ''rascunho''))', t);
+    execute format('drop policy if exists "obras update" on public.%I', t);
+    execute format('create policy "obras update" on public.%I for update to authenticated using ((select public.obras_has_access()) and exists (select 1 from public.obras_rdo r where r.id = rdo_id and r.estado = ''rascunho'')) with check ((select public.obras_has_access()) and exists (select 1 from public.obras_rdo r where r.id = rdo_id and r.estado = ''rascunho''))', t);
+    execute format('drop policy if exists "obras delete" on public.%I', t);
+    execute format('create policy "obras delete" on public.%I for delete to authenticated using ((select public.obras_has_access()) and exists (select 1 from public.obras_rdo r where r.id = rdo_id and r.estado = ''rascunho''))', t);
+  end loop;
+end
+$$;
+
+-- Feriado: leitura com acesso; escrita só administrador.
+alter table public.obras_feriado enable row level security;
+drop policy if exists "obras select" on public.obras_feriado;
+create policy "obras select" on public.obras_feriado for select to authenticated
   using ((select public.obras_has_access()));
-drop policy if exists "obras delete" on public.obras_rdo_foto;
-create policy "obras delete" on public.obras_rdo_foto for delete to authenticated
-  using ((select public.obras_has_access()));
+drop policy if exists "obras insert" on public.obras_feriado;
+create policy "obras insert" on public.obras_feriado for insert to authenticated
+  with check ((select public.obras_is_admin()));
+drop policy if exists "obras update" on public.obras_feriado;
+create policy "obras update" on public.obras_feriado for update to authenticated
+  using ((select public.obras_is_admin())) with check ((select public.obras_is_admin()));
+drop policy if exists "obras delete" on public.obras_feriado;
+create policy "obras delete" on public.obras_feriado for delete to authenticated
+  using ((select public.obras_is_admin()));
 
 -- Destinatário: leitura com acesso; escrita só administrador
 -- (obras_is_admin() = exists em hub_user_roles, nivel 'administrador').
@@ -530,7 +663,9 @@ from (
            where modalidade='obra'
              and (id='a6271663-d342-4669-8c32-f9dd97e8aa7c' or os in ('PLK-NORTESHOP','CDRJ-TELHADO')))
   union all select 10, 'triggers de imutabilidade existem',
-         (select count(*) = 2 from pg_trigger
-           where tgname in ('obras_atividade_imutavel','obras_versao_imutavel') and not tgisinternal)
+         (select count(*) = 7 from pg_trigger
+           where tgname in ('obras_atividade_imutavel','obras_versao_imutavel','obras_envio_autor',
+             'obras_rdo_autor','obras_impedimento_autor','obras_versao_autor','obras_atividade_exec_autor')
+             and not tgisinternal)
 ) t
 order by n;

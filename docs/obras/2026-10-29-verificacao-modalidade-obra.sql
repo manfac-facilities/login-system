@@ -36,3 +36,48 @@ begin;
   update public.obras_atividade set duracao = 9
    where obra_id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c' and numero = 1;   -- deve falhar
 rollback;
+
+-- 8. Fix round 1 — policies e triggers novos
+-- 8a. policies de escrita em avanço/foto exigem RDO rascunho (esperado: 'obras insert/update/delete' com "rascunho" no texto, 6 linhas)
+select tablename, policyname, cmd
+  from pg_policies
+ where schemaname = 'public' and tablename in ('obras_rdo_avanco','obras_rdo_foto')
+   and cmd in ('INSERT','UPDATE','DELETE')
+   and (coalesce(qual,'') || coalesce(with_check,'')) like '%rascunho%'
+ order by 1, 3;
+
+-- 8b. feriado: escrita só admin (esperado: 3 linhas INSERT/UPDATE/DELETE com obras_is_admin)
+select policyname, cmd from pg_policies
+ where schemaname = 'public' and tablename = 'obras_feriado'
+   and cmd in ('INSERT','UPDATE','DELETE')
+   and (coalesce(qual,'') || coalesce(with_check,'')) like '%obras_is_admin%';
+
+-- 8c. triggers de autoria (esperado 5) e de imutabilidade (esperado 2)
+select tgname from pg_trigger
+ where not tgisinternal
+   and tgname in ('obras_envio_autor','obras_rdo_autor','obras_impedimento_autor',
+                  'obras_versao_autor','obras_atividade_exec_autor',
+                  'obras_atividade_imutavel','obras_versao_imutavel')
+ order by 1;
+
+-- 8d. versão salva: qualquer UPDATE falha, inclusive no motivo (esperado ERRO OBRAS_VERSAO_SALVA; rollback desfaz)
+begin;
+  update public.obras_cronograma_versao
+     set salva_em = now(), salva_por = 'teste'
+   where obra_id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c' and numero = 1;
+  update public.obras_cronograma_versao set motivo = 'x'
+   where obra_id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c' and numero = 1;   -- deve falhar
+rollback;
+
+-- 8e. atividade com obra_id diferente do da versão (esperado ERRO 23514; rollback desfaz)
+begin;
+  update public.obras_atividade set obra_id = (select id from public.obras_obra where id <> 'a6271663-d342-4669-8c32-f9dd97e8aa7c' limit 1)
+   where obra_id = 'a6271663-d342-4669-8c32-f9dd97e8aa7c' and numero = 1;   -- deve falhar
+rollback;
+
+-- 8f. de/para fora de 0..1 (esperado ERRO de check; rollback desfaz)
+begin;
+  insert into public.obras_rdo (obra_id, data) values ('a6271663-d342-4669-8c32-f9dd97e8aa7c', date '2099-01-01');
+  insert into public.obras_rdo_avanco (rdo_id, numero, de, para)
+    select id, 1, 0, 1.5 from public.obras_rdo where data = date '2099-01-01';   -- deve falhar
+rollback;
