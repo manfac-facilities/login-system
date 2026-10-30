@@ -134,3 +134,27 @@ Docs: `docs/relatorio-email/`.
   Ver `.claude/rules/sql.md`.
 - **Fora de escopo (ver `docs/DIVIDAS.md`):** clima, ronda/mapa (Fase 4), semanal/PPC/curva S/Gantt (Fase 2),
   página do cliente (Fase 3).
+
+### Leva 1 do cronograma (branch `feat/obras-leva1`, 30/10/2026)
+
+Spec: `docs/superpowers/specs/2026-10-30-obras-leva1-cronograma-design.md`.
+
+- **Onde fica:** shell da obra (sidebar azul, menu inferior no celular) em `obras/_ui/shell.tsx`;
+  painel em `obras/_ui/painel.tsx` (+ `kpi`, `curva-s`, `barras-periodo`, `evolucao-etapas`, `avanco-fisico`);
+  cronograma em `obras/[id]/cronograma/` (`_tela` monta barra + `_arvore` + `_gantt`; `_atualizar-status` é a
+  gaveta; `_dados.ts` monta o que a tela recebe); motor em `obras/_lib/cronograma.ts`, curvas em `_lib/curvas.ts`;
+  leitura única em `_lib/leitura.ts` (`lerObraGrande` com banco, `montarObraGrande` puro).
+- **Tema claro só dentro de `/obras/obras/**`:** `obras/layout.tsx` põe `.obra-tema` (tokens `--obra-*` em
+  `obras/obras.css`) e o IBM Plex Mono (`.obra-num` para números/datas/%). Texto laranja usa `--obra-orange-texto`
+  (#b94606), nunca `--obra-orange` (contraste). O cabeçalho escuro de /obras some dentro da obra
+  (`_ui/fora-do-shell-obra.tsx`). Tudo em % físico, nunca R$.
+- **Histórico de status:** `obras_atividade_status_hist` (só inserção) recebe uma linha por atividade na gaveta
+  "Atualizar status" e na validação do diário. É a fonte da curva "Realizado" e do "Dados até". Gravação fora de
+  transação com o exec (dívida da Task 6).
+- **Dias restantes** (`obras_atividade_exec.dias_restantes`): opcional; quando informado, **manda** na projeção
+  do fim (pode antecipar). Volta a null quando o diário avança/conclui a atividade ou a gaveta a conclui. O % nunca
+  regride (tela e servidor) e data de status futura é recusada.
+- **Prévia visual sem banco:** `npm run dev` → `/previa-obras`, `/previa-obras/cronograma`
+  (`?status=1` abre a gaveta), `/previa-obras/diario`. Fixture de Macaé 3; 404 em produção; fica fora de /obras
+  porque o middleware exige sessão lá.
+- **SQL:** `sdd-sql-obras-leva1.sql` aplicado em 30/10/2026 (ver `.claude/rules/sql.md`).

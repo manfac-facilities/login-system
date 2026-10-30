@@ -285,3 +285,31 @@ Menores dos reviews por tarefa, não confirmados como corrigidos na leva final (
 - Edição da execução (status/%/datas reais) saiu da tela do cronograma junto com a tabela antiga; volta na gaveta "Atualizar status" (Task 6). O botão já está na barra com um aviso provisório.
 - Setas de dependência no Gantt: desligadas (spec §5 deixa a chamada ao builder).
 - O rótulo do mês no cabeçalho do Gantt não acompanha a rolagem horizontal (o mês da esquerda some ao rolar).
+
+## 30/10/2026 — Leva 1 do cronograma (branch `feat/obras-leva1`), menores dos reviews que ficaram
+
+Âncora: `.superpowers/sdd/2026-10-30-obras-leva1/progress.md` (linhas "minor") e `task-*-review.md`.
+Corrigidos na prévia da Task 9 (não entram aqui): desalinhamento árvore×Gantt nas últimas linhas,
+tooltip das barras com a caixa rolada, rótulo Realizado cortado/encostando no "Hoje", cabeçalho da
+tabela não fixo no celular, KPI cortado, "p.p." encostado no eixo, botão Salvar rascunho atrás do
+menu inferior do diário.
+
+- Motor (`_lib/cronograma.ts`): campos de entrada opcionais (`?:`); sem teste com `dataStatus` ≠ hoje;
+  `diasRestantes = 0` pode projetar o fim num dia não útil; `deltaDiasUteis` exportado a mais (Task 2).
+- Curvas/leitura (`_lib/curvas.ts`, `_lib/leitura.ts`): histórico sem paginação (corta em 1000 linhas);
+  `dadosAte` via RDO em UTC; realizado ausente vira 0 em `progressoPorPeriodo`; fórmula do % previsto
+  duplicada entre `curvas.ts` e `cronograma.ts` (Task 3).
+- Shell: "Dados até" sem hora (é data); telas internas ainda leem a obra 2x até migrarem; outros 6 em
+  `task-4-review.md` (Task 4).
+- Cronograma (`[id]/cronograma/`): Enter+blur pode enviar duas vezes; fallback de `data_base` diferente entre
+  action e página; `gravarAtividade` duplicado; mock duplicado nos testes; Dias e Predecessoras não editáveis
+  abaixo de 768px (Task 5).
+- Gaveta "Atualizar status": exec gravado antes do histórico, fora de transação — falha no insert do histórico
+  perde o ponto da curva no retry; outros 5 em `task-6-review.md` (Task 6).
+- Painel (`_ui/`): `previstoDaEtapa` duplicado; hex fora de token; ordem impedimentos × evolução;
+  `SeloSinal`/`corSinal` mortos; sem teste anti-NaN (Task 7).
+- Diário/e-mail: ícone do clima no e-mail é bolinha colorida (não SVG); hex literal no lugar de token;
+  clima legado regravado junto com os turnos (Task 8).
+- Visual, visto na prévia (`/previa-obras`): a faixa "Trava ativa" do painel lista as descrições inteiras
+  (8 linhas no celular com Macaé 3, empurra os KPIs); no celular, "Salvar rascunho" + menu inferior
+  ocupam ~130px fixos; a prévia importa a fixture de `_lib/__tests__/fixtures/` (só dev, 404 em produção).
