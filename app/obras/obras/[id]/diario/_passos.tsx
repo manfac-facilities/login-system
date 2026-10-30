@@ -133,11 +133,13 @@ function CartaoAtividade({
   a,
   av,
   bloqueado,
+  noPlano = false,
   onChange,
 }: {
   a: AtividadeDiario
   av: AvancoRdo
   bloqueado: boolean
+  noPlano?: boolean
   onChange: (av: AvancoRdo) => void
 }) {
   const desabilitado = bloqueado || a.travada
@@ -156,6 +158,11 @@ function CartaoAtividade({
           </span>
         ) : null}
         {a.numero} · {a.descricao}
+        {noPlano ? (
+          <span className="ml-2 inline-block rounded-full border border-[#00345e] px-2 py-0.5 align-middle text-xs font-semibold text-[#00345e]">
+            no plano
+          </span>
+        ) : null}
       </p>
       {a.travada ? <p className="text-xs text-[#5a7380]">{a.motivoTrava}</p> : null}
 
@@ -311,6 +318,7 @@ export default function PassosDiario({
   inicial,
   atividades,
   outras = [],
+  noPlano = [],
   fotos,
   impedimentos,
   impedimentosHoje = 0,
@@ -324,6 +332,8 @@ export default function PassosDiario({
   atividades: AtividadeDiario[]
   /** Demais atividades não concluídas da versão, para incluir à mão. */
   outras?: AtividadeDiario[]
+  /** Números das atividades do plano da semana (vêm primeiro, com selo). */
+  noPlano?: number[]
   fotos: FotoRdo[]
   /** Passo 4 (Task 9a). */
   impedimentos?: ReactNode
@@ -394,7 +404,9 @@ export default function PassosDiario({
 
   const semImpedimento = corpo.semImpedimento && impedimentosHoje === 0
   const porNumero = new Map(corpo.avancos.map((a) => [a.numero, a]))
-  const lista = [...atividades, ...incluidas]
+  const doPlano = new Set(noPlano)
+  const juntas = [...atividades, ...incluidas]
+  const lista = [...juntas.filter((a) => doPlano.has(a.numero)), ...juntas.filter((a) => !doPlano.has(a.numero))]
   const naLista = new Set(lista.map((a) => a.numero))
   const livres = lista.filter((a) => !a.travada)
   const mexidas = livres.filter((a) => {
@@ -508,7 +520,7 @@ export default function PassosDiario({
               {lista.map((a) => {
                 const av = porNumero.get(a.numero)
                 return av ? (
-                  <CartaoAtividade key={a.numero} a={a} av={av} bloqueado={somenteLeitura} onChange={mudarAvanco} />
+                  <CartaoAtividade key={a.numero} a={a} av={av} bloqueado={somenteLeitura} noPlano={doPlano.has(a.numero)} onChange={mudarAvanco} />
                 ) : null
               })}
             </div>

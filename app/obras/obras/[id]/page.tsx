@@ -4,6 +4,8 @@ import { isAdmin } from '@/lib/auth/roles'
 import type { ReactNode } from 'react'
 import { hojeISO } from '../../_lib/tipos'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
+import { lerPlanos } from '../_lib/leitura'
+import { dadosPpc } from './lookahead/_plano-tipos'
 import { ultimosDiariosEnviados } from '../_lib/ultimo-diario'
 import PainelObra, { type EstadoDiario } from '../_ui/painel'
 
@@ -36,9 +38,10 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
   const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
 
-  const [rdoR, envioR] = await Promise.all([
+  const [rdoR, envioR, planosR] = await Promise.all([
     supabase.from('obras_rdo').select('estado').eq('obra_id', id).eq('data', hoje).maybeSingle(),
     ultimosDiariosEnviados(supabase, [id]),
+    lerPlanos(supabase, id),
   ])
   if (rdoR.error || envioR.error) {
     return <EstadoVazio>Não deu para carregar o diário da obra. Recarregue a página em alguns instantes.</EstadoVazio>
@@ -51,6 +54,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
       hoje={hoje}
       estadoDiario={estado}
       ultimoEnvio={envioR.ultimo.get(id) ?? null}
+      ppcSemanas={planosR.ok ? dadosPpc(planosR.planos) : []}
     />
   )
 }

@@ -9,6 +9,7 @@ import CurvaS from './curva-s'
 import EvolucaoEtapas, { linhasDeEtapa } from './evolucao-etapas'
 import { IconeAlerta, IconeCadeado, IconeCronograma } from './icones'
 import Kpi, { Unidade } from './kpi'
+import PpcSemanas, { type PontoPpcSemana } from './ppc-semanas'
 import type { TomObra } from './tema'
 
 /**
@@ -55,11 +56,14 @@ export default function PainelObra({
   hoje,
   estadoDiario,
   ultimoEnvio,
+  ppcSemanas = [],
 }: {
   dados: ObraGrande
   hoje: string
   estadoDiario: EstadoDiario
   ultimoEnvio: string | null
+  /** PPC das últimas semanas avaliadas (mais antiga primeiro); vazio mostra "—". */
+  ppcSemanas?: PontoPpcSemana[]
 }) {
   const { obra, calc, calcBase, atraso, versaoVigente, rascunho, impedimentos, hist, feriados, dadosAte } = dados
   const raiz = `/obras/obras/${obra.id}`
@@ -228,6 +232,10 @@ export default function PainelObra({
           <CurvaS base={sSem.base} previsto={sSem.previsto} realizado={sSem.realizado} hoje={hoje} dadosAte={dadosAte} />
         </Cartao>
       </div>
+
+      <Cartao id="t-ppc" rotulado="figure" titulo="PPC por semana" sub="Percentual do plano cumprido, últimas 8 semanas avaliadas">
+        <PpcSemanas pontos={ppcSemanas} />
+      </Cartao>
 
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
         <Cartao

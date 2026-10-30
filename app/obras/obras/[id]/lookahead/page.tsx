@@ -10,6 +10,7 @@ import { lerRestricoes } from '../../_lib/leitura'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import Quadro, { type CartaoRestricao } from './_quadro'
 import RestricaoForm from './_restricao-form'
+import PlanoDaSemana from './_plano'
 import { RESPONSAVEIS_RESTRICAO, agruparQuadro, rotuloResponsavelRestricao, rotuloTipo } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +22,7 @@ export default async function LookaheadPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ aba?: string; semanas?: string; resp?: string; atrasadas?: string }>
+  searchParams: Promise<{ aba?: string; semana?: string; semanas?: string; resp?: string; atrasadas?: string }>
 }) {
   const { id } = await params
   const sp = await searchParams
@@ -64,9 +65,16 @@ export default async function LookaheadPage({
     return (
       <div className="flex flex-col gap-4">
         {abas}
-        {/* Slot da Task 4: plano da semana + PPC. */}
         <section id="plano-da-semana" aria-label="Plano da semana">
-          <EstadoVazio>Plano da semana em breve.</EstadoVazio>
+          <PlanoDaSemana
+            supabase={supabase}
+            obraId={id}
+            dados={r.dados}
+            hoje={hoje}
+            semanaParam={sp.semana}
+            podeEditar={admin || (!!r.dados.obra.engenheiro_email && r.dados.obra.engenheiro_email.trim().toLowerCase() === email)}
+            base={base}
+          />
         </section>
       </div>
     )
