@@ -22,7 +22,8 @@ export async function enviarEmail(p: {
   assunto: string
   html: string
   texto: string
-  anexos: { cid: string; nome: string; conteudo: Buffer }[]
+  /** Com `cid`: imagem embutida no corpo (inline). Sem `cid`: anexo comum (ex.: PDF da ata). */
+  anexos: { cid?: string; nome: string; conteudo: Buffer }[]
 }): Promise<ResultadoEnvio> {
   const smtp = {
     host: process.env.SMTP_HOST ?? '',
@@ -55,12 +56,11 @@ export async function enviarEmail(p: {
     subject: p.assunto,
     html: p.html,
     text: p.texto,
-    attachments: p.anexos.map((a) => ({
-      filename: a.nome,
-      content: a.conteudo,
-      cid: a.cid,
-      contentDisposition: 'inline' as const,
-    })),
+    attachments: p.anexos.map((a) =>
+      a.cid
+        ? { filename: a.nome, content: a.conteudo, cid: a.cid, contentDisposition: 'inline' as const }
+        : { filename: a.nome, content: a.conteudo, contentDisposition: 'attachment' as const },
+    ),
   }
 
   const aceitos: string[] = []

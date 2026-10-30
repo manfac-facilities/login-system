@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     '/api/obras/relatorio-diario': ['./app/api/obras/relatorio-diario/_fontes/*.ttf'],
     // PDF do diário (react-pdf): TTF e logo lidos em runtime em `app/obras/obras/_pdf/base.tsx`.
     '/obras/obras/[id]/diario/pdf/[data]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Ata de reunião: rota do PDF e a página da Comunicação (a action de envio anexa o PDF).
+    '/obras/obras/[id]/comunicacao/ata/[registro]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    '/obras/obras/[id]/comunicacao': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [
