@@ -38,7 +38,7 @@ select cron.schedule(
   '1 10 * * 1-5',
   $cron$
     select net.http_post(
-      url := 'https://hub.manfac.com.br/api/sofia/alertas-diarios',
+      url := 'https://hub.manfac.com.br/api/frotas/alertas-diarios',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'Authorization', 'Bearer ' || decrypted_secret
@@ -61,7 +61,7 @@ select 'job existe, ativo, 1 10 * * 1-5 (07:01 BRT, seg-sex)' as invariante,
 union all
 select 'job aponta para a rota certa',
        case when exists (select 1 from cron.job where jobname = 'sofia-alertas-diarios'
-                          and command like '%/api/sofia/alertas-diarios%') then 'OK' else '*** FALHOU ***' end
+                          and command like '%/api/frotas/alertas-diarios%') then 'OK' else '*** FALHOU ***' end
 union all
 select 'segredo no Vault',
        case when exists (select 1 from vault.secrets where name = 'SOFIA_ALERTAS_SECRET') then 'OK' else '*** FALHOU ***' end
@@ -79,7 +79,7 @@ select 'há ao menos um gestor com acesso ao slug sofia (senão a rota responde 
 -- select created, status_code, timed_out, error_msg, content
 --   from net._http_response order by created desc limit 5;
 -- 200 = enviado ("variante" diz com/nada); 500 "falha-avisada" = a montagem quebrou e o aviso de falha foi enviado;
--- 502 = SMTP recusou; 503/401 = variável ou segredo errado.
+-- 502 = SMTP recusou; 503 = variável do EasyPanel faltando; 401 = segredo do Vault diferente do EasyPanel (a rota fica fora do matcher do middleware, então o 401 vem dela mesma).
 --
 -- ROLLBACK (desligar):
 -- select cron.unschedule('sofia-alertas-diarios');

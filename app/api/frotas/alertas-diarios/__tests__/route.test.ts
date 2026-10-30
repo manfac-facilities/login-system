@@ -40,7 +40,7 @@ const ENV = {
 function req(corpo: unknown = {}, auth: string | null = `Bearer ${SEGREDO}`) {
   const headers = new Headers({ 'content-type': 'application/json' })
   if (auth) headers.set('authorization', auth)
-  return new Request('http://localhost/api/sofia/alertas-diarios', {
+  return new Request('http://localhost/api/frotas/alertas-diarios', {
     method: 'POST',
     headers,
     body: typeof corpo === 'string' ? corpo : JSON.stringify(corpo),

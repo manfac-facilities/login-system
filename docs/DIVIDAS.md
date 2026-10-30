@@ -324,6 +324,6 @@ menu inferior do diário.
 - Sem nova tentativa de envio (Obras tenta de novo após 60 s): falha de SMTP responde 502 e fica em `net._http_response`.
 - Leituras sem paginação (limite de 1000 linhas do PostgREST); aceitável para a frota atual, revisar se passar disso.
 - "Carro obrigado a apresentar KM" (item 2.3.4 do mapa do Igor) não existe no cadastro: todo carro com equipe é cobrado.
-- CNH usa janela de 60 dias (mockup e `getMotoristasComCnhVencendo`); a spec (decisão 7) diz 30. Constante `DIAS_CNH` em `lib/sofia/alertas/blocos.ts`.
+- CNH usa janela de 60 dias (mockup, spec e `getMotoristasComCnhVencendo`). Constante `DIAS_CNH` em `lib/sofia/alertas/blocos.ts`.
 - Links "Abrir no hub" levam à lista, sem filtro por query string (as telas ainda não leem filtro).
 - Destinatário = `sofia_gestores` com `hub_system_access` sofia ativo (mesma regra de `sofia_pode_gerir()`); gestor sem o slug não recebe e não há aviso disso.

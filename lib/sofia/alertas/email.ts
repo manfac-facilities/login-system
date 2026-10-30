@@ -107,7 +107,7 @@ export function emailDe(v: VarianteEmail, destinatario: string): EmailMontado {
   if (v.tipo === 'falha') {
     const sub = `Tentativa às 07:00 de ${diaLongo(v.hoje)}.`
     const msg = 'A conferência automática falhou ao ler os dados. Isso não quer dizer que está tudo em dia. Até corrigirmos, confira os alertas direto no hub.'
-    const nota = 'O suporte do hub recebeu o mesmo aviso.'
+    const nota = 'Se este aviso se repetir amanhã, avise o suporte do hub.'
     return {
       assunto,
       html: moldura('O resumo de hoje não pôde ser montado.', sub, `<p style="margin:0">${msg}</p>${botao(link('/sofia'), 'Ver os alertas no hub')}<p style="margin:14px 0 0;font-size:12px;color:#64748b">${nota}</p>`, nome),
