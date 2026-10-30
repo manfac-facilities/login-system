@@ -187,21 +187,57 @@ export async function lerObraGrande(
     dadosAte = v ? v.slice(0, 10) : null
   }
 
-  const feriados = new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string))
-  const exec: AtividadeExec[] = ((execR.data ?? []) as Linha[]).map(atividadeExecDe)
-  const impedimentos = ((impR.data ?? []) as Linha[]).map(impedimentoRow)
-  const imps = impedimentosCalcDe(impedimentos)
+  return {
+    ok: true,
+    dados: montarObraGrande({
+      obra,
+      vigente: vigenteL ? versaoInfo(vigenteL) : null,
+      base: baseL ? versaoInfo(baseL) : null,
+      rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
+      planoUsado: usada ? planoDe(atividades, usada.id) : [],
+      planoBase: baseL && baseL.id !== usada?.id ? planoDe(atividades, baseL.id) : null,
+      exec: ((execR.data ?? []) as Linha[]).map(atividadeExecDe),
+      impedimentos: ((impR.data ?? []) as Linha[]).map(impedimentoRow),
+      feriados: new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string)),
+      hist,
+      dadosAte,
+      hoje,
+    }),
+  }
+}
 
-  const plano = usada ? planoDe(atividades, usada.id) : []
-  const calcular = (p: AtividadePlano[]) =>
+/**
+ * Parte pura da leitura: com as linhas já convertidas, calcula vigente, base,
+ * sinal e atraso. Separada para a prévia visual (sem banco) usar o mesmo cálculo.
+ * `planoBase` = plano da v1 quando ela não é a versão usada; null = mesma versão.
+ */
+export function montarObraGrande(p: {
+  obra: ObraRow
+  vigente: VersaoInfo | null
+  base: VersaoInfo | null
+  rascunho: VersaoInfo | null
+  planoUsado: AtividadePlano[]
+  planoBase: AtividadePlano[] | null
+  exec: AtividadeExec[]
+  impedimentos: ImpedimentoRow[]
+  feriados: Set<string>
+  hist: PontoHist[]
+  dadosAte: string | null
+  hoje: string
+}): ObraGrande {
+  const { obra, exec, impedimentos, feriados, hist, dadosAte, hoje } = p
+  const imps = impedimentosCalcDe(impedimentos)
+  const usada = p.vigente ?? p.rascunho
+  const plano = usada ? p.planoUsado : []
+  const calcular = (pl: AtividadePlano[]) =>
     calcularCronograma({
-      plano: p, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
+      plano: pl, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
       atividadeTrava: obra.atividade_trava, impedimentos: imps,
     })
 
   const calc = usada ? calcular(plano) : null
-  const calcBase = baseL
-    ? (baseL.id === usada?.id && calc ? calc : calcular(planoDe(atividades, baseL.id)))
+  const calcBase = p.base
+    ? (p.base.id === usada?.id && calc ? calc : calcular(p.planoBase ?? []))
     : null
   const terminoBase = calcBase?.terminoPrevisto ?? null
   const sinal = calc
@@ -222,15 +258,12 @@ export async function lerObraGrande(
     : null
 
   return {
-    ok: true,
-    dados: {
-      obra,
-      versaoBase: baseL ? versaoInfo(baseL) : null,
-      versaoVigente: vigenteL ? versaoInfo(vigenteL) : null,
-      rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
-      plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
-      etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
-      terminoBase, sinal, atraso,
-    },
+    obra,
+    versaoBase: p.base,
+    versaoVigente: p.vigente,
+    rascunho: p.rascunho,
+    plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
+    etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
+    terminoBase, sinal, atraso,
   }
 }

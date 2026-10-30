@@ -86,6 +86,7 @@ export default function ShellObra({
   dadosAte,
   versao,
   estreito = false,
+  raiz: raizProp,
   children,
 }: {
   obra: ObraDoShell
@@ -93,10 +94,12 @@ export default function ShellObra({
   dadosAte?: string | null
   versao: VersaoInfo | null
   estreito?: boolean
+  /** Rota-raiz das seções; padrão `/obras/obras/<id>` (a prévia usa outra). */
+  raiz?: string
   children: ReactNode
 }) {
   const pathname = usePathname() ?? ''
-  const raiz = `/obras/obras/${obra.id}`
+  const raiz = raizProp ?? `/obras/obras/${obra.id}`
   const atual = (i: Item) =>
     i.sufixo === '' ? pathname === raiz : pathname === raiz + i.sufixo || pathname.startsWith(raiz + i.sufixo + '/')
   const itemAtual = ITENS.find(atual)

@@ -5,19 +5,10 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { impedimentosCalcDe, planoDe } from '../../_lib/leitura'
-import {
-  calcularCronograma,
-  compararComBase,
-  deltaDiasUteis,
-  resumirEtapas,
-  type AtividadeCalculada,
-  type Situacao,
-  type StatusAtividade,
-} from '../../_lib/cronograma'
-import { CORES_ETAPA } from '../../_ui/tema'
+import { calcularCronograma } from '../../_lib/cronograma'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import TelaCronograma from './_tela'
-import type { DadosCronograma, LinhaAtividade, LinhaEtapa } from './_tipos'
+import { montarDadosCronograma } from './_dados'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,16 +20,6 @@ function Aviso({ children }: { children: ReactNode }) {
       {children}
     </div>
   )
-}
-
-/** Situação da linha de etapa: a pior das filhas; sem problema, andamento pelo %. */
-function situacaoDaEtapa(as: AtividadeCalculada[]): { situacao: Situacao; status: StatusAtividade } {
-  if (as.every((a) => a.situacao === 'concluida')) return { situacao: 'concluida', status: 'concluido' }
-  for (const s of ['atrasada', 'aguardando_cliente', 'inicio_atrasado'] as const) {
-    if (as.some((a) => a.situacao === s)) return { situacao: s, status: 'em_andamento' }
-  }
-  const andando = as.some((a) => a.status === 'em_andamento' || a.status === 'concluido' || a.percentual > 0)
-  return { situacao: 'no_prazo', status: andando ? 'em_andamento' : 'nao_iniciado' }
 }
 
 export default async function CronogramaPage({
@@ -63,7 +44,7 @@ export default async function CronogramaPage({
   const hoje = hojeISO()
   const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <Aviso>{r.erro}</Aviso>
-  const { obra, calc, calcBase, versaoVigente, rascunho, exec, impedimentos, feriados } = r.dados
+  const { obra, calc, versaoVigente, rascunho, exec, impedimentos, feriados } = r.dados
 
   if (!calc) {
     return (
@@ -104,62 +85,14 @@ export default async function CronogramaPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEditar = admin || (!!engenheiro && engenheiro === email)
 
-  const base = calcBase?.atividades ?? null
-  const comp = compararComBase(exibida.atividades, base, feriados)
-  // Sem peso_valor/peso no cliente: dado interno.
-  const atividades: LinhaAtividade[] = exibida.atividades.map(({ pesoValor: _p, peso: _q, ...a }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-    const c = comp.get(a.numero)
-    return { ...a, inicioBase: c?.inicioBase ?? null, fimBase: c?.fimBase ?? null, delta: c?.deltaDias ?? null }
-  })
-
-  const etapasBase = new Map(base ? resumirEtapas(base, feriados).map((e) => [e.etapa, e]) : [])
-  const porNumero = new Map(exibida.atividades.map((a) => [a.numero, a]))
-  const etapas: LinhaEtapa[] = resumirEtapas(exibida.atividades, feriados).map((e, i) => {
-    const b = etapasBase.get(e.etapa)
-    return {
-      chave: e.etapa,
-      nome: e.etapa || 'Sem etapa',
-      cor: CORES_ETAPA[i % CORES_ETAPA.length],
-      inicio: e.inicio,
-      fim: e.fim,
-      diasUteis: e.diasUteis,
-      percentual: e.percentual,
-      inicioProjetado: e.inicioProjetado,
-      fimProjetado: e.fimProjetado,
-      inicioBase: b?.inicio ?? null,
-      fimBase: b?.fim ?? null,
-      delta: b ? deltaDiasUteis(b.fim, e.fimProjetado, feriados) : null,
-      ...situacaoDaEtapa(e.numeros.map((n) => porNumero.get(n)!)),
-      numeros: e.numeros,
-    }
-  })
-
-  const dados: DadosCronograma = {
-    obraId: id,
-    versao: { id: alvo.id, numero: alvo.numero, salva: !!alvo.salva_em },
-    versoes: versoes.map((x) => ({
-      numero: x.numero,
-      rotulo:
-        (x.numero === 1 ? 'Base v1' : `v${x.numero}`) +
-        (!x.salva_em ? ' · rascunho' : x.id === versaoVigente?.id ? ' · vigente' : ''),
-    })),
+  const dados = montarDadosCronograma({
+    obraDados: r.dados,
+    exibida,
+    alvo: { id: alvo.id, numero: alvo.numero, salva: !!alvo.salva_em },
+    versoes: versoes.map((x) => ({ id: x.id, numero: x.numero, salva: !!x.salva_em })),
     podeEditar,
-    editavel: podeEditar && !alvo.salva_em,
-    rascunho: rascunho ? { id: rascunho.id, numero: rascunho.numero } : null,
-    temVigente: !!versaoVigente,
-    temBase: !!calcBase,
-    etapas,
-    atividades,
-    feriados: [...feriados],
     hoje,
-    termino: { base: r.dados.terminoBase, previsto: exibida.terminoPrevisto, projetado: exibida.terminoProjetado },
-    statusAtividades: calc.atividades.map((a) => ({
-      numero: a.numero, etapa: a.etapa, descricao: a.descricao, status: a.status, percentual: a.percentual,
-      inicioPrevisto: a.inicioPrevisto, inicioReal: a.inicioReal, fimReal: a.fimReal,
-      diasRestantes: a.diasRestantes, travada: a.travada,
-    })),
-    atividadeTrava: obra.atividade_trava ?? null,
-  }
+  })
 
   return <TelaCronograma dados={dados} />
 }
