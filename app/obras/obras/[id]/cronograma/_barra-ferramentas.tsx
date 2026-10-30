@@ -10,6 +10,9 @@ import type { VersaoOpcao } from './_tipos'
 
 export type Escala = 'semana' | 'dia'
 
+/** Mesma regra e redação do diário (`SEM_BASE`): status só depois da base salva. */
+export const SEM_BASE_STATUS = 'Sem cronograma — o status começa quando a base for salva'
+
 const BOTAO =
   'inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-(--obra-border) bg-(--obra-card) px-3 text-[13px] font-medium text-(--obra-ink) transition-colors duration-150 hover:bg-(--obra-surface) disabled:opacity-50'
 const PRIMARIO =
@@ -124,14 +127,18 @@ export default function BarraFerramentas({
 
       {podeEditar ? (
         <Grupo>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-(--obra-orange) px-3.5 text-[13px] font-semibold text-[#1d1d1f] transition-colors duration-150 hover:bg-[#e65200] disabled:opacity-50"
-            disabled={pendente}
-            onClick={onAtualizarStatus}
-          >
-            Atualizar status
-          </button>
+          {temVigente ? (
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-(--obra-orange) px-3.5 text-[13px] font-semibold text-[#1d1d1f] transition-colors duration-150 hover:bg-[#e65200] disabled:opacity-50"
+              disabled={pendente}
+              onClick={onAtualizarStatus}
+            >
+              Atualizar status
+            </button>
+          ) : (
+            <span className="text-[13px] text-(--obra-muted-texto)">{SEM_BASE_STATUS}</span>
+          )}
           {rascunho && rascunho.numero === 1 ? (
             <button type="button" className={PRIMARIO} disabled={pendente} onClick={() => onSalvarVersao(null, () => {})}>
               Salvar base

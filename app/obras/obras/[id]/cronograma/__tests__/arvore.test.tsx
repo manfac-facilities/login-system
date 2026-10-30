@@ -103,6 +103,17 @@ describe('árvore do cronograma', () => {
     expect(definirInicioAction).toHaveBeenCalledWith('o1', 'v1', 2, '2026-11-04')
   })
 
+  it('sem base salva não há "Atualizar status"; mostra o aviso do diário', () => {
+    render(<TelaCronograma dados={dados()} />)
+    expect(screen.queryByRole('button', { name: 'Atualizar status' })).toBeNull()
+    expect(screen.getByText('Sem cronograma — o status começa quando a base for salva')).toBeTruthy()
+  })
+
+  it('com base salva o botão "Atualizar status" aparece', () => {
+    render(<TelaCronograma dados={dados({ versao: { id: 'v1', numero: 1, salva: true }, editavel: false, rascunho: null, temVigente: true })} />)
+    expect(screen.getByRole('button', { name: 'Atualizar status' })).toBeTruthy()
+  })
+
   it('em versão salva a célula Início não é editável', () => {
     render(
       <TelaCronograma

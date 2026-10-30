@@ -103,6 +103,21 @@ beforeEach(() => {
 })
 
 describe('atualizarStatusAction', () => {
+  it('sem base salva (só o rascunho da v1) recusa sem gravar, como o diário', async () => {
+    db.obras_cronograma_versao[0].salva_em = null
+    expect(await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])).toEqual({
+      ok: false, erro: 'Sem cronograma — o status começa quando a base for salva',
+    })
+    expect(escritas).toEqual([])
+  })
+
+  it('usa a versão vigente quando há revisão em rascunho', async () => {
+    // Na revisão (rascunho) a 6 deixaria de existir; a vigente manda.
+    db.obras_cronograma_versao.push({ id: 'v2', obra_id: OBRA, numero: 2, salva_em: null })
+    expect((await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])).ok).toBe(true)
+    expect(execDe(6).percentual).toBe(0.8)
+  })
+
   it('grava o histórico antes do exec', async () => {
     expect((await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])).ok).toBe(true)
     expect(escritas).toEqual(['insert:obras_atividade_status_hist', 'upsert:obras_atividade_exec'])

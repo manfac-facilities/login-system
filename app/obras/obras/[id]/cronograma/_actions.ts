@@ -34,6 +34,7 @@ const NAO_AUTENTICADO = 'Não autenticado'
 const SEM_PERMISSAO = 'Só o engenheiro da obra ou um administrador altera o cronograma'
 const VERSAO_SALVA = 'Versão salva não se altera — crie uma revisão'
 const VERSAO_NAO_ENCONTRADA = 'Versão não encontrada'
+const SEM_BASE = 'Sem cronograma — o status começa quando a base for salva'
 
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 type Erro = { ok: false; erro: string }
@@ -338,7 +339,7 @@ export async function criarRevisaoAction(obraId: string): Promise<Resultado & { 
   return { ok: true, versaoId: destino.id as string }
 }
 
-/** Plano que vale para a execução (a vigente; sem base salva, o rascunho) + execução atual. */
+/** Plano que vale para a execução (a vigente; sem base salva, recusa) + execução atual. */
 async function lerPlanoEExec(
   ctx: Contexto,
   obraId: string,
@@ -351,8 +352,9 @@ async function lerPlanoEExec(
   if (errV) return erroBanco('ler as versões', errV)
   const lista = ((versoes ?? []) as Linha[]).slice().sort((a, b) => a.numero - b.numero)
   const salvas = lista.filter((v) => v.salva_em)
-  const usada = salvas[salvas.length - 1] ?? lista.filter((v) => !v.salva_em).pop()
-  if (!usada) return falha('Esta obra ainda não tem cronograma')
+  // Como o diário: status só contra uma base salva (o rascunho da v1 ainda vai mudar).
+  const usada = salvas[salvas.length - 1]
+  if (!usada) return falha(SEM_BASE)
 
   const [atR, exR] = await Promise.all([
     ctx.supabase.from('obras_atividade').select('*').eq('versao_id', usada.id),
