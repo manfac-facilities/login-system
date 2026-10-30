@@ -317,3 +317,13 @@ menu inferior do diário.
 - Visual, visto na prévia (`/previa-obras`): a faixa "Trava ativa" do painel lista as descrições inteiras
   (8 linhas no celular com Macaé 3, empurra os KPIs); no celular, "Salvar rascunho" + menu inferior
   ocupam ~130px fixos; a prévia importa a fixture de `_lib/__tests__/fixtures/` (só dev, 404 em produção).
+
+## 30/10/2026 — Frotas e-mail diário (branch `feat/frotas-email-diario`), deixado de propósito
+
+- Feriados não entram em "dia útil anterior": depois de feriado a equipe aparece sem KM de ontem (só seg–sex).
+- Sem nova tentativa de envio (Obras tenta de novo após 60 s): falha de SMTP responde 502 e fica em `net._http_response`.
+- Leituras sem paginação (limite de 1000 linhas do PostgREST); aceitável para a frota atual, revisar se passar disso.
+- "Carro obrigado a apresentar KM" (item 2.3.4 do mapa do Igor) não existe no cadastro: todo carro com equipe é cobrado.
+- CNH usa janela de 60 dias (mockup e `getMotoristasComCnhVencendo`); a spec (decisão 7) diz 30. Constante `DIAS_CNH` em `lib/sofia/alertas/blocos.ts`.
+- Links "Abrir no hub" levam à lista, sem filtro por query string (as telas ainda não leem filtro).
+- Destinatário = `sofia_gestores` com `hub_system_access` sofia ativo (mesma regra de `sofia_pode_gerir()`); gestor sem o slug não recebe e não há aviso disso.
