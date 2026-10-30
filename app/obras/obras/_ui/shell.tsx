@@ -11,6 +11,7 @@ import {
   IconeCalendario,
   IconeCamadas,
   IconeComunicacao,
+  IconeConfiguracoes,
   IconeCronograma,
   IconeDiario,
   IconeDocumentos,
@@ -47,6 +48,8 @@ const ITENS: Item[] = [
   { sufixo: '/impedimentos', rotulo: 'Impedimentos', Icone: IconeImpedimento },
   { sufixo: '/comunicacao', rotulo: 'Comunicação', Icone: IconeComunicacao },
 ]
+/** Só administrador vê (a tela e as actions também exigem admin). */
+const ITEM_CONFIGURACOES: Item = { sufixo: '/configuracoes', rotulo: 'Configurações', Icone: IconeConfiguracoes }
 const EM_BREVE: Item[] = [
   { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
   { sufixo: '/documentos', rotulo: 'Documentos', Icone: IconeDocumentos },
@@ -59,7 +62,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao'])
+const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/configuracoes'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 
@@ -85,6 +88,7 @@ export default function ShellObra({
   sinal,
   dadosAte,
   versao,
+  admin = false,
   estreito = false,
   raiz: raizProp,
   children,
@@ -93,6 +97,8 @@ export default function ShellObra({
   sinal: Sinal | null
   dadosAte?: string | null
   versao: VersaoInfo | null
+  /** Mostra o item Configurações (só administrador). */
+  admin?: boolean
   estreito?: boolean
   /** Rota-raiz das seções; padrão `/obras/obras/<id>` (a prévia usa outra). */
   raiz?: string
@@ -102,7 +108,8 @@ export default function ShellObra({
   const raiz = raizProp ?? `/obras/obras/${obra.id}`
   const atual = (i: Item) =>
     i.sufixo === '' ? pathname === raiz : pathname === raiz + i.sufixo || pathname.startsWith(raiz + i.sufixo + '/')
-  const itemAtual = ITENS.find(atual)
+  const itens = admin ? [...ITENS, ITEM_CONFIGURACOES] : ITENS
+  const itemAtual = itens.find(atual)
   const telaClara = itemAtual ? TELAS_CLARAS.has(itemAtual.sufixo) : true
   const nome = obra.loja ?? 'Obra'
   const linhaObra = [obra.os ? `OS ${obra.os}` : null, obra.cliente].filter(Boolean).join(' · ')
@@ -144,7 +151,7 @@ export default function ShellObra({
 
           <nav aria-label="Seções da obra" className="mt-6 flex-1 overflow-y-auto px-3">
             <ul className="flex flex-col gap-0.5">
-              {ITENS.map((i) => {
+              {itens.map((i) => {
                 const ativo = atual(i)
                 return (
                   <li key={i.sufixo}>
@@ -258,7 +265,7 @@ export default function ShellObra({
         </main>
       </div>
 
-      <MenuInferior raiz={raiz} atual={atual} estreito={estreito} />
+      <MenuInferior itens={itens} raiz={raiz} atual={atual} estreito={estreito} />
     </div>
   )
 }
@@ -267,14 +274,16 @@ function MenuInferior({
   raiz,
   atual,
   estreito,
+  itens,
 }: {
+  itens: Item[]
   raiz: string
   atual: (i: Item) => boolean
   estreito: boolean
 }) {
   const [aberto, setAberto] = useState(false)
-  const principais = ITENS.slice(0, NO_MENU_INFERIOR)
-  const resto = ITENS.slice(NO_MENU_INFERIOR)
+  const principais = itens.slice(0, NO_MENU_INFERIOR)
+  const resto = itens.slice(NO_MENU_INFERIOR)
   const maisAtivo = resto.some(atual)
   const fechar = () => setAberto(false)
 

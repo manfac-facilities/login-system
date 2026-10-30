@@ -12,7 +12,15 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { TIPOS_ENVIO, type ConfigObra, type DestinatarioEntrada, type Resultado } from './_tipos'
+import {
+  ABRANGENCIAS_FERIADO,
+  TIPOS_ENVIO,
+  type ConfigObra,
+  type DestinatarioEntrada,
+  type FeriadoEntrada,
+  type PesoAvanco,
+  type Resultado,
+} from './_tipos'
 
 type Erro = { ok: false; erro: string }
 const falha = (erro: string): Erro => ({ ok: false, erro })
@@ -66,7 +74,7 @@ export async function salvarDestinatarioAction(obraId: string, d: DestinatarioEn
     : await supabase.from('obras_destinatario').insert(linha)
   if (error) return erroBanco('salvar o destinatário', error)
 
-  revalidatePath(`/obras/obras/${obraId}/comunicacao`)
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
   return { ok: true }
 }
 
@@ -111,7 +119,91 @@ export async function salvarConfigObraAction(obraId: string, c: ConfigObra): Pro
     .eq('id', obraId)
   if (error) return erroBanco('salvar a configuração', error)
 
-  revalidatePath(`/obras/obras/${obraId}/comunicacao`)
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
+  revalidatePath(`/obras/obras/${obraId}`)
+  return { ok: true }
+}
+
+export async function salvarPesoAvancoAction(obraId: string, peso: PesoAvanco): Promise<Resultado> {
+  const auth = await autorizarAdmin()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (peso !== null && peso !== 'valor' && peso !== 'duracao') return falha('Critério de peso inválido')
+
+  const { data: obra, error: eObra } = await supabase
+    .from('obras_obra')
+    .select('id, modalidade')
+    .eq('id', obraId)
+    .maybeSingle()
+  if (eObra) return erroBanco('ler a obra', eObra)
+  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
+
+  const { error } = await supabase.from('obras_obra').update({ peso_avanco: peso }).eq('id', obraId)
+  if (error) return erroBanco('salvar o peso do avanço', error)
+
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
+  revalidatePath(`/obras/obras/${obraId}`)
+  return { ok: true }
+}
+
+const dataValida = (s: string) => {
+  if (!ISO.test(s)) return false
+  const d = new Date(s + 'T00:00:00Z')
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s
+}
+
+export async function adicionarFeriadoObraAction(obraId: string, f: FeriadoEntrada): Promise<Resultado> {
+  const auth = await autorizarAdmin()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+
+  if (!dataValida(f.data ?? '')) return falha('Data inválida')
+  const descricao = texto(f.descricao)
+  if (!descricao) return falha('Descreva o feriado')
+  const validas: readonly string[] = ABRANGENCIAS_FERIADO.map((a) => a.valor)
+  if (!validas.includes(f.abrangencia)) return falha('Abrangência inválida')
+
+  const { data: obra, error: eObra } = await supabase
+    .from('obras_obra')
+    .select('id, modalidade')
+    .eq('id', obraId)
+    .maybeSingle()
+  if (eObra) return erroBanco('ler a obra', eObra)
+  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
+
+  const { data: ja, error: eJa } = await supabase
+    .from('obras_feriado')
+    .select('data')
+    .eq('obra_id', obraId)
+    .eq('data', f.data)
+    .maybeSingle()
+  if (eJa) return erroBanco('conferir os feriados', eJa)
+  if (ja) return falha('Esta data já é feriado desta obra')
+
+  const { error } = await supabase
+    .from('obras_feriado')
+    .insert({ obra_id: obraId, data: f.data, descricao, abrangencia: f.abrangencia })
+  if (error) {
+    if (error.code === '23505') return falha('Esta data já é feriado desta obra')
+    return erroBanco('salvar o feriado', error)
+  }
+
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
+  revalidatePath(`/obras/obras/${obraId}`)
+  return { ok: true }
+}
+
+/** Remove só feriado da própria obra — o global nunca sai por aqui. */
+export async function removerFeriadoObraAction(obraId: string, data: string): Promise<Resultado> {
+  const auth = await autorizarAdmin()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (!dataValida(data ?? '')) return falha('Data inválida')
+
+  const { error } = await supabase.from('obras_feriado').delete().eq('obra_id', obraId).eq('data', data)
+  if (error) return erroBanco('remover o feriado', error)
+
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
   revalidatePath(`/obras/obras/${obraId}`)
   return { ok: true }
 }

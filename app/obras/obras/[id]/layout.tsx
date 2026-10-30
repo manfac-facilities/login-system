@@ -41,9 +41,8 @@ export default async function ObraLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  const permitido =
-    !!user?.email &&
-    ((await hasSystemAccess(supabase, user.email, 'obras')) || (await isAdmin(supabase, user.email)))
+  const admin = !!user?.email && (await isAdmin(supabase, user.email))
+  const permitido = !!user?.email && (admin || (await hasSystemAccess(supabase, user.email, 'obras')))
   if (!permitido) return <Aviso>Esta tela é de quem é responsável pelas obras</Aviso>
 
   const r = await lerObraDaRequisicao(id, hojeISO())
@@ -54,7 +53,7 @@ export default async function ObraLayout({
   // Só o que o shell mostra vai para o cliente (nada de valor/custo no payload).
   const doShell = { id: obra.id, os: obra.os, loja: obra.loja, cliente: obra.cliente, descricao: obra.descricao }
   return (
-    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente}>
+    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente} admin={admin}>
       {children}
     </ShellObra>
   )

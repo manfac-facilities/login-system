@@ -95,6 +95,22 @@ describe('ShellObra', () => {
     expect(screen.getByRole('link', { name: 'Comunicação' })).toBeInTheDocument()
   })
 
+  it('item Configurações só aparece para admin', () => {
+    montar()
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).queryByRole('link', { name: 'Configurações' })).toBeNull()
+  })
+
+  it('admin vê Configurações apontando para /configuracoes', () => {
+    render(
+      <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null} admin>
+        <p>x</p>
+      </ShellObra>,
+    )
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/obras/obras/o1/configuracoes')
+  })
+
   it('sem versão salva e sem dados: textos neutros', () => {
     render(
       <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null}>

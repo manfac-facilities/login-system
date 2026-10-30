@@ -16,6 +16,10 @@ function construtor(tabela: string) {
       return { data: unico ? nova : [nova], error: null }
     }
     const alvo = linhas.filter((l) => filtros.every((f) => f(l)))
+    if (op === 'delete') {
+      db[tabela] = linhas.filter((l) => !alvo.includes(l))
+      return { data: null, error: null }
+    }
     if (op === 'update') alvo.forEach((l) => Object.assign(l, payload))
     return { data: unico ? (alvo[0] ?? null) : alvo, error: null }
   }
@@ -24,6 +28,7 @@ function construtor(tabela: string) {
     eq: (c: string, v: unknown) => (filtros.push((l) => l[c] === v), q),
     not: (c: string, _o: string, v: unknown) => (filtros.push((l) => l[c] !== v), q),
     insert: (p: Linha) => ((op = 'insert'), (payload = p), q),
+    delete: () => ((op = 'delete'), q),
     update: (p: Linha) => ((op = 'update'), (payload = p), q),
     maybeSingle: async () => executar(true),
     single: async () => executar(true),
@@ -42,7 +47,13 @@ jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { salvarConfigObraAction, salvarDestinatarioAction } from '../_actions'
+import {
+  adicionarFeriadoObraAction,
+  removerFeriadoObraAction,
+  salvarConfigObraAction,
+  salvarDestinatarioAction,
+  salvarPesoAvancoAction,
+} from '../_actions'
 import type { DestinatarioEntrada } from '../_tipos'
 
 const OBRA = 'o1'
@@ -63,6 +74,7 @@ beforeEach(() => {
     obras_obra: [{ id: OBRA, modalidade: 'obra', data_base: '2026-10-01', engenheiro_email: null, atividade_trava: null }],
     obras_cronograma_versao: [],
     obras_destinatario: [],
+    obras_feriado: [],
   }
   getUserMock.mockResolvedValue({ data: { user: { email: 'adm@manfac.com.br' } } })
   ;(isAdmin as jest.Mock).mockImplementation(async (_s, email: string) => email === 'adm@manfac.com.br')
@@ -133,5 +145,66 @@ describe('salvarConfigObraAction', () => {
     db.obras_cronograma_versao.push({ obra_id: OBRA, numero: 1, salva_em: null })
     expect((await salvarConfigObraAction(OBRA, { ...cfg, dataBase: '2026-10-05' })).ok).toBe(true)
     expect(db.obras_obra[0].data_base).toBe('2026-10-05')
+  })
+})
+
+describe('salvarPesoAvancoAction', () => {
+  it('não-admin → erro e nada gravado', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: 'eng@manfac.com.br' } } })
+    expect((await salvarPesoAvancoAction(OBRA, 'valor')).ok).toBe(false)
+    expect(db.obras_obra[0].peso_avanco).toBeUndefined()
+  })
+  it('critério inválido → erro', async () => {
+    expect((await salvarPesoAvancoAction(OBRA, 'x' as never)).ok).toBe(false)
+  })
+  it('grava valor, duracao e null (automático)', async () => {
+    expect((await salvarPesoAvancoAction(OBRA, 'duracao')).ok).toBe(true)
+    expect(db.obras_obra[0].peso_avanco).toBe('duracao')
+    expect((await salvarPesoAvancoAction(OBRA, null)).ok).toBe(true)
+    expect(db.obras_obra[0].peso_avanco).toBeNull()
+  })
+  it('obra inexistente → erro', async () => {
+    expect((await salvarPesoAvancoAction('nao', 'valor')).ok).toBe(false)
+  })
+})
+
+describe('feriados da obra', () => {
+  const f = { data: '2026-11-20', descricao: 'Aniversário da cidade', abrangencia: 'municipal' as const }
+  it('não-admin → erro', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: 'eng@manfac.com.br' } } })
+    expect((await adicionarFeriadoObraAction(OBRA, f)).ok).toBe(false)
+    expect((await removerFeriadoObraAction(OBRA, f.data)).ok).toBe(false)
+    expect(db.obras_feriado).toHaveLength(0)
+  })
+  it('adiciona com obra_id', async () => {
+    expect((await adicionarFeriadoObraAction(OBRA, f)).ok).toBe(true)
+    expect(db.obras_feriado[0]).toMatchObject({ obra_id: OBRA, data: '2026-11-20', abrangencia: 'municipal' })
+  })
+  it('data inválida → erro', async () => {
+    for (const data of ['20/11/2026', '2026-02-30', '']) {
+      expect(await adicionarFeriadoObraAction(OBRA, { ...f, data })).toEqual({ ok: false, erro: 'Data inválida' })
+    }
+  })
+  it('abrangência inválida e descrição vazia → erro', async () => {
+    expect((await adicionarFeriadoObraAction(OBRA, { ...f, abrangencia: 'nacional' as never })).ok).toBe(false)
+    expect((await adicionarFeriadoObraAction(OBRA, { ...f, descricao: '  ' })).ok).toBe(false)
+  })
+  it('duplicado na mesma obra → erro; global na mesma data não bloqueia', async () => {
+    db.obras_feriado.push({ obra_id: null, data: '2026-11-20', descricao: 'g', abrangencia: 'nacional' })
+    expect((await adicionarFeriadoObraAction(OBRA, f)).ok).toBe(true)
+    expect(await adicionarFeriadoObraAction(OBRA, f)).toEqual({ ok: false, erro: 'Esta data já é feriado desta obra' })
+    expect(db.obras_feriado).toHaveLength(2)
+  })
+  it('violação 23505 do banco → mensagem amigável', async () => {
+    erroBanco = { message: 'dup', code: '23505' }
+    expect(await adicionarFeriadoObraAction(OBRA, f)).toEqual({ ok: false, erro: 'Esta data já é feriado desta obra' })
+  })
+  it('remove só o da obra, nunca o global', async () => {
+    db.obras_feriado.push(
+      { obra_id: null, data: '2026-11-20', descricao: 'g', abrangencia: 'nacional' },
+      { obra_id: OBRA, data: '2026-11-20', descricao: 'o', abrangencia: 'municipal' },
+    )
+    expect((await removerFeriadoObraAction(OBRA, '2026-11-20')).ok).toBe(true)
+    expect(db.obras_feriado).toEqual([expect.objectContaining({ obra_id: null })])
   })
 })
