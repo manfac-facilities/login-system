@@ -100,6 +100,11 @@ describe('PDF do diário — versão cliente', () => {
     expect(t).toContain('página 1 de 2')
   })
 
+  it('rodapé sem validado_em: omite "validado em" (não inventa a hora atual)', () => {
+    const d = montar({}, { validadoEm: null })
+    expect(d.rodape).toBe('Manfac Facilities · gerado em 30/10/2026 às 09:05')
+  })
+
   it('sem execução: mostra o motivo no lugar da tabela de serviços', () => {
     const t = texto(montar({ semExecucao: true, motivoSemExecucao: 'chuva forte', avancos: [] }))
     expect(t).toContain('Sem execução hoje — chuva forte')

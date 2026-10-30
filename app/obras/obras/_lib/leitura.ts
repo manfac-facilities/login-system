@@ -165,6 +165,8 @@ export const impedimentoRow = (i: Linha): ImpedimentoRow => ({
   criadoEm: i.criado_em,
 })
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * Feriados que valem para a obra: globais (`obra_id` nulo) + os da própria obra.
  * Toda leitura de `obras_feriado` do módulo passa por aqui.
@@ -173,6 +175,8 @@ export async function feriadosDaObra(
   supabase: SupabaseClient,
   obraId: string,
 ): Promise<{ ok: true; feriados: Set<string> } | { ok: false; erro: string }> {
+  // obraId entra cru no filtro .or(...): só UUID passa.
+  if (!UUID_RE.test(obraId)) return { ok: false, erro: 'Obra inválida' }
   const { data, error } = await supabase
     .from('obras_feriado')
     .select('data')

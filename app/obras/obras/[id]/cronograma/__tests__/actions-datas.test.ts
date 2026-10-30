@@ -92,7 +92,7 @@ import { definirFimAction, definirInicioAction, salvarVersaoAction } from '../_a
  * Mock do banco copiado de `actions.test.ts` (mais `obras_feriado`).
  */
 const ENG = 'eduardo@manfac.com.br'
-const OBRA = 'o1'
+const OBRA = '00000000-0000-4000-8000-00000000000a'
 
 function atv(numero: number, over: Linha = {}): Linha {
   return {

@@ -13,9 +13,9 @@ function chain(tabela: string) {
 }
 const supabase = { from: jest.fn((t: string) => chain(t)) } as never
 
-const obra = { id: 'o1', modalidade: 'obra', data_base: '2026-10-05', atividade_trava: null }
+const obra = { id: '00000000-0000-4000-8000-00000000000a', modalidade: 'obra', data_base: '2026-10-05', atividade_trava: null }
 const ver = (id: string, numero: number, salva: string | null): Linhas => ({
-  id, obra_id: 'o1', numero, motivo: numero > 1 ? 'replan' : null, salva_em: salva,
+  id, obra_id: '00000000-0000-4000-8000-00000000000a', numero, motivo: numero > 1 ? 'replan' : null, salva_em: salva,
 })
 const ativ = (versao_id: string, numero: number, duracao: number): Linhas => ({
   versao_id, numero, etapa: 'E', descricao: `a${numero}`, pred1: numero > 1 ? numero - 1 : null, pred2: null,
@@ -37,7 +37,7 @@ beforeEach(() => {
 
 describe('lerObraGrande', () => {
   it('obra sem versão: sem cálculo', async () => {
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.dados.calc).toBeNull()
@@ -52,7 +52,7 @@ describe('lerObraGrande', () => {
       ver('v1', 1, '2026-10-01T00:00:00Z'), ver('v2', 2, '2026-10-08T00:00:00Z'),
     ]
     tabelas.obras_atividade.data = [ativ('v1', 1, 2), ativ('v2', 1, 5)]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     const d = r.dados
     expect(d.versaoVigente?.numero).toBe(2)
@@ -69,7 +69,7 @@ describe('lerObraGrande', () => {
   it('só rascunho: calcula pelo rascunho, sem base', async () => {
     tabelas.obras_cronograma_versao.data = [ver('r1', 1, null)]
     tabelas.obras_atividade.data = [ativ('r1', 1, 3)]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.rascunho?.id).toBe('r1')
     expect(r.dados.versaoVigente).toBeNull()
@@ -83,10 +83,10 @@ describe('lerObraGrande', () => {
     tabelas.obras_cronograma_versao.data = [ver('v1', 1, '2026-10-01T00:00:00Z')]
     tabelas.obras_atividade.data = [ativ('v1', 1, 20)]
     tabelas.obras_impedimento.data = [{
-      id: 'i1', obra_id: 'o1', categoria: 'impedimento', responsavel: 'cliente', atividade_numero: null,
+      id: 'i1', obra_id: '00000000-0000-4000-8000-00000000000a', categoria: 'impedimento', responsavel: 'cliente', atividade_numero: null,
       trava_atividade: false, aberto_em: '2026-10-06', encerrado_em: null, impacto_dias: 0,
     }]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-05')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-05')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.impedimentos[0].abertoEm).toBe('2026-10-06')
     expect(r.dados.sinal).toBe('amarelo')
@@ -98,7 +98,7 @@ describe('lerObraGrande', () => {
   ])('erro em %s: ok false', async (t) => {
     tabelas.obras_cronograma_versao.data = [ver('v1', 1, '2026-10-01T00:00:00Z')]
     tabelas[t] = { data: t === 'obras_obra' ? obra : [], error: { message: 'boom' } }
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     expect(r.ok).toBe(false)
   })
 
@@ -110,9 +110,9 @@ describe('lerObraGrande', () => {
       ativ('v1', 1, 2), { ...ativ('v2', 1, 2), inicio_fixo: '2026-10-07' },
     ]
     tabelas.obras_atividade_exec.data = [
-      { obra_id: 'o1', numero: 1, status: 'em_andamento', percentual: 0.5, inicio_real: '2026-10-07', fim_real: null, dias_restantes: '2.0' },
+      { obra_id: '00000000-0000-4000-8000-00000000000a', numero: 1, status: 'em_andamento', percentual: 0.5, inicio_real: '2026-10-07', fim_real: null, dias_restantes: '2.0' },
     ]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     const d = r.dados
     expect(d.plano[0].inicioFixo).toBe('2026-10-07')
@@ -127,8 +127,8 @@ describe('lerObraGrande', () => {
     tabelas.obras_cronograma_versao.data = [ver('v1', 1, '2026-10-01T00:00:00Z')]
     tabelas.obras_atividade.data = [ativ('v1', 1, 10), ativ('v1', 2, 3)]
     tabelas.obras_atividade_exec.data = [
-      { obra_id: 'o1', numero: 1, status: 'em_andamento', percentual: 0.5, inicio_real: '2026-10-05', fim_real: null, dias_restantes: 2 },
-      { obra_id: 'o1', numero: 2, status: 'em_andamento', percentual: 0.1, inicio_real: '2026-10-05', fim_real: null, dias_restantes: 4 },
+      { obra_id: '00000000-0000-4000-8000-00000000000a', numero: 1, status: 'em_andamento', percentual: 0.5, inicio_real: '2026-10-05', fim_real: null, dias_restantes: 2 },
+      { obra_id: '00000000-0000-4000-8000-00000000000a', numero: 2, status: 'em_andamento', percentual: 0.1, inicio_real: '2026-10-05', fim_real: null, dias_restantes: 4 },
     ]
     tabelas.obras_atividade_status_hist.data = [
       { numero: 1, data_status: '2026-10-01', percentual: 0.2, dias_restantes: 5, registrado_em: '2026-10-01T12:00:00Z' },
@@ -136,7 +136,7 @@ describe('lerObraGrande', () => {
       { numero: 1, data_status: '2026-10-08', percentual: 0.5, dias_restantes: null, registrado_em: '2026-10-08T12:00:00Z' },
       { numero: 2, data_status: '2026-10-06', percentual: 0.1, dias_restantes: 9, registrado_em: '2026-10-06T12:00:00Z' },
     ]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-14')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-14')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.exec[0].diasRestantesEm).toBe('2026-10-06')
     // 2 dias a partir de terça 06/10 → quarta 07/10, mesmo com hoje = 14/10.
@@ -149,8 +149,8 @@ describe('lerObraGrande', () => {
   it('sem colunas novas: inicioFixo/diasRestantes null; sem base: calcBase null', async () => {
     tabelas.obras_cronograma_versao.data = [ver('r1', 1, null)]
     tabelas.obras_atividade.data = [ativ('r1', 1, 3)]
-    tabelas.obras_atividade_exec.data = [{ obra_id: 'o1', numero: 1, status: 'nao_iniciado', percentual: 0, inicio_real: null, fim_real: null }]
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    tabelas.obras_atividade_exec.data = [{ obra_id: '00000000-0000-4000-8000-00000000000a', numero: 1, status: 'nao_iniciado', percentual: 0, inicio_real: null, fim_real: null }]
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.plano[0].inicioFixo).toBeNull()
     expect(r.dados.exec[0].diasRestantes).toBeNull()
@@ -159,7 +159,7 @@ describe('lerObraGrande', () => {
   })
 
   it('obra sem versão: etapas vazias', async () => {
-    const r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    const r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.etapas).toEqual([])
     expect(r.dados.calcBase).toBeNull()
@@ -170,7 +170,7 @@ describe('lerObraGrande', () => {
       { numero: 1, data_status: '2026-10-08', percentual: '0.5' },
       { numero: 1, data_status: '2026-10-12', percentual: 1 },
     ]
-    let r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    let r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.hist).toMatchObject([
       { numero: 1, dataStatus: '2026-10-08', percentual: 0.5 },
@@ -180,18 +180,18 @@ describe('lerObraGrande', () => {
 
     tabelas.obras_atividade_status_hist.data = []
     tabelas.obras_rdo.data = [{ validado_em: '2026-10-09T18:00:00Z' }]
-    r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.dadosAte).toBe('2026-10-09')
 
     tabelas.obras_rdo.data = []
-    r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    r = await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.dadosAte).toBeNull()
   })
 
   it('obra inexistente: ok false', async () => {
     tabelas.obras_obra = { data: null, error: null }
-    expect((await lerObraGrande(supabase, 'o1', '2026-10-10')).ok).toBe(false)
+    expect((await lerObraGrande(supabase, '00000000-0000-4000-8000-00000000000a', '2026-10-10')).ok).toBe(false)
   })
 })

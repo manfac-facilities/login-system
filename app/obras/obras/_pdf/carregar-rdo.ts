@@ -124,7 +124,7 @@ export async function carregarPdfRdo(
       texto: (rdo.equipe_texto as string | null) ?? null,
     },
     validadoPor: (rdo.validado_por as string | null) ?? '—',
-    validadoEm: (rdo.validado_em as string | null) ?? agora.toISOString(),
+    validadoEm: (rdo.validado_em as string | null) ?? null,
     diaN: diasUteisEntre(og.obra.data_base ?? data, data, og.feriados),
     fotos,
     fotosOmitidas,

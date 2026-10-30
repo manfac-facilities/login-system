@@ -36,7 +36,8 @@ export function montarDadosPdfRdo(p: {
   rdo: RdoCompleto
   equipe: { efetivo: number | null; texto: string | null }
   validadoPor: string
-  validadoEm: string
+  /** null = RDO sem validado_em: o rodapé omite "validado em". */
+  validadoEm: string | null
   diaN: number
   fotos: FotoPdf[]
   fotosOmitidas: number
@@ -44,7 +45,7 @@ export function montarDadosPdfRdo(p: {
   logo: Buffer | null
 }): DadosPdfRdo {
   const conteudo = montarConteudoDiario({
-    lado: 'cliente', obra: p.obra, rdo: p.rdo, validadoPor: p.validadoPor, validadoEm: p.validadoEm, diaN: p.diaN,
+    lado: 'cliente', obra: p.obra, rdo: p.rdo, validadoPor: p.validadoPor, validadoEm: p.validadoEm ?? p.geradoEm, diaN: p.diaN,
   })
   const { obra } = p.obra
   return {
@@ -60,7 +61,7 @@ export function montarDadosPdfRdo(p: {
     equipe: p.equipe,
     fotos: p.fotos,
     fotosOmitidas: p.fotosOmitidas,
-    rodape: `Manfac Facilities · gerado em ${dataHora(p.geradoEm)} a partir do diário validado em ${dataHora(p.validadoEm)}`,
+    rodape: `Manfac Facilities · gerado em ${dataHora(p.geradoEm)}${p.validadoEm ? ` a partir do diário validado em ${dataHora(p.validadoEm)}` : ''}`,
     logo: p.logo,
   }
 }
