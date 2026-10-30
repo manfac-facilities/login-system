@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import AbasObras from './_ui/abas-obras'
-import ForaDoShellObra from './_ui/fora-do-shell-obra'
+import ForaDoShellObra, { MainForaDoShellObra } from './_ui/fora-do-shell-obra'
 import FaixaComunicadosServidor from './_ui/faixa-comunicados-servidor'
 
 /**
@@ -44,7 +44,7 @@ export default function ObrasLayout({ children }: { children: React.ReactNode })
           <FaixaComunicadosServidor />
         </Suspense>
       </ForaDoShellObra>
-      <main>{children}</main>
+      <MainForaDoShellObra>{children}</MainForaDoShellObra>
     </div>
   )
 }

@@ -15,3 +15,12 @@ export default function ForaDoShellObra({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? ''
   return dentroDoShellObra(pathname) ? null : <>{children}</>
 }
+
+/**
+ * `<main>` do módulo fora da obra; dentro dela o ShellObra já tem o próprio
+ * `<main id="conteudo-obra">` (um landmark só por página).
+ */
+export function MainForaDoShellObra({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? ''
+  return dentroDoShellObra(pathname) ? <>{children}</> : <main>{children}</main>
+}
