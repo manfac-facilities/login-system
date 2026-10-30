@@ -23,7 +23,7 @@ import { render } from '@testing-library/react'
 import { DocumentoAta, montarDadosPdfAta } from '../ata'
 
 const obra = { os: 'OS-4321', loja: 'DP Macaé 3', cliente: 'DPSP', engenheiro_email: 'eng@manfac.com.br' }
-const registro = {
+const registro: Parameters<typeof montarDadosPdfAta>[0]['registro'] = {
   data: '2026-10-29',
   participantes: 'Ana (cliente)\n\nBeto (Manfac)',
   texto: 'Cliente pediu prioridade no forro.',

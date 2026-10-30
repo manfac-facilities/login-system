@@ -1,79 +1,150 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
-import type { Envio } from './_tipos'
+import { hojeISO } from '../../../_lib/tipos'
+import { lerObraDaRequisicao } from '../_obra-da-requisicao'
+import FormImediata from './_imediata-form'
+import LinhaDoTempo from './_linha-do-tempo'
+import FormRegistro from './_registro-form'
+import { FILTROS, filtroDe, montarLinhaDoTempo } from './_regras'
+import type { DestinatarioOpcao, Envio, Registro } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
-const dataBR = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—')
+type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
-/** Comunicação: por ora só o histórico de envios (a Task 5 a reconstrói). Destinatários e config moram em /configuracoes. */
-export default async function ComunicacaoPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Comunicação = histórico (Leva 2 §3.1): linha do tempo única, mais recente
+ * primeiro, com filtro por tipo; Novo registro (qualquer acesso obras) e
+ * Comunicação imediata (engenheiro/admin). Destinatários moram em /configuracoes.
+ */
+export default async function ComunicacaoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ tipo?: string }>
+}) {
   const { id } = await params
+  const { tipo } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  const email = user?.email
-  const permitido = !!email && ((await isAdmin(supabase, email)) || (await hasSystemAccess(supabase, email, 'obras')))
+  const email = user?.email?.trim().toLowerCase() ?? ''
+  const admin = !!email && (await isAdmin(supabase, email))
+  const permitido = !!email && (admin || (await hasSystemAccess(supabase, email, 'obras')))
   if (!permitido) return <EstadoVazio>Esta tela é de quem é responsável pelas obras</EstadoVazio>
 
-  const envR = await supabase
-    .from('obras_envio')
-    .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe')
-    .eq('obra_id', id)
-    .order('enviado_em', { ascending: false })
-    .limit(50)
-  if (envR.error) return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
+  const hoje = hojeISO()
+  const lida = await lerObraDaRequisicao(id, hoje)
+  if (!lida.ok) return <EstadoVazio>{lida.erro}</EstadoVazio>
+  const { obra, plano, impedimentos } = lida.dados
+  const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
+  const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const envios: Envio[] = (envR.data ?? []).map((e) => ({
-    id: e.id as string,
-    tipo: e.tipo,
-    referencia: e.referencia,
-    lado: e.lado,
-    enviadoPor: e.enviado_por,
-    enviadoEm: e.enviado_em,
+  const [envR, regR, destR] = await Promise.all([
+    supabase
+      .from('obras_envio')
+      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id')
+      .eq('obra_id', id)
+      .order('enviado_em', { ascending: false })
+      .limit(150),
+    supabase
+      .from('obras_registro')
+      .select('*')
+      .eq('obra_id', id)
+      .order('data', { ascending: false })
+      .order('criado_em', { ascending: false })
+      .limit(100),
+    supabase.from('obras_destinatario').select('email, nome, lado, tipos').eq('obra_id', id).eq('ativo', true).order('email'),
+  ])
+  if (envR.error || regR.error || destR.error) {
+    return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
+  }
+
+  const envios: Envio[] = ((envR.data ?? []) as Linha[]).map((e) => ({
+    id: String(e.id),
+    tipo: e.tipo ?? null,
+    referencia: e.referencia ?? null,
+    lado: e.lado ?? null,
+    enviadoPor: e.enviado_por ?? null,
+    enviadoEm: String(e.enviado_em),
     destinatarios: e.destinatarios ?? [],
-    resultado: e.resultado,
-    detalhe: e.detalhe,
+    resultado: e.resultado ?? null,
+    detalhe: e.detalhe ?? null,
+    registroId: e.registro_id ?? null,
+  }))
+  const registros: Registro[] = ((regR.data ?? []) as Linha[]).map((r) => ({
+    id: String(r.id),
+    tipo: r.tipo,
+    data: String(r.data),
+    participantes: r.participantes ?? null,
+    texto: r.texto ?? null,
+    ata: r.ata ?? null,
+    nivel: r.nivel ?? null,
+    impedimentoId: r.impedimento_id ?? null,
+    atividadeNumero: r.atividade_numero ?? null,
+    criadoPor: r.criado_por ?? null,
+    criadoEm: String(r.criado_em),
+    editadoEm: r.editado_em ?? null,
+  }))
+  const destinatarios: DestinatarioOpcao[] = ((destR.data ?? []) as Linha[]).map((d) => ({
+    email: String(d.email),
+    nome: d.nome ?? null,
+    lado: d.lado === 'interno' ? 'interno' : 'cliente',
+    tipos: d.tipos ?? [],
   }))
 
+  const filtro = filtroDe(tipo)
+  const itens = montarLinhaDoTempo({ envios, registros, filtro, email, admin })
+  const base = `/obras/obras/${id}/comunicacao`
+  const chip = (ativo: boolean) =>
+    `flex min-h-11 items-center rounded-full border px-3 text-sm ${
+      ativo ? 'border-[#b94606] bg-[#b94606] font-semibold text-white' : 'border-[#dadad8] text-[#333336]'
+    }`
+
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold text-[#00345e]">Histórico de envios</h2>
-      {envios.length === 0 ? (
-        <EstadoVazio>Nenhum envio ainda</EstadoVazio>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {envios.map((e) => (
-            <li key={e.id} className="rounded-xl border border-[#dadad8] p-3 text-sm text-[#333336]">
-              <div className="flex flex-wrap justify-between gap-2">
-                <strong>{e.tipo ?? 'envio'} · ref. {dataBR(e.referencia)} · {e.lado ?? '—'}</strong>
-                <span className={e.resultado === 'ok' ? 'text-[#5a7380]' : 'text-[#b23232]'}>
-                  {e.resultado === 'ok' ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}
-                </span>
-              </div>
-              <p className="text-xs text-[#5a7380]">
-                {new Date(e.enviadoEm).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-                {e.enviadoPor ? ` · por ${e.enviadoPor}` : ''}
-              </p>
-              <p className="break-words text-xs text-[#5a7380]">Para: {e.destinatarios.join(', ') || '—'}</p>
-              {e.detalhe ? <p className="text-xs text-[#5a7380]">{e.detalhe}</p> : null}
-              {e.tipo === 'diario' && e.referencia && /^\d{4}-\d{2}-\d{2}$/.test(e.referencia) ? (
-                <a
-                  href={`/obras/obras/${id}/diario/pdf/${e.referencia}`}
-                  target="_blank"
-                  rel="noopener"
-                  className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm font-semibold text-[#00345e] hover:border-[#b94606]"
-                >
-                  Abrir PDF
-                </a>
-              ) : null}
-            </li>
+    <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
+      <section className="flex min-w-0 flex-col gap-3">
+        <h2 className="text-lg font-bold text-[#00345e]">Comunicação</h2>
+        <nav aria-label="Filtrar por tipo" className="flex flex-wrap gap-2">
+          {FILTROS.map((f) => (
+            <Link
+              key={f.valor}
+              href={f.valor === 'todos' ? base : `${base}?tipo=${f.valor}`}
+              aria-current={filtro === f.valor ? 'page' : undefined}
+              className={chip(filtro === f.valor)}
+            >
+              {f.rotulo}
+            </Link>
           ))}
-        </ul>
-      )}
-    </section>
+        </nav>
+        {itens.length === 0 ? (
+          <EstadoVazio>Nada registrado ainda</EstadoVazio>
+        ) : (
+          <LinhaDoTempo itens={itens} obraId={id} hoje={hoje} podeEnviar={podeEnviar} destinatarios={destinatarios} />
+        )}
+      </section>
+      <aside className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+          <h3 className="text-sm font-semibold text-[#00345e]">Novo registro</h3>
+          <FormRegistro obraId={id} hoje={hoje} />
+        </section>
+        {podeEnviar ? (
+          <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <h3 className="text-sm font-semibold text-[#00345e]">Comunicação imediata</h3>
+            <FormImediata
+              obraId={id}
+              destinatarios={destinatarios.filter((d) => d.tipos.includes('imediato'))}
+              impedimentos={impedimentos.filter((i) => !i.encerradoEm).map((i) => ({ id: i.id, descricao: i.descricao }))}
+              atividades={plano.map((a) => ({ numero: a.numero, descricao: a.descricao }))}
+            />
+          </section>
+        ) : null}
+      </aside>
+    </div>
   )
 }
