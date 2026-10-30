@@ -142,7 +142,7 @@ export default function FotosDiario({
             onClick={() => input.current?.click()}
             className="min-h-12 rounded-xl border border-[#b94606] px-4 text-base font-semibold text-[#b94606] disabled:opacity-45"
           >
-            {enviando > 0 ? `enviando ${enviando} foto(s)…` : '📷 Tirar ou escolher fotos'}
+            {enviando > 0 ? `enviando ${enviando} foto(s)…` : 'Tirar ou escolher fotos'}
           </button>
         </>
       ) : null}

@@ -205,7 +205,7 @@ export default function FormImpedimento({
 
       <input ref={input} type="file" accept="image/*" className="hidden" onChange={(e) => setFoto(e.target.files?.[0] ?? null)} />
       <button type="button" onClick={() => input.current?.click()} className="min-h-12 rounded-xl border border-[#b94606] px-4 text-base font-semibold text-[#b94606]">
-        {foto ? `📷 ${foto.name}` : '📷 Anexar foto (opcional)'}
+        {foto ? foto.name : 'Anexar foto (opcional)'}
       </button>
 
       <button
