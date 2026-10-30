@@ -198,7 +198,7 @@ describe('montarEmailDiario', () => {
         expect(t).toMatch(/n[ãÃ]o avan[çÇ]ou hoje/i)
         expect(t).toContain('Escoramento da viga principal (50%) — causa: Cliente / loja · responsável: Cliente')
         expect(t).toContain('Atividade 2 (20%) — responsável: Manfac')
-        expect(t).toContain('Atividade 4 (0%) — causa: Projeto')
+        expect(t).toContain('Atividade 4 (0%) — causa: Projeto · responsável: Cliente')
         expect(t).not.toContain('Material')
         expect(t).not.toContain('Atividade 3 (')
       }

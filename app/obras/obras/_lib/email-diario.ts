@@ -67,13 +67,13 @@ const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
   impraticavel: { rotulo: 'Impraticável', cor: '#d64545' },
 }
 
-/** Rótulo da causa e responsável (spec §5.3: cada causa mapeada para um responsável; projeto/outro sem responsável fixo). */
+/** Rótulo da causa e responsável (spec §5.3: cada causa mapeada para um responsável; mapa confirmado pelo José em 31/10; outro sem responsável). */
 const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
   cliente: { rotulo: 'Cliente / loja', resp: 'cliente' },
   material: { rotulo: 'Material', resp: 'manfac' },
   equipe: { rotulo: 'Equipe', resp: 'manfac' },
   clima: { rotulo: 'Clima', resp: 'clima' },
-  projeto: { rotulo: 'Projeto', resp: null },
+  projeto: { rotulo: 'Projeto', resp: 'cliente' },
   outro: { rotulo: 'Outro', resp: null },
 }
 
