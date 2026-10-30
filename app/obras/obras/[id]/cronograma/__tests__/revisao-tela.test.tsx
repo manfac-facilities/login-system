@@ -94,8 +94,8 @@ describe('revisão do cronograma: a tela vai para o rascunho e as datas gravam n
     render(<TelaCronograma dados={comRascunho({ id: 'v2', numero: 2, salva: false })} />)
     expect(screen.getByText(/Editando v2 \(rascunho\)/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Salvar revisão' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Editar início da atividade 1' }))
-    const campo = screen.getByLabelText('Editar início da atividade 1')
+    // O rascunho abre na visão Tabela (Leva 1b): o campo já está editável.
+    const campo = screen.getByLabelText('Início da atividade 1.1')
     fireEvent.change(campo, { target: { value: '2026-11-04' } })
     fireEvent.keyDown(campo, { key: 'Enter' })
     expect(definirInicioAction).toHaveBeenCalledWith('o1', 'v2', 1, '2026-11-04')

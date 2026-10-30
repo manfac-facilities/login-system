@@ -9,6 +9,8 @@ import { useState, type ReactNode } from 'react'
 import type { VersaoOpcao } from './_tipos'
 
 export type Escala = 'semana' | 'dia'
+/** Tabela (planilha de edição) ou Gantt (árvore + barras). */
+export type Visao = 'tabela' | 'gantt'
 
 /** Mesma regra e redação do diário (`SEM_BASE`): status só depois da base salva. */
 export const SEM_BASE_STATUS = 'Sem cronograma — o status começa quando a base for salva'
@@ -24,6 +26,8 @@ function Grupo({ children, className = '' }: { children: ReactNode; className?: 
 }
 
 export default function BarraFerramentas({
+  visao,
+  onVisao,
   versoes,
   versaoNumero,
   onVersao,
@@ -43,6 +47,8 @@ export default function BarraFerramentas({
   onNovaRevisao,
   onSalvarVersao,
 }: {
+  visao: Visao
+  onVisao: (v: Visao) => void
   versoes: VersaoOpcao[]
   versaoNumero: number
   onVersao: (numero: number) => void
@@ -74,12 +80,29 @@ export default function BarraFerramentas({
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
     >
       <Grupo>
-        <button type="button" className={BOTAO} onClick={onExpandirTudo}>
-          <Chevron aberto /> Expandir tudo
-        </button>
-        <button type="button" className={BOTAO} onClick={onRecolherTudo}>
-          <Chevron aberto={false} /> Recolher tudo
-        </button>
+        <div role="group" aria-label="Visão do cronograma" className="inline-flex">
+          {(['tabela', 'gantt'] as const).map((v, i) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={visao === v}
+              className={BOTAO + ' ' + ALTERNADO + (i === 0 ? ' rounded-r-none' : ' -ml-px rounded-l-none')}
+              onClick={() => onVisao(v)}
+            >
+              {v === 'tabela' ? 'Tabela' : 'Gantt'}
+            </button>
+          ))}
+        </div>
+        {visao === 'gantt' ? (
+          <>
+            <button type="button" className={BOTAO} onClick={onExpandirTudo}>
+              <Chevron aberto /> Expandir tudo
+            </button>
+            <button type="button" className={BOTAO} onClick={onRecolherTudo}>
+              <Chevron aberto={false} /> Recolher tudo
+            </button>
+          </>
+        ) : null}
         <label className="inline-flex items-center gap-2 text-[13px] text-(--obra-muted-texto)">
           <span>Versão</span>
           <select
@@ -94,7 +117,7 @@ export default function BarraFerramentas({
             ))}
           </select>
         </label>
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className={visao === 'gantt' ? 'hidden items-center gap-2 lg:flex' : 'hidden'}>
           {temBase ? (
             <button
               type="button"
