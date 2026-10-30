@@ -1,4 +1,4 @@
-import { getVeiculos, getKmResumoMensal, getKmExcedidoDescontos } from '@/lib/sofia/queries'
+import { getKmResumoMensal, getKmExcedidoDescontos } from '@/lib/sofia/queries'
 import { carregarBase } from '@/lib/sofia/bases/leitura'
 import { filtrosDaUrl } from '@/lib/sofia/bases/filtro'
 import { bannersCorrecaoKm } from '@/lib/sofia/correcoes'
@@ -15,10 +15,10 @@ export default async function KmPage({
   const params = await searchParams
   const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
   const base = await carregarBase('km')
-  const [veiculos, resumoMensal, excedidos] = await Promise.all([getVeiculos(), getKmResumoMensal(), getKmExcedidoDescontos()])
+  const [resumoMensal, excedidos] = await Promise.all([getKmResumoMensal(), getKmExcedidoDescontos()])
   const podeGerir = base.podeGerir
   // URL só traz id do veículo + código do aviso; textos e números vêm do banco
-  const banners = bannersCorrecaoKm({ corrigido: um(params.corrigido), aviso: um(params.aviso) }, veiculos)
+  const banners = bannersCorrecaoKm({ corrigido: um(params.corrigido), aviso: um(params.aviso) }, base.veiculos)
 
   const excedidoMap = new Map(excedidos.map((e) => [`${e.veiculo_id}::${e.mes}`, e]))
 
@@ -48,6 +48,7 @@ export default async function KmPage({
         novoLabel="Lançar KM do dia"
         vazio="Nenhum KM lançado ainda."
         placeholderBusca="Placa, motorista, observação…"
+        subtitulo={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })}
       />
 
       {resumoMensal.length > 0 && (

@@ -33,7 +33,7 @@ describe('filtrarLinhas', () => {
   })
   it('motoristas: situação e CNH', () => {
     const m = [mot({ id: 'a', cnhClasse: 'vencida' }), mot({ id: 'b', cnhClasse: 'vencendo', cnhDias: 20, ativo: false }), mot({ id: 'c' }), mot({ id: 'd', cnhClasse: 'vencendo', cnhDias: 45 })]
-    expect(filtrarLinhas('mot', m, { ...FILTROS_VAZIOS, cnh: 'alerta' }).map((x) => x.id)).toEqual(['a', 'b'])
+    expect(filtrarLinhas('mot', m, { ...FILTROS_VAZIOS, cnh: 'alerta' }).map((x) => x.id)).toEqual(['a', 'b', 'd'])
     expect(filtrarLinhas('mot', m, { ...FILTROS_VAZIOS, cnh: 'vencendo' }).map((x) => x.id)).toEqual(['b', 'd'])
     expect(filtrarLinhas('mot', m, { ...FILTROS_VAZIOS, situacao: 'inativo' }).map((x) => x.id)).toEqual(['b'])
   })

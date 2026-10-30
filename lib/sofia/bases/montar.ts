@@ -138,6 +138,18 @@ export function montarMotoristas(e: EntradaMontagem): MotLinha[] {
     })
 }
 
+/** Motorista do trecho aberto só se ele é da equipe atual do cadastro; senão o motorista ativo da equipe. */
+function motoristaAtual(
+  equipeId: string | null,
+  aberto: TrechoBruto | null,
+  motoristas: MotoristaBruto[],
+  nome: Map<string, string>
+): string | null {
+  if (!equipeId) return null
+  if (aberto && aberto.equipe_id === equipeId && aberto.motorista_id) return nome.get(aberto.motorista_id) ?? null
+  return motoristas.find((x) => x.ativo && x.equipe_id === equipeId)?.nome ?? null
+}
+
 export function montarVeiculos(e: EntradaMontagem): VeicLinha[] {
   const cod = new Map(e.equipes.map((x) => [x.id, x.codigo]))
   const nome = new Map(e.motoristas.map((x) => [x.id, x.nome]))
@@ -151,9 +163,9 @@ export function montarVeiculos(e: EntradaMontagem): VeicLinha[] {
         .filter((t) => t.veiculo_id === v.id)
         .sort((a, b) => b.inicio.localeCompare(a.inicio) || b.created_at.localeCompare(a.created_at))
       const aberto = trechos.find((t) => t.fim === null) ?? null
-      const equipeId = aberto ? aberto.equipe_id : null
+      const equipeId = v.equipe_id
       const sit: SituacaoVeiculo =
-        v.status === 'inativo' ? 'fora' : v.status === 'manutencao' ? 'oficina' : aberto ? 'uso' : 'livre'
+        v.status === 'inativo' ? 'fora' : v.status === 'manutencao' ? 'oficina' : v.equipe_id ? 'uso' : 'livre'
       const meusKm = e.km.filter((k) => k.veiculo_id === v.id).sort((a, b) => b.data.localeCompare(a.data) || b.created_at.localeCompare(a.created_at))
       const doMes = meusKm.filter((k) => k.data.startsWith(mes))
       const meusAb = e.abastecimentos.filter((a) => a.veiculo_id === v.id).sort(porDataDesc)
@@ -164,7 +176,7 @@ export function montarVeiculos(e: EntradaMontagem): VeicLinha[] {
         ano: v.ano,
         sit,
         equipe: equipeId ? cod.get(equipeId) ?? null : null,
-        motorista: aberto?.motorista_id ? nome.get(aberto.motorista_id) ?? null : null,
+        motorista: motoristaAtual(v.equipe_id, aberto, e.motoristas, nome),
         km: Number(v.km_atual),
         kmMes: doMes.length ? doMes.reduce((s, k) => s + (rodado.get(k.id) ?? 0), 0) : null,
         franquia: v.km_contratual_mensal,

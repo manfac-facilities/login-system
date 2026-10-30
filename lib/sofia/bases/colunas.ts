@@ -11,7 +11,14 @@ export const SIT_LBL: Record<SituacaoVeiculo, string> = {
 const SIT_ORDEM: SituacaoVeiculo[] = ['uso', 'livre', 'oficina', 'fora']
 
 const NV = '—'
-const dataHora = (iso: string) => `${dataBR(iso.slice(0, 10))} ${horaSP(iso)}`
+/** 'dd/mm/aaaa hh:mm' no fuso de São Paulo (nunca o dia UTC). */
+export function dataHoraSP(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const dia = d.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+  return `${dataBR(dia)} ${horaSP(iso)}`
+}
+const dataHora = dataHoraSP
 /** HH:MM de São Paulo para um timestamp ISO. */
 function horaSP(iso: string): string {
   const d = new Date(iso)

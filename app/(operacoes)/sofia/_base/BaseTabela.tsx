@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { dataBR, fmtBrl, fmtKm, fmtLitros } from '@/lib/sofia/correcoes'
-import { colunasDa, passouFranquia, retornoAtrasado, rodapeDa, SIT_LBL } from '@/lib/sofia/bases/colunas'
+import { colunasDa, dataHoraSP, passouFranquia, retornoAtrasado, rodapeDa, SIT_LBL } from '@/lib/sofia/bases/colunas'
 import { descreverFiltros, filtrarLinhas, ordenarLinhas, paginar, type Ordem } from '@/lib/sofia/bases/filtro'
 import { baixarExcel } from '@/lib/sofia/bases/exportar'
 import {
@@ -36,6 +36,7 @@ interface Props {
   novoLabel: string
   vazio: string
   placeholderBusca: string
+  subtitulo?: string
 }
 
 const CAMPO =
@@ -94,7 +95,11 @@ export default function BaseTabela(props: Props) {
 
   useEffect(() => {
     if (!abertaId) return
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && setAbertaId(null)
+    const h = (e: KeyboardEvent) => {
+      // com o modal de Corrigir aberto por cima, Esc fecha só o modal
+      if (e.key !== 'Escape' || document.querySelectorAll('[aria-modal="true"]').length > 0) return
+      setAbertaId(null)
+    }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [abertaId])
@@ -129,7 +134,10 @@ export default function BaseTabela(props: Props) {
   return (
     <div className="p-4 sm:p-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">{nome}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white">{nome}</h1>
+          {props.subtitulo && <p className="mt-1 text-sm capitalize text-[#4a6080]">{props.subtitulo}</p>}
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link href={props.novoHref} className={`${BTN} bg-[#f05a28] text-white hover:bg-[#d94e22]`}>
             + {props.novoLabel}
@@ -190,7 +198,7 @@ export default function BaseTabela(props: Props) {
                 </Rotulo>
                 <Rotulo t="CNH">
                   <select className={CAMPO} value={f.cnh} onChange={(e) => muda({ cnh: e.target.value })}>
-                    <option value="">Todas</option><option value="alerta">Vencida ou vencendo em 30 dias</option>
+                    <option value="">Todas</option><option value="alerta">Vencida ou vencendo em 60 dias</option>
                     <option value="vencendo">Vencendo em 60 dias</option><option value="vencida">Vencida</option>
                   </select>
                 </Rotulo>
@@ -331,7 +339,7 @@ function Kv({ itens }: { itens: [string, React.ReactNode][] }) {
   )
 }
 
-const hora = (iso: string) => `${dataBR(iso.slice(0, 10))} ${new Date(iso).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}`
+const hora = dataHoraSP
 
 function Detalhe({ base, r, hoje, podeGerir }: { base: BaseId; r: Linha; hoje: string; podeGerir: boolean }) {
   const aviso = (

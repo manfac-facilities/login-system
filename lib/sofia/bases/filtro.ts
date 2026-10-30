@@ -49,7 +49,7 @@ export function filtrarLinhas<R extends Linha>(base: BaseId, rows: R[], f: Filtr
       if (f.situacao === 'inativo' && m.ativo) return false
       if (f.cnh === 'vencida' && m.cnhClasse !== 'vencida') return false
       if (f.cnh === 'vencendo' && m.cnhClasse !== 'vencendo') return false
-      if (f.cnh === 'alerta' && m.cnhClasse !== 'vencida' && !(m.cnhDias !== null && m.cnhDias <= 30)) return false
+      if (f.cnh === 'alerta' && m.cnhClasse !== 'vencida' && m.cnhClasse !== 'vencendo') return false
       return true
     }
     const v = r as unknown as VeicLinha
@@ -138,7 +138,7 @@ export function descreverFiltros(base: BaseId, f: FiltrosBase): string {
   if (f.placa) p.push(`placa ${f.placa}`)
   if (f.motorista) p.push(`motorista ${f.motorista}`)
   if (f.situacao) p.push(f.situacao === 'ativo' ? 'só ativos' : 'só inativos')
-  if (f.cnh) p.push({ vencendo: 'CNH vencendo em 60 dias', vencida: 'CNH vencida', alerta: 'CNH vencida ou vencendo em 30 dias' }[f.cnh] ?? '')
+  if (f.cnh) p.push({ vencendo: 'CNH vencendo em 60 dias', vencida: 'CNH vencida', alerta: 'CNH vencida ou vencendo em 60 dias' }[f.cnh] ?? '')
   if (f.sit) p.push(`situação: ${({ uso: 'em uso', livre: 'livre', oficina: 'na oficina', fora: 'fora da frota' } as Record<string, string>)[f.sit]}`)
   if (f.q) p.push(`busca "${f.q}"`)
   return p.length ? p.join(' · ') : 'sem filtro (tudo)'

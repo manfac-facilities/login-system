@@ -40,6 +40,7 @@ export interface BaseCarregada {
   linhas: Linha[]
   hoje: string
   podeGerir: boolean
+  veiculos: VeiculoBruto[]
   /** opções dos filtros */
   equipes: string[]
   placas: string[]
@@ -97,6 +98,7 @@ export async function carregarBase(base: BaseId): Promise<BaseCarregada> {
     linhas,
     hoje,
     podeGerir,
+    veiculos,
     equipes: equipes.map((e) => e.codigo),
     placas: veiculos.map((v) => v.placa),
     motoristas: motoristas.map((m) => m.nome),

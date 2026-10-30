@@ -1,3 +1,4 @@
+import { dataHoraSP } from '../colunas'
 import {
   classeCnh, montarAbastecimentos, montarKm, montarMotoristas, montarVeiculos, rodadoPorLancamento,
   type EntradaMontagem,
@@ -96,5 +97,30 @@ describe('montarVeiculos', () => {
     expect(r[0].historico.map((h) => h.equipe)).toEqual(['EQ-B', 'EQ-A'])
     expect(r[0].ultimosKm[0]).toEqual({ data: '2026-10-02', km: 1500 })
     expect(r[1]).toMatchObject({ substituto: 'AAA1A11', retorno: '2026-11-05', kmMes: null })
+  })
+})
+
+describe('montarVeiculos: equipe vem do cadastro, não do histórico', () => {
+  it('equipe no cadastro sem trecho aberto: Em uso, com o motorista ativo da equipe', () => {
+    const e = base()
+    e.responsabilidade = []
+    e.veiculos[0].equipe_id = 'eA'
+    expect(montarVeiculos(e)[0]).toMatchObject({ sit: 'uso', equipe: 'EQ-A', motorista: 'Zeca' })
+  })
+  it('desvinculado no cadastro mas com trecho aberto no histórico: Livre, sem equipe e sem motorista', () => {
+    const e = base()
+    e.veiculos[0].equipe_id = null
+    expect(montarVeiculos(e)[0]).toMatchObject({ sit: 'livre', equipe: null, motorista: null })
+  })
+  it('trecho aberto de outra equipe não empresta motorista', () => {
+    const e = base()
+    e.veiculos[0].equipe_id = 'eA'
+    expect(montarVeiculos(e)[0]).toMatchObject({ equipe: 'EQ-A', motorista: 'Zeca' })
+  })
+})
+
+describe('Lançado em no fuso de São Paulo', () => {
+  it('29/10 22:30 BRT (01:30Z do dia 30) mostra 29/10', () => {
+    expect(dataHoraSP('2026-10-30T01:30:00Z')).toBe('29/10/2026 22:30')
   })
 })
