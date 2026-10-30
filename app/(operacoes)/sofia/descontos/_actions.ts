@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { MULTA_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 function parseDescontoFormData(formData: FormData) {
@@ -17,8 +17,8 @@ export async function atualizarStatusMultaAction(id: string, status: string) {
   if (!isValidEnum(MULTA_STATUS, status)) throw new Error('Status de multa inválido')
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   const { error } = await supabase.from('multas').update({ status }).eq('id', id)
   if (error) throw error
@@ -30,8 +30,8 @@ export async function registrarDescontoMultaAction(formData: FormData): Promise<
   const { id, valor_descontado, tipo_desconto, autorizacao_assinada } = parseDescontoFormData(formData)
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   if (Number.isNaN(valor_descontado) || valor_descontado < 0) {
     throw new Error('Valor do desconto inválido')
@@ -54,8 +54,8 @@ export async function registrarDescontoMultaAction(formData: FormData): Promise<
 
 export async function desfazerDescontoMultaAction(id: string) {
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   const { error } = await supabase.from('multas').update({ status: 'validada' }).eq('id', id)
   if (error) throw error
@@ -67,8 +67,8 @@ export async function atualizarStatusDescontoSinistroAction(id: string, status: 
   if (!isValidEnum(MULTA_STATUS, status)) throw new Error('Status de desconto inválido')
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   const { error } = await supabase.from('sinistros').update({ status_desconto: status }).eq('id', id)
   if (error) throw error
@@ -80,8 +80,8 @@ export async function registrarDescontoSinistroAction(formData: FormData): Promi
   const { id, valor_descontado, tipo_desconto, autorizacao_assinada } = parseDescontoFormData(formData)
 
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   if (Number.isNaN(valor_descontado) || valor_descontado < 0) {
     throw new Error('Valor do desconto inválido')
@@ -104,8 +104,8 @@ export async function registrarDescontoSinistroAction(formData: FormData): Promi
 
 export async function desfazerDescontoSinistroAction(id: string) {
   const supabase = await createClient()
-  const erroAdmin = await requireAdmin(supabase)
-  if (erroAdmin) throw new Error(erroAdmin)
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) throw new Error(erroGestor)
 
   const { error } = await supabase.from('sinistros').update({ status_desconto: 'validada' }).eq('id', id)
   if (error) throw error

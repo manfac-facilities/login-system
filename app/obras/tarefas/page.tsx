@@ -67,6 +67,7 @@ export default async function TarefasPage() {
     supabase
       .from('obras_obra')
       .select('id, os, loja, pcm, etapa, diario_agendado_ate, diario_agendado_oque, diario_agendado_motivo, diario_agendado_por')
+      .eq('modalidade', 'spot')
       .not('diario_agendado_ate', 'is', null)
       .in('etapa', ETAPAS_FILA_DIARIO),
     admin ? Promise.resolve('') : resolverChave(supabase, email),

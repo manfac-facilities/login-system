@@ -98,6 +98,7 @@ function montar(
       admin={false}
       responsaveis={[]}
       analistaSelecionado=""
+      minhaChave="YURI"
       {...over}
     />
   )
@@ -188,4 +189,58 @@ test('admin vê o texto novo do seletor', () => {
   expect(
     screen.getByText('Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.')
   ).toBeInTheDocument()
+})
+
+// ---- diário liberado para todos (spec 27/10/2026 §4) ----
+const NOTA_TODOS =
+  'Você vê as obras de todos os responsáveis e pode responder no lugar deles. Fica registrado quem respondeu.'
+const respondida = (id: string, autoria: unknown) =>
+  ({ [id]: { obra_id: id, andou: true, motivo: null, item: 'Não faltou', obs: null, foto_path: 'x', autoria } }) as never
+
+test('não-admin vê o seletor, com "Todos os responsáveis" = ?analista=todos, e a nota nova', () => {
+  montar([obra('1')], [], { responsaveis: ['AMANDA', 'YURI'], analistaSelecionado: 'YURI' })
+  const sel = screen.getByLabelText('Diário de quem') as HTMLSelectElement
+  expect(sel.value).toBe('YURI')
+  expect(within(sel).getByRole('option', { name: 'Todos os responsáveis' })).toHaveAttribute('value', 'todos')
+  expect(screen.getByText(NOTA_TODOS)).toBeInTheDocument()
+})
+
+test('sem filtro o seletor marca "Todos os responsáveis" e o cartão mostra o responsável', () => {
+  montar([obra('1')], [], { responsaveis: ['YURI'], minhaChave: 'MARCOS' })
+  expect((screen.getByLabelText('Diário de quem') as HTMLSelectElement).value).toBe('todos')
+  expect(screen.getByText('Responsável')).toBeInTheDocument()
+})
+
+test('quem não é pcm da obra nem admin não vê "Agendar"', () => {
+  montar([obra('1')], [], { minhaChave: 'MARCOS' })
+  expect(screen.queryByRole('button', { name: /Agendar e tirar do diário/ })).toBeNull()
+})
+
+test('quem não é pcm nem admin não vê "Trazer de volta agora"', async () => {
+  const user = userEvent.setup()
+  montar([obra('1')], [obra('3', agendamento('2026-10-22'))], { minhaChave: 'MARCOS' })
+  await user.click(screen.getByRole('button', { name: /1 agendada/ }))
+  expect(screen.getByText('volta em 22/10')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Trazer de volta agora' })).toBeNull()
+})
+
+test('admin vê "Agendar" em obra de outro responsável', () => {
+  montar([obra('1')], [], { admin: true, minhaChave: 'ADMIN' })
+  expect(screen.getByRole('button', { name: /Agendar e tirar do diário/ })).toBeInTheDocument()
+})
+
+test('rótulo de autoria: em nome de', () => {
+  montar([obra('1')], [], { respostas: respondida('1', { por: 'Marcos', emNomeDe: 'Yuri', hora: '10:02' }) })
+  expect(screen.getByText((_, el) => el?.textContent === 'Respondido por Marcos em nome de Yuri às 10:02')).toBeInTheDocument()
+  expect(screen.getByText('Yuri')).toHaveClass('text-[#f05a28]')
+})
+
+test('rótulo de autoria: o próprio responsável', () => {
+  montar([obra('1')], [], { respostas: respondida('1', { por: 'Yuri', emNomeDe: null, hora: '09:14' }) })
+  expect(screen.getByText((_, el) => el?.textContent === 'Respondido por Yuri às 09:14')).toBeInTheDocument()
+})
+
+test('resposta antiga, sem autoria: sem rótulo', () => {
+  montar([obra('1')], [], { respostas: respondida('1', null) })
+  expect(screen.queryByText(/Respondido por/)).toBeNull()
 })

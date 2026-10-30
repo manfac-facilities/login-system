@@ -18,7 +18,7 @@ jest.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-import { getMultasPendentes, getRevisoesAtrasadas, getResponsabilidadesAtuais, getChecklistsRecentes, getVeiculos, getKmResumoMensal } from '../queries'
+import { getMultasPendentes, getRevisoesAtrasadas, getRevisoesVenceEmBreve, getResponsabilidadesAtuais, getChecklistsRecentes, getVeiculos, getKmResumoMensal } from '../queries'
 
 describe('propagação de erro (achado B-08)', () => {
   let consoleErrorSpy: jest.SpyInstance
@@ -138,6 +138,23 @@ describe('getRevisoesAtrasadas', () => {
     const result = await getRevisoesAtrasadas()
 
     expect(result[0]).toMatchObject({ motivo: 'data', km_passados: 0 })
+  })
+})
+
+describe('getRevisoesVenceEmBreve', () => {
+  it('lista só a que está a <= 1.000 km, com placa e km_restantes; atrasada fica de fora', async () => {
+    const rows = [
+      { id: 'breve', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 49000, veiculos: { placa: 'RTE-4F21', km_atual: 48360 } },
+      { id: 'atrasada', veiculo_id: 'v2', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 60000, veiculos: { placa: 'QXB-7J58', km_atual: 61230 } },
+      { id: 'longe', veiculo_id: 'v3', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 90000, veiculos: { placa: 'AAA-0A00', km_atual: 1000 } },
+    ]
+    fromMock = jest.fn(() => makeChainable({ data: rows }))
+
+    const result = await getRevisoesVenceEmBreve()
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ id: 'breve', placa: 'RTE-4F21', km_restantes: 640 })
+    expect((await getRevisoesAtrasadas()).map((r) => r.id)).toEqual(['atrasada'])
   })
 })
 

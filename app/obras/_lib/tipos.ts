@@ -309,6 +309,12 @@ export type ObraRow = {
   /** Segunda ausência consecutiva: a partir daqui o alerta fica visível. */
   field_ausente_em: string | null
 
+  /** SPOT (padrão) ou OBRA. Só administrador muda; a sincronização nunca grava. */
+  modalidade: 'spot' | 'obra'
+  data_base: string | null
+  engenheiro_email: string | null
+  atividade_trava: number | null
+
   analista_cliente: string | null
   pcm: string | null
   equipe: string | null

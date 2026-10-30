@@ -11,7 +11,7 @@ const config: Config = {
     '^react$': '<rootDir>/node_modules/react',
     '^react-dom$': '<rootDir>/node_modules/react-dom',
   },
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.claude/worktrees/'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.claude/worktrees/', '/__tests__/fixtures/'],
 }
 
 export default createJestConfig(config)

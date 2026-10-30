@@ -30,7 +30,7 @@ const QUALIDADE = 0.82
 const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024
 
 /** Reduz a foto no próprio aparelho. Se algo der errado, sobe o original. */
-async function reduzir(arquivo: File): Promise<Blob> {
+export async function reduzir(arquivo: File): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(arquivo)
     const escala = Math.min(1, LADO_MAX / Math.max(bitmap.width, bitmap.height))

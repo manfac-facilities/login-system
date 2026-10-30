@@ -105,7 +105,7 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
   const supabase = await createClient()
   let query = supabase
     .from('revisoes')
-    .select('*, veiculos(placa, modelo), motoristas(nome)')
+    .select('*, veiculos(placa, modelo, km_atual), motoristas(nome)')
     .order('data_realizada', { ascending: false })
   if (veiculoId) query = query.eq('veiculo_id', veiculoId)
   const { data, error } = await query
@@ -115,29 +115,42 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
 
 // motivo: 'data' quando a data prevista passou (mesmo que o km também tenha passado); 'km' só por km.
 // km_passados: quantos km passaram do previsto, preenchido sempre que o km venceu.
-export type RevisaoAtrasada = Revisao & { motivo: RevisaoMotivo; km_passados: number | null }
+export type RevisaoAtrasada = Revisao & { placa: string | null; motivo: RevisaoMotivo; km_passados: number | null }
+export type RevisaoVenceEmBreve = Revisao & { placa: string | null; km_restantes: number }
 
-export async function getRevisoesAtrasadas(): Promise<RevisaoAtrasada[]> {
+// Só a revisão mais recente de cada veículo+tipo conta; as anteriores foram substituídas.
+async function classificarRevisoesMaisRecentes() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('revisoes')
-    .select('*, veiculos(km_atual)')
+    .select('*, veiculos(placa, km_atual)')
     .order('created_at', { ascending: false })
   if (error) throwQueryError('getRevisoesAtrasadas', error)
   const hoje = new Date().toISOString().split('T')[0]
-  const maisRecentePorVeiculoETipo = new Map<string, Revisao & { veiculos?: { km_atual: number | null } | null }>()
+  const maisRecentePorVeiculoETipo = new Map<string, Revisao & { veiculos?: { placa: string | null; km_atual: number | null } | null }>()
   for (const r of data ?? []) {
     const chave = `${r.veiculo_id}::${r.tipo}`
     if (!maisRecentePorVeiculoETipo.has(chave)) maisRecentePorVeiculoETipo.set(chave, r)
   }
-  const atrasadas: RevisaoAtrasada[] = []
-  for (const { veiculos, ...r } of maisRecentePorVeiculoETipo.values()) {
-    const c = classificarRevisao(r, veiculos?.km_atual, hoje)
-    if (c.situacao === 'atrasada') {
-      atrasadas.push({ ...r, motivo: c.motivos.includes('data') ? 'data' : 'km', km_passados: c.kmPassados })
-    }
-  }
-  return atrasadas
+  return Array.from(maisRecentePorVeiculoETipo.values()).map(({ veiculos, ...r }) => ({
+    r,
+    placa: veiculos?.placa ?? null,
+    c: classificarRevisao(r, veiculos?.km_atual, hoje),
+  }))
+}
+
+export async function getRevisoesAtrasadas(): Promise<RevisaoAtrasada[]> {
+  const todas = await classificarRevisoesMaisRecentes()
+  return todas
+    .filter(({ c }) => c.situacao === 'atrasada')
+    .map(({ r, placa, c }) => ({ ...r, placa, motivo: c.motivos.includes('data') ? 'data' : 'km', km_passados: c.kmPassados }))
+}
+
+export async function getRevisoesVenceEmBreve(): Promise<RevisaoVenceEmBreve[]> {
+  const todas = await classificarRevisoesMaisRecentes()
+  return todas
+    .filter(({ c }) => c.situacao === 'vence_em_breve')
+    .map(({ r, placa, c }) => ({ ...r, placa, km_restantes: c.kmRestantes as number }))
 }
 
 export async function getDocumentosVeiculo(veiculoId?: string): Promise<DocumentoVeiculo[]> {
@@ -320,4 +333,37 @@ export async function getKmResumoMensal(): Promise<KmResumoMensal[]> {
   return Array.from(groups.values())
     .map((g) => ({ ...g, km_rodados: g.km_fim - g.km_inicio }))
     .sort((a, b) => b.mes.localeCompare(a.mes))
+}
+
+/**
+ * F2/F3 — correções gravadas pelas funções corrigir_km_atomico /
+ * corrigir_abastecimento (audit_log, operacao 'corrigiu'), só dos registros
+ * pedidos. Busca por registro_id (revisão B10), em lotes para não estourar o
+ * tamanho da URL do PostgREST — e não pelas N mais recentes do log geral.
+ */
+export async function getCorrecoes(
+  tabela: 'km_diario' | 'abastecimentos',
+  registroIds: string[]
+): Promise<{ registro_id: string; created_at: string; dados: unknown }[]> {
+  if (registroIds.length === 0) return []
+  const supabase = await createClient()
+  const LOTE = 100
+  const lotes: string[][] = []
+  for (let i = 0; i < registroIds.length; i += LOTE) lotes.push(registroIds.slice(i, i + LOTE))
+  const resultados = await Promise.all(
+    lotes.map((ids) =>
+      supabase
+        .from('audit_log')
+        .select('registro_id, created_at, dados')
+        .eq('operacao', 'corrigiu')
+        .eq('tabela', tabela)
+        .in('registro_id', ids)
+    )
+  )
+  const out: { registro_id: string; created_at: string; dados: unknown }[] = []
+  for (const { data, error } of resultados) {
+    if (error) throwQueryError('getCorrecoes', error)
+    out.push(...((data ?? []) as { registro_id: string; created_at: string; dados: unknown }[]))
+  }
+  return out
 }
