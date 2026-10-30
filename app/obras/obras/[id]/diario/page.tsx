@@ -8,6 +8,7 @@ import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
 import ValidarDiario from './_validar'
+import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
 import { diasUteisEntre } from '../../_lib/calendario'
 import FormImpedimento from '../impedimentos/_form'
@@ -198,18 +199,7 @@ export default async function DiarioObraPage({
               próximo dia →
             </Link>
           ) : null}
-          <form method="get" action={base} className="flex items-center gap-2">
-            <input
-              type="date"
-              name="data"
-              defaultValue={data}
-              aria-label="Data do diário"
-              className="min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-2 text-sm text-[#333336]"
-            />
-            <button type="submit" className={navLink}>
-              ir
-            </button>
-          </form>
+          <SeletorDataDiario key={data} base={base} data={data} />
         </nav>
       </header>
 
