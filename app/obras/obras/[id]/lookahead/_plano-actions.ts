@@ -16,7 +16,7 @@ import { CAUSA, type CausaRdo } from '../../_lib/causas'
 import { avaliarItem, dataEnvioSemanal } from '../../_lib/last-planner'
 import { feriadosDaObra, lerPlano } from '../../_lib/leitura'
 import type { Resultado } from './_tipos'
-import { segundaValida, type ItemAvaliacao, type ItemFechamento } from './_plano-tipos'
+import { segundaValida, semanaFechavel, type ItemAvaliacao, type ItemFechamento } from './_plano-tipos'
 
 type Erro = { ok: false; erro: string }
 const falha = (erro: string): Erro => ({ ok: false, erro })
@@ -70,6 +70,7 @@ export async function fecharPlanoAction(obraId: string, semana: string, itens: I
   const { supabase } = auth
   const segunda = segundaValida(semana)
   if (!segunda) return falha('Semana inválida')
+  if (!semanaFechavel(segunda, hojeISO())) return falha('Só dá para fechar o plano da semana atual ou da próxima.')
   if (!Array.isArray(itens) || itens.length === 0) return falha('Marque ao menos uma atividade para o plano')
   const vistos = new Set<number>()
   for (const i of itens) {

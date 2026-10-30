@@ -2,12 +2,12 @@ import Link from 'next/link'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { CAUSA } from '../../_lib/causas'
-import { avaliarItem, dataEnvioSemanal, lookahead, ppc, segundaDaSemana } from '../../_lib/last-planner'
+import { avaliarItem, dataEnvioSemanal, ppc, segundaDaSemana } from '../../_lib/last-planner'
 import type { ObraGrande } from '../../_lib/leitura'
 import { feriadosDaObra, lerPlano, lerPlanos, lerRestricoes } from '../../_lib/leitura'
 import { codigosDeAtividades } from '../../_lib/cronograma'
 import { FormAvaliarPlano, FormFecharPlano, type CausaOpcao } from './_plano-form'
-import { segundaValida, semanaAlvo, somarDias } from './_plano-tipos'
+import { atividadesDaSemana, segundaValida, semanaAlvo, somarDias } from './_plano-tipos'
 
 const dm = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`
 const pct = (v: number) => `${Math.round(v * 100)}%`
@@ -75,12 +75,12 @@ export default async function PlanoDaSemana({
 
   // ---- Plano ainda não existe ------------------------------------------
   if (!pl.plano) {
-    if (semana < atual) {
+    if (semana < atual || semana > somarDias(atual, 7)) {
       return (
         <div className="flex flex-col gap-3">
           {nav}
           {titulo}
-          <EstadoVazio>Não houve plano fechado nesta semana.</EstadoVazio>
+          <EstadoVazio>Não há plano fechado nesta semana.</EstadoVazio>
         </div>
       )
     }
@@ -95,14 +95,16 @@ export default async function PlanoDaSemana({
     }
     const rr = await lerRestricoes(supabase, obraId)
     if (!rr.ok) return <EstadoVazio>{rr.erro}</EstadoVazio>
-    const janela = lookahead(calc.atividades, rr.restricoes, hoje, 6, codigos)
-    const candidatos = (janela.find((s) => s.segunda === semana)?.itens ?? []).map((it) => ({
-      numero: it.numero,
-      rotulo: `${it.codigo} ${it.nome}`.trim(),
-      periodo: `${dm(it.inicio)} a ${dm(it.termino)}`,
-      pronta: it.pronta,
-      restricoes: it.restricoesAbertas.map((x) => x.descricao),
-    }))
+    const candidatos = atividadesDaSemana(calc.atividades, semana).map((a) => {
+      const abertas = rr.restricoes.filter((x) => x.atividadeNumero === a.numero && x.situacao !== 'liberada')
+      return {
+        numero: a.numero,
+        rotulo: `${codigos.get(a.numero) ?? ''} ${a.descricao}`.trim(),
+        periodo: `${dm(a.inicioProjetado || a.inicioPrevisto)} a ${dm(a.fimProjetado || a.fimPrevisto)}`,
+        pronta: abertas.length === 0,
+        restricoes: abertas.map((x) => x.descricao),
+      }
+    })
     return (
       <div className="flex flex-col gap-3">
         {nav}

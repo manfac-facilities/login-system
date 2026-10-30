@@ -45,7 +45,7 @@ jest.mock('../../../_lib/leitura', () => ({
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { avaliarPlanoAction, fecharPlanoAction } from '../_plano-actions'
-import { dadosPpc, segundaValida, semanaAlvo } from '../_plano-tipos'
+import { atividadesDaSemana, dadosPpc, segundaValida, semanaAlvo, semanaFechavel } from '../_plano-tipos'
 import type { PlanoSemana } from '../../../_lib/last-planner'
 
 const OBRA = 'o1'
@@ -191,6 +191,36 @@ describe('avaliarPlanoAction', () => {
     expect((await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 77, causa: 'outro' }])).ok).toBe(false)
     planoLido = null
     expect((await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 3, causa: 'outro' }])).ok).toBe(false)
+  })
+})
+
+describe('fechamento só da semana atual ou próxima', () => {
+  it('rejeita semana passada e distante; aceita atual e próxima', async () => {
+    const itens = [{ numero: 3, meta: 1 }]
+    expect((await fecharPlanoAction(OBRA, '2026-10-26', itens)).ok).toBe(false)
+    expect((await fecharPlanoAction(OBRA, '2026-11-16', itens)).ok).toBe(false)
+    expect(rpcMock).not.toHaveBeenCalled()
+    expect((await fecharPlanoAction(OBRA, '2026-11-09', itens)).ok).toBe(true)
+    expect(semanaFechavel('2026-11-02', '2026-11-06')).toBe(true)
+  })
+})
+
+describe('candidatos da semana', () => {
+  const at = (numero: number, status: string, ini: string, fim: string) => ({
+    numero, status, inicioProjetado: ini, inicioPrevisto: ini, fimProjetado: fim, fimPrevisto: fim,
+  })
+  it('inclui a que começou antes e segue; exclui concluída, futura distante e já encerrada', () => {
+    const r = atividadesDaSemana(
+      [
+        at(1, 'em_andamento', '2026-11-02', '2026-11-12'), // começou na semana anterior à 09/11
+        at(2, 'concluido', '2026-11-02', '2026-11-12'),
+        at(3, 'nao_iniciado', '2026-11-16', '2026-11-20'),
+        at(4, 'em_andamento', '2026-10-26', '2026-11-06'),
+        at(5, 'nao_iniciado', '2026-11-13', '2026-11-13'),
+      ],
+      '2026-11-09',
+    )
+    expect(r.map((a) => a.numero)).toEqual([1, 5])
   })
 })
 

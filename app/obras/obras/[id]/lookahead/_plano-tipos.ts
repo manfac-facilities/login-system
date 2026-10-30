@@ -35,3 +35,31 @@ export function dadosPpc(planos: PlanoSemana[], n = 8): PontoPpc[] {
   }
   return pontos.sort((a, b) => a.semana.localeCompare(b.semana)).slice(-n)
 }
+
+/** Quem pode ter plano fechado: a semana atual ou a próxima. */
+export function semanaFechavel(segunda: string, hoje: string): boolean {
+  const atual = segundaDaSemana(hoje)
+  return segunda === atual || segunda === somarDias(atual, 7)
+}
+
+export type AtividadeJanela = {
+  numero: number
+  status: string
+  inicioProjetado: string
+  inicioPrevisto: string
+  fimProjetado: string
+  fimPrevisto: string
+}
+
+/** Não concluídas cujo [início, fim] (projetado, senão previsto) cruza a semana (seg-sex). */
+export function atividadesDaSemana<T extends AtividadeJanela>(atividades: T[], segunda: string): T[] {
+  const sexta = somarDias(segunda, 4)
+  return atividades
+    .filter((a) => {
+      if (a.status === 'concluido') return false
+      const ini = a.inicioProjetado || a.inicioPrevisto
+      const fim = a.fimProjetado || a.fimPrevisto
+      return !!ini && ini <= sexta && (fim || ini) >= segunda
+    })
+    .sort((x, y) => (x.inicioProjetado || x.inicioPrevisto).localeCompare(y.inicioProjetado || y.inicioPrevisto) || x.numero - y.numero)
+}

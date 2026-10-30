@@ -342,14 +342,25 @@ export default function PassosDiario({
   /** "Validar e enviar" (engenheiro/admin); ausente = não mostra. */
   validacao?: { previaHtml: string | null; pendentes: number | null }
 }) {
-  const [corpo, setCorpo] = useState<RascunhoRdo>(inicial)
+  // Itens do plano da semana que não estão na lista do dia entram já na lista (mesmo caminho do "Incluir").
+  const doPlanoForaDaLista =
+    estado !== null && estado !== 'rascunho' ? [] : outras.filter((a) => noPlano.includes(a.numero))
+  const [corpo, setCorpo] = useState<RascunhoRdo>(() => ({
+    ...inicial,
+    avancos: [
+      ...inicial.avancos,
+      ...doPlanoForaDaLista
+        .filter((a) => !inicial.avancos.some((x) => x.numero === a.numero))
+        .map((a) => ({ numero: a.numero, de: a.atual, para: a.atual, concluida: false, causa: null })),
+    ],
+  }))
   const [rdoId, setRdoId] = useState<string | null>(rdoInicial)
   const [aberto, setAberto] = useState<number | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [qtdFotos, setQtdFotos] = useState(fotos.length)
-  const [incluidas, setIncluidas] = useState<AtividadeDiario[]>([])
+  const [incluidas, setIncluidas] = useState<AtividadeDiario[]>(doPlanoForaDaLista)
 
   const somenteLeitura = estado !== null && estado !== 'rascunho'
   const mudar = (p: Partial<RascunhoRdo>) => setCorpo((c) => ({ ...c, ...p }))
