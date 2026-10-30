@@ -64,6 +64,8 @@ export default function BarraFerramentas({
   onSalvarVersao: (motivo: string | null, depois: () => void) => void
 }) {
   const [motivo, setMotivo] = useState('')
+  // Salvar só de dentro do rascunho: de outra versão, o botão gravava o rascunho sem o usuário vê-lo.
+  const noRascunho = !!rascunho && rascunho.numero === versaoNumero
 
   return (
     <div
@@ -139,12 +141,12 @@ export default function BarraFerramentas({
           ) : (
             <span className="text-[13px] text-(--obra-muted-texto)">{SEM_BASE_STATUS}</span>
           )}
-          {rascunho && rascunho.numero === 1 ? (
+          {rascunho && noRascunho && rascunho.numero === 1 ? (
             <button type="button" className={PRIMARIO} disabled={pendente} onClick={() => onSalvarVersao(null, () => {})}>
               Salvar base
             </button>
           ) : null}
-          {rascunho && rascunho.numero > 1 ? (
+          {rascunho && noRascunho && rascunho.numero > 1 ? (
             <>
               <input
                 className="min-h-11 w-56 rounded-lg border border-(--obra-border) bg-(--obra-card) px-3 text-[13px] text-(--obra-text) placeholder:text-(--obra-muted-texto)"
@@ -162,6 +164,11 @@ export default function BarraFerramentas({
                 Salvar revisão
               </button>
             </>
+          ) : null}
+          {rascunho && !noRascunho ? (
+            <button type="button" className={PRIMARIO} disabled={pendente} onClick={() => onVersao(rascunho.numero)}>
+              Ir para o rascunho v{rascunho.numero}
+            </button>
           ) : null}
           {!rascunho && temVigente ? (
             <button type="button" className={BOTAO} disabled={pendente} onClick={onNovaRevisao}>

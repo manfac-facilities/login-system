@@ -269,7 +269,7 @@ describe('criarRevisaoAction', () => {
   it('copia as atividades da vigente para v(n+1) em rascunho', async () => {
     salvarV1()
     const r = await criarRevisaoAction(OBRA)
-    expect(r).toEqual({ ok: true, versaoId: expect.any(String) })
+    expect(r).toEqual({ ok: true, versaoId: expect.any(String), numero: 2 })
     const nova = db.obras_cronograma_versao.find((v) => v.id === (r as { versaoId: string }).versaoId)!
     expect(nova).toMatchObject({ obra_id: OBRA, numero: 2 })
     expect(nova.salva_em ?? null).toBeNull()
@@ -296,7 +296,7 @@ describe('criarRevisaoAction', () => {
   it('rascunho vazio (cópia que falhou antes) é reaproveitado', async () => {
     salvarV1()
     db.obras_cronograma_versao.push({ id: 'v2', obra_id: OBRA, numero: 2, motivo: null, salva_em: null })
-    expect(await criarRevisaoAction(OBRA)).toEqual({ ok: true, versaoId: 'v2' })
+    expect(await criarRevisaoAction(OBRA)).toEqual({ ok: true, versaoId: 'v2', numero: 2 })
     expect(db.obras_atividade.filter((a) => a.versao_id === 'v2')).toHaveLength(12)
   })
 })

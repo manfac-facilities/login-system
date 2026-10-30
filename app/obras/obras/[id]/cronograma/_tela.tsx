@@ -110,6 +110,19 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
       router.refresh()
     })
 
+  // A revisão nova abre na tela já no rascunho. Só `refresh` mantinha o `?v=` de antes
+  // (versão salva, só leitura) — e o "Salvar revisão" gravava a revisão sem nenhuma mudança.
+  const novaRevisao = () =>
+    iniciar(async () => {
+      setErro(null)
+      const r = await criarRevisaoAction(obraId)
+      if (!r.ok) {
+        setErro(r.erro)
+        return
+      }
+      router.push(`?v=${r.numero}`)
+    })
+
   const versaoId = dados.versao.id
   const salvarPlano = (numero: number, campos: Partial<LinhaPlano>) => {
     const a = porNumero.get(numero)
@@ -171,7 +184,14 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
   }
 
   const { versao, rascunho, termino } = dados
-  const somenteLeitura = versao.salva && rascunho ? `v${versao.numero} é uma versão salva — só leitura.` : null
+  const noRascunho = !!rascunho && versao.id === rascunho.id
+  const somenteLeitura = !versao.salva
+    ? null
+    : rascunho
+      ? `v${versao.numero} é uma versão salva — só leitura. As alterações vão na revisão v${rascunho.numero} (rascunho).`
+      : dados.podeEditar && dados.temVigente
+        ? `v${versao.numero} é uma versão salva — só leitura. Para alterar datas, clique em “Nova revisão”.`
+        : null
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -192,7 +212,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         temVigente={dados.temVigente}
         pendente={pendente}
         onAtualizarStatus={() => setStatusAberto(true)}
-        onNovaRevisao={() => executar(() => criarRevisaoAction(obraId))}
+        onNovaRevisao={novaRevisao}
         onSalvarVersao={(motivo, depois) => rascunho && executar(() => salvarVersaoAction(obraId, rascunho.id, motivo), depois)}
       />
 
@@ -203,9 +223,10 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         {pendente ? <span aria-live="polite">Salvando…</span> : null}
       </p>
 
-      {rascunho && versao.id === rascunho.id && dados.temVigente ? (
-        <p className="rounded-lg border border-[#efd77a] bg-[#fdf6d8] px-3 py-2 text-[13px] text-(--obra-yellow-texto)">
-          Revisão v{rascunho.numero} em rascunho — painel e diário seguem a versão vigente até ela ser salva.
+      {noRascunho && rascunho && dados.temVigente ? (
+        <p role="status" className="rounded-lg border border-[#efd77a] bg-[#fdf6d8] px-3 py-2 text-[13px] text-(--obra-yellow-texto)">
+          <b>Editando v{rascunho.numero} (rascunho)</b> — altere datas, dias úteis e predecessoras na tabela e depois
+          clique em “Salvar revisão”. Painel e diário seguem a versão vigente até lá.
         </p>
       ) : null}
       {rascunho && rascunho.numero === 1 && versao.id === rascunho.id ? (

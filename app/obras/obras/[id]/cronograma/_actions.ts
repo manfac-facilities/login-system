@@ -282,7 +282,9 @@ const COLUNAS_COPIADAS = [
   'duracao', 'responsavel_funcao', 'bloqueia_por_trava', 'peso_valor', 'inicio_fixo',
 ] as const
 
-export async function criarRevisaoAction(obraId: string): Promise<Resultado & { versaoId?: string }> {
+export async function criarRevisaoAction(
+  obraId: string,
+): Promise<Resultado & { versaoId?: string; numero?: number }> {
   const ctx = await autorizar(obraId)
   if (ehErro(ctx)) return ctx
 
@@ -336,7 +338,8 @@ export async function criarRevisaoAction(obraId: string): Promise<Resultado & { 
   }
 
   revalidar(obraId)
-  return { ok: true, versaoId: destino.id as string }
+  // A tela navega para `?v=<numero>`: sem isso ela seguia na versão do `?v=` anterior (salva, só leitura).
+  return { ok: true, versaoId: destino.id as string, numero: destino.numero as number }
 }
 
 /** Plano que vale para a execução (a vigente; sem base salva, recusa) + execução atual. */
