@@ -73,7 +73,7 @@ export function equipesSemKm(p: {
 export function classificarCnh<M extends { ativo: boolean; cnh_vencimento: string | null }>(
   motoristas: M[],
   hoje: string,
-  dias = 30
+  dias = 60
 ): { vencidas: M[]; vencendo: M[] } {
   const lim = new Date(`${hoje}T12:00:00Z`)
   lim.setUTCDate(lim.getUTCDate() + dias)
@@ -102,10 +102,10 @@ export interface EntradaAcoes {
   /** dia cobrado (AAAA-MM-DD) ou null em fim de semana */
   diaKm: string | null
   documentos: { placa: string | null; tipo: string; vencimento: string }[]
-  cnhVencidas: { nome: string }[]
-  cnhVencendo: { nome: string }[]
-  multasSemTratativa: number
-  sinistrosAbertos: number
+  cnhVencidas: { nome: string; cnh_vencimento: string | null }[]
+  cnhVencendo: { nome: string; cnh_vencimento: string | null }[]
+  multas: { status: string; valor: number | string }[]
+  sinistros: { placa: string | null; status: string }[]
   veiculosOficinaAtrasados: string[]
 }
 
@@ -147,18 +147,26 @@ export function montarAcoes(e: EntradaAcoes, hoje?: string): AcaoHoje[] {
   })
   add({
     id: 'cnh', n: e.cnhVencidas.length + e.cnhVencendo.length, urgente: e.cnhVencidas.length > 0,
-    titulo: 'CNH vencida ou vencendo em 30 dias',
-    descricao: `${e.cnhVencidas.length} vencida${e.cnhVencidas.length === 1 ? '' : 's'} · ${e.cnhVencendo.length} vencendo: ${[...e.cnhVencidas, ...e.cnhVencendo].map((m) => m.nome).join(', ')}`,
+    titulo: 'CNH vencida ou vencendo em 60 dias',
+    descricao: [
+      ...e.cnhVencidas.map((m) => `${m.nome} venceu ${m.cnh_vencimento ? dm(m.cnh_vencimento) : ''}`.trim()),
+      ...e.cnhVencendo.map((m) => `${m.nome} vence ${m.cnh_vencimento ? dm(m.cnh_vencimento) : ''}`.trim()),
+    ].join(' · '),
     href: '/sofia/motoristas?cnh=alerta', irPara: 'Motoristas',
   })
+  const pend = e.multas.filter((m) => m.status === 'pendente').length
+  const valid = e.multas.filter((m) => m.status === 'validada').length
+  const totalMultas = e.multas.reduce((s, m) => s + n(m.valor), 0)
   add({
-    id: 'multas', n: e.multasSemTratativa, urgente: false,
-    titulo: 'Multas sem tratativa', descricao: 'Multas ainda não descontadas',
+    id: 'multas', n: e.multas.length, urgente: false,
+    titulo: 'Multas sem tratativa',
+    descricao: `${pend} pendente${pend === 1 ? '' : 's'}, ${valid} validada${valid === 1 ? '' : 's'} aguardando desconto · ${totalMultas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
     href: '/sofia/multas', irPara: 'Multas',
   })
   add({
-    id: 'sinistros', n: e.sinistrosAbertos, urgente: false,
-    titulo: 'Sinistros abertos', descricao: 'Sinistros ainda não encerrados',
+    id: 'sinistros', n: e.sinistros.length, urgente: false,
+    titulo: 'Sinistros abertos',
+    descricao: e.sinistros.map((x) => `${placaDe(x.placa)} ${x.status.replace('_', ' ')}`).join(' · '),
     href: '/sofia/sinistros', irPara: 'Sinistros',
   })
   add({
@@ -227,4 +235,54 @@ export function agruparExtratosPorCentroCusto(
     a.codigo === null ? 1 : b.codigo === null ? -1 : a.codigo.localeCompare(b.codigo)
   )
   return { linhas, totalCentavos: linhas.reduce((s, l) => s + l.totalCentavos, 0) }
+}
+
+// ---------- documentos: só o mais recente por veículo + tipo ----------
+
+/** Documento antigo já renovado não conta: vale a linha de `created_at` mais recente de cada veículo+tipo. */
+export function documentosAVencer<D extends { veiculo_id: string; tipo: string; vencimento: string; created_at: string }>(
+  docs: D[],
+  hoje: string,
+  dias = 30
+): D[] {
+  const lim = new Date(`${hoje}T12:00:00Z`)
+  lim.setUTCDate(lim.getUTCDate() + dias)
+  const limite = lim.toISOString().slice(0, 10)
+  const recente = new Map<string, D>()
+  for (const d of docs) {
+    const k = `${d.veiculo_id}::${d.tipo}`
+    const a = recente.get(k)
+    if (!a || d.created_at > a.created_at) recente.set(k, d)
+  }
+  return [...recente.values()].filter((d) => d.vencimento <= limite).sort((a, b) => a.vencimento.localeCompare(b.vencimento))
+}
+
+// ---------- 1.1 carros na oficina agora ----------
+
+export interface CarroNaOficina {
+  placa: string
+  modelo: string
+  desde: string | null
+  retorno: string | null
+  diasAtraso: number
+}
+
+export function carrosNaOficina(
+  veiculos: { id: string; placa: string; modelo: string; status: string; previsao_retorno_oficina: string | null }[],
+  desdePorVeiculo: Map<string, string>,
+  hoje: string
+): CarroNaOficina[] {
+  const dia = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
+  return veiculos
+    .filter((v) => v.status === 'manutencao')
+    .map((v) => {
+      const r = v.previsao_retorno_oficina
+      return {
+        placa: v.placa,
+        modelo: v.modelo,
+        desde: desdePorVeiculo.get(v.id)?.slice(0, 10) ?? null,
+        retorno: r,
+        diasAtraso: r && r < hoje ? Math.round((dia(hoje) - dia(r)) / 86400000) : 0,
+      }
+    })
 }

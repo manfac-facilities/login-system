@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import {
-  getEquipes, getVeiculos, getMotoristas, getMultasPendentes, getSinistrosAbertos,
-  getDocumentosVencendo, getRevisoesAtrasadas, getRevisoesVenceEmBreve, getResponsabilidadesAtuais,
+  getEquipes, getVeiculos, getMotoristas, getMultasPendentes,
+  getRevisoesAtrasadas, getRevisoesVenceEmBreve, getResponsabilidadesAtuais,
 } from './queries'
 import { getGastos, hojeSP } from './extratos/leituras'
 import {
   frotaPorSituacao, diaUtilCobrado, equipesSemKm, classificarCnh, montarAcoes,
-  somarCustosDoMes, agruparExtratosPorCentroCusto,
+  somarCustosDoMes, agruparExtratosPorCentroCusto, documentosAVencer, carrosNaOficina,
 } from './visao-geral'
 
 /** Tudo pela RLS do usuário. Qualquer falha propaga para o error.tsx de /sofia. */
@@ -26,11 +26,20 @@ export async function carregarVisaoGeral() {
   }
 
   const [
-    equipes, veiculos, motoristas, multasPendentes, sinistrosAbertos, documentos, revAtrasadas, revBreve, responsabilidades,
+    equipes, veiculos, motoristas, multasPendentes, sinistrosAbertos, documentosTodos, revAtrasadas, revBreve, responsabilidades, revisoesCriadas,
     kmDoDia, multasMes, sinistrosMes, revisoesMes, abastecimentosMes, gastosExtrato,
   ] = await Promise.all([
-    getEquipes(), getVeiculos(), getMotoristas(), getMultasPendentes(), getSinistrosAbertos(),
-    getDocumentosVencendo(30), getRevisoesAtrasadas(), getRevisoesVenceEmBreve(), getResponsabilidadesAtuais(),
+    getEquipes(), getVeiculos(), getMotoristas(), getMultasPendentes(),
+    lerTabela(
+      supabase.from('sinistros').select('status, veiculos(placa)').neq('status', 'encerrado'),
+      'sinistros_abertos'
+    ),
+    lerTabela(
+      supabase.from('documentos_veiculo').select('veiculo_id, tipo, vencimento, created_at, veiculos(placa)'),
+      'documentos_veiculo'
+    ),
+    getRevisoesAtrasadas(), getRevisoesVenceEmBreve(), getResponsabilidadesAtuais(),
+    lerTabela(supabase.from('revisoes').select('veiculo_id, created_at'), 'revisoes_criadas'),
     diaKm
       ? lerTabela(supabase.from('km_diario').select('equipe_id').eq('data', diaKm), 'km_diario')
       : Promise.resolve([] as { equipe_id: string }[]),
@@ -43,10 +52,19 @@ export async function carregarVisaoGeral() {
 
   const frota = frotaPorSituacao(veiculos, responsabilidades)
   const semKm = diaKm ? equipesSemKm({ equipes, responsabilidades, veiculos, kmDoDia }) : []
-  const cnh = classificarCnh(motoristas, hoje, 30)
+  const cnh = classificarCnh(motoristas, hoje, 60)
   const oficinaAtrasada = veiculos
     .filter((v) => v.status === 'manutencao' && v.previsao_retorno_oficina && v.previsao_retorno_oficina < hoje)
     .map((v) => v.placa)
+
+  const documentos = documentosAVencer(documentosTodos, hoje, 30)
+  const placaRel = (r: unknown): string | null =>
+    (Array.isArray(r) ? r[0]?.placa : (r as { placa?: string } | null)?.placa) ?? null
+  const desdePorVeiculo = new Map<string, string>()
+  for (const r of revisoesCriadas) {
+    const a = desdePorVeiculo.get(r.veiculo_id)
+    if (!a || r.created_at > a) desdePorVeiculo.set(r.veiculo_id, r.created_at)
+  }
 
   const acoes = montarAcoes(
     {
@@ -54,15 +72,11 @@ export async function carregarVisaoGeral() {
       revisoesBreve: revBreve.map((r) => ({ placa: r.placa, km_restantes: r.km_restantes })),
       equipesSemKm: semKm,
       diaKm,
-      documentos: documentos.map((d) => ({
-        placa: (d as unknown as { veiculos?: { placa?: string } | null }).veiculos?.placa ?? null,
-        tipo: d.tipo,
-        vencimento: d.vencimento,
-      })),
+      documentos: documentos.map((d) => ({ placa: placaRel(d.veiculos), tipo: d.tipo, vencimento: d.vencimento })),
       cnhVencidas: cnh.vencidas,
       cnhVencendo: cnh.vencendo,
-      multasSemTratativa: multasPendentes.length,
-      sinistrosAbertos: sinistrosAbertos.length,
+      multas: multasPendentes,
+      sinistros: sinistrosAbertos.map((x) => ({ placa: placaRel(x.veiculos), status: x.status })),
       veiculosOficinaAtrasados: oficinaAtrasada,
     },
     hoje
@@ -73,6 +87,7 @@ export async function carregarVisaoGeral() {
     inicioMes,
     frota,
     acoes,
+    oficina: carrosNaOficina(veiculos, desdePorVeiculo, hoje),
     custos: somarCustosDoMes({
       veiculos, multas: multasMes, sinistros: sinistrosMes, revisoes: revisoesMes, abastecimentos: abastecimentosMes,
     }),

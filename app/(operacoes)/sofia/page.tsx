@@ -24,7 +24,7 @@ function Situacao({ href, label, valor, sub, quente }: { href: string; label: st
 export default async function SofiaPage() {
   const supabase = await createClient()
   const [v, gestor] = await Promise.all([carregarVisaoGeral(), podeGerirFrotas(supabase)])
-  const { frota, acoes, custos, extratos, hoje, inicioMes } = v
+  const { frota, acoes, oficina, custos, extratos, hoje, inicioMes } = v
   const mesNome = new Date(`${hoje}T12:00:00Z`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
   const periodo = `de=${inicioMes}&ate=${hoje}`
   const semVeiculos = frota.uso + frota.livre + frota.oficina + frota.fora === 0
@@ -82,6 +82,21 @@ export default async function SofiaPage() {
               <span style={{ width: `${(frota.uso / frota.base) * 100}%`, background: '#f05a28' }} />
               <span style={{ width: `${(frota.livre / frota.base) * 100}%`, background: '#ffffff' }} />
               <span style={{ width: `${(frota.oficina / frota.base) * 100}%`, background: '#1e3a5f' }} />
+            </div>
+          )}
+          {oficina.length > 0 && (
+            <div className={`${CARD} mt-4 text-sm`}>
+              <p className="text-white font-medium mb-2">Carros na oficina agora</p>
+              {oficina.map((o) => (
+                <div key={o.placa} className="flex flex-wrap justify-between gap-2 py-2 border-t border-[#1e3a5f]">
+                  <span><span className="text-white font-medium">{o.placa}</span> <span className="text-[#4a6080]">{o.modelo}</span></span>
+                  <span className="text-[#4a6080]">
+                    {o.desde ? `desde ${dataBR(o.desde)} · ` : ''}
+                    {o.retorno ? `volta prevista ${dataBR(o.retorno)}` : 'sem previsão de volta'}{' '}
+                    {o.diasAtraso > 0 && <span className="text-[#f05a28]">atrasado {o.diasAtraso} dia{o.diasAtraso === 1 ? '' : 's'}</span>}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
           <p className="text-xs text-[#4a6080] mt-2">

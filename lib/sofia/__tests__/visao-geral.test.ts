@@ -6,6 +6,8 @@ import {
   somarCustosDoMes,
   agruparExtratosPorCentroCusto,
   montarAcoes,
+  documentosAVencer,
+  carrosNaOficina,
 } from '../visao-geral'
 
 const v = (id: string, status: 'ativo' | 'inativo' | 'manutencao') => ({ id, status })
@@ -61,12 +63,12 @@ describe('equipesSemKm', () => {
 })
 
 describe('classificarCnh', () => {
-  it('vencida e vencendo em 30 dias; ignora inativo e sem data', () => {
+  it('vencida e vencendo em 60 dias; ignora inativo e sem data', () => {
     const r = classificarCnh(
       [
         { id: '1', nome: 'A', ativo: true, cnh_vencimento: '2026-10-01' },
-        { id: '2', nome: 'B', ativo: true, cnh_vencimento: '2026-11-20' },
-        { id: '3', nome: 'C', ativo: true, cnh_vencimento: '2026-12-01' },
+        { id: '2', nome: 'B', ativo: true, cnh_vencimento: '2026-12-20' },
+        { id: '3', nome: 'C', ativo: true, cnh_vencimento: '2027-01-05' },
         { id: '4', nome: 'D', ativo: false, cnh_vencimento: '2026-10-01' },
         { id: '5', nome: 'E', ativo: true, cnh_vencimento: null },
       ],
@@ -112,10 +114,10 @@ describe('montarAcoes', () => {
     equipesSemKm: [] as { codigo: string }[],
     diaKm: null as string | null,
     documentos: [] as { placa: string | null; tipo: string; vencimento: string }[],
-    cnhVencidas: [] as { nome: string }[],
-    cnhVencendo: [] as { nome: string }[],
-    multasSemTratativa: 0,
-    sinistrosAbertos: 0,
+    cnhVencidas: [] as { nome: string; cnh_vencimento: string | null }[],
+    cnhVencendo: [] as { nome: string; cnh_vencimento: string | null }[],
+    multas: [] as { status: string; valor: number }[],
+    sinistros: [] as { placa: string | null; status: string }[],
     veiculosOficinaAtrasados: [] as string[],
   }
   it('sem nada, lista vazia', () => {
@@ -127,11 +129,65 @@ describe('montarAcoes', () => {
       revisoesAtrasadas: [{ placa: 'AAA', motivo: 'km' }, { placa: 'BBB', motivo: 'data' }],
       equipesSemKm: [{ codigo: 'EQ2' }],
       diaKm: '2026-10-29',
-      cnhVencidas: [{ nome: 'Ana' }],
+      cnhVencidas: [{ nome: 'Ana', cnh_vencimento: '2026-10-01' }],
     })
     expect(r.map((a) => a.id)).toEqual(['revisoes-atrasadas', 'sem-km', 'cnh'])
     expect(r[0].descricao).toContain('1 por KM (AAA)')
     expect(r[1].titulo).toBe('Equipes sem KM diário de ontem (29/10)')
     expect(r[2]).toMatchObject({ n: 1, urgente: true })
+  })
+})
+
+describe('descrições das ações', () => {
+  const base = {
+    revisoesAtrasadas: [], revisoesBreve: [], equipesSemKm: [], diaKm: null, documentos: [],
+    cnhVencidas: [], cnhVencendo: [], multas: [], sinistros: [], veiculosOficinaAtrasados: [],
+  }
+  it('multas, sinistros e CNH com o texto do mockup', () => {
+    const r = montarAcoes({
+      ...base,
+      multas: [{ status: 'pendente', valor: 100 }, { status: 'pendente', valor: 50 }, { status: 'validada', valor: 25.5 }],
+      sinistros: [{ placa: 'AAA', status: 'em_tratativa' }, { placa: 'BBB', status: 'aberto' }],
+      cnhVencidas: [{ nome: 'Ana', cnh_vencimento: '2026-10-01' }],
+      cnhVencendo: [{ nome: 'Bia', cnh_vencimento: '2026-12-20' }],
+    })
+    const por = Object.fromEntries(r.map((a) => [a.id, a]))
+    expect(por.multas.descricao).toMatch(/^2 pendentes, 1 validada aguardando desconto · R\$\s175,50$/)
+    expect(por.sinistros.descricao).toBe('AAA em tratativa · BBB aberto')
+    expect(por.cnh.descricao).toBe('Ana venceu 01/10 · Bia vence 20/12')
+  })
+})
+
+describe('documentosAVencer', () => {
+  it('ignora documento antigo já renovado; mantém o mais recente se vence/venceu', () => {
+    const r = documentosAVencer(
+      [
+        { veiculo_id: 'a', tipo: 'ipva', vencimento: '2026-01-10', created_at: '2025-01-01' },
+        { veiculo_id: 'a', tipo: 'ipva', vencimento: '2027-01-10', created_at: '2026-01-05' },
+        { veiculo_id: 'b', tipo: 'seguro', vencimento: '2026-10-01', created_at: '2025-10-01' },
+        { veiculo_id: 'c', tipo: 'seguro', vencimento: '2026-11-15', created_at: '2025-11-15' },
+        { veiculo_id: 'd', tipo: 'seguro', vencimento: '2026-12-15', created_at: '2025-12-15' },
+      ],
+      '2026-10-30'
+    )
+    expect(r.map((d) => d.veiculo_id)).toEqual(['b', 'c'])
+  })
+})
+
+describe('carrosNaOficina', () => {
+  it('lista só carros na oficina, com atraso em dias', () => {
+    const r = carrosNaOficina(
+      [
+        { id: '1', placa: 'AAA', modelo: 'Fiorino', status: 'manutencao', previsao_retorno_oficina: '2026-10-27' },
+        { id: '2', placa: 'BBB', modelo: 'Strada', status: 'manutencao', previsao_retorno_oficina: '2026-11-02' },
+        { id: '3', placa: 'CCC', modelo: 'Uno', status: 'ativo', previsao_retorno_oficina: null },
+      ],
+      new Map([['1', '2026-10-20T10:00:00Z']]),
+      '2026-10-30'
+    )
+    expect(r).toEqual([
+      { placa: 'AAA', modelo: 'Fiorino', desde: '2026-10-20', retorno: '2026-10-27', diasAtraso: 3 },
+      { placa: 'BBB', modelo: 'Strada', desde: null, retorno: '2026-11-02', diasAtraso: 0 },
+    ])
   })
 })
