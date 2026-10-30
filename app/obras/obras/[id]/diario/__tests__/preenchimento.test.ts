@@ -5,7 +5,8 @@ const ativ = (over: Partial<AtividadeCalculada>): AtividadeCalculada => ({
   numero: 1, etapa: 'E', descricao: 'A', pred1: null, pred2: null, duracao: 2, bloqueiaPorTrava: false, pesoValor: 0,
   status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null,
   inicioPrevisto: '2026-10-26', fimPrevisto: '2026-10-27', inicioProjetado: '2026-10-26', fimProjetado: '2026-10-27',
-  peso: 0, percentualPrevisto: 0, situacao: 'no_prazo', travada: false, ...over,
+  peso: 0, percentualPrevisto: 0, situacao: 'no_prazo', travada: false,
+  inicioFixo: null, diasRestantes: null, alertaInicioFixo: null, inicioFixoAjustado: false, ...over,
 })
 
 const atividades = [

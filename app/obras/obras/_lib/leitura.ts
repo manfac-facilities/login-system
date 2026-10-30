@@ -10,11 +10,13 @@ import {
   atrasoPorResponsavel,
   calcularCronograma,
   diasDeImpacto,
+  resumirEtapas,
   sinalDaObra,
   type AtividadeExec,
   type AtividadePlano,
   type ImpedimentoCalc,
   type ResultadoCronograma,
+  type ResumoEtapa,
   type Responsavel,
   type Sinal,
   type StatusAtividade,
@@ -53,6 +55,10 @@ export type ObraGrande = {
   impedimentos: ImpedimentoRow[]
   feriados: Set<string>
   calc: ResultadoCronograma | null
+  /** Cálculo da base (v1 salva); null enquanto a v1 não foi salva. */
+  calcBase: ResultadoCronograma | null
+  /** Linhas-resumo por etapa do cálculo vigente (vazio sem cronograma). */
+  etapas: ResumoEtapa[]
   terminoBase: string | null
   sinal: Sinal | null
   atraso: ReturnType<typeof atrasoPorResponsavel> | null
@@ -74,6 +80,7 @@ export const atividadePlanoDe = (a: Linha): AtividadePlano => ({
   duracao: a.duracao,
   bloqueiaPorTrava: !!a.bloqueia_por_trava,
   pesoValor: Number(a.peso_valor ?? 0),
+  inicioFixo: a.inicio_fixo ?? null,
 })
 
 /** Linha de `obras_atividade_exec` → execução do motor. */
@@ -83,6 +90,7 @@ export const atividadeExecDe = (e: Linha): AtividadeExec => ({
   percentual: Number(e.percentual ?? 0),
   inicioReal: e.inicio_real ?? null,
   fimReal: e.fim_real ?? null,
+  diasRestantes: e.dias_restantes === null || e.dias_restantes === undefined ? null : Number(e.dias_restantes),
 })
 
 /** Impedimentos (já convertidos) → entrada do motor; orientação e sem responsável ficam de fora. */
@@ -171,9 +179,10 @@ export async function lerObraGrande(
     })
 
   const calc = usada ? calcular(plano) : null
-  const terminoBase = baseL
-    ? (baseL.id === usada?.id && calc ? calc : calcular(planoDe(atividades, baseL.id))).terminoPrevisto
+  const calcBase = baseL
+    ? (baseL.id === usada?.id && calc ? calc : calcular(planoDe(atividades, baseL.id)))
     : null
+  const terminoBase = calcBase?.terminoPrevisto ?? null
   const sinal = calc
     ? sinalDaObra({
         desvioPP: calc.desvioPP,
@@ -198,7 +207,9 @@ export async function lerObraGrande(
       versaoBase: baseL ? versaoInfo(baseL) : null,
       versaoVigente: vigenteL ? versaoInfo(vigenteL) : null,
       rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
-      plano, exec, impedimentos, feriados, calc, terminoBase, sinal, atraso,
+      plano, exec, impedimentos, feriados, calc, calcBase,
+      etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
+      terminoBase, sinal, atraso,
     },
   }
 }

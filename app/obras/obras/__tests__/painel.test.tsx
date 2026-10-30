@@ -11,14 +11,15 @@ const obra = {
 const base: ObraGrande = {
   obra, versaoBase: null, versaoVigente: null, rascunho: null,
   plano: [], exec: [], impedimentos: [], feriados: new Set(),
-  calc: null, terminoBase: null, sinal: null, atraso: null,
+  calc: null, calcBase: null, etapas: [], terminoBase: null, sinal: null, atraso: null,
 }
 
 const ativ = (over: Partial<AtividadeCalculada>): AtividadeCalculada => ({
   numero: 1, etapa: 'Demolição', descricao: 'Demolições', pred1: null, pred2: null, duracao: 2,
   bloqueiaPorTrava: true, pesoValor: 0, status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null,
   inicioPrevisto: '2026-10-01', fimPrevisto: '2026-10-02', inicioProjetado: '2026-10-01', fimProjetado: '2026-10-02',
-  peso: 0.1, percentualPrevisto: 0, situacao: 'no_prazo', travada: false, ...over,
+  peso: 0.1, percentualPrevisto: 0, situacao: 'no_prazo', travada: false,
+  inicioFixo: null, diasRestantes: null, alertaInicioFixo: null, inicioFixoAjustado: false, ...over,
 })
 
 const comCronograma = (over: Partial<ObraGrande> = {}): ObraGrande => ({

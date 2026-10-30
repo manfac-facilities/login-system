@@ -46,6 +46,8 @@ function obraGrande(over: Partial<ObraGrande> = {}): ObraGrande {
       atividades: [], previsto: 0.08, realizado: 0.06, desvioPP: -2,
       terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-12',
     },
+    calcBase: null,
+    etapas: [],
     terminoBase: '2027-02-12',
     sinal: 'amarelo',
     atraso: { total: 0, cliente: 0, manfac: 0, terceiro: 0, clima: 0 },
