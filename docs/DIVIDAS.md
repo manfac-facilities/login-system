@@ -304,8 +304,12 @@ menu inferior do diário.
 - Cronograma (`[id]/cronograma/`): Enter+blur pode enviar duas vezes; fallback de `data_base` diferente entre
   action e página; `gravarAtividade` duplicado; mock duplicado nos testes; Dias e Predecessoras não editáveis
   abaixo de 768px (Task 5).
-- Gaveta "Atualizar status": exec gravado antes do histórico, fora de transação — falha no insert do histórico
-  perde o ponto da curva no retry; outros 5 em `task-6-review.md` (Task 6).
+- Gaveta "Atualizar status" e validação do diário: ✅ 30/10/2026 (revisão final, I2) o histórico passou a ser
+  gravado **antes** do exec, então falha no histórico não deixa exec sem ponto na curva. **Segue fora de
+  transação:** falha no exec depois do histórico deixa uma linha de histórico a mais (no retry vira duplicata
+  com a mesma data e %, absorvida pela curva). Atomicidade real exige RPC nova. Outros 5 em `task-6-review.md` (Task 6).
+- Motor: ✅ 30/10/2026 (revisão final, I1) dias restantes ancorados na `data_status` em que foram informados
+  (derivada do histórico na leitura); `diasRestantes = 0` continua projetando o fim na própria âncora.
 - Painel (`_ui/`): `previstoDaEtapa` duplicado; hex fora de token; ordem impedimentos × evolução;
   `SeloSinal`/`corSinal` mortos; sem teste anti-NaN (Task 7).
 - Diário/e-mail: ícone do clima no e-mail é bolinha colorida (não SVG); hex literal no lugar de token;

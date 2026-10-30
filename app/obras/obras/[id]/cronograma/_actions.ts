@@ -527,8 +527,8 @@ export async function atualizarStatusAction(
   }
   if (!gravar.length) return { ok: true, aplicadas: 0 }
 
-  const { error } = await ctx.supabase.from('obras_atividade_exec').upsert(gravar, { onConflict: 'obra_id,numero' })
-  if (error) return erroBanco('atualizar o status', error)
+  // Histórico antes do exec: se o histórico falhar, o exec não muda e o retry grava os dois.
+  // Uma duplicata no retry (mesma data e %) não altera a curva.
   // registrado_por: o trigger carimba com o e-mail da sessão.
   const { error: errH } = await ctx.supabase.from('obras_atividade_status_hist').insert(
     gravar.map((g) => ({
@@ -542,6 +542,8 @@ export async function atualizarStatusAction(
     })),
   )
   if (errH) return erroBanco('gravar o histórico do status', errH)
+  const { error } = await ctx.supabase.from('obras_atividade_exec').upsert(gravar, { onConflict: 'obra_id,numero' })
+  if (error) return erroBanco('atualizar o status', error)
 
   revalidar(obraId)
   return { ok: true, aplicadas: gravar.length }

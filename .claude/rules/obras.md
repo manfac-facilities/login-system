@@ -149,10 +149,10 @@ Spec: `docs/superpowers/specs/2026-10-30-obras-leva1-cronograma-design.md`.
   (#b94606), nunca `--obra-orange` (contraste). O cabeçalho escuro de /obras some dentro da obra
   (`_ui/fora-do-shell-obra.tsx`). Tudo em % físico, nunca R$.
 - **Histórico de status:** `obras_atividade_status_hist` (só inserção) recebe uma linha por atividade na gaveta
-  "Atualizar status" e na validação do diário. É a fonte da curva "Realizado" e do "Dados até". Gravação fora de
-  transação com o exec (dívida da Task 6).
+  "Atualizar status" e na validação do diário. É a fonte da curva "Realizado" e do "Dados até". O histórico é gravado
+  antes do exec (falha no histórico não muda o exec), ainda fora de transação (DIVIDAS).
 - **Dias restantes** (`obras_atividade_exec.dias_restantes`): opcional; quando informado, **manda** na projeção
-  do fim (pode antecipar). Volta a null quando o diário avança/conclui a atividade ou a gaveta a conclui. O % nunca
+  do fim (pode antecipar), contado da `data_status` em que foi informado (a leitura acha no histórico), não de hoje. Volta a null quando o diário avança/conclui a atividade ou a gaveta a conclui. O % nunca
   regride (tela e servidor) e data de status futura é recusada.
 - **Prévia visual sem banco:** `npm run dev` → `/previa-obras`, `/previa-obras/cronograma`
   (`?status=1` abre a gaveta), `/previa-obras/diario`. Fixture de Macaé 3; 404 em produção; fica fora de /obras

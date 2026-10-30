@@ -380,9 +380,9 @@ export async function validarEEnviarAction(
       })
     }
     if (linhas.length) {
-      const { error } = await supabase.from('obras_atividade_exec').upsert(linhas, { onConflict: 'obra_id,numero' })
-      if (error) return erroBanco('aplicar o avanço no cronograma', error)
       // Histórico para as curvas (Leva 1): uma linha por atividade aplicada, na data do RDO.
+      // Grava ANTES do exec: se falhar, o exec não muda e repetir grava os dois
+      // (uma duplicata no retry tem a mesma data e %, e a curva a absorve).
       const { error: errH } = await supabase.from('obras_atividade_status_hist').insert(
         linhas.map((l) => ({
           obra_id: obraId,
@@ -395,6 +395,8 @@ export async function validarEEnviarAction(
         })),
       )
       if (errH) return erroBanco('gravar o histórico do avanço', errH)
+      const { error } = await supabase.from('obras_atividade_exec').upsert(linhas, { onConflict: 'obra_id,numero' })
+      if (error) return erroBanco('aplicar o avanço no cronograma', error)
     }
 
     // validado_por/validado_em: o trigger OBRAS_RDO_ESTADO grava (e-mail da sessão, now()).

@@ -9,6 +9,10 @@
 type Linha = Record<string, unknown>
 let db: Record<string, Linha[]>
 let seq = 0
+/** Escritas na ordem em que aconteceram (`op:tabela`). */
+let escritas: string[] = []
+/** Tabela cuja escrita devolve erro. */
+let falharEscritaEm: string | null = null
 const USUARIO = { email: 'eng@manfac.com.br' }
 
 function construtor(tabela: string) {
@@ -20,6 +24,10 @@ function construtor(tabela: string) {
   const executar = () => {
     const linhas = (db[tabela] ??= [])
     const alvo = () => linhas.filter((l) => filtros.every((f) => f(l)))
+    if (op !== 'select') {
+      escritas.push(`${op}:${tabela}`)
+      if (falharEscritaEm === tabela) return { data: null, error: { message: 'boom' } }
+    }
     let data: Linha[]
     if (op === 'select') data = alvo()
     else if (op === 'update') {
@@ -126,6 +134,8 @@ beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(console, 'warn').mockImplementation(() => {})
   seq = 0
+  escritas = []
+  falharEscritaEm = null
   process.env.SMTP_HOST = 'smtp'
   process.env.SMTP_USUARIO = 'u'
   process.env.SMTP_SENHA = 's'
@@ -268,6 +278,23 @@ describe('validarEEnviarAction', () => {
     db.obras_rdo[0].estado = 'validado'
     await validarEEnviarAction(OBRA, DIA)
     expect(db.obras_atividade_status_hist).toHaveLength(2)
+  })
+
+  it('grava o histórico antes do exec', async () => {
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    const iHist = escritas.indexOf('insert:obras_atividade_status_hist')
+    const iExec = escritas.indexOf('upsert:obras_atividade_exec')
+    expect(iHist).toBeGreaterThanOrEqual(0)
+    expect(iHist).toBeLessThan(iExec)
+  })
+
+  it('falha no histórico: exec não é gravado, RDO segue rascunho e o erro é amigável', async () => {
+    falharEscritaEm = 'obras_atividade_status_hist'
+    const r = await validarEEnviarAction(OBRA, DIA)
+    expect(r).toMatchObject({ ok: false, erro: expect.stringContaining('Não foi possível gravar o histórico do avanço') })
+    expect(escritas).not.toContain('upsert:obras_atividade_exec')
+    expect(db.obras_atividade_exec ?? []).toHaveLength(0)
+    expect(db.obras_rdo[0].estado).toBe('rascunho')
   })
 
   it('diário que avança ou conclui zera dias_restantes (valor antigo não manda mais na projeção)', async () => {

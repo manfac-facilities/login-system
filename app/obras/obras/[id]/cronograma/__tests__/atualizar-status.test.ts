@@ -6,6 +6,10 @@
 type Linha = Record<string, unknown>
 let db: Record<string, Linha[]>
 let seq = 0
+/** Escritas na ordem em que aconteceram (`op:tabela`). */
+let escritas: string[] = []
+/** Tabela cuja escrita devolve erro. */
+let falharEscritaEm: string | null = null
 
 function construtor(tabela: string) {
   const filtros: ((l: Linha) => boolean)[] = []
@@ -15,6 +19,10 @@ function construtor(tabela: string) {
 
   const executar = () => {
     const linhas = (db[tabela] ??= [])
+    if (op !== 'select') {
+      escritas.push(`${op}:${tabela}`)
+      if (falharEscritaEm === tabela) return { data: null, error: { message: 'boom' } }
+    }
     let data: Linha[]
     if (op === 'select') data = linhas.filter((l) => filtros.every((f) => f(l)))
     else if (op === 'insert') {
@@ -69,6 +77,8 @@ const execDe = (n: number) => db.obras_atividade_exec.find((e) => e.numero === n
 beforeEach(() => {
   jest.clearAllMocks()
   seq = 0
+  escritas = []
+  falharEscritaEm = null
   db = {
     obras_obra: [{ id: OBRA, modalidade: 'obra', engenheiro_email: 'Eduardo@Manfac.com.br', atividade_trava: 6, data_base: '2026-10-26' }],
     obras_cronograma_versao: [{ id: 'v1', obra_id: OBRA, numero: 1, salva_em: '2026-10-26T12:00:00Z' }],
@@ -93,6 +103,19 @@ beforeEach(() => {
 })
 
 describe('atualizarStatusAction', () => {
+  it('grava o histórico antes do exec', async () => {
+    expect((await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])).ok).toBe(true)
+    expect(escritas).toEqual(['insert:obras_atividade_status_hist', 'upsert:obras_atividade_exec'])
+  })
+
+  it('falha no histórico: exec não é gravado e o erro é amigável', async () => {
+    falharEscritaEm = 'obras_atividade_status_hist'
+    const r = await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])
+    expect(r).toEqual({ ok: false, erro: 'Não foi possível gravar o histórico do status. Tente de novo em instantes. (boom)' })
+    expect(escritas).toEqual(['insert:obras_atividade_status_hist'])
+    expect(execDe(6).percentual).toBe(0.5)
+  })
+
   it('quem não é engenheiro nem admin é recusado, sem gravar', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: 'outro@manfac.com.br' } } })
     expect(await atualizarStatusAction(OBRA, DIA, [lin(6, { percentual: 0.8 })])).toEqual({
