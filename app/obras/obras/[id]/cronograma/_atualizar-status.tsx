@@ -45,9 +45,31 @@ export default function AtualizarStatus({
   }, [onFechar])
 
   useEffect(() => {
+    // Quem abriu a gaveta (o botão "Atualizar status") recebe o foco de volta ao fechar.
+    const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null
     painelRef.current?.querySelector<HTMLElement>('input, button')?.focus()
     const tecla = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') fecharRef.current()
+      if (e.key === 'Escape') {
+        fecharRef.current()
+        return
+      }
+      if (e.key !== 'Tab' || !painelRef.current) return
+      // Foco preso na gaveta (aria-modal): Tab no último volta ao primeiro e vice-versa.
+      const focaveis = [...painelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      )]
+      if (!focaveis.length) return
+      const primeiro = focaveis[0]
+      const ultimo = focaveis[focaveis.length - 1]
+      const ativo = document.activeElement
+      const dentro = ativo instanceof Node && painelRef.current.contains(ativo)
+      if (e.shiftKey && (ativo === primeiro || !dentro)) {
+        e.preventDefault()
+        ultimo.focus()
+      } else if (!e.shiftKey && (ativo === ultimo || !dentro)) {
+        e.preventDefault()
+        primeiro.focus()
+      }
     }
     window.addEventListener('keydown', tecla)
     const overflow = document.body.style.overflow
@@ -55,6 +77,7 @@ export default function AtualizarStatus({
     return () => {
       window.removeEventListener('keydown', tecla)
       document.body.style.overflow = overflow
+      if (anterior?.isConnected) anterior.focus()
     }
   }, [])
 
