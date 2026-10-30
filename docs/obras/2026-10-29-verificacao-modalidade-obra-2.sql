@@ -394,7 +394,7 @@ begin
 exception when others then
   raise notice 'resultado: %', sqlerrm;
   perform pg_temp.reg(26, 'obras_foto_rdo_congelada: false no rascunho, true validado, false sem linha',
-                      'congelada: rascunho=false validado=true sem_linha=false', sqlerrm);
+                      'congelada: rascunho=f validado=t sem_linha=f', sqlerrm);
 end $$;
 
 -- ============================================================

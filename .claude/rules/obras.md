@@ -130,7 +130,7 @@ Docs: `docs/relatorio-email/`.
   - E-mail do cliente nunca mostra R$, peso nem item oculto; impedimento oculto vira "outros fatores".
   - Base SPOT, diário/tarefas, painel gerencial e e-mail das 08:01 filtram `modalidade='spot'`.
 - **SQL:** `sdd-sql-obras-modalidade-obra.sql` aplicado em 29/10/2026; `sdd-sql-obras-modalidade-obra-2.sql`
-  (RPC com `modalidade`, guardas de engenheiro/admin, storage e caminhos canônicos) **pendente até o José aplicar**;
-  sem ele "Tornar OBRA" falha. Ver `.claude/rules/sql.md`.
+  (RPC com `modalidade`, guardas de engenheiro/admin, storage e caminhos canônicos) **aplicado em 29/10/2026**;
+  Ver `.claude/rules/sql.md`.
 - **Fora de escopo (ver `docs/DIVIDAS.md`):** clima, ronda/mapa (Fase 4), semanal/PPC/curva S/Gantt (Fase 2),
   página do cliente (Fase 3).
