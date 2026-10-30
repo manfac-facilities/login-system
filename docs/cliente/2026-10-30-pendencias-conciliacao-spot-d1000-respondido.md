@@ -7,7 +7,7 @@ Conte√∫do literal de todas as abas (valores das c√©lulas, `|` separa colunas; li
 
 ```
 ### Resumo  (12 x 5)
-PendÍncias da conciliaÁ„o SPOT D1000 ◊ hub ó 27/10/2026
+Pend√™ncias da concilia√ß√£o SPOT D1000 √ó hub ‚Äî 27/10/2026
 Feito a partir do retorno do time na planilha de 23/10 (abas 1 e 2 respondidas; 4, 5, 7 e 9 em branco). O resumo conta sozinho.
 Aba | Com quem | Itens | Respondidos | Faltam
 Validar com o time | Time (analistas / PCM) | 53 | 50 | 3
@@ -15,161 +15,161 @@ Pendente Financeiro | Financeiro | 8 | 0 | 8
 Total |  | 61 | 50 | 11
 Vai subir (conferir): | 78 | obras
  | 103589.65999999999 | R$
-J· resolvido, sem aÁ„o: "S/N REPARO DE GERADOR" (R$ 805,58) entrou no hub em 24/10 como "REPARO DE GERADOR -01".
+J√° resolvido, sem a√ß√£o: "S/N REPARO DE GERADOR" (R$ 805,58) entrou no hub em 24/10 como "REPARO DE GERADOR -01".
 
 ### Validar com o time  (57 x 10)
-Validar com o time ó conciliaÁ„o SPOT D1000 (Profarma)
-Preencha sÛ as colunas amarelas. Exemplo de resposta: "OS 3291045, subir em Pendente faturamento".
-# | Grupo | OS | Loja | DescriÁ„o | Valor (R$) | Pergunta | O que acontece conforme a resposta | Resposta | Respondido por / data
-1 | Como ler as respostas | ó | ó | Aba 1 da planilha de retorno |  | Na aba 1, "SIM" quer dizer "pode subir no hub" e "FEITO EM dd/mm" È a data em que o serviÁo foi EXECUTADO? | Se sim, uso essa data como data de execuÁ„o no hub. Se for outra data (aprovaÁ„o, relatÛrio), me diga qual.
-2 | Como ler as respostas | ó | ó | Aba 2 da planilha de retorno |  | Na aba 2, "SIM" quer dizer que a obra J¡ FOI FATURADA? As datas que vocÍs puseram s„o iguais ‡ data de aprovaÁ„o em 5 das 6 obras. | Se faturou: fica no histÛrico, n„o entra no hub. Se n„o: sobe em Pendente faturamento.
-3 | Etapa a confirmar | 2684022 | TMO-113 | SUBSTITUI«√O DE DOBRADI«AS | 496.24 | A planilha diz PROGRAMADO (ainda n„o executada). Subo em Levantamento? | Subo na etapa informada. | Executado, confirmar faturamento.
-4 | Etapa a confirmar | 2725797 | DML-613 | SUBSTITUI«√O DE CIRCUITO | 4323.8 | A planilha diz PROGRAMADO (ainda n„o executada). Subo em Levantamento? | Subo na etapa informada. | Executada, confirmar faturamento.
-5 | Etapa a confirmar | 2889012 | DML-602 | REPARO EM FORRO | 1197.7 | A planilha diz PROGRAMADO (ainda n„o executada). Subo em Levantamento? | Subo na etapa informada. | Executada, confirmar faturamento.
-6 | Etapa a confirmar | 3053075 | TMO-134 | TROCA DE RAMPA DE ACESSIBILIDADE | 1332.68 | A planilha diz CONCLUÕDO, mas na an·lise de 23/10 a recomendaÁ„o foi Levantamento. Qual a etapa real: executada aguardando aprovaÁ„o da OS, pendente faturamento, ou ainda n„o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
-7 | Etapa a confirmar | 3082169 | DML-84 | TROCA DE MOLA E EIXO | 1326.37 | A planilha diz CONCLUÕDO, mas na an·lise de 23/10 a recomendaÁ„o foi Levantamento. Qual a etapa real: executada aguardando aprovaÁ„o da OS, pendente faturamento, ou ainda n„o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
-8 | Etapa a confirmar | 3087264 | TMO-124 | INSTALA«√O DE CANTONEIRAS | 850.65 | A planilha diz CONCLUÕDO, mas na an·lise de 23/10 a recomendaÁ„o foi Levantamento. Qual a etapa real: executada aguardando aprovaÁ„o da OS, pendente faturamento, ou ainda n„o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
-9 | Etapa a confirmar | 2958522 | DML-619 | Foi realizado a cÛpia de duas chaves do cadeado de ch„o | 200.8 | A linha n„o tem status na planilha. A obra existe? Em que etapa est· (executada, aguardando aprovaÁ„o, pendente faturamento)? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
-10 | Etapa a confirmar | 2983365 | DML-619 | Foi realizada a fabricaÁ„o de trÍs cÛpias da trava lateral da porta principal | 200.8 | A linha n„o tem status na planilha. A obra existe? Em que etapa est· (executada, aguardando aprovaÁ„o, pendente faturamento)? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
-11 | Sem resposta na aba 1 | 2384534 | DML-65 | PINTURA DE PISO RETAGUARDA | 2741.02 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | N„o subir no HUB.
-12 | Sem resposta na aba 1 | 2461419 | DML-631 | SUBSTITUI«√O DA CENTRAL E CABO DE A«O | 3975.45 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | Subir no HUB, porÈm, confirmar se houve faturamento.
-13 | Sem resposta na aba 1 | 2681966 | DML-625 | LOCA«√O DE ANDAIME | 522.75 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | Subir no HUB, porÈm, confirmar se houve faturamento.
-14 | Sem resposta na aba 1 | 2731555 | DML-91 | INSTALA«√O DE MAINEL | 2400.36 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | Subir no HUB, porÈm, confirmar se houve faturamento.
-15 | Sem resposta na aba 1 | 2738602 | DML-2 | referente a substituiÁ„o de vaso sanit·rio: | 1565.57 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | Subir no HUB, porÈm, confirmar se houve faturamento.
-16 | Sem resposta na aba 1 | 2908817 | DML-625 | FIXA«√O DE CORRIM√O | 1585.25 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | Subir no HUB, porÈm, confirmar se houve faturamento.
-17 | Sem resposta na aba 1 | SEM OS | DML-51 | TROCA DE DISJUNTOR | 1700.72 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? Qual o n∫ da OS no sistema D1000? | Se sim, subo na etapa informada. Se n„o, fica de fora (e sai da planilha). | ServiÁo executado, sem OS no sistema D1000. Subir no HUB, porÈm, confirmar se houve faturamento.
-18 | Respondidas "N√O" | 3159410 | DML-63 | ACOMPANHAMENTO DE GERADOR | 4399 | Resposta: "a luz havia retornado", ou seja, o serviÁo n„o foi feito. Mas a planilha lista como PENDENTE FATURAMENTO. Confirmar que n„o h· nada a faturar e que o chamado foi cancelado no sistema D1000. | N„o sobe no hub. | ServiÁo executado, h· faturamento. Confirmado pela analista LetÌcia por e-mail dia 24/08.
-19 | Respondidas "N√O" | VISA 995 | TMO-995 | SERVI«OS ADICIONAIS | 2525.1 | Veio "N√O" sem motivo. Provavelmente È duplicata dos itens "VISA TMO 995" que j· est„o no hub (e da obra "VISA" da TMO-995 na aba 4). … isso? | N„o sobe no hub. | N„o, este È um serviÁo adicional aos solicitados inicialmente na TMO995. N„o tem OS aberta.
-20 | Sem n∫ de OS | (sem OS) | TMO-116 | SUBSTITUI«√O FORRO PVC | 5266.84 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | OS 3158589
-21 | Sem n∫ de OS | EMERGENCIAL | DML-37 | SUBISTITUI«√O DE BLINDEX | 3694.46 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | OS 2803532
-22 | Sem n∫ de OS | S/N | S/N | REPARO DE GERADORES | 2476.9 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-23 | Sem n∫ de OS | SEM OS | DML-70 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-24 | Sem n∫ de OS | SEM OS | DML-81 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-25 | Sem n∫ de OS | SEM OS | DML-636 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-26 | Sem n∫ de OS | SEM OS | DML-638 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-27 | Sem n∫ de OS | SEM OS | DML-641 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-28 | Sem n∫ de OS | SEM OS | DML-639 | TROCA DE LUMIN¡RIAS | 1300 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | ServiÁo n„o tem OS aberta.
-29 | Sem n∫ de OS | SEM OS | TMO-226 | FORNECIMENTO E INSTALA«√O DE VIDRA«ARIA | 2500 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | OS 3112058
-30 | Sem n∫ de OS | SOS | TMO-189 | SUBSTITUI«√O DE CAIXA D'¡GUA | 1660.54 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | OS 3058267
-31 | Sem n∫ de OS | VISA 126 | TMO-126 | INTIMA«√O VIGIL¬NCIA SANIT¡RIA | 2748.46 | Qual o n∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n∫ informado em "Pendente faturamento". | OS 3190630
-32 | Sem n∫ de OS | (sem OS) | TMO-162 | VISA | 8396.33 | Qual o n∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n∫ informado em "Executado - pend. aprovaÁ„o OS (relatÛrio pendente)". | ServiÁo n„o tem OS aberta.
-33 | Sem n∫ de OS | (sem OS) | DML-619 | COPIA DE CHAVE(MAU USO) | 258.45 | Qual o n∫ da OS no sistema D1000? (status na planilha: ENVIAR RELAT”RIO) | Subo com o n∫ informado em "Executado - pend. aprovaÁ„o OS (relatÛrio pendente)". | ServiÁo n„o tem OS aberta.
-34 | Sem n∫ de OS | (sem OS) | DML-44 | ABERTURA DE AL«AP√O | 2131.6 | Qual o n∫ da OS no sistema D1000? (status na planilha: ENVIAR RELAT”RIO) | Subo com o n∫ informado em "Executado - pend. aprovaÁ„o OS (relatÛrio pendente)". | ServiÁo n„o tem OS aberta.
-35 | Sem n∫ de OS | (sem OS) | TMO-106 | MULTIR√O | 10720.72 | Qual o n∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n∫ informado em "Em andamento". | ServiÁo n„o tem OS aberta.
-36 | Sem n∫ de OS | SEM OS | TMO-136 | TROCA DE CADEADOS | 998.69 | Qual o n∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) A planilha tem o pedido 4503235799 ó j· foi faturada? | Subo com o n∫ informado em "Levantamento (aguardando execuÁ„o)". | ServiÁo n„o tem OS aberta.
-37 | Sem n∫ de OS | SEM OS | TMO-106 | INSTALA«√O DE CANTONEIRAS | 567.1 | Qual o n∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n∫ informado em "Levantamento (aguardando execuÁ„o)". | ServiÁo n„o tem OS aberta.
-38 | Data estranha | 3115066 | TMO-117 | TROCA DE TAMPA DE BUEIRO | 1017.03 | Data de aprovaÁ„o na planilha: 10/08/2028. … 10/08/2026? | Corrijo a data ao subir. | Data correta È 10/08/2026.
-39 | Data estranha | 3151602 | TMO-171 | ABASTECIMENTO DE ¡GUA | 2273.33 | ExecuÁ„o em 19/08/2026, antes da aprovaÁ„o em 21/08/2026. Qual est· certa? | Uso a data correta ao subir. | ExecuÁ„o dia 20/08 e aprovaÁ„o formal por e-mail dia 21/08. ServiÁo solicitado pelo Analista Felipe por Whatsapp dia 20/08.
-40 | Aba 4 ó OS fora do padr„o no hub | VISA TMO-108 | TMO-108 | Etapa no hub: Pendente faturamento | 13091.88 | Esta obra est· no hub com o n∫ "VISA TMO-108". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "VISA 108". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS aberta.
-41 | Aba 4 ó OS fora do padr„o no hub | VISA141 | TMO-141 | Etapa no hub: Pendente faturamento | 22815.31 | Esta obra est· no hub com o n∫ "VISA141". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "VISA 141". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS especÌfica aberta. Demandas divididas em 4 OS: 3175421, 3175401, 3175469 e 3175915.
-42 | Aba 4 ó OS fora do padr„o no hub | VISA | TMO-995 | Etapa no hub: Pendente faturamento | 5727.38 | Esta obra est· no hub com o n∫ "VISA". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "VISA 995". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS aberta.
-43 | Aba 4 ó OS fora do padr„o no hub | Cadeado Sem Os's | TMO-105 | Etapa no hub: Pendente faturamento | 1113.84 | Esta obra est· no hub com o n∫ "Cadeado Sem Os's". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "SEM OS". | Corrijo o n∫ da OS no hub.
-44 | Aba 4 ó OS fora do padr„o no hub | Reforma CalÁada e Marquise | TMO-168 | Etapa no hub: Levantamento | 14133.15 | Esta obra est· no hub com o n∫ "Reforma CalÁada e Marquise". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "SEM OS". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS especÌfica. Demandas divididas em 3 OS: 2716704, 2948868 e 2958423
-45 | Aba 4 ó OS fora do padr„o no hub | TMO104 - PINTURA | TMO-104 | Etapa no hub: Fechar OS | 2730.44 | Esta obra est· no hub com o n∫ "TMO104 - PINTURA". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "SEM OS". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS aberta.
-46 | Aba 4 ó OS fora do padr„o no hub | TMO106-Reparos gerais | TMO-106 | Etapa no hub: Fechar OS | 3828.42 | Esta obra est· no hub com o n∫ "TMO106-Reparos gerais". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "SEM OS". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS aberta.
-47 | Aba 4 ó OS fora do padr„o no hub | DML624 - ADEQUA«√O DE PONTO DE TOMADA | FML-624 | Etapa no hub: Pendente faturamento | 2963.84 | Esta obra est· no hub com o n∫ "DML624 - ADEQUA«√O DE PONTO DE TOMADA". Qual o n∫ da OS no sistema D1000 (7 dÌgitos)? Na planilha aparece como "SEM OS". | Corrijo o n∫ da OS no hub. | ServiÁo n„o tem OS aberta.
-48 | Aba 5 ó loja ou valor divergente | 2973385 | TMO-129 | INSTALA«√O DE 2 CAIXAS D'¡GUA | 4369.5 | Etapa compatÌvel, mas valor: planilha 4369.50, hub 4483.24. Qual est· certo? | Corrijo no hub se o certo for o da planilha. | Valor correto  R$ 4.483,24 	 	
-49 | Aba 5 ó loja ou valor divergente | 3230485 | TMO-186 | SUBSTITUI«√O DE CAIXA DE GORDURA | 1610.26 | Etapa compatÌvel, mas loja: planilha TMO-186, hub TMO-185. Qual est· certo? | Corrijo no hub se o certo for o da planilha. | TMO 186
-50 | Aba 5 ó loja ou valor divergente | 3238303 | TMO-128 | SUBSTITUI«√O DE BOMBA D'¡GUA | 1602.27 | Etapa compatÌvel, mas loja: planilha TMO-128, hub TMO-104. Qual est· certo? | Corrijo no hub se o certo for o da planilha. | TMO 104
-51 | Aba 5 ó loja ou valor divergente | 3263792 | DML-84 | SUBSTITUI«√O DE CAIXA D'¡GUA | 2107.23 | Etapa compatÌvel, mas valor: planilha 2107.23, hub 3079.66. Qual est· certo? | Corrijo no hub se o certo for o da planilha. | valor correto R$ 2107,23
-52 | Aba 5 ó loja ou valor divergente | SEM OS | DML-624 | ADEQUA«√O DE PONTO DE TOMADA | 2963.84 | Etapa compatÌvel, mas loja: planilha DML-624, hub FML-624. Qual est· certo? | Corrijo no hub se o certo for o da planilha. | FML 624
-53 | Field | ó | ó | Todas as obras da aba "Vai subir" |  | AlguÈm (ex.: Matheus) vai abrir essas obras no Field? Na DPSP isso aconteceu no mesmo dia e o script teve que ser refeito. | Se forem pelo Field, tiro do script; se n„o, subo pelo script. | Fazer via script
+Validar com o time ‚Äî concilia√ß√£o SPOT D1000 (Profarma)
+Preencha s√≥ as colunas amarelas. Exemplo de resposta: "OS 3291045, subir em Pendente faturamento".
+# | Grupo | OS | Loja | Descri√ß√£o | Valor (R$) | Pergunta | O que acontece conforme a resposta | Resposta | Respondido por / data
+1 | Como ler as respostas | ‚Äî | ‚Äî | Aba 1 da planilha de retorno |  | Na aba 1, "SIM" quer dizer "pode subir no hub" e "FEITO EM dd/mm" √© a data em que o servi√ßo foi EXECUTADO? | Se sim, uso essa data como data de execu√ß√£o no hub. Se for outra data (aprova√ß√£o, relat√≥rio), me diga qual.
+2 | Como ler as respostas | ‚Äî | ‚Äî | Aba 2 da planilha de retorno |  | Na aba 2, "SIM" quer dizer que a obra J√Å FOI FATURADA? As datas que voc√™s puseram s√£o iguais √† data de aprova√ß√£o em 5 das 6 obras. | Se faturou: fica no hist√≥rico, n√£o entra no hub. Se n√£o: sobe em Pendente faturamento.
+3 | Etapa a confirmar | 2684022 | TMO-113 | SUBSTITUI√á√ÉO DE DOBRADI√áAS | 496.24 | A planilha diz PROGRAMADO (ainda n√£o executada). Subo em Levantamento? | Subo na etapa informada. | Executado, confirmar faturamento.
+4 | Etapa a confirmar | 2725797 | DML-613 | SUBSTITUI√á√ÉO DE CIRCUITO | 4323.8 | A planilha diz PROGRAMADO (ainda n√£o executada). Subo em Levantamento? | Subo na etapa informada. | Executada, confirmar faturamento.
+5 | Etapa a confirmar | 2889012 | DML-602 | REPARO EM FORRO | 1197.7 | A planilha diz PROGRAMADO (ainda n√£o executada). Subo em Levantamento? | Subo na etapa informada. | Executada, confirmar faturamento.
+6 | Etapa a confirmar | 3053075 | TMO-134 | TROCA DE RAMPA DE ACESSIBILIDADE | 1332.68 | A planilha diz CONCLU√çDO, mas na an√°lise de 23/10 a recomenda√ß√£o foi Levantamento. Qual a etapa real: executada aguardando aprova√ß√£o da OS, pendente faturamento, ou ainda n√£o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
+7 | Etapa a confirmar | 3082169 | DML-84 | TROCA DE MOLA E EIXO | 1326.37 | A planilha diz CONCLU√çDO, mas na an√°lise de 23/10 a recomenda√ß√£o foi Levantamento. Qual a etapa real: executada aguardando aprova√ß√£o da OS, pendente faturamento, ou ainda n√£o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
+8 | Etapa a confirmar | 3087264 | TMO-124 | INSTALA√á√ÉO DE CANTONEIRAS | 850.65 | A planilha diz CONCLU√çDO, mas na an√°lise de 23/10 a recomenda√ß√£o foi Levantamento. Qual a etapa real: executada aguardando aprova√ß√£o da OS, pendente faturamento, ou ainda n√£o executada? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
+9 | Etapa a confirmar | 2958522 | DML-619 | Foi realizado a c√≥pia de duas chaves do cadeado de ch√£o | 200.8 | A linha n√£o tem status na planilha. A obra existe? Em que etapa est√° (executada, aguardando aprova√ß√£o, pendente faturamento)? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
+10 | Etapa a confirmar | 2983365 | DML-619 | Foi realizada a fabrica√ß√£o de tr√™s c√≥pias da trava lateral da porta principal | 200.8 | A linha n√£o tem status na planilha. A obra existe? Em que etapa est√° (executada, aguardando aprova√ß√£o, pendente faturamento)? | Subo na etapa informada. | Subir no HUB, executada, confirmar faturamento.
+11 | Sem resposta na aba 1 | 2384534 | DML-65 | PINTURA DE PISO RETAGUARDA | 2741.02 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | N√£o subir no HUB.
+12 | Sem resposta na aba 1 | 2461419 | DML-631 | SUBSTITUI√á√ÉO DA CENTRAL E CABO DE A√áO | 3975.45 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Subir no HUB, por√©m, confirmar se houve faturamento.
+13 | Sem resposta na aba 1 | 2681966 | DML-625 | LOCA√á√ÉO DE ANDAIME | 522.75 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Subir no HUB, por√©m, confirmar se houve faturamento.
+14 | Sem resposta na aba 1 | 2731555 | DML-91 | INSTALA√á√ÉO DE MAINEL | 2400.36 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Subir no HUB, por√©m, confirmar se houve faturamento.
+15 | Sem resposta na aba 1 | 2738602 | DML-2 | referente a substitui√ß√£o de vaso sanit√°rio: | 1565.57 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Subir no HUB, por√©m, confirmar se houve faturamento.
+16 | Sem resposta na aba 1 | 2908817 | DML-625 | FIXA√á√ÉO DE CORRIM√ÉO | 1585.25 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Subir no HUB, por√©m, confirmar se houve faturamento.
+17 | Sem resposta na aba 1 | SEM OS | DML-51 | TROCA DE DISJUNTOR | 1700.72 | Ficou em branco. Status na planilha: PENDENTE FATURAMENTO. Sobe no hub? Em que etapa? Qual o n¬∫ da OS no sistema D1000? | Se sim, subo na etapa informada. Se n√£o, fica de fora (e sai da planilha). | Servi√ßo executado, sem OS no sistema D1000. Subir no HUB, por√©m, confirmar se houve faturamento.
+18 | Respondidas "N√ÉO" | 3159410 | DML-63 | ACOMPANHAMENTO DE GERADOR | 4399 | Resposta: "a luz havia retornado", ou seja, o servi√ßo n√£o foi feito. Mas a planilha lista como PENDENTE FATURAMENTO. Confirmar que n√£o h√° nada a faturar e que o chamado foi cancelado no sistema D1000. | N√£o sobe no hub. | Servi√ßo executado, h√° faturamento. Confirmado pela analista Let√≠cia por e-mail dia 24/08.
+19 | Respondidas "N√ÉO" | VISA 995 | TMO-995 | SERVI√áOS ADICIONAIS | 2525.1 | Veio "N√ÉO" sem motivo. Provavelmente √© duplicata dos itens "VISA TMO 995" que j√° est√£o no hub (e da obra "VISA" da TMO-995 na aba 4). √â isso? | N√£o sobe no hub. | N√£o, este √© um servi√ßo adicional aos solicitados inicialmente na TMO995. N√£o tem OS aberta.
+20 | Sem n¬∫ de OS | (sem OS) | TMO-116 | SUBSTITUI√á√ÉO FORRO PVC | 5266.84 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | OS 3158589
+21 | Sem n¬∫ de OS | EMERGENCIAL | DML-37 | SUBISTITUI√á√ÉO DE BLINDEX | 3694.46 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | OS 2803532
+22 | Sem n¬∫ de OS | S/N | S/N | REPARO DE GERADORES | 2476.9 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+23 | Sem n¬∫ de OS | SEM OS | DML-70 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+24 | Sem n¬∫ de OS | SEM OS | DML-81 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+25 | Sem n¬∫ de OS | SEM OS | DML-636 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+26 | Sem n¬∫ de OS | SEM OS | DML-638 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+27 | Sem n¬∫ de OS | SEM OS | DML-641 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+28 | Sem n¬∫ de OS | SEM OS | DML-639 | TROCA DE LUMIN√ÅRIAS | 1300 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | Servi√ßo n√£o tem OS aberta.
+29 | Sem n¬∫ de OS | SEM OS | TMO-226 | FORNECIMENTO E INSTALA√á√ÉO DE VIDRA√áARIA | 2500 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | OS 3112058
+30 | Sem n¬∫ de OS | SOS | TMO-189 | SUBSTITUI√á√ÉO DE CAIXA D'√ÅGUA | 1660.54 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | OS 3058267
+31 | Sem n¬∫ de OS | VISA 126 | TMO-126 | INTIMA√á√ÉO VIGIL√ÇNCIA SANIT√ÅRIA | 2748.46 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: PENDENTE FATURAMENTO) | Subo com o n¬∫ informado em "Pendente faturamento". | OS 3190630
+32 | Sem n¬∫ de OS | (sem OS) | TMO-162 | VISA | 8396.33 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n¬∫ informado em "Executado - pend. aprova√ß√£o OS (relat√≥rio pendente)". | Servi√ßo n√£o tem OS aberta.
+33 | Sem n¬∫ de OS | (sem OS) | DML-619 | COPIA DE CHAVE(MAU USO) | 258.45 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: ENVIAR RELAT√ìRIO) | Subo com o n¬∫ informado em "Executado - pend. aprova√ß√£o OS (relat√≥rio pendente)". | Servi√ßo n√£o tem OS aberta.
+34 | Sem n¬∫ de OS | (sem OS) | DML-44 | ABERTURA DE AL√áAP√ÉO | 2131.6 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: ENVIAR RELAT√ìRIO) | Subo com o n¬∫ informado em "Executado - pend. aprova√ß√£o OS (relat√≥rio pendente)". | Servi√ßo n√£o tem OS aberta.
+35 | Sem n¬∫ de OS | (sem OS) | TMO-106 | MULTIR√ÉO | 10720.72 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n¬∫ informado em "Em andamento". | Servi√ßo n√£o tem OS aberta.
+36 | Sem n¬∫ de OS | SEM OS | TMO-136 | TROCA DE CADEADOS | 998.69 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) A planilha tem o pedido 4503235799 ‚Äî j√° foi faturada? | Subo com o n¬∫ informado em "Levantamento (aguardando execu√ß√£o)". | Servi√ßo n√£o tem OS aberta.
+37 | Sem n¬∫ de OS | SEM OS | TMO-106 | INSTALA√á√ÉO DE CANTONEIRAS | 567.1 | Qual o n¬∫ da OS no sistema D1000? (status na planilha: CONCLUIDO) | Subo com o n¬∫ informado em "Levantamento (aguardando execu√ß√£o)". | Servi√ßo n√£o tem OS aberta.
+38 | Data estranha | 3115066 | TMO-117 | TROCA DE TAMPA DE BUEIRO | 1017.03 | Data de aprova√ß√£o na planilha: 10/08/2028. √â 10/08/2026? | Corrijo a data ao subir. | Data correta √© 10/08/2026.
+39 | Data estranha | 3151602 | TMO-171 | ABASTECIMENTO DE √ÅGUA | 2273.33 | Execu√ß√£o em 19/08/2026, antes da aprova√ß√£o em 21/08/2026. Qual est√° certa? | Uso a data correta ao subir. | Execu√ß√£o dia 20/08 e aprova√ß√£o formal por e-mail dia 21/08. Servi√ßo solicitado pelo Analista Felipe por Whatsapp dia 20/08.
+40 | Aba 4 ‚Äî OS fora do padr√£o no hub | VISA TMO-108 | TMO-108 | Etapa no hub: Pendente faturamento | 13091.88 | Esta obra est√° no hub com o n¬∫ "VISA TMO-108". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "VISA 108". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS aberta.
+41 | Aba 4 ‚Äî OS fora do padr√£o no hub | VISA141 | TMO-141 | Etapa no hub: Pendente faturamento | 22815.31 | Esta obra est√° no hub com o n¬∫ "VISA141". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "VISA 141". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS espec√≠fica aberta. Demandas divididas em 4 OS: 3175421, 3175401, 3175469 e 3175915.
+42 | Aba 4 ‚Äî OS fora do padr√£o no hub | VISA | TMO-995 | Etapa no hub: Pendente faturamento | 5727.38 | Esta obra est√° no hub com o n¬∫ "VISA". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "VISA 995". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS aberta.
+43 | Aba 4 ‚Äî OS fora do padr√£o no hub | Cadeado Sem Os's | TMO-105 | Etapa no hub: Pendente faturamento | 1113.84 | Esta obra est√° no hub com o n¬∫ "Cadeado Sem Os's". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "SEM OS". | Corrijo o n¬∫ da OS no hub.
+44 | Aba 4 ‚Äî OS fora do padr√£o no hub | Reforma Cal√ßada e Marquise | TMO-168 | Etapa no hub: Levantamento | 14133.15 | Esta obra est√° no hub com o n¬∫ "Reforma Cal√ßada e Marquise". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "SEM OS". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS espec√≠fica. Demandas divididas em 3 OS: 2716704, 2948868 e 2958423
+45 | Aba 4 ‚Äî OS fora do padr√£o no hub | TMO104 - PINTURA | TMO-104 | Etapa no hub: Fechar OS | 2730.44 | Esta obra est√° no hub com o n¬∫ "TMO104 - PINTURA". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "SEM OS". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS aberta.
+46 | Aba 4 ‚Äî OS fora do padr√£o no hub | TMO106-Reparos gerais | TMO-106 | Etapa no hub: Fechar OS | 3828.42 | Esta obra est√° no hub com o n¬∫ "TMO106-Reparos gerais". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "SEM OS". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS aberta.
+47 | Aba 4 ‚Äî OS fora do padr√£o no hub | DML624 - ADEQUA√á√ÉO DE PONTO DE TOMADA | FML-624 | Etapa no hub: Pendente faturamento | 2963.84 | Esta obra est√° no hub com o n¬∫ "DML624 - ADEQUA√á√ÉO DE PONTO DE TOMADA". Qual o n¬∫ da OS no sistema D1000 (7 d√≠gitos)? Na planilha aparece como "SEM OS". | Corrijo o n¬∫ da OS no hub. | Servi√ßo n√£o tem OS aberta.
+48 | Aba 5 ‚Äî loja ou valor divergente | 2973385 | TMO-129 | INSTALA√á√ÉO DE 2 CAIXAS D'√ÅGUA | 4369.5 | Etapa compat√≠vel, mas valor: planilha 4369.50, hub 4483.24. Qual est√° certo? | Corrijo no hub se o certo for o da planilha. | Valor correto  R$ 4.483,24 	 	
+49 | Aba 5 ‚Äî loja ou valor divergente | 3230485 | TMO-186 | SUBSTITUI√á√ÉO DE CAIXA DE GORDURA | 1610.26 | Etapa compat√≠vel, mas loja: planilha TMO-186, hub TMO-185. Qual est√° certo? | Corrijo no hub se o certo for o da planilha. | TMO 186
+50 | Aba 5 ‚Äî loja ou valor divergente | 3238303 | TMO-128 | SUBSTITUI√á√ÉO DE BOMBA D'√ÅGUA | 1602.27 | Etapa compat√≠vel, mas loja: planilha TMO-128, hub TMO-104. Qual est√° certo? | Corrijo no hub se o certo for o da planilha. | TMO 104
+51 | Aba 5 ‚Äî loja ou valor divergente | 3263792 | DML-84 | SUBSTITUI√á√ÉO DE CAIXA D'√ÅGUA | 2107.23 | Etapa compat√≠vel, mas valor: planilha 2107.23, hub 3079.66. Qual est√° certo? | Corrijo no hub se o certo for o da planilha. | valor correto R$ 2107,23
+52 | Aba 5 ‚Äî loja ou valor divergente | SEM OS | DML-624 | ADEQUA√á√ÉO DE PONTO DE TOMADA | 2963.84 | Etapa compat√≠vel, mas loja: planilha DML-624, hub FML-624. Qual est√° certo? | Corrijo no hub se o certo for o da planilha. | FML 624
+53 | Field | ‚Äî | ‚Äî | Todas as obras da aba "Vai subir" |  | Algu√©m (ex.: Matheus) vai abrir essas obras no Field? Na DPSP isso aconteceu no mesmo dia e o script teve que ser refeito. | Se forem pelo Field, tiro do script; se n√£o, subo pelo script. | Fazer via script
 
 ### Vai subir (conferir)  (84 x 10)
-V„o subir no hub assim que vocÍ confirmar (78 obras com OS e "SIM" do time)
-SÛ olhar. Se alguma n„o deve subir ou a etapa est· errada, escreva na coluna amarela. Em branco = pode subir. Exemplo: "n„o subir, j· faturada".
-# | OS | Loja | DescriÁ„o | Valor (R$) | Analista | Etapa em que vai subir | Data aprovaÁ„o | Data execuÁ„o (FEITO EM) | CorreÁ„o
-1 | 2767867 | TMO-188 | SUBSTITUI«√O DE BOTOEIRA DA PORTA | 530 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-06-23 00:00:00 | 2026-06-29 00:00:00
-2 | 2866916 | TMO-193 | REPARO DA MAQUISE E FACHADA | 3412.16 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | SEM APROVA«√O | 2026-05-08 00:00:00
-3 | 2982319 | TMO-142 | INSTALA«√O DE BOMBA PRESSURUZADORA | 1969.13 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-06-16 00:00:00 | 2026-06-17 00:00:00
-4 | 3018955 | DML-36 | TROCA DE CENTRAL DE PORTA | 1145.44 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-07-07 00:00:00 | 2026-07-08 00:00:00
-5 | 3032545 | TMO-131 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-07-17 14:25:46 | executado como mau uso
-6 | 3047605 | TMO-139 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-07-17 15:12:00 | executado como mau uso
-7 | 3065960 | TMO-147 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-07-15 10:45:37 | executado como mau uso
-8 | 3072695 | TMO-147 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-07-20 17:06:11 | executado como mau uso
-9 | 3078140 | TMO-137 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-07-20 19:47:29 | executado como mau uso
-10 | 3078259 | TMO-160 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-07-29 16:04:03 | executado como mau uso
-11 | 3078536 | DML-54 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-07-20 21:45:25 | executado como mau uso
-12 | 3080881 | TMO-147 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-24 20:07:27 | executado como mau uso
-13 | 3086866 | TMO-147 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-24 19:56:46 | executado como mau uso
-14 | 3099670 | TMO-143 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-24 17:22:48 | executado como mau uso
-15 | 3108288 | DML-25 | SUBSTITUI«√O DE TRAVA DA PORTINHOLA | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-05 16:28:04 | executado como mau uso
-16 | 3112825 | DML-13 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-27 18:03:08 | executado como mau uso
-17 | 3123030 | FML-67 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-31 17:54:42 | executado como mau uso
-18 | 3139237 | TMO-134 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-08-13 19:32:08 | executado como mau uso
-19 | 3147017 | DML-637 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-20 11:43:10 | executado como mau uso
-20 | 3147597 | DML-34 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-20 10:44:11 | executado como mau uso
-21 | 3153379 | TMO-141 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-17 19:24:05 | executado como mau uso
-22 | 3163062 | DML-77 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-15 11:58:40 | executado como mau uso
-23 | 3167169 | TMO-185 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-01 14:08:11 | executado como mau uso
-24 | 3167733 | TMO-136 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-08-28 18:29:00 | executado como mau uso
-25 | 3168624 | DML-60 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-08-27 22:12:12 | executado como mau uso
-26 | 3170144 | DML-42 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-01 15:44:57 | executado como mau uso
-27 | 3173631 | TMO-186 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-31 00:00:00 | executado como mau uso
-28 | 3173935 | TMO-186 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-08-31 00:00:00 | executado como mau uso
-29 | 3174050 | DML-52 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-08-31 17:42:59 | executado como mau uso
-30 | 3183923 | DML-77 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-04 00:00:00 | executado como mau uso
-31 | 3183964 | DML-44 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-09 15:01:42 | executado como mau uso
-32 | 3189312 | DML-58 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-25 00:00:00 | executado como mau uso
-33 | 3190127 | DML-77 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-09 00:09:37 | executado como mau uso
-34 | 3198889 | DML-60 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-11 14:13:35 | executado como mau uso
-35 | 3212123 | DML-625 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-18 00:00:00 | executado como mau uso
-36 | 3215191 | DML-44 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-18 21:36:59 | executado como mau uso
-37 | 3215921 | TMO-116 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-23 10:43:59 | executado como mau uso
-38 | 3216570 | TMO-171 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-22 11:54:47 | executado como mau uso
-39 | 3226239 | TMO-140 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 2026-10-14 00:00:00 | 2026-09-24 13:58:55 | executado como mau uso
-40 | 3227877 | DML-6 | SUBSTITUI«√O DE TRAVA LATERAL | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | AGUARDANDO APROVA«√O | 2026-09-25 15:32:30 | executado como mau uso
-41 | 3257042 | TMO-121 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | SEM APROVA«√O | 2026-10-08 00:00:00 | executado como mau uso
-42 | 3262058 | DML-64 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | SEM APROVA«√O | 2026-10-12 00:00:00 | executado como mau uso
-43 | 3273277 | DML-52 | SUBSTITUI«√O DE TRAVA LATERAL POR MAU USO | 200.8 | LetÌcia Medeiros | Executado - pend. aprovaÁ„o OS | SEM APROVA«√O | 2026-10-18 00:00:00 | executado como mau uso
-44 | 4977028 | TMO-152 | COMUNICADO DESLIGAMENTO PROGRAMADO PARA MANUTEN«√O NA REDE | 5399.5 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 22/07/2026 | 2026-07-26 00:00:00
-45 | 8441151 | TMO-179 | COMUNICADO DESLIGAMENTO PROGRAMADO PARA MANUTEN«√O NA REDE | 5399.5 | Felipe Ferreira | Executado - pend. aprovaÁ„o OS | 22/07/2026 | 2026-07-26 00:00:00
-46 | 2419572 | TMO-138 | NOVO CIRCUITO EL…TRICO | 2128.45 | Felipe Ferreira | Pendente faturamento | 11/05/2026 | 16/05/2026
-47 | 2532038 | TMO-177 | TROCA DE MOTOR E ALINHAMENTO DA PORTA DE A«O | 5365.32 | Felipe Ferreira | Pendente faturamento | 07/05/2026 | 22/05/2026
-48 | 2677412 | DML-605 | SUBSTITUI«√O DE VASO SANITARIO | 1649.03 | LetÌcia Medeiros | Pendente faturamento | 06/04/2026 | 21/04/2026
-49 | 2714566 | DML-44 | REPARO EM COMPORTA + ABERTURA DE AL«AP√O | 3602 | LetÌcia Medeiros | Pendente faturamento | 14/07/2026 | 20/07/2026
-50 | 2730579 | DML-79 | LIMPEZA DE PORTA DE ENROLAR | 1126.8 | LetÌcia Medeiros | Pendente faturamento | 01/04/2026 | 10/05/2026
-51 | 2736434 | DML-87 | SUBSTITUI«√O DE VASO | 1565.57 | LetÌcia Medeiros | Pendente faturamento | 01/04/2026 | 08/04/2026
-52 | 2741876 | DML-56 | REPARO EM CALHA DO TELHADO | 3825.42 | LetÌcia Medeiros | Pendente faturamento | 10/04/2026 | 13/04/2026
-53 | 2791349 | DML-626 | TROCA DE CENTRAL DE PORTA | 1023.47 | LetÌcia Medeiros | Pendente faturamento | 12/04/2026 | 29/07/2026
+V√£o subir no hub assim que voc√™ confirmar (78 obras com OS e "SIM" do time)
+S√≥ olhar. Se alguma n√£o deve subir ou a etapa est√° errada, escreva na coluna amarela. Em branco = pode subir. Exemplo: "n√£o subir, j√° faturada".
+# | OS | Loja | Descri√ß√£o | Valor (R$) | Analista | Etapa em que vai subir | Data aprova√ß√£o | Data execu√ß√£o (FEITO EM) | Corre√ß√£o
+1 | 2767867 | TMO-188 | SUBSTITUI√á√ÉO DE BOTOEIRA DA PORTA | 530 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-06-23 00:00:00 | 2026-06-29 00:00:00
+2 | 2866916 | TMO-193 | REPARO DA MAQUISE E FACHADA | 3412.16 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | SEM APROVA√á√ÉO | 2026-05-08 00:00:00
+3 | 2982319 | TMO-142 | INSTALA√á√ÉO DE BOMBA PRESSURUZADORA | 1969.13 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-06-16 00:00:00 | 2026-06-17 00:00:00
+4 | 3018955 | DML-36 | TROCA DE CENTRAL DE PORTA | 1145.44 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-07-07 00:00:00 | 2026-07-08 00:00:00
+5 | 3032545 | TMO-131 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-07-17 14:25:46 | executado como mau uso
+6 | 3047605 | TMO-139 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-07-17 15:12:00 | executado como mau uso
+7 | 3065960 | TMO-147 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-07-15 10:45:37 | executado como mau uso
+8 | 3072695 | TMO-147 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-07-20 17:06:11 | executado como mau uso
+9 | 3078140 | TMO-137 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-07-20 19:47:29 | executado como mau uso
+10 | 3078259 | TMO-160 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-07-29 16:04:03 | executado como mau uso
+11 | 3078536 | DML-54 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-07-20 21:45:25 | executado como mau uso
+12 | 3080881 | TMO-147 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-24 20:07:27 | executado como mau uso
+13 | 3086866 | TMO-147 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-24 19:56:46 | executado como mau uso
+14 | 3099670 | TMO-143 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-24 17:22:48 | executado como mau uso
+15 | 3108288 | DML-25 | SUBSTITUI√á√ÉO DE TRAVA DA PORTINHOLA | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-05 16:28:04 | executado como mau uso
+16 | 3112825 | DML-13 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-27 18:03:08 | executado como mau uso
+17 | 3123030 | FML-67 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-31 17:54:42 | executado como mau uso
+18 | 3139237 | TMO-134 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-08-13 19:32:08 | executado como mau uso
+19 | 3147017 | DML-637 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-20 11:43:10 | executado como mau uso
+20 | 3147597 | DML-34 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-20 10:44:11 | executado como mau uso
+21 | 3153379 | TMO-141 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-17 19:24:05 | executado como mau uso
+22 | 3163062 | DML-77 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-15 11:58:40 | executado como mau uso
+23 | 3167169 | TMO-185 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-01 14:08:11 | executado como mau uso
+24 | 3167733 | TMO-136 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-08-28 18:29:00 | executado como mau uso
+25 | 3168624 | DML-60 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-08-27 22:12:12 | executado como mau uso
+26 | 3170144 | DML-42 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-01 15:44:57 | executado como mau uso
+27 | 3173631 | TMO-186 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-31 00:00:00 | executado como mau uso
+28 | 3173935 | TMO-186 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-08-31 00:00:00 | executado como mau uso
+29 | 3174050 | DML-52 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-08-31 17:42:59 | executado como mau uso
+30 | 3183923 | DML-77 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-04 00:00:00 | executado como mau uso
+31 | 3183964 | DML-44 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-09 15:01:42 | executado como mau uso
+32 | 3189312 | DML-58 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-25 00:00:00 | executado como mau uso
+33 | 3190127 | DML-77 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-09 00:09:37 | executado como mau uso
+34 | 3198889 | DML-60 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-11 14:13:35 | executado como mau uso
+35 | 3212123 | DML-625 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-18 00:00:00 | executado como mau uso
+36 | 3215191 | DML-44 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-18 21:36:59 | executado como mau uso
+37 | 3215921 | TMO-116 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-23 10:43:59 | executado como mau uso
+38 | 3216570 | TMO-171 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-22 11:54:47 | executado como mau uso
+39 | 3226239 | TMO-140 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 2026-10-14 00:00:00 | 2026-09-24 13:58:55 | executado como mau uso
+40 | 3227877 | DML-6 | SUBSTITUI√á√ÉO DE TRAVA LATERAL | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | AGUARDANDO APROVA√á√ÉO | 2026-09-25 15:32:30 | executado como mau uso
+41 | 3257042 | TMO-121 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | SEM APROVA√á√ÉO | 2026-10-08 00:00:00 | executado como mau uso
+42 | 3262058 | DML-64 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | SEM APROVA√á√ÉO | 2026-10-12 00:00:00 | executado como mau uso
+43 | 3273277 | DML-52 | SUBSTITUI√á√ÉO DE TRAVA LATERAL POR MAU USO | 200.8 | Let√≠cia Medeiros | Executado - pend. aprova√ß√£o OS | SEM APROVA√á√ÉO | 2026-10-18 00:00:00 | executado como mau uso
+44 | 4977028 | TMO-152 | COMUNICADO DESLIGAMENTO PROGRAMADO PARA MANUTEN√á√ÉO NA REDE | 5399.5 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 22/07/2026 | 2026-07-26 00:00:00
+45 | 8441151 | TMO-179 | COMUNICADO DESLIGAMENTO PROGRAMADO PARA MANUTEN√á√ÉO NA REDE | 5399.5 | Felipe Ferreira | Executado - pend. aprova√ß√£o OS | 22/07/2026 | 2026-07-26 00:00:00
+46 | 2419572 | TMO-138 | NOVO CIRCUITO EL√âTRICO | 2128.45 | Felipe Ferreira | Pendente faturamento | 11/05/2026 | 16/05/2026
+47 | 2532038 | TMO-177 | TROCA DE MOTOR E ALINHAMENTO DA PORTA DE A√áO | 5365.32 | Felipe Ferreira | Pendente faturamento | 07/05/2026 | 22/05/2026
+48 | 2677412 | DML-605 | SUBSTITUI√á√ÉO DE VASO SANITARIO | 1649.03 | Let√≠cia Medeiros | Pendente faturamento | 06/04/2026 | 21/04/2026
+49 | 2714566 | DML-44 | REPARO EM COMPORTA + ABERTURA DE AL√áAP√ÉO | 3602 | Let√≠cia Medeiros | Pendente faturamento | 14/07/2026 | 20/07/2026
+50 | 2730579 | DML-79 | LIMPEZA DE PORTA DE ENROLAR | 1126.8 | Let√≠cia Medeiros | Pendente faturamento | 01/04/2026 | 10/05/2026
+51 | 2736434 | DML-87 | SUBSTITUI√á√ÉO DE VASO | 1565.57 | Let√≠cia Medeiros | Pendente faturamento | 01/04/2026 | 08/04/2026
+52 | 2741876 | DML-56 | REPARO EM CALHA DO TELHADO | 3825.42 | Let√≠cia Medeiros | Pendente faturamento | 10/04/2026 | 13/04/2026
+53 | 2791349 | DML-626 | TROCA DE CENTRAL DE PORTA | 1023.47 | Let√≠cia Medeiros | Pendente faturamento | 12/04/2026 | 29/07/2026
 54 | 2811031 | TMO-105 | REPARO DE FORRO DE PORTA DE ENROLAR | 2823.48 | Felipe Ferreira | Pendente faturamento | 05/06/2026 | 05/06/2026
-55 | 2834680 | DML-77 | SUBSTITUI«√O DE BOMBA | 1669.67 | LetÌcia Medeiros | Pendente faturamento | 13/07/2026 | 13/07/2026
-56 | 2851704 | DML-36 | REPARO EM DRYWALL | 2041.14 | LetÌcia Medeiros | Pendente faturamento | 08/07/2026 | 28/07/2026
-57 | 2865147 | DML-27 | ESGOTAMENTO DE AGUA GALERIAS DO SOBSOLO | 12258.3 | LetÌcia Medeiros | Pendente faturamento | 08/05/2026 | 21/06/2026
-58 | 2928929 | TMO-142 | SUBSTITUI«√O DE PIA | 2481.4 | Felipe Ferreira | Pendente faturamento | 18/08/2026 | 01/09/2026
-59 | 2934134 | DML-1 | CORTE E DESCARTE DO TOTEM | 740.81 | LetÌcia Medeiros | Pendente faturamento | 17/05/2026 | 19/05/2026
-60 | 2975939 | DML-64 | TROCA DE TAMPA DE BUEIRO | 1017.03 | LetÌcia Medeiros | Pendente faturamento | 08/06/2026 | 11/06/2026
+55 | 2834680 | DML-77 | SUBSTITUI√á√ÉO DE BOMBA | 1669.67 | Let√≠cia Medeiros | Pendente faturamento | 13/07/2026 | 13/07/2026
+56 | 2851704 | DML-36 | REPARO EM DRYWALL | 2041.14 | Let√≠cia Medeiros | Pendente faturamento | 08/07/2026 | 28/07/2026
+57 | 2865147 | DML-27 | ESGOTAMENTO DE AGUA GALERIAS DO SOBSOLO | 12258.3 | Let√≠cia Medeiros | Pendente faturamento | 08/05/2026 | 21/06/2026
+58 | 2928929 | TMO-142 | SUBSTITUI√á√ÉO DE PIA | 2481.4 | Felipe Ferreira | Pendente faturamento | 18/08/2026 | 01/09/2026
+59 | 2934134 | DML-1 | CORTE E DESCARTE DO TOTEM | 740.81 | Let√≠cia Medeiros | Pendente faturamento | 17/05/2026 | 19/05/2026
+60 | 2975939 | DML-64 | TROCA DE TAMPA DE BUEIRO | 1017.03 | Let√≠cia Medeiros | Pendente faturamento | 08/06/2026 | 11/06/2026
 61 | 3048568 | TMO-149 | FORRO COBRE ROLO | 919.8 | Felipe Ferreira | Pendente faturamento | 27/08/2026 | 31/08/2026
 62 | 3056197 | TMO-104 | FECHADURAS TETRACHAVE | 1004 | Felipe Ferreira | Pendente faturamento | 17/08/2026 | 02/09/2026
-63 | 3082591 | DML-81 | HIDROJATEAMENTO | 3500 | LetÌcia Medeiros | Pendente faturamento | 29/07/2026 | 02/08/2026
-64 | 3101107 | TMO-107 | READEQUA«√O DE ILUMINA«√O  FACHADA | 7542.4 | Felipe Ferreira | Pendente faturamento | 12/08/2026 | 12/09/2026
-65 | 3106284 | TMO-107 | FORNECIMENTO, REPARO E INSTALA«√O DE VIDROS E PERFIS DE ALUMINIO | 4693.7 | Felipe Ferreira | Pendente faturamento | 11/08/2026 | 20/08/2026
-66 | 3108137 | TMO-116 | SUBSTITUI«√O DE TELHAS | 4706.07 | Felipe Ferreira | Pendente faturamento | 31/07/2026 | 04/08/2026
+63 | 3082591 | DML-81 | HIDROJATEAMENTO | 3500 | Let√≠cia Medeiros | Pendente faturamento | 29/07/2026 | 02/08/2026
+64 | 3101107 | TMO-107 | READEQUA√á√ÉO DE ILUMINA√á√ÉO  FACHADA | 7542.4 | Felipe Ferreira | Pendente faturamento | 12/08/2026 | 12/09/2026
+65 | 3106284 | TMO-107 | FORNECIMENTO, REPARO E INSTALA√á√ÉO DE VIDROS E PERFIS DE ALUMINIO | 4693.7 | Felipe Ferreira | Pendente faturamento | 11/08/2026 | 20/08/2026
+66 | 3108137 | TMO-116 | SUBSTITUI√á√ÉO DE TELHAS | 4706.07 | Felipe Ferreira | Pendente faturamento | 31/07/2026 | 04/08/2026
 67 | 3115066 | TMO-117 | TROCA DE TAMPA DE BUEIRO | 1017.03 | Felipe Ferreira | Pendente faturamento | 10/08/2028 | 18/08/2026
-68 | 3129193 | TMO-179 | SUBSTITUI«√O DE L¬MPADAS | 1859 | Felipe Ferreira | Pendente faturamento | 20/10/2026 | 20/10/2026
-69 | 3129438 | TMO-130 | TROCA DE BACIA SANIT¡RIA | 1516.87 | Felipe Ferreira | Pendente faturamento | 12/08/2026 | 18/08/2026
-70 | 3134246 | DML-608 | NOVO CIRCUITO DE CABOS | 1421.08 | LetÌcia Medeiros | Pendente faturamento | 11/08/2026
+68 | 3129193 | TMO-179 | SUBSTITUI√á√ÉO DE L√ÇMPADAS | 1859 | Felipe Ferreira | Pendente faturamento | 20/10/2026 | 20/10/2026
+69 | 3129438 | TMO-130 | TROCA DE BACIA SANIT√ÅRIA | 1516.87 | Felipe Ferreira | Pendente faturamento | 12/08/2026 | 18/08/2026
+70 | 3134246 | DML-608 | NOVO CIRCUITO DE CABOS | 1421.08 | Let√≠cia Medeiros | Pendente faturamento | 11/08/2026
 71 | 3149147 | TMO-185 | FORRO COBRE ROLO | 1091.6 | Felipe Ferreira | Pendente faturamento | 26/08/2026 | 02/09/2026
-72 | 3151602 | TMO-171 | ABASTECIMENTO DE ¡GUA | 2273.33 | Felipe Ferreira | Pendente faturamento | 21/08/2026 | 19/08/2026
-73 | 3159758 | DML-60 | FORNECIMENTO DE CONTROLES | 368.26 | LetÌcia Medeiros | Pendente faturamento | 24/08/2026 | 28/08/2026
-74 | 3176745 | TMO-138 | RECOMPOSI«√O DE FORRO | 1667.7 | Felipe Ferreira | Pendente faturamento | 03/09/2026 | 05/09/2026
-75 | 3230585 | TMO-175 | SUBSTITUI«√O DE TAMBOR | 200.8 | Felipe Ferreira | Pendente faturamento | 28/09/2026 | 28/09/2026
-76 | 3230586 | TMO-995 | SUBSTITUI«√O DE TAMBOR (MAU USO) | 200.8 | Felipe Ferreira | Pendente faturamento | 28/09/2026 | 28/09/2026
-77 | 3245574 | TMO-106 | SUBSTITUI«√O DE  2 TAMBORES POR MAU USO | 401.6 | Felipe Ferreira | Pendente faturamento | 05/10/2026 | 05/10/2026
-78 | 3271053 | TMO-136 | SUBSTITUI«√O DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Pendente faturamento | 23/10/2026 | 23/10/2026
+72 | 3151602 | TMO-171 | ABASTECIMENTO DE √ÅGUA | 2273.33 | Felipe Ferreira | Pendente faturamento | 21/08/2026 | 19/08/2026
+73 | 3159758 | DML-60 | FORNECIMENTO DE CONTROLES | 368.26 | Let√≠cia Medeiros | Pendente faturamento | 24/08/2026 | 28/08/2026
+74 | 3176745 | TMO-138 | RECOMPOSI√á√ÉO DE FORRO | 1667.7 | Felipe Ferreira | Pendente faturamento | 03/09/2026 | 05/09/2026
+75 | 3230585 | TMO-175 | SUBSTITUI√á√ÉO DE TAMBOR | 200.8 | Felipe Ferreira | Pendente faturamento | 28/09/2026 | 28/09/2026
+76 | 3230586 | TMO-995 | SUBSTITUI√á√ÉO DE TAMBOR (MAU USO) | 200.8 | Felipe Ferreira | Pendente faturamento | 28/09/2026 | 28/09/2026
+77 | 3245574 | TMO-106 | SUBSTITUI√á√ÉO DE  2 TAMBORES POR MAU USO | 401.6 | Felipe Ferreira | Pendente faturamento | 05/10/2026 | 05/10/2026
+78 | 3271053 | TMO-136 | SUBSTITUI√á√ÉO DE TAMBOR POR MAU USO | 200.8 | Felipe Ferreira | Pendente faturamento | 23/10/2026 | 23/10/2026
  |  |  | Total | 103589.65999999999
 
 ### Pendente Financeiro  (12 x 9)
-Pendente com o Financeiro ó conciliaÁ„o SPOT D1000
-Preencha sÛ as colunas amarelas. Exemplo de resposta: "NF 2391, emitida em 25/07/2026".
-# | OS | Loja | DescriÁ„o | Valor (R$) | O que j· se sabe | O que falta | Resposta | Respondido por / data
-1 | 3050164 | TMO-115 | SUBSTITUI«√O DE BOMBA | 1669.67 | Time respondeu "SIM" (faturada) com data 07/07/2026; status no sistema D1000 pela planilha: APROVADO. | N∫ da NF que faturou esta obra
-2 | 2926403 | TMO-120 | SUBSTITUI«√O DE PISO | 3188.3 | Time respondeu "SIM" (faturada) com data 09/07/2026; status no sistema D1000 pela planilha: FATURADO. | N∫ da NF que faturou esta obra
-3 | 3077273 | DML-632 | FORNECIMENTO DE CONTROLES | 368.26 | Time respondeu "SIM" (faturada) com data 22/08/2026; status no sistema D1000 pela planilha: APROVADO. | N∫ da NF que faturou esta obra
-4 | 3070940 | TMO-168 | TROCA DE BOMBA | 1919.67 | Time respondeu "SIM" (faturada) com data 15/07/2026; status no sistema D1000 pela planilha: APROVADO. | N∫ da NF que faturou esta obra
-5 | 3088762 | DML-36 | TROCA DE BOMBA PRESSURIZADA | 3306.27 | Time respondeu "SIM" (faturada) com data 23/07/2026; status no sistema D1000 pela planilha: APROVADO. | N∫ da NF que faturou esta obra
-6 | 3081276 | TMO-179 | HIDROJATEAMENTO CAIXA DE GORDURA | 3500 | Time respondeu "SIM" (faturada) com data 29/07/2026; status no sistema D1000 pela planilha: APROVADO. | N∫ da NF que faturou esta obra
-7 | SEM OS | TMO-136 | TROCA DE CADEADOS | 998.69 | A planilha tem o pedido 4503235799, mas a obra est· na lista para subir. | J· foi faturada? Qual NF?
-8 | ó | V·rias lojas | EQUIPE EXTRA - JUNHO (173 linhas) | 25977 | N„o s„o obras: cobranÁa de equipe extra de junho, por loja, todas "pendente faturamento". | Faturar em lote fora do hub, ou lanÁar como uma obra ˙nica de cobranÁa?
+Pendente com o Financeiro ‚Äî concilia√ß√£o SPOT D1000
+Preencha s√≥ as colunas amarelas. Exemplo de resposta: "NF 2391, emitida em 25/07/2026".
+# | OS | Loja | Descri√ß√£o | Valor (R$) | O que j√° se sabe | O que falta | Resposta | Respondido por / data
+1 | 3050164 | TMO-115 | SUBSTITUI√á√ÉO DE BOMBA | 1669.67 | Time respondeu "SIM" (faturada) com data 07/07/2026; status no sistema D1000 pela planilha: APROVADO. | N¬∫ da NF que faturou esta obra
+2 | 2926403 | TMO-120 | SUBSTITUI√á√ÉO DE PISO | 3188.3 | Time respondeu "SIM" (faturada) com data 09/07/2026; status no sistema D1000 pela planilha: FATURADO. | N¬∫ da NF que faturou esta obra
+3 | 3077273 | DML-632 | FORNECIMENTO DE CONTROLES | 368.26 | Time respondeu "SIM" (faturada) com data 22/08/2026; status no sistema D1000 pela planilha: APROVADO. | N¬∫ da NF que faturou esta obra
+4 | 3070940 | TMO-168 | TROCA DE BOMBA | 1919.67 | Time respondeu "SIM" (faturada) com data 15/07/2026; status no sistema D1000 pela planilha: APROVADO. | N¬∫ da NF que faturou esta obra
+5 | 3088762 | DML-36 | TROCA DE BOMBA PRESSURIZADA | 3306.27 | Time respondeu "SIM" (faturada) com data 23/07/2026; status no sistema D1000 pela planilha: APROVADO. | N¬∫ da NF que faturou esta obra
+6 | 3081276 | TMO-179 | HIDROJATEAMENTO CAIXA DE GORDURA | 3500 | Time respondeu "SIM" (faturada) com data 29/07/2026; status no sistema D1000 pela planilha: APROVADO. | N¬∫ da NF que faturou esta obra
+7 | SEM OS | TMO-136 | TROCA DE CADEADOS | 998.69 | A planilha tem o pedido 4503235799, mas a obra est√° na lista para subir. | J√° foi faturada? Qual NF?
+8 | ‚Äî | V√°rias lojas | EQUIPE EXTRA - JUNHO (173 linhas) | 25977 | N√£o s√£o obras: cobran√ßa de equipe extra de junho, por loja, todas "pendente faturamento". | Faturar em lote fora do hub, ou lan√ßar como uma obra √∫nica de cobran√ßa?
 
 ```
