@@ -380,6 +380,19 @@ export async function validarEEnviarAction(
     if (linhas.length) {
       const { error } = await supabase.from('obras_atividade_exec').upsert(linhas, { onConflict: 'obra_id,numero' })
       if (error) return erroBanco('aplicar o avanço no cronograma', error)
+      // Histórico para as curvas (Leva 1): uma linha por atividade aplicada, na data do RDO.
+      const { error: errH } = await supabase.from('obras_atividade_status_hist').insert(
+        linhas.map((l) => ({
+          obra_id: obraId,
+          numero: l.numero,
+          data_status: data,
+          percentual: l.percentual,
+          dias_restantes: null,
+          status: l.status,
+          origem: 'diario',
+        })),
+      )
+      if (errH) return erroBanco('gravar o histórico do avanço', errH)
     }
 
     // validado_por/validado_em: o trigger OBRAS_RDO_ESTADO grava (e-mail da sessão, now()).

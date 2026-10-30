@@ -258,6 +258,18 @@ describe('validarEEnviarAction', () => {
     ])
   })
 
+  it('diário validado grava 1 linha de histórico por atividade aplicada (origem diario, data do RDO)', async () => {
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_status_hist).toEqual([
+      expect.objectContaining({ obra_id: OBRA, numero: 6, data_status: DIA, percentual: 1, status: 'concluido', origem: 'diario' }),
+      expect.objectContaining({ obra_id: OBRA, numero: 7, data_status: DIA, percentual: 0.3, status: 'em_andamento', origem: 'diario' }),
+    ])
+    // reenviar um RDO já validado não duplica o histórico
+    db.obras_rdo[0].estado = 'validado'
+    await validarEEnviarAction(OBRA, DIA)
+    expect(db.obras_atividade_status_hist).toHaveLength(2)
+  })
+
   it('conclui a trava e avança a dependente no mesmo diário', async () => {
     db.obras_rdo_avanco = [
       { rdo_id: 'r1', numero: 6, de: 0.5, para: 1, concluida: true, causa: null },

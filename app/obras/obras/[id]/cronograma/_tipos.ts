@@ -24,6 +24,32 @@ export type CamposExecucao = {
   fimReal?: string | null
 }
 
+/** Uma linha da gaveta "Atualizar status" (spec Leva 1 §5 A5). */
+export type LinhaStatus = {
+  numero: number
+  percentual: number
+  /** Dias úteis restantes; null = projeta pelo %. */
+  diasRestantes: number | null
+  concluir: boolean
+  /** Ausente = automático (data de status ao sair de 0% / ao concluir). */
+  inicioReal?: string | null
+  fimReal?: string | null
+}
+
+/** Atividade como a gaveta recebe: plano vigente + execução atual (sem peso). */
+export type AtividadeStatus = {
+  numero: number
+  etapa: string
+  descricao: string
+  status: StatusAtividade
+  percentual: number
+  inicioPrevisto: string
+  inicioReal: string | null
+  fimReal: string | null
+  diasRestantes: number | null
+  travada: boolean
+}
+
 /* ── Tela do cronograma (árvore + Gantt) ─────────────────────────────── */
 
 /** Atividade como a árvore/Gantt recebem: sem peso (dado interno) e com a base ao lado. */
@@ -72,4 +98,7 @@ export type DadosCronograma = {
   feriados: string[]
   hoje: string
   termino: { base: string | null; previsto: string; projetado: string }
+  /** Gaveta "Atualizar status": plano que vale para a execução (vigente; sem base, o rascunho). */
+  statusAtividades: AtividadeStatus[]
+  atividadeTrava: number | null
 }

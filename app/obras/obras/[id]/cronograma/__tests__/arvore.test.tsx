@@ -50,6 +50,8 @@ const dados = (over: Partial<DadosCronograma> = {}): DadosCronograma => ({
   feriados: ['2026-11-02'],
   hoje: '2026-10-29',
   termino: { base: '2026-11-02', previsto: '2026-11-02', projetado: '2026-11-09' },
+  statusAtividades: [],
+  atividadeTrava: null,
   ...over,
 })
 

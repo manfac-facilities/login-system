@@ -153,6 +153,12 @@ export default async function CronogramaPage({
     feriados: [...feriados],
     hoje,
     termino: { base: r.dados.terminoBase, previsto: exibida.terminoPrevisto, projetado: exibida.terminoProjetado },
+    statusAtividades: calc.atividades.map((a) => ({
+      numero: a.numero, etapa: a.etapa, descricao: a.descricao, status: a.status, percentual: a.percentual,
+      inicioPrevisto: a.inicioPrevisto, inicioReal: a.inicioReal, fimReal: a.fimReal,
+      diasRestantes: a.diasRestantes, travada: a.travada,
+    })),
+    atividadeTrava: obra.atividade_trava ?? null,
   }
 
   return <TelaCronograma dados={dados} />

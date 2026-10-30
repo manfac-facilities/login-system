@@ -27,7 +27,7 @@ import {
   type StatusAtividade,
 } from '../../_lib/cronograma'
 import { atividadeExecDe, atividadePlanoDe } from '../../_lib/leitura'
-import type { CamposExecucao, LinhaPlano, Resultado } from './_tipos'
+import type { CamposExecucao, LinhaPlano, LinhaStatus, Resultado } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
 const SEM_PERMISSAO = 'Só o engenheiro da obra ou um administrador altera o cronograma'
@@ -338,6 +338,34 @@ export async function criarRevisaoAction(obraId: string): Promise<Resultado & { 
   return { ok: true, versaoId: destino.id as string }
 }
 
+/** Plano que vale para a execução (a vigente; sem base salva, o rascunho) + execução atual. */
+async function lerPlanoEExec(
+  ctx: Contexto,
+  obraId: string,
+): Promise<{ plano: AtividadePlano[]; exec: AtividadeExec[] } | Erro> {
+  const { data: versoes, error: errV } = await ctx.supabase
+    .from('obras_cronograma_versao')
+    .select('id, numero, salva_em')
+    .eq('obra_id', obraId)
+    .order('numero')
+  if (errV) return erroBanco('ler as versões', errV)
+  const lista = ((versoes ?? []) as Linha[]).slice().sort((a, b) => a.numero - b.numero)
+  const salvas = lista.filter((v) => v.salva_em)
+  const usada = salvas[salvas.length - 1] ?? lista.filter((v) => !v.salva_em).pop()
+  if (!usada) return falha('Esta obra ainda não tem cronograma')
+
+  const [atR, exR] = await Promise.all([
+    ctx.supabase.from('obras_atividade').select('*').eq('versao_id', usada.id),
+    ctx.supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
+  ])
+  if (atR.error) return erroBanco('ler o cronograma', atR.error)
+  if (exR.error) return erroBanco('ler a execução', exR.error)
+  return {
+    plano: planoDe((atR.data ?? []) as Linha[]),
+    exec: ((exR.data ?? []) as Linha[]).map(atividadeExecDe),
+  }
+}
+
 export async function atualizarExecucaoAction(
   obraId: string,
   numero: number,
@@ -357,28 +385,11 @@ export async function atualizarExecucaoAction(
     if (d !== undefined && d !== null && !dataISO(d)) return falha('Data inválida')
   }
 
-  // Plano que vale para a execução: a vigente; sem base salva, o rascunho.
-  const { data: versoes, error: errV } = await ctx.supabase
-    .from('obras_cronograma_versao')
-    .select('id, numero, salva_em')
-    .eq('obra_id', obraId)
-    .order('numero')
-  if (errV) return erroBanco('ler as versões', errV)
-  const lista = ((versoes ?? []) as Linha[]).slice().sort((a, b) => a.numero - b.numero)
-  const salvas = lista.filter((v) => v.salva_em)
-  const usada = salvas[salvas.length - 1] ?? lista.filter((v) => !v.salva_em).pop()
-  if (!usada) return falha('Esta obra ainda não tem cronograma')
-
-  const [atR, exR] = await Promise.all([
-    ctx.supabase.from('obras_atividade').select('*').eq('versao_id', usada.id),
-    ctx.supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
-  ])
-  if (atR.error) return erroBanco('ler o cronograma', atR.error)
-  if (exR.error) return erroBanco('ler a execução', exR.error)
-  const plano = planoDe((atR.data ?? []) as Linha[])
+  const lidos = await lerPlanoEExec(ctx, obraId)
+  if (ehErro(lidos)) return lidos
+  const { plano, exec } = lidos
   if (!plano.some((a) => a.numero === numero)) return falha(`Atividade ${numero} não existe no cronograma`)
 
-  const exec: AtividadeExec[] = ((exR.data ?? []) as Linha[]).map(atividadeExecDe)
   const atual = exec.find((e) => e.numero === numero) ?? {
     numero, status: 'nao_iniciado' as StatusAtividade, percentual: 0, inicioReal: null, fimReal: null,
   }
@@ -419,4 +430,116 @@ export async function atualizarExecucaoAction(
 
   revalidar(obraId)
   return { ok: true }
+}
+
+/**
+ * Atualizar status em lote (spec Leva 1 §5 A5). Mesmas regras do diário:
+ * % nunca regride (max com o atual), concluída fica concluída, trava respeitada
+ * (a trava concluída neste lote libera as dependentes). `inicio_real` = data de
+ * status quando sai de 0% sem data; `fim_real` = data de status ao concluir.
+ * Grava `dias_restantes` e uma linha em `obras_atividade_status_hist`
+ * (origem 'status') por atividade que de fato mudou.
+ */
+export async function atualizarStatusAction(
+  obraId: string,
+  dataStatus: string,
+  linhas: LinhaStatus[],
+): Promise<Resultado & { aplicadas?: number }> {
+  const ctx = await autorizar(obraId)
+  if (ehErro(ctx)) return ctx
+  if (!dataISO(dataStatus)) return falha('Data de status inválida')
+  if (!Array.isArray(linhas)) return falha('Nada para atualizar')
+
+  for (const l of linhas) {
+    if (!inteiroPositivo(l.numero)) return falha('Atividade inválida')
+    const p = l.percentual
+    if (typeof p !== 'number' || !Number.isFinite(p) || p < 0 || p > 1) {
+      return falha(`Atividade ${l.numero}: percentual deve estar entre 0% e 100%`)
+    }
+    const d = l.diasRestantes
+    if (d !== null && (typeof d !== 'number' || !Number.isFinite(d) || d < 0 || d > 99999)) {
+      return falha(`Atividade ${l.numero}: dias restantes deve ser um número a partir de 0`)
+    }
+    for (const x of [l.inicioReal, l.fimReal]) {
+      if (x !== undefined && x !== null && !dataISO(x)) return falha(`Atividade ${l.numero}: data inválida`)
+    }
+  }
+
+  const lidos = await lerPlanoEExec(ctx, obraId)
+  if (ehErro(lidos)) return lidos
+  const { plano, exec } = lidos
+  const trava = (ctx.obra.atividade_trava ?? null) as number | null
+
+  const execDe = (n: number): AtividadeExec =>
+    exec.find((e) => e.numero === n) ?? { numero: n, status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null }
+  // A trava concluída neste mesmo lote libera as que dependem dela.
+  const concluidasAgora = new Set(linhas.filter((l) => l.concluir).map((l) => l.numero))
+  const execParaTrava = exec.map((e) => (concluidasAgora.has(e.numero) ? { ...e, status: 'concluido' as const } : e))
+  if (trava !== null && concluidasAgora.has(trava) && !exec.some((e) => e.numero === trava)) {
+    execParaTrava.push({ numero: trava, status: 'concluido', percentual: 1, inicioReal: null, fimReal: null })
+  }
+
+  const agora = new Date().toISOString()
+  const gravar: Linha[] = []
+  for (const l of linhas) {
+    if (!plano.some((a) => a.numero === l.numero)) return falha(`Atividade ${l.numero} não existe no cronograma`)
+    const atual = execDe(l.numero)
+    if (atual.status === 'concluido') continue
+
+    const percentual = l.concluir ? 1 : Math.max(atual.percentual, l.percentual)
+    let status: StatusAtividade = atual.status
+    if (l.concluir) status = 'concluido'
+    else if (percentual > 0 && atual.status === 'nao_iniciado') status = 'em_andamento'
+    let inicioReal = l.inicioReal !== undefined ? l.inicioReal : atual.inicioReal
+    if (!inicioReal && percentual > 0) inicioReal = dataStatus
+    const fimReal = l.concluir ? (l.fimReal || dataStatus) : atual.fimReal
+    const diasRestantes = l.concluir ? 0 : l.diasRestantes
+
+    const mudou =
+      status !== atual.status ||
+      percentual !== atual.percentual ||
+      inicioReal !== atual.inicioReal ||
+      fimReal !== atual.fimReal ||
+      diasRestantes !== (atual.diasRestantes ?? null)
+    if (!mudou) continue
+
+    if (inicioReal && fimReal && fimReal < inicioReal) {
+      return falha(`Atividade ${l.numero}: o fim real não pode ser antes do início real`)
+    }
+    if (percentual > 0 || status === 'em_andamento' || status === 'concluido') {
+      const pode = podeIniciar(l.numero, plano, execParaTrava, trava)
+      if (!pode.ok) return falha(`Atividade ${l.numero}: ${pode.motivo.charAt(0).toLowerCase()}${pode.motivo.slice(1)}`)
+    }
+    gravar.push({
+      obra_id: obraId,
+      numero: l.numero,
+      status,
+      percentual,
+      inicio_real: inicioReal,
+      fim_real: fimReal,
+      dias_restantes: diasRestantes,
+      atualizado_em: agora,
+      atualizado_por: ctx.email,
+    })
+  }
+  if (!gravar.length) return { ok: true, aplicadas: 0 }
+
+  const { error } = await ctx.supabase.from('obras_atividade_exec').upsert(gravar, { onConflict: 'obra_id,numero' })
+  if (error) return erroBanco('atualizar o status', error)
+  // registrado_por: o trigger carimba com o e-mail da sessão.
+  const { error: errH } = await ctx.supabase.from('obras_atividade_status_hist').insert(
+    gravar.map((g) => ({
+      obra_id: obraId,
+      numero: g.numero,
+      data_status: dataStatus,
+      percentual: g.percentual,
+      dias_restantes: g.dias_restantes,
+      status: g.status,
+      origem: 'status',
+    })),
+  )
+  if (errH) return erroBanco('gravar o histórico do status', errH)
+
+  revalidar(obraId)
+  return { ok: true, aplicadas: gravar.length }
 }

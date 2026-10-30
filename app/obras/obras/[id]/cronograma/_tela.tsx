@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import Arvore, { dataBR, type Edicoes, type LinhaVisivel } from './_arvore'
 import BarraFerramentas, { type Escala } from './_barra-ferramentas'
 import Gantt from './_gantt'
+import AtualizarStatus from './_atualizar-status'
 import {
   criarRevisaoAction,
   definirFimAction,
@@ -85,6 +86,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
     mudarFechadas(f)
   }
 
+  const coresEtapa = useMemo(() => Object.fromEntries(dados.etapas.map((e) => [e.chave, e.cor])), [dados.etapas])
   const porNumero = useMemo(() => new Map(dados.atividades.map((a) => [a.numero, a])), [dados.atividades])
   const linhas = useMemo<LinhaVisivel[]>(() => {
     const r: LinhaVisivel[] = []
@@ -221,14 +223,19 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         </div>
       ) : null}
 
-      {/* TASK 6: trocar este aviso pela gaveta "Atualizar status". */}
       {statusAberto ? (
-        <div role="dialog" aria-label="Atualizar status" className="flex items-center justify-between gap-3 rounded-lg border border-(--obra-border) bg-(--obra-card) px-3 py-2 text-[13px] text-(--obra-text)">
-          <span>A atualização de status em lote chega na próxima entrega.</span>
-          <button type="button" className="min-h-11 px-2 font-medium text-(--obra-ink) underline" onClick={() => setStatusAberto(false)}>
-            Fechar
-          </button>
-        </div>
+        <AtualizarStatus
+          obraId={obraId}
+          hoje={dados.hoje}
+          atividades={dados.statusAtividades}
+          cores={coresEtapa}
+          atividadeTrava={dados.atividadeTrava}
+          onFechar={() => setStatusAberto(false)}
+          onSalvo={() => {
+            setStatusAberto(false)
+            router.refresh()
+          }}
+        />
       ) : null}
 
       <div
