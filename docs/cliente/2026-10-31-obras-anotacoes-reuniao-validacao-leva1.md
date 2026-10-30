@@ -23,3 +23,6 @@ Texto literal enviado pelo José. Contexto do pedido: "o importante é priorizar
 ---
 
 Estado no banco em 31/10 (conferido pelo Claude): Gabriel (gabriel.vidal@manfac.com.br) é o engenheiro de Macaé 3 (v1 em rascunho, data-base 26/10) e da OBRA TESTE (v1–v4 salvas, v5 rascunho).
+
+
+> (31/10, sobre o mapa causa→responsável do diário) ta certo, projeto é cliente
