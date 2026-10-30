@@ -107,7 +107,7 @@ export default function Gantt({
       ref={rolagemRef}
       onScroll={onRolar}
       onMouseLeave={() => onFoco(null)}
-      className="relative h-full overflow-auto"
+      className="relative h-full overflow-y-auto overflow-x-scroll"
       data-x-hoje={xHoje}
     >
       <div style={{ width: largura }} className="relative">

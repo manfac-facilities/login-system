@@ -166,7 +166,10 @@ export default function Arvore({
       ref={rolagemRef}
       onScroll={onRolar}
       onMouseLeave={() => onFoco(null)}
-      className="relative h-full overflow-x-auto lg:overflow-y-auto"
+      // Celular: altura limitada para o cabeçalho (sticky) ficar visível ao rolar a tabela.
+      // Computador: barra horizontal sempre presente, como a do Gantt — senão, no
+      // Windows, as últimas linhas desalinham (alturas úteis diferentes em 1 scrollbar).
+      className="relative h-full max-h-[calc(100dvh-8rem)] overflow-auto lg:max-h-none lg:overflow-x-scroll"
       aria-busy={pendente}
     >
       <table className="w-full border-separate border-spacing-0 text-[13px] text-(--obra-text)">
