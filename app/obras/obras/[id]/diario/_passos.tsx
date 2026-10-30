@@ -113,7 +113,10 @@ function Passo({
           {feito ? <IconeCheck tamanho={16} /> : n}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-[#333336]">{titulo}</span>
+          <span className="block font-semibold text-[#333336]">
+            {titulo}
+            {feito ? <span className="sr-only"> — preenchido</span> : null}
+          </span>
           <span className="block truncate text-xs text-[#5a7380]">{resumo}</span>
         </span>
         <span aria-hidden className="text-[#5a7380]">
@@ -227,6 +230,7 @@ export default function PassosDiario({
   atividades,
   fotos,
   impedimentos,
+  impedimentosHoje = 0,
 }: {
   obraId: string
   data: string
@@ -237,6 +241,8 @@ export default function PassosDiario({
   fotos: FotoRdo[]
   /** Passo 4 (Task 9a). */
   impedimentos?: ReactNode
+  /** Impedimentos registrados para o dia do diário: com algum, o passo 4 está preenchido. */
+  impedimentosHoje?: number
 }) {
   const [corpo, setCorpo] = useState<RascunhoRdo>(inicial)
   const [rdoId, setRdoId] = useState<string | null>(rdoInicial)
@@ -271,7 +277,8 @@ export default function PassosDiario({
     setErro(null)
     setAviso(null)
     try {
-      const r = await salvarRascunhoAction(obraId, data, corpo)
+      // Com impedimento registrado no dia, o "sem impedimentos" não vale mais.
+      const r = await salvarRascunhoAction(obraId, data, { ...corpo, semImpedimento })
       if (!r.ok) {
         setErro(r.erro)
         return null
@@ -287,6 +294,7 @@ export default function PassosDiario({
     }
   }
 
+  const semImpedimento = corpo.semImpedimento && impedimentosHoje === 0
   const porNumero = new Map(corpo.avancos.map((a) => [a.numero, a]))
   const livres = atividades.filter((a) => !a.travada)
   const mexidas = livres.filter((a) => {
@@ -413,11 +421,29 @@ export default function PassosDiario({
       <Passo
         n={4}
         titulo="Impedimentos"
-        resumo="loja, clima, material…"
-        feito={false}
+        resumo={
+          impedimentosHoje > 0
+            ? `${impedimentosHoje} registrado(s) hoje`
+            : semImpedimento
+              ? 'sem impedimentos hoje'
+              : 'loja, clima, material…'
+        }
+        feito={impedimentosHoje > 0 || semImpedimento}
         aberto={aberto === 4}
         onToggle={() => alternar(4)}
       >
+        {impedimentosHoje === 0 ? (
+          <label className="mb-3 flex min-h-11 items-center gap-3 rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 text-[#333336]">
+            <input
+              type="checkbox"
+              checked={corpo.semImpedimento}
+              disabled={somenteLeitura}
+              onChange={(e) => mudar({ semImpedimento: e.target.checked })}
+              className="h-5 w-5 accent-[#136c38]"
+            />
+            <span className="font-semibold">Sem impedimentos hoje</span>
+          </label>
+        ) : null}
         {impedimentos ?? <PassoImpedimentosPendente />}
       </Passo>
 

@@ -148,6 +148,18 @@ describe('vínculo com o diário (rdoId)', () => {
     expect(o.ok).toBe(false)
     expect(db.obras_impedimento).toHaveLength(0)
   })
+  it('registrar impedimento desmarca o "sem impedimentos hoje" do diário em rascunho daquele dia (item 7)', async () => {
+    db.obras_rdo[0].sem_impedimento = true
+    db.obras_rdo[1].sem_impedimento = true
+    await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r1' }))
+    expect(db.obras_rdo[0].sem_impedimento).toBe(false)
+    // pela aba Impedimentos (sem rdoId), na data do diário: também desmarca; o validado não é tocado
+    db.obras_rdo[0].sem_impedimento = true
+    await abrirImpedimentoAction(OBRA, novo({ abertoEm: '2026-10-15' }))
+    expect(db.obras_rdo[0].sem_impedimento).toBe(false)
+    await abrirImpedimentoAction(OBRA, novo({ abertoEm: '2026-10-14' }))
+    expect(db.obras_rdo[1].sem_impedimento).toBe(true)
+  })
   it('com rdo válido, aberto_em é a data do diário e rdo_id é gravado', async () => {
     await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r1', abertoEm: '2026-10-29' }))
     await registrarOrientacaoAction(OBRA, { descricao: 'x', pessoaCliente: null, atividadeNumero: null, fotoPath: null, rdoId: 'r1' })

@@ -63,6 +63,7 @@ export function montarDiario(p: {
       climaManha: null,
       climaTarde: null,
       programacaoAmanha: sugestao || null,
+      semImpedimento: false,
       avancos,
     },
     atividades,

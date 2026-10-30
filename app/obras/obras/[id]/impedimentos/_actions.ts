@@ -129,6 +129,15 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
     .select('id')
     .single()
   if (error) return erroBanco('registrar o impedimento', error)
+  // Item 7: o diário em rascunho daquele dia deixa de estar marcado "sem impedimentos hoje".
+  const { error: errS } = await supabase
+    .from('obras_rdo')
+    .update({ sem_impedimento: false })
+    .eq('obra_id', obraId)
+    .eq('data', rdo.data ?? comum.abertoEm)
+    .eq('estado', 'rascunho')
+    .eq('sem_impedimento', true)
+  if (errS) console.warn(`[impedimento] não deu para desmarcar "sem impedimentos" do diário: ${errS.message}`)
   revalidar(obraId)
   return { ok: true, id: data.id as string }
 }

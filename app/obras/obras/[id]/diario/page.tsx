@@ -123,6 +123,7 @@ export default async function DiarioObraPage({
           climaManha: (rdo.clima_manha ?? null) as Clima | null,
           climaTarde: (rdo.clima_tarde ?? null) as Clima | null,
           programacaoAmanha: rdo.programacao_amanha ?? null,
+          semImpedimento: !!rdo.sem_impedimento,
         }
       : null,
     avancosSalvos,
@@ -212,6 +213,11 @@ export default async function DiarioObraPage({
         inicial={inicial}
         atividades={atividades}
         fotos={fotos}
+        impedimentosHoje={
+          r.dados.impedimentos.filter(
+            (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
+          ).length
+        }
         impedimentos={
           <div className="flex flex-col gap-4">
             <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} dataReferencia={data} feriados={feriados} somenteAbertos />

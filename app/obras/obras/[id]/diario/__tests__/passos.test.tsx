@@ -26,6 +26,7 @@ const inicial: RascunhoRdo = {
   climaManha: null,
   climaTarde: null,
   programacaoAmanha: null,
+  semImpedimento: false,
   avancos: [
     { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: null },
     { numero: 11, de: 0, para: 0, concluida: false, causa: null },
@@ -99,6 +100,29 @@ describe('PassosDiario', () => {
     montar({ impedimentos: <p>formulário de impedimento</p> })
     abrirPasso(/Impedimentos/)
     expect(screen.getByText('formulário de impedimento')).toBeInTheDocument()
+  })
+
+  describe('"Sem impedimentos hoje" (item 7)', () => {
+    it('marcar deixa o passo 4 preenchido e vai no rascunho', async () => {
+      montar({ impedimentos: <p>form</p> })
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).not.toHaveAccessibleName(/preenchido/)
+      abrirPasso(/Impedimentos/)
+      fireEvent.click(screen.getByRole('checkbox', { name: /Sem impedimentos hoje/ }))
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).toHaveAccessibleName(/preenchido/)
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith('o1', '2026-10-29', expect.objectContaining({ semImpedimento: true }))
+    })
+
+    it('com impedimento registrado no dia: passo preenchido, opção some e o flag não vai', async () => {
+      montar({ inicial: { ...inicial, semImpedimento: true }, impedimentosHoje: 1 })
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).toHaveAccessibleName(/preenchido/)
+      abrirPasso(/Impedimentos/)
+      expect(screen.queryByRole('checkbox', { name: /Sem impedimentos hoje/ })).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith('o1', '2026-10-29', expect.objectContaining({ semImpedimento: false }))
+    })
   })
 
   it('diário validado: só leitura', () => {

@@ -138,6 +138,7 @@ export async function salvarRascunhoAction(
     clima_manha: corpo.climaManha ?? null,
     clima_tarde: corpo.climaTarde ?? null,
     programacao_amanha: texto(corpo.programacaoAmanha),
+    sem_impedimento: corpo.semImpedimento === true,
     atualizado_em: new Date().toISOString(),
   }
 
