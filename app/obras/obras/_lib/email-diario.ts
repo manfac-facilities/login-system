@@ -68,7 +68,7 @@ const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
 }
 
 /** Rótulo da causa e responsável (spec §5.3: cada causa mapeada para um responsável; mapa confirmado pelo José em 31/10; outro sem responsável). */
-const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
+export const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
   cliente: { rotulo: 'Cliente / loja', resp: 'cliente' },
   material: { rotulo: 'Material', resp: 'manfac' },
   equipe: { rotulo: 'Equipe', resp: 'manfac' },

@@ -7,6 +7,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
 import type { PontoHist } from './curvas'
+import type { PlanoSemana, Restricao } from './last-planner'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
@@ -339,4 +340,55 @@ export function montarObraGrande(p: {
     etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
     terminoBase, sinal, atraso,
   }
+}
+
+// ── Last Planner (Leva 3) ──────────────────────────────────────────────
+
+const restricaoDe = (r: Linha): Restricao => ({
+  id: r.id, obraId: r.obra_id, atividadeNumero: r.atividade_numero, tipo: r.tipo, descricao: r.descricao,
+  responsavel: r.responsavel, prazo: r.prazo ?? null, situacao: r.situacao, liberadaEm: r.liberada_em ?? null,
+  criadoPor: r.criado_por ?? null, criadoEm: r.criado_em,
+})
+
+const planoSemanaDe = (p: Linha): PlanoSemana => ({
+  id: p.id, obraId: p.obra_id, semanaInicio: p.semana_inicio,
+  fechadoEm: p.fechado_em ?? null, fechadoPor: p.fechado_por ?? null,
+  itens: ((p.obras_plano_item ?? []) as Linha[]).map((i) => ({
+    id: i.id, planoId: i.plano_id, numero: i.numero, metaPercentual: Number(i.meta_percentual),
+    percentualFinal: i.percentual_final === null || i.percentual_final === undefined ? null : Number(i.percentual_final),
+    cumprido: i.cumprido ?? null, causa: i.causa ?? null, avaliadoEm: i.avaliado_em ?? null,
+  })),
+})
+
+export async function lerRestricoes(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; restricoes: Restricao[] } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_restricao').select('*').eq('obra_id', obraId).order('criado_em', { ascending: false })
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, restricoes: ((data ?? []) as Linha[]).map(restricaoDe) }
+}
+
+export async function lerPlano(
+  supabase: SupabaseClient,
+  obraId: string,
+  segunda: string,
+): Promise<{ ok: true; plano: PlanoSemana | null } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_plano_semana').select('*, obras_plano_item(*)')
+    .eq('obra_id', obraId).eq('semana_inicio', segunda).maybeSingle()
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, plano: data ? planoSemanaDe(data as Linha) : null }
+}
+
+export async function lerPlanos(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; planos: PlanoSemana[] } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_plano_semana').select('*, obras_plano_item(*)')
+    .eq('obra_id', obraId).order('semana_inicio', { ascending: false })
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, planos: ((data ?? []) as Linha[]).map(planoSemanaDe) }
 }
