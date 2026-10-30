@@ -317,3 +317,13 @@ menu inferior do diário.
 - Visual, visto na prévia (`/previa-obras`): a faixa "Trava ativa" do painel lista as descrições inteiras
   (8 linhas no celular com Macaé 3, empurra os KPIs); no celular, "Salvar rascunho" + menu inferior
   ocupam ~130px fixos; a prévia importa a fixture de `_lib/__tests__/fixtures/` (só dev, 404 em produção).
+
+## 30/10/2026 — Frotas visão geral (branch `feat/frotas-visao-geral`), deixado de propósito
+
+- CNH: janela de 60 dias (mockup e `getMotoristasComCnhVencendo`); spec corrigida em 27fcd0b.
+- "Carros na oficina agora": o "desde" é o `created_at` da revisão mais recente do veículo (mesmo critério da tela Disponibilidade); não existe coluna com a data de envio à oficina.
+- Custos do mês somam a locação de **todos** os veículos (inclusive inativos), igual à tela Custos; o mockup excluía inativos. Divergência do mockup, regra da tela Custos preservada.
+- "Em uso" conta carro ativo com responsável no histórico, mesmo sem equipe (a regra pedida); "Equipes sem KM" usa só equipe ativa com carro ativo.
+- Os links `?sit=`, `?cnh=alerta`, `?de=&ate=`, `?placa=` dependem das bases novas (outra frente); até lá as listas abrem sem filtro.
+- Mês corrente pela data de São Paulo, mas `getRevisoesAtrasadas` e `getDocumentosVencendo` ainda usam data UTC (queries.ts, fora desta frente).
+- Falha de leitura vai para o `error.tsx` de /sofia (sem estado de erro por bloco, como o resto do Sofia).
