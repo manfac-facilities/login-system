@@ -4,13 +4,14 @@
  *
  * Contraste: as cores da marca (`orange`, `verde`, `vermelho`, `muted`) não
  * passam 4.5:1 como TEXTO pequeno sobre branco. Para texto use as variantes
- * `*Texto` (medidas ≥ 4.5:1 sobre `card` e `surface`); a cor cheia fica para
+ * `*Texto` (medidas ≥ 4.5:1 sobre `card` e `surface` — ex.: `orangeTexto` 5.33:1
+ * no branco e 4.93:1 no surface); a cor cheia fica para
  * preenchimento, barra, ícone e borda (≥ 3:1).
  */
 export const TEMA_OBRA = {
   ink: '#00345e',
   orange: '#f85e0b',
-  orangeTexto: '#c44a08',
+  orangeTexto: '#b94606',
   yellow: '#f7cb15',
   yellowTexto: '#7a5c00',
   surface: '#f6f6f5',

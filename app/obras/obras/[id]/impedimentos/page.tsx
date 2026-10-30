@@ -4,7 +4,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
-import { lerObraGrande } from '../../_lib/leitura'
+import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import FormImpedimento from './_form'
 import ListaImpedimentos from './_lista'
 import { RESPONSAVEIS } from './_tipos'
@@ -30,7 +30,7 @@ export default async function ImpedimentosPage({
   if (!permitido) return <EstadoVazio>Esta tela é de quem é responsável pelas obras</EstadoVazio>
 
   const hoje = hojeISO()
-  const r = await lerObraGrande(supabase, id, hoje)
+  const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
   const { plano, impedimentos, feriados } = r.dados
 

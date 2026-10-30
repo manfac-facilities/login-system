@@ -4,7 +4,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
-import { lerObraGrande } from '../../_lib/leitura'
+import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
 import ValidarDiario from './_validar'
@@ -52,7 +52,7 @@ export default async function DiarioObraPage({
   const hoje = hojeISO()
   const data = dataParam && ISO.test(dataParam) ? dataParam : hoje
 
-  const r = await lerObraGrande(supabase, id, hoje)
+  const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
   const { obra, calc, versaoBase, plano, exec, feriados } = r.dados
   if (!versaoBase?.salvaEm || !calc) {
