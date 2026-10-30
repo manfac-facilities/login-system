@@ -46,6 +46,7 @@ function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
 }
 
 const texto = (s: string | null | undefined) => (s ?? '').trim() || null
+const dataBR = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
 
 function revalidar(obraId: string) {
   revalidatePath(`/obras/obras/${obraId}/impedimentos`)
@@ -128,6 +129,15 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
     .select('id')
     .single()
   if (error) return erroBanco('registrar o impedimento', error)
+  // Item 7: o diário em rascunho daquele dia deixa de estar marcado "sem impedimentos hoje".
+  const { error: errS } = await supabase
+    .from('obras_rdo')
+    .update({ sem_impedimento: false })
+    .eq('obra_id', obraId)
+    .eq('data', rdo.data ?? comum.abertoEm)
+    .eq('estado', 'rascunho')
+    .eq('sem_impedimento', true)
+  if (errS) console.warn(`[impedimento] não deu para desmarcar "sem impedimentos" do diário: ${errS.message}`)
   revalidar(obraId)
   return { ok: true, id: data.id as string }
 }
@@ -146,7 +156,12 @@ export async function encerrarImpedimentoAction(id: string, encerradoEm: string)
   if (e1) return erroBanco('ler o impedimento', e1)
   if (!imp) return falha('Impedimento não encontrado')
   if (imp.encerrado_em) return falha('Impedimento já encerrado')
-  if (encerradoEm < String(imp.aberto_em)) return falha('A data de encerramento não pode ser anterior à abertura')
+  const abertoEm = String(imp.aberto_em).slice(0, 10)
+  if (encerradoEm < abertoEm) {
+    return falha(
+      `A data de encerramento (${dataBR(encerradoEm)}) não pode ser anterior à abertura do impedimento (${dataBR(abertoEm)})`,
+    )
+  }
 
   const { error } = await supabase.from('obras_impedimento').update({ encerrado_em: encerradoEm }).eq('id', id)
   if (error) return erroBanco('encerrar o impedimento', error)

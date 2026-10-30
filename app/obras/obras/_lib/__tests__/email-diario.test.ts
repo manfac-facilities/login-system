@@ -183,6 +183,38 @@ describe('montarEmailDiario', () => {
     expect(html).toContain('Concluir escoramento')
   })
 
+  describe('não avançou hoje (item 12)', () => {
+    const avancos = [
+      { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: 'cliente' as const },
+      { numero: 2, de: 0.2, para: 0.2, concluida: false, causa: 'material' as const },
+      { numero: 4, de: 0, para: 0, concluida: false, causa: 'projeto' as const },
+      { numero: 3, de: 0, para: 0, concluida: false, causa: null },
+      { numero: 1, de: 0.4, para: 1, concluida: true, causa: null },
+    ]
+
+    it('cliente: bloco com atividade e causa; causa interna da Manfac aparece só como "Manfac"', () => {
+      const { html, texto } = montar('cliente', {}, { avancos })
+      for (const t of [html, texto]) {
+        expect(t).toMatch(/n[ãÃ]o avan[çÇ]ou hoje/i)
+        expect(t).toContain('Escoramento da viga principal (50%) — causa: Cliente / loja · responsável: Cliente')
+        expect(t).toContain('Atividade 2 (20%) — responsável: Manfac')
+        expect(t).toContain('Atividade 4 (0%) — causa: Projeto · responsável: Cliente')
+        expect(t).not.toContain('Material')
+        expect(t).not.toContain('Atividade 3 (')
+      }
+    })
+
+    it('interno: mostra a causa detalhada', () => {
+      const { texto } = montar('interno', {}, { avancos })
+      expect(texto).toContain('Atividade 2 (20%) — causa: Material · responsável: Manfac')
+    })
+
+    it('sem causa informada ou dia sem execução: sem bloco', () => {
+      expect(montar('cliente').texto).not.toMatch(/não avançou hoje/i)
+      expect(montar('cliente', {}, { semExecucao: true, motivoSemExecucao: 'x', avancos }).texto).not.toMatch(/não avançou hoje/i)
+    })
+  })
+
   it('dia sem execução mostra a frase no lugar dos avanços', () => {
     const { html, texto } = montar('cliente', {}, { semExecucao: true, motivoSemExecucao: 'Área não liberada pela loja', avancos: [] })
     expect(html).toContain('Sem execução hoje — Área não liberada pela loja')

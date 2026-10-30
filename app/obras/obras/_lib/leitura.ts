@@ -111,12 +111,33 @@ export const impedimentosCalcDe = (impedimentos: ImpedimentoRow[]): ImpedimentoC
       impactoDias: i.impactoDias,
     }))
 
-/** Plano de uma versão, ordenado por número. */
+/**
+ * Ordem de EXIBIÇÃO das linhas de `obras_atividade` (Leva 1b): etapa por
+ * `etapa_ordem` (a menor do grupo), atividade por `ordem`, desempate por
+ * `numero`. Coluna nula (linha antiga) cai no `numero`; etapa sem nenhuma
+ * `etapa_ordem` vai depois das numeradas, pela primeira aparição. A etapa
+ * fica contígua — `resumirEtapas` agrupa na ordem de aparição.
+ */
+export function ordenarAtividades<T extends Linha>(linhas: T[]): T[] {
+  const chave = (a: Linha) => (a.etapa ?? '') as string
+  const pos = new Map<string, [number, number]>()
+  for (const a of linhas) {
+    const eo = typeof a.etapa_ordem === 'number' ? a.etapa_ordem : Infinity
+    const p = pos.get(chave(a))
+    pos.set(chave(a), p ? [Math.min(p[0], eo), Math.min(p[1], a.numero)] : [eo, a.numero])
+  }
+  const ordem = (a: Linha) => (typeof a.ordem === 'number' ? a.ordem : a.numero) as number
+  const cmp = (x: number, y: number) => (x === y ? 0 : x < y ? -1 : 1)
+  return [...linhas].sort((a, b) => {
+    const pa = pos.get(chave(a))!
+    const pb = pos.get(chave(b))!
+    return cmp(pa[0], pb[0]) || cmp(pa[1], pb[1]) || cmp(ordem(a), ordem(b)) || cmp(a.numero, b.numero)
+  })
+}
+
+/** Plano de uma versão, na ordem de exibição (`ordenarAtividades`). */
 export const planoDe = (linhas: Linha[], versaoId: string): AtividadePlano[] =>
-  linhas
-    .filter((a) => a.versao_id === versaoId)
-    .map(atividadePlanoDe)
-    .sort((a, b) => a.numero - b.numero)
+  ordenarAtividades(linhas.filter((a) => a.versao_id === versaoId)).map(atividadePlanoDe)
 
 export const impedimentoRow = (i: Linha): ImpedimentoRow => ({
   id: i.id,

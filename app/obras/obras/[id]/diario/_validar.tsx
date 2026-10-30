@@ -4,6 +4,10 @@
  * "Validar e enviar" do diário (Task 9b). Só aparece para o engenheiro da obra
  * ou admin (a action confere de novo no servidor). "Ver prévia" mostra o e-mail
  * do lado cliente num iframe isolado, montado com o que está salvo.
+ *
+ * Item 10 da reunião de 31/10: em rascunho, "Validar e enviar" primeiro grava o
+ * que está na tela (`salvarAntes`, a mesma action do rascunho, com a mesma
+ * validação) e só então valida e envia — nunca manda dado velho.
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -16,11 +20,15 @@ export default function ValidarDiario({
   estado,
   previaHtml,
   pendentes = null,
+  salvarAntes,
 }: {
   obraId: string
   data: string
   estado: EstadoRdo
-  previaHtml: string
+  /** Sem RDO gravado ainda não há prévia. */
+  previaHtml: string | null
+  /** Grava o formulário atual; `false` = não gravou (o erro já aparece no formulário). */
+  salvarAntes?: () => Promise<boolean>
   /** Já enviado: quantos destinatários ainda não receberam. */
   pendentes?: number | null
 }) {
@@ -35,6 +43,10 @@ export default function ValidarDiario({
     setErro(null)
     setAviso(null)
     try {
+      if (estado === 'rascunho' && salvarAntes && !(await salvarAntes())) {
+        setErro('O diário não foi salvo — corrija o que aparece acima e tente de novo. Nada foi enviado.')
+        return
+      }
       const r = await validarEEnviarAction(obraId, data)
       if (r.ok) {
         setAviso(r.enviados ? `Diário enviado para ${r.enviados} destinatário(s).` : 'Nada pendente: todos os destinatários já receberam.')
@@ -59,17 +71,19 @@ export default function ValidarDiario({
             ? `Diário enviado, mas ${pendentes ?? 0} destinatário(s) ainda não receberam. Enviar de novo manda só para eles.`
             : estado === 'validado'
             ? 'Diário já validado, mas o e-mail não saiu. Enviar de novo manda só para quem ainda não recebeu.'
-            : 'Ao validar, o avanço do dia vai para o cronograma e o diário não pode mais ser alterado. Salve o rascunho antes.'}
+            : 'Ao validar, o avanço do dia vai para o cronograma e o diário não pode mais ser alterado. O que está na tela é salvo antes de enviar.'}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setPrevia((v) => !v)}
-          className={`${botao} border border-[#dadad8] text-[#333336] hover:border-[#b94606]`}
-        >
-          {previa ? 'Fechar prévia' : 'Ver prévia'}
-        </button>
+        {previaHtml !== null ? (
+          <button
+            type="button"
+            onClick={() => setPrevia((v) => !v)}
+            className={`${botao} border border-[#dadad8] text-[#333336] hover:border-[#b94606]`}
+          >
+            {previa ? 'Fechar prévia' : 'Ver prévia'}
+          </button>
+        ) : null}
         <button type="button" onClick={enviar} disabled={enviando} className={`${botao} bg-[#b94606] text-white`}>
           {enviando ? 'Enviando…' : estado === 'rascunho' ? 'Validar e enviar' : 'Enviar de novo'}
         </button>
@@ -82,7 +96,7 @@ export default function ValidarDiario({
       {aviso ? (
         <p className="rounded-lg border border-[#136c38] bg-[#1f9d551a] px-3 py-2 text-sm text-[#333336]">{aviso}</p>
       ) : null}
-      {previa ? (
+      {previa && previaHtml !== null ? (
         <div className="flex flex-col gap-1">
           <p className="text-xs text-[#5a7380]">
             Prévia do e-mail do cliente com o que está salvo. Os percentuais ainda não incluem o avanço de hoje — ele

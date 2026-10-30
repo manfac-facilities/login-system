@@ -142,6 +142,7 @@ const corpo = (over: Partial<RascunhoRdo> = {}): RascunhoRdo => ({
   climaManha: null,
   climaTarde: null,
   programacaoAmanha: '7 · Atividade 7',
+  semImpedimento: false,
   avancos: [av()],
   ...over,
 })
@@ -196,6 +197,13 @@ describe('salvarRascunhoAction — gravação', () => {
     })
     expect(inseridos[0]).not.toHaveProperty('estado')
     expect(db.obras_rdo_avanco).toEqual([{ rdo_id: 'id1', numero: 6, de: 0.5, para: 0.7, concluida: false, causa: null }])
+  })
+
+  it('grava "sem impedimentos hoje" (item 7)', async () => {
+    await salvarRascunhoAction(OBRA, DIA, corpo({ semImpedimento: true }))
+    expect(db.obras_rdo[0]).toMatchObject({ sem_impedimento: true })
+    await salvarRascunhoAction(OBRA, DIA, corpo())
+    expect(db.obras_rdo[0]).toMatchObject({ sem_impedimento: false })
   })
 
   it('grava o clima da manhã e da tarde (e mantém o clima legado)', async () => {
@@ -279,6 +287,19 @@ describe('salvarRascunhoAction — regras do avanço', () => {
     expect(
       (await salvarRascunhoAction(OBRA, DIA, corpo({ avancos: [av({ causa: 'xx' as never })] }))).ok,
     ).toBe(false)
+    expect(db.obras_rdo).toHaveLength(0)
+  })
+})
+
+describe('salvarRascunhoAction — atividade incluída à mão (itens 6/11)', () => {
+  it('atividade fora da lista do dia (antecipada) grava como avanço normal; "de" vem da execução', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ avancos: [av({ numero: 9, de: 0.4, para: 0.2 })] }))
+    expect(r.ok).toBe(true)
+    expect(db.obras_rdo_avanco).toEqual([{ rdo_id: 'id1', numero: 9, de: 0, para: 0.2, concluida: false, causa: null }])
+  })
+  it('incluída mas travada: a trava vale', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ avancos: [av({ numero: 12, de: 0, para: 0.2 })] }))
+    expect(r.ok).toBe(false)
     expect(db.obras_rdo).toHaveLength(0)
   })
 })

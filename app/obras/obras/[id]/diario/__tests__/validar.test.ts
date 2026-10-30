@@ -350,6 +350,14 @@ describe('validarEEnviarAction', () => {
     )
   })
 
+  it('atividade que não andou (com causa) sai no e-mail em "Não avançou hoje" (item 12)', async () => {
+    db.obras_rdo_avanco.push({ rdo_id: 'r1', numero: 8, de: 0, para: 0, concluida: false, causa: 'cliente' })
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    const doCliente = sendMail.mock.calls.find((c) => c[0].to === 'ana@dpsp.com.br')![0]
+    expect(doCliente.text).toContain('NÃO AVANÇOU HOJE')
+    expect(doCliente.text).toMatch(/\(0%\) — causa: Cliente \/ loja · responsável: Cliente/)
+  })
+
   it('admin que não é o engenheiro também valida', async () => {
     getUserMock.mockResolvedValue({ data: { user: { email: 'admin@manfac.com.br' } } })
     ;(isAdmin as jest.Mock).mockResolvedValue(true)

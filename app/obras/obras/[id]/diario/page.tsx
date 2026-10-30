@@ -7,7 +7,7 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
-import ValidarDiario from './_validar'
+import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
 import { diasUteisEntre } from '../../_lib/calendario'
 import FormImpedimento from '../impedimentos/_form'
@@ -105,7 +105,7 @@ export default async function DiarioObraPage({
     if (u) ultimo = { efetivo: u.efetivo ?? null, equipeTexto: u.equipe_texto ?? null }
   }
 
-  const { inicial, atividades } = montarDiario({
+  const { inicial, atividades, outras } = montarDiario({
     calc,
     plano,
     exec,
@@ -122,6 +122,7 @@ export default async function DiarioObraPage({
           climaManha: (rdo.clima_manha ?? null) as Clima | null,
           climaTarde: (rdo.clima_tarde ?? null) as Clima | null,
           programacaoAmanha: rdo.programacao_amanha ?? null,
+          semImpedimento: !!rdo.sem_impedimento,
         }
       : null,
     avancosSalvos,
@@ -170,6 +171,9 @@ export default async function DiarioObraPage({
     previaHtml = html
   }
 
+  // Sem RDO gravado também valida: o botão salva o que está na tela antes (item 10).
+  const mostraValidar =
+    podeValidar && (!rdo || rdo.estado === 'rascunho' || rdo.estado === 'validado' || (pendentes ?? 0) > 0)
   const base = `/obras/obras/${id}/diario`
   const navLink =
     'flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606]'
@@ -198,18 +202,7 @@ export default async function DiarioObraPage({
               próximo dia →
             </Link>
           ) : null}
-          <form method="get" action={base} className="flex items-center gap-2">
-            <input
-              type="date"
-              name="data"
-              defaultValue={data}
-              aria-label="Data do diário"
-              className="min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-2 text-sm text-[#333336]"
-            />
-            <button type="submit" className={navLink}>
-              ir
-            </button>
-          </form>
+          <SeletorDataDiario key={data} base={base} data={data} />
         </nav>
       </header>
 
@@ -221,10 +214,17 @@ export default async function DiarioObraPage({
         estado={(rdo?.estado ?? null) as EstadoRdo | null}
         inicial={inicial}
         atividades={atividades}
+        outras={outras}
         fotos={fotos}
+        validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
+        impedimentosHoje={
+          r.dados.impedimentos.filter(
+            (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
+          ).length
+        }
         impedimentos={
           <div className="flex flex-col gap-4">
-            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} feriados={feriados} somenteAbertos />
+            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} dataReferencia={data} feriados={feriados} somenteAbertos />
             <FormImpedimento
               obraId={id}
               rdoId={rdo?.id ?? null}
@@ -238,9 +238,6 @@ export default async function DiarioObraPage({
         }
       />
 
-      {previaHtml !== null ? (
-        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} pendentes={pendentes} />
-      ) : null}
     </div>
   )
 }

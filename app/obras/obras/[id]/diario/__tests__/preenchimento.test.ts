@@ -29,7 +29,13 @@ describe('montarDiario', () => {
     expect(r.atividades.map((a) => a.numero)).toEqual([6, 7, 11])
     expect(r.atividades.find((a) => a.numero === 11)).toMatchObject({ travada: true, motivoTrava: 'Travada até a atividade 6 ser concluída' })
     expect(r.inicial.avancos.find((a) => a.numero === 6)).toEqual({ numero: 6, de: 0.5, para: 0.5, concluida: false, causa: null })
-    expect(r.inicial).toMatchObject({ efetivo: 6, equipeTexto: 'Própria', programacaoAmanha: '9 · Forro' })
+    expect(r.inicial).toMatchObject({ efetivo: 6, equipeTexto: 'Própria', programacaoAmanha: '9 · Forro', semImpedimento: false })
+  })
+
+  it('outras: as demais atividades da versão (não concluídas), para incluir à mão (itens 6/11)', () => {
+    const r = montarDiario({ ...base, data: '2026-10-29', ultimo: null })
+    expect(r.outras.map((a) => a.numero)).toEqual([8, 9])
+    expect(r.outras[0]).toMatchObject({ numero: 8, etapa: 'E', descricao: 'Pintura', atual: 0, travada: false })
   })
 
   it('sexta-feira sugere o que começa na segunda', () => {
@@ -39,11 +45,12 @@ describe('montarDiario', () => {
   })
 
   it('com rascunho salvo usa os campos e avanços dele', () => {
-    const rdo = { semExecucao: false, motivoSemExecucao: null, efetivo: 3, equipeTexto: null, clima: 'chuva' as const, climaManha: 'sol' as const, climaTarde: 'chuva' as const, programacaoAmanha: null }
+    const rdo = { semExecucao: false, motivoSemExecucao: null, efetivo: 3, equipeTexto: null, clima: 'chuva' as const, climaManha: 'sol' as const, climaTarde: 'chuva' as const, programacaoAmanha: null, semImpedimento: true }
     const r = montarDiario({
       ...base, data: '2026-10-29', rdo, ultimo: { efetivo: 9, equipeTexto: 'x' },
       avancosSalvos: [{ numero: 6, de: 0.5, para: 0.8, concluida: false, causa: null }, { numero: 9, de: 0, para: 0.1, concluida: false, causa: null }],
     })
+    expect(r.inicial.semImpedimento).toBe(true)
     expect(r.inicial).toMatchObject({ efetivo: 3, clima: 'chuva', climaManha: 'sol', climaTarde: 'chuva', programacaoAmanha: null })
     expect(r.atividades.map((a) => a.numero)).toEqual([6, 7, 11, 9])
     expect(r.inicial.avancos.find((a) => a.numero === 6)?.para).toBe(0.8)

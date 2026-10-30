@@ -25,8 +25,11 @@ export type RdoCompleto = {
   clima?: ClimaRdo | null
   climaManha?: ClimaRdo | null
   climaTarde?: ClimaRdo | null
-  avancos: { numero: number; de: number; para: number; concluida: boolean }[]
+  avancos: { numero: number; de: number; para: number; concluida: boolean; causa?: CausaRdo | null }[]
 }
+
+/** Causa de "não andou" do diário (mesmos valores de `CausaNaoAndou` em `[id]/diario/_tipos.ts`). */
+export type CausaRdo = 'cliente' | 'material' | 'equipe' | 'clima' | 'projeto' | 'outro'
 
 export type EmailDiario = { assunto: string; html: string; texto: string }
 
@@ -62,6 +65,16 @@ const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
   nublado: { rotulo: 'Nublado', cor: '#9aa9b2' },
   chuva: { rotulo: 'Chuva', cor: '#00345e' },
   impraticavel: { rotulo: 'Impraticável', cor: '#d64545' },
+}
+
+/** Rótulo da causa e responsável (spec §5.3: cada causa mapeada para um responsável; mapa confirmado pelo José em 31/10; outro sem responsável). */
+const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
+  cliente: { rotulo: 'Cliente / loja', resp: 'cliente' },
+  material: { rotulo: 'Material', resp: 'manfac' },
+  equipe: { rotulo: 'Equipe', resp: 'manfac' },
+  clima: { rotulo: 'Clima', resp: 'clima' },
+  projeto: { rotulo: 'Projeto', resp: 'cliente' },
+  outro: { rotulo: 'Outro', resp: null },
 }
 
 type Item = { rotulo: string; corpo: string; tecnico?: boolean }
@@ -196,6 +209,21 @@ export function montarEmailDiario(p: {
         .map((a) =>
           a.concluida ? `✓ ${descricao(a.numero)} — concluída` : `▲ ${descricao(a.numero)}: ${pct(a.de)} → ${pct(a.para)}`,
         )
+  // 5b. Não avançou hoje (item 12 da reunião de 31/10): atividade sem avanço com causa informada.
+  // Ao cliente, causa da Manfac (material/equipe) aparece só como "Manfac", sem detalhar a área interna.
+  const naoAvancou = rdo.semExecucao
+    ? []
+    : rdo.avancos
+        .filter((a) => !a.concluida && a.para <= a.de && a.causa && a.causa in CAUSA)
+        .sort((a, b) => a.numero - b.numero)
+        .map((a) => {
+          const c = CAUSA[a.causa!]
+          const partes = [
+            lado === 'cliente' && c.resp === 'manfac' ? null : `causa: ${c.rotulo}`,
+            c.resp ? `responsável: ${RESP[c.resp]}` : null,
+          ].filter(Boolean)
+          return `${descricao(a.numero)} (${pct(a.de)}) — ${partes.join(' · ')}`
+        })
   const semExecucao = rdo.semExecucao ? `Sem execução hoje — ${rdo.motivoSemExecucao ?? ''}`.trim() : null
   const omitidas = p.fotosOmitidas ?? 0
   const notaOmitidas = omitidas
@@ -280,6 +308,7 @@ ${ocultos.length ? secao('Só interno · Não foi ao cliente', ocultos.map(caixa
 ${orientacoes.length ? secao('Orientações à loja', orientacoes.map((t) => '<div style="border-left:3px solid #2563eb;background:#eff6ff;padding:6px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">' + esc(t) + '</div>').join('')) : ''}
 ${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a">${climaHtml}</div>`) : ''}
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
+${naoAvancou.length ? secao('Não avançou hoje', naoAvancou.map((t) => `<div style="border-left:3px solid #f59e0b;padding:3px 10px;margin-bottom:5px;font-size:14px;color:#0f172a">${esc(t)}</div>`).join('')) : ''}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
 <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
 </table></td></tr></table></body></html>`
@@ -305,6 +334,7 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     ...(semExecucao ? [semExecucao] : feitos.length ? feitos : ['Nenhuma atividade avançou hoje.']),
     ...(p.fotosCid.length ? [`${p.fotosCid.length} ${p.fotosCid.length === 1 ? 'foto' : 'fotos'} no e-mail`] : []),
     ...(notaOmitidas ? [notaOmitidas] : []),
+    ...(naoAvancou.length ? ['', 'NÃO AVANÇOU HOJE', ...naoAvancou.map((t) => `- ${t}`)] : []),
     '',
     'AMANHÃ',
     amanha,

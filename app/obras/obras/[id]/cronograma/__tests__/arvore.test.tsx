@@ -52,8 +52,12 @@ const dados = (over: Partial<DadosCronograma> = {}): DadosCronograma => ({
   termino: { base: '2026-11-02', previsto: '2026-11-02', projetado: '2026-11-09' },
   statusAtividades: [],
   atividadeTrava: null,
+  valores: null,
   ...over,
 })
+
+/** No rascunho a tela abre na Tabela; a árvore é a da visão Gantt. */
+const abrirGantt = () => fireEvent.click(screen.getByRole('button', { name: 'Gantt' }))
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -63,6 +67,7 @@ beforeEach(() => {
 describe('árvore do cronograma', () => {
   it('recolher a etapa esconde as atividades dela (e lembra no localStorage)', () => {
     render(<TelaCronograma dados={dados()} />)
+    abrirGantt()
     const arvore = screen.getByRole('table')
     expect(within(arvore).getByText('Retirada de entulho')).toBeInTheDocument()
 
@@ -80,6 +85,7 @@ describe('árvore do cronograma', () => {
   it('Recolher tudo deixa só as linhas de etapa; estado salvo é lido ao abrir', () => {
     window.localStorage.setItem('obras:crono:aberto:o1', JSON.stringify(['Pintura']))
     render(<TelaCronograma dados={dados()} />)
+    abrirGantt()
     const arvore = screen.getByRole('table')
     expect(within(arvore).queryByText('Pintura geral')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Recolher tudo' }))
@@ -88,6 +94,7 @@ describe('árvore do cronograma', () => {
 
   it('Δ "+5" aparece com a classe de atraso', () => {
     render(<TelaCronograma dados={dados()} />)
+    abrirGantt()
     const linha = within(screen.getByRole('table')).getByText('Pintura geral').closest('tr')!
     const delta = within(linha).getByText('+5')
     expect(delta).toHaveClass('delta-atraso')
@@ -96,6 +103,7 @@ describe('árvore do cronograma', () => {
   it('em rascunho a célula Início edita e grava o início fixo', () => {
     definirInicioAction.mockResolvedValue({ ok: true })
     render(<TelaCronograma dados={dados()} />)
+    abrirGantt()
     fireEvent.click(screen.getByRole('button', { name: 'Editar início da atividade 2' }))
     const campo = screen.getByLabelText('Editar início da atividade 2')
     fireEvent.change(campo, { target: { value: '2026-11-04' } })
@@ -105,6 +113,7 @@ describe('árvore do cronograma', () => {
 
   it('sem base salva não há "Atualizar status"; mostra o aviso do diário', () => {
     render(<TelaCronograma dados={dados()} />)
+    abrirGantt()
     expect(screen.queryByRole('button', { name: 'Atualizar status' })).toBeNull()
     expect(screen.getByText('Sem cronograma — o status começa quando a base for salva')).toBeTruthy()
   })

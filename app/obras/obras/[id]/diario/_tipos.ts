@@ -29,6 +29,8 @@ export type RascunhoRdo = {
   climaManha: Clima | null
   climaTarde: Clima | null
   programacaoAmanha: string | null
+  /** "Sem impedimentos hoje" (item 7 da reunião de 31/10): passo 4 preenchido sem registrar nada. */
+  semImpedimento: boolean
   avancos: AvancoRdo[]
 }
 

@@ -350,3 +350,19 @@ menu inferior do diário.
   lançamento do mês anterior), não MAX−MIN como a tela Consumo do mês.
 - "Enviar para oficina" na gaveta do veículo (mockup) não entrou: depende de manutenção corretiva (rodada seguinte).
 - Chip "corrigido" do KM aparece só quando o valor atual difere do original (regra de `valorOriginalKm`).
+
+## 31/10/2026 — Obras Leva 1b, estrutura do cronograma + visão Tabela (`feat/obras-leva1b`, Task 3)
+
+- Reordenar com o mouse (arrastar) não entrou: ↑/↓ por etapa e por atividade na visão Tabela. Para trocar de etapa,
+  edita-se a célula Etapa (lista das etapas existentes).
+- A estrutura (+ Etapa, renomear, ↑/↓, + Atividade, excluir) ficou só na visão Tabela (padrão no rascunho); a árvore
+  da visão Gantt segue com a edição inline de antes, sem os botões de estrutura (linha de 44px casada com o Gantt).
+- Atividade criada pela tela nasce com `peso_valor = 0`; o engenheiro preenche na coluna "Valor (R$)" da Tabela
+  (decisão do José, 31/10, opção A). Enquanto ficar 0 não pesa no % físico; com Σ = 0 o motor dá 0% (regra atual).
+  A coluna só aparece no rascunho, para engenheiro/admin; "+ Atividade" cria a linha e o valor se digita nela.
+- Renomear etapa numa revisão: a comparação com a base por etapa (início/fim base da linha de etapa) é pelo nome, então
+  a etapa renomeada aparece sem base até a próxima base. A comparação por atividade (`numero`) não muda.
+- Excluir atividade deixa a linha de `obras_atividade_exec` (sem avanço; não há delete nela). O `numero` não é
+  reaproveitado (próximo = maior da obra em todas as versões e na execução + 1).
+- Lista de etapas na linha muda ao escolher (inclusive com as setas do teclado numa lista fechada no Windows, que grava
+  a cada seta); predecessoras idem.

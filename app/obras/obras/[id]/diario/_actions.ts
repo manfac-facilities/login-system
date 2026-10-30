@@ -138,6 +138,7 @@ export async function salvarRascunhoAction(
     clima_manha: corpo.climaManha ?? null,
     clima_tarde: corpo.climaTarde ?? null,
     programacao_amanha: texto(corpo.programacaoAmanha),
+    sem_impedimento: corpo.semImpedimento === true,
     atualizado_em: new Date().toISOString(),
   }
 
@@ -335,6 +336,7 @@ export async function validarEEnviarAction(
     de: Number(a.de ?? 0),
     para: Number(a.para ?? 0),
     concluida: !!a.concluida,
+    causa: CAUSAS.includes(a.causa) ? (a.causa as CausaNaoAndou) : null,
   }))
 
   let validadoPor = (rdo.validado_por as string | null) ?? email

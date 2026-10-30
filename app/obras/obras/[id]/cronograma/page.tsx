@@ -8,6 +8,7 @@ import { impedimentosCalcDe, planoDe } from '../../_lib/leitura'
 import { calcularCronograma } from '../../_lib/cronograma'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import TelaCronograma from './_tela'
+import CriarCronograma from './_criar-cronograma'
 import { montarDadosCronograma } from './_dados'
 
 export const dynamic = 'force-dynamic'
@@ -46,6 +47,9 @@ export default async function CronogramaPage({
   if (!r.ok) return <Aviso>{r.erro}</Aviso>
   const { obra, calc, versaoVigente, rascunho, exec, impedimentos, feriados } = r.dados
 
+  const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
+  const podeEditar = admin || (!!engenheiro && engenheiro === email)
+
   if (!calc) {
     return (
       <Aviso>
@@ -53,6 +57,7 @@ export default async function CronogramaPage({
         <Link href={`/obras/obras/${id}`} className="font-medium text-(--obra-orange-texto) underline">
           Voltar ao painel
         </Link>
+        {podeEditar ? <CriarCronograma obraId={id} /> : null}
       </Aviso>
     )
   }
@@ -81,9 +86,6 @@ export default async function CronogramaPage({
       atividadeTrava: obra.atividade_trava, impedimentos: impedimentosCalcDe(impedimentos),
     })
   }
-
-  const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
-  const podeEditar = admin || (!!engenheiro && engenheiro === email)
 
   const dados = montarDadosCronograma({
     obraDados: r.dados,

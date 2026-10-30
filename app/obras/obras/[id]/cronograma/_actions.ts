@@ -26,9 +26,9 @@ import {
   type AtividadePlano,
   type StatusAtividade,
 } from '../../_lib/cronograma'
-import { atividadeExecDe, atividadePlanoDe } from '../../_lib/leitura'
+import { atividadeExecDe, atividadePlanoDe, ordenarAtividades } from '../../_lib/leitura'
 import { hojeISO } from '../../../_lib/tipos'
-import type { LinhaPlano, LinhaStatus, Resultado } from './_tipos'
+import type { Direcao, EdicaoLinha, LinhaStatus, NovaAtividade, Resultado, ResultadoNumero } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
 const SEM_PERMISSAO = 'Só o engenheiro da obra ou um administrador altera o cronograma'
@@ -96,65 +96,367 @@ const dataISO = (s: unknown) =>
 
 const planoDe = (linhas: Linha[]): AtividadePlano[] => linhas.map(atividadePlanoDe)
 
+const VALOR_INVALIDO = 'Valor deve ser um número a partir de R$ 0,00'
+/** Valor (R$) em centavos inteiros, 0 ≤ v < 10^12 (numeric(14,2)); inválido → null. */
+const valorValido = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < 1e12 ? Math.round(v * 100) / 100 : null
+
+/**
+ * Código exibido "etapa.posição" (1.2) de cada numero, na ordem de exibição — o mesmo
+ * que a tabela mostra (`codigosDe` em _tabela-edicao.tsx). As mensagens citam o código, não o numero.
+ */
+function codigosDe(linhas: Linha[]): Map<number, string> {
+  const etapas: string[] = []
+  const contagem = new Map<string, number>()
+  const m = new Map<number, string>()
+  for (const a of ordenarAtividades(linhas)) {
+    const e = (a.etapa as string | null) ?? ''
+    if (!contagem.has(e)) etapas.push(e)
+    contagem.set(e, (contagem.get(e) ?? 0) + 1)
+    m.set(a.numero as number, `${etapas.indexOf(e) + 1}.${contagem.get(e)}`)
+  }
+  return m
+}
+const rotulo = (cods: Map<number, string>, n: number) => cods.get(n) ?? String(n)
+/** "Ciclo nas predecessoras: 57 → 61 → 57" → com os códigos da tela. */
+const cicloComCodigos = (msg: string, cods: Map<number, string>) => msg.replace(/\d+/g, (n) => rotulo(cods, Number(n)))
+
+/** Testa o plano no motor; ciclo vira mensagem com os códigos de `linhasAtuais` (o que a tela mostra). */
+function cicloNoPlano(ctx: Contexto, linhas: Linha[], linhasAtuais: Linha[]): Erro | null {
+  try {
+    calcularCronograma({
+      plano: planoDe(linhas), exec: [], dataBase: ctx.obra.data_base ?? '2026-01-01', hoje: ctx.obra.data_base ?? '2026-01-01',
+      feriados: new Set(), atividadeTrava: null, impedimentos: [],
+    })
+    return null
+  } catch (e) {
+    if (e instanceof CicloNasPredecessoras) return falha(cicloComCodigos(e.message, codigosDe(linhasAtuais)))
+    throw e
+  }
+}
+
+/** Predecessoras: inteiros existentes na versão, nunca a própria atividade. */
+function erroPredecessoras(linhas: Linha[], numero: number | null, preds: (number | null | undefined)[]): Erro | null {
+  for (const p of preds) {
+    if (p === null || p === undefined) continue
+    if (!inteiroPositivo(p)) return falha('Predecessora inválida')
+    if (p === numero) return falha('Uma atividade não pode ser predecessora dela mesma')
+    if (!linhas.some((a) => a.numero === p)) return falha(`Predecessora ${p} não existe neste cronograma`)
+  }
+  return null
+}
+
+// Nome cru (como está no banco): renomear/mover filtram por ele.
+const nomeEtapa = (a: Linha) => (a.etapa as string | null) ?? ''
+const maior = (xs: unknown[]) => xs.reduce<number>((m, x) => (typeof x === 'number' && x > m ? x : m), 0)
+
+/** Etapas da versão na ordem de exibição. */
+const etapasDe = (linhas: Linha[]) => [...new Set(ordenarAtividades(linhas).map(nomeEtapa))]
+
+/** `etapa_ordem`/`ordem` para pôr uma atividade no fim da etapa `etapa` (existente ou nova). */
+function posicaoNoFim(linhas: Linha[], etapa: string): { etapa_ordem: number; ordem: number } {
+  const ordenadas = ordenarAtividades(linhas)
+  const ordem = maior(ordenadas.map((a) => a.ordem ?? a.numero)) + 1
+  const idx = etapasDe(linhas).indexOf(etapa)
+  // Etapa existente: a posição dela (1-based na exibição) já vale como etapa_ordem se todas forem
+  // numeradas; usa a etapa_ordem gravada do grupo e, sem nenhuma, a posição.
+  if (idx >= 0) {
+    const doGrupo = ordenadas.filter((a) => nomeEtapa(a) === etapa).map((a) => a.etapa_ordem)
+    const eo = doGrupo.find((x) => typeof x === 'number') as number | undefined
+    return { etapa_ordem: eo ?? idx + 1, ordem }
+  }
+  return { etapa_ordem: Math.max(maior(linhas.map((a) => a.etapa_ordem)), etapasDe(linhas).length) + 1, ordem }
+}
+
+const mesmaEtapa = (a: string, b: string) =>
+  a.trim().toLocaleLowerCase('pt-BR') === b.trim().toLocaleLowerCase('pt-BR')
+
+/**
+ * Edita uma linha do rascunho. Só os campos presentes em `linha` são gravados
+ * (a tabela salva célula a célula; duas edições seguidas não se sobrescrevem).
+ * Trocar a etapa leva a atividade para o fim da etapa de destino.
+ */
 export async function salvarLinhaRascunhoAction(
   obraId: string,
   versaoId: string,
-  linha: LinhaPlano,
+  linha: EdicaoLinha,
 ): Promise<Resultado> {
+  const r = await lerRascunho(obraId, versaoId, linha.numero)
+  if (ehErro(r)) return r
+  const { ctx, linhas } = r
+  const atual = linhas.find((a) => a.numero === linha.numero)!
+
+  const campos: Linha = {}
+  if (linha.duracao !== undefined) {
+    if (!inteiroPositivo(linha.duracao)) return falha('Duração deve ser um número inteiro de dias úteis, a partir de 1')
+    campos.duracao = linha.duracao
+  }
+  if (linha.descricao !== undefined) {
+    const descricao = (linha.descricao ?? '').trim()
+    if (!descricao) return falha('Informe a descrição da atividade')
+    campos.descricao = descricao
+  }
+  if (linha.pred1 !== undefined) campos.pred1 = linha.pred1
+  if (linha.pred2 !== undefined) campos.pred2 = linha.pred2
+  const erroP = erroPredecessoras(linhas, linha.numero, [linha.pred1, linha.pred2])
+  if (erroP) return erroP
+  if (linha.bloqueiaPorTrava !== undefined) campos.bloqueia_por_trava = !!linha.bloqueiaPorTrava
+  if (linha.pesoValor !== undefined) {
+    const v = valorValido(linha.pesoValor)
+    if (v === null) return falha(VALOR_INVALIDO)
+    campos.peso_valor = v
+  }
+  if (linha.etapa !== undefined) {
+    // Etapa existente vem com o nome cru (pode ter espaço); nome novo é aparado.
+    const etapa = etapasDe(linhas).includes(linha.etapa ?? '') ? (linha.etapa ?? '') : (linha.etapa ?? '').trim()
+    campos.etapa = etapa || null
+    if (etapa !== nomeEtapa(atual)) {
+      Object.assign(campos, posicaoNoFim(linhas.filter((a) => a.numero !== linha.numero), etapa))
+    }
+  }
+  if (!Object.keys(campos).length) return { ok: true }
+
+  const ciclo = cicloNoPlano(ctx, linhas.map((a) => (a.numero === linha.numero ? { ...a, ...campos } : a)), linhas)
+  if (ciclo) return ciclo
+  return gravarAtividade(ctx, obraId, versaoId, linha.numero, campos)
+}
+
+/** Rascunho da versão + suas atividades; recusa versão salva. */
+async function lerVersaoRascunho(obraId: string, versaoId: string): Promise<{ ctx: Contexto; linhas: Linha[] } | Erro> {
   const ctx = await autorizar(obraId)
   if (ehErro(ctx)) return ctx
   const versao = await lerVersao(ctx, versaoId)
   if (ehErro(versao)) return versao
   if (versao.salva_em) return falha(VERSAO_SALVA)
-
-  if (!inteiroPositivo(linha.duracao)) return falha('Duração deve ser um número inteiro de dias úteis, a partir de 1')
-  const descricao = (linha.descricao ?? '').trim()
-  if (!descricao) return falha('Informe a descrição da atividade')
-  const etapa = (linha.etapa ?? '').trim()
-
-  const { data: atividades, error } = await ctx.supabase
-    .from('obras_atividade')
-    .select('*')
-    .eq('versao_id', versaoId)
+  const { data, error } = await ctx.supabase.from('obras_atividade').select('*').eq('versao_id', versaoId)
   if (error) return erroBanco('ler o cronograma', error)
-  const linhas = (atividades ?? []) as Linha[]
-  if (!linhas.some((a) => a.numero === linha.numero)) return falha(`Atividade ${linha.numero} não existe neste cronograma`)
+  return { ctx, linhas: (data ?? []) as Linha[] }
+}
 
-  for (const p of [linha.pred1, linha.pred2]) {
-    if (p === null) continue
-    if (!inteiroPositivo(p)) return falha('Predecessora inválida')
-    if (p === linha.numero) return falha('Uma atividade não pode ser predecessora dela mesma')
-    if (!linhas.some((a) => a.numero === p)) return falha(`Predecessora ${p} não existe neste cronograma`)
-  }
+/**
+ * Próximo `numero` da obra: maior de TODAS as versões e da execução + 1.
+ * `numero` é a identidade ligada ao exec/histórico — nunca é reaproveitado.
+ */
+async function proximoNumero(ctx: Contexto, obraId: string): Promise<number | Erro> {
+  const [at, ex] = await Promise.all([
+    ctx.supabase.from('obras_atividade').select('numero').eq('obra_id', obraId),
+    ctx.supabase.from('obras_atividade_exec').select('numero').eq('obra_id', obraId),
+  ])
+  if (at.error) return erroBanco('ler o cronograma', at.error)
+  if (ex.error) return erroBanco('ler a execução', ex.error)
+  return maior([...((at.data ?? []) as Linha[]), ...((ex.data ?? []) as Linha[])].map((a) => a.numero)) + 1
+}
 
-  const campos = {
-    etapa: etapa || null,
-    descricao,
-    pred1: linha.pred1,
-    pred2: linha.pred2,
-    duracao: linha.duracao,
-    bloqueia_por_trava: !!linha.bloqueiaPorTrava,
-  }
-  const plano = planoDe(linhas.map((a) => (a.numero === linha.numero ? { ...a, ...campos } : a)))
-  try {
-    calcularCronograma({
-      plano, exec: [], dataBase: ctx.obra.data_base ?? '2026-01-01', hoje: ctx.obra.data_base ?? '2026-01-01',
-      feriados: new Set(), atividadeTrava: null, impedimentos: [],
-    })
-  } catch (e) {
-    if (e instanceof CicloNasPredecessoras) return falha(e.message)
-    throw e
-  }
-
-  const { data: gravadas, error: errUpd } = await ctx.supabase
+/** Insere a atividade e a execução 'nao_iniciado' dela (numero novo: o exec não existe). */
+async function inserirAtividade(ctx: Contexto, obraId: string, versaoId: string, nova: Linha): Promise<ResultadoNumero> {
+  const numero = await proximoNumero(ctx, obraId)
+  if (ehErro(numero)) return numero
+  const { error } = await ctx.supabase
     .from('obras_atividade')
-    .update(campos)
-    .eq('versao_id', versaoId)
-    .eq('numero', linha.numero)
-    .select('id')
-  if (errUpd) return erroBanco('salvar a atividade', errUpd)
-  if (!gravadas?.length) return falha('Não foi possível salvar a atividade. Recarregue a página.')
+    .insert({
+      versao_id: versaoId, obra_id: obraId, numero, frente: null, saida_trava: null, responsavel_funcao: null,
+      bloqueia_por_trava: false, peso_valor: 0, inicio_fixo: null, pred1: null, pred2: null, ...nova,
+    })
+  if (error) return erroBanco('criar a atividade', error)
+  const { error: errE } = await ctx.supabase
+    .from('obras_atividade_exec')
+    .insert({ obra_id: obraId, numero, status: 'nao_iniciado', percentual: 0 })
+  // Sem a linha de exec o motor trata como não iniciada; a atividade já está gravada.
+  if (errE) return erroBanco('criar a execução da atividade', errE)
+  revalidar(obraId)
+  return { ok: true, numero }
+}
 
+/** Etapa nova no fim; nasce com a 1ª atividade "Nova atividade" (etapa só existe pelas atividades). */
+export async function adicionarEtapaAction(obraId: string, versaoId: string, nome: string): Promise<ResultadoNumero> {
+  const r = await lerVersaoRascunho(obraId, versaoId)
+  if (ehErro(r)) return r
+  const etapa = (nome ?? '').trim()
+  if (!etapa) return falha('Informe o nome da etapa')
+  if (etapasDe(r.linhas).some((e) => mesmaEtapa(e, etapa))) return falha(`Já existe a etapa “${etapa}” neste cronograma`)
+  return inserirAtividade(r.ctx, obraId, versaoId, {
+    etapa, descricao: 'Nova atividade', duracao: 1, ...posicaoNoFim(r.linhas, etapa),
+  })
+}
+
+/** Filtra pela etapa (vazia = null no banco). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const daEtapa = (q: any, etapa: string) => (etapa ? q.eq('etapa', etapa) : q.is('etapa', null))
+
+export async function renomearEtapaAction(
+  obraId: string,
+  versaoId: string,
+  nomeAtual: string,
+  nomeNovo: string,
+): Promise<Resultado> {
+  const r = await lerVersaoRascunho(obraId, versaoId)
+  if (ehErro(r)) return r
+  const atual = nomeAtual ?? ''
+  const novo = (nomeNovo ?? '').trim()
+  if (!novo) return falha('Informe o nome da etapa')
+  if (novo === atual) return { ok: true }
+  const etapas = etapasDe(r.linhas)
+  if (!etapas.includes(atual)) return falha('Etapa não encontrada. Recarregue a página.')
+  if (etapas.some((e) => e !== atual && mesmaEtapa(e, novo))) return falha(`Já existe a etapa “${novo}” neste cronograma`)
+
+  const { data, error } = await daEtapa(
+    r.ctx.supabase.from('obras_atividade').update({ etapa: novo }).eq('versao_id', versaoId),
+    atual,
+  ).select('id')
+  if (error) return erroBanco('renomear a etapa', error)
+  if (!data?.length) return falha('Não foi possível renomear a etapa. Recarregue a página.')
+  revalidar(obraId)
+  return { ok: true }
+}
+
+/** Grava várias atualizações de ordem (por `numero`); só as que mudam. */
+async function gravarOrdens(ctx: Contexto, versaoId: string, mudancas: { numero: number; campos: Linha }[]) {
+  const rs = await Promise.all(
+    mudancas.map((m) =>
+      ctx.supabase.from('obras_atividade').update(m.campos).eq('versao_id', versaoId).eq('numero', m.numero).select('id'),
+    ),
+  )
+  const e = rs.find((x) => x.error)
+  return e ? erroBanco('mudar a ordem', e.error!) : null
+}
+
+export async function moverEtapaAction(
+  obraId: string,
+  versaoId: string,
+  nome: string,
+  direcao: Direcao,
+): Promise<Resultado> {
+  const r = await lerVersaoRascunho(obraId, versaoId)
+  if (ehErro(r)) return r
+  const etapas = etapasDe(r.linhas)
+  const i = etapas.indexOf(nome ?? '')
+  if (i < 0) return falha('Etapa não encontrada. Recarregue a página.')
+  const j = direcao === 'cima' ? i - 1 : i + 1
+  if (j < 0 || j >= etapas.length) return { ok: true }
+  ;[etapas[i], etapas[j]] = [etapas[j], etapas[i]]
+
+  // etapa_ordem = posição (1..N) de cada etapa; grava só as atividades cuja posição mudou.
+  const pos = new Map(etapas.map((e, k) => [e, k + 1]))
+  const mudancas = r.linhas
+    .filter((a) => a.etapa_ordem !== pos.get(nomeEtapa(a)))
+    .map((a) => ({ numero: a.numero as number, campos: { etapa_ordem: pos.get(nomeEtapa(a))! } }))
+  const erro = await gravarOrdens(r.ctx, versaoId, mudancas)
+  if (erro) return erro
+  revalidar(obraId)
+  return { ok: true }
+}
+
+/** ↑/↓ dentro da etapa (para outra etapa: troca o campo Etapa da linha). */
+export async function moverAtividadeAction(
+  obraId: string,
+  versaoId: string,
+  numero: number,
+  direcao: Direcao,
+): Promise<Resultado> {
+  const r = await lerRascunho(obraId, versaoId, numero)
+  if (ehErro(r)) return r
+  const etapa = nomeEtapa(r.linhas.find((a) => a.numero === numero)!)
+  const grupo = ordenarAtividades(r.linhas).filter((a) => nomeEtapa(a) === etapa)
+  const i = grupo.findIndex((a) => a.numero === numero)
+  const j = direcao === 'cima' ? i - 1 : i + 1
+  if (j < 0 || j >= grupo.length) return { ok: true }
+
+  const efetiva = (a: Linha) => (typeof a.ordem === 'number' ? a.ordem : (a.numero as number))
+  const valores = grupo.map(efetiva).sort((x, y) => x - y)
+  const distintos = new Set(valores).size === valores.length
+  const nova = grupo.slice()
+  ;[nova[i], nova[j]] = [nova[j], nova[i]]
+  // Reaproveita os valores de ordem do grupo (só as duas trocam); com repetidos, renumera a etapa.
+  const mudancas = nova
+    .map((a, k) => ({ a, ordem: distintos ? valores[k] : valores[0] + k }))
+    .filter(({ a, ordem }) => a.ordem !== ordem)
+    .map(({ a, ordem }) => ({ numero: a.numero as number, campos: { ordem } }))
+  const erro = await gravarOrdens(r.ctx, versaoId, mudancas)
+  if (erro) return erro
+  revalidar(obraId)
+  return { ok: true }
+}
+
+export async function adicionarAtividadeAction(
+  obraId: string,
+  versaoId: string,
+  etapa: string,
+  dados: NovaAtividade,
+): Promise<ResultadoNumero> {
+  const r = await lerVersaoRascunho(obraId, versaoId)
+  if (ehErro(r)) return r
+  const descricao = (dados.descricao ?? '').trim()
+  if (!descricao) return falha('Informe a descrição da atividade')
+  if (!inteiroPositivo(dados.duracao)) return falha('Duração deve ser um número inteiro de dias úteis, a partir de 1')
+  const erroP = erroPredecessoras(r.linhas, null, [dados.pred1, dados.pred2])
+  if (erroP) return erroP
+  const inicioFixo = dados.inicioFixo ?? null
+  const pesoValor = valorValido(dados.pesoValor ?? 0)
+  if (pesoValor === null) return falha(VALOR_INVALIDO)
+  if (inicioFixo !== null && !dataISO(inicioFixo)) return falha('Data inválida')
+  const nome = etapasDe(r.linhas).includes(etapa ?? '') ? (etapa ?? '') : (etapa ?? '').trim()
+  return inserirAtividade(r.ctx, obraId, versaoId, {
+    etapa: nome || null, descricao, duracao: dados.duracao, pred1: dados.pred1, pred2: dados.pred2,
+    inicio_fixo: inicioFixo, peso_valor: pesoValor, ...posicaoNoFim(r.linhas, nome),
+  })
+}
+
+/**
+ * Exclui a atividade do rascunho. Recusa se alguma atividade da versão a tem
+ * como predecessora, se é a atividade-trava ou se a execução já andou. A linha
+ * de execução (sem avanço) fica: não há delete nela, e o `numero` não é reaproveitado.
+ */
+export async function excluirAtividadeAction(obraId: string, versaoId: string, numero: number): Promise<Resultado> {
+  const r = await lerRascunho(obraId, versaoId, numero)
+  if (ehErro(r)) return r
+  const { ctx, linhas } = r
+  const cods = codigosDe(linhas)
+  const sucessora = ordenarAtividades(linhas).find((a) => a.numero !== numero && (a.pred1 === numero || a.pred2 === numero))
+  if (sucessora) {
+    return falha(
+      `A atividade ${rotulo(cods, sucessora.numero)} (${sucessora.descricao}) depende dela — tire a predecessora antes de excluir`,
+    )
+  }
+  if (ctx.obra.atividade_trava === numero) {
+    return falha(`A atividade ${rotulo(cods, numero)} é a atividade-trava da obra — não pode ser excluída`)
+  }
+  const { data: ex, error: errE } = await ctx.supabase
+    .from('obras_atividade_exec')
+    .select('status, percentual')
+    .eq('obra_id', obraId)
+    .eq('numero', numero)
+  if (errE) return erroBanco('ler a execução', errE)
+  if (((ex ?? []) as Linha[]).some((e) => Number(e.percentual ?? 0) > 0 || e.status !== 'nao_iniciado')) {
+    return falha(`A atividade ${rotulo(cods, numero)} já tem avanço registrado — não pode ser excluída`)
+  }
+
+  const { data, error } = await ctx.supabase
+    .from('obras_atividade')
+    .delete()
+    .eq('versao_id', versaoId)
+    .eq('numero', numero)
+    .select('id')
+  if (error) return erroBanco('excluir a atividade', error)
+  if (!data?.length) return falha('Não foi possível excluir a atividade. Recarregue a página.')
+  revalidar(obraId)
+  return { ok: true }
+}
+
+/** Item 15: OBRA sem cronograma → cria a v1 em rascunho, vazia (depois: + Etapa, + Atividade). */
+export async function criarCronogramaAction(obraId: string): Promise<Resultado> {
+  const ctx = await autorizar(obraId)
+  if (ehErro(ctx)) return ctx
+  const { data: versoes, error } = await ctx.supabase
+    .from('obras_cronograma_versao')
+    .select('id')
+    .eq('obra_id', obraId)
+  if (error) return erroBanco('ler as versões', error)
+  if (versoes?.length) return falha('Esta OBRA já tem cronograma')
+  const { error: errI } = await ctx.supabase
+    .from('obras_cronograma_versao')
+    .insert({ obra_id: obraId, numero: 1, criada_por: ctx.email })
+    .select('id')
+  if (errI) return erroBanco('criar o cronograma', errI)
   revalidar(obraId)
   return { ok: true }
 }
@@ -236,7 +538,7 @@ export async function definirFimAction(
     const inicio = calc.atividades.find((a) => a.numero === numero)!.inicioPrevisto
     duracao = duracaoPorFim(inicio, fim, feriados)
   } catch (e) {
-    if (e instanceof CicloNasPredecessoras) return falha(e.message)
+    if (e instanceof CicloNasPredecessoras) return falha(cicloComCodigos(e.message, codigosDe(linhas)))
     if (e instanceof Error && e.message.startsWith('Fim antes do início')) return falha(e.message)
     throw e
   }
@@ -279,10 +581,12 @@ export async function salvarVersaoAction(
 
 const COLUNAS_COPIADAS = [
   'numero', 'frente', 'etapa', 'descricao', 'saida_trava', 'pred1', 'pred2',
-  'duracao', 'responsavel_funcao', 'bloqueia_por_trava', 'peso_valor', 'inicio_fixo',
+  'duracao', 'responsavel_funcao', 'bloqueia_por_trava', 'peso_valor', 'inicio_fixo', 'ordem', 'etapa_ordem',
 ] as const
 
-export async function criarRevisaoAction(obraId: string): Promise<Resultado & { versaoId?: string }> {
+export async function criarRevisaoAction(
+  obraId: string,
+): Promise<Resultado & { versaoId?: string; numero?: number }> {
   const ctx = await autorizar(obraId)
   if (ehErro(ctx)) return ctx
 
@@ -336,7 +640,8 @@ export async function criarRevisaoAction(obraId: string): Promise<Resultado & { 
   }
 
   revalidar(obraId)
-  return { ok: true, versaoId: destino.id as string }
+  // A tela navega para `?v=<numero>`: sem isso ela seguia na versão do `?v=` anterior (salva, só leitura).
+  return { ok: true, versaoId: destino.id as string, numero: destino.numero as number }
 }
 
 /** Plano que vale para a execução (a vigente; sem base salva, recusa) + execução atual. */

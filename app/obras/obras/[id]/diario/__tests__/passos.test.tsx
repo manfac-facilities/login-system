@@ -4,12 +4,13 @@ jest.mock('../_actions', () => ({
   salvarRascunhoAction: jest.fn(async () => ({ ok: true, rdoId: 'r1' })),
   registrarFotoAction: jest.fn(),
   removerFotoAction: jest.fn(),
+  validarEEnviarAction: jest.fn(async () => ({ ok: true, enviados: 2 })),
 }))
 jest.mock('@/lib/supabase/client', () => ({ createClient: jest.fn() }))
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
 
 import PassosDiario from '../_passos'
-import { salvarRascunhoAction } from '../_actions'
+import { salvarRascunhoAction, validarEEnviarAction } from '../_actions'
 import type { AtividadeDiario, RascunhoRdo } from '../_tipos'
 
 const atividades: AtividadeDiario[] = [
@@ -26,6 +27,7 @@ const inicial: RascunhoRdo = {
   climaManha: null,
   climaTarde: null,
   programacaoAmanha: null,
+  semImpedimento: false,
   avancos: [
     { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: null },
     { numero: 11, de: 0, para: 0, concluida: false, causa: null },
@@ -99,6 +101,108 @@ describe('PassosDiario', () => {
     montar({ impedimentos: <p>formulário de impedimento</p> })
     abrirPasso(/Impedimentos/)
     expect(screen.getByText('formulário de impedimento')).toBeInTheDocument()
+  })
+
+  describe('"Sem impedimentos hoje" (item 7)', () => {
+    it('marcar deixa o passo 4 preenchido e vai no rascunho', async () => {
+      montar({ impedimentos: <p>form</p> })
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).not.toHaveAccessibleName(/preenchido/)
+      abrirPasso(/Impedimentos/)
+      fireEvent.click(screen.getByRole('checkbox', { name: /Sem impedimentos hoje/ }))
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).toHaveAccessibleName(/preenchido/)
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith('o1', '2026-10-29', expect.objectContaining({ semImpedimento: true }))
+    })
+
+    it('com impedimento registrado no dia: passo preenchido, opção some e o flag não vai', async () => {
+      montar({ inicial: { ...inicial, semImpedimento: true }, impedimentosHoje: 1 })
+      expect(screen.getByRole('button', { name: /Impedimentos/ })).toHaveAccessibleName(/preenchido/)
+      abrirPasso(/Impedimentos/)
+      expect(screen.queryByRole('checkbox', { name: /Sem impedimentos hoje/ })).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith('o1', '2026-10-29', expect.objectContaining({ semImpedimento: false }))
+    })
+  })
+
+  describe('Validar e enviar salva antes o que está na tela (item 10)', () => {
+    beforeEach(() => jest.clearAllMocks())
+
+    it('sem ter salvo o rascunho: salva o estado atual e só então valida', async () => {
+      const ordem: string[] = []
+      ;(salvarRascunhoAction as jest.Mock).mockImplementationOnce(async () => (ordem.push('salvar'), { ok: true, rdoId: 'r1' }))
+      ;(validarEEnviarAction as jest.Mock).mockImplementationOnce(async () => (ordem.push('validar'), { ok: true, enviados: 2 }))
+      montar({ validacao: { previaHtml: null, pendentes: null } })
+      abrirPasso(/O que andou/)
+      fireEvent.change(within(screen.getByTestId('atividade-6')).getByRole('spinbutton'), { target: { value: '70' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Validar e enviar' }))
+      await screen.findByText(/Diário enviado para 2/)
+      expect(ordem).toEqual(['salvar', 'validar'])
+      expect(salvarRascunhoAction).toHaveBeenCalledWith(
+        'o1', '2026-10-29',
+        expect.objectContaining({ avancos: expect.arrayContaining([expect.objectContaining({ numero: 6, para: 0.7 })]) }),
+      )
+      expect(validarEEnviarAction).toHaveBeenCalledWith('o1', '2026-10-29')
+    })
+
+    it('se salvar falhar (validação ou servidor), não valida nem envia', async () => {
+      ;(salvarRascunhoAction as jest.Mock).mockImplementationOnce(async () => ({ ok: false, erro: 'Atividade 6: travada' }))
+      montar({ validacao: { previaHtml: null, pendentes: null } })
+      fireEvent.click(screen.getByRole('button', { name: 'Validar e enviar' }))
+      expect(await screen.findByText('Atividade 6: travada')).toBeInTheDocument()
+      expect(validarEEnviarAction).not.toHaveBeenCalled()
+    })
+
+    it('já validado (reenvio): não tenta salvar', async () => {
+      montar({ estado: 'validado', rdoId: 'r1', validacao: { previaHtml: '<p>x</p>', pendentes: null } })
+      fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }))
+      await screen.findByText(/Diário enviado para 2/)
+      expect(salvarRascunhoAction).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Incluir outra atividade (itens 6/11)', () => {
+    const outras: AtividadeDiario[] = [
+      { numero: 20, etapa: 'Acabamento', descricao: 'Pintura da fachada', atual: 0.1, travada: false, motivoTrava: null },
+      { numero: 21, etapa: 'Acabamento', descricao: 'Forro de gesso', atual: 0, travada: false, motivoTrava: null },
+      { numero: 30, etapa: 'Elétrica', descricao: 'Quadro geral', atual: 0, travada: true, motivoTrava: 'Travada até a atividade 6 ser concluída' },
+    ]
+    beforeEach(() => jest.clearAllMocks())
+
+    it('lista agrupada por etapa, com busca; a incluída entra com de = % atual e vai no rascunho', async () => {
+      montar({ outras })
+      abrirPasso(/O que andou/)
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      const lista = screen.getByRole('region', { name: 'Incluir outra atividade' })
+      expect(within(lista).getByRole('group', { name: 'Acabamento' })).toBeInTheDocument()
+      expect(within(lista).getByRole('group', { name: 'Elétrica' })).toBeInTheDocument()
+      fireEvent.change(within(lista).getByRole('searchbox', { name: /Buscar/ }), { target: { value: 'fachada' } })
+      expect(within(lista).queryByText(/Forro de gesso/)).not.toBeInTheDocument()
+      fireEvent.click(within(lista).getByRole('button', { name: /20 · Pintura da fachada/ }))
+
+      const cartao = screen.getByTestId('atividade-20')
+      expect(within(cartao).getByText(/antes 10%/)).toBeInTheDocument()
+      fireEvent.change(within(cartao).getByRole('spinbutton'), { target: { value: '30' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith(
+        'o1', '2026-10-29',
+        expect.objectContaining({
+          avancos: expect.arrayContaining([{ numero: 20, de: 0.1, para: 0.3, concluida: false, causa: null }]),
+        }),
+      )
+    })
+
+    it('a incluída some da lista; atividade travada entra com cadeado (trava respeitada)', () => {
+      montar({ outras })
+      abrirPasso(/O que andou/)
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      fireEvent.click(screen.getByRole('button', { name: /30 · Quadro geral/ }))
+      expect(within(screen.getByTestId('atividade-30')).getByRole('slider')).toBeDisabled()
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      expect(screen.queryByRole('button', { name: /30 · Quadro geral/ })).not.toBeInTheDocument()
+    })
   })
 
   it('diário validado: só leitura', () => {

@@ -95,5 +95,6 @@ export function montarDadosCronograma(p: {
       diasRestantes: a.diasRestantes, travada: a.travada,
     })),
     atividadeTrava: obra.atividade_trava ?? null,
+    valores: podeEditar && !alvo.salva ? Object.fromEntries(exibida.atividades.map((a) => [a.numero, a.pesoValor])) : null,
   }
 }
