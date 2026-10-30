@@ -91,7 +91,11 @@ language plpgsql set search_path = pg_catalog, public as $$
 declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
 begin
   if tg_op = 'INSERT' then
-    if v_email is not null then new.criado_por := v_email; end if;
+    if v_email is not null then
+      new.criado_por := v_email;
+      new.criado_em := now();   -- não deixa o cliente empurrar criado_em p/ o futuro e burlar as 24 h
+      new.editado_em := null;
+    end if;
     return new;
   end if;
 

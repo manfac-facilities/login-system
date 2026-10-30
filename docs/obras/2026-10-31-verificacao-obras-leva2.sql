@@ -70,9 +70,9 @@ do $$ begin
   update public.obras_registro set texto = 'editado', criado_por = 'outro@teste.invalid',
          criado_em = now() - interval '5 days'
    where id = '00000000-0000-4000-8000-00000000d001';
-  raise exception 'ok:%|%|%', (select editado_em is not null from public.obras_registro where id = '00000000-0000-4000-8000-00000000d001'),
+  raise exception 'ok:%|%|%', (select (editado_em is not null)::text from public.obras_registro where id = '00000000-0000-4000-8000-00000000d001'),
     (select criado_por from public.obras_registro where id = '00000000-0000-4000-8000-00000000d001'),
-    (select (criado_em > now() - interval '1 hour') from public.obras_registro where id = '00000000-0000-4000-8000-00000000d001');
+    (select (criado_em > now() - interval '1 hour')::text from public.obras_registro where id = '00000000-0000-4000-8000-00000000d001');
 exception when others then
   perform pg_temp.reg(3, 'autor edita dentro de 24 h: passa, editado_em preenchido, autoria e criado_em intactos',
     'ok:true|autor.teste@teste.invalid|true', sqlerrm);
@@ -167,6 +167,18 @@ do $$ begin
 exception when others then
   perform pg_temp.reg(14, 'registro imediata/urgente com ata jsonb e atividade_numero: passa', 'OK_SEM_ERRO', sqlerrm);
 end $$;
+
+do $ begin
+  perform pg_temp.jwt('autor.teste@teste.invalid');
+  insert into public.obras_registro (id, obra_id, tipo, criado_em, editado_em)
+  values ('00000000-0000-4000-8000-00000000d004', '00000000-0000-4000-8000-00000000a005', 'visita',
+          timestamptz '2100-01-01', timestamptz '2100-01-01');
+  raise exception 'ok:%|%',
+    (select (criado_em = now())::text from public.obras_registro where id = '00000000-0000-4000-8000-00000000d004'),
+    (select (editado_em is null)::text from public.obras_registro where id = '00000000-0000-4000-8000-00000000d004');
+exception when others then
+  perform pg_temp.reg(33, 'com JWT, criado_em/editado_em enviados no INSERT são ignorados (janela de 24 h não burlável)', 'ok:true|true', sqlerrm);
+end $;
 
 -- ============================================================
 -- obras_envio: tipos e registro_id
@@ -343,10 +355,10 @@ begin
            filter (where obtido is null or obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 32 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 32 testes rodaram';
+  if v_total <> 33 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 33 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/32 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/33 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
