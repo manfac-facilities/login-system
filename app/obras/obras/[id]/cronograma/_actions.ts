@@ -121,7 +121,8 @@ function erroPredecessoras(linhas: Linha[], numero: number | null, preds: (numbe
   return null
 }
 
-const nomeEtapa = (a: Linha) => ((a.etapa as string | null) ?? '').trim()
+// Nome cru (como está no banco): renomear/mover filtram por ele.
+const nomeEtapa = (a: Linha) => (a.etapa as string | null) ?? ''
 const maior = (xs: unknown[]) => xs.reduce<number>((m, x) => (typeof x === 'number' && x > m ? x : m), 0)
 
 /** Etapas da versão na ordem de exibição. */
@@ -142,7 +143,8 @@ function posicaoNoFim(linhas: Linha[], etapa: string): { etapa_ordem: number; or
   return { etapa_ordem: Math.max(maior(linhas.map((a) => a.etapa_ordem)), etapasDe(linhas).length) + 1, ordem }
 }
 
-const mesmaEtapa = (a: string, b: string) => a.toLocaleLowerCase('pt-BR') === b.toLocaleLowerCase('pt-BR')
+const mesmaEtapa = (a: string, b: string) =>
+  a.trim().toLocaleLowerCase('pt-BR') === b.trim().toLocaleLowerCase('pt-BR')
 
 /**
  * Edita uma linha do rascunho. Só os campos presentes em `linha` são gravados
@@ -175,7 +177,8 @@ export async function salvarLinhaRascunhoAction(
   if (erroP) return erroP
   if (linha.bloqueiaPorTrava !== undefined) campos.bloqueia_por_trava = !!linha.bloqueiaPorTrava
   if (linha.etapa !== undefined) {
-    const etapa = (linha.etapa ?? '').trim()
+    // Etapa existente vem com o nome cru (pode ter espaço); nome novo é aparado.
+    const etapa = etapasDe(linhas).includes(linha.etapa ?? '') ? (linha.etapa ?? '') : (linha.etapa ?? '').trim()
     campos.etapa = etapa || null
     if (etapa !== nomeEtapa(atual)) {
       Object.assign(campos, posicaoNoFim(linhas.filter((a) => a.numero !== linha.numero), etapa))
@@ -258,7 +261,7 @@ export async function renomearEtapaAction(
 ): Promise<Resultado> {
   const r = await lerVersaoRascunho(obraId, versaoId)
   if (ehErro(r)) return r
-  const atual = (nomeAtual ?? '').trim()
+  const atual = nomeAtual ?? ''
   const novo = (nomeNovo ?? '').trim()
   if (!novo) return falha('Informe o nome da etapa')
   if (novo === atual) return { ok: true }
@@ -296,7 +299,7 @@ export async function moverEtapaAction(
   const r = await lerVersaoRascunho(obraId, versaoId)
   if (ehErro(r)) return r
   const etapas = etapasDe(r.linhas)
-  const i = etapas.indexOf((nome ?? '').trim())
+  const i = etapas.indexOf(nome ?? '')
   if (i < 0) return falha('Etapa não encontrada. Recarregue a página.')
   const j = direcao === 'cima' ? i - 1 : i + 1
   if (j < 0 || j >= etapas.length) return { ok: true }
@@ -359,7 +362,7 @@ export async function adicionarAtividadeAction(
   if (erroP) return erroP
   const inicioFixo = dados.inicioFixo ?? null
   if (inicioFixo !== null && !dataISO(inicioFixo)) return falha('Data inválida')
-  const nome = (etapa ?? '').trim()
+  const nome = etapasDe(r.linhas).includes(etapa ?? '') ? (etapa ?? '') : (etapa ?? '').trim()
   return inserirAtividade(r.ctx, obraId, versaoId, {
     etapa: nome || null, descricao, duracao: dados.duracao, pred1: dados.pred1, pred2: dados.pred2,
     inicio_fixo: inicioFixo, ...posicaoNoFim(r.linhas, nome),
