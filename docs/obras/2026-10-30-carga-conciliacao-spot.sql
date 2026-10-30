@@ -121,3 +121,10 @@ begin
     select ins.id, 'Esteira', 'etapa', null, nm->>src.et, src.mt, qm from ins join src using (os);
   get diagnostics n = row_count; if n <> 116 then raise exception 'carga: % obras novas, esperado 116', n; end if;
 end $$;
+
+-- Complemento aplicado em 30/10/2026, com as respostas de
+-- docs/cliente/2026-10-30-respostas-pendencias-conciliacao-spot.md (mesmo padrão: guarda por linha + histórico):
+--   0826-008233        Em andamento -> Cancelada ("excluir, não foi aprovado e não fizemos")
+--   0726-017515        valor R$ 1.139,96 -> R$ 609,45
+--   Cadeado Sem Os's   Pendente faturamento -> Faturado, fat_nfse = '1502' (data de faturamento não informada)
+--   1026-007537        analista já era AMANDA: nada a mudar
