@@ -105,3 +105,9 @@ ou pulso.
 **A regra que nasceu disso:** publicar o mockup como artifact com painel de controle
 para o João comparar variantes (opacidade, on/off) na própria tela, em vez de descrever
 a variação em texto.
+
+## 29/10/2026 — Hub fora do ar ~1h15 depois de um deploy com build OK
+
+- Deploy do `master` `86f26df` (extratos do Frotas + D3) às ~20:05 BRT. O **build terminou com Success** (23:08:41 GMT), mas o container novo **não ligou**: o EasyPanel mandou SIGTERM no antigo e o status ficou vermelho. `hub.manfac.com.br` respondeu **503** de ~20:05 até a volta (build no ar `Last-Modified: Fri, 30 Oct 2026 00:18:33 GMT`, 21:18 BRT). Compras, Financeiro, Cockpit e o site seguiram no ar.
+- O mesmo commit compila localmente; banco não envolvido. Causa exata não confirmada (sem acesso ao painel/SSH) — hipótese: disco ou memória do servidor no momento de ligar a imagem nova.
+- **Lição:** "build Success" no log do deploy não prova que subiu. Conferir sempre `Last-Modified` dos chunks e, se ficar 503, olhar o log do **container** (não o do deploy) e o Monitor do servidor (disco/memória).
