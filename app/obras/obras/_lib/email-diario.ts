@@ -37,14 +37,14 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
 const num = (x: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(x)
-const pct = (x: number) => `${Math.round(x * 100)}%`
-const dataBr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`
+export const pct = (x: number) => `${Math.round(x * 100)}%`
+export const dataBr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`
 const DIA_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const diaSemana = (iso: string) => {
   const [a, m, d] = iso.split('-').map(Number)
   return DIA_SEMANA[new Date(Date.UTC(a, m - 1, d)).getUTCDay()]
 }
-const hora = (ts: string) =>
+export const hora = (ts: string) =>
   new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ts))
 
 const diaLocal = (ts: string) =>
@@ -77,19 +77,46 @@ const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
   outro: { rotulo: 'Outro', resp: null },
 }
 
-type Item = { rotulo: string; corpo: string; tecnico?: boolean }
+export type ItemDiario = { rotulo: string; corpo: string; tecnico?: boolean }
+type Item = ItemDiario
+export type FeitoDiario = { numero: number; descricao: string; de: number; para: number; concluida: boolean }
+/** `causa` é null quando não pode ir ao lado (causa da Manfac ao cliente); `responsavel` null em "outro". */
+export type NaoAvancouDiario = { numero: number; descricao: string; de: number; causa: string | null; responsavel: string | null }
+export type ClimaTurno = { turno: string; clima: ClimaRdo; rotulo: string; cor: string }
 
-export function montarEmailDiario(p: {
+/**
+ * Conteúdo do diário já filtrado por lado — fonte única do e-mail e do PDF
+ * (`_pdf/rdo.tsx`), para os dois mostrarem a mesma coisa ao cliente.
+ */
+export type ConteudoDiario = {
+  lado: 'cliente' | 'interno'
+  loja: string
+  assunto: string
+  titulo: string
+  subtitulo: string
+  sinal: (typeof SINAL)[Sinal]
+  desvio: string
+  previsao: string
+  numeros: [string, string][]
+  travados: ItemDiario[]
+  /** Só no interno: impedimentos abertos com `exibirAoCliente = false`. */
+  ocultos: ItemDiario[]
+  orientacoes: string[]
+  clima: ClimaTurno[]
+  feitos: FeitoDiario[]
+  naoAvancou: NaoAvancouDiario[]
+  semExecucao: string | null
+  amanha: string
+}
+
+export function montarConteudoDiario(p: {
   lado: 'cliente' | 'interno'
   obra: ObraGrande
   rdo: RdoCompleto
   validadoPor: string
   validadoEm: string
   diaN: number
-  fotosCid: { cid: string; legenda: string | null }[]
-  /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
-  fotosOmitidas?: number
-}): EmailDiario {
+}): ConteudoDiario {
   const { lado, obra: og, rdo } = p
   const { obra, plano, exec, feriados } = og
   const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
@@ -206,9 +233,7 @@ export function montarEmailDiario(p: {
     : rdo.avancos
         .filter((a) => a.concluida || a.para > a.de)
         .sort((a, b) => a.numero - b.numero)
-        .map((a) =>
-          a.concluida ? `✓ ${descricao(a.numero)} — concluída` : `▲ ${descricao(a.numero)}: ${pct(a.de)} → ${pct(a.para)}`,
-        )
+        .map((a): FeitoDiario => ({ numero: a.numero, descricao: descricao(a.numero), de: a.de, para: a.para, concluida: a.concluida }))
   // 5b. Não avançou hoje (item 12 da reunião de 31/10): atividade sem avanço com causa informada.
   // Ao cliente, causa da Manfac (material/equipe) aparece só como "Manfac", sem detalhar a área interna.
   const naoAvancou = rdo.semExecucao
@@ -216,20 +241,17 @@ export function montarEmailDiario(p: {
     : rdo.avancos
         .filter((a) => !a.concluida && a.para <= a.de && a.causa && a.causa in CAUSA)
         .sort((a, b) => a.numero - b.numero)
-        .map((a) => {
+        .map((a): NaoAvancouDiario => {
           const c = CAUSA[a.causa!]
-          const partes = [
-            lado === 'cliente' && c.resp === 'manfac' ? null : `causa: ${c.rotulo}`,
-            c.resp ? `responsável: ${RESP[c.resp]}` : null,
-          ].filter(Boolean)
-          return `${descricao(a.numero)} (${pct(a.de)}) — ${partes.join(' · ')}`
+          return {
+            numero: a.numero,
+            descricao: descricao(a.numero),
+            de: a.de,
+            causa: lado === 'cliente' && c.resp === 'manfac' ? null : c.rotulo,
+            responsavel: c.resp ? RESP[c.resp] : null,
+          }
         })
   const semExecucao = rdo.semExecucao ? `Sem execução hoje — ${rdo.motivoSemExecucao ?? ''}`.trim() : null
-  const omitidas = p.fotosOmitidas ?? 0
-  const notaOmitidas = omitidas
-    ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
-    : null
-
   // Clima: por turno; o legado (`clima`) só entra quando não há turno.
   const climaTurnos = [
     ['Manhã', rdo.climaManha],
@@ -237,17 +259,50 @@ export function montarEmailDiario(p: {
   ].filter((t): t is [string, ClimaRdo] => !!t[1] && t[1] in CLIMA)
   const climaPartes: [string, ClimaRdo][] =
     climaTurnos.length ? climaTurnos : rdo.clima && rdo.clima in CLIMA ? [['Clima', rdo.clima]] : []
-  const climaTexto = climaPartes.map(([t, c]) => `${t}: ${CLIMA[c].rotulo}`).join(' · ')
-  // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
-  const climaHtml = climaPartes
-    .map(
-      ([t, c]) =>
-        `<span style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${CLIMA[c].cor};border:1px solid #6e8894;vertical-align:middle"></span> <b>${esc(t)}:</b> ${esc(CLIMA[c].rotulo)}`,
-    )
-    .join('&nbsp;&nbsp;·&nbsp;&nbsp;')
+  const clima = climaPartes.map(([turno, c]): ClimaTurno => ({ turno, clima: c, rotulo: CLIMA[c].rotulo, cor: CLIMA[c].cor }))
 
   // 6. Amanhã
   const amanha = rdo.programacaoAmanha?.trim() || 'Sem programação informada.'
+
+  return {
+    lado, loja, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes,
+    clima, feitos, naoAvancou, semExecucao, amanha,
+  }
+}
+
+export function montarEmailDiario(p: {
+  lado: 'cliente' | 'interno'
+  obra: ObraGrande
+  rdo: RdoCompleto
+  validadoPor: string
+  validadoEm: string
+  diaN: number
+  fotosCid: { cid: string; legenda: string | null }[]
+  /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
+  fotosOmitidas?: number
+}): EmailDiario {
+  const c = montarConteudoDiario(p)
+  const { lado, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes, semExecucao, amanha } = c
+  const feitos = c.feitos.map((a) =>
+    a.concluida ? `✓ ${a.descricao} — concluída` : `▲ ${a.descricao}: ${pct(a.de)} → ${pct(a.para)}`,
+  )
+  const naoAvancou = c.naoAvancou.map((a) => {
+    const partes = [a.causa ? `causa: ${a.causa}` : null, a.responsavel ? `responsável: ${a.responsavel}` : null].filter(Boolean)
+    return `${a.descricao} (${pct(a.de)}) — ${partes.join(' · ')}`
+  })
+  const omitidas = p.fotosOmitidas ?? 0
+  const notaOmitidas = omitidas
+    ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
+    : null
+  const climaPartes = c.clima
+  const climaTexto = climaPartes.map((t) => `${t.turno}: ${t.rotulo}`).join(' · ')
+  // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
+  const climaHtml = climaPartes
+    .map(
+      (t) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${t.cor};border:1px solid #6e8894;vertical-align:middle"></span> <b>${esc(t.turno)}:</b> ${esc(t.rotulo)}`,
+    )
+    .join('&nbsp;&nbsp;·&nbsp;&nbsp;')
 
   // ---------- HTML ----------
   const secao = (tituloSecao: string, corpo: string) =>

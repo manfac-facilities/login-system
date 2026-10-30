@@ -60,7 +60,16 @@ export default async function ComunicacaoPage({ params }: { params: Promise<{ id
               </p>
               <p className="break-words text-xs text-[#5a7380]">Para: {e.destinatarios.join(', ') || '—'}</p>
               {e.detalhe ? <p className="text-xs text-[#5a7380]">{e.detalhe}</p> : null}
-              {/* Slot: link "Abrir PDF" (agente do PDF) */}
+              {e.tipo === 'diario' && e.referencia && /^\d{4}-\d{2}-\d{2}$/.test(e.referencia) ? (
+                <a
+                  href={`/obras/obras/${id}/diario/pdf/${e.referencia}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm font-semibold text-[#00345e] hover:border-[#b94606]"
+                >
+                  Abrir PDF
+                </a>
+              ) : null}
             </li>
           ))}
         </ul>

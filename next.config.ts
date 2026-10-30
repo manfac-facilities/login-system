@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // o rastreio de arquivos não enxerga esse caminho sozinho.
   outputFileTracingIncludes: {
     '/api/obras/relatorio-diario': ['./app/api/obras/relatorio-diario/_fontes/*.ttf'],
+    // PDF do diário (react-pdf): TTF e logo lidos em runtime em `app/obras/obras/_pdf/base.tsx`.
+    '/obras/obras/[id]/diario/pdf/[data]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [

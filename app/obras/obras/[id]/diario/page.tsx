@@ -188,6 +188,17 @@ export default async function DiarioObraPage({
             {rdo ? ` · ${rdo.estado === 'rascunho' ? 'rascunho' : rdo.estado}` : ' · ainda não iniciado'}
           </p>
         </div>
+        {rdo && (rdo.estado === 'validado' || rdo.estado === 'enviado') ? (
+          // Rota GET (não página): <a> comum, abre o PDF da versão cliente em outra aba.
+          <a
+            href={`${base}/pdf/${data}`}
+            target="_blank"
+            rel="noopener"
+            className="flex min-h-11 w-fit items-center rounded-lg bg-[#00345e] px-4 text-sm font-semibold text-white hover:bg-[#0d2050]"
+          >
+            Gerar PDF
+          </a>
+        ) : null}
         <nav aria-label="Escolher o dia" className="flex flex-wrap items-center gap-2">
           <Link href={`${base}?data=${deslocar(data, -1)}`} className={navLink}>
             ← dia anterior
