@@ -16,6 +16,8 @@ import { useState, type ReactNode } from 'react'
 import { salvarRascunhoAction } from './_actions'
 import FotosDiario from './_fotos'
 import { ClimaTurnos } from './_clima'
+import { IconeCadeado, IconeCheck } from '../../_ui/icones'
+import { Chevron } from '../cronograma/_barra-ferramentas'
 import type {
   AtividadeDiario,
   AvancoRdo,
@@ -108,13 +110,15 @@ function Passo({
                 : 'border-[#dadad8] text-[#5a7380]')
           }
         >
-          {feito ? '✓' : n}
+          {feito ? <IconeCheck tamanho={16} /> : n}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-semibold text-[#333336]">{titulo}</span>
           <span className="block truncate text-xs text-[#5a7380]">{resumo}</span>
         </span>
-        <span aria-hidden className="text-[#5a7380]">{aberto ? '▴' : '▾'}</span>
+        <span aria-hidden className="text-[#5a7380]">
+          <Chevron aberto={aberto} tamanho={18} />
+        </span>
       </button>
       {aberto ? <div className="border-t border-[#dadad8] px-3 py-3">{children}</div> : null}
     </section>
@@ -142,7 +146,11 @@ function CartaoAtividade({
       className={'rounded-lg border border-[#dadad8] bg-[#f6f6f5] p-3 ' + (a.travada ? 'opacity-60' : '')}
     >
       <p className="font-semibold text-[#333336]">
-        {a.travada ? <span aria-label="Travada" className="mr-1">🔒</span> : null}
+        {a.travada ? (
+          <span role="img" aria-label="Travada" className="mr-1 inline-block align-[-2px] text-[#5a7380]">
+            <IconeCadeado tamanho={15} />
+          </span>
+        ) : null}
         {a.numero} · {a.descricao}
       </p>
       {a.travada ? <p className="text-xs text-[#5a7380]">{a.motivoTrava}</p> : null}
@@ -441,13 +449,14 @@ export default function PassosDiario({
       {aviso ? <p className="text-center text-xs text-[#5a7380]">{aviso}</p> : null}
 
       {!somenteLeitura ? (
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-[#dadad8] bg-[#ffffff]/95 px-4 py-3">
+        // No celular fica acima do menu inferior do ShellObra (56px + borda); no computador, à direita da sidebar.
+        <div className="fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 border-t border-[#dadad8] bg-[#ffffff]/95 px-4 py-3 lg:bottom-0 lg:left-[240px]">
           <div className="mx-auto max-w-xl">
             <button
               type="button"
               disabled={salvando}
               onClick={() => void salvar()}
-              className="min-h-12 w-full rounded-xl bg-[#b94606] text-base font-bold text-[#00345e] disabled:opacity-45"
+              className="min-h-12 w-full rounded-xl bg-[#b94606] text-base font-bold text-white disabled:opacity-45"
             >
               {salvando ? 'Salvando…' : 'Salvar rascunho'}
             </button>
