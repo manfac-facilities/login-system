@@ -10,6 +10,7 @@
  */
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
+import { CAUSA, type CausaRdo } from './causas'
 import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
@@ -29,7 +30,7 @@ export type RdoCompleto = {
 }
 
 /** Causa de "não andou" do diário (mesmos valores de `CausaNaoAndou` em `[id]/diario/_tipos.ts`). */
-export type CausaRdo = 'cliente' | 'material' | 'equipe' | 'clima' | 'projeto' | 'outro'
+export type { CausaRdo } from './causas'
 
 export type EmailDiario = { assunto: string; html: string; texto: string }
 
@@ -67,15 +68,6 @@ const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
   impraticavel: { rotulo: 'Impraticável', cor: '#d64545' },
 }
 
-/** Rótulo da causa e responsável (spec §5.3: cada causa mapeada para um responsável; mapa confirmado pelo José em 31/10; outro sem responsável). */
-export const CAUSA: Record<CausaRdo, { rotulo: string; resp: Responsavel | null }> = {
-  cliente: { rotulo: 'Cliente / loja', resp: 'cliente' },
-  material: { rotulo: 'Material', resp: 'manfac' },
-  equipe: { rotulo: 'Equipe', resp: 'manfac' },
-  clima: { rotulo: 'Clima', resp: 'clima' },
-  projeto: { rotulo: 'Projeto', resp: 'cliente' },
-  outro: { rotulo: 'Outro', resp: null },
-}
 
 export type ItemDiario = { rotulo: string; corpo: string; tecnico?: boolean }
 type Item = ItemDiario

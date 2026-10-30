@@ -29,14 +29,23 @@ describe('lookahead', () => {
   it('respeita janela, ignora concluídas, restrição liberada não conta', () => {
     const r = lookahead(
       [ativ(1, '2026-10-27'), ativ(2, '2026-11-03'), ativ(3, '2026-12-30'), ativ(4, '2026-10-28', { status: 'concluido' }), ativ(5, '2026-11-02', { inicioProjetado: '2026-11-10' })],
-      [rest(2, 'identificada'), rest(1, 'liberada')], '2026-10-29', 3)
+      [rest(2, 'identificada'), rest(1, 'liberada')], '2026-10-29', 3, new Map([[1, '2.3']]))
     expect(r.map((s) => s.segunda)).toEqual(['2026-10-26', '2026-11-02', '2026-11-09'])
     expect(r[0].itens.map((i) => i.numero)).toEqual([1])
     expect(r[0].itens[0].pronta).toBe(true)
+    expect(r[0].itens[0].codigo).toBe('2.3')
+    expect(r[1].itens[0].codigo).toBe('')
     expect(r[1].itens[0].numero).toBe(2)
     expect(r[1].itens[0].pronta).toBe(false)
     expect(r[2].itens.map((i) => i.numero)).toEqual([5])
     expect(r.flatMap((s) => s.itens).some((i) => i.numero === 3)).toBe(false)
+  })
+})
+
+describe('lookahead atrasadas', () => {
+  it('início passado (não iniciada ou em andamento) cai na primeira semana', () => {
+    const r = lookahead([ativ(7, '2026-10-05'), ativ(8, '2026-10-06', { status: 'em_andamento' })], [], '2026-10-29', 3, new Map())
+    expect(r[0].itens.map((i) => i.numero)).toEqual([7, 8])
   })
 })
 

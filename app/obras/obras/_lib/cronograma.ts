@@ -385,3 +385,13 @@ export function duracaoPorFim(inicio: string, fim: string, feriados: Feriados): 
   if (fim < inicio) throw new Error(`Fim antes do início (${inicio.slice(8, 10)}/${inicio.slice(5, 7)})`)
   return Math.max(diasUteisEntre(inicio, fim, feriados), 1)
 }
+
+/** numero → "etapa.posição" (1-based), na ordem de exibição. Fonte única do código mostrado nas telas. */
+export function codigosDeEtapas(etapas: { numeros: number[] }[]): Map<number, string> {
+  const m = new Map<number, string>()
+  etapas.forEach((e, i) => e.numeros.forEach((n, j) => m.set(n, `${i + 1}.${j + 1}`)))
+  return m
+}
+
+export const codigosDeAtividades = (atividades: AtividadeCalculada[], feriados: Feriados): Map<number, string> =>
+  codigosDeEtapas(resumirEtapas(atividades, feriados))

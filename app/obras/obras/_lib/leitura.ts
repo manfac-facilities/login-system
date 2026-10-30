@@ -8,6 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
 import type { PontoHist } from './curvas'
 import type { PlanoSemana, Restricao } from './last-planner'
+import { CAUSA, type CausaRdo } from './causas'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
@@ -356,7 +357,7 @@ const planoSemanaDe = (p: Linha): PlanoSemana => ({
   itens: ((p.obras_plano_item ?? []) as Linha[]).map((i) => ({
     id: i.id, planoId: i.plano_id, numero: i.numero, metaPercentual: Number(i.meta_percentual),
     percentualFinal: i.percentual_final === null || i.percentual_final === undefined ? null : Number(i.percentual_final),
-    cumprido: i.cumprido ?? null, causa: i.causa ?? null, avaliadoEm: i.avaliado_em ?? null,
+    cumprido: i.cumprido ?? null, causa: i.causa && i.causa in CAUSA ? (i.causa as CausaRdo) : null, avaliadoEm: i.avaliado_em ?? null,
   })),
 })
 

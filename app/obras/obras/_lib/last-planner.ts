@@ -3,7 +3,7 @@
  */
 import type { AtividadeCalculada, Responsavel } from './cronograma'
 import { ehDiaUtil } from './calendario'
-import { CAUSA, type CausaRdo } from './email-diario'
+import { CAUSA, type CausaRdo } from './causas'
 
 export type Restricao = {
   id: string
@@ -78,6 +78,7 @@ export function lookahead(
   restricoes: Restricao[],
   hojeIso: string,
   semanas: 3 | 4 | 6,
+  codigos: ReadonlyMap<number, string>,
 ): SemanaLookahead[] {
   const primeira = segundaDaSemana(hojeIso)
   const out: SemanaLookahead[] = Array.from({ length: semanas }, (_, i) => ({
@@ -88,12 +89,14 @@ export function lookahead(
     if (a.status === 'concluido') continue
     const inicio = a.inicioProjetado || a.inicioPrevisto
     if (!inicio) continue
-    const alvo = out.find((s) => s.segunda === segundaDaSemana(inicio))
+    // Atrasadas (início antes da semana atual) entram na primeira semana.
+    const seg = segundaDaSemana(inicio)
+    const alvo = seg < primeira ? out[0] : out.find((s) => s.segunda === seg)
     if (!alvo) continue
     const abertas = restricoes.filter((r) => r.atividadeNumero === a.numero && r.situacao !== 'liberada')
     alvo.itens.push({
       numero: a.numero,
-      codigo: String(a.numero),
+      codigo: codigos.get(a.numero) ?? '',
       nome: a.descricao,
       inicio,
       termino: a.fimProjetado || a.fimPrevisto,
