@@ -46,6 +46,7 @@ function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
 }
 
 const texto = (s: string | null | undefined) => (s ?? '').trim() || null
+const dataBR = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
 
 function revalidar(obraId: string) {
   revalidatePath(`/obras/obras/${obraId}/impedimentos`)
@@ -146,7 +147,12 @@ export async function encerrarImpedimentoAction(id: string, encerradoEm: string)
   if (e1) return erroBanco('ler o impedimento', e1)
   if (!imp) return falha('Impedimento não encontrado')
   if (imp.encerrado_em) return falha('Impedimento já encerrado')
-  if (encerradoEm < String(imp.aberto_em)) return falha('A data de encerramento não pode ser anterior à abertura')
+  const abertoEm = String(imp.aberto_em).slice(0, 10)
+  if (encerradoEm < abertoEm) {
+    return falha(
+      `A data de encerramento (${dataBR(encerradoEm)}) não pode ser anterior à abertura do impedimento (${dataBR(abertoEm)})`,
+    )
+  }
 
   const { error } = await supabase.from('obras_impedimento').update({ encerrado_em: encerradoEm }).eq('id', id)
   if (error) return erroBanco('encerrar o impedimento', error)

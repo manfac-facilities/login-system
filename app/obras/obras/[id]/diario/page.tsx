@@ -224,7 +224,7 @@ export default async function DiarioObraPage({
         fotos={fotos}
         impedimentos={
           <div className="flex flex-col gap-4">
-            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} feriados={feriados} somenteAbertos />
+            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} dataReferencia={data} feriados={feriados} somenteAbertos />
             <FormImpedimento
               obraId={id}
               rdoId={rdo?.id ?? null}

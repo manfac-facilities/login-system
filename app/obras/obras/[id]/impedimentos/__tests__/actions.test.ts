@@ -45,7 +45,7 @@ import {
   ligarDescumprimentoAction,
   registrarOrientacaoAction,
 } from '../_actions'
-import { exibirAoClientePadrao, responsavelPadrao, type NovoImpedimento } from '../_tipos'
+import { dataEncerramento, exibirAoClientePadrao, responsavelPadrao, type NovoImpedimento } from '../_tipos'
 
 const OBRA = 'o1'
 const novo = (over: Partial<NovoImpedimento> = {}): NovoImpedimento => ({
@@ -70,6 +70,12 @@ beforeEach(() => {
 })
 
 describe('regras puras', () => {
+  it('data de encerramento: a de referência (diário/hoje), nunca antes da abertura', () => {
+    expect(dataEncerramento('2026-10-20', '2026-10-31')).toBe('2026-10-31')
+    expect(dataEncerramento('2026-11-04', '2026-10-31')).toBe('2026-11-04')
+    expect(dataEncerramento('2026-11-04', '2026-11-04')).toBe('2026-11-04')
+  })
+
   it('responsável padrão por tipo', () => {
     expect(responsavelPadrao('Área não liberada')).toBe('cliente')
     expect(responsavelPadrao('Material do cliente')).toBe('cliente')
@@ -158,6 +164,21 @@ describe('encerrarImpedimentoAction', () => {
     const r = await encerrarImpedimentoAction('id1', '2026-10-19')
     expect(r.ok).toBe(false)
     expect(db.obras_impedimento[0].encerrado_em).toBeUndefined()
+  })
+  it('mensagem clara com as duas datas', async () => {
+    await abrirImpedimentoAction(OBRA, novo())
+    const r = await encerrarImpedimentoAction('id1', '2026-10-19')
+    expect(r).toEqual({
+      ok: false,
+      erro: 'A data de encerramento (19/10/2026) não pode ser anterior à abertura do impedimento (20/10/2026)',
+    })
+  })
+  it('aberto pelo diário de um dia posterior a hoje: encerrar na data do diário funciona (item 9)', async () => {
+    // Diário de 04/11 preenchido em 31/10: o impedimento nasce com aberto_em = data do diário.
+    db.obras_rdo = [{ id: 'r9', obra_id: OBRA, estado: 'rascunho', data: '2026-11-04' }]
+    await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r9', abertoEm: '2026-11-04' }))
+    expect(db.obras_impedimento[0].aberto_em).toBe('2026-11-04')
+    expect(await encerrarImpedimentoAction('id1', dataEncerramento('2026-11-04', '2026-11-04'))).toEqual({ ok: true })
   })
   it('encerra com data válida e não encerra duas vezes', async () => {
     await abrirImpedimentoAction(OBRA, novo())
