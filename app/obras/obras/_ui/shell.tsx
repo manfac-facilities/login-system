@@ -59,7 +59,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>([])
+const TELAS_CLARAS = new Set<string>(['/cronograma'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 

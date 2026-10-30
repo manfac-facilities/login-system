@@ -278,3 +278,10 @@ Menores dos reviews por tarefa, não confirmados como corrigidos na leva final (
 - Cronograma: `n` negativo/não inteiro vira 0 em silêncio; sem validação de data malformada; faltam testes a==b, início em fim de semana e virada de ano (Task 2).
 - Apagar RDO rascunho deixa fotos órfãs no storage; sem botão "Tornar OBRA" na Triagem; sem teste obra→spot (Tasks 1 e 5).
 - SQL 1: `create table if not exists` não acrescenta o check de/para se a tabela já existir; verificação 8e pode devolver `OBRAS_VERSAO_SALVA` em vez de 23514 (Task 1).
+
+## 30/10/2026 — Leva 1, Task 5 (cronograma árvore + Gantt), deixado de propósito
+
+- **"Descartar rascunho" fora:** `obras_cronograma_versao` não tem delete (RLS) e `obras_atividade` do rascunho também não; descartar exigiria policy/RPC nova. Hoje o rascunho vazio é reaproveitado por `criarRevisaoAction`.
+- Edição da execução (status/%/datas reais) saiu da tela do cronograma junto com a tabela antiga; volta na gaveta "Atualizar status" (Task 6). O botão já está na barra com um aviso provisório.
+- Setas de dependência no Gantt: desligadas (spec §5 deixa a chamada ao builder).
+- O rótulo do mês no cabeçalho do Gantt não acompanha a rolagem horizontal (o mês da esquerda some ao rolar).

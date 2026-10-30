@@ -40,3 +40,11 @@ export const COR_TOM: Record<TomObra, { texto: string; cheio: string }> = {
   negativo: { texto: TEMA_OBRA.vermelhoTexto, cheio: TEMA_OBRA.vermelho },
   destaque: { texto: TEMA_OBRA.orangeTexto, cheio: TEMA_OBRA.orange },
 }
+
+/**
+ * Bolinha de cor por etapa (cronograma, estilo Builderpad), na ordem em que as
+ * etapas aparecem. Sempre ao lado do nome da etapa — a cor só agrupa.
+ */
+export const CORES_ETAPA = [
+  '#00345e', '#f85e0b', '#1f9d55', '#7b5ea7', '#0e8a9a', '#c9a40a', '#b4436c', '#5a7380',
+] as const

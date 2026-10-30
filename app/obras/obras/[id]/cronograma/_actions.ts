@@ -20,6 +20,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import {
   CicloNasPredecessoras,
   calcularCronograma,
+  duracaoPorFim,
   podeIniciar,
   type AtividadeExec,
   type AtividadePlano,
@@ -157,6 +158,90 @@ export async function salvarLinhaRascunhoAction(
   return { ok: true }
 }
 
+/** Rascunho da versão + suas atividades; recusa versão salva e atividade inexistente. */
+async function lerRascunho(
+  obraId: string,
+  versaoId: string,
+  numero: number,
+): Promise<{ ctx: Contexto; linhas: Linha[] } | Erro> {
+  const ctx = await autorizar(obraId)
+  if (ehErro(ctx)) return ctx
+  const versao = await lerVersao(ctx, versaoId)
+  if (ehErro(versao)) return versao
+  if (versao.salva_em) return falha(VERSAO_SALVA)
+  const { data, error } = await ctx.supabase.from('obras_atividade').select('*').eq('versao_id', versaoId)
+  if (error) return erroBanco('ler o cronograma', error)
+  const linhas = (data ?? []) as Linha[]
+  if (!linhas.some((a) => a.numero === numero)) return falha(`Atividade ${numero} não existe neste cronograma`)
+  return { ctx, linhas }
+}
+
+async function gravarAtividade(ctx: Contexto, obraId: string, versaoId: string, numero: number, campos: Linha) {
+  const { data, error } = await ctx.supabase
+    .from('obras_atividade')
+    .update(campos)
+    .eq('versao_id', versaoId)
+    .eq('numero', numero)
+    .select('id')
+  if (error) return erroBanco('salvar a atividade', error)
+  if (!data?.length) return falha('Não foi possível salvar a atividade. Recarregue a página.')
+  revalidar(obraId)
+  return { ok: true as const }
+}
+
+/**
+ * Início digitado na árvore → `inicio_fixo` da atividade nesta versão (spec §5).
+ * `null` = "Seguir predecessoras". Data em folga é aceita: o motor leva ao
+ * próximo dia útil e a árvore avisa.
+ */
+export async function definirInicioAction(
+  obraId: string,
+  versaoId: string,
+  numero: number,
+  inicio: string | null,
+): Promise<Resultado> {
+  if (inicio !== null && !dataISO(inicio)) return falha('Data inválida')
+  const r = await lerRascunho(obraId, versaoId, numero)
+  if (ehErro(r)) return r
+  return gravarAtividade(r.ctx, obraId, versaoId, numero, { inicio_fixo: inicio })
+}
+
+/**
+ * Fim digitado na árvore → grava só a `duracao` (dias úteis do início calculado
+ * até o fim, mín. 1). O início calculado já é o `inicio_fixo` (no próximo dia
+ * útil) quando há um, ou o que as predecessoras dão (spec §8.1 item 4).
+ */
+export async function definirFimAction(
+  obraId: string,
+  versaoId: string,
+  numero: number,
+  fim: string,
+): Promise<Resultado> {
+  if (!dataISO(fim)) return falha('Data inválida')
+  const r = await lerRascunho(obraId, versaoId, numero)
+  if (ehErro(r)) return r
+  const { ctx, linhas } = r
+
+  const { data: fer, error: errF } = await ctx.supabase.from('obras_feriado').select('data')
+  if (errF) return erroBanco('ler os feriados', errF)
+  const feriados = new Set(((fer ?? []) as Linha[]).map((f) => f.data as string))
+
+  const dataBase = ctx.obra.data_base ?? fim
+  let duracao: number
+  try {
+    const calc = calcularCronograma({
+      plano: planoDe(linhas), exec: [], dataBase, hoje: dataBase, feriados, atividadeTrava: null, impedimentos: [],
+    })
+    const inicio = calc.atividades.find((a) => a.numero === numero)!.inicioPrevisto
+    duracao = duracaoPorFim(inicio, fim, feriados)
+  } catch (e) {
+    if (e instanceof CicloNasPredecessoras) return falha(e.message)
+    if (e instanceof Error && e.message.startsWith('Fim antes do início')) return falha(e.message)
+    throw e
+  }
+  return gravarAtividade(ctx, obraId, versaoId, numero, { duracao })
+}
+
 export async function salvarVersaoAction(
   obraId: string,
   versaoId: string,
@@ -193,7 +278,7 @@ export async function salvarVersaoAction(
 
 const COLUNAS_COPIADAS = [
   'numero', 'frente', 'etapa', 'descricao', 'saida_trava', 'pred1', 'pred2',
-  'duracao', 'responsavel_funcao', 'bloqueia_por_trava', 'peso_valor',
+  'duracao', 'responsavel_funcao', 'bloqueia_por_trava', 'peso_valor', 'inicio_fixo',
 ] as const
 
 export async function criarRevisaoAction(obraId: string): Promise<Resultado & { versaoId?: string }> {
