@@ -105,7 +105,7 @@ export default async function DiarioObraPage({
     if (u) ultimo = { efetivo: u.efetivo ?? null, equipeTexto: u.equipe_texto ?? null }
   }
 
-  const { inicial, atividades } = montarDiario({
+  const { inicial, atividades, outras } = montarDiario({
     calc,
     plano,
     exec,
@@ -214,6 +214,7 @@ export default async function DiarioObraPage({
         estado={(rdo?.estado ?? null) as EstadoRdo | null}
         inicial={inicial}
         atividades={atividades}
+        outras={outras}
         fotos={fotos}
         validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
         impedimentosHoje={

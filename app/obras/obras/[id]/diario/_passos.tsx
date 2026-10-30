@@ -222,6 +222,87 @@ function CartaoAtividade({
   )
 }
 
+const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+/**
+ * "Incluir outra atividade" (itens 6/11 da reunião de 31/10): qualquer atividade
+ * não concluída da versão vigente, agrupada por etapa, com busca. A trava vale
+ * igual (a travada entra com cadeado; o servidor confere de novo).
+ */
+function IncluirAtividade({ opcoes, onIncluir }: { opcoes: AtividadeDiario[]; onIncluir: (a: AtividadeDiario) => void }) {
+  const [aberto, setAberto] = useState(false)
+  const [busca, setBusca] = useState('')
+  const termo = normal(busca.trim())
+  const filtradas = termo
+    ? opcoes.filter((a) => normal(`${a.numero} ${a.descricao} ${a.etapa}`).includes(termo))
+    : opcoes
+  const etapas: [string, AtividadeDiario[]][] = []
+  for (const a of filtradas) {
+    const g = etapas.find(([e]) => e === a.etapa)
+    if (g) g[1].push(a)
+    else etapas.push([a.etapa, [a]])
+  }
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+        className="min-h-11 rounded-lg border border-dashed border-[#b94606] px-3 text-sm font-semibold text-[#b94606]"
+      >
+        Incluir outra atividade
+      </button>
+      {aberto ? (
+        <section aria-label="Incluir outra atividade" className="flex flex-col gap-2 rounded-lg border border-[#dadad8] p-2">
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            aria-label="Buscar atividade"
+            placeholder="buscar por nome, número ou etapa"
+            className="min-h-11 rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 text-base text-[#333336]"
+          />
+          {etapas.length ? (
+            <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+              {etapas.map(([etapa, itens]) => (
+                <div key={etapa} role="group" aria-label={etapa}>
+                  <p className="px-1 text-xs font-semibold uppercase text-[#5a7380]">{etapa}</p>
+                  {itens.map((a) => (
+                    <button
+                      key={a.numero}
+                      type="button"
+                      onClick={() => {
+                        onIncluir(a)
+                        setAberto(false)
+                        setBusca('')
+                      }}
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm text-[#333336] hover:bg-[#f6f6f5]"
+                    >
+                      {a.travada ? (
+                        <span role="img" aria-label="Travada" className="text-[#5a7380]">
+                          <IconeCadeado tamanho={14} />
+                        </span>
+                      ) : null}
+                      <span className="flex-1">
+                        {a.numero} · {a.descricao}
+                      </span>
+                      <span className="text-xs text-[#5a7380]">{pct(a.atual)}%</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="px-1 text-sm text-[#5a7380]">
+              {opcoes.length ? 'Nenhuma atividade encontrada.' : 'Todas as atividades em aberto já estão na lista.'}
+            </p>
+          )}
+        </section>
+      ) : null}
+    </div>
+  )
+}
+
 export default function PassosDiario({
   obraId,
   data,
@@ -229,6 +310,7 @@ export default function PassosDiario({
   estado,
   inicial,
   atividades,
+  outras = [],
   fotos,
   impedimentos,
   impedimentosHoje = 0,
@@ -240,6 +322,8 @@ export default function PassosDiario({
   estado: EstadoRdo | null
   inicial: RascunhoRdo
   atividades: AtividadeDiario[]
+  /** Demais atividades não concluídas da versão, para incluir à mão. */
+  outras?: AtividadeDiario[]
   fotos: FotoRdo[]
   /** Passo 4 (Task 9a). */
   impedimentos?: ReactNode
@@ -255,11 +339,21 @@ export default function PassosDiario({
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [qtdFotos, setQtdFotos] = useState(fotos.length)
+  const [incluidas, setIncluidas] = useState<AtividadeDiario[]>([])
 
   const somenteLeitura = estado !== null && estado !== 'rascunho'
   const mudar = (p: Partial<RascunhoRdo>) => setCorpo((c) => ({ ...c, ...p }))
   const mudarAvanco = (av: AvancoRdo) =>
     setCorpo((c) => ({ ...c, avancos: c.avancos.map((x) => (x.numero === av.numero ? av : x)) }))
+  const incluir = (a: AtividadeDiario) => {
+    setIncluidas((l) => [...l, a])
+    // Entra com "de" = % atual da execução (o servidor confirma).
+    setCorpo((c) =>
+      c.avancos.some((x) => x.numero === a.numero)
+        ? c
+        : { ...c, avancos: [...c.avancos, { numero: a.numero, de: a.atual, para: a.atual, concluida: false, causa: null }] },
+    )
+  }
   const alternar = (n: number) => setAberto((a) => (a === n ? null : n))
 
   function validar(): string | null {
@@ -300,7 +394,9 @@ export default function PassosDiario({
 
   const semImpedimento = corpo.semImpedimento && impedimentosHoje === 0
   const porNumero = new Map(corpo.avancos.map((a) => [a.numero, a]))
-  const livres = atividades.filter((a) => !a.travada)
+  const lista = [...atividades, ...incluidas]
+  const naLista = new Set(lista.map((a) => a.numero))
+  const livres = lista.filter((a) => !a.travada)
   const mexidas = livres.filter((a) => {
     const av = porNumero.get(a.numero)
     return av && (av.concluida || av.para !== av.de || av.causa)
@@ -402,14 +498,14 @@ export default function PassosDiario({
         <Passo
           n={3}
           titulo="O que andou"
-          resumo={atividades.length ? `${mexidas} de ${livres.length} atividade(s) atualizada(s)` : 'nenhuma atividade prevista até hoje'}
+          resumo={lista.length ? `${mexidas} de ${livres.length} atividade(s) atualizada(s)` : 'nenhuma atividade prevista até hoje'}
           feito={livres.length > 0 && mexidas === livres.length}
           aberto={aberto === 3}
           onToggle={() => alternar(3)}
         >
-          {atividades.length ? (
+          {lista.length ? (
             <div className="flex flex-col gap-2">
-              {atividades.map((a) => {
+              {lista.map((a) => {
                 const av = porNumero.get(a.numero)
                 return av ? (
                   <CartaoAtividade key={a.numero} a={a} av={av} bloqueado={somenteLeitura} onChange={mudarAvanco} />
@@ -419,6 +515,9 @@ export default function PassosDiario({
           ) : (
             <p className="text-sm text-[#5a7380]">Nenhuma atividade em andamento ou prevista até hoje.</p>
           )}
+          {!somenteLeitura ? (
+            <IncluirAtividade opcoes={outras.filter((a) => !naLista.has(a.numero))} onIncluir={incluir} />
+          ) : null}
         </Passo>
       ) : null}
 

@@ -291,6 +291,19 @@ describe('salvarRascunhoAction — regras do avanço', () => {
   })
 })
 
+describe('salvarRascunhoAction — atividade incluída à mão (itens 6/11)', () => {
+  it('atividade fora da lista do dia (antecipada) grava como avanço normal; "de" vem da execução', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ avancos: [av({ numero: 9, de: 0.4, para: 0.2 })] }))
+    expect(r.ok).toBe(true)
+    expect(db.obras_rdo_avanco).toEqual([{ rdo_id: 'id1', numero: 9, de: 0, para: 0.2, concluida: false, causa: null }])
+  })
+  it('incluída mas travada: a trava vale', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ avancos: [av({ numero: 12, de: 0, para: 0.2 })] }))
+    expect(r.ok).toBe(false)
+    expect(db.obras_rdo).toHaveLength(0)
+  })
+})
+
 describe('salvarRascunhoAction — sem execução', () => {
   it('sem execução sem motivo → erro', async () => {
     const r = await salvarRascunhoAction(OBRA, DIA, corpo({ semExecucao: true, motivoSemExecucao: '  ' }))

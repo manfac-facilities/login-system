@@ -32,6 +32,12 @@ describe('montarDiario', () => {
     expect(r.inicial).toMatchObject({ efetivo: 6, equipeTexto: 'Própria', programacaoAmanha: '9 · Forro', semImpedimento: false })
   })
 
+  it('outras: as demais atividades da versão (não concluídas), para incluir à mão (itens 6/11)', () => {
+    const r = montarDiario({ ...base, data: '2026-10-29', ultimo: null })
+    expect(r.outras.map((a) => a.numero)).toEqual([8, 9])
+    expect(r.outras[0]).toMatchObject({ numero: 8, etapa: 'E', descricao: 'Pintura', atual: 0, travada: false })
+  })
+
   it('sexta-feira sugere o que começa na segunda', () => {
     const r = montarDiario({ ...base, data: '2026-10-30', ultimo: null })
     expect(r.inicial.programacaoAmanha).toBe('8 · Pintura')

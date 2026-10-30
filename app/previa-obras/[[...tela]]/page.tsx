@@ -64,7 +64,7 @@ export default async function PreviaObrasPage({
       </>
     )
   } else if (qual === 'diario') {
-    const { inicial, atividades } = montarDiario({
+    const { inicial, atividades, outras } = montarDiario({
       calc: d.calc!, plano: d.plano, exec: d.exec, atividadeTrava: obra.atividade_trava, feriados: d.feriados,
       data: HOJE, rdo: null, avancosSalvos: [], ultimo: { efetivo: 6, equipeTexto: 'Equipe do Carlos + 2 ajudantes' },
     })
@@ -76,6 +76,7 @@ export default async function PreviaObrasPage({
         estado={null}
         inicial={inicial}
         atividades={atividades}
+        outras={outras}
         fotos={[]}
         impedimentos={
           <div className="flex flex-col gap-4">

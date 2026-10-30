@@ -162,6 +162,49 @@ describe('PassosDiario', () => {
     })
   })
 
+  describe('Incluir outra atividade (itens 6/11)', () => {
+    const outras: AtividadeDiario[] = [
+      { numero: 20, etapa: 'Acabamento', descricao: 'Pintura da fachada', atual: 0.1, travada: false, motivoTrava: null },
+      { numero: 21, etapa: 'Acabamento', descricao: 'Forro de gesso', atual: 0, travada: false, motivoTrava: null },
+      { numero: 30, etapa: 'Elétrica', descricao: 'Quadro geral', atual: 0, travada: true, motivoTrava: 'Travada até a atividade 6 ser concluída' },
+    ]
+    beforeEach(() => jest.clearAllMocks())
+
+    it('lista agrupada por etapa, com busca; a incluída entra com de = % atual e vai no rascunho', async () => {
+      montar({ outras })
+      abrirPasso(/O que andou/)
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      const lista = screen.getByRole('region', { name: 'Incluir outra atividade' })
+      expect(within(lista).getByRole('group', { name: 'Acabamento' })).toBeInTheDocument()
+      expect(within(lista).getByRole('group', { name: 'Elétrica' })).toBeInTheDocument()
+      fireEvent.change(within(lista).getByRole('searchbox', { name: /Buscar/ }), { target: { value: 'fachada' } })
+      expect(within(lista).queryByText(/Forro de gesso/)).not.toBeInTheDocument()
+      fireEvent.click(within(lista).getByRole('button', { name: /20 · Pintura da fachada/ }))
+
+      const cartao = screen.getByTestId('atividade-20')
+      expect(within(cartao).getByText(/antes 10%/)).toBeInTheDocument()
+      fireEvent.change(within(cartao).getByRole('spinbutton'), { target: { value: '30' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+      await screen.findByText(/Rascunho salvo/)
+      expect(salvarRascunhoAction).toHaveBeenLastCalledWith(
+        'o1', '2026-10-29',
+        expect.objectContaining({
+          avancos: expect.arrayContaining([{ numero: 20, de: 0.1, para: 0.3, concluida: false, causa: null }]),
+        }),
+      )
+    })
+
+    it('a incluída some da lista; atividade travada entra com cadeado (trava respeitada)', () => {
+      montar({ outras })
+      abrirPasso(/O que andou/)
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      fireEvent.click(screen.getByRole('button', { name: /30 · Quadro geral/ }))
+      expect(within(screen.getByTestId('atividade-30')).getByRole('slider')).toBeDisabled()
+      fireEvent.click(screen.getByRole('button', { name: 'Incluir outra atividade' }))
+      expect(screen.queryByRole('button', { name: /30 · Quadro geral/ })).not.toBeInTheDocument()
+    })
+  })
+
   it('diário validado: só leitura', () => {
     montar({ estado: 'validado', rdoId: 'r1' })
     expect(screen.getByText(/Diário já validado/)).toBeInTheDocument()
