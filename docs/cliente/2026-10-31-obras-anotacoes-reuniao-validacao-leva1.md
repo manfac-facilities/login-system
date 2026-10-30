@@ -26,3 +26,5 @@ Estado no banco em 31/10 (conferido pelo Claude): Gabriel (gabriel.vidal@manfac.
 
 
 > (31/10, sobre o mapa causa→responsável do diário) ta certo, projeto é cliente
+
+> (31/10, sobre o peso de atividade nova no % físico) pode ser A, mas sinceramente é dificil mapearmos o valor de cada atividade... mas pode ser nesse formato
