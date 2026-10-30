@@ -68,6 +68,17 @@ export default function CurvaS({
   const ultimoR = realizado[realizado.length - 1]
   const hojeDentro = ms(hoje) >= t0 && ms(hoje) <= t1
 
+  // Rótulo do Realizado: vira para a esquerda perto da borda direita (não corta no
+  // celular) e desce para baixo do ponto perto do topo (não encosta no "Hoje").
+  const larguraR = largo ? 96 : 34
+  const rotuloR = ultimoR
+    ? {
+        ancora: (x(ultimoR.data) + 8 + larguraR > W ? 'end' : 'start') as 'end' | 'start',
+        x: x(ultimoR.data) + 8 + larguraR > W ? x(ultimoR.data) - 8 : x(ultimoR.data) + 8,
+        y: y(ultimoR.valor) - 8 < M.t + 14 ? y(ultimoR.valor) + 18 : y(ultimoR.valor) - 8,
+      }
+    : null
+
   // Rótulos diretos na margem direita (Base/Previsto) e na ponta do Realizado.
   const rotulos: { id: string; texto: string; y: number }[] = []
   if (largo) {
@@ -181,7 +192,7 @@ export default function CurvaS({
             <g>
               <circle cx={x(ultimoR.data)} cy={y(ultimoR.valor)} r="4.5" fill={T.orange} stroke="#fff" strokeWidth="2" />
               <text
-                x={x(ultimoR.data) + 8} y={y(ultimoR.valor) - 8} fontSize="12" fontWeight="600" fill={T.orangeTexto}
+                x={rotuloR!.x} y={rotuloR!.y} textAnchor={rotuloR!.ancora} fontSize="12" fontWeight="600" fill={T.orangeTexto}
                 stroke="#fff" strokeWidth="3" paintOrder="stroke" className="obra-num"
               >
                 {largo ? `Realizado ${pct(ultimoR.valor)}` : pct(ultimoR.valor)}
@@ -207,7 +218,7 @@ export default function CurvaS({
         {at ? (
           <div
             className="pointer-events-none absolute top-2 z-10 min-w-36 rounded-lg border border-(--obra-border) bg-white px-3 py-2 text-[12px] leading-5 shadow-[0_4px_14px_rgba(0,52,94,0.12)]"
-            style={x(at.d) > W / 2 ? { right: W - x(at.d) + 10 } : { left: x(at.d) + 10 }}
+            style={x(at.d) > W / 2 ? { left: x(at.d) - 10, transform: 'translateX(-100%)' } : { left: x(at.d) + 10 }}
           >
             <div className="obra-num font-semibold text-(--obra-ink)">{ddmm(at.d)}</div>
             {at.b !== null ? <Linha nome="Base" valor={pct(at.b)} /> : null}
@@ -220,30 +231,33 @@ export default function CurvaS({
         </p>
       </div>
 
-      <table className="sr-only">
-        <caption>Curva S: avanço acumulado por data</caption>
-        <thead>
-          <tr>
-            <th scope="col">Data</th>
-            <th scope="col">Base</th>
-            <th scope="col">Previsto</th>
-            <th scope="col">Realizado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {datas.map((d, i) => {
-            const l = linhaDe(i)
-            return (
-              <tr key={d}>
-                <th scope="row">{ddmm(d)}</th>
-                <td>{l.b === null ? '—' : pct(l.b)}</td>
-                <td>{pct(l.p)}</td>
-                <td>{l.r === null ? '—' : pct(l.r)}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      {/* sr-only no wrapper: tabela ignora width:1px e vaza na largura da página. */}
+      <div className="sr-only">
+        <table>
+          <caption>Curva S: avanço acumulado por data</caption>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Base</th>
+              <th scope="col">Previsto</th>
+              <th scope="col">Realizado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {datas.map((d, i) => {
+              const l = linhaDe(i)
+              return (
+                <tr key={d}>
+                  <th scope="row">{ddmm(d)}</th>
+                  <td>{l.b === null ? '—' : pct(l.b)}</td>
+                  <td>{pct(l.p)}</td>
+                  <td>{l.r === null ? '—' : pct(l.r)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

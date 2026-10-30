@@ -37,7 +37,7 @@ export default function BarrasPeriodo({
   const series = (temBase ? ['base', 'previsto', 'realizado'] : ['previsto', 'realizado']) as ('base' | 'previsto' | 'realizado')[]
 
   const H = 220
-  const M = { t: 12, r: 8, b: 28, l: 44 }
+  const M = { t: 24, r: 8, b: 28, l: 44 }
   const minGrupo = series.length * 12 + 16
   const W = Math.max(largura, M.l + M.r + dados.length * minGrupo)
   const iw = W - M.l - M.r
@@ -118,7 +118,8 @@ export default function BarrasPeriodo({
               </text>
             </g>
           ))}
-          <text x={4} y={M.t - 2} fontSize="10" fill={T.mutedTexto}>p.p.</text>
+          {/* Unidade acima do eixo, alinhada aos números (antes encostava no "15": "p.p.15"). */}
+          <text x={M.l - 8} y={M.t - 12} textAnchor="end" fontSize="10" fill={T.mutedTexto}>p.p.</text>
           {dados.map((d, i) => {
             const x0 = xGrupo(i) + (grupo - (series.length * bw + (series.length - 1) * 2)) / 2
             return (
@@ -150,7 +151,12 @@ export default function BarrasPeriodo({
         {at ? (
           <div
             className="pointer-events-none absolute top-2 z-10 min-w-40 rounded-lg border border-(--obra-border) bg-white px-3 py-2 text-[12px] leading-5 shadow-[0_4px_14px_rgba(0,52,94,0.12)]"
-            style={xGrupo(ativo!) > W / 2 ? { right: W - xGrupo(ativo!) + 6 } : { left: xGrupo(ativo!) + grupo + 6 }}
+            // Sempre por `left` (+ translate): numa caixa com rolagem, `right` conta da borda visível e não de W.
+            style={
+              xGrupo(ativo!) > W / 2
+                ? { left: xGrupo(ativo!) - 6, transform: 'translateX(-100%)' }
+                : { left: xGrupo(ativo!) + grupo + 6 }
+            }
           >
             <div className="obra-num font-semibold text-(--obra-ink)">
               {passo === 'semana' ? `Semana até ${rotulo(at)}` : rotulo(at)}
@@ -170,27 +176,30 @@ export default function BarrasPeriodo({
         </p>
       </div>
 
-      <table className="sr-only">
-        <caption>Avanço por período, em pontos percentuais</caption>
-        <thead>
-          <tr>
-            <th scope="col">Período</th>
-            {temBase ? <th scope="col">Base</th> : null}
-            <th scope="col">Previsto</th>
-            <th scope="col">Realizado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dados.map((d) => (
-            <tr key={d.periodo}>
-              <th scope="row">{rotulo(d)}</th>
-              {temBase ? <td>{fmtPP(d.base)}</td> : null}
-              <td>{fmtPP(d.previsto)}</td>
-              <td>{fmtPP(d.realizado)}</td>
+      {/* sr-only no wrapper: tabela ignora width:1px e vaza na largura da página. */}
+      <div className="sr-only">
+        <table>
+          <caption>Avanço por período, em pontos percentuais</caption>
+          <thead>
+            <tr>
+              <th scope="col">Período</th>
+              {temBase ? <th scope="col">Base</th> : null}
+              <th scope="col">Previsto</th>
+              <th scope="col">Realizado</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {dados.map((d) => (
+              <tr key={d.periodo}>
+                <th scope="row">{rotulo(d)}</th>
+                {temBase ? <td>{fmtPP(d.base)}</td> : null}
+                <td>{fmtPP(d.previsto)}</td>
+                <td>{fmtPP(d.realizado)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

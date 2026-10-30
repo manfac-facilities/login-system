@@ -8,7 +8,7 @@ import { Cartao, dataBR, ddmm, num1, pct } from './cartao-painel'
 import CurvaS from './curva-s'
 import EvolucaoEtapas, { linhasDeEtapa } from './evolucao-etapas'
 import { IconeAlerta, IconeCadeado, IconeCronograma } from './icones'
-import Kpi from './kpi'
+import Kpi, { Unidade } from './kpi'
 import type { TomObra } from './tema'
 
 /**
@@ -160,7 +160,12 @@ export default function PainelObra({
         <GrupoKpi rotulo="Desvio vs previsto">
           <Kpi
             rotulo="Desvio vs previsto"
-            valor={`${desvio > 0 ? '+' : desvio < 0 ? '−' : ''}${num1(Math.abs(desvio))} p.p.`}
+            valor={
+              <>
+                {`${desvio > 0 ? '+' : desvio < 0 ? '−' : ''}${num1(Math.abs(desvio))}`}
+                <Unidade> p.p.</Unidade>
+              </>
+            }
             tom={tomDesvio}
             sub={desvio < 0 ? 'abaixo do previsto' : desvio > 0 ? 'acima do previsto' : 'igual ao previsto'}
           />
@@ -171,7 +176,8 @@ export default function PainelObra({
               rotulo="Dias vs base"
               valor={
                 <>
-                  {atraso.total > 0 ? `+${dias(atraso.total)}` : '0 dias'}
+                  {atraso.total > 0 ? `+${atraso.total}` : '0'}
+                  <Unidade> {atraso.total === 1 ? 'dia' : 'dias'}</Unidade>
                   {partes ? <span className="sr-only">: </span> : null}
                 </>
               }
