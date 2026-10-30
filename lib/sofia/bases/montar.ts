@@ -151,9 +151,9 @@ export function montarVeiculos(e: EntradaMontagem): VeicLinha[] {
         .filter((t) => t.veiculo_id === v.id)
         .sort((a, b) => b.inicio.localeCompare(a.inicio) || b.created_at.localeCompare(a.created_at))
       const aberto = trechos.find((t) => t.fim === null) ?? null
-      const equipeId = aberto ? aberto.equipe_id : v.equipe_id
+      const equipeId = aberto ? aberto.equipe_id : null
       const sit: SituacaoVeiculo =
-        v.status === 'inativo' ? 'fora' : v.status === 'manutencao' ? 'oficina' : aberto || v.equipe_id ? 'uso' : 'livre'
+        v.status === 'inativo' ? 'fora' : v.status === 'manutencao' ? 'oficina' : aberto ? 'uso' : 'livre'
       const meusKm = e.km.filter((k) => k.veiculo_id === v.id).sort((a, b) => b.data.localeCompare(a.data) || b.created_at.localeCompare(a.created_at))
       const doMes = meusKm.filter((k) => k.data.startsWith(mes))
       const meusAb = e.abastecimentos.filter((a) => a.veiculo_id === v.id).sort(porDataDesc)

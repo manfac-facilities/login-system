@@ -317,3 +317,16 @@ menu inferior do diário.
 - Visual, visto na prévia (`/previa-obras`): a faixa "Trava ativa" do painel lista as descrições inteiras
   (8 linhas no celular com Macaé 3, empurra os KPIs); no celular, "Salvar rascunho" + menu inferior
   ocupam ~130px fixos; a prévia importa a fixture de `_lib/__tests__/fixtures/` (só dev, 404 em produção).
+
+## 30/10/2026 — Frotas bases (`feat/frotas-bases`)
+
+- Filtros das bases ficam só no estado da tela: a URL só é lida ao abrir (não é reescrita ao filtrar); compartilhar o
+  link exige montar a query à mão. Ordenação e página também não vão para a URL.
+- Equipe/motorista do abastecimento sem trecho no histórico na data aparecem como "—" (sem fallback para o cadastro atual,
+  de propósito: não inventar responsável). Abastecimentos anteriores ao primeiro registro do histórico ficam assim.
+- Leitura carrega a base inteira no servidor (paginada de 1000 em 1000) e filtra no navegador; com dezenas de milhares de
+  linhas passa a pesar e pede filtro/paginação no servidor.
+- "Rodou no mês" do veículo soma o "rodou desde o anterior" dos lançamentos do mês corrente (inclui o salto do último
+  lançamento do mês anterior), não MAX−MIN como a tela Consumo do mês.
+- "Enviar para oficina" na gaveta do veículo (mockup) não entrou: depende de manutenção corretiva (rodada seguinte).
+- Chip "corrigido" do KM aparece só quando o valor atual difere do original (regra de `valorOriginalKm`).
