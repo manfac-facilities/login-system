@@ -33,7 +33,7 @@ manutenção corretiva, fotos/aba de avaria, comparação de checklist, processo
 | 4 | Combustível duas vezes | **Custo do mês usa o lançado no hub** (como a tela Custos); extrato aparece separado por centro de custo, sem somar |
 | 5 | Dia sem pendências | **Manda o e-mail curto "nada pendente"**; se a montagem falhar, manda aviso de falha |
 | 6 | Cobrança de KM diário | Toda equipe ativa com carro, em dia útil (seg–sex); fim de semana não cobra |
-| 7 | CNH vencida | Passa a aparecer (vencida + vencendo em 30 dias) no alerta e na visão geral |
+| 7 | CNH vencida | Passa a aparecer (vencida + vencendo em **60 dias**, como o mockup aprovado e `getMotoristasComCnhVencendo`; corrigido de 30 em 30/10) no alerta e na visão geral |
 | 8 | Equipe/motorista do abastecimento | Resolvidos pelo histórico de responsabilidade na data do abastecimento |
 | 9 | Correções F1–F3 / extratos | Já aplicados em produção (28 e 29/10); chip "corrigido" e bloco de extratos entram |
 | 10 | Gestor × admin no Frotas | Iguais dentro do Frotas (decisão D2 de 26/10) |
