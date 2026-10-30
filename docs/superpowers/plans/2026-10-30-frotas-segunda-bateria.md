@@ -22,7 +22,7 @@ Arquivos: `app/(operacoes)/sofia/page.tsx` (+ `_visao*.tsx` novos ao lado), `lib
    (links por query string nas rotas existentes).
 
 ## Frente C — E-mail diário de alertas (`feat/frotas-email-diario`)
-Arquivos: `app/api/sofia/alertas-diarios/route.ts` (novo), `lib/sofia/alertas/*` (novo), `sdd-sql-sofia-alertas-cron.sql` (novo, NÃO aplicado).
+Arquivos: `app/api/frotas/alertas-diarios/route.ts` (novo), `lib/sofia/alertas/*` (novo), `sdd-sql-sofia-alertas-cron.sql` (novo, NÃO aplicado).
 1. Montagem dos blocos (funções puras) + HTML/texto do e-mail conforme mockup seção 3; testes.
 2. Rota protegida por segredo (mesmo padrão de `app/api/obras/relatorio-diario/route.ts`), destinatários de `sofia_gestores`,
    variantes "com pendências" / "nada pendente" / "falha".

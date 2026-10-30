@@ -327,3 +327,13 @@ menu inferior do diário.
 - Os links `?sit=`, `?cnh=alerta`, `?de=&ate=`, `?placa=` dependem das bases novas (outra frente); até lá as listas abrem sem filtro.
 - Mês corrente pela data de São Paulo, mas `getRevisoesAtrasadas` e `getDocumentosVencendo` ainda usam data UTC (queries.ts, fora desta frente).
 - Falha de leitura vai para o `error.tsx` de /sofia (sem estado de erro por bloco, como o resto do Sofia).
+
+## 30/10/2026 — Frotas e-mail diário (branch `feat/frotas-email-diario`), deixado de propósito
+
+- Feriados não entram em "dia útil anterior": depois de feriado a equipe aparece sem KM de ontem (só seg–sex).
+- Sem nova tentativa de envio (Obras tenta de novo após 60 s): falha de SMTP responde 502 e fica em `net._http_response`.
+- Leituras sem paginação (limite de 1000 linhas do PostgREST); aceitável para a frota atual, revisar se passar disso.
+- "Carro obrigado a apresentar KM" (item 2.3.4 do mapa do Igor) não existe no cadastro: todo carro com equipe é cobrado.
+- CNH usa janela de 60 dias (mockup, spec e `getMotoristasComCnhVencendo`). Constante `DIAS_CNH` em `lib/sofia/alertas/blocos.ts`.
+- Links "Abrir no hub" levam à lista, sem filtro por query string (as telas ainda não leem filtro).
+- Destinatário = `sofia_gestores` com `hub_system_access` sofia ativo (mesma regra de `sofia_pode_gerir()`); gestor sem o slug não recebe e não há aviso disso.
