@@ -6,6 +6,7 @@
  */
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import TelaCronograma from '../_tela'
+import { lerValor } from '../_tabela-edicao'
 import type { DadosCronograma, LinhaAtividade, LinhaEtapa } from '../_tipos'
 
 const refresh = jest.fn()
@@ -92,6 +93,26 @@ const editar = async (rotulo: string, valor: string, tecla: 'Enter' | 'blur' = '
   })
   return campo
 }
+
+describe('lerValor (Valor R$ em pt-BR)', () => {
+  it.each([
+    ['1.234,56', 1234.56],
+    ['R$ 2.345,6', 2345.6],
+    ['1.500', 1500],
+    ['1.234.567', 1234567],
+    ['1234.5', 1234.5],
+    ['1.50', 1.5],
+    ['1500', 1500],
+    ['0,5', 0.5],
+    ['', 0],
+  ])('%s → %d', (texto, esperado) => {
+    expect(lerValor(texto)).toBe(esperado)
+  })
+  it('texto inválido vira NaN (o servidor recusa)', () => {
+    expect(lerValor('abc')).toBeNaN()
+    expect(lerValor('1.2.3,4,5')).toBeNaN()
+  })
+})
 
 describe('visão Tabela', () => {
   it('é o padrão no rascunho; numa versão salva o padrão é o Gantt', () => {

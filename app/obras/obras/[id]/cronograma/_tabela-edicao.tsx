@@ -42,7 +42,10 @@ const moedaBR = (v: number) => 'R$ ' + valorBR(v)
 export function lerValor(texto: string): number {
   let t = texto.replace(/R\$|\s/g, '')
   if (!t) return 0
+  // Com vírgula: pontos são milhar ("1.234,56"). Sem vírgula: pontos são milhar quando todo grupo
+  // depois de um ponto tem 3 dígitos ("1.500" = 1500, "1.234.567"); senão o ponto é decimal ("1234.5").
   if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '')
   return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : NaN
 }
 
