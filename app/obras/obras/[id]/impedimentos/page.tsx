@@ -42,13 +42,13 @@ export default async function ImpedimentosPage({
   const base = `/obras/obras/${id}/impedimentos`
   const chip = (ativo: boolean) =>
     `flex min-h-11 items-center rounded-full border px-3 text-sm ${
-      ativo ? 'border-[#f05a28] bg-[#f05a28] font-semibold text-white' : 'border-[#1e3a5f] text-[#e8eef7]'
+      ativo ? 'border-[#b94606] bg-[#b94606] font-semibold text-white' : 'border-[#dadad8] text-[#333336]'
     }`
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-white">Impedimentos</h2>
+        <h2 className="text-lg font-bold text-[#00345e]">Impedimentos</h2>
         <nav aria-label="Filtrar por responsável" className="flex flex-wrap gap-2">
           <Link href={base} className={chip(!filtro)}>Todos</Link>
           {RESPONSAVEIS.map((x) => (
@@ -58,11 +58,11 @@ export default async function ImpedimentosPage({
         <ListaImpedimentos itens={itens} hoje={hoje} feriados={feriados} />
         {orientacoes.length ? (
           <>
-            <h3 className="mt-2 text-sm font-semibold text-[#94a3b8]">Orientações do cliente</h3>
+            <h3 className="mt-2 text-sm font-semibold text-[#5a7380]">Orientações do cliente</h3>
             <ul className="flex flex-col gap-2">
               {orientacoes.map((o) => (
-                <li key={o.id} className="rounded-xl border border-[#1e3a5f] p-3 text-sm text-[#e8eef7]">
-                  <span className="text-xs text-[#94a3b8]">
+                <li key={o.id} className="rounded-xl border border-[#dadad8] p-3 text-sm text-[#333336]">
+                  <span className="text-xs text-[#5a7380]">
                     {o.abertoEm.slice(8, 10)}/{o.abertoEm.slice(5, 7)}
                     {o.pessoaCliente ? ` · ${o.pessoaCliente}` : ''}
                   </span>
@@ -74,7 +74,7 @@ export default async function ImpedimentosPage({
         ) : null}
       </section>
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-[#94a3b8]">Registrar</h3>
+        <h3 className="text-sm font-semibold text-[#5a7380]">Registrar</h3>
         <FormImpedimento
           obraId={id}
           atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}

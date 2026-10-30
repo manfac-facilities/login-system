@@ -119,6 +119,8 @@ export default async function DiarioObraPage({
           efetivo: rdo.efetivo ?? null,
           equipeTexto: rdo.equipe_texto ?? null,
           clima: (rdo.clima ?? null) as Clima | null,
+          climaManha: (rdo.clima_manha ?? null) as Clima | null,
+          climaTarde: (rdo.clima_tarde ?? null) as Clima | null,
           programacaoAmanha: rdo.programacao_amanha ?? null,
         }
       : null,
@@ -167,14 +169,14 @@ export default async function DiarioObraPage({
 
   const base = `/obras/obras/${id}/diario`
   const navLink =
-    'flex min-h-11 items-center rounded-lg border border-[#1e3a5f] px-3 text-sm text-[#e8eef7] hover:border-[#f05a28]'
+    'flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606]'
 
   return (
     <div className="flex flex-col gap-3">
       <header className="mx-auto flex w-full max-w-xl flex-col gap-2">
         <div>
-          <h2 className="text-lg font-bold text-white">{data === hoje ? 'Diário de hoje' : 'Diário de obra'}</h2>
-          <p className="text-sm text-[#94a3b8]">
+          <h2 className="text-lg font-bold text-[#00345e]">{data === hoje ? 'Diário de hoje' : 'Diário de obra'}</h2>
+          <p className="text-sm text-[#5a7380]">
             {rotuloDia(data)}
             {rdo ? ` · ${rdo.estado === 'rascunho' ? 'rascunho' : rdo.estado}` : ' · ainda não iniciado'}
           </p>
@@ -199,7 +201,7 @@ export default async function DiarioObraPage({
               name="data"
               defaultValue={data}
               aria-label="Data do diário"
-              className="min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0a1628] px-2 text-sm text-[#e8eef7]"
+              className="min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-2 text-sm text-[#333336]"
             />
             <button type="submit" className={navLink}>
               ir

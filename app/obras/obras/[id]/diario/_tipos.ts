@@ -24,7 +24,10 @@ export type RascunhoRdo = {
   motivoSemExecucao: string | null
   efetivo: number | null
   equipeTexto: string | null
+  /** Legado (antes dos turnos): continua lido e preservado. */
   clima: Clima | null
+  climaManha: Clima | null
+  climaTarde: Clima | null
   programacaoAmanha: string | null
   avancos: AvancoRdo[]
 }

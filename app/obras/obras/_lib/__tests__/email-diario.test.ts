@@ -226,3 +226,25 @@ describe('montarEmailDiario', () => {
     expect(montar('cliente').html).not.toContain('Orientações à loja')
   })
 })
+
+describe('clima no e-mail', () => {
+  const base = { lado: 'cliente' as const, obra: obraGrande(), validadoPor: 'Ana', validadoEm: '2026-10-29T20:00:00Z', diaN: 4, fotosCid: [] }
+
+  it('mostra manhã e tarde, no HTML e no texto', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo({ climaManha: 'sol', climaTarde: 'chuva' }) })
+    expect(m.texto).toContain('Manhã: Sol · Tarde: Chuva')
+    expect(m.html).toContain('Manhã')
+    expect(m.html).toContain('Chuva')
+  })
+
+  it('clima legado sem turnos ainda aparece', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo({ clima: 'nublado' }) })
+    expect(m.texto).toContain('Clima: Nublado')
+    expect(m.html).toContain('Nublado')
+  })
+
+  it('sem nenhum clima, não há linha de clima', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo() })
+    expect(m.texto).not.toMatch(/Clima:|Manhã:/)
+  })
+})

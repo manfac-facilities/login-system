@@ -63,25 +63,25 @@ export default async function ComunicacaoPage({ params }: { params: Promise<{ id
       <div className="flex flex-col gap-6">
         <Destinatarios obraId={id} itens={destinatarios} admin={admin} />
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-bold text-white">Histórico de envios</h2>
+          <h2 className="text-lg font-bold text-[#00345e]">Histórico de envios</h2>
           {envios.length === 0 ? (
             <EstadoVazio>Nenhum envio ainda</EstadoVazio>
           ) : (
             <ul className="flex flex-col gap-2">
               {envios.map((e) => (
-                <li key={e.id} className="rounded-xl border border-[#1e3a5f] p-3 text-sm text-[#e8eef7]">
+                <li key={e.id} className="rounded-xl border border-[#dadad8] p-3 text-sm text-[#333336]">
                   <div className="flex flex-wrap justify-between gap-2">
                     <strong>{e.tipo ?? 'envio'} · ref. {dataBR(e.referencia)} · {e.lado ?? '—'}</strong>
-                    <span className={e.resultado === 'ok' ? 'text-[#94a3b8]' : 'text-[#ff4d6d]'}>
+                    <span className={e.resultado === 'ok' ? 'text-[#5a7380]' : 'text-[#b23232]'}>
                       {e.resultado === 'ok' ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}
                     </span>
                   </div>
-                  <p className="text-xs text-[#94a3b8]">
+                  <p className="text-xs text-[#5a7380]">
                     {new Date(e.enviadoEm).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                     {e.enviadoPor ? ` · por ${e.enviadoPor}` : ''}
                   </p>
-                  <p className="break-words text-xs text-[#94a3b8]">Para: {e.destinatarios.join(', ') || '—'}</p>
-                  {e.detalhe ? <p className="text-xs text-[#94a3b8]">{e.detalhe}</p> : null}
+                  <p className="break-words text-xs text-[#5a7380]">Para: {e.destinatarios.join(', ') || '—'}</p>
+                  {e.detalhe ? <p className="text-xs text-[#5a7380]">{e.detalhe}</p> : null}
                 </li>
               ))}
             </ul>

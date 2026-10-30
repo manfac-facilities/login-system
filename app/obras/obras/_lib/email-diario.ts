@@ -13,12 +13,18 @@ import { diasUteisEntre } from './calendario'
 import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
+export type ClimaRdo = 'sol' | 'nublado' | 'chuva' | 'impraticavel'
+
 export type RdoCompleto = {
   id: string
   data: string
   semExecucao: boolean
   motivoSemExecucao: string | null
   programacaoAmanha: string | null
+  /** Legado (antes dos turnos); só aparece quando não há clima por turno. */
+  clima?: ClimaRdo | null
+  climaManha?: ClimaRdo | null
+  climaTarde?: ClimaRdo | null
   avancos: { numero: number; de: number; para: number; concluida: boolean }[]
 }
 
@@ -49,6 +55,13 @@ const SINAL: Record<Sinal, { rotulo: string; fundo: string; borda: string; ponto
   verde: { rotulo: 'No prazo', fundo: '#dcfce7', borda: '#bbf7d0', ponto: '#16a34a', texto: '#166534' },
   amarelo: { rotulo: 'Atenção', fundo: '#fef3c7', borda: '#fde68a', ponto: '#f59e0b', texto: '#92400e' },
   vermelho: { rotulo: 'Atrasado', fundo: '#fee2e2', borda: '#fecaca', ponto: '#dc2626', texto: '#991b1b' },
+}
+
+const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
+  sol: { rotulo: 'Sol', cor: '#f7cb15' },
+  nublado: { rotulo: 'Nublado', cor: '#9aa9b2' },
+  chuva: { rotulo: 'Chuva', cor: '#00345e' },
+  impraticavel: { rotulo: 'Impraticável', cor: '#d64545' },
 }
 
 type Item = { rotulo: string; corpo: string; tecnico?: boolean }
@@ -189,6 +202,22 @@ export function montarEmailDiario(p: {
     ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
     : null
 
+  // Clima: por turno; o legado (`clima`) só entra quando não há turno.
+  const climaTurnos = [
+    ['Manhã', rdo.climaManha],
+    ['Tarde', rdo.climaTarde],
+  ].filter((t): t is [string, ClimaRdo] => !!t[1] && t[1] in CLIMA)
+  const climaPartes: [string, ClimaRdo][] =
+    climaTurnos.length ? climaTurnos : rdo.clima && rdo.clima in CLIMA ? [['Clima', rdo.clima]] : []
+  const climaTexto = climaPartes.map(([t, c]) => `${t}: ${CLIMA[c].rotulo}`).join(' · ')
+  // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
+  const climaHtml = climaPartes
+    .map(
+      ([t, c]) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${CLIMA[c].cor};border:1px solid #6e8894;vertical-align:middle"></span> <b>${esc(t)}:</b> ${esc(CLIMA[c].rotulo)}`,
+    )
+    .join('&nbsp;&nbsp;·&nbsp;&nbsp;')
+
   // 6. Amanhã
   const amanha = rdo.programacaoAmanha?.trim() || 'Sem programação informada.'
 
@@ -249,6 +278,7 @@ ${numeros
 ${secao('Onde está travado', travados.length ? travados.map(caixa).join('') : '<div style="font-size:14px;color:#64748b">Nada travado hoje.</div>')}
 ${ocultos.length ? secao('Só interno · Não foi ao cliente', ocultos.map(caixa).join('')) : ''}
 ${orientacoes.length ? secao('Orientações à loja', orientacoes.map((t) => '<div style="border-left:3px solid #2563eb;background:#eff6ff;padding:6px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">' + esc(t) + '</div>').join('')) : ''}
+${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a">${climaHtml}</div>`) : ''}
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
 <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
@@ -270,6 +300,7 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     ...(ocultos.length ? ['', 'SÓ INTERNO · NÃO FOI AO CLIENTE', ...ocultos.map((it) => `- ${it.rotulo}: ${it.corpo}`)] : []),
     ...(orientacoes.length ? ['', 'ORIENTAÇÕES À LOJA', ...orientacoes.map((t) => `- ${t}`)] : []),
     '',
+    ...(climaTexto ? [climaTexto, ''] : []),
     'O QUE A MANFAC FEZ HOJE',
     ...(semExecucao ? [semExecucao] : feitos.length ? feitos : ['Nenhuma atividade avançou hoje.']),
     ...(p.fotosCid.length ? [`${p.fotosCid.length} ${p.fotosCid.length === 1 ? 'foto' : 'fotos'} no e-mail`] : []),

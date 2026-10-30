@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { salvarConfigObraAction } from './_actions'
 import type { ConfigObra } from './_tipos'
 
-const campo = 'min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0a1628] px-3 text-base text-[#e8eef7] disabled:opacity-60'
+const campo = 'min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-3 text-base text-[#333336] disabled:opacity-60'
 
 export default function ConfigObraForm({
   obraId,
@@ -43,23 +43,23 @@ export default function ConfigObraForm({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold text-white">Configuração</h2>
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <h2 className="text-lg font-bold text-[#00345e]">Configuração</h2>
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         Engenheiro (valida o diário)
         <input type="email" className={campo} disabled={!admin} value={eng} onChange={(e) => setEng(e.target.value)} />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         Data-base {baseSalva ? '(base já salva — não muda)' : ''}
         <input type="date" className={campo} disabled={!admin || baseSalva} value={base} onChange={(e) => setBase(e.target.value)} />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         Atividade-trava (número)
         <input type="number" min={1} step={1} className={campo} disabled={!admin} value={trava} onChange={(e) => setTrava(e.target.value)} />
       </label>
-      {erro ? <p role="alert" className="text-xs text-[#ff4d6d]">{erro}</p> : null}
-      {ok ? <p role="status" className="text-xs text-[#94a3b8]">Configuração salva.</p> : null}
+      {erro ? <p role="alert" className="text-xs text-[#b23232]">{erro}</p> : null}
+      {ok ? <p role="status" className="text-xs text-[#5a7380]">Configuração salva.</p> : null}
       {admin ? (
-        <button type="button" disabled={indo} onClick={salvar} className="min-h-11 self-start rounded-lg bg-[#f05a28] px-4 text-sm font-semibold text-white disabled:opacity-45">
+        <button type="button" disabled={indo} onClick={salvar} className="min-h-11 self-start rounded-lg bg-[#b94606] px-4 text-sm font-semibold text-white disabled:opacity-45">
           {indo ? 'salvando…' : 'Salvar configuração'}
         </button>
       ) : null}

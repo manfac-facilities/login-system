@@ -32,23 +32,23 @@ export default function ListaImpedimentos({
   const abertos = itens.filter((i) => i.categoria === 'impedimento' && !i.encerradoEm)
   const encerrados = somenteAbertos ? [] : itens.filter((i) => i.categoria === 'impedimento' && i.encerradoEm)
   const ordem = [...abertos, ...encerrados]
-  if (!ordem.length) return <p className="text-sm text-[#94a3b8]">Nenhum impedimento.</p>
+  if (!ordem.length) return <p className="text-sm text-[#5a7380]">Nenhum impedimento.</p>
   return (
     <ul className="flex flex-col gap-2">
       {ordem.map((i) => (
-        <li key={i.id} className={`rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-3 ${i.encerradoEm ? 'opacity-70' : ''}`}>
+        <li key={i.id} className={`rounded-xl border border-[#dadad8] bg-[#f6f6f5] p-3 ${i.encerradoEm ? 'opacity-70' : ''}`}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#e8eef7]">
+              <p className="text-sm font-semibold text-[#333336]">
                 {i.tipo ?? 'Impedimento'} · {rotuloResponsavel(i.responsavel)}
                 {i.travaAtividade ? ' · trava a atividade' : ''}
               </p>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-[#5a7380]">
                 {textoTempo(i, hoje, feriados)}
                 {i.atividadeNumero ? ` · atividade ${i.atividadeNumero}` : ''}
                 {i.exibirAoCliente ? '' : ' · interno'}
               </p>
-              <p className="mt-1 text-sm text-[#e8eef7]">{i.descricao}</p>
+              <p className="mt-1 text-sm text-[#333336]">{i.descricao}</p>
             </div>
             {!i.encerradoEm ? <BotaoEncerrar id={i.id} hoje={hoje} /> : null}
           </div>

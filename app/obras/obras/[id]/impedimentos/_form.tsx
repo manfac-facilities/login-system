@@ -22,7 +22,7 @@ import {
 export type OrientacaoOpcao = { id: string; descricao: string; abertoEm: string }
 export type AtividadeOpcao = { numero: number; descricao: string }
 
-const campo = 'min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0a1628] px-3 text-base text-[#e8eef7]'
+const campo = 'min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-3 text-base text-[#333336]'
 
 function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -31,7 +31,7 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
       aria-pressed={ativo}
       onClick={onClick}
       className={`min-h-11 rounded-full border px-3 text-sm ${
-        ativo ? 'border-[#f05a28] bg-[#f05a28] font-semibold text-white' : 'border-[#1e3a5f] text-[#e8eef7]'
+        ativo ? 'border-[#b94606] bg-[#b94606] font-semibold text-white' : 'border-[#dadad8] text-[#333336]'
       }`}
     >
       {children}
@@ -144,13 +144,13 @@ export default function FormImpedimento({
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Responsável">
-            <span className="text-xs text-[#94a3b8]">Responsável</span>
+            <span className="text-xs text-[#5a7380]">Responsável</span>
             {RESPONSAVEIS.map((r) => (
               <Chip key={r.valor} ativo={responsavel === r.valor} onClick={() => setResponsavel(r.valor)}>{r.rotulo}</Chip>
             ))}
           </div>
           {tipo === 'Orientação descumprida' && orientacoes.length ? (
-            <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+            <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
               Qual orientação foi descumprida?
               <select value={orientacaoId} onChange={(e) => setOrientacaoId(e.target.value)} className={campo}>
                 <option value="">—</option>
@@ -163,7 +163,7 @@ export default function FormImpedimento({
         </>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         Atividade afetada (opcional)
         <select value={atividade} onChange={(e) => setAtividade(e.target.value)} className={campo}>
           <option value="">—</option>
@@ -173,24 +173,24 @@ export default function FormImpedimento({
         </select>
       </label>
 
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         {modo === 'impedimento' ? 'O que aconteceu' : 'O que o cliente orientou'}
         <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className={`${campo} py-2`} />
       </label>
 
-      <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+      <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         Pessoa do cliente (opcional)
         <input value={pessoa} onChange={(e) => setPessoa(e.target.value)} className={campo} />
       </label>
 
       {modo === 'impedimento' ? (
         <>
-          <label className="flex min-h-11 items-center gap-2 text-sm text-[#e8eef7]">
+          <label className="flex min-h-11 items-center gap-2 text-sm text-[#333336]">
             <input type="checkbox" checked={trava} onChange={(e) => setTrava(e.target.checked)} className="h-5 w-5" />
             Trava a atividade (não dá para executar)
           </label>
           {!trava ? (
-            <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+            <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
               Impacto estimado em dias (opcional)
               <input value={impacto} onChange={(e) => setImpacto(e.target.value)} inputMode="decimal" className={campo} />
             </label>
@@ -198,13 +198,13 @@ export default function FormImpedimento({
         </>
       ) : null}
 
-      <label className="flex min-h-11 items-center gap-2 text-sm text-[#e8eef7]">
+      <label className="flex min-h-11 items-center gap-2 text-sm text-[#333336]">
         <input type="checkbox" checked={exibirEfetivo} onChange={(e) => setExibir(e.target.checked)} className="h-5 w-5" />
         Mostrar ao cliente
       </label>
 
       <input ref={input} type="file" accept="image/*" className="hidden" onChange={(e) => setFoto(e.target.files?.[0] ?? null)} />
-      <button type="button" onClick={() => input.current?.click()} className="min-h-12 rounded-xl border border-[#f05a28] px-4 text-base font-semibold text-[#f05a28]">
+      <button type="button" onClick={() => input.current?.click()} className="min-h-12 rounded-xl border border-[#b94606] px-4 text-base font-semibold text-[#b94606]">
         {foto ? `📷 ${foto.name}` : '📷 Anexar foto (opcional)'}
       </button>
 
@@ -212,12 +212,12 @@ export default function FormImpedimento({
         type="button"
         disabled={salvando}
         onClick={salvar}
-        className="min-h-12 rounded-xl bg-[#f05a28] px-4 text-base font-semibold text-white disabled:opacity-45"
+        className="min-h-12 rounded-xl bg-[#b94606] px-4 text-base font-semibold text-white disabled:opacity-45"
       >
         {salvando ? 'salvando…' : modo === 'impedimento' ? 'Registrar impedimento' : 'Registrar orientação'}
       </button>
-      {erro ? <p role="alert" className="text-sm text-[#ff4d6d]">{erro}</p> : null}
-      {ok ? <p role="status" className="text-sm text-[#34d399]">Registrado.</p> : null}
+      {erro ? <p role="alert" className="text-sm text-[#b23232]">{erro}</p> : null}
+      {ok ? <p role="status" className="text-sm text-[#136c38]">Registrado.</p> : null}
     </div>
   )
 }

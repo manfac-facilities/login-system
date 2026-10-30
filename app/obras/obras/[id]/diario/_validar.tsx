@@ -51,10 +51,10 @@ export default function ValidarDiario({
     'flex min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold disabled:opacity-50'
 
   return (
-    <section className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-3">
+    <section className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#f6f6f5] p-3">
       <div>
-        <h3 className="font-bold text-white">Validar e enviar</h3>
-        <p className="text-sm text-[#94a3b8]">
+        <h3 className="font-bold text-[#00345e]">Validar e enviar</h3>
+        <p className="text-sm text-[#5a7380]">
           {estado === 'enviado'
             ? `Diário enviado, mas ${pendentes ?? 0} destinatário(s) ainda não receberam. Enviar de novo manda só para eles.`
             : estado === 'validado'
@@ -66,25 +66,25 @@ export default function ValidarDiario({
         <button
           type="button"
           onClick={() => setPrevia((v) => !v)}
-          className={`${botao} border border-[#1e3a5f] text-[#e8eef7] hover:border-[#f05a28]`}
+          className={`${botao} border border-[#dadad8] text-[#333336] hover:border-[#b94606]`}
         >
           {previa ? 'Fechar prévia' : 'Ver prévia'}
         </button>
-        <button type="button" onClick={enviar} disabled={enviando} className={`${botao} bg-[#f05a28] text-white`}>
+        <button type="button" onClick={enviar} disabled={enviando} className={`${botao} bg-[#b94606] text-white`}>
           {enviando ? 'Enviando…' : estado === 'rascunho' ? 'Validar e enviar' : 'Enviar de novo'}
         </button>
       </div>
       {erro ? (
-        <p role="alert" className="rounded-lg border border-[#dc2626] bg-[#dc26261a] px-3 py-2 text-sm text-[#fecaca]">
+        <p role="alert" className="rounded-lg border border-[#b23232] bg-[#b232321a] px-3 py-2 text-sm text-[#b23232]">
           {erro}
         </p>
       ) : null}
       {aviso ? (
-        <p className="rounded-lg border border-[#16a34a] bg-[#16a34a1a] px-3 py-2 text-sm text-[#e8eef7]">{aviso}</p>
+        <p className="rounded-lg border border-[#136c38] bg-[#1f9d551a] px-3 py-2 text-sm text-[#333336]">{aviso}</p>
       ) : null}
       {previa ? (
         <div className="flex flex-col gap-1">
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-[#5a7380]">
             Prévia do e-mail do cliente com o que está salvo. Os percentuais ainda não incluem o avanço de hoje — ele
             entra no cronograma na validação.
           </p>
@@ -92,7 +92,7 @@ export default function ValidarDiario({
             title="Prévia do e-mail do cliente"
             srcDoc={previaHtml}
             sandbox=""
-            className="h-[640px] w-full rounded-lg border border-[#1e3a5f] bg-white"
+            className="h-[640px] w-full rounded-lg border border-[#dadad8] bg-white"
           />
         </div>
       ) : null}

@@ -60,6 +60,8 @@ export function montarDiario(p: {
       efetivo: p.ultimo?.efetivo ?? null,
       equipeTexto: p.ultimo?.equipeTexto ?? null,
       clima: null,
+      climaManha: null,
+      climaTarde: null,
       programacaoAmanha: sugestao || null,
       avancos,
     },

@@ -23,6 +23,8 @@ const inicial: RascunhoRdo = {
   efetivo: 6,
   equipeTexto: null,
   clima: null,
+  climaManha: null,
+  climaTarde: null,
   programacaoAmanha: null,
   avancos: [
     { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: null },
