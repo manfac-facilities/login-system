@@ -21,7 +21,7 @@ export interface FrotaPorSituacao {
   disponibilidadePct: number
 }
 
-/** Em uso = ativo com responsável no histórico; Livre = ativo sem; Na oficina = status manutencao; Fora = inativo. */
+/** Em uso = ativo com equipe no cadastro (`veiculos.equipe_id`); Livre = ativo sem; Na oficina = status manutencao; Fora = inativo. */
 export function frotaPorSituacao(
   veiculos: { id: string; status: 'ativo' | 'inativo' | 'manutencao' }[],
   responsabilidadesAtuais: { veiculo_id: string }[]
@@ -53,7 +53,7 @@ export function diaUtilCobrado(hoje: string): string | null {
   return d.toISOString().slice(0, 10)
 }
 
-/** Equipe ativa com carro ativo (responsabilidade atual) e sem KM lançado no dia. */
+/** Equipe ativa com carro ativo (equipe no cadastro do veículo) e sem KM lançado no dia. */
 export function equipesSemKm(p: {
   equipes: { id: string; codigo: string; ativo: boolean }[]
   responsabilidades: { veiculo_id: string; equipe_id: string | null }[]

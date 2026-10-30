@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import {
   getEquipes, getVeiculos, getMotoristas, getMultasPendentes,
-  getRevisoesAtrasadas, getRevisoesVenceEmBreve, getResponsabilidadesAtuais,
+  getRevisoesAtrasadas, getRevisoesVenceEmBreve,
 } from './queries'
 import { getGastos, hojeSP } from './extratos/leituras'
 import {
@@ -26,7 +26,7 @@ export async function carregarVisaoGeral() {
   }
 
   const [
-    equipes, veiculos, motoristas, multasPendentes, sinistrosAbertos, documentosTodos, revAtrasadas, revBreve, responsabilidades, revisoesCriadas,
+    equipes, veiculos, motoristas, multasPendentes, sinistrosAbertos, documentosTodos, revAtrasadas, revBreve, revisoesCriadas,
     kmDoDia, multasMes, sinistrosMes, revisoesMes, abastecimentosMes, gastosExtrato,
   ] = await Promise.all([
     getEquipes(), getVeiculos(), getMotoristas(), getMultasPendentes(),
@@ -38,7 +38,7 @@ export async function carregarVisaoGeral() {
       supabase.from('documentos_veiculo').select('veiculo_id, tipo, vencimento, created_at, veiculos(placa)'),
       'documentos_veiculo'
     ),
-    getRevisoesAtrasadas(), getRevisoesVenceEmBreve(), getResponsabilidadesAtuais(),
+    getRevisoesAtrasadas(), getRevisoesVenceEmBreve(),
     lerTabela(supabase.from('revisoes').select('veiculo_id, created_at'), 'revisoes_criadas'),
     diaKm
       ? lerTabela(supabase.from('km_diario').select('equipe_id').eq('data', diaKm), 'km_diario')
@@ -50,6 +50,11 @@ export async function carregarVisaoGeral() {
     getGastos({ de: inicioMes, ate: hoje }),
   ])
 
+  // Carro da equipe = cadastro do veículo (veiculos.equipe_id), como a base de Veículos e o e-mail diário:
+  // criar/editar veículo grava equipe_id sem passar pelo histórico de responsabilidade.
+  const responsabilidades = veiculos
+    .filter((v) => v.equipe_id)
+    .map((v) => ({ veiculo_id: v.id, equipe_id: v.equipe_id as string }))
   const frota = frotaPorSituacao(veiculos, responsabilidades)
   const semKm = diaKm ? equipesSemKm({ equipes, responsabilidades, veiculos, kmDoDia }) : []
   const cnh = classificarCnh(motoristas, hoje, 60)
