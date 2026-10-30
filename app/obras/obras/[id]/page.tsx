@@ -3,7 +3,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../_ui/primitivos'
 import { hojeISO } from '../../_lib/tipos'
-import { lerObraGrande } from '../_lib/leitura'
+import { lerObraDaRequisicao } from './_obra-da-requisicao'
 import { ultimosDiariosEnviados } from '../_lib/ultimo-diario'
 import PainelObra, { type EstadoDiario } from '../_ui/painel'
 
@@ -24,7 +24,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
   }
 
   const hoje = hojeISO()
-  const r = await lerObraGrande(supabase, id, hoje)
+  const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
 
   const [rdoR, envioR] = await Promise.all([

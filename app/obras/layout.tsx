@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import AbasObras from './_ui/abas-obras'
+import ForaDoShellObra from './_ui/fora-do-shell-obra'
 import FaixaComunicadosServidor from './_ui/faixa-comunicados-servidor'
 
 /**
@@ -16,6 +17,9 @@ import FaixaComunicadosServidor from './_ui/faixa-comunicados-servidor'
  * comunicados é buscada aqui no servidor, dentro de um Suspense sem fallback,
  * para não atrasar a página.
  *
+ * Dentro de uma obra (`/obras/obras/<id>/**`) o cabeçalho escuro e a faixa não
+ * aparecem: o ShellObra tem a própria navegação (spec Leva 1 §8.1-6).
+ *
  * Tema: hex literal em classe Tailwind arbitrária, como no resto do hub. Não
  * existe tailwind.config neste projeto (Tailwind v4 por @import em globals.css).
  */
@@ -23,21 +27,23 @@ import FaixaComunicadosServidor from './_ui/faixa-comunicados-servidor'
 export default function ObrasLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <header className="border-b border-[#1e3a5f] bg-[#0d2050]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <Link
-            href="/dashboard"
-            className="text-[#94a3b8] text-sm hover:text-white transition-colors whitespace-nowrap"
-          >
-            ← Voltar ao Hub
-          </Link>
-          <span className="text-white text-sm font-semibold">Gestão de Obras</span>
-        </div>
-        <AbasObras />
-      </header>
-      <Suspense fallback={null}>
-        <FaixaComunicadosServidor />
-      </Suspense>
+      <ForaDoShellObra>
+        <header className="border-b border-[#1e3a5f] bg-[#0d2050]">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            <Link
+              href="/dashboard"
+              className="text-[#94a3b8] text-sm hover:text-white transition-colors whitespace-nowrap"
+            >
+              ← Voltar ao Hub
+            </Link>
+            <span className="text-white text-sm font-semibold">Gestão de Obras</span>
+          </div>
+          <AbasObras />
+        </header>
+        <Suspense fallback={null}>
+          <FaixaComunicadosServidor />
+        </Suspense>
+      </ForaDoShellObra>
       <main>{children}</main>
     </div>
   )
