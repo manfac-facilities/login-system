@@ -28,13 +28,12 @@ import {
 } from '../../_lib/cronograma'
 import { atividadeExecDe, atividadePlanoDe } from '../../_lib/leitura'
 import { hojeISO } from '../../../_lib/tipos'
-import type { CamposExecucao, LinhaPlano, LinhaStatus, Resultado } from './_tipos'
+import type { LinhaPlano, LinhaStatus, Resultado } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
 const SEM_PERMISSAO = 'Só o engenheiro da obra ou um administrador altera o cronograma'
 const VERSAO_SALVA = 'Versão salva não se altera — crie uma revisão'
 const VERSAO_NAO_ENCONTRADA = 'Versão não encontrada'
-const STATUS: StatusAtividade[] = ['nao_iniciado', 'em_andamento', 'concluido', 'bloqueado']
 
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 type Erro = { ok: false; erro: string }
@@ -365,72 +364,6 @@ async function lerPlanoEExec(
     plano: planoDe((atR.data ?? []) as Linha[]),
     exec: ((exR.data ?? []) as Linha[]).map(atividadeExecDe),
   }
-}
-
-export async function atualizarExecucaoAction(
-  obraId: string,
-  numero: number,
-  campos: CamposExecucao,
-): Promise<Resultado> {
-  const ctx = await autorizar(obraId)
-  if (ehErro(ctx)) return ctx
-
-  if (campos.status !== undefined && !STATUS.includes(campos.status)) return falha('Status inválido')
-  if (campos.percentual !== undefined) {
-    const p = campos.percentual
-    if (typeof p !== 'number' || !Number.isFinite(p) || p < 0 || p > 1) {
-      return falha('Percentual deve estar entre 0% e 100%')
-    }
-  }
-  for (const d of [campos.inicioReal, campos.fimReal]) {
-    if (d !== undefined && d !== null && !dataISO(d)) return falha('Data inválida')
-  }
-
-  const lidos = await lerPlanoEExec(ctx, obraId)
-  if (ehErro(lidos)) return lidos
-  const { plano, exec } = lidos
-  if (!plano.some((a) => a.numero === numero)) return falha(`Atividade ${numero} não existe no cronograma`)
-
-  const atual = exec.find((e) => e.numero === numero) ?? {
-    numero, status: 'nao_iniciado' as StatusAtividade, percentual: 0, inicioReal: null, fimReal: null,
-  }
-  const novo: AtividadeExec = {
-    numero,
-    status: campos.status ?? atual.status,
-    percentual: campos.percentual ?? atual.percentual,
-    inicioReal: campos.inicioReal !== undefined ? campos.inicioReal : atual.inicioReal,
-    fimReal: campos.fimReal !== undefined ? campos.fimReal : atual.fimReal,
-  }
-  if (novo.status === 'concluido') {
-    novo.percentual = 1
-    if (!novo.fimReal) return falha('Informe o fim real para concluir a atividade')
-  }
-  if (novo.inicioReal && novo.fimReal && novo.fimReal < novo.inicioReal) {
-    return falha('O fim real não pode ser antes do início real')
-  }
-
-  if (novo.status === 'em_andamento' || novo.status === 'concluido' || novo.percentual > 0) {
-    const pode = podeIniciar(numero, plano, exec, ctx.obra.atividade_trava ?? null)
-    if (!pode.ok) return falha(pode.motivo)
-  }
-
-  const { error } = await ctx.supabase.from('obras_atividade_exec').upsert(
-    {
-      obra_id: obraId,
-      numero,
-      status: novo.status,
-      percentual: novo.percentual,
-      inicio_real: novo.inicioReal,
-      fim_real: novo.fimReal,
-      atualizado_em: new Date().toISOString(),
-      atualizado_por: ctx.email,
-    },
-    { onConflict: 'obra_id,numero' },
-  )
-  if (error) return erroBanco('atualizar a execução', error)
-
-  revalidar(obraId)
-  return { ok: true }
 }
 
 /**

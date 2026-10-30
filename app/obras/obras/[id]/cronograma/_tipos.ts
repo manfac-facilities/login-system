@@ -17,13 +17,6 @@ export type LinhaPlano = {
   bloqueiaPorTrava: boolean
 }
 
-export type CamposExecucao = {
-  status?: StatusAtividade
-  percentual?: number
-  inicioReal?: string | null
-  fimReal?: string | null
-}
-
 /** Uma linha da gaveta "Atualizar status" (spec Leva 1 §5 A5). */
 export type LinhaStatus = {
   numero: number

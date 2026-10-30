@@ -78,7 +78,6 @@ import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import {
-  atualizarExecucaoAction,
   criarRevisaoAction,
   salvarLinhaRascunhoAction,
   salvarVersaoAction,
@@ -162,7 +161,6 @@ describe('permissão', () => {
     expect(await salvarLinhaRascunhoAction(OBRA, 'v1', linha())).toEqual(SEM)
     expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual(SEM)
     expect(await criarRevisaoAction(OBRA)).toEqual(SEM)
-    expect(await atualizarExecucaoAction(OBRA, 1, { percentual: 0.5 })).toEqual(SEM)
     expect(db.obras_atividade.find((a) => a.numero === 3)!.duracao).toBe(2)
     expect(db.obras_cronograma_versao[0].salva_em).toBeNull()
     expect(db.obras_atividade_exec[0].percentual).toBe(0)
@@ -300,58 +298,5 @@ describe('criarRevisaoAction', () => {
     db.obras_cronograma_versao.push({ id: 'v2', obra_id: OBRA, numero: 2, motivo: null, salva_em: null })
     expect(await criarRevisaoAction(OBRA)).toEqual({ ok: true, versaoId: 'v2' })
     expect(db.obras_atividade.filter((a) => a.versao_id === 'v2')).toHaveLength(12)
-  })
-})
-
-describe('atualizarExecucaoAction', () => {
-  it('11 em andamento com a 6 não concluída → travada', async () => {
-    expect(await atualizarExecucaoAction(OBRA, 11, { status: 'em_andamento' })).toEqual({
-      ok: false,
-      erro: 'Travada até a atividade 6 ser concluída',
-    })
-    expect(await atualizarExecucaoAction(OBRA, 11, { percentual: 0.1 })).toEqual({
-      ok: false,
-      erro: 'Travada até a atividade 6 ser concluída',
-    })
-    expect(db.obras_atividade_exec.find((e) => e.numero === 11)!.status).toBe('nao_iniciado')
-  })
-
-  it('com a 6 concluída, a 11 pode iniciar', async () => {
-    db.obras_atividade_exec.find((e) => e.numero === 6)!.status = 'concluido'
-    expect(await atualizarExecucaoAction(OBRA, 11, { status: 'em_andamento', inicioReal: '2026-11-03' })).toEqual({ ok: true })
-    expect(db.obras_atividade_exec.find((e) => e.numero === 11)).toMatchObject({
-      status: 'em_andamento', inicio_real: '2026-11-03',
-    })
-  })
-
-  it('concluído força percentual 1 e exige fim real', async () => {
-    expect(await atualizarExecucaoAction(OBRA, 6, { status: 'concluido' })).toEqual({
-      ok: false,
-      erro: 'Informe o fim real para concluir a atividade',
-    })
-    expect(await atualizarExecucaoAction(OBRA, 6, { status: 'concluido', percentual: 0.4, fimReal: '2026-10-30' })).toEqual({ ok: true })
-    expect(db.obras_atividade_exec.find((e) => e.numero === 6)).toMatchObject({
-      status: 'concluido', percentual: 1, fim_real: '2026-10-30',
-    })
-  })
-
-  it('valida percentual, data e atividade inexistente', async () => {
-    expect(await atualizarExecucaoAction(OBRA, 1, { percentual: 1.5 })).toEqual({
-      ok: false, erro: 'Percentual deve estar entre 0% e 100%',
-    })
-    expect(await atualizarExecucaoAction(OBRA, 1, { inicioReal: '30/10/2026' })).toEqual({
-      ok: false, erro: 'Data inválida',
-    })
-    expect(await atualizarExecucaoAction(OBRA, 99, { percentual: 0.5 })).toEqual({
-      ok: false, erro: 'Atividade 99 não existe no cronograma',
-    })
-  })
-
-  it('usa a versão vigente quando há base salva e revisão em rascunho', async () => {
-    salvarV1()
-    // Na revisão (rascunho) a 1 passaria a bloquear; a vigente manda.
-    db.obras_cronograma_versao.push({ id: 'v2', obra_id: OBRA, numero: 2, motivo: null, salva_em: null })
-    db.obras_atividade.push(atv('v2', 1, { bloqueia_por_trava: true }))
-    expect(await atualizarExecucaoAction(OBRA, 1, { status: 'em_andamento' })).toEqual({ ok: true })
   })
 })
