@@ -270,6 +270,16 @@ describe('validarEEnviarAction', () => {
     expect(db.obras_atividade_status_hist).toHaveLength(2)
   })
 
+  it('diário que avança ou conclui zera dias_restantes (valor antigo não manda mais na projeção)', async () => {
+    db.obras_atividade_exec = [
+      { obra_id: OBRA, numero: 6, status: 'em_andamento', percentual: 0.5, dias_restantes: 4 },
+      { obra_id: OBRA, numero: 7, status: 'nao_iniciado', percentual: 0, dias_restantes: 2 },
+    ]
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_exec.find((e) => e.numero === 6)).toMatchObject({ status: 'concluido', dias_restantes: null })
+    expect(db.obras_atividade_exec.find((e) => e.numero === 7)).toMatchObject({ percentual: 0.3, dias_restantes: null })
+  })
+
   it('conclui a trava e avança a dependente no mesmo diário', async () => {
     db.obras_rdo_avanco = [
       { rdo_id: 'r1', numero: 6, de: 0.5, para: 1, concluida: true, causa: null },

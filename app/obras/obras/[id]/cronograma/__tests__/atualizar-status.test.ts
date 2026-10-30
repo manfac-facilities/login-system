@@ -58,7 +58,7 @@ import { atualizarStatusAction } from '../_actions'
 
 const ENG = 'eduardo@manfac.com.br'
 const OBRA = 'o1'
-const DIA = '2026-10-30'
+const DIA = '2026-10-28' // no passado: data de status futura é recusada
 
 type LinhaStatus = Parameters<typeof atualizarStatusAction>[2][number]
 const lin = (numero: number, over: Partial<LinhaStatus> = {}): LinhaStatus => ({
@@ -130,9 +130,19 @@ describe('atualizarStatusAction', () => {
     expect(execDe(6)).toMatchObject({ percentual: 0.5, dias_restantes: 4, status: 'em_andamento' })
   })
 
-  it('concluir preenche fim_real com a data de status, % = 100%', async () => {
-    expect((await atualizarStatusAction(OBRA, DIA, [lin(6, { concluir: true })])).ok).toBe(true)
-    expect(execDe(6)).toMatchObject({ status: 'concluido', percentual: 1, inicio_real: '2026-10-27', fim_real: DIA, atualizado_por: ENG })
+  it('concluir preenche fim_real com a data de status, % = 100%, dias restantes = null', async () => {
+    execDe(6).dias_restantes = 3
+    expect((await atualizarStatusAction(OBRA, DIA, [lin(6, { concluir: true, diasRestantes: 3 })])).ok).toBe(true)
+    expect(execDe(6)).toMatchObject({ status: 'concluido', percentual: 1, inicio_real: '2026-10-27', fim_real: DIA, dias_restantes: null, atualizado_por: ENG })
+    expect(db.obras_atividade_status_hist[0]).toMatchObject({ dias_restantes: null, status: 'concluido' })
+  })
+
+  it('data de status futura é recusada no servidor', async () => {
+    expect(await atualizarStatusAction(OBRA, '2999-01-01', [lin(6, { percentual: 0.7 })])).toEqual({
+      ok: false,
+      erro: 'A data de status não pode ser futura',
+    })
+    expect(execDe(6).percentual).toBe(0.5)
   })
 
   it('sair de 0% preenche inicio_real com a data de status; datas reais informadas mandam', async () => {

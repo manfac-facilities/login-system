@@ -27,6 +27,7 @@ import {
   type StatusAtividade,
 } from '../../_lib/cronograma'
 import { atividadeExecDe, atividadePlanoDe } from '../../_lib/leitura'
+import { hojeISO } from '../../../_lib/tipos'
 import type { CamposExecucao, LinhaPlano, LinhaStatus, Resultado } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
@@ -436,7 +437,8 @@ export async function atualizarExecucaoAction(
  * Atualizar status em lote (spec Leva 1 §5 A5). Mesmas regras do diário:
  * % nunca regride (max com o atual), concluída fica concluída, trava respeitada
  * (a trava concluída neste lote libera as dependentes). `inicio_real` = data de
- * status quando sai de 0% sem data; `fim_real` = data de status ao concluir.
+ * status quando sai de 0% sem data; `fim_real` = data de status ao concluir
+ * (e `dias_restantes` volta a null). Data de status futura é recusada.
  * Grava `dias_restantes` e uma linha em `obras_atividade_status_hist`
  * (origem 'status') por atividade que de fato mudou.
  */
@@ -448,6 +450,7 @@ export async function atualizarStatusAction(
   const ctx = await autorizar(obraId)
   if (ehErro(ctx)) return ctx
   if (!dataISO(dataStatus)) return falha('Data de status inválida')
+  if (dataStatus > hojeISO()) return falha('A data de status não pode ser futura')
   if (!Array.isArray(linhas)) return falha('Nada para atualizar')
 
   for (const l of linhas) {
@@ -493,7 +496,7 @@ export async function atualizarStatusAction(
     let inicioReal = l.inicioReal !== undefined ? l.inicioReal : atual.inicioReal
     if (!inicioReal && percentual > 0) inicioReal = dataStatus
     const fimReal = l.concluir ? (l.fimReal || dataStatus) : atual.fimReal
-    const diasRestantes = l.concluir ? 0 : l.diasRestantes
+    const diasRestantes = l.concluir ? null : l.diasRestantes
 
     const mudou =
       status !== atual.status ||

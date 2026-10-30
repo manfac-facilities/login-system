@@ -374,6 +374,8 @@ export async function validarEEnviarAction(
         percentual,
         inicio_real: atual?.inicioReal ?? data,
         fim_real: a.concluida ? (atual?.fimReal ?? data) : (atual?.fimReal ?? null),
+        // Dias restantes informados antes não podem seguir mandando na projeção.
+        dias_restantes: null,
         atualizado_em: agora,
       })
     }
