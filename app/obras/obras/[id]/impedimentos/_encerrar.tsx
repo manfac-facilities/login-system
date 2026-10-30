@@ -22,11 +22,11 @@ export default function BotaoEncerrar({ id, hoje }: { id: string; hoje: string }
         type="button"
         disabled={indo}
         onClick={encerrar}
-        className="min-h-11 rounded-lg border border-[#1e3a5f] px-3 text-sm text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
+        className="min-h-11 rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606] disabled:opacity-45"
       >
         {indo ? 'encerrando…' : 'Encerrar hoje'}
       </button>
-      {erro ? <span role="alert" className="text-xs text-[#ff4d6d]">{erro}</span> : null}
+      {erro ? <span role="alert" className="text-xs text-[#b23232]">{erro}</span> : null}
     </span>
   )
 }

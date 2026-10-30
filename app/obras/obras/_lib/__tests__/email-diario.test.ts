@@ -46,6 +46,10 @@ function obraGrande(over: Partial<ObraGrande> = {}): ObraGrande {
       atividades: [], previsto: 0.08, realizado: 0.06, desvioPP: -2,
       terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-12',
     },
+    calcBase: null,
+    etapas: [],
+    hist: [],
+    dadosAte: null,
     terminoBase: '2027-02-12',
     sinal: 'amarelo',
     atraso: { total: 0, cliente: 0, manfac: 0, terceiro: 0, clima: 0 },
@@ -220,5 +224,27 @@ describe('montarEmailDiario', () => {
     expect(int.html).toContain('Orientação interna da equipe (não foi ao cliente)')
     expect(int.html).not.toContain('Orientação de ontem')
     expect(montar('cliente').html).not.toContain('Orientações à loja')
+  })
+})
+
+describe('clima no e-mail', () => {
+  const base = { lado: 'cliente' as const, obra: obraGrande(), validadoPor: 'Ana', validadoEm: '2026-10-29T20:00:00Z', diaN: 4, fotosCid: [] }
+
+  it('mostra manhã e tarde, no HTML e no texto', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo({ climaManha: 'sol', climaTarde: 'chuva' }) })
+    expect(m.texto).toContain('Manhã: Sol · Tarde: Chuva')
+    expect(m.html).toContain('Manhã')
+    expect(m.html).toContain('Chuva')
+  })
+
+  it('clima legado sem turnos ainda aparece', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo({ clima: 'nublado' }) })
+    expect(m.texto).toContain('Clima: Nublado')
+    expect(m.html).toContain('Nublado')
+  })
+
+  it('sem nenhum clima, não há linha de clima', () => {
+    const m = montarEmailDiario({ ...base, rdo: rdo() })
+    expect(m.texto).not.toMatch(/Clima:|Manhã:/)
   })
 })

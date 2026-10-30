@@ -1,0 +1,78 @@
+/*
+ * Tema claro Manfac do módulo OBRAS (spec Leva 1 §4). Vale para toda a árvore
+ * /obras/obras/**; o resto do hub continua escuro. Os valores espelham
+ * `_ui/tema.ts` — mudou um, mude o outro.
+ *
+ * Uso em Tailwind v4: `bg-(--obra-card)`, `text-(--obra-ink)`, `border-(--obra-border)`.
+ */
+.obra-tema {
+  --obra-ink: #00345e;
+  --obra-ink-escuro: #002847;
+  --obra-orange: #f85e0b;
+  --obra-orange-texto: #b94606;
+  --obra-yellow: #f7cb15;
+  --obra-yellow-texto: #7a5c00;
+  --obra-surface: #f6f6f5;
+  --obra-card: #ffffff;
+  --obra-border: #dadad8;
+  --obra-text: #333336;
+  --obra-muted: #6e8894;
+  --obra-muted-texto: #5a7380;
+  --obra-base: #9aa9b2;
+  --obra-verde: #1f9d55;
+  --obra-verde-texto: #136c38;
+  --obra-vermelho: #d64545;
+  --obra-vermelho-texto: #b23232;
+  --obra-trilho: #e9e9e7;
+  --obra-grid-line: rgba(110, 136, 148, 0.16);
+
+  background-color: var(--obra-surface);
+  color: var(--obra-text);
+  min-height: 100vh;
+}
+
+/* Números, datas e % — IBM Plex Mono, algarismos tabulares. */
+.obra-num {
+  font-family: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Quadriculado de planta do site institucional — só no cabeçalho da obra. */
+.obra-blueprint {
+  background-image:
+    linear-gradient(var(--obra-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--obra-grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+
+/* "Aguardando cliente": vermelho com hachura diagonal (cor nunca é o único sinal). */
+.obra-hachura {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(214, 69, 69, 0.2) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+/* Foco visível em todo o módulo; na sidebar azul o anel é branco. */
+.obra-tema :focus-visible {
+  outline: 2px solid var(--obra-orange-texto);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.obra-tema .obra-escuro :focus-visible {
+  outline-color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obra-tema *,
+  .obra-tema *::before,
+  .obra-tema *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

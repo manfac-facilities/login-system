@@ -9,6 +9,10 @@
 type Linha = Record<string, unknown>
 let db: Record<string, Linha[]>
 let seq = 0
+/** Escritas na ordem em que aconteceram (`op:tabela`). */
+let escritas: string[] = []
+/** Tabela cuja escrita devolve erro. */
+let falharEscritaEm: string | null = null
 const USUARIO = { email: 'eng@manfac.com.br' }
 
 function construtor(tabela: string) {
@@ -20,6 +24,10 @@ function construtor(tabela: string) {
   const executar = () => {
     const linhas = (db[tabela] ??= [])
     const alvo = () => linhas.filter((l) => filtros.every((f) => f(l)))
+    if (op !== 'select') {
+      escritas.push(`${op}:${tabela}`)
+      if (falharEscritaEm === tabela) return { data: null, error: { message: 'boom' } }
+    }
     let data: Linha[]
     if (op === 'select') data = alvo()
     else if (op === 'update') {
@@ -126,6 +134,8 @@ beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(console, 'warn').mockImplementation(() => {})
   seq = 0
+  escritas = []
+  falharEscritaEm = null
   process.env.SMTP_HOST = 'smtp'
   process.env.SMTP_USUARIO = 'u'
   process.env.SMTP_SENHA = 's'
@@ -256,6 +266,45 @@ describe('validarEEnviarAction', () => {
     expect(db.obras_atividade_exec).toEqual([
       expect.objectContaining({ numero: 8, percentual: 0.4, status: 'em_andamento', inicio_real: DIA, fim_real: null }),
     ])
+  })
+
+  it('diário validado grava 1 linha de histórico por atividade aplicada (origem diario, data do RDO)', async () => {
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_status_hist).toEqual([
+      expect.objectContaining({ obra_id: OBRA, numero: 6, data_status: DIA, percentual: 1, status: 'concluido', origem: 'diario' }),
+      expect.objectContaining({ obra_id: OBRA, numero: 7, data_status: DIA, percentual: 0.3, status: 'em_andamento', origem: 'diario' }),
+    ])
+    // reenviar um RDO já validado não duplica o histórico
+    db.obras_rdo[0].estado = 'validado'
+    await validarEEnviarAction(OBRA, DIA)
+    expect(db.obras_atividade_status_hist).toHaveLength(2)
+  })
+
+  it('grava o histórico antes do exec', async () => {
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    const iHist = escritas.indexOf('insert:obras_atividade_status_hist')
+    const iExec = escritas.indexOf('upsert:obras_atividade_exec')
+    expect(iHist).toBeGreaterThanOrEqual(0)
+    expect(iHist).toBeLessThan(iExec)
+  })
+
+  it('falha no histórico: exec não é gravado, RDO segue rascunho e o erro é amigável', async () => {
+    falharEscritaEm = 'obras_atividade_status_hist'
+    const r = await validarEEnviarAction(OBRA, DIA)
+    expect(r).toMatchObject({ ok: false, erro: expect.stringContaining('Não foi possível gravar o histórico do avanço') })
+    expect(escritas).not.toContain('upsert:obras_atividade_exec')
+    expect(db.obras_atividade_exec ?? []).toHaveLength(0)
+    expect(db.obras_rdo[0].estado).toBe('rascunho')
+  })
+
+  it('diário que avança ou conclui zera dias_restantes (valor antigo não manda mais na projeção)', async () => {
+    db.obras_atividade_exec = [
+      { obra_id: OBRA, numero: 6, status: 'em_andamento', percentual: 0.5, dias_restantes: 4 },
+      { obra_id: OBRA, numero: 7, status: 'nao_iniciado', percentual: 0, dias_restantes: 2 },
+    ]
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    expect(db.obras_atividade_exec.find((e) => e.numero === 6)).toMatchObject({ status: 'concluido', dias_restantes: null })
+    expect(db.obras_atividade_exec.find((e) => e.numero === 7)).toMatchObject({ percentual: 0.3, dias_restantes: null })
   })
 
   it('conclui a trava e avança a dependente no mesmo diário', async () => {

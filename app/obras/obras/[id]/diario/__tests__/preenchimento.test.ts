@@ -5,7 +5,8 @@ const ativ = (over: Partial<AtividadeCalculada>): AtividadeCalculada => ({
   numero: 1, etapa: 'E', descricao: 'A', pred1: null, pred2: null, duracao: 2, bloqueiaPorTrava: false, pesoValor: 0,
   status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null,
   inicioPrevisto: '2026-10-26', fimPrevisto: '2026-10-27', inicioProjetado: '2026-10-26', fimProjetado: '2026-10-27',
-  peso: 0, percentualPrevisto: 0, situacao: 'no_prazo', travada: false, ...over,
+  peso: 0, percentualPrevisto: 0, situacao: 'no_prazo', travada: false,
+  inicioFixo: null, diasRestantes: null, alertaInicioFixo: null, inicioFixoAjustado: false, ...over,
 })
 
 const atividades = [
@@ -38,12 +39,12 @@ describe('montarDiario', () => {
   })
 
   it('com rascunho salvo usa os campos e avanços dele', () => {
-    const rdo = { semExecucao: false, motivoSemExecucao: null, efetivo: 3, equipeTexto: null, clima: 'chuva' as const, programacaoAmanha: null }
+    const rdo = { semExecucao: false, motivoSemExecucao: null, efetivo: 3, equipeTexto: null, clima: 'chuva' as const, climaManha: 'sol' as const, climaTarde: 'chuva' as const, programacaoAmanha: null }
     const r = montarDiario({
       ...base, data: '2026-10-29', rdo, ultimo: { efetivo: 9, equipeTexto: 'x' },
       avancosSalvos: [{ numero: 6, de: 0.5, para: 0.8, concluida: false, causa: null }, { numero: 9, de: 0, para: 0.1, concluida: false, causa: null }],
     })
-    expect(r.inicial).toMatchObject({ efetivo: 3, clima: 'chuva', programacaoAmanha: null })
+    expect(r.inicial).toMatchObject({ efetivo: 3, clima: 'chuva', climaManha: 'sol', climaTarde: 'chuva', programacaoAmanha: null })
     expect(r.atividades.map((a) => a.numero)).toEqual([6, 7, 11, 9])
     expect(r.inicial.avancos.find((a) => a.numero === 6)?.para).toBe(0.8)
   })

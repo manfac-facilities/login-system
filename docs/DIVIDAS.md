@@ -278,3 +278,42 @@ Menores dos reviews por tarefa, não confirmados como corrigidos na leva final (
 - Cronograma: `n` negativo/não inteiro vira 0 em silêncio; sem validação de data malformada; faltam testes a==b, início em fim de semana e virada de ano (Task 2).
 - Apagar RDO rascunho deixa fotos órfãs no storage; sem botão "Tornar OBRA" na Triagem; sem teste obra→spot (Tasks 1 e 5).
 - SQL 1: `create table if not exists` não acrescenta o check de/para se a tabela já existir; verificação 8e pode devolver `OBRAS_VERSAO_SALVA` em vez de 23514 (Task 1).
+
+## 30/10/2026 — Leva 1, Task 5 (cronograma árvore + Gantt), deixado de propósito
+
+- **"Descartar rascunho" fora:** `obras_cronograma_versao` não tem delete (RLS) e `obras_atividade` do rascunho também não; descartar exigiria policy/RPC nova. Hoje o rascunho vazio é reaproveitado por `criarRevisaoAction`.
+- Edição da execução (status/%/datas reais) saiu da tela do cronograma junto com a tabela antiga; volta na gaveta "Atualizar status" (Task 6). O botão já está na barra com um aviso provisório.
+- Setas de dependência no Gantt: desligadas (spec §5 deixa a chamada ao builder).
+- O rótulo do mês no cabeçalho do Gantt não acompanha a rolagem horizontal (o mês da esquerda some ao rolar).
+
+## 30/10/2026 — Leva 1 do cronograma (branch `feat/obras-leva1`), menores dos reviews que ficaram
+
+Âncora: `.superpowers/sdd/2026-10-30-obras-leva1/progress.md` (linhas "minor") e `task-*-review.md`.
+Corrigidos na prévia da Task 9 (não entram aqui): desalinhamento árvore×Gantt nas últimas linhas,
+tooltip das barras com a caixa rolada, rótulo Realizado cortado/encostando no "Hoje", cabeçalho da
+tabela não fixo no celular, KPI cortado, "p.p." encostado no eixo, botão Salvar rascunho atrás do
+menu inferior do diário.
+
+- Motor (`_lib/cronograma.ts`): campos de entrada opcionais (`?:`); sem teste com `dataStatus` ≠ hoje;
+  `diasRestantes = 0` pode projetar o fim num dia não útil; `deltaDiasUteis` exportado a mais (Task 2).
+- Curvas/leitura (`_lib/curvas.ts`, `_lib/leitura.ts`): histórico sem paginação (corta em 1000 linhas);
+  `dadosAte` via RDO em UTC; realizado ausente vira 0 em `progressoPorPeriodo`; fórmula do % previsto
+  duplicada entre `curvas.ts` e `cronograma.ts` (Task 3).
+- Shell: "Dados até" sem hora (é data); telas internas ainda leem a obra 2x até migrarem; outros 6 em
+  `task-4-review.md` (Task 4).
+- Cronograma (`[id]/cronograma/`): Enter+blur pode enviar duas vezes; fallback de `data_base` diferente entre
+  action e página; `gravarAtividade` duplicado; mock duplicado nos testes; Dias e Predecessoras não editáveis
+  abaixo de 768px (Task 5).
+- Gaveta "Atualizar status" e validação do diário: ✅ 30/10/2026 (revisão final, I2) o histórico passou a ser
+  gravado **antes** do exec, então falha no histórico não deixa exec sem ponto na curva. **Segue fora de
+  transação:** falha no exec depois do histórico deixa uma linha de histórico a mais (no retry vira duplicata
+  com a mesma data e %, absorvida pela curva). Atomicidade real exige RPC nova. Outros 5 em `task-6-review.md` (Task 6).
+- Motor: ✅ 30/10/2026 (revisão final, I1) dias restantes ancorados na `data_status` em que foram informados
+  (derivada do histórico na leitura); `diasRestantes = 0` continua projetando o fim na própria âncora.
+- Painel (`_ui/`): `previstoDaEtapa` duplicado; hex fora de token; ordem impedimentos × evolução;
+  `SeloSinal`/`corSinal` mortos; sem teste anti-NaN (Task 7).
+- Diário/e-mail: ícone do clima no e-mail é bolinha colorida (não SVG); hex literal no lugar de token;
+  clima legado regravado junto com os turnos (Task 8).
+- Visual, visto na prévia (`/previa-obras`): a faixa "Trava ativa" do painel lista as descrições inteiras
+  (8 linhas no celular com Macaé 3, empurra os KPIs); no celular, "Salvar rascunho" + menu inferior
+  ocupam ~130px fixos; a prévia importa a fixture de `_lib/__tests__/fixtures/` (só dev, 404 em produção).

@@ -139,6 +139,8 @@ const corpo = (over: Partial<RascunhoRdo> = {}): RascunhoRdo => ({
   efetivo: 6,
   equipeTexto: 'Equipe própria',
   clima: 'sol',
+  climaManha: null,
+  climaTarde: null,
   programacaoAmanha: '7 · Atividade 7',
   avancos: [av()],
   ...over,
@@ -194,6 +196,18 @@ describe('salvarRascunhoAction — gravação', () => {
     })
     expect(inseridos[0]).not.toHaveProperty('estado')
     expect(db.obras_rdo_avanco).toEqual([{ rdo_id: 'id1', numero: 6, de: 0.5, para: 0.7, concluida: false, causa: null }])
+  })
+
+  it('grava o clima da manhã e da tarde (e mantém o clima legado)', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ climaManha: 'sol', climaTarde: 'chuva' }))
+    expect(r.ok).toBe(true)
+    expect(db.obras_rdo[0]).toMatchObject({ clima_manha: 'sol', clima_tarde: 'chuva', clima: 'sol' })
+  })
+
+  it('clima de turno inválido → recusa sem gravar', async () => {
+    const r = await salvarRascunhoAction(OBRA, DIA, corpo({ climaTarde: 'neve' as never }))
+    expect(r).toEqual({ ok: false, erro: 'Clima inválido' })
+    expect(db.obras_rdo).toHaveLength(0)
   })
 
   it('salvar de novo atualiza o mesmo RDO e substitui as linhas de avanço', async () => {

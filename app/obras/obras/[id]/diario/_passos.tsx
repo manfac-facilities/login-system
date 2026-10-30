@@ -15,11 +15,13 @@
 import { useState, type ReactNode } from 'react'
 import { salvarRascunhoAction } from './_actions'
 import FotosDiario from './_fotos'
+import { ClimaTurnos } from './_clima'
+import { IconeCadeado, IconeCheck } from '../../_ui/icones'
+import { Chevron } from '../cronograma/_barra-ferramentas'
 import type {
   AtividadeDiario,
   AvancoRdo,
   CausaNaoAndou,
-  Clima,
   EstadoRdo,
   FotoRdo,
   RascunhoRdo,
@@ -34,19 +36,12 @@ const CAUSAS: { valor: CausaNaoAndou; rotulo: string }[] = [
   { valor: 'outro', rotulo: 'Outro' },
 ]
 
-const CLIMAS: { valor: Clima; rotulo: string }[] = [
-  { valor: 'sol', rotulo: '☀ Sol' },
-  { valor: 'nublado', rotulo: '☁ Nublado' },
-  { valor: 'chuva', rotulo: '🌧 Chuva' },
-  { valor: 'impraticavel', rotulo: '⛈ Impraticável' },
-]
-
 const pct = (x: number) => Math.round(x * 100)
 
 /** Placeholder do passo 4 até a Task 9a entregar o formulário. */
 export function PassoImpedimentosPendente() {
   return (
-    <p className="text-sm text-[#94a3b8]">
+    <p className="text-sm text-[#5a7380]">
       O registro de impedimentos e orientações entra aqui em breve. Por enquanto, avise o engenheiro da obra.
     </p>
   )
@@ -70,8 +65,8 @@ function Chip({
       disabled={disabled}
       onClick={onClick}
       className={
-        'min-h-10 rounded-full border px-3 text-sm transition disabled:opacity-45 ' +
-        (ativo ? 'border-[#f05a28] bg-[#f05a28] text-white' : 'border-[#1e3a5f] text-[#e8eef7] hover:border-[#f05a28]')
+        'min-h-11 rounded-full border px-3 text-sm transition disabled:opacity-45 ' +
+        (ativo ? 'border-[#b94606] bg-[#b94606] text-white' : 'border-[#dadad8] text-[#333336] hover:border-[#b94606]')
       }
     >
       {children}
@@ -97,7 +92,7 @@ function Passo({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-[#1e3a5f] bg-[#0a1628]">
+    <section className="rounded-xl border border-[#dadad8] bg-[#ffffff]">
       <button
         type="button"
         aria-expanded={aberto}
@@ -109,21 +104,23 @@ function Passo({
           className={
             'flex h-7 w-7 flex-none items-center justify-center rounded-full border-2 text-sm font-semibold ' +
             (feito
-              ? 'border-[#16a34a] bg-[#16a34a] text-white'
+              ? 'border-[#136c38] bg-[#136c38] text-white'
               : aberto
-                ? 'border-[#f05a28] text-[#f05a28]'
-                : 'border-[#1e3a5f] text-[#94a3b8]')
+                ? 'border-[#b94606] text-[#b94606]'
+                : 'border-[#dadad8] text-[#5a7380]')
           }
         >
-          {feito ? '✓' : n}
+          {feito ? <IconeCheck tamanho={16} /> : n}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-[#e8eef7]">{titulo}</span>
-          <span className="block truncate text-xs text-[#94a3b8]">{resumo}</span>
+          <span className="block font-semibold text-[#333336]">{titulo}</span>
+          <span className="block truncate text-xs text-[#5a7380]">{resumo}</span>
         </span>
-        <span aria-hidden className="text-[#94a3b8]">{aberto ? '▴' : '▾'}</span>
+        <span aria-hidden className="text-[#5a7380]">
+          <Chevron aberto={aberto} tamanho={18} />
+        </span>
       </button>
-      {aberto ? <div className="border-t border-[#1e3a5f] px-3 py-3">{children}</div> : null}
+      {aberto ? <div className="border-t border-[#dadad8] px-3 py-3">{children}</div> : null}
     </section>
   )
 }
@@ -146,13 +143,17 @@ function CartaoAtividade({
   return (
     <div
       data-testid={`atividade-${a.numero}`}
-      className={'rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-3 ' + (a.travada ? 'opacity-60' : '')}
+      className={'rounded-lg border border-[#dadad8] bg-[#f6f6f5] p-3 ' + (a.travada ? 'opacity-60' : '')}
     >
-      <p className="font-semibold text-[#e8eef7]">
-        {a.travada ? <span aria-label="Travada" className="mr-1">🔒</span> : null}
+      <p className="font-semibold text-[#333336]">
+        {a.travada ? (
+          <span role="img" aria-label="Travada" className="mr-1 inline-block align-[-2px] text-[#5a7380]">
+            <IconeCadeado tamanho={15} />
+          </span>
+        ) : null}
         {a.numero} · {a.descricao}
       </p>
-      {a.travada ? <p className="text-xs text-[#94a3b8]">{a.motivoTrava}</p> : null}
+      {a.travada ? <p className="text-xs text-[#5a7380]">{a.motivoTrava}</p> : null}
 
       <div className="mt-2 flex items-center gap-3">
         <input
@@ -164,7 +165,7 @@ function CartaoAtividade({
           disabled={desabilitado || av.concluida}
           aria-label={`Percentual da atividade ${a.numero}`}
           onChange={(e) => mudarPara(Number(e.target.value))}
-          className="h-8 flex-1 accent-[#f05a28]"
+          className="h-8 flex-1 accent-[#b94606]"
         />
         <input
           type="number"
@@ -175,28 +176,28 @@ function CartaoAtividade({
           disabled={desabilitado || av.concluida}
           aria-label={`Percentual digitado da atividade ${a.numero}`}
           onChange={(e) => mudarPara(Number(e.target.value) || 0)}
-          className="min-h-11 w-20 rounded-lg border border-[#1e3a5f] bg-[#0a1628] px-2 text-right text-base text-[#e8eef7]"
+          className="min-h-11 w-20 rounded-lg border border-[#dadad8] bg-[#ffffff] px-2 text-right text-base text-[#333336]"
         />
-        <span className="text-sm text-[#94a3b8]">%</span>
+        <span className="text-sm text-[#5a7380]">%</span>
       </div>
-      <p className="mt-1 text-xs text-[#94a3b8]">
-        antes {pct(av.de)}% → <b className="text-[#e8eef7]">hoje {valor}%</b>
+      <p className="mt-1 text-xs text-[#5a7380]">
+        antes {pct(av.de)}% → <b className="text-[#333336]">hoje {valor}%</b>
       </p>
 
-      <label className="mt-2 flex min-h-11 items-center gap-2 text-sm text-[#e8eef7]">
+      <label className="mt-2 flex min-h-11 items-center gap-2 text-sm text-[#333336]">
         <input
           type="checkbox"
           checked={av.concluida}
           disabled={desabilitado}
           onChange={(e) => onChange({ ...av, concluida: e.target.checked, causa: e.target.checked ? null : av.causa })}
-          className="h-5 w-5 accent-[#16a34a]"
+          className="h-5 w-5 accent-[#136c38]"
         />
         Concluída hoje
       </label>
 
       {naoAndou ? (
         <div className="mt-1">
-          <p className="text-xs text-[#fca5a5]">
+          <p className="text-xs text-[#b23232]">
             {av.para < av.de ? 'o percentual caiu → por quê? (obrigatório)' : 'não andou → por quê?'}
           </p>
           <div className="mt-1 flex flex-wrap gap-2">
@@ -296,25 +297,25 @@ export default function PassosDiario({
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-3 pb-24">
       {somenteLeitura ? (
-        <p className="rounded-lg border border-[#16a34a] bg-[#16a34a1a] px-3 py-2 text-sm text-[#e8eef7]">
+        <p className="rounded-lg border border-[#136c38] bg-[#1f9d551a] px-3 py-2 text-sm text-[#333336]">
           {estado === 'enviado' ? 'Diário já enviado' : 'Diário já validado'} — não dá mais para alterar.
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-[#1e3a5f] bg-[#0a1628] px-3 py-2">
-        <label className="flex min-h-11 items-center gap-3 text-[#e8eef7]">
+      <div className="rounded-xl border border-[#dadad8] bg-[#ffffff] px-3 py-2">
+        <label className="flex min-h-11 items-center gap-3 text-[#333336]">
           <input
             type="checkbox"
             checked={corpo.semExecucao}
             disabled={somenteLeitura}
             onChange={(e) => mudar({ semExecucao: e.target.checked })}
-            className="h-5 w-5 accent-[#f05a28]"
+            className="h-5 w-5 accent-[#b94606]"
           />
           <span className="font-semibold">Sem execução hoje</span>
         </label>
         {corpo.semExecucao ? (
           <div className="flex flex-col gap-2 pb-2">
-            <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+            <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
               Motivo (obrigatório)
               <textarea
                 value={corpo.motivoSemExecucao ?? ''}
@@ -322,21 +323,10 @@ export default function PassosDiario({
                 onChange={(e) => mudar({ motivoSemExecucao: e.target.value })}
                 rows={2}
                 placeholder="ex.: área não liberada pela loja"
-                className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 py-2 text-base text-[#e8eef7]"
+                className="rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 py-2 text-base text-[#333336]"
               />
             </label>
-            <div className="flex flex-wrap gap-2">
-              {CLIMAS.map((c) => (
-                <Chip
-                  key={c.valor}
-                  ativo={corpo.clima === c.valor}
-                  disabled={somenteLeitura}
-                  onClick={() => mudar({ clima: corpo.clima === c.valor ? null : c.valor })}
-                >
-                  {c.rotulo}
-                </Chip>
-              ))}
-            </div>
+            <ClimaTurnos corpo={corpo} mudar={mudar} somenteLeitura={somenteLeitura} />
           </div>
         ) : null}
       </div>
@@ -345,13 +335,13 @@ export default function PassosDiario({
         <Passo
           n={1}
           titulo="Equipe"
-          resumo={corpo.efetivo !== null ? `${corpo.efetivo} pessoa(s)` : 'quantas pessoas, qual equipe, clima'}
+          resumo={corpo.efetivo !== null ? `${corpo.efetivo} pessoa(s)` : 'quantas pessoas, qual equipe, clima do dia'}
           feito={corpo.efetivo !== null}
           aberto={aberto === 1}
           onToggle={() => alternar(1)}
         >
           <div className="flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+            <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
               Efetivo (nº de pessoas)
               <input
                 type="number"
@@ -360,34 +350,20 @@ export default function PassosDiario({
                 value={corpo.efetivo ?? ''}
                 disabled={somenteLeitura}
                 onChange={(e) => mudar({ efetivo: e.target.value === '' ? null : Math.max(0, Math.trunc(Number(e.target.value))) })}
-                className="min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 text-base text-[#e8eef7]"
+                className="min-h-11 rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 text-base text-[#333336]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+            <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
               Empresa / equipe
               <input
                 value={corpo.equipeTexto ?? ''}
                 disabled={somenteLeitura}
                 onChange={(e) => mudar({ equipeTexto: e.target.value })}
                 placeholder="ex.: equipe própria + 2 da elétrica"
-                className="min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 text-base text-[#e8eef7]"
+                className="min-h-11 rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 text-base text-[#333336]"
               />
             </label>
-            <div>
-              <p className="mb-1 text-xs text-[#94a3b8]">Clima</p>
-              <div className="flex flex-wrap gap-2">
-                {CLIMAS.map((c) => (
-                  <Chip
-                    key={c.valor}
-                    ativo={corpo.clima === c.valor}
-                    disabled={somenteLeitura}
-                    onClick={() => mudar({ clima: corpo.clima === c.valor ? null : c.valor })}
-                  >
-                    {c.rotulo}
-                  </Chip>
-                ))}
-              </div>
-            </div>
+            <ClimaTurnos corpo={corpo} mudar={mudar} somenteLeitura={somenteLeitura} />
           </div>
         </Passo>
       ) : null}
@@ -429,7 +405,7 @@ export default function PassosDiario({
               })}
             </div>
           ) : (
-            <p className="text-sm text-[#94a3b8]">Nenhuma atividade em andamento ou prevista até hoje.</p>
+            <p className="text-sm text-[#5a7380]">Nenhuma atividade em andamento ou prevista até hoje.</p>
           )}
         </Passo>
       ) : null}
@@ -453,33 +429,34 @@ export default function PassosDiario({
         aberto={aberto === 5}
         onToggle={() => alternar(5)}
       >
-        <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+        <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
           Programação de amanhã
           <textarea
             value={corpo.programacaoAmanha ?? ''}
             disabled={somenteLeitura}
             onChange={(e) => mudar({ programacaoAmanha: e.target.value })}
             rows={4}
-            className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-3 py-2 text-base text-[#e8eef7]"
+            className="rounded-lg border border-[#dadad8] bg-[#f6f6f5] px-3 py-2 text-base text-[#333336]"
           />
         </label>
       </Passo>
 
       {erro ? (
-        <p role="alert" className="rounded-lg border border-[#ff4d6d] bg-[#ff4d6d1a] px-3 py-2 text-sm text-[#ff4d6d]">
+        <p role="alert" className="rounded-lg border border-[#b23232] bg-[#d645451a] px-3 py-2 text-sm text-[#b23232]">
           {erro}
         </p>
       ) : null}
-      {aviso ? <p className="text-center text-xs text-[#94a3b8]">{aviso}</p> : null}
+      {aviso ? <p className="text-center text-xs text-[#5a7380]">{aviso}</p> : null}
 
       {!somenteLeitura ? (
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-[#1e3a5f] bg-[#0a1628]/95 px-4 py-3">
+        // No celular fica acima do menu inferior do ShellObra (56px + borda); no computador, à direita da sidebar.
+        <div className="fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 border-t border-[#dadad8] bg-[#ffffff]/95 px-4 py-3 lg:bottom-0 lg:left-[240px]">
           <div className="mx-auto max-w-xl">
             <button
               type="button"
               disabled={salvando}
               onClick={() => void salvar()}
-              className="min-h-12 w-full rounded-xl bg-[#f05a28] text-base font-bold text-white disabled:opacity-45"
+              className="min-h-12 w-full rounded-xl bg-[#b94606] text-base font-bold text-white disabled:opacity-45"
             >
               {salvando ? 'Salvando…' : 'Salvar rascunho'}
             </button>

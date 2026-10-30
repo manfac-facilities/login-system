@@ -23,6 +23,8 @@ export type AtividadePlano = {
   duracao: number
   bloqueiaPorTrava: boolean
   pesoValor: number
+  /** Início digitado na versão (Leva 1). Ausente/null = segue as predecessoras. */
+  inicioFixo?: string | null
 }
 
 export type AtividadeExec = {
@@ -31,6 +33,10 @@ export type AtividadeExec = {
   percentual: number
   inicioReal: string | null
   fimReal: string | null
+  /** Dias úteis restantes informados na atualização de status. Ausente/null = projeta pelo %. */
+  diasRestantes?: number | null
+  /** Data de status em que os dias restantes foram informados (âncora). Ausente/null = data de status/hoje. */
+  diasRestantesEm?: string | null
 }
 
 export type ImpedimentoCalc = {
@@ -52,6 +58,12 @@ export type AtividadeCalculada = AtividadePlano &
     percentualPrevisto: number
     situacao: Situacao
     travada: boolean
+    inicioFixo: string | null
+    diasRestantes: number | null
+    /** Ex.: 'Começa antes da atividade 5 terminar'. */
+    alertaInicioFixo: string | null
+    /** O início fixo caiu em folga e foi para o próximo dia útil. */
+    inicioFixoAjustado: boolean
   }
 
 export type ResultadoCronograma = {
@@ -110,11 +122,14 @@ export function calcularCronograma(p: {
   exec: AtividadeExec[]
   dataBase: string
   hoje: string
+  /** Data de status da projeção (padrão `hoje`). */
+  dataStatus?: string
   feriados: Feriados
   atividadeTrava: number | null
   impedimentos: ImpedimentoCalc[]
 }): ResultadoCronograma {
   const { plano, dataBase, hoje, feriados, atividadeTrava } = p
+  const dataStatus = p.dataStatus ?? hoje
   const ordem = ordenar(plano)
   const existentes = new Set(plano.map((a) => a.numero))
   const execPor = new Map(p.exec.map((e) => [e.numero, e]))
@@ -128,7 +143,7 @@ export function calcularCronograma(p: {
       .filter((i) => i.encerradoEm === null && i.responsavel === 'cliente' && i.travaAtividade && i.atividadeNumero !== null)
       .map((i) => i.atividadeNumero as number),
   )
-  const hojeUtil = proximoDiaUtil(hoje, feriados)
+  const statusUtil = proximoDiaUtil(dataStatus, feriados)
 
   const calc = new Map<number, AtividadeCalculada>()
   for (const a of ordem) {
@@ -136,10 +151,23 @@ export function calcularCronograma(p: {
     const preds = predecessoras(a, existentes).map((n) => calc.get(n)!)
     const dur = Math.max(a.duracao, 1)
 
-    // Previsto: só plano e calendário.
-    const inicioPrevisto = preds.length
-      ? somarDiasUteis(maxData(preds.map((x) => x.fimPrevisto)), 1, feriados)
-      : proximoDiaUtil(dataBase, feriados)
+    // Previsto: só plano e calendário. Início fixo manda e ignora as predecessoras.
+    const inicioFixo = a.inicioFixo ?? null
+    const diasRestantes = ex.diasRestantes ?? null
+    let alertaInicioFixo: string | null = null
+    let inicioPrevisto: string
+    if (inicioFixo) {
+      inicioPrevisto = proximoDiaUtil(inicioFixo, feriados)
+      const conflito = preds.filter((x) => inicioPrevisto <= x.fimPrevisto)
+      if (conflito.length) {
+        const pior = conflito.reduce((m, x) => (x.fimPrevisto > m.fimPrevisto ? x : m))
+        alertaInicioFixo = `Começa antes da atividade ${pior.numero} terminar`
+      }
+    } else {
+      inicioPrevisto = preds.length
+        ? somarDiasUteis(maxData(preds.map((x) => x.fimPrevisto)), 1, feriados)
+        : proximoDiaUtil(dataBase, feriados)
+    }
     const fimPrevisto = somarDiasUteis(inicioPrevisto, dur - 1, feriados)
 
     // Projetado: parte sempre do projetado das predecessoras.
@@ -151,12 +179,20 @@ export function calcularCronograma(p: {
       fimProjetado = ex.fimReal ?? fimPrevisto
     } else if (iniciada) {
       inicioProjetado = ex.inicioReal ?? inicioPrevisto
-      const restante = Math.max(ceilLimpo(a.duracao * (1 - ex.percentual)), 1)
-      fimProjetado = maxData([fimPrevisto, somarDiasUteis(hojeUtil, restante - 1, feriados)])
+      if (ex.status === 'em_andamento' && diasRestantes !== null) {
+        // Âncora: a data de status em que os dias foram informados (spec §5 A5), não hoje.
+        const ancora = ex.diasRestantesEm ?? dataStatus
+        fimProjetado = diasRestantes === 0
+          ? ancora
+          : somarDiasUteis(proximoDiaUtil(ancora, feriados), ceilLimpo(diasRestantes) - 1, feriados)
+      } else {
+        const restante = Math.max(ceilLimpo(a.duracao * (1 - ex.percentual)), 1)
+        fimProjetado = maxData([fimPrevisto, somarDiasUteis(statusUtil, restante - 1, feriados)])
+      }
     } else {
       const candidatos = [inicioPrevisto]
       if (preds.length) candidatos.push(somarDiasUteis(maxData(preds.map((x) => x.fimProjetado)), 1, feriados))
-      if (inicioPrevisto < hoje) candidatos.push(hojeUtil)
+      if (inicioPrevisto < dataStatus) candidatos.push(statusUtil)
       inicioProjetado = maxData(candidatos)
       fimProjetado = somarDiasUteis(inicioProjetado, dur - 1, feriados)
     }
@@ -184,6 +220,10 @@ export function calcularCronograma(p: {
       percentualPrevisto,
       situacao,
       travada: a.bloqueiaPorTrava && travaAberta,
+      inicioFixo,
+      diasRestantes,
+      alertaInicioFixo,
+      inicioFixoAjustado: inicioFixo !== null && inicioFixo !== inicioPrevisto,
     })
   }
 
@@ -253,4 +293,81 @@ export function sinalDaObra(p: {
   if (p.desvioPP < -5 || (p.terminoBase !== null && p.terminoProjetado > p.terminoBase)) return 'vermelho'
   if (p.desvioPP < 0 || p.impedimentoClienteAberto) return 'amarelo'
   return 'verde'
+}
+
+export type ResumoEtapa = {
+  etapa: string
+  inicio: string
+  fim: string
+  diasUteis: number
+  percentual: number
+  inicioProjetado: string
+  fimProjetado: string
+  numeros: number[]
+}
+
+const minData = (datas: string[]): string => datas.reduce((m, d) => (d < m ? d : m))
+
+/** Linhas-resumo por etapa, na ordem de aparição. % ponderado pelo peso; pela duração se a etapa soma peso 0. */
+export function resumirEtapas(atividades: AtividadeCalculada[], feriados: Feriados): ResumoEtapa[] {
+  const grupos = new Map<string, AtividadeCalculada[]>()
+  for (const a of atividades) {
+    const g = grupos.get(a.etapa)
+    if (g) g.push(a)
+    else grupos.set(a.etapa, [a])
+  }
+  return [...grupos].map(([etapa, as]) => {
+    const somaPeso = as.reduce((s, a) => s + a.peso, 0)
+    const pesoDe = (a: AtividadeCalculada) => (somaPeso > 0 ? a.peso : Math.max(a.duracao, 1))
+    const total = as.reduce((s, a) => s + pesoDe(a), 0)
+    const inicio = minData(as.map((a) => a.inicioPrevisto))
+    const fim = maxData(as.map((a) => a.fimPrevisto))
+    return {
+      etapa,
+      inicio,
+      fim,
+      diasUteis: diasUteisEntre(inicio, fim, feriados),
+      percentual: total > 0 ? as.reduce((s, a) => s + pesoDe(a) * a.percentual, 0) / total : 0,
+      inicioProjetado: minData(as.map((a) => a.inicioProjetado)),
+      fimProjetado: maxData(as.map((a) => a.fimProjetado)),
+      numeros: as.map((a) => a.numero),
+    }
+  })
+}
+
+export type ComparacaoBase = {
+  numero: number
+  inicioBase: string | null
+  fimBase: string | null
+  deltaDias: number | null
+}
+
+/** Dias úteis de `de` até `ate`, sem contar `de`: positivo se `ate` é depois, negativo se antes, 0 igual. */
+export function deltaDiasUteis(de: string, ate: string, feriados: Feriados): number {
+  if (ate === de) return 0
+  return ate > de ? diasUteisEntre(de, ate, feriados) - 1 : -(diasUteisEntre(ate, de, feriados) - 1)
+}
+
+/** Δ do fim projetado (vigente) vs fim previsto da base, por atividade. */
+export function compararComBase(
+  vigente: AtividadeCalculada[],
+  base: AtividadeCalculada[] | null,
+  feriados: Feriados,
+): Map<number, ComparacaoBase> {
+  const basePor = new Map((base ?? []).map((b) => [b.numero, b]))
+  return new Map(
+    vigente.map((a) => {
+      const b = basePor.get(a.numero)
+      const c: ComparacaoBase = b
+        ? { numero: a.numero, inicioBase: b.inicioPrevisto, fimBase: b.fimPrevisto, deltaDias: deltaDiasUteis(b.fimPrevisto, a.fimProjetado, feriados) }
+        : { numero: a.numero, inicioBase: null, fimBase: null, deltaDias: null }
+      return [a.numero, c]
+    }),
+  )
+}
+
+/** Duração (dias úteis inclusivos, mín. 1) a partir do Fim digitado. */
+export function duracaoPorFim(inicio: string, fim: string, feriados: Feriados): number {
+  if (fim < inicio) throw new Error(`Fim antes do início (${inicio.slice(8, 10)}/${inicio.slice(5, 7)})`)
+  return Math.max(diasUteisEntre(inicio, fim, feriados), 1)
 }

@@ -24,7 +24,7 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
 import { podeIniciar } from '../../_lib/cronograma'
 import { diasUteisEntre } from '../../_lib/calendario'
-import { montarEmailDiario } from '../../_lib/email-diario'
+import { montarEmailDiario, type RdoCompleto } from '../../_lib/email-diario'
 import { enviarEmail } from '../../_lib/enviar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { AvancoRdo, CausaNaoAndou, Clima, RascunhoRdo, Resultado } from './_tipos'
@@ -93,7 +93,9 @@ export async function salvarRascunhoAction(
   const semExecucao = corpo.semExecucao === true
   const motivo = texto(corpo.motivoSemExecucao)
   if (semExecucao && !motivo) return falha('Diga o motivo de não ter tido execução hoje')
-  if (corpo.clima !== null && !CLIMAS.includes(corpo.clima)) return falha('Clima inválido')
+  for (const c of [corpo.clima, corpo.climaManha, corpo.climaTarde]) {
+    if (c != null && !CLIMAS.includes(c)) return falha('Clima inválido')
+  }
   const efetivo = semExecucao ? null : corpo.efetivo
   if (efetivo !== null && !(Number.isInteger(efetivo) && efetivo >= 0 && efetivo <= 9999)) {
     return falha('Efetivo precisa ser um número inteiro de pessoas')
@@ -132,7 +134,9 @@ export async function salvarRascunhoAction(
     motivo_sem_execucao: semExecucao ? motivo : null,
     efetivo,
     equipe_texto: semExecucao ? null : texto(corpo.equipeTexto),
-    clima: corpo.clima,
+    clima: corpo.clima ?? null,
+    clima_manha: corpo.climaManha ?? null,
+    clima_tarde: corpo.climaTarde ?? null,
     programacao_amanha: texto(corpo.programacaoAmanha),
     atualizado_em: new Date().toISOString(),
   }
@@ -370,10 +374,27 @@ export async function validarEEnviarAction(
         percentual,
         inicio_real: atual?.inicioReal ?? data,
         fim_real: a.concluida ? (atual?.fimReal ?? data) : (atual?.fimReal ?? null),
+        // Dias restantes informados antes não podem seguir mandando na projeção.
+        dias_restantes: null,
         atualizado_em: agora,
       })
     }
     if (linhas.length) {
+      // Histórico para as curvas (Leva 1): uma linha por atividade aplicada, na data do RDO.
+      // Grava ANTES do exec: se falhar, o exec não muda e repetir grava os dois
+      // (uma duplicata no retry tem a mesma data e %, e a curva a absorve).
+      const { error: errH } = await supabase.from('obras_atividade_status_hist').insert(
+        linhas.map((l) => ({
+          obra_id: obraId,
+          numero: l.numero,
+          data_status: data,
+          percentual: l.percentual,
+          dias_restantes: null,
+          status: l.status,
+          origem: 'diario',
+        })),
+      )
+      if (errH) return erroBanco('gravar o histórico do avanço', errH)
       const { error } = await supabase.from('obras_atividade_exec').upsert(linhas, { onConflict: 'obra_id,numero' })
       if (error) return erroBanco('aplicar o avanço no cronograma', error)
     }
@@ -462,12 +483,15 @@ export async function validarEEnviarAction(
     }
   }
 
-  const rdoCompleto = {
+  const rdoCompleto: RdoCompleto = {
     id: String(rdo.id),
     data,
     semExecucao: !!rdo.sem_execucao,
     motivoSemExecucao: (rdo.motivo_sem_execucao as string | null) ?? null,
     programacaoAmanha: (rdo.programacao_amanha as string | null) ?? null,
+    clima: (rdo.clima as RdoCompleto['clima']) ?? null,
+    climaManha: (rdo.clima_manha as RdoCompleto['clima']) ?? null,
+    climaTarde: (rdo.clima_tarde as RdoCompleto['clima']) ?? null,
     avancos,
   }
   const diaN = diasUteisEntre(obra.data_base ?? data, data, relida.dados.feriados)

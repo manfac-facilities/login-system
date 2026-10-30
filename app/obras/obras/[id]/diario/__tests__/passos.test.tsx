@@ -23,6 +23,8 @@ const inicial: RascunhoRdo = {
   efetivo: 6,
   equipeTexto: null,
   clima: null,
+  climaManha: null,
+  climaTarde: null,
   programacaoAmanha: null,
   avancos: [
     { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: null },
@@ -53,14 +55,14 @@ describe('PassosDiario', () => {
     montar()
     abrirPasso(/O que andou/)
     const travada = screen.getByTestId('atividade-11')
-    expect(within(travada).getByText('🔒')).toBeInTheDocument()
+    expect(within(travada).getByRole('img', { name: 'Travada' })).toBeInTheDocument()
     expect(within(travada).getByText('Travada até a atividade 6 ser concluída')).toBeInTheDocument()
     expect(within(travada).getByRole('slider')).toBeDisabled()
     expect(within(travada).getByRole('spinbutton')).toBeDisabled()
     expect(within(travada).getByRole('checkbox', { name: /Concluída/ })).toBeDisabled()
 
     const livre = screen.getByTestId('atividade-6')
-    expect(within(livre).queryByText('🔒')).not.toBeInTheDocument()
+    expect(within(livre).queryByRole('img', { name: 'Travada' })).not.toBeInTheDocument()
     expect(within(livre).getByRole('slider')).not.toBeDisabled()
     expect(within(livre).getByRole('checkbox', { name: /Concluída/ })).not.toBeDisabled()
   })

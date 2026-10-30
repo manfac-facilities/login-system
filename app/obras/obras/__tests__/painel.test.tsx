@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+// Leva 1: painel redesenhado; casos novos em painel-leva1.test.tsx.
 import PainelObra from '../_ui/painel'
 import type { ObraGrande } from '../_lib/leitura'
 import type { AtividadeCalculada } from '../_lib/cronograma'
@@ -11,14 +12,15 @@ const obra = {
 const base: ObraGrande = {
   obra, versaoBase: null, versaoVigente: null, rascunho: null,
   plano: [], exec: [], impedimentos: [], feriados: new Set(),
-  calc: null, terminoBase: null, sinal: null, atraso: null,
+  calc: null, calcBase: null, etapas: [], hist: [], dadosAte: null, terminoBase: null, sinal: null, atraso: null,
 }
 
 const ativ = (over: Partial<AtividadeCalculada>): AtividadeCalculada => ({
   numero: 1, etapa: 'Demolição', descricao: 'Demolições', pred1: null, pred2: null, duracao: 2,
   bloqueiaPorTrava: true, pesoValor: 0, status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null,
   inicioPrevisto: '2026-10-01', fimPrevisto: '2026-10-02', inicioProjetado: '2026-10-01', fimProjetado: '2026-10-02',
-  peso: 0.1, percentualPrevisto: 0, situacao: 'no_prazo', travada: false, ...over,
+  peso: 0.1, percentualPrevisto: 0, situacao: 'no_prazo', travada: false,
+  inicioFixo: null, diasRestantes: null, alertaInicioFixo: null, inicioFixoAjustado: false, ...over,
 })
 
 const comCronograma = (over: Partial<ObraGrande> = {}): ObraGrande => ({
@@ -49,8 +51,8 @@ describe('PainelObra', () => {
 
   it('com atraso: decompõe por responsável', () => {
     render(<PainelObra dados={comCronograma()} hoje="2026-10-29" estadoDiario="nao_iniciado" ultimoEnvio={null} />)
-    expect(screen.getByText(/\+5 dias: 4 do cliente, 1 da Manfac/)).toBeInTheDocument()
-    expect(screen.getByText('Atrasado')).toBeInTheDocument()
+    const kpi = screen.getByRole('group', { name: 'Dias vs base' })
+    expect(kpi.textContent?.replace(/\s+/g, ' ')).toMatch(/\+5 dias: 4 do cliente, 1 da Manfac/)
     expect(screen.getByRole('link', { name: /Preencher diário de hoje/ })).toBeInTheDocument()
     expect(screen.getByText(/Demolições travadas até a atividade 6/)).toBeInTheDocument()
     expect(screen.getByText(/Pintura/)).toBeInTheDocument()
@@ -64,7 +66,7 @@ describe('PainelObra', () => {
     })
     render(<PainelObra dados={d} hoje="2026-10-29" estadoDiario="nao_iniciado" ultimoEnvio={null} />)
     expect(screen.getByText(/Base ainda não salva/)).toBeInTheDocument()
-    expect(screen.getByText(/40%/)).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Avanço realizado' })).toHaveTextContent('previsto 40%')
     expect(screen.queryByText(/Preencher diário de hoje/)).toBeNull()
   })
 

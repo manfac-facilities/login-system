@@ -6,15 +6,18 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
+import type { PontoHist } from './curvas'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
   diasDeImpacto,
+  resumirEtapas,
   sinalDaObra,
   type AtividadeExec,
   type AtividadePlano,
   type ImpedimentoCalc,
   type ResultadoCronograma,
+  type ResumoEtapa,
   type Responsavel,
   type Sinal,
   type StatusAtividade,
@@ -53,6 +56,14 @@ export type ObraGrande = {
   impedimentos: ImpedimentoRow[]
   feriados: Set<string>
   calc: ResultadoCronograma | null
+  /** Cálculo da base (v1 salva); null enquanto a v1 não foi salva. */
+  calcBase: ResultadoCronograma | null
+  /** Linhas-resumo por etapa do cálculo vigente (vazio sem cronograma). */
+  etapas: ResumoEtapa[]
+  /** Histórico de % por atividade (diário e atualização de status). */
+  hist: PontoHist[]
+  /** Maior data do histórico ou, sem histórico, o último RDO validado; null se nada. */
+  dadosAte: string | null
   terminoBase: string | null
   sinal: Sinal | null
   atraso: ReturnType<typeof atrasoPorResponsavel> | null
@@ -74,6 +85,7 @@ export const atividadePlanoDe = (a: Linha): AtividadePlano => ({
   duracao: a.duracao,
   bloqueiaPorTrava: !!a.bloqueia_por_trava,
   pesoValor: Number(a.peso_valor ?? 0),
+  inicioFixo: a.inicio_fixo ?? null,
 })
 
 /** Linha de `obras_atividade_exec` → execução do motor. */
@@ -83,6 +95,7 @@ export const atividadeExecDe = (e: Linha): AtividadeExec => ({
   percentual: Number(e.percentual ?? 0),
   inicioReal: e.inicio_real ?? null,
   fimReal: e.fim_real ?? null,
+  diasRestantes: e.dias_restantes === null || e.dias_restantes === undefined ? null : Number(e.dias_restantes),
 })
 
 /** Impedimentos (já convertidos) → entrada do motor; orientação e sem responsável ficam de fora. */
@@ -131,14 +144,15 @@ export async function lerObraGrande(
   obraId: string,
   hoje: string,
 ): Promise<{ ok: true; dados: ObraGrande } | { ok: false; erro: string }> {
-  const [obraR, versR, execR, impR, ferR] = await Promise.all([
+  const [obraR, versR, execR, impR, ferR, histR] = await Promise.all([
     supabase.from('obras_obra').select('*').eq('id', obraId).maybeSingle(),
     supabase.from('obras_cronograma_versao').select('id, numero, motivo, salva_em').eq('obra_id', obraId).order('numero'),
     supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
     supabase.from('obras_impedimento').select('*').eq('obra_id', obraId).order('aberto_em', { ascending: false }),
     supabase.from('obras_feriado').select('data'),
+    supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual, dias_restantes, registrado_em').eq('obra_id', obraId),
   ])
-  const falha = [obraR, versR, execR, impR, ferR].find((r) => r.error)
+  const falha = [obraR, versR, execR, impR, ferR, histR].find((r) => r.error)
   if (falha) return { ok: false, erro: `Falha ao ler a obra: ${falha.error!.message}` }
   if (!obraR.data) return { ok: false, erro: 'Obra não encontrada' }
 
@@ -158,22 +172,99 @@ export async function lerObraGrande(
     atividades = (atR.data ?? []) as Linha[]
   }
 
-  const feriados = new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string))
-  const exec: AtividadeExec[] = ((execR.data ?? []) as Linha[]).map(atividadeExecDe)
-  const impedimentos = ((impR.data ?? []) as Linha[]).map(impedimentoRow)
-  const imps = impedimentosCalcDe(impedimentos)
+  const hist: PontoHist[] = ((histR.data ?? []) as Linha[]).map((h) => ({
+    numero: h.numero,
+    dataStatus: h.data_status,
+    percentual: Number(h.percentual ?? 0),
+    diasRestantes: h.dias_restantes === null || h.dias_restantes === undefined ? null : Number(h.dias_restantes),
+    registradoEm: h.registrado_em ?? '',
+  }))
+  let dadosAte: string | null = hist.reduce<string | null>(
+    (m, h) => (m === null || h.dataStatus > m ? h.dataStatus : m), null,
+  )
+  if (dadosAte === null) {
+    const rdoR = await supabase
+      .from('obras_rdo').select('validado_em').eq('obra_id', obraId)
+      .not('validado_em', 'is', null).order('validado_em', { ascending: false }).limit(1)
+    if (rdoR.error) return { ok: false, erro: `Falha ao ler a obra: ${rdoR.error.message}` }
+    const v = ((rdoR.data ?? []) as Linha[])[0]?.validado_em as string | undefined
+    dadosAte = v ? v.slice(0, 10) : null
+  }
 
-  const plano = usada ? planoDe(atividades, usada.id) : []
-  const calcular = (p: AtividadePlano[]) =>
+  return {
+    ok: true,
+    dados: montarObraGrande({
+      obra,
+      vigente: vigenteL ? versaoInfo(vigenteL) : null,
+      base: baseL ? versaoInfo(baseL) : null,
+      rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
+      planoUsado: usada ? planoDe(atividades, usada.id) : [],
+      planoBase: baseL && baseL.id !== usada?.id ? planoDe(atividades, baseL.id) : null,
+      exec: ((execR.data ?? []) as Linha[]).map(atividadeExecDe),
+      impedimentos: ((impR.data ?? []) as Linha[]).map(impedimentoRow),
+      feriados: new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string)),
+      hist,
+      dadosAte,
+      hoje,
+    }),
+  }
+}
+
+/**
+ * Parte pura da leitura: com as linhas já convertidas, calcula vigente, base,
+ * sinal e atraso. Separada para a prévia visual (sem banco) usar o mesmo cálculo.
+ * `planoBase` = plano da v1 quando ela não é a versão usada; null = mesma versão.
+ */
+/**
+ * Âncora dos dias restantes (spec §5 A5): para cada atividade com `diasRestantes`
+ * no exec, a `data_status` da linha mais recente do histórico com dias restantes
+ * informados e igual ao valor atual. Sem essa linha, fica sem âncora (motor usa hoje).
+ */
+export function ancorarDiasRestantes(exec: AtividadeExec[], hist: PontoHist[]): AtividadeExec[] {
+  const ultima = new Map<number, PontoHist>()
+  for (const h of hist) {
+    if (h.diasRestantes === null || h.diasRestantes === undefined) continue
+    const m = ultima.get(h.numero)
+    const chave = (x: PontoHist) => `${x.dataStatus}|${x.registradoEm ?? ''}`
+    if (!m || chave(h) > chave(m)) ultima.set(h.numero, h)
+  }
+  return exec.map((e) => {
+    if (e.diasRestantes === null || e.diasRestantes === undefined) return e
+    const h = ultima.get(e.numero)
+    return { ...e, diasRestantesEm: h && h.diasRestantes === e.diasRestantes ? h.dataStatus : null }
+  })
+}
+
+export function montarObraGrande(p: {
+  obra: ObraRow
+  vigente: VersaoInfo | null
+  base: VersaoInfo | null
+  rascunho: VersaoInfo | null
+  planoUsado: AtividadePlano[]
+  planoBase: AtividadePlano[] | null
+  exec: AtividadeExec[]
+  impedimentos: ImpedimentoRow[]
+  feriados: Set<string>
+  hist: PontoHist[]
+  dadosAte: string | null
+  hoje: string
+}): ObraGrande {
+  const { obra, impedimentos, feriados, hist, dadosAte, hoje } = p
+  const exec = ancorarDiasRestantes(p.exec, hist)
+  const imps = impedimentosCalcDe(impedimentos)
+  const usada = p.vigente ?? p.rascunho
+  const plano = usada ? p.planoUsado : []
+  const calcular = (pl: AtividadePlano[]) =>
     calcularCronograma({
-      plano: p, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
+      plano: pl, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
       atividadeTrava: obra.atividade_trava, impedimentos: imps,
     })
 
   const calc = usada ? calcular(plano) : null
-  const terminoBase = baseL
-    ? (baseL.id === usada?.id && calc ? calc : calcular(planoDe(atividades, baseL.id))).terminoPrevisto
+  const calcBase = p.base
+    ? (p.base.id === usada?.id && calc ? calc : calcular(p.planoBase ?? []))
     : null
+  const terminoBase = calcBase?.terminoPrevisto ?? null
   const sinal = calc
     ? sinalDaObra({
         desvioPP: calc.desvioPP,
@@ -192,13 +283,12 @@ export async function lerObraGrande(
     : null
 
   return {
-    ok: true,
-    dados: {
-      obra,
-      versaoBase: baseL ? versaoInfo(baseL) : null,
-      versaoVigente: vigenteL ? versaoInfo(vigenteL) : null,
-      rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
-      plano, exec, impedimentos, feriados, calc, terminoBase, sinal, atraso,
-    },
+    obra,
+    versaoBase: p.base,
+    versaoVigente: p.vigente,
+    rascunho: p.rascunho,
+    plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
+    etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
+    terminoBase, sinal, atraso,
   }
 }

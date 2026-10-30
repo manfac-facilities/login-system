@@ -91,20 +91,20 @@ export default function FotosDiario({
       {fotos.length ? (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {fotos.map((f) => (
-            <li key={f.id} className="overflow-hidden rounded-lg border border-[#1e3a5f] bg-[#0a1628]">
+            <li key={f.id} className="overflow-hidden rounded-lg border border-[#dadad8] bg-[#ffffff]">
               {f.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={f.url} alt={f.legenda ?? 'Foto do diário'} className="aspect-[4/3] w-full object-cover" />
               ) : (
-                <div className="flex aspect-[4/3] items-center justify-center text-xs text-[#94a3b8]">sem prévia</div>
+                <div className="flex aspect-[4/3] items-center justify-center text-xs text-[#5a7380]">sem prévia</div>
               )}
               <div className="flex items-center justify-between gap-1 px-2 py-1.5">
-                <span className="truncate text-xs text-[#e8eef7]">{f.legenda ?? '—'}</span>
+                <span className="truncate text-xs text-[#333336]">{f.legenda ?? '—'}</span>
                 {!desabilitado ? (
                   <button
                     type="button"
                     onClick={() => remover(f.id)}
-                    className="min-h-9 shrink-0 rounded px-2 text-xs text-[#ff4d6d] hover:bg-[#ff4d6d1a]"
+                    className="min-h-9 shrink-0 rounded px-2 text-xs text-[#b23232] hover:bg-[#d645451a]"
                   >
                     tirar
                   </button>
@@ -114,18 +114,18 @@ export default function FotosDiario({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-[#94a3b8]">Nenhuma foto ainda.</p>
+        <p className="text-sm text-[#5a7380]">Nenhuma foto ainda.</p>
       )}
 
       {!desabilitado ? (
         <>
-          <label className="flex flex-col gap-1 text-xs text-[#94a3b8]">
+          <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
             Legenda da próxima foto (opcional)
             <input
               value={legenda}
               onChange={(e) => setLegenda(e.target.value)}
               placeholder="ex.: fachada, balcão, ponto 4"
-              className="min-h-11 rounded-lg border border-[#1e3a5f] bg-[#0a1628] px-3 text-base text-[#e8eef7]"
+              className="min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-3 text-base text-[#333336]"
             />
           </label>
           <input
@@ -140,13 +140,13 @@ export default function FotosDiario({
             type="button"
             disabled={enviando > 0}
             onClick={() => input.current?.click()}
-            className="min-h-12 rounded-xl border border-[#f05a28] px-4 text-base font-semibold text-[#f05a28] disabled:opacity-45"
+            className="min-h-12 rounded-xl border border-[#b94606] px-4 text-base font-semibold text-[#b94606] disabled:opacity-45"
           >
-            {enviando > 0 ? `enviando ${enviando} foto(s)…` : '📷 Tirar ou escolher fotos'}
+            {enviando > 0 ? `enviando ${enviando} foto(s)…` : 'Tirar ou escolher fotos'}
           </button>
         </>
       ) : null}
-      {erro ? <p role="alert" className="text-sm text-[#ff4d6d]">{erro}</p> : null}
+      {erro ? <p role="alert" className="text-sm text-[#b23232]">{erro}</p> : null}
     </div>
   )
 }
