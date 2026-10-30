@@ -73,6 +73,7 @@ const dados = (over: Partial<DadosCronograma> = {}): DadosCronograma => ({
   termino: { base: null, previsto: '2026-11-04', projetado: '2026-11-04' },
   statusAtividades: [],
   atividadeTrava: null,
+  valores: null,
   ...over,
 })
 
@@ -243,6 +244,34 @@ describe('visão Tabela', () => {
     })
     expect(m.excluirAtividadeAction).toHaveBeenCalledWith('o1', 'v1', 2)
     confirmar.mockRestore()
+  })
+
+  it('Valor (R$): só com valores (rascunho do engenheiro); grava o número; subtotal por etapa e total', async () => {
+    const { unmount } = render(<TelaCronograma dados={dados()} />)
+    expect(screen.queryByText('Valor (R$)')).toBeNull()
+    unmount()
+    render(<TelaCronograma dados={dados({ valores: { 1: 100, 2: 1000.5, 7: 0 } })} />)
+    expect(screen.getByLabelText('Valor (R$) da atividade 1.2')).toHaveValue('1.000,50')
+    expect(screen.getByLabelText('Subtotal da etapa 1')).toHaveTextContent('R$ 1.000,50')
+    expect(screen.getByLabelText('Subtotal da etapa 2')).toHaveTextContent('R$ 100,00')
+    expect(screen.getByLabelText('Total do valor')).toHaveTextContent('R$ 1.100,50')
+    await editar('Valor (R$) da atividade 1.1', 'R$ 2.345,6', 'blur')
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledWith('o1', 'v1', { numero: 7, pesoValor: 2345.6 })
+  })
+
+  it('Valor inválido ou negativo: o servidor recusa, o erro aparece e a célula volta', async () => {
+    m.salvarLinhaRascunhoAction.mockImplementation(async (_o: string, _v: string, ed: { pesoValor?: number }) =>
+      Number.isFinite(ed.pesoValor) && ed.pesoValor! >= 0
+        ? { ok: true }
+        : { ok: false, erro: 'Valor deve ser um número a partir de R$ 0,00' },
+    )
+    render(<TelaCronograma dados={dados({ valores: { 1: 100, 2: 0, 7: 0 } })} />)
+    const campo = await editar('Valor (R$) da atividade 2.1', '-10')
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledWith('o1', 'v1', { numero: 1, pesoValor: -10 })
+    expect(screen.getByRole('alert')).toHaveTextContent('Valor deve ser um número a partir de R$ 0,00')
+    expect(campo).toHaveValue('100,00')
+    await editar('Valor (R$) da atividade 2.1', 'abc')
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenLastCalledWith('o1', 'v1', { numero: 1, pesoValor: NaN })
   })
 
   it('cronograma vazio: "+ Etapa" cria a primeira etapa', async () => {

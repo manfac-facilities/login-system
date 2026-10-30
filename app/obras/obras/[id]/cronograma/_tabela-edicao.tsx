@@ -35,7 +35,18 @@ export function codigosDe(etapas: LinhaEtapa[]): Map<number, string> {
   return m
 }
 
-type Coluna = 'etapa' | 'descricao' | 'duracao' | 'inicio' | 'fim' | 'pred1' | 'pred2' | 'trava'
+/** Valor (R$) como a célula mostra: 1.234,56. */
+export const valorBR = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const moedaBR = (v: number) => 'R$ ' + valorBR(v)
+/** "R$ 1.234,56" / "1234,5" / "1234.5" → número; vazio = 0; inválido = NaN (o servidor recusa). */
+export function lerValor(texto: string): number {
+  let t = texto.replace(/R\$|\s/g, '')
+  if (!t) return 0
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
+  return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : NaN
+}
+
+type Coluna = 'etapa' | 'descricao' | 'duracao' | 'valor' | 'inicio' | 'fim' | 'pred1' | 'pred2' | 'trava'
 
 /** Enter/Shift+Enter: mesma coluna na linha de baixo/de cima. */
 function moverFoco(de: HTMLElement, passo: number) {
@@ -64,10 +75,13 @@ function Campo({
   onSalvar,
   className = '',
   placeholder,
+  modo,
 }: {
   valor: string
   rotulo: string
   placeholder?: string
+  /** inputMode para texto (ex.: 'decimal' no valor). */
+  modo?: 'decimal'
   tipo: 'text' | 'number' | 'date'
   linha: number
   col: Coluna | 'etapa-nome'
@@ -111,7 +125,7 @@ function Campo({
       aria-label={rotulo}
       title={rotulo}
       type={tipo}
-      inputMode={tipo === 'number' ? 'numeric' : undefined}
+      inputMode={tipo === 'number' ? 'numeric' : modo}
       min={tipo === 'number' ? 1 : undefined}
       data-linha={linha}
       data-col={col}
@@ -241,6 +255,7 @@ export default function TabelaEdicao({
   acoes,
   focarNumero,
   onFocado,
+  valores = null,
 }: {
   etapas: LinhaEtapa[]
   atividades: LinhaAtividade[]
@@ -248,6 +263,8 @@ export default function TabelaEdicao({
   acoes: AcoesTabela
   /** Atividade recém-criada: o foco vai para a descrição dela quando aparecer. */
   focarNumero?: number | null
+  /** Valor (R$) por numero; só no rascunho editável. null = sem a coluna. */
+  valores?: Record<number, number> | null
   onFocado?: () => void
 }) {
   const porNumero = new Map(atividades.map((a) => [a.numero, a]))
@@ -255,6 +272,9 @@ export default function TabelaEdicao({
   const ordem = etapas.flatMap((e) => e.numeros)
   // Índice da linha de atividade na tabela (Enter desce para a mesma coluna na próxima).
   const indice = new Map(ordem.map((n, i) => [n, i]))
+  const comValor = !!valores
+  const valorDe = (n: number) => valores?.[n] ?? 0
+  const extra = comValor ? 1 : 0
   const opcoesEtapa = etapas.map((e) => ({ valor: e.chave, rotulo: e.nome }))
   const opcoesPred = (self: number) => [
     { valor: '', rotulo: '—' },
@@ -287,6 +307,7 @@ export default function TabelaEdicao({
               <th className={th} scope="col">Etapa</th>
               <th className={th + ' min-w-56'} scope="col">Atividade</th>
               <th className={th} scope="col">Dias úteis</th>
+              {comValor ? <th className={th} scope="col" title="Pesa o avanço físico. Interno: não aparece para o cliente.">Valor (R$)</th> : null}
               <th className={th} scope="col">Início</th>
               <th className={th} scope="col">Fim</th>
               <th className={th} scope="col">Pred. 1</th>
@@ -303,7 +324,7 @@ export default function TabelaEdicao({
               <Fragment key={'e:' + e.chave}>
                 <tr className="bg-[#eef2f5] font-semibold text-(--obra-ink)">
                   <td className={td + ' obra-num pl-3'}>{ei + 1}</td>
-                  <td className={td} colSpan={editavel ? 9 : 8}>
+                  <td className={td} colSpan={(editavel ? 9 : 8) + extra}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: e.cor }} />
                       {editavel ? (
@@ -323,6 +344,11 @@ export default function TabelaEdicao({
                       <span className="text-[12px] font-normal text-(--obra-muted-texto)">
                         ({e.numeros.length} {e.numeros.length === 1 ? 'atividade' : 'atividades'})
                       </span>
+                      {comValor ? (
+                        <span className="obra-num text-[12px] font-normal text-(--obra-muted-texto)" aria-label={`Subtotal da etapa ${ei + 1}`}>
+                          Subtotal {moedaBR(e.numeros.reduce((s, n) => s + valorDe(n), 0))}
+                        </span>
+                      ) : null}
                       {editavel ? (
                         <span className="flex items-center gap-1 font-normal">
                           <button type="button" className={BOTAO_ICONE} aria-label={`Subir etapa ${e.nome}`} title="Subir etapa" disabled={ei === 0} onClick={() => acoes.moverEtapa(e.chave, 'cima')}>
@@ -385,6 +411,20 @@ export default function TabelaEdicao({
                           onSalvar={(v) => acoes.salvar({ numero: n, duracao: Number(v) })}
                         />
                       </Celula>
+                      {comValor ? (
+                        <td className={td}>
+                          <Campo
+                            valor={valorBR(valorDe(n))}
+                            rotulo={`Valor (R$) da atividade ${cod}`}
+                            tipo="text"
+                            modo="decimal"
+                            linha={linha}
+                            col="valor"
+                            className="obra-num w-28 text-right"
+                            onSalvar={(v) => acoes.salvar({ numero: n, pesoValor: lerValor(v) })}
+                          />
+                        </td>
+                      ) : null}
                       <td className={td}>
                         <span className="flex items-center gap-1">
                           {editavel ? (
@@ -492,12 +532,23 @@ export default function TabelaEdicao({
             ))}
             {!etapas.length ? (
               <tr>
-                <td colSpan={editavel ? 10 : 9} className="px-4 py-10 text-center text-[14px] text-(--obra-muted-texto)">
+                <td colSpan={(editavel ? 10 : 9) + extra} className="px-4 py-10 text-center text-[14px] text-(--obra-muted-texto)">
                   {editavel ? 'Cronograma vazio. Comece por “+ Etapa” abaixo; cada etapa nasce com uma atividade.' : 'Sem atividades.'}
                 </td>
               </tr>
             ) : null}
           </tbody>
+          {comValor && etapas.length ? (
+            <tfoot>
+              <tr className="font-semibold text-(--obra-ink)">
+                <td colSpan={4} className={td + ' bg-(--obra-surface) px-2 text-right'}>Total</td>
+                <td className={td + ' obra-num bg-(--obra-surface) px-2 text-right'} aria-label="Total do valor">
+                  {moedaBR(ordem.reduce((s, n) => s + valorDe(n), 0))}
+                </td>
+                <td colSpan={editavel ? 6 : 5} className={td + ' bg-(--obra-surface)'} />
+              </tr>
+            </tfoot>
+          ) : null}
         </table>
       </div>
       {editavel ? <NovaEtapa onAdicionar={acoes.adicionarEtapa} /> : null}

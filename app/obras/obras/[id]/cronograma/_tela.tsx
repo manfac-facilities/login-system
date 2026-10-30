@@ -306,6 +306,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
           acoes={acoesTabela}
           focarNumero={focarNumero}
           onFocado={limparFoco}
+          valores={dados.valores}
         />
       ) : (
         <>

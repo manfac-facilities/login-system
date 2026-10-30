@@ -275,6 +275,24 @@ describe('atividades', () => {
     expect(doV1().find((a) => a.numero === 4)).toMatchObject({ descricao: 'Pilares', duracao: 7, pred1: 3, etapa: 'Estrutura' })
   })
 
+  it('Valor (R$) grava em peso_valor (centavos); negativo ou inválido é recusado sem gravar', async () => {
+    expect(await salvarLinhaRascunhoAction(OBRA, 'v1', { numero: 4, pesoValor: 1234.567 })).toEqual({ ok: true })
+    expect(doV1().find((a) => a.numero === 4)).toMatchObject({ peso_valor: 1234.57, descricao: 'Atividade 4', duracao: 2 })
+    const ERRO = { ok: false, erro: 'Valor deve ser um número a partir de R$ 0,00' }
+    expect(await salvarLinhaRascunhoAction(OBRA, 'v1', { numero: 4, pesoValor: -1 })).toEqual(ERRO)
+    expect(await salvarLinhaRascunhoAction(OBRA, 'v1', { numero: 4, pesoValor: NaN })).toEqual(ERRO)
+    expect(doV1().find((a) => a.numero === 4)!.peso_valor).toBe(1234.57)
+    expect(await salvarLinhaRascunhoAction(OBRA, 'v1', { numero: 4, pesoValor: 0 })).toEqual({ ok: true })
+    expect(doV1().find((a) => a.numero === 4)!.peso_valor).toBe(0)
+
+    const base = { descricao: 'x', duracao: 1, pred1: null, pred2: null }
+    expect(await adicionarAtividadeAction(OBRA, 'v1', 'Estrutura', { ...base, pesoValor: -5 })).toEqual(ERRO)
+    const r = await adicionarAtividadeAction(OBRA, 'v1', 'Estrutura', { ...base, pesoValor: 500 })
+    expect(doV1().find((a) => a.numero === (r as { numero: number }).numero)!.peso_valor).toBe(500)
+    const sem = await adicionarAtividadeAction(OBRA, 'v1', 'Estrutura', base)
+    expect(doV1().find((a) => a.numero === (sem as { numero: number }).numero)!.peso_valor).toBe(0)
+  })
+
   it('excluir com sucessora é recusado', async () => {
     expect(await excluirAtividadeAction(OBRA, 'v1', 4)).toEqual({
       ok: false, erro: 'A atividade 2.2 (Atividade 5) depende dela — tire a predecessora antes de excluir',

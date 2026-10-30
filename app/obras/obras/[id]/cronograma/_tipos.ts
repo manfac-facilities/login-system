@@ -20,7 +20,11 @@ export type LinhaPlano = {
 }
 
 /** Edição parcial de uma linha: só os campos presentes são gravados (a tabela salva célula a célula). */
-export type EdicaoLinha = Pick<LinhaPlano, 'numero'> & Partial<Omit<LinhaPlano, 'numero'>>
+export type EdicaoLinha = Pick<LinhaPlano, 'numero'> &
+  Partial<Omit<LinhaPlano, 'numero'>> & {
+    /** Valor (R$) da atividade = obras_atividade.peso_valor (pesa o % físico). Interno: nunca vai ao cliente. */
+    pesoValor?: number
+  }
 
 /** Direção de ↑/↓ de etapa e de atividade. */
 export type Direcao = 'cima' | 'baixo'
@@ -32,6 +36,8 @@ export type NovaAtividade = {
   pred1: number | null
   pred2: number | null
   inicioFixo?: string | null
+  /** Valor (R$) = peso_valor; ausente = 0. */
+  pesoValor?: number
 }
 
 /** Uma linha da gaveta "Atualizar status" (spec Leva 1 §5 A5). */
@@ -110,5 +116,10 @@ export type DadosCronograma = {
   termino: { base: string | null; previsto: string; projetado: string }
   /** Gaveta "Atualizar status": plano que vale para a execução (vigente; sem base, o rascunho). */
   statusAtividades: AtividadeStatus[]
+  /**
+   * Valor (R$) por numero (peso_valor) — só no rascunho editável (engenheiro/admin); null nas demais.
+   * Dado interno: a tela do cliente e o e-mail nunca recebem.
+   */
+  valores: Record<number, number> | null
   atividadeTrava: number | null
 }

@@ -96,6 +96,11 @@ const dataISO = (s: unknown) =>
 
 const planoDe = (linhas: Linha[]): AtividadePlano[] => linhas.map(atividadePlanoDe)
 
+const VALOR_INVALIDO = 'Valor deve ser um número a partir de R$ 0,00'
+/** Valor (R$) em centavos inteiros, 0 ≤ v < 10^12 (numeric(14,2)); inválido → null. */
+const valorValido = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < 1e12 ? Math.round(v * 100) / 100 : null
+
 /**
  * Código exibido "etapa.posição" (1.2) de cada numero, na ordem de exibição — o mesmo
  * que a tabela mostra (`codigosDe` em _tabela-edicao.tsx). As mensagens citam o código, não o numero.
@@ -196,6 +201,11 @@ export async function salvarLinhaRascunhoAction(
   const erroP = erroPredecessoras(linhas, linha.numero, [linha.pred1, linha.pred2])
   if (erroP) return erroP
   if (linha.bloqueiaPorTrava !== undefined) campos.bloqueia_por_trava = !!linha.bloqueiaPorTrava
+  if (linha.pesoValor !== undefined) {
+    const v = valorValido(linha.pesoValor)
+    if (v === null) return falha(VALOR_INVALIDO)
+    campos.peso_valor = v
+  }
   if (linha.etapa !== undefined) {
     // Etapa existente vem com o nome cru (pode ter espaço); nome novo é aparado.
     const etapa = etapasDe(linhas).includes(linha.etapa ?? '') ? (linha.etapa ?? '') : (linha.etapa ?? '').trim()
@@ -381,11 +391,13 @@ export async function adicionarAtividadeAction(
   const erroP = erroPredecessoras(r.linhas, null, [dados.pred1, dados.pred2])
   if (erroP) return erroP
   const inicioFixo = dados.inicioFixo ?? null
+  const pesoValor = valorValido(dados.pesoValor ?? 0)
+  if (pesoValor === null) return falha(VALOR_INVALIDO)
   if (inicioFixo !== null && !dataISO(inicioFixo)) return falha('Data inválida')
   const nome = etapasDe(r.linhas).includes(etapa ?? '') ? (etapa ?? '') : (etapa ?? '').trim()
   return inserirAtividade(r.ctx, obraId, versaoId, {
     etapa: nome || null, descricao, duracao: dados.duracao, pred1: dados.pred1, pred2: dados.pred2,
-    inicio_fixo: inicioFixo, ...posicaoNoFim(r.linhas, nome),
+    inicio_fixo: inicioFixo, peso_valor: pesoValor, ...posicaoNoFim(r.linhas, nome),
   })
 }
 
