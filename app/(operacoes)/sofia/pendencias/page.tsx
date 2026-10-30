@@ -7,6 +7,7 @@ import {
   getPendenciasManuais,
 } from '@/lib/sofia/queries'
 import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos } from '@/lib/sofia/pendencias'
+import { formatarKm } from '@/lib/sofia/revisaoStatus'
 import { atualizarStatusPendenciaAction } from './_actions'
 import PendenciaForm from './_form'
 import StatCard from '@/components/sofia/StatCard'
@@ -66,7 +67,7 @@ export default async function PendenciasPage({
   const automaticas = mapAutomaticPendencias({
     multas: (multasNaoDescontadas ?? []).map((m) => ({ id: m.id, status: m.status, autorizacao_assinada: m.autorizacao_assinada, data: m.data, descricao: m.descricao })),
     sinistros: sinistros.map((s) => ({ id: s.id, status: s.status, data: s.data, descricao: s.descricao })),
-    revisoesAtrasadas: revisoesAtrasadas.map((r) => ({ id: r.id, proxima_data: r.proxima_data, motivo: r.motivo })),
+    revisoesAtrasadas: revisoesAtrasadas.map((r) => ({ id: r.id, placa: r.placa, proxima_data: r.proxima_data, proxima_km: r.proxima_km, km_passados: r.km_passados, motivo: r.motivo })),
     documentosVencendo: documentosVencendo.map((d) => ({ id: d.id, tipo: d.tipo, vencimento: d.vencimento })),
     termosNaoAssinados: termosNaoAssinados.map((m) => ({ id: m.id, nome: m.nome })),
   })
@@ -77,13 +78,14 @@ export default async function PendenciasPage({
     origem: string
     responsavel: string | null
     prazo: string | null
+    prazoKm?: number
     proxima_acao: string | null
     status: string
     updated_at: string
   }
 
   const todas: Linha[] = [
-    ...automaticas.map((a): Linha => ({ id: null, descricao: a.descricao, origem: a.origem, responsavel: null, prazo: a.prazo, proxima_acao: null, status: 'aberta', updated_at: '' })),
+    ...automaticas.map((a): Linha => ({ id: null, descricao: a.descricao, origem: a.origem, responsavel: null, prazo: a.prazo, prazoKm: a.prazoKm, proxima_acao: null, status: 'aberta', updated_at: '' })),
     ...manuais.map((p): Linha => ({ id: p.id, descricao: p.descricao, origem: p.origem, responsavel: p.responsavel, prazo: p.prazo, proxima_acao: p.proxima_acao, status: p.status, updated_at: p.updated_at })),
   ].sort((a, b) => {
     if (!a.prazo) return 1
@@ -162,8 +164,8 @@ export default async function PendenciasPage({
                       <td className="px-4 py-3 text-white">{p.descricao}</td>
                       <td className="px-4 py-3 text-[#94a3b8]">{origemLabel[p.origem]}</td>
                       <td className="px-4 py-3 text-[#94a3b8]">{p.responsavel ?? '—'}</td>
-                      <td className={`px-4 py-3 ${atrasada ? 'text-red-300' : 'text-[#94a3b8]'}`}>
-                        {p.prazo ? new Date(p.prazo).toLocaleDateString('pt-BR') : '—'}
+                      <td className={`px-4 py-3 ${atrasada || p.prazoKm != null ? 'text-red-300' : 'text-[#94a3b8]'}`}>
+                        {p.prazoKm != null ? `${formatarKm(p.prazoKm)} km` : p.prazo ? new Date(p.prazo).toLocaleDateString('pt-BR') : '—'}
                       </td>
                       <td className="px-4 py-3 text-[#94a3b8]">{p.proxima_acao ?? '—'}</td>
                       <td className="px-4 py-3">

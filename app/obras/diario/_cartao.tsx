@@ -146,6 +146,7 @@ export default function Cartao({
   pessoas,
   mostrarResponsavel,
   admin,
+  podeAgendar,
   pessoasPorEmail,
   aoSalvar,
   aoAgendar,
@@ -155,6 +156,8 @@ export default function Cartao({
   pessoas: Record<string, Pessoa>
   mostrarResponsavel?: boolean
   admin: boolean
+  /** pcm da obra ou admin — a mesma regra que a action aplica. */
+  podeAgendar: boolean
   pessoasPorEmail: { email: string; nome: string }[]
   aoSalvar: () => void
   aoAgendar: (ate: string) => void
@@ -333,21 +336,23 @@ export default function Cartao({
           </span>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2 border-t border-[#1e3a5f] pt-3 sm:flex-row sm:items-center">
-          <button
-            type="button"
-            onClick={() => setAgendando(true)}
-            disabled={saindo}
-            className="min-h-11 rounded-md border border-dashed border-[#1e3a5f] px-3 py-2 text-sm font-medium text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
-          >
-            📅 Agendar e tirar do diário
-          </button>
-          <span className="text-[12px] text-[#94a3b8]">
-            Para obra que só será levantada mais tarde: ela sai do diário até a data que você escolher.
-          </span>
-        </div>
+        {podeAgendar ? (
+          <div className="mt-3 flex flex-col gap-2 border-t border-[#1e3a5f] pt-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => setAgendando(true)}
+              disabled={saindo}
+              className="min-h-11 rounded-md border border-dashed border-[#1e3a5f] px-3 py-2 text-sm font-medium text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
+            >
+              📅 Agendar e tirar do diário
+            </button>
+            <span className="text-[12px] text-[#94a3b8]">
+              Para obra que só será levantada mais tarde: ela sai do diário até a data que você escolher.
+            </span>
+          </div>
+        ) : null}
       </div>
-      {agendando ? (
+      {agendando && podeAgendar ? (
         <DialogoAgendar
           obra={obra}
           hoje={hoje}

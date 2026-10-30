@@ -193,6 +193,24 @@ describe('salvarDiarioAction — autorização e a única trava', () => {
     )
   })
 
+  it('grava quem salvou e quando — corrigir sobrescreve, vale o último', async () => {
+    await salvarDiarioAction({
+      obraId: 'obra-1',
+      andou: true,
+      item: 'Não faltou',
+      motivo: null,
+      obs: null,
+      fotoPath: null,
+    })
+    expect(upsertDiarioMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registrado_por_email: 'yuri.nascimento@manfac.com.br',
+        atualizado_em: MEIO_DIA.toISOString(),
+      }),
+      { onConflict: 'obra_id,data' }
+    )
+  })
+
   it('recusa foto de outra obra ou dia antes de gravar o diário', async () => {
     const r = await salvarDiarioAction({
       obraId: 'obra-1', andou: true, item: 'Não faltou', motivo: null, obs: null,

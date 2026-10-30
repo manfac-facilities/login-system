@@ -184,6 +184,7 @@ export interface Revisao {
   proxima_km: number | null
   status: RevisaoStatus
   observacoes: string | null
+  pecas_trocadas: string | null
   created_at: string
   updated_at: string
 }

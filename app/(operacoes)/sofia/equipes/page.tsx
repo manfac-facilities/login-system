@@ -2,7 +2,7 @@ import { getEquipes, getVeiculos, getMotoristas, getChecklistsRecentes } from '@
 import { ultimoTipoPorVeiculo, statusEquipe, type StatusEquipe } from '@/lib/sofia/equipes'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { isAdmin } from '@/lib/auth/roles'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import { toggleEquipeAction, desativarEquipeAction } from './_actions'
 import FilterSelect from '@/components/sofia/FilterSelect'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
@@ -31,12 +31,11 @@ const statusOptions = (Object.keys(statusLabel) as StatusEquipe[]).map((value) =
 export default async function EquipesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; limit?: string }>
+  searchParams: Promise<{ q?: string; status?: string; limit?: string; editada?: string }>
 }) {
-  const { q, status, limit } = await searchParams
+  const { q, status, limit, editada } = await searchParams
   const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  const admin = await isAdmin(supabase, userData.user?.email ?? '')
+  const podeGerir = await podeGerirFrotas(supabase)
   const [equipes, veiculos, motoristas, checklists] = await Promise.all([
     getEquipes(),
     getVeiculos(),
@@ -45,6 +44,8 @@ export default async function EquipesPage({
   ])
 
   const ultimoTipo = ultimoTipoPorVeiculo(checklists)
+  // ?editada=<id>: o código vem do banco, nunca texto livre da URL
+  const equipeEditada = editada ? equipes.find((e) => e.id === editada) : undefined
 
   const enriquecidas = equipes.map((equipe) => {
     const veiculo = veiculos.find((v) => v.equipe_id === equipe.id)
@@ -76,6 +77,11 @@ export default async function EquipesPage({
 
   return (
     <div className="p-8">
+      {equipeEditada && (
+        <div className="mb-6 px-4 py-3 rounded-lg border border-green-600 bg-green-950 text-green-300 text-sm">
+          Equipe {equipeEditada.codigo} atualizada.
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-bold text-white">Gestão de Equipes</h1>
         <Link
@@ -125,12 +131,20 @@ export default async function EquipesPage({
               </div>
             </div>
             <div className="mt-3 flex items-center justify-end gap-3">
-              {!equipe.ativo && admin && (
+              {!equipe.ativo && podeGerir && (
                 <form action={toggleEquipeAction.bind(null, equipe.id, true)}>
                   <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                     Ativar
                   </button>
                 </form>
+              )}
+              {podeGerir && (
+                <Link
+                  href={`/sofia/equipes/${equipe.id}/editar`}
+                  className="text-xs text-[#f05a28] hover:underline active:scale-95 transition-transform"
+                >
+                  Editar
+                </Link>
               )}
               {equipe.ativo && (
                 <DeleteConfirmButton action={desativarEquipeAction} id={equipe.id} label="Desativar" itemLabel={`a equipe ${equipe.codigo}`} />

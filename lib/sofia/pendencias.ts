@@ -1,7 +1,9 @@
+import { formatarKm, formatarDataIso } from './revisaoStatus'
+
 interface AutomaticInputs {
   multas: { id: string; status: string; autorizacao_assinada: boolean; data: string; descricao: string | null }[]
   sinistros: { id: string; status: string; data: string; descricao: string }[]
-  revisoesAtrasadas: { id: string; proxima_data: string | null; motivo?: 'data' | 'km' }[]
+  revisoesAtrasadas: { id: string; placa: string | null; proxima_data: string | null; proxima_km: number | null; km_passados: number | null; motivo?: 'data' | 'km' }[]
   documentosVencendo: { id: string; tipo: string; vencimento: string }[]
   termosNaoAssinados: { id: string; nome: string }[]
 }
@@ -10,6 +12,8 @@ export interface PendenciaAutomatica {
   descricao: string
   origem: 'multa' | 'sinistro' | 'manutencao' | 'documento' | 'termo'
   prazo: string | null
+  // KM previsto, para pendência de revisão atrasada só por KM (não tem prazo em data).
+  prazoKm?: number
 }
 
 export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutomatica[] {
@@ -30,7 +34,21 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
     }
   }
   for (const r of inputs.revisoesAtrasadas) {
-    result.push({ descricao: r.motivo === 'km' ? 'Manutenção atrasada por KM' : 'Manutenção atrasada', origem: 'manutencao', prazo: r.proxima_data })
+    const placa = r.placa ?? 'veículo sem placa'
+    if (r.motivo === 'km') {
+      result.push({
+        descricao: `Manutenção atrasada por KM: ${placa} — passou ${formatarKm(r.km_passados ?? 0)} km do previsto`,
+        origem: 'manutencao',
+        prazo: r.proxima_data,
+        prazoKm: r.proxima_km ?? undefined,
+      })
+    } else {
+      result.push({
+        descricao: `Manutenção atrasada por data: ${placa} — prevista para ${r.proxima_data ? formatarDataIso(r.proxima_data) : 'data não informada'}`,
+        origem: 'manutencao',
+        prazo: r.proxima_data,
+      })
+    }
   }
   for (const d of inputs.documentosVencendo) {
     result.push({ descricao: `Documento (${d.tipo}) vencendo`, origem: 'documento', prazo: d.vencimento })
@@ -44,6 +62,8 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
 
 interface PendenciaKpiRow {
   prazo: string | null
+  // Presente só em revisão atrasada por KM: já está vencida, conta como urgência alta.
+  prazoKm?: number
   status: string
   updated_at: string
 }
@@ -58,7 +78,7 @@ export interface KpisPendencias {
 
 export function calcularKpisPendencias(todas: PendenciaKpiRow[], hoje: string): KpisPendencias {
   const abertas = todas.filter((p) => p.status !== 'concluida')
-  const urgenciaAlta = abertas.filter((p) => !!p.prazo && p.prazo < hoje).length
+  const urgenciaAlta = abertas.filter((p) => p.prazoKm != null || (!!p.prazo && p.prazo < hoje)).length
   const aguardandoTerceiros = abertas.filter((p) => p.status === 'em_andamento').length
   const resolvidosHoje = todas.filter((p) => p.status === 'concluida' && p.updated_at.startsWith(hoje)).length
   const denom = resolvidosHoje + abertas.length

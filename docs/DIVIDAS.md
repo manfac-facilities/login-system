@@ -183,11 +183,44 @@ Backlog da revisão independente; nenhum bloqueia.
 
 Backlog da revisão independente; nenhum bloqueia.
 - "Vence em breve" (≤1.000 km) e `km_passados` existem só em `lib/sofia/revisaoStatus.ts`/`getRevisoesAtrasadas`; nenhuma tela exibe ainda (espera o mockup da rodada 2).
-- Pendência de revisão atrasada só por KM usa `prazo = proxima_data` (nulo ou futuro), então não entra em "urgência alta".
 - `revisoes/page.tsx:67` mostra "atrasada" na revisão mais recente mesmo com status `realizada` (já era assim por data; agora também por KM).
 - Para não-admin seguem visíveis excluir sinistro, excluir lançamento de KM e desativar equipe; devolvem erro por State, não em silêncio. Resolver junto com o papel gestor de frotas.
 - `atualizarAutorizacao*Action`, `toggleEquipeAction`, `upsertKmExcedidoStatusAction` ainda saem calados para não-admin; só alcançável por chamada forjada (botão escondido).
 - Indentação do JSX em `multas/_table.tsx` nos blocos `{isAdmin && (`.
+
+## 26/10/2026 — Frotas: papel gestor de frotas (branch feat/frotas-gestor)
+
+Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-gestor-frotas.md` §1.4/§3.2/§6 e revisão `docs/frotas/2026-10-26-revisao-spec-gestor-frotas.md`). Nenhum bloqueia.
+- Concessão do papel só por SQL (spec §1.4); tela em `/admin/acessos` adiada até haver um segundo gestor ou pedido do João (UI + action com `exigirAdmin` + service role + testes).
+- `softDeleteVeiculoAction` (`app/(operacoes)/sofia/veiculos/_actions.ts`) segue sem trava: qualquer um com o slug `sofia` desativa veículo. Anterior a este branch; trava nova é outra decisão.
+- Reconvite após remoção (linha de `sofia_gestores` apagada por `apagarLinhasDoUsuario`) só provado no jest mockado (`app/admin/__tests__/_actions.test.ts`), não no banco.
+- Vetor `auth.updateUser({ email })` para o e-mail de um gestor órfão (linha deixada por remoção feita direto no painel do Supabase): o risco já existia igual com `hub_user_roles`/`hub_system_access`.
+- Itens 7 e 9 do diagnóstico (corrigir KM / corrigir abastecimento) não existem para ninguém; quando F2/F3 forem feitas, a action nasce com `requireGestorFrotas` e a função de banco com a guarda `sofia_pode_gerir() is not true` (se restrita). *(Feito em `feat/frotas-f1-f3`, seção abaixo.)*
+
+## 26/10/2026 — Frotas: F1-F3 editar equipe, corrigir KM e abastecimento (branch feat/frotas-f1-f3)
+
+Registrado por decisão do coordenador (spec `docs/frotas/2026-10-26-spec-f1-f2-f3.md` §7 e revisão `docs/frotas/2026-10-26-revisao-spec-f1-f2-f3.md`, itens "vai para DIVIDAS.md"). Nenhum bloqueia; **B7 e B12: avisar o João**.
+- **B7 (impacto em desconto):** `app/api/sofia/veiculo-motorista/route.ts:21-28` sugere o motorista do registro de responsabilidade **aberto**, não o da data da infração. Multa que chega depois de uma troca (por F1 ou pelo checklist) sugere o motorista novo; o campo é editável, mas a sugestão errada vira desconto em salário de quem não dirigia se ninguém conferir.
+- **B8:** o checklist (`atribuir_responsabilidade_veiculo`) não limpa o motorista anterior da equipe de destino — ainda pode nascer equipe com dois motoristas ativos. F1 corrige a equipe quando ela é editada; não há limpeza em massa.
+- **B11:** corrigir o primeiro lançamento de KM pode levar `veiculos.km_atual` abaixo do KM de cadastro do carro (a função usa o maior lançamento restante). A prévia do diálogo mostra o valor novo antes de salvar.
+- **B12 / R5:** o ✕ (excluir lançamento de KM, `deletarKmAction`) continua sem recalcular `veiculos.km_atual`. Com F2 no ar, o caminho recomendado ao cliente é "Corrigir".
+- **R1 (pré-existente):** quem tem o slug `sofia` consegue, pelo navegador, dar UPDATE direto em `km_diario.km_atual`, `abastecimentos`, `equipes.codigo`, `motoristas.equipe_id` e `veiculos.km_atual` (RLS `sofia access`), sem passar pelas funções nem pela auditoria. Fechar exige trigger novo sem quebrar o upsert de `lancar_km_atomico`. A linha `(info)` de `sdd-sql-sofia-correcoes-f1-f3-teste.sql` mede isso.
+- **R2 (pré-existente):** `audit_log` não é à prova de adulteração — a policy `sofia access` é `for all`. Sugestão do revisor (pergunta 2 do §8, aguarda o João): `revoke update, delete on public.audit_log from authenticated` (o app só faz insert/select: `lib/sofia/auditLog.ts:16`, `audit/page.tsx`). Impede alterar/apagar o histórico de correções; inserir linha falsa continua possível.
+- **R4 / pergunta 1 do §8 (dinheiro) — pré-requisito do deploy (C16):** a correção de KM **não altera** `km_excedido_desconto`; só avisa na mensagem de sucesso quando o mês tem registro ("Este mês tem registro de KM excedido para o {placa}. A correção não altera esse registro — confira em Descontos."; se a consulta falhar, avisa que não conseguiu conferir). Casos aguardando a regra do João: (a) correção cria excesso sem linha no mês; (b) correção tira o excesso com status `sem_solicitacao` (apagar a linha e fechar a pendência — apaga dado de cliente — ou manter e avisar; `descontos/page.tsx:168` mostraria "+-N km"); (c) `solicitado`/`autorizado`: não mexer e avisar.
+- `editar_equipe_atomico` recusa com "Os dados da equipe mudaram enquanto você editava…" se o motorista novo trocar de equipe entre a leitura e a trava, e `corrigir_km_atomico` recusa se o veículo do lançamento mudar (B3). Nenhum dos dois é coberto pelo teste SQL (exige duas sessões simultâneas).
+- `getCorrecoes` (`lib/sofia/queries.ts`) consulta o `audit_log` em lotes de 100 ids para todos os lançamentos exibidos (as listas de KM e de abastecimento não têm paginação); o custo cresce com o histórico.
+
+## 26/10/2026 — Frotas: B5/B6 (branch feat/frotas-revisoes-b5-b6)
+
+- Detalhe da revisão (`revisoes/[id]`) classifica pela previsão da própria revisão, mesmo quando ela já foi substituída por uma mais nova do mesmo veículo+tipo; na lista só a mais recente é classificada. Chip de revisão antiga no detalhe pode divergir da lista.
+- `[id]` que não é uuid válido faz a consulta falhar e cai no error boundary, não em "Revisão não encontrada".
+- Linha clicável da lista usa link esticado (`after:absolute`) na célula da placa; não testado em Safari antigo.
+
+## 28/10/2026 — Frotas: backend dos extratos Ticketlog/Veloe (branch feat/frotas-extratos-backend)
+
+- Envio de arquivo passa pelo limite padrão de 1 MB do corpo de Server Action (`node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/serverActions.md`); `next.config.ts` não foi mexido. A amostra Veloe de 27 dias tem 155 KB (Ticketlog 51 KB): a carga desde 01/08 cabe; um .csv de mais de ~5 meses estoura com erro genérico do Next. A tela (quando vier) deve avisar pelo tamanho antes de enviar.
+- O .csv da Veloe é lido com divisão por `;` e aspas simples (`lib/sofia/extratos/veloe.ts`, `campos`); quebra de linha dentro de campo entre aspas não é tratada. A amostra real não tem aspas.
+- `lib/sofia/extratos/__tests__/amostras-reais.test.ts` é pulado em quem não tem as amostras (fora do Git por dado pessoal) — a conferência 206/26 e 403/27 só roda na máquina do João.
 
 ## 27/10/2026 — Diário para todos (branch `feat/obras-diario-para-todos`), não bloqueantes do review
 
@@ -195,6 +228,22 @@ Backlog da revisão independente; nenhum bloqueia.
 - `page.tsx`: erro da consulta `todosPcm` é ignorado; se falhar, o seletor sai das obras já filtradas. Não vaza nada (todos com acesso veem tudo).
 - "Em nome de" usa o `pcm` atual da obra, não o da hora da resposta.
 
+## 28/10/2026 — Frotas: telas dos extratos (branch feat/frotas-extratos-telas)
+
+- **D2 (decisão do João):** o histórico de envios mostra o e-mail de quem enviou e o saldo digitado a **todo o Frotas** (RLS `sofia_extrato_ler` = `sofia_has_access`). Contraria a recomendação de restringir a gestor/admin/financeiro. O e-mail de quem enviou fica exposto a todo o Frotas.
+- **D3 (encerrar ligação) feito em 29/10/2026** (branch `feat/frotas-d3-encerrar-ligacao`): encerrar = linha nova com `equipe_id` nulo (view já dava `sem_equipe`). Depende de `sdd-sql-sofia-extratos-d3.sql` (**NÃO APLICADO**): sem ele o botão falha no NOT NULL. Não há "desfazer encerramento" além de religar com equipe; encerrar com data anterior a uma ligação mais nova é recusado só se não houver ligação vigente naquela data.
+- **D4 (divergência no reenvio)** é feita no app: `enviarExtratoAction` lê `sofia_extrato_linhas` antes da RPC e compara o valor. Uma linha gravada por outro envio entre a leitura e a RPC não aparece como divergente (a RPC ignora, nada é sobrescrito). Se quiser à prova de corrida, a RPC precisa devolver as divergentes.
+- Lista de gastos, "sem centro de custo" e cadastros leem a view inteira (paginando de 1000 em 1000) e agrupam/somam no servidor; com dezenas de milhares de linhas isso pesa e vira agregação no banco.
+- Telas de leitura (cadastros, gastos, sem centro de custo, histórico) abrem para qualquer pessoa com acesso ao Sofia; só os botões de gravar exigem gestor/admin (a action e a RLS reforçam). O mockup mostrava "sem permissão" para quem não é gestor; D2 prevaleceu.
+- Sem teste de componente/página (o projeto não tem teste de UI para as páginas do Sofia); a lógica está em `lib/sofia/extratos/__tests__/agrupar.test.ts` e na action.
+
+## 29/10/2026 — Frotas: D3 encerrar ligação, não bloqueantes da revisão
+
+- Encerramento com data passada tira gastos já enviados do centro de custo sem aviso (views do financeiro mudam junto, são calculadas na hora). Falta aviso/limite de data retroativa no diálogo.
+- Encerramento com data futura é aceito; até a data a tela segue mostrando a equipe e o botão "Encerrar" (a linha futura só aparece no histórico).
+- Gasto de cartão encerrado cai na caixa "ainda não têm equipe" — texto um pouco enganoso nesse caso.
+- `ligacaoVigente` desempata por `criado_em`; a view por `criado_em, id`. Só diverge com `criado_em` idêntico.
+- Teste da action não cobre não-gestor recusado (coberto pela RLS e pelo teste SQL u1); teste SQL não cobre encerrar no mesmo dia de uma ligação existente.
 ## 29/10/2026 — Diário de obra da OBRA (Task 8, branch `feat/obras-modalidade-obra`)
 
 - "Tirar" foto do rascunho apaga só a linha de `obras_rdo_foto`; o arquivo fica em `obras-fotos` (o bucket não tem policy de delete). Mesmo destino de RDO rascunho apagado (já anotado na Task 1).

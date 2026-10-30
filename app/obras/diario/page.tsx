@@ -4,11 +4,10 @@
  * FORMA CARTÕES, uma obra por vez (decisão B, forma 1). A forma "lista única"
  * do mockup NÃO entra na v0 — está cortada na spec §1.
  *
- * DE QUEM É A FILA (decisão técnica 7 da spec): das obras em campo onde o
- * USUÁRIO LOGADO é o `pcm`. O mockup demonstra só o diário do Yuri, com a
- * `FILA` fixa em `pcm === "YURI"` — aquilo é simplificação de demo, e está
- * listado como tal em modelo-mockup.md §6. Terça treina a equipe inteira, então
- * cada um vê o seu. Administrador vê todas, com seletor de responsável.
+ * DE QUEM É A FILA (spec 27/10/2026, "diário para todos"): qualquer pessoa com
+ * acesso a Gestão de Obras vê e responde o diário de qualquer responsável, com
+ * o seletor "Diário de quem". Quem é `pcm` de alguma obra da fila abre nas
+ * suas; quem não é, e o administrador, abre em todos.
  *
  * "EM CAMPO" aqui é o mesmo recorte do mockup: `!posCampo(o)` — levantamento,
  * em andamento e paralisado. Obra em `definir` fica de fora de propósito: sem
@@ -18,15 +17,14 @@
  * Server Component: busca e deriva. Quem responde é `_cartoes.tsx`, client.
  */
 
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { derivar, hojeISO, type ObraRow, type Obra } from '../_lib/tipos'
+import { derivar, hojeISO, horaISO, type ObraRow, type Obra } from '../_lib/tipos'
 import { ETAPAS_FILA_DIARIO, agendadaForaDoDiario, naFilaDoDiario } from '../_lib/agendamento'
-import { resolverChave } from './_pessoa'
+import { chaveDoUsuario, resolverChave } from './_pessoa'
 import { lerTodasAsLinhas } from '../_lib/ler-paginas'
-import Cartoes, { type RespostaDeHoje, type TarefaDeHoje } from './_cartoes'
+import Cartoes, { type Autoria, type RespostaDeHoje, type TarefaDeHoje } from './_cartoes'
 import type { Pessoa } from './_cartao'
 
 export const dynamic = 'force-dynamic'
@@ -58,25 +56,30 @@ export default async function DiarioPage({ searchParams }: Props) {
   // gente sem obra é lista que ninguém escolhe. Sem filtro ele sai das próprias
   // obras lidas mais abaixo (mesmo recorte); só com filtro precisa de consulta
   // à parte, porque aí as obras lidas são só as de um responsável.
+  //
+  // DIÁRIO PARA TODOS (spec 27/10/2026): quem tem acesso ao módulo vê e responde
+  // o diário de qualquer responsável. A guarda que falha fechada é a de cima
+  // (acesso ao módulo); o filtro por `pcm` aqui é só conveniência de tela.
+  // A lista do seletor só dispensa a consulta à parte quando a leitura das
+  // obras já vem sem filtro (admin sem parâmetro, ou `?analista=todos`).
+  const semFiltroGarantido = analista === 'todos' || (admin && !analista)
   const [minhaChave, { data: linhasPessoa }, { data: todosPcm }] = await Promise.all([
     resolverChave(supabase, email),
     supabase.from('obras_pessoa').select('chave, nome, area, email'),
-    admin && analista
-      ? lerTodasAsLinhas<{ pcm: string | null }>((de, ate, estavel) => {
+    semFiltroGarantido
+      ? Promise.resolve({ data: null, error: null })
+      : lerTodasAsLinhas<{ pcm: string | null }>((de, ate, estavel) => {
           const q = supabase.from('obras_obra').select('pcm').eq('modalidade', 'spot').in('etapa', ETAPAS_FILA_DIARIO)
           return (estavel ? q.order('id', { ascending: true }) : q).range(de, ate)
-        })
-      : Promise.resolve({ data: null, error: null }),
+        }),
   ])
-  // Administrador enxerga todo mundo e escolhe de quem é a fila; analista vê a
-  // sua e só a sua. O filtro do não-admin vai no banco, não na memória.
-  //
-  // Sem chave, o não-admin NÃO passa. Antes, chave vazia caía no `if (filtroPcm)`
-  // lá embaixo e a consulta ia sem filtro nenhum — quem tivesse um e-mail fora
-  // do padrão via, e podia responder, o diário de todos os analistas. Guarda de
-  // autorização tem que falhar fechada.
-  if (!admin && !minhaChave) return <SemPermissao />
-  const filtroPcm = admin ? (analista || '') : minhaChave
+  // `?analista` ausente → padrão da pessoa (D4): quem é `pcm` de alguma obra da
+  // fila abre nas suas; quem não é, e o admin, abre em todos.
+  let filtroPcm: string
+  if (analista === 'todos') filtroPcm = ''
+  else if (analista) filtroPcm = analista
+  else if (admin) filtroPcm = ''
+  else filtroPcm = minhaChave && (todosPcm ?? []).some((o) => o.pcm === minhaChave) ? minhaChave : ''
 
   // Em páginas: o PostgREST corta em 1.000 linhas sem avisar.
   const { data: linhas, error } = await lerTodasAsLinhas<ObraRow>((de, ate, estavel) => {
@@ -92,11 +95,6 @@ export default async function DiarioPage({ searchParams }: Props) {
   const obras = todas.filter((o) => naFilaDoDiario(o, hoje))
   const agendadas = todas.filter((o) => agendadaForaDoDiario(o, hoje))
   const ids = obras.map((o) => o.id)
-
-  // Analista que não é `pcm` de obra nenhuma não tem diário — e é isso que o
-  // mockup diz, com estas palavras. Administrador não cai aqui: ele vê todas.
-  // Conta as agendadas: analista com tudo agendado tem diário (vazio), não cai aqui.
-  if (!admin && todas.length === 0) return <SemPermissao />
 
   const nomes = new Map<string, Pessoa>(
     ((linhasPessoa ?? []) as { chave: string; nome: string; area: string | null }[]).map((p) => [
@@ -116,7 +114,7 @@ export default async function DiarioPage({ searchParams }: Props) {
     const [diario, tarefasHoje] = await Promise.all([
       supabase
         .from('obras_diario')
-        .select('obra_id, andou, motivo, item, obs, foto_path')
+        .select('obra_id, andou, motivo, item, obs, foto_path, registrado_por_email, atualizado_em, created_at')
         .eq('data', hoje)
         .in('obra_id', ids),
       supabase
@@ -131,8 +129,20 @@ export default async function DiarioPage({ searchParams }: Props) {
     // que nada foi cobrado quando foi. Melhor a tela de erro que a mentira.
     if (diario.error || tarefasHoje.error) return <Erro />
 
+    const pcmDa = new Map(obras.map((o) => [o.id, o.pcm]))
     respostas = Object.fromEntries(
-      (diario.data ?? []).map((d) => [d.obra_id as string, d as unknown as RespostaDeHoje])
+      ((diario.data ?? []) as unknown as LinhaDiario[]).map((d) => [
+        d.obra_id,
+        {
+          obra_id: d.obra_id,
+          andou: d.andou,
+          motivo: d.motivo,
+          item: d.item,
+          obs: d.obs,
+          foto_path: d.foto_path,
+          autoria: autoriaDe(d, pcmDa.get(d.obra_id) ?? null, nomes, linhasPessoa ?? []),
+        },
+      ])
     )
 
     for (const t of tarefasHoje.data ?? []) {
@@ -153,11 +163,9 @@ export default async function DiarioPage({ searchParams }: Props) {
     }
   }
 
-  let responsaveis: string[] = []
-  if (admin) {
-    const fonte = analista ? (todosPcm ?? []) : (linhas ?? [])
-    responsaveis = Array.from(new Set(fonte.map((o) => o.pcm).filter((p): p is string => !!p))).sort()
-  }
+  // Lista do seletor, para todos: `pcm` distintos das obras da fila.
+  const fonte = todosPcm ?? linhas ?? []
+  const responsaveis = Array.from(new Set(fonte.map((o) => o.pcm).filter((p): p is string => !!p))).sort()
 
   return (
     <Cartoes
@@ -171,8 +179,41 @@ export default async function DiarioPage({ searchParams }: Props) {
       admin={admin}
       responsaveis={responsaveis}
       analistaSelecionado={filtroPcm}
+      minhaChave={minhaChave}
     />
   )
+}
+
+type LinhaDiario = Omit<RespostaDeHoje, 'autoria'> & {
+  registrado_por_email: string | null
+  atualizado_em: string | null
+  created_at: string
+}
+
+const primeiroNome = (nome: string) => nome.split(' ')[0]
+const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+
+/**
+ * Rótulo "Respondido por X [em nome de Y] às HH:MM" (spec 27/10/2026 §3).
+ * Resposta antiga, sem e-mail, não tem rótulo. A chave de quem respondeu é a
+ * mesma regra de `resolverChave` (cadastro por e-mail, senão a convenção),
+ * resolvida aqui com a `obras_pessoa` já lida — sem uma ida ao banco por resposta.
+ */
+function autoriaDe(
+  d: LinhaDiario,
+  pcm: string | null,
+  nomes: Map<string, Pessoa>,
+  linhasPessoa: { chave: string; nome: string; email?: string | null }[]
+): Autoria | null {
+  const email = d.registrado_por_email
+  if (!email) return null
+  const cadastro = linhasPessoa.find((p) => !!p.email && p.email.toLowerCase() === email.toLowerCase())
+  const por = cadastro ? primeiroNome(cadastro.nome) : capitalizar(email.split('@')[0].split('.')[0])
+  const chave = cadastro?.chave ?? chaveDoUsuario(email)
+  const responsavel = pcm ? nomes.get(pcm) : undefined
+  const emNomeDe =
+    !pcm || chave === pcm ? null : responsavel ? primeiroNome(responsavel.nome) : capitalizar(pcm)
+  return { por, emNomeDe, hora: horaISO(new Date(d.atualizado_em ?? d.created_at)) }
 }
 
 /**
@@ -207,28 +248,19 @@ function Erro() {
   )
 }
 
-/** Texto do mockup (`:2932`). O middleware já barra quem não tem acesso — esta
- *  tela é para quem tem acesso ao módulo mas não é responsável por obra nenhuma. */
+/** Texto do mockup "diário para todos" (seção 4c): só para quem não tem acesso
+ *  ao módulo (ou sem sessão). Sem o botão "Ver a base de obras", como no mockup. */
 function SemPermissao() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-5">
-        <h1 className="text-base font-semibold text-[#e8eef7]">
-          Esta tela é de quem é responsável pelas obras
-        </h1>
+        <h1 className="text-base font-semibold text-[#e8eef7]">Você não tem acesso a Gestão de Obras</h1>
         <p className="mt-2 text-sm text-[#94a3b8]">
-          Seu acesso não inclui o diário destas obras. Quem responde é o analista responsável por elas.
+          Seu acesso não inclui este módulo, por isso o diário do dia não aparece para você.
         </p>
         <p className="mt-2 text-sm text-[#94a3b8]">
-          Se você precisa responder no lugar dele, peça ao administrador para incluir seu acesso. A base de obras
-          continua aberta para consulta.
+          Se você precisa dele, peça ao administrador para incluir seu acesso.
         </p>
-        <Link
-          href="/obras/base"
-          className="mt-4 inline-flex items-center justify-center rounded-md border border-[#1e3a5f] px-3 py-2 text-sm font-medium text-[#e8eef7] hover:bg-[#132a52]"
-        >
-          Ver a base de obras
-        </Link>
       </div>
     </div>
   )

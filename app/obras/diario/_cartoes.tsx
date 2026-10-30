@@ -33,7 +33,12 @@ export type RespostaDeHoje = {
   item: string
   obs: string | null
   foto_path: string | null
+  /** Rótulo de quem respondeu; null = resposta antiga, sem e-mail gravado. */
+  autoria?: Autoria | null
 }
+
+/** "Respondido por {por} [em nome de {emNomeDe}] às {hora}". */
+export type Autoria = { por: string; emNomeDe: string | null; hora: string }
 
 export type TarefaDeHoje = {
   id: string
@@ -54,6 +59,7 @@ export default function Cartoes({
   admin,
   responsaveis,
   analistaSelecionado,
+  minhaChave,
 }: {
   obras: Obra[]
   agendadas: Obra[]
@@ -65,10 +71,15 @@ export default function Cartoes({
   admin: boolean
   responsaveis: string[]
   analistaSelecionado: string
+  /** Chave da pessoa logada (`resolverChave`); '' quando não há. */
+  minhaChave: string
 }) {
   const router = useRouter()
   const [aviso, setAviso] = useState<string | null>(null)
   const [agendadasAbertas, setAgendadasAbertas] = useState(false)
+  // Mesma regra de `podeMexerNoAgendamento` (_actions.ts): pcm da obra ou
+  // admin. Quem não pode não vê o botão — botão que só devolve erro não fica.
+  const podeAgendar = (o: Obra) => admin || (!!minhaChave && minhaChave === o.pcm)
 
   // Quem voltou de agendamento vai primeiro; depois a ordem de sempre.
   const pendentes = obras
@@ -83,6 +94,7 @@ export default function Cartoes({
     <Agendadas
       obras={agendadas}
       pessoasPorEmail={pessoasPorEmail}
+      podeTrazer={podeAgendar}
       aoVoltar={(o) => {
         setAviso(`${o.loja ?? 'Obra sem loja'} voltou para o diário.`)
         router.refresh()
@@ -101,9 +113,7 @@ export default function Cartoes({
         </p>
       </div>
 
-      {admin ? (
-        <SeletorAnalista responsaveis={responsaveis} selecionado={analistaSelecionado} />
-      ) : null}
+      <SeletorAnalista responsaveis={responsaveis} selecionado={analistaSelecionado} admin={admin} />
 
       {aviso ? (
         <p role="status" className="mb-3 rounded-md border border-[#35c98a] bg-[#35c98a14] px-3 py-2 text-sm text-[#35c98a]">
@@ -146,8 +156,9 @@ export default function Cartoes({
                   obra={o}
                   hoje={hoje}
                   pessoas={pessoas}
-                  mostrarResponsavel={admin && !analistaSelecionado}
+                  mostrarResponsavel={!analistaSelecionado}
                   admin={admin}
+                  podeAgendar={podeAgendar(o)}
                   pessoasPorEmail={pessoasPorEmail}
                   aoSalvar={() => router.refresh()}
                   aoAgendar={(ate) => {
@@ -167,15 +178,18 @@ export default function Cartoes({
 }
 
 /**
- * Decisão técnica 7 da spec: o diário é de cada analista, e o administrador vê
- * todas com um seletor. Sem isso, terça treinaria só o Yuri.
+ * Seletor "Diário de quem", para todos (spec 27/10/2026). "Todos os
+ * responsáveis" vai como `?analista=todos` — sem parâmetro, o servidor aplica
+ * o padrão da pessoa (o pcm abre nas suas), e aí o pcm não conseguiria ver todas.
  */
 function SeletorAnalista({
   responsaveis,
   selecionado,
+  admin,
 }: {
   responsaveis: string[]
   selecionado: string
+  admin: boolean
 }) {
   const router = useRouter()
   return (
@@ -185,14 +199,11 @@ function SeletorAnalista({
       </label>
       <select
         id="analista"
-        value={selecionado}
-        onChange={(e) => {
-          const v = e.target.value
-          router.push(v ? `/obras/diario?analista=${encodeURIComponent(v)}` : '/obras/diario')
-        }}
+        value={selecionado || 'todos'}
+        onChange={(e) => router.push(`/obras/diario?analista=${encodeURIComponent(e.target.value)}`)}
         className="min-h-11 rounded-md border border-[#1e3a5f] bg-[#0f1f3d] px-3 py-2 text-sm text-[#e8eef7] focus:border-[#f05a28] focus:outline-none"
       >
-        <option value="">Todos os responsáveis</option>
+        <option value="todos">Todos os responsáveis</option>
         {responsaveis.map((r) => (
           <option key={r} value={r}>
             {r}
@@ -200,7 +211,9 @@ function SeletorAnalista({
         ))}
       </select>
       <span className="text-[11px] text-[#64748b]">
-        Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.
+        {admin
+          ? 'Você é administrador do hub: vê tudo e pode trazer de volta qualquer agendada.'
+          : 'Você vê as obras de todos os responsáveis e pode responder no lugar deles. Fica registrado quem respondeu.'}
       </span>
     </div>
   )
@@ -224,10 +237,12 @@ function BotaoAgendadas({ n, aberto, onClick }: { n: number; aberto: boolean; on
 function Agendadas({
   obras,
   pessoasPorEmail,
+  podeTrazer,
   aoVoltar,
 }: {
   obras: Obra[]
   pessoasPorEmail: { email: string; nome: string }[]
+  podeTrazer: (o: Obra) => boolean
   aoVoltar: (o: Obra) => void
 }) {
   const [pendente, iniciar] = useTransition()
@@ -273,14 +288,16 @@ function Agendadas({
                   )} em ${o.diario_agendado_em ? ddmm(hojeISO(new Date(o.diario_agendado_em))) : '—'}`}
                 </div>
               </div>
-              <button
-                type="button"
-                disabled={pendente}
-                onClick={() => trazer(o)}
-                className="min-h-9 rounded-md border border-[#1e3a5f] px-2.5 py-1.5 text-[12px] text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
-              >
-                Trazer de volta agora
-              </button>
+              {podeTrazer(o) ? (
+                <button
+                  type="button"
+                  disabled={pendente}
+                  onClick={() => trazer(o)}
+                  className="min-h-9 rounded-md border border-[#1e3a5f] px-2.5 py-1.5 text-[12px] text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45"
+                >
+                  Trazer de volta agora
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -446,6 +463,18 @@ function Feita({
           {pendente ? 'desfazendo…' : 'Desfazer'}
         </button>
       </div>
+      {resposta.autoria ? (
+        <p className="mt-1 text-[12px] text-[#94a3b8]">
+          Respondido por <b className="text-[#e8eef7]">{resposta.autoria.por}</b>
+          {resposta.autoria.emNomeDe ? (
+            <>
+              {' '}
+              em nome de <b className="text-[#f05a28]">{resposta.autoria.emNomeDe}</b>
+            </>
+          ) : null}{' '}
+          às {resposta.autoria.hora}
+        </p>
+      ) : null}
       {resposta.obs ? <p className="mt-1 text-[12px] text-[#64748b]">{resposta.obs}</p> : null}
       {resposta.foto_path ? <VerFoto path={resposta.foto_path} /> : null}
       {tarefas.map((t) => (
