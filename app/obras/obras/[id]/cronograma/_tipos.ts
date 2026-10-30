@@ -5,6 +5,8 @@
 import type { AtividadeCalculada, Situacao, StatusAtividade } from '../../_lib/cronograma'
 
 export type Resultado = { ok: true } | { ok: false; erro: string }
+/** Resultado de quem cria atividade: devolve o `numero` gerado. */
+export type ResultadoNumero = { ok: true; numero: number } | { ok: false; erro: string }
 
 /** O que o engenheiro edita numa linha do rascunho. `numero` identifica a linha. */
 export type LinhaPlano = {
@@ -15,6 +17,21 @@ export type LinhaPlano = {
   pred2: number | null
   duracao: number
   bloqueiaPorTrava: boolean
+}
+
+/** Edição parcial de uma linha: só os campos presentes são gravados (a tabela salva célula a célula). */
+export type EdicaoLinha = Pick<LinhaPlano, 'numero'> & Partial<Omit<LinhaPlano, 'numero'>>
+
+/** Direção de ↑/↓ de etapa e de atividade. */
+export type Direcao = 'cima' | 'baixo'
+
+/** Atividade nova numa etapa do rascunho (Leva 1b). */
+export type NovaAtividade = {
+  descricao: string
+  duracao: number
+  pred1: number | null
+  pred2: number | null
+  inicioFixo?: string | null
 }
 
 /** Uma linha da gaveta "Atualizar status" (spec Leva 1 §5 A5). */
