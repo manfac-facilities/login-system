@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+// Leva 1: painel redesenhado; casos novos em painel-leva1.test.tsx.
 import PainelObra from '../_ui/painel'
 import type { ObraGrande } from '../_lib/leitura'
 import type { AtividadeCalculada } from '../_lib/cronograma'
@@ -50,8 +51,8 @@ describe('PainelObra', () => {
 
   it('com atraso: decompõe por responsável', () => {
     render(<PainelObra dados={comCronograma()} hoje="2026-10-29" estadoDiario="nao_iniciado" ultimoEnvio={null} />)
-    expect(screen.getByText(/\+5 dias: 4 do cliente, 1 da Manfac/)).toBeInTheDocument()
-    expect(screen.getByText('Atrasado')).toBeInTheDocument()
+    const kpi = screen.getByRole('group', { name: 'Dias vs base' })
+    expect(kpi.textContent?.replace(/\s+/g, ' ')).toMatch(/\+5 dias: 4 do cliente, 1 da Manfac/)
     expect(screen.getByRole('link', { name: /Preencher diário de hoje/ })).toBeInTheDocument()
     expect(screen.getByText(/Demolições travadas até a atividade 6/)).toBeInTheDocument()
     expect(screen.getByText(/Pintura/)).toBeInTheDocument()
@@ -65,7 +66,7 @@ describe('PainelObra', () => {
     })
     render(<PainelObra dados={d} hoje="2026-10-29" estadoDiario="nao_iniciado" ultimoEnvio={null} />)
     expect(screen.getByText(/Base ainda não salva/)).toBeInTheDocument()
-    expect(screen.getByText(/40%/)).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Avanço realizado' })).toHaveTextContent('previsto 40%')
     expect(screen.queryByText(/Preencher diário de hoje/)).toBeNull()
   })
 
