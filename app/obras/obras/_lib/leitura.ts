@@ -150,7 +150,7 @@ export async function lerObraGrande(
     supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
     supabase.from('obras_impedimento').select('*').eq('obra_id', obraId).order('aberto_em', { ascending: false }),
     supabase.from('obras_feriado').select('data'),
-    supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual').eq('obra_id', obraId),
+    supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual, dias_restantes, registrado_em').eq('obra_id', obraId),
   ])
   const falha = [obraR, versR, execR, impR, ferR, histR].find((r) => r.error)
   if (falha) return { ok: false, erro: `Falha ao ler a obra: ${falha.error!.message}` }
@@ -173,7 +173,11 @@ export async function lerObraGrande(
   }
 
   const hist: PontoHist[] = ((histR.data ?? []) as Linha[]).map((h) => ({
-    numero: h.numero, dataStatus: h.data_status, percentual: Number(h.percentual ?? 0),
+    numero: h.numero,
+    dataStatus: h.data_status,
+    percentual: Number(h.percentual ?? 0),
+    diasRestantes: h.dias_restantes === null || h.dias_restantes === undefined ? null : Number(h.dias_restantes),
+    registradoEm: h.registrado_em ?? '',
   }))
   let dadosAte: string | null = hist.reduce<string | null>(
     (m, h) => (m === null || h.dataStatus > m ? h.dataStatus : m), null,
@@ -211,6 +215,26 @@ export async function lerObraGrande(
  * sinal e atraso. Separada para a prévia visual (sem banco) usar o mesmo cálculo.
  * `planoBase` = plano da v1 quando ela não é a versão usada; null = mesma versão.
  */
+/**
+ * Âncora dos dias restantes (spec §5 A5): para cada atividade com `diasRestantes`
+ * no exec, a `data_status` da linha mais recente do histórico com dias restantes
+ * informados e igual ao valor atual. Sem essa linha, fica sem âncora (motor usa hoje).
+ */
+export function ancorarDiasRestantes(exec: AtividadeExec[], hist: PontoHist[]): AtividadeExec[] {
+  const ultima = new Map<number, PontoHist>()
+  for (const h of hist) {
+    if (h.diasRestantes === null || h.diasRestantes === undefined) continue
+    const m = ultima.get(h.numero)
+    const chave = (x: PontoHist) => `${x.dataStatus}|${x.registradoEm ?? ''}`
+    if (!m || chave(h) > chave(m)) ultima.set(h.numero, h)
+  }
+  return exec.map((e) => {
+    if (e.diasRestantes === null || e.diasRestantes === undefined) return e
+    const h = ultima.get(e.numero)
+    return { ...e, diasRestantesEm: h && h.diasRestantes === e.diasRestantes ? h.dataStatus : null }
+  })
+}
+
 export function montarObraGrande(p: {
   obra: ObraRow
   vigente: VersaoInfo | null
@@ -225,7 +249,8 @@ export function montarObraGrande(p: {
   dadosAte: string | null
   hoje: string
 }): ObraGrande {
-  const { obra, exec, impedimentos, feriados, hist, dadosAte, hoje } = p
+  const { obra, impedimentos, feriados, hist, dadosAte, hoje } = p
+  const exec = ancorarDiasRestantes(p.exec, hist)
   const imps = impedimentosCalcDe(impedimentos)
   const usada = p.vigente ?? p.rascunho
   const plano = usada ? p.planoUsado : []

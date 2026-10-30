@@ -5,7 +5,14 @@ import { diasUteisEntre } from './calendario'
 import type { AtividadeCalculada } from './cronograma'
 
 type Feriados = ReadonlySet<string>
-export type PontoHist = { numero: number; dataStatus: string; percentual: number }
+export type PontoHist = {
+  numero: number
+  dataStatus: string
+  percentual: number
+  /** Dias restantes gravados nesta linha (âncora da projeção); ausente = não informado. */
+  diasRestantes?: number | null
+  registradoEm?: string
+}
 export type Serie = { data: string; valor: number }[]
 
 const DIA_MS = 86_400_000

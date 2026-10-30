@@ -97,6 +97,25 @@ describe('dias restantes', () => {
     const r = calcular({ exec: execCom(6, { diasRestantes: 3, inicioReal: '2026-10-30' }), hoje: '2026-11-10' })
     expect(ativ(r, 6).fimProjetado).toBe('2026-11-12')
   })
+
+  it('ancorado na data em que foi informado: hoje avançando 3 dias úteis não muda o fim projetado', () => {
+    const exec = execCom(6, { diasRestantes: 3, diasRestantesEm: '2026-11-10', inicioReal: '2026-10-30' })
+    const antes = calcular({ exec, hoje: '2026-11-10' })
+    const depois = calcular({ exec, hoje: '2026-11-13' })
+    expect(ativ(antes, 6).fimProjetado).toBe('2026-11-12')
+    expect(ativ(depois, 6).fimProjetado).toBe('2026-11-12')
+  })
+
+  it('âncora em dia não útil vai para o próximo dia útil', () => {
+    // 07/11/2026 é sábado → conta a partir de segunda 09/11.
+    const r = calcular({ exec: execCom(6, { diasRestantes: 2, diasRestantesEm: '2026-11-07', inicioReal: '2026-10-30' }), hoje: '2026-11-12' })
+    expect(ativ(r, 6).fimProjetado).toBe('2026-11-10')
+  })
+
+  it('sem âncora: cai na data de status/hoje', () => {
+    const r = calcular({ exec: execCom(6, { diasRestantes: 3, diasRestantesEm: null, inicioReal: '2026-10-30' }), hoje: '2026-11-13' })
+    expect(ativ(r, 6).fimProjetado).toBe('2026-11-17')
+  })
 })
 
 describe('resumirEtapas', () => {

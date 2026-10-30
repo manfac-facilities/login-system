@@ -35,6 +35,8 @@ export type AtividadeExec = {
   fimReal: string | null
   /** Dias úteis restantes informados na atualização de status. Ausente/null = projeta pelo %. */
   diasRestantes?: number | null
+  /** Data de status em que os dias restantes foram informados (âncora). Ausente/null = data de status/hoje. */
+  diasRestantesEm?: string | null
 }
 
 export type ImpedimentoCalc = {
@@ -178,9 +180,11 @@ export function calcularCronograma(p: {
     } else if (iniciada) {
       inicioProjetado = ex.inicioReal ?? inicioPrevisto
       if (ex.status === 'em_andamento' && diasRestantes !== null) {
+        // Âncora: a data de status em que os dias foram informados (spec §5 A5), não hoje.
+        const ancora = ex.diasRestantesEm ?? dataStatus
         fimProjetado = diasRestantes === 0
-          ? dataStatus
-          : somarDiasUteis(statusUtil, ceilLimpo(diasRestantes) - 1, feriados)
+          ? ancora
+          : somarDiasUteis(proximoDiaUtil(ancora, feriados), ceilLimpo(diasRestantes) - 1, feriados)
       } else {
         const restante = Math.max(ceilLimpo(a.duracao * (1 - ex.percentual)), 1)
         fimProjetado = maxData([fimPrevisto, somarDiasUteis(statusUtil, restante - 1, feriados)])
