@@ -6,7 +6,7 @@ let tabelas: Record<string, { data: unknown; error: unknown }> = {}
 function chain(tabela: string) {
   const r = tabelas[tabela] ?? { data: [], error: null }
   const c: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'in', 'order']) c[m] = jest.fn(() => c)
+  for (const m of ['select', 'eq', 'in', 'order', 'not', 'limit']) c[m] = jest.fn(() => c)
   c.maybeSingle = jest.fn(async () => r)
   c.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(r).then(res, rej)
   return c
@@ -30,6 +30,8 @@ beforeEach(() => {
     obras_atividade_exec: { data: [], error: null },
     obras_impedimento: { data: [], error: null },
     obras_feriado: { data: [], error: null },
+    obras_atividade_status_hist: { data: [], error: null },
+    obras_rdo: { data: [], error: null },
   }
 })
 
@@ -92,7 +94,7 @@ describe('lerObraGrande', () => {
 
   it.each([
     'obras_obra', 'obras_cronograma_versao', 'obras_atividade', 'obras_atividade_exec',
-    'obras_impedimento', 'obras_feriado',
+    'obras_impedimento', 'obras_feriado', 'obras_atividade_status_hist', 'obras_rdo',
   ])('erro em %s: ok false', async (t) => {
     tabelas.obras_cronograma_versao.data = [ver('v1', 1, '2026-10-01T00:00:00Z')]
     tabelas[t] = { data: t === 'obras_obra' ? obra : [], error: { message: 'boom' } }
@@ -138,6 +140,31 @@ describe('lerObraGrande', () => {
     if (!r.ok) throw new Error(r.erro)
     expect(r.dados.etapas).toEqual([])
     expect(r.dados.calcBase).toBeNull()
+  })
+
+  it('hist e dadosAte: maior data_status; sem hist, último RDO validado; senão null', async () => {
+    tabelas.obras_atividade_status_hist.data = [
+      { numero: 1, data_status: '2026-10-08', percentual: '0.5' },
+      { numero: 1, data_status: '2026-10-12', percentual: 1 },
+    ]
+    let r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.dados.hist).toEqual([
+      { numero: 1, dataStatus: '2026-10-08', percentual: 0.5 },
+      { numero: 1, dataStatus: '2026-10-12', percentual: 1 },
+    ])
+    expect(r.dados.dadosAte).toBe('2026-10-12')
+
+    tabelas.obras_atividade_status_hist.data = []
+    tabelas.obras_rdo.data = [{ validado_em: '2026-10-09T18:00:00Z' }]
+    r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.dados.dadosAte).toBe('2026-10-09')
+
+    tabelas.obras_rdo.data = []
+    r = await lerObraGrande(supabase, 'o1', '2026-10-10')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.dados.dadosAte).toBeNull()
   })
 
   it('obra inexistente: ok false', async () => {

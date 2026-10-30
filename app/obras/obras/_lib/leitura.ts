@@ -6,6 +6,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
+import type { PontoHist } from './curvas'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
@@ -59,6 +60,10 @@ export type ObraGrande = {
   calcBase: ResultadoCronograma | null
   /** Linhas-resumo por etapa do cálculo vigente (vazio sem cronograma). */
   etapas: ResumoEtapa[]
+  /** Histórico de % por atividade (diário e atualização de status). */
+  hist: PontoHist[]
+  /** Maior data do histórico ou, sem histórico, o último RDO validado; null se nada. */
+  dadosAte: string | null
   terminoBase: string | null
   sinal: Sinal | null
   atraso: ReturnType<typeof atrasoPorResponsavel> | null
@@ -139,14 +144,15 @@ export async function lerObraGrande(
   obraId: string,
   hoje: string,
 ): Promise<{ ok: true; dados: ObraGrande } | { ok: false; erro: string }> {
-  const [obraR, versR, execR, impR, ferR] = await Promise.all([
+  const [obraR, versR, execR, impR, ferR, histR] = await Promise.all([
     supabase.from('obras_obra').select('*').eq('id', obraId).maybeSingle(),
     supabase.from('obras_cronograma_versao').select('id, numero, motivo, salva_em').eq('obra_id', obraId).order('numero'),
     supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
     supabase.from('obras_impedimento').select('*').eq('obra_id', obraId).order('aberto_em', { ascending: false }),
     supabase.from('obras_feriado').select('data'),
+    supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual').eq('obra_id', obraId),
   ])
-  const falha = [obraR, versR, execR, impR, ferR].find((r) => r.error)
+  const falha = [obraR, versR, execR, impR, ferR, histR].find((r) => r.error)
   if (falha) return { ok: false, erro: `Falha ao ler a obra: ${falha.error!.message}` }
   if (!obraR.data) return { ok: false, erro: 'Obra não encontrada' }
 
@@ -164,6 +170,21 @@ export async function lerObraGrande(
     const atR = await supabase.from('obras_atividade').select('*').in('versao_id', ids)
     if (atR.error) return { ok: false, erro: `Falha ao ler a obra: ${atR.error.message}` }
     atividades = (atR.data ?? []) as Linha[]
+  }
+
+  const hist: PontoHist[] = ((histR.data ?? []) as Linha[]).map((h) => ({
+    numero: h.numero, dataStatus: h.data_status, percentual: Number(h.percentual ?? 0),
+  }))
+  let dadosAte: string | null = hist.reduce<string | null>(
+    (m, h) => (m === null || h.dataStatus > m ? h.dataStatus : m), null,
+  )
+  if (dadosAte === null) {
+    const rdoR = await supabase
+      .from('obras_rdo').select('validado_em').eq('obra_id', obraId)
+      .not('validado_em', 'is', null).order('validado_em', { ascending: false }).limit(1)
+    if (rdoR.error) return { ok: false, erro: `Falha ao ler a obra: ${rdoR.error.message}` }
+    const v = ((rdoR.data ?? []) as Linha[])[0]?.validado_em as string | undefined
+    dadosAte = v ? v.slice(0, 10) : null
   }
 
   const feriados = new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string))
@@ -207,7 +228,7 @@ export async function lerObraGrande(
       versaoBase: baseL ? versaoInfo(baseL) : null,
       versaoVigente: vigenteL ? versaoInfo(vigenteL) : null,
       rascunho: rascunhoL ? versaoInfo(rascunhoL) : null,
-      plano, exec, impedimentos, feriados, calc, calcBase,
+      plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
       etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
       terminoBase, sinal, atraso,
     },

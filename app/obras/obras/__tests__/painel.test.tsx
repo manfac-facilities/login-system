@@ -11,7 +11,7 @@ const obra = {
 const base: ObraGrande = {
   obra, versaoBase: null, versaoVigente: null, rascunho: null,
   plano: [], exec: [], impedimentos: [], feriados: new Set(),
-  calc: null, calcBase: null, etapas: [], terminoBase: null, sinal: null, atraso: null,
+  calc: null, calcBase: null, etapas: [], hist: [], dadosAte: null, terminoBase: null, sinal: null, atraso: null,
 }
 
 const ativ = (over: Partial<AtividadeCalculada>): AtividadeCalculada => ({
