@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frotas - Segunda bateria</title>
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --or:#f05a28; --mut:#94a3b8; --bd:#1e3a5f;
+  --tx:#e2e8f0; --wh:#ffffff; --orbg:rgba(240,90,40,.12); --orbd:rgba(240,90,40,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+body{overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color-scheme:dark}
+a{color:var(--or)}
+.mono{font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}
+.wh{color:var(--wh)}
+.or{color:var(--or)}
+.sm{font-size:.82rem}.xs{font-size:.74rem}
+.b{font-weight:600}
+
+/* barra do mockup */
+.mbar{position:sticky;top:0;z-index:40;background:var(--navy);border-bottom:1px solid var(--bd);padding:.55rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem .9rem;align-items:center}
+.mbar .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.mbar label{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--mut)}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:.5rem;overflow:hidden;flex-wrap:wrap}
+.seg button{padding:.32rem .65rem;font-size:.78rem;color:var(--mut);border-right:1px solid var(--bd)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--or);color:var(--wh)}
+.fld{width:100%;padding:.5rem .7rem;border-radius:.5rem;background:var(--bg);border:1px solid var(--bd);color:var(--wh);font-size:.86rem}
+.fld:focus{outline:none;border-color:var(--or)}
+.fld::placeholder{color:#4a6080}
+select.fld.auto{width:auto;padding:.3rem .5rem;font-size:.78rem}
+
+/* telas */
+.screens{display:flex;gap:.4rem;overflow-x:auto;padding:.7rem 1rem;border-bottom:1px solid var(--bd);background:var(--bg)}
+.screens button{white-space:nowrap;padding:.45rem .85rem;border-radius:.5rem;border:1px solid var(--bd);color:var(--mut);font-size:.85rem}
+.screens button.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+
+/* casca do app */
+.shell{display:flex;min-height:calc(100vh - 110px)}
+.side{width:210px;flex:0 0 210px;border-right:1px solid var(--bd);padding:1rem .6rem;background:var(--bg)}
+.side .grp{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#4a6080;margin:.9rem .5rem .3rem}
+.side .it{display:block;width:100%;text-align:left;padding:.38rem .55rem;border-radius:.45rem;font-size:.84rem;color:var(--mut)}
+.side .it.on{background:var(--or);color:var(--wh)}
+.side .it.dim{opacity:.45;cursor:default}
+.main{flex:1;min-width:0;padding:1.5rem 1.75rem 4rem}
+@media (max-width:860px){.side{display:none}.main{padding:1rem 1rem 4rem}}
+
+/* tipografia de seção */
+h1.sec{font-size:1.35rem;font-weight:700;color:var(--wh);margin:0 0 .25rem;display:flex;align-items:center;gap:.55rem}
+h2.sec{font-size:1.05rem;font-weight:650;color:var(--wh);margin:2rem 0 .2rem;display:flex;align-items:center;gap:.5rem}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:1.7rem;height:1.7rem;padding:0 .35rem;border-radius:999px;background:var(--or);color:var(--wh);font-size:.78rem;font-weight:700;flex:0 0 auto}
+h2.sec .num{min-width:2.1rem;height:1.5rem;font-size:.72rem;border-radius:.4rem}
+.lead{color:var(--mut);font-size:.88rem;margin:.1rem 0 1rem}
+.why{border-left:3px solid var(--or);background:var(--navy);padding:.6rem .85rem;border-radius:0 .5rem .5rem 0;font-size:.82rem;color:var(--mut);margin:.6rem 0 1rem}
+.why b{color:var(--wh);font-weight:600}
+
+.card{border:1px solid var(--bd);background:var(--navy);border-radius:.75rem}
+.pad{padding:1rem 1.1rem}
+.grid{display:grid;gap:.8rem}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1000px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.g3,.g2{grid-template-columns:1fr}}
+
+.stat{text-align:left;padding:.9rem 1rem;border:1px solid var(--bd);background:var(--navy);border-radius:.75rem;width:100%;transition:border-color .15s}
+.stat:hover{border-color:var(--or)}
+.stat .l{font-size:.78rem;color:var(--mut)}
+.stat .v{font-size:1.7rem;font-weight:700;color:var(--wh);margin:.15rem 0}
+.stat .s{font-size:.74rem;color:var(--mut)}
+.stat.hot .v{color:var(--or)}
+.stat.new{border-style:dashed}
+
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .95rem;border-radius:.5rem;font-size:.85rem;font-weight:500;white-space:nowrap}
+.btn-p{background:var(--or);color:var(--wh)}
+.btn-s{border:1px solid var(--bd);color:var(--mut)}
+.btn-s:hover{border-color:var(--mut);color:var(--wh)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.chip{display:inline-block;padding:.12rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;white-space:nowrap;border:1px solid var(--bd);color:var(--mut)}
+.chip.hot{background:var(--or);border-color:var(--or);color:var(--wh)}
+.chip.warn{border-color:var(--orbd);color:var(--or)}
+.chip.ok{color:var(--wh)}
+.chip.new{border-style:dashed;color:var(--mut)}
+
+/* barra de situação da frota */
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;border:1px solid var(--bd);margin:.8rem 0 .4rem}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font-size:.75rem;color:var(--mut)}
+.dot{display:inline-block;width:.6rem;height:.6rem;border-radius:2px;margin-right:.3rem;vertical-align:middle}
+
+/* lista de ação */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;border-top:1px solid var(--bd);text-align:left;width:100%}
+.act:first-child{border-top:0}
+.act:hover{background:rgba(255,255,255,.02)}
+.act .n{min-width:2.2rem;text-align:center;font-size:1.25rem;font-weight:700;color:var(--wh)}
+.act .n.hot{color:var(--or)}
+.act .t{flex:1;min-width:0}
+.act .t .a{color:var(--wh);font-size:.9rem}
+.act .t .d{color:var(--mut);font-size:.76rem;overflow:hidden;text-overflow:ellipsis}
+.act .go{color:var(--mut);font-size:.8rem;white-space:nowrap}
+
+/* tabela */
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:.75rem;background:var(--navy)}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--bd);white-space:nowrap;background:var(--navy);position:sticky;top:0}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--wh)}
+th .ar{color:var(--or);margin-left:.2rem}
+td{padding:.55rem .75rem;border-bottom:1px solid rgba(30,58,95,.6);font-size:.84rem;color:#cbd5e1;white-space:nowrap}
+tr.rowc{cursor:pointer}
+tr.rowc:hover td{background:rgba(240,90,40,.06)}
+td.r,th.r{text-align:right}
+tfoot td{color:var(--wh);font-weight:600;border-bottom:0;border-top:1px solid var(--bd)}
+.small-t table{min-width:0}
+
+/* filtros */
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:.6rem;margin-bottom:.8rem}
+.filters .lbl{display:block;font-size:.72rem;color:var(--mut);margin-bottom:.25rem}
+@media (max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.filters .wide{grid-column:1/-1}}
+@media (max-width:520px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin:.4rem 0 .8rem}
+.toolbar .l{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.pager{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;margin-top:.7rem;font-size:.8rem;color:var(--mut)}
+.pager .pg{display:flex;gap:.3rem}
+.pager .pg button{min-width:2rem;padding:.3rem .5rem;border:1px solid var(--bd);border-radius:.4rem;color:var(--mut)}
+.pager .pg button.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+.pager .pg button[disabled]{opacity:.4;cursor:default}
+
+.subtabs{display:flex;gap:.35rem;overflow-x:auto;margin:.2rem 0 1rem;border-bottom:1px solid var(--bd)}
+.subtabs button{padding:.55rem .8rem;font-size:.86rem;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap}
+.subtabs button.on{color:var(--wh);border-color:var(--or)}
+
+/* estados */
+.empty{border:1px dashed var(--bd);border-radius:.75rem;padding:2.2rem 1rem;text-align:center;color:var(--mut)}
+.empty .ic{font-size:1.6rem;opacity:.5;margin-bottom:.4rem}
+.err{border:1px solid var(--or);background:var(--orbg);border-radius:.75rem;padding:1.2rem 1.1rem;display:flex;gap:.8rem;align-items:flex-start}
+.err .ic{flex:0 0 auto;width:1.8rem;height:1.8rem;border-radius:999px;background:var(--or);color:var(--wh);font-weight:800;display:flex;align-items:center;justify-content:center}
+.err .t{color:var(--wh);font-weight:600}
+.err p{margin:.2rem 0 .7rem;font-size:.84rem;color:var(--tx)}
+.sk{background:linear-gradient(90deg,var(--navy) 0%,#13285a 50%,var(--navy) 100%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:.5rem}
+@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+.noperm{max-width:420px;margin:3rem auto;text-align:center}
+.banner{border:1px solid var(--orbd);background:var(--orbg);border-radius:.6rem;padding:.6rem .85rem;font-size:.83rem;color:var(--tx);margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.info{border:1px solid var(--bd);border-radius:.6rem;padding:.6rem .85rem;font-size:.8rem;color:var(--mut);margin-bottom:.8rem}
+
+/* gaveta e modal */
+.ov{position:fixed;inset:0;background:rgba(5,10,20,.7);z-index:60;display:flex;justify-content:flex-end}
+.drawer{width:min(520px,100%);height:100%;overflow-y:auto;background:var(--bg);border-left:1px solid var(--bd);padding:1.2rem 1.2rem 3rem}
+.ov.c{justify-content:center;align-items:center;padding:1rem}
+.modal{width:min(560px,100%);max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--bd);border-radius:.8rem;padding:1.2rem}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:.35rem .8rem;font-size:.85rem;margin:.6rem 0 1rem}
+.kv dt{color:var(--mut)}.kv dd{margin:0;color:var(--wh);overflow-wrap:anywhere}
+.tl{border-left:2px solid var(--bd);margin:.4rem 0 1rem .3rem;padding-left:.9rem;font-size:.82rem}
+.tl div{margin:.35rem 0;position:relative}
+.tl div::before{content:"";position:absolute;left:-1.24rem;top:.4rem;width:.5rem;height:.5rem;border-radius:999px;background:var(--bd)}
+.tl div.cur::before{background:var(--or)}
+.collist{columns:2;column-gap:1.2rem;font-size:.82rem;color:var(--tx);padding-left:1.1rem;margin:.4rem 0}
+@media (max-width:520px){.collist{columns:1}}
+.toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:80;width:calc(100% - 2rem);max-width:460px;background:var(--navy);border:1px solid var(--or);border-radius:.6rem;padding:.7rem .9rem;font-size:.85rem;color:var(--wh);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+
+/* e-mail */
+.mailwrap{max-width:720px}
+.mailhead{border:1px solid var(--bd);border-bottom:0;border-radius:.75rem .75rem 0 0;background:var(--navy);padding:.8rem 1rem;font-size:.82rem}
+.mailhead .row{display:flex;gap:.6rem;margin:.15rem 0}
+.mailhead .row span:first-child{color:var(--mut);min-width:4.2rem}
+.mailbody{border:1px solid var(--bd);border-radius:0 0 .75rem .75rem;background:#ffffff;color:#1f2937;padding:1.3rem 1.2rem;font-size:.9rem}
+.mailbody h3{margin:0 0 .2rem;font-size:1.05rem;color:#0d2050}
+.mailbody .top{border-bottom:3px solid #f05a28;padding-bottom:.7rem;margin-bottom:1rem}
+.mailbody .blk{margin:1.1rem 0}
+.mailbody .blk h4{margin:0 0 .35rem;font-size:.9rem;color:#0d2050;display:flex;justify-content:space-between;gap:.5rem}
+.mailbody .blk h4 .c{background:#f05a28;color:#fff;border-radius:999px;padding:0 .5rem;font-size:.75rem;line-height:1.4rem}
+.mailbody .blk h4 .c.n{background:#94a3b8}
+.mailbody ul{margin:0;padding:0;list-style:none}
+.mailbody li{display:flex;justify-content:space-between;gap:.6rem;padding:.42rem 0;border-bottom:1px solid #e5e7eb;font-size:.85rem}
+.mailbody li a{color:#f05a28;white-space:nowrap;font-size:.8rem;text-decoration:none;font-weight:600}
+.mailbody .foot{margin-top:1.2rem;font-size:.75rem;color:#64748b;border-top:1px solid #e5e7eb;padding-top:.7rem}
+.mailbody .cta{display:inline-block;background:#f05a28;color:#fff;text-decoration:none;padding:.55rem 1rem;border-radius:.4rem;font-weight:600;font-size:.85rem}
+.mailbody .sum{display:flex;flex-wrap:wrap;gap:.4rem}
+.mailbody .sum span{background:#0d2050;color:#fff;border-radius:.4rem;padding:.25rem .55rem;font-size:.76rem}
+.mailbody .sum span.h{background:#f05a28}
+
+.sup{counter-reset:s;list-style:none;padding:0;margin:0}
+.sup li{counter-increment:s;position:relative;padding:.85rem 1rem .85rem 3.3rem;border:1px solid var(--bd);background:var(--navy);border-radius:.6rem;margin-bottom:.55rem;font-size:.88rem}
+.sup li::before{content:"S" counter(s);position:absolute;left:.85rem;top:.82rem;background:var(--or);color:var(--wh);border-radius:.35rem;font-size:.72rem;font-weight:700;padding:.1rem .35rem}
+.sup li .d{color:var(--mut);font-size:.8rem;margin-top:.2rem}
+.hide-sm{}
+@media (max-width:520px){.hide-sm{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="ovl"></div>
+<div id="toast"></div>
+
+<script>
+/* ================= utilidades ================= */
+const $ = s => document.querySelector(s);
+const d2 = n => String(n).padStart(2,'0');
+const brl = v => 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf = v => Number(v).toLocaleString('pt-BR');
+const nf2 = v => Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const dt = iso => iso ? iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4) : '—';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R = rng(3010);
+const pick = a => a[Math.floor(R()*a.length)];
+const HOJE = '2026-10-30', ONTEM = '2026-10-29';
+const addDays = (iso,n) => {const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const diasAte = iso => Math.round((new Date(iso+'T12:00:00Z')-new Date(HOJE+'T12:00:00Z'))/864e5);
+
+/* ================= dados de exemplo ================= */
+const PLACAS = ['RTX4F21','KQP2B87','LSU7C03','RIO3D45','QNM8A12','LTB5E66','KXZ1H09','RJW6G38','PYR2J54','LQA9K71','RTB3M20','KPF7N16','LVC4P82','RHS0R47','QOD5S33','LMX8T05','RKN2U69','PZL6V91','LDF1W24','RCE9X58','KTG4Y13','LBH7Z40','RUA3B76','QWE8C02'];
+const MODELOS = ['Fiat Strada Endurance','Fiat Fiorino Furgão','VW Saveiro Robust','Renault Kangoo','Fiat Mobi Like','Chevrolet Montana'];
+const NOMES = ['Carlos Henrique Souza','Rafael Lima','Anderson Pereira','Marcos Vinícius Rocha','Thiago Martins','Bruno Albuquerque','Diego Fernandes','Leandro Costa','Fábio Nascimento','Wellington Silva','Rodrigo Teixeira','Jefferson Alves','Paulo Roberto Dias','Leonardo Barbosa','Renan Carvalho','Felipe Moreira','Alexandre Ramos','Gustavo Pinto','Márcio Freitas','Vitor Hugo Santos','Eduardo Lopes','Sérgio Mendes'];
+const POSTOS = ['Posto Ipiranga Av. Brasil - Bonsucesso','Posto Shell Av. das Américas - Barra','Posto BR Centro - Niterói','Auto Posto Ale - Duque de Caxias','Posto Petrobras Rod. Amaral Peixoto - São Gonçalo','Posto Ipiranga Centro - Nova Iguaçu','Posto Shell Dias da Cruz - Méier','Auto Posto BR Linha Amarela - Pilares'];
+const EQS = Array.from({length:20},(_,i)=>'EQ '+d2(i+1));
+
+const VEIC = PLACAS.map((p,i)=>({
+  id:i, placa:p, modelo:MODELOS[i%MODELOS.length], ano:2022+(i%3),
+  km_contratual:3000, locacao:[2890,3150,3290,3450][i%4],
+  status: i===21||i===22 ? 'manutencao' : i===23 ? 'inativo' : 'ativo',
+  equipe: i<18 ? EQS[i] : null, motorista: i<18 ? NOMES[i] : null,
+  retorno: i===21 ? '2026-10-31' : i===22 ? '2026-10-27' : null,
+  oficinaMotivo: i===21 ? 'revisao' : i===22 ? 'mecanico' : null,
+  oficinaDesde: i===21 ? '2026-10-28' : i===22 ? '2026-10-21' : null,
+  km0: 18000 + Math.floor(R()*34000), km:0
+}));
+const MOT = NOMES.map((n,i)=>({id:i,nome:n,equipe: i<18?EQS[i]: i===18?EQS[18]: null,
+  cnh: String(10000000000 + Math.floor(R()*89999999999)).slice(0,11),
+  cnhVenc: i===7?'2026-11-12': i===14?'2026-12-03': i===17?'2026-10-20' : addDays('2027-01-15', Math.floor(R()*900)),
+  contato:'(21) 9'+(8000+Math.floor(R()*1999))+'-'+(1000+Math.floor(R()*8999)),
+  ativo: i!==21}));
+// EQ 19 tem motorista mas está sem carro (o carro dela foi para a oficina)
+
+/* KM diário: dias úteis de 01/09 a 30/10 */
+const DIAS=[]; for(let d='2026-09-01'; d<=HOJE; d=addDays(d,1)){const w=new Date(d+'T12:00:00Z').getUTCDay(); if(w>0&&w<6) DIAS.push(d)}
+const SEM_KM_ONTEM = ['EQ 07','EQ 12','EQ 16'];
+const KM=[]; const kmAt={};
+VEIC.forEach(v=>{v.km=v.km0});
+DIAS.forEach(d=>{
+  VEIC.forEach(v=>{
+    if(v.id>=18 && !(v.id===21 && d<'2026-10-28') && !(v.id===22 && d<'2026-10-21')) return; // livres não lançam
+    if(v.id>=18) return;
+    if(d===HOJE && v.id%3!==0) return;                 // hoje só algumas equipes já lançaram
+    if(d===ONTEM && SEM_KM_ONTEM.includes(v.equipe)) return;
+    if(R()<.04) return;                                  // falhas esporádicas
+    const ant=v.km; v.km += 55+Math.floor(R()*140);
+    KM.push({id:'k'+KM.length,data:d,equipe:v.equipe,placa:v.placa,motorista:v.motorista,km:v.km,rodado:v.km-ant,obs: R()<.06?pick(['Plantão fim de semana','Trajeto até a obra de Niterói','Carro reserva no dia']):'',criado:d+' '+d2(17+Math.floor(R()*3))+':'+d2(Math.floor(R()*60))});
+    kmAt[v.id+'|'+d]=v.km;
+  });
+});
+KM.reverse();
+// veículos sem lançamento recente ficam com km inicial + algo
+VEIC.forEach(v=>{if(v.id>=18) v.km = v.km0 + 21000});
+
+/* Abastecimentos */
+const AB=[];
+VEIC.slice(0,18).forEach(v=>{
+  let i=Math.floor(R()*4);
+  while(i<DIAS.length){
+    const d=DIAS[i]; const pl=+(6.09+R()*.4).toFixed(2); const lt=+(24+R()*24).toFixed(2);
+    AB.push({id:'a'+AB.length,data:d,placa:v.placa,modelo:v.modelo,equipe:v.equipe,motorista:v.motorista,litros:lt,valor:+(lt*pl).toFixed(2),preco:pl,km: R()<.08?null:(kmAt[v.id+'|'+d]||null),posto:pick(POSTOS),criado:d+' '+d2(9+Math.floor(R()*9))+':'+d2(Math.floor(R()*60)),corrigido: R()<.03});
+    i += 3+Math.floor(R()*4);
+  }
+});
+AB.sort((a,b)=>b.data.localeCompare(a.data)||a.placa.localeCompare(b.placa));
+
+/* Histórico carro × equipe × motorista (veiculo_responsabilidade_historico) */
+function histVeic(v){
+  if(v.id===22) return [{ini:'2026-08-01',fim:'2026-10-21',eq:'EQ 20',mot:NOMES[19]+'',o:'Checklist de recebimento'}];
+  if(v.id===21) return [{ini:'2026-08-01',fim:'2026-10-28',eq:'EQ 19',mot:NOMES[18],o:'Checklist de recebimento'}];
+  if(v.id>=18) return [];
+  if(v.id===4) return [{ini:'2026-08-01',fim:'2026-09-14',eq:'EQ 05',mot:'Wellington Silva',o:'Checklist de recebimento'},{ini:'2026-09-15',fim:null,eq:'EQ 05',mot:v.motorista,o:'Checklist de troca'}];
+  if(v.id===9) return [{ini:'2026-08-01',fim:'2026-10-05',eq:'EQ 14',mot:'Leonardo Barbosa',o:'Checklist de recebimento'},{ini:'2026-10-06',fim:null,eq:v.equipe,mot:v.motorista,o:'Checklist de troca'}];
+  return [{ini:'2026-08-01',fim:null,eq:v.equipe,mot:v.motorista,o:'Checklist de recebimento'}];
+}
+
+/* Itens que exigem ação (usam as consultas que já existem) */
+const REV_ATR_KM = [{placa:'RTX4F21',eq:'EQ 01',prev:'40.000 km',txt:'passou 1.240 km do previsto'},{placa:'LSU7C03',eq:'EQ 03',prev:'30.000 km',txt:'passou 310 km do previsto'}];
+const REV_ATR_DATA = [{placa:'KXZ1H09',eq:'EQ 07',prev:'15/10/2026',txt:'prevista para 15/10/2026 (15 dias atrás)'}];
+const REV_BREVE = [{placa:'PYR2J54',eq:'EQ 09',txt:'faltam 620 km (prevista aos 50.000 km)'},{placa:'LQA9K71',eq:'EQ 10',txt:'faltam 880 km (prevista aos 40.000 km)'}];
+const DOCS = [{placa:'LMX8T05',tipo:'Licenciamento (CRLV)',venc:'2026-10-25'},{placa:'RHS0R47',tipo:'Licenciamento (CRLV)',venc:'2026-11-08'},{placa:'QOD5S33',tipo:'Seguro',venc:'2026-11-22'}];
+const CNH = MOT.filter(m=>m.ativo && diasAte(m.cnhVenc)<=60).sort((a,b)=>a.cnhVenc.localeCompare(b.cnhVenc));
+const MULTAS = [{placa:'KPF7N16',mot:'Jefferson Alves',data:'2026-10-02',inf:'Excesso de velocidade até 20% - Linha Vermelha',valor:130.16,st:'Pendente'},{placa:'RIO3D45',mot:'Marcos Vinícius Rocha',data:'2026-10-09',inf:'Estacionar em local proibido - Centro, Rio',valor:195.23,st:'Pendente'},{placa:'LTB5E66',mot:'Bruno Albuquerque',data:'2026-09-23',inf:'Avançar sinal vermelho - Niterói',valor:293.47,st:'Validada'},{placa:'RJW6G38',mot:'Fábio Nascimento',data:'2026-10-17',inf:'Excesso de velocidade até 20% - Av. Brasil',valor:130.16,st:'Pendente'}];
+const SIN = [{placa:'RKN2U69',eq:'EQ 17',data:'2026-10-14',tipo:'Colisão',desc:'Batida leve no para-choque traseiro - Barra',st:'Em tratativa',valor:2350},{placa:'PZL6V91',eq:'EQ 18',data:'2026-10-24',tipo:'Avaria',desc:'Retrovisor direito quebrado',st:'Aberto',valor:640}];
+const CC = [['2.01.004','Contrato DPSP Barra',1984.32,412.80],['2.01.009','Contrato DPSP Centro',1611.07,288.40],['2.02.002','Obra Raia Niterói',1402.55,516.10],['2.03.001','Manutenção Predial Botafogo',1150.90,97.50],['2.03.006','Contrato Shopping Nova Iguaçu',988.14,354.20],[null,'Sem centro de custo',214.60,38.90]];
+
+/* ================= estado ================= */
+const S = {
+  tela:'visao', papel:'gestor', estado:'dados', base:'abast', userRegistra:true, oficinaNova:false, mailVar:'com',
+  f:{}, sort:{}, pag:{}, drawer:null, modal:null, aviso:null, focus:null
+};
+const PAPEIS = {admin:'Administrador',gestor:'Gestor de frotas (Igor)',usuario:'Usuário do Frotas',sem:'Sem acesso ao Frotas'};
+const podeGerir = () => S.papel==='admin'||S.papel==='gestor';
+const temAcesso = () => S.papel!=='sem';
+const podeRegistrar = () => podeGerir() || (S.papel==='usuario' && S.userRegistra);
+
+/* ================= situação da frota ================= */
+function situacao(v){
+  if(v.status==='inativo') return 'fora';
+  if(v.status==='manutencao') return 'oficina';
+  return histVeic(v).some(h=>!h.fim) ? 'uso' : 'livre';
+}
+const SIT_LBL = {uso:'Em uso',livre:'Livre',oficina:'Na oficina',fora:'Fora da frota'};
+function contagem(){const c={uso:0,livre:0,oficina:0,fora:0};VEIC.forEach(v=>c[situacao(v)]++);return c}
+
+/* ================= definição das bases ================= */
+function mesAtual(r){return r.data>='2026-10-01'}
+const BASES = {
+  abast:{
+    nome:'Abastecimentos', novo:'Registrar novo abastecimento', arquivo:'frotas-abastecimentos', vazio:'Nenhum abastecimento registrado ainda.',
+    rows:()=>AB, temPeriodo:true, filtros:['busca','de','ate','equipe','placa','motorista'],
+    busca:r=>[r.placa,r.posto,r.motorista,r.equipe].join(' '),
+    cols:[
+      {k:'data',t:'Data',v:r=>dt(r.data),s:r=>r.data},
+      {k:'placa',t:'Placa',v:r=>`<span class="wh b">${r.placa}</span>`,s:r=>r.placa},
+      {k:'equipe',t:'Equipe no dia',v:r=>r.equipe,s:r=>r.equipe},
+      {k:'motorista',t:'Motorista no dia',v:r=>esc(r.motorista),s:r=>r.motorista},
+      {k:'litros',t:'Litros',r:1,v:r=>nf2(r.litros),s:r=>r.litros},
+      {k:'valor',t:'Valor',r:1,v:r=>brl(r.valor)+(r.corrigido?' <span class="chip warn">corrigido</span>':''),s:r=>r.valor},
+      {k:'preco',t:'R$ / litro',r:1,v:r=>nf2(r.preco),s:r=>r.preco},
+      {k:'km',t:'KM no painel',r:1,v:r=>r.km?nf(r.km):'<span class="mut">—</span>',s:r=>r.km||0},
+      {k:'posto',t:'Posto',v:r=>esc(r.posto),s:r=>r.posto}
+    ],
+    total:rows=>`<td colspan="4">${rows.length} abastecimento${rows.length!==1?'s':''} no filtro</td><td class="r">${nf2(rows.reduce((s,r)=>s+r.litros,0))}</td><td class="r">${brl(rows.reduce((s,r)=>s+r.valor,0))}</td><td class="r">${rows.length?nf2(rows.reduce((s,r)=>s+r.valor,0)/rows.reduce((s,r)=>s+r.litros,0)):'—'}</td><td colspan="2"></td>`,
+    planilha:['Data','Placa','Modelo','Equipe no dia','Motorista no dia','Litros','Valor (R$)','Preço por litro (R$)','KM no painel','Posto','Lançado em','Corrigido? (sim/não)']
+  },
+  km:{
+    nome:'KM diário', novo:'Lançar KM do dia', arquivo:'frotas-km-diario', vazio:'Nenhum KM lançado ainda.',
+    rows:()=>KM, temPeriodo:true, filtros:['busca','de','ate','equipe','placa','motorista'],
+    busca:r=>[r.placa,r.motorista,r.equipe,r.obs].join(' '),
+    cols:[
+      {k:'data',t:'Data',v:r=>dt(r.data),s:r=>r.data},
+      {k:'equipe',t:'Equipe',v:r=>r.equipe,s:r=>r.equipe},
+      {k:'placa',t:'Placa',v:r=>`<span class="wh b">${r.placa}</span>`,s:r=>r.placa},
+      {k:'motorista',t:'Motorista',v:r=>esc(r.motorista),s:r=>r.motorista},
+      {k:'km',t:'KM informado',r:1,v:r=>nf(r.km),s:r=>r.km},
+      {k:'rodado',t:'Rodou desde o anterior',r:1,v:r=>nf(r.rodado)+' km',s:r=>r.rodado},
+      {k:'obs',t:'Observações',v:r=>r.obs?esc(r.obs):'<span class="mut">—</span>',s:r=>r.obs},
+      {k:'criado',t:'Lançado em',v:r=>dt(r.criado.slice(0,10))+' '+r.criado.slice(11),s:r=>r.criado}
+    ],
+    total:rows=>`<td colspan="5">${rows.length} lançamento${rows.length!==1?'s':''} no filtro</td><td class="r">${nf(rows.reduce((s,r)=>s+r.rodado,0))} km</td><td colspan="2"></td>`,
+    planilha:['Data','Equipe','Placa','Motorista','KM informado','KM rodado desde o lançamento anterior','Observações','Lançado em']
+  },
+  mot:{
+    nome:'Motoristas', novo:'Cadastrar motorista', arquivo:'frotas-motoristas', vazio:'Nenhum motorista cadastrado ainda.',
+    rows:()=>MOT, temPeriodo:false, filtros:['busca','equipe','situacao','cnh'],
+    busca:r=>[r.nome,r.equipe,r.cnh,r.contato].join(' '),
+    cols:[
+      {k:'nome',t:'Nome',v:r=>`<span class="wh b">${esc(r.nome)}</span>`,s:r=>r.nome},
+      {k:'equipe',t:'Equipe atual',v:r=>r.equipe||'<span class="mut">sem equipe</span>',s:r=>r.equipe||'zz'},
+      {k:'cnh',t:'CNH',v:r=>r.cnh,s:r=>r.cnh},
+      {k:'cnhVenc',t:'Vencimento da CNH',v:r=>dt(r.cnhVenc)+' '+cnhChip(r),s:r=>r.cnhVenc},
+      {k:'contato',t:'Contato',v:r=>r.contato,s:r=>r.contato},
+      {k:'ativo',t:'Situação',v:r=>r.ativo?'<span class="chip ok">Ativo</span>':'<span class="chip">Inativo</span>',s:r=>r.ativo?0:1}
+    ],
+    total:rows=>`<td colspan="6">${rows.length} motorista${rows.length!==1?'s':''} no filtro</td>`,
+    planilha:['Nome','Equipe atual','CNH','Vencimento da CNH','Situação da CNH (em dia / vence em até 60 dias / vencida)','Contato','Ativo (sim/não)']
+  },
+  veic:{
+    nome:'Veículos', novo:'Cadastrar veículo', arquivo:'frotas-veiculos', vazio:'Nenhum veículo cadastrado ainda.',
+    rows:()=>VEIC, temPeriodo:false, filtros:['busca','equipe','placa','sit'],
+    busca:r=>[r.placa,r.modelo,r.equipe,r.motorista].join(' '),
+    cols:[
+      {k:'placa',t:'Placa',v:r=>`<span class="wh b">${r.placa}</span>`,s:r=>r.placa},
+      {k:'modelo',t:'Modelo',v:r=>r.modelo+' '+r.ano,s:r=>r.modelo},
+      {k:'sit',t:'Situação',v:r=>sitChip(r),s:r=>['uso','livre','oficina','fora'].indexOf(situacao(r))},
+      {k:'equipe',t:'Equipe',v:r=>r.equipe||'<span class="mut">—</span>',s:r=>r.equipe||'zz'},
+      {k:'motorista',t:'Motorista',v:r=>r.motorista?esc(r.motorista):'<span class="mut">—</span>',s:r=>r.motorista||'zz'},
+      {k:'km',t:'KM atual',r:1,v:r=>nf(r.km),s:r=>r.km},
+      {k:'kmmes',t:'Rodou no mês / franquia',r:1,v:r=>{const m=kmMes(r);return m==null?'<span class="mut">—</span>':`${nf(m)} / ${nf(r.km_contratual)}`+(m>r.km_contratual?' <span class="chip hot">passou</span>':'')},s:r=>kmMes(r)||0},
+      {k:'locacao',t:'Locação/mês',r:1,v:r=>brl(r.locacao),s:r=>r.locacao},
+      {k:'retorno',t:'Volta da oficina',v:r=>r.retorno?dt(r.retorno)+(r.retorno<HOJE?' <span class="chip hot">atrasado</span>':''):'<span class="mut">—</span>',s:r=>r.retorno||'9'}
+    ],
+    total:rows=>`<td colspan="7">${rows.length} veículo${rows.length!==1?'s':''} no filtro</td><td class="r">${brl(rows.filter(r=>r.status!=='inativo').reduce((s,r)=>s+r.locacao,0))}</td><td></td>`,
+    planilha:['Placa','Modelo','Ano','Situação (em uso / livre / na oficina / fora da frota)','Equipe atual','Motorista atual','KM atual','KM rodado no mês','Franquia de KM/mês','Valor da locação mensal (R$)','Previsão de volta da oficina','Carro substituto']
+  }
+};
+function kmMes(v){const r=KM.filter(k=>k.placa===v.placa&&k.data>='2026-10-01');return r.length?r.reduce((s,k)=>s+k.rodado,0):null}
+function cnhChip(m){const d=diasAte(m.cnhVenc);return d<0?'<span class="chip hot">vencida</span>':d<=60?'<span class="chip warn">vence em '+d+' dias</span>':''}
+function sitChip(v){const s=situacao(v);
+  if(s==='oficina'&&S.oficinaNova) return `<span class="chip warn">${v.oficinaMotivo==='revisao'?'Em revisão':'No mecânico'}</span>`;
+  return `<span class="chip ${s==='uso'?'ok':s==='oficina'?'warn':''}">${SIT_LBL[s]}</span>`}
+
+function fdef(b){return S.f[b] || (S.f[b] = {busca:'',de: b==='abast'||b==='km' ? '2026-10-01':'',ate: b==='abast'||b==='km' ? HOJE:'',equipe:'',placa:'',motorista:'',situacao:'',cnh:'',sit:''})}
+function filtrar(b){
+  const B=BASES[b], f=fdef(b); const q=f.busca.trim().toLowerCase();
+  let rows = B.rows().filter(r=>{
+    if(q && !B.busca(r).toLowerCase().includes(q)) return false;
+    if(B.temPeriodo){ if(f.de && r.data<f.de) return false; if(f.ate && r.data>f.ate) return false; }
+    if(f.equipe && r.equipe!==f.equipe) return false;
+    if(f.placa && r.placa!==f.placa) return false;
+    if(f.motorista && r.motorista!==f.motorista) return false;
+    if(b==='mot'){ if(f.situacao==='ativo'&&!r.ativo) return false; if(f.situacao==='inativo'&&r.ativo) return false;
+      const d=diasAte(r.cnhVenc); if(f.cnh==='vencendo'&&!(d>=0&&d<=60)) return false; if(f.cnh==='vencida'&&d>=0) return false; if(f.cnh==='alerta'&&d>60) return false; }
+    if(b==='veic' && f.sit && situacao(r)!==f.sit) return false;
+    return true;
+  });
+  const so = S.sort[b];
+  if(so){const c=B.cols.find(c=>c.k===so.k); rows=[...rows].sort((x,y)=>{const a=c.s(x),z=c.s(y);return (a>z?1:a<z?-1:0)*(so.dir)})}
+  return rows;
+}
+function filtrosTexto(b){
+  const f=fdef(b), p=[];
+  if(BASES[b].temPeriodo) p.push(`período ${f.de?dt(f.de):'início'} a ${f.ate?dt(f.ate):'hoje'}`);
+  if(f.equipe) p.push('equipe '+f.equipe); if(f.placa) p.push('placa '+f.placa); if(f.motorista) p.push('motorista '+f.motorista);
+  if(f.situacao) p.push(f.situacao==='ativo'?'só ativos':'só inativos'); if(f.cnh) p.push({vencendo:'CNH vencendo em 60 dias',vencida:'CNH vencida',alerta:'CNH vencida ou vencendo'}[f.cnh]);
+  if(f.sit) p.push('situação: '+SIT_LBL[f.sit].toLowerCase()); if(f.busca) p.push('busca "'+f.busca+'"');
+  return p.length?p.join(' · '):'sem filtro (tudo)';
+}
+
+/* ================= peças ================= */
+function head1(n,t,sub){return `<h1 class="sec"><span class="num">${n}</span>${t}</h1><p class="lead">${sub}</p>`}
+function head2(n,t,sub){return `<h2 class="sec"><span class="num">${n}</span>${t}</h2>${sub?`<p class="lead">${sub}</p>`:''}`}
+function why(html){return `<div class="why">${html}</div>`}
+function errBox(oque){return `<div class="err"><div class="ic">!</div><div><div class="t">Não foi possível carregar ${oque}</div><p>A conexão com o banco falhou. Nada foi apagado — os dados continuam lá. Tente de novo em instantes; se continuar, avise o suporte.</p><button class="btn btn-p" data-act="estado" data-v="dados">Tentar de novo</button></div></div>`}
+function emptyBox(msg,extra){return `<div class="empty"><div class="ic">○</div><div class="wh">${msg}</div>${extra||''}</div>`}
+function skel(h,n){return Array.from({length:n||1},()=>`<div class="sk" style="height:${h}px;margin-bottom:.6rem"></div>`).join('')}
+function noPerm(){return `<div class="noperm card pad"><div style="font-size:1.6rem;margin-bottom:.4rem">🔒</div><div class="wh b">Você não tem acesso à Gestão de Frotas</div><p class="mut sm">Peça a liberação a um administrador do hub, em Admin → Acessos.</p><button class="btn btn-s" data-act="papel" data-v="gestor">Voltar ao hub</button></div>`}
+function toast(m){$('#toast').innerHTML=`<div class="toast">${m}</div>`;clearTimeout(window._tt);window._tt=setTimeout(()=>$('#toast').innerHTML='',4200)}
+
+/* ================= barra do mockup ================= */
+function mbar(){
+  const est=[['dados','Com dados'],['carregando','Carregando'],['vazio','Vazio'],['erro','Erro ao carregar']];
+  return `<div class="mbar">
+    <span class="tag">Mockup · dados de exemplo · 30/10/2026</span>
+    <label>Ver como
+      <select class="fld auto" data-act="papel-sel">${Object.entries(PAPEIS).map(([k,v])=>`<option value="${k}" ${S.papel===k?'selected':''}>${v}</option>`).join('')}</select>
+    </label>
+    <label>Estado <span class="seg">${est.map(([k,v])=>`<button class="${S.estado===k?'on':''}" data-act="estado" data-v="${k}">${v}</button>`).join('')}</span></label>
+  </div>
+  <div class="screens">
+    ${[['visao','1 · Visão geral nova'],['bases','2 · Bases em tabela'],['email','3 · E-mail diário'],['sup','4 · Suposições']].map(([k,v])=>`<button class="${S.tela===k?'on':''}" data-act="tela" data-v="${k}">${v}</button>`).join('')}
+  </div>`;
+}
+function side(){
+  const it=(l,on,act)=>`<button class="it ${on?'on':''} ${act?'':'dim'}" ${act?`data-act="${act}"`:''}>${l}</button>`;
+  return `<nav class="side">
+    <div class="wh b" style="padding:0 .5rem">Gestão de Frotas</div>
+    <div class="grp">Operação</div>
+    ${it('Visão geral',S.tela==='visao','go-visao')}
+    ${it('Equipes')}${it('Checklist')}
+    <div class="grp">Bases</div>
+    ${it('Abastecimentos',S.tela==='bases'&&S.base==='abast','go-abast')}
+    ${it('KM diário',S.tela==='bases'&&S.base==='km','go-km')}
+    ${it('Motoristas',S.tela==='bases'&&S.base==='mot','go-mot')}
+    ${it('Veículos',S.tela==='bases'&&S.base==='veic','go-veic')}
+    <div class="grp">Ocorrências</div>${it('Multas')}${it('Sinistros')}${it('Descontos')}
+    <div class="grp">Manutenção</div>${it('Revisões')}${it('Documentos')}
+    <div class="grp">Gestão</div>${it('Extratos')}${it('Custos')}${it('Disponibilidade')}${it('Pendências')}
+    <div style="border-top:1px solid var(--bd);margin-top:1rem;padding:.7rem .5rem 0" class="xs mut">Entrou como<br><span class="wh">${PAPEIS[S.papel]}</span></div>
+  </nav>`;
+}
+
+/* ================= TELA 1: visão geral ================= */
+function telaVisao(){
+  let h = head1(1,'Visão geral nova','Substitui a tela inicial da Gestão de Frotas. Responde três perguntas, nesta ordem: como está a frota agora, o que precisa de ação hoje e quanto gastamos no mês. Todo número é clicável e abre a lista já filtrada.');
+  if(!temAcesso()) return h+noPerm();
+  if(S.estado==='carregando') return h+`<div class="grid g4">${skel(96,4)}</div>${skel(240,1)}<div class="grid g3">${skel(110,3)}</div>`;
+  if(S.estado==='erro') return h+errBox('a visão geral da frota');
+  const vazio = S.estado==='vazio';
+  const c = vazio?{uso:0,livre:0,oficina:0,fora:0}:contagem();
+  const base = c.uso+c.livre+c.oficina, disp = base?Math.round((c.uso+c.livre)/base*100):0;
+
+  /* 1.1 */
+  h += head2('1.1','Frota agora','Cada carro aparece em uma única situação. Clique para abrir a lista de veículos nessa situação.');
+  if(vazio){ h += emptyBox('Nenhum veículo cadastrado ainda.', `<p class="sm">Cadastre o primeiro veículo para a situação da frota aparecer aqui.</p>${podeRegistrar()?'<button class="btn btn-p" data-act="novo" data-v="veic">Cadastrar veículo</button>':''}`); }
+  else {
+    const card=(k,l,v,s,hot)=>`<button class="stat ${hot?'hot':''}" data-act="sit" data-v="${k}"><div class="l">${l}</div><div class="v mono">${v}</div><div class="s">${s}</div></button>`;
+    h += `<div class="grid g4">
+      ${card('uso','Em uso',c.uso,'com equipe e motorista hoje')}
+      ${card('livre','Livre',c.livre,'ativo, sem equipe — pronto para sair')}
+      ${S.oficinaNova
+        ? `<button class="stat new" data-act="sit" data-v="oficina"><div class="l">Na oficina <span class="chip new">dado novo</span></div><div class="v mono">${c.oficina}</div><div class="s">1 em revisão · 1 no mecânico</div></button>`
+        : card('oficina','Na oficina',c.oficina,'revisão ou mecânico, juntos',c.oficina>0)}
+      <div class="stat" style="cursor:default"><div class="l">Disponibilidade</div><div class="v mono">${disp}%</div><div class="s">${c.uso+c.livre} de ${base} carros fora da oficina</div></div>
+    </div>
+    <div class="bar">
+      <span style="width:${c.uso/base*100}%;background:var(--or)"></span>
+      <span style="width:${c.livre/base*100}%;background:var(--wh)"></span>
+      <span style="width:${c.oficina/base*100}%;background:var(--bd)"></span>
+    </div>
+    <div class="legend"><span><i class="dot" style="background:var(--or)"></i>Em uso ${c.uso}</span><span><i class="dot" style="background:var(--wh)"></i>Livre ${c.livre}</span><span><i class="dot" style="background:var(--bd)"></i>Na oficina ${c.oficina}</span><span>Fora da frota (devolvido/inativo): ${c.fora} — não entra na conta</span></div>
+    <div class="info" style="margin-top:.8rem">
+      <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer"><input type="checkbox" data-act="oficina-nova" ${S.oficinaNova?'checked':''}> <span>Mostrar como ficaria separando <b class="wh">em revisão</b> de <b class="wh">no mecânico</b></span></label>
+      <div class="xs" style="margin-top:.35rem">Hoje o sistema só sabe que o carro "foi para a oficina", com a data prevista de volta. Para separar revisão de mecânico, o botão "Enviar para oficina" precisa perguntar o motivo — <b class="wh">precisa de dado novo</b>.</div>
+    </div>
+    <div class="card" style="margin-top:.4rem"><div class="pad sm"><div class="wh b" style="margin-bottom:.4rem">Carros na oficina agora</div>
+      ${VEIC.filter(v=>v.status==='manutencao').map(v=>`<div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap;padding:.35rem 0;border-top:1px solid var(--bd)"><span><b class="wh">${v.placa}</b> <span class="mut">${v.modelo}</span>${S.oficinaNova?' · '+(v.oficinaMotivo==='revisao'?'em revisão':'no mecânico'):''}</span><span class="mut">desde ${dt(v.oficinaDesde)} · volta prevista ${dt(v.retorno)} ${v.retorno<HOJE?'<span class="chip hot">atrasado '+(-diasAte(v.retorno))+' dias</span>':''}</span></div>`).join('')}
+    </div></div>`;
+  }
+  h += why('<b>De onde vem cada número.</b> Em uso = carro ativo com equipe e motorista no histórico de responsabilidade (o mesmo que o checklist grava). Livre = carro ativo sem ninguém. Na oficina = carro enviado pelo botão "Enviar para oficina". Fora da frota = carro marcado como inativo. <b>Mudança:</b> hoje a tela inicial conta "ativos ÷ todos, inclusive inativos" e a tela Disponibilidade conta carro livre como parado — as duas dão números diferentes. A proposta é uma regra só: disponível = fora da oficina.');
+
+  /* 1.2 */
+  const A = vazio ? [] : [
+    {n:REV_ATR_KM.length+REV_ATR_DATA.length,hot:1,a:'Revisões atrasadas',d:`${REV_ATR_KM.length} por KM (${REV_ATR_KM.map(r=>r.placa).join(', ')}) · ${REV_ATR_DATA.length} por data (${REV_ATR_DATA.map(r=>r.placa).join(', ')})`,go:'Revisões · atrasadas',act:'toast-rev'},
+    {n:REV_BREVE.length,a:'Revisões chegando (faltam até 1.000 km)',d:REV_BREVE.map(r=>r.placa+' '+r.txt.split(' (')[0]).join(' · '),go:'Revisões · vencendo',act:'toast-rev'},
+    {n:SEM_KM_ONTEM.length,hot:1,a:'Equipes sem KM diário de ontem (29/10)',d:SEM_KM_ONTEM.join(', '),go:'KM diário · ontem',act:'km-ontem'},
+    {n:DOCS.length,hot:1,a:'Documentos vencidos ou vencendo em 30 dias',d:DOCS.map(x=>x.placa+' '+x.tipo.split(' ')[0]+' '+(x.venc<HOJE?'venceu '+dt(x.venc):'vence '+dt(x.venc))).join(' · '),go:'Documentos',act:'toast-doc'},
+    {n:CNH.length,hot:CNH.some(m=>m.cnhVenc<HOJE),a:'CNH vencida ou vencendo em 60 dias',d:CNH.map(m=>m.nome.split(' ')[0]+' '+(m.cnhVenc<HOJE?'venceu '+dt(m.cnhVenc):'vence '+dt(m.cnhVenc))).join(' · '),go:'Motoristas · CNH',act:'cnh'},
+    {n:MULTAS.length,a:'Multas sem tratativa',d:`${MULTAS.filter(m=>m.st==='Pendente').length} pendentes, ${MULTAS.filter(m=>m.st==='Validada').length} validada aguardando desconto · ${brl(MULTAS.reduce((s,m)=>s+m.valor,0))}`,go:'Multas · pendentes',act:'toast-multa'},
+    {n:SIN.length,a:'Sinistros abertos',d:SIN.map(s=>s.placa+' '+s.st.toLowerCase()).join(' · '),go:'Sinistros · abertos',act:'toast-sin'},
+    {n:1,hot:1,a:'Volta da oficina atrasada',d:'RUA3B76 deveria ter voltado em 27/10',go:'Veículos · na oficina',act:'sit',v:'oficina'}
+  ];
+  h += head2('1.2','O que precisa de ação hoje','A mesma lista que vai no e-mail das 07:00 (tela 3). Quando não há nada, o item some.');
+  if(vazio) h += emptyBox('Nada pendente hoje.','<p class="sm">Nenhuma revisão atrasada, documento vencendo, multa ou sinistro em aberto, e todas as equipes lançaram o KM de ontem.</p>');
+  else h += `<div class="card acts">${A.map(x=>`<button class="act" data-act="${x.act}" ${x.v?`data-v="${x.v}"`:''}><span class="n ${x.hot?'hot':''}">${x.n}</span><span class="t"><div class="a">${x.a}</div><div class="d">${x.d}</div></span><span class="go hide-sm">${x.go} →</span></button>`).join('')}</div>`;
+  h += why('<b>De onde vem.</b> Revisões: a mesma conta de hoje (última revisão de cada carro, por data prevista ou KM previsto; aviso a 1.000 km). Documentos: vencimento cadastrado em Documentos. CNH: vencimento no cadastro do motorista — <b>hoje a CNH que já venceu some do alerta</b>; a proposta passa a mostrar. KM de ontem: equipe ativa com carro e sem lançamento no último dia útil. Multas: tudo que não foi descontado. Sinistros: tudo que não foi encerrado. <b>Não entra:</b> "carro obrigado a apresentar KM" (item 2.3.4 do mapa do Igor) — o cadastro do veículo não tem esse campo, então hoje todo carro com equipe é cobrado.');
+
+  /* 1.3 */
+  h += head2('1.3','Quanto gastamos no mês','Outubro de 2026, do dia 1 até hoje. Mesma regra da tela Custos. Clique em um valor para abrir os lançamentos.');
+  if(vazio) h += emptyBox('Nenhum gasto registrado em outubro.');
+  else {
+    const ab=AB.filter(mesAtual).reduce((s,r)=>s+r.valor,0), mu=MULTAS.filter(m=>m.data>='2026-10-01').reduce((s,m)=>s+m.valor,0), si=SIN.reduce((s,x)=>s+x.valor,0), rv=1280, lo=VEIC.filter(v=>v.status!=='inativo').reduce((s,v)=>s+v.locacao,0);
+    const tot=ab+mu+si+rv+lo;
+    const it=[['Locação',lo,'toast-custo'],['Abastecimento (lançado no hub)',ab,'ab-mes'],['Revisões',rv,'toast-rev'],['Sinistros',si,'toast-sin'],['Multas',mu,'toast-multa']];
+    h += `<div class="grid g3">
+      <div class="stat" style="cursor:default"><div class="l">Total do mês</div><div class="v mono">${brl(tot)}</div><div class="s">${VEIC.filter(v=>v.status!=='inativo').length} carros · média ${brl(tot/23)} por carro</div></div>
+      <div class="card pad" style="grid-column:span 2;min-width:0"><div class="l sm mut" style="margin-bottom:.5rem">Onde o gasto pesa (item 14.1.4 do mapa)</div>
+        ${it.map(([l,v,a])=>`<button data-act="${a}" style="display:block;width:100%;text-align:left;margin:.3rem 0"><div style="display:flex;justify-content:space-between;gap:.5rem" class="sm"><span>${l}</span><span class="wh mono">${brl(v)} <span class="mut">${Math.round(v/tot*100)}%</span></span></div><div style="height:6px;background:var(--bg);border-radius:9px;margin-top:.2rem"><div style="height:6px;width:${v/tot*100}%;background:var(--or);border-radius:9px"></div></div></button>`).join('')}
+      </div></div>`;
+    h += `<h2 class="sec" style="margin-top:1.4rem;font-size:.95rem"><span class="num">1.3b</span>Gasto dos extratos por centro de custo <span class="chip new">já no ar desde 29/10</span></h2>
+    <p class="lead">Ticketlog (combustível) e Veloe (pedágio e estacionamento), outubro, enviados até 27/10. A equipe e o centro de custo são os da data de uso.</p>
+    <div class="tw small-t"><table style="min-width:520px"><thead><tr><th>Centro de custo</th><th class="r">Ticketlog</th><th class="r">Veloe</th><th class="r">Total</th></tr></thead><tbody>
+    ${CC.map(r=>`<tr class="rowc" data-act="toast-cc"><td>${r[0]?`<span class="wh">${r[0]}</span> <span class="mut">${r[1]}</span>`:`<span class="or">${r[1]}</span>`}</td><td class="r mono">${brl(r[2])}</td><td class="r mono">${brl(r[3])}</td><td class="r mono wh">${brl(r[2]+r[3])}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total</td><td class="r">${brl(CC.reduce((s,r)=>s+r[2],0))}</td><td class="r">${brl(CC.reduce((s,r)=>s+r[3],0))}</td><td class="r">${brl(CC.reduce((s,r)=>s+r[2]+r[3],0))}</td></tr></tfoot></table></div>`;
+    h += why('<b>Cuidado com contar duas vezes.</b> O abastecimento lançado à mão no hub e o extrato da Ticketlog são o mesmo combustível visto de dois lados. Por isso o quadro de cima usa só o lançado no hub (como a tela Custos faz hoje) e o extrato aparece separado. Decisão pendente: quando os extratos estiverem rodando, qual dos dois vale como "custo de combustível"? Recomendação: o extrato, e o lançamento à mão vira conferência.');
+  }
+
+  /* 1.4 */
+  h += head2('1.4','Atalhos','Os formulários são os que já existem; só mudam de lugar.');
+  const at=[['Registrar abastecimento','abast',1],['Lançar KM do dia','km',1],['Novo checklist',null,1],['Registrar multa',null,1],['Registrar sinistro',null,1],['Registrar revisão',null,1],['Enviar extrato',null,0]];
+  h += `<div class="grid g4">${at.filter(a=>a[2]?podeRegistrar():podeGerir()).map(a=>`<button class="stat" data-act="${a[1]?'novo':'toast-form'}" data-v="${a[1]||a[0]}"><div class="wh b sm">${a[0]}</div><div class="s">abre o formulário</div></button>`).join('')}
+  ${!podeRegistrar()&&!podeGerir()?`<div class="info" style="grid-column:1/-1">Sem atalhos de registro para o seu papel. As bases continuam abertas para consulta e exportação.</div>`:''}</div>`;
+  if(S.papel==='usuario') h += why('<b>Papel "usuário do Frotas".</b> Pelo sistema de hoje, quem tem acesso ao Frotas <b>já pode registrar</b> abastecimento, KM, checklist, multa, sinistro, revisão e cadastrar motorista e veículo. Só corrigir, excluir, enviar extrato e mexer em desconto são exclusivos do gestor. Use o botão "Usuário registra?" na tela 2 para ver as duas opções.');
+  return h;
+}
+
+/* ================= TELA 2: bases ================= */
+function telaBases(){
+  let h = head1(2,'Bases em tabela, com exportar','Um padrão só, igual à Base da Gestão de Obras: filtros em cima, tabela, total, "Exportar Excel" e "Registrar novo". Vale para Abastecimentos, KM diário, Motoristas e Veículos.');
+  if(!temAcesso()) return h+noPerm();
+  h += `<div class="subtabs">${Object.entries(BASES).map(([k,b],i)=>`<button class="${S.base===k?'on':''}" data-act="base" data-v="${k}">2.${i+1} ${b.nome}</button>`).join('')}<button class="${S.base==='ext'?'on':''}" data-act="base" data-v="ext">2.5 Revisões, Multas, Sinistros?</button></div>`;
+  if(S.base==='ext') return h+telaExt();
+  const b=S.base, B=BASES[b], f=fdef(b), idx=Object.keys(BASES).indexOf(b)+1;
+  h += head2('2.'+idx,B.nome, {abast:'Todos os abastecimentos, de qualquer mês — não só o mês atual como hoje. Equipe e motorista são os que estavam com o carro no dia, pelo histórico carro × equipe × motorista.',km:'Um lançamento por carro por dia. "Rodou desde o anterior" é a diferença para o lançamento anterior do mesmo carro.',mot:'Cadastro em tabela, com busca, como o José pediu ([26:14]).',veic:'A "ficha do veículo": clique na linha para ver cadastro, histórico de equipe e motorista, últimos KM e abastecimentos.'}[b]);
+  if(S.papel==='usuario') h += `<div class="info" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">Mockup — usuário do Frotas registra? <span class="seg"><button class="${S.userRegistra?'on':''}" data-act="ureg" data-v="1">Sim, como hoje</button><button class="${!S.userRegistra?'on':''}" data-act="ureg" data-v="0">Não, só consulta</button></span></div>`;
+
+  // toolbar
+  h += `<div class="toolbar"><div class="l">
+      ${podeRegistrar()?`<button class="btn btn-p" data-act="novo" data-v="${b}">+ ${B.novo}</button>`:''}
+      <button class="btn btn-s" data-act="exportar" ${S.estado!=='dados'?'disabled':''}>⭳ Exportar Excel</button>
+    </div><span class="xs mut">${podeGerir()?'Clique na linha para ver e corrigir.':'Clique na linha para ver o detalhe.'}</span></div>`;
+
+  // filtros
+  const opt=(arr,sel,all)=>`<option value="">${all}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${x}</option>`).join('');
+  const fl=(k,html,cls)=>`<label class="${cls||''}"><span class="lbl">${k}</span>${html}</label>`;
+  const parts={
+    busca: fl('Buscar',`<input id="q_${b}" class="fld" placeholder="${{abast:'Placa, posto, motorista…',km:'Placa, motorista, observação…',mot:'Nome, CNH, telefone…',veic:'Placa, modelo, motorista…'}[b]}" value="${esc(f.busca)}" data-act="f" data-k="busca">`,'wide'),
+    de: fl('De',`<input type="date" class="fld" value="${f.de}" data-act="f" data-k="de">`),
+    ate: fl('Até',`<input type="date" class="fld" value="${f.ate}" data-act="f" data-k="ate">`),
+    equipe: fl('Equipe',`<select class="fld" data-act="f" data-k="equipe">${opt(EQS,f.equipe,'Todas')}</select>`),
+    placa: fl('Placa',`<select class="fld" data-act="f" data-k="placa">${opt(PLACAS,f.placa,'Todas')}</select>`),
+    motorista: fl('Motorista',`<select class="fld" data-act="f" data-k="motorista">${opt(NOMES,f.motorista,'Todos')}</select>`),
+    situacao: fl('Situação',`<select class="fld" data-act="f" data-k="situacao"><option value="">Todos</option><option value="ativo" ${f.situacao==='ativo'?'selected':''}>Ativos</option><option value="inativo" ${f.situacao==='inativo'?'selected':''}>Inativos</option></select>`),
+    cnh: fl('CNH',`<select class="fld" data-act="f" data-k="cnh"><option value="">Todas</option><option value="alerta" ${f.cnh==='alerta'?'selected':''}>Vencida ou vencendo</option><option value="vencendo" ${f.cnh==='vencendo'?'selected':''}>Vencendo em 60 dias</option><option value="vencida" ${f.cnh==='vencida'?'selected':''}>Vencida</option></select>`),
+    sit: fl('Situação',`<select class="fld" data-act="f" data-k="sit"><option value="">Todas</option>${Object.entries(SIT_LBL).map(([k,v])=>`<option value="${k}" ${f.sit===k?'selected':''}>${v}</option>`).join('')}</select>`)
+  };
+  h += `<div class="filters">${B.filtros.map(k=>parts[k]).join('')}</div>`;
+  if(S.aviso && S.aviso.base===b) h += `<div class="banner"><span>${S.aviso.txt}</span><button class="btn btn-s" data-act="aviso-x">Fechar</button></div>`;
+
+  // estados
+  if(S.estado==='carregando') return h+skel(38,9);
+  if(S.estado==='erro') return h+errBox('a base de '+B.nome.toLowerCase());
+  if(S.estado==='vazio') return h+emptyBox(B.vazio, podeRegistrar()?`<p class="sm">Quando o primeiro registro entrar, ele aparece aqui.</p><button class="btn btn-p" data-act="novo" data-v="${b}">+ ${B.novo}</button>`:'<p class="sm">Quando o primeiro registro entrar, ele aparece aqui.</p>');
+
+  const rows=filtrar(b);
+  if(!rows.length) return h+emptyBox('Nenhum resultado com estes filtros.','<p class="sm">'+filtrosTexto(b)+'</p><button class="btn btn-s" data-act="limpar">Limpar filtros</button>');
+  const POR=20, tp=Math.ceil(rows.length/POR); let p=Math.min(S.pag[b]||1,tp);
+  const page=rows.slice((p-1)*POR,p*POR); const so=S.sort[b];
+  h += `<div class="tw"><table><thead><tr>${B.cols.map(c=>`<th class="sortable ${c.r?'r':''}" data-act="sort" data-v="${c.k}">${c.t}${so&&so.k===c.k?`<span class="ar">${so.dir>0?'▲':'▼'}</span>`:''}</th>`).join('')}</tr></thead>
+    <tbody>${page.map(r=>`<tr class="rowc" data-act="row" data-v="${r.id}">${B.cols.map(c=>`<td class="${c.r?'r mono':''}">${c.v(r)}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr>${B.total(rows)}</tr></tfoot></table></div>`;
+  const pages=[]; for(let i=Math.max(1,p-2);i<=Math.min(tp,p+2);i++) pages.push(i);
+  h += `<div class="pager"><span>Mostrando ${(p-1)*POR+1}–${Math.min(p*POR,rows.length)} de ${nf(rows.length)} · ${filtrosTexto(b)}</span><span class="pg"><button data-act="pag" data-v="${p-1}" ${p<=1?'disabled':''}>‹</button>${pages.map(i=>`<button class="${i===p?'on':''}" data-act="pag" data-v="${i}">${i}</button>`).join('')}<button data-act="pag" data-v="${p+1}" ${p>=tp?'disabled':''}>›</button></span></div>`;
+  h += why(`<b>Como funciona.</b> Clique no título de uma coluna para ordenar (de novo, inverte). 20 linhas por página. O "Exportar Excel" leva <b>tudo o que está filtrado</b>, não só a página da tela, na ordem da tela. ${b==='abast'?'O chip "corrigido" aparece quando o gestor corrigiu litros, valor ou KM.':''}${b==='veic'?'"Rodou no mês" soma o KM diário de outubro; "passou" marca quem estourou a franquia contratada.':''}`);
+  return h;
+}
+
+function telaExt(){
+  let h = head2('2.5','Estender o mesmo padrão a Revisões, Multas e Sinistros?','Recomendação: <b class="wh">sim, nas três</b>, numa rodada seguinte. O Igor pediu na reunião para "entrar na revisão" e ver peças trocadas depois ([10:32]), e Multas e Sinistros hoje são listas sem exportar.');
+  const L=[['Revisões',['Data feita','Placa','Tipo (preventiva/corretiva)','Oficina','KM feita','Valor','Peças trocadas','Próxima (data)','Próxima (KM)','Situação (em dia / vence em breve / atrasada)'],'Filtros: período, placa, tipo, situação.'],
+    ['Multas',['Data da infração','Recebida em','Placa','Motorista','Infração','Valor','Valor descontado','Situação (pendente / validada / descontada)','Autorização (sem pedido / pedida / autorizada)'],'Filtros: período, placa, motorista, situação. A seleção em massa que já existe continua.'],
+    ['Sinistros',['Data','Placa','Motorista','Tipo (colisão/furto/avaria/outro)','Descrição','Valor do dano','Valor descontado','Situação (aberto / em tratativa / encerrado)','Desconto'],'Filtros: período, placa, motorista, tipo, situação.'],
+    ['Documentos (opcional)',['Placa','Tipo','Número','Vencimento','Situação (em dia / vence em 30 dias / vencido)'],'Lista curta; talvez baste a coluna de situação na tela atual.']];
+  h += `<div class="grid g2">${L.map(([n,c,f])=>`<div class="card pad"><div class="wh b">${n}</div><div class="xs mut" style="margin:.2rem 0 .3rem">Colunas da tabela e da planilha</div><ul class="collist">${c.map(x=>`<li>${x}</li>`).join('')}</ul><div class="xs mut">${f}</div></div>`).join('')}</div>`;
+  return h;
+}
+
+/* ================= TELA 3: e-mail ================= */
+function telaEmail(){
+  let h = head1(3,'E-mail diário de alertas','Para o Igor não ter que ficar abrindo o sistema para saber o que vence ([23:58]). Chega todo dia útil às 07:00 com a mesma lista do item 1.2 da visão geral.');
+  if(S.papel==='sem'||S.papel==='usuario'){
+    h += `<div class="card pad" style="max-width:560px"><div class="wh b">Você não recebe este e-mail</div><p class="sm mut">O resumo diário vai para os gestores de frotas. ${S.papel==='usuario'?'Você continua vendo os mesmos alertas na visão geral do Frotas.':'Você não tem acesso à Gestão de Frotas.'}</p></div>`;
+    return h + quemRecebe();
+  }
+  h += `<div class="toolbar"><div class="l"><span class="seg">
+      <button class="${S.mailVar==='com'?'on':''}" data-act="mailvar" data-v="com">Dia com pendências</button>
+      <button class="${S.mailVar==='nada'?'on':''}" data-act="mailvar" data-v="nada">Nada pendente</button>
+      <button class="${S.mailVar==='falha'?'on':''}" data-act="mailvar" data-v="falha">Falhou ao montar</button></span></div>
+      <span class="xs mut">Os botões de estado lá em cima também trocam: vazio = nada pendente, erro = falhou.</span></div>`;
+  let v=S.mailVar; if(S.estado==='vazio') v='nada'; if(S.estado==='erro') v='falha';
+  if(S.estado==='carregando') return h+`<div class="mailwrap">${skel(70,1)}${skel(420,1)}</div>`+quemRecebe();
+
+  const it=(t,link)=>`<li><span>${t}</span><a href="#" data-act="mail-link" data-v="${link}">Abrir no hub →</a></li>`;
+  const blk=(tt,n,items)=>`<div class="blk"><h4><span>${tt}</span><span class="c ${n?'':'n'}">${n}</span></h4><ul>${items}</ul></div>`;
+  const total = REV_ATR_KM.length+REV_ATR_DATA.length+REV_BREVE.length+DOCS.length+CNH.length+MULTAS.length+SIN.length+SEM_KM_ONTEM.length+1;
+  let assunto, corpo;
+  if(v==='com'){
+    assunto = `Frotas · sex 30/10 · 3 revisões atrasadas, 3 equipes sem KM e mais ${total-6} itens`;
+    corpo = `<div class="top"><h3>Bom dia, Igor. ${total} itens pedem atenção hoje.</h3><div style="font-size:.82rem;color:#64748b">Resumo da Gestão de Frotas de sexta-feira, 30/10/2026, gerado às 07:00.</div></div>
+      <div class="sum"><span class="h">3 revisões atrasadas</span><span class="h">3 equipes sem KM</span><span class="h">1 documento vencido</span><span>2 revisões chegando</span><span>2 documentos vencendo</span><span>${CNH.length} CNH</span><span>4 multas</span><span>2 sinistros</span><span>1 volta da oficina atrasada</span></div>
+      ${blk('Revisões atrasadas',3,REV_ATR_KM.map(r=>it(`<b>${r.placa}</b> (${r.eq}) — por KM: ${r.txt}`,'rev')).join('')+REV_ATR_DATA.map(r=>it(`<b>${r.placa}</b> (${r.eq}) — por data: ${r.txt}`,'rev')).join(''))}
+      ${blk('Revisões chegando (faltam até 1.000 km)',2,REV_BREVE.map(r=>it(`<b>${r.placa}</b> (${r.eq}) — ${r.txt}`,'rev')).join(''))}
+      ${blk('Equipes sem KM diário de ontem (qui 29/10)',3,SEM_KM_ONTEM.map(e=>{const vv=VEIC.find(x=>x.equipe===e);return it(`<b>${e}</b> — ${vv.placa}, ${vv.motorista}`,'km')}).join(''))}
+      ${blk('Documentos vencidos ou vencendo em 30 dias',3,DOCS.map(d=>it(`<b>${d.placa}</b> — ${d.tipo}: ${d.venc<HOJE?'<span style="color:#f05a28;font-weight:600">venceu em '+dt(d.venc)+'</span>':'vence em '+dt(d.venc)+' ('+diasAte(d.venc)+' dias)'}`,'doc')).join(''))}
+      ${blk('CNH vencida ou vencendo em 60 dias',CNH.length,CNH.map(m=>it(`<b>${m.nome}</b> (${m.equipe||'sem equipe'}) — ${m.cnhVenc<HOJE?'<span style="color:#f05a28;font-weight:600">venceu em '+dt(m.cnhVenc)+'</span>':'vence em '+dt(m.cnhVenc)}`,'mot')).join(''))}
+      ${blk('Multas sem tratativa',4,MULTAS.map(m=>it(`<b>${m.placa}</b> — ${m.mot}, ${dt(m.data)}, ${brl(m.valor)} · ${m.st.toLowerCase()}`,'multa')).join(''))}
+      ${blk('Sinistros abertos',2,SIN.map(s=>it(`<b>${s.placa}</b> (${s.eq}) — ${s.tipo.toLowerCase()} em ${dt(s.data)}, ${s.st.toLowerCase()}`,'sin')).join(''))}
+      ${blk('Volta da oficina atrasada',1,it('<b>RUA3B76</b> — previsão era 27/10/2026 (3 dias)','veic'))}
+      <p style="margin-top:1.2rem"><a class="cta" href="#" data-act="mail-link" data-v="visao">Abrir a visão geral do Frotas</a></p>`;
+  } else if(v==='nada'){
+    assunto = 'Frotas · sex 30/10 · nada pendente hoje';
+    corpo = `<div class="top"><h3>Bom dia, Igor. Nada pendente hoje.</h3><div style="font-size:.82rem;color:#64748b">Resumo da Gestão de Frotas de sexta-feira, 30/10/2026, gerado às 07:00.</div></div>
+      <p>Conferimos revisões, documentos, CNH, multas, sinistros, carros na oficina e o KM de ontem: está tudo em dia.</p>
+      <p style="font-size:.82rem;color:#64748b">Este e-mail chega mesmo quando não há nada, para você saber que a conferência rodou.</p>`;
+  } else {
+    assunto = 'Frotas · sex 30/10 · não conseguimos montar o resumo de hoje';
+    corpo = `<div class="top"><h3>Bom dia, Igor. O resumo de hoje não pôde ser montado.</h3><div style="font-size:.82rem;color:#64748b">Tentativa às 07:00 de sexta-feira, 30/10/2026.</div></div>
+      <p>A conferência automática falhou ao ler os dados. <b>Isso não quer dizer que está tudo em dia.</b> Até corrigirmos, confira os alertas direto no hub.</p>
+      <p style="margin-top:1rem"><a class="cta" href="#" data-act="mail-link" data-v="visao">Ver os alertas no hub</a></p>
+      <p style="font-size:.82rem;color:#64748b;margin-top:1rem">O suporte do hub recebeu o mesmo aviso.</p>`;
+  }
+  h += `<div class="mailwrap"><div class="mailhead">
+      <div class="row"><span>De</span><span class="wh">Hub Manfac</span></div>
+      <div class="row"><span>Para</span><span class="wh">Igor (gestor de frotas)</span></div>
+      <div class="row"><span>Assunto</span><span class="wh b">${assunto}</span></div>
+      <div class="row"><span>Quando</span><span>sex, 30/10/2026, 07:00</span></div>
+    </div><div class="mailbody">${corpo}
+      <div class="foot">Você recebe este e-mail porque é gestor de frotas no Hub Manfac. Enviado de segunda a sexta às 07:00. Os links abrem o hub; se pedir login, entre com a sua conta de sempre.</div>
+    </div></div>`;
+  h += why('<b>Dia sem pendência: manda ou não manda?</b> Recomendação: <b>manda, curto</b>. Se o e-mail parar de chegar, o Igor precisa saber se é porque está tudo em dia ou porque o envio quebrou — silêncio não diferencia os dois. Pelo mesmo motivo, quando a conferência falha, chega um aviso dizendo isso, em vez de nada.');
+  h += why('<b>Segunda-feira:</b> "KM de ontem" passa a ser "KM de sexta" (último dia útil). Equipes de plantão no fim de semana não são cobradas, porque o sistema não sabe quem está de plantão.');
+  return h + quemRecebe();
+}
+function quemRecebe(){
+  return head2('3.1','Quem recebe e quando','Sem tela nova de configuração nesta rodada.') + `<div class="card pad" style="max-width:720px">
+    <div class="kv" style="margin:0">
+      <dt>Quem recebe</dt><dd>Todos os gestores de frotas (hoje: Igor). Para incluir alguém, essa pessoa recebe o papel de gestor de frotas.</dd>
+      <dt>Administradores do hub</dt><dd>Não recebem, a menos que também sejam gestores de frotas.</dd>
+      <dt>Horário</dt><dd>07:00, de segunda a sexta.</dd>
+      <dt>Um e-mail por pessoa</dt><dd>Todos recebem o mesmo conteúdo, com a frota inteira.</dd>
+      <dt>Como é enviado</dt><dd>Pelo mesmo caminho do e-mail diário da Gestão de Obras, que já está no ar.</dd>
+    </div></div>`;
+}
+
+/* ================= TELA 4: suposições ================= */
+function telaSup(){
+  const L=[
+    ['O e-mail diário vai para os gestores de frotas (hoje, o Igor), às 07:00, de segunda a sexta.','Administradores do hub não recebem. Não há tela para escolher destinatário; quem quiser receber vira gestor de frotas.'],
+    ['Num dia sem pendências o e-mail é enviado mesmo assim, curto, dizendo "nada pendente".','E se a conferência falhar, chega um aviso de falha. Alternativa: não mandar nada nesses dias.'],
+    ['A planilha exportada é um arquivo Excel (.xlsx), com o nome "frotas-<base>-<data de hoje>.xlsx".','Exporta tudo o que está filtrado, na ordem da tela, não só a página visível. Datas saem como data e valores como número, para dar para somar no Excel.'],
+    ['"Disponível" quer dizer "fora da oficina": carro em uso e carro livre contam como disponíveis.','Carro fora da frota (inativo/devolvido) não entra na conta. Hoje a tela inicial e a tela Disponibilidade calculam de jeitos diferentes; as duas passam a usar esta regra.'],
+    ['"Em revisão" e "no mecânico" aparecem juntos como "na oficina" até o sistema perguntar o motivo.','Para separar, o botão "Enviar para oficina" passa a pedir o motivo (revisão ou mecânico). Isso é um dado novo no banco.'],
+    ['"Equipe sem KM de ontem" vale para toda equipe ativa que tem carro, em dia útil.','O campo "obrigado a apresentar KM" do mapa do Igor não existe no cadastro do veículo. Plantão de fim de semana não é cobrado.'],
+    ['A CNH que já venceu passa a aparecer no alerta.','Hoje o sistema só avisa a CNH que vai vencer nos próximos 60 dias; a vencida some.'],
+    ['Na base de Abastecimentos, a equipe e o motorista são os que estavam com o carro naquela data.','O abastecimento só guarda a placa; a equipe e o motorista vêm do histórico carro × equipe × motorista, o mesmo que o checklist grava.'],
+    ['O "custo de combustível" da visão geral continua sendo o abastecimento lançado à mão, até decidirem.','O extrato da Ticketlog aparece separado, por centro de custo, para não somar o mesmo combustível duas vezes.'],
+    ['O usuário do Frotas (sem papel de gestor) continua podendo registrar, como hoje.','Ele vê as bases, exporta e registra novo; não corrige nem exclui. Se a intenção for "só consulta", é uma mudança a mais.'],
+    ['Os formulários de "Registrar novo" são os que já existem.','A base só muda de lugar o botão; os campos e as regras dos formulários não mudam nesta rodada.'],
+    ['Revisões, Multas e Sinistros ganham o mesmo formato de base numa rodada seguinte.','Esta rodada entrega Abastecimentos, KM diário, Motoristas e Veículos.'],
+    ['A tela Pendências continua existindo como está.','A visão geral nova mostra o "o que precisa de ação hoje" sem depender dela; a revisão do que é pendência ([23:39]) fica para outra conversa.']
+  ];
+  return head1(4,'Suposições do coordenador','O que foi assumido para desenhar estas telas. Se alguma estiver errada, basta citar o número (S1, S2…).') + `<ol class="sup">${L.map(([t,d])=>`<li><div class="wh">${t}</div><div class="d">${d}</div></li>`).join('')}</ol>`;
+}
+
+/* ================= gaveta de detalhe ================= */
+function drawer(){
+  const d=S.drawer; if(!d) return '';
+  const B=BASES[d.base], r=B.rows().find(x=>x.id==d.id); if(!r) return '';
+  let body='', titulo='';
+  const acoes = (corr)=> podeGerir()
+    ? `<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem"><button class="btn btn-p" data-act="toast" data-v="Abre o formulário de correção que já existe (${corr}).">Corrigir</button><button class="btn btn-s" data-act="toast" data-v="Pede confirmação antes de excluir — só gestor de frotas ou administrador.">Excluir</button></div>`
+    : `<div class="info" style="margin-top:.6rem">Só gestores de frotas corrigem ou excluem lançamentos. Se algo estiver errado, avise o Igor.</div>`;
+  if(d.base==='abast'){ titulo='Abastecimento · '+r.placa+' · '+dt(r.data);
+    body=`<dl class="kv"><dt>Data</dt><dd>${dt(r.data)}</dd><dt>Placa</dt><dd>${r.placa} · ${r.modelo}</dd><dt>Equipe no dia</dt><dd>${r.equipe}</dd><dt>Motorista no dia</dt><dd>${esc(r.motorista)}</dd><dt>Litros</dt><dd>${nf2(r.litros)}</dd><dt>Valor</dt><dd>${brl(r.valor)} (${nf2(r.preco)} por litro)</dd><dt>KM no painel</dt><dd>${r.km?nf(r.km):'não informado'}</dd><dt>Posto</dt><dd>${esc(r.posto)}</dd><dt>Lançado em</dt><dd>${dt(r.criado.slice(0,10))} ${r.criado.slice(11)}</dd></dl>${r.corrigido?'<div class="info">Corrigido em 22/10/2026 pelo gestor de frotas: valor era R$ 248,10. Motivo: "digitei errado".</div>':''}${acoes('litros, valor e KM, com motivo')}`;}
+  if(d.base==='km'){ titulo='KM diário · '+r.equipe+' · '+dt(r.data);
+    body=`<dl class="kv"><dt>Data</dt><dd>${dt(r.data)}</dd><dt>Equipe</dt><dd>${r.equipe}</dd><dt>Placa</dt><dd>${r.placa}</dd><dt>Motorista</dt><dd>${esc(r.motorista)}</dd><dt>KM informado</dt><dd>${nf(r.km)}</dd><dt>Rodou desde o anterior</dt><dd>${nf(r.rodado)} km</dd><dt>Observações</dt><dd>${r.obs?esc(r.obs):'—'}</dd></dl>${acoes('KM novo entre o lançamento anterior e o seguinte, com motivo')}`;}
+  if(d.base==='mot'){ titulo=r.nome;
+    body=`<dl class="kv"><dt>Equipe atual</dt><dd>${r.equipe||'sem equipe'}</dd><dt>CNH</dt><dd>${r.cnh}</dd><dt>Vencimento da CNH</dt><dd>${dt(r.cnhVenc)} ${cnhChip(r)}</dd><dt>Contato</dt><dd>${r.contato}</dd><dt>Situação</dt><dd>${r.ativo?'Ativo':'Inativo'}</dd><dt>Termo de uso</dt><dd>assinado em 04/08/2026</dd></dl>
+    <div class="wh b sm">Carros que passaram por este motorista</div><div class="tl">${(()=>{const v=VEIC.find(x=>x.motorista===r.nome);return v?histVeic(v).filter(h=>h.mot===r.nome).map(h=>`<div class="${h.fim?'':'cur'}">${dt(h.ini)} → ${h.fim?dt(h.fim):'hoje'} · <b class="wh">${v.placa}</b> · ${h.eq}</div>`).join(''):'<div>Nenhum carro registrado.</div>'})()}</div>
+    ${podeGerir()?'<button class="btn btn-s" data-act="toast" data-v="Abre o cadastro do motorista para edição.">Editar cadastro</button>':''}`;}
+  if(d.base==='veic'){ titulo='Ficha do veículo · '+r.placa;
+    const hh=histVeic(r); const ab=AB.filter(a=>a.placa===r.placa).slice(0,3); const km=KM.filter(k=>k.placa===r.placa).slice(0,3);
+    body=`<dl class="kv"><dt>Modelo</dt><dd>${r.modelo} ${r.ano}</dd><dt>Situação</dt><dd>${sitChip(r)}</dd><dt>Equipe / motorista</dt><dd>${r.equipe?r.equipe+' · '+esc(r.motorista):'—'}</dd><dt>KM atual</dt><dd>${nf(r.km)}</dd><dt>Franquia</dt><dd>${nf(r.km_contratual)} km/mês</dd><dt>Locação</dt><dd>${brl(r.locacao)}/mês</dd>${r.retorno?`<dt>Volta da oficina</dt><dd>${dt(r.retorno)}</dd>`:''}</dl>
+    <div class="wh b sm">Histórico carro × equipe × motorista</div><div class="tl">${hh.length?[...hh].reverse().map(h=>`<div class="${h.fim?'':'cur'}">${dt(h.ini)} → ${h.fim?dt(h.fim):'hoje'} · <b class="wh">${h.eq}</b> · ${esc(h.mot)} <span class="mut xs">(${h.o})</span></div>`).join(''):'<div>Nunca esteve com uma equipe.</div>'}</div>
+    <div class="wh b sm">Últimos KM</div><div class="tl">${km.length?km.map(k=>`<div>${dt(k.data)} · ${nf(k.km)} km</div>`).join(''):'<div>Sem lançamentos.</div>'}</div>
+    <div class="wh b sm">Últimos abastecimentos</div><div class="tl">${ab.length?ab.map(a=>`<div>${dt(a.data)} · ${nf2(a.litros)} L · ${brl(a.valor)}</div>`).join(''):'<div>Sem abastecimentos.</div>'}</div>
+    ${podeGerir()?'<div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-s" data-act="toast" data-v="Abre a ficha completa do veículo (tela que já existe).">Abrir ficha completa</button><button class="btn btn-s" data-act="toast" data-v="Pede a data prevista de volta (e, se aprovado, o motivo: revisão ou mecânico).">Enviar para oficina</button></div>':'<button class="btn btn-s" data-act="toast" data-v="Abre a ficha completa do veículo (tela que já existe).">Abrir ficha completa</button>'}`;}
+  return `<div class="ov" data-act="fechar-ov"><aside class="drawer" data-stop="1"><div style="display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start"><div class="wh b">${titulo}</div><button class="btn btn-s" data-act="fechar">Fechar</button></div>${body}</aside></div>`;
+}
+
+/* ================= modais ================= */
+function modal(){
+  const m=S.modal; if(!m) return '';
+  let t='',b='';
+  if(m.tipo==='exportar'){
+    const B=BASES[S.base], n=filtrar(S.base).length;
+    t='Exportar Excel · '+B.nome;
+    b=`<dl class="kv"><dt>Arquivo</dt><dd class="mono">${B.arquivo}-${HOJE}.xlsx</dd><dt>Linhas</dt><dd>${nf(n)} (tudo o que está filtrado, não só a página)</dd><dt>Filtros</dt><dd>${filtrosTexto(S.base)}</dd></dl>
+      <div class="sm mut">Colunas da planilha, nesta ordem:</div><ol class="collist" style="padding-left:1.3rem">${B.planilha.map(c=>`<li>${c}</li>`).join('')}</ol>
+      <div class="xs mut" style="margin:.6rem 0 1rem">Cabeçalho em negrito e congelado, com filtro do Excel ligado. Datas como data e valores como número.</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="baixar">Baixar planilha</button></div>`;
+  }
+  if(m.tipo==='novo'){
+    const F={abast:['Registrar novo abastecimento',[['Veículo','select'],['Data','date'],['Litros','text'],['Valor (R$)','text'],['KM no painel (opcional)','text'],['Posto (opcional)','text']]],
+      km:['Lançar KM do dia',[['Equipe','select'],['Data','date'],['KM do painel','text'],['Observações (opcional)','text']]],
+      mot:['Cadastrar motorista',[['Nome','text'],['CNH','text'],['Vencimento da CNH','date'],['Contato','text'],['Equipe','select']]],
+      veic:['Cadastrar veículo',[['Placa','text'],['Modelo','text'],['Ano','text'],['Franquia de KM/mês','text'],['Valor da locação mensal (R$)','text']]]}[m.v];
+    t=F[0];
+    b=`<p class="xs mut" style="margin-top:0">É o formulário que já existe hoje; só ganhou o botão na base.</p>${F[1].map(([l,ty])=>`<label style="display:block;margin-bottom:.6rem"><span class="lbl xs mut">${l}</span>${ty==='select'?`<select class="fld"><option>Selecione…</option></select>`:`<input class="fld" type="${ty}">`}</label>`).join('')}
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvar">Salvar</button></div>`;
+  }
+  return `<div class="ov c" data-act="fechar-ov"><div class="modal" data-stop="1"><div class="wh b" style="margin-bottom:.6rem">${t}</div>${b}</div></div>`;
+}
+
+/* ================= render ================= */
+function render(){
+  const corpo = {visao:telaVisao,bases:telaBases,email:telaEmail,sup:telaSup}[S.tela]();
+  $('#app').innerHTML = mbar() + `<div class="shell">${side()}<main class="main">${corpo}</main></div>`;
+  $('#ovl').innerHTML = drawer() + modal();
+  if(S.focus){const el=document.getElementById(S.focus); if(el){el.focus(); const n=el.value.length; try{el.setSelectionRange(n,n)}catch(e){}} S.focus=null}
+}
+function irBase(b,patch,aviso){S.tela='bases';S.base=b;S.f[b]=Object.assign(fdef(b),{busca:'',equipe:'',placa:'',motorista:'',situacao:'',cnh:'',sit:''},patch||{});S.pag[b]=1;S.aviso=aviso?{base:b,txt:aviso}:null;window.scrollTo(0,0);render()}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  if(el.dataset.act==='fechar-ov' && e.target.closest('[data-stop]')) return;
+  const a=el.dataset.act, v=el.dataset.v;
+  if(el.tagName==='A') e.preventDefault();
+  switch(a){
+    case 'tela': S.tela=v; S.drawer=null; window.scrollTo(0,0); break;
+    case 'estado': S.estado=v; break;
+    case 'papel': S.papel=v; break;
+    case 'go-visao': S.tela='visao'; break;
+    case 'go-abast': case 'go-km': case 'go-mot': case 'go-veic': S.tela='bases'; S.base=a.slice(3); S.aviso=null; break;
+    case 'base': S.base=v; S.aviso=null; break;
+    case 'sit': return irBase('veic',{sit:v});
+    case 'cnh': return irBase('mot',{cnh:'alerta'});
+    case 'km-ontem': return irBase('km',{de:'2026-10-28',ate:ONTEM},`Sem lançamento em 29/10: <b class="wh">${SEM_KM_ONTEM.join(', ')}</b>. As linhas abaixo são das equipes que lançaram.`);
+    case 'ab-mes': return irBase('abast',{de:'2026-10-01',ate:HOJE});
+    case 'sort': {const so=S.sort[S.base]; S.sort[S.base]= so&&so.k===v ? {k:v,dir:-so.dir} : {k:v,dir:1}; break}
+    case 'pag': S.pag[S.base]=+v; break;
+    case 'limpar': S.f[S.base]=null; fdef(S.base); S.f[S.base].de=''; S.aviso=null; break;
+    case 'aviso-x': S.aviso=null; break;
+    case 'row': S.drawer={base:S.base,id:v}; break;
+    case 'exportar': S.modal={tipo:'exportar'}; break;
+    case 'novo': S.modal={tipo:'novo',v}; break;
+    case 'baixar': S.modal=null; toast('Planilha gerada (no mockup não baixa arquivo).'); break;
+    case 'salvar': S.modal=null; toast('Salvo. A linha nova aparece no topo da base.'); break;
+    case 'fechar': case 'fechar-ov': S.modal=null; S.drawer=null; break;
+    case 'ureg': S.userRegistra = v==='1'; break;
+    case 'mailvar': S.mailVar=v; if(S.estado!=='dados') S.estado='dados'; break;
+    case 'mail-link': {const m={visao:'visão geral',rev:'Revisões, já filtrado',km:'KM diário de ontem',doc:'Documentos',mot:'Motoristas com CNH em alerta',multa:'Multas pendentes',sin:'Sinistros abertos',veic:'Veículos na oficina'}; toast('Abre o hub em: '+m[v]+'.'); return}
+    case 'toast': toast(v); return;
+    case 'toast-form': toast('Abre o formulário "'+v+'" que já existe.'); return;
+    case 'toast-rev': toast('Abre Revisões filtrado. (Revisões ainda não está no formato de base — ver 2.5.)'); return;
+    case 'toast-doc': toast('Abre Documentos, ordenado por vencimento.'); return;
+    case 'toast-multa': toast('Abre Multas, só as sem tratativa.'); return;
+    case 'toast-sin': toast('Abre Sinistros, só os abertos e em tratativa.'); return;
+    case 'toast-custo': toast('Abre a tela Custos, que detalha por carro.'); return;
+    case 'toast-cc': toast('Abre a Lista de gastos dos extratos, filtrada neste centro de custo.'); return;
+    default: return;
+  }
+  render();
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.dataset.act==='papel-sel'){S.papel=el.value;S.drawer=null;S.modal=null;render()}
+  else if(el.dataset.act==='oficina-nova'){S.oficinaNova=el.checked;render()}
+  else if(el.dataset.act==='f' && el.dataset.k!=='busca'){fdef(S.base)[el.dataset.k]=el.value;S.pag[S.base]=1;S.aviso=null;render()}
+});
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.act==='f' && el.dataset.k==='busca'){fdef(S.base).busca=el.value;S.pag[S.base]=1;S.focus=el.id;render()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(S.modal||S.drawer)){S.modal=null;S.drawer=null;render()}});
+render();
+</script>
+</body>
+</html>
