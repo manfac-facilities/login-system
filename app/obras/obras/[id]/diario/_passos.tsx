@@ -15,6 +15,7 @@
 import { useState, type ReactNode } from 'react'
 import { salvarRascunhoAction } from './_actions'
 import FotosDiario from './_fotos'
+import ValidarDiario from './_validar'
 import { ClimaTurnos } from './_clima'
 import { IconeCadeado, IconeCheck } from '../../_ui/icones'
 import { Chevron } from '../cronograma/_barra-ferramentas'
@@ -231,6 +232,7 @@ export default function PassosDiario({
   fotos,
   impedimentos,
   impedimentosHoje = 0,
+  validacao,
 }: {
   obraId: string
   data: string
@@ -243,6 +245,8 @@ export default function PassosDiario({
   impedimentos?: ReactNode
   /** Impedimentos registrados para o dia do diário: com algum, o passo 4 está preenchido. */
   impedimentosHoje?: number
+  /** "Validar e enviar" (engenheiro/admin); ausente = não mostra. */
+  validacao?: { previaHtml: string | null; pendentes: number | null }
 }) {
   const [corpo, setCorpo] = useState<RascunhoRdo>(inicial)
   const [rdoId, setRdoId] = useState<string | null>(rdoInicial)
@@ -473,6 +477,17 @@ export default function PassosDiario({
         </p>
       ) : null}
       {aviso ? <p className="text-center text-xs text-[#5a7380]">{aviso}</p> : null}
+
+      {validacao ? (
+        <ValidarDiario
+          obraId={obraId}
+          data={data}
+          estado={estado ?? 'rascunho'}
+          previaHtml={validacao.previaHtml}
+          pendentes={validacao.pendentes}
+          salvarAntes={async () => (await salvar()) !== null}
+        />
+      ) : null}
 
       {!somenteLeitura ? (
         // No celular fica acima do menu inferior do ShellObra (56px + borda); no computador, à direita da sidebar.

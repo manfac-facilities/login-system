@@ -4,12 +4,13 @@ jest.mock('../_actions', () => ({
   salvarRascunhoAction: jest.fn(async () => ({ ok: true, rdoId: 'r1' })),
   registrarFotoAction: jest.fn(),
   removerFotoAction: jest.fn(),
+  validarEEnviarAction: jest.fn(async () => ({ ok: true, enviados: 2 })),
 }))
 jest.mock('@/lib/supabase/client', () => ({ createClient: jest.fn() }))
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
 
 import PassosDiario from '../_passos'
-import { salvarRascunhoAction } from '../_actions'
+import { salvarRascunhoAction, validarEEnviarAction } from '../_actions'
 import type { AtividadeDiario, RascunhoRdo } from '../_tipos'
 
 const atividades: AtividadeDiario[] = [
@@ -122,6 +123,42 @@ describe('PassosDiario', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
       await screen.findByText(/Rascunho salvo/)
       expect(salvarRascunhoAction).toHaveBeenLastCalledWith('o1', '2026-10-29', expect.objectContaining({ semImpedimento: false }))
+    })
+  })
+
+  describe('Validar e enviar salva antes o que está na tela (item 10)', () => {
+    beforeEach(() => jest.clearAllMocks())
+
+    it('sem ter salvo o rascunho: salva o estado atual e só então valida', async () => {
+      const ordem: string[] = []
+      ;(salvarRascunhoAction as jest.Mock).mockImplementationOnce(async () => (ordem.push('salvar'), { ok: true, rdoId: 'r1' }))
+      ;(validarEEnviarAction as jest.Mock).mockImplementationOnce(async () => (ordem.push('validar'), { ok: true, enviados: 2 }))
+      montar({ validacao: { previaHtml: null, pendentes: null } })
+      abrirPasso(/O que andou/)
+      fireEvent.change(within(screen.getByTestId('atividade-6')).getByRole('spinbutton'), { target: { value: '70' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Validar e enviar' }))
+      await screen.findByText(/Diário enviado para 2/)
+      expect(ordem).toEqual(['salvar', 'validar'])
+      expect(salvarRascunhoAction).toHaveBeenCalledWith(
+        'o1', '2026-10-29',
+        expect.objectContaining({ avancos: expect.arrayContaining([expect.objectContaining({ numero: 6, para: 0.7 })]) }),
+      )
+      expect(validarEEnviarAction).toHaveBeenCalledWith('o1', '2026-10-29')
+    })
+
+    it('se salvar falhar (validação ou servidor), não valida nem envia', async () => {
+      ;(salvarRascunhoAction as jest.Mock).mockImplementationOnce(async () => ({ ok: false, erro: 'Atividade 6: travada' }))
+      montar({ validacao: { previaHtml: null, pendentes: null } })
+      fireEvent.click(screen.getByRole('button', { name: 'Validar e enviar' }))
+      expect(await screen.findByText('Atividade 6: travada')).toBeInTheDocument()
+      expect(validarEEnviarAction).not.toHaveBeenCalled()
+    })
+
+    it('já validado (reenvio): não tenta salvar', async () => {
+      montar({ estado: 'validado', rdoId: 'r1', validacao: { previaHtml: '<p>x</p>', pendentes: null } })
+      fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }))
+      await screen.findByText(/Diário enviado para 2/)
+      expect(salvarRascunhoAction).not.toHaveBeenCalled()
     })
   })
 

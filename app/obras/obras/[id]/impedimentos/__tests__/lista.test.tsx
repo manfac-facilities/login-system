@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-const encerrarMock = jest.fn(async (..._a: unknown[]) => ({ ok: true }))
-jest.mock('../_actions', () => ({ encerrarImpedimentoAction: (...a: unknown[]) => encerrarMock(...a) }))
+const encerrarMock = jest.fn(async (id: string, data: string) => ({ ok: true, id, data }))
+jest.mock('../_actions', () => ({ encerrarImpedimentoAction: (id: string, data: string) => encerrarMock(id, data) }))
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
 
 import ListaImpedimentos from '../_lista'

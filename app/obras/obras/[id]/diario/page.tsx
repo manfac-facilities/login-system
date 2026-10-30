@@ -7,7 +7,6 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
-import ValidarDiario from './_validar'
 import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
 import { diasUteisEntre } from '../../_lib/calendario'
@@ -172,6 +171,9 @@ export default async function DiarioObraPage({
     previaHtml = html
   }
 
+  // Sem RDO gravado também valida: o botão salva o que está na tela antes (item 10).
+  const mostraValidar =
+    podeValidar && (!rdo || rdo.estado === 'rascunho' || rdo.estado === 'validado' || (pendentes ?? 0) > 0)
   const base = `/obras/obras/${id}/diario`
   const navLink =
     'flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606]'
@@ -213,6 +215,7 @@ export default async function DiarioObraPage({
         inicial={inicial}
         atividades={atividades}
         fotos={fotos}
+        validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
         impedimentosHoje={
           r.dados.impedimentos.filter(
             (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
@@ -234,9 +237,6 @@ export default async function DiarioObraPage({
         }
       />
 
-      {previaHtml !== null ? (
-        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} pendentes={pendentes} />
-      ) : null}
     </div>
   )
 }
