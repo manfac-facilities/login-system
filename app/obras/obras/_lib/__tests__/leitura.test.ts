@@ -6,7 +6,7 @@ let tabelas: Record<string, { data: unknown; error: unknown }> = {}
 function chain(tabela: string) {
   const r = tabelas[tabela] ?? { data: [], error: null }
   const c: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'in', 'order', 'not', 'limit']) c[m] = jest.fn(() => c)
+  for (const m of ['select', 'eq', 'in', 'order', 'not', 'limit', 'or']) c[m] = jest.fn(() => c)
   c.maybeSingle = jest.fn(async () => r)
   c.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(r).then(res, rej)
   return c

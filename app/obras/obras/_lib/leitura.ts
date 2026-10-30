@@ -10,11 +10,13 @@ import type { PontoHist } from './curvas'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
+  criterioEfetivo,
   diasDeImpacto,
   resumirEtapas,
   sinalDaObra,
   type AtividadeExec,
   type AtividadePlano,
+  type CriterioPeso,
   type ImpedimentoCalc,
   type ResultadoCronograma,
   type ResumoEtapa,
@@ -54,7 +56,10 @@ export type ObraGrande = {
   plano: AtividadePlano[]
   exec: AtividadeExec[]
   impedimentos: ImpedimentoRow[]
+  /** Feriados globais + os da obra (Leva 2 §3.6). */
   feriados: Set<string>
+  /** Critério do peso do avanço em uso: o da obra ou o automático (Leva 2 §3.4). */
+  criterioPeso: CriterioPeso
   calc: ResultadoCronograma | null
   /** Cálculo da base (v1 salva); null enquanto a v1 não foi salva. */
   calcBase: ResultadoCronograma | null
@@ -160,6 +165,22 @@ export const impedimentoRow = (i: Linha): ImpedimentoRow => ({
   criadoEm: i.criado_em,
 })
 
+/**
+ * Feriados que valem para a obra: globais (`obra_id` nulo) + os da própria obra.
+ * Toda leitura de `obras_feriado` do módulo passa por aqui.
+ */
+export async function feriadosDaObra(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; feriados: Set<string> } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_feriado')
+    .select('data')
+    .or(`obra_id.is.null,obra_id.eq.${obraId}`)
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, feriados: new Set(((data ?? []) as Linha[]).map((f) => f.data as string)) }
+}
+
 export async function lerObraGrande(
   supabase: SupabaseClient,
   obraId: string,
@@ -170,11 +191,12 @@ export async function lerObraGrande(
     supabase.from('obras_cronograma_versao').select('id, numero, motivo, salva_em').eq('obra_id', obraId).order('numero'),
     supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
     supabase.from('obras_impedimento').select('*').eq('obra_id', obraId).order('aberto_em', { ascending: false }),
-    supabase.from('obras_feriado').select('data'),
+    feriadosDaObra(supabase, obraId),
     supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual, dias_restantes, registrado_em').eq('obra_id', obraId),
   ])
-  const falha = [obraR, versR, execR, impR, ferR, histR].find((r) => r.error)
+  const falha = [obraR, versR, execR, impR, histR].find((r) => r.error)
   if (falha) return { ok: false, erro: `Falha ao ler a obra: ${falha.error!.message}` }
+  if (!ferR.ok) return { ok: false, erro: `Falha ao ler a obra: ${ferR.erro}` }
   if (!obraR.data) return { ok: false, erro: 'Obra não encontrada' }
 
   const obra = obraR.data as ObraRow
@@ -223,7 +245,7 @@ export async function lerObraGrande(
       planoBase: baseL && baseL.id !== usada?.id ? planoDe(atividades, baseL.id) : null,
       exec: ((execR.data ?? []) as Linha[]).map(atividadeExecDe),
       impedimentos: ((impR.data ?? []) as Linha[]).map(impedimentoRow),
-      feriados: new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string)),
+      feriados: ferR.feriados,
       hist,
       dadosAte,
       hoje,
@@ -275,10 +297,11 @@ export function montarObraGrande(p: {
   const imps = impedimentosCalcDe(impedimentos)
   const usada = p.vigente ?? p.rascunho
   const plano = usada ? p.planoUsado : []
+  const criterioPeso = criterioEfetivo(obra.peso_avanco, plano)
   const calcular = (pl: AtividadePlano[]) =>
     calcularCronograma({
       plano: pl, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
-      atividadeTrava: obra.atividade_trava, impedimentos: imps,
+      atividadeTrava: obra.atividade_trava, impedimentos: imps, criterioPeso,
     })
 
   const calc = usada ? calcular(plano) : null
@@ -308,7 +331,7 @@ export function montarObraGrande(p: {
     versaoBase: p.base,
     versaoVigente: p.vigente,
     rascunho: p.rascunho,
-    plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
+    plano, exec, impedimentos, feriados, criterioPeso, calc, calcBase, hist, dadosAte,
     etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
     terminoBase, sinal, atraso,
   }

@@ -55,6 +55,11 @@ function construtor(tabela: string) {
     eq: (c: string, v: unknown) => (filtros.push((l) => l[c] === v), q),
     is: (c: string, v: unknown) => (filtros.push((l) => (l[c] ?? null) === v), q),
     in: (c: string, vs: unknown[]) => (filtros.push((l) => vs.includes(l[c])), q),
+    or: (expr: string) => {
+      const m = /^obra_id\.is\.null,obra_id\.eq\.(.+)$/.exec(expr)
+      if (!m) throw new Error(`or inesperado: ${expr}`)
+      return filtros.push((l) => (l.obra_id ?? null) === null || l.obra_id === m[1]), q
+    },
     order: () => q,
     update: (p: Linha) => ((op = 'update'), (payload = p), q),
     insert: (p: Linha | Linha[]) => ((op = 'insert'), (payload = p), q),
@@ -70,6 +75,8 @@ const getUserMock = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
 }))
+const adminFrom = jest.fn((t: string) => construtor(t))
+jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ from: (t: string) => adminFrom(t) }) }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
@@ -77,7 +84,7 @@ jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 import { revalidatePath } from 'next/cache'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { definirFimAction, definirInicioAction } from '../_actions'
+import { definirFimAction, definirInicioAction, salvarVersaoAction } from '../_actions'
 
 /**
  * Edição de datas na árvore (Leva 1, Task 5): Início digitado grava
@@ -101,11 +108,11 @@ beforeEach(() => {
   erroForcado = {}
   db = {
     // Quinta 29/10/2026; Finados (02/11) é feriado.
-    obras_obra: [{ id: OBRA, modalidade: 'obra', engenheiro_email: ENG, atividade_trava: null, data_base: '2026-10-29' }],
+    obras_obra: [{ id: OBRA, modalidade: 'obra', engenheiro_email: ENG, atividade_trava: null, data_base: '2026-10-29', peso_avanco: null }],
     obras_cronograma_versao: [{ id: 'v1', obra_id: OBRA, numero: 1, motivo: null, salva_em: null, salva_por: null }],
     obras_atividade: [atv(1), atv(2), atv(3)],
     obras_atividade_exec: [],
-    obras_feriado: [{ data: '2026-11-02' }],
+    obras_feriado: [{ data: '2026-11-02', obra_id: null }],
   }
   getUserMock.mockResolvedValue({ data: { user: { email: ENG } } })
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
@@ -169,5 +176,62 @@ describe('definirFimAction', () => {
   it('fim antes do início → mensagem com a data do início, sem gravar', async () => {
     expect(await definirFimAction(OBRA, 'v1', 1, '2026-10-28')).toEqual({ ok: false, erro: 'Fim antes do início (29/10)' })
     expect(linhaDe(1).duracao).toBe(2)
+  })
+})
+
+describe('feriados da obra (Leva 2 §3.6)', () => {
+  it('feriado da própria obra conta; o de outra obra não', async () => {
+    db.obras_feriado.push({ data: '2026-10-30', obra_id: OBRA }, { data: '2026-11-03', obra_id: 'outra' })
+    // 29/10 → 04/11: qui 29, (sex 30 da obra), (seg 02 global), ter 03 (da outra = útil), qua 04 → 3 dias.
+    expect(await definirFimAction(OBRA, 'v1', 1, '2026-11-04')).toEqual({ ok: true })
+    expect(linhaDe(1).duracao).toBe(3)
+  })
+})
+
+describe('salvarVersaoAction — critério de peso (Leva 2 §6.1 item 2)', () => {
+  const pesoGravado = () => db.obras_obra[0].peso_avanco
+
+  it('base com peso_avanco nulo e Σ valor > 0: grava "valor" pelo cliente admin', async () => {
+    expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({ ok: true })
+    expect(pesoGravado()).toBe('valor')
+    expect(adminFrom).toHaveBeenCalledTimes(1)
+    expect(adminFrom).toHaveBeenCalledWith('obras_obra')
+  })
+
+  it('base com Σ valor = 0: grava "duracao"', async () => {
+    db.obras_atividade.forEach((a) => (a.peso_valor = 0))
+    expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({ ok: true })
+    expect(pesoGravado()).toBe('duracao')
+  })
+
+  it('peso_avanco já definido: não mexe e não usa o admin', async () => {
+    db.obras_obra[0].peso_avanco = 'duracao'
+    expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({ ok: true })
+    expect(pesoGravado()).toBe('duracao')
+    expect(adminFrom).not.toHaveBeenCalled()
+  })
+
+  it('revisão (v2): não grava o critério', async () => {
+    db.obras_cronograma_versao[0].salva_em = '2026-10-29T12:00:00Z'
+    db.obras_cronograma_versao.push({ id: 'v2', obra_id: OBRA, numero: 2, motivo: null, salva_em: null, salva_por: null })
+    expect(await salvarVersaoAction(OBRA, 'v2', 'replan')).toEqual({ ok: true })
+    expect(pesoGravado()).toBeNull()
+    expect(adminFrom).not.toHaveBeenCalled()
+  })
+
+  it('falha ao gravar o critério não desfaz a base salva', async () => {
+    erroForcado['obras_obra.update'] = { message: 'boom' }
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({ ok: true })
+    expect(db.obras_cronograma_versao[0].salva_em).not.toBeNull()
+    expect(pesoGravado()).toBeNull()
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('quem não pode salvar não chega ao admin', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { email: 'outro@manfac.com.br' } } })
+    expect((await salvarVersaoAction(OBRA, 'v1', null)).ok).toBe(false)
+    expect(adminFrom).not.toHaveBeenCalled()
   })
 })

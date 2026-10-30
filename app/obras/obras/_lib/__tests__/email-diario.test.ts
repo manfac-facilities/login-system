@@ -42,6 +42,7 @@ function obraGrande(over: Partial<ObraGrande> = {}): ObraGrande {
     exec,
     impedimentos: IMPEDIMENTOS,
     feriados: new Set<string>(),
+    criterioPeso: 'valor',
     calc: {
       atividades: [], previsto: 0.08, realizado: 0.06, desvioPP: -2,
       terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-12',

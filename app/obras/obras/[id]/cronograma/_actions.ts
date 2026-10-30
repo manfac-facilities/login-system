@@ -15,18 +15,20 @@
 import { revalidatePath } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import {
   CicloNasPredecessoras,
   calcularCronograma,
+  criterioEfetivo,
   duracaoPorFim,
   podeIniciar,
   type AtividadeExec,
   type AtividadePlano,
   type StatusAtividade,
 } from '../../_lib/cronograma'
-import { atividadeExecDe, atividadePlanoDe, ordenarAtividades } from '../../_lib/leitura'
+import { atividadeExecDe, atividadePlanoDe, feriadosDaObra, ordenarAtividades } from '../../_lib/leitura'
 import { hojeISO } from '../../../_lib/tipos'
 import type { Direcao, EdicaoLinha, LinhaStatus, NovaAtividade, Resultado, ResultadoNumero } from './_tipos'
 
@@ -58,7 +60,7 @@ async function autorizar(obraId: string): Promise<Contexto | Erro> {
 
   const { data: obra, error } = await supabase
     .from('obras_obra')
-    .select('id, modalidade, engenheiro_email, atividade_trava, data_base')
+    .select('id, modalidade, engenheiro_email, atividade_trava, data_base, peso_avanco')
     .eq('id', obraId)
     .maybeSingle()
   if (error) return erroBanco('ler a obra', error)
@@ -525,9 +527,9 @@ export async function definirFimAction(
   if (ehErro(r)) return r
   const { ctx, linhas } = r
 
-  const { data: fer, error: errF } = await ctx.supabase.from('obras_feriado').select('data')
-  if (errF) return erroBanco('ler os feriados', errF)
-  const feriados = new Set(((fer ?? []) as Linha[]).map((f) => f.data as string))
+  const fer = await feriadosDaObra(ctx.supabase, obraId)
+  if (!fer.ok) return erroBanco('ler os feriados', { message: fer.erro })
+  const feriados = fer.feriados
 
   const dataBase = ctx.obra.data_base ?? fim
   let duracao: number
@@ -575,8 +577,35 @@ export async function salvarVersaoAction(
   if (error) return erroBanco('salvar a versão', error)
   if (!data?.length) return falha('Esta versão já foi salva')
 
+  if (versao.numero === 1 && ctx.obra.peso_avanco == null) await fixarCriterioPeso(ctx, obraId, versaoId)
+
   revalidar(obraId)
   return { ok: true }
+}
+
+/**
+ * Ao salvar a base com `peso_avanco` nulo, grava o critério automático (spec Leva 2
+ * §6.1 item 2) — dali em diante é explícito. O engenheiro não muda parâmetro da obra
+ * (RLS/trigger), então só esta coluna, só neste momento, vai pelo cliente admin.
+ * Sem linha em obras_historico: o check de `campo` não aceita `peso_avanco`.
+ * Falha aqui não desfaz a base: o critério segue automático e dá o mesmo resultado
+ * enquanto a vigente for a base.
+ */
+async function fixarCriterioPeso(ctx: Contexto, obraId: string, versaoId: string) {
+  const motivo = 'Base salva, mas não foi possível fixar o critério de peso do avanço'
+  const { data: ativs, error } = await ctx.supabase.from('obras_atividade').select('*').eq('versao_id', versaoId)
+  if (error) return console.error(motivo, obraId, error.message)
+  const criterio = criterioEfetivo(null, ((ativs ?? []) as Linha[]).map(atividadePlanoDe))
+  try {
+    const { error: errA } = await createAdminClient()
+      .from('obras_obra')
+      .update({ peso_avanco: criterio })
+      .eq('id', obraId)
+      .is('peso_avanco', null)
+    if (errA) console.error(motivo, obraId, errA.message)
+  } catch (e) {
+    console.error(motivo, obraId, e)
+  }
 }
 
 const COLUNAS_COPIADAS = [

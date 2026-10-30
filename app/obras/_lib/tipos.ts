@@ -314,6 +314,8 @@ export type ObraRow = {
   data_base: string | null
   engenheiro_email: string | null
   atividade_trava: number | null
+  /** Peso do avanço da OBRA (Leva 2): null = automático. Opcional: linhas sem a coluna. */
+  peso_avanco?: 'valor' | 'duracao' | null
 
   analista_cliente: string | null
   pcm: string | null

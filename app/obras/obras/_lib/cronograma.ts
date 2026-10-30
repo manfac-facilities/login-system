@@ -117,6 +117,17 @@ function ordenar(plano: AtividadePlano[]): AtividadePlano[] {
 /** ceil sem ruído de ponto flutuante (10 × 0,3 = 3,0000000000000004 → 3, não 4). */
 const ceilLimpo = (x: number) => Math.ceil(Math.round(x * 1e9) / 1e9)
 
+export type CriterioPeso = 'valor' | 'duracao'
+
+/**
+ * Critério do peso do avanço (Leva 2 §3.4): o gravado na obra; sem ele (null,
+ * coluna ausente ou valor desconhecido), valor se Σ peso_valor do plano > 0, senão duração.
+ */
+export function criterioEfetivo(pesoAvanco: unknown, plano: AtividadePlano[]): CriterioPeso {
+  if (pesoAvanco === 'valor' || pesoAvanco === 'duracao') return pesoAvanco
+  return plano.reduce((s, a) => s + a.pesoValor, 0) > 0 ? 'valor' : 'duracao'
+}
+
 export function calcularCronograma(p: {
   plano: AtividadePlano[]
   exec: AtividadeExec[]
@@ -127,6 +138,8 @@ export function calcularCronograma(p: {
   feriados: Feriados
   atividadeTrava: number | null
   impedimentos: ImpedimentoCalc[]
+  /** Peso do avanço: `valor` (peso_valor, padrão) ou `duracao` (dias úteis planejados, mín. 1). */
+  criterioPeso?: CriterioPeso
 }): ResultadoCronograma {
   const { plano, dataBase, hoje, feriados, atividadeTrava } = p
   const dataStatus = p.dataStatus ?? hoje
@@ -136,7 +149,8 @@ export function calcularCronograma(p: {
   const execDe = (n: number): AtividadeExec =>
     execPor.get(n) ?? { numero: n, status: 'nao_iniciado', percentual: 0, inicioReal: null, fimReal: null }
 
-  const somaPeso = plano.reduce((s, a) => s + a.pesoValor, 0)
+  const pesoBruto = (a: AtividadePlano) => (p.criterioPeso === 'duracao' ? Math.max(a.duracao, 1) : a.pesoValor)
+  const somaPeso = plano.reduce((s, a) => s + pesoBruto(a), 0)
   const travaAberta = atividadeTrava !== null && execDe(atividadeTrava).status !== 'concluido'
   const aguardandoCliente = new Set(
     p.impedimentos
@@ -216,7 +230,7 @@ export function calcularCronograma(p: {
       fimPrevisto,
       inicioProjetado,
       fimProjetado,
-      peso: somaPeso > 0 ? a.pesoValor / somaPeso : 0,
+      peso: somaPeso > 0 ? pesoBruto(a) / somaPeso : 0,
       percentualPrevisto,
       situacao,
       travada: a.bloqueiaPorTrava && travaAberta,

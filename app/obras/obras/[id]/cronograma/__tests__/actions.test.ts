@@ -70,6 +70,7 @@ const getUserMock = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
 }))
+jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ from: (t: string) => construtor(t) }) }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
