@@ -236,7 +236,7 @@ describe('salvarVersaoAction', () => {
     db.obras_obra[0].data_base = null
     expect(await salvarVersaoAction(OBRA, 'v1', null)).toEqual({
       ok: false,
-      erro: 'Defina a data-base na aba Comunicação antes de salvar a base',
+      erro: 'Defina a data-base em Configurações da obra (peça a um administrador) antes de salvar a base',
     })
     expect(db.obras_cronograma_versao.find((v) => v.id === 'v1')?.salva_em).toBeFalsy()
   })

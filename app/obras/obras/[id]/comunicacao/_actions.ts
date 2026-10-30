@@ -302,7 +302,7 @@ export async function enviarImediataAction(
     ((dest ?? []) as Linha[]).filter((d) => d.lado === lado).map((d) => String(d.email ?? '').trim()).filter(Boolean)
   const para = { cliente: doLado('cliente'), interno: doLado('interno') }
   if (!para.cliente.length && !para.interno.length) {
-    return falha('Nenhum destinatário com o tipo Imediato cadastrado (Configurações da obra)')
+    return falha('Nenhum destinatário com o tipo Imediato cadastrado em Configurações da obra (peça a um administrador)')
   }
 
   const { data: reg, error: errR } = await s.supabase

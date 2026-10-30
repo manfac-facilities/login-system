@@ -276,7 +276,7 @@ export async function removerFotoAction(fotoId: string): Promise<Resultado> {
 // ---------------------------------------------------------------------------
 
 const SO_ENGENHEIRO = 'Só o engenheiro responsável da obra ou um administrador valida o diário'
-const SEM_DESTINATARIO_CLIENTE = 'Cadastre os destinatários na aba Comunicação'
+const SEM_DESTINATARIO_CLIENTE = 'Cadastre os destinatários em Configurações da obra (peça a um administrador)'
 const VALIDADO_MAS = 'Diário validado, mas o e-mail não saiu'
 const MAX_FOTOS = 6
 /** Sem biblioteca de imagem no projeto: foto acima disso fica fora do e-mail. */
