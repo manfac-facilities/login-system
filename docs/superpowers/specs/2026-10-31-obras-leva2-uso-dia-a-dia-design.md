@@ -50,11 +50,11 @@ Mesmas das levas anteriores (AGENTS.md, `.claude/rules/obras.md` e `sql.md`): SQ
 
 ## 6.1 Chamadas minhas após a revisão do builder
 1. **Feriados da obra** valem para todos os cálculos da obra, inclusive as datas da base (a base guarda durações em dias úteis, as datas são calculadas). Incluir/remover feriado depois da base salva é permitido ao admin, com aviso "isso muda as datas calculadas, inclusive da base".
-2. **% por duração**: peso = duração (dias úteis) planejada de cada atividade na versão em questão (base usa as durações da base). Ao **salvar a base**, se  estiver nulo, grava o critério automático (valor se Σ peso_valor > 0, senão duração) — dali em diante é explícito. Admin pode trocar depois, com aviso de que os números do painel mudam; e-mails já enviados não mudam.
+2. **% por duração**: peso = duração (dias úteis) planejada de cada atividade na versão em questão (base usa as durações da base). Ao **salvar a base**, se peso_avanco estiver nulo, grava o critério automático (valor se Σ peso_valor > 0, senão duração) — dali em diante é explícito. Admin pode trocar depois, com aviso de que os números do painel mudam; e-mails já enviados não mudam.
 3. **Texto livre** (ata, imediata) é responsabilidade de quem escreve: antes de enviar, confirmação mostrando destinatários e o texto. Ata: o envio escolhe destinatários (padrão = destinatários do lado cliente com tipo diário). Imediata vai a quem tem o tipo **imediato** (já existe no cadastro de destinatários).
-4. **Editar/apagar registro**: autor até 24 h após ; admin a qualquer tempo.
+4. **Editar/apagar registro**: autor até 24 h após criado_em; admin a qualquer tempo.
 5. **Abrir PDF do diário** no histórico: gerado na hora a partir do RDO validado (conteúdo imutável pelo banco) e dos impedimentos/orientações daquela data; rodapé "gerado em dd/mm a partir do diário validado em dd/mm". Sem guardar cópia.
-6.  aprovado como dependência nova (fontes Inter/Plex Mono e logo PNG já do projeto).
+6. @react-pdf/renderer aprovado como dependência nova (fontes Inter/Plex Mono e logo PNG já do projeto).
 
 ## 7. Para o builder decidir
 Layout da linha do tempo, componentes do PDF, organização de arquivos, testes.
