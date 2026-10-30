@@ -38,8 +38,8 @@ export default async function SofiaPage() {
   ]
 
   const atalhos: [string, string, boolean][] = [
-    ['Registrar abastecimento', '/sofia/abastecimento', false],
-    ['Lançar KM do dia', '/sofia/km', false],
+    ['Registrar abastecimento', '/sofia/abastecimento/novo', false],
+    ['Lançar KM do dia', '/sofia/km/novo', false],
     ['Novo checklist', '/sofia/checklist/novo', false],
     ['Registrar multa', '/sofia/multas/nova', false],
     ['Registrar sinistro', '/sofia/sinistros/novo', false],

@@ -337,3 +337,16 @@ menu inferior do diário.
 - CNH usa janela de 60 dias (mockup, spec e `getMotoristasComCnhVencendo`). Constante `DIAS_CNH` em `lib/sofia/alertas/blocos.ts`.
 - Links "Abrir no hub" levam à lista, sem filtro por query string (as telas ainda não leem filtro).
 - Destinatário = `sofia_gestores` com `hub_system_access` sofia ativo (mesma regra de `sofia_pode_gerir()`); gestor sem o slug não recebe e não há aviso disso.
+
+## 30/10/2026 — Frotas bases (`feat/frotas-bases`)
+
+- Filtros das bases ficam só no estado da tela: a URL só é lida ao abrir (não é reescrita ao filtrar); compartilhar o
+  link exige montar a query à mão. Ordenação e página também não vão para a URL.
+- Equipe/motorista do abastecimento sem trecho no histórico na data aparecem como "—" (sem fallback para o cadastro atual,
+  de propósito: não inventar responsável). Abastecimentos anteriores ao primeiro registro do histórico ficam assim.
+- Leitura carrega a base inteira no servidor (paginada de 1000 em 1000) e filtra no navegador; com dezenas de milhares de
+  linhas passa a pesar e pede filtro/paginação no servidor.
+- "Rodou no mês" do veículo soma o "rodou desde o anterior" dos lançamentos do mês corrente (inclui o salto do último
+  lançamento do mês anterior), não MAX−MIN como a tela Consumo do mês.
+- "Enviar para oficina" na gaveta do veículo (mockup) não entrou: depende de manutenção corretiva (rodada seguinte).
+- Chip "corrigido" do KM aparece só quando o valor atual difere do original (regra de `valorOriginalKm`).
