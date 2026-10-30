@@ -72,3 +72,5 @@ Proposta do Claude aceita ("pode ser assim"): na revisão, Início e Fim editáv
 | A18 | **Clima por turno** (manhã/tarde: bom, nublado, chuva, impraticável) no diário, padrão de RDO | msg 6 (Obra Prima) | — |
 | A19 | Solicitar material direto do app de campo (vira solicitação no Compras com prazo necessário) | msg 6 (Obra Prima: aplicativo) | já previsto na Fase 5 |
 | A5 | Atualização rápida semanal tipo "data de status" do MS Project: para as atividades em andamento, informar % e **dias restantes** (não só %), datas reais automáticas; a projeção recalcula a entrega | msg 3 | % ou dias restantes como principal? |
+| A20 | Aba Comunicação só com o histórico de registros (envios automáticos + registros manuais), com botão Novo registro (ex.: reunião com ata, ligação, visita): data, participantes, texto, anexo | msg 8 | o registro manual vai ao cliente por e-mail ou fica só no histórico? anexo (PDF da ata)? |
+| A21 | Menu Configurações da obra, separado: destinatários, engenheiro, data-base, atividade-trava | msg 8 | só admin (como hoje)? |
