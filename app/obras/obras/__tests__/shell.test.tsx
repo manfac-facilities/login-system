@@ -67,8 +67,9 @@ describe('ShellObra', () => {
     const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
     expect(within(lateral).getByRole('link', { name: 'Cronograma' })).toHaveAttribute('aria-current', 'page')
     expect(within(lateral).getByRole('link', { name: 'Painel' })).not.toHaveAttribute('aria-current')
-    expect(within(lateral).queryByRole('link', { name: /Lookahead/ })).toBeNull()
-    expect(within(lateral).getAllByText('em breve')).toHaveLength(2)
+    expect(within(lateral).getByRole('link', { name: /Lookahead/ })).toBeTruthy()
+    expect(within(lateral).queryByRole('link', { name: /Documentos/ })).toBeNull()
+    expect(within(lateral).getAllByText('em breve')).toHaveLength(1)
   })
 
   it('cabeçalho: nome, OS · cliente, sinal em texto, dados até e versão vigente', () => {

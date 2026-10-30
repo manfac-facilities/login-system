@@ -47,11 +47,11 @@ const ITENS: Item[] = [
   { sufixo: '/diario', rotulo: 'Diário', Icone: IconeDiario },
   { sufixo: '/impedimentos', rotulo: 'Impedimentos', Icone: IconeImpedimento },
   { sufixo: '/comunicacao', rotulo: 'Comunicação', Icone: IconeComunicacao },
+  { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
 ]
 /** Só administrador vê (a tela e as actions também exigem admin). */
 const ITEM_CONFIGURACOES: Item = { sufixo: '/configuracoes', rotulo: 'Configurações', Icone: IconeConfiguracoes }
 const EM_BREVE: Item[] = [
-  { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
   { sufixo: '/documentos', rotulo: 'Documentos', Icone: IconeDocumentos },
 ]
 /** No celular, os 4 primeiros vão no menu inferior; o resto no "Mais". */
@@ -62,7 +62,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/configuracoes'])
+const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/configuracoes'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 
