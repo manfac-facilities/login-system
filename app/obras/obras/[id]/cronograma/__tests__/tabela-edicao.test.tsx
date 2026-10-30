@@ -133,7 +133,7 @@ describe('visão Tabela', () => {
   })
 
   it('erro do servidor aparece e a célula volta ao valor anterior', async () => {
-    m.salvarLinhaRascunhoAction.mockResolvedValue({ ok: false, erro: 'Ciclo nas predecessoras: 7 → 2 → 7' })
+    m.salvarLinhaRascunhoAction.mockResolvedValue({ ok: false, erro: 'Ciclo nas predecessoras: 1.1 → 1.2 → 1.1' })
     render(<TelaCronograma dados={dados()} />)
     const campo = await editar('Atividade 1.2', 'Outro nome')
     expect(screen.getByRole('alert')).toHaveTextContent('Ciclo nas predecessoras')
@@ -166,6 +166,39 @@ describe('visão Tabela', () => {
       fireEvent.change(screen.getByLabelText('Predecessora 1 da atividade 1.2'), { target: { value: '' } })
     })
     expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledWith('o1', 'v1', { numero: 2, pred1: null })
+  })
+
+  it('lista pelo teclado (setas numa lista fechada): não grava a cada passo, só ao sair ou com Enter; Esc desfaz', async () => {
+    render(<TelaCronograma dados={dados()} />)
+    const pred = screen.getByLabelText('Predecessora 1 da atividade 2.1')
+    fireEvent.keyDown(pred, { key: 'ArrowDown' })
+    fireEvent.change(pred, { target: { value: '7' } })
+    fireEvent.keyDown(pred, { key: 'ArrowDown' })
+    fireEvent.change(pred, { target: { value: '2' } })
+    expect(m.salvarLinhaRascunhoAction).not.toHaveBeenCalled()
+    await act(async () => {
+      fireEvent.blur(pred)
+    })
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledTimes(1)
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledWith('o1', 'v1', { numero: 1, pred1: 2 })
+
+    m.salvarLinhaRascunhoAction.mockClear()
+    const etapaLista = screen.getByLabelText('Etapa da atividade 2.1')
+    fireEvent.keyDown(etapaLista, { key: 'ArrowUp' })
+    fireEvent.change(etapaLista, { target: { value: 'Estrutura' } })
+    fireEvent.keyDown(etapaLista, { key: 'Escape' })
+    expect(etapaLista).toHaveValue('Mobilização')
+    await act(async () => {
+      fireEvent.blur(etapaLista)
+    })
+    expect(m.salvarLinhaRascunhoAction).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(etapaLista, { key: 'ArrowUp' })
+    fireEvent.change(etapaLista, { target: { value: 'Estrutura' } })
+    await act(async () => {
+      fireEvent.keyDown(etapaLista, { key: 'Enter' })
+    })
+    expect(m.salvarLinhaRascunhoAction).toHaveBeenCalledWith('o1', 'v1', { numero: 1, etapa: 'Estrutura' })
   })
 
   it('mudar a etapa da atividade pela lista de etapas existentes', async () => {

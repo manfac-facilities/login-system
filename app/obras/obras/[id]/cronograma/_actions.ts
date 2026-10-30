@@ -96,8 +96,28 @@ const dataISO = (s: unknown) =>
 
 const planoDe = (linhas: Linha[]): AtividadePlano[] => linhas.map(atividadePlanoDe)
 
-/** Testa o plano no motor; ciclo vira mensagem. */
-function cicloNoPlano(ctx: Contexto, linhas: Linha[]): Erro | null {
+/**
+ * Código exibido "etapa.posição" (1.2) de cada numero, na ordem de exibição — o mesmo
+ * que a tabela mostra (`codigosDe` em _tabela-edicao.tsx). As mensagens citam o código, não o numero.
+ */
+function codigosDe(linhas: Linha[]): Map<number, string> {
+  const etapas: string[] = []
+  const contagem = new Map<string, number>()
+  const m = new Map<number, string>()
+  for (const a of ordenarAtividades(linhas)) {
+    const e = (a.etapa as string | null) ?? ''
+    if (!contagem.has(e)) etapas.push(e)
+    contagem.set(e, (contagem.get(e) ?? 0) + 1)
+    m.set(a.numero as number, `${etapas.indexOf(e) + 1}.${contagem.get(e)}`)
+  }
+  return m
+}
+const rotulo = (cods: Map<number, string>, n: number) => cods.get(n) ?? String(n)
+/** "Ciclo nas predecessoras: 57 → 61 → 57" → com os códigos da tela. */
+const cicloComCodigos = (msg: string, cods: Map<number, string>) => msg.replace(/\d+/g, (n) => rotulo(cods, Number(n)))
+
+/** Testa o plano no motor; ciclo vira mensagem com os códigos de `linhasAtuais` (o que a tela mostra). */
+function cicloNoPlano(ctx: Contexto, linhas: Linha[], linhasAtuais: Linha[]): Erro | null {
   try {
     calcularCronograma({
       plano: planoDe(linhas), exec: [], dataBase: ctx.obra.data_base ?? '2026-01-01', hoje: ctx.obra.data_base ?? '2026-01-01',
@@ -105,7 +125,7 @@ function cicloNoPlano(ctx: Contexto, linhas: Linha[]): Erro | null {
     })
     return null
   } catch (e) {
-    if (e instanceof CicloNasPredecessoras) return falha(e.message)
+    if (e instanceof CicloNasPredecessoras) return falha(cicloComCodigos(e.message, codigosDe(linhasAtuais)))
     throw e
   }
 }
@@ -186,7 +206,7 @@ export async function salvarLinhaRascunhoAction(
   }
   if (!Object.keys(campos).length) return { ok: true }
 
-  const ciclo = cicloNoPlano(ctx, linhas.map((a) => (a.numero === linha.numero ? { ...a, ...campos } : a)))
+  const ciclo = cicloNoPlano(ctx, linhas.map((a) => (a.numero === linha.numero ? { ...a, ...campos } : a)), linhas)
   if (ciclo) return ciclo
   return gravarAtividade(ctx, obraId, versaoId, linha.numero, campos)
 }
@@ -378,12 +398,15 @@ export async function excluirAtividadeAction(obraId: string, versaoId: string, n
   const r = await lerRascunho(obraId, versaoId, numero)
   if (ehErro(r)) return r
   const { ctx, linhas } = r
+  const cods = codigosDe(linhas)
   const sucessora = ordenarAtividades(linhas).find((a) => a.numero !== numero && (a.pred1 === numero || a.pred2 === numero))
   if (sucessora) {
-    return falha(`A atividade ${sucessora.numero} (${sucessora.descricao}) depende dela — tire a predecessora antes de excluir`)
+    return falha(
+      `A atividade ${rotulo(cods, sucessora.numero)} (${sucessora.descricao}) depende dela — tire a predecessora antes de excluir`,
+    )
   }
   if (ctx.obra.atividade_trava === numero) {
-    return falha(`A atividade ${numero} é a atividade-trava da obra — não pode ser excluída`)
+    return falha(`A atividade ${rotulo(cods, numero)} é a atividade-trava da obra — não pode ser excluída`)
   }
   const { data: ex, error: errE } = await ctx.supabase
     .from('obras_atividade_exec')
@@ -392,7 +415,7 @@ export async function excluirAtividadeAction(obraId: string, versaoId: string, n
     .eq('numero', numero)
   if (errE) return erroBanco('ler a execução', errE)
   if (((ex ?? []) as Linha[]).some((e) => Number(e.percentual ?? 0) > 0 || e.status !== 'nao_iniciado')) {
-    return falha(`A atividade ${numero} já tem avanço registrado — não pode ser excluída`)
+    return falha(`A atividade ${rotulo(cods, numero)} já tem avanço registrado — não pode ser excluída`)
   }
 
   const { data, error } = await ctx.supabase
@@ -503,7 +526,7 @@ export async function definirFimAction(
     const inicio = calc.atividades.find((a) => a.numero === numero)!.inicioPrevisto
     duracao = duracaoPorFim(inicio, fim, feriados)
   } catch (e) {
-    if (e instanceof CicloNasPredecessoras) return falha(e.message)
+    if (e instanceof CicloNasPredecessoras) return falha(cicloComCodigos(e.message, codigosDe(linhas)))
     if (e instanceof Error && e.message.startsWith('Fim antes do início')) return falha(e.message)
     throw e
   }

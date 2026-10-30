@@ -211,7 +211,7 @@ describe('salvarLinhaRascunhoAction', () => {
   it('recusa ciclo nas predecessoras', async () => {
     // 3 depende de 5, e 5 → 4 → 3 já existe.
     const r = await salvarLinhaRascunhoAction(OBRA, 'v1', linha({ pred1: 5 }))
-    expect(r).toEqual({ ok: false, erro: 'Ciclo nas predecessoras: 3 → 5 → 4 → 3' })
+    expect(r).toEqual({ ok: false, erro: 'Ciclo nas predecessoras: 1.3 → 1.5 → 1.4 → 1.3' })
     expect(db.obras_atividade.find((a) => a.numero === 3)!.pred1).toBe(2)
   })
 

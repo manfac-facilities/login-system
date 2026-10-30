@@ -130,7 +130,12 @@ function Campo({
   )
 }
 
-/** Lista que grava ao escolher. */
+/**
+ * Lista (Etapa, Pred. 1, Pred. 2). Escolha com o mouse grava na hora; pelo teclado
+ * (setas/letras numa lista fechada disparam `change` a cada passo no Windows) só
+ * grava ao sair (blur/Tab) ou com Enter — senão cada passo moveria a atividade de
+ * etapa ou gravaria predecessoras intermediárias. Esc desfaz.
+ */
 function Lista({
   valor,
   rotulo,
@@ -150,9 +155,20 @@ function Lista({
 }) {
   const [prev, setPrev] = useState(valor)
   const [sel, setSel] = useState(valor)
+  const [sujo, setSujo] = useState(false)
+  const pendente = useRef<string | null>(null)
+  const teclado = useRef(false)
   if (valor !== prev) {
     setPrev(valor)
-    setSel(valor)
+    if (!sujo) setSel(valor)
+  }
+  const confirmar = async () => {
+    const v = pendente.current
+    if (v === null) return
+    pendente.current = null
+    setSujo(false)
+    if (v === valor) return
+    if (!(await onSalvar(v))) setSel(valor)
   }
   return (
     <select
@@ -162,16 +178,31 @@ function Lista({
       data-col={col}
       className={CAMPO + ' ' + className}
       value={sel}
-      onChange={async (e) => {
-        const v = e.target.value
-        setSel(v)
-        if (!(await onSalvar(v))) setSel(valor)
+      onPointerDown={() => {
+        teclado.current = false
+      }}
+      onChange={(e) => {
+        setSel(e.target.value)
+        pendente.current = e.target.value
+        setSujo(true)
+        if (!teclado.current) void confirmar()
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           e.preventDefault()
+          void confirmar()
           moverFoco(e.currentTarget, e.shiftKey ? -1 : 1)
+        } else if (e.key === 'Escape') {
+          pendente.current = null
+          setSujo(false)
+          setSel(valor)
+        } else if (e.key !== 'Tab') {
+          teclado.current = true
         }
+      }}
+      onBlur={() => {
+        teclado.current = false
+        void confirmar()
       }}
     >
       {opcoes.map((o) => (

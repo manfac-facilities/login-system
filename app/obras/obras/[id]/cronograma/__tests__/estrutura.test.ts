@@ -277,7 +277,7 @@ describe('atividades', () => {
 
   it('excluir com sucessora é recusado', async () => {
     expect(await excluirAtividadeAction(OBRA, 'v1', 4)).toEqual({
-      ok: false, erro: 'A atividade 5 (Atividade 5) depende dela — tire a predecessora antes de excluir',
+      ok: false, erro: 'A atividade 2.2 (Atividade 5) depende dela — tire a predecessora antes de excluir',
     })
     expect(doV1()).toHaveLength(6)
   })
@@ -285,15 +285,26 @@ describe('atividades', () => {
   it('excluir com avanço executado é recusado', async () => {
     db.obras_atividade.find((a) => a.numero === 3)!.pred1 = 1
     expect(await excluirAtividadeAction(OBRA, 'v1', 2)).toEqual({
-      ok: false, erro: 'A atividade 2 já tem avanço registrado — não pode ser excluída',
+      ok: false, erro: 'A atividade 1.2 já tem avanço registrado — não pode ser excluída',
     })
     expect(doV1()).toHaveLength(6)
+  })
+
+  it('mensagens citam o código da tela (etapa.posição), não o numero — também no ciclo', async () => {
+    await moverEtapaAction(OBRA, 'v1', 'Estrutura', 'cima') // Estrutura (4, 5, 6) vira a etapa 1
+    expect(await excluirAtividadeAction(OBRA, 'v1', 4)).toEqual({
+      ok: false, erro: 'A atividade 1.2 (Atividade 5) depende dela — tire a predecessora antes de excluir',
+    })
+    // 4 → 6 fecha o ciclo 4 → 6 → 5 → 4.
+    expect(await salvarLinhaRascunhoAction(OBRA, 'v1', { numero: 4, pred1: 6 })).toEqual({
+      ok: false, erro: 'Ciclo nas predecessoras: 1.1 → 1.3 → 1.2 → 1.1',
+    })
   })
 
   it('excluir a atividade-trava é recusado', async () => {
     db.obras_obra[0].atividade_trava = 6
     expect(await excluirAtividadeAction(OBRA, 'v1', 6)).toEqual({
-      ok: false, erro: 'A atividade 6 é a atividade-trava da obra — não pode ser excluída',
+      ok: false, erro: 'A atividade 2.3 é a atividade-trava da obra — não pode ser excluída',
     })
   })
 
