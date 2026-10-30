@@ -401,6 +401,15 @@ exception when others then
 end $$;
 
 do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_plano_item set percentual_final = null, cumprido = null, causa = null where id = pg_temp.item(1);
+  raise exception 'ok:%', (select pg_temp.tf(avaliado_em is null and avaliado_por is null)
+                             from public.obras_plano_item where id = pg_temp.item(1));
+exception when others then
+  perform pg_temp.reg(62, 'administrador zera a avaliação: avaliado_em/avaliado_por voltam a nulo', 'ok:t', sqlerrm);
+end $$;
+
+do $$ begin
   perform pg_temp.jwt('intruso.teste@teste.invalid');
   update public.obras_plano_item set percentual_final = 1, cumprido = true where id = pg_temp.item(2);
   raise exception 'NAO_FALHOU';
@@ -610,10 +619,34 @@ exception when others then
   perform pg_temp.reg(57, 'engenheiro apaga semanal rascunho: semanal_id do envio vira nulo, enviado_por intacto', 'ok:t|t', sqlerrm);
 end $$;
 
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_semanal (id, obra_id, semana_inicio)
+  values ('00000000-0000-4000-8000-00000000b002', '00000000-0000-4000-8000-00000000a007', '2026-11-02');
+  perform pg_temp.jwt(pg_temp.admin_email());
+  insert into public.obras_envio (obra_id, tipo, semanal_id, lado, resultado)
+  values ('00000000-0000-4000-8000-00000000a006', 'semanal', '00000000-0000-4000-8000-00000000b002', 'cliente', 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(60, 'envio da obra A com semanal_id da obra B: bloqueado', 'semanal_id é de outra obra', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_registro (id, obra_id, tipo)
+  values ('00000000-0000-4000-8000-00000000d006', '00000000-0000-4000-8000-00000000a007', 'reuniao');
+  perform pg_temp.jwt(pg_temp.admin_email());
+  insert into public.obras_envio (obra_id, tipo, registro_id, lado, resultado)
+  values ('00000000-0000-4000-8000-00000000a006', 'ata', '00000000-0000-4000-8000-00000000d006', 'cliente', 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(61, 'envio da obra A com registro_id da obra B: bloqueado', 'registro_id é de outra obra', sqlerrm);
+end $$;
+
 -- ============================================================
 -- Cascata da obra (com JWT de não administrador)
 -- ============================================================
-do $
+do $$
 declare v_plano uuid := pg_temp.plano('2026-11-02');
 begin
   -- restrição de outro autor, plano e semanal da obra A; o engenheiro (não
@@ -650,10 +683,10 @@ begin
            filter (where obtido is null or obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 59 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 59 testes rodaram';
+  if v_total <> 62 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 62 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/59 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/62 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 

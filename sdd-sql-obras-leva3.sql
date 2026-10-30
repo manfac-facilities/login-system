@@ -29,6 +29,8 @@
 --   4. obras_envio: tipo aceita também 'semanal' (check recriado a partir da
 --      Leva 2) + coluna semanal_id uuid null -> obras_semanal (on delete set
 --      null; o obras_envio_autor da Leva 2 preserva enviado_por nesse UPDATE).
+--      Trigger obras_envio_vinculo_obra: registro_id e semanal_id só podem
+--      apontar para linha da MESMA obra do envio.
 --
 -- Sem JWT (service role, SQL Editor) as guardas de AUTORIZAÇÃO passam, como
 -- nas levas anteriores. As regras ESTRUTURAIS valem sempre: plano não muda,
@@ -49,6 +51,7 @@
 -- aberto); uma função de trigger por tabela, sem campo de outra tabela.
 --
 -- ROLLBACK (só depois de reverter o app):
+--   drop trigger obras_envio_vinculo_obra on public.obras_envio; drop function public.obras_envio_vinculo_obra();
 --   alter table public.obras_envio drop column semanal_id;
 --   recriar obras_envio_tipo_check sem 'semanal' (só sem envio 'semanal');
 --   drop function public.obras_fechar_plano(uuid, date, jsonb);
@@ -313,6 +316,11 @@ begin
   else
     new.avaliado_em := now();
   end if;
+  -- Reavaliação que zera a avaliação: o item volta a "não avaliado".
+  if new.percentual_final is null and new.cumprido is null and new.causa is null then
+    new.avaliado_em := null;
+    new.avaliado_por := null;
+  end if;
   return new;
 end;
 $$;
@@ -506,6 +514,35 @@ end $$;
 alter table public.obras_envio
   add constraint obras_envio_tipo_check check (tipo is null or tipo in ('diario','ata','imediata','semanal'));
 
+-- Vínculo do envio: registro_id (Leva 2) e semanal_id têm de ser da MESMA obra
+-- do envio. Falha fechada: linha referenciada não achada também recusa (a FK
+-- já garante que existe). security definer só para ler por cima da RLS.
+create or replace function public.obras_envio_vinculo_obra() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  if new.registro_id is not null
+     and (select r.obra_id from public.obras_registro r where r.id = new.registro_id)
+         is distinct from new.obra_id then
+    raise exception 'OBRAS_ENVIO: registro_id é de outra obra' using errcode = '23514';
+  end if;
+  if new.semanal_id is not null
+     and (select s.obra_id from public.obras_semanal s where s.id = new.semanal_id)
+         is distinct from new.obra_id then
+    raise exception 'OBRAS_ENVIO: semanal_id é de outra obra' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_envio_vinculo_obra() from public, anon, authenticated;
+
+drop trigger if exists obras_envio_vinculo_obra on public.obras_envio;
+create trigger obras_envio_vinculo_obra
+  before insert or update of obra_id, registro_id, semanal_id on public.obras_envio
+  for each row execute function public.obras_envio_vinculo_obra();
+
 commit;
 
 -- ============================================================
@@ -577,6 +614,11 @@ from (values
       (select count(*)::text from pg_policies where schemaname = 'public' and tablename = 'obras_envio')),
   (17, 'obras_envio_autor (Leva 2) intacto: UPDATE mantém old.enviado_por', 'true',
       (select (prosrc like '%new.enviado_por := old.enviado_por%')::text
-         from pg_proc where oid = 'public.obras_envio_autor()'::regprocedure))
+         from pg_proc where oid = 'public.obras_envio_autor()'::regprocedure)),
+  (18, 'trigger obras_envio_vinculo_obra ligado, função fechada para authenticated/anon', '1|false',
+      (select (select count(*) from pg_trigger where tgname = 'obras_envio_vinculo_obra'
+                 and tgrelid = 'public.obras_envio'::regclass and not tgisinternal and tgenabled = 'O')::text
+              || '|' || (has_function_privilege('authenticated', 'public.obras_envio_vinculo_obra()', 'EXECUTE')
+                      or has_function_privilege('anon', 'public.obras_envio_vinculo_obra()', 'EXECUTE'))::text))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
