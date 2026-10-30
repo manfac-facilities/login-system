@@ -168,7 +168,7 @@ exception when others then
   perform pg_temp.reg(14, 'registro imediata/urgente com ata jsonb e atividade_numero: passa', 'OK_SEM_ERRO', sqlerrm);
 end $$;
 
-do $ begin
+do $$ begin
   perform pg_temp.jwt('autor.teste@teste.invalid');
   insert into public.obras_registro (id, obra_id, tipo, criado_em, editado_em)
   values ('00000000-0000-4000-8000-00000000d004', '00000000-0000-4000-8000-00000000a005', 'visita',
@@ -178,7 +178,7 @@ do $ begin
     (select (editado_em is null)::text from public.obras_registro where id = '00000000-0000-4000-8000-00000000d004');
 exception when others then
   perform pg_temp.reg(33, 'com JWT, criado_em/editado_em enviados no INSERT são ignorados (janela de 24 h não burlável)', 'ok:true|true', sqlerrm);
-end $;
+end $$;
 
 -- ============================================================
 -- obras_envio: tipos e registro_id
@@ -220,6 +220,24 @@ do $$ begin
   raise exception 'ok:%', (select (registro_id is null)::text from public.obras_envio where id = '00000000-0000-4000-8000-00000000e001');
 exception when others then
   perform pg_temp.reg(18, 'apagar o registro não apaga o envio (registro_id vira nulo)', 'ok:true', sqlerrm);
+end $$;
+
+do $$ begin
+  -- registro do autor; envio feito pelo administrador (tentando falsificar enviado_por);
+  -- o autor apaga o registro dentro das 24 h -> o "on delete set null" não reescreve a autoria.
+  perform pg_temp.jwt('autor.teste@teste.invalid');
+  insert into public.obras_registro (id, obra_id, tipo) values ('00000000-0000-4000-8000-00000000d005', '00000000-0000-4000-8000-00000000a005', 'reuniao');
+  perform pg_temp.jwt(pg_temp.admin_email());
+  insert into public.obras_envio (id, obra_id, tipo, registro_id, lado, resultado, enviado_por)
+  values ('00000000-0000-4000-8000-00000000e002', '00000000-0000-4000-8000-00000000a005', 'ata',
+          '00000000-0000-4000-8000-00000000d005', 'cliente', 'ok', 'falsificado@teste.invalid');
+  perform pg_temp.jwt('autor.teste@teste.invalid');
+  delete from public.obras_registro where id = '00000000-0000-4000-8000-00000000d005';
+  raise exception 'ok:%|%',
+    (select (enviado_por = pg_temp.admin_email())::text from public.obras_envio where id = '00000000-0000-4000-8000-00000000e002'),
+    (select (registro_id is null)::text from public.obras_envio where id = '00000000-0000-4000-8000-00000000e002');
+exception when others then
+  perform pg_temp.reg(34, 'com JWT: enviado_por = quem enviou; autor apaga o registro e o enviado_por não muda', 'ok:true|true', sqlerrm);
 end $$;
 
 -- ============================================================
@@ -355,10 +373,10 @@ begin
            filter (where obtido is null or obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 33 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 33 testes rodaram';
+  if v_total <> 34 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 34 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/33 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/34 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 

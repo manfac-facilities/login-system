@@ -13,6 +13,11 @@
 --      'imediata' (check obras_envio_tipo_check; qualquer check antigo sobre
 --      tipo é substituído) + coluna registro_id uuid null -> obras_registro
 --      (on delete set null).
+--      obras_envio_autor recriada (corpo de sdd-sql-obras-modalidade-obra.sql
+--      3b): o e-mail do JWT só entra no INSERT; no UPDATE fica old.enviado_por.
+--      Sem isso, o "on delete set null" (um UPDATE em obras_envio, que dispara
+--      o trigger de linha) reescreveria o autor do envio com o e-mail de quem
+--      apagou o registro.
 --   3. obras_obra.peso_avanco text check in ('valor','duracao'), nulo =
 --      automático. obras_obra_parametros_guarda recriada a partir de
 --      sdd-sql-obras-modalidade-obra.sql seção 3d (a -2 não a alterou), só
@@ -34,6 +39,7 @@
 -- ROLLBACK (só depois de reverter o app):
 --   drop table public.obras_registro;  -- apaga os registros (exportar antes)
 --   alter table public.obras_envio drop constraint obras_envio_tipo_check, drop column registro_id;
+--   obras_envio_autor: não precisa voltar (o corpo novo só endurece o UPDATE).
 --   alter table public.obras_obra drop column peso_avanco;  (e recriar a guarda sem a coluna)
 --   alter table public.obras_feriado drop column obra_id;   (só sem feriado de obra) e recriar a PK (data)
 -- ============================================================
@@ -158,6 +164,24 @@ end $$;
 alter table public.obras_envio
   add constraint obras_envio_tipo_check check (tipo is null or tipo in ('diario','ata','imediata'));
 
+-- Autoria do envio: o e-mail do JWT só no INSERT; UPDATE (inclusive o
+-- "on delete set null" de registro_id) mantém o enviado_por original.
+-- O trigger (before insert or update) e o revoke da modalidade-obra continuam;
+-- create or replace preserva o revoke.
+create or replace function public.obras_envio_autor() returns trigger
+language plpgsql set search_path = pg_catalog, public as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if tg_op = 'INSERT' then
+    if v_email is not null then new.enviado_por := v_email; end if;
+  else
+    new.enviado_por := old.enviado_por;
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_envio_autor() from public, anon, authenticated;
+
 -- ============================================================
 -- 3. obras_obra.peso_avanco + guarda de parâmetros (corpo de
 -- sdd-sql-obras-modalidade-obra.sql 3d, só com peso_avanco a mais)
@@ -281,6 +305,9 @@ from (values
       (select (count(*) >= 10)::text from public.obras_feriado where obra_id is null)),
   (18, 'obras_feriado: escrita segue só admin (insert/update/delete usam obras_is_admin)', '3',
       (select count(*)::text from pg_policies where schemaname = 'public' and tablename = 'obras_feriado'
-         and cmd in ('INSERT','UPDATE','DELETE') and coalesce(qual, with_check) like '%obras_is_admin%'))
+         and cmd in ('INSERT','UPDATE','DELETE') and coalesce(qual, with_check) like '%obras_is_admin%')),
+  (19, 'obras_envio_autor: JWT só no INSERT, UPDATE mantém old.enviado_por', 'true',
+      (select (prosrc like '%tg_op = ''INSERT''%' and prosrc like '%new.enviado_por := old.enviado_por%')::text
+         from pg_proc where oid = 'public.obras_envio_autor()'::regprocedure))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
