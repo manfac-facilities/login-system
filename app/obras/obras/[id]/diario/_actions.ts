@@ -335,6 +335,7 @@ export async function validarEEnviarAction(
     de: Number(a.de ?? 0),
     para: Number(a.para ?? 0),
     concluida: !!a.concluida,
+    causa: CAUSAS.includes(a.causa) ? (a.causa as CausaNaoAndou) : null,
   }))
 
   let validadoPor = (rdo.validado_por as string | null) ?? email
