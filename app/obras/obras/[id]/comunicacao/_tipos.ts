@@ -72,7 +72,7 @@ export type Registro = {
 /** Destinatário que a tela de envio oferece (ata) ou mostra na confirmação (imediata). */
 export type DestinatarioOpcao = { email: string; nome: string | null; lado: 'cliente' | 'interno'; tipos: string[] }
 
-export type FiltroLinha = 'todos' | 'diario' | TipoRegistro
+export type FiltroLinha = 'todos' | 'diario' | 'semanal' | TipoRegistro
 
 export type ItemLinha =
   | { tipo: 'envio'; chave: string; quando: string; envio: Envio }

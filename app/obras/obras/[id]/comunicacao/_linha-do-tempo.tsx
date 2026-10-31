@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Linha do tempo da Comunicação (Leva 2 §3.1): diários enviados (Abrir PDF),
+ * Linha do tempo da Comunicação (Leva 2 §3.1): diários e semanais enviados (Abrir PDF),
  * registros manuais (ata: Baixar PDF / Enviar por e-mail) e comunicações
  * imediatas, com os envios de cada uma. Editar/Apagar só aparece quando o
  * servidor calculou `podeEditar` (autor ≤ 24 h ou admin) — e a action confere.
@@ -18,7 +18,12 @@ const dataBR = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5
 const quando = (ts: string) => new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
-const ROTULO_ENVIO: Record<string, string> = { diario: 'Diário enviado', ata: 'Ata enviada', imediata: 'Comunicação imediata enviada' }
+const ROTULO_ENVIO: Record<string, string> = {
+  diario: 'Diário enviado',
+  ata: 'Ata enviada',
+  imediata: 'Comunicação imediata enviada',
+  semanal: 'Relatório semanal enviado',
+}
 const rotuloRegistro = (r: Registro) =>
   r.tipo === 'imediata' ? 'Comunicação imediata' : (TIPOS_REGISTRO.find((t) => t.valor === r.tipo)?.rotulo ?? r.tipo)
 
@@ -29,7 +34,8 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
       <div className="flex flex-wrap justify-between gap-2">
         <strong className="text-[#00345e]">
           {compacta ? 'E-mail' : (ROTULO_ENVIO[e.tipo ?? 'diario'] ?? 'Envio')}
-          {e.tipo === 'diario' ? ` · diário de ${dataBR(e.referencia)}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
+          {e.tipo === 'diario' ? ` · diário de ${dataBR(e.referencia)}` : ''}
+          {e.tipo === 'semanal' ? ` · semana de ${dataBR(e.referencia)}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
         </strong>
         <span className={ok ? 'text-[#136c38]' : 'text-[#b23232]'}>{ok ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}</span>
       </div>
@@ -41,6 +47,16 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
       {e.detalhe ? <p className="break-words text-xs text-[#b23232]">{e.detalhe}</p> : null}
       {e.tipo === 'diario' && e.referencia && ISO.test(e.referencia) ? (
         <a href={`/obras/obras/${obraId}/diario/pdf/${e.referencia}`} target="_blank" rel="noopener" className={`${botaoSecundario} mt-2`}>
+          Abrir PDF
+        </a>
+      ) : null}
+      {e.tipo === 'semanal' && e.referencia && ISO.test(e.referencia) ? (
+        <a
+          href={`/obras/obras/${obraId}/comunicacao/semanal/pdf/${e.referencia}`}
+          target="_blank"
+          rel="noopener"
+          className={`${botaoSecundario} mt-2`}
+        >
           Abrir PDF
         </a>
       ) : null}

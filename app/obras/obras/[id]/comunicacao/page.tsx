@@ -7,7 +7,7 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
-import FormRegistro from './_registro-form'
+import FormRegistro, { botaoSecundario } from './_registro-form'
 import { FILTROS, filtroDe, montarLinhaDoTempo } from './_regras'
 import type { DestinatarioOpcao, Envio, Registro } from './_tipos'
 
@@ -109,7 +109,12 @@ export default async function ComunicacaoPage({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
       <section className="flex min-w-0 flex-col gap-3">
-        <h2 className="text-lg font-bold text-[#00345e]">Comunicação</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-[#00345e]">Comunicação</h2>
+          <Link href={`${base}/semanal`} className={botaoSecundario}>
+            Semanal
+          </Link>
+        </div>
         <nav aria-label="Filtrar por tipo" className="flex flex-wrap gap-2">
           {FILTROS.map((f) => (
             <Link

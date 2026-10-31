@@ -39,6 +39,18 @@ describe('linha do tempo', () => {
     expect(screen.queryByRole('button', { name: 'Enviar por e-mail' })).toBeNull()
   })
 
+  it('semanal enviado: rótulo da semana e Abrir PDF do semanal', () => {
+    const semanal: Envio = { ...envio, id: 's1', tipo: 'semanal', referencia: '2026-10-26' }
+    render(
+      <LinhaDoTempo
+        itens={[{ tipo: 'envio', chave: 'e-s1', quando: semanal.enviadoEm, envio: semanal }]}
+        obraId="o1" hoje="2026-10-30" podeEnviar={false} destinatarios={dest}
+      />,
+    )
+    expect(screen.getByText(/Relatório semanal enviado · semana de 26\/10\/2026/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Abrir PDF' })).toHaveAttribute('href', '/obras/obras/o1/comunicacao/semanal/pdf/2026-10-26')
+  })
+
   it('envio da ata: padrão = cliente com tipo diário; confirmação lista quem recebe', () => {
     render(<LinhaDoTempo itens={itens(true)} obraId="o1" hoje="2026-10-30" podeEnviar destinatarios={dest} />)
     expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()

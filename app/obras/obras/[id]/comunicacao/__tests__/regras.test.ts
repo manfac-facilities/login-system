@@ -106,6 +106,15 @@ describe('linha do tempo', () => {
     expect(r1?.tipo === 'registro' && r1.podeEditar).toBe(true)
   })
 
+  it('semanal enviado aparece em Tudo e no filtro Semanais', () => {
+    const l = montarLinhaDoTempo({
+      envios: [...envios, envio({ id: 's1', tipo: 'semanal', referencia: '2026-10-26', enviadoEm: '2026-10-30T20:00:00Z' })],
+      registros, filtro: 'semanal', email: 'ana@manfac.com.br', admin: false, agora,
+    })
+    expect(l.map((i) => i.chave)).toEqual(['e-s1'])
+    expect(montar('diario').map((i) => i.chave)).not.toContain('e-s1')
+  })
+
   it('filtros por tipo', () => {
     expect(montar('diario').map((i) => i.chave)).toEqual(['e-d1'])
     expect(montar('reuniao').map((i) => i.chave)).toEqual(['r-r2'])
