@@ -4,9 +4,11 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
+import { lerAgenda } from '../../_lib/envios-agenda'
 import { etapasDaObra } from '../../_lib/relatorio-periodo'
 import { obraConcluida, relatorioValido, ultimoMesDoMensal } from '../../_pdf/carregar-periodo'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
+import Agenda, { tipoAgendaDe } from './_agenda'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
 import FormRegistro, { botaoSecundario } from './_registro-form'
@@ -27,10 +29,11 @@ export default async function ComunicacaoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ tipo?: string }>
+  searchParams: Promise<{ tipo?: string; aba?: string }>
 }) {
   const { id } = await params
-  const { tipo } = await searchParams
+  const { tipo, aba } = await searchParams
+  const naAgenda = aba === 'agenda'
   const supabase = await createClient()
   const {
     data: { user },
@@ -47,7 +50,7 @@ export default async function ComunicacaoPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const [envR, regR, destR, relR] = await Promise.all([
+  const [envR, regR, destR, relR, agenda] = await Promise.all([
     supabase
       .from('obras_envio')
       .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id')
@@ -63,6 +66,8 @@ export default async function ComunicacaoPage({
       .limit(100),
     supabase.from('obras_destinatario').select('email, nome, lado, tipos').eq('obra_id', id).eq('ativo', true).order('email'),
     supabase.from('obras_relatorio').select('id, tipo, referencia').eq('obra_id', id),
+    // Agenda (dado opcional): falha vira null e a aba avisa, sem derrubar a página.
+    naAgenda ? lerAgenda(supabase, id, lida.dados, hoje) : Promise.resolve(null),
   ])
   if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
@@ -163,6 +168,24 @@ export default async function ComunicacaoPage({
             ) : null}
           </nav>
         </div>
+        <nav aria-label="Abas da comunicação" className="flex gap-2">
+          <Link href={base} aria-current={naAgenda ? undefined : 'page'} className={chip(!naAgenda)}>
+            Histórico
+          </Link>
+          <Link href={`${base}?aba=agenda`} aria-current={naAgenda ? 'page' : undefined} className={chip(naAgenda)}>
+            Agenda
+          </Link>
+        </nav>
+        {naAgenda ? (
+          <Agenda
+            obraId={id}
+            agenda={agenda}
+            tipo={tipoAgendaDe(tipo)}
+            fases={new Map(etapas.map((e) => [e.referencia, e.nome]))}
+            hrefTipo={(t) => (t === 'todos' ? `${base}?aba=agenda` : `${base}?aba=agenda&tipo=${t}`)}
+          />
+        ) : (
+          <>
         <nav aria-label="Filtrar por tipo" className="flex flex-wrap gap-2">
           {FILTROS.map((f) => (
             <Link
@@ -179,6 +202,8 @@ export default async function ComunicacaoPage({
           <EstadoVazio>Nada registrado ainda</EstadoVazio>
         ) : (
           <LinhaDoTempo itens={itens} obraId={id} hoje={hoje} podeEnviar={podeEnviar} destinatarios={destinatarios} />
+        )}
+          </>
         )}
       </section>
       <aside className="flex flex-col gap-4">

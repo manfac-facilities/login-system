@@ -1,52 +1,53 @@
 /**
- * Faixa de alertas do painel da obra (Leva 3 §2.4, SGO §5). Puro: calcula a
- * partir do que o painel já leu. Só aparece o que estiver valendo.
+ * Faixa de alertas do painel da obra (Leva 3 §2.4, SGO §5; comunicações pela
+ * agenda desde a Leva 4). Puro: calcula a partir do que o painel já leu. Só
+ * aparece o que estiver valendo.
  */
-import { ehDiaUtil } from './calendario'
+import type { ItemAgenda } from './agenda'
 import type { ResultadoCronograma } from './cronograma'
-import { dataEnvioSemanal, segundaDaSemana, type Restricao } from './last-planner'
+import type { Restricao } from './last-planner'
 
 export type Alerta = {
-  id: 'atrasadas' | 'desvio' | 'diario' | 'semanal' | 'cliente' | 'vencidas'
+  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas'
   tom: 'negativo' | 'atencao'
   texto: string
   acao: { rotulo: string; href: string }
 }
 
-const DIA_MS = 86_400_000
-const somar = (d: string, n: number) => {
-  const [a, m, x] = d.split('-').map(Number)
-  return new Date(Date.UTC(a, m - 1, x) + n * DIA_MS).toISOString().slice(0, 10)
-}
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
 const num1 = (x: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(x)
 
-/** Último dia útil antes de `hoje` (até 30 dias para trás). */
-function diaUtilAnterior(hoje: string, feriados: ReadonlySet<string>): string | null {
-  for (let i = 1; i <= 30; i++) {
-    const d = somar(hoje, -i)
-    if (ehDiaUtil(d, feriados)) return d
-  }
-  return null
+const ROTULO: Record<ItemAgenda['tipo'], string> = {
+  diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal', fase: 'Relatório de fase', entrega: 'Relatório de entrega',
+}
+/** Rótulo curto do item. Fase: sem o numero (a data prevista identifica). */
+export const rotuloItem = (i: Pick<ItemAgenda, 'tipo' | 'referencia' | 'dataPrevista'>) =>
+  i.tipo === 'mensal' ? `Mensal ${i.referencia.slice(5, 7)}/${i.referencia.slice(0, 4)}`
+  : i.tipo === 'entrega' ? ROTULO.entrega
+  : `${ROTULO[i.tipo]} de ${ddmm(i.dataPrevista)}`
+
+/** Link do rascunho do item (diário da data, semanal da segunda, relatório de período). */
+export function hrefDoItem(obraId: string, i: Pick<ItemAgenda, 'tipo' | 'referencia'>): string {
+  const raiz = `/obras/obras/${obraId}`
+  if (i.tipo === 'diario') return `${raiz}/diario?data=${i.referencia}`
+  if (i.tipo === 'semanal') return `${raiz}/comunicacao/semanal?semana=${i.referencia}`
+  return `${raiz}/comunicacao/relatorio/${i.tipo}/${i.referencia}`
 }
 
 export function calcularAlertas(p: {
   obraId: string
   hoje: string
   calc: ResultadoCronograma | null
-  /** Base (v1) salva: diário e semanal só cobram depois disso. */
-  baseSalva: boolean
-  dataBase: string | null
-  feriados: ReadonlySet<string>
-  /** Data do último diário que o cliente recebeu (`ultimosDiariosEnviados`). */
-  ultimoDiarioEnviado: string | null
-  semanais: { semanaInicio: string; estado: string }[]
+  /**
+   * Agenda de comunicação (`agendaDaObra`); null = leitura falhou ou sem
+   * agenda: não há alerta de comunicação (nunca alerta em falso).
+   */
+  agenda: ItemAgenda[] | null
   restricoes: Restricao[]
 }): Alerta[] {
   const raiz = `/obras/obras/${p.obraId}`
   const out: Alerta[] = []
-  const iniciou = p.baseSalva && !!p.dataBase
 
   const atrasadas = (p.calc?.atividades ?? []).filter((a) => a.situacao === 'atrasada' || a.situacao === 'inicio_atrasado').length
   if (atrasadas > 0) {
@@ -65,27 +66,26 @@ export function calcularAlertas(p: {
     })
   }
 
-  // Diário do último dia útil passado que o cliente não recebeu (só enquanto há atividade por concluir).
-  const ontem = diaUtilAnterior(p.hoje, p.feriados)
-  const emAndamento = (p.calc?.atividades ?? []).some((a) => a.status !== 'concluido')
-  if (iniciou && emAndamento && ontem && ontem >= p.dataBase! && (!p.ultimoDiarioEnviado || p.ultimoDiarioEnviado < ontem)) {
+  // Comunicações da agenda (qualquer tipo): ATRASADO e ENVIAR HOJE (agenda vem ordenada por data prevista).
+  const agenda = `${raiz}/comunicacao?aba=agenda`
+  const atrasados = (p.agenda ?? []).filter((i) => i.situacao === 'atrasado')
+  if (atrasados.length > 0) {
+    const um = atrasados.length === 1
     out.push({
-      id: 'diario', tom: 'atencao',
-      texto: `Diário de ${ddmm(ontem)} sem envio ao cliente`,
-      acao: { rotulo: 'Abrir diário', href: `${raiz}/diario?data=${ontem}` },
+      id: 'comunicacao_atrasada', tom: 'atencao',
+      texto: um
+        ? `${rotuloItem(atrasados[0])} atrasado, sem envio ao cliente`
+        : `${atrasados.length} comunicações atrasadas, a mais antiga: ${rotuloItem(atrasados[0])}`,
+      acao: um ? { rotulo: 'Abrir rascunho', href: hrefDoItem(p.obraId, atrasados[0]) } : { rotulo: 'Ver agenda', href: agenda },
     })
   }
-
-  // Semanal: o desta semana a partir da data de envio; antes dela, o da semana passada.
-  const atual = segundaDaSemana(p.hoje)
-  const alvo = p.hoje >= dataEnvioSemanal(atual, p.feriados) ? atual : somar(atual, -7)
-  const envioAlvo = dataEnvioSemanal(alvo, p.feriados)
-  const estadoAlvo = p.semanais.find((s) => s.semanaInicio === alvo)?.estado
-  if (iniciou && p.dataBase! <= envioAlvo && estadoAlvo !== 'enviado') {
+  const hoje = (p.agenda ?? []).filter((i) => i.situacao === 'enviar_hoje')
+  if (hoje.length > 0) {
+    const um = hoje.length === 1
     out.push({
-      id: 'semanal', tom: 'atencao',
-      texto: `Semanal de ${ddmm(envioAlvo)} não enviado`,
-      acao: { rotulo: 'Abrir semanal', href: `${raiz}/comunicacao/semanal?semana=${alvo}` },
+      id: 'comunicacao_hoje', tom: 'atencao',
+      texto: `Enviar hoje: ${hoje.map(rotuloItem).join(', ')}`,
+      acao: um ? { rotulo: 'Abrir rascunho', href: hrefDoItem(p.obraId, hoje[0]) } : { rotulo: 'Ver agenda', href: agenda },
     })
   }
 

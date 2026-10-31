@@ -13,7 +13,7 @@ describe('FaixaAlertas', () => {
       <FaixaAlertas
         alertas={[
           { id: 'atrasadas', tom: 'negativo', texto: '2 atividades atrasadas — comunicar o cliente hoje', acao: { rotulo: 'Comunicação imediata', href: '/obras/obras/o1/comunicacao' } },
-          { id: 'semanal', tom: 'atencao', texto: 'Semanal de 30/10 não enviado', acao: { rotulo: 'Abrir semanal', href: '/obras/obras/o1/comunicacao/semanal?semana=2026-10-26' } },
+          { id: 'comunicacao_hoje', tom: 'atencao', texto: 'Enviar hoje: Semanal de 30/10', acao: { rotulo: 'Abrir semanal', href: '/obras/obras/o1/comunicacao/semanal?semana=2026-10-26' } },
         ]}
       />,
     )

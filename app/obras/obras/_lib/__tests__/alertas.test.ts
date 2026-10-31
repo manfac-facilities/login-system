@@ -1,5 +1,6 @@
-/** Faixa de alertas do painel (Leva 3 §2.4). */
-import { calcularAlertas } from '../alertas'
+/** Faixa de alertas do painel (Leva 3 §2.4; comunicações pela agenda na Leva 4). */
+import type { ItemAgenda } from '../agenda'
+import { calcularAlertas, hrefDoItem } from '../alertas'
 import type { AtividadeCalculada, ResultadoCronograma } from '../cronograma'
 import type { Restricao } from '../last-planner'
 
@@ -11,12 +12,12 @@ const restricao = (over: Partial<Restricao>): Restricao => ({
   id: 'r', obraId: 'o1', atividadeNumero: 1, tipo: 'decisao_cliente', descricao: 'x', responsavel: 'cliente',
   prazo: null, situacao: 'identificada', liberadaEm: null, criadoPor: null, criadoEm: 'x', ...over,
 })
+const item = (tipo: ItemAgenda['tipo'], referencia: string, dataPrevista: string, situacao: ItemAgenda['situacao']): ItemAgenda => ({
+  tipo, referencia, dataPrevista, dataReal: null, situacao,
+})
 
-// Quarta 28/10/2026; semana de 26/10, sexta 30/10.
 const base = {
-  obraId: 'o1', hoje: '2026-10-28', calc: calc(0, [ativ(9, 'no_prazo')]), baseSalva: true, dataBase: '2026-10-01',
-  feriados: new Set<string>(), ultimoDiarioEnviado: '2026-10-27' as string | null,
-  semanais: [{ semanaInicio: '2026-10-19', estado: 'enviado' }], restricoes: [] as Restricao[],
+  obraId: 'o1', hoje: '2026-10-28', calc: calc(0, [ativ(9, 'no_prazo')]), agenda: [] as ItemAgenda[] | null, restricoes: [] as Restricao[],
 }
 const ids = (p: Partial<typeof base>) => calcularAlertas({ ...base, ...p }).map((a) => a.id)
 
@@ -35,34 +36,44 @@ describe('calcularAlertas', () => {
     expect(ids({ calc: calc(-5) })).toEqual([])
   })
 
-  it('obra com todas as atividades concluídas: não cobra diário', () => {
-    const fim = { ...ativ(9, 'no_prazo'), status: 'concluido' } as AtividadeCalculada
-    expect(ids({ ultimoDiarioEnviado: null, calc: calc(0, [fim]) })).not.toContain('diario')
+  it('agenda: enviado, programado e sem agenda (null) não alertam', () => {
+    const agenda = [item('diario', '2026-10-27', '2026-10-27', 'no_prazo'), item('semanal', '2026-10-26', '2026-10-30', 'programado'), item('diario', '2026-10-26', '2026-10-26', 'com_atraso')]
+    expect(ids({ agenda })).toEqual([])
+    expect(ids({ agenda: null })).toEqual([])
   })
 
-  it('diário do último dia útil sem envio; segunda olha a sexta; feriado pula', () => {
-    expect(ids({ ultimoDiarioEnviado: '2026-10-26' })).toEqual(['diario'])
-    expect(ids({ ultimoDiarioEnviado: null })).toEqual(['diario'])
-    // Segunda 02/11: o dia útil anterior é sexta 30/10.
-    const seg = { hoje: '2026-11-02', semanais: [{ semanaInicio: '2026-10-26', estado: 'enviado' }] }
-    expect(ids({ ...seg, ultimoDiarioEnviado: '2026-10-30' })).toEqual([])
-    expect(ids({ ...seg, ultimoDiarioEnviado: '2026-10-29' })).toEqual(['diario'])
-    expect(ids({ ...seg, ultimoDiarioEnviado: '2026-10-29', feriados: new Set(['2026-10-30']) })).toEqual([])
-    // Obra que começa hoje não cobra diário de ontem.
-    expect(ids({ dataBase: '2026-10-28', ultimoDiarioEnviado: null })).toEqual([])
+  it('ATRASADO de um item: texto do item e link do rascunho (qualquer tipo)', () => {
+    const d = calcularAlertas({ ...base, agenda: [item('diario', '2026-10-27', '2026-10-27', 'atrasado')] })
+    expect(d).toHaveLength(1)
+    expect(d[0]).toMatchObject({ id: 'comunicacao_atrasada', texto: 'Diário de 27/10 atrasado, sem envio ao cliente', acao: { href: '/obras/obras/o1/diario?data=2026-10-27' } })
+    const m = calcularAlertas({ ...base, agenda: [item('mensal', '2026-09', '2026-09-30', 'atrasado')] })
+    expect(m[0]).toMatchObject({ texto: 'Mensal 09/2026 atrasado, sem envio ao cliente', acao: { href: '/obras/obras/o1/comunicacao/relatorio/mensal/2026-09' } })
   })
 
-  it('semanal: cobra a semana passada até a data de envio, depois a atual', () => {
-    expect(ids({ semanais: [] })).toEqual(['semanal']) // semana de 19/10 sem envio
-    const sexta = { hoje: '2026-10-30', ultimoDiarioEnviado: '2026-10-29' }
-    expect(calcularAlertas({ ...base, ...sexta }).find((a) => a.id === 'semanal')).toMatchObject({
-      texto: 'Semanal de 30/10 não enviado', acao: { href: '/obras/obras/o1/comunicacao/semanal?semana=2026-10-26' },
+  it('vários ATRASADO: contagem, a mais antiga e link para a aba Agenda', () => {
+    const a = calcularAlertas({
+      ...base,
+      agenda: [item('diario', '2026-10-26', '2026-10-26', 'atrasado'), item('semanal', '2026-10-19', '2026-10-23', 'atrasado'), item('diario', '2026-10-27', '2026-10-27', 'atrasado')],
     })
-    expect(ids({ ...sexta, semanais: [{ semanaInicio: '2026-10-26', estado: 'enviado' }] })).toEqual([])
-    // Feriado na sexta: a data de envio antecipa para quinta.
-    expect(ids({ hoje: '2026-10-29', ultimoDiarioEnviado: '2026-10-28', feriados: new Set(['2026-10-30']) })).toEqual(['semanal'])
-    // Sem base salva, nada de diário/semanal.
-    expect(ids({ semanais: [], baseSalva: false, ultimoDiarioEnviado: null })).toEqual([])
+    expect(a[0]).toMatchObject({
+      id: 'comunicacao_atrasada', texto: '3 comunicações atrasadas, a mais antiga: Diário de 26/10', acao: { href: '/obras/obras/o1/comunicacao?aba=agenda' },
+    })
+  })
+
+  it('ENVIAR HOJE de qualquer tipo, separado do atrasado', () => {
+    const a = calcularAlertas({
+      ...base,
+      agenda: [item('diario', '2026-10-27', '2026-10-27', 'atrasado'), item('diario', '2026-10-28', '2026-10-28', 'enviar_hoje'), item('semanal', '2026-10-26', '2026-10-28', 'enviar_hoje')],
+    })
+    expect(a.map((x) => x.id)).toEqual(['comunicacao_atrasada', 'comunicacao_hoje'])
+    expect(a[1]).toMatchObject({ texto: 'Enviar hoje: Diário de 28/10, Semanal de 28/10', acao: { href: '/obras/obras/o1/comunicacao?aba=agenda' } })
+    const u = calcularAlertas({ ...base, agenda: [item('entrega', 'entrega', '2026-10-28', 'enviar_hoje')] })
+    expect(u[0]).toMatchObject({ texto: 'Enviar hoje: Relatório de entrega', acao: { href: '/obras/obras/o1/comunicacao/relatorio/entrega/entrega' } })
+  })
+
+  it('hrefDoItem por tipo', () => {
+    expect(hrefDoItem('o1', { tipo: 'semanal', referencia: '2026-10-26' })).toBe('/obras/obras/o1/comunicacao/semanal?semana=2026-10-26')
+    expect(hrefDoItem('o1', { tipo: 'fase', referencia: '3' })).toBe('/obras/obras/o1/comunicacao/relatorio/fase/3')
   })
 
   it('restrições: do cliente em aberto e vencidas; liberada não conta', () => {
