@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Restricao } from '../../_lib/last-planner'
+import type { PedidoDaRestricao } from '../../_lib/restricao-pedido'
 import { apagarRestricaoAction, moverRestricaoAction } from './_actions'
+import PedidoDaRestricaoBloco from './_pedido'
 import { SITUACOES, rotuloResponsavelRestricao, rotuloTipo, vizinha, type SituacaoRestricao } from './_tipos'
 
 export type CartaoRestricao = Restricao & { atividade: string; podeApagar: boolean; atrasada: boolean }
 
 const btn = 'min-h-11 rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606] disabled:opacity-45'
 
-function Cartao({ r }: { r: CartaoRestricao }) {
+function Cartao({ r, obraId, pedidos }: { r: CartaoRestricao; obraId: string; pedidos: PedidoDaRestricao[] | null }) {
   const router = useRouter()
   const [erro, setErro] = useState<string | null>(null)
   const [indo, setIndo] = useState(false)
@@ -43,6 +45,7 @@ function Cartao({ r }: { r: CartaoRestricao }) {
           {r.atrasada ? ' · atrasada' : ''}
         </span>
       ) : null}
+      {r.tipo === 'material' ? <PedidoDaRestricaoBloco obraId={obraId} restricao={r} pedidos={pedidos} /> : null}
       <div className="flex flex-wrap gap-2">
         {volta ? <button type="button" disabled={indo} className={btn} onClick={() => mover(volta)} aria-label="Voltar">← Voltar</button> : null}
         {avanca ? <button type="button" disabled={indo} className={btn} onClick={() => mover(avanca)} aria-label="Avançar">Avançar →</button> : null}
@@ -62,7 +65,16 @@ function Cartao({ r }: { r: CartaoRestricao }) {
   )
 }
 
-export default function Quadro({ colunas }: { colunas: Record<SituacaoRestricao, CartaoRestricao[]> }) {
+export default function Quadro({
+  colunas,
+  obraId,
+  pedidos,
+}: {
+  colunas: Record<SituacaoRestricao, CartaoRestricao[]>
+  obraId: string
+  /** Pedidos do Compras da obra (sem valores); null = leitura falhou. */
+  pedidos: PedidoDaRestricao[] | null
+}) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {SITUACOES.map((s) => (
@@ -72,7 +84,7 @@ export default function Quadro({ colunas }: { colunas: Record<SituacaoRestricao,
           </h3>
           <ul className="flex flex-col gap-2">
             {colunas[s.valor].map((r) => (
-              <Cartao key={r.id} r={r} />
+              <Cartao key={r.id} r={r} obraId={obraId} pedidos={pedidos} />
             ))}
           </ul>
           {colunas[s.valor].length === 0 ? <p className="text-xs text-[#5a7380]">Nenhuma restrição aqui.</p> : null}

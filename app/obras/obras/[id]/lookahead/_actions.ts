@@ -131,9 +131,41 @@ export async function editarRestricaoAction(
   if (!r) return falha('Restrição não encontrada')
   const { error } = await supabase
     .from('obras_restricao')
-    .update({ tipo: i.tipo, descricao: v.descricao, responsavel: i.responsavel, prazo: i.prazo })
+    .update({ tipo: i.tipo, descricao: v.descricao, responsavel: i.responsavel, prazo: i.prazo, ...(i.tipo !== 'material' ? { cmp_pedido_id: null } : {}) })
     .eq('id', id)
   if (error) return erroBanco('editar a restrição', error)
+  revalidar(r.obra_id as string)
+  return { ok: true }
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Liga (ou desliga, `pedidoId` null) a restrição de Material a um pedido do Compras.
+ * Defesa em duas camadas: o pedido tem de estar em `obras_restricao_pedidos(obra da restrição)`
+ * (cliente da SESSÃO — nunca o admin) e o trigger `obras_restricao_pedido_guarda` recusa
+ * pedido de outra obra (OBRAS_RESTRICAO_PEDIDO). Ligar não libera a restrição.
+ */
+export async function ligarPedidoAction(id: string, pedidoId: string | null): Promise<Resultado> {
+  const auth = await autorizar()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (pedidoId !== null && !UUID.test(pedidoId)) return falha('Pedido inválido')
+  const { data: r, error: e1 } = await supabase.from('obras_restricao').select('id, obra_id, tipo').eq('id', id).maybeSingle()
+  if (e1) return erroBanco('ler a restrição', e1)
+  if (!r) return falha('Restrição não encontrada')
+  if (r.tipo !== 'material') return falha('Só restrição de Material liga a um pedido do Compras')
+  if (pedidoId !== null) {
+    const { data: lista, error: e2 } = await supabase.rpc('obras_restricao_pedidos', { p_obra: r.obra_id })
+    if (e2) return falha('Não deu para ler os pedidos do Compras. Tente de novo em instantes.')
+    const daObra = ((lista ?? []) as { pedido_id: string }[]).some((p) => p.pedido_id === pedidoId)
+    if (!daObra) return falha('Esse pedido não é desta obra')
+  }
+  const { error } = await supabase.from('obras_restricao').update({ cmp_pedido_id: pedidoId }).eq('id', id)
+  if (error) {
+    if (error.message?.includes('OBRAS_RESTRICAO_PEDIDO')) return falha('Esse pedido não é desta obra')
+    return erroBanco('ligar o pedido', error)
+  }
   revalidar(r.obra_id as string)
   return { ok: true }
 }

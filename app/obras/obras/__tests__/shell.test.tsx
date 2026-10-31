@@ -124,6 +124,30 @@ describe('ShellObra', () => {
     expect(within(lateral).getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/obras/obras/o1/configuracoes')
   })
 
+  it('item Financeiro escondido sem permissão de ver valores (Review Focus 1)', () => {
+    montar()
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).queryByRole('link', { name: 'Financeiro' })).toBeNull()
+  })
+
+  it('com permissão de ver valores, Financeiro aponta para /financeiro (também no Mais do celular)', async () => {
+    const { unmount } = render(
+      <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null} financeiro>
+        <p>x</p>
+      </ShellObra>,
+    )
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).getByRole('link', { name: 'Financeiro' })).toHaveAttribute('href', '/obras/obras/o1/financeiro')
+    unmount()
+    render(
+      <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null} financeiro estreito>
+        <p>x</p>
+      </ShellObra>,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Mais' }))
+    expect(screen.getByRole('link', { name: 'Financeiro' })).toHaveAttribute('href', '/obras/obras/o1/financeiro')
+  })
+
   it('sem versão salva e sem dados: textos neutros', () => {
     render(
       <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null}>

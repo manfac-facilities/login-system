@@ -418,3 +418,10 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - **Restrição da Manfac/terceiros vai ao prompt** com tipo e código, sem descrição; a resposta do engenheiro pode
   citar área interna. Motivo: desenho do spec; só a instrução da IA e a revisão humana antes de publicar protegem.
 - **Apresentação (`apresentacao.ts`) não leva a situação.** Motivo: o spec não pede.
+
+## 31/10/2026 — Obras Financeiro da obra, Fase A (`feat/obras-financeiro-a`), deixado de propósito
+- Falta índice em `frn_contratos.obra_id` (a leitura `obras_fin_fornecedores` filtra por ele). Sem custo hoje (poucos contratos); criar quando crescer.
+- Entrega com situação `divergencia` não conta como entregue no selo "Pronta para liberar" (só `confirmada`/`resolvida`). Confirmar com o José se está certo.
+- Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
+- As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
+- Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).

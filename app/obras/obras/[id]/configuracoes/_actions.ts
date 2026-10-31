@@ -146,6 +146,50 @@ export async function salvarPesoAvancoAction(obraId: string, peso: PesoAvanco): 
   return { ok: true }
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * "Esta obra é aditivo de…" (OS filha). Só admin. Um nível só e sem ciclo: a mãe é modalidade
+ * obra e não é aditivo de outra; obra com aditivos não vira aditivo. O trigger da guarda de
+ * parâmetros confere tudo de novo (OBRAS_OBRA_PAI).
+ */
+export async function salvarObraMaeAction(obraId: string, maeId: string | null): Promise<Resultado> {
+  const auth = await autorizarAdmin()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (maeId !== null && !UUID.test(maeId)) return falha('Obra mãe inválida')
+  if (maeId === obraId) return falha('A obra não pode ser aditivo de si mesma')
+
+  const { data: obra, error: eObra } = await supabase.from('obras_obra').select('id, modalidade').eq('id', obraId).maybeSingle()
+  if (eObra) return erroBanco('ler a obra', eObra)
+  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
+
+  if (maeId !== null) {
+    const { data: mae, error: eMae } = await supabase
+      .from('obras_obra')
+      .select('id, modalidade, obra_pai_id')
+      .eq('id', maeId)
+      .maybeSingle()
+    if (eMae) return erroBanco('ler a obra mãe', eMae)
+    if (!mae) return falha('Obra mãe não encontrada')
+    if (mae.modalidade !== 'obra') return falha('A obra mãe tem de ser da modalidade OBRA')
+    if (mae.obra_pai_id) return falha('A obra escolhida já é aditivo de outra (um nível só)')
+    const { data: filhas, error: eF } = await supabase.from('obras_obra').select('id').eq('obra_pai_id', obraId)
+    if (eF) return erroBanco('ler os aditivos', eF)
+    if ((filhas ?? []).length) return falha('Esta obra tem aditivos; não pode ser aditivo de outra (um nível só)')
+  }
+
+  const { error } = await supabase.from('obras_obra').update({ obra_pai_id: maeId }).eq('id', obraId)
+  if (error) {
+    const m = /OBRAS_OBRA_PAI: (.+)/.exec(error.message ?? '')
+    if (m) return falha(m[1].charAt(0).toUpperCase() + m[1].slice(1))
+    return erroBanco('salvar a obra mãe', error)
+  }
+  revalidatePath(`/obras/obras/${obraId}/configuracoes`)
+  if (maeId) revalidatePath(`/obras/obras/${maeId}/configuracoes`)
+  return { ok: true }
+}
+
 const dataValida = (s: string) => {
   if (!ISO.test(s)) return false
   const d = new Date(s + 'T00:00:00Z')

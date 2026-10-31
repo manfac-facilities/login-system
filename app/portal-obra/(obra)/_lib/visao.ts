@@ -17,6 +17,7 @@ import { atrasoDoLado, dataBr, pct, textoDesvio } from '@/app/obras/obras/_lib/e
 import { highlightsDoPeriodo } from '@/app/obras/obras/_lib/highlights'
 import { ppc, type PlanoSemana, type Restricao } from '@/app/obras/obras/_lib/last-planner'
 import type { ObraGrande } from '@/app/obras/obras/_lib/leitura'
+import { comDatasDoPedido } from '@/app/obras/obras/_lib/restricao-pedido'
 import { ddmm } from '@/app/obras/obras/_lib/relatorio-periodo'
 import type { SituacaoRelatorio } from '@/app/obras/obras/_lib/situacao'
 import { rotuloTipo } from '@/app/obras/obras/[id]/lookahead/_tipos'
@@ -156,7 +157,8 @@ export function aguardandoCliente(og: ObraGrande, restricoes: Restricao[], hoje:
       vencida: false,
     }))
 
-  const decisoes: ItemAguardando[] = restricoes
+  // Com pedido do Compras ligado, o prazo mostrado é a previsão de entrega do pedido.
+  const decisoes: ItemAguardando[] = comDatasDoPedido(restricoes)
     .filter((r) => r.responsavel === 'cliente' && r.situacao !== 'liberada')
     .sort((a, b) => (a.prazo ?? '9999').localeCompare(b.prazo ?? '9999'))
     .map((r) => {
