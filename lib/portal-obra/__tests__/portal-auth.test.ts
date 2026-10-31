@@ -42,7 +42,7 @@ async function enviados() {
 async function codigoPara(email: string, ip = '10.0.0.1', quando = agora) {
   mockEnviar.mockClear()
   agora = quando // o banco (rpc) grava criado_em com o relógio dele
-  const r = await pedirCodigo(email, ip, quando)
+  const r = await pedirCodigo(email, ip)
   expect(r).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
   const env = await enviados()
   expect(env).toHaveLength(1)
@@ -91,7 +91,7 @@ describe('pedirCodigo', () => {
     ['vazio', ''],
     ['não string', 42],
   ])('%s → mesma mensagem, nada gravado, nada enviado', async (_n, email) => {
-    const r = await pedirCodigo(email, '10.0.0.1', agora)
+    const r = await pedirCodigo(email, '10.0.0.1')
     expect(r).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
     expect(mockFake.db.obras_portal_codigo ?? []).toHaveLength(0)
     expect(await enviados()).toHaveLength(0)
@@ -100,7 +100,8 @@ describe('pedirCodigo', () => {
   it('Review Focus 1: 6º pedido na hora é recusado com a mesma mensagem, sem gravar nem enviar; libera após 1 h', async () => {
     for (let i = 0; i < 5; i++) await codigoPara('cliente@dpsp.com.br', `10.0.0.${i}`, em(i * MIN))
     mockEnviar.mockClear()
-    const sexto = await pedirCodigo('cliente@dpsp.com.br', '10.0.0.99', em(30 * MIN))
+    agora = em(30 * MIN)
+    const sexto = await pedirCodigo('cliente@dpsp.com.br', '10.0.0.99')
     expect(sexto).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
     expect(mockFake.db.obras_portal_codigo).toHaveLength(5)
     expect(await enviados()).toHaveLength(0)
@@ -112,28 +113,28 @@ describe('pedirCodigo', () => {
     mockFake.db.obras_portal_acesso = Array.from({ length: 21 }, (_, i) => ({ obra_id: 'o', email: `c${i}@x.com`, nome: '', ativo: true }))
     for (let i = 0; i < 20; i++) await codigoPara(`c${i}@x.com`, '9.9.9.9')
     mockEnviar.mockClear()
-    expect(await pedirCodigo('c20@x.com', '9.9.9.9', agora)).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
+    expect(await pedirCodigo('c20@x.com', '9.9.9.9')).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
     expect(await enviados()).toHaveLength(0)
     await codigoPara('c20@x.com', '8.8.8.8')
   })
 
   it('responde na hora, igual para cadastrado e não cadastrado: nenhum acesso ao banco antes da resposta', async () => {
     for (const email of ['cliente@dpsp.com.br', 'ninguem@dpsp.com.br', 'inativo@dpsp.com.br']) {
-      expect(await pedirCodigo(email, '1.1.1.1', agora)).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
+      expect(await pedirCodigo(email, '1.1.1.1')).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
       expect(mockFake.chamadas).toHaveLength(0)
       expect(mockPendentes).toHaveLength(1)
       mockPendentes.splice(0)
     }
     expect(mockEnviar).not.toHaveBeenCalled()
     // O trabalho só acontece depois, em after().
-    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)
+    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1')
     expect(mockFake.db.obras_portal_codigo ?? []).toHaveLength(0)
     expect(await enviados()).toHaveLength(1)
     expect(mockFake.db.obras_portal_codigo).toHaveLength(1)
   })
 
   it('10 pedidos simultâneos do mesmo e-mail → no máximo 5 códigos e 5 e-mails, um só código vivo', async () => {
-    const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => pedirCodigo('cliente@dpsp.com.br', `10.1.0.${i}`, agora)))
+    const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => pedirCodigo('cliente@dpsp.com.br', `10.1.0.${i}`)))
     rs.forEach((r) => expect(r).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME }))
     const env = await enviados()
     expect(env).toHaveLength(5)
@@ -144,8 +145,8 @@ describe('pedirCodigo', () => {
 
   it('sem IP: manda "sem-ip:<e-mail normalizado>" à rpc (limite do e-mail, não balde global) e loga uma vez sem PII', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => {})
-    await pedirCodigo('Cliente@DPSP.com.br', null, agora)
-    await pedirCodigo('cliente@dpsp.com.br', null, agora)
+    await pedirCodigo('Cliente@DPSP.com.br', null)
+    await pedirCodigo('cliente@dpsp.com.br', null)
     await rodarAfter()
     const ips = mockFake.chamadas.filter((c) => c.op === 'rpc').map((c) => c.patch.p_ip)
     expect(ips).toEqual(['sem-ip:cliente@dpsp.com.br', 'sem-ip:cliente@dpsp.com.br'])
@@ -154,7 +155,7 @@ describe('pedirCodigo', () => {
   })
 
   it('e-mail normalizado uma vez (tab, quebra de linha, NBSP, maiúsculas) antes de validar; a rpc recebe o normalizado', async () => {
-    await pedirCodigo(String.fromCharCode(9, 0xa0, 32) + 'Cliente@DPSP.com.BR' + String.fromCharCode(10, 0xa0), '1.1.1.1', agora)
+    await pedirCodigo(String.fromCharCode(9, 0xa0, 32) + 'Cliente@DPSP.com.BR' + String.fromCharCode(10, 0xa0), '1.1.1.1')
     expect(await enviados()).toHaveLength(1)
     const [rpc] = mockFake.chamadas.filter((c) => c.op === 'rpc')
     expect(rpc.patch.p_email).toBe('cliente@dpsp.com.br')
@@ -162,14 +163,14 @@ describe('pedirCodigo', () => {
 
   it('rpc recusa (limite) → nada enviado', async () => {
     mockFake.rpc = async () => ({ data: false, error: null })
-    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)
+    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1')
     expect(await enviados()).toHaveLength(0)
   })
 
   it('e-mail com mais de 254 caracteres é recusado, não truncado', async () => {
     const longo = `${'a'.repeat(250)}@dpsp.com.br`
     mockFake.db.obras_portal_acesso.push({ obra_id: 'o', email: longo.slice(0, 254), nome: '', ativo: true })
-    await pedirCodigo(longo, '1.1.1.1', agora)
+    await pedirCodigo(longo, '1.1.1.1')
     expect(await enviados()).toHaveLength(0)
     expect(mockFake.chamadas).toHaveLength(0)
   })
@@ -177,7 +178,7 @@ describe('pedirCodigo', () => {
   it('erro na emissão (rpc) → falha fechada (não envia), mesma mensagem', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockFake.falhar.add('rpc:obras_portal_emitir_codigo')
-    expect(await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
+    expect(await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1')).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
     expect(mockFake.db.obras_portal_codigo ?? []).toHaveLength(0)
     expect(await enviados()).toHaveLength(0)
   })
@@ -186,7 +187,7 @@ describe('pedirCodigo', () => {
     if (s === undefined) delete process.env.PORTAL_OBRA_SEGREDO
     else process.env.PORTAL_OBRA_SEGREDO = s
     jest.spyOn(console, 'error').mockImplementation(() => {})
-    expect(await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)).toEqual({ ok: false, mensagem: MENSAGEM_INDISPONIVEL })
+    expect(await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1')).toEqual({ ok: false, mensagem: MENSAGEM_INDISPONIVEL })
     expect(await verificarCodigo('cliente@dpsp.com.br', '123456', agora)).toEqual({ ok: false, mensagem: MENSAGEM_INDISPONIVEL })
     expect(mockFake.chamadas).toHaveLength(0)
     expect(await enviados()).toHaveLength(0)
@@ -260,6 +261,25 @@ describe('verificarCodigo', () => {
     const novo = await codigoPara('cliente@dpsp.com.br', '10.0.0.1', em(MIN))
     if (velho !== novo) expect(await verificarCodigo('cliente@dpsp.com.br', velho, em(MIN))).toEqual(INVALIDO)
     expect((await verificarCodigo('cliente@dpsp.com.br', novo, em(MIN))).ok).toBe(true)
+  })
+
+  it('pedido duplo (I1): o mais recente por criado_em está aposentado e existe um vivo → aceita o vivo', async () => {
+    // Corrida de duas emissões: a transação que começou antes grava por último e aposenta a outra,
+    // que pode ficar com criado_em MAIOR. A conferência tem de achar o código vivo, não o mais novo.
+    const vivo = await codigoPara('cliente@dpsp.com.br')
+    mockFake.db.obras_portal_codigo.push({
+      id: 'id-999999', email: 'cliente@dpsp.com.br', codigo_hash: 'f'.repeat(64), tentativas: 0,
+      criado_em: em(30_000).toISOString(), expira_em: em(30_000 + 10 * MIN).toISOString(),
+      usado_em: em(20_000).toISOString(), ip: '10.0.0.1',
+    })
+    expect(await verificarCodigo('cliente@dpsp.com.br', errado(vivo), em(MIN))).toEqual(INVALIDO)
+    expect((await verificarCodigo('cliente@dpsp.com.br', vivo, em(MIN))).ok).toBe(true)
+  })
+
+  it('validade vem do banco: o app não manda p_expira_em ao rpc', async () => {
+    await codigoPara('cliente@dpsp.com.br')
+    const rpc = mockFake.chamadas.find((c) => c.tabela === 'rpc:obras_portal_emitir_codigo')!
+    expect(Object.keys(rpc.patch).sort()).toEqual(['p_codigo_hash', 'p_email', 'p_ip'])
   })
 
   it('código de um e-mail não serve para outro', async () => {

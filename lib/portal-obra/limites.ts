@@ -3,6 +3,7 @@
  * 20 por IP) são aplicados atomicamente na função SQL `obras_portal_emitir_codigo`.
  */
 
+/** Só para o texto do e-mail: a validade real é calculada no rpc `obras_portal_emitir_codigo` (interval '10 minutes'). */
 export const CODIGO_VALIDADE_MIN = 10
 export const CODIGO_MAX_TENTATIVAS = 5
 

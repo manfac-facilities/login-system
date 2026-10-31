@@ -93,11 +93,14 @@ export class FakeAdmin {
   /**
    * Espelho de `obras_portal_emitir_codigo` (sdd-sql-obras-leva5.sql): conta e grava num
    * passo só (como as travas de transação), aposenta os códigos vivos do e-mail.
+   * Como o rpc, calcula expira_em = criado_em + 10 min no relógio "do banco" (`agora`);
+   * recusa `p_expira_em` (parâmetro que não existe mais).
    */
   async rpc(nome: string, p: Record<string, any>) {
     this.chamadas.push({ tabela: `rpc:${nome}`, op: 'rpc', patch: p })
     if (this.falhar.has(`rpc:${nome}`)) return { data: null, error: { message: 'falha simulada' } }
     if (nome !== 'obras_portal_emitir_codigo') return { data: null, error: { message: 'rpc desconhecida' } }
+    if ('p_expira_em' in p) return { data: null, error: { message: 'function does not exist' } }
     const linhas = (this.db.obras_portal_codigo ??= [])
     const agora = this.agora()
     const desde = agora.getTime() - 60 * 60_000
@@ -107,7 +110,7 @@ export class FakeAdmin {
     if (naHora.filter((r) => (r.ip ?? null) === (p.p_ip ?? null)).length >= 20) return { data: false, error: null }
     linhas.filter((r) => r.email === email && (r.usado_em ?? null) === null).forEach((r) => { r.usado_em = agora.toISOString() })
     linhas.push({
-      id: `id-${String(++this.seq).padStart(6, '0')}`, email, codigo_hash: p.p_codigo_hash, expira_em: p.p_expira_em,
+      id: `id-${String(++this.seq).padStart(6, '0')}`, email, codigo_hash: p.p_codigo_hash, expira_em: new Date(agora.getTime() + 10 * 60_000).toISOString(),
       tentativas: 0, usado_em: null, criado_em: agora.toISOString(), ip: p.p_ip,
     })
     return { data: true, error: null }

@@ -1,7 +1,8 @@
 /**
  * Código de entrada do portal (spec Leva 5 §3.1): 6 dígitos, 10 min, uso único,
  * 5 tentativas por código, 5 códigos/hora por e-mail, 20/hora por IP; só o HMAC no banco.
- * Só o código mais recente do e-mail vale (a emissão aposenta os anteriores). Tentativa e uso são gravados por
+ * Só um código vivo por e-mail (a emissão aposenta os anteriores sob trava). A validade (10 min)
+ * é calculada pelo banco na emissão. Tentativa e uso são gravados por
  * compare-and-swap (um UPDATE condicionado ao valor lido, com retorno): duas
  * conferências simultâneas nunca contam a mesma tentativa nem usam o código duas vezes.
  * Nunca logar código, token ou segredo.
@@ -49,7 +50,7 @@ function emailDoCodigo(codigo: string) {
  */
 let avisouSemIp = false
 
-export async function pedirCodigo(emailBruto: unknown, ip: string | null, agora: Date = new Date()): Promise<ResultadoPedido> {
+export async function pedirCodigo(emailBruto: unknown, ip: string | null): Promise<ResultadoPedido> {
   const segredo = segredoPortal()
   if (!segredo) return { ok: false, mensagem: MENSAGEM_INDISPONIVEL }
   const email = normalizarEmail(emailBruto)
@@ -60,23 +61,23 @@ export async function pedirCodigo(emailBruto: unknown, ip: string | null, agora:
       avisouSemIp = true
     }
     const ipEfetivo = ip || `sem-ip:${email}`
-    after(() => emitirEEnviar(segredo, email, ipEfetivo, agora))
+    after(() => emitirEEnviar(segredo, email, ipEfetivo))
   }
   return { ok: true, mensagem: MENSAGEM_UNIFORME }
 }
 
-async function emitirEEnviar(segredo: string, email: string, ip: string, agora: Date): Promise<void> {
+async function emitirEEnviar(segredo: string, email: string, ip: string): Promise<void> {
   try {
     const admin = createAdminClient()
     const obras = await obrasComAcessoAtivo(admin, email)
     if (obras.length === 0) return
 
     const codigo = String(randomInt(0, 1_000_000)).padStart(6, '0')
+    // criado_em e expira_em (criado_em + 10 min) saem do relógio do banco, depois das travas.
     const { data: emitiu, error } = await admin.rpc('obras_portal_emitir_codigo', {
       p_email: email,
       p_ip: ip,
       p_codigo_hash: hashDoCodigo(segredo, email, codigo),
-      p_expira_em: new Date(agora.getTime() + CODIGO_VALIDADE_MIN * 60_000).toISOString(),
     })
     if (error) {
       console.error('[portal-obra] falha ao emitir código')
@@ -105,10 +106,13 @@ export async function verificarCodigo(emailBruto: unknown, codigoBruto: unknown,
     const admin = createAdminClient()
     const agoraIso = agora.toISOString()
 
-    // Só o código mais recente do e-mail vale (pedir outro aposenta o anterior).
+    // O código VIVO do e-mail (não usado, não vencido). A emissão aposenta os outros sob trava,
+    // então há no máximo um; filtrar antes de ordenar evita pegar um aposentado que tenha
+    // criado_em maior (pedido duplo). Desempate por id só por determinismo.
     const { data, error } = await admin.from('obras_portal_codigo')
       .select('id, codigo_hash, expira_em, tentativas, usado_em')
-      .eq('email', email).order('criado_em', { ascending: false }).order('id', { ascending: false }).limit(1).maybeSingle()
+      .eq('email', email).is('usado_em', null).gt('expira_em', agoraIso)
+      .order('criado_em', { ascending: false }).order('id', { ascending: false }).limit(1).maybeSingle()
     if (error || !data) return invalido
     const c = data as LinhaCodigo
     if (c.usado_em !== null && c.usado_em !== undefined) return invalido

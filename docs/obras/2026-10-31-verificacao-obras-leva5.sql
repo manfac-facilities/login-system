@@ -920,13 +920,11 @@ declare v_ok int := 0; v_6 boolean;
 begin
   perform pg_temp.como('service_role', null);
   for i in 1..5 loop
-    if public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.' || i, repeat('a', 64),
-                                         now() + interval '10 minutes') then
+    if public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.' || i, repeat('a', 64)) then
       v_ok := v_ok + 1;
     end if;
   end loop;
-  v_6 := public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.99', repeat('a', 64),
-                                           now() + interval '10 minutes');
+  v_6 := public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.99', repeat('a', 64));
   raise exception 'ok:%|%|%', v_ok, pg_temp.tf(v_6),
     (select count(*) from public.obras_portal_codigo where email = 'limite.email@exemplo.invalid');
 exception when others then
@@ -938,13 +936,11 @@ declare v_ok int := 0; v_21 boolean;
 begin
   perform pg_temp.como('service_role', null);
   for i in 1..20 loop
-    if public.obras_portal_emitir_codigo('ip' || i || '@exemplo.invalid', '203.0.113.77', repeat('a', 64),
-                                         now() + interval '10 minutes') then
+    if public.obras_portal_emitir_codigo('ip' || i || '@exemplo.invalid', '203.0.113.77', repeat('a', 64)) then
       v_ok := v_ok + 1;
     end if;
   end loop;
-  v_21 := public.obras_portal_emitir_codigo('ip21@exemplo.invalid', '203.0.113.77', repeat('a', 64),
-                                            now() + interval '10 minutes');
+  v_21 := public.obras_portal_emitir_codigo('ip21@exemplo.invalid', '203.0.113.77', repeat('a', 64));
   raise exception 'ok:%|%', v_ok, pg_temp.tf(v_21);
 exception when others then
   perform pg_temp.reg(89, 'emitir: 20 por IP na hora passam, o 21º é recusado', 'ok:20|f', sqlerrm);
@@ -952,22 +948,21 @@ end $$;
 
 do $$ begin
   perform pg_temp.como('service_role', null);
-  perform public.obras_portal_emitir_codigo('  Dois.Codigos@Exemplo.invalid', '198.51.100.200', repeat('a', 64),
-                                            now() + interval '10 minutes');
-  perform public.obras_portal_emitir_codigo('dois.codigos@exemplo.invalid', '198.51.100.200', repeat('b', 64),
-                                            now() + interval '10 minutes');
+  perform public.obras_portal_emitir_codigo('  Dois.Codigos@Exemplo.invalid', '198.51.100.200', repeat('a', 64));
+  perform public.obras_portal_emitir_codigo('dois.codigos@exemplo.invalid', '198.51.100.200', repeat('b', 64));
   raise exception 'ok:%|%|%',
     (select count(*) from public.obras_portal_codigo where email = 'dois.codigos@exemplo.invalid' and usado_em is null),
     (select count(*) from public.obras_portal_codigo where email = 'dois.codigos@exemplo.invalid' and usado_em is not null),
-    (select codigo_hash = repeat('b', 64) from public.obras_portal_codigo
+    (select (codigo_hash = repeat('b', 64) and expira_em - criado_em = interval '10 minutes')::text
+       from public.obras_portal_codigo
       where email = 'dois.codigos@exemplo.invalid' and usado_em is null);
 exception when others then
-  perform pg_temp.reg(90, 'emitir: e-mail normalizado; o código anterior é aposentado, só o novo vale', 'ok:1|1|true', sqlerrm);
+  perform pg_temp.reg(90, 'emitir: e-mail normalizado; o anterior é aposentado, só o novo vale e expira 10 min depois de criado (banco)', 'ok:1|1|true', sqlerrm);
 end $$;
 
 do $$ begin
   perform pg_temp.como('authenticated', pg_temp.admin_email());
-  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64), now() + interval '10 minutes');
+  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64));
   raise exception 'NAO_FALHOU';
 exception when others then
   perform pg_temp.reg(91, 'authenticated (até admin) executa obras_portal_emitir_codigo: sem privilégio', 'permission denied', sqlerrm);
@@ -975,7 +970,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.como('anon', null);
-  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64), now() + interval '10 minutes');
+  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64));
   raise exception 'NAO_FALHOU';
 exception when others then
   perform pg_temp.reg(92, 'anon executa obras_portal_emitir_codigo: sem privilégio', 'permission denied', sqlerrm);

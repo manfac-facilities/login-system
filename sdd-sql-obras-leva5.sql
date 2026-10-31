@@ -21,9 +21,11 @@
 --      policy (as existentes são apagadas a cada aplicação) e revoke all de
 --      anon/authenticated. Só a service role (servidor) lê e grava. Hash do
 --      código/token com ao menos 32 caracteres (nunca o código cru).
---      obras_portal_emitir_codigo(email, ip, codigo_hash, expira_em) -> boolean
+--      obras_portal_emitir_codigo(email, ip, codigo_hash) -> boolean
 --      (só service role): travas por e-mail e IP, 5/h por e-mail, 20/h por
---      IP (false = limite), aposenta os códigos vivos do e-mail e grava o novo.
+--      IP (false = limite), aposenta os códigos vivos do e-mail e grava o novo
+--      com criado_em = clock_timestamp() (hora depois das travas) e
+--      expira_em = criado_em + 10 min (relógio do banco, não o do app).
 --   3. obras_documento: pasta fixa (projetos|laudos|art|layout|termos|outros),
 --      path no bucket obras-docs = '<obra_id>/<uuid>-<nome saneado>'
 --      (nome saneado = [A-Za-z0-9._-], 1..200), validado por trigger com ou
@@ -84,7 +86,7 @@
 --   drop function public.obras_docs_pode_escrever(text);
 --   drop trigger obras_obra_delete_guarda on public.obras_obra;
 --   drop function public.obras_obra_delete_guarda();
---   drop function public.obras_portal_emitir_codigo(text, text, text, timestamptz);
+--   drop function public.obras_portal_emitir_codigo(text, text, text);
 --   (bucket obras-docs: esvaziar pela API do Storage antes de apagar)
 --   drop table public.obras_situacao_cliente, public.obras_situacao_pergunta;
 --   drop function public.obras_situacao_cliente_guarda(), public.obras_situacao_cliente_sem_truncate(),
@@ -310,17 +312,25 @@ grant select, insert, update, delete on public.obras_portal_sessao to service_ro
 -- códigos vivos do e-mail (um só código vale) e grava o novo.
 -- false = limite atingido (o app responde a mesma mensagem genérica).
 -- Só service role: execute revogado de public/anon/authenticated.
+-- criado_em = clock_timestamp() lido DEPOIS das travas (now() é o início da
+-- transação: num pedido duplo, o código gravado por último poderia ter
+-- criado_em menor que o aposentado). Validade de 10 min no relógio do banco.
+-- Assinatura antiga (com p_expira_em, nunca aplicada) apagada se existir.
+drop function if exists public.obras_portal_emitir_codigo(text, text, text, timestamptz);
 create or replace function public.obras_portal_emitir_codigo(
-  p_email text, p_ip text, p_codigo_hash text, p_expira_em timestamptz)
+  p_email text, p_ip text, p_codigo_hash text)
 returns boolean
 language plpgsql
 security definer
 set search_path = pg_catalog, public
 as $$
-declare v_email text := lower(btrim(p_email));
+declare
+  v_email text := lower(btrim(p_email));
+  v_agora timestamptz;
 begin
   perform pg_advisory_xact_lock(hashtextextended('obras_portal:' || coalesce(v_email, ''), 0));
   perform pg_advisory_xact_lock(hashtextextended('obras_portal_ip:' || coalesce(p_ip, ''), 0));
+  v_agora := clock_timestamp();
 
   if (select count(*) from public.obras_portal_codigo c
        where c.email = v_email and c.criado_em > now() - interval '1 hour') >= 5 then
@@ -336,14 +346,14 @@ begin
      set usado_em = now()
    where email = v_email and usado_em is null;
 
-  insert into public.obras_portal_codigo (email, codigo_hash, expira_em, ip)
-  values (v_email, p_codigo_hash, p_expira_em, p_ip);
+  insert into public.obras_portal_codigo (email, codigo_hash, criado_em, expira_em, ip)
+  values (v_email, p_codigo_hash, v_agora, v_agora + interval '10 minutes', p_ip);
   return true;
 end;
 $$;
-revoke execute on function public.obras_portal_emitir_codigo(text, text, text, timestamptz)
+revoke execute on function public.obras_portal_emitir_codigo(text, text, text)
   from public, anon, authenticated;
-grant execute on function public.obras_portal_emitir_codigo(text, text, text, timestamptz) to service_role;
+grant execute on function public.obras_portal_emitir_codigo(text, text, text) to service_role;
 
 -- ============================================================
 -- 3. obras_documento (path validado; engenheiro/admin escreve)
@@ -1020,11 +1030,13 @@ from (values
               || '|' || (has_function_privilege('authenticated', p.oid, 'EXECUTE')
                       or has_function_privilege('anon', p.oid, 'EXECUTE'))::text
               || '|' || has_function_privilege('service_role', p.oid, 'EXECUTE')::text
-         from pg_proc p where p.oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text,timestamptz)'))),
-  (34, 'obras_portal_emitir_codigo trava e-mail e IP e aplica 5/h e 20/h', 'true',
+         from pg_proc p where p.oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text)'))),
+  (34, 'obras_portal_emitir_codigo trava e-mail e IP, aplica 5/h e 20/h, validade no banco; assinatura antiga ausente', 'true',
       (select (prosrc like '%pg_advisory_xact_lock%obras_portal:%' and prosrc like '%obras_portal_ip:%'
-               and prosrc like '%>= 5%' and prosrc like '%>= 20%' and prosrc like '%set usado_em = now()%')::text
-         from pg_proc where oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text,timestamptz)'))),
+               and prosrc like '%>= 5%' and prosrc like '%>= 20%' and prosrc like '%set usado_em = now()%'
+               and prosrc like '%v_agora := clock_timestamp()%' and prosrc like '%v_agora + interval ''10 minutes''%'
+               and to_regprocedure('public.obras_portal_emitir_codigo(text,text,text,timestamptz)') is null)::text
+         from pg_proc where oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text)'))),
   (35, 'e-mail do portal: só ASCII imprimível e rtrim do ponto final', 'true',
       (select (pg_get_constraintdef(oid) like '%rtrim(email%' and pg_get_constraintdef(oid) like '%x21%')::text
          from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass and conname = 'obras_portal_acesso_email_check')),
