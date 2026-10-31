@@ -760,27 +760,234 @@ exception when others then
 end $$;
 
 -- ============================================================
--- Cascata da obra (com JWT de não administrador)
+-- Apagar obra: só admin com JWT; documentos e mensagens com FK restrict
 -- ============================================================
 do $$ begin
   perform pg_temp.jwt('eng.teste@teste.invalid');
-  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a010';
-  raise exception 'ok:%|%|%',
-    (select count(*) from public.obras_portal_acesso where obra_id = '00000000-0000-4000-8000-00000000a010'),
-    (select count(*) from public.obras_documento where obra_id = '00000000-0000-4000-8000-00000000a010'),
-    (select count(*) from public.obras_mensagem where obra_id = '00000000-0000-4000-8000-00000000a010');
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a011';
+  raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(74, 'apagar a obra leva acesso, documentos e mensagens em cascata', 'ok:0|0|0', sqlerrm);
+  perform pg_temp.reg(74, 'engenheiro (não admin) apaga obra: bloqueado', 'só administrador apaga obra', sqlerrm);
 end $$;
 
-select pg_temp.reg(75, 'existe administrador para os testes de admin', 't',
-  (select pg_temp.tf(pg_temp.admin_email() is not null)));
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a011';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(75, 'authenticated do Obras (não admin) apaga obra pelo navegador: bloqueado', 'só administrador apaga obra', sqlerrm);
+end $$;
+
+do $$ begin
+  -- Sem o documento D1, só a mensagem segura a obra A.
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  delete from public.obras_documento where obra_id = '00000000-0000-4000-8000-00000000a010';
+  perform pg_temp.jwt(pg_temp.admin_email());
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a010';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(76, 'admin apaga obra com mensagens: FK restrict', 'obras_mensagem_obra_id_fkey', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_obra (id, os, modalidade) values ('00000000-0000-4000-8000-00000000a012', 'TESTE-VERIF-LEVA5-C', 'obra');
+  insert into public.obras_documento (obra_id, pasta, nome, path)
+  values ('00000000-0000-4000-8000-00000000a012', 'outros', 'X.pdf',
+          '00000000-0000-4000-8000-00000000a012/88888888-8888-4888-8888-888888888888-x.pdf');
+  perform pg_temp.jwt(pg_temp.admin_email());
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a012';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(77, 'admin apaga obra com documento: FK restrict', 'obras_documento_obra_id_fkey', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a010';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(78, 'sem JWT (service role) apaga obra com documento/mensagem: FK restrict', 'violates foreign key constraint', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_portal_acesso (obra_id, email) values ('00000000-0000-4000-8000-00000000a011', 'b@exemplo.invalid');
+  perform pg_temp.jwt(pg_temp.admin_email());
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a011';
+  raise exception 'ok:%|%', (select count(*) from public.obras_obra where id = '00000000-0000-4000-8000-00000000a011'),
+    (select count(*) from public.obras_portal_acesso where obra_id = '00000000-0000-4000-8000-00000000a011');
+exception when others then
+  perform pg_temp.reg(79, 'admin apaga obra sem documento/mensagem: passa e o acesso do portal sai em cascata', 'ok:0|0', sqlerrm);
+end $$;
+
+-- ============================================================
+-- Ajustes da revisão (fix round 1)
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt(null);
+  truncate public.obras_mensagem;
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(80, 'TRUNCATE de obras_mensagem (postgres): bloqueado', 'não pode ser apagada (truncate)', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_mensagem (obra_id, autor_tipo, autor_email, texto)
+  values ('00000000-0000-4000-8000-00000000a010', 'manfac', 'x', E'\n\t \n');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(81, 'texto só de quebras de linha e tabs: check', 'obras_mensagem_texto_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_portal_acesso (obra_id, email)
+  values ('00000000-0000-4000-8000-00000000a011', 'fulano@manfac.com.br.');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(82, 'e-mail Manfac com ponto final de FQDN: recusado', 'obras_portal_acesso_email_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_portal_acesso (obra_id, email)
+  values ('00000000-0000-4000-8000-00000000a011', U&'fulano\200B@exemplo.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(83, 'e-mail com caractere invisível (U+200B): recusado', 'obras_portal_acesso_email_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_portal_acesso set id = '00000000-0000-4000-8000-0000000f0009'
+   where id = '00000000-0000-4000-8000-0000000f0001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(84, 'trocar o id de um acesso: imutável', 'id, obra_id e email são imutáveis', sqlerrm);
+end $$;
+
+-- Storage: policy "obras docs delete" (o GUC libera o DELETE direto em
+-- versões do Storage com trigger protect_delete; sem ele não tem efeito).
+do $$
+declare v int;
+begin
+  perform set_config('storage.allow_delete_query', 'true', true);
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  delete from storage.objects
+   where bucket_id = 'obras-docs' and name = '00000000-0000-4000-8000-00000000a010/22222222-2222-4222-8222-222222222222-fixture.pdf';
+  get diagnostics v = row_count;
+  raise exception 'ok:%', v;
+exception when others then
+  perform pg_temp.reg(85, 'engenheiro apaga objeto da própria obra: passa', 'ok:1', sqlerrm);
+end $$;
+
+do $$
+declare v int;
+begin
+  perform set_config('storage.allow_delete_query', 'true', true);
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  delete from storage.objects
+   where bucket_id = 'obras-docs' and name = '00000000-0000-4000-8000-00000000a010/22222222-2222-4222-8222-222222222222-fixture.pdf';
+  get diagnostics v = row_count;
+  raise exception 'ok:%', v;
+exception when others then
+  perform pg_temp.reg(86, 'usuário do Obras não engenheiro apaga objeto: 0 linhas', 'ok:0', sqlerrm);
+end $$;
+
+do $$
+declare v int;
+begin
+  perform pg_temp.jwt(null);
+  insert into storage.objects (bucket_id, name)
+  values ('obras-docs', '00000000-0000-4000-8000-00000000a011/99999999-9999-4999-8999-999999999999-b.pdf');
+  perform set_config('storage.allow_delete_query', 'true', true);
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  delete from storage.objects
+   where bucket_id = 'obras-docs' and name = '00000000-0000-4000-8000-00000000a011/99999999-9999-4999-8999-999999999999-b.pdf';
+  get diagnostics v = row_count;
+  raise exception 'ok:%', v;
+exception when others then
+  perform pg_temp.reg(87, 'engenheiro apaga objeto de outra obra: 0 linhas', 'ok:0', sqlerrm);
+end $$;
+
+-- obras_portal_emitir_codigo
+do $$
+declare v_ok int := 0; v_6 boolean;
+begin
+  perform pg_temp.como('service_role', null);
+  for i in 1..5 loop
+    if public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.' || i, repeat('a', 64),
+                                         now() + interval '10 minutes') then
+      v_ok := v_ok + 1;
+    end if;
+  end loop;
+  v_6 := public.obras_portal_emitir_codigo('limite.email@exemplo.invalid', '198.51.100.99', repeat('a', 64),
+                                           now() + interval '10 minutes');
+  raise exception 'ok:%|%|%', v_ok, pg_temp.tf(v_6),
+    (select count(*) from public.obras_portal_codigo where email = 'limite.email@exemplo.invalid');
+exception when others then
+  perform pg_temp.reg(88, 'emitir: 5 por e-mail na hora passam, o 6º é recusado e não grava', 'ok:5|f|5', sqlerrm);
+end $$;
+
+do $$
+declare v_ok int := 0; v_21 boolean;
+begin
+  perform pg_temp.como('service_role', null);
+  for i in 1..20 loop
+    if public.obras_portal_emitir_codigo('ip' || i || '@exemplo.invalid', '203.0.113.77', repeat('a', 64),
+                                         now() + interval '10 minutes') then
+      v_ok := v_ok + 1;
+    end if;
+  end loop;
+  v_21 := public.obras_portal_emitir_codigo('ip21@exemplo.invalid', '203.0.113.77', repeat('a', 64),
+                                            now() + interval '10 minutes');
+  raise exception 'ok:%|%', v_ok, pg_temp.tf(v_21);
+exception when others then
+  perform pg_temp.reg(89, 'emitir: 20 por IP na hora passam, o 21º é recusado', 'ok:20|f', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('service_role', null);
+  perform public.obras_portal_emitir_codigo('  Dois.Codigos@Exemplo.invalid', '198.51.100.200', repeat('a', 64),
+                                            now() + interval '10 minutes');
+  perform public.obras_portal_emitir_codigo('dois.codigos@exemplo.invalid', '198.51.100.200', repeat('b', 64),
+                                            now() + interval '10 minutes');
+  raise exception 'ok:%|%|%',
+    (select count(*) from public.obras_portal_codigo where email = 'dois.codigos@exemplo.invalid' and usado_em is null),
+    (select count(*) from public.obras_portal_codigo where email = 'dois.codigos@exemplo.invalid' and usado_em is not null),
+    (select codigo_hash = repeat('b', 64) from public.obras_portal_codigo
+      where email = 'dois.codigos@exemplo.invalid' and usado_em is null);
+exception when others then
+  perform pg_temp.reg(90, 'emitir: e-mail normalizado; o código anterior é aposentado, só o novo vale', 'ok:1|1|true', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64), now() + interval '10 minutes');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(91, 'authenticated (até admin) executa obras_portal_emitir_codigo: sem privilégio', 'permission denied', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('anon', null);
+  perform public.obras_portal_emitir_codigo('x@exemplo.invalid', '198.51.100.1', repeat('a', 64), now() + interval '10 minutes');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(92, 'anon executa obras_portal_emitir_codigo: sem privilégio', 'permission denied', sqlerrm);
+end $$;
+
+select pg_temp.reg(93, 'existe administrador para os testes de admin', 'ok:t',
+  (select 'ok:' || pg_temp.tf(pg_temp.admin_email() is not null)));
 
 -- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
+-- Comparação por strpos (no LIKE o '_' dos nomes de constraint é curinga).
 -- ============================================================
 select n, teste, esperado, obtido,
-       case when obtido like '%' || esperado || '%' then 'OK' else '*** FALHOU ***' end as resultado
+       case when strpos(obtido, esperado) > 0 then 'OK' else '*** FALHOU ***' end as resultado
   from _v order by n;
 
 do $$
@@ -789,15 +996,15 @@ declare
   v_ok    int;
   v_falhas text;
 begin
-  select count(*), count(*) filter (where obtido like '%' || esperado || '%'),
+  select count(*), count(*) filter (where strpos(obtido, esperado) > 0),
          string_agg(n::text || ' (' || coalesce(obtido, 'NULL') || ')', '; ' order by n)
-           filter (where obtido is null or obtido not like '%' || esperado || '%')
+           filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 75 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 75 testes rodaram';
+  if v_total <> 93 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 93 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/75 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/93 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
