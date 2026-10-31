@@ -65,9 +65,10 @@ export function calcularAlertas(p: {
     })
   }
 
-  // Diário do último dia útil passado que o cliente não recebeu.
+  // Diário do último dia útil passado que o cliente não recebeu (só enquanto há atividade por concluir).
   const ontem = diaUtilAnterior(p.hoje, p.feriados)
-  if (iniciou && ontem && ontem >= p.dataBase! && (!p.ultimoDiarioEnviado || p.ultimoDiarioEnviado < ontem)) {
+  const emAndamento = (p.calc?.atividades ?? []).some((a) => a.status !== 'concluido')
+  if (iniciou && emAndamento && ontem && ontem >= p.dataBase! && (!p.ultimoDiarioEnviado || p.ultimoDiarioEnviado < ontem)) {
     out.push({
       id: 'diario', tom: 'atencao',
       texto: `Diário de ${ddmm(ontem)} sem envio ao cliente`,

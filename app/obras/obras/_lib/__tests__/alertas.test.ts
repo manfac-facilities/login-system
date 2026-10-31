@@ -14,7 +14,7 @@ const restricao = (over: Partial<Restricao>): Restricao => ({
 
 // Quarta 28/10/2026; semana de 26/10, sexta 30/10.
 const base = {
-  obraId: 'o1', hoje: '2026-10-28', calc: calc(0), baseSalva: true, dataBase: '2026-10-01',
+  obraId: 'o1', hoje: '2026-10-28', calc: calc(0, [ativ(9, 'no_prazo')]), baseSalva: true, dataBase: '2026-10-01',
   feriados: new Set<string>(), ultimoDiarioEnviado: '2026-10-27' as string | null,
   semanais: [{ semanaInicio: '2026-10-19', estado: 'enviado' }], restricoes: [] as Restricao[],
 }
@@ -33,6 +33,11 @@ describe('calcularAlertas', () => {
   it('desvio < −5 p.p. alerta; −5 exato não', () => {
     expect(ids({ calc: calc(-5.2) })).toEqual(['desvio'])
     expect(ids({ calc: calc(-5) })).toEqual([])
+  })
+
+  it('obra com todas as atividades concluídas: não cobra diário', () => {
+    const fim = { ...ativ(9, 'no_prazo'), status: 'concluido' } as AtividadeCalculada
+    expect(ids({ ultimoDiarioEnviado: null, calc: calc(0, [fim]) })).not.toContain('diario')
   })
 
   it('diário do último dia útil sem envio; segunda olha a sexta; feriado pula', () => {

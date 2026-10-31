@@ -39,7 +39,7 @@ describe('sugerirObservacoes', () => {
     const [args] = createMock.mock.calls[0]
     expect(args).toMatchObject({
       model: 'claude-opus-5-5',
-      max_tokens: 2000,
+      max_tokens: 1200,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       output_config: { effort: 'low' },
