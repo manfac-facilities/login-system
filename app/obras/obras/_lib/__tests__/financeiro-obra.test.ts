@@ -20,18 +20,18 @@ describe('consolidarFinanceiro', () => {
       fornecedores: [],
       notas: [],
       compras: [
-        { obraId: 'm', os: '100', status: 'emitido', total_centavos: 1000 },
-        { obraId: 'm', os: '100', status: 'emitido', total_centavos: 2000, nf: '5' },
-        { obraId: 'm', os: '100', status: 'emitido', total_centavos: 4000, nf: '6', pago_em: '2026-10-01' },
-        { obraId: 'm', os: '100', status: 'falha', total_centavos: 9999 },
-        { obraId: 'm', os: '100', status: 'cancelado', total_centavos: 9999 },
+        { obraId: 'm', status: 'emitido', total_centavos: 1000 },
+        { obraId: 'm', status: 'emitido', total_centavos: 2000, nf: '5' },
+        { obraId: 'm', status: 'emitido', total_centavos: 4000, nf: '6', pago_em: '2026-10-01' },
+        { obraId: 'm', status: 'falha', total_centavos: 9999 },
+        { obraId: 'm', status: 'cancelado', total_centavos: 9999 },
       ],
     })
     expect(r.porOS[0]).toMatchObject({ custoComprometido: 7000, custoRealizado: 6000, custoPago: 4000 })
   })
 
   it('medições: devolvida nunca conta; progressão aprovada -> paga', () => {
-    const s = (status: any, v: number) => ({ obraId: 'f', status, valor_centavos: v })
+    const s = (status: any, v: number) => ({ obraId: 'f', status, valorCentavos: v })
     const r = consolidarFinanceiro({
       obras, compras: [], notas: [],
       fornecedores: [s('solicitada', 1), s('aprovada', 10), s('pagamento_solicitado', 100), s('paga', 1000), s('devolvida', 99999)],
@@ -39,17 +39,15 @@ describe('consolidarFinanceiro', () => {
     expect(r.porOS[1]).toMatchObject({ custoComprometido: 1110, custoRealizado: 1100, custoPago: 1000 })
   })
 
-  it('NF rateada mãe/filha: cada parcela uma vez; total = soma; cancelada/devolvida fora; margem', () => {
+  const nota = (obraId: string, v: number, situacao: string, devolvidaEm: string | null = null) =>
+    ({ obraId, valor_centavos: v, situacao, devolvidaEm })
+
+  it('NF rateada mae/filha: cada parcela uma vez; total = soma; margem', () => {
     const r = consolidarFinanceiro({
       obras, compras: [
-        { obraId: 'f', os: '100-A', status: 'emitido', total_centavos: 3000, nf: '1' },
+        { obraId: 'f', status: 'emitido', total_centavos: 3000, nf: '1' },
       ], fornecedores: [],
-      notas: [
-        { obraId: 'm', valor_centavos: 6000, status: 'emitida' },
-        { obraId: 'f', valor_centavos: 4000, status: 'emitida' },
-        { obraId: 'f', valor_centavos: 777, status: 'cancelada' },
-        { obraId: 'm', valor_centavos: 555, status: 'devolvida' },
-      ],
+      notas: [nota('m', 6000, 'autorizada'), nota('f', 4000, 'enviada')],
     })
     expect(r.porOS[0].receitaRealizada).toBe(6000)
     expect(r.porOS[1].receitaRealizada).toBe(4000)
@@ -58,10 +56,33 @@ describe('consolidarFinanceiro', () => {
     expect(r.total.margemPct).toBeCloseTo(70)
   })
 
+  it('so autorizada/enviada nao devolvida conta como receita', () => {
+    const ruins = ['rascunho', 'aprovada', 'os_criada', 'faturando', 'rejeitada', 'falha_conferir', 'cancelada', 'xyz', '']
+    const r = consolidarFinanceiro({
+      obras, compras: [], fornecedores: [],
+      notas: [...ruins.map((s) => nota('m', 100, s)), nota('m', 50, 'autorizada', '2026-10-01')],
+    })
+    expect(r.total.receitaRealizada).toBe(0)
+    expect(r.total.margemPct).toBeNull()
+  })
+
+  it('linha da mae nao inclui valores da filha', () => {
+    const r = consolidarFinanceiro({
+      obras, compras: [], fornecedores: [{ obraId: 'f', status: 'paga', valorCentavos: 900 }],
+      notas: [nota('f', 1000, 'autorizada')],
+    })
+    expect(r.porOS[0]).toMatchObject({ receitaRealizada: 0, custoPago: 0 })
+    expect(r.total).toMatchObject({ receitaRealizada: 1000, custoPago: 900 })
+  })
+
+  it('valor nao finito lanca erro', () => {
+    expect(() => consolidarFinanceiro({ obras, compras: [], fornecedores: [], notas: [nota('m', NaN, 'autorizada')] })).toThrow()
+  })
+
   it('ignora itens de obra desconhecida; receita zero com custo gera margem negativa e pct null', () => {
     const r = consolidarFinanceiro({
-      obras, fornecedores: [], notas: [{ obraId: 'x', valor_centavos: 5 }],
-      compras: [{ obraId: 'm', os: '100', status: 'emitido', total_centavos: 500, nf: '1' }],
+      obras, fornecedores: [], notas: [nota('x', 5, 'autorizada')],
+      compras: [{ obraId: 'm', status: 'emitido', total_centavos: 500, nf: '1' }],
     })
     expect(r.total.receitaRealizada).toBe(0)
     expect(r.total.margemRealizada).toBe(-500)

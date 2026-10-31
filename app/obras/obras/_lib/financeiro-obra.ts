@@ -1,18 +1,20 @@
 // Consolidação financeira da obra (pura). Valores em centavos inteiros.
 //
-// Mapeamento esperado (Task 3) das linhas das funções SQL para estes tipos:
-//  - CompraPedido: um pedido por linha (cmp_pedidos). status = situacao do pedido
-//    ('emitido' conta; na_fila|gravando|falha|cancelado|cancelada nunca contam);
-//    total_centavos = total do pedido; nf = nf_numero; pago_em = pago_em.
-//  - MedicaoFornecedor: frn_medicoes (valor_centavos, status da medição).
+// Mapeamento esperado (Task 3) das linhas das funcoes SQL para estes tipos:
+//  - CompraPedido: um pedido por linha (cmp_pedidos). status = situacao
+//    (na_fila|gravando|emitido|falha; so 'emitido' conta); total_centavos = total do pedido
+//    (ja em centavos); nf = nf_numero; pago_em = pago_em.
+//  - MedicaoFornecedor: frn_medicoes. ATENCAO: frn_medicoes.valor e numeric em REAIS; a Task 3
+//    converte com Math.round(valor * 100) ANTES de chamar e passa em valorCentavos.
 //  - NotaObra: uma linha por nota x obra (fin_fat_nota_obras.valor_centavos = parcela da obra);
-//    status = situação da nota; 'cancelada'|'devolvida' nunca contam.
-// Cada item pertence a UMA obra (obraId): mãe e filha são obras distintas, então uma NF
-// rateada entre mãe e filha entra uma vez em cada, e o total soma cada parcela uma só vez.
+//    situacao = fin_fat_notas.situacao; devolvidaEm = fin_fat_notas.obras_devolvidas_em.
+//    Receita so conta com situacao 'autorizada' ou 'enviada' E devolvidaEm nulo (falha fechada).
+// Cada item pertence a UMA obra (obraId): mae e filha sao obras distintas, entao uma NF
+// rateada entre mae e filha entra uma vez em cada, e o total soma cada parcela uma so vez.
+// ObraRef.paiId e informativo (hierarquia para a tela); a consolidacao nao depende dele.
 
 export type CompraPedido = {
   obraId: string
-  os: string
   status: string
   total_centavos: number
   nf?: string | null
@@ -29,13 +31,14 @@ export type StatusMedicao =
 export type MedicaoFornecedor = {
   obraId: string
   status: StatusMedicao
-  valor_centavos: number
+  valorCentavos: number
 }
 
 export type NotaObra = {
   obraId: string
   valor_centavos: number
-  status?: string | null
+  situacao: string
+  devolvidaEm: string | null
 }
 
 export type ObraRef = { id: string; os: string; paiId: string | null }
@@ -51,10 +54,11 @@ export type Linha = {
   margemPct: number | null
 }
 
-const NOTA_IGNORADA = new Set(['cancelada', 'cancelado', 'devolvida', 'devolvido'])
+const NOTA_CONTA = new Set(['autorizada', 'enviada'])
 
 function num(v: number): number {
-  return Number.isFinite(v) ? Math.round(v) : 0
+  if (!Number.isFinite(v)) throw new Error('financeiro-obra: valor nao numerico')
+  return Math.round(v)
 }
 
 function linha(obraId: string | null, os: string, r: number, c: number, re: number, p: number): Linha {
@@ -91,14 +95,14 @@ export function consolidarFinanceiro(input: {
   for (const m of input.fornecedores) {
     const a = acc.get(m.obraId)
     if (!a) continue
-    const v = num(m.valor_centavos)
+    const v = num(m.valorCentavos)
     if (m.status === 'aprovada' || m.status === 'pagamento_solicitado' || m.status === 'paga') a.c += v
     if (m.status === 'pagamento_solicitado' || m.status === 'paga') a.re += v
     if (m.status === 'paga') a.p += v
   }
   for (const n of input.notas) {
     const a = acc.get(n.obraId)
-    if (!a || (n.status && NOTA_IGNORADA.has(n.status.toLowerCase()))) continue
+    if (!a || n.devolvidaEm || !NOTA_CONTA.has(n.situacao)) continue
     a.r += num(n.valor_centavos)
   }
 
