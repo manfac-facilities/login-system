@@ -138,6 +138,6 @@ export function dadosDaPrevia(): ObraGrande {
 export function calcDoRascunho(d: ObraGrande) {
   return calcularCronograma({
     plano: PLANO_V2, exec: d.exec, dataBase: obra.data_base!, hoje: HOJE, feriados: d.feriados,
-    atividadeTrava: obra.atividade_trava, impedimentos: impedimentosCalcDe(d.impedimentos),
+    atividadeTrava: obra.atividade_trava, impedimentos: impedimentosCalcDe(d.impedimentos), criterioPeso: d.criterioPeso,
   })
 }

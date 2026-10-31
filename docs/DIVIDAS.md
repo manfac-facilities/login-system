@@ -366,3 +366,16 @@ menu inferior do diário.
   reaproveitado (próximo = maior da obra em todas as versões e na execução + 1).
 - Lista de etapas na linha muda ao escolher (inclusive com as setas do teclado numa lista fechada no Windows, que grava
   a cada seta); predecessoras idem.
+
+## 31/10/2026 — Obras Leva 3, Last Planner + semanal (`feat/obras-leva3`), revisão final
+
+- `obras_restricao.atualizado_por`: UPDATE sem JWT (service role, cron) herda o valor anterior. Só a service role
+  escreve sem JWT.
+- Admin apaga um plano já avaliado e os itens vão em cascata (poder de admin, sem UI).
+- Avaliação do plano grava item por item, sem transação: falha no meio deixa parte avaliada; o resto segue avaliável
+  (a checagem é por item).
+- Validar e enviar o semanal em duas abas/cliques ao mesmo tempo: as duas leem `obras_envio` antes de qualquer insert
+  e mandam duas vezes. O botão fica desabilitado enquanto envia.
+- Semanal validado com `conteudo` fora do formato (só possível escrevendo o jsonb à mão pela API): o app ignora e monta
+  na hora, ou seja, volta a mostrar o estado atual para esse semanal.
+- Cabeçalho do PDF do semanal congelado (OS, cliente, engenheiro) ainda sai da obra atual; o corpo é o congelado.

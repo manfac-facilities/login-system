@@ -67,8 +67,9 @@ describe('ShellObra', () => {
     const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
     expect(within(lateral).getByRole('link', { name: 'Cronograma' })).toHaveAttribute('aria-current', 'page')
     expect(within(lateral).getByRole('link', { name: 'Painel' })).not.toHaveAttribute('aria-current')
-    expect(within(lateral).queryByRole('link', { name: /Lookahead/ })).toBeNull()
-    expect(within(lateral).getAllByText('em breve')).toHaveLength(2)
+    expect(within(lateral).getByRole('link', { name: /Lookahead/ })).toBeTruthy()
+    expect(within(lateral).queryByRole('link', { name: /Documentos/ })).toBeNull()
+    expect(within(lateral).getAllByText('em breve')).toHaveLength(1)
   })
 
   it('cabeçalho: nome, OS · cliente, sinal em texto, dados até e versão vigente', () => {
@@ -93,6 +94,34 @@ describe('ShellObra', () => {
     await userEvent.click(mais)
     expect(mais).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('link', { name: 'Comunicação' })).toBeInTheDocument()
+  })
+
+  it('item Apresentação aponta para /apresentacao na sidebar', async () => {
+    montar()
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).getByRole('link', { name: 'Apresentação' })).toHaveAttribute('href', '/obras/obras/o1/apresentacao')
+  })
+
+  it('item Apresentação fica no Mais do celular', async () => {
+    montar(true)
+    await userEvent.click(screen.getByRole('button', { name: 'Mais' }))
+    expect(screen.getByRole('link', { name: 'Apresentação' })).toHaveAttribute('href', '/obras/obras/o1/apresentacao')
+  })
+
+  it('item Configurações só aparece para admin', () => {
+    montar()
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).queryByRole('link', { name: 'Configurações' })).toBeNull()
+  })
+
+  it('admin vê Configurações apontando para /configuracoes', () => {
+    render(
+      <ShellObra obra={obra} sinal={null} dadosAte={null} versao={null} admin>
+        <p>x</p>
+      </ShellObra>,
+    )
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/obras/obras/o1/configuracoes')
   })
 
   it('sem versão salva e sem dados: textos neutros', () => {

@@ -84,6 +84,7 @@ export default async function CronogramaPage({
     exibida = calcularCronograma({
       plano: planoDe((at ?? []) as Linha[], alvo.id), exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
       atividadeTrava: obra.atividade_trava, impedimentos: impedimentosCalcDe(impedimentos),
+      criterioPeso: r.dados.criterioPeso,
     })
   }
 

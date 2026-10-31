@@ -12,6 +12,7 @@
  */
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { IconeAlerta, IconeCadeado } from '../../_ui/icones'
+import { codigosDeEtapas } from '../../_lib/cronograma'
 import { dataBR } from './_arvore'
 import type { Direcao, EdicaoLinha, LinhaAtividade, LinhaEtapa } from './_tipos'
 
@@ -29,11 +30,7 @@ export type AcoesTabela = {
 }
 
 /** numero → "etapa.posição" (1-based), na ordem de exibição. */
-export function codigosDe(etapas: LinhaEtapa[]): Map<number, string> {
-  const m = new Map<number, string>()
-  etapas.forEach((e, i) => e.numeros.forEach((n, j) => m.set(n, `${i + 1}.${j + 1}`)))
-  return m
-}
+export const codigosDe = (etapas: LinhaEtapa[]): Map<number, string> => codigosDeEtapas(etapas)
 
 /** Valor (R$) como a célula mostra: 1.234,56. */
 export const valorBR = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

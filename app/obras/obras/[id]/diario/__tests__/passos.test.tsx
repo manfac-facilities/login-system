@@ -97,6 +97,18 @@ describe('PassosDiario', () => {
     expect(salvarRascunhoAction).not.toHaveBeenCalled()
   })
 
+  it('item do plano da semana fora da lista do dia entra já listado, com selo, e salva sem avanço', async () => {
+    const outra: AtividadeDiario = { numero: 20, etapa: 'Acabamento', descricao: 'Pintura do depósito', atual: 0.3, travada: false, motivoTrava: null }
+    montar({ outras: [outra], noPlano: [20] })
+    abrirPasso(/O que andou/)
+    const item = screen.getByTestId('atividade-20')
+    expect(within(item).getByText('no plano')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
+    await screen.findByRole('button', { name: 'Salvar rascunho' })
+    const corpo = (salvarRascunhoAction as jest.Mock).mock.calls.at(-1)[2] as RascunhoRdo
+    expect(corpo.avancos).toContainEqual({ numero: 20, de: 0.3, para: 0.3, concluida: false, causa: null })
+  })
+
   it('o passo 4 renderiza o slot de impedimentos recebido', () => {
     montar({ impedimentos: <p>formulário de impedimento</p> })
     abrirPasso(/Impedimentos/)

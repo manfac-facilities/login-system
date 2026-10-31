@@ -387,7 +387,7 @@ describe('validarEEnviarAction', () => {
   it('sem destinatário cliente: valida, não envia e pede o cadastro', async () => {
     db.obras_destinatario = [dest('interno@manfac.com.br', 'interno')]
     const r = await validarEEnviarAction(OBRA, DIA)
-    expect(r).toEqual({ ok: false, erro: 'Cadastre os destinatários na aba Comunicação' })
+    expect(r).toEqual({ ok: false, erro: 'Cadastre os destinatários em Configurações da obra (peça a um administrador)' })
     expect(db.obras_rdo[0].estado).toBe('validado')
     expect(sendMail).not.toHaveBeenCalled()
     expect(db.obras_envio).toHaveLength(0)

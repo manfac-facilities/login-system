@@ -7,14 +7,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
 import type { PontoHist } from './curvas'
+import type { PlanoSemana, Restricao } from './last-planner'
+import { CAUSA, type CausaRdo } from './causas'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
+  criterioEfetivo,
   diasDeImpacto,
   resumirEtapas,
   sinalDaObra,
   type AtividadeExec,
   type AtividadePlano,
+  type CriterioPeso,
   type ImpedimentoCalc,
   type ResultadoCronograma,
   type ResumoEtapa,
@@ -54,7 +58,10 @@ export type ObraGrande = {
   plano: AtividadePlano[]
   exec: AtividadeExec[]
   impedimentos: ImpedimentoRow[]
+  /** Feriados globais + os da obra (Leva 2 §3.6). */
   feriados: Set<string>
+  /** Critério do peso do avanço em uso: o da obra ou o automático (Leva 2 §3.4). */
+  criterioPeso: CriterioPeso
   calc: ResultadoCronograma | null
   /** Cálculo da base (v1 salva); null enquanto a v1 não foi salva. */
   calcBase: ResultadoCronograma | null
@@ -160,6 +167,26 @@ export const impedimentoRow = (i: Linha): ImpedimentoRow => ({
   criadoEm: i.criado_em,
 })
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Feriados que valem para a obra: globais (`obra_id` nulo) + os da própria obra.
+ * Toda leitura de `obras_feriado` do módulo passa por aqui.
+ */
+export async function feriadosDaObra(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; feriados: Set<string> } | { ok: false; erro: string }> {
+  // obraId entra cru no filtro .or(...): só UUID passa.
+  if (!UUID_RE.test(obraId)) return { ok: false, erro: 'Obra inválida' }
+  const { data, error } = await supabase
+    .from('obras_feriado')
+    .select('data')
+    .or(`obra_id.is.null,obra_id.eq.${obraId}`)
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, feriados: new Set(((data ?? []) as Linha[]).map((f) => f.data as string)) }
+}
+
 export async function lerObraGrande(
   supabase: SupabaseClient,
   obraId: string,
@@ -170,11 +197,12 @@ export async function lerObraGrande(
     supabase.from('obras_cronograma_versao').select('id, numero, motivo, salva_em').eq('obra_id', obraId).order('numero'),
     supabase.from('obras_atividade_exec').select('*').eq('obra_id', obraId),
     supabase.from('obras_impedimento').select('*').eq('obra_id', obraId).order('aberto_em', { ascending: false }),
-    supabase.from('obras_feriado').select('data'),
+    feriadosDaObra(supabase, obraId),
     supabase.from('obras_atividade_status_hist').select('numero, data_status, percentual, dias_restantes, registrado_em').eq('obra_id', obraId),
   ])
-  const falha = [obraR, versR, execR, impR, ferR, histR].find((r) => r.error)
+  const falha = [obraR, versR, execR, impR, histR].find((r) => r.error)
   if (falha) return { ok: false, erro: `Falha ao ler a obra: ${falha.error!.message}` }
+  if (!ferR.ok) return { ok: false, erro: `Falha ao ler a obra: ${ferR.erro}` }
   if (!obraR.data) return { ok: false, erro: 'Obra não encontrada' }
 
   const obra = obraR.data as ObraRow
@@ -223,7 +251,7 @@ export async function lerObraGrande(
       planoBase: baseL && baseL.id !== usada?.id ? planoDe(atividades, baseL.id) : null,
       exec: ((execR.data ?? []) as Linha[]).map(atividadeExecDe),
       impedimentos: ((impR.data ?? []) as Linha[]).map(impedimentoRow),
-      feriados: new Set(((ferR.data ?? []) as Linha[]).map((f) => f.data as string)),
+      feriados: ferR.feriados,
       hist,
       dadosAte,
       hoje,
@@ -275,10 +303,11 @@ export function montarObraGrande(p: {
   const imps = impedimentosCalcDe(impedimentos)
   const usada = p.vigente ?? p.rascunho
   const plano = usada ? p.planoUsado : []
+  const criterioPeso = criterioEfetivo(obra.peso_avanco, plano)
   const calcular = (pl: AtividadePlano[]) =>
     calcularCronograma({
       plano: pl, exec, dataBase: obra.data_base ?? hoje, hoje, feriados,
-      atividadeTrava: obra.atividade_trava, impedimentos: imps,
+      atividadeTrava: obra.atividade_trava, impedimentos: imps, criterioPeso,
     })
 
   const calc = usada ? calcular(plano) : null
@@ -308,8 +337,79 @@ export function montarObraGrande(p: {
     versaoBase: p.base,
     versaoVigente: p.vigente,
     rascunho: p.rascunho,
-    plano, exec, impedimentos, feriados, calc, calcBase, hist, dadosAte,
+    plano, exec, impedimentos, feriados, criterioPeso, calc, calcBase, hist, dadosAte,
     etapas: calc ? resumirEtapas(calc.atividades, feriados) : [],
     terminoBase, sinal, atraso,
   }
+}
+
+// ── Last Planner (Leva 3) ──────────────────────────────────────────────
+
+const restricaoDe = (r: Linha): Restricao => ({
+  id: r.id, obraId: r.obra_id, atividadeNumero: r.atividade_numero, tipo: r.tipo, descricao: r.descricao,
+  responsavel: r.responsavel, prazo: r.prazo ?? null, situacao: r.situacao, liberadaEm: r.liberada_em ?? null,
+  criadoPor: r.criado_por ?? null, criadoEm: r.criado_em,
+})
+
+const planoSemanaDe = (p: Linha): PlanoSemana => ({
+  id: p.id, obraId: p.obra_id, semanaInicio: p.semana_inicio,
+  fechadoEm: p.fechado_em ?? null, fechadoPor: p.fechado_por ?? null,
+  itens: ((p.obras_plano_item ?? []) as Linha[]).map((i) => ({
+    id: i.id, planoId: i.plano_id, numero: i.numero, metaPercentual: Number(i.meta_percentual),
+    percentualFinal: i.percentual_final === null || i.percentual_final === undefined ? null : Number(i.percentual_final),
+    cumprido: i.cumprido ?? null, causa: i.causa && i.causa in CAUSA ? (i.causa as CausaRdo) : null, avaliadoEm: i.avaliado_em ?? null,
+  })),
+})
+
+export async function lerRestricoes(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; restricoes: Restricao[] } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_restricao').select('*').eq('obra_id', obraId).order('criado_em', { ascending: false })
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, restricoes: ((data ?? []) as Linha[]).map(restricaoDe) }
+}
+
+/** Avanços (numero, `de`) dos diários da obra com data > `data` — base do % de quem só tem histórico depois. */
+export async function lerAvancosDepois(
+  supabase: SupabaseClient,
+  obraId: string,
+  data: string,
+): Promise<{ ok: true; avancos: { numero: number; data: string; de: number }[] } | { ok: false }> {
+  const { data: rdos, error } = await supabase.from('obras_rdo').select('id, data').eq('obra_id', obraId).gt('data', data)
+  if (error) return { ok: false }
+  const dataDe = new Map(((rdos ?? []) as Linha[]).map((r) => [String(r.id), String(r.data)]))
+  if (!dataDe.size) return { ok: true, avancos: [] }
+  const { data: av, error: e2 } = await supabase.from('obras_rdo_avanco').select('rdo_id, numero, de').in('rdo_id', [...dataDe.keys()])
+  if (e2) return { ok: false }
+  return {
+    ok: true,
+    avancos: ((av ?? []) as Linha[])
+      .filter((a) => dataDe.has(String(a.rdo_id)))
+      .map((a) => ({ numero: Number(a.numero), data: dataDe.get(String(a.rdo_id))!, de: Number(a.de ?? 0) })),
+  }
+}
+
+export async function lerPlano(
+  supabase: SupabaseClient,
+  obraId: string,
+  segunda: string,
+): Promise<{ ok: true; plano: PlanoSemana | null } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_plano_semana').select('*, obras_plano_item(*)')
+    .eq('obra_id', obraId).eq('semana_inicio', segunda).maybeSingle()
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, plano: data ? planoSemanaDe(data as Linha) : null }
+}
+
+export async function lerPlanos(
+  supabase: SupabaseClient,
+  obraId: string,
+): Promise<{ ok: true; planos: PlanoSemana[] } | { ok: false; erro: string }> {
+  const { data, error } = await supabase
+    .from('obras_plano_semana').select('*, obras_plano_item(*)')
+    .eq('obra_id', obraId).order('semana_inicio', { ascending: false })
+  if (error) return { ok: false, erro: error.message }
+  return { ok: true, planos: ((data ?? []) as Linha[]).map(planoSemanaDe) }
 }

@@ -10,6 +10,8 @@ import PassosDiario from './_passos'
 import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
 import { diasUteisEntre } from '../../_lib/calendario'
+import { segundaDaSemana } from '../../_lib/last-planner'
+import { lerPlano } from '../../_lib/leitura'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
 import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
@@ -129,6 +131,10 @@ export default async function DiarioObraPage({
     ultimo,
   })
 
+  // Plano da semana do dia do diário: suas atividades vêm primeiro (falha de leitura = sem selo).
+  const planoR = await lerPlano(supabase, id, segundaDaSemana(data))
+  const noPlano = planoR.ok && planoR.plano ? planoR.plano.itens.map((i) => i.numero) : []
+
   // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).
   const podeValidar =
     admin || (!!obra.engenheiro_email && obra.engenheiro_email.trim().toLowerCase() === email)
@@ -188,6 +194,17 @@ export default async function DiarioObraPage({
             {rdo ? ` · ${rdo.estado === 'rascunho' ? 'rascunho' : rdo.estado}` : ' · ainda não iniciado'}
           </p>
         </div>
+        {rdo && (rdo.estado === 'validado' || rdo.estado === 'enviado') ? (
+          // Rota GET (não página): <a> comum, abre o PDF da versão cliente em outra aba.
+          <a
+            href={`${base}/pdf/${data}`}
+            target="_blank"
+            rel="noopener"
+            className="flex min-h-11 w-fit items-center rounded-lg bg-[#00345e] px-4 text-sm font-semibold text-white hover:bg-[#0d2050]"
+          >
+            Gerar PDF
+          </a>
+        ) : null}
         <nav aria-label="Escolher o dia" className="flex flex-wrap items-center gap-2">
           <Link href={`${base}?data=${deslocar(data, -1)}`} className={navLink}>
             ← dia anterior
@@ -215,6 +232,7 @@ export default async function DiarioObraPage({
         inicial={inicial}
         atividades={atividades}
         outras={outras}
+        noPlano={noPlano}
         fotos={fotos}
         validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
         impedimentosHoje={
