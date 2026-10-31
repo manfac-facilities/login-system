@@ -18,6 +18,7 @@ import {
   IconeImpedimento,
   IconeLookahead,
   IconeMais,
+  IconePlay,
   IconePainel,
   IconeTrocar,
   IconeVoltar,
@@ -48,6 +49,7 @@ const ITENS: Item[] = [
   { sufixo: '/impedimentos', rotulo: 'Impedimentos', Icone: IconeImpedimento },
   { sufixo: '/comunicacao', rotulo: 'Comunicação', Icone: IconeComunicacao },
   { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
+  { sufixo: '/apresentacao', rotulo: 'Apresentação', Icone: IconePlay },
 ]
 /** Só administrador vê (a tela e as actions também exigem admin). */
 const ITEM_CONFIGURACOES: Item = { sufixo: '/configuracoes', rotulo: 'Configurações', Icone: IconeConfiguracoes }
@@ -62,7 +64,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/configuracoes'])
+const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/apresentacao', '/configuracoes'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 

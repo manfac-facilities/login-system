@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     // Relatórios de período (Leva 4): rota do PDF e a página (a action de envio anexa o PDF).
     '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Apresentação ao cliente (Leva 4): PDF paisagem.
+    '/obras/obras/[id]/apresentacao/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [
