@@ -3,7 +3,9 @@
 /**
  * Server Actions do plano da semana (Leva 3, Task 4). Fechar e avaliar: só o
  * engenheiro da obra ou admin (o banco confere de novo). A obra é lida do banco
- * pelo id da rota; o % realizado vem do exec no servidor, nunca do navegador.
+ * pelo id da rota; o % realizado é lido no servidor, nunca do navegador: o % de
+ * cada atividade em min(sexta, hoje) pelo histórico de status (o avanço da semana
+ * seguinte não conta como cumprimento); sem histórico até a data, o exec atual.
  */
 
 import { revalidatePath } from 'next/cache'
@@ -13,7 +15,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { CAUSA, type CausaRdo } from '../../_lib/causas'
-import { avaliarItem, dataEnvioSemanal } from '../../_lib/last-planner'
+import { avaliarItem, dataDaAvaliacao, dataEnvioSemanal, percentuaisNaData } from '../../_lib/last-planner'
 import { feriadosDaObra, lerPlano } from '../../_lib/leitura'
 import type { Resultado } from './_tipos'
 import { segundaValida, semanaFechavel, type ItemAvaliacao, type ItemFechamento } from './_plano-tipos'
@@ -31,9 +33,13 @@ async function autorizarEngenheiro(obraId: string): Promise<{ supabase: Supabase
   if (!email) return falha('Não autenticado')
   const admin = await isAdmin(supabase, email)
   if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return falha('Sem acesso ao Gestão de Obras')
-  const { data: obra, error } = await supabase.from('obras_obra').select('id, engenheiro_email').eq('id', obraId).maybeSingle()
+  const { data: obra, error } = await supabase
+    .from('obras_obra')
+    .select('id, engenheiro_email, modalidade')
+    .eq('id', obraId)
+    .maybeSingle()
   if (error) return falha('Não foi possível ler a obra.')
-  if (!obra) return falha('Obra não encontrada')
+  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
   const eng = typeof obra.engenheiro_email === 'string' ? obra.engenheiro_email.trim().toLowerCase() : ''
   if (!admin && !(eng !== '' && eng === email)) return falha(SO_ENGENHEIRO)
   return { supabase, email, admin }
@@ -117,11 +123,25 @@ export async function avaliarPlanoAction(obraId: string, semana: string, avaliac
   if (!pl.plano) return falha('Não há plano fechado para esta semana')
   const plano = pl.plano
 
-  const { data: ex, error: eExec } = await supabase
-    .from('obras_atividade_exec')
-    .select('numero, status, percentual')
-    .eq('obra_id', obraId)
-  if (eExec) return falha('Não foi possível ler a execução.')
+  const ate = dataDaAvaliacao(segunda, hojeISO())
+  const [{ data: ex, error: eExec }, { data: hs, error: eHist }] = await Promise.all([
+    supabase.from('obras_atividade_exec').select('numero, status, percentual').eq('obra_id', obraId),
+    supabase
+      .from('obras_atividade_status_hist')
+      .select('numero, data_status, percentual, registrado_em')
+      .eq('obra_id', obraId)
+      .lte('data_status', ate),
+  ])
+  if (eExec || eHist) return falha('Não foi possível ler a execução.')
+  const naData = percentuaisNaData(
+    ((hs ?? []) as { numero: number; data_status: string; percentual: number | null; registrado_em: string | null }[]).map((h) => ({
+      numero: Number(h.numero),
+      dataStatus: String(h.data_status),
+      percentual: Number(h.percentual ?? 0),
+      registradoEm: h.registrado_em ?? '',
+    })),
+    ate,
+  )
   const exec = new Map(
     ((ex ?? []) as { numero: number; status: string; percentual: number | null }[]).map((e) => [
       e.numero,
@@ -137,7 +157,7 @@ export async function avaliarPlanoAction(obraId: string, semana: string, avaliac
     const item = plano.itens.find((i) => i.numero === a.numero)
     if (!item) return falha('Atividade fora do plano da semana')
     if (item.avaliadoEm && !admin) return falha('Este item já foi avaliado; só administrador reavalia.')
-    const final = exec.get(a.numero) ?? 0
+    const final = naData.get(a.numero) ?? exec.get(a.numero) ?? 0
     const cumprido = avaliarItem(item.metaPercentual, final)
     if (cumprido) {
       gravar.push({ numero: a.numero, final, cumprido, causa: null })

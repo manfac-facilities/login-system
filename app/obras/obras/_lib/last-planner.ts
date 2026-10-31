@@ -4,6 +4,7 @@
 import type { AtividadeCalculada, Responsavel } from './cronograma'
 import { ehDiaUtil } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
+import type { PontoHist } from './curvas'
 
 export type Restricao = {
   id: string
@@ -106,6 +107,26 @@ export function lookahead(
   }
   for (const s of out) s.itens.sort((x, y) => x.inicio.localeCompare(y.inicio) || x.numero - y.numero)
   return out
+}
+
+/**
+ * % de cada atividade na data, pelo histórico de status: o último registro com
+ * data_status <= data (empate: o registrado por último) — a mesma âncora da
+ * curva Realizado. Atividade sem registro até a data fica fora do mapa.
+ */
+export function percentuaisNaData(hist: PontoHist[], data: string): Map<number, number> {
+  const ordenado = hist
+    .filter((h) => h.dataStatus <= data)
+    .sort((a, b) => a.dataStatus.localeCompare(b.dataStatus) || (a.registradoEm ?? '').localeCompare(b.registradoEm ?? ''))
+  const m = new Map<number, number>()
+  for (const h of ordenado) m.set(h.numero, Math.min(1, Math.max(0, h.percentual)))
+  return m
+}
+
+/** Data em que o plano da semana é medido: a sexta, ou hoje se a semana ainda não acabou. */
+export const dataDaAvaliacao = (segunda: string, hoje: string): string => {
+  const sexta = diasDaSemana(segunda)[4]
+  return sexta < hoje ? sexta : hoje
 }
 
 export const avaliarItem = (meta: number, percentualFinal: number): boolean =>

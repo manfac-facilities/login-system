@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { CAUSA } from '../../_lib/causas'
-import { avaliarItem, dataEnvioSemanal, ppc, segundaDaSemana } from '../../_lib/last-planner'
+import { avaliarItem, dataDaAvaliacao, dataEnvioSemanal, percentuaisNaData, ppc, segundaDaSemana } from '../../_lib/last-planner'
 import type { ObraGrande } from '../../_lib/leitura'
 import { feriadosDaObra, lerPlano, lerPlanos, lerRestricoes } from '../../_lib/leitura'
 import { codigosDeAtividades } from '../../_lib/cronograma'
@@ -119,7 +119,12 @@ export default async function PlanoDaSemana({
   const fer = await feriadosDaObra(supabase, obraId)
   const envio = dataEnvioSemanal(semana, fer.ok ? fer.feriados : feriados)
   const liberada = hoje >= envio
-  const execPor = new Map(dados.exec.map((e) => [e.numero, e.status === 'concluido' ? 1 : e.percentual]))
+  // Mesma régua da action: % em min(sexta, hoje) pelo histórico; sem histórico até lá, o exec.
+  const naData = percentuaisNaData(dados.hist, dataDaAvaliacao(semana, hoje))
+  const execPor = new Map<number, number>([
+    ...dados.exec.map((e): [number, number] => [e.numero, e.status === 'concluido' ? 1 : e.percentual]),
+    ...naData,
+  ])
   const pendentes = plano.itens.filter((i) => i.cumprido === null)
   const avaliados = plano.itens.filter((i) => i.cumprido !== null)
   const resultado = ppc(plano.itens)

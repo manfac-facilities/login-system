@@ -17,6 +17,7 @@ function construtor(tabela: string) {
   const q: Record<string, unknown> = {
     select: () => q,
     eq: (c: string, v: unknown) => (filtros.push((l) => l[c] === v), q),
+    lte: (c: string, v: string) => (filtros.push((l) => String(l[c]) <= v), q),
     update: (p: Linha) => ((op = 'update'), (payload = p), q),
     maybeSingle: async () => executar(true),
     then: (ok: (v: unknown) => unknown, ko: (e: unknown) => unknown) => Promise.resolve(executar(false)).then(ok, ko),
@@ -68,7 +69,7 @@ beforeEach(() => {
   planoLido = null
   hojeMock.mockReturnValue('2026-11-06')
   db = {
-    obras_obra: [{ id: OBRA, engenheiro_email: 'eng@m.com' }],
+    obras_obra: [{ id: OBRA, engenheiro_email: 'eng@m.com', modalidade: 'obra' }],
     obras_cronograma_versao: [{ id: 'v1', obra_id: OBRA, numero: 1, salva_em: '2026-10-01' }],
     obras_atividade: [
       { versao_id: 'v1', numero: 3 },
@@ -167,6 +168,43 @@ describe('avaliarPlanoAction', () => {
     expect(ok).toEqual({ ok: true })
     expect(db.obras_plano_item[0]).toMatchObject({ percentual_final: 0.4, cumprido: false, causa: 'material' })
     expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0.5, cumprido: true, causa: null })
+  })
+
+  it('mede pelo histórico na sexta, não pelo exec de hoje; sem histórico até a sexta, o exec', async () => {
+    hojeMock.mockReturnValue('2026-11-10') // terça da semana seguinte
+    db.obras_atividade_status_hist = [
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-04', percentual: 0.2, registrado_em: '2026-11-04T10:00:00Z' },
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-06', percentual: 0.3, registrado_em: '2026-11-06T10:00:00Z' },
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-09', percentual: 0.9, registrado_em: '2026-11-09T10:00:00Z' },
+      { obra_id: OBRA, numero: 3, data_status: '2026-11-09', percentual: 1, registrado_em: '2026-11-09T10:00:00Z' },
+    ]
+    // Exec de hoje: 4 em 50% (cumpriria a meta de 50%), mas na sexta estava em 30%.
+    const sem = await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: null }])
+    expect(sem).toEqual({ ok: false, erro: expect.stringContaining('causa') })
+    const ok = await avaliarPlanoAction(OBRA, SEMANA, [
+      { numero: 3, causa: 'clima' },
+      { numero: 4, causa: 'material' },
+    ])
+    expect(ok).toEqual({ ok: true })
+    expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0.3, cumprido: false, causa: 'material' })
+    // 3 só tem histórico depois da sexta: vale o exec (40%).
+    expect(db.obras_plano_item[0]).toMatchObject({ percentual_final: 0.4, cumprido: false, causa: 'clima' })
+  })
+
+  it('semana ainda em curso: mede em hoje', async () => {
+    hojeMock.mockReturnValue('2026-11-06')
+    db.obras_atividade_status_hist = [
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-05', percentual: 0.6, registrado_em: '2026-11-05T10:00:00Z' },
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-05', percentual: 0.7, registrado_em: '2026-11-05T18:00:00Z' },
+    ]
+    expect(await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: null }])).toEqual({ ok: true })
+    expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0.7, cumprido: true })
+  })
+
+  it('obra SPOT: recusada como não encontrada', async () => {
+    db.obras_obra[0].modalidade = 'spot'
+    expect(await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: null }])).toEqual({ ok: false, erro: 'Obra não encontrada' })
+    expect(await fecharPlanoAction(OBRA, SEMANA, [{ numero: 3, meta: 1 }])).toEqual({ ok: false, erro: 'Obra não encontrada' })
   })
 
   it('antes da data de envio do semanal é recusada', async () => {
