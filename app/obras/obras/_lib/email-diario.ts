@@ -101,42 +101,32 @@ export type ConteudoDiario = {
   amanha: string
 }
 
-export function montarConteudoDiario(p: {
-  lado: 'cliente' | 'interno'
-  obra: ObraGrande
-  rdo: RdoCompleto
-  validadoPor: string
-  validadoEm: string
-  diaN: number
-}): ConteudoDiario {
-  const { lado, obra: og, rdo } = p
-  const { obra, plano, exec, feriados } = og
-  const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
-  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || `Atividade ${n}`
+export type SinalVisual = (typeof SINAL)[Sinal]
+/** Visual do sinal (rótulo e cores), o mesmo no e-mail, no PDF e no semanal. */
+export const sinalVisual = (s: Sinal | null | undefined): SinalVisual => SINAL[s ?? 'verde']
 
-  // 1. Cabeçalho
-  const assunto = `Diário de obra · ${loja} · dia ${p.diaN} · ${dataBr(rdo.data)}${lado === 'interno' ? ' · interno' : ''}`
-  const titulo = `${loja} — dia ${p.diaN}`
-  const subtitulo = `${diaSemana(rdo.data)}, ${dataBr(rdo.data)} · validado por ${p.validadoPor} às ${hora(p.validadoEm)}`
+export const textoDesvio = (desvioPP: number) =>
+  desvioPP < 0
+    ? `${num(-desvioPP)} p.p. abaixo do previsto`
+    : desvioPP > 0
+      ? `${num(desvioPP)} p.p. acima do previsto`
+      : 'em linha com o previsto'
 
-  // 2. Sinal + previsão
-  const calc = og.calc ?? { previsto: 0, realizado: 0, desvioPP: 0, terminoProjetado: rdo.data }
-  const sinal = SINAL[og.sinal ?? 'verde']
-  const desvio =
-    calc.desvioPP < 0
-      ? `${num(-calc.desvioPP)} p.p. abaixo do previsto`
-      : calc.desvioPP > 0
-        ? `${num(calc.desvioPP)} p.p. acima do previsto`
-        : 'em linha com o previsto'
-  // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
+/**
+ * "Entrega prevista: dd/mm/aaaa (+N dias: …)" com a quebra por responsável.
+ * Ao cliente, dias de impedimento oculto que não são da Manfac vão para
+ * "outros fatores", nunca para "da Manfac". Fonte única do diário e do semanal.
+ */
+export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const { feriados } = og
+  const terminoProjetado = og.calc?.terminoProjetado ?? data
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
   type Quebra = { total: number; outros: number } & Record<Responsavel, number>
   let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
   if (lado === 'cliente' && og.atraso) {
-    // Dias de impedimento oculto que não são da Manfac vão para "outros fatores", nunca para "da Manfac".
-    const vis = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados)
+    const vis = diasDeImpacto(impedimentosCalcDe(visiveis), data, feriados)
     const ocultosNaoManfac = og.impedimentos.filter((i) => !i.exibirAoCliente && i.responsavel !== 'manfac')
-    const oc = diasDeImpacto(impedimentosCalcDe(ocultosNaoManfac), rdo.data, feriados)
+    const oc = diasDeImpacto(impedimentosCalcDe(ocultosNaoManfac), data, feriados)
     let restante = og.atraso.total
     const parte = (v: number) => {
       const x = Math.min(restante, Math.max(v, 0))
@@ -160,7 +150,34 @@ export function montarConteudoDiario(p: {
     ]
     quebra = ` (+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''})`
   }
-  const previsao = `Entrega prevista: ${dataBr(calc.terminoProjetado)}${quebra}`
+  return `Entrega prevista: ${dataBr(terminoProjetado)}${quebra}`
+}
+
+export function montarConteudoDiario(p: {
+  lado: 'cliente' | 'interno'
+  obra: ObraGrande
+  rdo: RdoCompleto
+  validadoPor: string
+  validadoEm: string
+  diaN: number
+}): ConteudoDiario {
+  const { lado, obra: og, rdo } = p
+  const { obra, plano, exec, feriados } = og
+  const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
+  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || `Atividade ${n}`
+
+  // 1. Cabeçalho
+  const assunto = `Diário de obra · ${loja} · dia ${p.diaN} · ${dataBr(rdo.data)}${lado === 'interno' ? ' · interno' : ''}`
+  const titulo = `${loja} — dia ${p.diaN}`
+  const subtitulo = `${diaSemana(rdo.data)}, ${dataBr(rdo.data)} · validado por ${p.validadoPor} às ${hora(p.validadoEm)}`
+
+  // 2. Sinal + previsão
+  const calc = og.calc ?? { previsto: 0, realizado: 0, desvioPP: 0, terminoProjetado: rdo.data }
+  const sinal = SINAL[og.sinal ?? 'verde']
+  const desvio = textoDesvio(calc.desvioPP)
+  // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
+  const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
+  const previsao = previsaoEntrega(lado, og, rdo.data)
 
   // 3. Três números
   const impactoCliente = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados).cliente
