@@ -3,8 +3,11 @@
  * referência (a sexta, ou hoje se a semana não acabou), plano da semana e da
  * próxima, restrições, linha de `obras_semanal` e fotos dos diários validados
  * da semana. Rascunho: montado na hora. Validado/enviado: sai do conteúdo
- * congelado na validação (`obras_semanal.conteudo`: cliente, interno e os
- * caminhos das fotos), para o reenvio e o "Abrir PDF" serem o que foi validado.
+ * congelado na validação (`obras_semanal.conteudo`: cliente, interno e os ids
+ * das fotos), para o reenvio e o "Abrir PDF" serem o que foi validado. O
+ * congelado é entrada não confiável (o engenheiro escreve o jsonb pela API):
+ * formato inválido = montado na hora; foto só pelo id, re-resolvida contra os
+ * diários validados desta obra e semana, e caminho conferido antes do download.
  *
  * Quem chama já conferiu a sessão e o acesso. Leituras pelo cliente da sessão
  * (RLS vale); só o download das fotos usa a service role, restrito ao caminho
@@ -14,7 +17,7 @@ import { createElement } from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { montarConteudoSemanal, type ConteudoSemanal, type Lado } from '../_lib/email-semanal'
+import { conteudoSemanalValido, montarConteudoSemanal, type ConteudoSemanal, type Lado } from '../_lib/email-semanal'
 import { diasDaSemana, segundaDaSemana, type PlanoSemana, type Restricao } from '../_lib/last-planner'
 import { lerObraGrande, lerPlano, lerRestricoes, type ObraGrande } from '../_lib/leitura'
 import { segundaValida, somarDias } from '../[id]/lookahead/_plano-tipos'
@@ -27,10 +30,10 @@ export const MAX_FOTOS_SEMANAL = 8
 export const MAX_BYTES_FOTO_SEMANAL = 1_500_000
 
 export type EstadoSemanal = 'rascunho' | 'validado' | 'enviado'
-/** Foto escolhida na validação; o arquivo é baixado de novo (write-once em /rdo/). */
-export type FotoSemanalRef = { path: string; legenda: string | null; data: string }
-/** O que fica gravado em `obras_semanal.conteudo` na validação (imutável depois). */
-export type ConteudoCongelado = { cliente: ConteudoSemanal; interno: ConteudoSemanal; fotos: FotoSemanalRef[] }
+/** Foto de diário validado da semana (linha de `obras_rdo_foto` + data do diário). */
+export type FotoSemanalRef = { id: string; path: string; legenda: string | null; data: string }
+/** O que fica gravado em `obras_semanal.conteudo` na validação (imutável depois). `fotos` = ids de `obras_rdo_foto`. */
+export type ConteudoCongelado = { cliente: ConteudoSemanal; interno: ConteudoSemanal; fotos: string[] }
 export type SemanalRow = {
   id: string
   estado: EstadoSemanal
@@ -62,10 +65,14 @@ export function semanaDoRelatorio(segunda: string, hoje: string): { ok: true; se
   return { ok: true, sexta, ref: sexta < hoje ? sexta : hoje }
 }
 
+/** Só aceita o congelado com o formato exato; qualquer desvio = null (a tela/envio/PDF montam na hora). */
 function congeladoDe(v: unknown): ConteudoCongelado | null {
-  const c = v as Partial<ConteudoCongelado> | null
-  if (!c || typeof c !== 'object' || c.cliente?.lado !== 'cliente' || c.interno?.lado !== 'interno' || !Array.isArray(c.fotos)) return null
-  return c as ConteudoCongelado
+  if (typeof v !== 'object' || v === null) return null
+  const c = v as Record<string, unknown>
+  const fotos = c.fotos
+  if (!Array.isArray(fotos) || fotos.length > MAX_FOTOS_SEMANAL || !fotos.every((f) => typeof f === 'string')) return null
+  if (!conteudoSemanalValido(c.cliente, 'cliente') || !conteudoSemanalValido(c.interno, 'interno')) return null
+  return { cliente: c.cliente, interno: c.interno, fotos: fotos as string[] }
 }
 
 export const semanalRowDe = (s: Linha): SemanalRow => ({
@@ -127,8 +134,8 @@ function formatoDe(b: Buffer): FotoSemanalPdf['formato'] | null {
   return null
 }
 
-/** Até 8 fotos dos diários validados/enviados da semana (só os caminhos; o download é em `baixarFotosSemanal`). */
-export async function escolherFotosDaSemana(supabase: SupabaseClient, obraId: string, segunda: string): Promise<FotoSemanalRef[]> {
+/** Todas as fotos dos diários validados/enviados DESTA obra na semana, em ordem (data do diário, ordem). */
+export async function fotosElegiveis(supabase: SupabaseClient, obraId: string, segunda: string): Promise<FotoSemanalRef[]> {
   const sexta = diasDaSemana(segunda)[4]
   const { data: rdos, error } = await supabase
     .from('obras_rdo')
@@ -148,18 +155,26 @@ export async function escolherFotosDaSemana(supabase: SupabaseClient, obraId: st
   return ((linhas ?? []) as Linha[])
     .filter((f) => dataDe.has(String(f.rdo_id)))
     .sort((a, b) => dataDe.get(String(a.rdo_id))!.localeCompare(dataDe.get(String(b.rdo_id))!) || Number(a.ordem ?? 0) - Number(b.ordem ?? 0))
-    .slice(0, MAX_FOTOS_SEMANAL)
-    .map((f) => ({ path: String(f.path ?? ''), legenda: (f.legenda as string | null) ?? null, data: dataDe.get(String(f.rdo_id))! }))
+    .map((f) => ({ id: String(f.id), path: String(f.path ?? ''), legenda: (f.legenda as string | null) ?? null, data: dataDe.get(String(f.rdo_id))! }))
 }
 
-/** Baixa as fotos escolhidas, só do caminho canônico desta obra (`<obra>/rdo/<data>/`). */
+const ISO = /^\d{4}-\d{2}-\d{2}$/
+const ARQUIVO = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/
+/** Caminho canônico `<obra>/rdo/<data>/<arquivo>`; arquivo sem barra, `..`, `%`, `?`, `#` nem barra invertida. */
+export const caminhoFotoValido = (obraId: string, data: string, path: string): boolean => {
+  const prefixo = `${obraId}/rdo/${data}/`
+  const arquivo = path.slice(prefixo.length)
+  return ISO.test(data) && path.startsWith(prefixo) && ARQUIVO.test(arquivo) && !arquivo.includes('..')
+}
+
+/** Baixa as fotos (service role), só do caminho canônico desta obra. */
 export async function baixarFotosSemanal(obraId: string, refs: FotoSemanalRef[]): Promise<{ fotos: FotoSemanalPdf[]; omitidas: number }> {
   const fotos: FotoSemanalPdf[] = []
   let omitidas = 0
   if (!refs.length) return { fotos, omitidas }
   const bucket = createAdminClient().storage.from('obras-fotos')
   for (const { path, legenda, data } of refs.slice(0, MAX_FOTOS_SEMANAL)) {
-    const valido = path.startsWith(`${obraId}/rdo/${data}/`) && !path.split('/').includes('..')
+    const valido = caminhoFotoValido(obraId, data, path)
     const { data: blob, error: e } = valido ? await bucket.download(path) : { data: null, error: null }
     const dados = blob && !e ? Buffer.from(await blob.arrayBuffer()) : null
     const formato = dados && dados.length <= MAX_BYTES_FOTO_SEMANAL ? formatoDe(dados) : null
@@ -187,7 +202,12 @@ export async function dadosPdfSemanal(
   d: DadosSemanal,
   agora: Date = new Date(),
 ): Promise<{ dados: DadosPdfSemanal; nomeArquivo: string }> {
-  const refs = (d.semanal?.estado !== 'rascunho' && d.semanal?.conteudo?.fotos) || (await escolherFotosDaSemana(supabase, d.og.obra.id, d.segunda))
+  // Congelado: só os ids, re-resolvidos contra as fotos elegíveis desta obra e semana (id estranho some).
+  const elegiveis = await fotosElegiveis(supabase, d.og.obra.id, d.segunda)
+  const ids = d.semanal && d.semanal.estado !== 'rascunho' ? d.semanal.conteudo?.fotos : undefined
+  const refs = ids
+    ? ids.map((id) => elegiveis.find((f) => f.id === id)).filter((f): f is FotoSemanalRef => !!f)
+    : elegiveis.slice(0, MAX_FOTOS_SEMANAL)
   const { fotos, omitidas } = await baixarFotosSemanal(d.og.obra.id, refs)
   const conteudo = conteudoSemanalDe(d, 'cliente')
   const dados = montarDadosPdfSemanal({
@@ -209,7 +229,7 @@ export async function congelarSemanal(supabase: SupabaseClient, d: DadosSemanal)
   return {
     cliente: conteudoSemanalDe(d, 'cliente'),
     interno: conteudoSemanalDe(d, 'interno'),
-    fotos: await escolherFotosDaSemana(supabase, d.og.obra.id, d.segunda),
+    fotos: (await fotosElegiveis(supabase, d.og.obra.id, d.segunda)).slice(0, MAX_FOTOS_SEMANAL).map((f) => f.id),
   }
 }
 

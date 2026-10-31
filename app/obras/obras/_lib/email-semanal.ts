@@ -165,6 +165,41 @@ export function montarConteudoSemanal(p: {
   }
 }
 
+// ---- Conteúdo congelado (obras_semanal.conteudo) --------------------------
+// O engenheiro pode gravar o jsonb direto pela API na validação: o congelado é
+// entrada não confiável. Só é usado se tiver exatamente o formato abaixo e o
+// sinal for um dos três visuais canônicos; senão, quem chama monta na hora.
+
+const ISO = /^\d{4}-\d{2}-\d{2}$/
+const SINAIS = (['verde', 'amarelo', 'vermelho'] as const).map((s) => sinalVisual(s))
+type Campos = Record<string, unknown>
+const obj = (v: unknown): v is Campos => typeof v === 'object' && v !== null && !Array.isArray(v)
+const str = (v: unknown): v is string => typeof v === 'string'
+const strOuNull = (v: unknown) => v === null || str(v)
+const nums = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
+const lista = (v: unknown, item: (x: Campos) => boolean) => Array.isArray(v) && v.every((x) => obj(x) && item(x))
+const strs = (x: Campos, ...k: string[]) => k.every((c) => str(x[c]))
+const itemValido = (x: Campos) => strs(x, 'rotulo', 'corpo') && (x.tecnico === undefined || typeof x.tecnico === 'boolean')
+
+/** true só se `v` tem o formato de ConteudoSemanal do `lado` (sinal canônico; cliente sem ocultos). */
+export function conteudoSemanalValido(v: unknown, lado: Lado): v is ConteudoSemanal {
+  if (!obj(v) || v.lado !== lado) return false
+  if (!strs(v, 'loja', 'assunto', 'titulo', 'subtitulo', 'previsao') || !ISO.test(String(v.segunda)) || !ISO.test(String(v.sexta))) return false
+  const s = v.sinal
+  if (!obj(s) || !SINAIS.some((c) => (Object.keys(c) as (keyof SinalVisual)[]).every((k) => s[k] === c[k]) && Object.keys(s).length === Object.keys(c).length)) return false
+  if (!obj(v.avanco) || !strs(v.avanco, 'previsto', 'realizado', 'desvio', 'ate')) return false
+  const p = v.ppc
+  if (p !== null && !(obj(p) && str(p.valor) && nums(p.cumpridos) && nums(p.avaliados) && nums(p.planejados))) return false
+  if (!lista(v.naoCumpridos, (x) => strs(x, 'descricao', 'meta', 'final') && strOuNull(x.causa) && strOuNull(x.responsavel))) return false
+  if (!lista(v.concluidas, (x) => strs(x, 'descricao', 'fim'))) return false
+  if (!lista(v.emAndamento, (x) => strs(x, 'descricao', 'percentual', 'termino'))) return false
+  if (v.proximaSemana !== null && !lista(v.proximaSemana, (x) => strs(x, 'descricao', 'meta'))) return false
+  if (!lista(v.doCliente, (x) => strs(x, 'descricao', 'atividade', 'tipo') && strOuNull(x.prazo) && typeof x.vencida === 'boolean')) return false
+  if (!lista(v.impedimentos, itemValido) || !lista(v.ocultos, itemValido)) return false
+  if (lado === 'cliente' && (v.ocultos as unknown[]).length) return false
+  return strOuNull(v.observacoes)
+}
+
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
@@ -250,10 +285,10 @@ ${corpo}</td></tr>`
 <div style="color:#ffffff;font-size:19px;font-weight:700;margin-top:3px">${esc(c.titulo)}</div>
 <div style="color:#94a3b8;font-size:13px;margin-top:2px">${esc(c.subtitulo)}</div>
 </td></tr>
-<tr><td style="background:${c.sinal.fundo};border-bottom:1px solid ${c.sinal.borda};padding:12px 20px">
+<tr><td style="background:${esc(c.sinal.fundo)};border-bottom:1px solid ${esc(c.sinal.borda)};padding:12px 20px">
 <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td valign="top" style="padding-right:10px"><div style="width:14px;height:14px;border-radius:7px;background:${c.sinal.ponto}"></div></td>
-<td style="font-size:14px;color:#0f172a"><b>${c.sinal.rotulo}</b> — ${esc(c.avanco.desvio)}.<br><span style="color:${c.sinal.texto}">${esc(c.previsao)}</span></td>
+<td valign="top" style="padding-right:10px"><div style="width:14px;height:14px;border-radius:7px;background:${esc(c.sinal.ponto)}"></div></td>
+<td style="font-size:14px;color:#0f172a"><b>${esc(c.sinal.rotulo)}</b> — ${esc(c.avanco.desvio)}.<br><span style="color:${esc(c.sinal.texto)}">${esc(c.previsao)}</span></td>
 </tr></table></td></tr>
 <tr><td style="padding:12px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 ${numeros

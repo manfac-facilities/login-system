@@ -2,7 +2,7 @@
  * Relatório semanal (Leva 3 §2.3): lado cliente sem R$, sem item oculto e sem
  * área interna; restrição liberada some; PPC sem plano; resumo da IA só do cliente.
  */
-import { montarConteudoSemanal, montarEmailSemanal, resumoParaIa } from '../email-semanal'
+import { conteudoSemanalValido, montarConteudoSemanal, montarEmailSemanal, resumoParaIa } from '../email-semanal'
 import type { AtividadeCalculada } from '../cronograma'
 import type { PlanoSemana, Restricao } from '../last-planner'
 import { imp, obraGrandePdf } from '../../_pdf/__tests__/fixtures/rdo'
@@ -144,5 +144,42 @@ describe('montarConteudoSemanal', () => {
   it('resumo da IA recusa o conteúdo interno e não leva as observações', () => {
     expect(() => resumoParaIa(conteudo('interno'))).toThrow()
     expect(resumoParaIa(conteudo('cliente'))).not.toContain('Alvenaria atrasou por material')
+  })
+})
+
+describe('conteúdo congelado (entrada não confiável)', () => {
+  it('aceita o conteúdo montado, ida e volta por JSON', () => {
+    expect(conteudoSemanalValido(JSON.parse(JSON.stringify(conteudo('cliente'))), 'cliente')).toBe(true)
+    expect(conteudoSemanalValido(JSON.parse(JSON.stringify(conteudo('interno'))), 'interno')).toBe(true)
+  })
+
+  it('recusa lado trocado, sinal fora dos três, cor estranha, campo de tipo errado e oculto no cliente', () => {
+    const c = conteudo('cliente')
+    expect(conteudoSemanalValido(c, 'interno')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, sinal: { ...c.sinal, rotulo: '<b>x</b>' } }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, sinal: { ...c.sinal, fundo: 'red;background:url(x)' } }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, sinal: { ...c.sinal, extra: 'x' } }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, segunda: '2026-10-26<x>' }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, concluidas: [{ descricao: 1, fim: 'x' }] }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido({ ...c, ocultos: [{ rotulo: 'a', corpo: 'b' }] }, 'cliente')).toBe(false)
+    expect(conteudoSemanalValido(null, 'cliente')).toBe(false)
+  })
+
+  it('e-mail escapa todo texto interpolado, inclusive o do sinal', () => {
+    const c = conteudo('cliente')
+    const mau = '<img src=x onerror=alert(1)>'
+    const { html } = montarEmailSemanal(
+      {
+        ...c,
+        titulo: mau, subtitulo: mau, previsao: mau, observacoes: mau,
+        sinal: { ...c.sinal, rotulo: mau, fundo: '"><script>', texto: '"><script>' },
+        avanco: { ...c.avanco, previsto: mau, ate: mau },
+        doCliente: [{ descricao: mau, atividade: mau, tipo: mau, prazo: mau, vencida: false }],
+      },
+      { fotos: 0 },
+    )
+    expect(html).not.toContain('<img')
+    expect(html).not.toContain('<script>')
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
   })
 })

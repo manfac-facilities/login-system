@@ -6,6 +6,7 @@
  * cliente, fotos só do caminho canônico da obra. react-pdf e Supabase mockados.
  */
 import { obraGrandePdf } from '../../../../_pdf/__tests__/fixtures/rdo'
+import { montarConteudoSemanal } from '../../../../_lib/email-semanal'
 
 type Linha = Record<string, unknown>
 let db: Record<string, Linha[]>
@@ -122,31 +123,65 @@ describe('rota do PDF do semanal', () => {
     expect(d.conteudo.observacoes).toBe('Semana boa.')
   })
 
-  it('validado com conteúdo congelado: o PDF sai dele (e das fotos escolhidas na validação)', async () => {
-    const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0, 0])])
+  const congeladoValido = () => {
+    const base = {
+      obra: obraGrandePdf(), segunda: '2026-10-26', ref: '2026-10-30', hoje: '2026-10-30',
+      plano: null, planoProximo: null, restricoes: [], observacoes: 'Como foi validado.',
+    }
+    return {
+      cliente: { ...montarConteudoSemanal({ ...base, lado: 'cliente' }), loja: 'Congelada' },
+      interno: montarConteudoSemanal({ ...base, lado: 'interno' }),
+    }
+  }
+  const pdfRenderizado = () =>
+    ((renderMock.mock.calls[0] as unknown[])[0] as {
+      props: { d: { conteudo: Record<string, unknown>; fotos: { legenda: string }[]; fotosOmitidas: number } }
+    }).props.d
+  const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0, 0])])
+
+  it('validado com conteúdo congelado: o PDF sai dele e as fotos pelos ids, re-resolvidos', async () => {
     downloadMock.mockImplementation(async () => ({ data: jpeg(), error: null }))
     jest.spyOn(console, 'warn').mockImplementation(() => {})
-    const congelado = (lado: string) => ({ lado, loja: 'Congelada', segunda: '2026-10-26', sexta: '2026-10-30', observacoes: 'Como foi validado.', avanco: { previsto: '10%', realizado: '9%', desvio: 'x', ate: 'a sexta' } })
-    db.obras_semanal = [{
-      ...semanal('enviado'),
-      conteudo: {
-        cliente: congelado('cliente'), interno: congelado('interno'),
-        fotos: [
-          { path: 'o1/rdo/2026-10-27/a.jpg', legenda: 'congelada', data: '2026-10-27' },
-          { path: 'outra/rdo/2026-10-27/b.jpg', legenda: 'fora', data: '2026-10-27' },
-        ],
-      },
-    }]
-    db.obras_rdo_foto = [{ rdo_id: 'd1', path: 'o1/rdo/2026-10-27/nova.jpg', legenda: 'nova', ordem: 1 }]
+    db.obras_rdo_foto = [
+      { id: 'f1', rdo_id: 'd1', path: 'o1/rdo/2026-10-27/a.jpg', legenda: 'congelada', ordem: 1 },
+      { id: 'f2', rdo_id: 'd1', path: 'o1/rdo/2026-10-27/nova.jpg', legenda: 'nova', ordem: 2 },
+      { id: 'f3', rdo_id: 'd2', path: 'o1/rdo/2026-10-28/c.jpg', legenda: 'rascunho', ordem: 1 },
+      { id: 'f4', rdo_id: 'x9', path: 'outra/rdo/2026-10-27/b.jpg', legenda: 'outra obra', ordem: 1 },
+    ]
+    // Ids de diário em rascunho, de outra obra e um caminho no lugar de id: somem.
+    db.obras_semanal = [{ ...semanal('enviado'), conteudo: { ...congeladoValido(), fotos: ['f1', 'f3', 'f4', 'o1/rdo/2026-10-27/nova.jpg'] } }]
     const r = await pedir()
     expect(r.status).toBe(200)
     expect(r.headers.get('Content-Disposition')).toContain('semanal-congelada-2026-10-26.pdf')
-    const d = ((renderMock.mock.calls[0] as unknown[])[0] as { props: { d: { conteudo: Record<string, unknown>; fotos: { legenda: string }[]; fotosOmitidas: number } } }).props.d
+    const d = pdfRenderizado()
     expect(d.conteudo.observacoes).toBe('Como foi validado.')
     expect(JSON.stringify(d.conteudo)).not.toContain('Aprovar layout')
     expect(d.fotos.map((f) => f.legenda)).toEqual(['congelada'])
-    expect(d.fotosOmitidas).toBe(1)
     expect(downloadMock).toHaveBeenCalledTimes(1)
+    expect(downloadMock).toHaveBeenCalledWith('o1/rdo/2026-10-27/a.jpg')
+  })
+
+  it('caminho fora do padrão estrito não é baixado (%, ?, #, barra invertida, subpasta, ..)', async () => {
+    downloadMock.mockImplementation(async () => ({ data: jpeg(), error: null }))
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const ruins = ['a%2F..%2Fx.jpg', 'a.jpg?x=1', 'a.jpg#x', 'a\\..\\x.jpg', 'sub/a.jpg', '..', '.hidden']
+    db.obras_rdo_foto = ruins.map((n, i) => ({ id: `r${i}`, rdo_id: 'd1', path: `o1/rdo/2026-10-27/${n}`, legenda: n, ordem: i }))
+    db.obras_semanal = [{ ...semanal('enviado'), conteudo: { ...congeladoValido(), fotos: ruins.map((_, i) => `r${i}`) } }]
+    expect((await pedir()).status).toBe(200)
+    expect(downloadMock).not.toHaveBeenCalled()
+    expect(pdfRenderizado().fotosOmitidas).toBe(ruins.length)
+  })
+
+  it('congelado adulterado (sinal fora dos três, HTML no rótulo): ignorado, monta na hora', async () => {
+    const c = congeladoValido()
+    db.obras_semanal = [{
+      ...semanal('enviado'),
+      conteudo: { ...c, cliente: { ...c.cliente, sinal: { ...c.cliente.sinal, rotulo: '<img src=x onerror=alert(1)>' } }, fotos: [] },
+    }]
+    expect((await pedir()).status).toBe(200)
+    const d = pdfRenderizado()
+    expect(d.conteudo.observacoes).toBe('Semana boa.') // a linha do banco, não o congelado
+    expect(JSON.stringify(d.conteudo)).not.toContain('onerror')
   })
 
   it('fotos: só de diários validados da semana e do caminho canônico desta obra', async () => {
