@@ -371,7 +371,7 @@ end $$;
 do $$ begin
   perform pg_temp.jwt(pg_temp.admin_email());
   update public.obras_relatorio set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000c001';
-  raise exception 'ok:%', (select pg_temp.tf(validado_por = pg_temp.admin_email())
+  raise exception 'ok:%', (select pg_temp.tf(validado_por = lower(pg_temp.admin_email()))
                              from public.obras_relatorio where id = '00000000-0000-4000-8000-00000000c001');
 exception when others then
   perform pg_temp.reg(34, 'administrador valida: passa, carimbo do admin', 'ok:t', sqlerrm);
@@ -572,19 +572,63 @@ exception when others then
 end $$;
 
 do $$ begin
-  -- envio feito pelo administrador; o engenheiro apaga o relatório (rascunho):
-  -- relatorio_id vira nulo e o enviado_por não muda.
+  -- envio feito pelo administrador; o engenheiro tenta apagar o relatório
+  -- (rascunho): a FK NO ACTION recusa (envio feito não perde o relatório).
   perform pg_temp.jwt(pg_temp.admin_email());
   insert into public.obras_envio (id, obra_id, tipo, relatorio_id, lado, resultado, enviado_por)
   values ('00000000-0000-4000-8000-00000000e007', '00000000-0000-4000-8000-00000000a008', 'mensal',
           '00000000-0000-4000-8000-00000000c001', 'cliente', 'ok', 'falsificado@teste.invalid');
   perform pg_temp.jwt('eng.teste@teste.invalid');
   delete from public.obras_relatorio where id = '00000000-0000-4000-8000-00000000c001';
-  raise exception 'ok:%|%',
-    (select pg_temp.tf(enviado_por = pg_temp.admin_email()) from public.obras_envio where id = '00000000-0000-4000-8000-00000000e007'),
-    (select pg_temp.tf(relatorio_id is null) from public.obras_envio where id = '00000000-0000-4000-8000-00000000e007');
+  raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(54, 'engenheiro apaga relatório rascunho: relatorio_id do envio vira nulo, enviado_por intacto', 'ok:t|t', sqlerrm);
+  perform pg_temp.reg(54, 'apagar relatório que tem envio: bloqueado pela FK', 'obras_envio_relatorio_id_fkey', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  insert into public.obras_envio (id, obra_id, tipo, relatorio_id, lado, resultado, enviado_por)
+  values ('00000000-0000-4000-8000-00000000e007', '00000000-0000-4000-8000-00000000a008', 'mensal',
+          '00000000-0000-4000-8000-00000000c001', 'cliente', 'ok', 'falsificado@teste.invalid');
+  raise exception 'ok:%', (select pg_temp.tf(enviado_por = lower(pg_temp.admin_email()))
+                             from public.obras_envio where id = '00000000-0000-4000-8000-00000000e007');
+exception when others then
+  perform pg_temp.reg(59, 'envio de relatório: enviado_por = sessão (não falsificável)', 'ok:t', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_envio (obra_id, tipo, lado, resultado) values ('00000000-0000-4000-8000-00000000a008', 'mensal', 'cliente', 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(60, 'envio mensal sem relatorio_id: check', 'obras_envio_relatorio_obrigatorio', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_envio (obra_id, tipo, lado, resultado) values ('00000000-0000-4000-8000-00000000a008', 'fase', 'cliente', 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(61, 'envio fase sem relatorio_id: check', 'obras_envio_relatorio_obrigatorio', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_envio (obra_id, tipo, lado, resultado) values ('00000000-0000-4000-8000-00000000a008', 'entrega', 'cliente', 'ok');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(62, 'envio entrega sem relatorio_id: check', 'obras_envio_relatorio_obrigatorio', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_envio (id, obra_id, tipo, relatorio_id, lado, resultado)
+  values ('00000000-0000-4000-8000-00000000e008', '00000000-0000-4000-8000-00000000a008', 'mensal',
+          '00000000-0000-4000-8000-00000000c001', 'cliente', 'ok');
+  update public.obras_envio set relatorio_id = null where id = '00000000-0000-4000-8000-00000000e008';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(63, 'UPDATE que tira o relatorio_id de envio mensal: check', 'obras_envio_relatorio_obrigatorio', sqlerrm);
 end $$;
 
 -- Regressão das Levas 2 e 3: o trigger recriado continua conferindo registro_id e semanal_id
@@ -651,10 +695,10 @@ begin
            filter (where obtido is null or obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 58 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 58 testes rodaram';
+  if v_total <> 63 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 63 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/58 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/63 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 

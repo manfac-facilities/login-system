@@ -23,8 +23,10 @@
 --      highlights jsonb: livre (o app define a forma), editável só em rascunho.
 --   2. obras_envio: tipo aceita também 'mensal', 'fase' e 'entrega' (check
 --      recriado mantendo diario/ata/imediata/semanal) + coluna relatorio_id
---      uuid null -> obras_relatorio (on delete set null; o obras_envio_autor
---      da Leva 2 preserva enviado_por nesse UPDATE). Trigger
+--      uuid -> obras_relatorio (FK NO ACTION: relatório com envio não é
+--      apagado, só sai na cascata da obra; índice obras_envio_relatorio_idx).
+--      Check obras_envio_relatorio_obrigatorio: envio mensal/fase/entrega
+--      exige relatorio_id (obras_envio.referencia é date). Trigger
 --      obras_envio_vinculo_obra recriado: registro_id, semanal_id e
 --      relatorio_id só podem apontar para linha da MESMA obra do envio, e
 --      relatorio_id só com envio do MESMO tipo do relatório (a agenda casa o
@@ -51,7 +53,8 @@
 -- ROLLBACK (só depois de reverter o app):
 --   recriar obras_envio_vinculo_obra com o corpo da Leva 3 (sem relatorio_id)
 --     e o trigger "before insert or update of obra_id, registro_id, semanal_id";
---   alter table public.obras_envio drop column relatorio_id;
+--   alter table public.obras_envio drop constraint obras_envio_relatorio_obrigatorio,
+--     drop column relatorio_id;  -- leva o índice junto
 --   recriar obras_envio_tipo_check sem mensal/fase/entrega (só sem envio desses tipos);
 --   drop table public.obras_relatorio;  -- apaga dados (exportar antes)
 -- ============================================================
@@ -118,10 +121,14 @@ create table if not exists public.obras_relatorio (
   conteudo jsonb,
   validado_por text,
   validado_em timestamptz,
+  -- Tipo fora da lista: o "else true" deixa só o obras_relatorio_tipo_check acusar.
   constraint obras_relatorio_referencia_check check (
-       (tipo = 'mensal'  and referencia ~ '^\d{4}-(0[1-9]|1[0-2])$')
-    or (tipo = 'fase'    and referencia ~ '^(0|[1-9]\d*)$')
-    or (tipo = 'entrega' and referencia = 'entrega')),
+    case tipo
+      when 'mensal'  then referencia ~ '^\d{4}-(0[1-9]|1[0-2])$'
+      when 'fase'    then referencia ~ '^(0|[1-9]\d*)$'
+      when 'entrega' then referencia = 'entrega'
+      else true
+    end),
   constraint obras_relatorio_periodo_check check (periodo_inicio <= periodo_fim),
   constraint obras_relatorio_obra_tipo_referencia_key unique (obra_id, tipo, referencia)
 );
@@ -233,8 +240,12 @@ create policy "obras delete" on public.obras_relatorio for delete to authenticat
 -- ============================================================
 -- 2. obras_envio: tipos mensal/fase/entrega e relatorio_id
 -- ============================================================
+-- FK sem ação (NO ACTION, conferida no fim do comando): relatório com envio
+-- não é apagado (o envio de mensal/fase/entrega exige relatorio_id); na
+-- cascata da obra os envios saem no mesmo comando e a conferência passa.
 alter table public.obras_envio
-  add column if not exists relatorio_id uuid references public.obras_relatorio(id) on delete set null;
+  add column if not exists relatorio_id uuid references public.obras_relatorio(id);
+create index if not exists obras_envio_relatorio_idx on public.obras_envio (relatorio_id);
 
 do $$
 declare c record;
@@ -249,6 +260,12 @@ end $$;
 alter table public.obras_envio
   add constraint obras_envio_tipo_check
   check (tipo is null or tipo in ('diario','ata','imediata','semanal','mensal','fase','entrega'));
+-- Envio de relatório de período sempre aponta para o relatório (a agenda casa
+-- por relatorio_id -> obras_relatorio.referencia; obras_envio.referencia é date).
+-- Recriado pelo laço acima a cada reaplicação (menciona tipo).
+alter table public.obras_envio
+  add constraint obras_envio_relatorio_obrigatorio
+  check (tipo is null or tipo not in ('mensal','fase','entrega') or relatorio_id is not null);
 
 -- Vínculo do envio: registro_id (Leva 2), semanal_id (Leva 3) e relatorio_id
 -- têm de ser da MESMA obra do envio; relatorio_id só com envio do MESMO tipo
@@ -346,14 +363,18 @@ from (values
                and pg_get_constraintdef(oid) like '%''mensal''%' and pg_get_constraintdef(oid) like '%''fase''%'
                and pg_get_constraintdef(oid) like '%''entrega''%')::text
          from pg_constraint where conrelid = 'public.obras_envio'::regclass and conname = 'obras_envio_tipo_check')),
-  (12, 'obras_envio tem um só check sobre tipo', '1',
-      (select count(*)::text from pg_constraint where conrelid = 'public.obras_envio'::regclass
+  (12, 'obras_envio: checks sobre tipo = só tipo_check e relatorio_obrigatorio', 'obras_envio_relatorio_obrigatorio,obras_envio_tipo_check',
+      (select string_agg(conname, ',' order by conname) from pg_constraint where conrelid = 'public.obras_envio'::regclass
          and contype = 'c' and pg_get_constraintdef(oid) ~ '\mtipo\M')),
-  (13, 'obras_envio.relatorio_id existe (uuid), FK on delete set null', 'uuid|n',
+  (13, 'obras_envio.relatorio_id existe (uuid), uma FK NO ACTION para obras_relatorio', 'uuid|a',
       (select (select data_type from information_schema.columns where table_schema = 'public'
                  and table_name = 'obras_envio' and column_name = 'relatorio_id')
-              || '|' || (select confdeltype::text from pg_constraint where conrelid = 'public.obras_envio'::regclass
-                           and contype = 'f' and confrelid = 'public.obras_relatorio'::regclass))),
+              || '|' || (select string_agg(c.confdeltype::text, ',') from pg_constraint c
+                          where c.conrelid = 'public.obras_envio'::regclass and c.contype = 'f'
+                            and c.confrelid = 'public.obras_relatorio'::regclass
+                            and c.conkey = array[(select a.attnum from pg_attribute a
+                                                   where a.attrelid = 'public.obras_envio'::regclass
+                                                     and a.attname = 'relatorio_id')]))),
   (14, 'obras_envio segue só com select e insert', '2',
       (select count(*)::text from pg_policies where schemaname = 'public' and tablename = 'obras_envio')),
   (15, 'obras_envio_autor (Leva 2) intacto: UPDATE mantém old.enviado_por', 'true',
@@ -370,6 +391,13 @@ from (values
                       or has_function_privilege('anon', 'public.obras_envio_vinculo_obra()', 'EXECUTE'))::text)),
   (18, 'obras_semanal_estado (Leva 3) intacto', 'true',
       (select (prosrc like '%validar exige o conteudo%')::text
-         from pg_proc where oid = 'public.obras_semanal_estado()'::regprocedure))
+         from pg_proc where oid = 'public.obras_semanal_estado()'::regprocedure)),
+  (19, 'envio mensal/fase/entrega exige relatorio_id (check)', 'true',
+      (select (pg_get_constraintdef(oid) like '%relatorio_id IS NOT NULL%'
+               and pg_get_constraintdef(oid) like '%''mensal''%' and pg_get_constraintdef(oid) like '%''fase''%'
+               and pg_get_constraintdef(oid) like '%''entrega''%')::text
+         from pg_constraint where conrelid = 'public.obras_envio'::regclass and conname = 'obras_envio_relatorio_obrigatorio')),
+  (20, 'índice obras_envio_relatorio_idx existe', 'true',
+      (select (to_regclass('public.obras_envio_relatorio_idx') is not null)::text))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
