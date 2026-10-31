@@ -29,7 +29,7 @@ import { ehDiaUtil } from './calendario'
 import { dataEnvioSemanal, segundaDaSemana } from './last-planner'
 
 export type TipoAgenda = 'diario' | 'semanal' | 'mensal' | 'fase' | 'entrega'
-export type SituacaoAgenda = 'no_prazo' | 'com_atraso' | 'atrasado' | 'enviar_hoje' | 'programado'
+export type SituacaoAgenda = 'no_prazo' | 'com_atraso' | 'atrasado' | 'enviar_hoje' | 'programado' | 'antes_do_sistema'
 export type ItemAgenda = {
   tipo: TipoAgenda
   referencia: string
@@ -80,6 +80,16 @@ function dataNatural(tipo: TipoAgenda, ref: string, feriados: ReadonlySet<string
   return null
 }
 
+/**
+ * Início da cobrança: o primeiro uso da obra no sistema = o menor entre a data (SP) em que a base
+ * foi salva e a do 1º envio ao cliente, nunca antes da dataBase. Sem nenhum dos dois: hoje.
+ */
+export function cobrarDesdeDe(p: { dataBase: string | null; salvaEm: string | null; envios: EnvioAgenda[]; hojeIso: string }): string {
+  const datas = [...(p.salvaEm ? [p.salvaEm] : []), ...p.envios.map((e) => e.enviadoEm)].map(dataSp)
+  const primeiro = datas.length ? datas.reduce((a, b) => (a < b ? a : b)) : p.hojeIso
+  return p.dataBase && p.dataBase > primeiro ? p.dataBase : primeiro
+}
+
 export function agendaDaObra(p: {
   /** null = base ainda não salva: só os envios já feitos. */
   dataBase: string | null
@@ -91,6 +101,8 @@ export function agendaDaObra(p: {
   feriados: ReadonlySet<string>
   envios: EnvioAgenda[]
   hojeIso: string
+  /** Itens previstos antes desta data e sem envio ficam 'antes_do_sistema' (ver `cobrarDesdeDe`). */
+  cobrarDesde?: string | null
 }): ItemAgenda[] {
   const { dataBase, terminoProjetado: fim, feriados, hojeIso: hoje } = p
   const previstos: { tipo: TipoAgenda; referencia: string; dataPrevista: string; disponivel: boolean }[] = []
@@ -131,6 +143,7 @@ export function agendaDaObra(p: {
   const situacao = (dataPrevista: string, dataReal: string | null, disponivel: boolean): SituacaoAgenda =>
     dataReal
       ? dataReal <= dataPrevista ? 'no_prazo' : 'com_atraso'
+      : p.cobrarDesde && dataPrevista < p.cobrarDesde ? 'antes_do_sistema'
       : !disponivel || dataPrevista > hoje ? 'programado' : dataPrevista === hoje ? 'enviar_hoje' : 'atrasado'
 
   const out: ItemAgenda[] = previstos.map((i) => {

@@ -211,6 +211,10 @@ export async function lerDadosPeriodo(
   ])
   if (!plR.ok || !rR.ok || relR.error) return { ok: false, status: 500, erro: 'Não deu para ler os dados do relatório' }
   const relatorio = relR.data ? relatorioRowDe(relR.data as Linha, tipo, referencia) : null
+  // Congelado é entrada não confiável: inválido não é remontado com os dados de hoje.
+  if (relatorio && relatorio.estado !== 'rascunho' && !relatorio.conteudo) {
+    return { ok: false, status: 500, erro: 'Conteúdo do relatório inválido; fale com o administrador.' }
+  }
 
   let inicio: string
   let fim: string

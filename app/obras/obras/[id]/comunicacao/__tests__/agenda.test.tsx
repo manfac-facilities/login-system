@@ -16,7 +16,7 @@ const props = { obraId: 'o1', fases: new Map([['3', 'Alvenaria']]), hrefTipo: (t
 
 describe('aba Agenda', () => {
   it('chips de situação têm o texto exigido', () => {
-    expect(Object.values(SITUACAO).map((s) => s.rotulo)).toEqual(['Enviado no prazo', 'Enviado com atraso', 'ATRASADO', 'ENVIAR HOJE', 'Programado'])
+    expect(Object.values(SITUACAO).map((s) => s.rotulo)).toEqual(['Enviado no prazo', 'Enviado com atraso', 'ATRASADO', 'ENVIAR HOJE', 'Antes do sistema', 'Programado'])
   })
 
   it('agrupa por mês, mostra chips e links dos rascunhos', () => {

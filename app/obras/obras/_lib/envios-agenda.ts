@@ -9,7 +9,7 @@
  * não serve a esses tipos). Sem o vínculo resolvido, o envio é ignorado.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { agendaDaObra, type EnvioAgenda, type ItemAgenda } from './agenda'
+import { agendaDaObra, cobrarDesdeDe, type EnvioAgenda, type ItemAgenda } from './agenda'
 import { etapasDaObra } from './relatorio-periodo'
 import type { ObraGrande } from './leitura'
 
@@ -89,5 +89,6 @@ export async function lerAgenda(
     feriados: og.feriados,
     envios,
     hojeIso: hoje,
+    cobrarDesde: cobrarDesdeDe({ dataBase: og.obra.data_base ?? null, salvaEm: og.versaoBase?.salvaEm ?? null, envios, hojeIso: hoje }),
   })
 }

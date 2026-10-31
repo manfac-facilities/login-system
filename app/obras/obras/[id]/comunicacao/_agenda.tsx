@@ -9,6 +9,7 @@ export const SITUACAO: Record<SituacaoAgenda, { rotulo: string; classe: string }
   com_atraso: { rotulo: 'Enviado com atraso', classe: 'border-[#efd77a] bg-[#fdf6d8] text-[#6b4e00]' },
   atrasado: { rotulo: 'ATRASADO', classe: 'border-[#f0c2c2] bg-[#fdeeee] text-[#8a1c1c]' },
   enviar_hoje: { rotulo: 'ENVIAR HOJE', classe: 'border-[#b94606] bg-[#fff1e8] text-[#8a3300]' },
+  antes_do_sistema: { rotulo: 'Antes do sistema', classe: 'border-[#dadad8] bg-[#f4f4f2] text-[#333336]' },
   programado: { rotulo: 'Programado', classe: 'border-[#dadad8] bg-[#f4f4f2] text-[#333336]' },
 }
 

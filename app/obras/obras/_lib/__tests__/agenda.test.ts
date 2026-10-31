@@ -3,7 +3,7 @@
  * Review Focus 1 (último dia útil feriado), 2 (fase não concluída = Programado),
  * 3 (envio casa por tipo + referência quando o cronograma muda).
  */
-import { agendaDaObra, periodoMensal, ultimoDiaUtilDoMes, type ItemAgenda } from '../agenda'
+import { agendaDaObra, cobrarDesdeDe, periodoMensal, ultimoDiaUtilDoMes, type ItemAgenda } from '../agenda'
 
 const sem = new Set<string>()
 const base = {
@@ -179,5 +179,31 @@ describe('agendaDaObra — situação', () => {
       ],
     })
     expect(a.some((i) => i.dataReal)).toBe(false)
+  })
+})
+
+describe('cobrança desde o primeiro uso do sistema (I1)', () => {
+  const macae = { ...base, hojeIso: '2026-11-02' }
+  const salvaEm = '2026-10-30T15:00:00Z'
+
+  it('cobrarDesdeDe: máx(dataBase, mín(base salva, 1º envio)); sem nada = hoje', () => {
+    expect(cobrarDesdeDe({ dataBase: '2026-10-26', salvaEm, envios: [], hojeIso: '2026-11-02' })).toBe('2026-10-30')
+    expect(cobrarDesdeDe({ dataBase: '2026-10-26', salvaEm, envios: [{ tipo: 'diario', referencia: '2026-10-27', enviadoEm: '2026-10-28T12:00:00Z' }], hojeIso: '2026-11-02' })).toBe('2026-10-28')
+    expect(cobrarDesdeDe({ dataBase: '2026-10-30', salvaEm: '2026-10-20T12:00:00Z', envios: [], hojeIso: '2026-11-02' })).toBe('2026-10-30')
+    expect(cobrarDesdeDe({ dataBase: '2026-10-26', salvaEm: null, envios: [], hojeIso: '2026-11-02' })).toBe('2026-11-02')
+  })
+
+  it('Macaé-like: diários 26–29/10 antes do sistema; semanal de 26/10 (envio 30/10) e mensal seguem cobrados', () => {
+    const a = agendaDaObra({ ...macae, cobrarDesde: cobrarDesdeDe({ dataBase: base.dataBase, salvaEm, envios: [], hojeIso: macae.hojeIso }) })
+    const d = doTipo(a, 'diario')
+    expect(d.filter((i) => i.referencia <= '2026-10-29').map((i) => i.situacao)).toEqual(Array(4).fill('antes_do_sistema'))
+    expect(d.find((i) => i.referencia === '2026-10-30')!.situacao).toBe('atrasado')
+    expect(doTipo(a, 'semanal')[0]).toMatchObject({ referencia: '2026-10-26', situacao: 'atrasado' })
+    expect(doTipo(a, 'mensal')[0].situacao).toBe('atrasado')
+  })
+
+  it('item anterior ao corte mas enviado continua no_prazo/com_atraso', () => {
+    const a = agendaDaObra({ ...macae, cobrarDesde: '2026-10-30', envios: [{ tipo: 'diario', referencia: '2026-10-27', enviadoEm: '2026-10-27T12:00:00Z' }] })
+    expect(doTipo(a, 'diario').find((i) => i.referencia === '2026-10-27')!.situacao).toBe('no_prazo')
   })
 })

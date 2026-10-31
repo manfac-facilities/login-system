@@ -36,8 +36,8 @@ describe('calcularAlertas', () => {
     expect(ids({ calc: calc(-5) })).toEqual([])
   })
 
-  it('agenda: enviado, programado e sem agenda (null) não alertam', () => {
-    const agenda = [item('diario', '2026-10-27', '2026-10-27', 'no_prazo'), item('semanal', '2026-10-26', '2026-10-30', 'programado'), item('diario', '2026-10-26', '2026-10-26', 'com_atraso')]
+  it('agenda: enviado, programado, antes do sistema e sem agenda (null) não alertam', () => {
+    const agenda = [item('diario', '2026-10-27', '2026-10-27', 'no_prazo'), item('semanal', '2026-10-26', '2026-10-30', 'programado'), item('diario', '2026-10-26', '2026-10-26', 'com_atraso'), item('diario', '2026-10-25', '2026-10-25', 'antes_do_sistema')]
     expect(ids({ agenda })).toEqual([])
     expect(ids({ agenda: null })).toEqual([])
   })

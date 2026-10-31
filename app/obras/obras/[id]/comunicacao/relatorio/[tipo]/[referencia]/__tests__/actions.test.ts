@@ -212,7 +212,8 @@ describe('salvarRascunhoRelatorioAction', () => {
     expect((await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada({ livre: 'x'.repeat(301) }))).ok).toBe(false)
     expect((await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', { ...entrada(), marcados: 'tudo' as unknown as string[] })).ok).toBe(false)
     db.obras_relatorio = [{ id: 'r1', obra_id: OBRA, tipo: 'fase', referencia: '10', estado: 'validado', periodo_inicio: '2026-10-26', periodo_fim: '2026-11-06', observacoes: 'Antes' }]
-    expect(await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada())).toEqual({ ok: false, erro: expect.stringMatching(/já validado/) })
+    // (sem `conteudo` congelado válido, a leitura recusa antes: M4)
+    expect(await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada())).toEqual({ ok: false, erro: expect.stringMatching(/já validado|inválido/) })
     expect(db.obras_relatorio[0].observacoes).toBe('Antes')
   })
 })
@@ -319,8 +320,9 @@ describe('validarEEnviarRelatorioAction', () => {
     db.obras_relatorio[0].conteudo.interno.sinal = { ...db.obras_relatorio[0].conteudo.interno.sinal, fundo: 'red;background:url(x)' }
     db.obras_destinatario.push({ obra_id: OBRA, email: 'int2@manfac.com.br', lado: 'interno', tipos: ['semanal'], ativo: true })
     enviarEmailMock.mockClear()
-    await validarEEnviarRelatorioAction(OBRA, 'fase', '10')
-    expect(enviarEmailMock.mock.calls[0][0].html).not.toContain('url(x)')
+    // M4: congelado inválido não é remontado com dados de hoje — recusa, nada é enviado.
+    expect(await validarEEnviarRelatorioAction(OBRA, 'fase', '10')).toEqual({ ok: false, erro: expect.stringMatching(/Conteúdo do relatório inválido/) })
+    expect(enviarEmailMock).not.toHaveBeenCalled()
   })
 })
 
