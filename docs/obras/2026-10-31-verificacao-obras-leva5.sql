@@ -1233,6 +1233,23 @@ exception when others then
   perform pg_temp.reg(115, 'situação: administrador publica em obra sem engenheiro', 'ok:t', sqlerrm);
 end $$;
 
+-- Caminho real do app (_analista-actions): sem publicada_por e com versão qualquer;
+-- o BEFORE trigger preenche autor e versão antes do NOT NULL e do WITH CHECK da RLS.
+do $$
+declare v int;
+begin
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao)
+  values ('00000000-0000-4000-8000-00000000a010', 42, 'Como o app grava.');
+  get diagnostics v = row_count;
+  raise exception 'ok:%|%', v,
+    (select string_agg(versao::text || '|' || publicada_por, ',') from public.obras_situacao_cliente
+      where obra_id = '00000000-0000-4000-8000-00000000a010');
+exception when others then
+  perform pg_temp.reg(116, 'situação (RLS real, como o app): sem publicada_por e versão errada → versão 1, autor = JWT',
+    'ok:1|1|eng.teste@teste.invalid', sqlerrm);
+end $$;
+
 -- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por strpos (no LIKE o '_' dos nomes de constraint é curinga).
@@ -1252,10 +1269,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 115 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 115 testes rodaram';
+  if v_total <> 116 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 116 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/115 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/116 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
