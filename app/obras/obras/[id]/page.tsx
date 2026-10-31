@@ -11,6 +11,11 @@ import { dadosPpc } from './lookahead/_plano-tipos'
 import { ultimosDiariosEnviados } from '../_lib/ultimo-diario'
 import PainelObra, { type EstadoDiario } from '../_ui/painel'
 import FaixaAlertas from '../_ui/faixa-alertas'
+import { perguntasAbertas } from '../_lib/analista'
+import { iaDisponivel } from '../_lib/ia-situacao'
+import { situacaoParaCliente } from '../_lib/situacao'
+import { lerAnalise } from './_analista-dados'
+import QuadroAnalista from './_analista'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,9 +35,9 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     data: { user },
   } = await supabase.auth.getUser()
 
-  const permitido =
-    !!user?.email &&
-    ((await hasSystemAccess(supabase, user.email, 'obras')) || (await isAdmin(supabase, user.email)))
+  const email = user?.email?.trim().toLowerCase() ?? ''
+  const admin = !!email && (await isAdmin(supabase, email))
+  const permitido = !!email && (admin || (await hasSystemAccess(supabase, email, 'obras')))
   if (!permitido) {
     return <EstadoVazio>Esta tela é de quem é responsável pelas obras</EstadoVazio>
   }
@@ -62,6 +67,16 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     restricoes: restR.ok ? restR.restricoes : [],
   })
 
+  // Analista da obra (Leva 5 §7): só com planos e restrições lidos (leitura que falhou não vira pergunta falsa).
+  const analiseR =
+    r.dados.calc && planosR.ok && restR.ok
+      ? await lerAnalise(supabase, { og: r.dados, hoje, restricoes: restR.restricoes, planos: planosR.planos })
+      : null
+  const engenheiro = String(r.dados.obra.engenheiro_email ?? '').trim().toLowerCase()
+  const podeEditar = admin || (!!engenheiro && engenheiro === email)
+  const analise = analiseR?.ok ? analiseR.analise : null
+  const abertas = analise ? perguntasAbertas(analise.pontos, analise.salvas) : []
+
   return (
     <div className="flex flex-col gap-4 lg:gap-5">
       <FaixaAlertas alertas={alertas} />
@@ -72,6 +87,18 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
         ultimoEnvio={ultimoEnvio}
         ppcSemanas={planosR.ok ? dadosPpc(planosR.planos) : []}
       />
+      {analise ? (
+        <QuadroAnalista
+          obraId={id}
+          podeEditar={podeEditar}
+          abertas={abertas.map((p) => ({ chave: p.chave, pergunta: p.pergunta, soInterno: p.soInterno, anterior: p.anterior }))}
+          respondidas={analise.pontos.length - abertas.length}
+          publicada={analise.publicada ? { versao: analise.publicada.versao, ...situacaoParaCliente(analise.publicada) } : null}
+          ia={iaDisponivel()}
+        />
+      ) : analiseR ? (
+        <EstadoVazio>Não deu para carregar o analista da obra. Recarregue a página em alguns instantes.</EstadoVazio>
+      ) : null}
     </div>
   )
 }
