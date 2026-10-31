@@ -5,7 +5,8 @@
  * Todo texto é escapado (`email-html.ts`). A curva S vai só no PDF anexo.
  */
 import { dataBr } from './email-diario'
-import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { caixa, documentoEmail, htmlDaSituacao, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { linhasDaSituacao } from './situacao'
 import { linkDoLado, textoLinkObra } from './link-portal'
 import type { ConteudoPeriodo, TipoPeriodo } from './relatorio-periodo'
 
@@ -62,6 +63,7 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number; linkO
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto do período' : 'fotos do período'} no PDF anexo.` : null
 
   const corpo = [
+    c.situacao ? htmlDaSituacao(c.situacao) : '',
     c.comparativo
       ? secao(
           'Comparativo base × final',
@@ -101,6 +103,7 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number; linkO
     c.subtitulo,
     '',
     ...linhasDeDados(c),
+    ...(c.situacao ? ['', ...linhasDaSituacao(c.situacao)] : []),
     '',
     'OBSERVAÇÕES DA ENGENHARIA',
     c.observacoes ?? 'Sem observações.',

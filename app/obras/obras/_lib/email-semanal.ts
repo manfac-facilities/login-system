@@ -13,7 +13,8 @@ import { diasDaSemana, ppc, type PlanoSemana, type Restricao } from './last-plan
 import type { ObraGrande } from './leitura'
 import type { Responsavel } from './cronograma'
 import { esc, ISO, lista, nums, obj, str, strOuNull, strs } from './conteudo-valido'
-import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { caixa, documentoEmail, htmlDaSituacao, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { linhasDaSituacao, situacaoRelatorioValida, type SituacaoRelatorio } from './situacao'
 import { linkDoLado, textoLinkObra } from './link-portal'
 import { blocosDoPeriodo, blocosValidos, ddmm, type Lado } from './relatorio-periodo'
 
@@ -45,6 +46,8 @@ export type ConteudoSemanal = {
   /** Só no interno: impedimentos da semana com `exibirAoCliente = false`. */
   ocultos: ItemDiario[]
   observacoes: string | null
+  /** Situação publicada vigente na montagem (Leva 5 §7); ausente = nenhuma publicada. */
+  situacao?: SituacaoRelatorio
 }
 
 const RESP: Record<Responsavel, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiro: 'Terceiro', clima: 'Clima' }
@@ -60,6 +63,8 @@ export function montarConteudoSemanal(p: {
   planoProximo: PlanoSemana | null
   restricoes: Restricao[]
   observacoes: string | null
+  /** Situação publicada vigente (congelada junto no validado). */
+  situacao?: SituacaoRelatorio | null
 }): ConteudoSemanal {
   const { lado, obra: og, segunda, ref } = p
   const sexta = diasDaSemana(segunda)[4]
@@ -105,6 +110,7 @@ export function montarConteudoSemanal(p: {
     ppc: ppcSemana, naoCumpridos, concluidas: b.concluidas, emAndamento: b.emAndamento, proximaSemana,
     doCliente: b.doCliente, impedimentos: b.impedimentos, ocultos: b.ocultos,
     observacoes: p.observacoes?.trim() || null,
+    ...(p.situacao ? { situacao: p.situacao } : {}),
   }
 }
 
@@ -120,6 +126,7 @@ export function conteudoSemanalValido(v: unknown, lado: Lado): v is ConteudoSema
   const p = v.ppc
   if (p !== null && !(obj(p) && str(p.valor) && nums(p.cumpridos) && nums(p.avaliados) && nums(p.planejados))) return false
   if (!lista(v.naoCumpridos, (x) => strs(x, 'descricao', 'meta', 'final') && strOuNull(x.causa) && strOuNull(x.responsavel))) return false
+  if (v.situacao !== undefined && !situacaoRelatorioValida(v.situacao)) return false
   return v.proximaSemana === null || lista(v.proximaSemana, (x) => strs(x, 'descricao', 'meta'))
 }
 
@@ -181,6 +188,7 @@ export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number; linkO
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto da semana' : 'fotos da semana'} no PDF anexo.` : null
 
   const corpo = [
+    ...(c.situacao ? [htmlDaSituacao(c.situacao)] : []),
     secao(
       'Plano da semana',
       (c.ppc
@@ -224,6 +232,7 @@ export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number; linkO
     c.subtitulo,
     '',
     ...linhasDeDados(c),
+    ...(c.situacao ? ['', ...linhasDaSituacao(c.situacao)] : []),
     '',
     'OBSERVAÇÕES DA ENGENHARIA',
     c.observacoes ?? 'Sem observações.',

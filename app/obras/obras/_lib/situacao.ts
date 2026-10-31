@@ -113,11 +113,7 @@ export async function lerSituacaoPublicada(
   supabase: SupabaseClient,
   obraId: string,
 ): Promise<{ ok: true; situacao: SituacaoPublicada | null } | { ok: false }> {
-  const { data, error } = await supabase
-    .from('obras_situacao_cliente')
-    .select('*')
-    .eq('obra_id', obraId)
-    .order('versao', { ascending: false })
+  const { data, error } = await supabase.from('obras_situacao_cliente').select('*').eq('obra_id', obraId)
   if (error) return { ok: false }
   const linhas = ((data ?? []) as Linha[]).filter((l) => l.obra_id === undefined || l.obra_id === obraId)
   const ultima = linhas.reduce<Linha | null>((m, l) => (!m || Number(l.versao) > Number(m.versao) ? l : m), null)
@@ -143,6 +139,17 @@ export const situacaoParaCliente = (s: SituacaoPublicada): SituacaoRelatorio => 
 })
 
 const DATA_BR = /^\d{2}\/\d{2}\/\d{4}$/
+
+/** "o quê · quando · efeito" (só as partes preenchidas). */
+export const acaoTxt = (a: AcaoSituacao) => [a.oque, a.quando, a.efeito].filter(Boolean).join(' · ')
+
+/** Bloco da situação no e-mail em texto. */
+export const linhasDaSituacao = (s: SituacaoRelatorio): string[] => [
+  'SITUAÇÃO DA OBRA',
+  s.explicacao,
+  ...(s.acoes.length ? ['O que estamos fazendo para recuperar:', ...s.acoes.map((a) => `- ${acaoTxt(a)}`)] : []),
+  `Atualizado em ${s.atualizadoEm} por ${s.por}.`,
+]
 
 /** Para os validadores do conteúdo congelado (semanal e período). */
 export function situacaoRelatorioValida(v: unknown): v is SituacaoRelatorio {

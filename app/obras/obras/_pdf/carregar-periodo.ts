@@ -36,6 +36,7 @@ import { logoManfac, registrarFontes } from './base'
 import { baixarFotos, fotosDosIds, fotosElegiveisDoPeriodo, slug, type FotoRef } from './fotos-periodo'
 import { DocumentoPeriodo, montarDadosPdfPeriodo, type DadosPdfPeriodo } from './periodo'
 import { MAX_HIGHLIGHT_LIVRE } from '../[id]/comunicacao/relatorio/[tipo]/[referencia]/_tipos'
+import { lerSituacaoPublicada, situacaoParaCliente, type SituacaoRelatorio } from '../_lib/situacao'
 
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -77,6 +78,8 @@ export type DadosPeriodo = {
   relatorio: RelatorioRow | null
   /** Highlights automáticos do período (ids só para a tela de rascunho). */
   automaticos: Highlight[]
+  /** Situação publicada vigente (Leva 5 §7); entra no conteúdo montado do rascunho. */
+  situacao?: SituacaoRelatorio | null
 }
 
 type Falha = { ok: false; status: 404 | 500; erro: string }
@@ -204,12 +207,13 @@ export async function lerDadosPeriodo(
   // O id da obra vem da leitura pela sessão (RLS), não do navegador.
   const id = String(obra.obra.id)
 
-  const [plR, rR, relR] = await Promise.all([
+  const [plR, rR, relR, stR] = await Promise.all([
     lerPlanos(supabase, id),
     lerRestricoes(supabase, id),
     supabase.from('obras_relatorio').select('*').eq('obra_id', id).eq('tipo', tipo).eq('referencia', referencia).maybeSingle(),
+    lerSituacaoPublicada(supabase, id),
   ])
-  if (!plR.ok || !rR.ok || relR.error) return { ok: false, status: 500, erro: 'Não deu para ler os dados do relatório' }
+  if (!plR.ok || !rR.ok || relR.error || !stR.ok) return { ok: false, status: 500, erro: 'Não deu para ler os dados do relatório' }
   const relatorio = relR.data ? relatorioRowDe(relR.data as Linha, tipo, referencia) : null
   // Congelado é entrada não confiável: inválido não é remontado com os dados de hoje.
   if (relatorio && relatorio.estado !== 'rascunho' && !relatorio.conteudo) {
@@ -238,6 +242,7 @@ export async function lerDadosPeriodo(
       og: obra, tipo, referencia, inicio, fim, ref, hoje,
       planos: plR.planos, restricoes: rR.restricoes, relatorio,
       automaticos: highlightsDoPeriodo({ obra, inicio, fim, ref, planos: plR.planos }),
+      situacao: stR.situacao ? situacaoParaCliente(stR.situacao) : null,
     },
   }
 }
@@ -256,6 +261,7 @@ export const conteudoPeriodoDe = (d: DadosPeriodo, lado: Lado): ConteudoPeriodo 
     planos: d.planos, restricoes: d.restricoes,
     highlights: textosDosHighlights(d.automaticos, d.relatorio?.highlights ?? null),
     observacoes: d.relatorio?.observacoes ?? null,
+    situacao: d.situacao ?? null,
   })
 
 /** Até `max` fotos espalhadas pelo período (a primeira e a última sempre entram). */

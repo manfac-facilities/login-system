@@ -21,6 +21,7 @@ import { conteudoSemanalValido, montarConteudoSemanal, type ConteudoSemanal, typ
 import { diasDaSemana, segundaDaSemana, type PlanoSemana, type Restricao } from '../_lib/last-planner'
 import { lerObraGrande, lerPlano, lerRestricoes, type ObraGrande } from '../_lib/leitura'
 import { segundaValida, somarDias } from '../[id]/lookahead/_plano-tipos'
+import { lerSituacaoPublicada, situacaoParaCliente, type SituacaoRelatorio } from '../_lib/situacao'
 import { logoManfac, registrarFontes } from './base'
 import { MAX_BYTES_FOTO, baixarFotos, fotosDosIds, fotosElegiveisDoPeriodo, slug, type FotoRef } from './fotos-periodo'
 import { DocumentoSemanal, montarDadosPdfSemanal, type DadosPdfSemanal } from './semanal'
@@ -56,6 +57,8 @@ export type DadosSemanal = {
   planoProximo: PlanoSemana | null
   restricoes: Restricao[]
   semanal: SemanalRow | null
+  /** Situação publicada vigente (Leva 5 §7); entra no conteúdo montado do rascunho. */
+  situacao?: SituacaoRelatorio | null
 }
 
 type Falha = { ok: false; status: 404 | 500; erro: string }
@@ -105,19 +108,21 @@ export async function lerDadosSemanal(
   }
   if (obra.obra.modalidade !== 'obra') return { ok: false, status: 404, erro: 'Obra não encontrada' }
 
-  const [pR, pxR, rR, sR] = await Promise.all([
+  const [pR, pxR, rR, sR, stR] = await Promise.all([
     lerPlano(supabase, obraId, segunda),
     lerPlano(supabase, obraId, somarDias(segunda, 7)),
     lerRestricoes(supabase, obraId),
     supabase.from('obras_semanal').select('*').eq('obra_id', obraId).eq('semana_inicio', segunda).maybeSingle(),
+    lerSituacaoPublicada(supabase, obraId),
   ])
-  if (!pR.ok || !pxR.ok || !rR.ok || sR.error) return { ok: false, status: 500, erro: 'Não deu para ler os dados da semana' }
+  if (!pR.ok || !pxR.ok || !rR.ok || sR.error || !stR.ok) return { ok: false, status: 500, erro: 'Não deu para ler os dados da semana' }
   return {
     ok: true,
     dados: {
       og: obra, segunda, sexta: s.sexta, ref: s.ref, hoje,
       plano: pR.plano, planoProximo: pxR.plano, restricoes: rR.restricoes,
       semanal: sR.data ? semanalRowDe(sR.data as Linha) : null,
+      situacao: stR.situacao ? situacaoParaCliente(stR.situacao) : null,
     },
   }
 }
@@ -128,6 +133,7 @@ export const conteudoSemanalDe = (d: DadosSemanal, lado: Lado): ConteudoSemanal 
   montarConteudoSemanal({
     lado, obra: d.og, segunda: d.segunda, ref: d.ref, hoje: d.hoje,
     plano: d.plano, planoProximo: d.planoProximo, restricoes: d.restricoes, observacoes: d.semanal?.observacoes ?? null,
+    situacao: d.situacao ?? null,
   })
 
 /** Todas as fotos dos diários validados/enviados DESTA obra na semana, em ordem (data do diário, ordem). */
