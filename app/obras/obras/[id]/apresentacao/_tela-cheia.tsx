@@ -194,6 +194,7 @@ export default function TelaCheia({ conteudo, fotos }: { conteudo: ConteudoApres
   const [i, setI] = useState(0)
   const raiz = useRef<HTMLDivElement>(null)
   const toque = useRef<{ x: number; y: number } | null>(null)
+  const abertura = useRef<HTMLButtonElement>(null)
 
   const ir = useCallback((n: number) => setI(Math.min(slides.length - 1, Math.max(0, n))), [slides.length])
   const alternarTela = useCallback(() => {
@@ -203,6 +204,8 @@ export default function TelaCheia({ conteudo, fotos }: { conteudo: ConteudoApres
   const fechar = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen?.()
     setAberto(false)
+    // O foco volta ao botão que abriu (o diálogo some do DOM neste render).
+    setTimeout(() => abertura.current?.focus(), 0)
   }, [])
 
   useEffect(() => {
@@ -212,6 +215,31 @@ export default function TelaCheia({ conteudo, fotos }: { conteudo: ConteudoApres
     raiz.current?.focus()
     const tecla = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
+      const alvo = e.target instanceof Element ? e.target : null
+      const controle = !!alvo?.closest('button, a, input, select, textarea, [role="button"]')
+      const campo = !!alvo?.closest('input, select, textarea')
+      if (e.key === 'Tab') {
+        // Prende o foco no diálogo.
+        const foc = [...(raiz.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? [])]
+        if (!foc.length) return
+        const ativo = document.activeElement
+        const primeiro = foc[0]
+        const ultimo = foc[foc.length - 1]
+        if (!raiz.current?.contains(ativo) || ativo === raiz.current) {
+          e.preventDefault()
+          ;(e.shiftKey ? ultimo : primeiro).focus()
+        } else if (e.shiftKey && ativo === primeiro) {
+          e.preventDefault()
+          ultimo.focus()
+        } else if (!e.shiftKey && ativo === ultimo) {
+          e.preventDefault()
+          primeiro.focus()
+        }
+        return
+      }
+      // Espaço/Enter são do botão em foco; setas e afins não valem dentro de campos.
+      if ((e.key === ' ' || e.key === 'Enter') && controle) return
+      if (campo) return
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') ir(i + 1)
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') ir(i - 1)
       else if (e.key === 'Home') ir(0)
@@ -243,6 +271,7 @@ export default function TelaCheia({ conteudo, fotos }: { conteudo: ConteudoApres
   return (
     <>
       <button
+        ref={abertura}
         type="button"
         onClick={() => {
           setI(0)
@@ -266,23 +295,24 @@ export default function TelaCheia({ conteudo, fotos }: { conteudo: ConteudoApres
           <div className="flex items-center justify-between gap-3 border-b border-(--obra-border) px-4 py-2">
             <span className="truncate text-[14px] font-semibold text-(--obra-ink)">{conteudo.loja}</span>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={alternarTela} className={BOTAO} aria-label="Tela cheia (tecla F)">
+              <button type="button" onClick={alternarTela} className={BOTAO}>
                 Tela cheia (F)
               </button>
-              <button type="button" onClick={fechar} className={BOTAO} aria-label="Sair da apresentação (tecla Esc)">
+              <button type="button" onClick={fechar} className={BOTAO}>
                 Sair (Esc)
               </button>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-12 sm:py-10" aria-live="polite">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-12 sm:py-10">
             <Conteudo bloco={slides[i]} c={conteudo} fotos={fotos} />
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-(--obra-border) px-4 py-2">
             <button type="button" onClick={() => ir(i - 1)} disabled={i === 0} className={BOTAO}>
               Anterior
             </button>
-            <span className="obra-num text-[14px] text-(--obra-muted-texto)" aria-label={`Slide ${i + 1} de ${slides.length}`}>
+            <span role="status" className="obra-num text-[14px] text-(--obra-muted-texto)">
               {i + 1} / {slides.length}
+              <span className="sr-only"> — {slides[i] === 'capa' ? 'Capa' : ROTULO_BLOCO[slides[i]]}</span>
             </span>
             <button type="button" onClick={() => ir(i + 1)} disabled={i === slides.length - 1} className={BOTAO}>
               Próximo

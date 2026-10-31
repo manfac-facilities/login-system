@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { obraPeriodo } from '../../../_pdf/__tests__/fixtures/periodo'
 import { BLOCOS, montarApresentacao } from '../../../_lib/apresentacao'
@@ -61,11 +61,47 @@ describe('TelaCheia', () => {
     await userEvent.click(screen.getByRole('button', { name: /Apresentar em tela cheia/ }))
     expect(screen.getByText('1 / 1')).toBeInTheDocument()
 
+  })
+
+  it('percorrendo todos os slides com dado: sem NaN, R$ nem Infinity', async () => {
     render(<TelaCheia conteudo={conteudo()} fotos={[]} />)
-    const btns = screen.getAllByRole('button', { name: /Apresentar em tela cheia/ })
-    expect(btns.length).toBeGreaterThan(0)
-    for (let i = 0; i < 3; i++) fireEvent.keyDown(window, { key: 'ArrowRight' })
-    expect(document.body.textContent).not.toMatch(/NaN|R\$|Infinity/)
+    await userEvent.click(screen.getByRole('button', { name: /Apresentar em tela cheia/ }))
+    for (let k = 0; k < 4; k++) {
+      expect(screen.getByRole('dialog').textContent).not.toMatch(/NaN|R\$|Infinity|undefined/)
+      fireEvent.keyDown(window, { key: 'ArrowRight' })
+    }
+    expect(screen.getByRole('status')).toHaveTextContent('4 / 4')
+  })
+
+  it('Espaço no botão em foco ativa o botão, não avança o slide', async () => {
+    render(<TelaCheia conteudo={conteudo()} fotos={[]} />)
+    await userEvent.click(screen.getByRole('button', { name: /Apresentar em tela cheia/ }))
+    const sair = screen.getByRole('button', { name: /Sair/ })
+    sair.focus()
+    fireEvent.keyDown(sair, { key: ' ', bubbles: true })
+    expect(screen.getByText('1 / 4')).toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: ' ', bubbles: true })
+    expect(screen.getByText('2 / 4')).toBeInTheDocument()
+  })
+
+  it('Tab fica preso no diálogo e Esc devolve o foco ao botão Apresentar', async () => {
+    jest.useFakeTimers()
+    render(<TelaCheia conteudo={conteudo()} fotos={[]} />)
+    const abrir = screen.getByRole('button', { name: /Apresentar em tela cheia/ })
+    fireEvent.click(abrir)
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveFocus()
+    const proximo = screen.getByRole('button', { name: 'Próximo' })
+    proximo.focus()
+    fireEvent.keyDown(proximo, { key: 'Tab' })
+    expect(screen.getByRole('button', { name: /Tela cheia/ })).toHaveFocus()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    act(() => {
+      jest.runAllTimers()
+    })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(abrir).toHaveFocus()
+    jest.useRealTimers()
   })
 
   it('fotos viram um slide extra', async () => {

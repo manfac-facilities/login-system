@@ -58,10 +58,11 @@ const um = (q: Query, k: string): string | undefined => {
   const v = q[k]
   return Array.isArray(v) ? v[0] : v
 }
+const MAX_CHARS = 2000
+const MAX_PEDACOS = 64
 const varios = (q: Query, k: string): string[] => {
-  if (q instanceof URLSearchParams) return q.getAll(k).flatMap((x) => x.split(','))
-  const v = q[k]
-  return (Array.isArray(v) ? v : v === undefined ? [] : [v]).flatMap((x) => x.split(','))
+  const brutos = q instanceof URLSearchParams ? q.getAll(k) : q[k] === undefined ? [] : Array.isArray(q[k]) ? (q[k] as string[]) : [q[k] as string]
+  return brutos.slice(0, 4).flatMap((x) => x.slice(0, MAX_CHARS).split(',', MAX_PEDACOS))
 }
 
 /** Data ISO real (rejeita 2026-02-31). */

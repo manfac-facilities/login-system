@@ -21,6 +21,12 @@ describe('lerParams', () => {
     expect(p.preset).toBe('mes')
     expect(lerParams({ f: '1', fotos: '../x' }).fotos).toEqual([])
   })
+  it('limita o tamanho de blocos e fotos antes de processar', () => {
+    const lixo = 'a,'.repeat(50_000)
+    const p = lerParams({ f: '1', blocos: lixo, fotos: lixo })
+    expect(p.blocos).toEqual([])
+    expect(p.fotos).toEqual(['a'])
+  })
   it('datas inválidas viram null', () => {
     const p = lerParams(new URLSearchParams('periodo=custom&de=2026-02-31&ate=2026-11-01'))
     expect(p.de).toBeNull()
