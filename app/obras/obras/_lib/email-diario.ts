@@ -8,6 +8,7 @@
  *
  * HTML de e-mail: tabelas e estilos inline, largura 600 px.
  */
+import { htmlLinkObra, linkDoLado, textoLinkObra } from './link-portal'
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
@@ -301,6 +302,8 @@ export function montarEmailDiario(p: {
   fotosCid: { cid: string; legenda: string | null }[]
   /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
   fotosOmitidas?: number
+  /** Só versão cliente: link "Ver a obra completa". */
+  linkObra?: string | null
 }): EmailDiario {
   const c = montarConteudoDiario(p)
   const { lado, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes, semExecucao, amanha } = c
@@ -386,7 +389,7 @@ ${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a"
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
 ${naoAvancou.length ? secao('Não avançou hoje', naoAvancou.map((t) => `<div style="border-left:3px solid #f59e0b;padding:3px 10px;margin-bottom:5px;font-size:14px;color:#0f172a">${esc(t)}</div>`).join('')) : ''}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
+${htmlLinkObra(linkDoLado(lado, p.linkObra))}<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
 </table></td></tr></table></body></html>`
 
   // ---------- Texto ----------
@@ -414,6 +417,7 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     '',
     'AMANHÃ',
     amanha,
+    ...textoLinkObra(linkDoLado(lado, p.linkObra)),
   ]
   return { assunto, html, texto: linhas.join('\n') }
 }

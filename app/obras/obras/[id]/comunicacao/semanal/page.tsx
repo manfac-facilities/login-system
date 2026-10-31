@@ -5,6 +5,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../../_ui/primitivos'
 import { hojeISO } from '../../../../_lib/tipos'
 import { montarEmailSemanal } from '../../../_lib/email-semanal'
+import { linkPortalObra } from '../../../_lib/link-portal'
 import { iaDisponivel } from '../../../_lib/ia-semanal'
 import { dataEnvioSemanal, segundaDaSemana } from '../../../_lib/last-planner'
 import { conteudoSemanalDe, lerDadosSemanal, semanaDoRelatorio } from '../../../_pdf/carregar-semanal'
@@ -74,7 +75,7 @@ export default async function SemanalPage({
   const nInterno = (dest ?? []).filter((x) => x.lado === 'interno').length
 
   const interna = sp.versao === 'interna'
-  const previa = montarEmailSemanal(conteudoSemanalDe(d, interna ? 'interno' : 'cliente'), { fotos: 0 })
+  const previa = montarEmailSemanal(conteudoSemanalDe(d, interna ? 'interno' : 'cliente'), { fotos: 0, linkObra: linkPortalObra() })
   const estado: EstadoTela = d.semanal?.estado ?? 'nao_iniciado'
   const envio = dataEnvioSemanal(segunda, d.og.feriados)
   const base = `/obras/obras/${id}/comunicacao/semanal`

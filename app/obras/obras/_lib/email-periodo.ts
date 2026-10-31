@@ -6,6 +6,7 @@
  */
 import { dataBr } from './email-diario'
 import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { linkDoLado, textoLinkObra } from './link-portal'
 import type { ConteudoPeriodo, TipoPeriodo } from './relatorio-periodo'
 
 const FAIXA: Record<TipoPeriodo, string> = { mensal: 'RELATÓRIO MENSAL', fase: 'RELATÓRIO DE FASE', entrega: 'RELATÓRIO DE ENTREGA' }
@@ -56,7 +57,7 @@ export function resumoPeriodoParaIa(c: ConteudoPeriodo): string {
   return [`Obra: ${c.loja}`, `${c.titulo}`, `Período: ${dataBr(c.inicio)} a ${dataBr(c.fim)}`, '', ...linhasDeDados(c)].join('\n')
 }
 
-export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { assunto: string; html: string; texto: string } {
+export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number; linkObra?: string | null }): { assunto: string; html: string; texto: string } {
   const interno = c.lado === 'interno'
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto do período' : 'fotos do período'} no PDF anexo.` : null
 
@@ -91,6 +92,7 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { 
     ],
     corpo,
     rodape: RODAPE[c.tipo],
+    linkObra: linkDoLado(c.lado, p.linkObra),
   })
 
   const textoPlano = [
@@ -103,6 +105,7 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { 
     'OBSERVAÇÕES DA ENGENHARIA',
     c.observacoes ?? 'Sem observações.',
     ...(notaFotos ? ['', notaFotos] : []),
+    ...textoLinkObra(linkDoLado(c.lado, p.linkObra)),
   ].join('\n')
   return { assunto: c.assunto, html, texto: textoPlano }
 }

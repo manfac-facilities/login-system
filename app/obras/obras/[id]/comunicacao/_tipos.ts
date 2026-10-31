@@ -74,8 +74,12 @@ export type Registro = {
 /** Destinatário que a tela de envio oferece (ata) ou mostra na confirmação (imediata). */
 export type DestinatarioOpcao = { email: string; nome: string | null; lado: 'cliente' | 'interno'; tipos: string[] }
 
-export type FiltroLinha = 'todos' | 'diario' | 'semanal' | 'relatorio' | TipoRegistro
+/** Mensagem da página do cliente (cliente escreve no portal; a Manfac responde no hub). */
+export type Mensagem = { id: string; autorTipo: 'cliente' | 'manfac'; autorEmail: string; texto: string; criadoEm: string }
+
+export type FiltroLinha = 'todos' | 'diario' | 'semanal' | 'relatorio' | 'mensagem' | TipoRegistro
 
 export type ItemLinha =
   | { tipo: 'envio'; chave: string; quando: string; envio: Envio }
+  | { tipo: 'mensagem'; chave: string; quando: string; mensagem: Mensagem }
   | { tipo: 'registro'; chave: string; quando: string; registro: Registro; envios: Envio[]; podeEditar: boolean }

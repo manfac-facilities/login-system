@@ -6,6 +6,7 @@
  */
 import { dataBr } from '../../_lib/email-diario'
 import type { ImpedimentoRow } from '../../_lib/leitura'
+import { htmlLinkObra, linkDoLado, textoLinkObra } from '../../_lib/link-portal'
 import type { Ata, NivelImediata } from './_tipos'
 
 export type EmailSimples = { assunto: string; html: string; texto: string }
@@ -16,7 +17,7 @@ const paragrafos = (s: string) => esc(s).replace(/\r?\n/g, '<br>')
 
 const RESP: Record<string, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiro: 'Terceiro', clima: 'Clima' }
 
-function moldura(p: { faixa: string; titulo: string; subtitulo: string; destaque?: string; corpo: string; rodape: string }) {
+function moldura(p: { faixa: string; titulo: string; subtitulo: string; destaque?: string; corpo: string; rodape: string; linkObra?: string | null }) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(p.titulo)}</title></head>
 <body style="margin:0;padding:0;background:#f1f5f9">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9"><tr><td align="center" style="padding:16px 8px">
@@ -28,7 +29,7 @@ function moldura(p: { faixa: string; titulo: string; subtitulo: string; destaque
 </td></tr>
 ${p.destaque ?? ''}
 ${p.corpo}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">${esc(p.rodape)}</td></tr>
+${htmlLinkObra(p.linkObra)}<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">${esc(p.rodape)}</td></tr>
 </table></td></tr></table></body></html>`
 }
 
@@ -44,6 +45,8 @@ export function montarEmailAta(p: {
   texto: string | null
   ata: Ata
   enviadoPor: string
+  /** Só versão cliente (o chamador passa só para o lado cliente). */
+  linkObra?: string | null
 }): EmailSimples {
   const assunto = `Ata de reunião · ${p.loja} · ${dataBr(p.data)}`
   const subtitulo = `Reunião de ${dataBr(p.data)}`
@@ -66,6 +69,7 @@ export function montarEmailAta(p: {
     subtitulo,
     corpo,
     rodape: `Manfac Facilities · ata enviada por ${p.enviadoPor}.`,
+    linkObra: p.linkObra,
   })
   const texto = [
     'MANFAC · ATA DE REUNIÃO',
@@ -84,6 +88,7 @@ export function montarEmailAta(p: {
     ...(pend.length ? pend.map((d, i) => `${i + 1}. ${d}`) : ['Nenhuma pendência.']),
     '',
     'A ata completa segue em PDF anexo.',
+    ...textoLinkObra(p.linkObra),
   ].join('\n')
   return { assunto, html, texto }
 }
@@ -124,6 +129,8 @@ export function montarEmailImediata(p: {
   nivel: NivelImediata
   vinculo: string[]
   enviadoPor: string
+  /** Só vale no lado cliente. */
+  linkObra?: string | null
 }): EmailSimples {
   const n = NIVEL[p.nivel]
   const interno = p.lado === 'interno' ? ' · INTERNO' : ''
@@ -140,6 +147,7 @@ export function montarEmailImediata(p: {
     destaque,
     corpo,
     rodape: `Manfac Facilities · enviado por ${p.enviadoPor}.`,
+    linkObra: linkDoLado(p.lado, p.linkObra),
   })
   const texto = [
     `MANFAC · COMUNICAÇÃO IMEDIATA${interno}`,
@@ -150,6 +158,7 @@ export function montarEmailImediata(p: {
     '',
     p.texto,
     ...(p.vinculo.length ? ['', 'REFERENTE A', ...p.vinculo] : []),
+    ...textoLinkObra(linkDoLado(p.lado, p.linkObra)),
   ].join('\n')
   return { assunto, html, texto }
 }

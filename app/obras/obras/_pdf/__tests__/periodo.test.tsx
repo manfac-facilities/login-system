@@ -218,3 +218,18 @@ describe('PDF do período', () => {
     expect(() => pdf(conteudo('interno'))).toThrow()
   })
 })
+
+describe('link "Ver a obra completa" nos relatórios de período', () => {
+  const LINK = 'https://hub.exemplo.test/portal-obra'
+  it('só no cliente; sem link a saída não muda', () => {
+    const d = dados()
+    const c = montarEmailPeriodo(conteudoPeriodoDe(d, 'cliente'), { fotos: 0, linkObra: LINK })
+    expect(c.html).toContain(`href="${LINK}"`)
+    expect(c.texto).toContain(`Ver a obra completa: ${LINK}`)
+    const i = montarEmailPeriodo(conteudoPeriodoDe(d, 'interno'), { fotos: 0, linkObra: LINK })
+    expect(i.html + i.texto).not.toContain('portal-obra')
+    expect(montarEmailPeriodo(conteudoPeriodoDe(d, 'cliente'), { fotos: 0 })).toEqual(
+      montarEmailPeriodo(conteudoPeriodoDe(d, 'cliente'), { fotos: 0, linkObra: null }),
+    )
+  })
+})

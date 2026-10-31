@@ -11,9 +11,12 @@ import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import Agenda, { tipoAgendaDe } from './_agenda'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
+import ResponderForm from './_responder-form'
+import DocumentosObra from '../configuracoes/_documentos'
+import type { DocumentoLinha } from '../configuracoes/_tipos-portal'
 import FormRegistro, { botaoSecundario } from './_registro-form'
 import { FILTROS, filtroDe, montarLinhaDoTempo } from './_regras'
-import type { DestinatarioOpcao, Envio, Registro } from './_tipos'
+import type { DestinatarioOpcao, Envio, Mensagem, Registro } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +53,7 @@ export default async function ComunicacaoPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const [envR, regR, destR, relR, agenda] = await Promise.all([
+  const [envR, regR, destR, relR, agenda, msgR, docR] = await Promise.all([
     supabase
       .from('obras_envio')
       .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id')
@@ -68,6 +71,12 @@ export default async function ComunicacaoPage({
     supabase.from('obras_relatorio').select('id, tipo, referencia').eq('obra_id', id),
     // Agenda (dado opcional): falha vira null e a aba avisa, sem derrubar a página.
     naAgenda ? lerAgenda(supabase, id, lida.dados, hoje) : Promise.resolve(null),
+    supabase.from('obras_mensagem').select('id, autor_tipo, autor_email, texto, criado_em').eq('obra_id', id).order('criado_em', { ascending: false }).limit(200),
+    supabase
+      .from('obras_documento')
+      .select('id, pasta, nome, tamanho, criado_em, criado_por')
+      .eq('obra_id', id)
+      .order('criado_em', { ascending: false }),
   ])
   if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
@@ -117,6 +126,23 @@ export default async function ComunicacaoPage({
     criadoEm: String(r.criado_em),
     editadoEm: r.editado_em ?? null,
   }))
+  // Mensagens são dado opcional: falha na leitura não derruba a página.
+  const mensagens: Mensagem[] = (msgR.error ? [] : ((msgR.data ?? []) as Linha[])).map((m) => ({
+    id: String(m.id),
+    autorTipo: m.autor_tipo === 'manfac' ? 'manfac' : 'cliente',
+    autorEmail: String(m.autor_email),
+    texto: String(m.texto),
+    criadoEm: String(m.criado_em),
+  }))
+  // Documentos (dado opcional): o engenheiro, que não abre as Configurações (só admin), sobe e apaga por aqui.
+  const documentos: DocumentoLinha[] = (docR.error ? [] : ((docR.data ?? []) as Linha[])).map((d) => ({
+    id: String(d.id),
+    pasta: String(d.pasta),
+    nome: String(d.nome),
+    tamanho: d.tamanho ?? null,
+    criadoEm: String(d.criado_em),
+    criadoPor: d.criado_por ?? null,
+  }))
   const destinatarios: DestinatarioOpcao[] = ((destR.data ?? []) as Linha[]).map((d) => ({
     email: String(d.email),
     nome: d.nome ?? null,
@@ -135,7 +161,7 @@ export default async function ComunicacaoPage({
     .sort((a, b) => b.fimReal!.localeCompare(a.fimReal!) || b.ordem - a.ordem)[0]
 
   const filtro = filtroDe(tipo)
-  const itens = montarLinhaDoTempo({ envios, registros, filtro, email, admin })
+  const itens = montarLinhaDoTempo({ envios, registros, mensagens, filtro, email, admin })
   const base = `/obras/obras/${id}/comunicacao`
   const chip = (ativo: boolean) =>
     `flex min-h-11 items-center rounded-full border px-3 text-sm ${
@@ -211,6 +237,17 @@ export default async function ComunicacaoPage({
           <h3 className="text-sm font-semibold text-[#00345e]">Novo registro</h3>
           <FormRegistro obraId={id} hoje={hoje} />
         </section>
+        {podeEnviar ? (
+          <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <h3 className="text-sm font-semibold text-[#00345e]">Responder ao cliente</h3>
+            <ResponderForm obraId={id} />
+          </section>
+        ) : null}
+        {podeEnviar ? (
+          <section className="rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <DocumentosObra obraId={id} itens={documentos} pode />
+          </section>
+        ) : null}
         {podeEnviar ? (
           <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
             <h3 className="text-sm font-semibold text-[#00345e]">Comunicação imediata</h3>

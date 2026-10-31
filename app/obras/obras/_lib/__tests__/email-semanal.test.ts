@@ -183,3 +183,15 @@ describe('conteúdo congelado (entrada não confiável)', () => {
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
   })
 })
+
+describe('link "Ver a obra completa" no semanal', () => {
+  const LINK = 'https://hub.exemplo.test/portal-obra'
+  it('só no cliente; sem link a saída não muda', () => {
+    const c = montarEmailSemanal(conteudo('cliente'), { fotos: 0, linkObra: LINK })
+    expect(c.html).toContain(`href="${LINK}"`)
+    expect(c.texto).toContain(`Ver a obra completa: ${LINK}`)
+    const i = montarEmailSemanal(conteudo('interno'), { fotos: 0, linkObra: LINK })
+    expect(i.html + i.texto).not.toContain('portal-obra')
+    expect(montarEmailSemanal(conteudo('cliente'), { fotos: 0 })).toEqual(montarEmailSemanal(conteudo('cliente'), { fotos: 0, linkObra: null }))
+  })
+})

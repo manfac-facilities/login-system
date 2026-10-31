@@ -23,6 +23,7 @@ import { hojeISO } from '../../../../_lib/tipos'
 import { montarEmailSemanal, resumoParaIa } from '../../../_lib/email-semanal'
 import { autorizarEngenheiroDaObra } from '../../../_lib/autorizar-relatorio'
 import { enviarEmail } from '../../../_lib/enviar'
+import { linkPortalObra } from '../../../_lib/link-portal'
 import { SEM_IA, iaDisponivel, sugerirObservacoes } from '../../../_lib/ia-semanal'
 import {
   congelarSemanal,
@@ -212,7 +213,7 @@ export async function validarEEnviarSemanalAction(obraId: string, segunda: strin
   for (const lado of ['cliente', 'interno'] as const) {
     const para = pendentes[lado]
     if (!para.length) continue
-    const msg = montarEmailSemanal(conteudoSemanalDe(l.dados, lado), { fotos })
+    const msg = montarEmailSemanal(conteudoSemanalDe(l.dados, lado), { fotos, linkObra: linkPortalObra() })
     const r = await enviarEmail({ para, ...msg, anexos: [{ nome: nomeArquivo, conteudo: pdf }] })
     enviados += r.aceitos.length
     if (lado === 'cliente' && r.aceitos.length) clienteRecebeu = true

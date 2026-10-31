@@ -142,3 +142,21 @@ describe('linha do tempo', () => {
     expect(quandoRegistro({ data: '2026-10-29', criadoEm: '2026-10-30T13:00:00Z' })).toBe('2026-10-29T15:00:00.000Z')
   })
 })
+
+describe('mensagens na linha do tempo', () => {
+  const mensagens = [
+    { id: 'm1', autorTipo: 'cliente' as const, autorEmail: 'ana@cli.com', texto: '<b>Oi</b>', criadoEm: '2026-10-30T15:00:00Z' },
+    { id: 'm2', autorTipo: 'manfac' as const, autorEmail: 'eng@manfac.com.br', texto: 'Resposta', criadoEm: '2026-10-30T16:00:00Z' },
+  ]
+  const montar = (filtro: Parameters<typeof montarLinhaDoTempo>[0]['filtro']) =>
+    montarLinhaDoTempo({ envios: [], registros: [], mensagens, filtro, email: 'x@manfac.com.br', admin: false })
+  it('aparecem em Tudo e em Mensagens, mais recente primeiro, e em nenhum outro filtro', () => {
+    expect(montar('todos').map((i) => i.chave)).toEqual(['m-m2', 'm-m1'])
+    expect(montar('mensagem').map((i) => i.chave)).toEqual(['m-m2', 'm-m1'])
+    expect(montar('diario')).toEqual([])
+    expect(FILTROS.map((f) => f.valor)).toContain('mensagem')
+  })
+  it('sem a lista de mensagens nada muda', () => {
+    expect(montarLinhaDoTempo({ envios: [], registros: [], filtro: 'todos', email: 'x', admin: false })).toEqual([])
+  })
+})

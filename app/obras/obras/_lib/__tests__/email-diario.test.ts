@@ -295,3 +295,21 @@ describe('clima no e-mail', () => {
     expect(m.texto).not.toMatch(/Clima:|Manhã:/)
   })
 })
+
+describe('link "Ver a obra completa" no diário', () => {
+  const LINK = 'https://hub.exemplo.test/portal-obra'
+  const com = (lado: 'cliente' | 'interno') =>
+    montarEmailDiario({
+      lado, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z',
+      diaN: 4, fotosCid: [], linkObra: LINK,
+    })
+  it('só no cliente; sem link a saída não muda', () => {
+    const c = com('cliente')
+    expect(c.html).toContain(`href="${LINK}"`)
+    expect(c.texto).toContain(`Ver a obra completa: ${LINK}`)
+    const i = com('interno')
+    expect(i.html + i.texto).not.toContain('portal-obra')
+    const base = { lado: 'cliente' as const, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z', diaN: 4, fotosCid: [] }
+    expect(montarEmailDiario({ ...base, linkObra: null })).toEqual(montarEmailDiario(base))
+  })
+})

@@ -14,6 +14,7 @@ import type { ObraGrande } from './leitura'
 import type { Responsavel } from './cronograma'
 import { esc, ISO, lista, nums, obj, str, strOuNull, strs } from './conteudo-valido'
 import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { linkDoLado, textoLinkObra } from './link-portal'
 import { blocosDoPeriodo, blocosValidos, ddmm, type Lado } from './relatorio-periodo'
 
 export type { Lado } from './relatorio-periodo'
@@ -175,7 +176,7 @@ export function resumoParaIa(c: ConteudoSemanal): string {
   return [`Obra: ${c.loja}`, `Semana: ${dataBr(c.segunda)} a ${dataBr(c.sexta)}`, '', ...linhasDeDados(c)].join('\n')
 }
 
-export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number }): { assunto: string; html: string; texto: string } {
+export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number; linkObra?: string | null }): { assunto: string; html: string; texto: string } {
   const interno = c.lado === 'interno'
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto da semana' : 'fotos da semana'} no PDF anexo.` : null
 
@@ -214,6 +215,7 @@ export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number }): { 
     ],
     corpo,
     rodape: 'Manfac Facilities · relatório semanal da obra.',
+    linkObra: linkDoLado(c.lado, p.linkObra),
   })
 
   const textoPlano = [
@@ -226,6 +228,7 @@ export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number }): { 
     'OBSERVAÇÕES DA ENGENHARIA',
     c.observacoes ?? 'Sem observações.',
     ...(notaFotos ? ['', notaFotos] : []),
+    ...textoLinkObra(linkDoLado(c.lado, p.linkObra)),
   ].join('\n')
   return { assunto: c.assunto, html, texto: textoPlano }
 }
