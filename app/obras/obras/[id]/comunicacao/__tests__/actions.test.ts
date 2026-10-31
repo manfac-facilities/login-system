@@ -275,7 +275,8 @@ describe('enviarImediataAction', () => {
     expect(interno.para).toEqual(['int@manfac.com.br'])
     // Impedimento oculto: o cliente não vê; o interno vê com a área.
     expect(cliente.texto).not.toContain('Atraso no perfil')
-    expect(cliente.texto).toContain('Atividade 3 · Forro')
+    expect(cliente.texto).toContain('Atividade: Forro') // fixture sem cronograma calculado: sem código, nunca o numero
+    expect(cliente.texto).not.toContain('Atividade 3')
     expect(interno.texto).toContain('Atraso no perfil')
     expect(interno.texto).toContain('Material Manfac')
     const regId = db.obras_registro[0].id

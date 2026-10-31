@@ -19,6 +19,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
+import { codigosDeAtividades } from '../../_lib/cronograma'
 import { enviarEmail } from '../../_lib/enviar'
 import { carregarPdfAta, renderizarAta } from '../../_pdf/carregar-ata'
 import { montarEmailAta, montarEmailImediata, vinculoImediata, type EmailSimples } from './_email'
@@ -323,7 +324,9 @@ export async function enviarImediataAction(
   if (errR) return erroBanco('registrar a comunicação', errR)
 
   const loja = og.obra.loja?.trim() || og.obra.descricao?.trim() || og.obra.os || 'Obra'
-  const atividade = ativ ? { numero: ativ.numero, descricao: ativ.descricao } : null
+  const atividade = ativ
+    ? { codigo: codigosDeAtividades(og.calc?.atividades ?? [], og.feriados).get(ativ.numero) ?? null, descricao: ativ.descricao }
+    : null
   const res = await enviarPorLado({
     supabase: s.supabase,
     obraId,

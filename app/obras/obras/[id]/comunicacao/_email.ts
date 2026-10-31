@@ -97,10 +97,11 @@ const NIVEL: Record<NivelImediata, { rotulo: string; fundo: string; borda: strin
 export function vinculoImediata(p: {
   lado: 'cliente' | 'interno'
   impedimento: ImpedimentoRow | null
-  atividade: { numero: number; descricao: string } | null
+  /** `codigo` = código exibido ("2.3"), nunca o numero interno. */
+  atividade: { codigo: string | null; descricao: string } | null
 }): string[] {
   const linhas: string[] = []
-  if (p.atividade) linhas.push(`Atividade ${p.atividade.numero} · ${p.atividade.descricao}`)
+  if (p.atividade) linhas.push(p.atividade.codigo ? `Atividade ${p.atividade.codigo} · ${p.atividade.descricao}` : `Atividade: ${p.atividade.descricao}`)
   const i = p.impedimento
   if (i && (p.lado === 'interno' || i.exibirAoCliente)) {
     const mostraTipo = p.lado === 'interno' || i.responsavel === 'cliente' || i.responsavel === 'clima'

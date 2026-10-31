@@ -10,8 +10,8 @@ const imp = (over: Partial<ImpedimentoRow> = {}): ImpedimentoRow => ({
 
 describe('vínculo da imediata', () => {
   it('cliente: Manfac sem a área (tipo); interno: com tipo', () => {
-    const c = vinculoImediata({ lado: 'cliente', impedimento: imp(), atividade: { numero: 3, descricao: 'Forro' } })
-    expect(c).toEqual(['Atividade 3 · Forro', 'Impedimento: Atraso no perfil (responsável: Manfac)'])
+    const c = vinculoImediata({ lado: 'cliente', impedimento: imp(), atividade: { codigo: '1.3', descricao: 'Forro' } })
+    expect(c).toEqual(['Atividade 1.3 · Forro', 'Impedimento: Atraso no perfil (responsável: Manfac)'])
     const i = vinculoImediata({ lado: 'interno', impedimento: imp(), atividade: null })
     expect(i[0]).toContain('Material Manfac')
   })

@@ -92,6 +92,20 @@ describe('montarEmailDiario', () => {
     }
   })
 
+  it('impedimento cita o código exibido da atividade, nunca o numero interno', () => {
+    // numero 12 é a 2ª atividade da etapa B: código 2.2. Sem cálculo da atividade: "fora da versão vigente".
+    const at = (numero: number, etapa: string) =>
+      ({ numero, etapa, peso: 1, duracao: 5, percentual: 0, inicioPrevisto: '2026-10-26', fimPrevisto: '2026-10-30',
+         inicioProjetado: '2026-10-26', fimProjetado: '2026-10-30' }) as unknown as NonNullable<ObraGrande['calc']>['atividades'][number]
+    const base = obraGrande().calc!
+    const { html, texto } = montar('cliente', { calc: { ...base, atividades: [at(1, 'A'), at(11, 'B'), at(12, 'B')] } })
+    for (const s of [html, texto]) {
+      expect(s).toContain('trava a atividade 2.2 (Atividade 12)')
+      expect(s).not.toContain('atividade 12 (')
+    }
+    expect(montar('cliente').texto).toContain('trava uma atividade fora da versão vigente')
+  })
+
   it('impedimento da Manfac aparece ao cliente como "Manfac", sem o tipo interno', () => {
     const { html } = montar('cliente')
     expect(html).toContain('Atraso na entrega do perfil')

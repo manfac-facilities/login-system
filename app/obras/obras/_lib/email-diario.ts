@@ -11,7 +11,7 @@
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
-import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
+import { codigosDeAtividades, diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
 export type ClimaRdo = 'sol' | 'nublado' | 'chuva' | 'impraticavel'
@@ -164,7 +164,9 @@ export function montarConteudoDiario(p: {
   const { lado, obra: og, rdo } = p
   const { obra, plano, exec, feriados } = og
   const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
-  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || `Atividade ${n}`
+  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || 'Atividade fora da versão vigente'
+  // Código exibido ("2.3"), nunca o numero interno.
+  const codigos = codigosDeAtividades(og.calc?.atividades ?? [], feriados)
 
   // 1. Cabeçalho
   const assunto = `Diário de obra · ${loja} · dia ${p.diaN} · ${dataBr(rdo.data)}${lado === 'interno' ? ' · interno' : ''}`
@@ -202,9 +204,11 @@ export function montarConteudoDiario(p: {
     const mostraTipo = lado === 'interno' || i.responsavel === 'cliente' || i.responsavel === 'clima'
     const extras = [
       mostraTipo && i.tipo ? i.tipo : null,
-      i.atividadeNumero !== null
-        ? `${i.travaAtividade ? 'trava' : 'afeta'} a atividade ${i.atividadeNumero} (${descricao(i.atividadeNumero)})`
-        : null,
+      i.atividadeNumero === null
+        ? null
+        : codigos.has(i.atividadeNumero)
+          ? `${i.travaAtividade ? 'trava' : 'afeta'} a atividade ${codigos.get(i.atividadeNumero)} (${descricao(i.atividadeNumero)})`
+          : `${i.travaAtividade ? 'trava' : 'afeta'} uma atividade fora da versão vigente`,
       !i.travaAtividade && i.impactoDias ? `~${num(i.impactoDias)} ${i.impactoDias === 1 ? 'dia' : 'dias'}` : null,
     ].filter(Boolean)
     return {
