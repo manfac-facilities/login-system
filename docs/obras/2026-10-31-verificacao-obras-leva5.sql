@@ -985,6 +985,260 @@ select pg_temp.reg(93, 'existe administrador para os testes de admin', 'ok:t',
   (select 'ok:' || pg_temp.tf(pg_temp.admin_email() is not null)));
 
 -- ============================================================
+-- 6. Analista da obra: obras_situacao_pergunta
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta, contexto, resposta, interno, respondida_por, respondida_em, aberta, criado_em)
+  values ('00000000-0000-4000-8000-00000000a010', 'execucao:12', 'Drywall (4.2): 13 dias úteis contra 9. O que causou?',
+          '{"impressao":"9|2026-11-20"}', 'Interferência com a infra existente.', false,
+          'forjado@teste.invalid', '2020-01-01', false, '2020-01-01');
+  raise exception 'ok:%',
+    (select pg_temp.tf(respondida_por = 'eng.teste@teste.invalid') || '|' || pg_temp.tf(respondida_em = now())
+            || '|' || pg_temp.tf(criado_em = now())
+       from public.obras_situacao_pergunta where obra_id = '00000000-0000-4000-8000-00000000a010' and chave = 'execucao:12');
+exception when others then
+  perform pg_temp.reg(95, 'pergunta: engenheiro responde; respondida_por/em e criado_em forçados', 'ok:t|t|t', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('usuario.obras@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta, resposta, aberta)
+  values ('00000000-0000-4000-8000-00000000a010', 'desvio:obra', 'Desvio de 4 p.p.', 'x', false);
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(96, 'pergunta: usuário do Obras que não é engenheiro nem admin não responde', 'OBRAS_SITUACAO_PERGUNTA', sqlerrm);
+end $$;
+
+do $$
+declare v int;
+begin
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta, resposta, aberta)
+  values ('00000000-0000-4000-8000-00000000a010', 'desvio:obra', 'Desvio de 4 p.p.', 'Primeira resposta', false);
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta, resposta, interno, aberta)
+  values ('00000000-0000-4000-8000-00000000a010', 'desvio:obra', 'Desvio de 5 p.p.', 'Segunda resposta', true, false)
+  on conflict (obra_id, chave) do update
+    set pergunta = excluded.pergunta, resposta = excluded.resposta, interno = excluded.interno, aberta = excluded.aberta;
+  select count(*) into v from public.obras_situacao_pergunta
+   where obra_id = '00000000-0000-4000-8000-00000000a010' and chave = 'desvio:obra';
+  raise exception 'ok:%|%', v,
+    (select resposta || '|' || pg_temp.tf(interno) || '|' || respondida_por from public.obras_situacao_pergunta
+      where obra_id = '00000000-0000-4000-8000-00000000a010' and chave = 'desvio:obra');
+exception when others then
+  perform pg_temp.reg(97, 'pergunta (RLS real): engenheiro regrava a resposta pela chave estável (upsert, uma linha)',
+    'ok:1|Segunda resposta|t|eng.teste@teste.invalid', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta)
+  values ('00000000-0000-4000-8000-00000000a010', 'entrega:obra', 'Entrega mudou');
+  update public.obras_situacao_pergunta set chave = 'entrega:outra'
+   where obra_id = '00000000-0000-4000-8000-00000000a010' and chave = 'entrega:obra';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(98, 'pergunta: chave (e obra) imutáveis no UPDATE', 'são imutáveis', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta, aberta)
+  values ('00000000-0000-4000-8000-00000000a010', 'entrega:obra', 'Entrega mudou', false);
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(99, 'pergunta: fechada sem resposta recusada', 'obras_situacao_pergunta_fechada_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  delete from public.obras_situacao_pergunta where obra_id = '00000000-0000-4000-8000-00000000a010';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(100, 'pergunta: authenticated não apaga (sem privilégio de delete)', 'permission denied', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('anon', null);
+  perform 1 from public.obras_situacao_pergunta limit 1;
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(101, 'pergunta: anon não lê', 'permission denied', sqlerrm);
+end $$;
+
+do $$
+declare v int;
+begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_pergunta (obra_id, chave, pergunta)
+  values ('00000000-0000-4000-8000-00000000a010', 'impedimento:x1', 'Impedimento aberto há 5 dias úteis');
+  perform pg_temp.como('authenticated', 'sem.acesso@teste.invalid');
+  select count(*) into v from public.obras_situacao_pergunta where obra_id = '00000000-0000-4000-8000-00000000a010';
+  raise exception 'ok:%', v;
+exception when others then
+  perform pg_temp.reg(102, 'pergunta: quem não tem acesso ao Obras não vê nada (RLS)', 'ok:0', sqlerrm);
+end $$;
+
+-- ============================================================
+-- 6. Situação para o cliente: obras_situacao_cliente (publicada = imutável)
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, acoes, publicada_por, publicada_em)
+  values ('00000000-0000-4000-8000-00000000a010', 99, 'O atraso é de responsabilidade da Manfac.',
+          '[{"oque":"Segunda equipe","quando":"desde 23/11","efeito":"recupera 2 dias úteis"}]',
+          'forjado@teste.invalid', '2020-01-01');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Nova versão.', 'forjado@teste.invalid');
+  raise exception 'ok:%',
+    (select string_agg(versao::text || '/' || publicada_por || '/' || pg_temp.tf(publicada_em = now()), ',' order by versao)
+       from public.obras_situacao_cliente where obra_id = '00000000-0000-4000-8000-00000000a010');
+exception when others then
+  perform pg_temp.reg(103, 'situação: versões 1 e 2 em sequência (versão do navegador ignorada), autoria e data forçadas',
+    'ok:1/eng.teste@teste.invalid/t,2/eng.teste@teste.invalid/t', sqlerrm);
+end $$;
+
+do $$
+declare v_erro text;
+begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Publicada.', 'x@teste.invalid');
+  begin
+    update public.obras_situacao_cliente set explicacao = 'Trocada.'
+     where obra_id = '00000000-0000-4000-8000-00000000a010';
+    v_erro := 'NAO_FALHOU';
+  exception when others then
+    v_erro := sqlerrm;
+  end;
+  raise exception 'ok:%', v_erro;
+exception when others then
+  perform pg_temp.reg(104, 'situação: publicada não se altera (engenheiro)', 'ok:OBRAS_SITUACAO: situação publicada é imutável', sqlerrm);
+end $$;
+
+do $$
+declare v_erro text;
+begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Publicada.', 'x@teste.invalid');
+  perform pg_temp.jwt(null);
+  begin
+    update public.obras_situacao_cliente set explicacao = 'Trocada.'
+     where obra_id = '00000000-0000-4000-8000-00000000a010';
+    v_erro := 'NAO_FALHOU';
+  exception when others then
+    v_erro := sqlerrm;
+  end;
+  begin
+    delete from public.obras_situacao_cliente where obra_id = '00000000-0000-4000-8000-00000000a010';
+    v_erro := v_erro || '|NAO_FALHOU';
+  exception when others then
+    v_erro := v_erro || '|' || sqlerrm;
+  end;
+  raise exception 'ok:%', v_erro;
+exception when others then
+  perform pg_temp.reg(105, 'situação: nem sem JWT (service role/postgres) altera ou apaga',
+    'ok:OBRAS_SITUACAO: situação publicada é imutável (publique uma nova versão)|OBRAS_SITUACAO: situação publicada é registro, não pode ser apagada', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  truncate public.obras_situacao_cliente;
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(106, 'situação: truncate recusado', 'não pode ser apagada (truncate)', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('usuario.obras@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Tentativa.', 'usuario.obras@teste.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(107, 'situação: usuário do Obras que não é engenheiro nem admin não publica', 'só o engenheiro da obra ou administrador publica', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, acoes, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Seis ações.',
+          '[{"oque":"a","quando":"","efeito":""},{"oque":"b","quando":"","efeito":""},{"oque":"c","quando":"","efeito":""},{"oque":"d","quando":"","efeito":""},{"oque":"e","quando":"","efeito":""},{"oque":"f","quando":"","efeito":""}]',
+          'x@teste.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(108, 'situação: mais de 5 ações recusado', 'obras_situacao_cliente_acoes_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, acoes, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Campo extra.',
+          '[{"oque":"a","quando":"","efeito":"","area":"suprimentos"}]', 'x@teste.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(109, 'situação: ação com campo desconhecido recusada', 'OBRAS_SITUACAO_ACOES', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Custou R$ 3.000 a mais.', 'x@teste.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(110, 'situação: R$ na explicação recusado', 'obras_situacao_cliente_explicacao_check', sqlerrm);
+end $$;
+
+do $$
+declare v int;
+begin
+  perform pg_temp.como('authenticated', 'eng.teste@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 7, 'Pela API.', 'eng.teste@teste.invalid');
+  get diagnostics v = row_count;
+  raise exception 'ok:%|%', v,
+    (select string_agg(versao::text, ',') from public.obras_situacao_cliente where obra_id = '00000000-0000-4000-8000-00000000a010');
+exception when others then
+  perform pg_temp.reg(111, 'situação (RLS real): engenheiro publica pela API; versão 1', 'ok:1|1', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'sem.acesso@teste.invalid');
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a010', 1, 'Sem acesso.', 'sem.acesso@teste.invalid');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(112, 'situação (RLS real): sem acesso ao Obras não publica', 'OBRAS_SITUACAO', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  update public.obras_situacao_cliente set explicacao = 'x';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(113, 'situação: authenticated (até admin) sem privilégio de update', 'permission denied', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('anon', null);
+  perform 1 from public.obras_situacao_cliente limit 1;
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(114, 'situação: anon não lê', 'permission denied', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  insert into public.obras_situacao_cliente (obra_id, versao, explicacao, publicada_por)
+  values ('00000000-0000-4000-8000-00000000a011', 1, 'Admin publica na obra sem engenheiro.', 'x@teste.invalid');
+  raise exception 'ok:%',
+    (select pg_temp.tf(publicada_por = pg_temp.admin_email()) from public.obras_situacao_cliente
+      where obra_id = '00000000-0000-4000-8000-00000000a011');
+exception when others then
+  perform pg_temp.reg(115, 'situação: administrador publica em obra sem engenheiro', 'ok:t', sqlerrm);
+end $$;
+
+-- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por strpos (no LIKE o '_' dos nomes de constraint é curinga).
 -- ============================================================
@@ -1003,10 +1257,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 94 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 94 testes rodaram';
+  if v_total <> 115 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 115 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/94 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/115 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
