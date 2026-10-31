@@ -204,7 +204,7 @@ describe('server action', () => {
 
   it('autor vem da sessão, nunca do form; avisa a equipe', async () => {
     mockEnviar.mockResolvedValue({ ok: true })
-    const fake = new FakeAdmin({ obras_obra: [{ id: O, engenheiro_email: 'e@manfac.com.br' }] })
+    const fake = new FakeAdmin({ obras_obra: [{ id: O, modalidade: 'obra', engenheiro_email: 'e@manfac.com.br' }] })
     mockAdmin = fake
     const r = await enviarMensagemAction(O, {}, form(' oi ', { autor_email: 'chefe@manfac.com.br', autor_tipo: 'manfac' }))
     expect(r).toEqual({ ok: true })
@@ -221,9 +221,28 @@ describe('server action', () => {
     expect(fake.db.obras_mensagem ?? []).toHaveLength(0)
   })
 
+  it('obra que voltou para SPOT (ou inexistente) não grava nem avisa a equipe', async () => {
+    mockEnviar.mockResolvedValue({ ok: true })
+    const fake = new FakeAdmin({ obras_obra: [{ id: O, modalidade: 'spot', engenheiro_email: 'e@manfac.com.br' }] })
+    mockAdmin = fake
+    expect(await enviarMensagemAction(O, {}, form('oi'))).toEqual({ erro: 'Obra não encontrada.' })
+    fake.db.obras_obra = []
+    expect(await enviarMensagemAction(O, {}, form('oi'))).toEqual({ erro: 'Obra não encontrada.' })
+    expect(fake.db.obras_mensagem ?? []).toHaveLength(0)
+    expect(mockEnviar).not.toHaveBeenCalled()
+  })
+
+  it('erro ao ler a obra → não grava (falha fechada)', async () => {
+    const fake = new FakeAdmin({ obras_obra: [{ id: O, modalidade: 'obra', engenheiro_email: 'e@manfac.com.br' }] })
+    fake.falhar.add('obras_obra')
+    mockAdmin = fake
+    expect((await enviarMensagemAction(O, {}, form('oi'))).erro).toBeTruthy()
+    expect(fake.db.obras_mensagem ?? []).toHaveLength(0)
+  })
+
   it('falha no e-mail não bloqueia a mensagem', async () => {
     mockEnviar.mockRejectedValue(new Error('smtp'))
-    const fake = new FakeAdmin({ obras_obra: [{ id: O, engenheiro_email: 'e@manfac.com.br' }] })
+    const fake = new FakeAdmin({ obras_obra: [{ id: O, modalidade: 'obra', engenheiro_email: 'e@manfac.com.br' }] })
     mockAdmin = fake
     expect(await enviarMensagemAction(O, {}, form('oi'))).toEqual({ ok: true })
   })

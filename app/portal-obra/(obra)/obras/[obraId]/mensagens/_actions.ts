@@ -17,6 +17,10 @@ export async function enviarMensagemAction(obraId: string, _prev: EstadoMensagem
   if (!sessao) return { erro: 'Sua sessão expirou. Entre de novo.' }
   if (!obraLiberada(sessao, obraId)) return { erro: 'Obra não encontrada.' }
   const admin = createAdminClient()
+  // Como as páginas, o PDF e o documento: obra que voltou para SPOT não recebe mensagem do cliente.
+  const { data: obra, error: eObra } = await admin.from('obras_obra').select('modalidade').eq('id', obraId).maybeSingle()
+  if (eObra) return { erro: 'Não foi possível enviar agora. Tente novamente em alguns minutos.' }
+  if ((obra as { modalidade?: string } | null)?.modalidade !== 'obra') return { erro: 'Obra não encontrada.' }
   const texto = form.get('texto')
   const r = await gravarMensagemCliente(admin, { email: sessao.email, obraId, texto })
   if (!r.ok) return { erro: r.erro }
