@@ -65,7 +65,7 @@ create function pg_temp.tf(p boolean) returns text language sql as $$
 $$;
 
 create function pg_temp.admin_email() returns text language sql as $$
-  select user_email from public.hub_user_roles where nivel = 'administrador' order by user_email limit 1;
+  select lower(trim(user_email)) from public.hub_user_roles where nivel = 'administrador' order by lower(trim(user_email)) limit 1;
 $$;
 
 -- Soma de linhas das 3 leituras de valor para uma obra (chamada na role corrente).
@@ -302,11 +302,12 @@ end $$;
 do $$ begin
   perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
   raise exception 'ok:%', (select count(*) || '|' || count(distinct nota_id) || '|' || sum(parcela_centavos) || '|'
-                                  || count(*) filter (where nota_id = '00000000-0000-4000-8000-00000000f402')
+                                  || count(*) filter (where nota_id = '00000000-0000-4000-8000-00000000f402') || '|'
+                                  || count(*) filter (where obras_devolvidas_em is null)
                              from public.obras_fin_notas('00000000-0000-4000-8000-00000000fa01'));
 exception when others then
-  perform pg_temp.reg(17, 'notas(mãe): nota rateada = 2 parcelas de 1 nota, soma 100000; nota da outra obra fora',
-    'ok:2|1|100000|0', sqlerrm);
+  perform pg_temp.reg(17, 'notas(mãe): nota rateada = 2 parcelas de 1 nota, soma 100000; nota da outra obra fora; não devolvida',
+    'ok:2|1|100000|0|2', sqlerrm);
 end $$;
 
 do $$ begin

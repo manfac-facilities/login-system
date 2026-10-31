@@ -22,9 +22,16 @@
 --      (administrador do Obras OU engenheiro da obra OU engenheiro da obra mãe
 --       OU papel ATIVO 'financeiro'/'diretor' em fin_papeis para o e-mail).
 --      Supervisor, usuário comum do Obras, cliente e anon: false.
+--      Financeiro/diretor TAMBÉM precisam de obras_has_access() de propósito:
+--      eles abrem a obra dentro da Gestão de Obras (decisão do controlador).
 --   3. Leituras (security definer, search_path fixo, stable, EXECUTE para
 --      authenticated e service_role, nunca anon/public; service role não tem
---      JWT, então recebe vazio — falha fechada; devolvem ZERO linhas se obras_pode_ver_valores = false):
+--      JWT, então recebe vazio — falha fechada: o app TEM de chamar com o
+--      cliente da sessão, nunca com o admin; devolvem ZERO linhas se obras_pode_ver_valores = false):
+--      DE PROPÓSITO vão além da RLS do Compras/Fornecedores para esse público:
+--      o engenheiro da obra vê as compras e contratos da obra (motivo,
+--      fornecedor, valores) — decisão 1.1 do José. Sem documento (CPF/CNPJ)
+--      do fornecedor nem CNPJ do tomador (minimização).
 --      obras_fin_compras(p_obra), obras_fin_fornecedores(p_obra),
 --      obras_fin_notas(p_obra) — da obra e das filhas diretas
 --      (obra_pai_id = p_obra), com obra_id/obra_os da OS de origem.
@@ -33,7 +40,7 @@
 --        *_reais    = numeric em REAIS (frn_* grava reais, não centavos).
 --   4. obras_restricao.cmp_pedido_id uuid null (SEM FK: FK criaria gatilho de
 --      integridade em cmp_pedidos e travaria o apagar do Compras) + trigger
---      obras_restricao_pedido_guarda: ao gravar/trocar o vínculo, o pedido
+--      obras_restricao_pedido_guarda: (insert ou update of cmp_pedido_id, obra_id), o pedido
 --      tem de existir e a solicitação dele ter obra_id = obra da restrição
 --      (ambiente produção). Vale para qualquer role.
 --      obras_restricao_pedidos(p_obra): pedidos da obra (só ela, não filhas)
@@ -105,20 +112,20 @@ begin
     'cmp_pedidos.mapa_fornecedor_id', 'cmp_pedidos.total_centavos', 'cmp_pedidos.situacao', 'cmp_pedidos.omie_numero',
     'cmp_pedidos.criado_em', 'cmp_pedidos.previsao_entrega', 'cmp_pedidos.entrega_situacao', 'cmp_pedidos.entrega_em',
     'cmp_pedidos.nf_numero', 'cmp_pedidos.nf_em', 'cmp_pedidos.pago_em', 'cmp_pedidos.concluido_em',
-    'cmp_mapa_fornecedores.id', 'cmp_mapa_fornecedores.razao_social', 'cmp_mapa_fornecedores.documento',
+    'cmp_mapa_fornecedores.id', 'cmp_mapa_fornecedores.razao_social',
     'frn_contratos.id', 'frn_contratos.numero', 'frn_contratos.fornecedor_id', 'frn_contratos.obra_id',
     'frn_contratos.status', 'frn_contratos.classificacao', 'frn_contratos.escopo', 'frn_contratos.inicio',
     'frn_contratos.fim', 'frn_contratos.valor_mo', 'frn_contratos.valor_mat',
     'frn_aditivos.contrato_id', 'frn_aditivos.tipo', 'frn_aditivos.item', 'frn_aditivos.valor', 'frn_aditivos.status',
-    'frn_fornecedores.id', 'frn_fornecedores.razao_social', 'frn_fornecedores.documento',
+    'frn_fornecedores.id', 'frn_fornecedores.razao_social',
     'frn_medicoes.id', 'frn_medicoes.numero', 'frn_medicoes.contrato_id', 'frn_medicoes.item', 'frn_medicoes.descricao',
     'frn_medicoes.competencia', 'frn_medicoes.valor', 'frn_medicoes.status', 'frn_medicoes.solicitado_em',
     'frn_medicoes.aprovado_em', 'frn_medicoes.vencimento', 'frn_medicoes.nf_numero', 'frn_medicoes.pago_em',
     'frn_medicoes.valor_pago', 'frn_medicoes.seq',
     'fin_fat_notas.id', 'fin_fat_notas.ambiente', 'fin_fat_notas.valor_total_centavos',
     'fin_fat_notas.valor_servico_centavos', 'fin_fat_notas.situacao', 'fin_fat_notas.nfse_numero',
-    'fin_fat_notas.tomador_nome', 'fin_fat_notas.tomador_cnpj', 'fin_fat_notas.pedido', 'fin_fat_notas.criado_em',
-    'fin_fat_notas.autorizada_em', 'fin_fat_notas.enviada_em',
+    'fin_fat_notas.tomador_nome', 'fin_fat_notas.pedido', 'fin_fat_notas.criado_em',
+    'fin_fat_notas.autorizada_em', 'fin_fat_notas.enviada_em', 'fin_fat_notas.obras_devolvidas_em',
     'fin_fat_nota_obras.nota_id', 'fin_fat_nota_obras.obra_id', 'fin_fat_nota_obras.os',
     'fin_fat_nota_obras.valor_centavos', 'fin_fat_nota_obras.etapa', 'fin_fat_nota_obras.forma',
     'fin_papeis.user_email', 'fin_papeis.papel', 'fin_papeis.ativo', 'fin_papeis.revogado_em'
@@ -283,7 +290,6 @@ returns table (
   pedido_id uuid,
   pedido_sequencia smallint,
   fornecedor_razao_social text,
-  fornecedor_documento text,
   pedido_situacao text,
   omie_numero text,
   total_centavos bigint,
@@ -309,7 +315,7 @@ as $$
   )
   select a.id, a.os,
          s.id, s.numero, s.tipo, s.etapa, s.motivo, s.prazo_necessario, s.enviado_em, s.valor_estimado_centavos,
-         p.id, p.sequencia, f.razao_social, f.documento, p.situacao, p.omie_numero, p.total_centavos,
+         p.id, p.sequencia, f.razao_social, p.situacao, p.omie_numero, p.total_centavos,
          p.criado_em, p.previsao_entrega, p.entrega_situacao, p.entrega_em, p.nf_numero, p.nf_em,
          p.pago_em, p.concluido_em
     from alvo a
@@ -337,7 +343,6 @@ returns table (
   contrato_classificacao text,
   contrato_escopo text,
   fornecedor_razao_social text,
-  fornecedor_documento text,
   contrato_inicio date,
   contrato_fim date,
   valor_mo_reais numeric,
@@ -370,7 +375,7 @@ as $$
        and (o.id = p_obra or o.obra_pai_id = p_obra)
   )
   select a.id, a.os,
-         c.id, c.numero, c.status, c.classificacao, c.escopo, fo.razao_social, fo.documento,
+         c.id, c.numero, c.status, c.classificacao, c.escopo, fo.razao_social,
          c.inicio, c.fim, c.valor_mo, c.valor_mat,
          coalesce(ad.mo, 0), coalesce(ad.mat, 0),
          m.id, m.numero, m.item, m.descricao, m.competencia, m.valor, m.status,
@@ -395,6 +400,7 @@ grant execute on function public.obras_fin_fornecedores(uuid) to authenticated, 
 --     obra: some parcela_centavos, NUNCA nota_valor_total_centavos.
 --     Centavos: parcela_centavos (pode ser NULL na origem),
 --     nota_valor_total_centavos, nota_valor_servico_centavos.
+--     obras_devolvidas_em: não nulo = a nota devolveu as obras (a receita não conta).
 create or replace function public.obras_fin_notas(p_obra uuid)
 returns table (
   obra_id uuid,
@@ -409,11 +415,11 @@ returns table (
   nota_situacao text,
   nfse_numero text,
   tomador_nome text,
-  tomador_cnpj text,
   pedido text,
   nota_criado_em timestamptz,
   autorizada_em timestamptz,
-  enviada_em timestamptz
+  enviada_em timestamptz,
+  obras_devolvidas_em timestamptz
 )
 language sql
 stable
@@ -429,7 +435,7 @@ as $$
   select a.id, a.os,
          n.id, nob.valor_centavos, nob.os, nob.etapa, nob.forma,
          n.valor_total_centavos, n.valor_servico_centavos, n.situacao, n.nfse_numero,
-         n.tomador_nome, n.tomador_cnpj, n.pedido, n.criado_em, n.autorizada_em, n.enviada_em
+         n.tomador_nome, n.pedido, n.criado_em, n.autorizada_em, n.enviada_em, n.obras_devolvidas_em
     from alvo a
     join public.fin_fat_nota_obras nob on nob.obra_id = a.id
     join public.fin_fat_notas n on n.id = nob.nota_id and n.ambiente = 'producao'
@@ -480,7 +486,7 @@ revoke execute on function public.obras_restricao_pedido_guarda() from public, a
 
 drop trigger if exists obras_restricao_pedido_guarda on public.obras_restricao;
 create trigger obras_restricao_pedido_guarda
-  before insert or update on public.obras_restricao
+  before insert or update of cmp_pedido_id, obra_id on public.obras_restricao
   for each row execute function public.obras_restricao_pedido_guarda();
 
 -- Pedidos da obra para vincular — SEM NENHUM VALOR (nem total, nem estimado,
@@ -621,6 +627,18 @@ from (values
       (select count(*)::text from pg_constraint c join pg_class t on t.oid = c.conrelid
         where c.contype = 'f' and t.relnamespace = 'public'::regnamespace
           and (t.relname like 'cmp\_%' or t.relname like 'fin\_%' or t.relname like 'frn\_%')
-          and c.confrelid in (select oid from pg_class where relnamespace = 'public'::regnamespace and relname like 'obras\_%')))
+          and c.confrelid in (select oid from pg_class where relnamespace = 'public'::regnamespace and relname like 'obras\_%'))),
+  (15, 'leituras sem documento/CNPJ; notas devolvem obras_devolvidas_em', '0|1',
+      (select (select count(*) from pg_proc p, unnest(p.proargnames) as a(nome)
+                where p.oid in (to_regprocedure('public.obras_fin_compras(uuid)'),
+                                to_regprocedure('public.obras_fin_fornecedores(uuid)'),
+                                to_regprocedure('public.obras_fin_notas(uuid)'),
+                                to_regprocedure('public.obras_restricao_pedidos(uuid)'))
+                  and (a.nome like '%documento%' or a.nome like '%cnpj%' or a.nome like '%cpf%'))::text
+              || '|' || (select count(*) from pg_proc p, unnest(p.proargnames) as a(nome)
+                where p.oid = to_regprocedure('public.obras_fin_notas(uuid)') and a.nome = 'obras_devolvidas_em')::text)),
+  (16, 'trigger obras_restricao_pedido_guarda só em update of cmp_pedido_id, obra_id', 'true',
+      (select (pg_get_triggerdef(oid) like '%UPDATE OF cmp_pedido_id, obra_id%')::text from pg_trigger
+        where tgname = 'obras_restricao_pedido_guarda' and tgrelid = 'public.obras_restricao'::regclass))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
