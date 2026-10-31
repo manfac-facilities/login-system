@@ -15,6 +15,7 @@ import { notFound, redirect } from 'next/navigation'
 import { lerSessao, type SessaoPortal } from '@/lib/portal-obra/sessao'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { lerObraGrande, lerPlanos, lerRestricoes, type ObraGrande } from '@/app/obras/obras/_lib/leitura'
+import { lerSituacaoPublicada, situacaoParaCliente } from '@/app/obras/obras/_lib/situacao'
 import { montarVisaoCliente, type VisaoCliente } from './visao'
 import { hojeISO } from '@/app/obras/_lib/tipos'
 
@@ -52,9 +53,12 @@ export async function exigirObra(obraId: string): Promise<ObraDoPortal> {
 
 const visaoDoPortal = cache(async (obraId: string, hoje: string, og: ObraGrande): Promise<VisaoCliente> => {
   const admin = createAdminClient()
-  const [pl, rs] = await Promise.all([lerPlanos(admin, obraId), lerRestricoes(admin, obraId)])
-  if (!pl.ok || !rs.ok) throw new Error('portal-obra: falha ao ler planos/restrições')
-  return montarVisaoCliente({ obra: og, planos: pl.planos, restricoes: rs.restricoes, hoje })
+  const [pl, rs, st] = await Promise.all([lerPlanos(admin, obraId), lerRestricoes(admin, obraId), lerSituacaoPublicada(admin, obraId)])
+  if (!pl.ok || !rs.ok || !st.ok) throw new Error('portal-obra: falha ao ler planos/restrições/situação')
+  return montarVisaoCliente({
+    obra: og, planos: pl.planos, restricoes: rs.restricoes, hoje,
+    situacao: st.situacao ? situacaoParaCliente(st.situacao) : null,
+  })
 })
 
 /** Guarda + visão do cliente já montada (só textos e números do lado cliente). */

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { Sinal } from '@/app/obras/obras/_lib/cronograma'
 import type { CronogramaCliente, ItemAguardando } from '../_lib/visao'
 import type { DocumentoEnviado } from '../_lib/ler'
+import type { SituacaoRelatorio } from '@/app/obras/obras/_lib/situacao'
 
 /**
  * Peças da página do cliente (Leva 5 §3.2), no padrão do mockup aprovado
@@ -178,10 +179,39 @@ export function ListaDocumentos({ docs, raiz }: { docs: DocumentoEnviado[]; raiz
 }
 
 /**
- * Lugar da "Situação para o cliente" (spec §7, Task 6): a explicação e as ações de
- * recuperação publicadas pelo engenheiro. Até a Task 6, `situacao` é sempre null.
+ * "Situação para o cliente" (spec §7, Task 6): a explicação e as ações de
+ * recuperação da última situação PUBLICADA pelo engenheiro, no tom do mockup
+ * aprovado ("O que estamos fazendo para recuperar"). Sem publicação, não aparece.
  */
-export function SlotSituacaoCliente({ situacao }: { situacao: null }) {
+export function SlotSituacaoCliente({ situacao }: { situacao: SituacaoRelatorio | null }) {
   if (situacao === null) return null
-  return null
+  return (
+    <Bloco titulo="Situação da obra" id="b-situacao">
+      <p className="max-w-4xl text-[15px] leading-relaxed text-(--obra-text) sm:text-[16px]">{situacao.explicacao}</p>
+      {situacao.acoes.length ? (
+        <>
+          <h3 className="mt-5 text-[16px] font-bold text-(--obra-ink) sm:text-[18px]">O que estamos fazendo para recuperar</h3>
+          <ul className="mt-3 flex flex-col gap-3">
+            {situacao.acoes.map((a, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <svg aria-hidden width="20" height="20" viewBox="0 0 20 20" className="mt-0.5 shrink-0">
+                  <circle cx="10" cy="10" r="8" fill="none" stroke="#f85e0b" strokeWidth="2" />
+                  <path d="M6.5 10.2l2.4 2.4 4.6-4.8" fill="none" stroke="#00345e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div>
+                  <p className="text-[15px] leading-snug font-semibold text-(--obra-text)">{a.oque}</p>
+                  {a.quando || a.efeito ? (
+                    <p className="mt-0.5 text-[13px] text-(--obra-muted-texto)">{[a.quando, a.efeito].filter(Boolean).join(' · ')}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <p className="mt-4 text-[13px] text-(--obra-muted-texto)">
+        Atualizado em <span className="obra-num">{situacao.atualizadoEm.slice(0, 5)}</span> por {situacao.por}
+      </p>
+    </Bloco>
+  )
 }

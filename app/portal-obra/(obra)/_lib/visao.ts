@@ -18,6 +18,7 @@ import { highlightsDoPeriodo } from '@/app/obras/obras/_lib/highlights'
 import { ppc, type PlanoSemana, type Restricao } from '@/app/obras/obras/_lib/last-planner'
 import type { ObraGrande } from '@/app/obras/obras/_lib/leitura'
 import { ddmm } from '@/app/obras/obras/_lib/relatorio-periodo'
+import type { SituacaoRelatorio } from '@/app/obras/obras/_lib/situacao'
 import { rotuloTipo } from '@/app/obras/obras/[id]/lookahead/_tipos'
 import { linhasDeEtapa, type LinhaEtapa } from '@/app/obras/obras/_ui/evolucao-etapas'
 
@@ -85,10 +86,10 @@ export type VisaoCliente = {
   aguardando: ItemAguardando[]
   highlights: string[]
   /**
-   * Situação para o cliente (spec §7, Task 6): a última situação publicada pelo
-   * engenheiro. Enquanto a Task 6 não existe, sempre null (o bloco não aparece).
+   * Situação para o cliente (spec §7, Task 6): a última situação PUBLICADA pelo
+   * engenheiro (nunca rascunho nem resposta do analista); null = bloco não aparece.
    */
-  situacao: null
+  situacao: SituacaoRelatorio | null
 }
 
 const RESP: Record<Responsavel, string> = { cliente: 'Vocês (cliente)', manfac: 'Manfac', terceiro: 'Terceiros', clima: 'Clima' }
@@ -294,7 +295,13 @@ const somarDias = (iso: string, n: number) => {
   return new Date(Date.UTC(a, m - 1, d + n)).toISOString().slice(0, 10)
 }
 
-export function montarVisaoCliente(p: { obra: ObraGrande; planos: PlanoSemana[]; restricoes: Restricao[]; hoje: string }): VisaoCliente {
+export function montarVisaoCliente(p: {
+  obra: ObraGrande
+  planos: PlanoSemana[]
+  restricoes: Restricao[]
+  hoje: string
+  situacao?: SituacaoRelatorio | null
+}): VisaoCliente {
   const { obra: og, hoje } = p
   const o = og.obra
   const cronograma = cronogramaCliente(og, p.planos, hoje)
@@ -309,7 +316,7 @@ export function montarVisaoCliente(p: { obra: ObraGrande; planos: PlanoSemana[];
     cronograma,
     aguardando: aguardandoCliente(og, p.restricoes, hoje),
     highlights,
-    situacao: null,
+    situacao: p.situacao ?? null,
   }
 }
 
