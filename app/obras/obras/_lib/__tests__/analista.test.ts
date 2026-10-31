@@ -49,6 +49,24 @@ function dados(over: Partial<DadosAnalista> = {}, og = obraGrandePdf()): DadosAn
 const por = (ps: Ponto[], tipo: Ponto['tipo']) => ps.filter((p) => p.tipo === tipo)
 
 describe('pontosAExplicar', () => {
+  it('descrições longas (sem limite no banco) são cortadas: pergunta cabe no check de 1000 e o contexto em 8192 bytes', () => {
+    const longo = 'Ç'.repeat(3000)
+    const d = dados({
+      restricoes: [restricao({ id: 'rl', descricao: longo, atividadeNumero: 77 })],
+    })
+    d.og.calc!.atividades.forEach((a) => { a.descricao = longo })
+    d.og.impedimentos.forEach((i) => { i.descricao = longo })
+    const ps = pontosAExplicar(d)
+    expect(por(ps, 'restricao')).toHaveLength(1)
+    expect(por(ps, 'execucao')).toHaveLength(1)
+    expect(por(ps, 'impedimento').length).toBeGreaterThan(0)
+    for (const p of ps) {
+      expect(p.pergunta.length).toBeLessThanOrEqual(1000)
+      expect(Buffer.byteLength(JSON.stringify(p.contexto), 'utf8')).toBeLessThanOrEqual(8192)
+    }
+    expect(por(ps, 'restricao')[0].pergunta).toContain('…')
+  })
+
   it('desvio > 2 p.p. abaixo do previsto', () => {
     const [p] = por(pontosAExplicar(dados()), 'desvio')
     expect(p).toMatchObject({ chave: 'desvio:obra', contexto: { realizado: '52%', previsto: '58%', desvioPP: -6 } })

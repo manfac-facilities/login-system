@@ -69,6 +69,9 @@ const TIPO_RESTRICAO: Record<Restricao['tipo'], string> = {
 }
 
 const num1 = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(v)
+/** Descrição livre (sem limite no banco) cortada: a pergunta tem check ≤ 1000 e o contexto ≤ 8192 bytes. */
+export const LIMITE_DESCRICAO = 300
+const curto = (t: string) => (t.length > LIMITE_DESCRICAO ? `${t.slice(0, LIMITE_DESCRICAO - 1).trimEnd()}…` : t)
 const dU = (n: number) => `${n} ${n === 1 ? 'dia útil' : 'dias úteis'}`
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 const menosDias = (iso: string, n: number) => {
@@ -83,7 +86,7 @@ export function pontosAExplicar(d: DadosAnalista): Ponto[] {
   const { feriados } = og
   const codigos = codigosDeAtividades(calc.atividades, feriados)
   const cod = (n: number | null) => (n === null ? null : (codigos.get(n) ?? null))
-  const nome = (n: number) => calc.atividades.find((a) => a.numero === n)?.descricao ?? 'Atividade'
+  const nome = (n: number) => curto(calc.atividades.find((a) => a.numero === n)?.descricao ?? 'Atividade')
   const alvo = (n: number | null) => {
     const c = cod(n)
     return n === null ? 'sem atividade' : c ? `${nome(n)} (${c})` : 'atividade fora da versão vigente'
@@ -130,10 +133,10 @@ export function pontosAExplicar(d: DadosAnalista): Ponto[] {
     pontos.push({
       chave: `execucao:${a.numero}`,
       tipo: 'execucao',
-      pergunta: `${a.descricao} (${c}): ${dU(emExecucao)} em execução contra ${a.duracao} planejados, ${pct(a.percentual)} concluído. O que causou e qual a ação para recuperar? Até quando?`,
-      contexto: { codigo: c, descricao: a.descricao, diasEmExecucao: emExecucao, duracao: a.duracao, percentual: pct(a.percentual), termino: dataBr(a.fimProjetado) },
+      pergunta: `${curto(a.descricao)} (${c}): ${dU(emExecucao)} em execução contra ${a.duracao} planejados, ${pct(a.percentual)} concluído. O que causou e qual a ação para recuperar? Até quando?`,
+      contexto: { codigo: c, descricao: curto(a.descricao), diasEmExecucao: emExecucao, duracao: a.duracao, percentual: pct(a.percentual), termino: dataBr(a.fimProjetado) },
       impressao: `${a.duracao}|${a.fimProjetado}`,
-      fato: `${a.descricao} (${c}): ${dU(emExecucao)} em execução contra ${a.duracao} planejados, ${pct(a.percentual)} concluído; término previsto ${dataBr(a.fimProjetado)}.`,
+      fato: `${curto(a.descricao)} (${c}): ${dU(emExecucao)} em execução contra ${a.duracao} planejados, ${pct(a.percentual)} concluído; término previsto ${dataBr(a.fimProjetado)}.`,
       soInterno: false,
     })
   }
@@ -152,14 +155,14 @@ export function pontosAExplicar(d: DadosAnalista): Ponto[] {
     const prazo = dataBr(r.prazo)
     const lib = r.liberadaEm ? dataBr(r.liberadaEm) : null
     // Ao cliente, só restrição do cliente mostra a descrição (as demais podem citar área interna).
-    const quem = r.responsavel === 'cliente' ? `"${r.descricao}" (${tipo}, ${ativ})` : `de ${tipo} da ${ativ} (responsabilidade ${r.responsavel === 'manfac' ? 'da Manfac' : 'de terceiros'})`
+    const quem = r.responsavel === 'cliente' ? `"${curto(r.descricao)}" (${tipo}, ${ativ})` : `de ${tipo} da ${ativ} (responsabilidade ${r.responsavel === 'manfac' ? 'da Manfac' : 'de terceiros'})`
     pontos.push({
       chave: `restricao:${r.id}`,
       tipo: 'restricao',
       pergunta: vencida
-        ? `Restrição "${r.descricao}" (${tipo}, ${alvo(r.atividadeNumero)}, ${resp}) venceu em ${prazo} e segue aberta. O que falta para liberar e qual o novo prazo?`
-        : `Restrição "${r.descricao}" (${tipo}, ${alvo(r.atividadeNumero)}, ${resp}) foi liberada em ${lib}, depois do prazo de ${prazo}. Qual o efeito na obra e o que foi feito para recuperar?`,
-      contexto: { descricao: r.descricao, tipo, responsavel: resp, codigo: c, prazo, liberadaEm: lib, situacao: vencida ? 'vencida' : 'liberada com atraso' },
+        ? `Restrição "${curto(r.descricao)}" (${tipo}, ${alvo(r.atividadeNumero)}, ${resp}) venceu em ${prazo} e segue aberta. O que falta para liberar e qual o novo prazo?`
+        : `Restrição "${curto(r.descricao)}" (${tipo}, ${alvo(r.atividadeNumero)}, ${resp}) foi liberada em ${lib}, depois do prazo de ${prazo}. Qual o efeito na obra e o que foi feito para recuperar?`,
+      contexto: { descricao: curto(r.descricao), tipo, responsavel: resp, codigo: c, prazo, liberadaEm: lib, situacao: vencida ? 'vencida' : 'liberada com atraso' },
       impressao: `${vencida ? 'vencida' : 'liberada'}|${r.prazo}|${r.liberadaEm ?? ''}`,
       fato: vencida
         ? `Restrição ${quem} com prazo em ${prazo}, ainda pendente.`
@@ -201,11 +204,11 @@ export function pontosAExplicar(d: DadosAnalista): Ponto[] {
     pontos.push({
       chave: `impedimento:${i.id}`,
       tipo: 'impedimento',
-      pergunta: `Impedimento "${i.descricao}" (${resp}${i.atividadeNumero !== null ? `, ${alvo(i.atividadeNumero)}` : ''}) aberto desde ${dataBr(i.abertoEm)}: ${dU(dias)}. O que falta para resolver e qual o plano até lá?`,
-      contexto: { descricao: i.descricao, responsavel: resp, codigo: c, desde: dataBr(i.abertoEm), diasUteis: dias, visivelAoCliente: i.exibirAoCliente ? 'sim' : 'não' },
+      pergunta: `Impedimento "${curto(i.descricao)}" (${resp}${i.atividadeNumero !== null ? `, ${alvo(i.atividadeNumero)}` : ''}) aberto desde ${dataBr(i.abertoEm)}: ${dU(dias)}. O que falta para resolver e qual o plano até lá?`,
+      contexto: { descricao: curto(i.descricao), responsavel: resp, codigo: c, desde: dataBr(i.abertoEm), diasUteis: dias, visivelAoCliente: i.exibirAoCliente ? 'sim' : 'não' },
       impressao: i.abertoEm,
       fato: i.exibirAoCliente
-        ? `Impedimento "${i.descricao}"${i.responsavel ? ` (responsabilidade ${DE_RESP[i.responsavel]})` : ''} aberto há ${dU(dias)}.`
+        ? `Impedimento "${curto(i.descricao)}"${i.responsavel ? ` (responsabilidade ${DE_RESP[i.responsavel]})` : ''} aberto há ${dU(dias)}.`
         : '',
       soInterno: !i.exibirAoCliente,
     })

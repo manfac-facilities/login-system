@@ -664,6 +664,8 @@ create table if not exists public.obras_situacao_pergunta (
   interno boolean not null default false,
   respondida_por text,
   respondida_em timestamptz,
+  -- "Respondida" no sentido do banco. A pergunta VOLTA para o engenheiro quando os números
+  -- mudam (contexto->>'impressao' diferente da atual) — decisão do app; aqui ela segue false.
   aberta boolean not null default true,
   criado_em timestamptz not null default now(),
   constraint obras_situacao_pergunta_obra_chave_key unique (obra_id, chave),
