@@ -12,7 +12,7 @@ import { curvaRealizada } from './curvas'
 import { dataBr, pct, previsaoEntrega, sinalVisual, textoDesvio, type ItemDiario, type SinalVisual } from './email-diario'
 import { diasDaSemana, ppc, type PlanoSemana, type Restricao } from './last-planner'
 import type { ImpedimentoRow, ObraGrande } from './leitura'
-import type { Responsavel } from './cronograma'
+import { codigosDeAtividades, type Responsavel } from './cronograma'
 import { rotuloTipo } from '../[id]/lookahead/_tipos'
 
 export type Lado = 'cliente' | 'interno'
@@ -28,7 +28,8 @@ export type ConteudoSemanal = {
   segunda: string
   sexta: string
   sinal: SinalVisual
-  avanco: { previsto: string; realizado: string; desvio: string }
+  /** `ate`: "a sexta", ou "dd/mm/aaaa" quando a semana ainda não acabou. */
+  avanco: { previsto: string; realizado: string; desvio: string; ate: string }
   previsao: string
   /** null = sem plano fechado para a semana. `valor` "—" = plano sem avaliação. */
   ppc: { valor: string; cumpridos: number; avaliados: number; planejados: number } | null
@@ -45,6 +46,7 @@ export type ConteudoSemanal = {
 }
 
 const RESP: Record<Responsavel, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiro: 'Terceiro', clima: 'Clima' }
+const FORA_DA_VERSAO = 'Atividade fora da versão vigente'
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
 export function montarConteudoSemanal(p: {
@@ -63,7 +65,13 @@ export function montarConteudoSemanal(p: {
   const { obra, plano } = og
   const sexta = diasDaSemana(segunda)[4]
   const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
-  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || `Atividade ${n}`
+  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || FORA_DA_VERSAO
+  // Código exibido ("2.3"), nunca o numero interno — a mesma fonte do lookahead e do cronograma.
+  const codigos = codigosDeAtividades(og.calc?.atividades ?? [], og.feriados)
+  const atividadeCom = (n: number) => {
+    const c = codigos.get(n)
+    return c ? `${c} — ${descricao(n)}` : 'fora da versão vigente'
+  }
   const interno = lado === 'interno'
 
   const assunto = `Relatório semanal · ${loja} · ${ddmm(segunda)} a ${dataBr(sexta)}${interno ? ' · interno' : ''}`
@@ -76,7 +84,7 @@ export function montarConteudoSemanal(p: {
   const realizado =
     calc && ref < p.hoje && og.hist.length ? (curvaRealizada(calc.atividades, og.hist, [ref])[0]?.valor ?? 0) : (calc?.realizado ?? 0)
   const desvioPP = Math.round((realizado - previsto) * 1000) / 10 || 0
-  const avanco = { previsto: pct(previsto), realizado: pct(realizado), desvio: textoDesvio(desvioPP) }
+  const avanco = { previsto: pct(previsto), realizado: pct(realizado), desvio: textoDesvio(desvioPP), ate: ref < sexta ? dataBr(ref) : 'a sexta' }
 
   // PPC e não cumpridos. Ao cliente, causa da Manfac aparece só como "Manfac".
   const itens = p.plano?.itens ?? []
@@ -119,7 +127,7 @@ export function montarConteudoSemanal(p: {
     .sort((a, b) => (a.prazo ?? '9999').localeCompare(b.prazo ?? '9999'))
     .map((r) => ({
       descricao: r.descricao,
-      atividade: `${r.atividadeNumero} — ${descricao(r.atividadeNumero)}`,
+      atividade: atividadeCom(r.atividadeNumero),
       tipo: rotuloTipo(r.tipo),
       prazo: r.prazo ? dataBr(r.prazo) : null,
       vencida: !!r.prazo && r.prazo < ref,
@@ -136,7 +144,11 @@ export function montarConteudoSemanal(p: {
     const quando = i.encerradoEm ? `${ddmm(i.abertoEm)} a ${ddmm(i.encerradoEm)}` : `aberto desde ${ddmm(i.abertoEm)}`
     const extras = [
       mostraTipo && i.tipo ? i.tipo : null,
-      i.atividadeNumero !== null ? `atividade ${i.atividadeNumero} (${descricao(i.atividadeNumero)})` : null,
+      i.atividadeNumero === null
+        ? null
+        : codigos.has(i.atividadeNumero)
+          ? `atividade ${codigos.get(i.atividadeNumero)} (${descricao(i.atividadeNumero)})`
+          : 'atividade fora da versão vigente',
     ].filter(Boolean)
     return { rotulo: `${resp.toUpperCase()} · ${quando}`, corpo: `${i.descricao}${extras.length ? ` — ${extras.join(' · ')}` : ''}` }
   }
@@ -163,7 +175,7 @@ function linhasDeDados(c: ConteudoSemanal): string[] {
     : 'PPC da semana: sem plano fechado'
   return [
     `${c.sinal.rotulo} — ${c.avanco.desvio}.`,
-    `Avanço até a sexta: previsto ${c.avanco.previsto} · realizado ${c.avanco.realizado}`,
+    `Avanço até ${c.avanco.ate}: previsto ${c.avanco.previsto} · realizado ${c.avanco.realizado}`,
     c.previsao,
     '',
     ppcTxt,
@@ -224,7 +236,7 @@ ${corpo}</td></tr>`
     `<div style="border-left:3px solid ${cor};background:${fundo};padding:8px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">
 <div style="font-size:12px;font-weight:700;color:#334155">${esc(it.rotulo)}</div>${esc(it.corpo)}</div>`
   const numeros: [string, string][] = [
-    [c.avanco.previsto, 'previsto até a sexta'],
+    [c.avanco.previsto, `previsto até ${c.avanco.ate}`],
     [c.avanco.realizado, 'realizado'],
     [c.ppc?.valor ?? '—', 'PPC da semana'],
   ]

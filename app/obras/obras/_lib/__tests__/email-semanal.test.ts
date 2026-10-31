@@ -109,6 +109,38 @@ describe('montarConteudoSemanal', () => {
     expect(c.impedimentos.map((i) => i.corpo).join()).not.toContain('Antigo resolvido')
   })
 
+  it('cliente vê o código exibido da atividade, nunca o numero interno', () => {
+    const og = obraGrandePdf({
+      impedimentos: [
+        imp({ id: 'na', descricao: 'Gôndolas no caminho', abertoEm: '2026-10-27', atividadeNumero: 3 }),
+        imp({ id: 'velha', descricao: 'Forro antigo', abertoEm: '2026-10-27', atividadeNumero: 99 }),
+      ],
+    })
+    // numero 3 é a 2ª atividade da 2ª etapa: código 2.2.
+    og.calc = { ...og.calc!, atividades: [ativ(1, { etapa: 'A' }), ativ(7, { etapa: 'B' }), ativ(3, { etapa: 'B', descricao: 'Alvenaria do depósito' })] }
+    const c = montarConteudoSemanal({
+      lado: 'cliente', obra: og, segunda: SEG, ref: '2026-10-30', hoje: '2026-10-30', plano: null, planoProximo: null,
+      restricoes: [restricao({ id: 'aberta' }), restricao({ id: 'fora', atividadeNumero: 99, descricao: 'Definir cor' })],
+      observacoes: null,
+    })
+    expect(c.doCliente.map((r) => r.atividade)).toEqual(['2.2 — Alvenaria do depósito', 'fora da versão vigente'])
+    const corpos = c.impedimentos.map((i) => i.corpo).join(' | ')
+    expect(corpos).toContain('atividade 2.2 (Alvenaria do depósito)')
+    expect(corpos).toContain('atividade fora da versão vigente')
+    const { html, texto } = montarEmailSemanal(c, { fotos: 0 })
+    for (const t of [html, texto]) {
+      expect(t).not.toMatch(/atividade 3|atividade 99|Atividade 99/)
+      expect(t).toContain('atividade 2.2')
+    }
+  })
+
+  it('semana em curso: rótulo do previsto é a data de referência, não a sexta', () => {
+    const c = conteudo('cliente', { ref: '2026-10-28', hoje: '2026-10-28' })
+    expect(c.avanco.ate).toBe('28/10/2026')
+    expect(montarEmailSemanal(c, { fotos: 0 }).html).toContain('previsto até 28/10/2026')
+    expect(conteudo('cliente').avanco.ate).toBe('a sexta')
+  })
+
   it('resumo da IA recusa o conteúdo interno e não leva as observações', () => {
     expect(() => resumoParaIa(conteudo('interno'))).toThrow()
     expect(resumoParaIa(conteudo('cliente'))).not.toContain('Alvenaria atrasou por material')

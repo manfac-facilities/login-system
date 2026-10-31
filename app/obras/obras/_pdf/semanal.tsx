@@ -77,7 +77,7 @@ export function DocumentoSemanal({ d }: { d: DadosPdfSemanal }) {
             </Text>
           </View>
           <Text style={estilos.paragrafo}>
-            Previsto até a sexta: <Text style={estilos.mono}>{c.avanco.previsto}</Text> · realizado:{' '}
+            Previsto até {c.avanco.ate}: <Text style={estilos.mono}>{c.avanco.previsto}</Text> · realizado:{' '}
             <Text style={estilos.mono}>{c.avanco.realizado}</Text>
           </Text>
           <Text>{c.previsao}</Text>

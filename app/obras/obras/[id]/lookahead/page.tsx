@@ -86,7 +86,7 @@ export default async function LookaheadPage({
     const grupos = agruparQuadro(rr.restricoes, { responsavel: resp, atrasadas, hoje })
     const cartao = (x: (typeof rr.restricoes)[number]): CartaoRestricao => ({
       ...x,
-      atividade: nomes.get(x.atividadeNumero) ?? `Atividade ${x.atividadeNumero}`,
+      atividade: nomes.get(x.atividadeNumero) ?? 'Atividade fora da versão vigente',
       podeApagar: admin || x.criadoPor?.trim().toLowerCase() === email,
       atrasada: x.situacao !== 'liberada' && x.prazo !== null && x.prazo < hoje,
     })
