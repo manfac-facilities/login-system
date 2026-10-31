@@ -19,6 +19,7 @@ export const dynamic = 'force-dynamic'
 const texto = (status: number, corpo: string) =>
   new Response(corpo, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } })
 const NAO_ENCONTRADO = 'Documento não encontrado'
+const ERRO = 'Não foi possível gerar o PDF agora. Tente novamente em alguns minutos.'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ obraId: string; envioId: string }> }) {
   const { obraId, envioId } = await params
@@ -31,9 +32,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ obra
     const admin = createAdminClient()
     const hoje = hojeISO()
     const lida = await lerObraGrande(admin, obraId, hoje)
-    if (!lida.ok || lida.dados.obra.modalidade !== 'obra') return texto(404, NAO_ENCONTRADO)
+    // Obra apagada ou SPOT → 404; erro de banco → 500 (como em `exigirObra`).
+    if (!lida.ok) return lida.erro === 'Obra não encontrada' ? texto(404, NAO_ENCONTRADO) : texto(500, ERRO)
+    if (lida.dados.obra.modalidade !== 'obra') return texto(404, NAO_ENCONTRADO)
     const r = await pdfDoEnvio(admin, obraId, lida.dados, envioId, hoje)
-    if (!r.ok) return r.status === 404 ? texto(404, NAO_ENCONTRADO) : texto(500, 'Não foi possível gerar o PDF agora. Tente novamente em alguns minutos.')
+    if (!r.ok) return r.status === 404 ? texto(404, NAO_ENCONTRADO) : texto(500, ERRO)
     return new Response(new Uint8Array(r.pdf), {
       status: 200,
       headers: {
@@ -44,6 +47,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ obra
     })
   } catch {
     console.error('[portal-obra] erro ao gerar PDF')
-    return texto(500, 'Não foi possível gerar o PDF agora. Tente novamente em alguns minutos.')
+    return texto(500, ERRO)
   }
 }

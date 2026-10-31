@@ -136,6 +136,40 @@ describe('montarVisaoCliente', () => {
     expect(r.aguardando).toHaveLength(2)
   })
 
+  it('"Aguardando vocês" no cronograma só por impedimento do cliente VISÍVEL; oculto com trava vira "outros fatores"', () => {
+    const og = obra()
+    og.calc = {
+      ...og.calc!,
+      atividades: og.calc!.atividades.map((a) => (a.numero === 77 || a.numero === 40 ? { ...a, situacao: 'aguardando_cliente' as const } : a)),
+    }
+    og.impedimentos = [
+      imp({ id: 'vis', descricao: 'Liberar o depósito', travaAtividade: true, atividadeNumero: 77, abertoEm: '2026-11-03' }),
+      imp({ id: 'ocTrava', descricao: 'Pendência oculta com trava', travaAtividade: true, exibirAoCliente: false, atividadeNumero: 40, abertoEm: '2026-11-03' }),
+    ]
+    const r = montarVisaoCliente({ obra: og, planos, restricoes: [], hoje: HOJE })
+    const [a77, a40] = r.cronograma!.etapas[1].atividades
+    expect(a77).toMatchObject({ codigo: '2.1', situacao: 'Aguardando vocês' })
+    expect(a40).toMatchObject({ codigo: '2.2', situacao: 'Aguardando outros fatores' })
+    expect(r.aguardando.map((i) => i.titulo)).toEqual(['Liberar o depósito'])
+    expect(JSON.stringify(r)).not.toContain('Pendência oculta')
+  })
+
+  it('sinal do portal ignora impedimento oculto do cliente (o selo bate com o texto)', () => {
+    const og = obra({ terminoBase: '2026-11-27', atraso: { total: 0, cliente: 0, manfac: 0, terceiro: 0, clima: 0 }, sinal: 'amarelo' })
+    og.calc = { ...og.calc!, desvioPP: 0, previsto: 0.45 }
+    og.impedimentos = [imp({ id: 'oc', descricao: 'Oculto do cliente', exibirAoCliente: false, abertoEm: '2026-11-03' })]
+    const r = montarVisaoCliente({ obra: og, planos, restricoes: [], hoje: HOJE })
+    expect(r.cronograma!.sinal).toMatchObject({ tom: 'verde', titulo: 'Em dia', resumo: 'Obra dentro do planejado' })
+    og.impedimentos = [imp({ id: 'vis', descricao: 'Visível do cliente', abertoEm: '2026-11-03' })]
+    expect(montarVisaoCliente({ obra: og, planos, restricoes: [], hoje: HOJE }).cronograma!.sinal.tom).toBe('amarelo')
+  })
+
+  it('cronograma por etapa leva base × previsto × realizado (a mesma linha da evolução por etapa)', () => {
+    const e = v.cronograma!.etapas[1]
+    expect(e.linha).toEqual(v.cronograma!.linhasEtapa[1])
+    expect(e.linha.base).not.toBeNull()
+  })
+
   it('situação para o cliente: espaço reservado (Task 6), por enquanto nulo', () => {
     expect(v.situacao).toBeNull()
   })

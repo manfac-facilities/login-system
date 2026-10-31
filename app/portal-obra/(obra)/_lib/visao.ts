@@ -11,7 +11,7 @@
  * aparece: o cliente só vê o que foi salvo.
  */
 import { diasUteisEntre } from '@/app/obras/obras/_lib/calendario'
-import { compararComBase, codigosDeAtividades, type AtividadeCalculada, type Responsavel, type Sinal } from '@/app/obras/obras/_lib/cronograma'
+import { compararComBase, codigosDeAtividades, sinalDaObra, type AtividadeCalculada, type Responsavel, type Sinal } from '@/app/obras/obras/_lib/cronograma'
 import { curvaPlanejada, curvaRealizada, datasDaCurva, type Serie } from '@/app/obras/obras/_lib/curvas'
 import { atrasoDoLado, dataBr, pct, textoDesvio } from '@/app/obras/obras/_lib/email-diario'
 import { highlightsDoPeriodo } from '@/app/obras/obras/_lib/highlights'
@@ -51,6 +51,8 @@ export type AtividadeCliente = {
 export type EtapaCliente = {
   ordem: number
   nome: string
+  /** Linha da evolução por etapa (base × previsto × realizado), a mesma conta da Visão geral. */
+  linha: LinhaEtapa
   realizado: string
   previsto: string
   termino: string
@@ -103,7 +105,12 @@ export const diasUteisTxt = (n: number) => {
 const deltaTxt = (d: number | null) => (d === null ? null : d === 0 ? 'no prazo' : `${d > 0 ? '+' : '−'}${diasUteisTxt(Math.abs(d))}`)
 const maior = (...ds: (string | null | undefined)[]) => ds.reduce<string>((m, d) => (d && d > m ? d : m), '')
 
-function situacaoDe(a: AtividadeCalculada): Pick<AtividadeCliente, 'situacao' | 'tom' | 'atrasada'> {
+/**
+ * `aguardaVisivel`: atividades travadas por impedimento do cliente aberto E visível
+ * ao cliente. O motor marca `aguardando_cliente` também pelo impedimento oculto;
+ * nesse caso o cliente vê o rótulo neutro dos e-mails ("outros fatores").
+ */
+function situacaoDe(a: AtividadeCalculada, aguardaVisivel: ReadonlySet<number>): Pick<AtividadeCliente, 'situacao' | 'tom' | 'atrasada'> {
   switch (a.situacao) {
     case 'concluida':
       return { situacao: 'Concluída', tom: 'ok', atrasada: false }
@@ -112,7 +119,9 @@ function situacaoDe(a: AtividadeCalculada): Pick<AtividadeCliente, 'situacao' | 
     case 'inicio_atrasado':
       return { situacao: 'Início atrasado', tom: 'atraso', atrasada: true }
     case 'aguardando_cliente':
-      return { situacao: 'Aguardando vocês', tom: 'atencao', atrasada: false }
+      return aguardaVisivel.has(a.numero)
+        ? { situacao: 'Aguardando vocês', tom: 'atencao', atrasada: false }
+        : { situacao: 'Aguardando outros fatores', tom: 'atencao', atrasada: false }
     case 'bloqueada':
       return { situacao: 'Aguardando liberação', tom: 'atencao', atrasada: false }
     default:
@@ -183,6 +192,8 @@ function cronogramaCliente(og: ObraGrande, planos: PlanoSemana[], hoje: string):
   const clienteAberto = og.impedimentos.some(
     (i) => i.categoria === 'impedimento' && i.responsavel === 'cliente' && i.exibirAoCliente && !i.encerradoEm,
   )
+  // Sinal recalculado só com o que o cliente vê (o `og.sinal` conta impedimento oculto do cliente).
+  const sinal: Sinal = sinalDaObra({ desvioPP: desvio, terminoProjetado: calc.terminoProjetado, terminoBase: og.terminoBase, impedimentoClienteAberto: clienteAberto })
   const resumo =
     atraso && atraso.total > 0
       ? `Entrega prevista ${diasUteisTxt(atraso.total)} depois da base`
@@ -219,6 +230,11 @@ function cronogramaCliente(og: ObraGrande, planos: PlanoSemana[], hoje: string):
   const datas = [...new Set([inicio, ...datasDaCurva(inicio, fim, 'semana')])].sort()
 
   const codigos = codigosDeAtividades(calc.atividades, feriados)
+  const aguardaVisivel = new Set(
+    og.impedimentos
+      .filter((i) => i.categoria === 'impedimento' && i.responsavel === 'cliente' && i.exibirAoCliente && i.travaAtividade && !i.encerradoEm && i.atividadeNumero !== null)
+      .map((i) => i.atividadeNumero as number),
+  )
   const comparacao = compararComBase(calc.atividades, calcBase?.atividades ?? null, feriados)
   const linhas = linhasDeEtapa(og.etapas, calc.atividades, calcBase?.atividades ?? null, feriados)
   const etapas: EtapaCliente[] = og.etapas.map((e, i) => {
@@ -227,6 +243,7 @@ function cronogramaCliente(og: ObraGrande, planos: PlanoSemana[], hoje: string):
     return {
       ordem: i + 1,
       nome: e.etapa,
+      linha: l,
       realizado: pct(l.realizado),
       previsto: pct(l.previsto),
       termino: dataBr(e.fimProjetado),
@@ -236,7 +253,7 @@ function cronogramaCliente(og: ObraGrande, planos: PlanoSemana[], hoje: string):
         .map((a) => ({
           codigo: codigos.get(a.numero) ?? '',
           descricao: a.descricao,
-          ...situacaoDe(a),
+          ...situacaoDe(a, aguardaVisivel),
           realizado: pct(a.percentual),
           previsto: pct(a.percentualPrevisto),
           inicio: dataBr(a.inicioReal ?? a.inicioProjetado),
@@ -247,7 +264,7 @@ function cronogramaCliente(og: ObraGrande, planos: PlanoSemana[], hoje: string):
   })
 
   return {
-    sinal: { tom: og.sinal ?? 'verde', titulo: TITULO_SINAL[og.sinal ?? 'verde'], resumo, texto },
+    sinal: { tom: sinal, titulo: TITULO_SINAL[sinal], resumo, texto },
     previsto: pct(calc.previsto),
     realizado: pct(calc.realizado),
     desvio: textoDesvio(desvio),

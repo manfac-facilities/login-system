@@ -1,3 +1,4 @@
+import EvolucaoEtapas from '@/app/obras/obras/_ui/evolucao-etapas'
 import { exigirVisao } from '../../../_lib/guarda'
 import { Bloco, Vazio } from '../../../_ui/blocos'
 import type { AtividadeCliente } from '../../../_lib/visao'
@@ -10,7 +11,6 @@ const TOM: Record<AtividadeCliente['tom'], string> = {
   atraso: 'text-[#9a2a00] font-semibold',
   neutro: 'text-(--obra-text)',
 }
-const largura = (p: string) => `${Math.min(100, Math.max(0, parseInt(p, 10) || 0))}%`
 
 /** Cronograma por etapa (Leva 5 §3.2): barras previsto × realizado, código exibido, nunca o numero interno. */
 export default async function CronogramaPortal({ params }: { params: Promise<{ obraId: string }> }) {
@@ -33,23 +33,11 @@ export default async function CronogramaPortal({ params }: { params: Promise<{ o
             {' '}· data da base <span className="obra-num">{c.base}</span>
           </>
         ) : null}
-        . Barra azul-clara: previsto até hoje; barra azul: realizado.
+        . Por etapa: realizado (laranja) × previsto hoje (marcador azul) × base (tracejado).
       </p>
       {c.etapas.map((e) => (
         <Bloco key={e.ordem} titulo={`${e.ordem}. ${e.nome}`} id={`e-${e.ordem}`}>
-          <div className="flex flex-col gap-1.5" aria-hidden>
-            <div className="h-2 rounded bg-(--obra-trilho)">
-              <div className="h-2 rounded bg-[#c7d0da]" style={{ width: largura(e.previsto) }} />
-            </div>
-            <div className="h-2 rounded bg-(--obra-trilho)">
-              <div className="h-2 rounded bg-(--obra-ink)" style={{ width: largura(e.realizado) }} />
-            </div>
-          </div>
-          <p className="mt-2 text-[14px] text-(--obra-text)">
-            <span className="obra-num font-semibold">{e.realizado}</span> realizado de <span className="obra-num">{e.previsto}</span> previsto · término{' '}
-            <span className="obra-num">{e.termino}</span>
-            {e.delta ? ` (${e.delta === 'no prazo' ? 'no prazo da base' : `${e.delta} contra a base`})` : ''}
-          </p>
+          <EvolucaoEtapas linhas={[e.linha]} />
           <ul className="mt-3 divide-y divide-(--obra-border) border-t border-(--obra-border)">
             {e.atividades.map((a) => (
               <li key={a.codigo} className="grid grid-cols-[3rem_1fr] gap-x-3 gap-y-1 py-2.5 sm:grid-cols-[3.5rem_1fr_9rem_10rem] sm:items-center">

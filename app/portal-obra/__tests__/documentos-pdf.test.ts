@@ -212,6 +212,13 @@ describe('GET /portal-obra/obras/<obra>/pdf/<envio>', () => {
     expect(await r.text()).toBe('Documento não encontrado')
   })
 
+  it('erro de banco ao ler a obra: 500 (não um 404 silencioso)', async () => {
+    mockLerObra.mockResolvedValue({ ok: false, erro: 'Falha ao ler a obra: timeout' })
+    expect((await pedir(O, u(2))).status).toBe(500)
+    mockLerObra.mockResolvedValue({ ok: false, erro: 'Obra não encontrada' })
+    expect((await pedir(O, u(2))).status).toBe(404)
+  })
+
   it('envio com id fora do formato: 404', async () => {
     expect((await pedir(O, 'rdo-ok')).status).toBe(404)
   })

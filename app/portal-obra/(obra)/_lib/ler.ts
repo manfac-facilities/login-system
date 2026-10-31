@@ -131,9 +131,17 @@ export type FotoGaleria = { id: string; url: string; legenda: string | null; dat
 
 export const MAX_FOTOS_GALERIA = 200
 export const VALIDADE_URL_FOTO_S = 300
+export const MAX_DIARIOS_GALERIA = 120
 
 export async function lerGaleria(admin: Admin, obraId: string, og: ObraGrande): Promise<{ ok: true; fotos: FotoGaleria[] } | { ok: false }> {
-  const { data: rdos, error } = await admin.from('obras_rdo').select('id, obra_id, data, estado').eq('obra_id', obraId).in('estado', ['validado', 'enviado'])
+  // Só os diários mais recentes: o `.in('rdo_id', …)` abaixo vai na URL (limite do gateway); o teto de fotos já é 200.
+  const { data: rdos, error } = await admin
+    .from('obras_rdo')
+    .select('id, obra_id, data, estado')
+    .eq('obra_id', obraId)
+    .in('estado', ['validado', 'enviado'])
+    .order('data', { ascending: false })
+    .limit(MAX_DIARIOS_GALERIA)
   if (error) return { ok: false }
   const validos = ((rdos ?? []) as Linha[]).filter((r) => r.obra_id === obraId && VALIDO.has(r.estado))
   if (!validos.length) return { ok: true, fotos: [] }
