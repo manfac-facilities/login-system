@@ -14,6 +14,7 @@ import { curvaPlanejada, curvaRealizada, datasDaCurva } from './curvas'
 import { dataBr, pct, previsaoEntrega, quebraDoAtraso, sinalVisual, textoDesvio, type ItemDiario, type SinalVisual } from './email-diario'
 import { dataEnvioSemanal, ppc, type PlanoSemana, type Restricao } from './last-planner'
 import type { ImpedimentoRow, ObraGrande } from './leitura'
+import { comDatasDoPedido } from './restricao-pedido'
 import { codigosDeAtividades, deltaDiasUteis, type Responsavel } from './cronograma'
 import { rotuloTipo } from '../[id]/lookahead/_tipos'
 import { ISO, lista, nums, obj, str, strOuNull, strs, type Campos } from './conteudo-valido'
@@ -88,7 +89,8 @@ export function blocosDoPeriodo(p: {
     .map((a) => ({ descricao: a.descricao, percentual: pct(a.percentual), termino: dataBr(a.fimProjetado) }))
 
   // Decisões/restrições que dependem do cliente: só as em aberto (liberada some).
-  const doCliente = p.restricoes
+  // Com pedido do Compras ligado, o prazo mostrado é a previsão de entrega do pedido.
+  const doCliente = comDatasDoPedido(p.restricoes)
     .filter((r) => r.responsavel === 'cliente' && r.situacao !== 'liberada')
     .sort((a, b) => (a.prazo ?? '9999').localeCompare(b.prazo ?? '9999'))
     .map((r) => ({

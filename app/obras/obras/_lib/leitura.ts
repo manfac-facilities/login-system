@@ -8,6 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ObraRow } from '../../_lib/tipos'
 import type { PontoHist } from './curvas'
 import type { PlanoSemana, Restricao } from './last-planner'
+import { pedidoDeLinha, type PedidoDaRestricao } from './restricao-pedido'
 import { CAUSA, type CausaRdo } from './causas'
 import {
   atrasoPorResponsavel,
@@ -348,7 +349,7 @@ export function montarObraGrande(p: {
 const restricaoDe = (r: Linha): Restricao => ({
   id: r.id, obraId: r.obra_id, atividadeNumero: r.atividade_numero, tipo: r.tipo, descricao: r.descricao,
   responsavel: r.responsavel, prazo: r.prazo ?? null, situacao: r.situacao, liberadaEm: r.liberada_em ?? null,
-  criadoPor: r.criado_por ?? null, criadoEm: r.criado_em,
+  criadoPor: r.criado_por ?? null, criadoEm: r.criado_em, cmpPedidoId: r.cmp_pedido_id ?? null, pedido: null,
 })
 
 const planoSemanaDe = (p: Linha): PlanoSemana => ({
@@ -361,14 +362,32 @@ const planoSemanaDe = (p: Linha): PlanoSemana => ({
   })),
 })
 
+/**
+ * Pedidos do Compras da obra para ligar a restrição (`obras_restricao_pedidos`, SEM valores).
+ * Sempre com o cliente da SESSÃO: com o admin a função devolve vazio. Erro → null.
+ */
+export async function lerPedidosDaObra(supabase: SupabaseClient, obraId: string): Promise<PedidoDaRestricao[] | null> {
+  const { data, error } = await supabase.rpc('obras_restricao_pedidos', { p_obra: obraId })
+  if (error) return null
+  return ((data ?? []) as Linha[]).map(pedidoDeLinha)
+}
+
 export async function lerRestricoes(
   supabase: SupabaseClient,
   obraId: string,
+  pedidos?: PedidoDaRestricao[] | null,
 ): Promise<{ ok: true; restricoes: Restricao[] } | { ok: false; erro: string }> {
   const { data, error } = await supabase
     .from('obras_restricao').select('*').eq('obra_id', obraId).order('criado_em', { ascending: false })
   if (error) return { ok: false, erro: error.message }
-  return { ok: true, restricoes: ((data ?? []) as Linha[]).map(restricaoDe) }
+  const restricoes = ((data ?? []) as Linha[]).map(restricaoDe)
+  // Datas do pedido ligado: só consulta o Compras se alguma restrição tem vínculo. Falha → sem datas.
+  if (restricoes.some((r) => r.cmpPedidoId)) {
+    const lista = pedidos ?? (await lerPedidosDaObra(supabase, obraId)) ?? []
+    const porId = new Map(lista.map((p) => [p.pedidoId, p]))
+    for (const r of restricoes) r.pedido = r.cmpPedidoId ? (porId.get(r.cmpPedidoId) ?? null) : null
+  }
+  return { ok: true, restricoes }
 }
 
 /** Avanços (numero, `de`) dos diários da obra com data > `data` — base do % de quem só tem histórico depois. */

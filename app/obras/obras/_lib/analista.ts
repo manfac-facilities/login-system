@@ -21,6 +21,7 @@ import { codigosDeAtividades, deltaDiasUteis, type Responsavel } from './cronogr
 import { atrasoDoLado, dataBr, pct, textoDesvio } from './email-diario'
 import type { PlanoSemana, Restricao } from './last-planner'
 import type { ObraGrande } from './leitura'
+import { comDatasDoPedido } from './restricao-pedido'
 import type { NumerosSituacao } from './situacao'
 
 export type TipoPonto = 'desvio' | 'entrega' | 'execucao' | 'restricao' | 'plano' | 'impedimento' | 'atraso'
@@ -77,7 +78,9 @@ const menosDias = (iso: string, n: number) => {
 }
 
 export function pontosAExplicar(d: DadosAnalista): Ponto[] {
-  const { og, hoje, restricoes, planos } = d
+  const { og, hoje, planos } = d
+  // Restrição ligada a pedido do Compras: prazo = previsão do pedido, liberada em = entrega.
+  const restricoes = comDatasDoPedido(d.restricoes)
   const calc = og.calc
   if (!calc) return []
   const { feriados } = og

@@ -7,8 +7,9 @@ import PesoAvancoForm from './_peso'
 import FeriadosObra from './_feriados'
 import AcessoPortalCliente from './_acesso-portal'
 import DocumentosObra from './_documentos'
+import ObraMaeForm from './_obra-mae'
 import type { AcessoPortal, DocumentoLinha } from './_tipos-portal'
-import type { AbrangenciaFeriado, Destinatario, FeriadoObra, Lado, PesoAvanco, TipoEnvio } from './_tipos'
+import { opcoesObraMae, type AbrangenciaFeriado, type Destinatario, type FeriadoObra, type Lado, type ObraParaMae, type PesoAvanco, type TipoEnvio } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     return <EstadoVazio>Só administrador acessa as configurações da obra</EstadoVazio>
   }
 
-  const [obraR, destR, ferR, v1R, acR, docR] = await Promise.all([
+  const [obraR, destR, ferR, v1R, acR, docR, obrasR] = await Promise.all([
     supabase.from('obras_obra').select('engenheiro_email, data_base, atividade_trava, peso_avanco').eq('id', id).maybeSingle(),
     supabase.from('obras_destinatario').select('id, email, nome, funcao, lado, tipos, ativo').eq('obra_id', id).order('email'),
     supabase
@@ -39,6 +40,8 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
       .select('id, pasta, nome, tamanho, criado_em, criado_por')
       .eq('obra_id', id)
       .order('criado_em', { ascending: false }),
+    // OS filha: consulta separada — se falhar (ex.: coluna obra_pai_id ainda não aplicada), só o bloco some.
+    supabase.from('obras_obra').select('id, os, loja, obra_pai_id').eq('modalidade', 'obra').is('cancelado_em', null),
   ])
   if (obraR.error || destR.error || ferR.error || acR.error || docR.error) {
     return <EstadoVazio>Não foi possível carregar as configurações desta obra</EstadoVazio>
@@ -75,6 +78,14 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     global: f.obra_id == null,
   }))
 
+  const obrasMae: ObraParaMae[] | null = obrasR.error
+    ? null
+    : ((obrasR.data ?? []) as { id: string; os: string | null; loja: string | null; obra_pai_id: string | null }[]).map((o) => ({
+        id: o.id, os: o.os, loja: o.loja, paiId: o.obra_pai_id,
+      }))
+  const maeAtual = obrasMae?.find((o) => o.id === id)?.paiId ?? null
+  const mae = obrasMae ? opcoesObraMae(obrasMae, id) : null
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="flex flex-col gap-6">
@@ -95,6 +106,15 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
           }}
         />
         <PesoAvancoForm obraId={id} inicial={(obra?.peso_avanco ?? null) as PesoAvanco} />
+        {obrasMae && mae ? (
+          <ObraMaeForm
+            obraId={id}
+            maeAtual={maeAtual}
+            opcoes={mae.opcoes}
+            bloqueio={mae.bloqueio}
+            filhas={obrasMae.filter((o) => o.paiId === id)}
+          />
+        ) : null}
       </div>
     </div>
   )
