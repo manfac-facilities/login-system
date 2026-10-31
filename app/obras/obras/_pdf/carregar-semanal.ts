@@ -11,27 +11,30 @@
  *
  * Quem chama já conferiu a sessão e o acesso. Leituras pelo cliente da sessão
  * (RLS vale); só o download das fotos usa a service role, restrito ao caminho
- * canônico desta obra (`<obra>/rdo/<data>/`).
+ * canônico desta obra (`<obra>/rdo/<data>/`). Fotos: `fotos-periodo.ts` (comum ao
+ * relatório de período).
  */
 import { createElement } from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { conteudoSemanalValido, montarConteudoSemanal, type ConteudoSemanal, type Lado } from '../_lib/email-semanal'
 import { diasDaSemana, segundaDaSemana, type PlanoSemana, type Restricao } from '../_lib/last-planner'
 import { lerObraGrande, lerPlano, lerRestricoes, type ObraGrande } from '../_lib/leitura'
 import { segundaValida, somarDias } from '../[id]/lookahead/_plano-tipos'
 import { logoManfac, registrarFontes } from './base'
-import { DocumentoSemanal, montarDadosPdfSemanal, type DadosPdfSemanal, type FotoSemanalPdf } from './semanal'
+import { MAX_BYTES_FOTO, baixarFotos, fotosDosIds, fotosElegiveisDoPeriodo, slug, type FotoRef } from './fotos-periodo'
+import { DocumentoSemanal, montarDadosPdfSemanal, type DadosPdfSemanal } from './semanal'
+
+export { caminhoFotoValido } from './fotos-periodo'
 
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const MAX_FOTOS_SEMANAL = 8
-export const MAX_BYTES_FOTO_SEMANAL = 1_500_000
+export const MAX_BYTES_FOTO_SEMANAL = MAX_BYTES_FOTO
 
 export type EstadoSemanal = 'rascunho' | 'validado' | 'enviado'
 /** Foto de diário validado da semana (linha de `obras_rdo_foto` + data do diário). */
-export type FotoSemanalRef = { id: string; path: string; legenda: string | null; data: string }
+export type FotoSemanalRef = FotoRef
 /** O que fica gravado em `obras_semanal.conteudo` na validação (imutável depois). `fotos` = ids de `obras_rdo_foto`. */
 export type ConteudoCongelado = { cliente: ConteudoSemanal; interno: ConteudoSemanal; fotos: string[] }
 export type SemanalRow = {
@@ -127,74 +130,12 @@ export const conteudoSemanalDe = (d: DadosSemanal, lado: Lado): ConteudoSemanal 
     plano: d.plano, planoProximo: d.planoProximo, restricoes: d.restricoes, observacoes: d.semanal?.observacoes ?? null,
   })
 
-/** JPEG ou PNG pelo cabeçalho; outro formato o react-pdf não desenha. */
-function formatoDe(b: Buffer): FotoSemanalPdf['formato'] | null {
-  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg'
-  if (b.length > 8 && b.readUInt32BE(0) === 0x89504e47) return 'png'
-  return null
-}
-
 /** Todas as fotos dos diários validados/enviados DESTA obra na semana, em ordem (data do diário, ordem). */
-export async function fotosElegiveis(supabase: SupabaseClient, obraId: string, segunda: string): Promise<FotoSemanalRef[]> {
-  const sexta = diasDaSemana(segunda)[4]
-  const { data: rdos, error } = await supabase
-    .from('obras_rdo')
-    .select('id, data, estado')
-    .eq('obra_id', obraId)
-    .gte('data', segunda)
-    .lte('data', sexta)
-  const validos = ((rdos ?? []) as Linha[]).filter((r) => r.estado === 'validado' || r.estado === 'enviado')
-  if (error || !validos.length) return []
-  const dataDe = new Map(validos.map((r) => [String(r.id), String(r.data)]))
-  const { data: linhas, error: errF } = await supabase
-    .from('obras_rdo_foto')
-    .select('*')
-    .in('rdo_id', [...dataDe.keys()])
-    .order('ordem')
-  if (errF) return []
-  return ((linhas ?? []) as Linha[])
-    .filter((f) => dataDe.has(String(f.rdo_id)))
-    .sort((a, b) => dataDe.get(String(a.rdo_id))!.localeCompare(dataDe.get(String(b.rdo_id))!) || Number(a.ordem ?? 0) - Number(b.ordem ?? 0))
-    .map((f) => ({ id: String(f.id), path: String(f.path ?? ''), legenda: (f.legenda as string | null) ?? null, data: dataDe.get(String(f.rdo_id))! }))
-}
-
-const ISO = /^\d{4}-\d{2}-\d{2}$/
-const ARQUIVO = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/
-/** Caminho canônico `<obra>/rdo/<data>/<arquivo>`; arquivo sem barra, `..`, `%`, `?`, `#` nem barra invertida. */
-export const caminhoFotoValido = (obraId: string, data: string, path: string): boolean => {
-  const prefixo = `${obraId}/rdo/${data}/`
-  const arquivo = path.slice(prefixo.length)
-  return ISO.test(data) && path.startsWith(prefixo) && ARQUIVO.test(arquivo) && !arquivo.includes('..')
-}
+export const fotosElegiveis = (supabase: SupabaseClient, obraId: string, segunda: string): Promise<FotoSemanalRef[]> =>
+  fotosElegiveisDoPeriodo(supabase, obraId, segunda, diasDaSemana(segunda)[4])
 
 /** Baixa as fotos (service role), só do caminho canônico desta obra. */
-export async function baixarFotosSemanal(obraId: string, refs: FotoSemanalRef[]): Promise<{ fotos: FotoSemanalPdf[]; omitidas: number }> {
-  const fotos: FotoSemanalPdf[] = []
-  let omitidas = 0
-  if (!refs.length) return { fotos, omitidas }
-  const bucket = createAdminClient().storage.from('obras-fotos')
-  for (const { path, legenda, data } of refs.slice(0, MAX_FOTOS_SEMANAL)) {
-    const valido = caminhoFotoValido(obraId, data, path)
-    const { data: blob, error: e } = valido ? await bucket.download(path) : { data: null, error: null }
-    const dados = blob && !e ? Buffer.from(await blob.arrayBuffer()) : null
-    const formato = dados && dados.length <= MAX_BYTES_FOTO_SEMANAL ? formatoDe(dados) : null
-    if (!dados || !formato) {
-      console.warn(`[pdf-semanal] foto omitida ${path}: ${e?.message ?? `${dados?.length ?? 0} bytes`}`)
-      omitidas++
-      continue
-    }
-    fotos.push({ dados, formato, legenda, data })
-  }
-  return { fotos, omitidas }
-}
-
-const slug = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^A-Za-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase() || 'obra'
+export const baixarFotosSemanal = (obraId: string, refs: FotoSemanalRef[]) => baixarFotos(obraId, refs, MAX_FOTOS_SEMANAL, 'pdf-semanal')
 
 /** Dados do PDF (lado cliente) a partir da leitura da semana. */
 export async function dadosPdfSemanal(
@@ -205,9 +146,7 @@ export async function dadosPdfSemanal(
   // Congelado: só os ids, re-resolvidos contra as fotos elegíveis desta obra e semana (id estranho some).
   const elegiveis = await fotosElegiveis(supabase, d.og.obra.id, d.segunda)
   const ids = d.semanal && d.semanal.estado !== 'rascunho' ? d.semanal.conteudo?.fotos : undefined
-  const refs = ids
-    ? [...new Set(ids)].map((id) => elegiveis.find((f) => f.id === id)).filter((f): f is FotoSemanalRef => !!f)
-    : elegiveis.slice(0, MAX_FOTOS_SEMANAL)
+  const refs = fotosDosIds(ids, elegiveis, MAX_FOTOS_SEMANAL)
   const { fotos, omitidas } = await baixarFotosSemanal(d.og.obra.id, refs)
   const conteudo = conteudoSemanalDe(d, 'cliente')
   const dados = montarDadosPdfSemanal({

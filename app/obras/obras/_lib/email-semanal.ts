@@ -13,6 +13,7 @@ import { diasDaSemana, ppc, type PlanoSemana, type Restricao } from './last-plan
 import type { ObraGrande } from './leitura'
 import type { Responsavel } from './cronograma'
 import { esc, ISO, lista, nums, obj, str, strOuNull, strs } from './conteudo-valido'
+import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
 import { blocosDoPeriodo, blocosValidos, ddmm, type Lado } from './relatorio-periodo'
 
 export type { Lado } from './relatorio-periodo'
@@ -178,83 +179,44 @@ export function montarEmailSemanal(c: ConteudoSemanal, p: { fotos: number }): { 
   const interno = c.lado === 'interno'
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto da semana' : 'fotos da semana'} no PDF anexo.` : null
 
-  const secao = (t: string, corpo: string) =>
-    `<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0">
-<div style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;font-weight:700">${esc(t)}</div>
-${corpo}</td></tr>`
-  const vazio = (t: string) => `<div style="font-size:14px;color:#64748b">${esc(t)}</div>`
-  const linha = (t: string, cor = '#16a34a') =>
-    `<div style="border-left:3px solid ${cor};padding:3px 10px;margin-bottom:5px;font-size:14px;color:#0f172a">${esc(t)}</div>`
-  const caixa = (it: ItemDiario, cor: string, fundo: string) =>
-    `<div style="border-left:3px solid ${cor};background:${fundo};padding:8px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">
-<div style="font-size:12px;font-weight:700;color:#334155">${esc(it.rotulo)}</div>${esc(it.corpo)}</div>`
-  const numeros: [string, string][] = [
-    [c.avanco.previsto, `previsto até ${c.avanco.ate}`],
-    [c.avanco.realizado, 'realizado'],
-    [c.ppc?.valor ?? '—', 'PPC da semana'],
-  ]
+  const corpo = [
+    secao(
+      'Plano da semana',
+      (c.ppc
+        ? `<div style="font-size:14px;color:#0f172a;margin-bottom:6px">${esc(`${c.ppc.cumpridos} de ${c.ppc.avaliados} itens avaliados cumpridos (${c.ppc.planejados} planejados)`)}</div>`
+        : vazio('Sem plano fechado para esta semana.')) +
+        c.naoCumpridos.map((n) => linha(`Não cumprido: ${n.descricao} (meta ${n.meta}, chegou a ${n.final})${causaTxt(n)}`, '#f59e0b')).join(''),
+    ),
+    secao('Concluídas na semana', c.concluidas.length ? c.concluidas.map((a) => linha(`${a.descricao} — ${a.fim}`)).join('') : vazio('Nenhuma atividade concluída na semana.')),
+    secao('Em andamento', c.emAndamento.length ? c.emAndamento.map((a) => linha(`${a.descricao}: ${a.percentual} · término previsto ${a.termino}`, '#2563eb')).join('') : vazio('Nenhuma atividade em andamento.')),
+    secao(
+      'Programação da próxima semana',
+      c.proximaSemana === null
+        ? vazio('Plano da próxima semana ainda não fechado.')
+        : c.proximaSemana.length
+          ? c.proximaSemana.map((i) => linha(`${i.descricao} — meta ${i.meta}`, '#00345e')).join('')
+          : vazio('Nenhuma atividade no plano.'),
+    ),
+    secao('Dependem do cliente', htmlDoCliente(c.doCliente)),
+    secao('Impedimentos da semana', c.impedimentos.length ? c.impedimentos.map((i) => caixa(i, '#dc2626', '#fef2f2')).join('') : vazio('Nenhum impedimento na semana.')),
+    c.ocultos.length ? secao('Só interno · Não foi ao cliente', c.ocultos.map((i) => caixa(i, '#dc2626', '#fef2f2')).join('')) : '',
+    secao('Observações da engenharia', c.observacoes ? texto(c.observacoes) : vazio('Sem observações.')),
+    notaFotos ? secao('Fotos', vazio(notaFotos)) : '',
+  ].join('\n')
 
-  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.assunto)}</title></head>
-<body style="margin:0;padding:0;background:#f1f5f9">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9"><tr><td align="center" style="padding:16px 8px">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#0f172a">
-<tr><td style="background:#0d2050;padding:16px 20px">
-<div style="color:#f05a28;font-weight:700;font-size:12px;letter-spacing:.05em">MANFAC · RELATÓRIO SEMANAL${interno ? ' · INTERNO' : ''}</div>
-<div style="color:#ffffff;font-size:19px;font-weight:700;margin-top:3px">${esc(c.titulo)}</div>
-<div style="color:#94a3b8;font-size:13px;margin-top:2px">${esc(c.subtitulo)}</div>
-</td></tr>
-<tr><td style="background:${esc(c.sinal.fundo)};border-bottom:1px solid ${esc(c.sinal.borda)};padding:12px 20px">
-<table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td valign="top" style="padding-right:10px"><div style="width:14px;height:14px;border-radius:7px;background:${esc(c.sinal.ponto)}"></div></td>
-<td style="font-size:14px;color:#0f172a"><b>${esc(c.sinal.rotulo)}</b> — ${esc(c.avanco.desvio)}.<br><span style="color:${esc(c.sinal.texto)}">${esc(c.previsao)}</span></td>
-</tr></table></td></tr>
-<tr><td style="padding:12px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-${numeros
-  .map(
-    ([v, r]) =>
-      `<td width="33%" style="padding:4px"><div style="background:#f1f5f9;border-radius:8px;padding:10px;text-align:center"><b style="display:block;font-size:20px;color:#0f172a">${esc(v)}</b><span style="font-size:12px;color:#64748b">${esc(r)}</span></div></td>`,
-  )
-  .join('')}
-</tr></table></td></tr>
-${secao(
-  'Plano da semana',
-  (c.ppc
-    ? `<div style="font-size:14px;color:#0f172a;margin-bottom:6px">${esc(`${c.ppc.cumpridos} de ${c.ppc.avaliados} itens avaliados cumpridos (${c.ppc.planejados} planejados)`)}</div>`
-    : vazio('Sem plano fechado para esta semana.')) +
-    c.naoCumpridos.map((n) => linha(`Não cumprido: ${n.descricao} (meta ${n.meta}, chegou a ${n.final})${causaTxt(n)}`, '#f59e0b')).join(''),
-)}
-${secao('Concluídas na semana', c.concluidas.length ? c.concluidas.map((a) => linha(`${a.descricao} — ${a.fim}`)).join('') : vazio('Nenhuma atividade concluída na semana.'))}
-${secao('Em andamento', c.emAndamento.length ? c.emAndamento.map((a) => linha(`${a.descricao}: ${a.percentual} · término previsto ${a.termino}`, '#2563eb')).join('') : vazio('Nenhuma atividade em andamento.'))}
-${secao(
-  'Programação da próxima semana',
-  c.proximaSemana === null
-    ? vazio('Plano da próxima semana ainda não fechado.')
-    : c.proximaSemana.length
-      ? c.proximaSemana.map((i) => linha(`${i.descricao} — meta ${i.meta}`, '#00345e')).join('')
-      : vazio('Nenhuma atividade no plano.'),
-)}
-${secao(
-  'Dependem do cliente',
-  c.doCliente.length
-    ? c.doCliente
-        .map((r) =>
-          caixa(
-            { rotulo: `${r.tipo.toUpperCase()}${r.prazo ? ` · prazo ${r.prazo}${r.vencida ? ' (vencido)' : ''}` : ''}`, corpo: `${r.descricao} — atividade ${r.atividade}` },
-            r.vencida ? '#dc2626' : '#f59e0b',
-            r.vencida ? '#fef2f2' : '#fffbeb',
-          ),
-        )
-        .join('')
-    : vazio('Nada pendente com o cliente.'),
-)}
-${secao('Impedimentos da semana', c.impedimentos.length ? c.impedimentos.map((i) => caixa(i, '#dc2626', '#fef2f2')).join('') : vazio('Nenhum impedimento na semana.'))}
-${c.ocultos.length ? secao('Só interno · Não foi ao cliente', c.ocultos.map((i) => caixa(i, '#dc2626', '#fef2f2')).join('')) : ''}
-${secao('Observações da engenharia', c.observacoes ? `<div style="font-size:14px;color:#0f172a;white-space:pre-wrap">${esc(c.observacoes)}</div>` : vazio('Sem observações.'))}
-${notaFotos ? secao('Fotos', vazio(notaFotos)) : ''}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · relatório semanal da obra.</td></tr>
-</table></td></tr></table></body></html>`
+  const html = documentoEmail({
+    assunto: c.assunto, faixa: 'RELATÓRIO SEMANAL', interno, titulo: c.titulo, subtitulo: c.subtitulo,
+    sinal: c.sinal, desvio: c.avanco.desvio, previsao: c.previsao,
+    numeros: [
+      [c.avanco.previsto, `previsto até ${c.avanco.ate}`],
+      [c.avanco.realizado, 'realizado'],
+      [c.ppc?.valor ?? '—', 'PPC da semana'],
+    ],
+    corpo,
+    rodape: 'Manfac Facilities · relatório semanal da obra.',
+  })
 
-  const texto = [
+  const textoPlano = [
     `MANFAC · RELATÓRIO SEMANAL${interno ? ' · INTERNO' : ''}`,
     c.titulo,
     c.subtitulo,
@@ -265,5 +227,5 @@ ${notaFotos ? secao('Fotos', vazio(notaFotos)) : ''}
     c.observacoes ?? 'Sem observações.',
     ...(notaFotos ? ['', notaFotos] : []),
   ].join('\n')
-  return { assunto: c.assunto, html, texto }
+  return { assunto: c.assunto, html, texto: textoPlano }
 }
