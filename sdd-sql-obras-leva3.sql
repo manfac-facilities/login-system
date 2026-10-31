@@ -24,7 +24,9 @@
 --      administrador. Escrita com JWT exige obras_engenheiro_ou_admin(obra).
 --   3. obras_semanal: máquina de estados igual à do RDO (rascunho -> validado
 --      -> enviado, sem voltar; conteúdo imutável depois de validado;
---      validado_por/validado_em carimbados na validação). Escrita com JWT só
+--      validado_por/validado_em carimbados na validação). Coluna conteudo
+--      jsonb = relatório congelado na validação (cliente + interno): nula em
+--      rascunho, obrigatória (objeto) ao validar, imutável depois. Escrita com JWT só
 --      engenheiro da obra ou administrador; DELETE só em rascunho.
 --   4. obras_envio: tipo aceita também 'semanal' (check recriado a partir da
 --      Leva 2) + coluna semanal_id uuid null -> obras_semanal (on delete set
@@ -401,10 +403,14 @@ create table if not exists public.obras_semanal (
   estado text not null default 'rascunho'
     check (estado in ('rascunho','validado','enviado')),
   observacoes text,
+  -- Conteúdo congelado na validação ({cliente, interno} montado pelo app):
+  -- null em rascunho, obrigatório ao validar, imutável depois (trigger).
+  conteudo jsonb,
   validado_por text,
   validado_em timestamptz,
   unique (obra_id, semana_inicio)
 );
+alter table public.obras_semanal add column if not exists conteudo jsonb;
 
 create or replace function public.obras_semanal_estado() returns trigger
 language plpgsql
@@ -436,6 +442,11 @@ begin
         or new.validado_por is not null or new.validado_em is not null) then
       raise exception 'OBRAS_SEMANAL: relatório novo nasce como rascunho' using errcode = 'P0001';
     end if;
+    -- Estrutural (vale sem JWT): conteúdo congelado só existe fora do rascunho, e lá é obrigatório.
+    if (new.estado = 'rascunho') is distinct from (new.conteudo is null) then
+      raise exception 'OBRAS_SEMANAL: conteudo é nulo em rascunho e obrigatório quando validado'
+        using errcode = 'P0001';
+    end if;
     return new;
   end if;
 
@@ -451,9 +462,9 @@ begin
   end if;
 
   if old.estado is distinct from 'rascunho' then
-    if row(new.id, new.obra_id, new.semana_inicio, new.observacoes, new.validado_por, new.validado_em)
+    if row(new.id, new.obra_id, new.semana_inicio, new.observacoes, new.conteudo, new.validado_por, new.validado_em)
        is distinct from
-       row(old.id, old.obra_id, old.semana_inicio, old.observacoes, old.validado_por, old.validado_em) then
+       row(old.id, old.obra_id, old.semana_inicio, old.observacoes, old.conteudo, old.validado_por, old.validado_em) then
       raise exception 'OBRAS_SEMANAL: relatório % não pode ter o conteúdo alterado', old.estado
         using errcode = 'P0001';
     end if;
@@ -462,6 +473,10 @@ begin
 
   -- old.estado = 'rascunho'
   if new.estado = 'validado' then
+    if new.conteudo is null or jsonb_typeof(new.conteudo) is distinct from 'object' then
+      raise exception 'OBRAS_SEMANAL: validar exige o conteudo congelado (objeto json)'
+        using errcode = 'P0001';
+    end if;
     if v_email is not null then
       new.validado_por := v_email;
     end if;
@@ -469,6 +484,9 @@ begin
   elsif new.validado_por is distinct from old.validado_por
      or new.validado_em is distinct from old.validado_em then
     raise exception 'OBRAS_SEMANAL: validado_por/validado_em só mudam na validação'
+      using errcode = 'P0001';
+  elsif new.conteudo is not null then
+    raise exception 'OBRAS_SEMANAL: conteudo é nulo em rascunho e obrigatório quando validado'
       using errcode = 'P0001';
   end if;
   return new;
@@ -619,6 +637,11 @@ from (values
       (select (select count(*) from pg_trigger where tgname = 'obras_envio_vinculo_obra'
                  and tgrelid = 'public.obras_envio'::regclass and not tgisinternal and tgenabled = 'O')::text
               || '|' || (has_function_privilege('authenticated', 'public.obras_envio_vinculo_obra()', 'EXECUTE')
-                      or has_function_privilege('anon', 'public.obras_envio_vinculo_obra()', 'EXECUTE'))::text))
+                      or has_function_privilege('anon', 'public.obras_envio_vinculo_obra()', 'EXECUTE'))::text)),
+  (19, 'obras_semanal.conteudo (jsonb) congelado pelo trigger', 'jsonb|true',
+      (select (select data_type from information_schema.columns where table_schema = 'public'
+                 and table_name = 'obras_semanal' and column_name = 'conteudo')
+              || '|' || (select (prosrc like '%old.conteudo%' and prosrc like '%validar exige o conteudo%')::text
+                           from pg_proc where oid = 'public.obras_semanal_estado()'::regprocedure)))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

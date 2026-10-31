@@ -478,7 +478,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt('intruso.teste@teste.invalid');
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'NAO_FALHOU';
 exception when others then
   perform pg_temp.reg(43, 'quem não é engenheiro da obra nem admin valida: bloqueado', 'OBRAS_SEMANAL: só o engenheiro', sqlerrm);
@@ -510,7 +510,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt('eng.teste@teste.invalid');
-  update public.obras_semanal set estado = 'validado', validado_por = 'falsificado@teste.invalid'
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}', validado_por = 'falsificado@teste.invalid'
    where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'ok:%|%', (select validado_por from public.obras_semanal where id = '00000000-0000-4000-8000-00000000b001'),
     (select pg_temp.tf(validado_em = now()) from public.obras_semanal where id = '00000000-0000-4000-8000-00000000b001');
@@ -520,7 +520,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt('eng.teste@teste.invalid');
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   update public.obras_semanal set observacoes = 'mudou depois' where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'NAO_FALHOU';
 exception when others then
@@ -529,7 +529,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt(pg_temp.admin_email());
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   update public.obras_semanal set estado = 'rascunho' where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'NAO_FALHOU';
 exception when others then
@@ -538,7 +538,7 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt('eng.teste@teste.invalid');
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   update public.obras_semanal set estado = 'enviado' where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'ok:%', (select estado from public.obras_semanal where id = '00000000-0000-4000-8000-00000000b001');
 exception when others then
@@ -547,9 +547,9 @@ end $$;
 
 do $$ begin
   perform pg_temp.jwt(null);
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   update public.obras_semanal set estado = 'enviado' where id = '00000000-0000-4000-8000-00000000b001';
-  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
   raise exception 'NAO_FALHOU';
 exception when others then
   perform pg_temp.reg(51, 'enviado -> validado (sem JWT): bloqueado', 'transição enviado -> validado', sqlerrm);
@@ -577,6 +577,50 @@ do $$ begin
   raise exception 'NAO_FALHOU';
 exception when others then
   perform pg_temp.reg(54, 'quem não é engenheiro da obra nem admin apaga semanal: bloqueado', 'OBRAS_SEMANAL: só o engenheiro', sqlerrm);
+end $$;
+
+-- conteudo congelado (jsonb): nulo em rascunho, obrigatório ao validar, imutável depois
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_semanal set estado = 'validado' where id = '00000000-0000-4000-8000-00000000b001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(63, 'validar sem conteudo: bloqueado', 'validar exige o conteudo', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_semanal set conteudo = '{"cliente":{}}' where id = '00000000-0000-4000-8000-00000000b001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(64, 'conteudo gravado em rascunho sem validar: bloqueado', 'nulo em rascunho', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_semanal (obra_id, semana_inicio, estado) values ('00000000-0000-4000-8000-00000000a006', '2026-11-09', 'validado');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(65, 'sem JWT: semanal inserido validado sem conteudo: bloqueado', 'nulo em rascunho', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{"a":1}}' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set conteudo = '{"cliente":{"a":2}}' where id = '00000000-0000-4000-8000-00000000b001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(66, 'conteudo alterado depois de validado: bloqueado', 'não pode ter o conteúdo alterado', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_semanal set estado = 'validado', conteudo = '{"cliente":{"a":1}}' where id = '00000000-0000-4000-8000-00000000b001';
+  update public.obras_semanal set estado = 'enviado' where id = '00000000-0000-4000-8000-00000000b001';
+  raise exception 'ok:%|%', (select estado from public.obras_semanal where id = '00000000-0000-4000-8000-00000000b001'),
+    (select conteudo #>> '{cliente,a}' from public.obras_semanal where id = '00000000-0000-4000-8000-00000000b001');
+exception when others then
+  perform pg_temp.reg(67, 'valida com conteudo e envia: conteudo preservado', 'ok:enviado|1', sqlerrm);
 end $$;
 
 -- ============================================================
@@ -683,10 +727,10 @@ begin
            filter (where obtido is null or obtido not like '%' || esperado || '%')
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 62 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 62 testes rodaram';
+  if v_total <> 67 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 67 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/62 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/67 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
