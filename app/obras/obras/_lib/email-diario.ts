@@ -128,10 +128,32 @@ export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, dat
  * lado como em `previsaoEntrega`); '' sem atraso.
  */
 export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const atraso = atrasoDoLado(lado, og, data)
+  let quebra = ''
+  if (atraso && atraso.total > 0) {
+    const a = atraso
+    const partes = [
+      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
+        .filter((r) => a[r] > 0)
+        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
+      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
+    ]
+    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
+  }
+  return quebra
+}
+
+export type QuebraAtraso = { total: number; outros: number } & Record<Responsavel, number>
+
+/**
+ * Dias de atraso do término por responsável, filtrados por lado (a mesma regra
+ * de `quebraDoAtraso`): ao cliente, o impedimento oculto que não é da Manfac
+ * vai para `outros`. null sem base salva. Também usado pela página do cliente.
+ */
+export function atrasoDoLado(lado: 'cliente' | 'interno', og: ObraGrande, data: string): QuebraAtraso | null {
   const { feriados } = og
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
-  type Quebra = { total: number; outros: number } & Record<Responsavel, number>
-  let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
+  let atraso: QuebraAtraso | null = og.atraso ? { ...og.atraso, outros: 0 } : null
   if (lado === 'cliente' && og.atraso) {
     const vis = diasDeImpacto(impedimentosCalcDe(visiveis), data, feriados)
     const ocultosNaoManfac = og.impedimentos.filter((i) => !i.exibirAoCliente && i.responsavel !== 'manfac')
@@ -148,18 +170,7 @@ export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data
     const outros = parte(oc.cliente + oc.clima + oc.terceiro)
     atraso = { total: og.atraso.total, cliente, clima, terceiro, outros, manfac: restante }
   }
-  let quebra = ''
-  if (atraso && atraso.total > 0) {
-    const a = atraso
-    const partes = [
-      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
-        .filter((r) => a[r] > 0)
-        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
-      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
-    ]
-    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
-  }
-  return quebra
+  return atraso
 }
 
 export function montarConteudoDiario(p: {

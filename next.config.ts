@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
     '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     // Apresentação ao cliente (Leva 4): PDF paisagem.
     '/obras/obras/[id]/apresentacao/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Portal do cliente (Leva 5): "Abrir PDF" dos documentos enviados ao cliente.
+    '/portal-obra/obras/[obraId]/pdf/[envioId]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [
