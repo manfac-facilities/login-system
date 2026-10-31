@@ -1,4 +1,4 @@
-import { consolidarFinanceiro } from '../financeiro-obra'
+import { consolidarFinanceiro, type StatusMedicao } from '../financeiro-obra'
 
 const obras = [
   { id: 'm', os: '100', paiId: null },
@@ -30,8 +30,20 @@ describe('consolidarFinanceiro', () => {
     expect(r.porOS[0]).toMatchObject({ custoComprometido: 7000, custoRealizado: 6000, custoPago: 4000 })
   })
 
+  it('solicitacao cancelada: sem nf/pago nao conta; com nf ou pago continua contando', () => {
+    const r = consolidarFinanceiro({
+      obras, fornecedores: [], notas: [],
+      compras: [
+        { obraId: 'm', status: 'emitido', total_centavos: 1000, cancelada: true },
+        { obraId: 'm', status: 'emitido', total_centavos: 2000, nf: '5', cancelada: true },
+        { obraId: 'm', status: 'emitido', total_centavos: 4000, pago_em: '2026-10-01', cancelada: true },
+      ],
+    })
+    expect(r.porOS[0]).toMatchObject({ custoComprometido: 6000, custoRealizado: 6000, custoPago: 4000 })
+  })
+
   it('medições: devolvida nunca conta; progressão aprovada -> paga', () => {
-    const s = (status: any, v: number) => ({ obraId: 'f', status, valorCentavos: v })
+    const s = (status: StatusMedicao, v: number) => ({ obraId: 'f', status, valorCentavos: v })
     const r = consolidarFinanceiro({
       obras, compras: [], notas: [],
       fornecedores: [s('solicitada', 1), s('aprovada', 10), s('pagamento_solicitado', 100), s('paga', 1000), s('devolvida', 99999)],

@@ -19,6 +19,8 @@ export type CompraPedido = {
   total_centavos: number
   nf?: string | null
   pago_em?: string | null
+  // solicitacao de origem cancelada: so conta se ja tem nf ou pago_em (dinheiro real nunca some)
+  cancelada?: boolean
 }
 
 export type StatusMedicao =
@@ -87,6 +89,7 @@ export function consolidarFinanceiro(input: {
   for (const x of input.compras) {
     const a = acc.get(x.obraId)
     if (!a || x.status !== 'emitido') continue
+    if (x.cancelada && !x.nf && !x.pago_em) continue
     const v = num(x.total_centavos)
     a.c += v
     if (x.nf || x.pago_em) a.re += v

@@ -131,7 +131,7 @@ export async function editarRestricaoAction(
   if (!r) return falha('Restrição não encontrada')
   const { error } = await supabase
     .from('obras_restricao')
-    .update({ tipo: i.tipo, descricao: v.descricao, responsavel: i.responsavel, prazo: i.prazo })
+    .update({ tipo: i.tipo, descricao: v.descricao, responsavel: i.responsavel, prazo: i.prazo, ...(i.tipo !== 'material' ? { cmp_pedido_id: null } : {}) })
     .eq('id', id)
   if (error) return erroBanco('editar a restrição', error)
   revalidar(r.obra_id as string)

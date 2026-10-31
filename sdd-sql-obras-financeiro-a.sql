@@ -490,7 +490,9 @@ create trigger obras_restricao_pedido_guarda
   for each row execute function public.obras_restricao_pedido_guarda();
 
 -- Pedidos da obra para vincular — SEM NENHUM VALOR (nem total, nem estimado,
--- nem frete). Só p_obra (o vínculo exige a mesma obra). Gate: obras_has_access().
+-- nem frete). Só p_obra (o vínculo exige a mesma obra). Gate: obras_has_access() ou
+-- service_role (o portal do cliente lê com o cliente admin, sem e-mail; auth.role() vem
+-- do claim assinado). Só esta função: as obras_fin_* continuam vazias sem e-mail.
 create or replace function public.obras_restricao_pedidos(p_obra uuid)
 returns table (
   pedido_id uuid,
@@ -518,7 +520,7 @@ as $$
     from public.cmp_solicitacoes s
     join public.cmp_pedidos p on p.solicitacao_id = s.id and p.ambiente = 'producao'
     left join public.cmp_mapa_fornecedores f on f.id = p.mapa_fornecedor_id
-   where public.obras_has_access() is true
+   where (public.obras_has_access() is true or coalesce(auth.role(), '') = 'service_role')
      and p_obra is not null
      and s.obra_id = p_obra
      and s.ambiente = 'producao'

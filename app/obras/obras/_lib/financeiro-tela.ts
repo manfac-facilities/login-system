@@ -123,13 +123,14 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
   const resumo = bloco(() => {
     const refs: ObraRef[] = p.obras.map((o) => ({ id: o.id, os: o.os ?? '—', paiId: o.paiId }))
     const cp: CompraPedido[] = compras
-      .filter((r) => r.pedido_id && r.solicitacao_etapa !== 'cancelada')
+      .filter((r) => r.pedido_id)
       .map((r) => ({
         obraId: String(r.obra_id),
         status: String(r.pedido_situacao ?? ''),
         total_centavos: valor(r.total_centavos),
         nf: txt(r.nf_numero),
         pago_em: txt(r.pago_em),
+        cancelada: r.solicitacao_etapa === 'cancelada',
       }))
     const md: MedicaoFornecedor[] = fornecedores
       .filter((r) => r.medicao_id)

@@ -635,6 +635,24 @@ exception when others then
   perform pg_temp.reg(54, 'obra mãe com filha não se apaga (FK restrict)', 'obra_pai_id_fkey', sqlerrm);
 end $$;
 
+-- Portal do cliente lê com a service role, sem e-mail: tem de ver as datas do pedido.
+-- JWT authenticated sem e-mail continua sem ver nada.
+do $$ begin
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+  perform set_config('role', 'service_role', true);
+  raise exception 'ok:%', (select count(*) from public.obras_restricao_pedidos('00000000-0000-4000-8000-00000000fa01'));
+exception when others then
+  perform pg_temp.reg(55, 'pedidos para vincular: service_role sem e-mail (portal) devolve a linha', 'ok:1', sqlerrm);
+end $$;
+
+do $$ begin
+  perform set_config('request.jwt.claims', json_build_object('role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+  raise exception 'ok:%', (select count(*) from public.obras_restricao_pedidos('00000000-0000-4000-8000-00000000fa01'));
+exception when others then
+  perform pg_temp.reg(56, 'pedidos para vincular: authenticated sem e-mail = vazio', 'ok:0', sqlerrm);
+end $$;
+
 -- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por strpos (no LIKE o '_' dos nomes é curinga).
@@ -654,10 +672,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 54 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 54 testes rodaram';
+  if v_total <> 56 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 56 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/54 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/56 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
