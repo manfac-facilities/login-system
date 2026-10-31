@@ -118,8 +118,16 @@ export const textoDesvio = (desvioPP: number) =>
  * "outros fatores", nunca para "da Manfac". Fonte única do diário e do semanal.
  */
 export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const q = quebraDoAtraso(lado, og, data)
+  return `Entrega prevista: ${dataBr(og.calc?.terminoProjetado ?? data)}${q ? ` (${q})` : ''}`
+}
+
+/**
+ * "+N dias: …" (atraso do término com a quebra por responsável, filtrada por
+ * lado como em `previsaoEntrega`); '' sem atraso.
+ */
+export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
   const { feriados } = og
-  const terminoProjetado = og.calc?.terminoProjetado ?? data
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
   type Quebra = { total: number; outros: number } & Record<Responsavel, number>
   let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
@@ -148,9 +156,9 @@ export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, dat
         .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
       ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
     ]
-    quebra = ` (+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''})`
+    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
   }
-  return `Entrega prevista: ${dataBr(terminoProjetado)}${quebra}`
+  return quebra
 }
 
 export function montarConteudoDiario(p: {

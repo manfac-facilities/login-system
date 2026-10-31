@@ -8,14 +8,13 @@
  * aparece só como "Manfac"). Restrição liberada não aparece.
  */
 import { CAUSA } from './causas'
-import { curvaRealizada } from './curvas'
-import { dataBr, pct, previsaoEntrega, sinalVisual, textoDesvio, type ItemDiario, type SinalVisual } from './email-diario'
+import { dataBr, pct, type ItemDiario, type SinalVisual } from './email-diario'
 import { diasDaSemana, ppc, type PlanoSemana, type Restricao } from './last-planner'
-import type { ImpedimentoRow, ObraGrande } from './leitura'
-import { codigosDeAtividades, type Responsavel } from './cronograma'
-import { rotuloTipo } from '../[id]/lookahead/_tipos'
+import type { ObraGrande } from './leitura'
+import type { Responsavel } from './cronograma'
+import { blocosDoPeriodo, blocosValidos, ddmm, esc, ISO, lista, obj, str, strOuNull, nums, strs, type Lado } from './relatorio-periodo'
 
-export type Lado = 'cliente' | 'interno'
+export type { Lado } from './relatorio-periodo'
 
 export type NaoCumpridoSemanal = { descricao: string; meta: string; final: string; causa: string | null; responsavel: string | null }
 
@@ -46,8 +45,6 @@ export type ConteudoSemanal = {
 }
 
 const RESP: Record<Responsavel, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiro: 'Terceiro', clima: 'Clima' }
-const FORA_DA_VERSAO = 'Atividade fora da versão vigente'
-const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
 export function montarConteudoSemanal(p: {
   lado: Lado
@@ -62,29 +59,15 @@ export function montarConteudoSemanal(p: {
   observacoes: string | null
 }): ConteudoSemanal {
   const { lado, obra: og, segunda, ref } = p
-  const { obra, plano } = og
   const sexta = diasDaSemana(segunda)[4]
-  const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
-  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || FORA_DA_VERSAO
-  // Código exibido ("2.3"), nunca o numero interno — a mesma fonte do lookahead e do cronograma.
-  const codigos = codigosDeAtividades(og.calc?.atividades ?? [], og.feriados)
-  const atividadeCom = (n: number) => {
-    const c = codigos.get(n)
-    return c ? `${c} — ${descricao(n)}` : 'fora da versão vigente'
-  }
+  const b = blocosDoPeriodo({ lado, obra: og, inicio: segunda, fim: sexta, ref, hoje: p.hoje, restricoes: p.restricoes })
+  const { loja, descricao } = b
   const interno = lado === 'interno'
 
   const assunto = `Relatório semanal · ${loja} · ${ddmm(segunda)} a ${dataBr(sexta)}${interno ? ' · interno' : ''}`
   const titulo = `${loja} — semana de ${ddmm(segunda)} a ${ddmm(sexta)}`
   const subtitulo = `Segunda ${dataBr(segunda)} a sexta ${dataBr(sexta)}${ref < sexta ? ` · dados até ${dataBr(ref)}` : ''}`
-
-  // Avanço planejado até a sexta × realizado (semana passada: o realizado vem do histórico até a data).
-  const calc = og.calc
-  const previsto = calc?.previsto ?? 0
-  const realizado =
-    calc && ref < p.hoje && og.hist.length ? (curvaRealizada(calc.atividades, og.hist, [ref])[0]?.valor ?? 0) : (calc?.realizado ?? 0)
-  const desvioPP = Math.round((realizado - previsto) * 1000) / 10 || 0
-  const avanco = { previsto: pct(previsto), realizado: pct(realizado), desvio: textoDesvio(desvioPP), ate: ref < sexta ? dataBr(ref) : 'a sexta' }
+  const avanco = { ...b.avanco, ate: ref < sexta ? dataBr(ref) : 'a sexta' }
 
   // PPC e não cumpridos. Ao cliente, causa da Manfac aparece só como "Manfac".
   const itens = p.plano?.itens ?? []
@@ -107,60 +90,17 @@ export function montarConteudoSemanal(p: {
       }
     })
 
-  const atividades = calc?.atividades ?? []
-  const concluidas = atividades
-    .filter((a) => a.status === 'concluido' && a.fimReal && a.fimReal >= segunda && a.fimReal <= sexta)
-    .sort((a, b) => a.fimReal!.localeCompare(b.fimReal!) || a.numero - b.numero)
-    .map((a) => ({ descricao: a.descricao, fim: dataBr(a.fimReal!) }))
-  const emAndamento = atividades
-    .filter((a) => a.status !== 'concluido' && a.percentual > 0)
-    .sort((a, b) => a.fimProjetado.localeCompare(b.fimProjetado) || a.numero - b.numero)
-    .map((a) => ({ descricao: a.descricao, percentual: pct(a.percentual), termino: dataBr(a.fimProjetado) }))
-
   const proximaSemana = p.planoProximo
     ? [...p.planoProximo.itens].sort((a, b) => a.numero - b.numero).map((i) => ({ descricao: descricao(i.numero), meta: pct(i.metaPercentual) }))
     : null
 
-  // Decisões/restrições que dependem do cliente: só as em aberto (liberada some).
-  const doCliente = p.restricoes
-    .filter((r) => r.responsavel === 'cliente' && r.situacao !== 'liberada')
-    .sort((a, b) => (a.prazo ?? '9999').localeCompare(b.prazo ?? '9999'))
-    .map((r) => ({
-      descricao: r.descricao,
-      atividade: atividadeCom(r.atividadeNumero),
-      tipo: rotuloTipo(r.tipo),
-      prazo: r.prazo ? dataBr(r.prazo) : null,
-      vencida: !!r.prazo && r.prazo < ref,
-    }))
-
-  // Impedimentos que estiveram abertos em algum dia da semana.
-  const daSemana = og.impedimentos.filter(
-    (i) => i.categoria === 'impedimento' && i.abertoEm <= sexta && (i.encerradoEm === null || i.encerradoEm >= segunda),
-  )
-  const itemDe = (i: ImpedimentoRow): ItemDiario => {
-    const resp = i.responsavel ? RESP[i.responsavel] : '—'
-    // Ao cliente, o tipo só aparece quando é do cliente ou do clima: o da Manfac/terceiro é área interna.
-    const mostraTipo = interno || i.responsavel === 'cliente' || i.responsavel === 'clima'
-    const quando = i.encerradoEm ? `${ddmm(i.abertoEm)} a ${ddmm(i.encerradoEm)}` : `aberto desde ${ddmm(i.abertoEm)}`
-    const extras = [
-      mostraTipo && i.tipo ? i.tipo : null,
-      i.atividadeNumero === null
-        ? null
-        : codigos.has(i.atividadeNumero)
-          ? `atividade ${codigos.get(i.atividadeNumero)} (${descricao(i.atividadeNumero)})`
-          : 'atividade fora da versão vigente',
-    ].filter(Boolean)
-    return { rotulo: `${resp.toUpperCase()} · ${quando}`, corpo: `${i.descricao}${extras.length ? ` — ${extras.join(' · ')}` : ''}` }
-  }
-  const impedimentos = daSemana.filter((i) => i.exibirAoCliente).map(itemDe)
-  const ocultos = interno ? daSemana.filter((i) => !i.exibirAoCliente).map(itemDe) : []
-
   return {
     lado, loja, assunto, titulo, subtitulo, segunda, sexta,
-    sinal: sinalVisual(og.sinal),
+    sinal: b.sinal,
     avanco,
-    previsao: previsaoEntrega(lado, og, ref),
-    ppc: ppcSemana, naoCumpridos, concluidas, emAndamento, proximaSemana, doCliente, impedimentos, ocultos,
+    previsao: b.previsao,
+    ppc: ppcSemana, naoCumpridos, concluidas: b.concluidas, emAndamento: b.emAndamento, proximaSemana,
+    doCliente: b.doCliente, impedimentos: b.impedimentos, ocultos: b.ocultos,
     observacoes: p.observacoes?.trim() || null,
   }
 }
@@ -170,38 +110,15 @@ export function montarConteudoSemanal(p: {
 // entrada não confiável. Só é usado se tiver exatamente o formato abaixo e o
 // sinal for um dos três visuais canônicos; senão, quem chama monta na hora.
 
-const ISO = /^\d{4}-\d{2}-\d{2}$/
-const SINAIS = (['verde', 'amarelo', 'vermelho'] as const).map((s) => sinalVisual(s))
-type Campos = Record<string, unknown>
-const obj = (v: unknown): v is Campos => typeof v === 'object' && v !== null && !Array.isArray(v)
-const str = (v: unknown): v is string => typeof v === 'string'
-const strOuNull = (v: unknown) => v === null || str(v)
-const nums = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
-const lista = (v: unknown, item: (x: Campos) => boolean) => Array.isArray(v) && v.every((x) => obj(x) && item(x))
-const strs = (x: Campos, ...k: string[]) => k.every((c) => str(x[c]))
-const itemValido = (x: Campos) => strs(x, 'rotulo', 'corpo') && (x.tecnico === undefined || typeof x.tecnico === 'boolean')
-
 /** true só se `v` tem o formato de ConteudoSemanal do `lado` (sinal canônico; cliente sem ocultos). */
 export function conteudoSemanalValido(v: unknown, lado: Lado): v is ConteudoSemanal {
-  if (!obj(v) || v.lado !== lado) return false
-  if (!strs(v, 'loja', 'assunto', 'titulo', 'subtitulo', 'previsao') || !ISO.test(String(v.segunda)) || !ISO.test(String(v.sexta))) return false
-  const s = v.sinal
-  if (!obj(s) || !SINAIS.some((c) => (Object.keys(c) as (keyof SinalVisual)[]).every((k) => s[k] === c[k]) && Object.keys(s).length === Object.keys(c).length)) return false
-  if (!obj(v.avanco) || !strs(v.avanco, 'previsto', 'realizado', 'desvio', 'ate')) return false
+  if (!obj(v) || !blocosValidos(v, lado)) return false
+  if (!ISO.test(String(v.segunda)) || !ISO.test(String(v.sexta))) return false
   const p = v.ppc
   if (p !== null && !(obj(p) && str(p.valor) && nums(p.cumpridos) && nums(p.avaliados) && nums(p.planejados))) return false
   if (!lista(v.naoCumpridos, (x) => strs(x, 'descricao', 'meta', 'final') && strOuNull(x.causa) && strOuNull(x.responsavel))) return false
-  if (!lista(v.concluidas, (x) => strs(x, 'descricao', 'fim'))) return false
-  if (!lista(v.emAndamento, (x) => strs(x, 'descricao', 'percentual', 'termino'))) return false
-  if (v.proximaSemana !== null && !lista(v.proximaSemana, (x) => strs(x, 'descricao', 'meta'))) return false
-  if (!lista(v.doCliente, (x) => strs(x, 'descricao', 'atividade', 'tipo') && strOuNull(x.prazo) && typeof x.vencida === 'boolean')) return false
-  if (!lista(v.impedimentos, itemValido) || !lista(v.ocultos, itemValido)) return false
-  if (lado === 'cliente' && (v.ocultos as unknown[]).length) return false
-  return strOuNull(v.observacoes)
+  return v.proximaSemana === null || lista(v.proximaSemana, (x) => strs(x, 'descricao', 'meta'))
 }
-
-const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
 /** Linhas de texto das seções de dados (sem as observações) — e-mail em texto e resumo da IA. */
 function linhasDeDados(c: ConteudoSemanal): string[] {
