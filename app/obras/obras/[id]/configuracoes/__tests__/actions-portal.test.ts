@@ -9,6 +9,9 @@ type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-ex
 let db: Record<string, Linha[]>
 let erroInsert: { message: string; code?: string } | null
 let erroRemove: { message: string } | null
+let removeVazio = false
+const emails: { para: string[]; assunto: string; html: string; texto: string }[] = []
+let envioFalha = false
 const removidos: string[][] = []
 const assinadas: [string, number][] = []
 let seq = 0
@@ -52,11 +55,19 @@ jest.mock('@/lib/supabase/server', () => ({
     from: (t: string) => construtor(t),
     storage: {
       from: () => ({
-        remove: async (p: string[]) => (removidos.push(p), { error: erroRemove }),
+        remove: async (p: string[]) => (removidos.push(p), { data: erroRemove || removeVazio ? [] : p.map((name) => ({ name })), error: erroRemove }),
         createSignedUrl: async (p: string, s: number) => (assinadas.push([p, s]), { data: { signedUrl: `https://x.test/${p}` }, error: null }),
       }),
     },
   })),
+}))
+jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ from: (t: string) => construtor(t) }) }))
+jest.mock('../../../_lib/enviar', () => ({
+  enviarEmail: jest.fn(async (m: { para: string[]; assunto: string; html: string; texto: string }) => {
+    if (envioFalha) throw new Error('smtp')
+    emails.push(m)
+    return { ok: true, aceitos: m.para, falhas: [] }
+  }),
 }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
@@ -75,6 +86,7 @@ import { responderMensagemAction } from '../../comunicacao/_mensagens'
 
 const OBRA = '11111111-1111-4111-8111-111111111111'
 const UUID = '22222222-2222-4222-8222-222222222222'
+const UUID_HEX = 'abcdefab-2222-4222-8222-abcdefabcdef'
 const PATH = `${OBRA}/${UUID}-laudo.pdf`
 const entrada = (over: Record<string, unknown> = {}) => ({ pasta: 'laudos', nome: 'laudo.pdf', tamanho: 1000, tipo: 'application/pdf', path: PATH, ...over })
 
@@ -87,6 +99,10 @@ beforeEach(() => {
   db = { obras_obra: [{ id: OBRA, engenheiro_email: 'eng@manfac.com.br' }] }
   erroInsert = null
   erroRemove = null
+  removeVazio = false
+  envioFalha = false
+  emails.length = 0
+  process.env.NEXT_PUBLIC_SITE_URL = 'https://hub.exemplo.test'
   removidos.length = 0
   assinadas.length = 0
   jest.clearAllMocks()
@@ -158,10 +174,11 @@ describe('documentos', () => {
     como('eng@manfac.com.br', false)
     await registrarDocumentoAction(OBRA, entrada({ nome: 'Projeto Elétrico (2).pdf' }))
     expect(db.obras_documento[0].nome).toBe('Projeto_Eletrico_2_.pdf')
-    expect(await registrarDocumentoAction(OBRA, entrada({ pasta: 'fotos' }))).toMatchObject({ ok: false })
-    expect(await registrarDocumentoAction(OBRA, entrada({ nome: 'x.exe' }))).toMatchObject({ ok: false })
-    expect(await registrarDocumentoAction(OBRA, entrada({ tamanho: 26 * 1024 * 1024 }))).toMatchObject({ ok: false })
-    expect(removidos).toHaveLength(3)
+    const outro = (n: number) => `${OBRA}/${UUID.replace(/2/g, String(n))}-b.pdf`
+    expect(await registrarDocumentoAction(OBRA, entrada({ pasta: 'fotos', path: outro(3) }))).toMatchObject({ ok: false })
+    expect(await registrarDocumentoAction(OBRA, entrada({ nome: 'x.exe', path: outro(4) }))).toMatchObject({ ok: false })
+    expect(await registrarDocumentoAction(OBRA, entrada({ tamanho: 26 * 1024 * 1024, path: outro(5) }))).toMatchObject({ ok: false })
+    expect(removidos).toEqual([[outro(3)], [outro(4)], [outro(5)]])
     expect(await registrarDocumentoAction(OBRA, entrada({ path: `outra/${UUID}-a.pdf` }))).toMatchObject({ ok: false })
     expect(db.obras_documento).toHaveLength(1)
   })
@@ -184,6 +201,34 @@ describe('documentos', () => {
     expect(removidos.at(-1)).toEqual([PATH])
     expect(db.obras_documento).toHaveLength(0)
     expect(await apagarDocumentoAction(OBRA, 'd1')).toMatchObject({ ok: false })
+  })
+
+  it('path repetido (23505) NUNCA apaga o objeto do documento já registrado', async () => {
+    como('eng@manfac.com.br', false)
+    db.obras_documento = [{ id: 'd0', obra_id: OBRA, path: PATH, nome: 'laudo.pdf' }]
+    erroInsert = { message: 'duplicate', code: '23505' }
+    expect(await registrarDocumentoAction(OBRA, entrada())).toMatchObject({ ok: false })
+    expect(removidos).toHaveLength(0)
+    // mesmo recusa por validação, com path já registrado: o objeto fica
+    expect(await registrarDocumentoAction(OBRA, entrada({ pasta: 'fotos' }))).toMatchObject({ ok: false })
+    expect(removidos).toHaveLength(0)
+  })
+
+  it('path em maiúsculas ou com extensão fora da lista no arquivo guardado é recusado', async () => {
+    como('eng@manfac.com.br', false)
+    expect(await registrarDocumentoAction(OBRA, entrada({ path: `${OBRA}/${UUID_HEX.toUpperCase()}-a.pdf` }))).toMatchObject({ ok: false })
+    expect(await registrarDocumentoAction(OBRA, entrada({ path: `${OBRA}/${UUID}-x.html` }))).toMatchObject({ ok: false })
+    expect(db.obras_documento ?? []).toHaveLength(0)
+  })
+
+  it('remove() que não remove nada é erro explícito e mantém a linha', async () => {
+    como('eng@manfac.com.br', false)
+    db.obras_documento = [{ id: 'd1', obra_id: OBRA, path: PATH }]
+    removeVazio = true
+    const r = await apagarDocumentoAction(OBRA, 'd1')
+    expect(r).toMatchObject({ ok: false })
+    expect((r as { erro: string }).erro).toMatch(/não foi encontrado/)
+    expect(db.obras_documento).toHaveLength(1)
   })
 
   it('apagar é só engenheiro/admin; documento de outra obra não é achado', async () => {
@@ -210,6 +255,34 @@ describe('resposta ao cliente', () => {
     expect(await responderMensagemAction(OBRA, '  Olá <b>cliente</b>  ')).toEqual({ ok: true })
     expect(db.obras_mensagem[0]).toMatchObject({ obra_id: OBRA, autor_tipo: 'manfac', autor_email: 'eng@manfac.com.br', texto: 'Olá <b>cliente</b>' })
   })
+  it('avisa por e-mail só os acessos ATIVOS, sem o texto da mensagem, com o link', async () => {
+    como('eng@manfac.com.br', false)
+    db.obras_obra = [{ id: OBRA, engenheiro_email: 'eng@manfac.com.br', loja: 'DP Macaé 3' }]
+    db.obras_portal_acesso = [
+      { obra_id: OBRA, email: 'a@cli.com', ativo: true },
+      { obra_id: OBRA, email: 'b@cli.com', ativo: false },
+      { obra_id: 'outra', email: 'c@cli.com', ativo: true },
+    ]
+    expect(await responderMensagemAction(OBRA, 'segredo da resposta')).toEqual({ ok: true })
+    expect(emails).toHaveLength(1)
+    expect(emails[0].para).toEqual(['a@cli.com'])
+    expect(emails[0].assunto).toBe('Nova mensagem da Manfac sobre DP Macaé 3')
+    expect(emails[0].html + emails[0].texto).toContain('https://hub.exemplo.test/portal-obra')
+    expect(emails[0].html + emails[0].texto).not.toContain('segredo da resposta')
+  })
+
+  it('falha no envio (ou sem acesso ativo, ou sem base de URL) não derruba a resposta', async () => {
+    como('eng@manfac.com.br', false)
+    db.obras_portal_acesso = [{ obra_id: OBRA, email: 'a@cli.com', ativo: true }]
+    envioFalha = true
+    expect(await responderMensagemAction(OBRA, 'oi')).toEqual({ ok: true })
+    envioFalha = false
+    delete process.env.NEXT_PUBLIC_SITE_URL
+    expect(await responderMensagemAction(OBRA, 'oi 2')).toEqual({ ok: true })
+    expect(emails).toHaveLength(0)
+    expect(db.obras_mensagem).toHaveLength(2)
+  })
+
   it('admin responde; outro usuário, anônimo, vazio e longo demais não', async () => {
     como('adm@manfac.com.br', true)
     expect(await responderMensagemAction(OBRA, 'ok')).toEqual({ ok: true })

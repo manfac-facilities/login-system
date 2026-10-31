@@ -162,3 +162,22 @@ export function montarEmailImediata(p: {
   ].join('\n')
   return { assunto, html, texto }
 }
+
+/**
+ * Aviso ao cliente de que a Manfac respondeu na página da obra. NUNCA leva o
+ * texto da mensagem: só o aviso e o link "Ver a obra completa".
+ */
+export function montarEmailNovaMensagem(p: { loja: string; linkObra: string }): EmailSimples {
+  const assunto = `Nova mensagem da Manfac sobre ${p.loja}`
+  const corpo = secao('Mensagem', 'A Manfac respondeu à sua mensagem. Para ler e responder, entre na página da obra.')
+  const html = moldura({
+    faixa: 'MANFAC · NOVA MENSAGEM',
+    titulo: p.loja,
+    subtitulo: 'Nova mensagem da Manfac',
+    corpo,
+    rodape: 'Manfac Facilities · aviso automático da página do cliente.',
+    linkObra: p.linkObra,
+  })
+  const texto = ['MANFAC · NOVA MENSAGEM', p.loja, '', 'A Manfac respondeu à sua mensagem. Para ler e responder, entre na página da obra.', ...textoLinkObra(p.linkObra)].join('\n')
+  return { assunto, html, texto }
+}

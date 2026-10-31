@@ -9,6 +9,10 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/roles'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { enviarEmail } from '../../_lib/enviar'
+import { linkPortalObra } from '../../_lib/link-portal'
+import { montarEmailNovaMensagem } from './_email'
 import type { Resultado } from './_tipos'
 
 const falha = (erro: string): Resultado => ({ ok: false, erro })
@@ -39,5 +43,34 @@ export async function responderMensagemAction(obraId: string, texto: string): Pr
     return falha('Não foi possível enviar a resposta. Tente de novo em instantes.')
   }
   revalidatePath(`/obras/obras/${obraId}/comunicacao`)
+  await avisarCliente(supabase, obraId)
   return { ok: true }
+}
+
+/**
+ * Avisa por e-mail os acessos ATIVOS da página do cliente (sem o texto da
+ * mensagem). Falha aqui nunca derruba a resposta, que já foi gravada. Não vai
+ * para obras_envio: nenhum tipo do check cobre aviso do portal. A leitura dos
+ * acessos usa o cliente admin porque a RLS de obras_portal_acesso é só admin
+ * (o engenheiro responde mas não lê a lista); a autorização acima já foi feita.
+ */
+async function avisarCliente(supabase: Awaited<ReturnType<typeof createClient>>, obraId: string) {
+  try {
+    const link = linkPortalObra()
+    if (!link) return
+    const { data: acessos } = await createAdminClient()
+      .from('obras_portal_acesso')
+      .select('email')
+      .eq('obra_id', obraId)
+      .eq('ativo', true)
+    const para = [...new Set(((acessos ?? []) as { email: string }[]).map((a) => a.email))]
+    if (!para.length) return
+    const { data: obra } = await supabase.from('obras_obra').select('loja, descricao, os').eq('id', obraId).maybeSingle()
+    const o = (obra ?? {}) as { loja?: string | null; descricao?: string | null; os?: string | null }
+    const loja = String(o.loja ?? o.descricao ?? o.os ?? 'Obra').trim() || 'Obra'
+    const msg = montarEmailNovaMensagem({ loja, linkObra: link })
+    await enviarEmail({ para, ...msg, anexos: [] })
+  } catch {
+    // aviso é cortesia; a resposta já está gravada
+  }
 }

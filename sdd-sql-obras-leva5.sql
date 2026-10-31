@@ -446,9 +446,12 @@ revoke update on public.obras_documento from authenticated;
 -- ============================================================
 -- 4. Bucket privado obras-docs + policies de storage
 -- ============================================================
-insert into storage.buckets (id, name, public)
-values ('obras-docs', 'obras-docs', false)
-on conflict (id) do update set public = false;
+-- file_size_limit = 25 MB (26214400), imposto pelo Storage sobre os bytes reais.
+-- Sem allowed_mime_types (o tipo declarado pelo cliente é forjável e DWG/XLSX/DOCX
+-- chegam com MIME inconsistente).
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('obras-docs', 'obras-docs', false, 26214400)
+on conflict (id) do update set public = false, file_size_limit = 26214400;
 
 -- true/false (nunca NULL): nome '<obra_id existente>/<uuid>-<nome saneado>'
 -- e sessão = engenheiro dessa obra ou administrador. security definer para
@@ -777,6 +780,8 @@ from (values
          from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass and conname = 'obras_portal_acesso_email_check')),
   (36, 'texto da mensagem exige caractere não-branco (\S)', 'true',
       (select (strpos(pg_get_constraintdef(oid), '\S') > 0)::text
-         from pg_constraint where conrelid = 'public.obras_mensagem'::regclass and conname = 'obras_mensagem_texto_check'))
+         from pg_constraint where conrelid = 'public.obras_mensagem'::regclass and conname = 'obras_mensagem_texto_check')),
+  (37, 'bucket obras-docs: privado e limite de 25 MB (26214400)', 'false|26214400',
+      (select public::text || '|' || coalesce(file_size_limit::text, 'sem limite') from storage.buckets where id = 'obras-docs'))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

@@ -30,6 +30,10 @@ describe('path', () => {
     expect(pathDocValido(OBRA, `${OBRA}/${UUID}-../a.pdf`)).toBe(false)
     expect(pathDocValido(OBRA, `${OBRA}/x-a.pdf`)).toBe(false)
     expect(pathDocValido(OBRA, 42)).toBe(false)
+    expect(pathDocValido(OBRA, `${OBRA}/abcdefab-2222-4222-8222-abcdefabcdef-a.pdf`)).toBe(true)
+    expect(pathDocValido(OBRA, `${OBRA}/ABCDEFAB-2222-4222-8222-ABCDEFABCDEF-a.pdf`)).toBe(false)
+    const OBRA_UP = 'ABCDEFAB-1111-4111-8111-111111111111'
+    expect(pathDocValido(OBRA_UP, `${OBRA_UP}/${UUID}-a.pdf`)).toBe(false)
     expect(pathDocValido('.*', `${OBRA}/${UUID}-a.pdf`)).toBe(false)
   })
 })

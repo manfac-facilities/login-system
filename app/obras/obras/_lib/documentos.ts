@@ -59,7 +59,11 @@ export function validarArquivoDoc(a: { nome: string; tamanho: number }): string 
 
 export const montarPathDoc = (obraId: string, uuid: string, nome: string) => `${obraId}/${uuid}-${nomeSaneado(nome)}`
 
+/** Mesmo critério do trigger do banco: obra_id em minúsculas, uuid em minúsculas, nome [A-Za-z0-9._-]{1,200} (sem flag i). */
 export const pathDocValido = (obraId: string, path: unknown): path is string =>
   typeof path === 'string' &&
-  new RegExp(`^${obraId.replace(/[^0-9a-f-]/gi, '')}/${UUID}-[A-Za-z0-9._-]{1,200}$`, 'i').test(path) &&
-  /^[0-9a-f-]{36}$/i.test(obraId)
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(obraId) &&
+  new RegExp(`^${obraId}/${UUID}-[A-Za-z0-9._-]{1,200}$`).test(path)
+
+/** Nome salvo no fim do path (depois de `<obra>/<uuid>-`). */
+export const nomeDoPath = (path: string): string => path.slice(path.indexOf('/') + 1 + 37)

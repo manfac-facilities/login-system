@@ -16,6 +16,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import {
   BUCKET_DOCS,
   VALIDADE_URL_DOC_S,
+  nomeDoPath,
   nomeSaneado,
   pastaValida,
   pathDocValido,
@@ -26,7 +27,7 @@ import type { DocumentoEntrada, Resultado } from './_tipos-portal'
 
 type Erro = { ok: false; erro: string }
 const falha = (erro: string): Erro => ({ ok: false, erro })
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 async function sessao(): Promise<{ supabase: SupabaseClient; email: string; admin: boolean } | Erro> {
   const supabase = await createClient()
@@ -133,15 +134,18 @@ export async function trazerDestinatariosClienteAction(obraId: string): Promise<
 
 /**
  * Registra o documento DEPOIS de o navegador subir o arquivo para `obras-docs`
- * (mesma ordem das fotos do diário). Se o registro for recusado, o objeto é removido.
+ * (mesma ordem das fotos do diário). Se o registro for recusado, remove o objeto
+ * que ESTA requisição subiu — mas só se nenhuma linha aponta para esse path
+ * (um path repetido nunca apaga o arquivo de um documento já registrado).
  */
 export async function registrarDocumentoAction(obraId: string, d: DocumentoEntrada): Promise<Resultado> {
   const s = await autorizarDocumentos(obraId)
   if ('ok' in s) return s
   const limpar = async () => {
-    if (typeof d?.path === 'string' && pathDocValido(obraId, d.path)) {
-      await s.supabase.storage.from(BUCKET_DOCS).remove([d.path])
-    }
+    if (typeof d?.path !== 'string' || !pathDocValido(obraId, d.path)) return
+    const { data, error } = await s.supabase.from('obras_documento').select('id').eq('path', d.path).maybeSingle()
+    if (error || data) return // na dúvida, o objeto fica (falha fechada para dado de cliente)
+    await s.supabase.storage.from(BUCKET_DOCS).remove([d.path])
   }
   if (!pastaValida(d?.pasta)) {
     await limpar()
@@ -154,6 +158,11 @@ export async function registrarDocumentoAction(obraId: string, d: DocumentoEntra
     return falha(invalido)
   }
   if (!pathDocValido(obraId, d.path)) return falha('Caminho do arquivo inválido')
+  // A extensão que vale é a do arquivo guardado, não só a do nome declarado.
+  if (validarArquivoDoc({ nome: nomeDoPath(d.path), tamanho: Number(d.tamanho) })) {
+    await limpar()
+    return falha('Tipo não aceito: use PDF, JPG, PNG, DWG, XLSX ou DOCX')
+  }
   const { error } = await s.supabase.from('obras_documento').insert({
     obra_id: obraId,
     pasta: d.pasta,
@@ -170,7 +179,11 @@ export async function registrarDocumentoAction(obraId: string, d: DocumentoEntra
   return { ok: true }
 }
 
-/** Apaga o objeto do bucket e, só então, a linha (se o objeto não sai, a linha fica para nova tentativa). */
+/**
+ * Apaga o objeto do bucket e, só depois de confirmar que ele saiu, a linha.
+ * `remove()` não dá erro quando o objeto não existe (ou a RLS o esconde): devolve
+ * lista vazia. Isso é tratado como erro explícito e a linha fica (nunca sucesso mudo).
+ */
 export async function apagarDocumentoAction(obraId: string, docId: string): Promise<Resultado> {
   const s = await autorizarDocumentos(obraId)
   if ('ok' in s) return s
@@ -178,8 +191,11 @@ export async function apagarDocumentoAction(obraId: string, docId: string): Prom
   if (error) return erroBanco('ler o documento', error)
   const doc = data as { id: string; path: string } | null
   if (!doc) return falha('Documento não encontrado')
-  const { error: eS } = await s.supabase.storage.from(BUCKET_DOCS).remove([doc.path])
+  const { data: saiu, error: eS } = await s.supabase.storage.from(BUCKET_DOCS).remove([doc.path])
   if (eS) return falha('Não foi possível apagar o arquivo. Tente de novo.')
+  if (!Array.isArray(saiu) || saiu.length < 1) {
+    return falha('O arquivo não foi encontrado no armazenamento (ou você não tem permissão sobre ele). O registro foi mantido; avise um administrador para conferir.')
+  }
   const { error: eD } = await s.supabase.from('obras_documento').delete().eq('id', docId).eq('obra_id', obraId)
   if (eD) return erroBanco('apagar o documento', eD)
   rev(obraId)

@@ -512,6 +512,8 @@ end $$;
 -- ============================================================
 select pg_temp.reg(46, 'bucket obras-docs privado', 'ok:f',
   (select 'ok:' || pg_temp.tf(public) from storage.buckets where id = 'obras-docs'));
+select pg_temp.reg(94, 'bucket obras-docs com limite de 25 MB (file_size_limit 26214400)', 'ok:26214400',
+  (select 'ok:' || coalesce(file_size_limit::text, 'sem limite') from storage.buckets where id = 'obras-docs'));
 
 do $$
 declare a text; b text; c text; d text; e text; f text;
@@ -1001,10 +1003,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 93 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 93 testes rodaram';
+  if v_total <> 94 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 94 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/93 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/94 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
