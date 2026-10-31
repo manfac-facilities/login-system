@@ -8,11 +8,18 @@
  * fase: maior fimPrevisto de cada etapa; de entrega: previsão de término."
  *
  * O envio casa com o item por tipo + referência (diário = data; semanal =
- * segunda; mensal = AAAA-MM; fase = ordem da etapa; entrega = 'entrega'), então
- * o item não duplica quando o cronograma muda; envio sem item calculado (etapa
- * que sumiu, semana fora do novo término) continua na agenda — envio feito não
- * se apaga. Fase de etapa não concluída fica sempre Programado (o relatório só
- * existe depois da conclusão).
+ * segunda; mensal = AAAA-MM; fase = menor `numero` das atividades da etapa —
+ * o numero é imutável, então a fase não troca de identidade quando uma etapa é
+ * inserida/removida antes dela, e a tela mostra o nome/código atuais;
+ * entrega = 'entrega'), então o item não duplica quando o cronograma muda;
+ * envio sem item calculado (etapa que sumiu, semana fora do novo término)
+ * continua na agenda — envio feito não se apaga.
+ *
+ * "Término" = término PROJETADO do motor (`calc.terminoProjetado`, não o
+ * `calc.terminoPrevisto` do plano): obra atrasada continua agendando diários e
+ * semanais. Fase de etapa não concluída e entrega de obra não concluída ficam
+ * sempre Programado (o relatório só existe depois da conclusão; status
+ * desatualizado não vira ATRASADO).
  *
  * Quem monta `envios` (só lado cliente): diário/semanal pela data de
  * `obras_envio.referencia`; mensal/fase/entrega pela `obras_relatorio.referencia`
@@ -31,7 +38,8 @@ export type ItemAgenda = {
   dataReal: string | null
   situacao: SituacaoAgenda
 }
-export type EtapaAgenda = { ordem: number; nome: string; fimPrevisto: string; concluida: boolean }
+/** `referencia` = menor numero das atividades da etapa (ver `etapasDaObra`). */
+export type EtapaAgenda = { referencia: string; nome: string; fimPrevisto: string; concluida: boolean }
 export type EnvioAgenda = { tipo: string; referencia: string | null; enviadoEm: string }
 
 const DIA_MS = 86_400_000
@@ -75,14 +83,16 @@ function dataNatural(tipo: TipoAgenda, ref: string, feriados: ReadonlySet<string
 export function agendaDaObra(p: {
   /** null = base ainda não salva: só os envios já feitos. */
   dataBase: string | null
-  /** Previsão de término do cronograma vigente. */
-  terminoPrevisto: string | null
+  /** Término projetado do cronograma vigente: passe `og.calc.terminoProjetado`. */
+  terminoProjetado: string | null
+  /** Todas as atividades concluídas (libera o relatório de entrega). */
+  obraConcluida: boolean
   etapas: EtapaAgenda[]
   feriados: ReadonlySet<string>
   envios: EnvioAgenda[]
   hojeIso: string
 }): ItemAgenda[] {
-  const { dataBase, terminoPrevisto: fim, feriados, hojeIso: hoje } = p
+  const { dataBase, terminoProjetado: fim, feriados, hojeIso: hoje } = p
   const previstos: { tipo: TipoAgenda; referencia: string; dataPrevista: string; disponivel: boolean }[] = []
   const add = (tipo: TipoAgenda, referencia: string, dataPrevista: string, disponivel = true) =>
     previstos.push({ tipo, referencia, dataPrevista, disponivel })
@@ -105,8 +115,8 @@ export function agendaDaObra(p: {
     }
   }
   if (dataBase) {
-    for (const e of p.etapas) add('fase', String(e.ordem), e.fimPrevisto, e.concluida)
-    if (fim) add('entrega', 'entrega', fim)
+    for (const e of p.etapas) add('fase', e.referencia, e.fimPrevisto, e.concluida)
+    if (fim) add('entrega', 'entrega', fim, p.obraConcluida)
   }
 
   // Primeiro envio de cada (tipo, referência).

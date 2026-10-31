@@ -12,10 +12,13 @@
  */
 import { curvaPlanejada, curvaRealizada, datasDaCurva } from './curvas'
 import { dataBr, pct, previsaoEntrega, quebraDoAtraso, sinalVisual, textoDesvio, type ItemDiario, type SinalVisual } from './email-diario'
-import { ppc, segundaDaSemana, type PlanoSemana, type Restricao } from './last-planner'
+import { dataEnvioSemanal, ppc, type PlanoSemana, type Restricao } from './last-planner'
 import type { ImpedimentoRow, ObraGrande } from './leitura'
 import { codigosDeAtividades, deltaDiasUteis, type Responsavel } from './cronograma'
 import { rotuloTipo } from '../[id]/lookahead/_tipos'
+import { ISO, lista, nums, obj, str, strOuNull, strs, type Campos } from './conteudo-valido'
+
+export { esc } from './conteudo-valido'
 
 export type Lado = 'cliente' | 'interno'
 export type TipoPeriodo = 'mensal' | 'fase' | 'entrega'
@@ -134,7 +137,13 @@ export function blocosDoPeriodo(p: {
 // ---- Etapas -----------------------------------------------------------------
 
 export type EtapaDaObra = {
-  /** 1-based, na ordem de exibição (= referência do relatório de fase). */
+  /**
+   * Identidade da fase (referência do relatório e da agenda): o menor `numero`
+   * das atividades da etapa. O numero é imutável, então a fase continua a
+   * mesma quando outra etapa é inserida/removida antes dela. Nunca exibido.
+   */
+  referencia: string
+  /** 1-based, na ordem de exibição atual (só rótulo: "etapa 2 — Alvenaria"). */
   ordem: number
   nome: string
   numeros: number[]
@@ -162,6 +171,7 @@ export function etapasDaObra(og: ObraGrande): EtapaDaObra[] {
     const base = e.numeros.map((n) => basePor.get(n)?.fimPrevisto).filter((d): d is string => !!d)
     const inicios = as.map((a) => a.inicioReal).filter((d): d is string => !!d)
     return {
+      referencia: String(Math.min(...e.numeros)),
       ordem: i + 1,
       nome: e.etapa,
       numeros: e.numeros,
@@ -216,15 +226,22 @@ const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julh
 const mesExtenso = (anoMes: string) => `${MESES[Number(anoMes.slice(5, 7)) - 1]} de ${anoMes.slice(0, 4)}`
 const ROTULO_TIPO: Record<TipoPeriodo, string> = { mensal: 'Relatório mensal', fase: 'Relatório de fase', entrega: 'Relatório de entrega' }
 
-/** Semanas cujo plano conta no período: segunda entre a semana do início e o fim. */
-const planosDoPeriodo = (planos: PlanoSemana[], inicio: string, fim: string) => {
-  const de = segundaDaSemana(inicio)
-  return planos.filter((pl) => pl.semanaInicio >= de && pl.semanaInicio <= fim)
-}
-
-/** PPC de cada semana avaliada do período, em ordem. */
-export function ppcSemanasDoPeriodo(planos: PlanoSemana[], inicio: string, fim: string): { segunda: string; valor: number }[] {
-  return planosDoPeriodo(planos, inicio, fim)
+/**
+ * PPC de cada semana avaliada do período, em ordem. A semana conta só se a data
+ * de envio do semanal (sexta, ou antecipada por feriado) cai em [inicio, fim]:
+ * nenhuma semana conta em dois meses.
+ */
+export function ppcSemanasDoPeriodo(
+  planos: PlanoSemana[],
+  inicio: string,
+  fim: string,
+  feriados: ReadonlySet<string>,
+): { segunda: string; valor: number }[] {
+  return planos
+    .filter((pl) => {
+      const envio = dataEnvioSemanal(pl.semanaInicio, feriados)
+      return envio >= inicio && envio <= fim
+    })
     .map((pl) => ({ segunda: pl.semanaInicio, valor: ppc(pl.itens) }))
     .filter((s): s is { segunda: string; valor: number } => s.valor !== null)
     .sort((a, b) => a.segunda.localeCompare(b.segunda))
@@ -233,7 +250,7 @@ export function ppcSemanasDoPeriodo(planos: PlanoSemana[], inicio: string, fim: 
 export function montarConteudoPeriodo(p: {
   lado: Lado
   tipo: TipoPeriodo
-  /** AAAA-MM (mensal) | ordem da etapa (fase) | 'entrega'. */
+  /** AAAA-MM (mensal) | `EtapaDaObra.referencia` (fase: menor numero da etapa) | 'entrega'. */
   referencia: string
   obra: ObraGrande
   inicio: string
@@ -251,12 +268,9 @@ export function montarConteudoPeriodo(p: {
   const interno = lado === 'interno'
   const etapas = etapasDaObra(og)
 
+  const etapa = tipo === 'fase' ? etapas.find((e) => e.referencia === referencia) : undefined
   const nomePeriodo =
-    tipo === 'mensal'
-      ? mesExtenso(referencia)
-      : tipo === 'fase'
-        ? `etapa ${referencia}${etapas[Number(referencia) - 1] ? ` — ${etapas[Number(referencia) - 1].nome}` : ''}`
-        : 'entrega da obra'
+    tipo === 'mensal' ? mesExtenso(referencia) : tipo === 'fase' ? (etapa ? `etapa ${etapa.ordem} — ${etapa.nome}` : 'fase') : 'entrega da obra'
   const assunto = `${ROTULO_TIPO[tipo]} · ${b.loja} · ${nomePeriodo}${interno ? ' · interno' : ''}`
   const titulo = `${b.loja} — ${nomePeriodo}`
   const subtitulo = `Período de ${dataBr(inicio)} a ${dataBr(fim)}${ref < fim ? ` · dados até ${dataBr(ref)}` : ''}`
@@ -287,7 +301,7 @@ export function montarConteudoPeriodo(p: {
       }
     })
 
-  const semanas = ppcSemanasDoPeriodo(p.planos, inicio, fim)
+  const semanas = ppcSemanasDoPeriodo(p.planos, inicio, fim, og.feriados)
   const ppcMedio = semanas.length ? { valor: pct(semanas.reduce((s, x) => s + x.valor, 0) / semanas.length), semanas: semanas.length } : null
 
   let comparativo: ConteudoPeriodo['comparativo'] = null
@@ -318,15 +332,7 @@ export function montarConteudoPeriodo(p: {
 
 // ---- Validação do conteúdo congelado (entrada não confiável) ----------------
 
-export const ISO = /^\d{4}-\d{2}-\d{2}$/
 const SINAIS = (['verde', 'amarelo', 'vermelho'] as const).map((s) => sinalVisual(s))
-export type Campos = Record<string, unknown>
-export const obj = (v: unknown): v is Campos => typeof v === 'object' && v !== null && !Array.isArray(v)
-export const str = (v: unknown): v is string => typeof v === 'string'
-export const strOuNull = (v: unknown) => v === null || str(v)
-export const nums = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
-export const lista = (v: unknown, item: (x: Campos) => boolean) => Array.isArray(v) && v.every((x) => obj(x) && item(x))
-export const strs = (x: Campos, ...k: string[]) => k.every((c) => str(x[c]))
 const itemValido = (x: Campos) => strs(x, 'rotulo', 'corpo') && (x.tecnico === undefined || typeof x.tecnico === 'boolean')
 
 /**
@@ -348,7 +354,8 @@ export function blocosValidos(v: Campos, lado: Lado): boolean {
 
 const TIPOS: TipoPeriodo[] = ['mensal', 'fase', 'entrega']
 const REFERENCIA: Record<TipoPeriodo, RegExp> = { mensal: /^\d{4}-\d{2}$/, fase: /^\d+$/, entrega: /^entrega$/ }
-const fracao = (v: unknown) => nums(v) && (v as number) >= 0 && (v as number) <= 1.0001
+// Fração finita e não negativa (sem teto: duração incoerente pode passar de 100% sem invalidar o congelado).
+const fracao = (v: unknown) => nums(v) && (v as number) >= 0
 
 /** true só se `v` tem o formato de ConteudoPeriodo do `lado` (e, se dados, do tipo/referência esperados). */
 export function conteudoPeriodoValido(v: unknown, lado: Lado, esperado?: { tipo: TipoPeriodo; referencia: string }): v is ConteudoPeriodo {
@@ -366,6 +373,3 @@ export function conteudoPeriodoValido(v: unknown, lado: Lado, esperado?: { tipo:
   if (tipo === 'entrega' ? !(obj(c) && strOuNull(c.base) && strs(c, 'final', 'atraso')) : c !== null) return false
   return true
 }
-
-export const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')

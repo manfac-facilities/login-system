@@ -8,8 +8,9 @@ import { agendaDaObra, periodoMensal, ultimoDiaUtilDoMes, type ItemAgenda } from
 const sem = new Set<string>()
 const base = {
   dataBase: '2026-10-26', // segunda
-  terminoPrevisto: '2026-11-06', // sexta
-  etapas: [] as { ordem: number; nome: string; fimPrevisto: string; concluida: boolean }[],
+  terminoProjetado: '2026-11-06', // sexta
+  obraConcluida: false,
+  etapas: [] as { referencia: string; nome: string; fimPrevisto: string; concluida: boolean }[],
   feriados: sem as ReadonlySet<string>,
   envios: [] as { tipo: string; referencia: string | null; enviadoEm: string }[],
   hojeIso: '2026-10-20',
@@ -60,7 +61,7 @@ describe('agendaDaObra — datas', () => {
   })
 
   it('mensais: último dia útil de cada mês até o mês do término; feriado no último dia útil antecipa', () => {
-    const a = agendaDaObra({ ...base, terminoPrevisto: '2026-12-10', feriados: new Set(['2026-11-30']) })
+    const a = agendaDaObra({ ...base, terminoProjetado: '2026-12-10', feriados: new Set(['2026-11-30']) })
     expect(doTipo(a, 'mensal').map((i) => [i.referencia, i.dataPrevista])).toEqual([
       ['2026-10', '2026-10-30'],
       ['2026-11', '2026-11-27'],
@@ -69,16 +70,16 @@ describe('agendaDaObra — datas', () => {
   })
 
   it('mensal: mês da data-base cujo último dia útil já passou não entra', () => {
-    const a = agendaDaObra({ ...base, dataBase: '2026-10-31', terminoPrevisto: '2026-11-20' })
+    const a = agendaDaObra({ ...base, dataBase: '2026-10-31', terminoProjetado: '2026-11-20' })
     expect(doTipo(a, 'mensal').map((i) => i.referencia)).toEqual(['2026-11'])
   })
 
-  it('fase: maior fimPrevisto da etapa, referência = ordem; entrega = término', () => {
+  it('fase: maior fimPrevisto da etapa, referência da etapa; entrega = término projetado', () => {
     const a = agendaDaObra({
       ...base,
       etapas: [
-        { ordem: 1, nome: 'Demolição', fimPrevisto: '2026-10-28', concluida: true },
-        { ordem: 2, nome: 'Alvenaria', fimPrevisto: '2026-11-04', concluida: false },
+        { referencia: '1', nome: 'Demolição', fimPrevisto: '2026-10-28', concluida: true },
+        { referencia: '2', nome: 'Alvenaria', fimPrevisto: '2026-11-04', concluida: false },
       ],
     })
     expect(doTipo(a, 'fase').map((i) => [i.referencia, i.dataPrevista])).toEqual([['1', '2026-10-28'], ['2', '2026-11-04']])
@@ -124,8 +125,8 @@ describe('agendaDaObra — situação', () => {
     const a = agendaDaObra({
       ...base, hojeIso: '2026-11-10',
       etapas: [
-        { ordem: 1, nome: 'Demolição', fimPrevisto: '2026-10-28', concluida: false },
-        { ordem: 2, nome: 'Alvenaria', fimPrevisto: '2026-10-28', concluida: true },
+        { referencia: '1', nome: 'Demolição', fimPrevisto: '2026-10-28', concluida: false },
+        { referencia: '2', nome: 'Alvenaria', fimPrevisto: '2026-10-28', concluida: true },
       ],
     })
     expect(doTipo(a, 'fase').map((i) => i.situacao)).toEqual(['programado', 'atrasado'])
@@ -137,12 +138,12 @@ describe('agendaDaObra — situação', () => {
       { tipo: 'semanal', referencia: '2026-11-09', enviadoEm: '2026-11-13T15:00:00Z' },
       { tipo: 'mensal', referencia: '2026-11', enviadoEm: '2026-11-30T15:00:00Z' },
     ]
-    const etapa = (fim: string) => ({ ordem: 2, nome: 'Alvenaria', fimPrevisto: fim, concluida: true })
-    const antes = agendaDaObra({ ...base, terminoPrevisto: '2026-11-30', hojeIso: '2026-12-01', etapas: [etapa('2026-11-04')], envios })
+    const etapa = (fim: string) => ({ referencia: '2', nome: 'Alvenaria', fimPrevisto: fim, concluida: true })
+    const antes = agendaDaObra({ ...base, terminoProjetado: '2026-11-30', hojeIso: '2026-12-01', etapas: [etapa('2026-11-04')], envios })
     expect(doTipo(antes, 'fase')).toEqual([{ tipo: 'fase', referencia: '2', dataPrevista: '2026-11-04', dataReal: '2026-11-04', situacao: 'no_prazo' }])
 
     // Etapa 2 replanejada para antes; término encurtou (a semana de 09/11 e o mês 11 saem do cálculo).
-    const depois = agendaDaObra({ ...base, terminoPrevisto: '2026-10-30', hojeIso: '2026-12-01', etapas: [etapa('2026-10-29')], envios })
+    const depois = agendaDaObra({ ...base, terminoProjetado: '2026-10-30', hojeIso: '2026-12-01', etapas: [etapa('2026-10-29')], envios })
     expect(doTipo(depois, 'fase')).toEqual([{ tipo: 'fase', referencia: '2', dataPrevista: '2026-10-29', dataReal: '2026-11-04', situacao: 'com_atraso' }])
     expect(doTipo(depois, 'semanal').filter((i) => i.referencia === '2026-11-09')).toEqual([
       { tipo: 'semanal', referencia: '2026-11-09', dataPrevista: '2026-11-13', dataReal: '2026-11-13', situacao: 'no_prazo' },
@@ -154,6 +155,19 @@ describe('agendaDaObra — situação', () => {
     // Etapa removida do cronograma: o envio feito continua.
     const semEtapa = agendaDaObra({ ...base, hojeIso: '2026-12-01', etapas: [], envios })
     expect(doTipo(semEtapa, 'fase')).toEqual([{ tipo: 'fase', referencia: '2', dataPrevista: '2026-11-04', dataReal: '2026-11-04', situacao: 'no_prazo' }])
+  })
+
+  it('obra atrasada ainda em andamento: diários seguem até o término projetado e a entrega não fica ATRASADO', () => {
+    // Plano terminava em 06/11; a projeção do motor (calc.terminoProjetado) foi para 13/11.
+    const a = agendaDaObra({ ...base, terminoProjetado: '2026-11-13', hojeIso: '2026-11-10' })
+    expect(doTipo(a, 'diario').map((i) => i.referencia)).toContain('2026-11-12')
+    expect(doTipo(a, 'semanal').map((i) => i.referencia)).toContain('2026-11-16') // até término + 7
+    expect(doTipo(a, 'entrega')[0]).toMatchObject({ dataPrevista: '2026-11-13', situacao: 'programado' })
+    // Status desatualizado (projeção já passou) com a obra não concluída: continua Programado.
+    expect(doTipo(agendaDaObra({ ...base, hojeIso: '2026-11-20' }), 'entrega')[0].situacao).toBe('programado')
+    // Concluída: segue a regra geral.
+    expect(doTipo(agendaDaObra({ ...base, obraConcluida: true, hojeIso: '2026-11-06' }), 'entrega')[0].situacao).toBe('enviar_hoje')
+    expect(doTipo(agendaDaObra({ ...base, obraConcluida: true, hojeIso: '2026-11-09' }), 'entrega')[0].situacao).toBe('atrasado')
   })
 
   it('envio de tipo fora da agenda ou sem referência é ignorado', () => {

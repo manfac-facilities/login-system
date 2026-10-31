@@ -1,9 +1,10 @@
 /**
  * Highlights automáticos do relatório de período (Leva 4 §2.3). Puro.
  * Só fatos do lado cliente (sem R$, sem impedimento oculto, sem área interna,
- * só o código exibido da atividade). O `id` é estável (não depende do texto
- * nem da ordem de exibição) — é ele que o engenheiro desmarca; o `id` nunca vai
- * ao cliente, só o `texto`.
+ * só o código exibido da atividade). O `id` é estável — não depende do texto
+ * nem da ordem de exibição: etapa pela `referencia` (menor numero), atividade
+ * pelo numero, semana pela segunda, impedimento pelo id. É ele que o
+ * engenheiro desmarca; o `id` nunca vai ao cliente, só o `texto`.
  *
  * Regras: etapa concluída antes do término base; atividade concluída antes do
  * previsto (o da base, se houver; senão o vigente); semana com PPC ≥ 80%;
@@ -37,7 +38,7 @@ export function highlightsDoPeriodo(p: {
   for (const e of etapasDaObra(og)) {
     if (!e.concluida || !no(e.fimReal) || !e.fimBase || e.fimReal >= e.fimBase) continue
     out.push({
-      id: `etapa-antecipada:${e.numeros.join('-')}`,
+      id: `etapa-antecipada:${e.referencia}`,
       texto: `Etapa ${e.ordem} — ${e.nome} concluída em ${dataBr(e.fimReal)}, ${uteis(-deltaDiasUteis(e.fimBase, e.fimReal, og.feriados))} antes do previsto na base`,
     })
   }
@@ -54,7 +55,7 @@ export function highlightsDoPeriodo(p: {
     })
   }
 
-  for (const s of ppcSemanasDoPeriodo(p.planos, inicio, fim)) {
+  for (const s of ppcSemanasDoPeriodo(p.planos, inicio, fim, og.feriados)) {
     if (s.valor < 0.8 - 1e-9) continue
     out.push({ id: `ppc:${s.segunda}`, texto: `Semana de ${ddmm(s.segunda)}: ${pct(s.valor)} do plano cumprido (PPC)` })
   }

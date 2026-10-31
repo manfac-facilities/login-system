@@ -12,7 +12,8 @@ import { dataBr, pct, type ItemDiario, type SinalVisual } from './email-diario'
 import { diasDaSemana, ppc, type PlanoSemana, type Restricao } from './last-planner'
 import type { ObraGrande } from './leitura'
 import type { Responsavel } from './cronograma'
-import { blocosDoPeriodo, blocosValidos, ddmm, esc, ISO, lista, obj, str, strOuNull, nums, strs, type Lado } from './relatorio-periodo'
+import { esc, ISO, lista, nums, obj, str, strOuNull, strs } from './conteudo-valido'
+import { blocosDoPeriodo, blocosValidos, ddmm, type Lado } from './relatorio-periodo'
 
 export type { Lado } from './relatorio-periodo'
 
