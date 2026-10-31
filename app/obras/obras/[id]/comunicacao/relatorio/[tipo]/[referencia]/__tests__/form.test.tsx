@@ -44,6 +44,12 @@ describe('FormRelatorio', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Validar e enviar' })).toBeEnabled())
   })
 
+  it('mensal antes do último dia útil: validar bloqueado com a data', () => {
+    render(<FormRelatorio {...props} tipo="mensal" referencia="2026-11" validarAPartirDe="30/11/2026" />)
+    expect(screen.getByRole('button', { name: 'Validar e enviar' })).toBeDisabled()
+    expect(screen.getByText(/a partir de 30\/11\/2026/)).toBeInTheDocument()
+  })
+
   it('validado: só os textos congelados, sem caixas nem salvar', () => {
     render(<FormRelatorio {...props} estado="validado" destaques={[]} marcados={[]} congelados={['Só o que foi']} />)
     expect(screen.queryByRole('checkbox')).toBeNull()

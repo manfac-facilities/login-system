@@ -8,3 +8,6 @@ export type EstadoTela = 'nao_iniciado' | 'rascunho' | 'validado' | 'enviado'
 export type EntradaRascunho = { observacoes: string; marcados: string[]; livre: string }
 
 export const ROTULO_TIPO = { mensal: 'Relatório mensal', fase: 'Relatório de fase', entrega: 'Relatório de entrega' } as const
+
+/** Tamanho máximo do destaque livre (form e servidor). */
+export const MAX_HIGHLIGHT_LIVRE = 300

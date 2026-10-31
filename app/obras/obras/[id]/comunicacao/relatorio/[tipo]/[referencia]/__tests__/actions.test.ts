@@ -50,6 +50,7 @@ const lerObraGrandeMock = jest.fn()
 const renderMock = jest.fn(async () => Buffer.from('%PDF-1.4 periodo'))
 const createMock = jest.fn()
 const HOJE = '2026-11-10'
+let mockHoje = HOJE
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
@@ -60,7 +61,7 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 jest.mock('../../../../../../../_lib/tipos', () => ({
   ...jest.requireActual('../../../../../../../_lib/tipos'),
-  hojeISO: () => '2026-11-10',
+  hojeISO: () => mockHoje,
 }))
 jest.mock('../../../../../../_lib/enviar', () => ({ enviarEmail: (...a: unknown[]) => enviarEmailMock(...a) }))
 jest.mock('../../../../../../_lib/leitura', () => ({
@@ -102,6 +103,7 @@ const ORIGINAL_KEY = process.env.ANTHROPIC_API_KEY
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockHoje = HOJE
   seq = 0
   db = {
     obras_obra: [{ id: OBRA, modalidade: 'obra', engenheiro_email: ENG }],
@@ -189,18 +191,21 @@ describe('disponibilidade', () => {
 })
 
 describe('salvarRascunhoRelatorioAction', () => {
-  it('grava período, observações e só os ids marcados que existem; depois atualiza', async () => {
+  it('grava período, observações e os automáticos DESmarcados (id inventado não entra); depois atualiza', async () => {
     expect(await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada())).toEqual({ ok: true })
     expect(db.obras_relatorio).toEqual([
       expect.objectContaining({
         obra_id: OBRA, tipo: 'fase', referencia: '10', periodo_inicio: '2026-10-26', periodo_fim: '2026-11-06',
         observacoes: 'Fase entregue antes.',
-        highlights: { marcados: ['etapa-antecipada:10', 'atividade-antecipada:20'], livre: 'Equipe elogiada pelo cliente' },
+        highlights: { desmarcados: ['atividade-antecipada:10', 'impedimento-resolvido:cli'], livre: 'Equipe elogiada pelo cliente' },
       }),
     ])
     expect(await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada({ marcados: [], livre: '' }))).toEqual({ ok: true })
     expect(db.obras_relatorio).toHaveLength(1)
-    expect(db.obras_relatorio[0].highlights).toEqual({ marcados: [], livre: null })
+    expect(db.obras_relatorio[0].highlights).toEqual({
+      desmarcados: ['etapa-antecipada:10', 'atividade-antecipada:10', 'atividade-antecipada:20', 'impedimento-resolvido:cli'],
+      livre: null,
+    })
   })
 
   it('limites e seleção inválida; validado não muda', async () => {
@@ -252,10 +257,41 @@ describe('validarEEnviarRelatorioAction', () => {
     ])
   })
 
-  it('mensal: só destinatário do tipo mensal; período do mês até hoje', async () => {
+  it('mensal no meio do mês: rascunho sim, validar não (só no último dia útil)', async () => {
+    expect(await salvarRascunhoRelatorioAction(OBRA, 'mensal', '2026-11', entrada({ marcados: [] }))).toEqual({ ok: true })
+    expect(await validarEEnviarRelatorioAction(OBRA, 'mensal', '2026-11')).toEqual({
+      ok: false,
+      erro: 'O relatório mensal só pode ser validado a partir de 30/11/2026 (último dia útil do mês)',
+    })
+    mockHoje = '2026-11-27'
+    expect((await validarEEnviarRelatorioAction(OBRA, 'mensal', '2026-11')).ok).toBe(false)
+    expect(db.obras_relatorio[0].estado).toBe('rascunho')
+    expect(db.obras_relatorio[0].conteudo ?? null).toBeNull()
+    expect(enviarEmailMock).not.toHaveBeenCalled()
+    expect(db.obras_envio).toEqual([])
+  })
+
+  it('mensal com o último dia útil feriado da obra: valida a partir do dia útil anterior', async () => {
+    const comFeriado = () => {
+      const og = obraPeriodo()
+      og.feriados = new Set(['2026-11-30'])
+      return { ok: true, dados: og }
+    }
+    lerObraGrandeMock.mockImplementation(async () => comFeriado())
+    mockHoje = '2026-11-26'
+    await salvarRascunhoRelatorioAction(OBRA, 'mensal', '2026-11', entrada({ marcados: [] }))
+    expect(await validarEEnviarRelatorioAction(OBRA, 'mensal', '2026-11')).toEqual({ ok: false, erro: expect.stringContaining('a partir de 27/11/2026') })
+    mockHoje = '2026-11-27'
+    expect(await validarEEnviarRelatorioAction(OBRA, 'mensal', '2026-11')).toEqual({ ok: true, enviados: 2 })
+    expect(db.obras_relatorio[0]).toMatchObject({ estado: 'enviado', periodo_inicio: '2026-11-01', periodo_fim: '2026-11-27' })
+  })
+
+  it('mensal no último dia útil: período do mês inteiro, só destinatário do tipo mensal', async () => {
+    mockHoje = '2026-11-30'
     await salvarRascunhoRelatorioAction(OBRA, 'mensal', '2026-11', entrada({ marcados: [] }))
     expect(db.obras_relatorio[0]).toMatchObject({ periodo_inicio: '2026-11-01', periodo_fim: '2026-11-30' })
     expect(await validarEEnviarRelatorioAction(OBRA, 'mensal', '2026-11')).toEqual({ ok: true, enviados: 2 })
+    expect(db.obras_relatorio[0].conteudo.cliente.avanco.ate).toBe('30/11/2026')
     expect(enviarEmailMock.mock.calls[0][0].para).toEqual(['cli-mensal@cliente.com'])
     expect(enviarEmailMock.mock.calls[0][0].assunto).toBe('Relatório mensal · DP Macaé 3 · novembro de 2026')
   })

@@ -19,12 +19,9 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
-import { hasSystemAccess } from '@/lib/auth/systemAccess'
-import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../../_lib/tipos'
 import { montarEmailSemanal, resumoParaIa } from '../../../_lib/email-semanal'
+import { autorizarEngenheiroDaObra } from '../../../_lib/autorizar-relatorio'
 import { enviarEmail } from '../../../_lib/enviar'
 import { SEM_IA, iaDisponivel, sugerirObservacoes } from '../../../_lib/ia-semanal'
 import {
@@ -38,8 +35,6 @@ import {
 } from '../../../_pdf/carregar-semanal'
 import { MAX_OBSERVACOES, type Resultado, type ResultadoEnvio, type ResultadoIa } from './_tipos'
 
-const NAO_AUTENTICADO = 'Não autenticado'
-const SEM_ACESSO = 'Sem acesso ao Gestão de Obras'
 const SO_ENGENHEIRO = 'Só o engenheiro responsável da obra ou um administrador mexe no relatório semanal'
 const JA_VALIDADO = 'Relatório semanal já validado — as observações não mudam mais'
 const SEM_RASCUNHO = 'Salve as observações antes de validar'
@@ -60,28 +55,8 @@ function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
   return falha(`Não foi possível ${acao}. Tente de novo em instantes. (${e.message})`)
 }
 
-/** Sessão + acesso obras/admin + obra OBRA lida pela sessão + engenheiro da obra ou admin. */
-async function autorizar(obraId: string): Promise<{ supabase: SupabaseClient; obraId: string } | Erro> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  const email = user?.email?.trim().toLowerCase()
-  if (!email) return falha(NAO_AUTENTICADO)
-  const admin = await isAdmin(supabase, email)
-  if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return falha(SEM_ACESSO)
-  const { data, error } = await supabase
-    .from('obras_obra')
-    .select('id, modalidade, engenheiro_email')
-    .eq('id', obraId)
-    .maybeSingle()
-  if (error) return erroBanco('ler a obra', error)
-  const obra = data as Linha | null
-  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
-  const engenheiro = String(obra.engenheiro_email ?? '').trim().toLowerCase()
-  if (!admin && !(engenheiro !== '' && engenheiro === email)) return falha(SO_ENGENHEIRO)
-  return { supabase, obraId: String(obra.id) }
-}
+/** Sessão + acesso obras/admin + obra OBRA lida pela sessão + engenheiro da obra ou admin (`autorizar-relatorio.ts`). */
+const autorizar = (obraId: string) => autorizarEngenheiroDaObra(obraId, { soEngenheiro: SO_ENGENHEIRO, erroBanco })
 
 const revalidar = (obraId: string) => {
   revalidatePath(`/obras/obras/${obraId}/comunicacao/semanal`)

@@ -5,7 +5,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
 import { etapasDaObra } from '../../_lib/relatorio-periodo'
-import { obraConcluida, relatorioValido } from '../../_pdf/carregar-periodo'
+import { obraConcluida, relatorioValido, ultimoMesDoMensal } from '../../_pdf/carregar-periodo'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
@@ -64,13 +64,14 @@ export default async function ComunicacaoPage({
     supabase.from('obras_destinatario').select('email, nome, lado, tipos').eq('obra_id', id).eq('ativo', true).order('email'),
     supabase.from('obras_relatorio').select('id, tipo, referencia').eq('obra_id', id),
   ])
-  if (envR.error || regR.error || destR.error || relR.error) {
+  if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
   }
 
   // Relatórios de período: o envio casa pelo relatorio_id; a fase aparece pelo nome atual da etapa (nunca o numero).
   const etapas = etapasDaObra(lida.dados)
-  const relatorios = new Map(((relR.data ?? []) as Linha[]).map((r) => [String(r.id), r]))
+  // Só rótulo e link do PDF: falha nesta leitura não derruba a página (o envio aparece sem o link).
+  const relatorios = new Map((relR.error ? [] : ((relR.data ?? []) as Linha[])).map((r) => [String(r.id), r]))
   const relatorioDe = (relatorioId: unknown): Envio['relatorio'] => {
     const r = relatorioId ? relatorios.get(String(relatorioId)) : undefined
     if (!r || !relatorioValido(r.tipo, r.referencia)) return null
@@ -118,11 +119,12 @@ export default async function ComunicacaoPage({
     tipos: d.tipos ?? [],
   }))
 
-  // Botões só dos relatórios disponíveis: mensal a partir do mês da data-base; fase com etapa concluída
+  // Botões só dos relatórios disponíveis: mensal do mês da data-base ao mês do término; fase com etapa concluída
   // (a mais recente; a tela lista as outras); entrega com a obra concluída.
   const mesAtual = hoje.slice(0, 7)
   const dataBase = (obra.data_base as string | null | undefined) ?? null
-  const mensalDisponivel = !!dataBase && dataBase.slice(0, 7) <= mesAtual
+  const ultimoMes = ultimoMesDoMensal(lida.dados)
+  const mensalDisponivel = !!dataBase && dataBase.slice(0, 7) <= mesAtual && (!ultimoMes || mesAtual <= ultimoMes)
   const ultimaFase = etapas
     .filter((e) => e.concluida && e.fimReal)
     .sort((a, b) => b.fimReal!.localeCompare(a.fimReal!) || b.ordem - a.ordem)[0]

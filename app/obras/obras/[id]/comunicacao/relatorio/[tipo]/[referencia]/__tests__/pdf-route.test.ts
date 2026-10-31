@@ -75,7 +75,7 @@ const congelado = () => {
 }
 const relatorio = (estado: string, over: Linha = {}): Linha => ({
   id: 'r1', obra_id: 'o1', tipo: 'fase', referencia: '10', estado, periodo_inicio: '2026-10-26', periodo_fim: '2026-11-06',
-  observacoes: 'Como foi validado.', highlights: { marcados: [], livre: null },
+  observacoes: 'Como foi validado.', highlights: { desmarcados: [], livre: null },
   conteudo: estado === 'rascunho' ? null : congelado(), validado_por: 'eng@manfac.com.br', validado_em: '2026-11-07T20:00:00Z', ...over,
 })
 const pdfRenderizado = () =>

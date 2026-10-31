@@ -7,11 +7,12 @@
  * falha fechada; tipo e referência conferidos com regex estrita; a obra é
  * relida do banco pela sessão (RLS) — o id do navegador só escolhe qual.
  *
- * - Salvar rascunho: observações, highlights automáticos marcados (só ids que
- *   existem no período) e o highlight livre; só em rascunho e só com o
+ * - Salvar rascunho: observações, highlights automáticos DESMARCADOS (os ids do
+ *   período que o navegador não mandou como marcados) e o highlight livre; só em rascunho e só com o
  *   relatório disponível (fase: etapa concluída; entrega: obra concluída).
  * - Sugerir com IA: só devolve o texto para o campo; não grava nem envia.
- * - Validar e enviar: valida o que está SALVO, congela cliente/interno/fotos em
+ * - Validar e enviar: mensal só a partir da data da agenda (último dia útil do
+ *   mês, feriados da obra); valida o que está SALVO, congela cliente/interno/fotos em
  *   `obras_relatorio.conteudo` e manda a versão cliente aos destinatários do
  *   cliente e a interna aos internos (PDF cliente anexo). Mensal → tipo
  *   `mensal`; fase e entrega → `semanal` OU `mensal`. Um `obras_envio` por lado
@@ -22,16 +23,12 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
-import { hasSystemAccess } from '@/lib/auth/systemAccess'
-import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../../../../_lib/tipos'
 import { montarEmailPeriodo, resumoPeriodoParaIa } from '../../../../../_lib/email-periodo'
+import { autorizarEngenheiroDaObra } from '../../../../../_lib/autorizar-relatorio'
 import { enviarEmail } from '../../../../../_lib/enviar'
 import { SEM_IA, iaDisponivel, instrucoesPeriodo, sugerirObservacoes } from '../../../../../_lib/ia-semanal'
 import {
-  MAX_HIGHLIGHT_LIVRE,
   congelarPeriodo,
   conteudoPeriodoDe,
   dadosPdfPeriodo,
@@ -39,11 +36,10 @@ import {
   relatorioRowDe,
   relatorioValido,
   renderizarPeriodo,
+  validacaoLiberadaEm,
 } from '../../../../../_pdf/carregar-periodo'
-import { MAX_OBSERVACOES, type EntradaRascunho, type Resultado, type ResultadoEnvio, type ResultadoIa } from './_tipos'
+import { MAX_HIGHLIGHT_LIVRE, MAX_OBSERVACOES, type EntradaRascunho, type Resultado, type ResultadoEnvio, type ResultadoIa } from './_tipos'
 
-const NAO_AUTENTICADO = 'Não autenticado'
-const SEM_ACESSO = 'Sem acesso ao Gestão de Obras'
 const SO_ENGENHEIRO = 'Só o engenheiro responsável da obra ou um administrador mexe no relatório'
 const JA_VALIDADO = 'Relatório já validado — o conteúdo não muda mais'
 const SEM_RASCUNHO = 'Salve o rascunho antes de validar'
@@ -63,28 +59,8 @@ function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
   return falha(`Não foi possível ${acao}. Tente de novo em instantes. (${e.message})`)
 }
 
-/** Sessão + acesso obras/admin + obra OBRA lida pela sessão + engenheiro da obra ou admin. */
-async function autorizar(obraId: string): Promise<{ supabase: SupabaseClient; obraId: string } | Erro> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  const email = user?.email?.trim().toLowerCase()
-  if (!email) return falha(NAO_AUTENTICADO)
-  const admin = await isAdmin(supabase, email)
-  if (!admin && !(await hasSystemAccess(supabase, email, 'obras'))) return falha(SEM_ACESSO)
-  const { data, error } = await supabase
-    .from('obras_obra')
-    .select('id, modalidade, engenheiro_email')
-    .eq('id', String(obraId))
-    .maybeSingle()
-  if (error) return erroBanco('ler a obra', error)
-  const obra = data as Linha | null
-  if (!obra || obra.modalidade !== 'obra') return falha('Obra não encontrada')
-  const engenheiro = String(obra.engenheiro_email ?? '').trim().toLowerCase()
-  if (!admin && !(engenheiro !== '' && engenheiro === email)) return falha(SO_ENGENHEIRO)
-  return { supabase, obraId: String(obra.id) }
-}
+/** Sessão + acesso obras/admin + obra OBRA lida pela sessão + engenheiro da obra ou admin (`autorizar-relatorio.ts`). */
+const autorizar = (obraId: string) => autorizarEngenheiroDaObra(obraId, { soEngenheiro: SO_ENGENHEIRO, erroBanco })
 
 const revalidar = (obraId: string, tipo: string, referencia: string) => {
   revalidatePath(`/obras/obras/${obraId}/comunicacao/relatorio/${tipo}/${referencia}`)
@@ -111,9 +87,10 @@ export async function salvarRascunhoRelatorioAction(
   if (!l.ok) return falha(l.erro)
   const d = l.dados
   if (d.relatorio && d.relatorio.estado !== 'rascunho') return falha(JA_VALIDADO)
-  // Só ids que existem entre os automáticos do período (o navegador não inventa destaque).
-  const existentes = new Set(d.automaticos.map((h) => h.id))
-  const highlights = { marcados: [...new Set(x.marcados)].filter((m) => existentes.has(m)), livre: livre || null }
+  // Grava os automáticos do período que NÃO vieram marcados: id inventado pelo navegador não entra,
+  // e destaque que surgir depois (mês corrente) nasce marcado.
+  const marcados = new Set(x.marcados)
+  const highlights = { desmarcados: d.automaticos.map((h) => h.id).filter((id) => !marcados.has(id)), livre: livre || null }
   const campos = { observacoes: observacoes || null, highlights, periodo_inicio: d.inicio, periodo_fim: d.fim }
 
   if (d.relatorio) {
@@ -185,6 +162,11 @@ export async function validarEEnviarRelatorioAction(obraId: string, tipo: string
     return falha(
       `Nenhum destinatário do cliente com o tipo ${tipo === 'mensal' ? 'Mensal' : 'Semanal ou Mensal'} em Configurações da obra (peça a um administrador)`,
     )
+  }
+
+  const liberaEm = validacaoLiberadaEm(d.og, tipo, referencia)
+  if (estado === 'rascunho' && liberaEm && hoje < liberaEm) {
+    return falha(`O relatório mensal só pode ser validado a partir de ${liberaEm.slice(8, 10)}/${liberaEm.slice(5, 7)}/${liberaEm.slice(0, 4)} (último dia útil do mês)`)
   }
 
   if (estado === 'rascunho') {

@@ -10,7 +10,7 @@
  *
  * O congelado é entrada não confiável: formato inválido = montado na hora;
  * foto só pelo id, re-resolvida contra os diários validados desta obra no
- * período (`fotos-periodo.ts`). `highlights` guarda só os ids MARCADOS e o
+ * período (`fotos-periodo.ts`). `highlights` guarda só os ids DESMARCADOS e o
  * texto livre (o id carrega `numero` e nunca vai ao conteúdo do cliente: o
  * conteúdo leva só os textos).
  *
@@ -20,7 +20,7 @@
 import { createElement } from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { periodoMensal } from '../_lib/agenda'
+import { periodoMensal, ultimoDiaUtilDoMes } from '../_lib/agenda'
 import { highlightsDoPeriodo, type Highlight } from '../_lib/highlights'
 import type { PlanoSemana, Restricao } from '../_lib/last-planner'
 import { lerObraGrande, lerPlanos, lerRestricoes, type ObraGrande } from '../_lib/leitura'
@@ -35,16 +35,21 @@ import {
 import { logoManfac, registrarFontes } from './base'
 import { baixarFotos, fotosDosIds, fotosElegiveisDoPeriodo, slug, type FotoRef } from './fotos-periodo'
 import { DocumentoPeriodo, montarDadosPdfPeriodo, type DadosPdfPeriodo } from './periodo'
+import { MAX_HIGHLIGHT_LIVRE } from '../[id]/comunicacao/relatorio/[tipo]/[referencia]/_tipos'
 
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const MAX_FOTOS_PERIODO = 12
-export const MAX_HIGHLIGHT_LIVRE = 300
-const MAX_MARCADOS = 200
+export { MAX_HIGHLIGHT_LIVRE }
+const MAX_DESMARCADOS = 200
 
 export type EstadoRelatorio = 'rascunho' | 'validado' | 'enviado'
-/** `obras_relatorio.highlights`: ids automáticos MARCADOS + o highlight livre. */
-export type SelecaoHighlights = { marcados: string[]; livre: string | null }
+/**
+ * `obras_relatorio.highlights`: ids automáticos DESMARCADOS + o highlight livre.
+ * Guardar os desmarcados faz o destaque que surgir depois (mensal do mês
+ * corrente) entrar marcado — o engenheiro só desmarca.
+ */
+export type SelecaoHighlights = { desmarcados: string[]; livre: string | null }
 /** `obras_relatorio.conteudo` (imutável depois da validação). `fotos` = ids de `obras_rdo_foto`. */
 export type CongeladoPeriodo = { cliente: ConteudoPeriodo; interno: ConteudoPeriodo; fotos: string[] }
 export type RelatorioRow = {
@@ -98,6 +103,15 @@ export const obraConcluida = (og: ObraGrande): boolean => {
 
 const minD = (a: string, b: string) => (a < b ? a : b)
 
+/**
+ * Último mês com mensal (agenda §2.2: "até o mês do término"): o do maior fim
+ * real se a obra concluiu, senão o do término projetado; null sem cronograma.
+ */
+export function ultimoMesDoMensal(og: ObraGrande): string | null {
+  if (obraConcluida(og)) return (og.calc?.atividades ?? []).map((a) => a.fimReal!).reduce((m, x) => (x > m ? x : m)).slice(0, 7)
+  return og.calc?.terminoProjetado?.slice(0, 7) ?? null
+}
+
 /** Período do relatório ainda não validado, ou por que ele não está disponível. */
 export function periodoDisponivel(
   og: ObraGrande,
@@ -110,6 +124,8 @@ export function periodoDisponivel(
   if (tipo === 'mensal') {
     if (referencia > hoje.slice(0, 7)) return { ok: false, erro: 'Este mês ainda não começou' }
     if (referencia < dataBase.slice(0, 7)) return { ok: false, erro: 'Mês anterior à data-base da obra' }
+    const ultimo = ultimoMesDoMensal(og)
+    if (ultimo && referencia > ultimo) return { ok: false, erro: 'Mês depois do término da obra' }
     const p = periodoMensal(referencia, dataBase, og.feriados)
     if (p.inicio > p.fim) return { ok: false, erro: 'Mês sem dia útil depois da data-base' }
     return { ok: true, ...p }
@@ -127,14 +143,23 @@ export function periodoDisponivel(
   return { ok: true, inicio: minD(dataBase, fim), fim }
 }
 
+/**
+ * Primeiro dia em que o relatório pode ser VALIDADO (o rascunho sai a qualquer
+ * hora): o mensal só a partir da data da agenda — último dia útil do mês, com
+ * os feriados da obra —, para não congelar meio mês como se fosse o mês todo.
+ * Fase e entrega já só existem depois da conclusão: null.
+ */
+export const validacaoLiberadaEm = (og: ObraGrande, tipo: TipoPeriodo, referencia: string): string | null =>
+  tipo === 'mensal' ? ultimoDiaUtilDoMes(referencia, og.feriados) : null
+
 function selecaoDe(v: unknown): SelecaoHighlights | null {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) return null
   const x = v as Record<string, unknown>
-  const m = x.marcados
-  if (!Array.isArray(m) || m.length > MAX_MARCADOS || !m.every((i) => typeof i === 'string' && i.length <= 200)) return null
+  const m = x.desmarcados
+  if (!Array.isArray(m) || m.length > MAX_DESMARCADOS || !m.every((i) => typeof i === 'string' && i.length <= 200)) return null
   const livre = x.livre
   if (livre !== null && livre !== undefined && !(typeof livre === 'string' && livre.length <= MAX_HIGHLIGHT_LIVRE)) return null
-  return { marcados: m as string[], livre: typeof livre === 'string' && livre.trim() ? livre.trim() : null }
+  return { desmarcados: m as string[], livre: typeof livre === 'string' && livre.trim() ? livre.trim() : null }
 }
 
 function congeladoDe(v: unknown, tipo: TipoPeriodo, referencia: string): CongeladoPeriodo | null {
@@ -213,10 +238,10 @@ export async function lerDadosPeriodo(
   }
 }
 
-/** Sem seleção salva: todos os automáticos marcados. Com seleção: só os marcados, mais o livre. */
+/** Automáticos menos os desmarcados (sem seleção salva: todos), mais o livre. */
 export function textosDosHighlights(automaticos: Highlight[], sel: SelecaoHighlights | null): string[] {
-  const marcados = sel ? new Set(sel.marcados) : null
-  return [...automaticos.filter((h) => !marcados || marcados.has(h.id)).map((h) => h.texto), ...(sel?.livre ? [sel.livre] : [])]
+  const fora = new Set(sel?.desmarcados ?? [])
+  return [...automaticos.filter((h) => !fora.has(h.id)).map((h) => h.texto), ...(sel?.livre ? [sel.livre] : [])]
 }
 
 /** Validado/enviado com congelado válido: o congelado. Senão: montado agora dos dados lidos. */

@@ -12,9 +12,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { salvarRascunhoRelatorioAction, sugerirObservacoesRelatorioIaAction, validarEEnviarRelatorioAction } from './_actions'
 import { botaoPrincipal, botaoSecundario, campoCls, rotuloCls } from '../../../_registro-form'
-import { MAX_OBSERVACOES, type EstadoTela } from './_tipos'
-
-const MAX_LIVRE = 300
+import { MAX_HIGHLIGHT_LIVRE, MAX_OBSERVACOES, type EstadoTela } from './_tipos'
 
 export default function FormRelatorio({
   obraId,
@@ -30,6 +28,7 @@ export default function FormRelatorio({
   ia,
   temCliente,
   rotuloDestinatarios,
+  validarAPartirDe,
 }: {
   obraId: string
   tipo: string
@@ -46,6 +45,8 @@ export default function FormRelatorio({
   ia: boolean
   temCliente: boolean
   rotuloDestinatarios: string
+  /** Mensal antes do último dia útil do mês: "dd/mm/aaaa" a partir de quando valida (o servidor confere). */
+  validarAPartirDe?: string | null
 }) {
   const router = useRouter()
   const inicial = JSON.stringify({ o: observacoes.trim(), m: [...marcados].sort(), l: livre.trim() })
@@ -145,7 +146,7 @@ export default function FormRelatorio({
                 type="text"
                 value={livreTxt}
                 onChange={(e) => setLivreTxt(e.target.value)}
-                maxLength={MAX_LIVRE}
+                maxLength={MAX_HIGHLIGHT_LIVRE}
                 className={campoCls}
                 placeholder="Ex.: liberação antecipada da área de vendas"
               />
@@ -188,10 +189,13 @@ export default function FormRelatorio({
       ) : null}
       {podeEnviar && estado !== 'enviado' && estado !== 'nao_iniciado' ? (
         <div className="flex flex-col gap-1">
-          <button type="button" onClick={enviar} disabled={!!ocupado || sujo || !temCliente} className={botaoPrincipal}>
+          <button type="button" onClick={enviar} disabled={!!ocupado || sujo || !temCliente || !!validarAPartirDe} className={botaoPrincipal}>
             {ocupado === 'enviar' ? 'Enviando…' : estado === 'rascunho' ? 'Validar e enviar' : 'Enviar a quem falta'}
           </button>
           {sujo ? <p className="text-xs text-[#5a7380]">Salve o rascunho antes de validar.</p> : null}
+          {validarAPartirDe ? (
+            <p className="text-xs text-[#5a7380]">O mensal só pode ser validado a partir de {validarAPartirDe} (último dia útil do mês).</p>
+          ) : null}
           {!temCliente ? (
             <p className="text-xs text-[#b23232]">Nenhum destinatário do cliente com o tipo {rotuloDestinatarios} em Configurações da obra.</p>
           ) : null}

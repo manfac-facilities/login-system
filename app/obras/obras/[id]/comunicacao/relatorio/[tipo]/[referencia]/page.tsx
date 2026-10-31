@@ -8,7 +8,7 @@ import { ultimoDiaUtilDoMes } from '../../../../../_lib/agenda'
 import { montarEmailPeriodo } from '../../../../../_lib/email-periodo'
 import { iaDisponivel } from '../../../../../_lib/ia-semanal'
 import { etapasDaObra } from '../../../../../_lib/relatorio-periodo'
-import { conteudoPeriodoDe, lerDadosPeriodo, relatorioValido } from '../../../../../_pdf/carregar-periodo'
+import { conteudoPeriodoDe, lerDadosPeriodo, relatorioValido, ultimoMesDoMensal, validacaoLiberadaEm } from '../../../../../_pdf/carregar-periodo'
 import { lerObraDaRequisicao } from '../../../../_obra-da-requisicao'
 import { botaoSecundario } from '../../../_registro-form'
 import FormRelatorio from './_form'
@@ -94,7 +94,8 @@ export default async function RelatorioPeriodoPage({
   const estado: EstadoTela = d.relatorio?.estado ?? 'nao_iniciado'
   const congelado = estado === 'validado' || estado === 'enviado'
   const sel = d.relatorio?.highlights ?? null
-  const marcados = sel ? sel.marcados.filter((m) => d.automaticos.some((h) => h.id === m)) : d.automaticos.map((h) => h.id)
+  const marcados = d.automaticos.map((h) => h.id).filter((h) => !sel?.desmarcados.includes(h))
+  const liberaEm = validacaoLiberadaEm(og, tipo, referencia)
 
   const etapas = etapasDaObra(og)
   const envio =
@@ -131,7 +132,7 @@ export default async function RelatorioPeriodoPage({
                 Mês anterior
               </Link>
             ) : null}
-            {referencia < mesAtual ? (
+            {referencia < mesAtual && referencia < (ultimoMesDoMensal(og) ?? '9999-12') ? (
               <Link href={`/obras/obras/${id}/comunicacao/relatorio/mensal/${mesVizinho(referencia, 1)}`} className={botaoSecundario}>
                 Próximo mês
               </Link>
@@ -196,6 +197,7 @@ export default async function RelatorioPeriodoPage({
             ia={podeEnviar && iaDisponivel()}
             temCliente={nCliente > 0}
             rotuloDestinatarios={rotuloDestinatarios}
+            validarAPartirDe={estado === 'rascunho' && liberaEm && hoje < liberaEm ? `${dm(liberaEm)}/${liberaEm.slice(0, 4)}` : null}
           />
           {congelado ? (
             <a href={`${base}/pdf`} target="_blank" rel="noopener" className={botaoSecundario}>

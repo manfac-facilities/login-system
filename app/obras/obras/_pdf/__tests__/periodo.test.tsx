@@ -36,6 +36,8 @@ import {
   relatorioRowDe,
   relatorioValido,
   textosDosHighlights,
+  ultimoMesDoMensal,
+  validacaoLiberadaEm,
   type DadosPeriodo,
 } from '../carregar-periodo'
 import { DocumentoPeriodo, montarDadosPdfPeriodo } from '../periodo'
@@ -70,6 +72,10 @@ describe('periodoDisponivel', () => {
     expect(periodoDisponivel(obraPeriodo(), 'mensal', '2026-10', HOJE)).toEqual({ ok: true, inicio: '2026-10-26', fim: '2026-10-30' })
     expect(periodoDisponivel(obraPeriodo(), 'mensal', '2026-12', HOJE).ok).toBe(false)
     expect(periodoDisponivel(obraPeriodo(), 'mensal', '2026-09', HOJE).ok).toBe(false)
+    // Depois do mês do término (projetado 27/11) não há mensal.
+    expect(ultimoMesDoMensal(obraPeriodo())).toBe('2026-11')
+    expect(periodoDisponivel(obraPeriodo(), 'mensal', '2026-12', '2027-01-10')).toEqual({ ok: false, erro: expect.stringMatching(/término/) })
+    expect(ultimoMesDoMensal(obraPeriodo({ tudoConcluido: true }))).toBe('2026-11')
     const sem = obraPeriodo()
     sem.obra = { ...sem.obra, data_base: null }
     expect(periodoDisponivel(sem, 'mensal', '2026-11', HOJE)).toEqual({ ok: false, erro: expect.stringMatching(/data-base/) })
@@ -85,18 +91,32 @@ const dados = (over: Partial<DadosPeriodo> = {}): DadosPeriodo => {
   }
 }
 
+describe('validacaoLiberadaEm', () => {
+  it('mensal: último dia útil do mês com os feriados da obra; fase/entrega: sem trava de data', () => {
+    expect(validacaoLiberadaEm(obraPeriodo(), 'mensal', '2026-11')).toBe('2026-11-30')
+    const og = obraPeriodo()
+    og.feriados = new Set(['2026-11-30'])
+    expect(validacaoLiberadaEm(og, 'mensal', '2026-11')).toBe('2026-11-27')
+    expect(validacaoLiberadaEm(og, 'fase', '10')).toBeNull()
+    expect(validacaoLiberadaEm(og, 'entrega', 'entrega')).toBeNull()
+  })
+})
+
 describe('highlights marcados', () => {
-  it('sem seleção salva: todos; com seleção: só os marcados + o livre', () => {
+  it('sem seleção salva: todos; com seleção: todos menos os desmarcados + o livre; novo automático nasce marcado', () => {
     const a = dados().automaticos
     expect(a.map((h) => h.id)).toEqual(['etapa-antecipada:10', 'atividade-antecipada:10', 'atividade-antecipada:20', 'impedimento-resolvido:cli'])
     expect(textosDosHighlights(a, null)).toHaveLength(4)
-    const t = textosDosHighlights(a, { marcados: ['atividade-antecipada:20'], livre: 'Livre' })
+    const t = textosDosHighlights(a, { desmarcados: ['etapa-antecipada:10', 'atividade-antecipada:10', 'impedimento-resolvido:cli'], livre: 'Livre' })
     expect(t).toEqual([a[2].texto, 'Livre'])
+    // Seleção salva antes de o destaque existir: ele não está nos desmarcados, então entra.
+    const novo = { id: 'ppc:2026-11-09', texto: 'Semana de 09/11: 100% do plano cumprido (PPC)' }
+    expect(textosDosHighlights([...a, novo], { desmarcados: [a[0].id], livre: null })).toContain(novo.texto)
   })
 
   it('desmarcado não aparece no conteúdo, no e-mail nem no PDF; id nunca aparece', () => {
     const rel = relatorioRowDe(
-      { id: 'r', estado: 'rascunho', periodo_inicio: '2026-10-26', periodo_fim: '2026-11-06', highlights: { marcados: ['etapa-antecipada:10'], livre: null } },
+      { id: 'r', estado: 'rascunho', periodo_inicio: '2026-10-26', periodo_fim: '2026-11-06', highlights: { desmarcados: ['atividade-antecipada:10', 'atividade-antecipada:20', 'impedimento-resolvido:cli'], livre: null } },
       'fase', '10',
     )
     const c = conteudoPeriodoDe(dados({ relatorio: rel }), 'cliente')
@@ -141,10 +161,11 @@ describe('esquema do congelado e da seleção', () => {
   })
 
   it('seleção de highlights fora do formato: ignorada (todos marcados)', () => {
-    expect(linha(null, { marcados: 'x' }).highlights).toBeNull()
-    expect(linha(null, { marcados: [1] }).highlights).toBeNull()
-    expect(linha(null, { marcados: [], livre: 'x'.repeat(301) }).highlights).toBeNull()
-    expect(linha(null, { marcados: ['a'], livre: '  ' }).highlights).toEqual({ marcados: ['a'], livre: null })
+    expect(linha(null, { desmarcados: 'x' }).highlights).toBeNull()
+    expect(linha(null, { desmarcados: [1] }).highlights).toBeNull()
+    expect(linha(null, { marcados: ['a'] }).highlights).toBeNull()
+    expect(linha(null, { desmarcados: [], livre: 'x'.repeat(301) }).highlights).toBeNull()
+    expect(linha(null, { desmarcados: ['a'], livre: '  ' }).highlights).toEqual({ desmarcados: ['a'], livre: null })
   })
 })
 
