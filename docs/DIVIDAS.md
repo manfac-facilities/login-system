@@ -385,5 +385,4 @@ menu inferior do diário.
 - Entrega com situação `divergencia` não conta como entregue no selo "Pronta para liberar" (só `confirmada`/`resolvida`). Confirmar com o José se está certo.
 - Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
 - As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
-- Nota na receita (autorizada/enviada) com `parcela_centavos` NULL derruba o Resumo para "dados inconsistentes" (falha fechada). Conferir no banco se `fin_fat_nota_obras.valor_centavos` é nullable.
 - Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).

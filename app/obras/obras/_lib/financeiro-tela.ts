@@ -101,11 +101,14 @@ export type NotaTela = {
 
 export type Financeiro = {
   semLancamentos: boolean
-  resumo: Bloco<{ porOS: (Linha & { papel: 'mae' | 'aditivo' | 'obra' })[]; total: Linha }>
+  resumo: Bloco<{ porOS: (Linha & { papel: 'mae' | 'aditivo' | 'obra' })[]; total: Linha; notasSemParcela: number }>
   compras: Bloco<CompraTela[]>
   fornecedores: Bloco<ContratoTela[]>
   faturamento: Bloco<NotaTela[]>
 }
+
+const contaNaReceita = (r: Row) =>
+  (String(r.nota_situacao ?? '') === 'autorizada' || String(r.nota_situacao ?? '') === 'enviada') && !r.obras_devolvidas_em
 
 const osDe = (o: ObraFin | undefined, row: Row) => txt(row.obra_os) ?? o?.os ?? '—'
 
@@ -139,12 +142,17 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
         if (!STATUS_MEDICAO.has(status)) throw new Error('financeiro-tela: status de medição desconhecido')
         return { obraId: String(r.obra_id), status: status as StatusMedicao, valorCentavos: Math.round(valor(r.medicao_valor_reais) * 100) }
       })
-    const nt: NotaObra[] = notas.map((r) => ({
-      obraId: String(r.obra_id),
-      valor_centavos: valor(r.parcela_centavos),
-      situacao: String(r.nota_situacao ?? ''),
-      devolvidaEm: txt(r.obras_devolvidas_em),
-    }))
+    // Parcela NULL no Financeiro: a nota fica fora da receita e o Resumo avisa (não derruba o bloco).
+    const semParcela = (r: Row) => r.parcela_centavos === null || r.parcela_centavos === undefined || r.parcela_centavos === ''
+    const notasSemParcela = notas.filter((r) => semParcela(r) && contaNaReceita(r)).length
+    const nt: NotaObra[] = notas
+      .filter((r) => !semParcela(r))
+      .map((r) => ({
+        obraId: String(r.obra_id),
+        valor_centavos: valor(r.parcela_centavos),
+        situacao: String(r.nota_situacao ?? ''),
+        devolvidaEm: txt(r.obras_devolvidas_em),
+      }))
     const c = consolidarFinanceiro({ compras: cp, fornecedores: md, notas: nt, obras: refs })
     const temFilha = p.obras.some((o) => o.paiId === p.obraId)
     return {
@@ -153,6 +161,7 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
         papel: (l.obraId === p.obraId ? (temFilha ? 'mae' : 'obra') : 'aditivo') as 'mae' | 'aditivo' | 'obra',
       })),
       total: c.total,
+      notasSemParcela,
     }
   })
 
@@ -235,7 +244,7 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
         parcelaCentavos: parcela,
         totalCentavos: total,
         emitidaEm: txt(r.autorizada_em) ?? txt(r.nota_criado_em),
-        contaNaReceita: (situacao === 'autorizada' || situacao === 'enviada') && !r.obras_devolvidas_em,
+        contaNaReceita: parcela !== null && contaNaReceita(r),
       }
     }),
   )

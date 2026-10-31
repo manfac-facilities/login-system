@@ -94,6 +94,11 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
             </tbody>
           </Tabela>
         ) : null}
+        {fin.resumo.ok && fin.resumo.dados.notasSemParcela > 0 ? (
+          <p role="status" className="text-[13px] font-medium text-(--obra-orange-texto)">
+            {fin.resumo.dados.notasSemParcela} {fin.resumo.dados.notasSemParcela === 1 ? 'nota sem valor de parcela' : 'notas sem valor de parcela'} — receita pode estar incompleta
+          </p>
+        ) : null}
         <p className="text-[12px] text-(--obra-muted-texto)">
           Comprometido = pedido emitido e medição aprovada; realizado = NF de compra e medição com pagamento solicitado; margem pelo realizado.
           {obras.length > 1 ? ' A mãe soma os aditivos no total; cada NF entra uma vez por OS.' : ''}
@@ -222,7 +227,7 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
                   <td className={td + ' obra-num'}>{data(n.emitidaEm)}</td>
                   <td className={td}>
                     {n.situacao}
-                    {!n.contaNaReceita ? <span className="block text-[11px] text-(--obra-muted-texto)">não conta na receita</span> : null}
+                    {n.parcelaCentavos === null ? <span className="block text-[11px] text-(--obra-muted-texto)">parcela não informada no Financeiro</span> : !n.contaNaReceita ? <span className="block text-[11px] text-(--obra-muted-texto)">não conta na receita</span> : null}
                   </td>
                   <td className={num}>{n.parcelaCentavos === null ? '—' : brl(n.parcelaCentavos)}</td>
                   <td className={num}>{n.totalCentavos === null ? '—' : brl(n.totalCentavos)}</td>

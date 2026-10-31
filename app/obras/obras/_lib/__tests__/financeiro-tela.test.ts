@@ -82,6 +82,18 @@ describe('montarFinanceiro', () => {
     expect(f.faturamento.ok).toBe(true)
   })
 
+  it('nota com parcela NULL: fora da receita, listada como não informada, Resumo avisa e não cai', () => {
+    const f = montarFinanceiro({
+      obraId: MAE, obras, compras: [], fornecedores: [],
+      notas: [nota(), nota({ nota_id: 'n2', parcela_centavos: null }), nota({ nota_id: 'n3', parcela_centavos: null, nota_situacao: 'rascunho' })],
+    })
+    expect(f.resumo.ok).toBe(true)
+    if (!f.resumo.ok) return
+    expect(f.resumo.dados.total.receitaRealizada).toBe(300000)
+    expect(f.resumo.dados.notasSemParcela).toBe(1)
+    expect(f.faturamento.ok && f.faturamento.dados.map((n) => [n.parcelaCentavos, n.contaNaReceita])).toEqual([[300000, true], [null, false], [null, false]])
+  })
+
   it('pedido emitido sem total (null) é inconsistente, não vira R$ 0', () => {
     const f = montarFinanceiro({ obraId: MAE, obras, fornecedores: [], notas: [], compras: [pedido({ total_centavos: null })] })
     expect(f.resumo).toEqual({ ok: false })
