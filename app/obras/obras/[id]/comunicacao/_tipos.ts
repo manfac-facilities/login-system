@@ -13,6 +13,8 @@ export type Envio = {
   resultado: 'ok' | 'falha' | null
   detalhe: string | null
   registroId: string | null
+  /** Mensal/fase/entrega: o relatório do envio (`relatorio_id`) e o rótulo exibido (nunca o numero da fase). */
+  relatorio?: { tipo: 'mensal' | 'fase' | 'entrega'; referencia: string; rotulo: string } | null
 }
 
 export const TIPOS_REGISTRO = [
@@ -72,7 +74,7 @@ export type Registro = {
 /** Destinatário que a tela de envio oferece (ata) ou mostra na confirmação (imediata). */
 export type DestinatarioOpcao = { email: string; nome: string | null; lado: 'cliente' | 'interno'; tipos: string[] }
 
-export type FiltroLinha = 'todos' | 'diario' | 'semanal' | TipoRegistro
+export type FiltroLinha = 'todos' | 'diario' | 'semanal' | 'relatorio' | TipoRegistro
 
 export type ItemLinha =
   | { tipo: 'envio'; chave: string; quando: string; envio: Envio }

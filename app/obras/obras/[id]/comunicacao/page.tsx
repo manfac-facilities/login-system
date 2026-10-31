@@ -4,6 +4,8 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
+import { etapasDaObra } from '../../_lib/relatorio-periodo'
+import { obraConcluida, relatorioValido } from '../../_pdf/carregar-periodo'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
@@ -45,10 +47,10 @@ export default async function ComunicacaoPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const [envR, regR, destR] = await Promise.all([
+  const [envR, regR, destR, relR] = await Promise.all([
     supabase
       .from('obras_envio')
-      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id')
+      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id')
       .eq('obra_id', id)
       .order('enviado_em', { ascending: false })
       .limit(150),
@@ -60,11 +62,28 @@ export default async function ComunicacaoPage({
       .order('criado_em', { ascending: false })
       .limit(100),
     supabase.from('obras_destinatario').select('email, nome, lado, tipos').eq('obra_id', id).eq('ativo', true).order('email'),
+    supabase.from('obras_relatorio').select('id, tipo, referencia').eq('obra_id', id),
   ])
-  if (envR.error || regR.error || destR.error) {
+  if (envR.error || regR.error || destR.error || relR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
   }
 
+  // Relatórios de período: o envio casa pelo relatorio_id; a fase aparece pelo nome atual da etapa (nunca o numero).
+  const etapas = etapasDaObra(lida.dados)
+  const relatorios = new Map(((relR.data ?? []) as Linha[]).map((r) => [String(r.id), r]))
+  const relatorioDe = (relatorioId: unknown): Envio['relatorio'] => {
+    const r = relatorioId ? relatorios.get(String(relatorioId)) : undefined
+    if (!r || !relatorioValido(r.tipo, r.referencia)) return null
+    const referencia = String(r.referencia)
+    const e = r.tipo === 'fase' ? etapas.find((x) => x.referencia === referencia) : undefined
+    const rotulo =
+      r.tipo === 'mensal'
+        ? `mês ${referencia.slice(5, 7)}/${referencia.slice(0, 4)}`
+        : r.tipo === 'fase'
+          ? e ? `etapa ${e.ordem} — ${e.nome}` : 'etapa fora do cronograma vigente'
+          : 'entrega da obra'
+    return { tipo: r.tipo, referencia, rotulo }
+  }
   const envios: Envio[] = ((envR.data ?? []) as Linha[]).map((e) => ({
     id: String(e.id),
     tipo: e.tipo ?? null,
@@ -76,6 +95,7 @@ export default async function ComunicacaoPage({
     resultado: e.resultado ?? null,
     detalhe: e.detalhe ?? null,
     registroId: e.registro_id ?? null,
+    relatorio: relatorioDe(e.relatorio_id),
   }))
   const registros: Registro[] = ((regR.data ?? []) as Linha[]).map((r) => ({
     id: String(r.id),
@@ -98,6 +118,15 @@ export default async function ComunicacaoPage({
     tipos: d.tipos ?? [],
   }))
 
+  // Botões só dos relatórios disponíveis: mensal a partir do mês da data-base; fase com etapa concluída
+  // (a mais recente; a tela lista as outras); entrega com a obra concluída.
+  const mesAtual = hoje.slice(0, 7)
+  const dataBase = (obra.data_base as string | null | undefined) ?? null
+  const mensalDisponivel = !!dataBase && dataBase.slice(0, 7) <= mesAtual
+  const ultimaFase = etapas
+    .filter((e) => e.concluida && e.fimReal)
+    .sort((a, b) => b.fimReal!.localeCompare(a.fimReal!) || b.ordem - a.ordem)[0]
+
   const filtro = filtroDe(tipo)
   const itens = montarLinhaDoTempo({ envios, registros, filtro, email, admin })
   const base = `/obras/obras/${id}/comunicacao`
@@ -111,9 +140,26 @@ export default async function ComunicacaoPage({
       <section className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-bold text-[#00345e]">Comunicação</h2>
-          <Link href={`${base}/semanal`} className={botaoSecundario}>
-            Semanal
-          </Link>
+          <nav aria-label="Relatórios" className="flex flex-wrap gap-2">
+            <Link href={`${base}/semanal`} className={botaoSecundario}>
+              Semanal
+            </Link>
+            {mensalDisponivel ? (
+              <Link href={`${base}/relatorio/mensal/${mesAtual}`} className={botaoSecundario}>
+                Mensal
+              </Link>
+            ) : null}
+            {ultimaFase ? (
+              <Link href={`${base}/relatorio/fase/${ultimaFase.referencia}`} className={botaoSecundario}>
+                Fase
+              </Link>
+            ) : null}
+            {obraConcluida(lida.dados) ? (
+              <Link href={`${base}/relatorio/entrega/entrega`} className={botaoSecundario}>
+                Entrega
+              </Link>
+            ) : null}
+          </nav>
         </div>
         <nav aria-label="Filtrar por tipo" className="flex flex-wrap gap-2">
           {FILTROS.map((f) => (

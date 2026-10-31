@@ -1,4 +1,4 @@
-import { montarLinhaDoTempo, podeEditar, quandoRegistro, validarAta, validarImediata, validarRegistro } from '../_regras'
+import { FILTROS, montarLinhaDoTempo, podeEditar, quandoRegistro, validarAta, validarImediata, validarRegistro } from '../_regras'
 import type { Envio, Registro } from '../_tipos'
 
 const HOJE = '2026-10-30'
@@ -113,6 +113,21 @@ describe('linha do tempo', () => {
     })
     expect(l.map((i) => i.chave)).toEqual(['e-s1'])
     expect(montar('diario').map((i) => i.chave)).not.toContain('e-s1')
+  })
+
+  it('mensal/fase/entrega enviados entram no filtro Relatórios, não nos outros', () => {
+    const rel = [
+      envio({ id: 'm1', tipo: 'mensal', referencia: '2026-10-30', enviadoEm: '2026-10-30T20:00:00Z' }),
+      envio({ id: 'f1', tipo: 'fase', referencia: '2026-10-29', enviadoEm: '2026-10-29T20:00:00Z' }),
+      envio({ id: 'en', tipo: 'entrega', referencia: '2026-10-28', enviadoEm: '2026-10-28T20:00:00Z' }),
+    ]
+    const m = (filtro: Parameters<typeof montarLinhaDoTempo>[0]['filtro']) =>
+      montarLinhaDoTempo({ envios: [...envios, ...rel], registros, filtro, email: 'ana@manfac.com.br', admin: false, agora }).map((i) => i.chave)
+    expect(m('relatorio')).toEqual(['e-m1', 'e-f1', 'e-en'])
+    expect(m('semanal')).toEqual([])
+    expect(m('diario')).toEqual(['e-d1'])
+    expect(m('todos')).toEqual(expect.arrayContaining(['e-m1', 'e-f1', 'e-en']))
+    expect(FILTROS.map((f) => f.rotulo)).toContain('Relatórios')
   })
 
   it('filtros por tipo', () => {

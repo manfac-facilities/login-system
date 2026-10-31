@@ -153,6 +153,7 @@ export function montarLinhaDoTempo(p: {
       p.filtro === 'todos' ||
       (p.filtro === 'diario' && tipo === 'diario') ||
       (p.filtro === 'semanal' && tipo === 'semanal') ||
+      (p.filtro === 'relatorio' && (tipo === 'mensal' || tipo === 'fase' || tipo === 'entrega')) ||
       (p.filtro === 'reuniao' && tipo === 'ata') ||
       (p.filtro === 'imediata' && tipo === 'imediata')
     if (passa) itens.push({ tipo: 'envio', chave: `e-${e.id}`, quando: new Date(e.enviadoEm).toISOString(), envio: e })
@@ -178,6 +179,7 @@ export const FILTROS: { valor: FiltroLinha; rotulo: string }[] = [
   { valor: 'todos', rotulo: 'Tudo' },
   { valor: 'diario', rotulo: 'Diários' },
   { valor: 'semanal', rotulo: 'Semanais' },
+  { valor: 'relatorio', rotulo: 'Relatórios' },
   { valor: 'reuniao', rotulo: 'Reuniões' },
   { valor: 'ligacao', rotulo: 'Ligações' },
   { valor: 'visita', rotulo: 'Visitas' },

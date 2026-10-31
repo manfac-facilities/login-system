@@ -23,7 +23,11 @@ const ROTULO_ENVIO: Record<string, string> = {
   ata: 'Ata enviada',
   imediata: 'Comunicação imediata enviada',
   semanal: 'Relatório semanal enviado',
+  mensal: 'Relatório mensal enviado',
+  fase: 'Relatório de fase enviado',
+  entrega: 'Relatório de entrega enviado',
 }
+const REF_RELATORIO: Record<string, RegExp> = { mensal: /^\d{4}-(0[1-9]|1[0-2])$/, fase: /^(0|[1-9]\d{0,8})$/, entrega: /^entrega$/ }
 const rotuloRegistro = (r: Registro) =>
   r.tipo === 'imediata' ? 'Comunicação imediata' : (TIPOS_REGISTRO.find((t) => t.valor === r.tipo)?.rotulo ?? r.tipo)
 
@@ -35,7 +39,8 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
         <strong className="text-[#00345e]">
           {compacta ? 'E-mail' : (ROTULO_ENVIO[e.tipo ?? 'diario'] ?? 'Envio')}
           {e.tipo === 'diario' ? ` · diário de ${dataBR(e.referencia)}` : ''}
-          {e.tipo === 'semanal' ? ` · semana de ${dataBR(e.referencia)}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
+          {e.tipo === 'semanal' ? ` · semana de ${dataBR(e.referencia)}` : ''}
+          {e.relatorio ? ` · ${e.relatorio.rotulo}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
         </strong>
         <span className={ok ? 'text-[#136c38]' : 'text-[#b23232]'}>{ok ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}</span>
       </div>
@@ -53,6 +58,16 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
       {e.tipo === 'semanal' && e.referencia && ISO.test(e.referencia) ? (
         <a
           href={`/obras/obras/${obraId}/comunicacao/semanal/pdf/${e.referencia}`}
+          target="_blank"
+          rel="noopener"
+          className={`${botaoSecundario} mt-2`}
+        >
+          Abrir PDF
+        </a>
+      ) : null}
+      {e.relatorio && e.relatorio.tipo === e.tipo && REF_RELATORIO[e.relatorio.tipo]?.test(e.relatorio.referencia) ? (
+        <a
+          href={`/obras/obras/${obraId}/comunicacao/relatorio/${e.relatorio.tipo}/${e.relatorio.referencia}/pdf`}
           target="_blank"
           rel="noopener"
           className={`${botaoSecundario} mt-2`}

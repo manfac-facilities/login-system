@@ -51,6 +51,27 @@ describe('linha do tempo', () => {
     expect(screen.getByRole('link', { name: 'Abrir PDF' })).toHaveAttribute('href', '/obras/obras/o1/comunicacao/semanal/pdf/2026-10-26')
   })
 
+  it('relatório de período enviado: rótulo sem numero e Abrir PDF; referência estranha não vira link', () => {
+    const fase: Envio = {
+      ...envio, id: 'f1', tipo: 'fase', referencia: '2026-11-06',
+      relatorio: { tipo: 'fase', referencia: '10', rotulo: 'etapa 1 — Demolição' },
+    }
+    const torto: Envio = { ...envio, id: 'x1', tipo: 'mensal', relatorio: { tipo: 'mensal', referencia: '../x', rotulo: 'mês' } }
+    render(
+      <LinhaDoTempo
+        itens={[
+          { tipo: 'envio', chave: 'e-f1', quando: fase.enviadoEm, envio: fase },
+          { tipo: 'envio', chave: 'e-x1', quando: torto.enviadoEm, envio: torto },
+        ]}
+        obraId="o1" hoje="2026-11-10" podeEnviar={false} destinatarios={dest}
+      />,
+    )
+    expect(screen.getByText(/Relatório de fase enviado · etapa 1 — Demolição · cliente/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Abrir PDF' }).map((a) => a.getAttribute('href'))).toEqual([
+      '/obras/obras/o1/comunicacao/relatorio/fase/10/pdf',
+    ])
+  })
+
   it('envio da ata: padrão = cliente com tipo diário; confirmação lista quem recebe', () => {
     render(<LinhaDoTempo itens={itens(true)} obraId="o1" hoje="2026-10-30" podeEnviar destinatarios={dest} />)
     expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()

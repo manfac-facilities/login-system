@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     // Ata de reunião: rota do PDF e a página da Comunicação (a action de envio anexa o PDF).
     '/obras/obras/[id]/comunicacao/ata/[registro]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     '/obras/obras/[id]/comunicacao': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Relatórios de período (Leva 4): rota do PDF e a página (a action de envio anexa o PDF).
+    '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [
