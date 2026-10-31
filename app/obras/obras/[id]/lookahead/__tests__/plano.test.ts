@@ -18,6 +18,8 @@ function construtor(tabela: string) {
     select: () => q,
     eq: (c: string, v: unknown) => (filtros.push((l) => l[c] === v), q),
     lte: (c: string, v: string) => (filtros.push((l) => String(l[c]) <= v), q),
+    gt: (c: string, v: string) => (filtros.push((l) => String(l[c]) > v), q),
+    in: (c: string, v: unknown[]) => (filtros.push((l) => v.includes(l[c])), q),
     update: (p: Linha) => ((op = 'update'), (payload = p), q),
     maybeSingle: async () => executar(true),
     then: (ok: (v: unknown) => unknown, ko: (e: unknown) => unknown) => Promise.resolve(executar(false)).then(ok, ko),
@@ -41,6 +43,7 @@ jest.mock('../../../../_lib/tipos', () => ({ hojeISO: () => hojeMock() }))
 jest.mock('../../../_lib/leitura', () => ({
   feriadosDaObra: jest.fn(async () => ({ ok: true, feriados: new Set<string>() })),
   lerPlano: jest.fn(async () => ({ ok: true, plano: planoLido })),
+  lerAvancosDepois: jest.requireActual('../../../_lib/leitura').lerAvancosDepois,
 }))
 
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
@@ -178,6 +181,17 @@ describe('avaliarPlanoAction', () => {
       { obra_id: OBRA, numero: 4, data_status: '2026-11-09', percentual: 0.9, registrado_em: '2026-11-09T10:00:00Z' },
       { obra_id: OBRA, numero: 3, data_status: '2026-11-09', percentual: 1, registrado_em: '2026-11-09T10:00:00Z' },
     ]
+    // Diários depois da sexta: o da segunda abre a atividade 3 em 35%; o da terça já em 100% (não conta).
+    db.obras_rdo = [
+      { id: 'rdo-ter', obra_id: OBRA, data: '2026-11-10' },
+      { id: 'rdo-seg', obra_id: OBRA, data: '2026-11-09' },
+      { id: 'rdo-qui', obra_id: OBRA, data: '2026-11-05' },
+    ]
+    db.obras_rdo_avanco = [
+      { rdo_id: 'rdo-ter', numero: 3, de: 1, para: 1 },
+      { rdo_id: 'rdo-seg', numero: 3, de: 0.35, para: 1 },
+      { rdo_id: 'rdo-qui', numero: 3, de: 0.1, para: 0.2 },
+    ]
     // Exec de hoje: 4 em 50% (cumpriria a meta de 50%), mas na sexta estava em 30%.
     const sem = await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: null }])
     expect(sem).toEqual({ ok: false, erro: expect.stringContaining('causa') })
@@ -187,8 +201,28 @@ describe('avaliarPlanoAction', () => {
     ])
     expect(ok).toEqual({ ok: true })
     expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0.3, cumprido: false, causa: 'material' })
-    // 3 só tem histórico depois da sexta: vale o exec (40%).
-    expect(db.obras_plano_item[0]).toMatchObject({ percentual_final: 0.4, cumprido: false, causa: 'clima' })
+    // 3 só tem histórico depois da sexta: vale o `de` do primeiro diário depois dela (35%), não o exec (40%).
+    expect(db.obras_plano_item[0]).toMatchObject({ percentual_final: 0.35, cumprido: false, causa: 'clima' })
+  })
+
+  it('atividade que só começou na segunda seguinte: 0%, mesmo com exec e histórico de hoje', async () => {
+    hojeMock.mockReturnValue('2026-11-10')
+    db.obras_rdo = [{ id: 'rdo-seg', obra_id: OBRA, data: '2026-11-09' }]
+    db.obras_rdo_avanco = [{ rdo_id: 'rdo-seg', numero: 4, de: 0, para: 0.6 }]
+    db.obras_atividade_status_hist = [
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-09', percentual: 0.6, registrado_em: '2026-11-09T18:00:00Z' },
+    ]
+    expect(await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: 'equipe' }])).toEqual({ ok: true })
+    expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0, cumprido: false, causa: 'equipe' })
+  })
+
+  it('só histórico depois e nenhum diário depois da data: 0%', async () => {
+    hojeMock.mockReturnValue('2026-11-10')
+    db.obras_atividade_status_hist = [
+      { obra_id: OBRA, numero: 4, data_status: '2026-11-09', percentual: 0.9, registrado_em: '2026-11-09T18:00:00Z' },
+    ]
+    expect(await avaliarPlanoAction(OBRA, SEMANA, [{ numero: 4, causa: 'outro' }])).toEqual({ ok: true })
+    expect(db.obras_plano_item[1]).toMatchObject({ percentual_final: 0, cumprido: false })
   })
 
   it('semana ainda em curso: mede em hoje', async () => {

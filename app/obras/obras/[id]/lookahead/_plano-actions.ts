@@ -15,8 +15,8 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { CAUSA, type CausaRdo } from '../../_lib/causas'
-import { avaliarItem, dataDaAvaliacao, dataEnvioSemanal, percentuaisNaData } from '../../_lib/last-planner'
-import { feriadosDaObra, lerPlano } from '../../_lib/leitura'
+import { avaliarItem, dataDaAvaliacao, dataEnvioSemanal, percentualDaAvaliacao } from '../../_lib/last-planner'
+import { feriadosDaObra, lerAvancosDepois, lerPlano } from '../../_lib/leitura'
 import type { Resultado } from './_tipos'
 import { segundaValida, semanaFechavel, type ItemAvaliacao, type ItemFechamento } from './_plano-tipos'
 
@@ -124,30 +124,29 @@ export async function avaliarPlanoAction(obraId: string, semana: string, avaliac
   const plano = pl.plano
 
   const ate = dataDaAvaliacao(segunda, hojeISO())
-  const [{ data: ex, error: eExec }, { data: hs, error: eHist }] = await Promise.all([
+  const [{ data: ex, error: eExec }, { data: hs, error: eHist }, avD] = await Promise.all([
     supabase.from('obras_atividade_exec').select('numero, status, percentual').eq('obra_id', obraId),
     supabase
       .from('obras_atividade_status_hist')
       .select('numero, data_status, percentual, registrado_em')
-      .eq('obra_id', obraId)
-      .lte('data_status', ate),
+      .eq('obra_id', obraId),
+    lerAvancosDepois(supabase, obraId, ate),
   ])
-  if (eExec || eHist) return falha('Não foi possível ler a execução.')
-  const naData = percentuaisNaData(
-    ((hs ?? []) as { numero: number; data_status: string; percentual: number | null; registrado_em: string | null }[]).map((h) => ({
+  if (eExec || eHist || !avD.ok) return falha('Não foi possível ler a execução.')
+  const hist = (
+    (hs ?? []) as { numero: number; data_status: string; percentual: number | null; registrado_em: string | null }[]).map((h) => ({
       numero: Number(h.numero),
       dataStatus: String(h.data_status),
       percentual: Number(h.percentual ?? 0),
       registradoEm: h.registrado_em ?? '',
-    })),
-    ate,
-  )
+    }))
   const exec = new Map(
     ((ex ?? []) as { numero: number; status: string; percentual: number | null }[]).map((e) => [
       e.numero,
       e.status === 'concluido' ? 1 : Math.min(1, Math.max(0, Number(e.percentual ?? 0))),
     ]),
   )
+  const finalDe = percentualDaAvaliacao({ hist, avancosDepois: avD.avancos, data: ate, exec })
 
   const vistos = new Set<number>()
   const gravar: { numero: number; final: number; cumprido: boolean; causa: CausaRdo | null }[] = []
@@ -157,7 +156,7 @@ export async function avaliarPlanoAction(obraId: string, semana: string, avaliac
     const item = plano.itens.find((i) => i.numero === a.numero)
     if (!item) return falha('Atividade fora do plano da semana')
     if (item.avaliadoEm && !admin) return falha('Este item já foi avaliado; só administrador reavalia.')
-    const final = naData.get(a.numero) ?? exec.get(a.numero) ?? 0
+    const final = finalDe(a.numero)
     const cumprido = avaliarItem(item.metaPercentual, final)
     if (cumprido) {
       gravar.push({ numero: a.numero, final, cumprido, causa: null })

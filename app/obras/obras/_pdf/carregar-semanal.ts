@@ -206,7 +206,7 @@ export async function dadosPdfSemanal(
   const elegiveis = await fotosElegiveis(supabase, d.og.obra.id, d.segunda)
   const ids = d.semanal && d.semanal.estado !== 'rascunho' ? d.semanal.conteudo?.fotos : undefined
   const refs = ids
-    ? ids.map((id) => elegiveis.find((f) => f.id === id)).filter((f): f is FotoSemanalRef => !!f)
+    ? [...new Set(ids)].map((id) => elegiveis.find((f) => f.id === id)).filter((f): f is FotoSemanalRef => !!f)
     : elegiveis.slice(0, MAX_FOTOS_SEMANAL)
   const { fotos, omitidas } = await baixarFotosSemanal(d.og.obra.id, refs)
   const conteudo = conteudoSemanalDe(d, 'cliente')

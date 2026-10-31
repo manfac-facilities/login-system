@@ -371,6 +371,26 @@ export async function lerRestricoes(
   return { ok: true, restricoes: ((data ?? []) as Linha[]).map(restricaoDe) }
 }
 
+/** Avanços (numero, `de`) dos diários da obra com data > `data` — base do % de quem só tem histórico depois. */
+export async function lerAvancosDepois(
+  supabase: SupabaseClient,
+  obraId: string,
+  data: string,
+): Promise<{ ok: true; avancos: { numero: number; data: string; de: number }[] } | { ok: false }> {
+  const { data: rdos, error } = await supabase.from('obras_rdo').select('id, data').eq('obra_id', obraId).gt('data', data)
+  if (error) return { ok: false }
+  const dataDe = new Map(((rdos ?? []) as Linha[]).map((r) => [String(r.id), String(r.data)]))
+  if (!dataDe.size) return { ok: true, avancos: [] }
+  const { data: av, error: e2 } = await supabase.from('obras_rdo_avanco').select('rdo_id, numero, de').in('rdo_id', [...dataDe.keys()])
+  if (e2) return { ok: false }
+  return {
+    ok: true,
+    avancos: ((av ?? []) as Linha[])
+      .filter((a) => dataDe.has(String(a.rdo_id)))
+      .map((a) => ({ numero: Number(a.numero), data: dataDe.get(String(a.rdo_id))!, de: Number(a.de ?? 0) })),
+  }
+}
+
 export async function lerPlano(
   supabase: SupabaseClient,
   obraId: string,

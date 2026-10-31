@@ -148,8 +148,8 @@ describe('rota do PDF do semanal', () => {
       { id: 'f3', rdo_id: 'd2', path: 'o1/rdo/2026-10-28/c.jpg', legenda: 'rascunho', ordem: 1 },
       { id: 'f4', rdo_id: 'x9', path: 'outra/rdo/2026-10-27/b.jpg', legenda: 'outra obra', ordem: 1 },
     ]
-    // Ids de diário em rascunho, de outra obra e um caminho no lugar de id: somem.
-    db.obras_semanal = [{ ...semanal('enviado'), conteudo: { ...congeladoValido(), fotos: ['f1', 'f3', 'f4', 'o1/rdo/2026-10-27/nova.jpg'] } }]
+    // Id repetido conta uma vez; ids de diário em rascunho, de outra obra e um caminho no lugar de id: somem.
+    db.obras_semanal = [{ ...semanal('enviado'), conteudo: { ...congeladoValido(), fotos: ['f1', 'f1', 'f3', 'f4', 'o1/rdo/2026-10-27/nova.jpg'] } }]
     const r = await pedir()
     expect(r.status).toBe(200)
     expect(r.headers.get('Content-Disposition')).toContain('semanal-congelada-2026-10-26.pdf')

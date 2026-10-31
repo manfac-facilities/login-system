@@ -123,6 +123,29 @@ export function percentuaisNaData(hist: PontoHist[], data: string): Map<number, 
   return m
 }
 
+/**
+ * % final de cada item na avaliação (data = min(sexta, hoje)):
+ * - histórico até a data: o último registro (`percentuaisNaData`);
+ * - só histórico DEPOIS da data: o `de` do primeiro diário depois dela (sem diário, 0)
+ *   — o avanço da semana seguinte não conta;
+ * - nenhum histórico: o exec atual.
+ */
+export function percentualDaAvaliacao(p: {
+  hist: PontoHist[]
+  /** Avanços de diários com data > `data` (qualquer ordem). */
+  avancosDepois: { numero: number; data: string; de: number }[]
+  data: string
+  exec: Map<number, number>
+}): (numero: number) => number {
+  const naData = percentuaisNaData(p.hist, p.data)
+  const comHist = new Set(p.hist.map((h) => h.numero))
+  const abertura = new Map<number, number>()
+  for (const a of p.avancosDepois.filter((x) => x.data > p.data).sort((x, y) => y.data.localeCompare(x.data))) {
+    abertura.set(a.numero, Math.min(1, Math.max(0, a.de)))
+  }
+  return (n) => naData.get(n) ?? (comHist.has(n) ? (abertura.get(n) ?? 0) : (p.exec.get(n) ?? 0))
+}
+
 /** Data em que o plano da semana é medido: a sexta, ou hoje se a semana ainda não acabou. */
 export const dataDaAvaliacao = (segunda: string, hoje: string): string => {
   const sexta = diasDaSemana(segunda)[4]
