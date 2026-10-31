@@ -16,7 +16,7 @@ class Query implements PromiseLike<any> {
   private patch: Row | Row[] | null = null
   private retorna = false
   private head = false
-  private ordem: { col: string; asc: boolean } | null = null
+  private ordens: { col: string; asc: boolean }[] = []
   private lim: number | null = null
   private unico: 'maybe' | 'single' | null = null
 
@@ -36,7 +36,7 @@ class Query implements PromiseLike<any> {
   gte(c: string, v: any) { this.filtros.push((r) => comoTempo(r[c]) >= comoTempo(v)); return this }
   lt(c: string, v: any) { this.filtros.push((r) => comoTempo(r[c]) < comoTempo(v)); return this }
   in(c: string, vs: any[]) { this.filtros.push((r) => vs.includes(r[c])); return this }
-  order(col: string, o?: { ascending?: boolean }) { this.ordem = { col, asc: o?.ascending !== false }; return this }
+  order(col: string, o?: { ascending?: boolean }) { this.ordens.push({ col, asc: o?.ascending !== false }); return this }
   limit(n: number) { this.lim = n; return this }
   maybeSingle() { this.unico = 'maybe'; return this }
   single() { this.unico = 'single'; return this }
@@ -49,7 +49,7 @@ class Query implements PromiseLike<any> {
     const linhas = (this.fake.db[this.tabela] ??= [])
     if (this.op === 'insert') {
       const novas = (Array.isArray(this.patch) ? this.patch : [this.patch!]).map((r) => ({
-        id: `id-${++this.fake.seq}`, criado_em: this.fake.agora().toISOString(), ...r,
+        id: `id-${String(++this.fake.seq).padStart(6, '0')}`, criado_em: this.fake.agora().toISOString(), ...r,
       }))
       linhas.push(...novas)
       return { data: this.retorna ? novas : null, error: null }
@@ -60,9 +60,14 @@ class Query implements PromiseLike<any> {
       return { data: this.retorna ? alvo.map((r) => ({ ...r })) : null, error: null }
     }
     if (this.head) return { data: null, error: null, count: alvo.length }
-    if (this.ordem) {
-      const { col, asc } = this.ordem
-      alvo = [...alvo].sort((a, b) => (comoTempo(a[col]) < comoTempo(b[col]) ? -1 : 1) * (asc ? 1 : -1))
+    if (this.ordens.length) {
+      alvo = [...alvo].sort((a, b) => {
+        for (const { col, asc } of this.ordens) {
+          const x = comoTempo(a[col]), y = comoTempo(b[col])
+          if (x !== y) return (x < y ? -1 : 1) * (asc ? 1 : -1)
+        }
+        return 0
+      })
     }
     if (this.lim !== null) alvo = alvo.slice(0, this.lim)
     const copia = alvo.map((r) => ({ ...r }))
@@ -84,4 +89,27 @@ export class FakeAdmin {
   falhar = new Set<string>()
   constructor(public db: FakeDb = {}, public agora: () => Date = () => new Date()) {}
   from(tabela: string) { return new Query(this, tabela) }
+
+  /**
+   * Espelho de `obras_portal_emitir_codigo` (sdd-sql-obras-leva5.sql): conta e grava num
+   * passo só (como as travas de transação), aposenta os códigos vivos do e-mail.
+   */
+  async rpc(nome: string, p: Record<string, any>) {
+    this.chamadas.push({ tabela: `rpc:${nome}`, op: 'rpc', patch: p })
+    if (this.falhar.has(`rpc:${nome}`)) return { data: null, error: { message: 'falha simulada' } }
+    if (nome !== 'obras_portal_emitir_codigo') return { data: null, error: { message: 'rpc desconhecida' } }
+    const linhas = (this.db.obras_portal_codigo ??= [])
+    const agora = this.agora()
+    const desde = agora.getTime() - 60 * 60_000
+    const email = String(p.p_email).trim().toLowerCase()
+    const naHora = linhas.filter((r) => Date.parse(r.criado_em) > desde)
+    if (naHora.filter((r) => r.email === email).length >= 5) return { data: false, error: null }
+    if (naHora.filter((r) => (r.ip ?? null) === (p.p_ip ?? null)).length >= 20) return { data: false, error: null }
+    linhas.filter((r) => r.email === email && (r.usado_em ?? null) === null).forEach((r) => { r.usado_em = agora.toISOString() })
+    linhas.push({
+      id: `id-${String(++this.seq).padStart(6, '0')}`, email, codigo_hash: p.p_codigo_hash, expira_em: p.p_expira_em,
+      tentativas: 0, usado_em: null, criado_em: agora.toISOString(), ip: p.p_ip,
+    })
+    return { data: true, error: null }
+  }
 }

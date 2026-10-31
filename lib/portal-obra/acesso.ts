@@ -11,11 +11,12 @@ export const MENSAGEM_CODIGO_INVALIDO = 'Código inválido ou expirado. Peça um
 /** Portal sem segredo configurado (falha fechada) ou banco indisponível antes de qualquer decisão por e-mail. */
 export const MENSAGEM_INDISPONIVEL = 'A entrada está indisponível no momento. Tente novamente mais tarde.'
 
+/** trim() do JS tira todo espaço Unicode (tab, quebra de linha, NBSP, BOM); depois minúsculas. */
 export function normalizarEmail(e: unknown): string {
-  return typeof e === 'string' ? e.trim().toLowerCase().slice(0, 254) : ''
+  return typeof e === 'string' ? e.trim().toLowerCase() : ''
 }
 
-/** Formato mínimo de e-mail e fora do domínio Manfac (interno usa o hub). */
+/** Formato mínimo de e-mail, até 254 caracteres (acima disso recusa, não trunca), fora do domínio Manfac. */
 export function emailAceito(email: string): boolean {
   if (!email || email.length > 254) return false
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false

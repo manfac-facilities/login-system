@@ -1,7 +1,7 @@
 /**
  * Código de entrada do portal (spec Leva 5 §3.1): 6 dígitos, 10 min, uso único,
  * 5 tentativas por código, 5 códigos/hora por e-mail, 20/hora por IP; só o HMAC no banco.
- * Só o código mais recente do e-mail vale. Tentativa e uso são gravados por
+ * Só o código mais recente do e-mail vale (a emissão aposenta os anteriores). Tentativa e uso são gravados por
  * compare-and-swap (um UPDATE condicionado ao valor lido, com retorno): duas
  * conferências simultâneas nunca contam a mesma tentativa nem usam o código duas vezes.
  * Nunca logar código, token ou segredo.
@@ -14,7 +14,7 @@ import { hashesIguais, hmacHex, segredoPortal } from './segredo'
 import {
   MENSAGEM_CODIGO_INVALIDO, MENSAGEM_INDISPONIVEL, MENSAGEM_UNIFORME, emailAceito, normalizarEmail, obrasComAcessoAtivo,
 } from './acesso'
-import { CODIGO_MAX_TENTATIVAS, CODIGO_VALIDADE_MIN, dentroDosLimites } from './limites'
+import { CODIGO_MAX_TENTATIVAS, CODIGO_VALIDADE_MIN } from './limites'
 import { criarSessao } from './sessao'
 
 export type ResultadoPedido = { ok: boolean; mensagem: string }
@@ -40,48 +40,55 @@ function emailDoCodigo(codigo: string) {
   return { assunto: 'Seu código de acesso — Manfac', texto, html }
 }
 
-export async function pedirCodigo(emailBruto: unknown, ip: string, agora: Date = new Date()): Promise<ResultadoPedido> {
+/**
+ * Responde SEMPRE na hora com a mesma mensagem (só o segredo ausente muda a resposta, igual para todos).
+ * Acesso, emissão e envio rodam em `after()`, depois da resposta: o tempo de resposta não
+ * depende de o e-mail estar cadastrado nem de ter batido o limite (spec §2, sem enumeração).
+ * Limites por hora e "um só código vivo" são garantidos na função SQL
+ * `obras_portal_emitir_codigo` (travas de transação), não aqui.
+ */
+let avisouSemIp = false
+
+export async function pedirCodigo(emailBruto: unknown, ip: string | null, agora: Date = new Date()): Promise<ResultadoPedido> {
   const segredo = segredoPortal()
   if (!segredo) return { ok: false, mensagem: MENSAGEM_INDISPONIVEL }
-  let admin
-  try {
-    admin = createAdminClient()
-  } catch {
-    console.error('[portal-obra] cliente admin indisponível')
-    return { ok: false, mensagem: MENSAGEM_INDISPONIVEL }
+  const email = normalizarEmail(emailBruto)
+  if (emailAceito(email)) {
+    // Sem IP: o limite por IP vira o limite do próprio e-mail (nunca um balde global de 20/h).
+    if (!ip && !avisouSemIp) {
+      console.error('[portal-obra] pedido sem x-forwarded-for/x-real-ip; limite por IP caindo para o do e-mail')
+      avisouSemIp = true
+    }
+    const ipEfetivo = ip || `sem-ip:${email}`
+    after(() => emitirEEnviar(segredo, email, ipEfetivo, agora))
   }
-  const uniforme = { ok: true, mensagem: MENSAGEM_UNIFORME }
+  return { ok: true, mensagem: MENSAGEM_UNIFORME }
+}
+
+async function emitirEEnviar(segredo: string, email: string, ip: string, agora: Date): Promise<void> {
   try {
-    const email = normalizarEmail(emailBruto)
-    if (!emailAceito(email)) return uniforme
-    // Limites antes do acesso: o mesmo trabalho para e-mail cadastrado ou não.
-    if (!(await dentroDosLimites(admin, email, ip, agora))) return uniforme
+    const admin = createAdminClient()
     const obras = await obrasComAcessoAtivo(admin, email)
-    if (obras.length === 0) return uniforme
+    if (obras.length === 0) return
 
     const codigo = String(randomInt(0, 1_000_000)).padStart(6, '0')
-    const { error } = await admin.from('obras_portal_codigo').insert({
-      email,
-      codigo_hash: hashDoCodigo(segredo, email, codigo),
-      expira_em: new Date(agora.getTime() + CODIGO_VALIDADE_MIN * 60_000).toISOString(),
-      tentativas: 0,
-      criado_em: agora.toISOString(),
-      ip,
+    const { data: emitiu, error } = await admin.rpc('obras_portal_emitir_codigo', {
+      p_email: email,
+      p_ip: ip,
+      p_codigo_hash: hashDoCodigo(segredo, email, codigo),
+      p_expira_em: new Date(agora.getTime() + CODIGO_VALIDADE_MIN * 60_000).toISOString(),
     })
     if (error) {
-      console.error('[portal-obra] falha ao gravar código')
-      return uniforme
+      console.error('[portal-obra] falha ao emitir código')
+      return
     }
-    // Envio depois da resposta: o tempo de resposta não denuncia e-mail cadastrado.
+    if (emitiu !== true) return // limite por hora (e-mail ou IP): nada é enviado
+
     const msg = emailDoCodigo(codigo)
-    after(async () => {
-      const r = await enviarEmail({ para: [email], assunto: msg.assunto, html: msg.html, texto: msg.texto, anexos: [] })
-      if (!r.ok) console.error(`[portal-obra] falha no envio do código: ${r.falhas.map((f) => f.erro).join('; ')}`)
-    })
-    return uniforme
+    const r = await enviarEmail({ para: [email], assunto: msg.assunto, html: msg.html, texto: msg.texto, anexos: [] })
+    if (!r.ok) console.error(`[portal-obra] falha no envio do código: ${r.falhas.map((f) => f.erro).join('; ')}`)
   } catch {
     console.error('[portal-obra] erro ao pedir código')
-    return uniforme
   }
 }
 
@@ -101,7 +108,7 @@ export async function verificarCodigo(emailBruto: unknown, codigoBruto: unknown,
     // Só o código mais recente do e-mail vale (pedir outro aposenta o anterior).
     const { data, error } = await admin.from('obras_portal_codigo')
       .select('id, codigo_hash, expira_em, tentativas, usado_em')
-      .eq('email', email).order('criado_em', { ascending: false }).limit(1).maybeSingle()
+      .eq('email', email).order('criado_em', { ascending: false }).order('id', { ascending: false }).limit(1).maybeSingle()
     if (error || !data) return invalido
     const c = data as LinhaCodigo
     if (c.usado_em !== null && c.usado_em !== undefined) return invalido

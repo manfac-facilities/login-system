@@ -5,11 +5,12 @@ import { FakeAdmin } from './fixtures/fake-admin'
 
 let mockFake: FakeAdmin
 const mockEnviar = jest.fn()
-const mockPendentes: Promise<unknown>[] = []
+/** `after()` só agenda: o trabalho roda quando o teste chama `rodarAfter()` (= depois da resposta). */
+const mockPendentes: (() => unknown)[] = []
 
 jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => mockFake }))
 jest.mock('@/app/obras/obras/_lib/enviar', () => ({ enviarEmail: (...a: unknown[]) => mockEnviar(...a) }))
-jest.mock('next/server', () => ({ after: (fn: () => unknown) => { mockPendentes.push(Promise.resolve(fn())) } }))
+jest.mock('next/server', () => ({ after: (fn: () => unknown) => { mockPendentes.push(fn) } }))
 
 import { pedirCodigo, verificarCodigo } from '../codigo'
 import { lerSessao, encerrarSessao, opcoesCookiePortal, COOKIE_SESSAO } from '../sessao'
@@ -30,14 +31,17 @@ const ACESSO = [
   { obra_id: 'obra-9', email: 'joao@manfac.com.br', nome: 'Interno', ativo: true },
 ]
 
+const rodarAfter = () => Promise.all(mockPendentes.splice(0).map((fn) => fn()))
+
 async function enviados() {
-  await Promise.all(mockPendentes.splice(0))
+  await rodarAfter()
   return mockEnviar.mock.calls.map((c) => c[0] as { para: string[]; assunto: string; texto: string; html: string })
 }
 
 /** Pede um código e devolve o que chegou no e-mail. */
 async function codigoPara(email: string, ip = '10.0.0.1', quando = agora) {
   mockEnviar.mockClear()
+  agora = quando // o banco (rpc) grava criado_em com o relógio dele
   const r = await pedirCodigo(email, ip, quando)
   expect(r).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
   const env = await enviados()
@@ -113,8 +117,66 @@ describe('pedirCodigo', () => {
     await codigoPara('c20@x.com', '8.8.8.8')
   })
 
-  it('erro na contagem dos limites → falha fechada (não emite), mesma mensagem', async () => {
-    mockFake.falhar.add('obras_portal_codigo:select')
+  it('responde na hora, igual para cadastrado e não cadastrado: nenhum acesso ao banco antes da resposta', async () => {
+    for (const email of ['cliente@dpsp.com.br', 'ninguem@dpsp.com.br', 'inativo@dpsp.com.br']) {
+      expect(await pedirCodigo(email, '1.1.1.1', agora)).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
+      expect(mockFake.chamadas).toHaveLength(0)
+      expect(mockPendentes).toHaveLength(1)
+      mockPendentes.splice(0)
+    }
+    expect(mockEnviar).not.toHaveBeenCalled()
+    // O trabalho só acontece depois, em after().
+    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)
+    expect(mockFake.db.obras_portal_codigo ?? []).toHaveLength(0)
+    expect(await enviados()).toHaveLength(1)
+    expect(mockFake.db.obras_portal_codigo).toHaveLength(1)
+  })
+
+  it('10 pedidos simultâneos do mesmo e-mail → no máximo 5 códigos e 5 e-mails, um só código vivo', async () => {
+    const rs = await Promise.all(Array.from({ length: 10 }, (_, i) => pedirCodigo('cliente@dpsp.com.br', `10.1.0.${i}`, agora)))
+    rs.forEach((r) => expect(r).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME }))
+    const env = await enviados()
+    expect(env).toHaveLength(5)
+    expect(mockFake.db.obras_portal_codigo).toHaveLength(5)
+    expect(mockFake.db.obras_portal_codigo.filter((l) => l.usado_em === null)).toHaveLength(1)
+    expect(mockFake.chamadas.filter((c) => c.tabela === 'rpc:obras_portal_emitir_codigo')).toHaveLength(10)
+  })
+
+  it('sem IP: manda "sem-ip:<e-mail normalizado>" à rpc (limite do e-mail, não balde global) e loga uma vez sem PII', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => {})
+    await pedirCodigo('Cliente@DPSP.com.br', null, agora)
+    await pedirCodigo('cliente@dpsp.com.br', null, agora)
+    await rodarAfter()
+    const ips = mockFake.chamadas.filter((c) => c.op === 'rpc').map((c) => c.patch.p_ip)
+    expect(ips).toEqual(['sem-ip:cliente@dpsp.com.br', 'sem-ip:cliente@dpsp.com.br'])
+    expect(erro).toHaveBeenCalledTimes(1)
+    expect(String(erro.mock.calls[0][0])).not.toContain('@')
+  })
+
+  it('e-mail normalizado uma vez (tab, quebra de linha, NBSP, maiúsculas) antes de validar; a rpc recebe o normalizado', async () => {
+    await pedirCodigo(String.fromCharCode(9, 0xa0, 32) + 'Cliente@DPSP.com.BR' + String.fromCharCode(10, 0xa0), '1.1.1.1', agora)
+    expect(await enviados()).toHaveLength(1)
+    const [rpc] = mockFake.chamadas.filter((c) => c.op === 'rpc')
+    expect(rpc.patch.p_email).toBe('cliente@dpsp.com.br')
+  })
+
+  it('rpc recusa (limite) → nada enviado', async () => {
+    mockFake.rpc = async () => ({ data: false, error: null })
+    await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)
+    expect(await enviados()).toHaveLength(0)
+  })
+
+  it('e-mail com mais de 254 caracteres é recusado, não truncado', async () => {
+    const longo = `${'a'.repeat(250)}@dpsp.com.br`
+    mockFake.db.obras_portal_acesso.push({ obra_id: 'o', email: longo.slice(0, 254), nome: '', ativo: true })
+    await pedirCodigo(longo, '1.1.1.1', agora)
+    expect(await enviados()).toHaveLength(0)
+    expect(mockFake.chamadas).toHaveLength(0)
+  })
+
+  it('erro na emissão (rpc) → falha fechada (não envia), mesma mensagem', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockFake.falhar.add('rpc:obras_portal_emitir_codigo')
     expect(await pedirCodigo('cliente@dpsp.com.br', '1.1.1.1', agora)).toEqual({ ok: true, mensagem: MENSAGEM_UNIFORME })
     expect(mockFake.db.obras_portal_codigo ?? []).toHaveLength(0)
     expect(await enviados()).toHaveLength(0)
@@ -336,10 +398,12 @@ describe('cookie e IP', () => {
     expect(opcoesCookiePortal(exp)).toEqual({ httpOnly: true, secure: true, sameSite: 'lax', path: '/portal-obra', expires: exp })
   })
 
-  it('IP: primeiro salto do x-forwarded-for; senão x-real-ip; senão "desconhecido"', () => {
+  it('IP: último salto do x-forwarded-for (o que o Traefik acrescenta); senão x-real-ip; senão "desconhecido"', () => {
     const h = (o: Record<string, string>) => ({ get: (n: string) => o[n] ?? null })
-    expect(ipDoCliente(h({ 'x-forwarded-for': ' 200.1.1.1 , 10.0.0.2', 'x-real-ip': '10.0.0.2' }))).toBe('200.1.1.1')
+    expect(ipDoCliente(h({ 'x-forwarded-for': ' 1.2.3.4 (forjado), 200.1.1.1 ', 'x-real-ip': '10.0.0.2' }))).toBe('200.1.1.1')
+    expect(ipDoCliente(h({ 'x-forwarded-for': '200.1.1.1' }))).toBe('200.1.1.1')
     expect(ipDoCliente(h({ 'x-real-ip': '10.0.0.3' }))).toBe('10.0.0.3')
-    expect(ipDoCliente(h({}))).toBe('desconhecido')
+    expect(ipDoCliente(h({}))).toBeNull()
+    expect(ipDoCliente(h({ 'x-forwarded-for': ' , ' }))).toBeNull()
   })
 })

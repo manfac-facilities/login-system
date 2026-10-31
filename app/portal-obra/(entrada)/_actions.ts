@@ -15,7 +15,7 @@ export async function pedirCodigoAction(_prev: EstadoEntrada, form: FormData): P
   if (!r.ok) return { erro: r.mensagem }
   // Mesma resposta para qualquer e-mail: guarda o e-mail digitado para a tela do código.
   const jar = await cookies()
-  jar.set(COOKIE_EMAIL, email, opcoesCookiePortal(new Date(Date.now() + 10 * 60_000)))
+  jar.set(COOKIE_EMAIL, email.length <= 254 ? email : '', opcoesCookiePortal(new Date(Date.now() + 10 * 60_000)))
   redirect('/portal-obra/codigo')
 }
 

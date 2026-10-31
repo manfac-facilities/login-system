@@ -8,7 +8,7 @@ const mockEncerrar = jest.fn()
 
 jest.mock('next/headers', () => ({
   cookies: async () => mockJar,
-  headers: async () => ({ get: (n: string) => (n === 'x-forwarded-for' ? '200.9.9.9, 10.0.0.1' : null) }),
+  headers: async () => ({ get: (n: string) => (n === 'x-forwarded-for' ? '6.6.6.6, 200.9.9.9' : null) }),
 }))
 jest.mock('next/navigation', () => ({ redirect: (u: string) => { throw new Error(`REDIRECT:${u}`) } }))
 jest.mock('@/lib/portal-obra/codigo', () => ({
@@ -29,7 +29,7 @@ const flagsSeguras = { httpOnly: true, secure: true, sameSite: 'lax', path: '/po
 
 beforeEach(() => { jest.clearAllMocks() })
 
-it('pedir código: IP do primeiro salto, e-mail normalizado, cookie do e-mail com flags seguras, vai para o código', async () => {
+it('pedir código: IP do último salto, e-mail normalizado, cookie do e-mail com flags seguras, vai para o código', async () => {
   mockPedir.mockResolvedValue({ ok: true, mensagem: 'x' })
   await expect(pedirCodigoAction({}, form({ email: ' A@B.com ' }))).rejects.toThrow('REDIRECT:/portal-obra/codigo')
   expect(mockPedir).toHaveBeenCalledWith('a@b.com', '200.9.9.9')
@@ -59,7 +59,10 @@ it('código errado: mensagem e nenhum cookie de sessão', async () => {
 })
 
 it('sair (POST): revoga, apaga o cookie no path /portal-obra e volta para a entrada (303)', async () => {
-  const req = new NextRequest('http://localhost/portal-obra/sair', { method: 'POST', headers: { cookie: 'portal_obra_sessao=abc' } })
+  const req = new NextRequest('http://localhost/portal-obra/sair', {
+    method: 'POST',
+    headers: { cookie: 'portal_obra_sessao=abc', host: 'hub.manfac.com.br', origin: 'https://hub.manfac.com.br' },
+  })
   const res = await POST(req)
   expect(mockEncerrar).toHaveBeenCalledTimes(1)
   expect(mockEncerrar.mock.calls[0][0].get('portal_obra_sessao')?.value).toBe('abc')
@@ -72,4 +75,31 @@ it('sair (POST): revoga, apaga o cookie no path /portal-obra e volta para a entr
   expect(sc).toMatch(/HttpOnly/)
   expect(sc).toMatch(/Secure/)
   expect(sc).toMatch(/SameSite=lax/i)
+})
+
+it.each([
+  ['Origin de outro site', { origin: 'https://evil.example', host: 'hub.manfac.com.br' }],
+  ['Origin inválido', { origin: 'null', host: 'hub.manfac.com.br' }],
+  ['sem Origin e cross-site', { 'sec-fetch-site': 'cross-site', host: 'hub.manfac.com.br' }],
+  ['sem Origin nem Sec-Fetch-Site', { host: 'hub.manfac.com.br' }],
+])('sair recusa %s (403): não revoga nem apaga cookie', async (_n, h) => {
+  const req = new NextRequest('http://localhost/portal-obra/sair', { method: 'POST', headers: { cookie: 'portal_obra_sessao=abc', ...h } })
+  const res = await POST(req)
+  expect(res.status).toBe(403)
+  expect(mockEncerrar).not.toHaveBeenCalled()
+  expect(res.headers.get('set-cookie')).toBeNull()
+})
+
+it('sair aceita sem Origin quando Sec-Fetch-Site é same-origin', async () => {
+  const req = new NextRequest('http://localhost/portal-obra/sair', {
+    method: 'POST', headers: { cookie: 'portal_obra_sessao=abc', host: 'hub.manfac.com.br', 'sec-fetch-site': 'same-origin' },
+  })
+  expect((await POST(req)).status).toBe(303)
+})
+
+it('pedir código com e-mail > 254: não guarda o e-mail no cookie', async () => {
+  mockPedir.mockResolvedValue({ ok: true, mensagem: 'x' })
+  const longo = `${'a'.repeat(260)}@b.com`
+  await expect(pedirCodigoAction({}, form({ email: longo }))).rejects.toThrow('REDIRECT:/portal-obra/codigo')
+  expect(mockJar.set).toHaveBeenCalledWith('portal_obra_email', '', expect.objectContaining(flagsSeguras))
 })

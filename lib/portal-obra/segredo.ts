@@ -6,11 +6,13 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 const TAMANHO_MINIMO = 32
+let avisou = false
 
 export function segredoPortal(): string | null {
   const s = process.env.PORTAL_OBRA_SEGREDO?.trim() ?? ''
   if (s.length < TAMANHO_MINIMO) {
-    console.error(`[portal-obra] PORTAL_OBRA_SEGREDO ausente ou com menos de ${TAMANHO_MINIMO} caracteres; portal recusando entrada`)
+    if (!avisou) console.error(`[portal-obra] PORTAL_OBRA_SEGREDO ausente ou com menos de ${TAMANHO_MINIMO} caracteres; portal recusando entrada`)
+    avisou = true
     return null
   }
   return s

@@ -28,3 +28,19 @@ it('formato fora de hex-64 → false sem comparar', () => {
 it('propósito separa código de sessão', () => {
   expect(hmacHex(S, 'codigo', 'v')).not.toBe(hmacHex(S, 'sessao', 'v'))
 })
+
+it('segredo ausente é logado uma vez por processo, não a cada chamada', () => {
+  const erro = jest.spyOn(console, 'error').mockImplementation(() => {})
+  const antes = process.env.PORTAL_OBRA_SEGREDO
+  delete process.env.PORTAL_OBRA_SEGREDO
+  jest.isolateModules(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { segredoPortal } = require('../segredo') as typeof import('../segredo')
+    expect(segredoPortal()).toBeNull()
+    expect(segredoPortal()).toBeNull()
+    expect(segredoPortal()).toBeNull()
+  })
+  expect(erro).toHaveBeenCalledTimes(1)
+  process.env.PORTAL_OBRA_SEGREDO = antes
+  erro.mockRestore()
+})

@@ -7,7 +7,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export default async function MinhasObrasProvisorio() {
   const sessao = await lerSessao(await cookies())
   if (!sessao) redirect('/portal-obra')
-  const { data } = await createAdminClient().from('obras_obra').select('id, loja, descricao').in('id', sessao.obras)
+  const { data, error } = await createAdminClient().from('obras_obra').select('id, loja, descricao').in('id', sessao.obras)
+  if (error) {
+    return (
+      <main className="mx-auto max-w-xl px-4 py-10">
+        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Não foi possível carregar suas obras agora. Tente novamente em alguns minutos.
+        </p>
+      </main>
+    )
+  }
   const obras = (data ?? []) as { id: string; loja: string | null; descricao: string | null }[]
   return (
     <main className="mx-auto max-w-xl px-4 py-10">
