@@ -209,6 +209,34 @@ describe('validarEEnviarSemanalAction', () => {
     expect(pdf.conteudo.lado).toBe('cliente')
   })
 
+  it('validar congela cliente, interno e fotos em obras_semanal.conteudo', async () => {
+    db.obras_semanal = [semanal()]
+    await validarEEnviarSemanalAction(OBRA, SEG)
+    const c = db.obras_semanal[0].conteudo
+    expect(c.cliente).toMatchObject({ lado: 'cliente', observacoes: 'Texto salvo.' })
+    expect(c.interno).toMatchObject({ lado: 'interno' })
+    expect(c.fotos).toEqual([])
+    expect(JSON.stringify(c.cliente)).not.toContain('Pedreiro faltou')
+    expect(JSON.stringify(c.interno)).toContain('Pedreiro faltou')
+  })
+
+  it('reenvio a quem falta sai do conteúdo congelado, não do estado de hoje', async () => {
+    db.obras_semanal = [semanal()]
+    db.obras_destinatario = db.obras_destinatario.filter((d) => d.lado === 'cliente')
+    expect(await validarEEnviarSemanalAction(OBRA, SEG)).toEqual({ ok: true, enviados: 1 })
+    // Depois da validação: restrição liberada e observação mexida direto no banco; entra um interno.
+    db.obras_restricao[0].situacao = 'liberada'
+    db.obras_semanal[0].observacoes = 'Mexido depois.'
+    db.obras_destinatario.push({ obra_id: OBRA, email: 'int@manfac.com.br', lado: 'interno', tipos: ['semanal'], ativo: true })
+    enviarEmailMock.mockClear()
+    expect(await validarEEnviarSemanalAction(OBRA, SEG)).toEqual({ ok: true, enviados: 1 })
+    const int = enviarEmailMock.mock.calls[0][0]
+    expect(int.para).toEqual(['int@manfac.com.br'])
+    expect(int.texto).toContain('Aprovar layout')
+    expect(int.texto).toContain('Texto salvo.')
+    expect(int.texto).not.toContain('Mexido depois.')
+  })
+
   it('já validado: manda só a quem não recebeu; falha do cliente mantém validado', async () => {
     db.obras_semanal = [semanal({ estado: 'validado' })]
     db.obras_envio = [{ semanal_id: 's1', lado: 'interno', destinatarios: ['int@manfac.com.br'] }]

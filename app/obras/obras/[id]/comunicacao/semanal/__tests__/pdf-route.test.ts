@@ -122,6 +122,33 @@ describe('rota do PDF do semanal', () => {
     expect(d.conteudo.observacoes).toBe('Semana boa.')
   })
 
+  it('validado com conteúdo congelado: o PDF sai dele (e das fotos escolhidas na validação)', async () => {
+    const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0, 0])])
+    downloadMock.mockImplementation(async () => ({ data: jpeg(), error: null }))
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const congelado = (lado: string) => ({ lado, loja: 'Congelada', segunda: '2026-10-26', sexta: '2026-10-30', observacoes: 'Como foi validado.', avanco: { previsto: '10%', realizado: '9%', desvio: 'x', ate: 'a sexta' } })
+    db.obras_semanal = [{
+      ...semanal('enviado'),
+      conteudo: {
+        cliente: congelado('cliente'), interno: congelado('interno'),
+        fotos: [
+          { path: 'o1/rdo/2026-10-27/a.jpg', legenda: 'congelada', data: '2026-10-27' },
+          { path: 'outra/rdo/2026-10-27/b.jpg', legenda: 'fora', data: '2026-10-27' },
+        ],
+      },
+    }]
+    db.obras_rdo_foto = [{ rdo_id: 'd1', path: 'o1/rdo/2026-10-27/nova.jpg', legenda: 'nova', ordem: 1 }]
+    const r = await pedir()
+    expect(r.status).toBe(200)
+    expect(r.headers.get('Content-Disposition')).toContain('semanal-congelada-2026-10-26.pdf')
+    const d = ((renderMock.mock.calls[0] as unknown[])[0] as { props: { d: { conteudo: Record<string, unknown>; fotos: { legenda: string }[]; fotosOmitidas: number } } }).props.d
+    expect(d.conteudo.observacoes).toBe('Como foi validado.')
+    expect(JSON.stringify(d.conteudo)).not.toContain('Aprovar layout')
+    expect(d.fotos.map((f) => f.legenda)).toEqual(['congelada'])
+    expect(d.fotosOmitidas).toBe(1)
+    expect(downloadMock).toHaveBeenCalledTimes(1)
+  })
+
   it('fotos: só de diários validados da semana e do caminho canônico desta obra', async () => {
     const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0, 0])])
     db.obras_rdo_foto = [

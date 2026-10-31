@@ -162,7 +162,11 @@ export default async function SemanalPage({
               Interna
             </Link>
           </div>
-          <p className="text-xs text-[#5a7380]">Com as observações salvas. As fotos da semana vão no PDF anexo.</p>
+          <p className="text-xs text-[#5a7380]">
+            {estado === 'validado' || estado === 'enviado'
+              ? 'Conteúdo congelado na validação. As fotos da semana vão no PDF anexo.'
+              : 'Com as observações salvas. As fotos da semana vão no PDF anexo.'}
+          </p>
           <iframe
             title={`Prévia do relatório semanal (${interna ? 'versão interna' : 'versão do cliente'})`}
             srcDoc={previa.html}

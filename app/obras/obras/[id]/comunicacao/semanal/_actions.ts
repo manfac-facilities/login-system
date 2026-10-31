@@ -12,6 +12,8 @@
  *   destinatários `semanal` do cliente e a interna aos internos (PDF cliente
  *   anexo), um `obras_envio` tipo `semanal` por lado; `enviado` quando o
  *   cliente recebeu. Já validado → manda só a quem ainda não recebeu.
+ *   Na validação o conteúdo (cliente, interno, fotos) é congelado em
+ *   `obras_semanal.conteudo`; o reenvio e o PDF saem dele.
  *
  * Sem `export type` aqui — tipos em `_tipos.ts`.
  */
@@ -26,11 +28,13 @@ import { montarEmailSemanal, resumoParaIa } from '../../../_lib/email-semanal'
 import { enviarEmail } from '../../../_lib/enviar'
 import { SEM_IA, iaDisponivel, sugerirObservacoes } from '../../../_lib/ia-semanal'
 import {
+  congelarSemanal,
   conteudoSemanalDe,
   dadosPdfSemanal,
   lerDadosSemanal,
   renderizarSemanal,
   semanaDoRelatorio,
+  semanalRowDe,
 } from '../../../_pdf/carregar-semanal'
 import { MAX_OBSERVACOES, type Resultado, type ResultadoEnvio, type ResultadoIa } from './_tipos'
 
@@ -162,19 +166,26 @@ export async function validarEEnviarSemanalAction(obraId: string, segunda: strin
   const cadastrados = { cliente: doLado('cliente'), interno: doLado('interno') }
   if (!cadastrados.cliente.length) return falha(SEM_DESTINATARIO_CLIENTE)
 
+  // Lido do banco: as observações são as SALVAS, nunca as do navegador. Já validado: vem o congelado.
+  const l = await lerDadosSemanal(supabase, a.obraId, String(segunda), hoje)
+  if (!l.ok) return falha(estado === 'rascunho' ? l.erro : `${VALIDADO_MAS}: ${l.erro}`)
+
   if (estado === 'rascunho') {
+    // Congela o conteúdo validado (cliente, interno, fotos): reenvio e "Abrir PDF" saem dele.
     // validado_por/validado_em: o trigger OBRAS_SEMANAL grava (e-mail da sessão, now()).
+    const conteudo = await congelarSemanal(supabase, l.dados)
     const { data, error } = await supabase
       .from('obras_semanal')
-      .update({ estado: 'validado' })
+      .update({ estado: 'validado', conteudo })
       .eq('id', row.id)
       .eq('obra_id', a.obraId)
       .eq('estado', 'rascunho')
-      .select('id')
+      .select('*')
       .maybeSingle()
     if (error) return erroBanco('validar o relatório', error)
     if (!data) return falha(JA_VALIDADO)
     estado = 'validado'
+    l.dados.semanal = { ...semanalRowDe(data as Linha), conteudo }
     revalidar(a.obraId)
   }
 
@@ -208,9 +219,6 @@ export async function validarEEnviarSemanalAction(obraId: string, segunda: strin
     return { ok: true, enviados: 0 }
   }
 
-  // Conteúdo relido do banco: as observações enviadas são as validadas, nunca as do navegador.
-  const l = await lerDadosSemanal(supabase, a.obraId, String(segunda), hoje)
-  if (!l.ok) return falha(`${VALIDADO_MAS}: ${l.erro}`)
   let pdf: Buffer
   let nomeArquivo: string
   let fotos: number
