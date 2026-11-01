@@ -3,16 +3,23 @@
  * emissão, o status da atividade de trava e das atividades bloqueadas por ela.
  */
 
+export type StatusTrava = 'nao_iniciado' | 'em_andamento' | 'concluido' | 'bloqueado'
+
+/** Formato gravado pelo banco em `obras_fase_revisao.trava_snapshot` (Task 1). */
 export type TravaSnapshot = {
-  atividade: { numero: number; nome: string; status: string }
-  bloqueadas: { numero: number; nome: string }[]
-  liberada: boolean
+  /** AAAA-MM-DD (America/Sao_Paulo) do dia da emissão. */
+  data: string
+  gerado_em?: string
+  versao?: number | null
+  atividade: { numero: number; descricao: string | null; status: StatusTrava; percentual?: number }
+  bloqueadas: { numero: number; descricao: string | null; status?: string }[]
 }
 
 const STATUS: Record<string, string> = {
-  nao_iniciado: 'NÃO INICIADO',
+  nao_iniciado: 'NÃO INICIADA',
   em_andamento: 'EM ANDAMENTO',
-  concluido: 'CONCLUÍDO',
+  concluido: 'CONCLUÍDA',
+  bloqueado: 'BLOQUEADA',
 }
 
 /** `dd/mm/aaaa` de uma data `AAAA-MM-DD` ou de um instante ISO (fuso de São Paulo). */
@@ -37,17 +44,19 @@ function faixas(numeros: number[]): string {
   return partes.length <= 1 ? partes.join('') : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`
 }
 
-export function textoDaTrava(snapshot: TravaSnapshot | null, dataEmissao: string): string | null {
+const nomeDe = (n: { numero: number; descricao: string | null }) => `nº ${n.numero}${n.descricao ? ` ${n.descricao}` : ''}`
+
+/** Texto impresso na prancha; a data é a do próprio snapshot. Liberada = atividade de trava concluída. */
+export function textoDaTrava(snapshot: TravaSnapshot | null): string | null {
   if (!snapshot) return null
-  const { atividade, bloqueadas, liberada } = snapshot
-  const status = STATUS[atividade.status] ?? atividade.status.replace(/_/g, ' ').toUpperCase()
-  const base = `Status na geração (${dataBR(dataEmissao)}): atividade nº ${atividade.numero} ${atividade.nome} ${status}.`
-  if (liberada) return `${base} Condição de liberação atendida.`
+  const { atividade, bloqueadas } = snapshot
+  const status = STATUS[atividade.status] ?? String(atividade.status).replace(/_/g, ' ').toUpperCase()
+  const base = `Status na geração (${dataBR(snapshot.data)}): atividade ${nomeDe(atividade)} ${status}.`
+  if (atividade.status === 'concluido') return `${base} Condição de liberação atendida.`
   if (bloqueadas.length === 0) return base
   if (bloqueadas.length <= 3) {
-    const lista = bloqueadas.map((b) => `nº ${b.numero} ${b.nome}`).join(', ')
     const um = bloqueadas.length === 1
-    return `${base} ${um ? 'Atividade' : 'Atividades'} ${lista} ${um ? 'BLOQUEADA' : 'BLOQUEADAS'}.`
+    return `${base} ${um ? 'Atividade' : 'Atividades'} ${bloqueadas.map(nomeDe).join(', ')} ${um ? 'BLOQUEADA' : 'BLOQUEADAS'}.`
   }
   return `${base} Atividades nº ${faixas(bloqueadas.map((b) => b.numero))} BLOQUEADAS.`
 }

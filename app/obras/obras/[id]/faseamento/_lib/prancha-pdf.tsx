@@ -29,7 +29,7 @@ export type DadosPrancha = {
 
 const A3 = { w: 1190.55, h: 841.89 }
 const MARGEM = 24
-const COLUNA = 282
+const COLUNA = 440
 const GAP = 16
 const U = 1000
 const ORDEM: GrupoCamada[] = ['zona', 'linha', 'porta', 'fluxo', 'icone']
@@ -182,12 +182,19 @@ function CelulaCarimbo({ rotulo, valor, cheia, mono }: { rotulo: string; valor: 
   return (
     <View style={{ width: cheia ? '100%' : '50%', padding: 4, borderTopWidth: 0.5, borderTopColor: T.border }}>
       <Text style={{ fontSize: 6.5, color: T.mutedTexto, textTransform: 'uppercase', letterSpacing: 0.4 }}>{rotulo}</Text>
-      <Text style={[{ fontSize: 8.5, fontWeight: 700, color: T.ink }, mono ? estilos.mono : {}]}>{valor || '—'}</Text>
+      <Text style={[{ fontSize: 8, fontWeight: 700, color: T.ink, maxLines: 2, textOverflow: 'ellipsis' }, mono ? estilos.mono : {}]}>{valor || '—'}</Text>
     </View>
   )
 }
 
+/** Corpo das regras em degraus pelo volume de texto, para a coluna caber sempre em 1 página A3. */
+export function fonteDasRegras(regras: readonly string[]): number {
+  const total = regras.reduce((n, r) => n + r.length, 0)
+  return total <= 900 ? 11.5 : total <= 1500 ? 10 : 9
+}
+
 export function PranchaFaseamento(d: DadosPrancha) {
+  const fonteRegra = fonteDasRegras(d.regras)
   const prop = d.planta && d.planta.largura > 0 && d.planta.altura > 0 ? d.planta.largura / d.planta.altura : 1000 / 700
   const caixaW = A3.w - 2 * MARGEM - COLUNA - GAP
   const caixaH = A3.h - 2 * MARGEM
@@ -199,7 +206,8 @@ export function PranchaFaseamento(d: DadosPrancha) {
   }
   const V = U / prop
   const comPlanta = !!(d.plantaUrl && d.planta)
-  const camadas = [...d.camadas].sort((a, b) => ORDEM.indexOf(GRUPO_DE(a.t)) - ORDEM.indexOf(GRUPO_DE(b.t)))
+  const visiveis = d.camadas.filter((c) => !c.oculta)
+  const camadas = [...visiveis].sort((a, b) => ORDEM.indexOf(GRUPO_DE(a.t)) - ORDEM.indexOf(GRUPO_DE(b.t)))
   const rascunho = d.revisao.emitidaEm == null
   const data = d.revisao.emitidaEm ? dataBR(d.revisao.emitidaEm) : '—'
   const rev = `R${d.revisao.revisao}`
@@ -213,15 +221,17 @@ export function PranchaFaseamento(d: DadosPrancha) {
 
   return (
     <Document title={`${d.carimbo.titulo || d.fase.nome} ${rev}`} author="Manfac">
-      <Page size="A3" orientation="landscape" style={[estilos.pagina, { padding: MARGEM, flexDirection: 'row' }]}>
+      <Page size="A3" orientation="landscape" style={[estilos.pagina, { paddingTop: MARGEM, paddingBottom: MARGEM, paddingHorizontal: MARGEM, flexDirection: 'row' }]}>
         <View style={{ width: caixaW, height: caixaH, justifyContent: 'flex-start' }}>
-          <View style={{ width: w, height: h, borderWidth: 1, borderColor: '#222', position: 'relative' }}>
+          <View style={{ width: w, height: h, position: 'relative' }}>
             {comPlanta ? <Image src={d.plantaUrl as string} style={{ position: 'absolute', left: 0, top: 0, width: w, height: h, objectFit: 'fill' }} /> : null}
             <Svg width={w} height={h} viewBox={`0 0 ${U} ${V.toFixed(2)}`} style={{ position: 'absolute', left: 0, top: 0 }}>
               {!comPlanta ? <Rect x={0} y={0} width={U} height={V} fill="#fff" /> : null}
               {camadas.map((c) => (
                 <Camada1 key={c.id} c={c} V={V} />
               ))}
+              {/* Moldura desenhada por dentro do próprio Svg: não empurra a imagem nem as camadas. */}
+              <Rect x={1} y={1} width={U - 2} height={V - 2} fill="none" stroke="#222" strokeWidth={2} />
             </Svg>
             {!comPlanta ? (
               <Text style={{ position: 'absolute', left: 8, bottom: 6, fontSize: 8, color: T.mutedTexto }}>Sem planta enviada: camadas sobre quadro branco</Text>
@@ -233,18 +243,18 @@ export function PranchaFaseamento(d: DadosPrancha) {
           </View>
         </View>
 
-        <View style={{ width: COLUNA, marginLeft: GAP, height: caixaH }}>
+        <View style={{ width: COLUNA, marginLeft: GAP, minHeight: caixaH }}>
           {logo ? <Image src={logo} style={{ width: 110, height: 30 }} /> : <Text style={{ fontSize: 16, fontWeight: 700, color: T.ink }}>MANFAC</Text>}
-          <Text style={{ fontSize: 14, lineHeight: 1.25, fontWeight: 700, color: T.ink, marginTop: 10 }}>{d.carimbo.titulo || `Fase ${d.fase.numero} · ${d.fase.nome}`}</Text>
+          <Text style={{ fontSize: 14, lineHeight: 1.25, fontWeight: 700, color: T.ink, marginTop: 6, maxLines: 3, textOverflow: 'ellipsis' }}>{d.carimbo.titulo || `Fase ${d.fase.numero} · ${d.fase.nome}`}</Text>
           <Text style={{ fontSize: 8.5, color: T.text, marginTop: 3 }}>{`${d.obra.nome} · OS ${d.obra.os}`}</Text>
-          <View style={{ height: 2.5, backgroundColor: T.orange, marginVertical: 8 }} />
+          <View style={{ height: 2.5, backgroundColor: T.orange, marginVertical: 6 }} />
 
           <Text style={cab}>Legenda</Text>
-          <View style={{ marginBottom: 8 }}>
-            {legendaDe(d.camadas).map((l) => (
-              <View key={l.t} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+            {legendaDe(visiveis).map((l) => (
+              <View key={l.t} style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginBottom: 1, paddingRight: 4 }}>
                 <Amostra t={l.t} />
-                <Text style={{ fontSize: 8, marginLeft: 6, flex: 1 }}>{l.nome}</Text>
+                <Text style={{ fontSize: 7, marginLeft: 5, flex: 1 }}>{l.nome}</Text>
               </View>
             ))}
           </View>
@@ -252,13 +262,13 @@ export function PranchaFaseamento(d: DadosPrancha) {
           <Text style={cab}>Regras</Text>
           <View style={{ marginBottom: 8 }}>
             {d.regras.map((r, i) => (
-              <Text key={i} style={{ fontSize: 8, lineHeight: 1.3, marginBottom: 3 }}>{`${i + 1}. ${r}`}</Text>
+              <Text key={i} style={{ fontSize: fonteRegra, lineHeight: 1.2, marginBottom: 2 }}>{`${i + 1}. ${r}`}</Text>
             ))}
           </View>
 
           {d.travaTexto ? (
             <View style={{ borderWidth: 1, borderColor: '#b42318', padding: 5, marginBottom: 8 }}>
-              <Text style={{ fontSize: 8, color: '#b42318', lineHeight: 1.3 }}>{d.travaTexto}</Text>
+              <Text style={{ fontSize: 7.5, color: '#b42318', lineHeight: 1.2 }}>{d.travaTexto}</Text>
             </View>
           ) : null}
 

@@ -9,9 +9,11 @@
 
 export const MAX_CAMADAS = 300
 export const MAX_PONTOS = 50
-export const MAX_REGRAS = 20
-export const MAX_TEXTO_REGRA = 300
-export const MAX_TEXTO_CARIMBO = 200
+export const MAX_ROTULO = 120
+const EPS = 1e-6
+export const MAX_REGRAS = 12
+export const MAX_TEXTO_REGRA = 200
+export const MAX_TEXTO_CARIMBO = 300
 
 export type GrupoCamada = 'zona' | 'linha' | 'porta' | 'fluxo' | 'icone'
 
@@ -37,9 +39,9 @@ export type TipoCamada = keyof typeof TIPOS
 export type Ponto = [number, number]
 type TipoDe<G extends GrupoCamada> = { [K in TipoCamada]: (typeof TIPOS)[K]['grupo'] extends G ? K : never }[TipoCamada]
 
-export type CamadaZona = { id: string; t: TipoDe<'zona'>; r: [number, number, number, number]; rot?: string }
-export type CamadaLinha = { id: string; t: TipoDe<'linha' | 'fluxo'>; p: Ponto[] }
-export type CamadaPonto = { id: string; t: TipoDe<'porta' | 'icone'>; at: Ponto }
+export type CamadaZona = { id: string; t: TipoDe<'zona'>; r: [number, number, number, number]; rot?: string; oculta?: boolean }
+export type CamadaLinha = { id: string; t: TipoDe<'linha' | 'fluxo'>; p: Ponto[]; oculta?: boolean }
+export type CamadaPonto = { id: string; t: TipoDe<'porta' | 'icone'>; at: Ponto; oculta?: boolean }
 export type Camada = CamadaZona | CamadaLinha | CamadaPonto
 
 export type ResultadoSchema<T> = { success: true; data: T } | { success: false; error: { message: string } }
@@ -60,33 +62,44 @@ function criarSchema<T>(validar: (v: unknown) => string | { data: T }): Schema<T
   }
 }
 
+/** `every` que não pula buracos de array esparso (`[ , 1]`): cada índice conta. */
+const todos = (a: readonly unknown[], f: (x: unknown) => boolean) => Array.from(a).every(f)
+/** Texto de uma linha só: quebras e espaços repetidos viram um espaço; bordas aparadas. */
+const limpo = (s: string) => s.replace(/\s+/g, ' ').trim()
 const ehObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const rel = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1
 const ehTipo = (t: unknown): t is TipoCamada => typeof t === 'string' && Object.prototype.hasOwnProperty.call(TIPOS, t)
 const ponto = (p: unknown): p is Ponto => Array.isArray(p) && p.length === 2 && rel(p[0]) && rel(p[1])
 
+/** Mantém `oculta` na saída (só booleano; qualquer outra coisa é recusada em `validarCamada`). */
+const com = <C extends Camada>(c: C, v: Record<string, unknown>): C => (v.oculta === undefined ? c : { ...c, oculta: v.oculta as boolean })
+
 function validarCamada(v: unknown): string | Camada {
   if (!ehObj(v)) return 'camada inválida'
+  if (v.oculta !== undefined && typeof v.oculta !== 'boolean') return 'oculta deve ser verdadeiro ou falso'
   if (typeof v.id !== 'string' || v.id.length < 1 || v.id.length > 40) return 'id da camada inválido'
   if (!ehTipo(v.t)) return 'tipo de camada desconhecido'
   const grupo = TIPOS[v.t].grupo
   if (grupo === 'zona') {
     const r = v.r
-    if (!Array.isArray(r) || r.length !== 4 || !r.every(rel)) return 'zona precisa de r=[x,y,w,h] entre 0 e 1'
-    if (v.rot !== undefined && (typeof v.rot !== 'string' || v.rot.length > 80)) return 'rótulo da zona inválido'
+    if (!Array.isArray(r) || r.length !== 4 || !todos(r, rel)) return 'zona precisa de r=[x,y,w,h] entre 0 e 1'
+    const [x, y, w, h] = r as number[]
+    if (!(w > 0) || !(h > 0) || x + w > 1 + EPS || y + h > 1 + EPS) return 'zona com largura/altura > 0 e dentro da planta (x+w ≤ 1, y+h ≤ 1)'
+    const rot = typeof v.rot === 'string' ? limpo(v.rot) : v.rot
+    if (rot != null && (typeof rot !== 'string' || rot.length > MAX_ROTULO)) return `rótulo da zona inválido (até ${MAX_ROTULO} caracteres)`
     if ('p' in v || 'at' in v) return 'zona só aceita r'
     const base: CamadaZona = { id: v.id, t: v.t as CamadaZona['t'], r: r as CamadaZona['r'] }
-    return v.rot !== undefined ? { ...base, rot: v.rot as string } : base
+    return com(rot ? { ...base, rot } : base, v)
   }
   if (grupo === 'linha' || grupo === 'fluxo') {
     const p = v.p
-    if (!Array.isArray(p) || p.length < 2 || p.length > MAX_PONTOS || !p.every(ponto)) return 'linha precisa de 2 a 50 pontos entre 0 e 1'
+    if (!Array.isArray(p) || p.length < 2 || p.length > MAX_PONTOS || !todos(p, ponto)) return 'linha precisa de 2 a 50 pontos entre 0 e 1'
     if ('r' in v || 'at' in v) return 'linha só aceita p'
-    return { id: v.id, t: v.t as CamadaLinha['t'], p: p as Ponto[] }
+    return com({ id: v.id, t: v.t as CamadaLinha['t'], p: p as Ponto[] }, v)
   }
   if (!ponto(v.at)) return 'ponto precisa de at=[x,y] entre 0 e 1'
   if ('r' in v || 'p' in v) return 'ponto só aceita at'
-  return { id: v.id, t: v.t as CamadaPonto['t'], at: v.at }
+  return com({ id: v.id, t: v.t as CamadaPonto['t'], at: v.at }, v)
 }
 
 export const camadasSchema: Schema<Camada[]> = criarSchema((v) => {
@@ -107,10 +120,14 @@ export const camadasSchema: Schema<Camada[]> = criarSchema((v) => {
 export const regrasSchema: Schema<string[]> = criarSchema((v) => {
   if (!Array.isArray(v)) return 'regras deve ser uma lista'
   if (v.length > MAX_REGRAS) return `no máximo ${MAX_REGRAS} regras`
-  for (const r of v) {
-    if (typeof r !== 'string' || r.length < 1 || r.length > MAX_TEXTO_REGRA) return `cada regra tem de 1 a ${MAX_TEXTO_REGRA} caracteres`
+  const out: string[] = []
+  for (let i = 0; i < v.length; i++) {
+    const r: unknown = v[i]
+    const t = typeof r === 'string' ? r.trim() : ''
+    if (t.length < 1 || t.length > MAX_TEXTO_REGRA) return `cada regra tem de 1 a ${MAX_TEXTO_REGRA} caracteres`
+    out.push(t)
   }
-  return { data: v as string[] }
+  return { data: out }
 })
 
 export type Carimbo = { titulo: string; cliente: string; desenho: string; base: string; rt: string }
@@ -121,15 +138,16 @@ export const carimboSchema: Schema<Carimbo> = criarSchema((v) => {
   const out = {} as Carimbo
   for (const k of CAMPOS_CARIMBO) {
     const s = v[k]
-    if (typeof s !== 'string' || s.length > MAX_TEXTO_CARIMBO) return `carimbo.${k} deve ser texto de até ${MAX_TEXTO_CARIMBO} caracteres`
-    out[k] = s
+    const t = typeof s === 'string' ? limpo(s) : null
+    if (t === null || t.length > MAX_TEXTO_CARIMBO) return `carimbo.${k} deve ser texto de até ${MAX_TEXTO_CARIMBO} caracteres`
+    out[k] = t
   }
   return { data: out }
 })
 
 /** Tipos usados em `camadas`, na ordem fixa de `TIPOS`, com o nome legível. */
-export function legendaDe<C extends { t: TipoCamada }>(camadas: readonly C[]): { t: TipoCamada; nome: string }[] {
-  const usados = new Set(camadas.map((c) => c.t))
+export function legendaDe<C extends { t: TipoCamada; oculta?: boolean }>(camadas: readonly C[]): { t: TipoCamada; nome: string }[] {
+  const usados = new Set(camadas.filter((c) => !c.oculta).map((c) => c.t))
   return (Object.keys(TIPOS) as TipoCamada[]).filter((t) => usados.has(t)).map((t) => ({ t, nome: TIPOS[t].nome }))
 }
 

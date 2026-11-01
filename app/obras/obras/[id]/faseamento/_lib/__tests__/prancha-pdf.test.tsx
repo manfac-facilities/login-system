@@ -26,14 +26,15 @@ jest.mock('@react-pdf/renderer', () => {
 })
 
 import { render } from '@testing-library/react'
-import { PranchaFaseamento, type DadosPrancha } from '../prancha-pdf'
+import { PranchaFaseamento, fonteDasRegras, type DadosPrancha } from '../prancha-pdf'
 import { CAMADAS_EXEMPLO_FASE1 } from '../camadas'
 import { textoDaTrava } from '../trava'
 
-const trava = textoDaTrava(
-  { atividade: { numero: 6, nome: 'Escoramento provisório', status: 'em_andamento' }, bloqueadas: [{ numero: 11, nome: 'Demolição' }], liberada: false },
-  '2026-10-30',
-)
+const trava = textoDaTrava({
+  data: '2026-10-30',
+  atividade: { numero: 6, descricao: 'Escoramento provisório', status: 'em_andamento' },
+  bloqueadas: [{ numero: 11, descricao: 'Demolição', status: 'bloqueado' }],
+})
 
 const dados = (over: Partial<DadosPrancha> = {}): DadosPrancha => ({
   obra: { nome: 'Macaé 3', os: '24.0871' },
@@ -68,6 +69,13 @@ describe('PranchaFaseamento', () => {
     expect(pg?.getAttribute('data-orientation')).toBe('landscape')
   })
 
+  it('camadas ocultas não entram na legenda nem no desenho', () => {
+    const so = CAMADAS_EXEMPLO_FASE1.map((c) => (c.t === 'extintor' ? { ...c, oculta: true } : c))
+    const { container } = render(<PranchaFaseamento {...dados({ camadas: so })} />)
+    expect(container.textContent).not.toContain('Extintor')
+    expect(container.textContent).toContain('Luminária de emergência')
+  })
+
   it('sem planta: quadro branco com aviso e sem imagem', () => {
     const { container } = render(<PranchaFaseamento {...dados({ plantaUrl: null, planta: null })} />)
     expect(container.textContent).toContain('Sem planta enviada: camadas sobre quadro branco')
@@ -81,5 +89,15 @@ describe('PranchaFaseamento', () => {
     expect(t).toContain('RASCUNHO')
     expect(t).toContain('R0')
     expect(t).not.toContain('Status na geração')
+  })
+})
+
+describe('fonteDasRegras', () => {
+  it('reduz o corpo em degraus conforme o volume de texto', () => {
+    expect(fonteDasRegras(['x'.repeat(900)])).toBe(11.5)
+    expect(fonteDasRegras(['x'.repeat(901)])).toBe(10)
+    expect(fonteDasRegras(['x'.repeat(1500)])).toBe(10)
+    expect(fonteDasRegras(['x'.repeat(1501)])).toBe(9)
+    expect(fonteDasRegras(Array.from({ length: 12 }, () => 'x'.repeat(200)))).toBe(9)
   })
 })
