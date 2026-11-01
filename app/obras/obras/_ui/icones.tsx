@@ -188,3 +188,12 @@ export const IconeFinanceiro = (p: Props) => (
     <path d="M6 9.5v5M18 9.5v5" />
   </Base>
 )
+
+/** Dados da obra (Fases B/C): ficha com pessoas. */
+export const IconeDados = (p: Props) => (
+  <Base {...p}>
+    <rect x="3.5" y="3.5" width="17" height="17" rx="2" />
+    <circle cx="9" cy="10" r="2.25" />
+    <path d="M5.75 16.5c.6-1.8 1.8-2.75 3.25-2.75s2.65.95 3.25 2.75M14.5 9h3M14.5 12.5h3" />
+  </Base>
+)

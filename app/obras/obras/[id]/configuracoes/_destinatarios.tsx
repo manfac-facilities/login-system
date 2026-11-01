@@ -96,16 +96,20 @@ function Grupo({ titulo, itens, obraId, admin }: { titulo: string; itens: Destin
   )
 }
 
-export default function Destinatarios({ obraId, itens, admin }: { obraId: string; itens: Destinatario[]; admin: boolean }) {
+/**
+ * Lista de destinatários. Com `soInterno`, só o lado interno (Manfac): os do cliente são
+ * cadastrados pelo organograma em Dados da obra (Fases B/C §2.2), com as mesmas actions.
+ */
+export default function Destinatarios({ obraId, itens, admin, soInterno = false }: { obraId: string; itens: Destinatario[]; admin: boolean; soInterno?: boolean }) {
   const [novo, setNovo] = useState(false)
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold text-[#00345e]">Destinatários</h2>
-      <Grupo titulo="Cliente" itens={itens.filter((i) => i.lado === 'cliente')} obraId={obraId} admin={admin} />
+      <h2 className="text-lg font-bold text-[#00345e]">{soInterno ? 'Destinatários internos' : 'Destinatários'}</h2>
+      {soInterno ? null : <Grupo titulo="Cliente" itens={itens.filter((i) => i.lado === 'cliente')} obraId={obraId} admin={admin} />}
       <Grupo titulo="Interno" itens={itens.filter((i) => i.lado === 'interno')} obraId={obraId} admin={admin} />
       {admin ? (
         novo ? (
-          <Form obraId={obraId} inicial={VAZIO} onFim={() => setNovo(false)} />
+          <Form obraId={obraId} inicial={soInterno ? { ...VAZIO, lado: 'interno' } : VAZIO} onFim={() => setNovo(false)} />
         ) : (
           <button type="button" onClick={() => setNovo(true)} className="min-h-11 self-start rounded-lg border border-[#dadad8] px-4 text-sm text-[#333336] hover:border-[#b94606]">
             Adicionar destinatário

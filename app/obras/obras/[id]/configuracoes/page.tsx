@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
@@ -5,10 +6,9 @@ import Destinatarios from './_destinatarios'
 import ConfigObraForm from './_config'
 import PesoAvancoForm from './_peso'
 import FeriadosObra from './_feriados'
-import AcessoPortalCliente from './_acesso-portal'
 import DocumentosObra from './_documentos'
 import ObraMaeForm from './_obra-mae'
-import type { AcessoPortal, DocumentoLinha } from './_tipos-portal'
+import type { DocumentoLinha } from './_tipos-portal'
 import { opcoesObraMae, type AbrangenciaFeriado, type Destinatario, type FeriadoObra, type Lado, type ObraParaMae, type PesoAvanco, type TipoEnvio } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +25,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     return <EstadoVazio>Só administrador acessa as configurações da obra</EstadoVazio>
   }
 
-  const [obraR, destR, ferR, v1R, acR, docR, obrasR] = await Promise.all([
+  const [obraR, destR, ferR, v1R, docR, obrasR] = await Promise.all([
     supabase.from('obras_obra').select('engenheiro_email, data_base, atividade_trava, peso_avanco').eq('id', id).maybeSingle(),
     supabase.from('obras_destinatario').select('id, email, nome, funcao, lado, tipos, ativo').eq('obra_id', id).order('email'),
     supabase
@@ -34,7 +34,6 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
       .or(`obra_id.is.null,obra_id.eq.${id}`)
       .order('data'),
     supabase.from('obras_cronograma_versao').select('salva_em').eq('obra_id', id).eq('numero', 1).maybeSingle(),
-    supabase.from('obras_portal_acesso').select('id, email, nome, ativo').eq('obra_id', id).order('email'),
     supabase
       .from('obras_documento')
       .select('id, pasta, nome, tamanho, criado_em, criado_por')
@@ -43,7 +42,7 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     // OS filha: consulta separada — se falhar (ex.: coluna obra_pai_id ainda não aplicada), só o bloco some.
     supabase.from('obras_obra').select('id, os, loja, obra_pai_id').eq('modalidade', 'obra').is('cancelado_em', null),
   ])
-  if (obraR.error || destR.error || ferR.error || acR.error || docR.error) {
+  if (obraR.error || destR.error || ferR.error || docR.error) {
     return <EstadoVazio>Não foi possível carregar as configurações desta obra</EstadoVazio>
   }
 
@@ -56,12 +55,6 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
     lado: ((d.lado as Lado | null) ?? 'cliente') as Lado,
     tipos: (d.tipos ?? []) as TipoEnvio[],
     ativo: d.ativo !== false,
-  }))
-  const acessos: AcessoPortal[] = (acR.data ?? []).map((a) => ({
-    id: a.id as string,
-    email: a.email as string,
-    nome: (a.nome as string | null) ?? null,
-    ativo: a.ativo !== false,
   }))
   const documentos: DocumentoLinha[] = (docR.data ?? []).map((d) => ({
     id: d.id as string,
@@ -89,9 +82,18 @@ export default async function ConfiguracoesPage({ params }: { params: Promise<{ 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="flex flex-col gap-6">
-        <Destinatarios obraId={id} itens={destinatarios} admin />
+        {/* Destinatários do cliente e acesso ao portal: no organograma de Dados da obra (Fases B/C §2.2). */}
+        <section aria-label="Cliente" className="flex flex-col gap-2 rounded-xl border border-[#dadad8] bg-white p-3 text-sm text-[#333336]">
+          <h2 className="text-lg font-bold text-[#00345e]">Envios ao cliente e acesso ao portal</h2>
+          <p>
+            Quem do cliente recebe o diário, o semanal e o mensal, e quem entra na página do cliente, agora se marca no organograma, em Dados da obra.
+          </p>
+          <Link href={`/obras/obras/${id}/dados`} className="inline-flex min-h-11 items-center self-start rounded-lg bg-[#b94606] px-4 text-sm font-semibold text-white">
+            Abrir Dados da obra
+          </Link>
+        </section>
+        <Destinatarios obraId={id} itens={destinatarios} admin soInterno />
         <FeriadosObra obraId={id} feriados={feriados} />
-        <AcessoPortalCliente obraId={id} itens={acessos} />
         <DocumentosObra obraId={id} itens={documentos} pode />
       </div>
       <div className="flex flex-col gap-6">
