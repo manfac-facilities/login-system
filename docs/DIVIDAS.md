@@ -438,7 +438,7 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - Avanço físico da medição é gravado no momento do registro (lido do cronograma da própria OS); aditivo sem cronograma grava NULL ("—").
 ## 01/11/2026 — Obras Leva 6, mapa e fotos (`feat/obras-leva6`), deixado de propósito
 - ~~Planta só como imagem (PDF não)~~ **Resolvida em 01/11/2026** (`feat/obras-leva6b-pdf`): a tela de montar aceita
-  PDF e converte a 1ª página em imagem no navegador (`pdfjs-dist` 6.4.299, import dinâmico, `montar/_pdf-para-imagem.ts`);
+  PDF e converte a 1ª página em imagem no navegador (`pdfjs-dist` 5.4.624 — a 6.x exige Node ≥22 e o Dockerfile usa node:20, import dinâmico, `montar/_pdf-para-imagem.ts`);
   o servidor segue recebendo só imagem.
 - **Trocar a planta deixa a imagem antiga no bucket** (`<obra>/mapa/`): a policy não deixa apagar pelo navegador e
   não há limpeza. Volume pequeno (uma imagem por troca).
