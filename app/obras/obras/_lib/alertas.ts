@@ -6,9 +6,10 @@
 import type { ItemAgenda } from './agenda'
 import type { ResultadoCronograma } from './cronograma'
 import type { Restricao } from './last-planner'
+import { avisoLocacao, textoAviso } from './locacao'
 
 export type Alerta = {
-  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas'
+  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas' | 'locacao'
   tom: 'negativo' | 'atencao'
   texto: string
   acao: { rotulo: string; href: string }
@@ -45,6 +46,12 @@ export function calcularAlertas(p: {
    */
   agenda: ItemAgenda[] | null
   restricoes: Restricao[]
+  /**
+   * Locações da obra (`obras_fin_locacoes`, Fases B/C §2.9) com o calendário da obra.
+   * Ausente/null = leitura falhou: sem alerta de locação (nunca alerta em falso).
+   */
+  locacoes?: { item: string; fim: string | null; estado: string | null }[] | null
+  feriados?: ReadonlySet<string>
 }): Alerta[] {
   const raiz = `/obras/obras/${p.obraId}`
   const out: Alerta[] = []
@@ -104,6 +111,22 @@ export function calcularAlertas(p: {
       id: 'vencidas', tom: 'negativo',
       texto: `${plural(vencidas, 'restrição vencida', 'restrições vencidas')}`,
       acao: { rotulo: 'Ver quadro', href: `${raiz}/lookahead?aba=quadro&atrasadas=1` },
+    })
+  }
+
+  const avisos = (p.locacoes ?? [])
+    .map((l) => ({ item: l.item, aviso: avisoLocacao(l, p.hoje, p.feriados ?? new Set()) }))
+    .filter((x): x is { item: string; aviso: NonNullable<typeof x.aviso> } => x.aviso !== null)
+    .sort((a, b) => a.aviso.fim.localeCompare(b.aviso.fim))
+  if (avisos.length > 0) {
+    const urgente = avisos.some((x) => x.aviso.tipo !== 'proxima')
+    const primeira = `${avisos[0].item} ${textoAviso(avisos[0].aviso)}`
+    out.push({
+      id: 'locacao', tom: urgente ? 'negativo' : 'atencao',
+      texto: avisos.length === 1
+        ? `Locação: ${primeira} — devolver ou renovar`
+        : `${avisos.length} locações vencendo, a primeira: ${primeira}`,
+      acao: { rotulo: 'Ver locações', href: `${raiz}/financeiro/locacoes` },
     })
   }
   return out

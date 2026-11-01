@@ -6,6 +6,7 @@ import { hojeISO } from '../../_lib/tipos'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
 import { lerPlanos, lerRestricoes } from '../_lib/leitura'
 import { calcularAlertas } from '../_lib/alertas'
+import { itensDeLocacao } from './financeiro/locacoes/_tipos'
 import { lerAgenda } from '../_lib/envios-agenda'
 import { dadosPpc } from './lookahead/_plano-tipos'
 import { ultimosDiariosEnviados } from '../_lib/ultimo-diario'
@@ -46,12 +47,14 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
   const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
 
-  const [rdoR, envioR, planosR, restR, agenda] = await Promise.all([
+  const [rdoR, envioR, planosR, restR, agenda, locR] = await Promise.all([
     supabase.from('obras_rdo').select('estado').eq('obra_id', id).eq('data', hoje).maybeSingle(),
     ultimosDiariosEnviados(supabase, [id]),
     lerPlanos(supabase, id),
     lerRestricoes(supabase, id),
     lerAgenda(supabase, id, r.dados, hoje),
+    // Locações (Fases B/C §2.9): cliente da SESSÃO; sem valor para quem não vê valores.
+    supabase.rpc('obras_fin_locacoes', { p_obra: id }),
   ])
   if (rdoR.error || envioR.error) {
     return <EstadoVazio>Não deu para carregar o diário da obra. Recarregue a página em alguns instantes.</EstadoVazio>
@@ -65,6 +68,8 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     calc: r.dados.calc,
     agenda,
     restricoes: restR.ok ? restR.restricoes : [],
+    locacoes: locR.error ? null : itensDeLocacao((locR.data ?? []) as Record<string, unknown>[]),
+    feriados: r.dados.feriados,
   })
 
   // Analista da obra (Leva 5 §7): só com planos e restrições lidos (leitura que falhou não vira pergunta falsa).

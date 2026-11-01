@@ -4,6 +4,7 @@ import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { montarFinanceiro, type ObraFin } from '../../_lib/financeiro-tela'
 import TelaFinanceiro from './_tela'
+import SubnavFinanceiro from './_subnav'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,5 +70,10 @@ export default async function FinanceiroPage({ params }: { params: Promise<{ id:
     fin.semLancamentos = false
   }
 
-  return <TelaFinanceiro fin={fin} obras={obras} obraId={id} lidoEm={new Date().toISOString()} />
+  return (
+    <div className="flex flex-col gap-5">
+      <SubnavFinanceiro obraId={id} atual="resumo" valores />
+      <TelaFinanceiro fin={fin} obras={obras} obraId={id} lidoEm={new Date().toISOString()} />
+    </div>
+  )
 }
