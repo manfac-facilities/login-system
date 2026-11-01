@@ -27,6 +27,12 @@
 --   2. emitida não muda e não volta; envio faseamento só aponta emitida da
 --      mesma obra — 24–52;
 --   4. camadas inválidas recusadas no banco — 53–61 (regras 62, 65, 66: até 12 de até 200 caracteres; carimbo 63; válidas 64).
+--   Rodada de correções da revisão — 67–86: obra_id/fase_id da revisão e
+--   obra_id da fase imutáveis (67–69), supervisor cria fase e outro e-mail
+--   apaga fase como authenticated (70–71), obra_id do envio (72), cascata da
+--   obra com JWT de admin (73), base (planta) e fase congeladas na emissão,
+--   imutáveis depois e NULL no rascunho (74–81), limites de tamanho de
+--   camadas e carimbo (82–85), anon sem execute nos validadores (86).
 --
 -- Fixture (só dentro da transação):
 --   obra A TESTE-VERIF-LEVA6B-A (OBRA, engenheiro eng.teste@teste.invalid,
@@ -34,7 +40,8 @@
 --     atividade_trava 6);
 --   obra B TESTE-VERIF-LEVA6B-B (OBRA, sem engenheiro, coordenador NULL,
 --     sem atividade_trava);
---   obra C TESTE-VERIF-LEVA6B-C (OBRA, sem engenheiro, coordenador '  ');
+--   obra C TESTE-VERIF-LEVA6B-C (OBRA, sem engenheiro, coordenador '  ', sem mapa);
+--   mapa da obra A com planta <A>/mapa/5555….png 1200×840 (congelada na R0);
 --   hub_system_access slug obras para eng.teste, coord.teste, outro.coord e
 --   usuario.obras (o "supervisor"); sem.acesso não tem linha;
 --   cronograma da obra A: versão 1 SALVA (6 Escoramento provisório; 7 sem
@@ -115,6 +122,11 @@ values ('eng.teste@teste.invalid', 'obras', true, 'verificacao-leva6b'),
        ('coord.teste@teste.invalid', 'obras', true, 'verificacao-leva6b'),
        ('outro.coord@teste.invalid', 'obras', true, 'verificacao-leva6b'),
        ('usuario.obras@teste.invalid', 'obras', true, 'verificacao-leva6b');
+
+-- Mapa da obra A com planta (a revisão emitida congela este caminho e as dimensões).
+insert into public.obras_mapa (obra_id, modo, planta_path, planta_largura, planta_altura)
+values ('00000000-0000-4000-8000-00000000a060', 'planta',
+        '00000000-0000-4000-8000-00000000a060/mapa/55555555-5555-4555-8555-555555555555.png', 1200, 840);
 
 insert into public.obras_cronograma_versao (id, obra_id, numero, criada_por, salva_em, salva_por)
 values ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-00000000a060', 1, 'verificacao', now(), 'verificacao'),
@@ -756,6 +768,205 @@ exception when others then
 end $$;
 
 -- ============================================================
+-- Rodada de correções (revisão da Task 1): imutáveis que faltavam,
+-- escritas sem permissão, cascata com admin, congelamento da base/fase e
+-- limites de tamanho (M1, M5, I1, M6)
+-- ============================================================
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_fase_revisao set obra_id = '00000000-0000-4000-8000-00000000a061'
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(67, 'obra_id da revisão em rascunho é imutável (nem admin)', 'fase, obra e número da revisão são imutáveis', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_fase_revisao set fase_id = '00000000-0000-4000-8000-0000000f0002'
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(68, 'fase_id da revisão em rascunho é imutável (nem admin)', 'fase, obra e número da revisão são imutáveis', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_fase set obra_id = '00000000-0000-4000-8000-00000000a061'
+   where id = '00000000-0000-4000-8000-0000000f0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(69, 'obra_id da fase é imutável (nem admin)', 'obra_id e numero da fase são imutáveis', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  insert into public.obras_fase (obra_id, nome) values ('00000000-0000-4000-8000-00000000a060', 'Via RLS');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(70, 'supervisor (authenticated) cria fase: bloqueado pelo trigger', 'só o engenheiro da obra, o coordenador ou administrador', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'outro.coord@teste.invalid');
+  delete from public.obras_fase where id = '00000000-0000-4000-8000-0000000f0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(71, 'e-mail diferente do coordenador (authenticated) apaga fase: bloqueado', 'só o engenheiro da obra, o coordenador ou administrador', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  update public.obras_envio set obra_id = '00000000-0000-4000-8000-00000000a061'
+   where id = '00000000-0000-4000-8000-0000000d0001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(72, 'UPDATE do obra_id do envio faseamento para outra obra: recusado (nem sem JWT)', 'fase_revisao_id é de outra obra', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a060';
+  raise exception 'ok:%|%|%',
+    (select count(*) from public.obras_fase where obra_id = '00000000-0000-4000-8000-00000000a060'),
+    (select count(*) from public.obras_fase_revisao where obra_id = '00000000-0000-4000-8000-00000000a060'),
+    (select count(*) from public.obras_envio where obra_id = '00000000-0000-4000-8000-00000000a060');
+exception when others then
+  perform pg_temp.reg(73, 'administrador (authenticated, JWT) apaga a obra: fases, emitidas e envios saem em cascata', 'ok:0|0|0', sqlerrm);
+end $$;
+
+select pg_temp.reg(74, 'R0 emitida congelou planta (caminho e dimensões do mapa) e fase (nome e número)',
+  'ok:t|1200x840|Fase 1 · Demolição e reforço|1',
+  (select 'ok:' || pg_temp.tf(planta_path = '00000000-0000-4000-8000-00000000a060/mapa/55555555-5555-4555-8555-555555555555.png')
+          || '|' || planta_largura || 'x' || planta_altura || '|' || fase_nome || '|' || fase_numero
+     from public.obras_fase_revisao where id = '00000000-0000-4000-8000-0000000e0001'));
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_mapa set planta_path = '00000000-0000-4000-8000-00000000a060/mapa/66666666-6666-4666-8666-666666666666.jpg',
+                               planta_largura = 800, planta_altura = 800
+   where obra_id = '00000000-0000-4000-8000-00000000a060';
+  update public.obras_fase set nome = 'Fase 1 renomeada' where id = '00000000-0000-4000-8000-0000000f0001';
+  raise exception 'ok:%', (select pg_temp.tf(planta_path like '%55555555-5555-4555-8555-555555555555.png')
+                                  || '|' || planta_largura || 'x' || planta_altura || '|' || fase_nome
+                             from public.obras_fase_revisao where id = '00000000-0000-4000-8000-0000000e0001');
+exception when others then
+  perform pg_temp.reg(75, 'trocar a planta do mapa e renomear a fase NÃO muda a R0 emitida',
+    'ok:t|1200x840|Fase 1 · Demolição e reforço', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  update public.obras_fase_revisao set planta_path = null where id = '00000000-0000-4000-8000-0000000e0001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(76, 'emitida: planta congelada não muda (nem sem JWT)', 'revisão emitida é imutável', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(pg_temp.admin_email());
+  update public.obras_fase_revisao set fase_nome = 'Outro nome', planta_largura = 10
+   where id = '00000000-0000-4000-8000-0000000e0001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(77, 'emitida: nome da fase e dimensões congelados não mudam (nem admin)', 'revisão emitida é imutável', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_fase_revisao
+     set planta_path = 'forjado.png', planta_largura = 1, planta_altura = 1, fase_nome = 'Forjado', fase_numero = 9
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'ok:%', (select concat_ws('|', coalesce(planta_path, 'null'), coalesce(planta_largura::text, 'null'),
+                                            coalesce(planta_altura::text, 'null'), coalesce(fase_nome, 'null'),
+                                            coalesce(fase_numero::text, 'null'))
+                             from public.obras_fase_revisao where id = '00000000-0000-4000-8000-0000000e0002');
+exception when others then
+  perform pg_temp.reg(78, 'rascunho: planta e fase ficam NULL (forjados ignorados)', 'ok:null|null|null|null|null', sqlerrm);
+end $$;
+
+select pg_temp.reg(79, 'rascunho criado (R1) nasce com planta e fase NULL',
+  'ok:t',
+  (select 'ok:' || pg_temp.tf(planta_path is null and planta_largura is null and planta_altura is null
+                              and fase_nome is null and fase_numero is null)
+     from public.obras_fase_revisao where id = '00000000-0000-4000-8000-0000000e0002'));
+
+do $$
+declare v public.obras_fase_revisao;
+begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_fase (id, obra_id, nome) values ('00000000-0000-4000-8000-0000000f0201', '00000000-0000-4000-8000-00000000a062', 'Fase C');
+  insert into public.obras_fase_revisao (id, fase_id) values ('00000000-0000-4000-8000-0000000e0301', '00000000-0000-4000-8000-0000000f0201');
+  v := public.obras_emitir_fase_revisao('00000000-0000-4000-8000-0000000e0301');
+  raise exception 'ok:%|%|%|%|%', v.status, coalesce(v.planta_path, 'null'), coalesce(v.planta_largura::text, 'null'),
+                                  v.fase_nome, v.fase_numero;
+exception when others then
+  perform pg_temp.reg(80, 'obra sem mapa: emitida com planta NULL (quadro branco) e fase congelada', 'ok:emitida|null|null|Fase C|1', sqlerrm);
+end $$;
+
+do $$
+declare v public.obras_fase_revisao;
+begin
+  perform pg_temp.jwt(null);
+  insert into public.obras_mapa (obra_id, modo) values ('00000000-0000-4000-8000-00000000a062', 'ambientes');
+  insert into public.obras_fase (id, obra_id, nome) values ('00000000-0000-4000-8000-0000000f0201', '00000000-0000-4000-8000-00000000a062', 'Fase C');
+  insert into public.obras_fase_revisao (id, fase_id) values ('00000000-0000-4000-8000-0000000e0301', '00000000-0000-4000-8000-0000000f0201');
+  v := public.obras_emitir_fase_revisao('00000000-0000-4000-8000-0000000e0301');
+  raise exception 'ok:%|%|%', coalesce(v.planta_path, 'null'), coalesce(v.planta_largura::text, 'null'), coalesce(v.planta_altura::text, 'null');
+exception when others then
+  perform pg_temp.reg(81, 'obra com mapa sem planta: emitida com planta NULL', 'ok:null|null|null', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_fase_revisao
+     set camadas = (select jsonb_agg(jsonb_build_object('t', 'emerg', 'at', '[0.5,0.5]'::jsonb, 'id', repeat(md5(g::text), 30)))
+                      from generate_series(1, 300) g)
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(82, 'camadas válidas mas > 256 KiB (300 itens com id de ~1 KB): recusadas', 'obras_fase_revisao_camadas_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_fase_revisao set carimbo = jsonb_build_object(repeat('k', 41), 'v')
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(83, 'carimbo com chave de 41 caracteres: recusado', 'obras_fase_revisao_carimbo_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_fase_revisao
+     set carimbo = (select jsonb_object_agg('c' || g, repeat('é', 300)) from generate_series(1, 20) g)
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(84, 'carimbo > 8 KiB (20 valores de 300 "é"): recusado', 'obras_fase_revisao_carimbo_check', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  update public.obras_fase_revisao
+     set carimbo = (select jsonb_object_agg(repeat('k', 38) || lpad(g::text, 2, '0'), repeat('v', 300)) from generate_series(1, 20) g)
+   where id = '00000000-0000-4000-8000-0000000e0002';
+  raise exception 'ok:%', (select count(*) from jsonb_object_keys((select carimbo from public.obras_fase_revisao
+                                                                    where id = '00000000-0000-4000-8000-0000000e0002')));
+exception when others then
+  perform pg_temp.reg(85, 'carimbo no limite (20 chaves de 40, valores de 300 ASCII): aceito', 'ok:20', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('anon', null);
+  perform public.obras_fase_camadas_validas('[]');
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(86, 'anon não executa os validadores (/rpc)', 'permission denied', sqlerrm);
+end $$;
+
+-- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por strpos (no LIKE o '_' dos nomes de constraint é curinga).
 -- ============================================================
@@ -774,10 +985,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 66 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 66 testes rodaram';
+  if v_total <> 86 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 86 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/66 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/86 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 

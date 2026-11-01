@@ -34,13 +34,23 @@
 --        = e-mail do JWT e, se usa_trava, o trava_snapshot lido do cronograma
 --        vigente (o cliente não consegue forjar nenhum dos três). Obra sem
 --        atividade_trava com usa_trava = true: emissão recusada;
+--      - na emissão o trigger também CONGELA a base da prancha e a fase:
+--        planta_path / planta_largura / planta_altura copiados de obras_mapa
+--        (obra sem mapa ou sem planta: as três NULL = quadro branco) e
+--        fase_nome / fase_numero copiados de obras_fase. No rascunho as cinco
+--        ficam NULL (o enviado é ignorado; check obras_fase_revisao_emissao_check).
+--        A imagem antiga da planta continua no bucket quando o mapa troca de
+--        planta (nenhum código apaga '<obra>/mapa/…'; a policy de delete só
+--        alcança '/rdo/'), então o caminho congelado continua válido;
 --      - emitida é IMUTÁVEL (qualquer UPDATE recusado, com ou sem JWT) e não
 --        volta a rascunho; não se apaga (só na cascata da fase/obra);
 --      - camadas: check obras_fase_revisao_camadas_check
---        (obras_fase_camadas_validas): array, <= 300 itens, cada item objeto
---        com t conhecido e geometria do grupo com coordenadas 0–1 (formato no
---        comentário da função); regras: <= 12 textos de 1–200 caracteres;
---        carimbo: objeto, <= 20 chaves, valores texto <= 300 ou null.
+--        (obras_fase_camadas_validas + pg_column_size <= 256 KiB): array,
+--        <= 300 itens, cada item objeto com t conhecido e geometria do grupo
+--        com coordenadas 0–1 (formato no comentário da função); regras: <= 12
+--        textos de 1–200 caracteres; carimbo: objeto, <= 20 chaves de <= 40
+--        caracteres, valores texto <= 300 ou null, <= 8 KiB. Validadores sem
+--        execute para anon/public (authenticated e service_role mantêm).
 --      rpc obras_emitir_fase_revisao(p_revisao uuid) (security invoker, para
 --      authenticated): faz o UPDATE para emitida e devolve a linha.
 --   Fase e revisão, numa sessão de usuário (JWT com e-mail): INSERT/UPDATE/
@@ -52,8 +62,10 @@
 --   Autoria: criado_por (JWT) e criado_em = now() forçados no INSERT; no
 --   UPDATE voltam aos antigos, atualizado_por = JWT, atualizado_em = now().
 --   anon sem nada.
---   5. obras_envio: tipo 'faseamento' + coluna fase_revisao_id (FK NO ACTION,
---      como relatorio_id; índice obras_envio_fase_revisao_idx); check
+--   5. obras_envio: tipo 'faseamento' + coluna fase_revisao_id (FK ON DELETE
+--      CASCADE — a revisão emitida só sai na cascata da obra, junto com o
+--      envio; assim a cascata não depende da ordem dos gatilhos de RI;
+--      índice obras_envio_fase_revisao_idx); check
 --      obras_envio_faseamento_obrigatorio (tipo faseamento exige
 --      fase_revisao_id). obras_envio_vinculo_obra recriado (corpo de produção
 --      + fase_revisao_id: mesma obra do envio, revisão EMITIDA e envio do tipo
@@ -76,29 +88,9 @@
 -- ARMADILHAS DO .claude/rules/sql.md: guardas usam `is not true` (sem NULL
 -- aberto); uma função de trigger por tabela, sem campo de outra tabela.
 --
--- ROLLBACK (só depois de reverter o app; apaga o faseamento — exportar antes):
---   begin;
---   delete from public.obras_envio where tipo = 'faseamento';  -- só se aceito perder o registro
---   drop trigger obras_envio_vinculo_obra on public.obras_envio;
---   -- recriar obras_envio_vinculo_obra e obras_envio_guarda com o corpo da Leva 4
---   -- (cabeçalho deste arquivo, seção 5: corpo de produção sem o bloco faseamento)
---   create trigger obras_envio_vinculo_obra before insert or update of obra_id, tipo,
---     registro_id, semanal_id, relatorio_id on public.obras_envio
---     for each row execute function public.obras_envio_vinculo_obra();
---   alter table public.obras_envio drop constraint obras_envio_faseamento_obrigatorio;
---   alter table public.obras_envio drop constraint obras_envio_tipo_check;
---   alter table public.obras_envio add constraint obras_envio_tipo_check check (tipo is null
---     or tipo in ('diario','ata','imediata','semanal','mensal','fase','entrega'));
---   alter table public.obras_envio drop column fase_revisao_id;
---   drop function public.obras_emitir_fase_revisao(uuid);
---   drop table public.obras_fase_revisao, public.obras_fase;
---   drop function public.obras_fase_guarda(), public.obras_fase_revisao_guarda(),
---     public.obras_fase_camadas_validas(jsonb), public.obras_fase_regras_validas(text[]),
---     public.obras_fase_carimbo_valido(jsonb), public.obras_fase_num01(jsonb),
---     public.obras_pode_fasear(uuid);
---   -- recriar obras_obra_parametros_guarda e o trigger sem coordenador_email (financeiro-a)
---   alter table public.obras_obra drop column coordenador_email;
---   commit;
+-- ROLLBACK: bloco comentado no FIM deste arquivo, com os corpos de produção
+-- (catálogo 01/11/2026) das funções recriadas. Só depois de reverter o app;
+-- apaga o faseamento — exportar antes.
 -- ============================================================
 
 begin;
@@ -140,8 +132,11 @@ begin
   end if;
   if to_regclass('public.obras_mapa') is null
      or to_regclass('public.obras_ponto_foto') is null
-     or to_regprocedure('public.obras_mapa_pode_escrever(text)') is null then
-    raise exception 'Pré-requisito ausente: sdd-sql-obras-leva6.sql não está aplicado (obras_mapa, obras_ponto_foto, obras_mapa_pode_escrever). Nada foi alterado.';
+     or to_regprocedure('public.obras_mapa_pode_escrever(text)') is null
+     or (select count(*) from information_schema.columns
+          where table_schema = 'public' and table_name = 'obras_mapa'
+            and column_name in ('planta_path','planta_largura','planta_altura')) <> 3 then
+    raise exception 'Pré-requisito ausente: sdd-sql-obras-leva6.sql não está aplicado (obras_mapa com planta_path/largura/altura, obras_ponto_foto, obras_mapa_pode_escrever). Nada foi alterado.';
   end if;
 end $$;
 
@@ -393,7 +388,8 @@ as $$
     false);
 $$;
 
--- Carimbo: objeto com até 20 chaves; cada valor texto <= 300 ou null.
+-- Carimbo: objeto com até 20 chaves de até 40 caracteres; cada valor texto
+-- <= 300 ou null; no máximo 8 KiB (pg_column_size).
 create or replace function public.obras_fase_carimbo_valido(p jsonb)
 returns boolean
 language sql
@@ -402,12 +398,25 @@ set search_path = pg_catalog
 as $$
   select coalesce(
     jsonb_typeof(p) = 'object'
+    and pg_column_size(p) <= 8192
     and (select count(*) from jsonb_object_keys(p)) <= 20
     and not exists (select 1 from jsonb_each(p) kv
-                     where jsonb_typeof(kv.value) not in ('string','null')
+                     where char_length(kv.key) > 40
+                        or jsonb_typeof(kv.value) not in ('string','null')
                         or char_length(kv.value #>> '{}') > 300),
     false);
 $$;
+
+-- Validadores: fora do alcance de anon (/rpc); authenticated e service_role
+-- precisam, porque o CHECK roda com o privilégio de quem grava.
+revoke execute on function public.obras_fase_num01(jsonb) from public, anon;
+revoke execute on function public.obras_fase_camadas_validas(jsonb) from public, anon;
+revoke execute on function public.obras_fase_regras_validas(text[]) from public, anon;
+revoke execute on function public.obras_fase_carimbo_valido(jsonb) from public, anon;
+grant execute on function public.obras_fase_num01(jsonb) to authenticated, service_role;
+grant execute on function public.obras_fase_camadas_validas(jsonb) to authenticated, service_role;
+grant execute on function public.obras_fase_regras_validas(text[]) to authenticated, service_role;
+grant execute on function public.obras_fase_carimbo_valido(jsonb) to authenticated, service_role;
 
 -- ============================================================
 -- 4. obras_fase
@@ -514,6 +523,14 @@ create table if not exists public.obras_fase_revisao (
     references public.obras_fase(id, obra_id) on delete cascade,
   constraint obras_fase_revisao_fase_revisao_key unique (fase_id, revisao)
 );
+-- Congelados na emissão (I1/M6): a base da prancha (planta do mapa) e o nome/
+-- número da fase. NULL no rascunho; o trigger copia quando vira emitida.
+alter table public.obras_fase_revisao
+  add column if not exists planta_path text,
+  add column if not exists planta_largura int,
+  add column if not exists planta_altura int,
+  add column if not exists fase_nome text,
+  add column if not exists fase_numero int;
 create index if not exists obras_fase_revisao_obra_idx on public.obras_fase_revisao (obra_id);
 -- Só uma revisão em rascunho por fase.
 create unique index if not exists obras_fase_revisao_um_rascunho
@@ -527,19 +544,29 @@ alter table public.obras_fase_revisao add constraint obras_fase_revisao_revisao_
   check (revisao >= 0);
 alter table public.obras_fase_revisao drop constraint if exists obras_fase_revisao_camadas_check;
 alter table public.obras_fase_revisao add constraint obras_fase_revisao_camadas_check
-  check (public.obras_fase_camadas_validas(camadas));
+  check (public.obras_fase_camadas_validas(camadas) and pg_column_size(camadas) <= 262144);
 alter table public.obras_fase_revisao drop constraint if exists obras_fase_revisao_regras_check;
 alter table public.obras_fase_revisao add constraint obras_fase_revisao_regras_check
   check (public.obras_fase_regras_validas(regras));
 alter table public.obras_fase_revisao drop constraint if exists obras_fase_revisao_carimbo_check;
 alter table public.obras_fase_revisao add constraint obras_fase_revisao_carimbo_check
   check (public.obras_fase_carimbo_valido(carimbo));
--- Emitida tem data e (com trava) o retrato; rascunho não tem nenhum dos dois.
+-- Rascunho não tem nada de emissão (data, autor, retrato, planta, fase).
+-- Emitida tem data, nome e número da fase; retrato só com trava; planta
+-- ausente (quadro branco: as três nulas) ou caminho com dimensões nulas
+-- juntas ou positivas juntas (mesma regra de obras_mapa).
 alter table public.obras_fase_revisao drop constraint if exists obras_fase_revisao_emissao_check;
 alter table public.obras_fase_revisao add constraint obras_fase_revisao_emissao_check
-  check ((status = 'rascunho' and emitida_em is null and emitida_por is null and trava_snapshot is null)
+  check ((status = 'rascunho' and emitida_em is null and emitida_por is null and trava_snapshot is null
+          and planta_path is null and planta_largura is null and planta_altura is null
+          and fase_nome is null and fase_numero is null)
          or (status = 'emitida' and emitida_em is not null
-             and (usa_trava = (trava_snapshot is not null))));
+             and (usa_trava = (trava_snapshot is not null))
+             and fase_nome is not null and fase_numero is not null
+             and ((planta_path is null and planta_largura is null and planta_altura is null)
+                  or (planta_path is not null
+                      and ((planta_largura is null and planta_altura is null)
+                           or (planta_largura > 0 and planta_altura > 0))))));
 
 create or replace function public.obras_fase_revisao_guarda() returns trigger
 language plpgsql
@@ -605,6 +632,11 @@ begin
     new.trava_snapshot := null;
     new.emitida_em := null;
     new.emitida_por := null;
+    new.planta_path := null;
+    new.planta_largura := null;
+    new.planta_altura := null;
+    new.fase_nome := null;
+    new.fase_numero := null;
     if v_email is not null then
       new.criado_por := v_email;
     end if;
@@ -626,9 +658,22 @@ begin
   new.atualizado_em := now();
 
   if new.status = 'emitida' then
-    -- Emissão: data, autor e retrato da trava vêm do banco, nunca do cliente.
+    -- Emissão: data, autor, retrato da trava, base (planta) e fase vêm do
+    -- banco, nunca do cliente.
     new.emitida_em := now();
     new.emitida_por := coalesce(v_email, new.emitida_por);
+    select f.nome, f.numero into new.fase_nome, new.fase_numero
+      from public.obras_fase f where f.id = new.fase_id;
+    -- Obra sem mapa ou sem planta: as três nulas (quadro branco). Dimensões
+    -- só junto com o caminho.
+    new.planta_path := null;
+    new.planta_largura := null;
+    new.planta_altura := null;
+    select m.planta_path,
+           case when m.planta_path is not null then m.planta_largura end,
+           case when m.planta_path is not null then m.planta_altura end
+      into new.planta_path, new.planta_largura, new.planta_altura
+      from public.obras_mapa m where m.obra_id = new.obra_id;
     if new.usa_trava then
       select o.atividade_trava into v_trava from public.obras_obra o where o.id = new.obra_id;
       if v_trava is null then
@@ -671,6 +716,11 @@ begin
     new.trava_snapshot := null;
     new.emitida_em := null;
     new.emitida_por := null;
+    new.planta_path := null;
+    new.planta_largura := null;
+    new.planta_altura := null;
+    new.fase_nome := null;
+    new.fase_numero := null;
   end if;
   return new;
 end;
@@ -743,10 +793,14 @@ end $$;
 -- ============================================================
 -- 6. obras_envio: tipo faseamento + fase_revisao_id
 -- ============================================================
--- FK sem ação (NO ACTION), como relatorio_id: revisão com envio não se apaga
--- (e emitida já não se apaga fora da cascata da obra).
+-- FK ON DELETE CASCADE (M4): o envio só aponta revisão emitida, e emitida só
+-- sai na cascata da obra — quando o envio também sai. Assim a cascata não
+-- depende da ordem dos gatilhos de RI de obras_obra.
 alter table public.obras_envio
-  add column if not exists fase_revisao_id uuid references public.obras_fase_revisao(id);
+  add column if not exists fase_revisao_id uuid;
+alter table public.obras_envio drop constraint if exists obras_envio_fase_revisao_id_fkey;
+alter table public.obras_envio add constraint obras_envio_fase_revisao_id_fkey
+  foreign key (fase_revisao_id) references public.obras_fase_revisao(id) on delete cascade;
 create index if not exists obras_envio_fase_revisao_idx on public.obras_envio (fase_revisao_id)
   where fase_revisao_id is not null;
 
@@ -923,7 +977,7 @@ from (values
       (select string_agg(conname, ',' order by conname) from pg_constraint
         where conrelid = 'public.obras_envio'::regclass and contype = 'c'
           and pg_get_constraintdef(oid) ~ '\mtipo\M')),
-  (15, 'obras_envio.fase_revisao_id (uuid) com FK NO ACTION para obras_fase_revisao', 'uuid|a',
+  (15, 'obras_envio.fase_revisao_id (uuid) com uma FK ON DELETE CASCADE para obras_fase_revisao', 'uuid|c',
       (select data_type from information_schema.columns
         where table_schema = 'public' and table_name = 'obras_envio' and column_name = 'fase_revisao_id')
       || '|' ||
@@ -951,17 +1005,201 @@ from (values
          case when public.obras_fase_camadas_validas('[{"t":"piscina","at":[0.5,0.5]}]') then 't' else 'f' end,
          case when public.obras_fase_camadas_validas((select jsonb_agg('{"t":"emerg","at":[0.5,0.5]}'::jsonb) from generate_series(1, 301))) then 't' else 'f' end,
          case when public.obras_fase_camadas_validas('{"t":"emerg"}') then 't' else 'f' end))),
-  (20, 'cascata da obra: RI de obras_envio dispara antes dos de obras_fase/obras_fase_revisao', 'true',
-      (select (max(t.tgname) filter (where c.conname = 'obras_envio_obra_id_fkey')
-             < min(t.tgname) filter (where c.conrelid in ('public.obras_fase'::regclass, 'public.obras_fase_revisao'::regclass)))::text
-         from pg_trigger t join pg_constraint c on c.oid = t.tgconstraint
-        where t.tgrelid = 'public.obras_obra'::regclass)),
+  (20, 'colunas congeladas na emissão em obras_fase_revisao (5)', 'fase_nome:text|fase_numero:integer|planta_altura:integer|planta_largura:integer|planta_path:text',
+      (select string_agg(column_name || ':' || data_type, '|' order by column_name) from information_schema.columns
+        where table_schema = 'public' and table_name = 'obras_fase_revisao'
+          and column_name in ('planta_path','planta_largura','planta_altura','fase_nome','fase_numero'))),
   (21, 'validador de regras: 12×200 t, 13 itens f, 201 caracteres f, só espaço f, NULL dentro f', 't|f|f|f|f',
       (select concat_ws('|',
          case when public.obras_fase_regras_validas((select array_agg(repeat('a', 200)) from generate_series(1, 12))) then 't' else 'f' end,
          case when public.obras_fase_regras_validas((select array_agg('r'::text) from generate_series(1, 13))) then 't' else 'f' end,
          case when public.obras_fase_regras_validas(array[repeat('a', 201)]) then 't' else 'f' end,
          case when public.obras_fase_regras_validas(array['   ']) then 't' else 'f' end,
-         case when public.obras_fase_regras_validas(array['ok', null]) then 't' else 'f' end)))
+         case when public.obras_fase_regras_validas(array['ok', null]) then 't' else 'f' end))),
+  (22, 'validadores: anon não executa; authenticated e service_role executam', 'false|true|true',
+      (select bool_or(has_function_privilege('anon', p.oid, 'EXECUTE'))::text
+              || '|' || bool_and(has_function_privilege('authenticated', p.oid, 'EXECUTE'))::text
+              || '|' || bool_and(has_function_privilege('service_role', p.oid, 'EXECUTE'))::text
+         from pg_proc p where p.pronamespace = 'public'::regnamespace
+          and p.proname in ('obras_fase_num01','obras_fase_camadas_validas','obras_fase_regras_validas','obras_fase_carimbo_valido'))),
+  (23, 'limites de tamanho: camadas <= 256 KiB no check; carimbo com chave <= 40 e <= 8 KiB', 'true|t|f|f',
+      (select (pg_get_constraintdef(oid) like '%pg_column_size(camadas) <= 262144%')::text
+         from pg_constraint where conname = 'obras_fase_revisao_camadas_check')
+      || '|' || (case when public.obras_fase_carimbo_valido(jsonb_build_object(repeat('k', 40), 'v')) then 't' else 'f' end)
+      || '|' || (case when public.obras_fase_carimbo_valido(jsonb_build_object(repeat('k', 41), 'v')) then 't' else 'f' end)
+      || '|' || (case when public.obras_fase_carimbo_valido((select jsonb_object_agg('c' || g, repeat('é', 300)) from generate_series(1, 20) g)) then 't' else 'f' end))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
+
+-- ============================================================
+-- ROLLBACK (comentado; descomente e rode inteiro só se for desfazer)
+-- ============================================================
+-- -- ROLLBACK da Leva 6b — rodar só depois de reverter o app. APAGA o faseamento
+-- -- (fases, revisões e envios do tipo faseamento): exportar antes.
+-- -- Corpos das funções = produção ANTES da Leva 6b (catálogo de 01/11/2026).
+--
+-- begin;
+--
+-- -- 1. obras_envio: volta ao estado da Leva 4.
+-- delete from public.obras_envio where tipo = 'faseamento';
+-- drop trigger if exists obras_envio_vinculo_obra on public.obras_envio;
+--
+-- CREATE OR REPLACE FUNCTION public.obras_envio_vinculo_obra()
+--  RETURNS trigger
+--  LANGUAGE plpgsql
+--  SECURITY DEFINER
+--  SET search_path TO 'pg_catalog', 'public'
+-- AS $function$
+-- declare
+--   v_obra uuid;
+--   v_tipo text;
+-- begin
+--   if new.registro_id is not null
+--      and (select r.obra_id from public.obras_registro r where r.id = new.registro_id)
+--          is distinct from new.obra_id then
+--     raise exception 'OBRAS_ENVIO: registro_id é de outra obra' using errcode = '23514';
+--   end if;
+--   if new.semanal_id is not null
+--      and (select s.obra_id from public.obras_semanal s where s.id = new.semanal_id)
+--          is distinct from new.obra_id then
+--     raise exception 'OBRAS_ENVIO: semanal_id é de outra obra' using errcode = '23514';
+--   end if;
+--   if new.relatorio_id is not null then
+--     select r.obra_id, r.tipo into v_obra, v_tipo from public.obras_relatorio r where r.id = new.relatorio_id;
+--     if v_obra is distinct from new.obra_id then
+--       raise exception 'OBRAS_ENVIO: relatorio_id é de outra obra' using errcode = '23514';
+--     end if;
+--     if v_tipo is distinct from new.tipo then
+--       raise exception 'OBRAS_ENVIO: relatorio_id é de outro tipo de relatório' using errcode = '23514';
+--     end if;
+--   end if;
+--   return new;
+-- end;
+-- $function$;
+-- revoke execute on function public.obras_envio_vinculo_obra() from public, anon, authenticated;
+-- create trigger obras_envio_vinculo_obra
+--   before insert or update of obra_id, tipo, registro_id, semanal_id, relatorio_id on public.obras_envio
+--   for each row execute function public.obras_envio_vinculo_obra();
+--
+-- CREATE OR REPLACE FUNCTION public.obras_envio_guarda()
+--  RETURNS trigger
+--  LANGUAGE plpgsql
+--  SECURITY DEFINER
+--  SET search_path TO 'pg_catalog', 'public'
+-- AS $function$
+-- begin
+--   if nullif(lower(trim(auth.jwt() ->> 'email')), '') is null then
+--     return new;
+--   end if;
+--   if public.obras_engenheiro_ou_admin(new.obra_id) is not true then
+--     raise exception 'OBRAS_ENVIO: só o engenheiro da obra ou administrador registra envio'
+--       using errcode = '42501';
+--   end if;
+--   return new;
+-- end;
+-- $function$;
+-- revoke execute on function public.obras_envio_guarda() from public, anon, authenticated;
+--
+-- alter table public.obras_envio drop constraint if exists obras_envio_faseamento_obrigatorio;
+-- alter table public.obras_envio drop constraint if exists obras_envio_tipo_check;
+-- alter table public.obras_envio add constraint obras_envio_tipo_check
+--   check (tipo is null or tipo in ('diario','ata','imediata','semanal','mensal','fase','entrega'));
+-- alter table public.obras_envio drop column if exists fase_revisao_id;  -- leva FK e índice
+--
+-- -- 2. Fases e revisões.
+-- drop function if exists public.obras_emitir_fase_revisao(uuid);
+-- drop table if exists public.obras_fase_revisao, public.obras_fase;
+-- drop function if exists public.obras_fase_guarda(), public.obras_fase_revisao_guarda(),
+--   public.obras_fase_camadas_validas(jsonb), public.obras_fase_regras_validas(text[]),
+--   public.obras_fase_carimbo_valido(jsonb), public.obras_fase_num01(jsonb),
+--   public.obras_pode_fasear(uuid);
+--
+-- -- 3. obras_obra: guarda e trigger sem coordenador_email, depois a coluna.
+-- CREATE OR REPLACE FUNCTION public.obras_obra_parametros_guarda()
+--  RETURNS trigger
+--  LANGUAGE plpgsql
+--  SET search_path TO 'pg_catalog', 'public'
+-- AS $function$
+-- declare
+--   v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+--   v_checar_pai boolean;
+--   v_pai_modalidade text;
+--   v_pai_pai uuid;
+-- begin
+--   -- INSERT com JWT de usuário comum: nasce como SPOT, sem os parâmetros.
+--   if tg_op = 'INSERT' then
+--     if v_email is not null
+--        and (new.engenheiro_email is not null
+--             or new.data_base is not null
+--             or new.atividade_trava is not null
+--             or new.peso_avanco is not null
+--             or new.obra_pai_id is not null
+--             or new.modalidade is distinct from 'spot')
+--        and public.obras_is_admin() is not true then
+--       raise exception 'OBRAS_PARAMETROS: só administrador cria obra com modalidade, data base, engenheiro, atividade-trava, critério de peso ou obra mãe'
+--         using errcode = '42501';
+--     end if;
+--     v_checar_pai := new.obra_pai_id is not null;
+--   else
+--     if v_email is not null
+--        and (new.modalidade is distinct from old.modalidade
+--             or new.data_base is distinct from old.data_base
+--             or new.engenheiro_email is distinct from old.engenheiro_email
+--             or new.atividade_trava is distinct from old.atividade_trava
+--             or new.peso_avanco is distinct from old.peso_avanco
+--             or new.obra_pai_id is distinct from old.obra_pai_id)
+--        and public.obras_is_admin() is not true then
+--       raise exception 'OBRAS_PARAMETROS: só administrador altera modalidade, data base, engenheiro, atividade-trava, critério de peso e obra mãe'
+--         using errcode = '42501';
+--     end if;
+--     v_checar_pai := new.obra_pai_id is distinct from old.obra_pai_id
+--                     or new.modalidade is distinct from old.modalidade;
+--   end if;
+--
+--   -- Estrutura mãe/filha: vale com ou sem JWT (inclusive service role).
+--   if v_checar_pai then
+--     if new.obra_pai_id is not null then
+--       if new.obra_pai_id = new.id then
+--         raise exception 'OBRAS_OBRA_PAI: a obra não pode ser aditivo de si mesma' using errcode = '23514';
+--       end if;
+--       if new.modalidade is distinct from 'obra' then
+--         raise exception 'OBRAS_OBRA_PAI: só obra da modalidade OBRA pode ser aditivo' using errcode = '23514';
+--       end if;
+--       -- Trava a mãe: duas gravações simultâneas não montam dois níveis.
+--       select o.modalidade, o.obra_pai_id into v_pai_modalidade, v_pai_pai
+--         from public.obras_obra o where o.id = new.obra_pai_id
+--         for update;
+--       if not found then
+--         raise exception 'OBRAS_OBRA_PAI: a obra mãe não existe' using errcode = '23503';
+--       end if;
+--       if v_pai_modalidade is distinct from 'obra' then
+--         raise exception 'OBRAS_OBRA_PAI: a obra mãe tem de ser da modalidade OBRA' using errcode = '23514';
+--       end if;
+--       if v_pai_pai is not null then
+--         raise exception 'OBRAS_OBRA_PAI: a obra mãe já é aditivo de outra (um nível só)' using errcode = '23514';
+--       end if;
+--     end if;
+--     if tg_op = 'UPDATE' then
+--       if exists (select 1 from public.obras_obra f where f.obra_pai_id = new.id) then
+--         if new.obra_pai_id is not null then
+--           raise exception 'OBRAS_OBRA_PAI: esta obra tem aditivos e não pode virar aditivo (um nível só)' using errcode = '23514';
+--         end if;
+--         if new.modalidade is distinct from 'obra' then
+--           raise exception 'OBRAS_OBRA_PAI: esta obra tem aditivos e não pode deixar de ser OBRA' using errcode = '23514';
+--         end if;
+--       end if;
+--     end if;
+--   end if;
+--   return new;
+-- end;
+-- $function$;
+-- revoke execute on function public.obras_obra_parametros_guarda() from public, anon, authenticated;
+-- drop trigger if exists obras_obra_parametros_guarda on public.obras_obra;
+-- create trigger obras_obra_parametros_guarda
+--   before insert or update of modalidade, data_base, engenheiro_email, atividade_trava, peso_avanco, obra_pai_id
+--   on public.obras_obra
+--   for each row execute function public.obras_obra_parametros_guarda();
+-- alter table public.obras_obra drop column if exists coordenador_email;
+--
+-- commit;
+
