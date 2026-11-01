@@ -61,6 +61,12 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
           Pedir pagamento
         </a>
         <a
+          href={`/fornecedores/medicoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
+        >
+          Pedir medição
+        </a>
+        <a
           href={`/compras/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
         >
