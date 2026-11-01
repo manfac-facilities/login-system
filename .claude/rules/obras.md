@@ -256,5 +256,6 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6b-faseamento-design.md`.
 - **Envio:** `obras_envio` tipo `faseamento` com `fase_revisao_id` (só emitida), um por lado, aos destinatários do
   relatório de fase (tipos `semanal`/`mensal`); aparece na linha do tempo da Comunicação com "Abrir PDF".
 - **SQL:** `sdd-sql-obras-leva6b.sql` **precisa estar aplicado antes do deploy** (verificação 23/23 + teste 86/86). Sem
-  ele o Faseamento dá erro e a **Comunicação inteira falha** (o select de envios pede `fase_revisao_id`).
+  ele a aba Faseamento mostra "ainda não está disponível", a Comunicação relê os envios sem `fase_revisao_id` (42703) e o
+  portal ignora o faseamento (PGRST205/42P01/42703 = lista vazia).
 - **Portal (aba Mapa):** seção "Faseamento" (`portal-obra/(obra)/obras/[obraId]/mapa/_faseamento.tsx`, leitura em `_lib/faseamento.ts`) com só a **última emitida de cada fase** (base e nome congelados da revisão); sem emitida a seção some, e a aba Mapa aparece também só com faseamento (`obraTemMapa` = ambiente OU emitida). PDF em `faseamento/[revisaoId]/pdf` (sessão do portal, cliente admin, modalidade obra): 404 igual para rascunho, outra obra, id inválido **e revisão antiga já substituída** (só a última emitida abre).
