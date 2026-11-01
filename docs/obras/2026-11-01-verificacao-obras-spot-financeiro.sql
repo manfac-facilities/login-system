@@ -20,12 +20,13 @@
 -- usuário); o GRANT só para service_role é conferido nos casos 34 e 35.
 --
 -- Fixture (só dentro da transação; e-mails .invalid, nada pessoal):
---   S1 TESTE-SPOTFIN-S1 (SPOT, pcm TESTE-SPOTFIN-AN, valor R$ 1.000,00, pendFat)
---   S2 TESTE-SPOTFIN-S2 (SPOT, pcm TESTE-SPOTFIN-OUTRO, valor R$ 500,00, pendFat)
+--   S1 TESTE-SPOTFIN-S1 (SPOT, valor R$ 1.000,00, pendFat)
+--   S2 TESTE-SPOTFIN-S2 (SPOT, valor R$ 500,00, pendFat)
 --   S3 TESTE-SPOTFIN-S3 (SPOT, sem valor, pendFat)
---   O1 TESTE-SPOTFIN-O1 (OBRA, engenheiro eng.o, pcm TESTE-SPOTFIN-AN, valor R$ 2.000,00, pendFat)
---   obras_pessoa: TESTE-SPOTFIN-AN = analista.spot; TESTE-SPOTFIN-OUTRO = outro.analista
---   acesso ao Obras: usuario.obras, analista.spot, outro.analista, eng.o (sem.acesso não tem)
+--   O1 TESTE-SPOTFIN-O1 (OBRA, engenheiro eng.o, valor R$ 2.000,00, pendFat)
+--   acesso ao Obras: usuario.obras, eng.o (sem.acesso não tem)
+--   Locação no SPOT: qualquer usuário do Obras (não há ligação confiável do responsável da
+--   OS com o e-mail: obras_obra.pcm e obras_pessoa.email são editáveis por qualquer usuário do Obras).
 --   Compras: locações emitidas P1 e P2 em S1, P3 em S2, P4 em O1; estado E1 em P2 (sem JWT).
 --   Notas do Financeiro: criadas DENTRO de cada teste (pg_temp.nota), autorizadas, produção.
 -- "Administrador" = o primeiro e-mail com nivel 'administrador' em hub_user_roles.
@@ -111,19 +112,13 @@ select pg_temp.jwt(null);
 
 -- Obras (sem JWT)
 insert into public.obras_obra (id, os, modalidade, engenheiro_email, pcm, etapa, valor)
-values ('00000000-0000-4000-8000-00000005f001', 'TESTE-SPOTFIN-S1', 'spot', null, 'TESTE-SPOTFIN-AN', 'pendFat', 1000.00),
-       ('00000000-0000-4000-8000-00000005f002', 'TESTE-SPOTFIN-S2', 'spot', null, 'TESTE-SPOTFIN-OUTRO', 'pendFat', 500.00),
+values ('00000000-0000-4000-8000-00000005f001', 'TESTE-SPOTFIN-S1', 'spot', null, null, 'pendFat', 1000.00),
+       ('00000000-0000-4000-8000-00000005f002', 'TESTE-SPOTFIN-S2', 'spot', null, null, 'pendFat', 500.00),
        ('00000000-0000-4000-8000-00000005f003', 'TESTE-SPOTFIN-S3', 'spot', null, null, 'pendFat', null),
-       ('00000000-0000-4000-8000-00000005f004', 'TESTE-SPOTFIN-O1', 'obra', 'eng.o@teste.invalid', 'TESTE-SPOTFIN-AN', 'pendFat', 2000.00);
-
-insert into public.obras_pessoa (chave, nome, email)
-values ('TESTE-SPOTFIN-AN', 'Analista Teste', 'analista.spot@teste.invalid'),
-       ('TESTE-SPOTFIN-OUTRO', 'Outro Analista Teste', 'outro.analista@teste.invalid');
+       ('00000000-0000-4000-8000-00000005f004', 'TESTE-SPOTFIN-O1', 'obra', 'eng.o@teste.invalid', null, 'pendFat', 2000.00);
 
 insert into public.hub_system_access (user_email, system_slug, has_access, granted_by)
 values ('usuario.obras@teste.invalid', 'obras', true, 'verificacao-spot-fin'),
-       ('analista.spot@teste.invalid', 'obras', true, 'verificacao-spot-fin'),
-       ('outro.analista@teste.invalid', 'obras', true, 'verificacao-spot-fin'),
        ('eng.o@teste.invalid', 'obras', true, 'verificacao-spot-fin');
 
 -- Compras: solicitação -> mapa -> fornecedor do mapa -> pedido (locações emitidas)
@@ -216,45 +211,54 @@ exception when others then
 end $$;
 
 -- ============================================================
--- Locação no SPOT: analista da OS ou admin
+-- Locação no SPOT: qualquer usuário do Obras (fallback da spec §4.2); OBRA sem mudança
 -- ============================================================
-do $$ begin
-  perform pg_temp.como('authenticated', 'analista.spot@teste.invalid');
-  raise exception 'ok:%', pg_temp.tf(public.obras_analista_spot('00000000-0000-4000-8000-00000005f001'))
-                          || '|' || pg_temp.tf(public.obras_analista_spot('00000000-0000-4000-8000-00000005f002'))
-                          || '|' || pg_temp.tf(public.obras_analista_spot('00000000-0000-4000-8000-00000005f004'))
-                          || '|' || pg_temp.tf(public.obras_analista_spot('00000000-0000-4000-8000-0000000fffff'));
+do $$
+declare v text;
+begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  v := pg_temp.tf(public.obras_pode_marcar_locacao('00000000-0000-4000-8000-00000005f001'))
+       || '|' || pg_temp.tf(public.obras_pode_marcar_locacao('00000000-0000-4000-8000-00000005f004'))
+       || '|' || pg_temp.tf(public.obras_pode_marcar_locacao('00000000-0000-4000-8000-0000000fffff'));
+  perform pg_temp.como('authenticated', 'sem.acesso@teste.invalid');
+  v := v || '|' || pg_temp.tf(public.obras_pode_marcar_locacao('00000000-0000-4000-8000-00000005f001'));
+  perform pg_temp.como('authenticated', null);
+  v := v || '|' || pg_temp.tf(public.obras_pode_marcar_locacao('00000000-0000-4000-8000-00000005f001'));
+  raise exception 'ok:%', v;
 exception when others then
-  perform pg_temp.reg(7, 'analista_spot: true na OS dele; false em outra OS, em OBRA (mesmo pcm) e em obra inexistente', 'ok:t|f|f|f', sqlerrm);
-end $$;
-
-do $$ begin
-  perform pg_temp.como('authenticated', 'analista.spot@teste.invalid');
-  insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em, criado_por)
-  values ('00000000-0000-4000-8000-00000005f041', '00000000-0000-4000-8000-00000005f001', current_date, 'forjado@teste.invalid');
-  raise exception 'ok:%', (select criado_por from public.obras_locacao_estado where cmp_pedido_id = '00000000-0000-4000-8000-00000005f041');
-exception when others then
-  perform pg_temp.reg(8, 'locação: analista (via obras_pessoa.email) marca locação do SPOT; autoria forçada', 'ok:analista.spot@teste.invalid', sqlerrm);
-end $$;
-
-do $$ begin
-  perform pg_temp.como('authenticated', 'outro.analista@teste.invalid');
-  insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em)
-  values ('00000000-0000-4000-8000-00000005f041', '00000000-0000-4000-8000-00000005f001', current_date);
-  raise exception 'NAO_FALHOU';
-exception when others then
-  perform pg_temp.reg(9, 'locação: analista de OUTRA OS recusado (42501)', 'RECUSADO|42501',
-    pg_temp.rec(sqlerrm, 'OBRAS_LOCACAO: só o engenheiro da obra, o analista do SPOT') || '|' || sqlstate);
+  perform pg_temp.reg(7, 'pode_marcar_locacao: usuário do Obras t no SPOT; f na OBRA e em obra inexistente; sem acesso f; sem JWT f',
+    'ok:t|f|f|f|f', sqlerrm);
 end $$;
 
 do $$ begin
   perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em, criado_por)
+  values ('00000000-0000-4000-8000-00000005f041', '00000000-0000-4000-8000-00000005f001', current_date, 'forjado@teste.invalid');
+  raise exception 'ok:%', (select criado_por from public.obras_locacao_estado where cmp_pedido_id = '00000000-0000-4000-8000-00000005f041');
+exception when others then
+  perform pg_temp.reg(8, 'locação: usuário do Obras marca locação do SPOT; autoria forçada', 'ok:usuario.obras@teste.invalid', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'sem.acesso@teste.invalid');
   insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em)
   values ('00000000-0000-4000-8000-00000005f041', '00000000-0000-4000-8000-00000005f001', current_date);
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(10, 'locação: usuário só com acesso ao Obras NÃO marca locação do SPOT', 'RECUSADO',
-    pg_temp.rec(sqlerrm, 'OBRAS_LOCACAO: só o engenheiro da obra, o analista do SPOT'));
+  perform pg_temp.reg(9, 'locação: usuário SEM acesso ao Obras recusado no SPOT (42501)', 'RECUSADO|42501',
+    pg_temp.rec(sqlerrm, 'OBRAS_LOCACAO: só o engenheiro da obra, quem tem acesso ao Obras') || '|' || sqlstate);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt('sem.acesso@teste.invalid');
+  -- a guarda do gatilho (sem a RLS)
+  insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em)
+  values ('00000000-0000-4000-8000-00000005f041', '00000000-0000-4000-8000-00000005f001', current_date);
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(10, 'locação: gatilho recusa sem acesso ao Obras no SPOT com 42501 (sem RLS)',
+    'OBRAS_LOCACAO: só o engenheiro da obra, quem tem acesso ao Obras (no SPOT) ou administrador marca a locação|42501',
+    sqlerrm || '|' || sqlstate);
 end $$;
 
 do $$ begin
@@ -274,32 +278,33 @@ end $$;
 do $$
 declare v_n int;
 begin
-  perform pg_temp.como('authenticated', 'analista.spot@teste.invalid');
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
   update public.obras_locacao_estado set devolvida_em = current_date where id = '00000000-0000-4000-8000-00000005f092';
   get diagnostics v_n = row_count;
   raise exception 'ok:%|%', v_n, (select atualizado_por from public.obras_locacao_estado where id = '00000000-0000-4000-8000-00000005f092');
 exception when others then
-  perform pg_temp.reg(12, 'locação: analista marca devolvida (update) no SPOT dele', 'ok:1|analista.spot@teste.invalid', sqlerrm);
+  perform pg_temp.reg(12, 'locação: usuário do Obras marca devolvida (update) no SPOT', 'ok:1|usuario.obras@teste.invalid', sqlerrm);
 end $$;
 
 do $$
 declare v_n int;
 begin
-  perform pg_temp.como('authenticated', 'outro.analista@teste.invalid');
+  perform pg_temp.como('authenticated', 'sem.acesso@teste.invalid');
   update public.obras_locacao_estado set devolvida_em = current_date where id = '00000000-0000-4000-8000-00000005f092';
   get diagnostics v_n = row_count;
   raise exception 'ok:%', v_n;
 exception when others then
-  perform pg_temp.reg(13, 'locação: analista de outra OS não altera (0 linhas)', 'ok:0', sqlerrm);
+  perform pg_temp.reg(13, 'locação: sem acesso ao Obras não altera no SPOT (0 linhas)', 'ok:0', sqlerrm);
 end $$;
 
 do $$ begin
-  perform pg_temp.jwt('outro.analista@teste.invalid');
-  -- a guarda do gatilho (sem a RLS): analista de outra OS = 42501
+  perform pg_temp.jwt('sem.acesso@teste.invalid');
+  -- a guarda do gatilho (sem a RLS): sem acesso = 42501 também no UPDATE
   update public.obras_locacao_estado set devolvida_em = current_date where id = '00000000-0000-4000-8000-00000005f092';
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(14, 'locação: gatilho recusa analista de outra OS com 42501 (sem RLS)', 'OBRAS_LOCACAO: só o engenheiro da obra, o analista do SPOT ou administrador marca a locação|42501',
+  perform pg_temp.reg(14, 'locação: gatilho recusa update sem acesso ao Obras com 42501 (sem RLS)',
+    'OBRAS_LOCACAO: só o engenheiro da obra, quem tem acesso ao Obras (no SPOT) ou administrador marca a locação|42501',
     sqlerrm || '|' || sqlstate);
 end $$;
 
@@ -313,13 +318,13 @@ exception when others then
 end $$;
 
 do $$ begin
-  perform pg_temp.como('authenticated', 'analista.spot@teste.invalid');
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
   insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em)
   values ('00000000-0000-4000-8000-00000005f044', '00000000-0000-4000-8000-00000005f004', current_date);
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(16, 'locação: analista (pcm) NÃO marca locação de OBRA', 'RECUSADO',
-    pg_temp.rec(sqlerrm, 'OBRAS_LOCACAO: só o engenheiro da obra, o analista do SPOT'));
+  perform pg_temp.reg(16, 'locação: OBRA — usuário do Obras que não é o engenheiro é recusado', 'RECUSADO',
+    pg_temp.rec(sqlerrm, 'OBRAS_LOCACAO: só o engenheiro da obra, quem tem acesso ao Obras'));
 end $$;
 
 -- ============================================================
@@ -335,12 +340,12 @@ exception when others then
 end $$;
 
 do $$ begin
-  perform pg_temp.como('authenticated', 'analista.spot@teste.invalid');
+  perform pg_temp.como('authenticated', 'eng.o@teste.invalid');
   insert into public.obras_nota_externa (obra_id, nfse, emitida_em, valor_centavos)
   values ('00000000-0000-4000-8000-00000005f001', '7001', current_date, 10000);
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(18, 'nota externa: analista do SPOT NÃO insere', 'RECUSADO', pg_temp.rec(sqlerrm, 'row-level security'));
+  perform pg_temp.reg(18, 'nota externa: engenheiro (não admin) NÃO insere', 'RECUSADO', pg_temp.rec(sqlerrm, 'row-level security'));
 end $$;
 
 do $$ begin

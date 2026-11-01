@@ -470,3 +470,15 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
   há testes em jsdom.
 - **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
   `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.
+
+## 01/11/2026 — Obras Financeiro da OS no SPOT, SQL do hub (`feat/obras-spot-financeiro`, Task 1), deixado de propósito
+- **Locação do SPOT é marcável (devolvida/renovada) por qualquer usuário do Obras**, não só pelo analista da OS
+  (`obras_pode_marcar_locacao` em `sdd-sql-obras-spot-financeiro.sql`, fallback da spec
+  `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md` §4.2). Motivo: a ligação analista → e-mail
+  (`obras_obra.pcm` → `obras_pessoa.email`) não é confiável como guarda — as duas tabelas têm a policy "obras access"
+  `for all` (`sdd-sql-obras-v0.sql`), então qualquer usuário do Obras pode pôr a própria chave no `pcm` ou o próprio
+  e-mail numa pessoa. Restringir ao analista exige antes proteger essas colunas (só admin grava `obras_pessoa.email` e o
+  `pcm`, ou gatilho de guarda). OBRAS continuam só com engenheiro da obra/mãe ou admin.
+- **Inserir/apagar `obras_nota_externa` não reavalia a etapa do SPOT.** A nota externa só entra na soma quando o
+  Financeiro chama `obras_marcar_faturada` (próxima NFS-e da OS) ou `obras_desmarcar_faturada`. Uma nota externa que
+  sozinha fecha o valor deixa a OS em "Pendente faturamento" até alguém mudar a etapa na ficha ou a próxima nota chegar.

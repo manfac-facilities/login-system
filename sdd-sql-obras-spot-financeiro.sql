@@ -14,11 +14,12 @@
 --   1. obras_pode_ver_valores(p_obra): obra SPOT (modalidade = 'spot') passa a ser
 --      visível a quem tem acesso ao Obras — DENTRO do bloco que já exige e-mail no
 --      JWT e obras_has_access() is true. OBRA (modalidade 'obra') sem mudança.
---   2. obras_analista_spot(p_obra) -> boolean (nunca NULL): administrador do Obras,
---      OU (obras_has_access() E obra SPOT E e-mail do JWT = obras_pessoa.email da
---      pessoa com chave = obras_obra.pcm). Pessoa sem e-mail cadastrado: só admin.
---      obras_pode_marcar_locacao(p_obra) = engenheiro da obra/mãe ou admin
---      (obras_engenheiro_ou_admin_mae) OU analista do SPOT. Substitui
+--   2. obras_pode_marcar_locacao(p_obra) -> boolean (nunca NULL) = engenheiro da
+--      obra/mãe ou admin (obras_engenheiro_ou_admin_mae) OU (obra SPOT existente E
+--      e-mail no JWT E obras_has_access() is true). No SPOT é QUALQUER usuário do
+--      Obras, não "o analista": obras_obra.pcm e obras_pessoa.email são editáveis por
+--      qualquer usuário do Obras (policy "obras access"), então uma guarda por analista
+--      seria forjável — fallback da spec §4.2, registrado em docs/DIVIDAS.md. Substitui
 --      obras_engenheiro_ou_admin_mae no gatilho obras_locacao_estado_guarda e nas
 --      policies "obras engenheiro insert"/"obras engenheiro update" (mesmos nomes).
 --   3. obras_nota_externa: NF emitida FORA do módulo de faturamento do Financeiro
@@ -41,6 +42,10 @@
 --      (em qualquer posição). Estava faturado e o faturado recalculado < valor (ou
 --      sem valor): volta a pendFat como hoje. Senão (faturado que continua coberto,
 --      ou pendFat parcial): só atualiza a lista e grava histórico. OBRA: igual a hoje.
+--      Retorno {marcadas, puladas}: no SPOT a obra vai em "marcadas" sempre que a
+--      NFS-e estava na lista — também quando continua faturado ou só a lista mudou
+--      (pendFat parcial). "puladas" = obra inexistente, etapa fora de
+--      faturado/pendFat ou NFS-e fora da lista.
 --   7. obras_historico_campo_check aceita o campo 'faturamento parcial'.
 --   8. obras_reais_txt(bigint) -> 'R$ 1.234,56' (formato do histórico).
 --
@@ -56,7 +61,7 @@
 --   reaplicar a seção 2 de sdd-sql-obras-financeiro-a.sql (obras_pode_ver_valores);
 --   reaplicar o gatilho e as policies de obras_locacao_estado da seção 4 de
 --     sdd-sql-obras-financeiro-bc.sql; depois
---     drop function public.obras_pode_marcar_locacao(uuid), public.obras_analista_spot(uuid);
+--     drop function public.obras_pode_marcar_locacao(uuid);
 --   reaplicar as seções 2 e 3 de sdd-sql-obras-faturamento.sql (marcar/desmarcar); depois
 --     drop function public.obras_spot_faturado_centavos(uuid), public.obras_reais_txt(bigint);
 --   drop table public.obras_nota_externa;   -- apaga dados (exportar antes)
@@ -92,16 +97,14 @@ begin
      or to_regprocedure('public.obras_desmarcar_faturada(uuid[], text, text)') is null
      or (select count(*) from information_schema.columns
           where table_schema = 'public' and table_name = 'obras_obra'
-            and column_name in ('fat_nfse', 'fat_pedido', 'fat_folhas', 'modalidade', 'valor', 'pcm')) <> 6 then
+            and column_name in ('fat_nfse', 'fat_pedido', 'fat_folhas', 'modalidade', 'valor')) <> 5 then
     raise exception 'Pré-requisito ausente: sdd-sql-obras-faturamento.sql / modalidade (obras_marcar_faturada, obras_obra.fat_*). Nada foi alterado.';
   end if;
-  if not exists (select 1 from information_schema.columns
-                  where table_schema = 'public' and table_name = 'obras_pessoa' and column_name = 'email')
-     or (select count(*) from information_schema.columns
+  if (select count(*) from information_schema.columns
           where table_schema = 'public'
             and ((table_name = 'fin_fat_nota_obras' and column_name in ('nota_id', 'obra_id', 'valor_centavos'))
               or (table_name = 'fin_fat_notas' and column_name in ('id', 'ambiente', 'situacao', 'obras_devolvidas_em')))) <> 7 then
-    raise exception 'Pré-requisito ausente: obras_pessoa.email ou colunas de fin_fat_notas/fin_fat_nota_obras. Nada foi alterado.';
+    raise exception 'Pré-requisito ausente: colunas de fin_fat_notas/fin_fat_nota_obras. Nada foi alterado.';
   end if;
 
   -- O check de campo é recriado com a lista inteira: tem de estar no estado de
@@ -155,33 +158,8 @@ revoke execute on function public.obras_pode_ver_valores(uuid) from public, anon
 grant execute on function public.obras_pode_ver_valores(uuid) to authenticated, service_role;
 
 -- ============================================================
--- 2. Locação no SPOT: analista da OS (por obras_pessoa.email) ou admin
+-- 2. Locação no SPOT: qualquer usuário do Obras (ver o cabeçalho, item 2)
 -- ============================================================
-create or replace function public.obras_analista_spot(p_obra uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = pg_catalog, public
-as $$
-  with eu as (select nullif(lower(trim(auth.jwt() ->> 'email')), '') as email)
-  select coalesce((
-    select true
-      from eu
-     where eu.email is not null
-       and (public.obras_is_admin() is true
-            or (public.obras_has_access() is true
-                and exists (select 1
-                              from public.obras_obra o
-                              join public.obras_pessoa p on p.chave = o.pcm
-                             where o.id = p_obra
-                               and o.modalidade = 'spot'
-                               and nullif(lower(trim(p.email)), '') = eu.email)))
-  ), false);
-$$;
-revoke execute on function public.obras_analista_spot(uuid) from public, anon;
-grant execute on function public.obras_analista_spot(uuid) to authenticated, service_role;
-
 create or replace function public.obras_pode_marcar_locacao(p_obra uuid)
 returns boolean
 language sql
@@ -189,7 +167,12 @@ stable
 security definer
 set search_path = pg_catalog, public
 as $$
-  select coalesce(public.obras_engenheiro_ou_admin_mae(p_obra) or public.obras_analista_spot(p_obra), false);
+  select coalesce(
+    public.obras_engenheiro_ou_admin_mae(p_obra) is true
+    or (nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
+        and public.obras_has_access() is true
+        and exists (select 1 from public.obras_obra o where o.id = p_obra and o.modalidade = 'spot')),
+    false);
 $$;
 revoke execute on function public.obras_pode_marcar_locacao(uuid) from public, anon;
 -- authenticated executa: as policies abaixo rodam como o usuário.
@@ -216,7 +199,7 @@ begin
   end if;
 
   if v_email is not null and public.obras_pode_marcar_locacao(new.obra_id) is not true then
-    raise exception 'OBRAS_LOCACAO: só o engenheiro da obra, o analista do SPOT ou administrador marca a locação'
+    raise exception 'OBRAS_LOCACAO: só o engenheiro da obra, quem tem acesso ao Obras (no SPOT) ou administrador marca a locação'
       using errcode = '42501';
   end if;
 
@@ -617,10 +600,10 @@ from (values
   (4, 'pode_ver_valores aceita SPOT dentro do bloco de acesso',
       (select prosrc like '%obras_has_access() is true%o.modalidade = ''spot''%' from pg_proc
         where oid = 'public.obras_pode_ver_valores(uuid)'::regprocedure)),
-  (5, 'analista_spot e pode_marcar_locacao: definer, search_path fixo',
+  (5, 'pode_marcar_locacao: definer, search_path fixo',
       (select count(*) from pg_proc
-        where oid in ('public.obras_analista_spot(uuid)'::regprocedure, 'public.obras_pode_marcar_locacao(uuid)'::regprocedure)
-          and prosecdef and proconfig is not null) = 2),
+        where oid = 'public.obras_pode_marcar_locacao(uuid)'::regprocedure
+          and prosecdef and proconfig is not null) = 1),
   (6, 'gatilho de locação usa obras_pode_marcar_locacao',
       (select prosrc like '%obras_pode_marcar_locacao(new.obra_id) is not true%'
               and prosrc not like '%obras_engenheiro_ou_admin_mae%'

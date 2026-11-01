@@ -41,7 +41,7 @@ describe('sdd-sql-obras-spot-financeiro.sql', () => {
   })
 
   it('obras_pode_marcar_locacao guarda o gatilho e as duas policies de obras_locacao_estado', () => {
-    expect(corpo('obras_pode_marcar_locacao')).toMatch(/obras_engenheiro_ou_admin_mae\(p_obra\)[\s\S]*obras_analista_spot\(p_obra\)/i)
+    expect(corpo('obras_pode_marcar_locacao')).toMatch(/obras_engenheiro_ou_admin_mae\(p_obra\)/i)
     expect(corpo('obras_locacao_estado_guarda')).toMatch(/obras_pode_marcar_locacao\(new\.obra_id\) is not true/i)
     expect(corpo('obras_locacao_estado_guarda')).not.toMatch(/obras_engenheiro_ou_admin_mae/i)
     expect(semComentarios).toMatch(/create policy "obras engenheiro insert" on public\.obras_locacao_estado[^;]*obras_pode_marcar_locacao\(obra_id\)/i)
@@ -49,14 +49,18 @@ describe('sdd-sql-obras-spot-financeiro.sql', () => {
     expect((upd.match(/obras_pode_marcar_locacao\(obra_id\)/gi) ?? []).length).toBe(2)
   })
 
-  it('obras_analista_spot é security definer, nunca NULL e exige SPOT e o e-mail da pessoa do pcm', () => {
-    const f = corpo('obras_analista_spot')
+  it('obras_pode_marcar_locacao no SPOT: e-mail no JWT, acesso ao Obras e obra SPOT; nunca NULL; sem guarda por analista', () => {
+    const f = corpo('obras_pode_marcar_locacao')
     expect(f).toMatch(/security definer/i)
     expect(f).toMatch(/set search_path/i)
     expect(f).toMatch(/coalesce\(/i)
-    expect(f).toMatch(/modalidade = 'spot'/i)
-    expect(f).toMatch(/obras_pessoa/i)
-    expect(f).toMatch(/lower\(trim\(p\.email\)\)/i)
+    expect(f).toMatch(/'email'\)\), ''\) is not null/i)
+    expect(f).toMatch(/obras_has_access\(\) is true/i)
+    expect(f).toMatch(/o\.modalidade = 'spot'/i)
+    // pcm e obras_pessoa.email são editáveis por qualquer usuário do Obras: não servem de guarda
+    expect(semComentarios).not.toMatch(/obras_analista_spot/i)
+    expect(f).not.toMatch(/obras_pessoa/i)
+    expect(corpo('obras_locacao_estado_guarda')).toMatch(/quem tem acesso ao Obras \(no SPOT\)/)
   })
 
   it('cria obras_nota_externa com RLS: leitura por valores, escrita só admin, sem update', () => {
