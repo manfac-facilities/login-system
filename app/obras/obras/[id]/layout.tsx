@@ -7,6 +7,7 @@ import { hojeISO } from '../../_lib/tipos'
 import ShellObra from '../_ui/shell'
 import SimboloManfac from '../_ui/simbolo-manfac'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
+import { podeVerValoresDaRequisicao } from './_pode-ver-valores'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,8 +52,8 @@ export default async function ObraLayout({
   if (obra.modalidade !== 'obra') return <Aviso>Obra não encontrada ou não é da modalidade OBRA</Aviso>
 
   // Item Financeiro: só quem pode ver valores. Cliente da SESSÃO (com o admin volta false); erro → false.
-  const { data: podeVer, error: ePode } = await supabase.rpc('obras_pode_ver_valores', { p_obra: id })
-  const financeiro = !ePode && podeVer === true
+  // Memorizada por requisição: o painel da obra reaproveita a mesma resposta.
+  const financeiro = await podeVerValoresDaRequisicao(id)
 
   // Só o que o shell mostra vai para o cliente (nada de valor/custo no payload).
   const doShell = { id: obra.id, os: obra.os, loja: obra.loja, cliente: obra.cliente, descricao: obra.descricao }

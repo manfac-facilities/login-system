@@ -96,6 +96,13 @@ export default function Resumo({ d, pend, obraId }: { d: Dados; pend: Financeiro
       <Pilula key="m" tom="n">{plural(d.vinculosDeMedicaoFornecedor, 'pagamento de medição já em Fornecedores', 'pagamentos de medição já em Fornecedores')}</Pilula>,
     )
   }
+  if (d.vinculosComoPagamentoDePedido > 0) {
+    chips.pagamentos.push(
+      <Pilula key="p" tom="n">
+        {plural(d.vinculosComoPagamentoDePedido, 'pagamento casado com pedido do Compras', 'pagamentos casados com pedidos do Compras')}
+      </Pilula>,
+    )
+  }
   if (pend.caixinhaSemObra === null) chips.caixinha.push(<Pilula key="x" tom="n">não deu para ler as despesas sem obra</Pilula>)
   else if (pend.caixinhaSemObra > 0) chips.caixinha.push(<Pilula key="s" tom="bad">{plural(pend.caixinhaSemObra, 'despesa sem obra no CC', 'despesas sem obra no CC')}</Pilula>)
   if (pend.locacoes === null) chips.locacoes.push(<Pilula key="x" tom="n">não deu para ler as locações</Pilula>)
@@ -205,6 +212,11 @@ export default function Resumo({ d, pend, obraId }: { d: Dados; pend: Financeiro
               </tr>
             </tbody>
           </table>
+          {!semReceita && d.osSemReceita > 0 ? (
+            <p className="text-[12px] font-medium text-(--obra-orange-texto)">
+              Margem projetada só sobre as OS com valor receita ({plural(d.osSemReceita, 'OS sem valor receita', 'OS sem valor receita')}).
+            </p>
+          ) : null}
           <p className="text-[12px] text-(--obra-muted-texto)">
             A projeção é uma régua simples até existir PEF por obra. Margem realizada negativa no meio da obra é normal enquanto o faturamento está atrás do gasto.
           </p>
@@ -273,7 +285,7 @@ export default function Resumo({ d, pend, obraId }: { d: Dados; pend: Financeiro
         </div>
         <p className="text-[12px] text-(--obra-muted-texto)">
           Comprometido = pedido emitido, medição aprovada, pagamento pedido no Financeiro e despesa de caixinha não reprovada; realizado = NF, pagamento solicitado/lançado ou caixinha aprovada.
-          Pagamento gerado por medição de fornecedor conta uma vez só (em Fornecedores). Despesas sem obra no CC: contagem da empresa toda.
+          Pagamento gerado por medição de fornecedor conta uma vez só (em Fornecedores); pagamento do Financeiro ao mesmo fornecedor (CPF/CNPJ) de um pedido do Compras desta obra quita o pedido, e só o que passar do pedido fica em Pagamentos / rateio. Despesas sem obra no CC: contagem da empresa toda.
         </p>
       </div>
 

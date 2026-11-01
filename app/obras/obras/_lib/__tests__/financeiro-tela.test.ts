@@ -168,6 +168,19 @@ describe('montarFinanceiro — Fases B/C', () => {
     })
   })
 
+  it('pagamento do Financeiro ao fornecedor (mesmo documento) de um pedido de locação quita o pedido, sem somar de novo', () => {
+    const f = montarFinanceiro({
+      obraId: MAE, obras: obrasBC, notas: [], fornecedores: [],
+      compras: [pedido({ solicitacao_tipo: 'locacao', total_centavos: 30_000, fornecedor_documento: '12345678000190' })],
+      vinculos: [vinculo({ valor_centavos: 30_000, fornecedor_documento: '12345678000190' })],
+    })
+    if (!f.resumo.ok) throw new Error('resumo')
+    expect(f.resumo.dados.origens.locacoes).toEqual({ comprometido: 30_000, realizado: 30_000, pago: 30_000 })
+    expect(f.resumo.dados.origens.pagamentos.comprometido).toBe(0)
+    expect(f.resumo.dados.total.custoComprometido).toBe(30_000)
+    expect(f.resumo.dados.vinculosComoPagamentoDePedido).toBe(1)
+  })
+
   it('leituras de pendência que falharam ficam null (não viram zero)', () => {
     const f = montarFinanceiro({ obraId: MAE, obras: obrasBC, compras: [], notas: [], fornecedores: [], medicoesFornecedorAtrasadas: null, caixinhaSemObra: null, locacoes: null })
     expect(f.pendencias).toEqual({ comprasSemEntrega: 0, medicoesFornecedorAtrasadas: null, caixinhaSemObra: null, locacoes: null })

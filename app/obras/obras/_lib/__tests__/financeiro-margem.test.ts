@@ -208,3 +208,117 @@ describe('custoDoVinculo', () => {
     expect(cx('PAGO')).toEqual({ comprometido: 100_000, realizado: 100_000, pago: 100_000 })
   })
 })
+
+describe('consolidarMargem — pagamento do Financeiro casado com pedido do Compras (revisão M3)', () => {
+  const pedido = (over: Partial<import('../financeiro-obra').CompraPedido> = {}) => ({
+    obraId: 'm', status: 'emitido', total_centavos: 10_000, fornecedorDocumento: 'D1', ...over,
+  })
+  const pago = (over: Partial<VinculoCusto> = {}) => vin({ valorCentavos: 10_000, pagamentoSituacao: 'pago', fornecedorDocumento: 'D1', ...over })
+
+  it('mesmo documento: o vínculo é o pagamento do pedido (realizado/pago na origem do pedido), não custo a mais', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido()], vinculos: [pago()] })
+    expect(r.origens.compras).toEqual({ comprometido: 10_000, realizado: 10_000, pago: 10_000 })
+    expect(r.origens.pagamentos).toEqual({ comprometido: 0, realizado: 0, pago: 0 })
+    expect(r.total.custoComprometido).toBe(10_000)
+    expect(r.vinculosComoPagamentoDePedido).toBe(1)
+  })
+
+  it('pagamento maior que o pedido: só o excedente fica em Pagamentos / rateio', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido()], vinculos: [pago({ valorCentavos: 15_000 })] })
+    expect(r.origens.compras).toEqual({ comprometido: 10_000, realizado: 10_000, pago: 10_000 })
+    expect(r.origens.pagamentos).toEqual({ comprometido: 5_000, realizado: 5_000, pago: 5_000 })
+    expect(r.total.custoComprometido).toBe(15_000)
+  })
+
+  it('dois pagamentos dividem a capacidade do pedido', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido()], vinculos: [pago({ valorCentavos: 6_000 }), pago({ valorCentavos: 6_000 })] })
+    expect(r.origens.compras.pago).toBe(10_000)
+    expect(r.origens.pagamentos).toEqual({ comprometido: 2_000, realizado: 2_000, pago: 2_000 })
+    expect(r.vinculosComoPagamentoDePedido).toBe(2)
+  })
+
+  it('locação já paga no Compras: o pagamento do Financeiro não soma de novo', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      compras: [pedido({ locacao: true, total_centavos: 5_000, nf: '1', pago_em: '2026-10-01' })],
+      vinculos: [pago({ valorCentavos: 5_000 })],
+    })
+    expect(r.origens.locacoes).toEqual({ comprometido: 5_000, realizado: 5_000, pago: 5_000 })
+    expect(r.origens.pagamentos).toEqual({ comprometido: 0, realizado: 0, pago: 0 })
+    expect(r.total.custoPago).toBe(5_000)
+  })
+
+  it('pagamento só pedido (não pago): pedido fica realizado, sem pago', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido()], vinculos: [pago({ pagamentoSituacao: null, etapa: 'lancada' })] })
+    expect(r.origens.compras).toEqual({ comprometido: 10_000, realizado: 10_000, pago: 0 })
+  })
+
+  it('pedido em outra OS da família: realizado/pago vão para a OS do pedido', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido({ obraId: 'f' })], vinculos: [pago({ obraId: 'm' })] })
+    expect(r.porOS[0]).toMatchObject({ custoComprometido: 0, custoPago: 0 })
+    expect(r.porOS[1]).toMatchObject({ custoComprometido: 10_000, custoRealizado: 10_000, custoPago: 10_000 })
+  })
+
+  it('sem casamento: documento diferente/ausente, pedido fora da família, não emitido ou cancelado sem NF', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      compras: [
+        pedido({ fornecedorDocumento: 'OUTRO' }),
+        pedido({ obraId: 'fora', fornecedorDocumento: 'D2' }),
+        pedido({ status: 'na_fila', fornecedorDocumento: 'D3' }),
+        pedido({ cancelada: true, fornecedorDocumento: 'D4' }),
+      ],
+      vinculos: [pago(), pago({ fornecedorDocumento: null }), pago({ fornecedorDocumento: 'D2' }), pago({ fornecedorDocumento: 'D3' }), pago({ fornecedorDocumento: 'D4' })],
+    })
+    expect(r.origens.pagamentos.comprometido).toBe(50_000)
+    expect(r.vinculosComoPagamentoDePedido).toBe(0)
+  })
+
+  it('soma das origens = total com casamento', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      compras: [pedido({ nf: '9' }), pedido({ obraId: 'f', locacao: true, total_centavos: 3_000, fornecedorDocumento: 'D9' })],
+      vinculos: [pago({ valorCentavos: 12_345 }), pago({ obraId: 'f', fornecedorDocumento: 'D9', valorCentavos: 1_000 }), vin({ valorCentavos: 777 })],
+    })
+    const o = Object.values(r.origens)
+    expect(o.reduce((s, x) => s + x.comprometido, 0)).toBe(r.total.custoComprometido)
+    expect(o.reduce((s, x) => s + x.realizado, 0)).toBe(r.total.custoRealizado)
+    expect(o.reduce((s, x) => s + x.pago, 0)).toBe(r.total.custoPago)
+    for (const l of r.porOS) expect(l.custoPago <= l.custoRealizado && l.custoRealizado <= l.custoComprometido).toBe(true)
+  })
+})
+
+describe('consolidarMargem — revisão M1/M2', () => {
+  it('M1: com OS sem valor receita, a margem projetada total usa só as OS com valor', () => {
+    const r = consolidarMargem({
+      ...vazio, avanco: 0.5,
+      obras: [obras[0], { ...obras[1], receitaCentavos: null }],
+      compras: [{ obraId: 'm', status: 'emitido', total_centavos: 1_000_000 }, { obraId: 'f', status: 'emitido', total_centavos: 3_000_000 }],
+      medicoesCliente: [{ obraId: 'f', situacao: 'aprovada', valorCentavos: 5_000_000 }],
+    })
+    expect(r.total.custoComprometido).toBe(4_000_000)
+    expect(r.total.custoProjetado).toBe(2_000_000)
+    expect(r.total.margemProjetada).toBe(38_000_000)
+    expect(r.percentuais.liberado).toBe(0)
+    expect(r.pendencias.avancoAFrente).toBe(20_000_000)
+    expect(r.osSemReceita).toBe(1)
+  })
+
+  it('M2: liberado e não faturado somado por OS; OS cancelada fora do liberado', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      medicoesCliente: [{ obraId: 'm', situacao: 'aprovada', valorCentavos: 1_000 }],
+      notas: [{ obraId: 'f', valor_centavos: 2_000, situacao: 'autorizada', devolvidaEm: null }],
+    })
+    expect(r.porOS.map((l) => l.liberadoNaoFaturado)).toEqual([1_000, 0])
+    expect(r.pendencias.liberadoNaoFaturado).toBe(1_000)
+    const c = consolidarMargem({
+      ...vazio, avanco: 0.5,
+      obras: [obras[0], { ...obras[1], cancelada: true }],
+      medicoesCliente: [{ obraId: 'f', situacao: 'aprovada', valorCentavos: 5_000 }],
+    })
+    expect(c.porOS[1].liberado).toBe(0)
+    expect(c.total.liberado).toBe(0)
+    expect(c.pendencias.liberadoNaoFaturado).toBe(0)
+  })
+})

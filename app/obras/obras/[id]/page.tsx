@@ -4,6 +4,8 @@ import { isAdmin } from '@/lib/auth/roles'
 import type { ReactNode } from 'react'
 import { hojeISO } from '../../_lib/tipos'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
+import { podeVerValoresDaRequisicao } from './_pode-ver-valores'
+import { lerAlertasFinanceiros } from './_alertas-financeiros'
 import { lerPlanos, lerRestricoes } from '../_lib/leitura'
 import { calcularAlertas } from '../_lib/alertas'
 import { itensDeLocacao } from './financeiro/locacoes/_tipos'
@@ -29,23 +31,6 @@ function EstadoVazio({ children }: { children: ReactNode }) {
   )
 }
 
-type Supa = Awaited<ReturnType<typeof createClient>>
-
-/**
- * Medições ao cliente ENVIADAS da família (alerta > 10 dias). Cliente da SESSÃO: a RLS de
- * `obras_medicao_cliente` só devolve linhas a quem vê valores. Falha → null (sem alerta falso).
- */
-async function medicoesEnviadas(supabase: Supa, id: string) {
-  const fam = await supabase.from('obras_obra').select('id, os').or(`id.eq.${id},obra_pai_id.eq.${id}`)
-  if (fam.error) return null
-  const os = new Map(((fam.data ?? []) as { id: string; os: string | null }[]).map((o) => [o.id, o.os]))
-  const med = await supabase.from('obras_medicao_cliente').select('numero, obra_id, enviada_em, situacao').in('obra_id', [...os.keys()]).eq('situacao', 'enviada')
-  if (med.error) return null
-  return ((med.data ?? []) as { numero: number; obra_id: string; enviada_em: string; situacao: string }[]).map((m) => ({
-    numero: Number(m.numero), os: os.get(m.obra_id) ?? null, enviadaEm: m.enviada_em, situacao: m.situacao,
-  }))
-}
-
 export default async function PainelDaObraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -64,7 +49,9 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
   const r = await lerObraDaRequisicao(id, hoje)
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
 
-  const [rdoR, envioR, planosR, restR, agenda, locR, medCli, frnR] = await Promise.all([
+  // Mesmo cache do layout (item Financeiro): sem consulta extra. Quem não vê valores não lê medição nenhuma.
+  const podeVer = await podeVerValoresDaRequisicao(id)
+  const [rdoR, envioR, planosR, restR, agenda, locR, finA] = await Promise.all([
     supabase.from('obras_rdo').select('estado').eq('obra_id', id).eq('data', hoje).maybeSingle(),
     ultimosDiariosEnviados(supabase, [id]),
     lerPlanos(supabase, id),
@@ -72,9 +59,8 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     lerAgenda(supabase, id, r.dados, hoje),
     // Locações (Fases B/C §2.9): cliente da SESSÃO; sem valor para quem não vê valores.
     supabase.rpc('obras_fin_locacoes', { p_obra: id }),
-    // Medições > 10 dias (Fases B/C §2.4): só voltam linhas para quem vê valores (RLS/gate da função).
-    medicoesEnviadas(supabase, id),
-    supabase.rpc('obras_fin_medicoes_fornecedor_atrasadas', { p_obra: id }),
+    // Medições > 10 dias (Fases B/C §2.4): só para quem vê valores.
+    lerAlertasFinanceiros(supabase, id, podeVer),
   ])
   if (rdoR.error || envioR.error) {
     return <EstadoVazio>Não deu para carregar o diário da obra. Recarregue a página em alguns instantes.</EstadoVazio>
@@ -90,14 +76,8 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     restricoes: restR.ok ? restR.restricoes : [],
     locacoes: locR.error ? null : itensDeLocacao((locR.data ?? []) as Record<string, unknown>[]),
     feriados: r.dados.feriados,
-    medicoesCliente: medCli,
-    medicoesFornecedor: frnR.error
-      ? null
-      : ((frnR.data ?? []) as Record<string, unknown>[]).map((m) => ({
-          fornecedor: m.fornecedor_razao_social ? String(m.fornecedor_razao_social) : null,
-          dias: Number(m.dias_aguardando) || 0,
-          aguardando: m.aguardando ? String(m.aguardando) : null,
-        })),
+    medicoesCliente: finA.medicoesCliente,
+    medicoesFornecedor: finA.medicoesFornecedor,
   })
 
   // Analista da obra (Leva 5 §7): só com planos e restrições lidos (leitura que falhou não vira pergunta falsa).

@@ -186,6 +186,7 @@ export function montarFinanceiro(p: {
         pago_em: txt(r.pago_em),
         cancelada: r.solicitacao_etapa === 'cancelada',
         locacao: r.solicitacao_tipo === 'locacao',
+        fornecedorDocumento: txt(r.fornecedor_documento),
       }))
     const md: MedicaoFornecedor[] = fornecedores
       .filter((r) => r.medicao_id)
@@ -216,6 +217,7 @@ export function montarFinanceiro(p: {
       valorPagoCentavos: opcional(r.pagamento_valor_pago_centavos),
       solicitacaoValorCentavos: opcional(r.solicitacao_valor_centavos),
       relatorioStatus: txt(r.relatorio_status),
+      fornecedorDocumento: txt(r.fornecedor_documento),
     }))
     const mc: MedicaoCliente[] = medicoesCliente.map((r) => ({ obraId: String(r.obra_id), situacao: String(r.situacao ?? ''), valorCentavos: valor(r.valor_centavos) }))
     const c = consolidarMargem({ compras: cp, fornecedores: md, notas: nt, vinculos: vc, medicoesCliente: mc, obras: refs, avanco: p.avanco ?? null })

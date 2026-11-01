@@ -203,9 +203,13 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; 
 - **Regras que mordem:** custo projetado = comprometido ÷ avanço físico da obra aberta (`calc.realizado`, 0–1; sem
   avanço → "—"); receita esperada exclui OS cancelada; sem valor receita a tela pede o valor em Dados da obra.
   Sem dupla contagem: vínculo com `de_medicao_fornecedor` fica fora (já está em Fornecedores); pedido de locação do
-  Compras sai de "Compras" e entra em "Locações". Pagamento do Financeiro que quita pedido do Compras não tem chave
-  (DIVIDAS M1): aparece como está em "Pagamentos / rateio". Tudo com o cliente da SESSÃO; valores só com
-  `obras_pode_ver_valores` (a aba some para os demais; a faixa só alerta medição a quem a RLS devolve linhas).
+  Compras sai de "Compras" e entra em "Locações". Pagamento do Financeiro ao mesmo fornecedor (CPF/CNPJ, `fornecedor_documento`) de um
+  pedido do Compras da família quita o pedido (realizado/pago na origem do pedido, até o valor dele); só o
+  excedente fica em "Pagamentos / rateio" (DIVIDAS M1). Margem projetada total e percentuais só sobre as OS
+  com valor receita; liberado de OS cancelada fora; "liberado e não faturado" somado por OS. Tudo com o cliente da SESSÃO; valores só com
+  `obras_pode_ver_valores` (a aba some para os demais). O painel só lê medições para os alertas quando
+  `podeVerValoresDaRequisicao` (`[id]/_pode-ver-valores.ts`, `cache` do React compartilhado com o layout) é true —
+  quem não vê valores não faz leitura extra (`[id]/_alertas-financeiros.ts`).
 - **SQL e ordem de deploy:** Fase A (`sdd-sql-obras-financeiro-a.sql`) → Financeiro `044` → Compras `016` →
   Fornecedores `013` → `sdd-sql-obras-financeiro-bc.sql`; depois os apps. Teste de comportamento:
   `docs/obras/2026-11-01-verificacao-obras-financeiro-bc.sql` (rollback).
