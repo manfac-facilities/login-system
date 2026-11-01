@@ -27,6 +27,8 @@ export type DadosPrancha = {
   planta: { largura: number; altura: number } | null
   /** Nota discreta no rodapé da moldura quando algo gravado não pôde ser lido (ex.: "1 camada não pôde ser desenhada"). */
   avisoLeitura?: string | null
+  /** Sem planta por formato que o react-pdf não lê (WEBP): este texto entra no lugar de "Sem planta enviada". */
+  avisoPlanta?: string | null
 }
 
 const A3 = { w: 1190.55, h: 841.89 }
@@ -276,7 +278,9 @@ export function PranchaFaseamento(d: DadosPrancha) {
           </View>
           <View style={{ height: RODAPE, borderTopWidth: 0.75, borderTopColor: T.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 }}>
             {!comPlanta ? (
-              <Text style={{ fontSize: 8.5, color: T.mutedTexto }}>Sem planta enviada: camadas sobre quadro branco</Text>
+              <Text style={{ fontSize: 8.5, color: d.avisoPlanta ? '#b42318' : T.mutedTexto }}>
+                {d.avisoPlanta || 'Sem planta enviada: camadas sobre quadro branco'}
+              </Text>
             ) : (
               <Text style={[estilos.mono, { fontSize: 7.5, color: '#444', fontWeight: 700 }]}>{`BASE: ${(d.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}`}</Text>
             )}

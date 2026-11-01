@@ -287,3 +287,42 @@ describe('rodada de correções da revisão', () => {
     expect(r0().status).toBe('rascunho')
   })
 })
+
+describe('revisão final da Leva 6b', () => {
+  it('M2: nova revisão a partir de emitida ilegível copia só o legível e não nasce travada', async () => {
+    await salvarRascunhoAction(R0, entrada())
+    await emitirRevisaoAction(R0)
+    // Só por SQL manual: uma linha de 60 pontos (o app aceita até 50), uma regra vazia e um carimbo com chave estranha.
+    r0().camadas = [{ id: 'c1', t: 'extintor', at: [0.1, 0.1] }, { id: 'c2', t: 'drywall', p: Array.from({ length: 60 }, () => [0.1, 0.1]) }]
+    r0().regras = ['Regra boa.', '']
+    r0().carimbo = { titulo: 'x', estranha: 1 }
+    const r = await novaRevisaoAction(FASE)
+    expect(r.ok).toBe(true)
+    const r1 = b.db.obras_fase_revisao.find((x) => x.id === r.revisaoId)!
+    expect(r1.camadas).toEqual([{ id: 'c1', t: 'extintor', at: [0.1, 0.1] }])
+    expect(r1.regras).toEqual(['Regra boa.'])
+    expect(r1.carimbo).toMatchObject({ titulo: 'Planta de faseamento · Fase 1', desenho: 'FAS-01', cliente: 'DPSP' })
+    // Destravada: salva e emite.
+    expect(await salvarRascunhoAction(String(r.revisaoId), entrada())).toEqual({ ok: true })
+    expect(await emitirRevisaoAction(String(r.revisaoId))).toEqual({ ok: true })
+  })
+
+  it('M2: rascunho ilegível pede ajuda ao suporte (nada de "até um administrador corrigir")', async () => {
+    r0().regras = ['']
+    const r = await salvarRascunhoAction(R0, entrada())
+    expect((r as { erro: string }).erro).toMatch(/peça ajuda ao suporte/)
+    expect((r as { erro: string }).erro).not.toMatch(/administrador corrigir/)
+  })
+
+  it.each([
+    ['OBRAS_ENVIO: fase_revisao_id é de outra obra', 'Esta revisão não pertence a esta obra.'],
+    ['OBRAS_ENVIO: fase_revisao_id não é revisão emitida', 'Esta revisão não pode ser enviada: ela precisa estar emitida.'],
+  ])('M3: "%s" chega ao usuário sem o nome da coluna', async (message, esperado) => {
+    await salvarRascunhoAction(R0, entrada())
+    await emitirRevisaoAction(R0)
+    b.erro['obras_envio.insert'] = { message, code: '23514' }
+    const r = await enviarFaseamentoAction(R0)
+    expect((r as { erro: string }).erro).toContain(esperado)
+    expect((r as { erro: string }).erro).not.toMatch(/fase_revisao_id/i)
+  })
+})

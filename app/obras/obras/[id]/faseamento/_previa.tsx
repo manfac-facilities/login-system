@@ -9,6 +9,7 @@
 import { TIPOS, legendaDe, type Camada, type Carimbo, type TipoCamada } from './_lib/camadas'
 import { dataBR } from './_lib/trava'
 import { DesenhoFase, grupoDe } from './_desenho'
+import { AVISO_FORMATO_PLANTA } from './_regras'
 import type { BaseDesenho } from './_tipos'
 
 function Amostra({ t }: { t: TipoCamada }) {
@@ -62,11 +63,16 @@ export default function PreviaPrancha(p: {
         <div className="flex min-w-0 flex-1 flex-col border border-[#222]">
           <div className="flex flex-1 items-center justify-center p-1">
             <div className="w-full">
-              <DesenhoFase camadas={p.camadas} base={p.base} />
+              {/* Igual ao PDF: planta em formato que o react-pdf não lê sai do desenho, com o aviso no rodapé. */}
+              <DesenhoFase camadas={p.camadas} base={p.base.foraDoPdf ? { url: null, largura: null, altura: null } : p.base} />
             </div>
           </div>
-          <div className="border-t border-[#dbe1ec] px-2 py-1 text-[9px] font-semibold text-[#444]">
-            {p.base.url ? `BASE: ${(p.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}` : 'Sem planta enviada: camadas sobre quadro branco'}
+          <div className={`border-t border-[#dbe1ec] px-2 py-1 text-[9px] font-semibold ${p.base.foraDoPdf ? 'text-[#b42318]' : 'text-[#444]'}`}>
+            {p.base.foraDoPdf
+              ? AVISO_FORMATO_PLANTA
+              : p.base.url
+                ? `BASE: ${(p.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}`
+                : 'Sem planta enviada: camadas sobre quadro branco'}
           </div>
         </div>
         <div className="flex w-[37%] shrink-0 flex-col gap-1.5 overflow-hidden">

@@ -146,3 +146,26 @@ describe('rodada de correções da revisão', () => {
     expect(dadosRenderizados().avisoLeitura).toBeNull()
   })
 })
+
+describe('C1: planta em formato que o react-pdf não lê', () => {
+  it('emitida com planta .webp: sai sem planta, sem assinar, e com o aviso de formato no lugar de "Sem planta enviada"', async () => {
+    Object.assign(b.db.obras_fase_revisao[0], { planta_path: `${OBRA}/mapa/ANTIGA.webp` })
+    expect((await pedir(R0)).status).toBe(200)
+    expect(b.assinadas).toEqual([])
+    expect(dadosRenderizados()).toMatchObject({
+      plantaUrl: null,
+      planta: null,
+      avisoPlanta: 'Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em Montar o mapa',
+    })
+  })
+  it('rascunho com a planta do mapa em .webp: o mesmo aviso', async () => {
+    b.db.obras_mapa[0].planta_path = `${OBRA}/mapa/NOVA.webp`
+    expect((await pedir(R1)).status).toBe(200)
+    expect(dadosRenderizados()).toMatchObject({ plantaUrl: null, avisoPlanta: expect.stringContaining('Formato da planta') })
+  })
+  it.each(['jpg', 'jpeg', 'png'])('planta .%s entra no PDF, sem aviso', async (ext) => {
+    Object.assign(b.db.obras_fase_revisao[0], { planta_path: `${OBRA}/mapa/ANTIGA.${ext}` })
+    await pedir(R0)
+    expect(dadosRenderizados()).toMatchObject({ plantaUrl: `https://assinada/${OBRA}/mapa/ANTIGA.${ext}`, avisoPlanta: null })
+  })
+})

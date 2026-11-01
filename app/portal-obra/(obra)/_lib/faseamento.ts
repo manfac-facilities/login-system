@@ -7,7 +7,8 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { camadasSchema, type Camada } from '@/app/obras/obras/[id]/faseamento/_lib/camadas'
+import type { Camada } from '@/app/obras/obras/[id]/faseamento/_lib/camadas'
+import { lerCamadas } from '@/app/obras/obras/[id]/faseamento/_regras'
 import { caminhoPlantaValido } from '@/app/obras/obras/[id]/mapa/_regras'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +81,8 @@ export async function lerFaseamentoDoPortal(admin: Admin, obraId: string): Promi
         const { data } = await storage.createSignedUrl(path, VALIDADE_URL_FASEAMENTO_S)
         plantaUrl = data?.signedUrl ?? null
       }
-      const c = camadasSchema.safeParse(camadasDe.get(String(r.id)))
+      // Uma a uma (como a tela interna e o PDF): uma camada ilegível não zera a prévia.
+      const c = lerCamadas(camadasDe.get(String(r.id)))
       return {
         revisaoId: String(r.id),
         faseId: String(r.fase_id),
@@ -88,7 +90,7 @@ export async function lerFaseamentoDoPortal(admin: Admin, obraId: string): Promi
         nome: String(r.fase_nome ?? ''),
         revisao: Number(r.revisao),
         emitidaEm: r.emitida_em ? String(r.emitida_em) : null,
-        camadas: c.success ? c.data : [],
+        camadas: c.camadas,
         plantaUrl,
         plantaLargura: plantaUrl ? Number(r.planta_largura) : null,
         plantaAltura: plantaUrl ? Number(r.planta_altura) : null,

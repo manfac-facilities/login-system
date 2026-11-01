@@ -70,3 +70,24 @@ it('camada gravada que o schema recusa: mostra só as válidas e avisa (leitura 
   expect(r.camadas.map((c) => c.id)).toEqual(['c1'])
   expect(r.ilegivel).toContain('Há camadas que não puderam ser lidas')
 })
+
+describe('revisão final da Leva 6b', () => {
+  const baseNaTela = () => (telaProps.mock.calls.at(-1)![0] as { base: Record<string, unknown> }).base
+  it('C1: planta do mapa em .webp fica marcada como fora do PDF; .png não', async () => {
+    b.db.obras_mapa = [{ obra_id: OBRA, planta_path: `${OBRA}/mapa/a.webp`, planta_largura: 1200, planta_altura: 840 }]
+    await montar()
+    expect(baseNaTela()).toMatchObject({ foraDoPdf: true })
+    b.db.obras_mapa = [{ obra_id: OBRA, planta_path: `${OBRA}/mapa/a.png`, planta_largura: 1200, planta_altura: 840 }]
+    await montar()
+    expect(baseNaTela()).toMatchObject({ foraDoPdf: false })
+  })
+  it('M2: emitida ilegível manda criar nova revisão; rascunho ilegível manda pedir ajuda ao suporte', async () => {
+    b.db.obras_fase_revisao[0].regras = ['']
+    await montar()
+    expect(revisaoNaTela().ilegivel).toMatch(/peça ajuda ao suporte/)
+    Object.assign(b.db.obras_fase_revisao[0], { status: 'emitida', emitida_em: '2026-10-30T15:00:00Z', fase_numero: 1, fase_nome: 'Demolição' })
+    await montar()
+    expect(revisaoNaTela().ilegivel).toMatch(/Crie uma nova revisão a partir da última emitida para continuar\.$/)
+    expect(revisaoNaTela().ilegivel).not.toMatch(/administrador corrigir/)
+  })
+})

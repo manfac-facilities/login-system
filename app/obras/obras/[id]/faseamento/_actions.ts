@@ -25,13 +25,14 @@ import { camadasSchema, carimboSchema, regrasSchema } from './_lib/camadas'
 import { dataBR } from './_lib/trava'
 import { podeFasear } from './_permissao'
 import { carregarPrancha, renderizarPrancha, UUID } from './_pdf'
-import { MAX_NOME_FASE, carimboLegivel, carimboPadrao, lerCamadas, lerRegras } from './_regras'
+import { ILEGIVEL_RASCUNHO, MAX_NOME_FASE, carimboDe, carimboLegivel, carimboPadrao, lerCamadas, lerRegras } from './_regras'
 import type { EntradaRevisao, Resultado } from './_tipos'
 
 const SEM_PERMISSAO = 'Só o engenheiro da obra, o coordenador ou um administrador mexe na planta de faseamento'
 const EMITIDA = 'Revisão emitida não muda. Use "Nova revisão" para alterar.'
 const MAX_DESTINATARIOS = 40
-const ILEGIVEL = 'Há camadas, regras ou carimbo gravados nesta revisão que não puderam ser lidos. Ela fica em leitura até um administrador corrigir.'
+/** Só vale para rascunho (salvar/emitir conferem o status antes): a emitida destrava pela "Nova revisão". */
+const ILEGIVEL = `Há camadas, regras ou carimbo gravados nesta revisão que não puderam ser lidos. ${ILEGIVEL_RASCUNHO}`
 /** Mesmos destinatários do relatório de fase (spec §2.3): tipos semanal ou mensal. */
 const TIPOS_DESTINATARIO_FASE = ['semanal', 'mensal']
 
@@ -53,6 +54,10 @@ function erroFaseamento(acao: string, e: { message: string; code?: string; detai
       const t = e.message.split(prefixo)[1]?.trim() ?? ''
       if (/só o engenheiro/i.test(t)) return falha(SEM_PERMISSAO)
       if (/imutável/i.test(t)) return falha(EMITIDA)
+      // Guarda do envio (só por corrida ou gravação direta): não mostra o nome da coluna ao usuário.
+      if (/fase_revisao_id/.test(t)) {
+        return falha(/outra obra/.test(t) ? 'Esta revisão não pertence a esta obra.' : 'Esta revisão não pode ser enviada: ela precisa estar emitida.')
+      }
       return falha(maiuscula(t) || `Não foi possível ${acao}.`)
     }
   }
@@ -196,14 +201,15 @@ export async function novaRevisaoAction(faseId: string): Promise<Resultado & { r
   if (revs.some((r) => r.status === 'rascunho')) return falha('Esta fase já tem uma revisão em rascunho')
   const base = revs.find((r) => r.status === 'emitida')
   if (!base) return falha('Ainda não há revisão emitida para copiar')
+  // Copia já saneado (camadas e regras válidas, uma a uma; carimbo validado ou o padrão): a nova nunca nasce travada.
   const { data, error } = await ctx.supabase
     .from('obras_fase_revisao')
     .insert({
       fase_id: faseId,
       obra_id: ctx.obra.id,
-      camadas: base.camadas ?? [],
-      regras: base.regras ?? [],
-      carimbo: base.carimbo ?? {},
+      camadas: lerCamadas(base.camadas).camadas,
+      regras: lerRegras(base.regras).regras,
+      carimbo: carimboDe(base.carimbo, Number(ctx.linha.numero), ctx.obra.cliente),
       usa_trava: base.usa_trava === true,
     })
     .select('id')

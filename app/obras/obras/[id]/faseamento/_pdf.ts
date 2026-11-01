@@ -18,7 +18,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { registrarFontes } from '../../_pdf/base'
 import { PranchaFaseamento, type DadosPrancha } from './_lib/prancha-pdf'
 import { textoDaTrava, type TravaSnapshot } from './_lib/trava'
-import { avisoDeLeitura, carimboDe, lerCamadas, lerRegras } from './_regras'
+import { AVISO_FORMATO_PLANTA, avisoDeLeitura, carimboDe, lerCamadas, lerRegras, plantaEntraNoPdf } from './_regras'
 
 export const VALIDADE_URL_S = 600
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -75,7 +75,9 @@ export async function carregarPrancha(supabase: SupabaseClient, obraId: string, 
     base = { path: m?.planta_path ?? null, largura: m?.planta_largura ?? null, altura: m?.planta_altura ?? null }
   }
 
-  const plantaUrl = await assinarPlanta(supabase, base.path)
+  // Formato que o react-pdf não lê (WEBP): sem planta no PDF, com aviso no rodapé (nunca some calada).
+  const formatoRuim = !!base.path && !plantaEntraNoPdf(base.path)
+  const plantaUrl = formatoRuim ? null : await assinarPlanta(supabase, base.path)
   const temDim = !!(base.largura && base.altura)
   // Gravado que o schema recusa: desenha/imprime o que é válido, um a um, e avisa no rodapé (nunca some em silêncio).
   const camadas = lerCamadas(rev.camadas)
@@ -93,6 +95,7 @@ export async function carregarPrancha(supabase: SupabaseClient, obraId: string, 
     plantaUrl: plantaUrl && temDim ? plantaUrl : null,
     planta: plantaUrl && temDim ? { largura: Number(base.largura), altura: Number(base.altura) } : null,
     avisoLeitura: avisoDeLeitura(camadas, regras),
+    avisoPlanta: formatoRuim ? AVISO_FORMATO_PLANTA : null,
   }
   const nomeArquivo = `faseamento-${slug(nomeObra)}-fase${fase.numero}-R${dados.revisao.revisao}${emitida ? '' : '-rascunho'}.pdf`
   return { ok: true, dados, nomeArquivo, revisao: rev, obra }

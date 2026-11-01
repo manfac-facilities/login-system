@@ -32,4 +32,10 @@ export type RevisaoTela = {
 }
 
 /** Base do desenho: a planta (URL assinada curta) ou quadro branco. */
-export type BaseDesenho = { url: string | null; largura: number | null; altura: number | null }
+export type BaseDesenho = {
+  url: string | null
+  largura: number | null
+  altura: number | null
+  /** Planta num formato que o react-pdf não lê (WEBP): a tela desenha, mas o PDF sai sem ela e com aviso. */
+  foraDoPdf?: boolean
+}

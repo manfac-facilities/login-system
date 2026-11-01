@@ -5,7 +5,7 @@ import AvisoMapa from '../mapa/_aviso'
 import { textoDaTrava, type TravaSnapshot } from './_lib/trava'
 import { assinarPlanta, UUID } from './_pdf'
 import { podeFasear } from './_permissao'
-import { carimboDe, carimboLegivel, faltaSqlFaseamento, lerCamadas, lerRegras, revisaoAberta } from './_regras'
+import { ILEGIVEL_RASCUNHO, carimboDe, carimboLegivel, faltaSqlFaseamento, lerCamadas, lerRegras, plantaEntraNoPdf, revisaoAberta } from './_regras'
 import TelaFaseamento from './_tela'
 import type { BaseDesenho, FaseTela, RevisaoResumo, RevisaoTela } from './_tipos'
 
@@ -98,7 +98,12 @@ export default async function FaseamentoPage({
       planta = m.error ? null : (m.data as Linha | null)
     }
     const url = await assinarPlanta(supabase, planta?.planta_path)
-    base = { url, largura: url ? (planta?.planta_largura ?? null) : null, altura: url ? (planta?.planta_altura ?? null) : null }
+    base = {
+      url,
+      largura: url ? (planta?.planta_largura ?? null) : null,
+      altura: url ? (planta?.planta_altura ?? null) : null,
+      foraDoPdf: !!url && !plantaEntraNoPdf(String(planta?.planta_path)),
+    }
     // Gravado que o schema recusa: mostra só o válido, avisa e deixa a revisão em leitura (nunca troca por [] calado).
     const camadas = lerCamadas(r.camadas)
     const regras = lerRegras(r.regras)
@@ -119,7 +124,10 @@ export default async function FaseamentoPage({
       emitidaEm: r.emitida_em ?? null,
       emitidaPor: r.emitida_por ?? null,
       travaTexto: emitida ? textoDaTrava((r.trava_snapshot ?? null) as TravaSnapshot | null) : null,
-      ilegivel: problemas.length ? `${problemas.join('; ')}. A revisão fica em leitura até um administrador corrigir.` : null,
+      // Emitida: a "Nova revisão" copia só o que é legível, então destrava. Rascunho só fica assim por SQL manual (DIVIDAS).
+      ilegivel: problemas.length
+        ? `${problemas.join('; ')}. ${emitida ? 'Crie uma nova revisão a partir da última emitida para continuar.' : ILEGIVEL_RASCUNHO}`
+        : null,
     }
   } else {
     // Sem fase ainda: o aviso de "sem planta" já vale para a primeira.

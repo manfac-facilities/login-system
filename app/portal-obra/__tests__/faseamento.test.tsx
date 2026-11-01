@@ -116,6 +116,13 @@ describe('lerFaseamentoDoPortal', () => {
     expect(b.assinadas).toEqual([])
   })
 
+  it('M1 (revisão final): camada ilegível sai sozinha; as válidas continuam na prévia', async () => {
+    const ruim = { id: 'c2', t: 'drywall', p: Array.from({ length: 60 }, () => [0.1, 0.1]) }
+    banco([rev(u(10), F1, 0, 'emitida', { camadas: [...ZONA, ruim] })])
+    const r = await lerFaseamentoDoPortal(mockAdmin as never, O)
+    expect(r[0].camadas).toEqual(ZONA)
+  })
+
   it('nada emitido: lista vazia', async () => {
     banco([rev(u(12), F1, 2, 'rascunho')])
     expect(await lerFaseamentoDoPortal(mockAdmin as never, O)).toEqual([])

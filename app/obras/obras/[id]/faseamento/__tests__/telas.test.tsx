@@ -249,7 +249,7 @@ describe('rodada de correções da revisão', () => {
         obra={{ nome: 'Macaé 3', os: '24.0871' }}
         fases={fases('rascunho')}
         faseId="f1"
-        revisao={{ ...revisao('rascunho'), ilegivel: 'Há camadas que não puderam ser lidas. A revisão fica em leitura até um administrador corrigir.' }}
+        revisao={{ ...revisao('rascunho'), ilegivel: 'Há camadas que não puderam ser lidas. Este rascunho fica em leitura; peça ajuda ao suporte para corrigi-lo.' }}
         base={PLANTA}
         podeEditar
         temTrava
@@ -339,5 +339,17 @@ describe('rodada de correções da revisão', () => {
       fireEvent.keyDown(window, { key: 'Enter' })
     })
     expect(ultimas).toEqual([{ id: 'c1', t: 'drywall', p: [[0.1, 0.2], [0.5, 0.2]] }])
+  })
+})
+
+describe('revisão final da Leva 6b (C1)', () => {
+  it('planta fora do PDF (WEBP): a prévia tira a imagem e mostra o aviso de formato no rodapé, como o PDF', () => {
+    tela({ base: { url: 'https://x/planta.webp', largura: 1200, altura: 840, foraDoPdf: true } })
+    expect(screen.getByRole('note').textContent).toContain('Formato da planta não suportado no PDF')
+    fireEvent.click(screen.getByRole('button', { name: 'Prancha A3' }))
+    const previa = screen.getByRole('img', { name: 'Prévia da prancha A3' })
+    expect(previa.textContent).toContain('Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em Montar o mapa')
+    expect(previa.textContent).not.toContain('Sem planta enviada')
+    expect(previa.querySelector('image')).toBeNull()
   })
 })

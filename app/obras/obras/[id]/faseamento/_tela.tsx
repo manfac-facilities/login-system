@@ -17,7 +17,7 @@ import { criarFaseAction, emitirRevisaoAction, enviarFaseamentoAction, novaRevis
 import { DesenhoFase } from './_desenho'
 import EditorCamadas from './_editor'
 import PreviaPrancha from './_previa'
-import { MAX_NOME_FASE, regrasDeTexto, revisaoAberta, rotuloRevisao } from './_regras'
+import { AVISO_FORMATO_PLANTA, MAX_NOME_FASE, regrasDeTexto, revisaoAberta, rotuloRevisao } from './_regras'
 import type { BaseDesenho, FaseTela, RevisaoTela } from './_tipos'
 
 const botao = 'inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-(--obra-card) px-4 text-sm font-medium text-(--obra-ink) disabled:opacity-45'
@@ -214,6 +214,11 @@ export default function TelaFaseamento({
       ) : null}
 
       {semPlanta ? <AvisoSemPlanta /> : null}
+      {base.foraDoPdf ? (
+        <p role="note" className="rounded-lg border border-[#f7cb15] bg-[#fff8db] px-3 py-2 text-sm text-(--obra-yellow-texto)">
+          {AVISO_FORMATO_PLANTA}.
+        </p>
+      ) : null}
       {erro ? <p role="alert" className="rounded-lg bg-[#fdecea] px-3 py-2 text-sm text-(--obra-vermelho-texto)">{erro}</p> : null}
       {revisao?.ilegivel ? <p role="alert" className="rounded-lg border border-[#b42318] bg-[#fdecea] px-3 py-2 text-sm text-(--obra-vermelho-texto)">{revisao.ilegivel}</p> : null}
       {aviso ? <p role="status" className="text-sm text-(--obra-verde-texto)">{aviso}</p> : null}

@@ -52,7 +52,19 @@ export function novoIdCamada(camadas: readonly Pick<Camada, 'id'>[]): string {
 export const alturaDoQuadro = (largura: number | null | undefined, altura: number | null | undefined) =>
   largura && altura && largura > 0 && altura > 0 ? (1000 * altura) / largura : ALTURA_QUADRO
 
-/** Revisão aberta na tela: a em rascunho; sem ela, a emitida mais recente. */
+/**
+ * Rascunho com conteúdo gravado ilegível (só acontece por SQL manual: a "Nova revisão" copia saneado). Salvar
+ * apagaria o descartado e não há tela de correção, então o caminho real é o suporte (DIVIDAS).
+ */
+export const ILEGIVEL_RASCUNHO = 'Este rascunho fica em leitura; peça ajuda ao suporte para corrigi-lo.'
+
+/** Aviso no rodapé da prancha (PDF e prévia) quando a planta tem formato que o react-pdf não lê (ex.: WEBP antigo). */
+export const AVISO_FORMATO_PLANTA = 'Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em Montar o mapa'
+
+/** O react-pdf (`@react-pdf/image`) só lê JPEG e PNG: outra extensão sai do PDF como "sem planta", com aviso. */
+export const plantaEntraNoPdf = (path: string) => /\.(jpe?g|png)$/i.test(path)
+
+/** Revisão aberta na tela:a em rascunho; sem ela, a emitida mais recente. */
 export function revisaoAberta(revisoes: readonly RevisaoResumo[]): RevisaoResumo | null {
   return revisoes.find((r) => r.status === 'rascunho') ?? [...revisoes].sort((a, b) => b.revisao - a.revisao)[0] ?? null
 }

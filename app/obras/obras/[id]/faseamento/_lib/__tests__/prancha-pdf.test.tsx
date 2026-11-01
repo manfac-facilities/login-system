@@ -130,3 +130,13 @@ describe('aviso de leitura no rodapé (revisão da Task 3, M3)', () => {
     expect(sem.container.textContent).not.toContain('não pôde ser desenhada')
   })
 })
+
+describe('planta em formato que o react-pdf não lê (revisão final, C1)', () => {
+  it('com avisoPlanta: o rodapé mostra o aviso de formato e não "Sem planta enviada"', () => {
+    const aviso = 'Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em Montar o mapa'
+    const { container } = render(<PranchaFaseamento {...dados({ plantaUrl: null, planta: null, avisoPlanta: aviso })} />)
+    expect(container.textContent).toContain(aviso)
+    expect(container.textContent).not.toContain('Sem planta enviada')
+    expect(container.querySelector('pdf-image[data-src="https://x/planta.png"]')).toBeNull()
+  })
+})
