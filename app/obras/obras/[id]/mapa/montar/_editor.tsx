@@ -44,7 +44,14 @@ export type AmbienteEditor = {
 export type PontoEditor = { id: string; numero: number; nome: string; ambienteId: string; x: number | null; y: number | null; ativo: boolean }
 type Ferramenta = 'selecionar' | 'ambiente' | 'ponto'
 type Arrasto =
-  | { tipo: 'mover' | 'redim'; id: string; ini: { x: number; y: number }; orig: Retangulo }
+  | {
+      tipo: 'mover' | 'redim'
+      id: string
+      ini: { x: number; y: number }
+      orig: Retangulo
+      /** Ao mover, os pontos do ambiente vão junto (posição original de cada um). */
+      pontosOrig: { id: string; x: number; y: number }[]
+    }
   | { tipo: 'criar'; ini: { x: number; y: number }; atual: Retangulo }
   | { tipo: 'ponto'; id: string; ini: { x: number; y: number }; orig: { x: number; y: number } }
 
@@ -291,7 +298,11 @@ export default function EditorMapa({
     setSelId(a.id)
     if (!orig) return
     capturar(e)
-    setArrasto({ tipo, id: a.id, ini: rel(e), orig })
+    const pontosOrig =
+      tipo === 'mover'
+        ? pontos.filter((p) => p.ambienteId === a.id && p.x !== null && p.y !== null).map((p) => ({ id: p.id, x: p.x!, y: p.y! }))
+        : []
+    setArrasto({ tipo, id: a.id, ini: rel(e), orig, pontosOrig })
   }
 
   function noPonto(e: PE, p: PontoEditor) {
@@ -323,6 +334,24 @@ export default function EditorMapa({
         ? { ...o, x: clamp(o.x + dx, 0, 1 - o.w), y: clamp(o.y + dy, 0, 1 - o.h) }
         : { ...o, w: clamp(o.w + dx, LADO_MINIMO, 1 - o.x), h: clamp(o.h + dy, LADO_MINIMO, 1 - o.y) }
     setAmbientes((l) => l.map((a) => (a.id === arrasto.id ? { ...a, ...r } : a)))
+    if (arrasto.pontosOrig.length) {
+      // mesmo deslocamento que o retângulo de fato andou (já encaixado no quadro)
+      const ddx = r.x - o.x
+      const ddy = r.y - o.y
+      const pos = new Map(arrasto.pontosOrig.map((p) => [p.id, { x: clamp(p.x + ddx), y: clamp(p.y + ddy) }]))
+      setPontos((l) => l.map((x) => (pos.has(x.id) ? { ...x, ...pos.get(x.id)! } : x)))
+    }
+  }
+
+  /** Gesto cancelado (rolagem/sistema no tablet): volta tudo ao original, sem gravar. */
+  function cancelar() {
+    const a = arrasto
+    setArrasto(null)
+    if (!a || a.tipo === 'criar') return
+    if (a.tipo === 'ponto') return setPontos((l) => l.map((x) => (x.id === a.id ? { ...x, ...a.orig } : x)))
+    const voltar = new Map(a.pontosOrig.map((p) => [p.id, p]))
+    setAmbientes((l) => l.map((x) => (x.id === a.id ? { ...x, ...a.orig } : x)))
+    if (voltar.size) setPontos((l) => l.map((x) => (voltar.has(x.id) ? { ...x, x: voltar.get(x.id)!.x, y: voltar.get(x.id)!.y } : x)))
   }
 
   async function soltar() {
@@ -344,7 +373,20 @@ export default function EditorMapa({
     const ret = amb ? retDe(amb) : null
     if (!ret || (ret.x === a.orig.x && ret.y === a.orig.y && ret.w === a.orig.w && ret.h === a.orig.h)) return
     const r = await rodar(() => atualizarAmbienteAction(a.id, { retangulo: ret }))
-    if (!r) setAmbientes((l) => l.map((x) => (x.id === a.id ? { ...x, ...a.orig } : x)))
+    if (!r) {
+      setAmbientes((l) => l.map((x) => (x.id === a.id ? { ...x, ...a.orig } : x)))
+      const voltar = new Map(a.pontosOrig.map((p) => [p.id, p]))
+      if (voltar.size) setPontos((l) => l.map((x) => (voltar.has(x.id) ? { ...x, x: voltar.get(x.id)!.x, y: voltar.get(x.id)!.y } : x)))
+      return
+    }
+    // Pontos que foram junto com o ambiente.
+    for (const po of a.pontosOrig) {
+      const p = pontos.find((x) => x.id === po.id)
+      if (p && p.x !== null && p.y !== null && (p.x !== po.x || p.y !== po.y)) {
+        const rp = await rodar(() => atualizarPontoAction(po.id, { x: p.x, y: p.y }))
+        if (!rp) setPontos((l) => l.map((x) => (x.id === po.id ? { ...x, x: po.x, y: po.y } : x)))
+      }
+    }
   }
 
   const pontosSel = sel ? pontos.filter((p) => p.ambienteId === sel.id) : []
@@ -417,7 +459,7 @@ export default function EditorMapa({
                     onPointerDown={noFundo}
                     onPointerMove={mover}
                     onPointerUp={() => void soltar()}
-                    onPointerCancel={() => void soltar()}
+                    onPointerCancel={cancelar}
                   >
                     <rect width={W} height={H} fill="#f7f9fc" />
                     {comImagem ? <image href={planta.url!} width={W} height={H} preserveAspectRatio="none" /> : null}
@@ -442,18 +484,20 @@ export default function EditorMapa({
                             {a.nome}
                           </text>
                           {s ? (
-                            <rect
-                              data-alca="redimensionar"
-                              x={(r.x + r.w) * W - 12 * u}
-                              y={(r.y + r.h) * H - 12 * u}
-                              width={24 * u}
-                              height={24 * u}
-                              fill="#ffffff"
-                              stroke={LARANJA}
-                              strokeWidth={2 * u}
-                              className="cursor-nwse-resize"
-                              onPointerDown={(e) => noAmbiente(e, a, 'redim')}
-                            />
+                            <g data-alca="redimensionar" className="cursor-nwse-resize" onPointerDown={(e) => noAmbiente(e, a, 'redim')}>
+                              {/* alvo de toque invisível ≥ 44 px no tamanho usual do editor */}
+                              <rect x={(r.x + r.w) * W - 32 * u} y={(r.y + r.h) * H - 32 * u} width={64 * u} height={64 * u} fill="transparent" />
+                              <rect
+                                x={(r.x + r.w) * W - 12 * u}
+                                y={(r.y + r.h) * H - 12 * u}
+                                width={24 * u}
+                                height={24 * u}
+                                fill="#ffffff"
+                                stroke={LARANJA}
+                                strokeWidth={2 * u}
+                                pointerEvents="none"
+                              />
+                            </g>
                           ) : null}
                         </g>
                       )
@@ -474,7 +518,9 @@ export default function EditorMapa({
                       .filter((p) => p.x !== null && p.y !== null)
                       .map((p) => (
                         <g key={p.id} data-ponto={p.id} onPointerDown={(e) => noPonto(e, p)} className={ferramenta === 'selecionar' ? 'cursor-move' : undefined} opacity={p.ativo ? 1 : 0.4}>
-                          <circle cx={p.x! * W} cy={p.y! * H} r={16 * u} fill="#ffffff" stroke={TINTA} strokeWidth={2 * u} />
+                          {/* alvo de toque invisível ≥ 44 px no tamanho usual do editor */}
+                          <circle cx={p.x! * W} cy={p.y! * H} r={32 * u} fill="transparent" />
+                          <circle cx={p.x! * W} cy={p.y! * H} r={16 * u} fill="#ffffff" stroke={TINTA} strokeWidth={2 * u} pointerEvents="none" />
                           <text x={p.x! * W} y={p.y! * H + 5 * u} textAnchor="middle" fontSize={13 * u} fontWeight={600} fill={TINTA} pointerEvents="none" className="obra-num">
                             {p.numero}
                           </text>

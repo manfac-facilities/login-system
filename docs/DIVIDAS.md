@@ -434,9 +434,18 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
   não há limpeza. Volume pequeno (uma imagem por troca).
 - **Ponto desativado não é barrado no banco para foto nova** (Task 1, ponto 2): a ronda só lista pontos ativos,
   mas uma chamada direta à action com o id de um ponto desativado grava.
-- **Diário lê todas as fotos ligadas ao mapa da obra** (`lerFotosDoMapa`) para achar a referência de ângulo de
-  cada ponto. Uma consulta indexada; cresce com a obra. Se pesar, ler só a última por ponto (rpc ou `distinct on`).
+- **Leituras de foto do mapa sempre ordenadas e limitadas** (fix 1 da revisão, contra o corte calado de 1000 linhas do
+  PostgREST): diário = 1 consulta `limit 1` por ponto ativo (referência de ângulo); mapa = 1 consulta por ambiente com as
+  6 mais novas; linha do tempo do ponto = páginas de 60 ("Ver mais fotos", até 600) + a primeira foto. Custo: N consultas
+  pequenas por tela (N = pontos ativos ou ambientes). Se pesar, trocar por um rpc com `distinct on`.
+- **Ordem por coluna do RDO** usa `order=obras_rdo(data)` (ordenação por relação to-one do PostgREST ≥ 11). Conferir na
+  primeira abertura em produção que a linha do tempo vem em ordem.
 - **Editor do mapa sem desfazer e sem atalho de teclado para mover/redimensionar** (só ponteiro e os botões
   "+ Ambiente"/"Pôr no desenho"). O mockup mostrava "Desfazer"; como tudo grava na hora, ficou de fora.
+- **`salvarPlantaAction` não confere se o arquivo existe no bucket**: um caminho canônico válido mas não enviado deixa a
+  planta quebrada (a imagem não aparece). Só engenheiro/admin chega lá; reenviar a planta resolve.
+- **Deploy: `sdd-sql-obras-leva6.sql` antes do app, sem exceção.** Sem ele quebram o diário inteiro (`lerMapa` em toda
+  obra → "Não deu para carregar o diário"), o registro de impedimento/orientação (insert com `ambiente_id`), o envio de
+  foto e as telas do mapa.
 - **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
   `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.

@@ -15,7 +15,7 @@ import { segundaDaSemana } from '../../_lib/last-planner'
 import { lerPlano } from '../../_lib/leitura'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
-import { lerFotosDoMapa, lerMapa } from '../../_lib/mapa-leitura'
+import { lerMapa, lerReferenciasDosPontos } from '../../_lib/mapa-leitura'
 import { montarMapaDiario } from './_mapa-diario'
 import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo, MapaDiario } from './_tipos'
 
@@ -147,12 +147,12 @@ export default async function DiarioObraPage({
   const mapaR = await lerMapa(supabase, id)
   if (!mapaR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
   if (mapaR.dados.ambientes.length) {
-    const fotosR = await lerFotosDoMapa(supabase, id)
-    if (!fotosR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
+    const ativos = mapaR.dados.pontos.filter((p) => p.ativo).map((p) => p.id)
+    const refR = await lerReferenciasDosPontos(supabase, id, ativos, data)
+    if (!refR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
     const entrada = {
       mapa: mapaR.dados,
-      fotos: fotosR.fotos,
-      data,
+      referencias: refR.referencias,
       atividades: plano.map((p) => ({ numero: p.numero, descricao: p.descricao })),
     }
     const caminhos = montarMapaDiario(entrada)?.caminhos ?? []

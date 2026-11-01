@@ -1,4 +1,4 @@
-import { lerMapa, lerFotosDoMapa, montarMapa } from '../mapa-leitura'
+import { lerMapa, lerFotosDoMapa, lerReferenciasDosPontos, montarMapa, LIMITE_FOTOS_MAPA } from '../mapa-leitura'
 
 type R = { data: unknown; error: unknown }
 let tabelas: Record<string, R> = {}
@@ -7,7 +7,7 @@ const chamadas: { tabela: string; metodo: string; args: unknown[] }[] = []
 function chain(tabela: string) {
   const r = tabelas[tabela] ?? { data: [], error: null }
   const c: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'in', 'order', 'or']) {
+  for (const m of ['select', 'eq', 'in', 'order', 'or', 'lt', 'limit']) {
     c[m] = jest.fn((...args: unknown[]) => { chamadas.push({ tabela, metodo: m, args }); return c })
   }
   c.maybeSingle = jest.fn(async () => r)
@@ -109,5 +109,32 @@ describe('lerFotosDoMapa', () => {
   it('erro vira ok:false', async () => {
     tabelas = { obras_rdo_foto: { data: null, error: { message: 'x' } } }
     expect((await lerFotosDoMapa(supabase, 'obra')).ok).toBe(false)
+  })
+  it('sempre ordena pela data do RDO (desc por padrão) e limita explicitamente', async () => {
+    await lerFotosDoMapa(supabase, 'obra')
+    expect(chamadas).toContainEqual({ tabela: 'obras_rdo_foto', metodo: 'order', args: ['obras_rdo(data)', { ascending: false }] })
+    expect(chamadas).toContainEqual({ tabela: 'obras_rdo_foto', metodo: 'order', args: ['ordem', { ascending: false }] })
+    expect(chamadas).toContainEqual({ tabela: 'obras_rdo_foto', metodo: 'limit', args: [LIMITE_FOTOS_MAPA] })
+  })
+  it('filtros: ambiente, antes de, estados, ascendente e limite', async () => {
+    await lerFotosDoMapa(supabase, 'obra', { ambienteId: 'a', antesDe: '2026-11-01', estados: ['validado', 'enviado'], ascendente: true, limite: 6 })
+    expect(chamadas).toEqual(expect.arrayContaining([
+      { tabela: 'obras_rdo_foto', metodo: 'eq', args: ['ambiente_id', 'a'] },
+      { tabela: 'obras_rdo_foto', metodo: 'lt', args: ['obras_rdo.data', '2026-11-01'] },
+      { tabela: 'obras_rdo_foto', metodo: 'in', args: ['obras_rdo.estado', ['validado', 'enviado']] },
+      { tabela: 'obras_rdo_foto', metodo: 'order', args: ['obras_rdo(data)', { ascending: true }] },
+      { tabela: 'obras_rdo_foto', metodo: 'limit', args: [6] },
+    ]))
+    expect(chamadas.some((c) => c.metodo === 'or')).toBe(false)
+  })
+  it('referências dos pontos: uma consulta limit 1 por ponto, antes do dia', async () => {
+    tabelas = { obras_rdo_foto: { data: [linha], error: null } }
+    const r = await lerReferenciasDosPontos(supabase, 'obra', ['p1', 'p2'], '2026-11-01')
+    expect(r.ok && [...r.referencias.keys()]).toEqual(['p1', 'p2'])
+    expect(chamadas.filter((c) => c.metodo === 'limit')).toEqual([
+      { tabela: 'obras_rdo_foto', metodo: 'limit', args: [1] },
+      { tabela: 'obras_rdo_foto', metodo: 'limit', args: [1] },
+    ])
+    expect(chamadas.filter((c) => c.metodo === 'lt')).toHaveLength(2)
   })
 })

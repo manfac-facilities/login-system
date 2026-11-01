@@ -10,11 +10,21 @@ import CompararPonto from './_comparar'
 
 export const dynamic = 'force-dynamic'
 
-/** Teto de fotos da linha do tempo (as mais recentes); a primeira foto sempre entra (início × hoje). */
-const MAX_FOTOS = 120
+/** Fotos por página da linha do tempo (as mais recentes); "Ver mais fotos" soma outra página. */
+const POR_PAGINA = 60
+const MAX_PAGINAS = 10
 
-export default async function PontoPage({ params }: { params: Promise<{ id: string; pontoId: string }> }) {
+export default async function PontoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string; pontoId: string }>
+  searchParams: Promise<{ paginas?: string }>
+}) {
   const { id, pontoId } = await params
+  const { paginas: pParam } = await searchParams
+  const paginas = Math.min(Math.max(Number.parseInt(pParam ?? '1', 10) || 1, 1), MAX_PAGINAS)
+  const limite = paginas * POR_PAGINA
   const supabase = await createClient()
   const {
     data: { user },
@@ -32,10 +42,19 @@ export default async function PontoPage({ params }: { params: Promise<{ id: stri
   if (error) return <AvisoMapa>Não deu para carregar o ponto. Recarregue a página.</AvisoMapa>
   if (!ponto) return <AvisoMapa>Ponto não encontrado nesta obra</AvisoMapa>
 
-  const fR = await lerFotosDoMapa(supabase, id, { pontoId })
-  if (!fR.ok) return <AvisoMapa>Não deu para carregar as fotos do ponto. Recarregue a página.</AvisoMapa>
-  const todas = fotosDoPonto(pontoId, fR.fotos)
-  const fotos = todas.length > MAX_FOTOS ? [todas[0], ...todas.slice(-(MAX_FOTOS - 1))] : todas
+  // As mais novas (uma a mais para saber se há outra página) + a primeira de todas (início × hoje).
+  const [fR, primR] = await Promise.all([
+    lerFotosDoMapa(supabase, id, { pontoId, limite: limite + 1 }),
+    lerFotosDoMapa(supabase, id, { pontoId, limite: 1, ascendente: true }),
+  ])
+  if (!fR.ok || !primR.ok) return <AvisoMapa>Não deu para carregar as fotos do ponto. Recarregue a página.</AvisoMapa>
+  const temMais = fR.fotos.length > limite
+  const recentes = fR.fotos.slice(0, limite)
+  const primeira = primR.fotos[0]
+  const fotos = fotosDoPonto(
+    pontoId,
+    primeira && !recentes.some((f) => f.id === primeira.id) ? [primeira, ...recentes] : recentes,
+  )
 
   const urls = new Map<string, string>()
   if (fotos.length) {
@@ -63,6 +82,16 @@ export default async function PontoPage({ params }: { params: Promise<{ id: stri
       </header>
       <section className="rounded-xl border border-(--obra-border) bg-(--obra-card) p-4">
         <CompararPonto hoje={hojeISO()} fotos={fotos.map((f) => ({ ...f, url: urls.get(f.path) ?? null }))} />
+        {temMais && paginas < MAX_PAGINAS ? (
+          <Link
+            href={`/obras/obras/${id}/mapa/ponto/${pontoId}?paginas=${paginas + 1}`}
+            className="mt-3 flex min-h-11 w-fit items-center rounded-lg border border-(--obra-border) px-3 text-sm text-(--obra-ink)"
+          >
+            Ver mais fotos
+          </Link>
+        ) : temMais ? (
+          <p className="mt-3 text-xs text-(--obra-muted-texto)">Mostrando as {limite} fotos mais recentes e a primeira.</p>
+        ) : null}
       </section>
     </div>
   )

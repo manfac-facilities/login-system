@@ -20,7 +20,17 @@ jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), pu
 import TelaMapa from '../_tela'
 import EditorMapa from '../montar/_editor'
 import CompararPonto, { type FotoPonto } from '../ponto/[pontoId]/_comparar'
-import { apagarAmbienteAction, criarAmbienteAction, definirAtividadesAction, definirPontoAtivoAction, salvarModoAction } from '../_actions'
+import {
+  apagarAmbienteAction,
+  atualizarAmbienteAction,
+  atualizarPontoAction,
+  criarAmbienteAction,
+  criarPontoAction,
+  definirAtividadesAction,
+  definirPontoAtivoAction,
+  salvarModoAction,
+} from '../_actions'
+import { normalizarRetangulo } from '../_regras'
 import type { AmbienteTela, MapaTela } from '../_tipos'
 
 const amb = (over: Partial<AmbienteTela>): AmbienteTela => ({
@@ -135,6 +145,77 @@ describe('EditorMapa', () => {
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['%PDF'], 'layout.pdf', { type: 'application/pdf' })] } })
     expect((await screen.findByRole('alert')).textContent).toMatch(/PDF ainda não é aceito/)
+  })
+})
+
+describe('EditorMapa — arrasto por ponteiro (quadro 1000 × 625 px)', () => {
+  const ambientes = [{ id: 'A', nome: 'Salão', areaM2: null, x: 0.1, y: 0.1, w: 0.4, h: 0.4, ordem: 1, atividades: [] }]
+  const pontos = [{ id: 'p1', numero: 1, nome: 'Entrada', ambienteId: 'A', x: 0.2, y: 0.2, ativo: true }]
+  const abrir = () => {
+    render(<EditorMapa obraId="o1" configurado modo="croqui" planta={{ url: null, largura: null, altura: null }} ambientes={ambientes} pontos={pontos} atividades={[]} />)
+    const svg = screen.getByRole('application')
+    jest.spyOn(svg, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 1000, height: 625, right: 1000, bottom: 625, x: 0, y: 0, toJSON: () => ({}) })
+    return svg
+  }
+  const ret = (svg: Element) => svg.querySelector('[data-ambiente="A"] rect')!
+  const c = (v: number) => expect.closeTo(v, 6)
+
+  beforeAll(() => {
+    // jsdom sem PointerEvent: usa MouseEvent (clientX/clientY) no lugar
+    if (!('PointerEvent' in window)) Object.assign(window, { PointerEvent: MouseEvent })
+  })
+
+  it('mover: grava o retângulo novo e leva os pontos do ambiente junto', async () => {
+    const svg = abrir()
+    fireEvent.pointerDown(ret(svg), { clientX: 200, clientY: 200 })
+    fireEvent.pointerMove(svg, { clientX: 300, clientY: 262.5 })
+    fireEvent.pointerUp(svg, { clientX: 300, clientY: 262.5 })
+    await waitFor(() => expect(atualizarAmbienteAction).toHaveBeenCalledWith('A', { retangulo: { x: c(0.2), y: c(0.2), w: 0.4, h: 0.4 } }))
+    await waitFor(() => expect(atualizarPontoAction).toHaveBeenCalledWith('p1', { x: c(0.3), y: c(0.3) }))
+  })
+
+  it('mover para fora do quadro: encaixa em 0–1 (x ≤ 1 − w)', async () => {
+    const svg = abrir()
+    fireEvent.pointerDown(ret(svg), { clientX: 200, clientY: 200 })
+    fireEvent.pointerMove(svg, { clientX: 5000, clientY: -800 })
+    fireEvent.pointerUp(svg)
+    await waitFor(() => expect(atualizarAmbienteAction).toHaveBeenCalledWith('A', { retangulo: { x: c(0.6), y: c(0), w: 0.4, h: 0.4 } }))
+  })
+
+  it('redimensionar pela alça: cresce até a borda, nunca passa de 1', async () => {
+    const svg = abrir()
+    fireEvent.pointerDown(ret(svg), { clientX: 200, clientY: 200 }) // escolhe (a alça aparece)
+    fireEvent.pointerUp(svg)
+    const alca = svg.querySelector('[data-alca] rect')!
+    fireEvent.pointerDown(alca, { clientX: 500, clientY: 312.5 })
+    fireEvent.pointerMove(svg, { clientX: 2000, clientY: 375 })
+    fireEvent.pointerUp(svg)
+    await waitFor(() => expect(atualizarAmbienteAction).toHaveBeenCalledWith('A', { retangulo: { x: 0.1, y: 0.1, w: c(0.9), h: c(0.5) } }))
+  })
+
+  it('gesto cancelado (pointercancel) volta ao original e não grava', async () => {
+    const svg = abrir()
+    fireEvent.pointerDown(ret(svg), { clientX: 200, clientY: 200 })
+    fireEvent.pointerMove(svg, { clientX: 400, clientY: 400 })
+    fireEvent.pointerCancel(svg)
+    await new Promise((r) => setTimeout(r, 0))
+    expect(atualizarAmbienteAction).not.toHaveBeenCalled()
+    expect(atualizarPontoAction).not.toHaveBeenCalled()
+    expect(ret(svg).getAttribute('x')).toBe('100')
+  })
+
+  it('+ Ponto de foto (toque): cria no ambiente tocado, na posição relativa', async () => {
+    const svg = abrir()
+    fireEvent.click(screen.getByRole('button', { name: '+ Ponto de foto (toque no ambiente)' }))
+    fireEvent.pointerDown(svg, { clientX: 300, clientY: 125 })
+    await waitFor(() => expect(criarPontoAction).toHaveBeenCalledWith('o1', { nome: 'Salão', ambienteId: 'A', x: c(0.3), y: c(0.2) }))
+  })
+})
+
+describe('normalizarRetangulo — lado mínimo também na borda', () => {
+  it('origem colada na borda direita/inferior ainda deixa 1% de lado', () => {
+    expect(normalizarRetangulo({ x: 0.995, y: 1, w: 0.5, h: 0.5 })).toEqual({ x: 0.99, y: 0.99, w: 0.01, h: 0.01 })
+    expect(normalizarRetangulo({ x: 0.5, y: 0.5, w: 0.001, h: 2 })).toEqual({ x: 0.5, y: 0.5, w: 0.01, h: 0.5 })
   })
 })
 

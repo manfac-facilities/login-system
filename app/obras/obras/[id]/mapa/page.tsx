@@ -5,7 +5,7 @@ import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
 import { lerFotosDoMapa, lerMapa } from '../../_lib/mapa-leitura'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
-import { fotosRecentesPorAmbiente, montarMapaTela } from './_dados'
+import { FOTOS_POR_AMBIENTE, fotosRecentesPorAmbiente, montarMapaTela } from './_dados'
 import { podeMontarMapa } from './_permissao'
 import TelaMapa from './_tela'
 import AvisoMapa from './_aviso'
@@ -56,8 +56,10 @@ export default async function MapaObraPage({ params }: { params: Promise<{ id: s
     )
   }
 
-  const [fR, iR] = await Promise.all([
-    lerFotosDoMapa(supabase, id),
+  // Fotos recentes: uma consulta por ambiente, as mais novas, com limite (nunca a obra inteira).
+  // A foto de ponto já leva o ambiente do ponto (trigger da Leva 6).
+  const [fRs, iR] = await Promise.all([
+    Promise.all(mapa.ambientes.map((a) => lerFotosDoMapa(supabase, id, { ambienteId: a.id, limite: FOTOS_POR_AMBIENTE }))),
     supabase
       .from('obras_impedimento')
       .select('id, ambiente_id, descricao')
@@ -66,10 +68,11 @@ export default async function MapaObraPage({ params }: { params: Promise<{ id: s
       .is('encerrado_em', null)
       .not('ambiente_id', 'is', null),
   ])
-  if (!fR.ok || iR.error) return <AvisoMapa>Não deu para carregar o mapa. Recarregue a página.</AvisoMapa>
+  if (fRs.some((r) => !r.ok) || iR.error) return <AvisoMapa>Não deu para carregar o mapa. Recarregue a página.</AvisoMapa>
+  const fotos = fRs.flatMap((r) => (r.ok ? r.fotos : []))
 
   // Só as fotos que a tela mostra ganham URL assinada.
-  const caminhos = [...fotosRecentesPorAmbiente(mapa, fR.fotos).values()].flat().map((f) => f.path)
+  const caminhos = [...fotosRecentesPorAmbiente(mapa, fotos).values()].flat().map((f) => f.path)
   const urls = new Map<string, string>()
   const storage = supabase.storage.from('obras-fotos')
   if (caminhos.length) {
@@ -85,7 +88,7 @@ export default async function MapaObraPage({ params }: { params: Promise<{ id: s
   const tela = montarMapaTela({
     mapa,
     atividades: calc?.atividades ?? [],
-    fotos: fR.fotos,
+    fotos,
     impedimentos: ((iR.data ?? []) as Linha[]).map((i) => ({ id: i.id, ambienteId: i.ambiente_id, descricao: i.descricao })),
     urls,
     plantaUrl,

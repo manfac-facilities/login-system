@@ -135,22 +135,70 @@ export const fotoMapaDe = (f: Linha): FotoMapa => {
   }
 }
 
+/** Teto padrão de linhas por leitura (o PostgREST do Supabase corta em 1000 sem avisar). */
+export const LIMITE_FOTOS_MAPA = 500
+
+export type OpcoesFotosMapa = {
+  pontoId?: string
+  ambienteId?: string
+  /** Só fotos de RDO com data ANTERIOR a esta (YYYY-MM-DD). */
+  antesDe?: string
+  /** Só RDOs nestes estados (o portal passa validado/enviado). */
+  estados?: string[]
+  /** Padrão: da mais nova para a mais antiga (data do RDO, depois `ordem`). */
+  ascendente?: boolean
+  /** Padrão `LIMITE_FOTOS_MAPA`; sempre explícito (nunca o corte calado de 1000). */
+  limite?: number
+}
+
 /**
- * Fotos da obra ligadas a ambiente ou ponto (ou só as do ponto), com a data e o
- * estado do RDO. Devolve TODOS os estados: o portal do cliente filtra
- * validado/enviado por conta própria (rascunho nunca vai ao cliente).
+ * Fotos da obra ligadas a ambiente ou ponto (ou só as do ponto/ambiente), com a
+ * data e o estado do RDO, ORDENADAS pela data do RDO (desc por padrão) e com
+ * limite explícito. Sem `estados`, devolve todos: a tela interna mostra
+ * rascunho; o portal do cliente passa `estados: ['validado','enviado']`.
  */
 export async function lerFotosDoMapa(
   supabase: SupabaseClient,
   obraId: string,
-  opcoes: { pontoId?: string } = {},
+  opcoes: OpcoesFotosMapa = {},
 ): Promise<{ ok: true; fotos: FotoMapa[] } | { ok: false; erro: string }> {
+  const asc = opcoes.ascendente === true
   let q = supabase
     .from('obras_rdo_foto')
     .select('id, rdo_id, path, legenda, ordem, ambiente_id, ponto_id, atividade_numero, obras_rdo!inner(data, estado, obra_id)')
     .eq('obras_rdo.obra_id', obraId)
-  q = opcoes.pontoId ? q.eq('ponto_id', opcoes.pontoId) : q.or('ambiente_id.not.is.null,ponto_id.not.is.null')
+  if (opcoes.pontoId) q = q.eq('ponto_id', opcoes.pontoId)
+  if (opcoes.ambienteId) q = q.eq('ambiente_id', opcoes.ambienteId)
+  if (!opcoes.pontoId && !opcoes.ambienteId) q = q.or('ambiente_id.not.is.null,ponto_id.not.is.null')
+  if (opcoes.antesDe) q = q.lt('obras_rdo.data', opcoes.antesDe)
+  if (opcoes.estados) q = q.in('obras_rdo.estado', opcoes.estados)
+  // Ordena as FOTOS pela coluna do RDO (to-one): `order=obras_rdo(data).desc` no PostgREST.
   const { data, error } = await q
+    .order('obras_rdo(data)', { ascending: asc })
+    .order('ordem', { ascending: asc })
+    .limit(opcoes.limite ?? LIMITE_FOTOS_MAPA)
   if (error) return { ok: false, erro: `Falha ao ler as fotos do mapa: ${error.message}` }
   return { ok: true, fotos: ((data ?? []) as Linha[]).map(fotoMapaDe) }
+}
+
+/**
+ * Última foto de cada ponto em dia anterior a `antesDe` (referência de ângulo da
+ * ronda). Uma consulta por ponto, em paralelo, cada uma `limit 1` pelo índice
+ * de `ponto_id`: exato e barato (pontos ativos são poucos); uma consulta única
+ * limitada a pontos × k erraria quando um ponto concentra fotos.
+ */
+export async function lerReferenciasDosPontos(
+  supabase: SupabaseClient,
+  obraId: string,
+  pontoIds: string[],
+  antesDe: string,
+): Promise<{ ok: true; referencias: Map<string, FotoMapa> } | { ok: false; erro: string }> {
+  const rs = await Promise.all(pontoIds.map((pontoId) => lerFotosDoMapa(supabase, obraId, { pontoId, antesDe, limite: 1 })))
+  const referencias = new Map<string, FotoMapa>()
+  for (let i = 0; i < rs.length; i++) {
+    const r = rs[i]
+    if (!r.ok) return r
+    if (r.fotos[0]) referencias.set(pontoIds[i], r.fotos[0])
+  }
+  return { ok: true, referencias }
 }

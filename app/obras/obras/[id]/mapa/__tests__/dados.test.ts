@@ -77,16 +77,15 @@ describe('montarMapaTela', () => {
 
 describe('montarMapaDiario', () => {
   it('obra sem ambiente → null (diário de sempre)', () => {
-    expect(montarMapaDiario({ mapa: { ...mapa, ambientes: [] }, fotos: [], data: '2026-11-01', atividades: [] })).toBeNull()
+    expect(montarMapaDiario({ mapa: { ...mapa, ambientes: [] }, referencias: new Map(), atividades: [] })).toBeNull()
   })
 
-  it('ronda = pontos ativos; referência = última foto do ponto em dia anterior', () => {
-    const fotos = [
-      f('a', '2026-10-30', { pontoId: 'p1' }),
-      f('b', '2026-10-31', { pontoId: 'p1' }),
-      f('c', '2026-11-01', { pontoId: 'p1' }), // do próprio dia: não é referência
-    ]
-    const r = montarMapaDiario({ mapa, fotos, data: '2026-11-01', atividades: [{ numero: 1, descricao: 'A1' }], urls: new Map([['o/b.jpg', 'u-b']]) })!
+  it('ronda = pontos ativos; referência = a lida por ponto (ponto inativo fica de fora)', () => {
+    const referencias = new Map([
+      ['p1', f('b', '2026-10-31', { pontoId: 'p1' })],
+      ['p2', f('z', '2026-10-30', { pontoId: 'p2' })],
+    ])
+    const r = montarMapaDiario({ mapa, referencias, atividades: [{ numero: 1, descricao: 'A1' }], urls: new Map([['o/b.jpg', 'u-b']]) })!
     expect(r.caminhos).toEqual(['o/b.jpg'])
     expect(r.mapa.pontos).toEqual([{ id: 'p1', numero: 1, nome: 'Entrada', ambienteId: 'A', referenciaUrl: 'u-b', referenciaData: '2026-10-31' }])
     expect(r.mapa.ambientes[0]).toEqual({ id: 'A', nome: 'Salão', atividades: [1, 2] })

@@ -19,8 +19,9 @@ export function normalizarRetangulo(r: Retangulo | null | undefined): Retangulo 
   if (!r) return null
   const vals = [r.x, r.y, r.w, r.h]
   if (!vals.every((v) => typeof v === 'number' && Number.isFinite(v))) return null
-  const x = arred(dentro(r.x))
-  const y = arred(dentro(r.y))
+  // Origem nunca tão perto da borda direita/inferior que o lado mínimo não caiba.
+  const x = arred(Math.min(dentro(r.x), 1 - LADO_MINIMO))
+  const y = arred(Math.min(dentro(r.y), 1 - LADO_MINIMO))
   const w = arred(Math.min(Math.max(r.w, LADO_MINIMO), 1 - x))
   const h = arred(Math.min(Math.max(r.h, LADO_MINIMO), 1 - y))
   if (!(w > 0 && h > 0)) return null
