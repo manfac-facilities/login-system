@@ -3,23 +3,27 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-/** Abas da obra no portal: rolam na horizontal no celular, alvo ≥ 44px, aba atual com `aria-current`. */
+/**
+ * Abas da obra no portal: rolam na horizontal no celular, alvo ≥ 44px, aba atual com `aria-current`.
+ * "Mapa" (Leva 6) só aparece quando a obra tem mapa (`comMapa`).
+ */
 export const ABAS = [
   { seg: '', rotulo: 'Visão geral' },
   { seg: 'cronograma', rotulo: 'Cronograma' },
   { seg: 'aguardando', rotulo: 'Aguardando vocês' },
   { seg: 'relatorios', rotulo: 'Diários e relatórios' },
   { seg: 'galeria', rotulo: 'Galeria' },
+  { seg: 'mapa', rotulo: 'Mapa' },
   { seg: 'documentos', rotulo: 'Documentos' },
   { seg: 'mensagens', rotulo: 'Mensagens' },
 ] as const
 
-export default function AbasObra({ raiz, aguardando }: { raiz: string; aguardando: number }) {
+export default function AbasObra({ raiz, aguardando, comMapa = false }: { raiz: string; aguardando: number; comMapa?: boolean }) {
   const caminho = usePathname()
   return (
     <nav aria-label="Seções da obra" className="-mx-4 overflow-x-auto border-b border-(--obra-border) px-4 sm:mx-0 sm:px-0">
       <ul className="flex min-w-max gap-1">
-        {ABAS.map((a) => {
+        {ABAS.filter((a) => a.seg !== 'mapa' || comMapa).map((a) => {
           const href = a.seg ? `${raiz}/${a.seg}` : raiz
           const atual = a.seg ? caminho === href || caminho.startsWith(`${href}/`) : caminho === raiz
           return (

@@ -34,7 +34,8 @@ export type AmbienteDesenho = {
   detalhe?: string
   impedimento?: boolean
 }
-export type PontoDesenho = { id: string; numero: number; nome: string; x: number | null; y: number | null }
+/** `nome` é interno: o portal do cliente manda só o número. */
+export type PontoDesenho = { id: string; numero: number; nome?: string; x: number | null; y: number | null }
 
 export default function DesenhoMapa({
   modo,
@@ -133,7 +134,7 @@ export default function DesenhoMapa({
         )
       })}
       {comPosicao.map((p) => (
-        <g key={p.id} pointerEvents="none" aria-label={`Ponto ${p.numero} · ${p.nome}`}>
+        <g key={p.id} pointerEvents="none" aria-label={p.nome ? `Ponto ${p.numero} · ${p.nome}` : `Ponto ${p.numero}`}>
           <circle cx={p.x! * W} cy={p.y! * H} r={13 * u} fill="#ffffff" stroke={TINTA} strokeWidth={2 * u} />
           <text
             x={p.x! * W}

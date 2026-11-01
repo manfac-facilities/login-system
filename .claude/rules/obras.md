@@ -201,6 +201,9 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
 - **Diário:** com pelo menos um ambiente, o passo Fotos ganha "Por ponto (ronda)", "Por atividade" e "+ Foto avulsa",
   e `registrarFotoAction` exige ambiente ou ponto (regra só do app). Obra sem ambiente: diário de sempre.
 - **Planta:** só imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+- **Portal (aba Mapa):** `portal-obra/(obra)/_lib/mapa.ts` (`lerMapaDoPortal`, `obraTemMapa`); aba só com ≥ 1 ambiente,
+  página 404 sem mapa. Fotos só de RDO validado/enviado (filtro no banco e no código), impedimento só aberto e
+  `exibir_ao_cliente`, atividade pelo código e pela situação do cronograma do portal, ponto só pelo número.
 - **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy**: sem ele quebram o diário inteiro (lê o
   mapa de toda obra), o registro de impedimento/orientação (grava `ambiente_id`), o envio de foto e as telas do mapa.
 - **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
