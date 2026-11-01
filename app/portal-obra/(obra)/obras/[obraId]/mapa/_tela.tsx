@@ -35,7 +35,7 @@ function Cartao({ a, sel, onClick }: { a: AmbienteCliente; sel: boolean; onClick
       <span className="text-[15px] font-semibold text-(--obra-ink)">{a.nome}</span>
       <span className="obra-num text-[14px] text-(--obra-muted-texto)">avanço {pctTexto(a.pct)}</span>
       <span className="mt-1 block h-2 overflow-hidden rounded bg-(--obra-trilho)">
-        <i className="block h-full" style={{ width: `${Math.round((a.pct ?? 0) * 100)}%`, background: CORES_FAIXA[4] }} />
+        <i className="block h-full" style={{ width: `${Math.round((a.pct ?? 0) * 100)}%`, background: CORES_FAIXA[a.faixa ?? 0] }} />
       </span>
       {a.impedimentos.length ? (
         <span className="mt-1 w-fit rounded-full bg-[#fdecea] px-2 text-[13px] font-semibold text-(--obra-vermelho-texto)">▲ impedimento aberto</span>
@@ -108,7 +108,11 @@ export default function MapaPortal({ mapa }: { mapa: MapaCliente }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-[14px] text-(--obra-muted-texto)">Sem atividade do cronograma neste ambiente (—).</p>
+                <p className="mt-3 text-[14px] text-(--obra-muted-texto)">
+                  {mapa.cronogramaPublicado
+                    ? 'Sem atividade do cronograma neste ambiente (—).'
+                    : 'Cronograma ainda não publicado: o avanço por atividade aparece aqui quando ele estiver publicado.'}
+                </p>
               )}
 
               {sel.impedimentos.length ? (

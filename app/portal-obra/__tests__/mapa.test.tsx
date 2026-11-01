@@ -48,6 +48,7 @@ import type { VisaoCliente } from '../(obra)/_lib/visao'
 import { lerMapaDoPortal, obraTemMapa, type MapaCliente } from '../(obra)/_lib/mapa'
 import AbasObra from '../(obra)/obras/[obraId]/_abas'
 import MapaObraPortal from '../(obra)/obras/[obraId]/mapa/page'
+import ObraPortalLayout from '../(obra)/obras/[obraId]/layout'
 import MapaPortal from '../(obra)/obras/[obraId]/mapa/_tela'
 
 const O = '11111111-1111-4111-8111-111111111111'
@@ -61,7 +62,9 @@ const PLANTA = `${O}/mapa/${u(9)}.png`
 function criarAdmin(db: Record<string, Record<string, unknown>[]> = {}) {
   const filtros: { tabela: string; op: string; col: string; v: unknown }[] = []
   const assinadas: string[][] = []
+  const tabelas: string[] = []
   const q = (tabela: string) => {
+    tabelas.push(tabela)
     const b = {
       select: () => b,
       eq: (col: string, v: unknown) => (filtros.push({ tabela, op: 'eq', col, v }), b),
@@ -75,6 +78,7 @@ function criarAdmin(db: Record<string, Record<string, unknown>[]> = {}) {
   return {
     filtros,
     assinadas,
+    tabelas,
     from: q,
     storage: {
       from: () => ({
@@ -145,6 +149,16 @@ describe('lerMapaDoPortal', () => {
     expect(mockAdmin.assinadas.flat().some((p) => p.includes('rasc'))).toBe(false)
   })
 
+  it('foto de ponto desativado: sai só com o ambiente (sem "ponto N" que não está no mapa)', async () => {
+    mockLerFotos.mockImplementation(async (_a: unknown, _o: string, op: { ambienteId: string }) => ({
+      ok: true,
+      fotos: op.ambienteId === AMB ? [foto('ativo', 'validado', { pontoId: u(20) }), foto('desat', 'validado', { pontoId: u(21), ordem: 1 })] : [],
+    }))
+    const r = (await lerMapaDoPortal(mockAdmin as never, O, og, visao))!
+    expect(Object.fromEntries(r.ambientes[0].fotos.map((f) => [f.id, f.pontoNumero]))).toEqual({ ativo: 3, desat: null })
+    expect(r.cronogramaPublicado).toBe(true)
+  })
+
   it('foto fora do caminho canônico desta obra não ganha URL', async () => {
     mockLerFotos.mockResolvedValue({ ok: true, fotos: [foto('alheia', 'validado', { path: `${ALHEIA}/rdo/2026-10-30/x.jpg` })] })
     const r = (await lerMapaDoPortal(mockAdmin as never, O, og, visao))!
@@ -189,6 +203,7 @@ describe('lerMapaDoPortal', () => {
   it('sem cronograma salvo no portal: nenhum avanço por ambiente ("—")', async () => {
     const r = (await lerMapaDoPortal(mockAdmin as never, O, og, { cronograma: null } as unknown as VisaoCliente))!
     expect(r.ambientes.map((a) => [a.pct, a.atividades.length])).toEqual([[null, 0], [null, 0]])
+    expect(r.cronogramaPublicado).toBe(false)
   })
 
   it('planta: só caminho canônico desta obra vira URL assinada; senão cai no croqui', async () => {
@@ -238,6 +253,18 @@ describe('página e aba', () => {
     expect(html).toContain('Salão de vendas')
   })
 
+  it('layout: guarda antes de obraTemMapa (obra alheia → 404 sem consultar ambientes); com mapa, aba aparece', async () => {
+    const layout = (obraId: string) => ObraPortalLayout({ children: null, params: Promise.resolve({ obraId }) })
+    await expect(layout(ALHEIA)).rejects.toThrow('NOT_FOUND')
+    expect(mockAdmin.tabelas).not.toContain('obras_ambiente')
+    expect(mockLerObra).not.toHaveBeenCalled()
+
+    mockAdmin = criarAdmin({ obras_ambiente: [{ id: AMB }] })
+    const html = renderToStaticMarkup(await layout(O))
+    expect(mockAdmin.filtros).toContainEqual({ tabela: 'obras_ambiente', op: 'eq', col: 'obra_id', v: O })
+    expect(html).toContain(`href="/portal-obra/obras/${O}/mapa"`)
+  })
+
   it('aba Mapa só com mapa; obraTemMapa lê pelo id da obra', async () => {
     const { rerender } = render(<AbasObra raiz="/portal-obra/obras/x" aguardando={0} />)
     expect(screen.queryByRole('link', { name: 'Mapa' })).toBeNull()
@@ -254,6 +281,7 @@ describe('página e aba', () => {
 
 describe('tela', () => {
   const mapa: MapaCliente = {
+    cronogramaPublicado: true,
     modo: 'croqui', plantaUrl: null, plantaLargura: null, plantaAltura: null,
     ambientes: [
       {
@@ -282,5 +310,13 @@ describe('tela', () => {
     expect(painel.textContent).toContain('Aguardando liberação da área')
     expect(painel.textContent).toContain('assim que os diários de obra forem validados')
     expect(screen.getByLabelText('Ponto 3')).toBeTruthy()
+  })
+
+  it('barra do cartão na cor da faixa do ambiente; sem cronograma publicado, texto próprio', () => {
+    const { container } = render(<MapaPortal mapa={{ ...mapa, cronogramaPublicado: false, modo: 'ambientes' }} />)
+    const barras = [...container.querySelectorAll('button i')].map((i) => (i as HTMLElement).style.background)
+    expect(barras[0]).toBe('rgb(93, 159, 220)') // CORES_FAIXA[3]
+    fireEvent.click(screen.getByRole('button', { name: /Estoque/ }))
+    expect(screen.getByRole('complementary', { name: 'Ambiente escolhido' }).textContent).toContain('Cronograma ainda não publicado')
   })
 })

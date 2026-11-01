@@ -45,6 +45,8 @@ export type AmbienteCliente = {
 }
 
 export type MapaCliente = {
+  /** false = obra sem cronograma salvo: nenhum avanço por atividade ainda. */
+  cronogramaPublicado: boolean
   /** Planta sem URL (caminho inválido/assinatura falhou) cai no croqui. */
   modo: ModoMapa
   plantaUrl: string | null
@@ -105,9 +107,12 @@ export async function lerMapaDoPortal(admin: Admin, obraId: string, og: ObraGran
   const atividades = visao.cronograma && og.calc ? og.calc.atividades : []
   const tela = montarMapaTela({ mapa, atividades, fotos, impedimentos, urls, plantaUrl })
   const codigos = codigosDeAtividades(atividades, og.feriados)
+  // Foto de ponto depois desativado: o número não está mais no mapa, então sai só o ambiente.
+  const numerosAtivos = new Set(tela.pontos.map((p) => p.numero))
   const doPortal = new Map((visao.cronograma?.etapas ?? []).flatMap((e) => e.atividades.map((a) => [a.codigo, a] as const)))
 
   return {
+    cronogramaPublicado: atividades.length > 0,
     modo: tela.modo === 'planta' && !plantaUrl ? 'croqui' : tela.modo,
     plantaUrl,
     plantaLargura: tela.plantaLargura,
@@ -129,7 +134,7 @@ export async function lerMapaDoPortal(admin: Admin, obraId: string, og: ObraGran
         return c ? [{ codigo: c.codigo, descricao: c.descricao, situacao: c.situacao, tom: c.tom, realizado: c.realizado }] : []
       }),
       impedimentos: a.impedimentos,
-      fotos: a.fotos.flatMap((f) => (f.url ? [{ id: f.id, url: f.url, data: f.data, pontoNumero: f.pontoNumero }] : [])),
+      fotos: a.fotos.flatMap((f) => (f.url ? [{ id: f.id, url: f.url, data: f.data, pontoNumero: f.pontoNumero !== null && numerosAtivos.has(f.pontoNumero) ? f.pontoNumero : null }] : [])),
     })),
     pontos: tela.pontos.map((p) => ({ id: p.id, numero: p.numero, x: p.x, y: p.y })),
   }
