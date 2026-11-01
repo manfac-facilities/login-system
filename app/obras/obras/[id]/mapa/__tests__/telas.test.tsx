@@ -15,6 +15,7 @@ jest.mock('../_actions', () => ({
   definirPontoAtivoAction: jest.fn(async () => ({ ok: true })),
 }))
 jest.mock('@/lib/supabase/client', () => ({ createClient: jest.fn() }))
+jest.mock('../montar/_pdf-para-imagem', () => ({ pdfParaImagem: jest.fn() }))
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
 
 import TelaMapa from '../_tela'
@@ -30,6 +31,9 @@ import {
   definirPontoAtivoAction,
   salvarModoAction,
 } from '../_actions'
+import { pdfParaImagem } from '../montar/_pdf-para-imagem'
+import { createClient } from '@/lib/supabase/client'
+import { salvarPlantaAction } from '../_actions'
 import { normalizarRetangulo } from '../_regras'
 import type { AmbienteTela, MapaTela } from '../_tipos'
 
@@ -140,11 +144,65 @@ describe('EditorMapa', () => {
     expect(await screen.findByRole('button', { name: 'Reativar ponto' })).toBeTruthy()
   })
 
-  it('planta em PDF: avisa que só imagem nesta leva', async () => {
-    render(<EditorMapa {...base} configurado modo="planta" ambientes={ambientes} />)
-    const input = document.querySelector('input[type=file]') as HTMLInputElement
-    fireEvent.change(input, { target: { files: [new File(['%PDF'], 'layout.pdf', { type: 'application/pdf' })] } })
-    expect((await screen.findByRole('alert')).textContent).toMatch(/PDF ainda não é aceito/)
+  describe('planta em PDF', () => {
+    const upload = jest.fn(async () => ({ error: null }))
+    const enviar = (arq: File) => {
+      render(<EditorMapa {...base} configurado modo="planta" ambientes={ambientes} />)
+      const input = document.querySelector('input[type=file]') as HTMLInputElement
+      expect(input.accept).toContain('application/pdf')
+      fireEvent.change(input, { target: { files: [arq] } })
+    }
+    const pdf = () => new File(['%PDF'], 'layout.pdf', { type: 'application/pdf' })
+    beforeEach(() => {
+      upload.mockClear()
+      ;(createClient as jest.Mock).mockReturnValue({ storage: { from: () => ({ upload }) } })
+      Object.assign(URL, { createObjectURL: jest.fn(() => 'blob:x'), revokeObjectURL: jest.fn() })
+    })
+
+    it('converte a 1ª página e sobe a imagem pelo caminho canônico', async () => {
+      const blob = new Blob(['img'], { type: 'image/webp' })
+      ;(pdfParaImagem as jest.Mock).mockResolvedValue({ blob, ext: 'webp', type: 'image/webp', largura: 2400, altura: 1700, paginas: 1 })
+      enviar(pdf())
+      expect((await screen.findByRole('status')).textContent).toBe('Planta enviada.')
+      expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^o1\/mapa\/[0-9a-f-]{36}\.webp$/), blob, { contentType: 'image/webp' })
+      expect(salvarPlantaAction).toHaveBeenCalledWith('o1', expect.stringMatching(/\.webp$/), 2400, 1700)
+    })
+
+    it('PDF com várias páginas: avisa que usou só a 1ª', async () => {
+      ;(pdfParaImagem as jest.Mock).mockResolvedValue({ blob: new Blob(['i']), ext: 'png', type: 'image/png', largura: 2400, altura: 1700, paginas: 3 })
+      enviar(pdf())
+      expect((await screen.findByRole('status')).textContent).toMatch(/Usei só a 1ª página do PDF/)
+      expect(upload).toHaveBeenCalledWith(expect.stringMatching(/\.png$/), expect.anything(), { contentType: 'image/png' })
+    })
+
+    it('PDF que não abre: mensagem clara e nada é enviado', async () => {
+      ;(pdfParaImagem as jest.Mock).mockRejectedValue(new Error('senha'))
+      enviar(pdf())
+      expect((await screen.findByRole('alert')).textContent).toBe(
+        'Não consegui abrir este PDF. Exporte a primeira página como imagem e envie de novo.',
+      )
+      expect(upload).not.toHaveBeenCalled()
+      expect(salvarPlantaAction).not.toHaveBeenCalled()
+    })
+
+    it('imagem segue o caminho de sempre, sem converter PDF', async () => {
+      const OrigImage = global.Image
+      global.Image = class {
+        naturalWidth = 1600
+        naturalHeight = 900
+        onload: () => void = () => {}
+        set src(_: string) { queueMicrotask(() => this.onload()) }
+      } as unknown as typeof Image
+      try {
+        enviar(new File(['x'], 'p.png', { type: 'image/png' }))
+        await screen.findByRole('status')
+        expect(pdfParaImagem).not.toHaveBeenCalled()
+        expect(upload).toHaveBeenCalledWith(expect.stringMatching(/\.png$/), expect.any(File), { contentType: 'image/png' })
+        expect(salvarPlantaAction).toHaveBeenCalledWith('o1', expect.any(String), 1600, 900)
+      } finally {
+        global.Image = OrigImage
+      }
+    })
   })
 })
 

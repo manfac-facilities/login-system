@@ -6,8 +6,8 @@
  * ponto); 3. atividades do ambiente. Tudo grava na hora, pelas actions
  * (engenheiro/admin conferido no servidor e no banco).
  *
- * Planta: só imagem (JPG/PNG/WebP) nesta leva — o projeto não tem uma
- * dependência leve para converter PDF no navegador (DIVIDAS).
+ * Planta: imagem (JPG/PNG/WebP) ou PDF. O PDF vira imagem da 1ª página no
+ * navegador (`_pdf-para-imagem`); o servidor só recebe imagem.
  */
 
 import { useRef, useState, type PointerEvent as PE } from 'react'
@@ -27,6 +27,7 @@ import {
   salvarPlantaAction,
 } from '../_actions'
 import { quadroDe } from '../_desenho'
+import { pdfParaImagem } from './_pdf-para-imagem'
 import { EXTENSAO_PLANTA, LADO_MINIMO, normalizarRetangulo } from '../_regras'
 import type { Retangulo } from '../_tipos'
 
@@ -180,23 +181,34 @@ export default function EditorMapa({
     if (arquivoRef.current) arquivoRef.current.value = ''
     if (!arquivo) return
     setErro(null)
-    if (arquivo.type === 'application/pdf') {
-      return setErro('PDF ainda não é aceito: exporte a primeira página do layout como imagem (JPG ou PNG) e envie.')
-    }
+    const ehPdf = arquivo.type === 'application/pdf'
     const ext = EXTENSAO_PLANTA[arquivo.type]
-    if (!ext) return setErro('Envie a planta como imagem JPG, PNG ou WebP.')
-    if (arquivo.size > TAMANHO_MAXIMO_PLANTA) return setErro('A imagem da planta precisa ter até 15 MB.')
+    if (!ehPdf && !ext) return setErro('Envie a planta como imagem JPG, PNG ou WebP, ou como PDF.')
+    if (arquivo.size > TAMANHO_MAXIMO_PLANTA) return setErro(`${ehPdf ? 'O PDF' : 'A imagem'} da planta precisa ter até 15 MB.`)
     setOcupado(true)
     try {
-      const { largura, altura } = await lerDimensoes(arquivo)
-      const path = `${obraId}/mapa/${crypto.randomUUID()}.${ext}`
-      const { error } = await createClient().storage.from('obras-fotos').upload(path, arquivo, { contentType: arquivo.type })
+      let envio: { blob: Blob; type: string; ext: string; largura: number; altura: number }
+      let soPrimeiraPagina = false
+      if (ehPdf) {
+        try {
+          const r = await pdfParaImagem(arquivo)
+          envio = r
+          soPrimeiraPagina = r.paginas > 1
+        } catch {
+          return setErro('Não consegui abrir este PDF. Exporte a primeira página como imagem e envie de novo.')
+        }
+      } else {
+        envio = { blob: arquivo, type: arquivo.type, ext, ...(await lerDimensoes(arquivo)) }
+      }
+      const { largura, altura } = envio
+      const path = `${obraId}/mapa/${crypto.randomUUID()}.${envio.ext}`
+      const { error } = await createClient().storage.from('obras-fotos').upload(path, envio.blob, { contentType: envio.type })
       if (error) return setErro('Não deu para enviar a planta. Tente de novo.')
       const r = await salvarPlantaAction(obraId, path, largura, altura)
       if (!r.ok) return setErro(r.erro)
-      setPlanta({ url: URL.createObjectURL(arquivo), largura, altura })
+      setPlanta({ url: URL.createObjectURL(envio.blob), largura, altura })
       setModo('planta')
-      setAviso('Planta enviada.')
+      setAviso(soPrimeiraPagina ? 'Planta enviada. Usei só a 1ª página do PDF.' : 'Planta enviada.')
       router.refresh()
     } catch {
       setErro('Não deu para ler a imagem da planta.')
@@ -416,7 +428,7 @@ export default function EditorMapa({
           valor={modo ?? ('' as ModoMapa)}
           onChange={(m) => void escolherModo(m)}
           opcoes={[
-            { v: 'planta', r: 'Planta (enviar imagem do layout)' },
+            { v: 'planta', r: 'Planta (enviar imagem ou PDF do layout)' },
             { v: 'croqui', r: 'Croqui (desenhar retângulos)' },
             { v: 'ambientes', r: 'Só ambientes (sem desenho)' },
           ]}
@@ -424,11 +436,11 @@ export default function EditorMapa({
         <input ref={arquivoRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={(e) => void enviarPlanta(e.target.files)} />
         {modo === 'planta' ? (
           <button type="button" disabled={ocupado} onClick={() => arquivoRef.current?.click()} className={`${botao} mt-2`}>
-            {planta.url ? 'Trocar a imagem da planta' : 'Enviar a imagem da planta'}
+            {planta.url ? 'Trocar a planta (imagem ou PDF)' : 'Enviar a planta (imagem ou PDF)'}
           </button>
         ) : null}
         <p className="mt-2 text-sm text-(--obra-muted-texto)">
-          Planta: envie o layout aprovado como imagem (JPG, PNG ou WebP; PDF ainda não). No celular, o mapa vira a lista de ambientes.
+          Planta: envie o layout aprovado como imagem (JPG, PNG ou WebP) ou PDF (usamos só a 1ª página). No celular, o mapa vira a lista de ambientes.
         </p>
       </section>
 
