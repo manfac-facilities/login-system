@@ -35,7 +35,7 @@
 --   5. obras_rdo_foto ganha ambiente_id, ponto_id, atividade_numero (nulos nas
 --      fotos antigas). Trigger obras_rdo_foto_vinculo (com ou sem JWT):
 --      ambiente e ponto têm de ser da obra do RDO; ponto com ambiente informado
---      tem de ser daquele ambiente; foto de RDO já validado/enviado não troca
+--      tem de ser daquele ambiente (foto só com ponto herda o ambiente dele); foto de RDO já validado/enviado não troca
 --      esses vínculos (nem pela service role). A imutabilidade de hoje (policies
 --      "obras update"/"obras delete" de obras_rdo_foto só no rascunho) fica
 --      INTACTA — não havia trigger de imutabilidade da foto, este é novo e só
@@ -44,8 +44,14 @@
 --   6. obras_impedimento ganha ambiente_id (null). Trigger
 --      obras_impedimento_ambiente: ambiente da mesma obra do impedimento.
 --   FKs para obras_ambiente / obras_ponto_foto vindas das fotos e do impedimento
---   são NO ACTION (conferidas no fim do comando): apagar ambiente ou ponto com
---   foto/impedimento é recusado; apagar a obra (cascata) apaga tudo junto.
+--   são NO ACTION: apagar ambiente ou ponto com foto/impedimento é recusado.
+--   A checagem NO ACTION roda no fim de CADA delete (inclusive de cada delete
+--   em cascata, que é uma consulta aninhada), não no fim do comando externo.
+--   Apagar a obra passa porque os RI triggers de obras_obra disparam em ordem
+--   alfabética de nome, e os de obras_rdo (leva as fotos) e obras_impedimento
+--   ordenam antes dos de obras_ambiente/obras_ponto_foto (verificação 20). Se
+--   uma daquelas FKs for recriada, apagar obra com foto/impedimento ligado a
+--   ambiente passa a dar 23503 (fail-closed; só admin apaga obra).
 --   Ponto e ligação caem em cascata com o ambiente (se nenhum ponto tiver foto).
 --   7. Storage (bucket obras-fotos): caminho '<obra>/mapa/...' só pelo
 --      engenheiro da obra ou administrador, e só no formato canônico
@@ -492,8 +498,9 @@ alter table public.obras_rdo_foto
   add column if not exists ponto_id uuid,
   add column if not exists atividade_numero int;
 
--- NO ACTION (conferido no fim do comando): ambiente/ponto com foto não se apaga;
--- a cascata da obra apaga foto e ambiente no mesmo comando e passa.
+-- NO ACTION (conferido no fim de cada delete, inclusive dos aninhados da cascata):
+-- ambiente/ponto com foto não se apaga. A cascata da obra passa pela ordem dos RI
+-- triggers de obras_obra (ver cabeçalho e verificação 20).
 alter table public.obras_rdo_foto drop constraint if exists obras_rdo_foto_ambiente_id_fkey;
 alter table public.obras_rdo_foto add constraint obras_rdo_foto_ambiente_id_fkey
   foreign key (ambiente_id) references public.obras_ambiente(id) on delete no action;
@@ -555,6 +562,8 @@ begin
     if new.ambiente_id is not null and new.ambiente_id is distinct from v_ponto_amb then
       raise exception 'OBRAS_MAPA_VINCULO: o ponto da foto não é do ambiente informado' using errcode = '23514';
     end if;
+    -- Foto só com ponto herda o ambiente do ponto (já validado acima).
+    new.ambiente_id := coalesce(new.ambiente_id, v_ponto_amb);
   end if;
   return new;
 end;
@@ -638,7 +647,7 @@ grant execute on function public.obras_mapa_pode_escrever(text) to authenticated
 drop policy if exists "obras fotos upload" on storage.objects;
 create policy "obras fotos upload" on storage.objects for insert to authenticated
   with check (bucket_id = 'obras-fotos' and (select public.obras_has_access())
-              and (name not like '%/mapa/%' or public.obras_mapa_pode_escrever(name) is true));
+              and (name not ilike '%/mapa/%' or public.obras_mapa_pode_escrever(name) is true));
 
 -- Update: igual ao de produção (modalidade-obra-2) + nunca em /mapa/ (nem de
 -- origem nem de destino): a planta não é sobrescrita nem movida.
@@ -646,11 +655,11 @@ drop policy if exists "obras fotos update" on storage.objects;
 create policy "obras fotos update" on storage.objects for update to authenticated
   using (bucket_id = 'obras-fotos' and (select public.obras_has_access())
          and name not like '%/rdo/%'
-         and name not like '%/mapa/%'
+         and name not ilike '%/mapa/%'
          and public.obras_foto_rdo_congelada(name) is not true)
   with check (bucket_id = 'obras-fotos' and (select public.obras_has_access())
               and name not like '%/rdo/%'
-              and name not like '%/mapa/%'
+              and name not ilike '%/mapa/%'
               and public.obras_foto_rdo_congelada(name) is not true);
 -- "obras fotos read" e "obras fotos delete" NÃO mudam.
 
@@ -736,6 +745,11 @@ from (values
   (19, 'policies de obras_rdo_foto inalteradas (insert/update/delete só no rascunho)', '3',
       (select count(*)::text from pg_policies where schemaname = 'public' and tablename = 'obras_rdo_foto'
           and policyname in ('obras insert','obras update','obras delete')
-          and coalesce(qual, '') || coalesce(with_check, '') like '%rascunho%'))
+          and coalesce(qual, '') || coalesce(with_check, '') like '%rascunho%')),
+  (20, 'cascata da obra: RI de obras_rdo/obras_impedimento disparam antes dos de ambiente/ponto', 'true',
+      (select (max(t.tgname) filter (where c.conname in ('obras_rdo_obra_id_fkey','obras_impedimento_obra_id_fkey'))
+             < min(t.tgname) filter (where c.conname in ('obras_ambiente_obra_id_fkey','obras_ponto_foto_obra_id_fkey')))::text
+         from pg_trigger t join pg_constraint c on c.oid = t.tgconstraint
+        where t.tgrelid = 'public.obras_obra'::regclass))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

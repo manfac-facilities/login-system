@@ -702,9 +702,14 @@ begin
   values ('00000000-0000-4000-8000-0000000d0001',
           '00000000-0000-4000-8000-00000000a020/rdo/2026-11-02/00000000-0000-4000-8000-0000000f0107.jpg');
   get diagnostics v = row_count;
-  raise exception 'ok:%', v;
+  raise exception 'ok:%|%|%', v,
+    (select ambiente_id::text from public.obras_rdo_foto
+      where path = '00000000-0000-4000-8000-00000000a020/rdo/2026-11-02/00000000-0000-4000-8000-0000000f0106.jpg'),
+    (select coalesce(ambiente_id::text, 'null') from public.obras_rdo_foto
+      where path = '00000000-0000-4000-8000-00000000a020/rdo/2026-11-02/00000000-0000-4000-8000-0000000f0107.jpg');
 exception when others then
-  perform pg_temp.reg(62, 'foto só com ponto e foto sem vínculo nenhum (como hoje): aceitas', 'ok:1', sqlerrm);
+  perform pg_temp.reg(62, 'foto só com ponto (herda o ambiente do ponto) e foto sem vínculo (como hoje): aceitas',
+    'ok:1|00000000-0000-4000-8000-0000000b0002|null', sqlerrm);
 end $$;
 
 do $$ begin
@@ -839,10 +844,43 @@ end $$;
 -- ============================================================
 do $$ begin
   perform pg_temp.jwt('eng.teste@teste.invalid');
-  delete from public.obras_ambiente where id = '00000000-0000-4000-8000-0000000b0001';
+  insert into public.obras_ambiente (id, obra_id, nome)
+  values ('00000000-0000-4000-8000-0000000b0004', '00000000-0000-4000-8000-00000000a020', 'Só foto');
+  perform pg_temp.jwt(null);
+  insert into public.obras_rdo_foto (rdo_id, path, ambiente_id)
+  values ('00000000-0000-4000-8000-0000000d0001',
+          '00000000-0000-4000-8000-00000000a020/rdo/2026-11-02/00000000-0000-4000-8000-0000000f0301.jpg',
+          '00000000-0000-4000-8000-0000000b0004');
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  delete from public.obras_ambiente where id = '00000000-0000-4000-8000-0000000b0004';
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(74, 'engenheiro apaga ambiente com foto: recusado (FK)', 'violates foreign key constraint "obras_rdo_foto_', sqlerrm);
+  perform pg_temp.reg(74, 'engenheiro apaga ambiente com foto ligada só ao ambiente (sem ponto): recusado', 'obras_rdo_foto_ambiente_id_fkey', sqlerrm);
+end $$;
+
+-- Ambiente cujo único vínculo é um ponto com foto sem ambiente_id (foto antiga /
+-- gravada com o trigger de vínculo desligado, que hoje preencheria o ambiente):
+-- a cascata apaga o ponto e a FK do ponto recusa.
+do $$ begin
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  insert into public.obras_ambiente (id, obra_id, nome)
+  values ('00000000-0000-4000-8000-0000000b0005', '00000000-0000-4000-8000-00000000a020', 'Só ponto');
+  insert into public.obras_ponto_foto (id, obra_id, numero, nome, ambiente_id)
+  values ('00000000-0000-4000-8000-0000000c0005', '00000000-0000-4000-8000-00000000a020', 1, 'Ponto só',
+          '00000000-0000-4000-8000-0000000b0005');
+  perform pg_temp.jwt(null);
+  alter table public.obras_rdo_foto disable trigger obras_rdo_foto_vinculo;
+  insert into public.obras_rdo_foto (rdo_id, path, ponto_id)
+  values ('00000000-0000-4000-8000-0000000d0001',
+          '00000000-0000-4000-8000-00000000a020/rdo/2026-11-02/00000000-0000-4000-8000-0000000f0302.jpg',
+          '00000000-0000-4000-8000-0000000c0005');
+  alter table public.obras_rdo_foto enable trigger obras_rdo_foto_vinculo;
+  perform pg_temp.jwt('eng.teste@teste.invalid');
+  delete from public.obras_ambiente where id = '00000000-0000-4000-8000-0000000b0005';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(94, 'engenheiro apaga ambiente cujo ponto tem foto (foto sem ambiente_id): recusado pela FK do ponto',
+    'obras_rdo_foto_ponto_id_fkey', sqlerrm);
 end $$;
 
 do $$ begin
@@ -1069,10 +1107,10 @@ begin
            filter (where obtido is null or strpos(obtido, esperado) = 0)
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 93 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 93 testes rodaram';
+  if v_total <> 94 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 94 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/93 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/94 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end;
 end $$;
 
