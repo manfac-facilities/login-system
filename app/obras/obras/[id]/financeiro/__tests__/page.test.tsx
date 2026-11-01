@@ -4,19 +4,28 @@ const OBRA = '11111111-1111-4111-8111-111111111111'
 const rpcMock = jest.fn()
 const getUserMock = jest.fn()
 let obrasLinhas: Record<string, unknown>[] = []
+let medicoesLinhas: Record<string, unknown>[] = []
+let calcRealizado: number | null = 0.52
+const tabelas: string[] = []
 
-function consultaObras() {
+function consulta(tabela: string) {
+  tabelas.push(tabela)
+  const data = tabela === 'obras_medicao_cliente' ? medicoesLinhas : obrasLinhas
   const q: Record<string, unknown> = {
     select: () => q,
     or: () => q,
-    then: (ok: (v: unknown) => unknown) => Promise.resolve({ data: obrasLinhas, error: null }).then(ok),
+    in: () => q,
+    then: (ok: (v: unknown) => unknown) => Promise.resolve({ data, error: null }).then(ok),
   }
   return q
 }
 
 // Só o cliente da SESSÃO existe neste mock: se a página usasse o admin, o import falharia.
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, rpc: rpcMock, from: () => consultaObras() })),
+  createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, rpc: rpcMock, from: (t: string) => consulta(t) })),
+}))
+jest.mock('../../_obra-da-requisicao', () => ({
+  lerObraDaRequisicao: jest.fn(async () => ({ ok: true, dados: { calc: calcRealizado === null ? null : { realizado: calcRealizado }, feriados: new Set<string>() } })),
 }))
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => {
@@ -35,6 +44,9 @@ const funcoesFin = () => rpcMock.mock.calls.map((c) => c[0]).filter((n: string) 
 
 beforeEach(() => {
   rpcMock.mockReset()
+  tabelas.length = 0
+  medicoesLinhas = []
+  calcRealizado = 0.52
   getUserMock.mockResolvedValue({ data: { user: { email: 'eng@manfac.com.br' } } })
   obrasLinhas = [{ id: OBRA, os: '0526-1', loja: 'Macaé 3', obra_pai_id: null }]
 })
@@ -50,13 +62,17 @@ describe('aba Financeiro: permissão (Review Focus 1)', () => {
     expect(screen.getByText(/só para o engenheiro da obra/)).toBeInTheDocument()
     expect(rpcMock).toHaveBeenCalledWith('obras_pode_ver_valores', { p_obra: OBRA })
     expect(funcoesFin()).toEqual([])
+    expect(tabelas).toEqual([])
     expect(screen.queryByText(/R\$/)).toBeNull()
   })
 
-  it('pode ver: chama as 3 leituras com o cliente da sessão e mostra "sem lançamentos" sem NaN', async () => {
+  it('pode ver: chama as leituras com o cliente da sessão e mostra "sem lançamentos" sem NaN', async () => {
     rpcMock.mockImplementation(async (nome: string) => (nome === 'obras_pode_ver_valores' ? { data: true, error: null } : { data: [], error: null }))
     const { container } = await montar()
-    expect(funcoesFin().sort()).toEqual(['obras_fin_compras', 'obras_fin_fornecedores', 'obras_fin_notas'])
+    expect(funcoesFin().sort()).toEqual([
+      'obras_fin_caixinha_sem_obra', 'obras_fin_compras', 'obras_fin_fornecedores', 'obras_fin_locacoes',
+      'obras_fin_medicoes_fornecedor_atrasadas', 'obras_fin_notas', 'obras_fin_vinculos',
+    ])
     expect(screen.getByText('Sem lançamentos financeiros nesta obra ainda.')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(/NaN/)
     expect(screen.getByText(/Dados até/)).toBeInTheDocument()
@@ -71,6 +87,51 @@ describe('aba Financeiro: permissão (Review Focus 1)', () => {
     expect(within(screen.getByRole('region', { name: 'Faturamento' })).getByRole('alert')).toHaveTextContent('Não deu para ler')
     expect(within(screen.getByRole('region', { name: 'Resumo' })).getByRole('alert')).toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'Compras' })).queryByRole('alert')).toBeNull()
+  })
+
+  it('leitura dos vínculos que falha derruba o resumo (nunca custo a menos)', async () => {
+    rpcMock.mockImplementation(async (nome: string) =>
+      nome === 'obras_pode_ver_valores' ? { data: true, error: null } : nome === 'obras_fin_vinculos' ? { data: null, error: { message: 'x' } } : { data: [], error: null },
+    )
+    await montar()
+    expect(within(screen.getByRole('region', { name: 'Resumo' })).getByRole('alert')).toHaveTextContent('Não deu para ler')
+  })
+})
+
+describe('aba Financeiro: Review Focus 5 (sem receita, sem avanço, sem lançamentos)', () => {
+  const pode = () =>
+    rpcMock.mockImplementation(async (nome: string) =>
+      nome === 'obras_pode_ver_valores' ? { data: true, error: null } : nome === 'obras_fin_caixinha_sem_obra' ? { data: [{ quantidade: 0 }], error: null } : { data: [], error: null },
+    )
+
+  it('sem valor receita: pede o valor em Dados da obra e não mostra NaN/Infinity', async () => {
+    pode()
+    const { container } = await montar()
+    const resumo = screen.getByRole('region', { name: 'Resumo' })
+    expect(within(resumo).getAllByRole('link', { name: 'Informe o valor receita em Dados da obra' })[0]).toHaveAttribute('href', `/obras/obras/${OBRA}/dados`)
+    expect(container.textContent).not.toMatch(/NaN|Infinity/)
+  })
+
+  it('com receita e sem avanço (calc null): "—" na margem projetada, sem NaN', async () => {
+    pode()
+    calcRealizado = null
+    obrasLinhas = [{ id: OBRA, os: '0526-1', loja: 'Macaé 3', obra_pai_id: null, valor: '476272.41', cancelado_em: null }]
+    const { container } = await montar()
+    const resumo = screen.getByRole('region', { name: 'Resumo' })
+    expect(within(resumo).queryByText('Informe o valor receita em Dados da obra')).toBeNull()
+    expect(within(resumo).getByText(/476\.272,41/, { selector: 'span' })).toBeInTheDocument()
+    expect(within(resumo).getAllByText('sem avanço físico').length).toBeGreaterThan(0)
+    expect(container.textContent).not.toMatch(/NaN|Infinity/)
+  })
+
+  it('com receita, avanço 0 e liberação aprovada: pendências em R$, sem NaN', async () => {
+    pode()
+    calcRealizado = 0
+    obrasLinhas = [{ id: OBRA, os: '0526-1', loja: 'Macaé 3', obra_pai_id: null, valor: 1000, cancelado_em: null }]
+    medicoesLinhas = [{ obra_id: OBRA, situacao: 'aprovada', valor_centavos: 40_000 }]
+    const { container } = await montar()
+    expect(screen.getByText('emitir nota')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/NaN|Infinity/)
   })
 })
 

@@ -108,3 +108,68 @@ describe('montarFinanceiro', () => {
     expect(brl(123456).replace(/\s/g, ' ')).toBe('R$ 1.234,56')
   })
 })
+
+describe('montarFinanceiro — Fases B/C', () => {
+  const obrasBC: ObraFin[] = [
+    { ...obras[0], receitaCentavos: 40_000_000 },
+    { ...obras[1], receitaCentavos: 10_000_000 },
+  ]
+  const vinculo = (over: Record<string, unknown> = {}) => ({
+    obra_id: MAE, obra_os: '0526-1', vinculo_id: 'v1', origem: 'solicitacao', valor_centavos: 50_000, vinculo_valor_centavos: 50_000,
+    solicitacao_etapa: 'lancada', solicitacao_valor_centavos: 50_000, pagamento_situacao: 'pago', pagamento_valor_pago_centavos: 50_000,
+    frn_medicao_id: null, de_medicao_fornecedor: false, relatorio_status: null, ...over,
+  })
+
+  it('receita esperada, liberado e avanço chegam ao resumo; vínculo de medição de fornecedor não soma', () => {
+    const f = montarFinanceiro({
+      obraId: MAE, obras: obrasBC, compras: [], notas: [], avanco: 0.5,
+      fornecedores: [medicao()],
+      vinculos: [vinculo(), vinculo({ vinculo_id: 'v2', de_medicao_fornecedor: true, valor_centavos: 20_025 })],
+      medicoesCliente: [{ obra_id: MAE, situacao: 'aprovada', valor_centavos: 10_000_000 }, { obra_id: 'outra', situacao: 'aprovada', valor_centavos: 1 }],
+    })
+    if (!f.resumo.ok) throw new Error('resumo')
+    expect(f.resumo.dados.total.receitaEsperada).toBe(50_000_000)
+    expect(f.resumo.dados.total.liberado).toBe(10_000_000)
+    expect(f.resumo.dados.porOS[0].avanco).toBe(0.5)
+    expect(f.resumo.dados.porOS[1].avanco).toBeNull()
+    expect(f.resumo.dados.origens.pagamentos.comprometido).toBe(50_000)
+    expect(f.resumo.dados.total.custoComprometido).toBe(50_000 + 20_025)
+    expect(f.resumo.dados.vinculosDeMedicaoFornecedor).toBe(1)
+    expect(f.semLancamentos).toBe(false)
+  })
+
+  it('vínculo com valor não numérico derruba o resumo (falha fechada)', () => {
+    const f = montarFinanceiro({ obraId: MAE, obras: obrasBC, compras: [], notas: [], fornecedores: [], vinculos: [vinculo({ valor_centavos: null })] })
+    expect(f.resumo).toEqual({ ok: false })
+  })
+
+  it('pedido de locação vai para Locações; pendências: sem entrega, medição atrasada, caixinha sem obra, locação vencendo', () => {
+    const f = montarFinanceiro({
+      obraId: MAE, obras: obrasBC, notas: [], fornecedores: [],
+      compras: [
+        pedido(),
+        pedido({ pedido_id: 'p2', entrega_situacao: 'confirmada' }),
+        pedido({ pedido_id: 'p3', solicitacao_tipo: 'locacao', total_centavos: 5_000 }),
+        pedido({ pedido_id: 'p4', solicitacao_etapa: 'cancelada' }),
+      ],
+      medicoesFornecedorAtrasadas: [{ obra_id: MAE, dias_aguardando: 12 }, { obra_id: FILHA, dias_aguardando: 15 }, { obra_id: 'outra', dias_aguardando: 99 }],
+      caixinhaSemObra: 3,
+      locacoes: [{ item: 'Andaime', fim: '2026-11-05', estado: 'ativa' }, { item: 'Betoneira', fim: null, estado: 'ativa' }],
+      hoje: '2026-11-02',
+    })
+    if (!f.resumo.ok) throw new Error('resumo')
+    expect(f.resumo.dados.origens.locacoes.comprometido).toBe(5_000)
+    expect(f.resumo.dados.origens.compras.comprometido).toBe(200_000)
+    expect(f.pendencias).toEqual({
+      comprasSemEntrega: 1,
+      medicoesFornecedorAtrasadas: { quantidade: 2, maisDias: 15 },
+      caixinhaSemObra: 3,
+      locacoes: { quantidade: 1, primeira: 'Andaime vence em 3 dias úteis (05/11)', urgente: false },
+    })
+  })
+
+  it('leituras de pendência que falharam ficam null (não viram zero)', () => {
+    const f = montarFinanceiro({ obraId: MAE, obras: obrasBC, compras: [], notas: [], fornecedores: [], medicoesFornecedorAtrasadas: null, caixinhaSemObra: null, locacoes: null })
+    expect(f.pendencias).toEqual({ comprasSemEntrega: 0, medicoesFornecedorAtrasadas: null, caixinhaSemObra: null, locacoes: null })
+  })
+})

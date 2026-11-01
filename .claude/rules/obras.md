@@ -190,3 +190,22 @@ Spec: `docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md
 - **SQL:** `sdd-sql-obras-leva5.sql` aplicado em 31/10/2026 (ver `.claude/rules/sql.md`). Ordem obrigatória no deploy: SQL antes do app
   (sem `obras_situacao_cliente`, a Visão geral do portal, o semanal e o relatório de período dão 500). Teste de
   comportamento: `docs/obras/2026-10-31-verificacao-obras-leva5.sql` (116 casos, rollback).
+
+### Financeiro da obra — Fases B/C (branch `feat/obras-financeiro-bc`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; plano `docs/superpowers/plans/2026-11-01-obras-financeiro-fases-b-c.md`.
+
+- **Onde fica:** aba Dados da obra em `obras/[id]/dados/` (valor receita por OS, organograma do cliente); sub-telas
+  `obras/[id]/financeiro/medicoes/` e `.../locacoes/`; o Resumo é `financeiro/page.tsx` → `_tela.tsx` + `_resumo.tsx`.
+  Regras puras: `_lib/financeiro-obra.ts` (`consolidarFinanceiro` da Fase A + `consolidarMargem`/`custoDoVinculo`),
+  montagem da tela em `_lib/financeiro-tela.ts`, % ⇄ valor em `_lib/medicao.ts`, aviso de locação em `_lib/locacao.ts`,
+  alertas > 10 dias (medição ao cliente e de fornecedor) em `_lib/alertas.ts` (faixa do painel da obra).
+- **Regras que mordem:** custo projetado = comprometido ÷ avanço físico da obra aberta (`calc.realizado`, 0–1; sem
+  avanço → "—"); receita esperada exclui OS cancelada; sem valor receita a tela pede o valor em Dados da obra.
+  Sem dupla contagem: vínculo com `de_medicao_fornecedor` fica fora (já está em Fornecedores); pedido de locação do
+  Compras sai de "Compras" e entra em "Locações". Pagamento do Financeiro que quita pedido do Compras não tem chave
+  (DIVIDAS M1): aparece como está em "Pagamentos / rateio". Tudo com o cliente da SESSÃO; valores só com
+  `obras_pode_ver_valores` (a aba some para os demais; a faixa só alerta medição a quem a RLS devolve linhas).
+- **SQL e ordem de deploy:** Fase A (`sdd-sql-obras-financeiro-a.sql`) → Financeiro `044` → Compras `016` →
+  Fornecedores `013` → `sdd-sql-obras-financeiro-bc.sql`; depois os apps. Teste de comportamento:
+  `docs/obras/2026-11-01-verificacao-obras-financeiro-bc.sql` (rollback).

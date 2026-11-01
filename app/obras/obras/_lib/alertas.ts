@@ -7,9 +7,10 @@ import type { ItemAgenda } from './agenda'
 import type { ResultadoCronograma } from './cronograma'
 import type { Restricao } from './last-planner'
 import { avisoLocacao, textoAviso } from './locacao'
+import { diasDesde, LIMITE_DIAS_AGUARDANDO } from './medicao'
 
 export type Alerta = {
-  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas' | 'locacao'
+  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas' | 'locacao' | 'medicao_cliente' | 'medicao_fornecedor'
   tom: 'negativo' | 'atencao'
   texto: string
   acao: { rotulo: string; href: string }
@@ -52,6 +53,13 @@ export function calcularAlertas(p: {
    */
   locacoes?: { item: string; fim: string | null; estado: string | null }[] | null
   feriados?: ReadonlySet<string>
+  /**
+   * Medições ao cliente da família (`obras_medicao_cliente`; a RLS só devolve a quem vê valores).
+   * Ausente/null = leitura falhou ou sem permissão: sem alerta. Nunca leva R$.
+   */
+  medicoesCliente?: { numero: number; os: string | null; enviadaEm: string; situacao: string }[] | null
+  /** `obras_fin_medicoes_fornecedor_atrasadas` (já > 10 dias); ausente/null = sem alerta. */
+  medicoesFornecedor?: { fornecedor: string | null; dias: number; aguardando: string | null }[] | null
 }): Alerta[] {
   const raiz = `/obras/obras/${p.obraId}`
   const out: Alerta[] = []
@@ -127,6 +135,34 @@ export function calcularAlertas(p: {
         ? `Locação: ${primeira} — devolver ou renovar`
         : `${avisos.length} locações vencendo, a primeira: ${primeira}`,
       acao: { rotulo: 'Ver locações', href: `${raiz}/financeiro/locacoes` },
+    })
+  }
+
+  const aguardando = (p.medicoesCliente ?? [])
+    .filter((m) => m.situacao === 'enviada')
+    .map((m) => ({ ...m, dias: diasDesde(m.enviadaEm, p.hoje) }))
+    .filter((m) => m.dias > LIMITE_DIAS_AGUARDANDO)
+    .sort((a, b) => b.dias - a.dias)
+  if (aguardando.length > 0) {
+    const m = aguardando[0]
+    out.push({
+      id: 'medicao_cliente', tom: 'atencao',
+      texto: aguardando.length === 1
+        ? `Medição ${m.numero}${m.os ? ` da OS ${m.os}` : ''} há ${m.dias} dias aguardando o cliente`
+        : `${aguardando.length} medições ao cliente há mais de ${LIMITE_DIAS_AGUARDANDO} dias aguardando aprovação, a mais antiga há ${m.dias} dias`,
+      acao: { rotulo: 'Ver medições', href: `${raiz}/financeiro/medicoes` },
+    })
+  }
+
+  const frn = [...(p.medicoesFornecedor ?? [])].sort((a, b) => b.dias - a.dias)
+  if (frn.length > 0) {
+    const m = frn[0]
+    out.push({
+      id: 'medicao_fornecedor', tom: 'atencao',
+      texto: frn.length === 1
+        ? `Medição de fornecedor${m.fornecedor ? ` (${m.fornecedor})` : ''} há ${m.dias} dias em aprovação — aguardando ${m.aguardando === 'engenheiro' ? 'o engenheiro' : 'o Eduardo'}`
+        : `${frn.length} medições de fornecedor há mais de ${LIMITE_DIAS_AGUARDANDO} dias em aprovação, a mais antiga há ${m.dias} dias`,
+      acao: { rotulo: 'Ver financeiro', href: `${raiz}/financeiro` },
     })
   }
   return out

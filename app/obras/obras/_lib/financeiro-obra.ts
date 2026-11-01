@@ -21,6 +21,8 @@ export type CompraPedido = {
   pago_em?: string | null
   // solicitacao de origem cancelada: so conta se ja tem nf ou pago_em (dinheiro real nunca some)
   cancelada?: boolean
+  // solicitacao tipo 'locacao' (Fases B/C): mesma regra de custo, origem "Locacoes" na tela
+  locacao?: boolean
 }
 
 export type StatusMedicao =
@@ -123,4 +125,193 @@ export function consolidarFinanceiro(input: {
     { r: 0, c: 0, re: 0, p: 0 },
   )
   return { porOS, total: linha(null, 'Total', s.r, s.c, s.re, s.p) }
+}
+
+// ---------------------------------------------------------------------------
+// Fases B/C (spec 2026-11-01 §2.3, §3 "Aba Financeiro"): receita esperada, liberado, faturado,
+// pendencias, margem projetada e custos por origem. Puro; centavos inteiros; percentuais 0–100.
+//
+// Sem dupla contagem:
+//  - Vinculo (obras_fin_vinculos) com deMedicaoFornecedor = pagamento gerado por medicao de
+//    fornecedor, que ja conta em `fornecedores` → fica fora (so contado em vinculosDeMedicaoFornecedor).
+//  - Pedido de locacao do Compras (locacao = true) sai da origem Compras e entra em Locacoes;
+//    o custo da OS e o mesmo (uma vez so).
+//  - Pagamento do Financeiro que quita pedido do Compras (DIVIDAS M1, sem chave): conta como esta,
+//    na origem "Pagamentos / rateio", para o usuario ver.
+
+export type VinculoCusto = {
+  obraId: string
+  origem: 'solicitacao' | 'caixinha_despesa'
+  /** Custo ATRIBUIDO a esta OS (obras_fin_vinculos.valor_centavos). */
+  valorCentavos: number
+  deMedicaoFornecedor: boolean
+  /** fin_solicitacoes.etapa (solicitacao). */
+  etapa: string | null
+  /** fin_pagamentos_omie.situacao: pago|parcial|estornado|cancelado|null. */
+  pagamentoSituacao: string | null
+  valorPagoCentavos: number | null
+  solicitacaoValorCentavos: number | null
+  /** fin_caixinha_relatorios.status (caixinha). */
+  relatorioStatus: string | null
+}
+
+export type MedicaoCliente = { obraId: string; situacao: string; valorCentavos: number }
+
+export type ObraMargem = ObraRef & {
+  /** Valor receita da OS (centavos); null = nao informado. */
+  receitaCentavos: number | null
+  /** OS cancelada: fora da receita esperada. */
+  cancelada: boolean
+  /** Avanco fisico 0–1 da OS; null = sem cronograma/desconhecido. */
+  avanco: number | null
+}
+
+export type Custo = { comprometido: number; realizado: number; pago: number }
+
+export type LinhaMargem = Linha & {
+  cancelada: boolean
+  receitaEsperada: number | null
+  liberado: number
+  avanco: number | null
+  custoProjetado: number | null
+  margemProjetada: number | null
+  margemProjetadaPct: number | null
+}
+
+export type OrigemCusto = 'compras' | 'fornecedores' | 'pagamentos' | 'caixinha' | 'locacoes'
+
+export type MargemObra = {
+  porOS: LinhaMargem[]
+  total: LinhaMargem
+  origens: Record<OrigemCusto, Custo>
+  /** Percentuais 0–100 sobre a receita esperada (avanco: fisico da obra). */
+  percentuais: { avanco: number | null; liberado: number | null; faturado: number | null }
+  pendencias: { liberadoNaoFaturado: number; avancoAFrente: number | null; avancoAFrentePP: number | null }
+  vinculosDeMedicaoFornecedor: number
+  /** OS nao canceladas sem valor receita. */
+  osSemReceita: number
+}
+
+const ZERO: Custo = { comprometido: 0, realizado: 0, pago: 0 }
+const ETAPA_FORA = new Set(['recusada', 'cancelada'])
+
+/** Avanco valido 0–1, ou null (NaN/Infinity/null nunca entram na conta). */
+const avancoValido = (x: number | null): number | null =>
+  x === null || !Number.isFinite(x) ? null : Math.min(1, Math.max(0, x))
+
+/** Custo de um vinculo (pagamento/rateio ou caixinha) para a OS dele. */
+export function custoDoVinculo(v: VinculoCusto): Custo {
+  const val = num(v.valorCentavos)
+  if (v.origem === 'caixinha_despesa') {
+    const s = v.relatorioStatus
+    if (s === 'REPROVADO') return { ...ZERO }
+    return { comprometido: val, realizado: s === 'APROVADO' || s === 'PAGO' ? val : 0, pago: s === 'PAGO' ? val : 0 }
+  }
+  let pago = 0
+  if (v.pagamentoSituacao === 'pago') pago = val
+  else if (v.pagamentoSituacao === 'parcial') {
+    const total = v.solicitacaoValorCentavos === null ? 0 : num(v.solicitacaoValorCentavos)
+    const pg = v.valorPagoCentavos === null ? 0 : num(v.valorPagoCentavos)
+    pago = total > 0 ? Math.min(val, Math.max(0, Math.round((val * pg) / total))) : 0
+  }
+  if (v.etapa !== null && ETAPA_FORA.has(v.etapa)) return pago > 0 ? { comprometido: pago, realizado: pago, pago } : { ...ZERO }
+  return { comprometido: val, realizado: v.etapa === 'lancada' || pago > 0 ? val : 0, pago }
+}
+
+const soma = (a: Custo, b: Custo): Custo => ({ comprometido: a.comprometido + b.comprometido, realizado: a.realizado + b.realizado, pago: a.pago + b.pago })
+const deLinha = (l: Linha): Custo => ({ comprometido: l.custoComprometido, realizado: l.custoRealizado, pago: l.custoPago })
+const pctDe = (parte: number, base: number | null): number | null => (base !== null && base > 0 ? (parte / base) * 100 : null)
+
+function linhaMargem(l: Linha, receita: number | null, liberado: number, avanco: number | null, cancelada: boolean): LinhaMargem {
+  const custoProjetado = avanco !== null && avanco > 0 ? Math.round(l.custoComprometido / avanco) : null
+  const margemProjetada = receita !== null && custoProjetado !== null ? receita - custoProjetado : null
+  return {
+    ...l,
+    cancelada,
+    receitaEsperada: receita,
+    liberado,
+    avanco,
+    custoProjetado,
+    margemProjetada,
+    margemProjetadaPct: margemProjetada !== null ? pctDe(margemProjetada, receita) : null,
+  }
+}
+
+/**
+ * `obras`: a obra aberta e as filhas; `avanco`: avanco fisico (0–1) da obra aberta, usado no
+ * total (custo projetado = comprometido ÷ avanco). Itens de OS fora da lista sao ignorados.
+ */
+export function consolidarMargem(input: {
+  compras: CompraPedido[]
+  fornecedores: MedicaoFornecedor[]
+  notas: NotaObra[]
+  vinculos: VinculoCusto[]
+  medicoesCliente: MedicaoCliente[]
+  obras: ObraMargem[]
+  avanco: number | null
+}): MargemObra {
+  const ids = new Set(input.obras.map((o) => o.id))
+  const base = consolidarFinanceiro({ compras: input.compras, fornecedores: input.fornecedores, notas: input.notas, obras: input.obras })
+  const so = (p: { compras?: CompraPedido[]; fornecedores?: MedicaoFornecedor[] }) =>
+    deLinha(consolidarFinanceiro({ compras: p.compras ?? [], fornecedores: p.fornecedores ?? [], notas: [], obras: input.obras }).total)
+
+  const extra = new Map<string, Custo>()
+  const origens: Record<OrigemCusto, Custo> = {
+    compras: so({ compras: input.compras.filter((c) => !c.locacao) }),
+    fornecedores: so({ fornecedores: input.fornecedores }),
+    pagamentos: { ...ZERO },
+    caixinha: { ...ZERO },
+    locacoes: so({ compras: input.compras.filter((c) => c.locacao) }),
+  }
+  let vinculosDeMedicaoFornecedor = 0
+  for (const v of input.vinculos) {
+    if (!ids.has(v.obraId)) continue
+    if (v.deMedicaoFornecedor) {
+      vinculosDeMedicaoFornecedor++
+      continue
+    }
+    const c = custoDoVinculo(v)
+    const k = v.origem === 'caixinha_despesa' ? 'caixinha' : 'pagamentos'
+    origens[k] = soma(origens[k], c)
+    extra.set(v.obraId, soma(extra.get(v.obraId) ?? ZERO, c))
+  }
+
+  const liberadoPor = new Map<string, number>()
+  for (const m of input.medicoesCliente) {
+    if (!ids.has(m.obraId) || m.situacao !== 'aprovada') continue
+    liberadoPor.set(m.obraId, (liberadoPor.get(m.obraId) ?? 0) + num(m.valorCentavos))
+  }
+
+  const porOS = input.obras.map((o, i) => {
+    const b = base.porOS[i]
+    const c = soma(deLinha(b), extra.get(o.id) ?? ZERO)
+    const l = linha(o.id, o.os, b.receitaRealizada, c.comprometido, c.realizado, c.pago)
+    const receita = o.cancelada || o.receitaCentavos === null ? null : num(o.receitaCentavos)
+    return linhaMargem(l, receita, liberadoPor.get(o.id) ?? 0, avancoValido(o.avanco), o.cancelada)
+  })
+
+  const receitas = porOS.filter((l) => l.receitaEsperada !== null)
+  const receitaTotal = receitas.length ? receitas.reduce((s, l) => s + (l.receitaEsperada as number), 0) : null
+  const t = porOS.reduce(
+    (a, l) => ({ r: a.r + l.receitaRealizada, c: a.c + l.custoComprometido, re: a.re + l.custoRealizado, p: a.p + l.custoPago, lib: a.lib + l.liberado }),
+    { r: 0, c: 0, re: 0, p: 0, lib: 0 },
+  )
+  const avanco = avancoValido(input.avanco)
+  const total = linhaMargem(linha(null, 'Total', t.r, t.c, t.re, t.p), receitaTotal, t.lib, avanco, false)
+
+  const pctLiberado = pctDe(t.lib, receitaTotal)
+  const comReceita = receitaTotal !== null && receitaTotal > 0 && avanco !== null
+  return {
+    porOS,
+    total,
+    origens,
+    percentuais: { avanco: avanco === null ? null : avanco * 100, liberado: pctLiberado, faturado: pctDe(t.r, receitaTotal) },
+    pendencias: {
+      liberadoNaoFaturado: Math.max(0, t.lib - t.r),
+      avancoAFrente: comReceita ? Math.max(0, Math.round((avanco as number) * (receitaTotal as number)) - t.lib) : null,
+      avancoAFrentePP: comReceita ? Math.max(0, (avanco as number) * 100 - (pctLiberado as number)) : null,
+    },
+    vinculosDeMedicaoFornecedor,
+    osSemReceita: input.obras.filter((o) => !o.cancelada && o.receitaCentavos === null).length,
+  }
 }

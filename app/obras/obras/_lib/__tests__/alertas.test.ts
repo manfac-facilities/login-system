@@ -87,3 +87,30 @@ describe('calcularAlertas', () => {
     expect(ids({ restricoes: [restricao({ situacao: 'liberada' })] })).toEqual([])
   })
 })
+
+describe('calcularAlertas — medições > 10 dias (Fases B/C §2.4)', () => {
+  const mc = (numero: number, enviadaEm: string, situacao = 'enviada', os: string | null = '100') => ({ numero, os, enviadaEm, situacao })
+  it('medição ao cliente enviada há mais de 10 dias (dia BRT) → alerta sem R$; 10 dias ainda não', () => {
+    // 2026-10-18T02:00Z = 17/10 em Brasília → 11 dias até 28/10
+    const a = calcularAlertas({ ...base, medicoesCliente: [mc(2, '2026-10-18T02:00:00Z'), mc(3, '2026-10-18T12:00:00Z'), mc(1, '2026-09-01T12:00:00Z', 'aprovada')] })
+    const m = a.find((x) => x.id === 'medicao_cliente')!
+    expect(m.texto).toBe('Medição 2 da OS 100 há 11 dias aguardando o cliente')
+    expect(m.texto).not.toMatch(/R\$/)
+    expect(m.acao.href).toBe('/obras/obras/o1/financeiro/medicoes')
+    expect(ids({ medicoesCliente: [mc(3, '2026-10-18T12:00:00Z')] } as never)).toEqual([])
+  })
+  it('várias medições ao cliente: conta e mostra a mais antiga', () => {
+    const a = calcularAlertas({ ...base, medicoesCliente: [mc(2, '2026-10-10T12:00:00Z'), mc(1, '2026-10-01T12:00:00Z')] })
+    expect(a.find((x) => x.id === 'medicao_cliente')!.texto).toBe('2 medições ao cliente há mais de 10 dias aguardando aprovação, a mais antiga há 27 dias')
+  })
+  it('medição de fornecedor > 10 dias → alerta com quem aprova; null/vazio sem alerta', () => {
+    const a = calcularAlertas({ ...base, medicoesFornecedor: [{ fornecedor: 'Eletro Ltda', dias: 12, aguardando: 'engenheiro' }] })
+    const m = a.find((x) => x.id === 'medicao_fornecedor')!
+    expect(m.texto).toBe('Medição de fornecedor (Eletro Ltda) há 12 dias em aprovação — aguardando o engenheiro')
+    expect(m.acao.href).toBe('/obras/obras/o1/financeiro')
+    const v = calcularAlertas({ ...base, medicoesFornecedor: [{ fornecedor: null, dias: 12, aguardando: 'eduardo' }, { fornecedor: 'B', dias: 20, aguardando: 'eduardo' }] })
+    expect(v.find((x) => x.id === 'medicao_fornecedor')!.texto).toBe('2 medições de fornecedor há mais de 10 dias em aprovação, a mais antiga há 20 dias')
+    expect(ids({ medicoesFornecedor: null } as never)).toEqual([])
+    expect(ids({ medicoesFornecedor: [] } as never)).toEqual([])
+  })
+})

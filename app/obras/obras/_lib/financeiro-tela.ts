@@ -8,7 +8,11 @@
  * `{ ok: false }` ("dados inconsistentes") e os outros blocos seguem de pé.
  * frn_* grava REAIS (colunas `_reais`): converte com Math.round(x * 100).
  */
-import { consolidarFinanceiro, type CompraPedido, type Linha, type MedicaoFornecedor, type NotaObra, type ObraRef, type StatusMedicao } from './financeiro-obra'
+import {
+  consolidarMargem, type CompraPedido, type LinhaMargem, type MargemObra, type MedicaoCliente, type MedicaoFornecedor,
+  type NotaObra, type ObraMargem, type StatusMedicao, type VinculoCusto,
+} from './financeiro-obra'
+import { avisoLocacao, textoAviso } from './locacao'
 
 type Row = Record<string, unknown>
 /** ok:false sem motivo = dados inconsistentes; motivo 'leitura' = a consulta falhou. */
@@ -53,7 +57,16 @@ const NOTA: Record<string, string> = {
   rejeitada: 'Rejeitada', falha_conferir: 'Falha (conferir)', cancelada: 'Cancelada', enviada: 'Enviada',
 }
 
-export type ObraFin = { id: string; os: string | null; loja: string | null; paiId: string | null }
+export type ObraFin = {
+  id: string
+  os: string | null
+  loja: string | null
+  paiId: string | null
+  /** Valor receita (centavos); null/ausente = não informado (Fases B/C). */
+  receitaCentavos?: number | null
+  /** OS cancelada: fora da receita esperada. */
+  cancelada?: boolean
+}
 
 export type CompraTela = {
   chave: string
@@ -99,9 +112,20 @@ export type NotaTela = {
   contaNaReceita: boolean
 }
 
+export type Papel = 'mae' | 'aditivo' | 'obra'
+
+/** Pílulas da tabela "Custos por origem". null = a leitura falhou (a tela avisa, não mostra 0). */
+export type PendenciasOrigem = {
+  comprasSemEntrega: number
+  medicoesFornecedorAtrasadas: { quantidade: number; maisDias: number } | null
+  caixinhaSemObra: number | null
+  locacoes: { quantidade: number; primeira: string; urgente: boolean } | null
+}
+
 export type Financeiro = {
   semLancamentos: boolean
-  resumo: Bloco<{ porOS: (Linha & { papel: 'mae' | 'aditivo' | 'obra' })[]; total: Linha; notasSemParcela: number }>
+  resumo: Bloco<Omit<MargemObra, 'porOS'> & { porOS: (LinhaMargem & { papel: Papel })[]; notasSemParcela: number }>
+  pendencias: PendenciasOrigem
   compras: Bloco<CompraTela[]>
   fornecedores: Bloco<ContratoTela[]>
   faturamento: Bloco<NotaTela[]>
@@ -116,15 +140,42 @@ const osDe = (o: ObraFin | undefined, row: Row) => txt(row.obra_os) ?? o?.os ?? 
  * `obras`: a obra aberta e as filhas diretas (a obra aberta primeiro). Linhas de obra que não
  * está na lista são ignoradas.
  */
-export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras: Row[]; fornecedores: Row[]; notas: Row[] }): Financeiro {
+export function montarFinanceiro(p: {
+  obraId: string
+  obras: ObraFin[]
+  compras: Row[]
+  fornecedores: Row[]
+  notas: Row[]
+  /** Fases B/C (opcionais; ausente = vazio). `obras_fin_vinculos`. */
+  vinculos?: Row[]
+  /** `obras_medicao_cliente` da família (liberado = aprovadas). */
+  medicoesCliente?: Row[]
+  /** Avanço físico 0–1 da obra aberta (calc.realizado); null = sem cronograma. */
+  avanco?: number | null
+  /** `obras_fin_medicoes_fornecedor_atrasadas`; null = leitura falhou. */
+  medicoesFornecedorAtrasadas?: Row[] | null
+  /** `obras_fin_caixinha_sem_obra.quantidade`; null = leitura falhou. */
+  caixinhaSemObra?: number | null
+  /** Locações (`itensDeLocacao`) para a pílula de vencimento; null = leitura falhou. */
+  locacoes?: { item: string; fim: string | null; estado: string | null }[] | null
+  hoje?: string
+  feriados?: ReadonlySet<string>
+}): Financeiro {
   const porId = new Map(p.obras.map((o) => [o.id, o]))
   const daObra = (r: Row) => porId.has(String(r.obra_id))
   const compras = p.compras.filter(daObra)
   const fornecedores = p.fornecedores.filter(daObra)
   const notas = p.notas.filter(daObra)
+  const vinculos = (p.vinculos ?? []).filter(daObra)
+  const medicoesCliente = (p.medicoesCliente ?? []).filter(daObra)
 
   const resumo = bloco(() => {
-    const refs: ObraRef[] = p.obras.map((o) => ({ id: o.id, os: o.os ?? '—', paiId: o.paiId }))
+    const refs: ObraMargem[] = p.obras.map((o) => ({
+      id: o.id, os: o.os ?? '—', paiId: o.paiId,
+      receitaCentavos: o.receitaCentavos ?? null, cancelada: !!o.cancelada,
+      // Avanço só se conhece da obra aberta (cronograma dela); aditivo fica "—".
+      avanco: o.id === p.obraId ? (p.avanco ?? null) : null,
+    }))
     const cp: CompraPedido[] = compras
       .filter((r) => r.pedido_id)
       .map((r) => ({
@@ -134,6 +185,7 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
         nf: txt(r.nf_numero),
         pago_em: txt(r.pago_em),
         cancelada: r.solicitacao_etapa === 'cancelada',
+        locacao: r.solicitacao_tipo === 'locacao',
       }))
     const md: MedicaoFornecedor[] = fornecedores
       .filter((r) => r.medicao_id)
@@ -153,14 +205,27 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
         situacao: String(r.nota_situacao ?? ''),
         devolvidaEm: txt(r.obras_devolvidas_em),
       }))
-    const c = consolidarFinanceiro({ compras: cp, fornecedores: md, notas: nt, obras: refs })
+    const opcional = (v: unknown) => (v === null || v === undefined ? null : valor(v))
+    const vc: VinculoCusto[] = vinculos.map((r) => ({
+      obraId: String(r.obra_id),
+      origem: r.origem === 'caixinha_despesa' ? 'caixinha_despesa' : 'solicitacao',
+      valorCentavos: valor(r.valor_centavos),
+      deMedicaoFornecedor: r.de_medicao_fornecedor === true,
+      etapa: txt(r.solicitacao_etapa),
+      pagamentoSituacao: txt(r.pagamento_situacao),
+      valorPagoCentavos: opcional(r.pagamento_valor_pago_centavos),
+      solicitacaoValorCentavos: opcional(r.solicitacao_valor_centavos),
+      relatorioStatus: txt(r.relatorio_status),
+    }))
+    const mc: MedicaoCliente[] = medicoesCliente.map((r) => ({ obraId: String(r.obra_id), situacao: String(r.situacao ?? ''), valorCentavos: valor(r.valor_centavos) }))
+    const c = consolidarMargem({ compras: cp, fornecedores: md, notas: nt, vinculos: vc, medicoesCliente: mc, obras: refs, avanco: p.avanco ?? null })
     const temFilha = p.obras.some((o) => o.paiId === p.obraId)
     return {
+      ...c,
       porOS: c.porOS.map((l) => ({
         ...l,
-        papel: (l.obraId === p.obraId ? (temFilha ? 'mae' : 'obra') : 'aditivo') as 'mae' | 'aditivo' | 'obra',
+        papel: (l.obraId === p.obraId ? (temFilha ? 'mae' : 'obra') : 'aditivo') as Papel,
       })),
-      total: c.total,
       notasSemParcela,
     }
   })
@@ -250,10 +315,46 @@ export function montarFinanceiro(p: { obraId: string; obras: ObraFin[]; compras:
   )
 
   return {
-    semLancamentos: compras.length === 0 && fornecedores.length === 0 && notas.length === 0,
+    semLancamentos: compras.length === 0 && fornecedores.length === 0 && notas.length === 0 && vinculos.length === 0 && medicoesCliente.length === 0,
     resumo,
+    pendencias: pendenciasOrigem(p, compras),
     compras: comprasB,
     fornecedores: fornecedoresB,
     faturamento: faturamentoB,
+  }
+}
+
+const ENTREGUE = new Set(['confirmada', 'resolvida'])
+
+function pendenciasOrigem(
+  p: Pick<Parameters<typeof montarFinanceiro>[0], 'medicoesFornecedorAtrasadas' | 'caixinhaSemObra' | 'locacoes' | 'hoje' | 'feriados' | 'obras'>,
+  compras: Row[],
+): PendenciasOrigem {
+  const ids = new Set(p.obras.map((o) => o.id))
+  // Pedido emitido (fora locação) ainda não entregue; solicitação cancelada sem NF/pagamento não conta.
+  const comprasSemEntrega = compras.filter(
+    (r) => r.pedido_id && r.pedido_situacao === 'emitido' && r.solicitacao_tipo !== 'locacao' &&
+      !(r.solicitacao_etapa === 'cancelada' && !r.nf_numero && !r.pago_em) && !ENTREGUE.has(String(r.entrega_situacao ?? '')),
+  ).length
+  const atrasadas = p.medicoesFornecedorAtrasadas === undefined ? [] : p.medicoesFornecedorAtrasadas
+  const doFornecedor = atrasadas === null ? null : atrasadas.filter((r) => ids.has(String(r.obra_id)))
+  const dias = (r: Row) => (Number.isFinite(Number(r.dias_aguardando)) ? Number(r.dias_aguardando) : 0)
+  const avisos = p.locacoes === null
+    ? null
+    : (p.locacoes ?? [])
+        .map((l) => ({ item: l.item, aviso: p.hoje ? avisoLocacao(l, p.hoje, p.feriados ?? new Set()) : null }))
+        .filter((x): x is { item: string; aviso: NonNullable<typeof x.aviso> } => x.aviso !== null)
+        .sort((a, b) => a.aviso.fim.localeCompare(b.aviso.fim))
+  return {
+    comprasSemEntrega,
+    medicoesFornecedorAtrasadas: doFornecedor === null
+      ? null
+      : { quantidade: doFornecedor.length, maisDias: doFornecedor.reduce((m, r) => Math.max(m, dias(r)), 0) },
+    caixinhaSemObra: p.caixinhaSemObra === undefined ? 0 : p.caixinhaSemObra,
+    locacoes: avisos === null
+      ? null
+      : avisos.length
+        ? { quantidade: avisos.length, primeira: `${avisos[0].item} ${textoAviso(avisos[0].aviso)}`, urgente: avisos.some((x) => x.aviso.tipo !== 'proxima') }
+        : { quantidade: 0, primeira: '', urgente: false },
   }
 }

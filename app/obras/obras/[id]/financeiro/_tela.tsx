@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { brl, pctTexto, type Bloco, type Financeiro, type ObraFin } from '../../_lib/financeiro-tela'
+import { brl, type Bloco, type Financeiro, type ObraFin } from '../../_lib/financeiro-tela'
 import { diaBr } from '../../_lib/restricao-pedido'
+import Resumo from './_resumo'
 
 /**
  * Aba Financeiro (render puro). R$ só aqui (`brl`). Cada bloco degrada sozinho:
@@ -45,11 +46,13 @@ const Tabela = ({ children }: { children: ReactNode }) => (
 
 export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Financeiro; obras: ObraFin[]; obraId: string; lidoEm: string }) {
   const nomeOS = (os: string) => (os === '—' ? 'OS não informada' : `OS ${os}`)
-  const papel = { mae: ' (mãe)', aditivo: ' (aditivo)', obra: '' }
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="obra-num text-[13px] text-(--obra-muted-texto)">Dados até {diaBr(lidoEm)} · lidos agora do Compras, da Gestão de Fornecedores e do Financeiro</p>
+        <p className="obra-num text-[13px] text-(--obra-muted-texto)">
+          Dados até {diaBr(lidoEm)} · lidos agora do Compras, da Gestão de Fornecedores e do Financeiro
+          {obras.length > 1 ? ` · mãe + ${obras.length - 1} ${obras.length === 2 ? 'aditivo' : 'aditivos'}` : ''}
+        </p>
         <a
           href={`/compras/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
@@ -64,45 +67,9 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
         </p>
       ) : null}
 
-      <Secao titulo="Resumo" fonte="consolidação das três fontes">
+      <Secao titulo="Resumo" fonte="Compras, Fornecedores, Financeiro (pagamentos, rateio, caixinha) e Faturamento">
         <Falha b={fin.resumo} />
-        {fin.resumo.ok ? (
-          <Tabela>
-            <thead>
-              <tr className="border-b border-(--obra-border)">
-                <th className={th}>OS</th>
-                <th className={th + ' text-right'}>Receita realizada</th>
-                <th className={th + ' text-right'}>Custo comprometido</th>
-                <th className={th + ' text-right'}>Custo realizado</th>
-                <th className={th + ' text-right'}>Custo pago</th>
-                <th className={th + ' text-right'}>Margem realizada</th>
-                <th className={th + ' text-right'}>Margem %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...fin.resumo.dados.porOS, ...(fin.resumo.dados.porOS.length > 1 ? [{ ...fin.resumo.dados.total, papel: 'total' as const }] : [])].map((l) => (
-                <tr key={l.obraId ?? 'total'} className={'border-b border-(--obra-border) ' + (l.papel === 'total' ? 'font-semibold' : '')}>
-                  <td className={td}>{l.papel === 'total' ? 'Total' : nomeOS(l.os) + papel[l.papel]}</td>
-                  <td className={num}>{brl(l.receitaRealizada)}</td>
-                  <td className={num}>{brl(l.custoComprometido)}</td>
-                  <td className={num}>{brl(l.custoRealizado)}</td>
-                  <td className={num}>{brl(l.custoPago)}</td>
-                  <td className={num}>{brl(l.margemRealizada)}</td>
-                  <td className={num}>{pctTexto(l.margemPct)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabela>
-        ) : null}
-        {fin.resumo.ok && fin.resumo.dados.notasSemParcela > 0 ? (
-          <p role="status" className="text-[13px] font-medium text-(--obra-orange-texto)">
-            {fin.resumo.dados.notasSemParcela} {fin.resumo.dados.notasSemParcela === 1 ? 'nota sem valor de parcela' : 'notas sem valor de parcela'} — receita pode estar incompleta
-          </p>
-        ) : null}
-        <p className="text-[12px] text-(--obra-muted-texto)">
-          Comprometido = pedido emitido e medição aprovada; realizado = NF de compra e medição com pagamento solicitado; margem pelo realizado.
-          {obras.length > 1 ? ' A mãe soma os aditivos no total; cada NF entra uma vez por OS.' : ''}
-        </p>
+        {fin.resumo.ok ? <Resumo d={fin.resumo.dados} pend={fin.pendencias} obraId={obraId} /> : null}
       </Secao>
 
       <Secao titulo="Compras" fonte="Compras">
