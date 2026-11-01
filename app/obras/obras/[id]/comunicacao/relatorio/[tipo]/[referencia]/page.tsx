@@ -6,6 +6,7 @@ import { EstadoVazio } from '../../../../../../_ui/primitivos'
 import { hojeISO } from '../../../../../../_lib/tipos'
 import { ultimoDiaUtilDoMes } from '../../../../../_lib/agenda'
 import { montarEmailPeriodo } from '../../../../../_lib/email-periodo'
+import { linkPortalObra } from '../../../../../_lib/link-portal'
 import { iaDisponivel } from '../../../../../_lib/ia-semanal'
 import { etapasDaObra } from '../../../../../_lib/relatorio-periodo'
 import { conteudoPeriodoDe, lerDadosPeriodo, relatorioValido, ultimoMesDoMensal, validacaoLiberadaEm } from '../../../../../_pdf/carregar-periodo'
@@ -90,7 +91,7 @@ export default async function RelatorioPeriodoPage({
 
   const interna = sp.versao === 'interna'
   const conteudoCliente = conteudoPeriodoDe(d, 'cliente')
-  const previa = montarEmailPeriodo(interna ? conteudoPeriodoDe(d, 'interno') : conteudoCliente, { fotos: 0 })
+  const previa = montarEmailPeriodo(interna ? conteudoPeriodoDe(d, 'interno') : conteudoCliente, { fotos: 0, linkObra: linkPortalObra() })
   const estado: EstadoTela = d.relatorio?.estado ?? 'nao_iniciado'
   const congelado = estado === 'validado' || estado === 'enviado'
   const sel = d.relatorio?.highlights ?? null

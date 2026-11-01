@@ -2,6 +2,8 @@
 paths:
   - "app/obras/**"
   - "app/api/obras/**"
+  - "app/portal-obra/**"
+  - "lib/portal-obra/**"
 ---
 
 # Módulo Controle de Obras
@@ -158,3 +160,29 @@ Spec: `docs/superpowers/specs/2026-10-30-obras-leva1-cronograma-design.md`.
   (`?status=1` abre a gaveta), `/previa-obras/diario`. Fixture de Macaé 3; 404 em produção; fica fora de /obras
   porque o middleware exige sessão lá.
 - **SQL:** `sdd-sql-obras-leva1.sql` aplicado em 30/10/2026 (ver `.claude/rules/sql.md`).
+
+### Portal do cliente (Leva 5, branch `feat/obras-leva5`, 31/10/2026)
+
+Spec: `docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md`.
+
+- **Onde fica:** páginas em `app/portal-obra/` (`(entrada)` = e-mail + código; `(obra)` = obras da sessão,
+  guardas em `(obra)/_lib/guarda.ts`; `sair/` = logout por POST com conferência de Origin). Auth em
+  `lib/portal-obra/` (`codigo.ts` pedido/conferência do código, `sessao.ts`, `segredo.ts`, `acesso.ts`,
+  `limites.ts`). Lado do hub: configurações/comunicação/documentos em `app/obras/obras/`; analista e
+  "Situação para o cliente" em `app/obras/obras/_lib/analista.ts` + `[id]/_analista-actions.ts`.
+- **Não usa o Supabase Auth.** OTP próprio; o portal nunca importa `lib/supabase/server` nem `getUser`.
+  Tudo com o cliente admin (service role), e todo carregador recebe o cliente por parâmetro.
+- **Regras do código (OTP):** 6 dígitos, 10 min, uso único, 5 tentativas por código, 5 códigos/h por e-mail e
+  20/h por IP. Só o HMAC fica no banco. Emissão atômica no rpc `obras_portal_emitir_codigo` (travas por
+  e-mail e IP, aposenta os vivos, `criado_em = clock_timestamp()` e validade calculada **no banco**). A
+  conferência pega o código **vivo** (`usado_em is null`, não vencido) e conta tentativa/uso por
+  compare-and-swap. A resposta do pedido é sempre a mesma e o trabalho roda em `after()` (sem enumeração).
+  Sessão: cookie `httpOnly`/`secure`/`lax`, path `/portal-obra`, 7 dias renováveis com teto de 30; o acesso
+  (`obras_portal_acesso.ativo`) é relido a cada request, então desativar derruba a sessão.
+- **Modalidade:** página, PDF, documento e mensagem do cliente recusam obra que não é `modalidade = 'obra'`.
+- **Env:** `PORTAL_OBRA_SEGREDO` (≥ 32 caracteres; só no EasyPanel). Sem ele, ou curto, o portal falha fechado.
+- **IP do limite:** o **último** salto do `x-forwarded-for` (o que o Traefik do EasyPanel acrescenta). Pressupõe
+  o Traefik em publish mode **host**; em ingress todos chegam com o mesmo IP e o limite de 20/h vira global.
+- **SQL:** `sdd-sql-obras-leva5.sql` **NÃO aplicado** (31/10/2026). Ordem obrigatória no deploy: SQL antes do app
+  (sem `obras_situacao_cliente`, a Visão geral do portal, o semanal e o relatório de período dão 500). Teste de
+  comportamento: `docs/obras/2026-10-31-verificacao-obras-leva5.sql` (116 casos, rollback).

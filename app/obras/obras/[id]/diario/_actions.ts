@@ -26,6 +26,7 @@ import { podeIniciar } from '../../_lib/cronograma'
 import { diasUteisEntre } from '../../_lib/calendario'
 import { montarEmailDiario, type RdoCompleto } from '../../_lib/email-diario'
 import { enviarEmail } from '../../_lib/enviar'
+import { linkPortalObra } from '../../_lib/link-portal'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { AvancoRdo, CausaNaoAndou, Clima, RascunhoRdo, Resultado } from './_tipos'
 
@@ -507,6 +508,7 @@ export async function validarEEnviarAction(
     if (!para.length) continue
     const msg = montarEmailDiario({
       lado, obra: relida.dados, rdo: rdoCompleto, validadoPor, validadoEm, diaN, fotosCid, fotosOmitidas,
+      linkObra: linkPortalObra(),
     })
     const r = await enviarEmail({ para, ...msg, anexos })
     enviados += r.aceitos.length

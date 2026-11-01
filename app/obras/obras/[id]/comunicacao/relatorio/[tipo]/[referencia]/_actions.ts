@@ -27,6 +27,7 @@ import { hojeISO } from '../../../../../../_lib/tipos'
 import { montarEmailPeriodo, resumoPeriodoParaIa } from '../../../../../_lib/email-periodo'
 import { autorizarEngenheiroDaObra } from '../../../../../_lib/autorizar-relatorio'
 import { enviarEmail } from '../../../../../_lib/enviar'
+import { linkPortalObra } from '../../../../../_lib/link-portal'
 import { SEM_IA, iaDisponivel, instrucoesPeriodo, sugerirObservacoes } from '../../../../../_lib/ia-semanal'
 import {
   congelarPeriodo,
@@ -236,7 +237,7 @@ export async function validarEEnviarRelatorioAction(obraId: string, tipo: string
   for (const lado of ['cliente', 'interno'] as const) {
     const para = pendentes[lado]
     if (!para.length) continue
-    const msg = montarEmailPeriodo(conteudoPeriodoDe(d, lado), { fotos })
+    const msg = montarEmailPeriodo(conteudoPeriodoDe(d, lado), { fotos, linkObra: linkPortalObra() })
     const r = await enviarEmail({ para, ...msg, anexos: [{ nome: nomeArquivo, conteudo: pdf }] })
     enviados += r.aceitos.length
     if (lado === 'cliente' && r.aceitos.length) clienteRecebeu = true

@@ -21,6 +21,7 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraGrande } from '../../_lib/leitura'
 import { codigosDeAtividades } from '../../_lib/cronograma'
 import { enviarEmail } from '../../_lib/enviar'
+import { linkPortalObra } from '../../_lib/link-portal'
 import { carregarPdfAta, renderizarAta } from '../../_pdf/carregar-ata'
 import { montarEmailAta, montarEmailImediata, vinculoImediata, type EmailSimples } from './_email'
 import { podeEditar, validarImediata, validarRegistro } from './_regras'
@@ -239,14 +240,18 @@ export async function enviarAtaAction(
     pendencias: Array.isArray(ataBanco.pendencias) ? ataBanco.pendencias : [],
   }
   const loja = String(c.obra.loja ?? c.obra.descricao ?? c.obra.os ?? 'Obra').trim() || 'Obra'
-  const msg = montarEmailAta({
-    loja,
-    data: String(r.data),
-    participantes: r.participantes ?? null,
-    texto: r.texto ?? null,
-    ata,
-    enviadoPor: s.email,
-  })
+  const montarAta = (linkObra: string | null) =>
+    montarEmailAta({
+      loja,
+      data: String(r.data),
+      participantes: r.participantes ?? null,
+      texto: r.texto ?? null,
+      ata,
+      enviadoPor: s.email,
+      linkObra,
+    })
+  const msgCliente = montarAta(linkPortalObra())
+  const msgInterna = montarAta(null)
   let pdf: Buffer
   try {
     pdf = await renderizarAta(c.dados)
@@ -260,7 +265,7 @@ export async function enviarAtaAction(
     referencia: String(r.data),
     registroId,
     para,
-    mensagem: () => msg,
+    mensagem: (lado) => (lado === 'cliente' ? msgCliente : msgInterna),
     anexos: [{ nome: c.nomeArquivo, conteudo: pdf }],
   })
   revalidar(obraId)
@@ -344,6 +349,7 @@ export async function enviarImediataAction(
         nivel: v.valor.nivel,
         vinculo: vinculoImediata({ lado, impedimento, atividade }),
         enviadoPor: s.email,
+        linkObra: linkPortalObra(),
       }),
     anexos: [],
   })

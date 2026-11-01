@@ -5,6 +5,7 @@ import type { AtividadeCalculada, Responsavel } from './cronograma'
 import { ehDiaUtil } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
 import type { PontoHist } from './curvas'
+import type { PedidoDaRestricao } from './restricao-pedido'
 
 export type Restricao = {
   id: string
@@ -18,6 +19,9 @@ export type Restricao = {
   liberadaEm: string | null
   criadoPor: string | null
   criadoEm: string
+  /** Pedido do Compras ligado (restrição de Material); só datas, sem valores. */
+  cmpPedidoId?: string | null
+  pedido?: PedidoDaRestricao | null
 }
 
 export type PlanoItem = {

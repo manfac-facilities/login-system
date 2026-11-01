@@ -50,10 +50,14 @@ export default async function ObraLayout({
   const { obra } = r.dados
   if (obra.modalidade !== 'obra') return <Aviso>Obra não encontrada ou não é da modalidade OBRA</Aviso>
 
+  // Item Financeiro: só quem pode ver valores. Cliente da SESSÃO (com o admin volta false); erro → false.
+  const { data: podeVer, error: ePode } = await supabase.rpc('obras_pode_ver_valores', { p_obra: id })
+  const financeiro = !ePode && podeVer === true
+
   // Só o que o shell mostra vai para o cliente (nada de valor/custo no payload).
   const doShell = { id: obra.id, os: obra.os, loja: obra.loja, cliente: obra.cliente, descricao: obra.descricao }
   return (
-    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente} admin={admin}>
+    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente} admin={admin} financeiro={financeiro}>
       {children}
     </ShellObra>
   )

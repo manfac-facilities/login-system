@@ -9,6 +9,7 @@ import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
 import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
+import { linkPortalObra } from '../../_lib/link-portal'
 import { diasUteisEntre } from '../../_lib/calendario'
 import { segundaDaSemana } from '../../_lib/last-planner'
 import { lerPlano } from '../../_lib/leitura'
@@ -171,6 +172,7 @@ export default async function DiarioObraPage({
       validadoEm: rdo.validado_em ?? new Date().toISOString(),
       diaN: diasUteisEntre(obra.data_base ?? data, data, feriados),
       fotosCid: comUrl.map((f) => ({ cid: f.id, legenda: f.legenda })),
+      linkObra: linkPortalObra(),
     }).html
     // Na prévia, a foto vem pela URL assinada no lugar do CID.
     for (const f of comUrl) html = html.split(`cid:${f.id}`).join(f.url!.replace(/&/g, '&amp;'))

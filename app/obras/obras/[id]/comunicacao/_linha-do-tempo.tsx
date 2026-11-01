@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 import { apagarRegistroAction } from './_actions'
 import EnvioAta from './_ata-envio'
 import FormRegistro, { botaoSecundario } from './_registro-form'
-import { TIPOS_REGISTRO, type DestinatarioOpcao, type Envio, type ItemLinha, type Registro } from './_tipos'
+import { TIPOS_REGISTRO, type DestinatarioOpcao, type Envio, type ItemLinha, type Mensagem, type Registro } from './_tipos'
 
 const dataBR = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—')
 const quando = (ts: string) => new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
@@ -75,6 +75,21 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
           Abrir PDF
         </a>
       ) : null}
+    </div>
+  )
+}
+
+/** Mensagem do cliente ou resposta da Manfac. O texto entra como texto (React escapa), nunca como HTML. */
+function ItemMensagem({ m }: { m: Mensagem }) {
+  const cliente = m.autorTipo === 'cliente'
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap justify-between gap-2">
+        <strong className="text-[#00345e]">{cliente ? 'Mensagem do cliente' : 'Resposta da Manfac'}</strong>
+        <span className="text-xs text-[#5a7380]">{quando(m.criadoEm)}</span>
+      </div>
+      <p className="break-words text-xs text-[#5a7380]">{m.autorEmail}</p>
+      <p className="whitespace-pre-wrap break-words">{m.texto}</p>
     </div>
   )
 }
@@ -223,6 +238,8 @@ export default function LinhaDoTempo({
         <li key={it.chave} className="rounded-xl border border-[#dadad8] bg-[#ffffff] p-3 text-sm text-[#333336]">
           {it.tipo === 'envio' ? (
             <LinhaEnvio e={it.envio} obraId={obraId} />
+          ) : it.tipo === 'mensagem' ? (
+            <ItemMensagem m={it.mensagem} />
           ) : (
             <ItemRegistro item={it} obraId={obraId} hoje={hoje} podeEnviar={podeEnviar} destinatarios={destinatarios} />
           )}

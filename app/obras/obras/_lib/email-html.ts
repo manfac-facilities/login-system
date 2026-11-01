@@ -5,6 +5,8 @@
  */
 import type { ItemDiario, SinalVisual } from './email-diario'
 import { esc } from './conteudo-valido'
+import { htmlLinkObra } from './link-portal'
+import { acaoTxt, type SituacaoRelatorio } from './situacao'
 
 export const secao = (t: string, corpo: string) =>
   `<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0">
@@ -32,6 +34,8 @@ export function documentoEmail(p: {
   numeros: [string, string][]
   corpo: string
   rodape: string
+  /** Só versão cliente: link "Ver a obra completa". */
+  linkObra?: string | null
 }): string {
   const { sinal: s } = p
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(p.assunto)}</title></head>
@@ -57,9 +61,21 @@ ${p.numeros
   .join('')}
 </tr></table></td></tr>
 ${p.corpo}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">${esc(p.rodape)}</td></tr>
+${htmlLinkObra(p.linkObra)}<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">${esc(p.rodape)}</td></tr>
 </table></td></tr></table></body></html>`
 }
+
+/** Situação publicada para o cliente (Leva 5 §7): explicação + ações de recuperação. */
+export const htmlDaSituacao = (s: SituacaoRelatorio) =>
+  secao(
+    'Situação da obra',
+    texto(s.explicacao) +
+      (s.acoes.length
+        ? `<div style="margin:10px 0 6px;font-size:13px;font-weight:700;color:#00345e">O que estamos fazendo para recuperar</div>` +
+          s.acoes.map((a) => linha(acaoTxt(a), '#f05a28')).join('')
+        : '') +
+      `<div style="margin-top:6px;font-size:12px;color:#64748b">${esc(`Atualizado em ${s.atualizadoEm} por ${s.por}.`)}</div>`,
+  )
 
 /** "Dependem do cliente": caixa vermelha se vencida, amarela se não. */
 export const htmlDoCliente = (lista: { descricao: string; atividade: string; tipo: string; prazo: string | null; vencida: boolean }[]) =>

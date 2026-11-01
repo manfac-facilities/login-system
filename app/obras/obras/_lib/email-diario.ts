@@ -8,6 +8,7 @@
  *
  * HTML de e-mail: tabelas e estilos inline, largura 600 px.
  */
+import { htmlLinkObra, linkDoLado, textoLinkObra } from './link-portal'
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
@@ -127,10 +128,32 @@ export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, dat
  * lado como em `previsaoEntrega`); '' sem atraso.
  */
 export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const atraso = atrasoDoLado(lado, og, data)
+  let quebra = ''
+  if (atraso && atraso.total > 0) {
+    const a = atraso
+    const partes = [
+      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
+        .filter((r) => a[r] > 0)
+        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
+      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
+    ]
+    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
+  }
+  return quebra
+}
+
+export type QuebraAtraso = { total: number; outros: number } & Record<Responsavel, number>
+
+/**
+ * Dias de atraso do término por responsável, filtrados por lado (a mesma regra
+ * de `quebraDoAtraso`): ao cliente, o impedimento oculto que não é da Manfac
+ * vai para `outros`. null sem base salva. Também usado pela página do cliente.
+ */
+export function atrasoDoLado(lado: 'cliente' | 'interno', og: ObraGrande, data: string): QuebraAtraso | null {
   const { feriados } = og
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
-  type Quebra = { total: number; outros: number } & Record<Responsavel, number>
-  let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
+  let atraso: QuebraAtraso | null = og.atraso ? { ...og.atraso, outros: 0 } : null
   if (lado === 'cliente' && og.atraso) {
     const vis = diasDeImpacto(impedimentosCalcDe(visiveis), data, feriados)
     const ocultosNaoManfac = og.impedimentos.filter((i) => !i.exibirAoCliente && i.responsavel !== 'manfac')
@@ -147,18 +170,7 @@ export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data
     const outros = parte(oc.cliente + oc.clima + oc.terceiro)
     atraso = { total: og.atraso.total, cliente, clima, terceiro, outros, manfac: restante }
   }
-  let quebra = ''
-  if (atraso && atraso.total > 0) {
-    const a = atraso
-    const partes = [
-      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
-        .filter((r) => a[r] > 0)
-        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
-      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
-    ]
-    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
-  }
-  return quebra
+  return atraso
 }
 
 export function montarConteudoDiario(p: {
@@ -301,6 +313,8 @@ export function montarEmailDiario(p: {
   fotosCid: { cid: string; legenda: string | null }[]
   /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
   fotosOmitidas?: number
+  /** Só versão cliente: link "Ver a obra completa". */
+  linkObra?: string | null
 }): EmailDiario {
   const c = montarConteudoDiario(p)
   const { lado, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes, semExecucao, amanha } = c
@@ -386,7 +400,7 @@ ${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a"
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
 ${naoAvancou.length ? secao('Não avançou hoje', naoAvancou.map((t) => `<div style="border-left:3px solid #f59e0b;padding:3px 10px;margin-bottom:5px;font-size:14px;color:#0f172a">${esc(t)}</div>`).join('')) : ''}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
+${htmlLinkObra(linkDoLado(lado, p.linkObra))}<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
 </table></td></tr></table></body></html>`
 
   // ---------- Texto ----------
@@ -414,6 +428,7 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     '',
     'AMANHÃ',
     amanha,
+    ...textoLinkObra(linkDoLado(lado, p.linkObra)),
   ]
   return { assunto, html, texto: linhas.join('\n') }
 }

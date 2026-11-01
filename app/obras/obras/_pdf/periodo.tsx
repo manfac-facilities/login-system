@@ -8,6 +8,7 @@ import { Document, Image, Line, Polyline, Svg, Text, View } from '@react-pdf/ren
 import { FUSO } from '../../_lib/tipos'
 import type { ConteudoPeriodo, PontoCurva, TipoPeriodo } from '../_lib/relatorio-periodo'
 import { TEMA_OBRA as T } from '../_ui/tema'
+import { acaoTxt } from '../_lib/situacao'
 import { CabecalhoManfac, Caixa, PaginaManfac, Secao, TabelaSimples, estilos } from './base'
 import type { FotoSemanalPdf } from './semanal'
 
@@ -218,6 +219,23 @@ export function DocumentoPeriodo({ d }: { d: DadosPdfPeriodo }) {
               ))
             : vazio('Nenhum impedimento no período.')}
         </Secao>
+
+        {c.situacao ? (
+          <Secao titulo="Situação da obra">
+            <Text>{c.situacao.explicacao}</Text>
+            {c.situacao.acoes.length ? (
+              <View style={{ marginTop: 4 }}>
+                <Text style={{ fontWeight: 700, color: T.ink, marginBottom: 2 }}>O que estamos fazendo para recuperar</Text>
+                {c.situacao.acoes.map((a, i) => (
+                  <Caixa key={i} cor={T.orange}>
+                    {acaoTxt(a)}
+                  </Caixa>
+                ))}
+              </View>
+            ) : null}
+            <Text style={[estilos.muted, { marginTop: 2 }]}>{`Atualizado em ${c.situacao.atualizadoEm} por ${c.situacao.por}`}</Text>
+          </Secao>
+        ) : null}
 
         <Secao titulo="Observações da engenharia">{c.observacoes ? <Text>{c.observacoes}</Text> : vazio('Sem observações.')}</Secao>
 

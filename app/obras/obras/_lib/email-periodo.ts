@@ -5,7 +5,9 @@
  * Todo texto é escapado (`email-html.ts`). A curva S vai só no PDF anexo.
  */
 import { dataBr } from './email-diario'
-import { caixa, documentoEmail, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { caixa, documentoEmail, htmlDaSituacao, htmlDoCliente, linha, secao, texto, vazio } from './email-html'
+import { linhasDaSituacao } from './situacao'
+import { linkDoLado, textoLinkObra } from './link-portal'
 import type { ConteudoPeriodo, TipoPeriodo } from './relatorio-periodo'
 
 const FAIXA: Record<TipoPeriodo, string> = { mensal: 'RELATÓRIO MENSAL', fase: 'RELATÓRIO DE FASE', entrega: 'RELATÓRIO DE ENTREGA' }
@@ -56,11 +58,12 @@ export function resumoPeriodoParaIa(c: ConteudoPeriodo): string {
   return [`Obra: ${c.loja}`, `${c.titulo}`, `Período: ${dataBr(c.inicio)} a ${dataBr(c.fim)}`, '', ...linhasDeDados(c)].join('\n')
 }
 
-export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { assunto: string; html: string; texto: string } {
+export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number; linkObra?: string | null }): { assunto: string; html: string; texto: string } {
   const interno = c.lado === 'interno'
   const notaFotos = p.fotos ? `${p.fotos} ${p.fotos === 1 ? 'foto do período' : 'fotos do período'} no PDF anexo.` : null
 
   const corpo = [
+    c.situacao ? htmlDaSituacao(c.situacao) : '',
     c.comparativo
       ? secao(
           'Comparativo base × final',
@@ -91,6 +94,7 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { 
     ],
     corpo,
     rodape: RODAPE[c.tipo],
+    linkObra: linkDoLado(c.lado, p.linkObra),
   })
 
   const textoPlano = [
@@ -99,10 +103,12 @@ export function montarEmailPeriodo(c: ConteudoPeriodo, p: { fotos: number }): { 
     c.subtitulo,
     '',
     ...linhasDeDados(c),
+    ...(c.situacao ? ['', ...linhasDaSituacao(c.situacao)] : []),
     '',
     'OBSERVAÇÕES DA ENGENHARIA',
     c.observacoes ?? 'Sem observações.',
     ...(notaFotos ? ['', notaFotos] : []),
+    ...textoLinkObra(linkDoLado(c.lado, p.linkObra)),
   ].join('\n')
   return { assunto: c.assunto, html, texto: textoPlano }
 }

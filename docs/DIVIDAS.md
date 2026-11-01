@@ -379,3 +379,49 @@ menu inferior do diário.
 - Semanal validado com `conteudo` fora do formato (só possível escrevendo o jsonb à mão pela API): o app ignora e monta
   na hora, ou seja, volta a mostrar o estado atual para esse semanal.
 - Cabeçalho do PDF do semanal congelado (OS, cliente, engenheiro) ainda sai da obra atual; o corpo é o congelado.
+
+## 31/10/2026 — Obras Leva 5, portal do cliente (`feat/obras-leva5`), deixado de propósito
+
+Fontes: `.superpowers/sdd/2026-10-31-obras-leva5/progress.md` (ledger) e `final-review.md` (revisão final).
+O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de operação e de produto.
+
+- **Verificações antigas não rodam de novo** (`docs/obras/2026-10-31-verificacao-obras-leva3.sql` caso 58 e `docs/obras/2026-10-31-verificacao-obras-leva4.sql` caso 57): elas
+  apagam obra com JWT de não-admin, e a Leva 5 passou a recusar isso (`obras_obra_delete_guarda`). Motivo: o teste
+  antigo não é reaproveitado; corrigir é trocar para JWT de admin quando alguém precisar rodá-lo. Consequência:
+  rodar de novo dá falso "FALHOU" nesses dois casos.
+- **Índice de IP não usado** (`obras_portal_codigo_ip_idx`, `sdd-sql-obras-leva5.sql`): o rpc conta por
+  `ip is not distinct from p_ip`, que não usa o índice. Motivo: volume baixo (códigos da última hora). Consequência:
+  varredura da tabela a cada pedido; vira problema só com dezenas de milhares de linhas (falta limpeza de códigos
+  antigos, ver abaixo).
+- **Cota da vítima** (`obras_portal_emitir_codigo`): quem sabe o e-mail do cliente pode pedir código por ele,
+  aposentar o código vivo e gastar os 5/h dele. Motivo: desenho do spec (resposta uniforme, sem enumeração);
+  não vaza nada. Consequência: o cliente pode ficar até 1 h sem conseguir entrar sob abuso.
+- **Obra com mensagem ou documento não se apaga** (FK `on delete restrict`; delete de obra só admin). Motivo:
+  mensagem é registro imutável. Consequência: apagar obra exige runbook (exportar e limpar antes, sem JWT).
+- **Linha órfã de documento sem objeto** no Storage só admin apaga (Task 3). Motivo: borda rara (falha entre
+  upload e insert). Consequência: o documento aparece e o download dá erro até um admin limpar.
+- **URL de foto do portal com 300 s** em thumbnail lazy (Task 4): a página aberta por muito tempo mostra foto
+  quebrada até recarregar. Motivo: URL curta é a proteção; recarregar resolve.
+- **Rate limit de mensagens do cliente não é atômico** (30/h por e-mail, `(obra)/_lib/mensagens.ts`). Motivo:
+  não é auth; o excesso numa corrida é de poucas unidades.
+- **Conferência do código usa o relógio do app** (`lib/portal-obra/codigo.ts`, `.gt('expira_em', agora)`): a
+  emissão já usa o relógio do banco (M1), mas a conferência compara com a hora do servidor Next. Motivo: só muda
+  a validade efetiva pelo tamanho do desvio de relógio (NTP nos dois); um rpc `obras_portal_usar_codigo` resolveria.
+- **Códigos e sessões vencidos não são apagados** (`obras_portal_codigo`, `obras_portal_sessao`). Motivo: volume
+  pequeno; sem cron de limpeza. Consequência: a tabela cresce devagar.
+- **Pergunta de execução/entrega pode voltar quase todo dia** (`app/obras/obras/_lib/analista.ts`, `impressao` =
+  duração + fim projetado; o fim de atividade em andamento sem `dias_restantes` anda com a data de status).
+  Motivo: é o que o spec diz ("sem mudança nos números não volta"); faixas (semana do término) dependem do José.
+- **Situação publicada fica no portal indefinidamente**, mesmo se os pontos somem; e se a última versão estiver
+  com formato inválido (só por escrita manual) nada aparece, sem cair para a anterior. Motivo: spec ("a última
+  publicada"). Consequência: o engenheiro publica uma nova quando a situação melhora.
+- **Restrição da Manfac/terceiros vai ao prompt** com tipo e código, sem descrição; a resposta do engenheiro pode
+  citar área interna. Motivo: desenho do spec; só a instrução da IA e a revisão humana antes de publicar protegem.
+- **Apresentação (`apresentacao.ts`) não leva a situação.** Motivo: o spec não pede.
+
+## 31/10/2026 — Obras Financeiro da obra, Fase A (`feat/obras-financeiro-a`), deixado de propósito
+- Falta índice em `frn_contratos.obra_id` (a leitura `obras_fin_fornecedores` filtra por ele). Sem custo hoje (poucos contratos); criar quando crescer.
+- Entrega com situação `divergencia` não conta como entregue no selo "Pronta para liberar" (só `confirmada`/`resolvida`). Confirmar com o José se está certo.
+- Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
+- As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
+- Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).

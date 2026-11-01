@@ -6,11 +6,12 @@ import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
 import { codigosDeAtividades } from '../../_lib/cronograma'
 import { lookahead } from '../../_lib/last-planner'
-import { lerRestricoes } from '../../_lib/leitura'
+import { lerPedidosDaObra, lerRestricoes } from '../../_lib/leitura'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import Quadro, { type CartaoRestricao } from './_quadro'
 import RestricaoForm from './_restricao-form'
 import PlanoDaSemana from './_plano'
+import { prontaParaLiberar, textoDatasPedido } from '../../_lib/restricao-pedido'
 import { RESPONSAVEIS_RESTRICAO, agruparQuadro, rotuloResponsavelRestricao, rotuloTipo } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -40,10 +41,12 @@ export default async function LookaheadPage({
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
   const { calc, feriados } = r.dados
   if (!calc) return <EstadoVazio>A obra ainda não tem cronograma.</EstadoVazio>
-  const rr = await lerRestricoes(supabase, id)
+  const aba = sp.aba === 'quadro' || sp.aba === 'plano' ? sp.aba : 'lookahead'
+  // Quadro: pedidos do Compras para ligar (sem valores; cliente da SESSÃO). Lidos uma vez e reaproveitados.
+  const pedidos = aba === 'quadro' ? await lerPedidosDaObra(supabase, id) : undefined
+  const rr = await lerRestricoes(supabase, id, pedidos)
   if (!rr.ok) return <EstadoVazio>{rr.erro}</EstadoVazio>
 
-  const aba = sp.aba === 'quadro' || sp.aba === 'plano' ? sp.aba : 'lookahead'
   const n = sp.semanas === '3' ? 3 : sp.semanas === '6' ? 6 : 4
   const base = `/obras/obras/${id}/lookahead`
   const codigos = codigosDeAtividades(calc.atividades, feriados)
@@ -111,7 +114,7 @@ export default async function LookaheadPage({
           ))}
           <Link href={q(resp, !atrasadas)} className={chip(atrasadas)}>Só atrasadas</Link>
         </nav>
-        <Quadro colunas={colunas} />
+        <Quadro colunas={colunas} obraId={id} pedidos={pedidos ?? null} />
       </div>
     )
   }
@@ -146,6 +149,13 @@ export default async function LookaheadPage({
                       {it.restricoesAbertas.map((x) => (
                         <li key={x.id} className="text-xs text-[#b23232]">
                           {rotuloTipo(x.tipo)} ({rotuloResponsavelRestricao(x.responsavel)}): {x.descricao}
+                          {x.pedido ? <span className="text-[#5a7380]"> · {textoDatasPedido(x.pedido)}</span> : null}
+                          {prontaParaLiberar(x) ? <span className="ml-1 rounded-full border border-[#136c38] px-1.5 text-[#136c38]">Pronta para liberar</span> : null}
+                          {x.tipo === 'material' ? (
+                            <a href={`/compras/solicitacoes/nova?obra=${id}`} className="ml-2 inline-flex min-h-11 items-center font-medium text-[#b94606] underline">
+                              Pedir material
+                            </a>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

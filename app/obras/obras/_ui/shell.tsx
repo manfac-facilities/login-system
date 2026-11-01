@@ -15,6 +15,7 @@ import {
   IconeCronograma,
   IconeDiario,
   IconeDocumentos,
+  IconeFinanceiro,
   IconeImpedimento,
   IconeLookahead,
   IconeMais,
@@ -51,6 +52,8 @@ const ITENS: Item[] = [
   { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
   { sufixo: '/apresentacao', rotulo: 'Apresentação', Icone: IconePlay },
 ]
+/** Só quem pode ver valores (obras_pode_ver_valores, calculado no layout; a tela confere de novo). */
+const ITEM_FINANCEIRO: Item = { sufixo: '/financeiro', rotulo: 'Financeiro', Icone: IconeFinanceiro }
 /** Só administrador vê (a tela e as actions também exigem admin). */
 const ITEM_CONFIGURACOES: Item = { sufixo: '/configuracoes', rotulo: 'Configurações', Icone: IconeConfiguracoes }
 const EM_BREVE: Item[] = [
@@ -64,7 +67,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/apresentacao', '/configuracoes'])
+const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/apresentacao', '/configuracoes', '/financeiro'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 
@@ -91,6 +94,7 @@ export default function ShellObra({
   dadosAte,
   versao,
   admin = false,
+  financeiro = false,
   estreito = false,
   raiz: raizProp,
   children,
@@ -101,6 +105,8 @@ export default function ShellObra({
   versao: VersaoInfo | null
   /** Mostra o item Configurações (só administrador). */
   admin?: boolean
+  /** Mostra o item Financeiro (só quem pode ver valores da obra). */
+  financeiro?: boolean
   estreito?: boolean
   /** Rota-raiz das seções; padrão `/obras/obras/<id>` (a prévia usa outra). */
   raiz?: string
@@ -110,7 +116,7 @@ export default function ShellObra({
   const raiz = raizProp ?? `/obras/obras/${obra.id}`
   const atual = (i: Item) =>
     i.sufixo === '' ? pathname === raiz : pathname === raiz + i.sufixo || pathname.startsWith(raiz + i.sufixo + '/')
-  const itens = admin ? [...ITENS, ITEM_CONFIGURACOES] : ITENS
+  const itens = [...ITENS, ...(financeiro ? [ITEM_FINANCEIRO] : []), ...(admin ? [ITEM_CONFIGURACOES] : [])]
   const itemAtual = itens.find(atual)
   const telaClara = itemAtual ? TELAS_CLARAS.has(itemAtual.sufixo) : true
   const nome = obra.loja ?? 'Obra'

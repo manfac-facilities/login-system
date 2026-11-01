@@ -14,9 +14,11 @@ import { curvaPlanejada, curvaRealizada, datasDaCurva } from './curvas'
 import { dataBr, pct, previsaoEntrega, quebraDoAtraso, sinalVisual, textoDesvio, type ItemDiario, type SinalVisual } from './email-diario'
 import { dataEnvioSemanal, ppc, type PlanoSemana, type Restricao } from './last-planner'
 import type { ImpedimentoRow, ObraGrande } from './leitura'
+import { comDatasDoPedido } from './restricao-pedido'
 import { codigosDeAtividades, deltaDiasUteis, type Responsavel } from './cronograma'
 import { rotuloTipo } from '../[id]/lookahead/_tipos'
 import { ISO, lista, nums, obj, str, strOuNull, strs, type Campos } from './conteudo-valido'
+import { situacaoRelatorioValida, type SituacaoRelatorio } from './situacao'
 
 export { esc } from './conteudo-valido'
 
@@ -88,7 +90,8 @@ export function blocosDoPeriodo(p: {
     .map((a) => ({ descricao: a.descricao, percentual: pct(a.percentual), termino: dataBr(a.fimProjetado) }))
 
   // Decisões/restrições que dependem do cliente: só as em aberto (liberada some).
-  const doCliente = p.restricoes
+  // Com pedido do Compras ligado, o prazo mostrado é a previsão de entrega do pedido.
+  const doCliente = comDatasDoPedido(p.restricoes)
     .filter((r) => r.responsavel === 'cliente' && r.situacao !== 'liberada')
     .sort((a, b) => (a.prazo ?? '9999').localeCompare(b.prazo ?? '9999'))
     .map((r) => ({
@@ -220,6 +223,8 @@ export type ConteudoPeriodo = {
   /** Só na entrega. */
   comparativo: { base: string | null; final: string; atraso: string } | null
   observacoes: string | null
+  /** Situação publicada vigente na montagem (Leva 5 §7); ausente = nenhuma publicada. */
+  situacao?: SituacaoRelatorio
 }
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
@@ -262,6 +267,8 @@ export function montarConteudoPeriodo(p: {
   restricoes: Restricao[]
   highlights: string[]
   observacoes: string | null
+  /** Situação publicada vigente (congelada junto no validado). */
+  situacao?: SituacaoRelatorio | null
 }): ConteudoPeriodo {
   const { lado, tipo, referencia, obra: og, inicio, fim, ref } = p
   const b = blocosDoPeriodo({ lado, obra: og, inicio, fim, ref, hoje: p.hoje, restricoes: p.restricoes })
@@ -327,6 +334,7 @@ export function montarConteudoPeriodo(p: {
     highlights: p.highlights.map((h) => h.trim()).filter(Boolean),
     comparativo,
     observacoes: p.observacoes?.trim() || null,
+    ...(p.situacao ? { situacao: p.situacao } : {}),
   }
 }
 
@@ -371,5 +379,6 @@ export function conteudoPeriodoValido(v: unknown, lado: Lado, esperado?: { tipo:
   if (!Array.isArray(v.highlights) || !v.highlights.every(str)) return false
   const c = v.comparativo
   if (tipo === 'entrega' ? !(obj(c) && strOuNull(c.base) && strs(c, 'final', 'atraso')) : c !== null) return false
+  if (v.situacao !== undefined && !situacaoRelatorioValida(v.situacao)) return false
   return true
 }

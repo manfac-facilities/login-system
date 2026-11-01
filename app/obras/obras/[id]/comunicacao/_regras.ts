@@ -12,6 +12,7 @@ import {
   type FiltroLinha,
   type ImediataEntrada,
   type ItemLinha,
+  type Mensagem,
   type Registro,
   type RegistroEntrada,
 } from './_tipos'
@@ -139,6 +140,8 @@ export function quandoRegistro(r: { data: string; criadoEm: string }): string {
 export function montarLinhaDoTempo(p: {
   envios: Envio[]
   registros: Registro[]
+  /** Mensagens do cliente e respostas da Manfac (entram em Tudo e em Mensagens). */
+  mensagens?: Mensagem[]
   filtro: FiltroLinha
   email: string
   admin: boolean
@@ -172,6 +175,11 @@ export function montarLinhaDoTempo(p: {
       podeEditar: podeEditar(r, p.email, p.admin, p.agora),
     })
   }
+  if (p.filtro === 'todos' || p.filtro === 'mensagem') {
+    for (const m of p.mensagens ?? []) {
+      itens.push({ tipo: 'mensagem', chave: `m-${m.id}`, quando: new Date(m.criadoEm).toISOString(), mensagem: m })
+    }
+  }
   return itens.sort((a, b) => b.quando.localeCompare(a.quando))
 }
 
@@ -180,6 +188,7 @@ export const FILTROS: { valor: FiltroLinha; rotulo: string }[] = [
   { valor: 'diario', rotulo: 'Diários' },
   { valor: 'semanal', rotulo: 'Semanais' },
   { valor: 'relatorio', rotulo: 'Relatórios' },
+  { valor: 'mensagem', rotulo: 'Mensagens' },
   { valor: 'reuniao', rotulo: 'Reuniões' },
   { valor: 'ligacao', rotulo: 'Ligações' },
   { valor: 'visita', rotulo: 'Visitas' },
