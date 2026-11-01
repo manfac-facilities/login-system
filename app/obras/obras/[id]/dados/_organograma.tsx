@@ -6,7 +6,8 @@ import { CHIPS_ENVIO, destinatarioAposChip, estadoChips, type ForaDoOrganograma,
 import { emailInterno } from '../../_lib/portal-email'
 // Fonte única do envio e do acesso ao portal: as actions das Configurações.
 import { salvarDestinatarioAction } from '../configuracoes/_actions'
-import { adicionarAcessoAction, alternarAcessoAction } from '../configuracoes/_actions-portal'
+import { adicionarAcessoAction, alternarAcessoAction, removerAcessoAction } from '../configuracoes/_actions-portal'
+import { FormDestinatario } from '../configuracoes/_destinatarios'
 import type { Destinatario, TipoEnvio } from '../configuracoes/_tipos'
 import type { AcessoPortal } from '../configuracoes/_tipos-portal'
 import { moverPessoaAction, removerPessoaAction, salvarPessoaAction } from './_actions'
@@ -70,8 +71,16 @@ function FormPessoa({ obraId, inicial, onFim }: { obraId: string; inicial: Pesso
 /** Chips Portal / Diário / Semanal / Mensal / Imediato de um e-mail (grava pelas actions das Configurações). */
 function ChipsDaPessoa({ obraId, pessoa, chips }: { obraId: string; pessoa: { nome: string; cargo: string | null; email: string }; chips: Chips }) {
   const { rodar, indo, erro } = useRodar()
+  const [editandoEnvio, setEditandoEnvio] = useState(false)
   const est = estadoChips(pessoa.email, chips.destinatarios, chips.acessos)
   const interno = emailInterno(pessoa.email)
+  if (interno) {
+    return (
+      <p className="text-[13px] text-(--obra-muted-texto)">
+        E-mail da Manfac: não é do cliente. Envios internos ficam nas Configurações; o portal é só do cliente.
+      </p>
+    )
+  }
   const chip = (ligado: boolean) =>
     `min-h-11 rounded-full border px-3 text-[13px] disabled:opacity-45 ${
       ligado ? 'border-(--obra-ink) bg-(--obra-ink) font-semibold text-white' : 'border-(--obra-border) bg-white text-(--obra-muted-texto)'
@@ -92,8 +101,7 @@ function ChipsDaPessoa({ obraId, pessoa, chips }: { obraId: string; pessoa: { no
         <button
           type="button"
           aria-pressed={est.portal}
-          disabled={indo || (interno && !est.acesso)}
-          title={interno ? 'E-mail da Manfac entra pelo hub, não pela página do cliente' : undefined}
+          disabled={indo}
           onClick={() => void portal()}
           className={chip(est.portal)}
         >
@@ -105,6 +113,30 @@ function ChipsDaPessoa({ obraId, pessoa, chips }: { obraId: string; pessoa: { no
           </button>
         ))}
       </div>
+      {est.destinatario || est.acesso ? (
+        <div className="flex flex-wrap gap-1.5">
+          {est.destinatario ? (
+            <button type="button" className={botao} disabled={indo} onClick={() => setEditandoEnvio((x) => !x)}>
+              {editandoEnvio ? 'Fechar envio' : 'Editar envio'}
+            </button>
+          ) : null}
+          {est.acesso ? (
+            <button
+              type="button"
+              className={botao}
+              disabled={indo}
+              onClick={() => {
+                if (window.confirm(`Remover o acesso de ${pessoa.email} à página do cliente?`)) void rodar(() => removerAcessoAction(obraId, est.acesso!.id))
+              }}
+            >
+              Remover acesso
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {editandoEnvio && est.destinatario ? (
+        <FormDestinatario obraId={obraId} inicial={est.destinatario} onFim={() => setEditandoEnvio(false)} />
+      ) : null}
       {erro ? <p role="alert" className="text-xs text-(--obra-vermelho-texto)">{erro}</p> : null}
     </div>
   )

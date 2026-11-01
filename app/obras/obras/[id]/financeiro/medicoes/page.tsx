@@ -42,10 +42,10 @@ export default async function MedicoesPage({ params }: { params: Promise<{ id: s
     return <Aviso>As medições ao cliente são só para o engenheiro da obra, a administração e o Financeiro.</Aviso>
   }
 
-  type O = { id: string; os: string | null; obra_pai_id: string | null; engenheiro_email: string | null; valor: unknown }
+  type O = { id: string; os: string | null; obra_pai_id: string | null; engenheiro_email: string | null; valor: unknown; cancelado_em?: string | null }
   const { data: obrasD, error: eObras } = await supabase
     .from('obras_obra')
-    .select('id, os, obra_pai_id, engenheiro_email, valor')
+    .select('id, os, obra_pai_id, engenheiro_email, valor, cancelado_em')
     .or(`id.eq.${id},obra_pai_id.eq.${id}`)
   if (eObras) return <Aviso>Não deu para ler a obra agora. Recarregue em instantes.</Aviso>
   const familia = (obrasD ?? []) as O[]
@@ -79,7 +79,9 @@ export default async function MedicoesPage({ params }: { params: Promise<{ id: s
         os: o.os,
         papel: o.id === id ? (temAditivos ? 'mae' : atual.obra_pai_id ? 'aditivo' : 'obra') : 'aditivo',
         receitaCentavos: receitaEmCentavos(o.valor),
-        podeGravar: admin || (!!email && (eng(o.engenheiro_email) === email || engMae === email)),
+        cancelada: !!o.cancelado_em,
+        // OS cancelada: as medições dela continuam na lista, mas não entra no seletor nem recebe gravação.
+        podeGravar: !o.cancelado_em && (admin || (!!email && (eng(o.engenheiro_email) === email || engMae === email))),
         avancoCentesimos: o.id === id && realizado !== undefined && Number.isFinite(realizado) ? Math.round(realizado * 100) : null,
       }
     })

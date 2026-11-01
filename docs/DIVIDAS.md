@@ -432,8 +432,7 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - Datas da medição (`enviada_em`/`aprovada_em`) só têm limite superior (hoje, BRT) e coerência (aprovação não antes do envio); retroagir livremente continua possível. Combinar com o José se quer um limite inferior.
 
 ## 01/11/2026 — Obras Financeiro da obra, Fases B/C, telas do hub (`feat/obras-financeiro-bc`, Task 6), deixado de propósito
-- **`obras_obra.valor` (valor receita) não tem guarda de admin no banco**: a policy única "obras access" deixa qualquer usuário do Obras gravar a coluna. A barreira é a action de Dados da obra (admin conferido no servidor). Se quiser no banco, incluir `valor` na `obras_obra_parametros_guarda` (mudança de schema, pedir ao José).
-- A sincronização do Field só preenche colunas vazias: se o admin apagar o valor receita de uma OS, o Field pode voltar a preenchê-lo com o valor dele.
 - `obras_medicao_cliente.percentual_centesimos` é NOT NULL: OS sem valor receita não registra medição (a tela mostra o % como "—" e pede o valor receita em Dados da obra). Se o José quiser medição só por valor, o percentual precisa virar nulável.
 - Trocar o e-mail de uma pessoa do organograma não leva junto o destinatário/acesso do e-mail antigo: eles aparecem em "sem cadastro no organograma" até alguém acertar.
+- Funções da lista antiga sem tela: "Trazer destinatários do lado cliente" (`trazerDestinatariosClienteAction`) ficou sem botão (o organograma substitui). Remover acesso ao portal e editar destinatário do cliente voltaram em Dados da obra.
 - Avanço físico da medição é gravado no momento do registro (lido do cronograma da própria OS); aditivo sem cronograma grava NULL ("—").

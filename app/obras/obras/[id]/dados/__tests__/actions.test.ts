@@ -102,3 +102,15 @@ describe('chips gravam pelas actions das Configurações (o envio continua lendo
     expect(f.db.obras_destinatario[0]).toMatchObject({ ativo: false, tipos: ['diario'] })
   })
 })
+
+describe('valor receita: guarda do banco e OS cancelada (fix 1)', () => {
+  it('erro OBRAS_VALOR do trigger aparece em pt-BR', async () => {
+    f.erroEscrita.obras_obra = { code: '42501', message: 'OBRAS_VALOR: só administrador altera o valor receita de obra da modalidade OBRA' }
+    expect(await salvarValorReceitaAction(MAE, MAE, '10,00')).toEqual({ ok: false, erro: 'Só administrador altera o valor receita de obra da modalidade OBRA' })
+  })
+  it('aditivo cancelado não recebe valor receita', async () => {
+    f.db.obras_obra[1].cancelado_em = '2026-10-30T12:00:00Z'
+    expect(await salvarValorReceitaAction(MAE, FILHA, '10,00')).toEqual({ ok: false, erro: 'Esta OS foi cancelada: o valor receita não conta mais' })
+    expect(f.db.obras_obra[1].valor).toBeNull()
+  })
+})

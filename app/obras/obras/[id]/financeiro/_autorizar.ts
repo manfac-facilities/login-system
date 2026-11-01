@@ -15,7 +15,7 @@ export type OsAutorizada = {
   supabase: SupabaseClient
   email: string
   admin: boolean
-  os: { id: string; paiId: string | null; valor: unknown }
+  os: { id: string; paiId: string | null; valor: unknown; cancelada: boolean }
 }
 
 export async function autorizarOs(paginaId: string, osId: string, quem: string): Promise<OsAutorizada | { ok: false; erro: string }> {
@@ -29,11 +29,11 @@ export async function autorizarOs(paginaId: string, osId: string, quem: string):
 
   const { data, error } = await supabase
     .from('obras_obra')
-    .select('id, obra_pai_id, engenheiro_email, valor, modalidade')
+    .select('id, obra_pai_id, engenheiro_email, valor, modalidade, cancelado_em')
     .eq('id', osId)
     .maybeSingle()
   if (error) return { ok: false, erro: 'Não foi possível conferir a OS. Tente de novo.' }
-  const os = data as { id: string; obra_pai_id: string | null; engenheiro_email: string | null; valor: unknown; modalidade: string } | null
+  const os = data as { id: string; obra_pai_id: string | null; engenheiro_email: string | null; valor: unknown; modalidade: string; cancelado_em?: string | null } | null
   if (!os || os.modalidade !== 'obra' || (os.id !== paginaId && os.obra_pai_id !== paginaId)) {
     return { ok: false, erro: 'OS não encontrada nesta obra' }
   }
@@ -49,5 +49,5 @@ export async function autorizarOs(paginaId: string, osId: string, quem: string):
     const ehEngenheiro = engs.some((e) => !!e && e.trim().toLowerCase() === email)
     if (!ehEngenheiro) return { ok: false, erro: `Só o engenheiro da obra (ou da obra mãe) ou um administrador ${quem}` }
   }
-  return { supabase, email, admin, os: { id: os.id, paiId: os.obra_pai_id, valor: os.valor } }
+  return { supabase, email, admin, os: { id: os.id, paiId: os.obra_pai_id, valor: os.valor, cancelada: !!os.cancelado_em } }
 }

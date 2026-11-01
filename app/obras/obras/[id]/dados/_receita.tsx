@@ -32,7 +32,7 @@ function Linha({ obraId, o, admin }: { obraId: string; o: OsReceita; admin: bool
       <td className={td + ' obra-num whitespace-nowrap'}>{o.os ?? '—'}</td>
       <td className={td}>{o.descricao}</td>
       <td className={td + ' text-right'}>
-        {admin ? (
+        {admin && !o.cancelada ? (
           <span className="inline-flex flex-col items-end gap-1">
             <span className="inline-flex items-center gap-2">
               <input
@@ -60,7 +60,7 @@ function Linha({ obraId, o, admin }: { obraId: string; o: OsReceita; admin: bool
       </td>
       <td className={td}>
         <span className="rounded-full bg-(--obra-surface) px-2 py-0.5 text-[12px] font-semibold text-(--obra-muted-texto)">
-          {o.receitaCentavos === null ? 'sem valor' : 'digitado'}
+          {o.cancelada ? 'OS cancelada · fora do total' : o.receitaCentavos === null ? 'sem valor' : 'digitado'}
         </span>
       </td>
     </tr>
@@ -68,8 +68,10 @@ function Linha({ obraId, o, admin }: { obraId: string; o: OsReceita; admin: bool
 }
 
 export default function ValorReceita({ obraId, oss, admin }: { obraId: string; oss: OsReceita[]; admin: boolean }) {
-  const total = oss.reduce((s, o) => s + (o.receitaCentavos ?? 0), 0)
-  const faltando = oss.some((o) => o.receitaCentavos === null)
+  // OS cancelada não conta no total (nem pede valor).
+  const valendo = oss.filter((o) => !o.cancelada)
+  const total = valendo.reduce((s, o) => s + (o.receitaCentavos ?? 0), 0)
+  const faltando = valendo.some((o) => o.receitaCentavos === null)
   return (
     <section aria-labelledby="receita-titulo" className="flex flex-col gap-3 rounded-xl border border-(--obra-border) bg-(--obra-card) p-4">
       <h2 id="receita-titulo" className="text-lg font-bold text-(--obra-ink)">Valor receita por OS</h2>
@@ -87,7 +89,7 @@ export default function ValorReceita({ obraId, oss, admin }: { obraId: string; o
             {oss.map((o) => (
               <Linha key={`${o.id}:${o.receitaCentavos}`} obraId={obraId} o={o} admin={admin} />
             ))}
-            {oss.length > 1 ? (
+            {valendo.length > 1 || valendo.length !== oss.length ? (
               <tr className="font-semibold">
                 <td className={td} colSpan={2}>Total da obra</td>
                 <td className={td + ' obra-num text-right'}>{brl(total)}</td>

@@ -7,6 +7,9 @@ import {
   diasDesde,
   erroDoBanco,
   lerDecimalBR,
+  parAceitavel,
+  pctPorValor,
+  restanteDaOs,
   percentualDeValor,
   receitaEmCentavos,
   valorDePercentual,
@@ -85,5 +88,34 @@ describe('diasDesde (dia de Brasília)', () => {
   it('conta dias corridos pelo dia BRT do envio', () => {
     expect(diasDesde('2026-10-20T02:00:00Z', '2026-11-01')).toBe(13) // 19/10 23h BRT
     expect(diasDesde('2026-11-01T12:00:00Z', '2026-11-01')).toBe(0)
+  })
+})
+
+describe('restante da OS (fix 1)', () => {
+  const ms = [
+    { id: 'a', situacao: 'aprovada', percentualCentesimos: 3333, valorCentavos: 1_000_000 },
+    { id: 'b', situacao: 'enviada', percentualCentesimos: 3333, valorCentavos: 1_000_000 },
+    { id: 'c', situacao: 'recusada', percentualCentesimos: 5000, valorCentavos: 1_500_000 },
+  ]
+  it('soma só as não recusadas e tira a que está sendo editada', () => {
+    expect(restanteDaOs(3_000_000, ms)).toEqual({ pct: 3334, valor: 1_000_000 })
+    expect(restanteDaOs(3_000_000, ms, 'b')).toEqual({ pct: 6667, valor: 2_000_000 })
+  })
+  it('valor = restante leva o % restante exato; arredondamento nunca passa do restante', () => {
+    const r = { pct: 3334, valor: 1_000_000 }
+    expect(pctPorValor(3_000_000, 1_000_000, r)).toBe(3334) // sem o restante daria 33,33%
+    expect(pctPorValor(3_000_000, 999_999, r)).toBe(3333)
+    expect(pctPorValor(3_000_000, 1_000_000, { pct: 3333, valor: 1_000_100 })).toBe(3333) // limita
+  })
+  it('servidor: aceita o restante exato e o % limitado; recusa valor acima do restante', () => {
+    const r = { pct: 3334, valor: 1_000_000 }
+    expect(parAceitavel(3_000_000, 3334, 1_000_000, r)).toBe(true)
+    expect(parAceitavel(3_000_000, 3333, 1_000_000, { pct: 3333, valor: 1_000_100 })).toBe(true)
+    expect(parAceitavel(3_000_000, 3334, 1_000_001, r)).toBe(false)
+    expect(parAceitavel(3_000_000, 3000, 1_000_000, r)).toBe(false)
+  })
+  it('OBRAS_VALOR do trigger vira pt-BR', () => {
+    expect(erroDoBanco({ code: '42501', message: 'OBRAS_VALOR: só administrador altera o valor receita de obra da modalidade OBRA' }, 'x'))
+      .toBe('Só administrador altera o valor receita de obra da modalidade OBRA')
   })
 })

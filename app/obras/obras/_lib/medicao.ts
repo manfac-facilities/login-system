@@ -71,6 +71,44 @@ export function aoDigitarValor(texto: string, receitaCentavos: number | null): s
   return textoDeCentesimos(percentualDeValor(receitaCentavos, v) ?? 0)
 }
 
+/** O que ainda falta liberar na OS (receita − medições não recusadas). Pode ser ≤ 0. */
+export type Restante = { pct: number; valor: number }
+
+/** Restante da OS: soma das medições NÃO recusadas, menos a que está sendo editada. */
+export function restanteDaOs(
+  receitaCentavos: number,
+  medicoes: { id: string; situacao: string; percentualCentesimos: number; valorCentavos: number }[],
+  excetoId?: string,
+): Restante {
+  const vale = medicoes.filter((m) => m.situacao !== 'recusada' && m.id !== excetoId)
+  return {
+    pct: 10000 - vale.reduce((s, m) => s + m.percentualCentesimos, 0),
+    valor: receitaCentavos - vale.reduce((s, m) => s + m.valorCentavos, 0),
+  }
+}
+
+/**
+ * % (centésimos) de um valor digitado, sem passar do % restante: o valor igual ao restante leva
+ * exatamente o % restante; o arredondamento nunca empurra a soma além de 100%.
+ */
+export function pctPorValor(receitaCentavos: number, valorCentavos: number, r: Restante | null): number {
+  const p = percentualDeValor(receitaCentavos, valorCentavos) ?? 0
+  if (!r) return p
+  if (valorCentavos === r.valor) return r.pct
+  return Math.min(p, r.pct)
+}
+
+/**
+ * O servidor aceita o par (%, valor): coerentes entre si, ou o % é o restante (valor = restante,
+ * ou o arredondamento do valor passaria do restante e foi limitado). Valor acima do restante em
+ * R$ nunca passa.
+ */
+export function parAceitavel(receitaCentavos: number, pct: number, valor: number, r: Restante): boolean {
+  if (valor > r.valor) return false
+  if (coerentes(receitaCentavos, pct, valor)) return true
+  return pct === r.pct && (valor === r.valor || (percentualDeValor(receitaCentavos, valor) ?? 0) >= r.pct)
+}
+
 /** Valor receita (`obras_obra.valor`, numeric em REAIS) → centavos; null/0/inválido → null. */
 export function receitaEmCentavos(valor: unknown): number | null {
   if (valor === null || valor === undefined || valor === '') return null
@@ -89,12 +127,13 @@ export function diasDesde(isoTimestamp: string, hoje: string): number {
 export const LIMITE_DIAS_AGUARDANDO = 10
 
 /**
- * Mensagem do banco (prefixo OBRAS_MEDICAO_CLIENTE / OBRAS_LOCACAO) → texto pt-BR para a tela.
+ * Mensagem do banco (prefixo OBRAS_MEDICAO_CLIENTE / OBRAS_LOCACAO / OBRAS_CLIENTE_PESSOA / OBRAS_VALOR)
+ * → texto pt-BR para a tela.
  * Números "90.00%" viram "90,00%".
  */
 export function erroDoBanco(e: { message?: string; code?: string } | null | undefined, padrao: string): string {
   const msg = String(e?.message ?? '')
-  const m = /OBRAS_(?:MEDICAO_CLIENTE|LOCACAO|CLIENTE_PESSOA): (.+)/.exec(msg)
+  const m = /OBRAS_(?:MEDICAO_CLIENTE|LOCACAO|CLIENTE_PESSOA|VALOR): (.+)/.exec(msg)
   if (m) {
     const t = m[1].replace(/(\d+)\.(\d{2})%/g, '$1,$2%')
     return t.charAt(0).toUpperCase() + t.slice(1)

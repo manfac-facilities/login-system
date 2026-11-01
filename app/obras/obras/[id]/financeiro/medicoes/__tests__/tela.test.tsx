@@ -58,3 +58,35 @@ describe('lista', () => {
     expect(within(linha).getByText('87.554,48')).toBeInTheDocument()
   })
 })
+
+describe('restante da OS (fix 1)', () => {
+  const linha = (id: string, situacao: string, pct: number, valor: number) => ({
+    id, obra_id: 'mae', numero: id.length, periodo_inicio: '2026-10-01', periodo_fim: '2026-10-20', percentual_centesimos: pct, valor_centavos: valor, situacao, enviada_em: '2026-10-30T15:00:00Z',
+  })
+  const medicoes = montarMedicoes({
+    linhas: [linha('a', 'aprovada', 3333, 1_000_000), linha('bb', 'enviada', 3333, 1_000_000), linha('ccc', 'recusada', 2000, 600_000)],
+    notas: [], osPorId: new Map([['mae', '1026-014683']]), hoje: '2026-11-01',
+  })
+  it('mostra o restante e "Usar o restante" preenche os dois campos exatos', () => {
+    render(<TelaMedicoes obraId="o" oss={[os({ receitaCentavos: 3_000_000 })]} medicoes={medicoes} admin={false} notasOk />)
+    fireEvent.click(screen.getByRole('button', { name: '+ Nova medição' }))
+    expect(screen.getByText('R$ 10.000,00 · 33,34%')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Usar o restante' }))
+    expect(screen.getByLabelText('% liberado nesta medição')).toHaveValue('33,34')
+    expect(screen.getByLabelText('Valor liberado (R$)')).toHaveValue('10.000,00')
+  })
+  it('digitar o valor restante dá o % restante (não 33,33%)', () => {
+    render(<TelaMedicoes obraId="o" oss={[os({ receitaCentavos: 3_000_000 })]} medicoes={medicoes} admin={false} notasOk />)
+    fireEvent.click(screen.getByRole('button', { name: '+ Nova medição' }))
+    fireEvent.change(screen.getByLabelText('Valor liberado (R$)'), { target: { value: '10.000,00' } })
+    expect(screen.getByLabelText('% liberado nesta medição')).toHaveValue('33,34')
+  })
+  it('editar a recusada recalcula o % do valor sobre a receita atual', () => {
+    // receita mudou para R$ 60.000,00: R$ 6.000,00 = 10,00% (era 20,00%)
+    render(<TelaMedicoes obraId="o" oss={[os({ receitaCentavos: 6_000_000 })]} medicoes={medicoes} admin={false} notasOk />)
+    const tr = screen.getByText('recusada · renegociar').closest('tr')!
+    fireEvent.click(within(tr).getByRole('button', { name: 'Editar' }))
+    expect(screen.getByLabelText('% liberado nesta medição')).toHaveValue('10,00')
+    expect(screen.getByLabelText('Valor liberado (R$)')).toHaveValue('6.000,00')
+  })
+})

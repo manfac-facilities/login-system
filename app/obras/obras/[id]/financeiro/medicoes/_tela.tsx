@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   aoDigitarPercentual,
-  aoDigitarValor,
   centavosDeTexto,
+  pctPorValor,
+  restanteDaOs,
   centesimosDeTexto,
   LIMITE_DIAS_AGUARDANDO,
   textoDeCentavos,
@@ -39,13 +40,21 @@ function Pilula({ m }: { m: MedicaoLinha }) {
 
 type Form = { id?: string; osId: string; inicio: string; fim: string; pct: string; valor: string }
 
-function Formulario({ obraId, oss, inicial, onFim }: { obraId: string; oss: OsMedicao[]; inicial: Form; onFim: () => void }) {
+function Formulario({ obraId, oss, medicoes, inicial, onFim }: { obraId: string; oss: OsMedicao[]; medicoes: MedicaoLinha[]; inicial: Form; onFim: () => void }) {
   const router = useRouter()
   const [f, setF] = useState<Form>(inicial)
   const [erro, setErro] = useState<string | null>(null)
   const [indo, setIndo] = useState(false)
   const os = oss.find((o) => o.id === f.osId) ?? oss[0]
   const receita = os?.receitaCentavos ?? null
+  const restante = receita === null ? null : restanteDaOs(receita, medicoes.filter((m) => m.osId === f.osId), f.id)
+  /** Valor digitado → % (2 casas), nunca acima do % restante; valor = restante leva o % restante exato. */
+  const pctDoValor = (texto: string, rec: number | null, r: typeof restante) => {
+    const v = centavosDeTexto(texto)
+    if (rec === null) return ''
+    if (v === null) return ''
+    return textoDeCentesimos(pctPorValor(rec, v, r))
+  }
 
   async function salvar() {
     const p = centesimosDeTexto(f.pct)
@@ -102,7 +111,12 @@ function Formulario({ obraId, oss, inicial, onFim }: { obraId: string; oss: OsMe
             className={campo}
             disabled={receita === null}
             value={receita === null ? '—' : f.pct}
-            onChange={(e) => setF({ ...f, pct: e.target.value, valor: aoDigitarPercentual(e.target.value, receita) })}
+            onChange={(e) => {
+              // % igual ao restante leva o valor restante exato (a soma em R$ fecha na receita).
+              const p = centesimosDeTexto(e.target.value)
+              const valor = restante && p === restante.pct && restante.valor > 0 ? textoDeCentavos(restante.valor) : aoDigitarPercentual(e.target.value, receita)
+              setF({ ...f, pct: e.target.value, valor })
+            }}
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] text-(--obra-muted-texto)">
@@ -111,10 +125,29 @@ function Formulario({ obraId, oss, inicial, onFim }: { obraId: string; oss: OsMe
             inputMode="decimal"
             className={campo}
             value={f.valor}
-            onChange={(e) => setF({ ...f, valor: e.target.value, pct: receita === null ? '' : aoDigitarValor(e.target.value, receita) })}
+            onChange={(e) => setF({ ...f, valor: e.target.value, pct: pctDoValor(e.target.value, receita, restante) })}
           />
         </label>
       </div>
+      {restante ? (
+        <div className="flex flex-wrap items-center gap-2 text-[13px] text-(--obra-text)">
+          <span>
+            Restante da OS:{' '}
+            <b className="obra-num">
+              R$ {textoDeCentavos(Math.max(0, restante.valor))} · {textoDeCentesimos(Math.max(0, restante.pct))}%
+            </b>
+          </span>
+          {restante.pct > 0 && restante.valor > 0 ? (
+            <button
+              type="button"
+              className={botao}
+              onClick={() => setF({ ...f, pct: textoDeCentesimos(restante.pct), valor: textoDeCentavos(restante.valor) })}
+            >
+              Usar o restante
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {receita === null ? (
         <p role="status" className="rounded-lg border border-[#efd77a] bg-[#fdf6d8] px-3 py-2 text-[13px] text-(--obra-text)">
           Esta OS não tem valor receita: o % não se calcula. Informe o valor receita em Dados da obra para registrar a medição.
@@ -200,15 +233,19 @@ export default function TelaMedicoes({ obraId, oss, medicoes, admin, notasOk }: 
 
   const novo = () =>
     setForm({ osId: gravaveis[0]?.id ?? '', inicio: '', fim: '', pct: '', valor: '' })
-  const editar = (m: MedicaoLinha) =>
+  // Ao abrir a edição, o % é recalculado do valor sobre o valor receita ATUAL (que pode ter mudado).
+  const editar = (m: MedicaoLinha) => {
+    const rec = receitaPorOs.get(m.osId) ?? null
+    const r = rec === null ? null : restanteDaOs(rec, medicoes.filter((x) => x.osId === m.osId), m.id)
     setForm({
       id: m.id,
       osId: m.osId,
       inicio: m.inicio,
       fim: m.fim,
-      pct: receitaPorOs.get(m.osId) ? textoDeCentesimos(m.percentualCentesimos) : '',
+      pct: rec === null ? '' : textoDeCentesimos(pctPorValor(rec, m.valorCentavos, r)),
       valor: textoDeCentavos(m.valorCentavos),
     })
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -286,7 +323,7 @@ export default function TelaMedicoes({ obraId, oss, medicoes, admin, notasOk }: 
       </section>
 
       {form ? (
-        <Formulario key={form.id ?? 'nova'} obraId={obraId} oss={form.id ? oss.filter((o) => o.id === form.osId) : gravaveis} inicial={form} onFim={() => setForm(null)} />
+        <Formulario key={form.id ?? 'nova'} obraId={obraId} medicoes={medicoes} oss={form.id ? oss.filter((o) => o.id === form.osId) : gravaveis} inicial={form} onFim={() => setForm(null)} />
       ) : null}
       {gravaveis.length === 0 ? (
         <p className="text-[13px] text-(--obra-muted-texto)">Só o engenheiro da obra (ou da obra mãe) ou um administrador registra medição. Você vê a lista.</p>

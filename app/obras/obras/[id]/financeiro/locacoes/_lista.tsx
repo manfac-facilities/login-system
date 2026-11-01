@@ -13,6 +13,9 @@ const campo = 'obra-num min-h-11 rounded-lg border border-(--obra-border) bg-whi
 const botao = 'min-h-11 rounded-lg border border-(--obra-border) bg-white px-3 text-sm text-(--obra-ink) hover:border-(--obra-orange-texto) disabled:opacity-45'
 const dia = (d: string | null) => (d ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}` : '—')
 
+/** Dia seguinte (YYYY-MM-DD): a renovação tem de passar do fim atual. */
+const diaSeguinte = (d: string | null) => (d ? new Date(Date.parse(d + 'T00:00:00Z') + 86_400_000).toISOString().slice(0, 10) : undefined)
+
 export type LocacaoTela = Locacao & { aviso: AvisoLocacao | null; pode: boolean }
 
 function Situacao({ l }: { l: LocacaoTela }) {
@@ -59,7 +62,7 @@ function Acoes({ obraId, l, hoje }: { obraId: string; l: LocacaoTela; hoje: stri
     <div className="flex flex-col gap-1.5">
       <label className="flex flex-col gap-1 text-[13px] text-(--obra-muted-texto)">
         {modo === 'devolver' ? 'Devolvida em' : 'Renovada até'}
-        <input type="date" className={campo} value={data} max={modo === 'devolver' ? hoje : undefined} min={modo === 'renovar' && l.fim ? l.fim : undefined} onChange={(e) => setData(e.target.value)} />
+        <input type="date" className={campo} value={data} max={modo === 'devolver' ? hoje : undefined} min={modo === 'devolver' ? (l.inicio ?? undefined) : diaSeguinte(l.fim ?? l.inicio)} onChange={(e) => setData(e.target.value)} />
       </label>
       <div className="flex gap-1.5">
         <button type="button" disabled={indo || !data} onClick={confirmar} className="min-h-11 rounded-lg bg-(--obra-orange-texto) px-3 text-sm font-semibold text-white disabled:opacity-45">

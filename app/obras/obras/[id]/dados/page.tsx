@@ -41,7 +41,7 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
 
   const [podeR, obrasR, pessoasR, destR, acR] = await Promise.all([
     supabase.rpc('obras_pode_ver_valores', { p_obra: id }),
-    supabase.from('obras_obra').select('id, os, loja, descricao, obra_pai_id, valor').or(`id.eq.${id},obra_pai_id.eq.${id}`),
+    supabase.from('obras_obra').select('id, os, loja, descricao, obra_pai_id, valor, cancelado_em').or(`id.eq.${id},obra_pai_id.eq.${id}`),
     supabase.from('obras_cliente_pessoa').select('id, nome, cargo, email, ordem').eq('obra_id', id).order('ordem').order('criado_em'),
     admin
       ? supabase.from('obras_destinatario').select('id, email, nome, funcao, lado, tipos, ativo').eq('obra_id', id).order('email')
@@ -51,7 +51,7 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
   if (obrasR.error) return <Aviso>Não deu para ler a obra agora. Recarregue em instantes.</Aviso>
   const valores = !podeR.error && podeR.data === true
 
-  type O = { id: string; os: string | null; loja: string | null; descricao: string | null; obra_pai_id: string | null; valor: unknown }
+  type O = { id: string; os: string | null; loja: string | null; descricao: string | null; obra_pai_id: string | null; valor: unknown; cancelado_em?: string | null }
   const linhas = (obrasR.data ?? []) as O[]
   const atual = linhas.find((o) => o.id === id)
   if (!atual) return <Aviso>Obra não encontrada</Aviso>
@@ -63,6 +63,7 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
       os: o.os,
       descricao: o.id === id ? (temAditivos ? 'Obra principal (mãe)' : atual.obra_pai_id ? 'Aditivo' : 'Obra') : `Aditivo${o.descricao ? ` · ${o.descricao}` : ''}`,
       papel: o.id === id ? (temAditivos ? 'mae' : atual.obra_pai_id ? 'aditivo' : 'obra') : 'aditivo',
+      cancelada: !!o.cancelado_em,
       // Valor só sai do servidor para quem pode ver valores.
       receitaCentavos: valores ? receitaEmCentavos(o.valor) : null,
     }))

@@ -41,6 +41,7 @@ export async function marcarDevolvidaAction(paginaId: string, pedidoId: string, 
   const g = await gravar(paginaId, pedidoId, 'marca a locação')
   if ('erro' in g) return g.erro!
   if (g.loc.estado === 'devolvida') return falha('Esta locação já foi marcada como devolvida')
+  if (g.loc.inicio && data < g.loc.inicio) return falha('A devolução não pode ser antes do início da locação')
   const { error } = await g.auth.supabase
     .from('obras_locacao_estado')
     .upsert({ cmp_pedido_id: pedidoId, obra_id: g.loc.obraId, devolvida_em: data }, { onConflict: 'cmp_pedido_id' })

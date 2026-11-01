@@ -8,7 +8,7 @@ import { TIPOS_ENVIO, type Destinatario, type DestinatarioEntrada, type Lado, ty
 const campo = 'min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-3 text-base text-[#333336]'
 const VAZIO: DestinatarioEntrada = { email: '', nome: '', funcao: '', lado: 'cliente', tipos: ['diario'], ativo: true }
 
-function Form({ obraId, inicial, onFim }: { obraId: string; inicial: DestinatarioEntrada; onFim: () => void }) {
+export function FormDestinatario({ obraId, inicial, onFim }: { obraId: string; inicial: DestinatarioEntrada; onFim: () => void }) {
   const router = useRouter()
   const [d, setD] = useState<DestinatarioEntrada>(inicial)
   const [erro, setErro] = useState<string | null>(null)
@@ -76,7 +76,7 @@ function Grupo({ titulo, itens, obraId, admin }: { titulo: string; itens: Destin
       <ul className="flex flex-col gap-2">
         {itens.map((i) =>
           editando === i.id ? (
-            <li key={i.id}><Form obraId={obraId} inicial={i} onFim={() => setEditando(null)} /></li>
+            <li key={i.id}><FormDestinatario obraId={obraId} inicial={i} onFim={() => setEditando(null)} /></li>
           ) : (
             <li key={i.id} className="flex items-start justify-between gap-2 rounded-xl border border-[#dadad8] p-3 text-sm text-[#333336]">
               <span className={i.ativo ? '' : 'opacity-50'}>
@@ -109,7 +109,7 @@ export default function Destinatarios({ obraId, itens, admin, soInterno = false 
       <Grupo titulo="Interno" itens={itens.filter((i) => i.lado === 'interno')} obraId={obraId} admin={admin} />
       {admin ? (
         novo ? (
-          <Form obraId={obraId} inicial={soInterno ? { ...VAZIO, lado: 'interno' } : VAZIO} onFim={() => setNovo(false)} />
+          <FormDestinatario obraId={obraId} inicial={soInterno ? { ...VAZIO, lado: 'interno' } : VAZIO} onFim={() => setNovo(false)} />
         ) : (
           <button type="button" onClick={() => setNovo(true)} className="min-h-11 self-start rounded-lg border border-[#dadad8] px-4 text-sm text-[#333336] hover:border-[#b94606]">
             Adicionar destinatário

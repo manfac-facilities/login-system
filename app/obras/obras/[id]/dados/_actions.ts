@@ -2,8 +2,9 @@
 
 /**
  * Server Actions da aba Dados da obra (Fases B/C §2.1–2.2): valor receita por OS e organograma
- * do cliente. SÓ administrador (conferido aqui; o organograma tem RLS + trigger de admin no banco;
- * `obras_obra.valor` não tem guarda de admin no banco, então esta checagem é a barreira).
+ * do cliente. SÓ administrador (conferido aqui e de novo no banco: o organograma tem RLS + trigger de admin;
+ * `obras_obra.valor` tem o trigger `obras_obra_valor_guarda`, erro OBRAS_VALOR). Sempre o cliente da SESSÃO
+ * (nunca service role), para o trigger valer.
  * Os chips Portal/Diário/Semanal/Mensal NÃO têm action aqui: usam as das Configurações.
  * Sem `export type` aqui.
  */
@@ -49,12 +50,13 @@ export async function salvarValorReceitaAction(paginaId: string, osId: string, t
 
   const { data: os, error: eOs } = await auth.supabase
     .from('obras_obra')
-    .select('id, obra_pai_id, modalidade')
+    .select('id, obra_pai_id, modalidade, cancelado_em')
     .eq('id', osId)
     .maybeSingle()
   if (eOs) return falha('Não foi possível ler a OS. Tente de novo.')
-  const o = os as { id: string; obra_pai_id: string | null; modalidade: string } | null
+  const o = os as { id: string; obra_pai_id: string | null; modalidade: string; cancelado_em?: string | null } | null
   if (!o || o.modalidade !== 'obra' || (o.id !== paginaId && o.obra_pai_id !== paginaId)) return falha('OS não encontrada nesta obra')
+  if (o.cancelado_em && o.id !== paginaId) return falha('Esta OS foi cancelada: o valor receita não conta mais')
 
   const { error } = await auth.supabase.from('obras_obra').update({ valor: centavos === null ? null : centavos / 100 }).eq('id', osId)
   if (error) return falha(erroDoBanco(error, 'Não foi possível salvar o valor receita. Tente de novo.'))

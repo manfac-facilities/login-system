@@ -44,4 +44,8 @@ describe('locações: marcar devolvida / renovada até', () => {
     expect((await renovarLocacaoAction(MAE, PED, '2026-11-06')).ok).toBe(false)
     expect((await marcarDevolvidaAction(MAE, PED, '2099-01-01')).ok).toBe(false)
   })
+  it('devolução antes do início (entrega) → recusada', async () => {
+    expect(await marcarDevolvidaAction(MAE, PED, '2026-10-05')).toEqual({ ok: false, erro: 'A devolução não pode ser antes do início da locação' })
+    expect(f.db.obras_locacao_estado).toHaveLength(0)
+  })
 })

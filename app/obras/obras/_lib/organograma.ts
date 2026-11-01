@@ -5,6 +5,7 @@
  */
 import type { Destinatario, DestinatarioEntrada, TipoEnvio } from '../[id]/configuracoes/_tipos'
 import type { AcessoPortal } from '../[id]/configuracoes/_tipos-portal'
+import { emailInterno } from './portal-email'
 
 export type Pessoa = { id: string; nome: string; cargo: string | null; email: string | null; ordem: number }
 
@@ -53,7 +54,9 @@ export function destinatarioAposChip(
 ): DestinatarioEntrada | null {
   if (!atual) {
     if (!ligar) return null
-    return { email: chave(pessoa.email), nome: pessoa.nome, funcao: pessoa.cargo, lado: 'cliente', tipos: [tipo], ativo: true }
+    // E-mail da Manfac nunca vira destinatário do lado cliente (a tela nem mostra os chips para ele).
+    const lado = emailInterno(pessoa.email) ? 'interno' : 'cliente'
+    return { email: chave(pessoa.email), nome: pessoa.nome, funcao: pessoa.cargo, lado, tipos: [tipo], ativo: true }
   }
   const base = atual.ativo ? atual.tipos : []
   const tipos = ligar ? [...new Set([...base, tipo])] : base.filter((t) => t !== tipo)

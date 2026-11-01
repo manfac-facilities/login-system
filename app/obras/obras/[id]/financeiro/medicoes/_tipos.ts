@@ -21,6 +21,8 @@ export type OsMedicao = {
   papel: 'mae' | 'aditivo' | 'obra'
   /** Valor receita em centavos; null = não informado (o % não se calcula). */
   receitaCentavos: number | null
+  /** OS cancelada (cancelado_em): fora do seletor. */
+  cancelada?: boolean
   /** Esta pessoa grava medição nesta OS (engenheiro da OS/mãe ou admin). */
   podeGravar: boolean
   /** Avanço físico de hoje (centésimos), quando a página conhece; null = "—". */

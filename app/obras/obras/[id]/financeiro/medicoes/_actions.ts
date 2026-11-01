@@ -9,7 +9,7 @@
 import { revalidatePath } from 'next/cache'
 import { hojeISO } from '../../../../_lib/tipos'
 import { lerObraGrande } from '../../../_lib/leitura'
-import { coerentes, erroDoBanco, receitaEmCentavos } from '../../../_lib/medicao'
+import { erroDoBanco, parAceitavel, receitaEmCentavos, restanteDaOs, textoDeCentavos, textoDeCentesimos } from '../../../_lib/medicao'
 import { autorizarOs } from '../_autorizar'
 import type { MedicaoEntrada, Resultado, Situacao } from './_tipos'
 
@@ -45,7 +45,25 @@ export async function salvarMedicaoAction(paginaId: string, m: MedicaoEntrada): 
   if (!Number.isInteger(pct) || !Number.isInteger(valor)) return falha('Percentual e valor inválidos')
   if (pct < 1 || pct > 10000) return falha('O % liberado tem de estar entre 0,01% e 100%')
   if (valor <= 0) return falha('O valor liberado tem de ser maior que zero')
-  if (!coerentes(receita, pct, valor)) return falha('O % e o valor não batem com o valor receita da OS — digite um deles de novo')
+  if (os.cancelada) return falha('Esta OS foi cancelada: não recebe medição')
+
+  // Restante da OS (medições não recusadas, menos esta): o banco soma só o %; aqui o R$ também.
+  const { data: outras, error: eO } = await supabase
+    .from('obras_medicao_cliente')
+    .select('id, situacao, percentual_centesimos, valor_centavos')
+    .eq('obra_id', os.id)
+  if (eO) return falha('Não foi possível ler as medições da OS. Tente de novo.')
+  const restante = restanteDaOs(
+    receita,
+    ((outras ?? []) as Record<string, unknown>[]).map((o) => ({
+      id: String(o.id), situacao: String(o.situacao), percentualCentesimos: Number(o.percentual_centesimos), valorCentavos: Number(o.valor_centavos),
+    })),
+    m.id,
+  )
+  if (valor > restante.valor) {
+    return falha(`O valor passa do restante da OS (R$ ${textoDeCentavos(Math.max(0, restante.valor))}, ${textoDeCentesimos(Math.max(0, restante.pct))}%)`)
+  }
+  if (!parAceitavel(receita, pct, valor, restante)) return falha('O % e o valor não batem com o valor receita da OS — digite um deles de novo')
 
   const linha = { periodo_inicio: m.inicio, periodo_fim: m.fim, percentual_centesimos: pct, valor_centavos: valor }
   if (m.id) {

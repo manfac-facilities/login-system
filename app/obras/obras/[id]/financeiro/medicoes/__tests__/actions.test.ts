@@ -96,3 +96,26 @@ describe('% ⇄ valor e regras de dinheiro', () => {
     expect(await apagarMedicaoAction(MAE, MAE, M1)).toEqual({ ok: false, erro: 'Medição com nota emitida não se apaga — desligue a nota no Financeiro antes' })
   })
 })
+
+describe('restante da OS e OS cancelada (fix 1)', () => {
+  beforeEach(() => {
+    f.db.obras_obra[0].valor = 30000 // R$ 30.000,00
+    f.db.obras_medicao_cliente = [
+      { id: 'a', obra_id: MAE, situacao: 'aprovada', percentual_centesimos: 3333, valor_centavos: 1_000_000 },
+      { id: 'b', obra_id: MAE, situacao: 'enviada', percentual_centesimos: 3333, valor_centavos: 1_000_000 },
+      { id: 'c', obra_id: MAE, situacao: 'recusada', percentual_centesimos: 9000, valor_centavos: 2_700_000 },
+    ]
+  })
+  it('"usar o restante" (33,34% e R$ 10.000,00) passa, mesmo sem ser o arredondamento um do outro', async () => {
+    expect(await salvarMedicaoAction(MAE, med({ percentualCentesimos: 3334, valorCentavos: 1_000_000 }))).toEqual({ ok: true })
+  })
+  it('valor acima do restante em R$ é recusado com o restante na mensagem', async () => {
+    expect(await salvarMedicaoAction(MAE, med({ percentualCentesimos: 3334, valorCentavos: 1_000_100 }))).toEqual({
+      ok: false, erro: 'O valor passa do restante da OS (R$ 10.000,00, 33,34%)',
+    })
+  })
+  it('OS cancelada não recebe medição', async () => {
+    f.db.obras_obra[1].cancelado_em = '2026-10-30T12:00:00Z'
+    expect(await salvarMedicaoAction(MAE, med({ osId: FILHA, percentualCentesimos: 5000, valorCentavos: 1_925_000 }))).toEqual({ ok: false, erro: 'Esta OS foi cancelada: não recebe medição' })
+  })
+})

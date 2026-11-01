@@ -62,3 +62,9 @@ describe('reordenar', () => {
     expect(reordenar([pessoa('a', 0), pessoa('b', 0)], 'a', 'baixo')).toEqual([{ id: 'a', ordem: 1 }])
   })
 })
+
+describe('e-mail da Manfac (fix 1)', () => {
+  it('nunca vira destinatário do lado cliente', () => {
+    expect(destinatarioAposChip({ nome: 'Eng', cargo: null, email: 'eng@manfac.com.br' }, null, 'diario', true)?.lado).toBe('interno')
+  })
+})
