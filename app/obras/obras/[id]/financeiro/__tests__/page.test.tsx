@@ -146,6 +146,7 @@ describe('TelaFinanceiro', () => {
     expect(within(screen.getByRole('region', { name: 'Compras' })).getByRole('alert')).toHaveTextContent('Dados inconsistentes')
     expect(within(screen.getByRole('region', { name: 'Faturamento' })).getByText('Sem lançamentos.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pedir material' })).toHaveAttribute('href', '/compras/solicitacoes/nova?obra=o1')
+    expect(screen.getByRole('link', { name: 'Pedir pagamento' })).toHaveAttribute('href', '/financeiro/solicitacoes/nova?obra=o1')
   })
 
   it('compras com valor em R$ e "abrir no Compras" para a solicitação', () => {

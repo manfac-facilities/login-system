@@ -53,12 +53,20 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
           Dados até {diaBr(lidoEm)} · lidos agora do Compras, da Gestão de Fornecedores e do Financeiro
           {obras.length > 1 ? ` · mãe + ${obras.length - 1} ${obras.length === 2 ? 'aditivo' : 'aditivos'}` : ''}
         </p>
+        <div className="flex flex-wrap gap-2">
+        <a
+          href={`/financeiro/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
+        >
+          Pedir pagamento
+        </a>
         <a
           href={`/compras/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
         >
           Pedir material
         </a>
+        </div>
       </div>
 
       {fin.semLancamentos ? (
