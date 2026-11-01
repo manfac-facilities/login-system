@@ -57,11 +57,12 @@ export function avancoDoAmbiente(
   return Number.isFinite(pct) ? pct : null
 }
 
-/** 0 = parado (0%), 1 = 1-25%, 2 = 26-50%, 3 = 51-75%, 4 = 76-100%; null = sem avanço ("-"). Fração 0-1. */
+/** 0 = parado (exatamente 0%), 1 = >0-25%, 2 = 26-50%, 3 = 51-75%, 4 = 76-100%; null = sem avanço ("-"). Fração 0-1. */
 export function faixaDeCor(pct: number | null): 0 | 1 | 2 | 3 | 4 | null {
   if (pct === null || !Number.isFinite(pct)) return null
-  const p = Math.round(Math.min(Math.max(pct, 0), 1) * 100)
-  if (p <= 0) return 0
+  if (pct <= 0) return 0
+  // Qualquer avanço > 0 já é faixa 1 (0,4% não pode aparecer como "parado").
+  const p = Math.max(1, Math.round(Math.min(pct, 1) * 100))
   if (p <= 25) return 1
   if (p <= 50) return 2
   if (p <= 75) return 3

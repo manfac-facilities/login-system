@@ -18,6 +18,7 @@ import {
   IconeFinanceiro,
   IconeImpedimento,
   IconeLookahead,
+  IconeMapa,
   IconeMais,
   IconePlay,
   IconePainel,
@@ -51,6 +52,7 @@ const ITENS: Item[] = [
   { sufixo: '/comunicacao', rotulo: 'Comunicação', Icone: IconeComunicacao },
   { sufixo: '/lookahead', rotulo: 'Lookahead', Icone: IconeLookahead },
   { sufixo: '/apresentacao', rotulo: 'Apresentação', Icone: IconePlay },
+  { sufixo: '/mapa', rotulo: 'Mapa', Icone: IconeMapa },
 ]
 /** Só quem pode ver valores (obras_pode_ver_valores, calculado no layout; a tela confere de novo). */
 const ITEM_FINANCEIRO: Item = { sufixo: '/financeiro', rotulo: 'Financeiro', Icone: IconeFinanceiro }
@@ -67,7 +69,7 @@ const NO_MENU_INFERIOR = 4
  * são escuras por dentro e recebem um painel escuro para continuarem legíveis
  * até serem redesenhadas — cada tarefa que redesenhar uma tela a inclui aqui.
  */
-const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/apresentacao', '/configuracoes', '/financeiro'])
+const TELAS_CLARAS = new Set<string>(['', '/cronograma', '/diario', '/impedimentos', '/comunicacao', '/lookahead', '/apresentacao', '/configuracoes', '/financeiro', '/mapa'])
 
 const GESTAO_DE_OBRAS = '/obras/base'
 
