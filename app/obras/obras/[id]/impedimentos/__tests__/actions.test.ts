@@ -121,11 +121,13 @@ describe('abrirImpedimentoAction', () => {
     const r = await abrirImpedimentoAction(OBRA, novo({ fotoPath: 'outra/impedimento/x.jpg' }))
     expect(r.ok).toBe(false)
   })
-  it('Leva 6: ambiente opcional — sem ele grava null, com ele grava o ambiente', async () => {
+  it('Leva 6: ambiente opcional — sem ele não manda a coluna, com ele grava o ambiente', async () => {
     await abrirImpedimentoAction(OBRA, novo())
     await abrirImpedimentoAction(OBRA, novo({ ambienteId: 'a1' }))
     await registrarOrientacaoAction(OBRA, { descricao: 'Usar a porta lateral', pessoaCliente: null, atividadeNumero: null, fotoPath: null, ambienteId: 'a1' })
-    expect(db.obras_impedimento.map((l) => l.ambiente_id)).toEqual([null, 'a1', 'a1'])
+    expect(db.obras_impedimento.map((l) => l.ambiente_id)).toEqual([undefined, 'a1', 'a1'])
+    // sem ambiente, a coluna nem vai no insert (funciona antes do SQL da Leva 6)
+    expect('ambiente_id' in db.obras_impedimento[0]).toBe(false)
   })
   it('Leva 6: ambiente de outra obra -> recusa do banco em pt-BR', async () => {
     erroInsert = { message: 'OBRAS_MAPA_VINCULO: o ambiente do impedimento não é desta obra', code: '23514' }

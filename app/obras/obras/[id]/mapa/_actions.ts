@@ -41,7 +41,11 @@ function erroMapa(acao: string, e: { message: string; code?: string; details?: s
     if (m.includes('obras_rdo_foto')) {
       return falha('Este ambiente tem fotos no diário e não pode ser apagado. Desative os pontos dele em vez de apagar.')
     }
-    if (m.includes('obras_impedimento')) return falha('Este ambiente tem impedimento marcado e não pode ser apagado.')
+    if (m.includes('obras_impedimento')) {
+      return falha(
+        'Este ambiente tem impedimento registrado (mesmo encerrado) e o histórico não deixa apagar. Renomeie ou deixe sem pontos.',
+      )
+    }
     return falha('Referência inválida (obra, ambiente ou ponto não existe mais).')
   }
   if (e.code === '23514') {

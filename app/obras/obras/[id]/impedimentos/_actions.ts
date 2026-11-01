@@ -129,7 +129,8 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
       exibir_ao_cliente: i.exibirAoCliente ?? exibirAoClientePadrao(i.responsavel),
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
-      ambiente_id: comum.ambienteId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()
@@ -202,7 +203,8 @@ export async function registrarOrientacaoAction(obraId: string, o: NovaOrientaca
       exibir_ao_cliente: o.exibirAoCliente ?? true,
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
-      ambiente_id: comum.ambienteId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()

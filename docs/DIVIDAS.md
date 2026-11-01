@@ -426,7 +426,7 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
 - Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).
 
-## 01/11/2026 — Obras Leva 6, mapa e fotos (`feat/obras-leva6`, Task 3), deixado de propósito
+## 01/11/2026 — Obras Leva 6, mapa e fotos (`feat/obras-leva6`), deixado de propósito
 - **Planta só como imagem (JPG/PNG/WebP), PDF não** (chamada da spec §4). O projeto não tem dependência leve
   para renderizar a 1ª página do PDF no navegador (`@react-pdf/renderer` só gera PDF; `pdfjs-dist` não está
   instalado e é pesado). A tela de montar recusa PDF com a orientação de exportar a 1ª página como imagem.
@@ -444,8 +444,19 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
   "+ Ambiente"/"Pôr no desenho"). O mockup mostrava "Desfazer"; como tudo grava na hora, ficou de fora.
 - **`salvarPlantaAction` não confere se o arquivo existe no bucket**: um caminho canônico válido mas não enviado deixa a
   planta quebrada (a imagem não aparece). Só engenheiro/admin chega lá; reenviar a planta resolve.
-- **Deploy: `sdd-sql-obras-leva6.sql` antes do app, sem exceção.** Sem ele quebram o diário inteiro (`lerMapa` em toda
-  obra → "Não deu para carregar o diário"), o registro de impedimento/orientação (insert com `ambiente_id`), o envio de
-  foto e as telas do mapa.
+- **Deploy: `sdd-sql-obras-leva6.sql` antes do app** (verificação pós-commit 20/20 e teste
+  `docs/obras/2026-11-01-verificacao-obras-leva6.sql` 94/94). Se o app subir antes, o diário, a foto e o impedimento
+  continuam como antes da Leva 6 (leitura do mapa que falha = obra sem mapa; `ambiente_id`/`ponto_id`/`atividade_numero`
+  só vão no insert quando preenchidos); só as telas do mapa dão erro.
+- **Ambiente com impedimento (mesmo encerrado) nunca se apaga** (FK NO ACTION de `obras_impedimento.ambiente_id`) e não
+  há tela para desmarcar o ambiente do impedimento. Coerente com não apagar histórico; a mensagem orienta renomear.
+- **`atividade_numero` da foto não é conferido contra o cronograma** (nem no banco nem na action, só `>= 1`). A tela só
+  oferece atividades da versão vigente; uma chamada direta pode gravar número inexistente (a foto só não aparece na
+  atividade).
+- **Diário aberto antes de o mapa existir:** se o engenheiro cria o primeiro ambiente enquanto o supervisor está com o
+  diário aberto, a foto seguinte é recusada com "O mapa da obra mudou; recarregue a página…" e o arquivo enviado é
+  apagado na hora (sem órfão, salvo falha da própria remoção).
+- **Teste manual do editor do mapa pendente** (arrastar, redimensionar, pontos) em desktop e tablet antes do deploy; só
+  há testes em jsdom.
 - **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
   `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.

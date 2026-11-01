@@ -36,6 +36,7 @@ const SEM_BASE = 'Sem cronograma — o diário começa quando a base for salva'
 const JA_VALIDADO = 'Diário já validado'
 const JA_ENVIADO = 'Diário já enviado'
 const RDO_NAO_ENCONTRADO = 'Diário não encontrado'
+const MAPA_MUDOU = 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.'
 const CLIMAS: Clima[] = ['sol', 'nublado', 'chuva', 'impraticavel']
 const CAUSAS: CausaNaoAndou[] = ['cliente', 'material', 'equipe', 'clima', 'projeto', 'outro']
 const ISO = /^\d{4}-\d{2}-\d{2}$/
@@ -237,8 +238,10 @@ export async function registrarFotoAction(
   if (atividadeNumero !== null && !(Number.isInteger(atividadeNumero) && atividadeNumero >= 1)) return falha('Atividade inválida')
   if (!ambienteId && !pontoId) {
     const { data: amb, error: errA } = await supabase.from('obras_ambiente').select('id').eq('obra_id', rdo.obra_id).limit(1)
-    if (errA) return erroBanco('ler o mapa', errA)
-    if ((amb ?? []).length) return falha('Escolha o ambiente da foto (esta obra tem mapa)')
+    // Sem ler o mapa (ex.: SQL da Leva 6 ainda não aplicado) segue como obra sem mapa: o banco não exige ambiente.
+    if (errA) console.warn(`[diario-obra] mapa não lido, foto sem ambiente: ${errA.message}`)
+    // Tela aberta antes de o mapa existir: ela não tem como escolher o ambiente até recarregar.
+    else if ((amb ?? []).length) return falha(MAPA_MUDOU)
   }
 
   const { data: atuais, error: errO } = await supabase.from('obras_rdo_foto').select('ordem').eq('rdo_id', rdoId)

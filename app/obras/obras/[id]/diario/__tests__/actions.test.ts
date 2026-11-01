@@ -359,8 +359,8 @@ describe('fotos', () => {
 
   it('Leva 6 — obra COM mapa: foto sem ambiente nem ponto é recusada no app', async () => {
     db.obras_ambiente = [{ id: 'a1', obra_id: OBRA }]
-    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: false, erro: 'Escolha o ambiente da foto (esta obra tem mapa)' })
-    expect(await registrarFotoAction('r1', path, null, {})).toEqual({ ok: false, erro: 'Escolha o ambiente da foto (esta obra tem mapa)' })
+    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: false, erro: 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.' })
+    expect(await registrarFotoAction('r1', path, null, {})).toEqual({ ok: false, erro: 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.' })
     expect(db.obras_rdo_foto).toHaveLength(0)
   })
 
@@ -371,6 +371,17 @@ describe('fotos', () => {
     // só o ponto basta (o banco herda o ambiente do ponto)
     expect((await registrarFotoAction('r1', path.replace('0b6f', '1b6f'), null, { pontoId: 'p1' })).ok).toBe(true)
     expect(db.obras_rdo_foto[1]).toMatchObject({ ambiente_id: null, ponto_id: 'p1', atividade_numero: null })
+  })
+
+  it('Leva 6 — mapa ilegível (SQL ainda não aplicado): segue como obra sem mapa, insert de sempre', async () => {
+    erroForcado['obras_ambiente.select'] = { message: 'relation "public.obras_ambiente" does not exist', code: '42P01' }
+    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: true, fotoId: 'id1' })
+    expect(db.obras_rdo_foto).toEqual([{ id: 'id1', rdo_id: 'r1', path, legenda: null, ordem: 1 }])
+  })
+
+  it('Leva 6 — vínculo trocado em foto de RDO validado (OBRAS_FOTO_CONGELADA) vira "Diário já validado"', async () => {
+    erroForcado['obras_rdo_foto.insert'] = { message: 'OBRAS_FOTO_CONGELADA: foto de RDO validado não muda ambiente, ponto nem atividade', code: 'P0001' }
+    expect(await registrarFotoAction('r1', path, null, { ambienteId: 'a1' })).toEqual({ ok: false, erro: 'Diário já validado' })
   })
 
   it('Leva 6 — atividade inválida é recusada antes do banco', async () => {

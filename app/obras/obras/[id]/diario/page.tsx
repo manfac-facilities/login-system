@@ -143,16 +143,22 @@ export default async function DiarioObraPage({
   })
 
   // Leva 6: mapa da obra para a ronda de fotos. Sem ambiente → null (diário de sempre).
+  // Falha ao ler o mapa (ex.: SQL da Leva 6 ainda não aplicado) também cai no diário de sempre:
+  // só a ronda some; o resto do diário não depende do mapa.
   let mapaDiario: MapaDiario | null = null
   const mapaR = await lerMapa(supabase, id)
-  if (!mapaR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
-  if (mapaR.dados.ambientes.length) {
-    const ativos = mapaR.dados.pontos.filter((p) => p.ativo).map((p) => p.id)
-    const refR = await lerReferenciasDosPontos(supabase, id, ativos, data)
-    if (!refR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
+  if (!mapaR.ok) console.warn(`[diario-obra] mapa não lido, diário sem ronda: ${mapaR.erro}`)
+  const ambientesMapa = mapaR.ok ? mapaR.dados.ambientes : []
+  const refR =
+    mapaR.ok && ambientesMapa.length
+      ? await lerReferenciasDosPontos(supabase, id, mapaR.dados.pontos.filter((p) => p.ativo).map((p) => p.id), data)
+      : null
+  // Sem as referências a ronda continua (só sem a miniatura de ângulo).
+  if (refR && !refR.ok) console.warn(`[diario-obra] referências da ronda não lidas: ${refR.erro}`)
+  if (mapaR.ok && refR) {
     const entrada = {
       mapa: mapaR.dados,
-      referencias: refR.referencias,
+      referencias: refR.ok ? refR.referencias : new Map(),
       atividades: plano.map((p) => ({ numero: p.numero, descricao: p.descricao })),
     }
     const caminhos = montarMapaDiario(entrada)?.caminhos ?? []
@@ -283,7 +289,7 @@ export default async function DiarioObraPage({
               rdoId={rdo?.id ?? null}
               dataDiario={data}
               atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
-              ambientes={mapaR.dados.ambientes.map((a) => ({ id: a.id, nome: a.nome }))}
+              ambientes={ambientesMapa.map((a) => ({ id: a.id, nome: a.nome }))}
               orientacoes={r.dados.impedimentos
                 .filter((i) => i.categoria === 'orientacao')
                 .map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}

@@ -5,7 +5,8 @@ jest.mock('../_actions', () => ({
   removerFotoAction: jest.fn(),
 }))
 const upload = jest.fn(async () => ({ error: null }))
-jest.mock('@/lib/supabase/client', () => ({ createClient: () => ({ storage: { from: () => ({ upload }) } }) }))
+const remove = jest.fn(async () => ({ error: null }))
+jest.mock('@/lib/supabase/client', () => ({ createClient: () => ({ storage: { from: () => ({ upload, remove }) } }) }))
 jest.mock('../../../../diario/_foto', () => ({ reduzir: jest.fn(async () => new Blob(['x'], { type: 'image/jpeg' })) }))
 
 import FotosDiario from '../_fotos'
@@ -107,6 +108,15 @@ describe('obra COM mapa', () => {
     await anexar(container)
     await waitFor(() => expect(registrarFotoAction).toHaveBeenCalled())
     expect((registrarFotoAction as jest.Mock).mock.calls[0][3]).toEqual({ ambienteId: 'B', atividadeNumero: null })
+  })
+
+  it('registro recusado (o mapa mudou): mostra a mensagem e apaga o arquivo enviado', async () => {
+    ;(registrarFotoAction as jest.Mock).mockResolvedValueOnce({ ok: false, erro: 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.' })
+    const { container } = montar()
+    fireEvent.click(screen.getByRole('button', { name: 'Tirar ou escolher fotos' }))
+    await anexar(container)
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/O mapa da obra mudou/))
+    expect(remove).toHaveBeenCalledWith([expect.stringMatching(/^o1\/rdo\/2026-11-01\/.+\.jpg$/)])
   })
 
   it('diário validado: sem botões de foto, ronda continua visível', () => {

@@ -76,10 +76,15 @@ export default function FotosDiario({
     const blob = await reduzir(arquivo)
     if (blob.type !== 'image/jpeg' || blob.size > TAMANHO_MAXIMO_FOTO) throw new Error('A foto precisa ser JPEG e ter até 5 MB.')
     const path = `${obraId}/rdo/${data}/${crypto.randomUUID()}.jpg`
-    const { error } = await createClient().storage.from('obras-fotos').upload(path, blob, { contentType: 'image/jpeg' })
+    const bucket = createClient().storage.from('obras-fotos')
+    const { error } = await bucket.upload(path, blob, { contentType: 'image/jpeg' })
     if (error) throw new Error('Não deu para enviar a foto. Tente de novo.')
     const r = mapa ? await registrarFotoAction(rdoId, path, leg, vinculo) : await registrarFotoAction(rdoId, path, leg)
-    if (!r.ok) throw new Error(r.erro)
+    if (!r.ok) {
+      // Registro recusado (ex.: o mapa mudou): tira o arquivo que acabou de subir, para não ficar órfão.
+      await bucket.remove([path]).catch(() => undefined)
+      throw new Error(r.erro)
+    }
     setFotos((f) => [
       ...f,
       { id: r.fotoId!, path, legenda: leg, url: URL.createObjectURL(blob), ambienteId: vinculo.ambienteId ?? null, pontoId: vinculo.pontoId ?? null, atividadeNumero: vinculo.atividadeNumero ?? null },

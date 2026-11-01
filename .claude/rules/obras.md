@@ -204,7 +204,8 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
 - **Portal (aba Mapa):** `portal-obra/(obra)/_lib/mapa.ts` (`lerMapaDoPortal`, `obraTemMapa`); aba só com ≥ 1 ambiente,
   página 404 sem mapa. Fotos só de RDO validado/enviado (filtro no banco e no código), impedimento só aberto e
   `exibir_ao_cliente`, atividade pelo código e pela situação do cronograma do portal, ponto só pelo número.
-- **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy**: sem ele quebram o diário inteiro (lê o
-  mapa de toda obra), o registro de impedimento/orientação (grava `ambiente_id`), o envio de foto e as telas do mapa.
+- **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy** (20/20 + teste 94/94). Se o app subir
+  antes, diário, foto e impedimento seguem como antes da Leva 6 (mapa ilegível = obra sem mapa; colunas novas só vão no
+  insert quando preenchidas); só as telas do mapa dão erro.
 - **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
   `lerReferenciasDosPontos` (1 foto por ponto). Nunca ler as fotos da obra inteira.
