@@ -27,7 +27,7 @@ import {
   salvarPlantaAction,
 } from '../_actions'
 import { quadroDe } from '../_desenho'
-import { pdfParaImagem } from './_pdf-para-imagem'
+import { pdfParaImagem, webpParaJpeg } from './_pdf-para-imagem'
 import { EXTENSAO_PLANTA, LADO_MINIMO, normalizarRetangulo } from '../_regras'
 import type { Retangulo } from '../_tipos'
 
@@ -197,6 +197,9 @@ export default function EditorMapa({
         } catch {
           return setErro('Não consegui abrir este PDF. Exporte a primeira página como imagem e envie de novo.')
         }
+      } else if (arquivo.type === 'image/webp') {
+        // O PDF da prancha de faseamento (react-pdf) só lê JPEG e PNG: WEBP vira JPEG aqui, antes de subir.
+        envio = await webpParaJpeg(arquivo)
       } else {
         envio = { blob: arquivo, type: arquivo.type, ext, ...(await lerDimensoes(arquivo)) }
       }

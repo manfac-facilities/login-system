@@ -15,7 +15,7 @@ jest.mock('../_actions', () => ({
   definirPontoAtivoAction: jest.fn(async () => ({ ok: true })),
 }))
 jest.mock('@/lib/supabase/client', () => ({ createClient: jest.fn() }))
-jest.mock('../montar/_pdf-para-imagem', () => ({ pdfParaImagem: jest.fn() }))
+jest.mock('../montar/_pdf-para-imagem', () => ({ pdfParaImagem: jest.fn(), webpParaJpeg: jest.fn() }))
 jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
 
 import TelaMapa from '../_tela'
@@ -31,7 +31,7 @@ import {
   definirPontoAtivoAction,
   salvarModoAction,
 } from '../_actions'
-import { pdfParaImagem } from '../montar/_pdf-para-imagem'
+import { pdfParaImagem, webpParaJpeg } from '../montar/_pdf-para-imagem'
 import { createClient } from '@/lib/supabase/client'
 import { salvarPlantaAction } from '../_actions'
 import { normalizarRetangulo } from '../_regras'
@@ -160,12 +160,32 @@ describe('EditorMapa', () => {
     })
 
     it('converte a 1ª página e sobe a imagem pelo caminho canônico', async () => {
-      const blob = new Blob(['img'], { type: 'image/webp' })
-      ;(pdfParaImagem as jest.Mock).mockResolvedValue({ blob, ext: 'webp', type: 'image/webp', largura: 2400, altura: 1700, paginas: 1 })
+      const blob = new Blob(['img'], { type: 'image/jpeg' })
+      ;(pdfParaImagem as jest.Mock).mockResolvedValue({ blob, ext: 'jpg', type: 'image/jpeg', largura: 2400, altura: 1700, paginas: 1 })
       enviar(pdf())
       expect((await screen.findByRole('status')).textContent).toBe('Planta enviada.')
-      expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^o1\/mapa\/[0-9a-f-]{36}\.webp$/), blob, { contentType: 'image/webp' })
-      expect(salvarPlantaAction).toHaveBeenCalledWith('o1', expect.stringMatching(/\.webp$/), 2400, 1700)
+      expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^o1\/mapa\/[0-9a-f-]{36}\.jpg$/), blob, { contentType: 'image/jpeg' })
+      expect(salvarPlantaAction).toHaveBeenCalledWith('o1', expect.stringMatching(/\.jpg$/), 2400, 1700)
+    })
+
+    it('imagem WEBP é convertida para JPEG antes de subir (o PDF do faseamento não lê WEBP)', async () => {
+      const blob = new Blob(['jpg'], { type: 'image/jpeg' })
+      ;(webpParaJpeg as jest.Mock).mockResolvedValue({ blob, ext: 'jpg', type: 'image/jpeg', largura: 1800, altura: 1000 })
+      const webp = new File(['w'], 'p.webp', { type: 'image/webp' })
+      enviar(webp)
+      expect((await screen.findByRole('status')).textContent).toBe('Planta enviada.')
+      expect(webpParaJpeg).toHaveBeenCalledWith(webp)
+      expect(pdfParaImagem).not.toHaveBeenCalled()
+      expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^o1\/mapa\/[0-9a-f-]{36}\.jpg$/), blob, { contentType: 'image/jpeg' })
+      expect(salvarPlantaAction).toHaveBeenCalledWith('o1', expect.stringMatching(/\.jpg$/), 1800, 1000)
+    })
+
+    it('WEBP que o navegador não converte: mensagem e nada é enviado', async () => {
+      ;(webpParaJpeg as jest.Mock).mockRejectedValue(new Error('canvas'))
+      enviar(new File(['w'], 'p.webp', { type: 'image/webp' }))
+      expect((await screen.findByRole('alert')).textContent).toBe('Não deu para ler a imagem da planta.')
+      expect(upload).not.toHaveBeenCalled()
+      expect(salvarPlantaAction).not.toHaveBeenCalled()
     })
 
     it('PDF com várias páginas: avisa que usou só a 1ª', async () => {
