@@ -257,3 +257,4 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6b-faseamento-design.md`.
   relatório de fase (tipos `semanal`/`mensal`); aparece na linha do tempo da Comunicação com "Abrir PDF".
 - **SQL:** `sdd-sql-obras-leva6b.sql` **precisa estar aplicado antes do deploy** (verificação 23/23 + teste 86/86). Sem
   ele o Faseamento dá erro e a **Comunicação inteira falha** (o select de envios pede `fase_revisao_id`).
+- **Portal (aba Mapa):** seção "Faseamento" (`portal-obra/(obra)/obras/[obraId]/mapa/_faseamento.tsx`, leitura em `_lib/faseamento.ts`) com só a **última emitida de cada fase** (base e nome congelados da revisão); sem emitida a seção some, e a aba Mapa aparece também só com faseamento (`obraTemMapa` = ambiente OU emitida). PDF em `faseamento/[revisaoId]/pdf` (sessão do portal, cliente admin, modalidade obra): 404 igual para rascunho, outra obra, id inválido **e revisão antiga já substituída** (só a última emitida abre).

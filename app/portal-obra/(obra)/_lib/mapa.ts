@@ -20,6 +20,7 @@ import { caminhoFotoValido } from '@/app/obras/obras/_pdf/fotos-periodo'
 import { FOTOS_POR_AMBIENTE, montarMapaTela } from '@/app/obras/obras/[id]/mapa/_dados'
 import { caminhoPlantaValido } from '@/app/obras/obras/[id]/mapa/_regras'
 import type { AtividadeCliente, VisaoCliente } from './visao'
+import { obraTemFaseamento } from './faseamento'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = SupabaseClient<any, any, any>
@@ -56,10 +57,16 @@ export type MapaCliente = {
   pontos: { id: string; numero: number; x: number | null; y: number | null }[]
 }
 
-/** A obra tem mapa (≥ 1 ambiente)? Decide se a aba aparece. Erro de leitura → esconde a aba. */
+/**
+ * A aba Mapa aparece? Com ≥ 1 ambiente OU com faseamento emitido (a aba pode ter só a seção Faseamento).
+ * Erro de leitura de uma das fontes não esconde a outra.
+ */
 export const obraTemMapa = cache(async (obraId: string): Promise<boolean> => {
-  const { data, error } = await createAdminClient().from('obras_ambiente').select('id').eq('obra_id', obraId).limit(1)
-  return !error && (data ?? []).length > 0
+  const [amb, fase] = await Promise.all([
+    createAdminClient().from('obras_ambiente').select('id').eq('obra_id', obraId).limit(1),
+    obraTemFaseamento(obraId),
+  ])
+  return (!amb.error && (amb.data ?? []).length > 0) || fase
 })
 
 /** null = obra sem mapa (a página dá 404). Lança em falha de leitura. */

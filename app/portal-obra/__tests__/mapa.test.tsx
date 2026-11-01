@@ -71,6 +71,7 @@ function criarAdmin(db: Record<string, Record<string, unknown>[]> = {}) {
       is: (col: string, v: unknown) => (filtros.push({ tabela, op: 'is', col, v }), b),
       not: (col: string, _o: string, v: unknown) => (filtros.push({ tabela, op: 'not', col, v }), b),
       limit: () => b,
+      order: () => b,
       then: (ok: (r: unknown) => unknown) => Promise.resolve({ data: db[tabela] ?? [], error: null }).then(ok),
     }
     return b

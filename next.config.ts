@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     '/obras/obras/[id]/apresentacao/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     // Portal do cliente (Leva 5): "Abrir PDF" dos documentos enviados ao cliente.
     '/portal-obra/obras/[obraId]/pdf/[envioId]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Faseamento no portal (Leva 6b): PDF da última revisão emitida.
+    '/portal-obra/obras/[obraId]/faseamento/[revisaoId]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     // Planta de faseamento (Leva 6b): rota do PDF e a página (a action de envio anexa a prancha).
     '/obras/obras/[id]/faseamento/[revisaoId]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
     '/obras/obras/[id]/faseamento': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
