@@ -15,7 +15,9 @@ import { segundaDaSemana } from '../../_lib/last-planner'
 import { lerPlano } from '../../_lib/leitura'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
-import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
+import { lerMapa, lerReferenciasDosPontos } from '../../_lib/mapa-leitura'
+import { montarMapaDiario } from './_mapa-diario'
+import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo, MapaDiario } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,7 +96,15 @@ export default async function DiarioObraPage({
         .createSignedUrls(linhasFoto.map((f) => f.path as string), 600)
       for (const s of assinadas ?? []) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl)
     }
-    fotos = linhasFoto.map((f) => ({ id: f.id, path: f.path, legenda: f.legenda ?? null, url: urls.get(f.path) ?? null }))
+    fotos = linhasFoto.map((f) => ({
+      id: f.id,
+      path: f.path,
+      legenda: f.legenda ?? null,
+      url: urls.get(f.path) ?? null,
+      ambienteId: f.ambiente_id ?? null,
+      pontoId: f.ponto_id ?? null,
+      atividadeNumero: f.atividade_numero ?? null,
+    }))
   } else {
     const { data: u } = await supabase
       .from('obras_rdo')
@@ -131,6 +141,34 @@ export default async function DiarioObraPage({
     avancosSalvos,
     ultimo,
   })
+
+  // Leva 6: mapa da obra para a ronda de fotos. Sem ambiente → null (diário de sempre).
+  // Falha ao ler o mapa (ex.: SQL da Leva 6 ainda não aplicado) também cai no diário de sempre:
+  // só a ronda some; o resto do diário não depende do mapa.
+  let mapaDiario: MapaDiario | null = null
+  const mapaR = await lerMapa(supabase, id)
+  if (!mapaR.ok) console.warn(`[diario-obra] mapa não lido, diário sem ronda: ${mapaR.erro}`)
+  const ambientesMapa = mapaR.ok ? mapaR.dados.ambientes : []
+  const refR =
+    mapaR.ok && ambientesMapa.length
+      ? await lerReferenciasDosPontos(supabase, id, mapaR.dados.pontos.filter((p) => p.ativo).map((p) => p.id), data)
+      : null
+  // Sem as referências a ronda continua (só sem a miniatura de ângulo).
+  if (refR && !refR.ok) console.warn(`[diario-obra] referências da ronda não lidas: ${refR.erro}`)
+  if (mapaR.ok && refR) {
+    const entrada = {
+      mapa: mapaR.dados,
+      referencias: refR.ok ? refR.referencias : new Map(),
+      atividades: plano.map((p) => ({ numero: p.numero, descricao: p.descricao })),
+    }
+    const caminhos = montarMapaDiario(entrada)?.caminhos ?? []
+    const urlsRef = new Map<string, string>()
+    if (caminhos.length) {
+      const { data: assinadas } = await supabase.storage.from('obras-fotos').createSignedUrls(caminhos, 600)
+      for (const s of assinadas ?? []) if (s.path && s.signedUrl) urlsRef.set(s.path, s.signedUrl)
+    }
+    mapaDiario = montarMapaDiario({ ...entrada, urls: urlsRef })?.mapa ?? null
+  }
 
   // Plano da semana do dia do diário: suas atividades vêm primeiro (falha de leitura = sem selo).
   const planoR = await lerPlano(supabase, id, segundaDaSemana(data))
@@ -237,6 +275,7 @@ export default async function DiarioObraPage({
         noPlano={noPlano}
         fotos={fotos}
         validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
+        mapa={mapaDiario}
         impedimentosHoje={
           r.dados.impedimentos.filter(
             (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
@@ -250,6 +289,7 @@ export default async function DiarioObraPage({
               rdoId={rdo?.id ?? null}
               dataDiario={data}
               atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
+              ambientes={ambientesMapa.map((a) => ({ id: a.id, nome: a.nome }))}
               orientacoes={r.dados.impedimentos
                 .filter((i) => i.categoria === 'orientacao')
                 .map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}

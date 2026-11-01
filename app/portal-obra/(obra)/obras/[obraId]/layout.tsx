@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { exigirVisao } from '../../_lib/guarda'
+import { obraTemMapa } from '../../_lib/mapa'
 import AbasObra from './_abas'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic'
 export default async function ObraPortalLayout({ children, params }: { children: ReactNode; params: Promise<{ obraId: string }> }) {
   const { obraId } = await params
   const { visao } = await exigirVisao(obraId)
+  const comMapa = await obraTemMapa(obraId)
   const raiz = `/portal-obra/obras/${obraId}`
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pt-6 pb-16 sm:px-6">
@@ -27,7 +29,7 @@ export default async function ObraPortalLayout({ children, params }: { children:
           )}
         </p>
       </div>
-      <AbasObra raiz={raiz} aguardando={visao.aguardando.length} />
+      <AbasObra raiz={raiz} aguardando={visao.aguardando.length} comMapa={comMapa} />
       {children}
     </div>
   )

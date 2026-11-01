@@ -25,6 +25,7 @@ import type {
   CausaNaoAndou,
   EstadoRdo,
   FotoRdo,
+  MapaDiario,
   RascunhoRdo,
 } from './_tipos'
 
@@ -323,6 +324,7 @@ export default function PassosDiario({
   impedimentos,
   impedimentosHoje = 0,
   validacao,
+  mapa = null,
 }: {
   obraId: string
   data: string
@@ -341,6 +343,8 @@ export default function PassosDiario({
   impedimentosHoje?: number
   /** "Validar e enviar" (engenheiro/admin); ausente = não mostra. */
   validacao?: { previaHtml: string | null; pendentes: number | null }
+  /** Leva 6: mapa da obra para a ronda de fotos; null = obra sem mapa (diário de sempre). */
+  mapa?: MapaDiario | null
 }) {
   // Itens do plano da semana que não estão na lista do dia entram já na lista (mesmo caminho do "Incluir").
   const doPlanoForaDaLista =
@@ -360,6 +364,7 @@ export default function PassosDiario({
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [qtdFotos, setQtdFotos] = useState(fotos.length)
+  const [ronda, setRonda] = useState<{ feitos: number; total: number } | null>(null)
   const [incluidas, setIncluidas] = useState<AtividadeDiario[]>(doPlanoForaDaLista)
 
   const somenteLeitura = estado !== null && estado !== 'rascunho'
@@ -502,7 +507,14 @@ export default function PassosDiario({
       <Passo
         n={2}
         titulo="Fotos"
-        resumo={qtdFotos ? `${qtdFotos} foto(s)` : 'várias por dia, com legenda'}
+        resumo={
+          [
+            qtdFotos ? `${qtdFotos} foto(s)` : 'várias por dia, com legenda',
+            ronda && ronda.total > 0 && ronda.feitos < ronda.total ? `ronda incompleta (${ronda.feitos} de ${ronda.total})` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        }
         feito={qtdFotos > 0}
         aberto={aberto === 2}
         onToggle={() => alternar(2)}
@@ -514,6 +526,8 @@ export default function PassosDiario({
           desabilitado={somenteLeitura}
           garantirRdo={async () => rdoId ?? (await salvar())}
           onQuantidade={setQtdFotos}
+          onRonda={setRonda}
+          mapa={mapa}
         />
       </Passo>
 

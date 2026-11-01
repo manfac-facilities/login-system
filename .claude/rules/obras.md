@@ -218,3 +218,21 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; 
   teste de comportamento **114/114 OK**. Não há deploy por feature: qualquer deploy de outra coisa leva esta junto,
   e sem o SQL a aba Financeiro fica sem margem e Medições/Locações só avisam. (Dados da obra aguenta: sem
   `obras_cliente_pessoa`, o organograma mostra o aviso e "sem cadastro" continua com os botões de acesso e envio.)
+### Mapa da obra e fotos por ponto (Leva 6, branch `feat/obras-leva6`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
+
+- **Onde fica:** regras puras em `obras/_lib/mapa.ts`, leitura em `_lib/mapa-leitura.ts`; telas em `obras/[id]/mapa/`
+  (`_tela` + `_desenho` SVG relativo 0–1; `montar/_editor` com arrasto por ponteiro; `ponto/[pontoId]/_comparar`
+  antes × depois); permissão `mapa/_permissao.ts` (engenheiro com acesso `obras` ou admin, igual ao banco).
+- **Diário:** com pelo menos um ambiente, o passo Fotos ganha "Por ponto (ronda)", "Por atividade" e "+ Foto avulsa",
+  e `registrarFotoAction` exige ambiente ou ponto (regra só do app). Obra sem ambiente: diário de sempre.
+- **Planta:** só imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+- **Portal (aba Mapa):** `portal-obra/(obra)/_lib/mapa.ts` (`lerMapaDoPortal`, `obraTemMapa`); aba só com ≥ 1 ambiente,
+  página 404 sem mapa. Fotos só de RDO validado/enviado (filtro no banco e no código), impedimento só aberto e
+  `exibir_ao_cliente`, atividade pelo código e pela situação do cronograma do portal, ponto só pelo número.
+- **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy** (20/20 + teste 94/94). Se o app subir
+  antes, diário, foto e impedimento seguem como antes da Leva 6 (mapa ilegível = obra sem mapa; colunas novas só vão no
+  insert quando preenchidas); só as telas do mapa dão erro.
+- **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
+  `lerReferenciasDosPontos` (1 foto por ponto). Nunca ler as fotos da obra inteira.

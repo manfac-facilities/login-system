@@ -351,6 +351,51 @@ describe('fotos', () => {
     expect(db.obras_rdo_foto).toHaveLength(1)
   })
 
+  it('Leva 6 — obra SEM mapa: foto sem ambiente passa e o insert é o de sempre (Review Focus 3)', async () => {
+    db.obras_ambiente = [{ id: 'aX', obra_id: 'outra-obra' }] // ambiente de outra obra não conta
+    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: true, fotoId: 'id1' })
+    expect(db.obras_rdo_foto).toEqual([{ id: 'id1', rdo_id: 'r1', path, legenda: null, ordem: 1 }])
+  })
+
+  it('Leva 6 — obra COM mapa: foto sem ambiente nem ponto é recusada no app', async () => {
+    db.obras_ambiente = [{ id: 'a1', obra_id: OBRA }]
+    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: false, erro: 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.' })
+    expect(await registrarFotoAction('r1', path, null, {})).toEqual({ ok: false, erro: 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.' })
+    expect(db.obras_rdo_foto).toHaveLength(0)
+  })
+
+  it('Leva 6 — grava ambiente, ponto e atividade da foto', async () => {
+    db.obras_ambiente = [{ id: 'a1', obra_id: OBRA }]
+    expect(await registrarFotoAction('r1', path, null, { ambienteId: 'a1', pontoId: 'p1', atividadeNumero: 6 })).toEqual({ ok: true, fotoId: 'id1' })
+    expect(db.obras_rdo_foto[0]).toMatchObject({ ambiente_id: 'a1', ponto_id: 'p1', atividade_numero: 6 })
+    // só o ponto basta (o banco herda o ambiente do ponto)
+    expect((await registrarFotoAction('r1', path.replace('0b6f', '1b6f'), null, { pontoId: 'p1' })).ok).toBe(true)
+    expect(db.obras_rdo_foto[1]).toMatchObject({ ambiente_id: null, ponto_id: 'p1', atividade_numero: null })
+  })
+
+  it('Leva 6 — mapa ilegível (SQL ainda não aplicado): segue como obra sem mapa, insert de sempre', async () => {
+    erroForcado['obras_ambiente.select'] = { message: 'relation "public.obras_ambiente" does not exist', code: '42P01' }
+    expect(await registrarFotoAction('r1', path, null)).toEqual({ ok: true, fotoId: 'id1' })
+    expect(db.obras_rdo_foto).toEqual([{ id: 'id1', rdo_id: 'r1', path, legenda: null, ordem: 1 }])
+  })
+
+  it('Leva 6 — vínculo trocado em foto de RDO validado (OBRAS_FOTO_CONGELADA) vira "Diário já validado"', async () => {
+    erroForcado['obras_rdo_foto.insert'] = { message: 'OBRAS_FOTO_CONGELADA: foto de RDO validado não muda ambiente, ponto nem atividade', code: 'P0001' }
+    expect(await registrarFotoAction('r1', path, null, { ambienteId: 'a1' })).toEqual({ ok: false, erro: 'Diário já validado' })
+  })
+
+  it('Leva 6 — atividade inválida é recusada antes do banco', async () => {
+    expect(await registrarFotoAction('r1', path, null, { ambienteId: 'a1', atividadeNumero: 1.5 })).toEqual({ ok: false, erro: 'Atividade inválida' })
+  })
+
+  it('Leva 6 — ponto/ambiente de outra obra: a recusa do banco volta em pt-BR', async () => {
+    erroForcado['obras_rdo_foto.insert'] = { message: 'OBRAS_MAPA_VINCULO: o ponto da foto não é da obra do RDO', code: '23514' }
+    expect(await registrarFotoAction('r1', path, null, { pontoId: 'p-de-outra-obra' })).toEqual({
+      ok: false,
+      erro: 'O ponto da foto não é da obra do RDO',
+    })
+  })
+
   it('remove a foto do rascunho', async () => {
     db.obras_rdo_foto.push({ id: 'f1', rdo_id: 'r1', path, legenda: null, ordem: 1 })
     removerStorageMock.mockResolvedValue({ data: [], error: null })

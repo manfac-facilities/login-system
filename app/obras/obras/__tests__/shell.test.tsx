@@ -108,6 +108,18 @@ describe('ShellObra', () => {
     expect(screen.getByRole('link', { name: 'Apresentação' })).toHaveAttribute('href', '/obras/obras/o1/apresentacao')
   })
 
+  it('item Mapa (Leva 6) aponta para /mapa na sidebar', async () => {
+    montar()
+    const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })
+    expect(within(lateral).getByRole('link', { name: 'Mapa' })).toHaveAttribute('href', '/obras/obras/o1/mapa')
+  })
+
+  it('item Mapa fica no Mais do celular', async () => {
+    montar(true)
+    await userEvent.click(screen.getByRole('button', { name: 'Mais' }))
+    expect(screen.getByRole('link', { name: 'Mapa' })).toHaveAttribute('href', '/obras/obras/o1/mapa')
+  })
+
   it('item Configurações só aparece para admin', () => {
     montar()
     const lateral = screen.getByRole('navigation', { name: 'Seções da obra' })

@@ -34,6 +34,10 @@ export default async function ImpedimentosPage({
   if (!r.ok) return <EstadoVazio>{r.erro}</EstadoVazio>
   const { plano, impedimentos, feriados } = r.dados
 
+  // Ambientes do mapa (Leva 6) para marcar o impedimento; falha de leitura = sem o campo.
+  const { data: ambR } = await supabase.from('obras_ambiente').select('id, nome').eq('obra_id', id).order('ordem')
+  const ambientes = ((ambR ?? []) as { id: string; nome: string }[]).map((a) => ({ id: a.id, nome: a.nome }))
+
   const filtro = RESPONSAVEIS.find((x) => x.valor === resp)?.valor ?? null
   const itens = impedimentos
     .filter((i) => !filtro || i.responsavel === filtro)
@@ -79,6 +83,7 @@ export default async function ImpedimentosPage({
           obraId={id}
           atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
           orientacoes={orientacoes.map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}
+          ambientes={ambientes}
         />
       </section>
     </div>

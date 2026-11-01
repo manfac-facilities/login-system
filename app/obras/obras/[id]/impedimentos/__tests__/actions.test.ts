@@ -1,6 +1,7 @@
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 let db: Record<string, Linha[]>
 let seq = 0
+let erroInsert: { message: string; code?: string } | null = null
 
 function construtor(tabela: string) {
   const filtros: ((l: Linha) => boolean)[] = []
@@ -9,6 +10,7 @@ function construtor(tabela: string) {
   const executar = (unico: boolean) => {
     const linhas = (db[tabela] ??= [])
     if (op === 'insert') {
+      if (erroInsert) return { data: null, error: erroInsert }
       const nova = { id: `id${++seq}`, ...payload }
       linhas.push(nova)
       return { data: unico ? nova : [nova], error: null }
@@ -63,6 +65,7 @@ const novo = (over: Partial<NovoImpedimento> = {}): NovoImpedimento => ({
 
 beforeEach(() => {
   seq = 0
+  erroInsert = null
   db = { obras_obra: [{ id: OBRA, modalidade: 'obra' }], obras_impedimento: [] }
   getUserMock.mockResolvedValue({ data: { user: { email: 'a@b.com' } } })
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
@@ -117,6 +120,21 @@ describe('abrirImpedimentoAction', () => {
   it('foto de outra obra -> erro', async () => {
     const r = await abrirImpedimentoAction(OBRA, novo({ fotoPath: 'outra/impedimento/x.jpg' }))
     expect(r.ok).toBe(false)
+  })
+  it('Leva 6: ambiente opcional — sem ele não manda a coluna, com ele grava o ambiente', async () => {
+    await abrirImpedimentoAction(OBRA, novo())
+    await abrirImpedimentoAction(OBRA, novo({ ambienteId: 'a1' }))
+    await registrarOrientacaoAction(OBRA, { descricao: 'Usar a porta lateral', pessoaCliente: null, atividadeNumero: null, fotoPath: null, ambienteId: 'a1' })
+    expect(db.obras_impedimento.map((l) => l.ambiente_id)).toEqual([undefined, 'a1', 'a1'])
+    // sem ambiente, a coluna nem vai no insert (funciona antes do SQL da Leva 6)
+    expect('ambiente_id' in db.obras_impedimento[0]).toBe(false)
+  })
+  it('Leva 6: ambiente de outra obra -> recusa do banco em pt-BR', async () => {
+    erroInsert = { message: 'OBRAS_MAPA_VINCULO: o ambiente do impedimento não é desta obra', code: '23514' }
+    expect(await abrirImpedimentoAction(OBRA, novo({ ambienteId: 'amb-de-outra-obra' }))).toEqual({
+      ok: false,
+      erro: 'O ambiente escolhido não é desta obra.',
+    })
   })
   it('sem acesso -> falha fechada', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)

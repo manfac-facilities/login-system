@@ -28,7 +28,7 @@ import { montarEmailDiario, type RdoCompleto } from '../../_lib/email-diario'
 import { enviarEmail } from '../../_lib/enviar'
 import { linkPortalObra } from '../../_lib/link-portal'
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { AvancoRdo, CausaNaoAndou, Clima, RascunhoRdo, Resultado } from './_tipos'
+import type { AvancoRdo, CausaNaoAndou, Clima, RascunhoRdo, Resultado, VinculoFoto } from './_tipos'
 
 const NAO_AUTENTICADO = 'Não autenticado'
 const SEM_ACESSO = 'Sem acesso ao Gestão de Obras'
@@ -36,6 +36,7 @@ const SEM_BASE = 'Sem cronograma — o diário começa quando a base for salva'
 const JA_VALIDADO = 'Diário já validado'
 const JA_ENVIADO = 'Diário já enviado'
 const RDO_NAO_ENCONTRADO = 'Diário não encontrado'
+const MAPA_MUDOU = 'O mapa da obra mudou; recarregue a página para escolher o ambiente da foto.'
 const CLIMAS: Clima[] = ['sol', 'nublado', 'chuva', 'impraticavel']
 const CAUSAS: CausaNaoAndou[] = ['cliente', 'material', 'equipe', 'clima', 'projeto', 'outro']
 const ISO = /^\d{4}-\d{2}-\d{2}$/
@@ -47,6 +48,12 @@ const falha = (erro: string): Erro => ({ ok: false, erro })
 
 /** RDO que saiu de rascunho no meio do caminho: trigger ou RLS recusam. */
 function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
+  // Leva 6: ponto/ambiente de outra obra, ou ponto de outro ambiente (trigger obras_rdo_foto_vinculo).
+  if (e.message.includes('OBRAS_MAPA_VINCULO:')) {
+    const t = e.message.split('OBRAS_MAPA_VINCULO:')[1]?.trim() ?? ''
+    return falha(t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Ponto ou ambiente inválido')
+  }
+  if (e.message.includes('OBRAS_FOTO_CONGELADA')) return falha(JA_VALIDADO)
   if (e.message.includes('OBRAS_RDO_ESTADO') || e.code === '42501' || e.message.includes('row-level security')) {
     return falha(JA_VALIDADO)
   }
@@ -197,10 +204,17 @@ async function lerRdo(supabase: SupabaseClient, rdoId: string): Promise<Linha | 
   return data as Linha
 }
 
+/**
+ * Registra a foto já enviada ao bucket. Leva 6: com `vinculo`, a foto fica no
+ * ambiente/ponto/atividade. Obra COM mapa (pelo menos um ambiente) exige ambiente
+ * ou ponto — regra do app, o banco não exige; obra sem mapa segue como antes.
+ * Ponto/ambiente de outra obra: o banco recusa e a mensagem volta em pt-BR.
+ */
 export async function registrarFotoAction(
   rdoId: string,
   path: string,
   legenda: string | null,
+  vinculo: VinculoFoto = {},
 ): Promise<Resultado & { fotoId?: string }> {
   const auth = await autorizar()
   if ('ok' in auth) return auth
@@ -215,13 +229,37 @@ export async function registrarFotoAction(
   const nome = path.startsWith(prefixo) ? path.slice(prefixo.length) : ''
   if (!/^[0-9a-f-]{36}\.jpg$/i.test(nome)) return falha('Caminho de foto inválido')
 
+  const ambienteId = vinculo?.ambienteId || null
+  const pontoId = vinculo?.pontoId || null
+  const atividadeNumero = vinculo?.atividadeNumero ?? null
+  if ((ambienteId !== null && typeof ambienteId !== 'string') || (pontoId !== null && typeof pontoId !== 'string')) {
+    return falha('Ambiente ou ponto inválido')
+  }
+  if (atividadeNumero !== null && !(Number.isInteger(atividadeNumero) && atividadeNumero >= 1)) return falha('Atividade inválida')
+  if (!ambienteId && !pontoId) {
+    const { data: amb, error: errA } = await supabase.from('obras_ambiente').select('id').eq('obra_id', rdo.obra_id).limit(1)
+    // Sem ler o mapa (ex.: SQL da Leva 6 ainda não aplicado) segue como obra sem mapa: o banco não exige ambiente.
+    if (errA) console.warn(`[diario-obra] mapa não lido, foto sem ambiente: ${errA.message}`)
+    // Tela aberta antes de o mapa existir: ela não tem como escolher o ambiente até recarregar.
+    else if ((amb ?? []).length) return falha(MAPA_MUDOU)
+  }
+
   const { data: atuais, error: errO } = await supabase.from('obras_rdo_foto').select('ordem').eq('rdo_id', rdoId)
   if (errO) return erroBanco('ler as fotos', errO)
   const ordem = ((atuais ?? []) as Linha[]).reduce((m, f) => Math.max(m, Number(f.ordem ?? 0)), 0) + 1
 
   const { data: nova, error } = await supabase
     .from('obras_rdo_foto')
-    .insert({ rdo_id: rdoId, path, legenda: texto(legenda), ordem })
+    .insert({
+      rdo_id: rdoId,
+      path,
+      legenda: texto(legenda),
+      ordem,
+      // Só manda as colunas da Leva 6 quando há vínculo (obra sem mapa: o insert de sempre).
+      ...(ambienteId || pontoId || atividadeNumero !== null
+        ? { ambiente_id: ambienteId, ponto_id: pontoId, atividade_numero: atividadeNumero }
+        : {}),
+    })
     .select('id')
     .single()
   if (error || !nova) return erroBanco('registrar a foto', error ?? { message: 'sem retorno' })

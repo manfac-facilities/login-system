@@ -39,6 +39,7 @@ async function autorizar(): Promise<{ supabase: SupabaseClient } | Erro> {
 }
 
 function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
+  if (e.message.includes('OBRAS_MAPA_VINCULO')) return falha('O ambiente escolhido não é desta obra.')
   if (e.code === '42501' || e.message.includes('row-level security')) return falha('Você não tem permissão para isso.')
   if (e.code === '23503') return falha('Referência inválida (obra, diário ou orientação não existe mais).')
   if (e.code === '23514') return falha('Dados inválidos: confira responsável e campos obrigatórios.')
@@ -78,8 +79,8 @@ async function resolverRdo(
 /** Campos comuns; devolve erro ou o que vai ao banco. */
 function validarComum(
   obraId: string,
-  i: { descricao: string; atividadeNumero: number | null; fotoPath: string | null; abertoEm?: string },
-): Erro | { descricao: string; abertoEm: string } {
+  i: { descricao: string; atividadeNumero: number | null; fotoPath: string | null; abertoEm?: string; ambienteId?: string | null },
+): Erro | { descricao: string; abertoEm: string; ambienteId: string | null } {
   const descricao = texto(i.descricao)
   if (!descricao) return falha('Descreva o que aconteceu')
   const abertoEm = i.abertoEm ?? hojeISO()
@@ -88,7 +89,10 @@ function validarComum(
     return falha('Atividade inválida')
   }
   if (i.fotoPath !== null && !i.fotoPath.startsWith(`${obraId}/impedimento/`)) return falha('Foto inválida')
-  return { descricao, abertoEm }
+  // Ambiente de outra obra: o banco recusa (OBRAS_MAPA_VINCULO).
+  const ambienteId = i.ambienteId ?? null
+  if (ambienteId !== null && (typeof ambienteId !== 'string' || !ambienteId)) return falha('Ambiente inválido')
+  return { descricao, abertoEm, ambienteId }
 }
 
 export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento): Promise<Resultado & { id?: string }> {
@@ -125,6 +129,8 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
       exibir_ao_cliente: i.exibirAoCliente ?? exibirAoClientePadrao(i.responsavel),
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()
@@ -197,6 +203,8 @@ export async function registrarOrientacaoAction(obraId: string, o: NovaOrientaca
       exibir_ao_cliente: o.exibirAoCliente ?? true,
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()

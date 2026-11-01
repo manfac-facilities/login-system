@@ -197,3 +197,12 @@ export const IconeDados = (p: Props) => (
     <path d="M5.75 16.5c.6-1.8 1.8-2.75 3.25-2.75s2.65.95 3.25 2.75M14.5 9h3M14.5 12.5h3" />
   </Base>
 )
+
+/** Mapa da obra (Leva 6): planta dobrada. */
+export const IconeMapa = (p: Props) => (
+  <Base {...p}>
+    <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" />
+    <path d="M9 4v13.5" />
+    <path d="M15 6.5V20" />
+  </Base>
+)
