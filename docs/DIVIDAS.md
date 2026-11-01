@@ -491,3 +491,21 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - **Teste manual do editor de camadas pendente** (zona por arrasto, linha com duplo clique/Enter/Esc, mover, ocultar)
   em desktop e tablet, e conferência visual do PDF com planta real: só há testes em jsdom e o render do react-pdf é mockado
   no Jest.
+
+### Revisão final da Leva 6b (01/11/2026)
+
+- ~~Planta em WEBP some do PDF em silêncio (C1)~~ **Resolvida na origem em 01/11/2026**: o `@react-pdf/image` só lê
+  JPEG e PNG. O conversor de PDF do mapa (`montar/_pdf-para-imagem.ts`) gera JPEG 0,9 (PNG se o navegador não gerar
+  JPEG) e o upload direto de WEBP é convertido para JPEG no navegador (`webpParaJpeg`, mesmos tetos de 2400 px e
+  16 Mpx). Servidor e policy continuam aceitando `.webp` (sem SQL). Se ainda assim houver planta `.webp` (enviada antes
+  ou gravada direto), o PDF sai sem a base e com "Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em
+  Montar o mapa" no rodapé; a prévia e a tela mostram o mesmo aviso. Prova com o react-pdf real:
+  `scripts/verificar-prancha-formato-planta.tsx`. Em 01/11 não havia planta em produção (`obras_mapa.planta_path` vazio).
+  Revisão **emitida** com `.webp` congelado continuaria sem base para sempre; reenviar a planta e criar nova revisão
+  resolve. Converter no servidor (`sharp`) consertaria as antigas, mas exige declarar a dependência (OK do José).
+- **Planta WEBP fora do PDF sai no quadro padrão 1000×700**, não na proporção da planta: as camadas (0–1) ficam
+  esticadas em relação ao que o editor mostra. Só acontece com planta antiga ou gravada direto.
+- **Revisão ilegível (M2):** a "Nova revisão" copia só o legível da última emitida (camadas e regras uma a uma, carimbo
+  validado ou o padrão), então a emitida ilegível destrava por ela, sem avisar quantas camadas/regras foram descartadas.
+  Já um **rascunho** ilegível (só por SQL manual: o app nunca grava assim) continua em leitura, porque salvar apagaria o
+  descartado e não há tela de correção; a mensagem diz "peça ajuda ao suporte" e o conserto é por SQL.
