@@ -181,3 +181,49 @@ export function montarEmailNovaMensagem(p: { loja: string; linkObra: string }): 
   const texto = ['MANFAC · NOVA MENSAGEM', p.loja, '', 'A Manfac respondeu à sua mensagem. Para ler e responder, entre na página da obra.', ...textoLinkObra(p.linkObra)].join('\n')
   return { assunto, html, texto }
 }
+
+/**
+ * Planta de faseamento enviada (Leva 6b §2.3): aviso com a fase, a revisão e as
+ * regras impressas; a prancha A3 vai em PDF anexo. Mesmo texto nos dois lados;
+ * o link da página do cliente só no lado cliente.
+ */
+export function montarEmailFaseamento(p: {
+  lado: 'cliente' | 'interno'
+  loja: string
+  fase: string
+  revisao: number
+  /** Data da emissão já em dd/mm/aaaa (fuso de São Paulo). */
+  data: string
+  regras: string[]
+  enviadoPor: string
+  linkObra?: string | null
+}): EmailSimples {
+  const interno = p.lado === 'interno' ? ' · INTERNO' : ''
+  const rev = `R${p.revisao}`
+  const data = p.data
+  const assunto = `Planta de faseamento · ${p.loja} · ${p.fase} · ${rev}${p.lado === 'interno' ? ' · interno' : ''}`
+  const lista = `<ol style="margin:0;padding-left:20px">${p.regras.map((r) => `<li>${esc(r)}</li>`).join('')}</ol>`
+  const corpo = [
+    secao('Prancha', `${esc(p.fase)} · revisão ${rev}, emitida em ${data}.`),
+    p.regras.length ? secao('Regras da fase', lista) : '',
+    secao('Documento', 'A prancha A3 segue em PDF anexo.'),
+  ].join('\n')
+  const html = moldura({
+    faixa: `MANFAC · PLANTA DE FASEAMENTO${interno}`,
+    titulo: p.loja,
+    subtitulo: `${p.fase} · ${rev}`,
+    corpo,
+    rodape: `Manfac Facilities · enviado por ${p.enviadoPor}.`,
+    linkObra: linkDoLado(p.lado, p.linkObra),
+  })
+  const texto = [
+    `MANFAC · PLANTA DE FASEAMENTO${interno}`,
+    p.loja,
+    `${p.fase} · revisão ${rev}, emitida em ${data}.`,
+    ...(p.regras.length ? ['', 'REGRAS DA FASE', ...p.regras.map((r, i) => `${i + 1}. ${r}`)] : []),
+    '',
+    'A prancha A3 segue em PDF anexo.',
+    ...textoLinkObra(linkDoLado(p.lado, p.linkObra)),
+  ].join('\n')
+  return { assunto, html, texto }
+}

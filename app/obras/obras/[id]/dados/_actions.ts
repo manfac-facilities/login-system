@@ -131,3 +131,24 @@ export async function moverPessoaAction(paginaId: string, pessoaId: string, dire
   rev(paginaId)
   return { ok: true }
 }
+
+/**
+ * Coordenador da obra (Leva 6b §2.1): e-mail que, com o engenheiro e o admin, edita/emite/envia a planta
+ * de faseamento. Grava direto em `obras_obra.coordenador_email` (não passa pelo `obras_aplicar_alteracao`);
+ * o trigger `obras_obra_parametros_guarda` exige admin de novo (OBRAS_PARAMETROS). Vazio apaga.
+ */
+export async function salvarCoordenadorAction(paginaId: string, email: string): Promise<Resultado> {
+  const auth = await autorizarAdmin(paginaId)
+  if ('ok' in auth) return auth
+  const e = String(email ?? '').trim().toLowerCase() || null
+  if (e && (!EMAIL.test(e) || e.length > 254)) return falha('E-mail inválido')
+  const { data, error } = await auth.supabase.from('obras_obra').update({ coordenador_email: e }).eq('id', paginaId).eq('modalidade', 'obra').select('id')
+  if (error) {
+    if (String(error.message ?? '').includes('OBRAS_PARAMETROS')) return falha('Só administrador altera os dados da obra')
+    return falha(erroDoBanco(error, 'Não foi possível salvar o coordenador. Tente de novo.'))
+  }
+  if (!data || (data as unknown[]).length === 0) return falha('Obra não encontrada')
+  rev(paginaId)
+  revalidatePath(`/obras/obras/${paginaId}/faseamento`)
+  return { ok: true }
+}

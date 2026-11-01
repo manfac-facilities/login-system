@@ -470,3 +470,24 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
   há testes em jsdom.
 - **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
   `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.
+
+## 01/11/2026 — Obras Leva 6b, planta de faseamento, telas do hub (`feat/obras-leva6b-faseamento`, Task 3), deixado de propósito
+
+- **Deploy: `sdd-sql-obras-leva6b.sql` antes do app.** Sem ele a aba Faseamento dá aviso de erro e a Comunicação inteira
+  falha (o `select` de `obras_envio` passou a pedir `fase_revisao_id`). Dados da obra aguenta (o coordenador é leitura
+  própria; sem a coluna só o campo some).
+- **Destinatários do envio `faseamento` = os do relatório de fase** (tipos `semanal` ou `mensal`): não existe tipo
+  `fase` em `obras_destinatario` (o CHECK só aceita diario/semanal/mensal/imediato). Reenviar manda de novo a todos (cada
+  clique é um envio registrado), sem pular quem já recebeu.
+- **Prévia da prancha na tela é HTML/SVG, não o PDF**: o hub manda `X-Frame-Options: DENY` e `frame-ancestors 'none'`
+  em todas as rotas, então `<iframe>` do PDF não abre. A prévia segue o layout do PDF mas não é idêntica (fontes, quebra
+  das regras, rótulo da zona que encolhe só no PDF). O oficial é "Gerar PDF". Na revisão emitida, o título da prévia sem
+  carimbo usa o nome ATUAL da fase (o PDF usa o congelado).
+- **Planta com caminho mas sem largura/altura** (permitido pelo banco) sai em quadro branco no PDF (a prancha precisa da
+  proporção). O `salvarPlantaAction` sempre grava as dimensões, então não deve acontecer.
+- **Sem renomear, reordenar nem apagar fase pela tela**, e sem desfazer no editor de camadas (o rascunho só grava em
+  "Salvar rascunho"; recarregar descarta). Fora da spec.
+- **Filtro "Relatórios" da Comunicação não inclui o faseamento**: o envio aparece em "Todos".
+- **Teste manual do editor de camadas pendente** (zona por arrasto, linha com duplo clique/Enter/Esc, mover, ocultar)
+  em desktop e tablet, e conferência visual do PDF com planta real: só há testes em jsdom e o render do react-pdf é mockado
+  no Jest.

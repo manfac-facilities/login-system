@@ -8,6 +8,7 @@ import type { Destinatario, Lado, TipoEnvio } from '../configuracoes/_tipos'
 import type { AcessoPortal } from '../configuracoes/_tipos-portal'
 import ValorReceita from './_receita'
 import Organograma from './_organograma'
+import Coordenador from './_coordenador'
 import type { OsReceita } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -39,7 +40,7 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
   if (!permitido) return <Aviso>Esta tela é de quem é responsável pelas obras</Aviso>
   if (!UUID.test(id)) return <Aviso>Obra não encontrada</Aviso>
 
-  const [podeR, obrasR, pessoasR, destR, acR] = await Promise.all([
+  const [podeR, obrasR, pessoasR, destR, acR, coordR] = await Promise.all([
     supabase.rpc('obras_pode_ver_valores', { p_obra: id }),
     supabase.from('obras_obra').select('id, os, loja, descricao, obra_pai_id, valor, cancelado_em').or(`id.eq.${id},obra_pai_id.eq.${id}`),
     supabase.from('obras_cliente_pessoa').select('id, nome, cargo, email, ordem').eq('obra_id', id).order('ordem').order('criado_em'),
@@ -47,6 +48,8 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
       ? supabase.from('obras_destinatario').select('id, email, nome, funcao, lado, tipos, ativo').eq('obra_id', id).order('email')
       : Promise.resolve({ data: [], error: null }),
     admin ? supabase.from('obras_portal_acesso').select('id, email, nome, ativo').eq('obra_id', id).order('email') : Promise.resolve({ data: [], error: null }),
+    // Leitura própria: sem o SQL da leva 6b (coluna ausente) só o campo some, o resto da aba continua.
+    supabase.from('obras_obra').select('coordenador_email').eq('id', id).maybeSingle(),
   ])
   if (obrasR.error) return <Aviso>Não deu para ler a obra agora. Recarregue em instantes.</Aviso>
   const valores = !podeR.error && podeR.data === true
@@ -93,6 +96,9 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
       <p className="text-[13px] text-(--obra-muted-texto)">
         Só administrador edita. Engenheiro e supervisor veem; valores só para quem vê o Financeiro.
       </p>
+      {!coordR.error ? (
+        <Coordenador obraId={id} admin={admin} email={((coordR.data as { coordenador_email?: string | null } | null)?.coordenador_email ?? null) || null} />
+      ) : null}
       {valores ? <ValorReceita obraId={id} oss={oss} admin={admin} /> : null}
       {/* Sem a tabela do organograma (SQL B/C não aplicado): pessoas = [] e tudo cai em "sem cadastro",
           com Remover acesso / Desativar portal / Editar envio — o admin nunca perde como revogar acesso. */}

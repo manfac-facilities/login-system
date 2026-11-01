@@ -11,6 +11,8 @@ const receitaProps = jest.fn()
 const orgProps = jest.fn()
 jest.mock('../_receita', () => ({ __esModule: true, default: (p: unknown) => (receitaProps(p), null) }))
 jest.mock('../_organograma', () => ({ __esModule: true, default: (p: unknown) => (orgProps(p), null) }))
+const coordProps = jest.fn()
+jest.mock('../_coordenador', () => ({ __esModule: true, default: (p: unknown) => (coordProps(p), null) }))
 
 import DadosDaObraPage from '../page'
 import { isAdmin } from '@/lib/auth/roles'
@@ -68,5 +70,13 @@ describe('Dados da obra: sem a tabela do organograma (SQL B/C não aplicado)', (
     expect(p.pessoas).toEqual([])
     expect(p.chips).not.toBeNull()
     expect(p.fora.map((x) => x.email)).toEqual(['bia@dpsp.com.br'])
+  })
+})
+
+describe('Dados da obra: coordenador (Leva 6b)', () => {
+  it('todos veem o coordenador; só admin recebe o campo editável', async () => {
+    f.db.obras_obra[0].coordenador_email = 'coord@manfac.com.br'
+    await montar()
+    expect(coordProps).toHaveBeenCalledWith(expect.objectContaining({ obraId: OBRA, email: 'coord@manfac.com.br', admin: false }))
   })
 })

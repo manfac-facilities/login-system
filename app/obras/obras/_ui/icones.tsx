@@ -206,3 +206,12 @@ export const IconeMapa = (p: Props) => (
     <path d="M15 6.5V20" />
   </Base>
 )
+
+/** Planta de faseamento (Leva 6b): prancha com zona e seta de fluxo. */
+export const IconeFaseamento = (p: Props) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />
+    <path d="M3.5 12h9V4.5" />
+    <path d="M15 16h4M17.5 14l1.5 2-1.5 2" />
+  </Base>
+)

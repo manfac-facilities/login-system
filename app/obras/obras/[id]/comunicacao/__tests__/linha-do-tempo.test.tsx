@@ -83,3 +83,13 @@ describe('linha do tempo', () => {
     expect(screen.getByRole('button', { name: 'Enviar a 1' })).toBeInTheDocument()
   })
 })
+
+describe('faseamento (Leva 6b)', () => {
+  it('envio faseamento: rótulo da fase/revisão e Abrir PDF da revisão', () => {
+    const rev = '33333333-3333-4333-8333-333333333333'
+    const fas: Envio = { ...envio, id: 'f1', tipo: 'faseamento', referencia: '2026-11-01', faseRevisao: { id: rev, rotulo: 'Fase 1 · Demolição · R0' } }
+    render(<LinhaDoTempo itens={[{ tipo: 'envio', chave: 'e-f1', quando: fas.enviadoEm, envio: fas }]} obraId="o1" hoje="2026-11-01" podeEnviar={false} destinatarios={dest} />)
+    expect(screen.getByText(/Planta de faseamento enviada · Fase 1 · Demolição · R0 · cliente/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Abrir PDF' })).toHaveAttribute('href', `/obras/obras/o1/faseamento/${rev}/pdf`)
+  })
+})

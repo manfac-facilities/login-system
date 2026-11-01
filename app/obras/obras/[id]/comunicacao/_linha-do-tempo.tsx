@@ -17,6 +17,7 @@ import { TIPOS_REGISTRO, type DestinatarioOpcao, type Envio, type ItemLinha, typ
 const dataBR = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—')
 const quando = (ts: string) => new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
 const ISO = /^\d{4}-\d{2}-\d{2}$/
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const ROTULO_ENVIO: Record<string, string> = {
   diario: 'Diário enviado',
@@ -26,6 +27,7 @@ const ROTULO_ENVIO: Record<string, string> = {
   mensal: 'Relatório mensal enviado',
   fase: 'Relatório de fase enviado',
   entrega: 'Relatório de entrega enviado',
+  faseamento: 'Planta de faseamento enviada',
 }
 const REF_RELATORIO: Record<string, RegExp> = { mensal: /^\d{4}-(0[1-9]|1[0-2])$/, fase: /^(0|[1-9]\d{0,8})$/, entrega: /^entrega$/ }
 const rotuloRegistro = (r: Registro) =>
@@ -40,7 +42,8 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
           {compacta ? 'E-mail' : (ROTULO_ENVIO[e.tipo ?? 'diario'] ?? 'Envio')}
           {e.tipo === 'diario' ? ` · diário de ${dataBR(e.referencia)}` : ''}
           {e.tipo === 'semanal' ? ` · semana de ${dataBR(e.referencia)}` : ''}
-          {e.relatorio ? ` · ${e.relatorio.rotulo}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
+          {e.relatorio ? ` · ${e.relatorio.rotulo}` : ''}
+          {e.tipo === 'faseamento' && e.faseRevisao ? ` · ${e.faseRevisao.rotulo}` : ''} · {e.lado === 'interno' ? 'interno' : 'cliente'}
         </strong>
         <span className={ok ? 'text-[#136c38]' : 'text-[#b23232]'}>{ok ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}</span>
       </div>
@@ -72,6 +75,11 @@ function LinhaEnvio({ e, obraId, compacta }: { e: Envio; obraId: string; compact
           rel="noopener"
           className={`${botaoSecundario} mt-2`}
         >
+          Abrir PDF
+        </a>
+      ) : null}
+      {e.tipo === 'faseamento' && e.faseRevisao && UUID.test(e.faseRevisao.id) ? (
+        <a href={`/obras/obras/${obraId}/faseamento/${e.faseRevisao.id}/pdf`} target="_blank" rel="noopener" className={`${botaoSecundario} mt-2`}>
           Abrir PDF
         </a>
       ) : null}

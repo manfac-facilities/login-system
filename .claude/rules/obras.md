@@ -236,3 +236,24 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
   insert quando preenchidas); só as telas do mapa dão erro.
 - **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
   `lerReferenciasDosPontos` (1 foto por ponto). Nunca ler as fotos da obra inteira.
+
+### Planta de faseamento (Leva 6b, branch `feat/obras-leva6b-faseamento`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-leva6b-faseamento-design.md`.
+
+- **Onde fica:** `obras/[id]/faseamento/`. Regras puras, schemas (escritos à mão, API `safeParse`/`parse`) e a prancha
+  react-pdf em `_lib/` (`camadas.ts`, `trava.ts`, `prancha-pdf.tsx`); tela em `page.tsx` → `_tela.tsx` (fases, abas
+  "Editar camadas"/"Prancha A3", botões), editor SVG em `_editor.tsx` (arrasto por ponteiro, como o do mapa), desenho em
+  `_desenho.tsx`, prévia HTML/SVG da folha em `_previa.tsx`; carga e render do PDF em `_pdf.ts` (rota
+  `[revisaoId]/pdf` e envio); permissão em `_permissao.ts`. Coordenador em Dados da obra (`dados/_coordenador.tsx`).
+- **Quem edita/emite/envia:** admin, ou com acesso `obras` o engenheiro da obra ou o coordenador
+  (`obras_obra.coordenador_email`, só admin grava, direto na tabela). Igual a `obras_pode_fasear` (lower/trim; NULL/vazio
+  nunca passa). Os demais veem em leitura; o banco recusa mesmo assim.
+- **Regras que mordem:** coordenadas 0–1; ids únicos por camada (o schema recusa repetido); um rascunho por fase;
+  emitida é imutável (trigger) e congela base, fase e trava — PDF e portal da emitida usam `planta_*`/`fase_*` da própria
+  revisão, nunca o mapa vivo; rascunho usa a planta atual e sai com RASCUNHO. Obra sem planta = quadro branco + aviso.
+  Editor só em tela ≥ 768 px. **Prévia nunca em `<iframe>`:** o hub manda `X-Frame-Options: DENY`.
+- **Envio:** `obras_envio` tipo `faseamento` com `fase_revisao_id` (só emitida), um por lado, aos destinatários do
+  relatório de fase (tipos `semanal`/`mensal`); aparece na linha do tempo da Comunicação com "Abrir PDF".
+- **SQL:** `sdd-sql-obras-leva6b.sql` **precisa estar aplicado antes do deploy** (verificação 23/23 + teste 86/86). Sem
+  ele o Faseamento dá erro e a **Comunicação inteira falha** (o select de envios pede `fase_revisao_id`).

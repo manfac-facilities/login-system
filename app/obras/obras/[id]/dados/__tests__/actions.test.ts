@@ -7,7 +7,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn(async () => true) }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn(async (_s: unknown, e: string) => e === 'adm@manfac.com.br') }))
 
-import { moverPessoaAction, removerPessoaAction, salvarPessoaAction, salvarValorReceitaAction } from '../_actions'
+import { moverPessoaAction, removerPessoaAction, salvarCoordenadorAction, salvarPessoaAction, salvarValorReceitaAction } from '../_actions'
 import { salvarDestinatarioAction } from '../../configuracoes/_actions'
 import { destinatarioAposChip, estadoChips } from '../../../_lib/organograma'
 
@@ -112,5 +112,23 @@ describe('valor receita: guarda do banco e OS cancelada (fix 1)', () => {
     f.db.obras_obra[1].cancelado_em = '2026-10-30T12:00:00Z'
     expect(await salvarValorReceitaAction(MAE, FILHA, '10,00')).toEqual({ ok: false, erro: 'Esta OS foi cancelada: o valor receita não conta mais' })
     expect(f.db.obras_obra[1].valor).toBeNull()
+  })
+})
+
+describe('coordenador (Leva 6b, só admin, direto em obras_obra)', () => {
+  it('não admin não grava; admin grava normalizado e vazio apaga; e-mail inválido recusa', async () => {
+    como('eng@manfac.com.br')
+    expect(await salvarCoordenadorAction(MAE, 'coord@manfac.com.br')).toEqual({ ok: false, erro: 'Só administrador altera os dados da obra' })
+    expect(f.db.obras_obra[0].coordenador_email).toBeUndefined()
+    como('adm@manfac.com.br')
+    expect(await salvarCoordenadorAction(MAE, '  Coord@Manfac.com.br ')).toEqual({ ok: true })
+    expect(f.db.obras_obra[0].coordenador_email).toBe('coord@manfac.com.br')
+    expect((await salvarCoordenadorAction(MAE, 'sem arroba')).ok).toBe(false)
+    expect(await salvarCoordenadorAction(MAE, '')).toEqual({ ok: true })
+    expect(f.db.obras_obra[0].coordenador_email).toBeNull()
+  })
+  it('o banco recusando (OBRAS_PARAMETROS) vira a mensagem de só admin', async () => {
+    f.erroEscrita.obras_obra = { message: 'OBRAS_PARAMETROS: só administrador altera ...', code: '42501' }
+    expect(await salvarCoordenadorAction(MAE, 'coord@manfac.com.br')).toEqual({ ok: false, erro: 'Só administrador altera os dados da obra' })
   })
 })

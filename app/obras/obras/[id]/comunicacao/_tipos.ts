@@ -15,6 +15,8 @@ export type Envio = {
   registroId: string | null
   /** Mensal/fase/entrega: o relatório do envio (`relatorio_id`) e o rótulo exibido (nunca o numero da fase). */
   relatorio?: { tipo: 'mensal' | 'fase' | 'entrega'; referencia: string; rotulo: string } | null
+  /** Faseamento (Leva 6b): a revisão emitida do envio (`fase_revisao_id`) e o rótulo ("Fase 1 · Demolição · R1"). */
+  faseRevisao?: { id: string; rotulo: string } | null
 }
 
 export const TIPOS_REGISTRO = [

@@ -53,10 +53,10 @@ export default async function ComunicacaoPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const [envR, regR, destR, relR, agenda, msgR, docR] = await Promise.all([
+  const [envR, regR, destR, relR, agenda, msgR, docR, fasR] = await Promise.all([
     supabase
       .from('obras_envio')
-      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id')
+      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id, fase_revisao_id')
       .eq('obra_id', id)
       .order('enviado_em', { ascending: false })
       .limit(150),
@@ -77,6 +77,8 @@ export default async function ComunicacaoPage({
       .select('id, pasta, nome, tamanho, criado_em, criado_por')
       .eq('obra_id', id)
       .order('criado_em', { ascending: false }),
+    // Faseamento (Leva 6b): só rótulo e link do PDF da revisão emitida (congelados nela).
+    supabase.from('obras_fase_revisao').select('id, revisao, fase_numero, fase_nome').eq('obra_id', id).eq('status', 'emitida'),
   ])
   if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
@@ -99,6 +101,12 @@ export default async function ComunicacaoPage({
           : 'entrega da obra'
     return { tipo: r.tipo, referencia, rotulo }
   }
+  // Só rótulo e link: falha nesta leitura não derruba a página (o envio aparece sem o link).
+  const revisoesFase = new Map((fasR.error ? [] : ((fasR.data ?? []) as Linha[])).map((r) => [String(r.id), r]))
+  const faseRevisaoDe = (revisaoId: unknown): Envio['faseRevisao'] => {
+    const r = revisaoId ? revisoesFase.get(String(revisaoId)) : undefined
+    return r ? { id: String(r.id), rotulo: `Fase ${r.fase_numero} · ${r.fase_nome} · R${r.revisao}` } : null
+  }
   const envios: Envio[] = ((envR.data ?? []) as Linha[]).map((e) => ({
     id: String(e.id),
     tipo: e.tipo ?? null,
@@ -111,6 +119,7 @@ export default async function ComunicacaoPage({
     detalhe: e.detalhe ?? null,
     registroId: e.registro_id ?? null,
     relatorio: relatorioDe(e.relatorio_id),
+    faseRevisao: faseRevisaoDe(e.fase_revisao_id),
   }))
   const registros: Registro[] = ((regR.data ?? []) as Linha[]).map((r) => ({
     id: String(r.id),
