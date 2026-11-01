@@ -5,6 +5,8 @@ export type Falso = {
   db: Record<string, Linha[]>
   /** Erro do próximo insert/update/upsert/delete (por tabela). */
   erroEscrita: Record<string, { message: string; code?: string } | undefined>
+  /** Erro de toda leitura (select) da tabela — ex.: tabela que ainda não existe. */
+  erroLeitura: Record<string, { message: string; code?: string } | undefined>
   rpcs: Record<string, (args: Record<string, unknown>) => { data: unknown; error: unknown }>
   cliente: (getUser: () => Promise<unknown>) => unknown
 }
@@ -14,6 +16,7 @@ export function criarFalso(): Falso {
   const f: Falso = {
     db: {},
     erroEscrita: {},
+    erroLeitura: {},
     rpcs: {},
     cliente: (getUser) => ({
       auth: { getUser },
@@ -32,6 +35,7 @@ export function criarFalso(): Falso {
     const executar = (unico: boolean) => {
       const linhas = (f.db[tabela] ??= [])
       if (op !== 'select' && f.erroEscrita[tabela]) return { data: null, error: f.erroEscrita[tabela] }
+      if (op === 'select' && f.erroLeitura[tabela]) return { data: null, error: f.erroLeitura[tabela] }
       if (op === 'insert') {
         const nova = { id: `id${++seq}`, ...payload }
         linhas.push(nova)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CHIPS_ENVIO, destinatarioAposChip, estadoChips, type ForaDoOrganograma, type Pessoa } from '../../_lib/organograma'
+import { CHIPS_ENVIO, destinatarioAposChip, estadoChips, pendenteDoEmailAntigo, type ForaDoOrganograma, type PendenteEmailAntigo, type Pessoa } from '../../_lib/organograma'
 import { emailInterno } from '../../_lib/portal-email'
 // Fonte única do envio e do acesso ao portal: as actions das Configurações.
 import { salvarDestinatarioAction } from '../configuracoes/_actions'
@@ -38,7 +38,7 @@ function useRodar(): { rodar: Rodar; indo: boolean; erro: string | null } {
   return { rodar, indo, erro }
 }
 
-function FormPessoa({ obraId, inicial, onFim }: { obraId: string; inicial: PessoaEntrada; onFim: () => void }) {
+function FormPessoa({ obraId, inicial, onFim }: { obraId: string; inicial: PessoaEntrada; onFim: (salvo?: PessoaEntrada) => void }) {
   const [p, setP] = useState<PessoaEntrada>(inicial)
   const { rodar, indo, erro } = useRodar()
   return (
@@ -54,13 +54,13 @@ function FormPessoa({ obraId, inicial, onFim }: { obraId: string; inicial: Pesso
           type="button"
           disabled={indo || !p.nome.trim()}
           onClick={async () => {
-            if (await rodar(() => salvarPessoaAction(obraId, p))) onFim()
+            if (await rodar(() => salvarPessoaAction(obraId, p))) onFim(p)
           }}
           className="min-h-11 rounded-lg bg-(--obra-orange-texto) px-4 text-sm font-semibold text-white disabled:opacity-45"
         >
           {indo ? 'salvando…' : 'Salvar'}
         </button>
-        <button type="button" onClick={onFim} className={botao}>
+        <button type="button" onClick={() => onFim()} className={botao}>
           Cancelar
         </button>
       </div>
@@ -142,11 +142,55 @@ function ChipsDaPessoa({ obraId, pessoa, chips }: { obraId: string; pessoa: { no
   )
 }
 
+/**
+ * Depois de trocar o e-mail: o acesso ao portal e o envio do e-mail antigo continuam ativos.
+ * Pergunta (não desativa sozinho): um clique desativa os dois, ou "Manter".
+ */
+function AvisoEmailAntigo({ obraId, pendente, onFim }: { obraId: string; pendente: PendenteEmailAntigo; onFim: () => void }) {
+  const { rodar, indo, erro } = useRodar()
+  const itens = [pendente.acesso ? 'acesso ao portal ativo' : null, pendente.destinatario ? 'recebe os envios' : null].filter(Boolean).join(' e ')
+  const desativar = async () => {
+    if (pendente.acesso && !(await rodar(() => alternarAcessoAction(obraId, pendente.acesso!.id, false)))) return
+    if (pendente.destinatario && !(await rodar(() => salvarDestinatarioAction(obraId, { ...pendente.destinatario!, ativo: false })))) return
+    onFim()
+  }
+  return (
+    <li role="status" className="flex flex-col gap-2 rounded-xl border border-[#efd77a] bg-[#fdf6d8] p-3 text-[14px] text-(--obra-text)">
+      <span>
+        O e-mail antigo <strong className="obra-num break-all">{pendente.email}</strong> continua com {itens}.
+      </span>
+      <span className="flex flex-wrap gap-1.5">
+        <button type="button" className={botao} disabled={indo} onClick={() => void desativar()}>
+          Desativar acesso antigo
+        </button>
+        <button type="button" className={botao} disabled={indo} onClick={onFim}>
+          Manter
+        </button>
+      </span>
+      {erro ? <span role="alert" className="text-xs text-(--obra-vermelho-texto)">{erro}</span> : null}
+    </li>
+  )
+}
+
 function LinhaPessoa({ obraId, p, admin, chips, primeira, ultima }: { obraId: string; p: Pessoa; admin: boolean; chips: Chips | null; primeira: boolean; ultima: boolean }) {
   const [editando, setEditando] = useState(false)
+  const [pendente, setPendente] = useState<PendenteEmailAntigo | null>(null)
   const { rodar, indo, erro } = useRodar()
-  if (editando) return <FormPessoa obraId={obraId} inicial={{ id: p.id, nome: p.nome, cargo: p.cargo, email: p.email }} onFim={() => setEditando(false)} />
+  if (editando) {
+    return (
+      <FormPessoa
+        obraId={obraId}
+        inicial={{ id: p.id, nome: p.nome, cargo: p.cargo, email: p.email }}
+        onFim={(salvo) => {
+          setEditando(false)
+          if (salvo && chips) setPendente(pendenteDoEmailAntigo(p.email, salvo.email, chips.destinatarios, chips.acessos))
+        }}
+      />
+    )
+  }
   return (
+    <>
+    {pendente ? <AvisoEmailAntigo obraId={obraId} pendente={pendente} onFim={() => setPendente(null)} /> : null}
     <li className="grid gap-2 rounded-xl border border-(--obra-border) bg-white p-3 text-[14px] text-(--obra-text) lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] lg:items-center">
       <span className="font-semibold text-(--obra-ink)">{p.nome}</span>
       <span>{p.cargo ?? <span className="text-(--obra-muted-texto)">sem cargo</span>}</span>
@@ -185,10 +229,11 @@ function LinhaPessoa({ obraId, p, admin, chips, primeira, ultima }: { obraId: st
         {erro ? <p role="alert" className="text-xs text-(--obra-vermelho-texto)">{erro}</p> : null}
       </div>
     </li>
+    </>
   )
 }
 
-function Fora({ obraId, itens, chips }: { obraId: string; itens: ForaDoOrganograma[]; chips: Chips }) {
+function Fora({ obraId, itens, chips, podeAdicionar }: { obraId: string; itens: ForaDoOrganograma[]; chips: Chips; podeAdicionar: boolean }) {
   const [adicionando, setAdicionando] = useState<string | null>(null)
   if (!itens.length) return null
   return (
@@ -213,9 +258,11 @@ function Fora({ obraId, itens, chips }: { obraId: string; itens: ForaDoOrganogra
               </span>
               <span className="flex flex-col items-end gap-2">
                 <ChipsDaPessoa obraId={obraId} pessoa={{ nome: f.nome ?? f.email, cargo: f.funcao, email: f.email }} chips={chips} />
-                <button type="button" className={botao} onClick={() => setAdicionando(f.email)}>
-                  Adicionar ao organograma
-                </button>
+                {podeAdicionar ? (
+                  <button type="button" className={botao} onClick={() => setAdicionando(f.email)}>
+                    Adicionar ao organograma
+                  </button>
+                ) : null}
               </span>
             </li>
           ),
@@ -232,6 +279,7 @@ export default function Organograma({
   chips,
   fora,
   erroChips,
+  indisponivel = false,
 }: {
   obraId: string
   admin: boolean
@@ -240,6 +288,11 @@ export default function Organograma({
   chips: Chips | null
   fora: ForaDoOrganograma[]
   erroChips: boolean
+  /**
+   * A tabela do organograma não pôde ser lida (SQL B/C ainda não aplicado ou falha): mostra
+   * o aviso e mantém "sem cadastro" com os botões de acesso e envio (tabelas da Leva 5).
+   */
+  indisponivel?: boolean
 }) {
   const [novo, setNovo] = useState(false)
   return (
@@ -251,14 +304,20 @@ export default function Organograma({
             Nome e cargo. E-mail opcional; quem tem e-mail pode ser marcado para receber os envios e entrar no portal.
           </p>
         </div>
-        {admin && !novo ? (
+        {admin && !novo && !indisponivel ? (
           <button type="button" className={botao} onClick={() => setNovo(true)}>
             + Adicionar pessoa
           </button>
         ) : null}
       </div>
       {novo ? <FormPessoa obraId={obraId} inicial={{ nome: '', cargo: null, email: null }} onFim={() => setNovo(false)} /> : null}
-      {pessoas.length === 0 ? <p className="text-sm text-(--obra-muted-texto)">Ninguém no organograma ainda.</p> : null}
+      {indisponivel ? (
+        <p role="status" className="rounded-lg border border-dashed border-(--obra-border) px-3 py-2 text-sm text-(--obra-muted-texto)">
+          Não deu para ler o organograma agora. Os e-mails que já recebem envios ou entram no portal continuam abaixo, com os botões de acesso e envio.
+        </p>
+      ) : pessoas.length === 0 ? (
+        <p className="text-sm text-(--obra-muted-texto)">Ninguém no organograma ainda.</p>
+      ) : null}
       <ul className="flex flex-col gap-2">
         {pessoas.map((p, i) => (
           <LinhaPessoa key={p.id} obraId={obraId} p={p} admin={admin} chips={chips} primeira={i === 0} ultima={i === pessoas.length - 1} />
@@ -267,7 +326,7 @@ export default function Organograma({
       {erroChips ? (
         <p role="alert" className="text-sm text-(--obra-vermelho-texto)">Não deu para ler os envios e o acesso ao portal agora. Recarregue em instantes.</p>
       ) : null}
-      {chips ? <Fora obraId={obraId} itens={fora} chips={chips} /> : null}
+      {chips ? <Fora obraId={obraId} itens={fora} chips={chips} podeAdicionar={admin && !indisponivel} /> : null}
       <p className="text-[13px] text-(--obra-muted-texto)">
         Esta lista é o cadastro de e-mails do cliente: os destinatários dos envios e o acesso ao portal saem daqui. Os destinatários internos (Manfac) ficam nas Configurações.
       </p>

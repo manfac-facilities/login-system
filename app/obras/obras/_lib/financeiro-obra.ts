@@ -142,6 +142,9 @@ export function consolidarFinanceiro(input: {
 //    pedido do Compras (inclusive locacao) da mesma familia = PAGAMENTO do pedido, nao custo a
 //    mais: soma no realizado/pago da origem do pedido (e da OS do pedido) ate o valor do pedido;
 //    so o excedente fica em "Pagamentos / rateio" (decisao M3 da revisao da Task 7).
+//    Pedido JA PAGO no Compras (pago_em) nao absorve: o pagamento vira custo proprio — salvo se
+//    for o MESMO pagamento visto dos dois lados (data do pagamento = dia BRT do pago_em), senao
+//    todo pedido quitado pelo Financeiro contaria duas vezes depois que o Compras marca pago_em.
 
 export type VinculoCusto = {
   obraId: string
@@ -159,6 +162,8 @@ export type VinculoCusto = {
   relatorioStatus: string | null
   /** CPF/CNPJ do fornecedor da solicitacao (so [0-9A-Z]); null na caixinha. */
   fornecedorDocumento?: string | null
+  /** fin_pagamentos_omie.data_pagamento (AAAA-MM-DD). */
+  pagamentoData?: string | null
 }
 
 export type MedicaoCliente = { obraId: string; situacao: string; valorCentavos: number }
@@ -204,6 +209,12 @@ export type MargemObra = {
 
 const ZERO: Custo = { comprometido: 0, realizado: 0, pago: 0 }
 const ETAPA_FORA = new Set(['recusada', 'cancelada'])
+
+/** Dia (AAAA-MM-DD) em Brasilia de um timestamp; null se invalido. */
+function diaBrt(ts: string): string | null {
+  const d = new Date(ts)
+  return Number.isNaN(d.getTime()) ? null : new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(d)
+}
 
 /** Avanco valido 0–1, ou null (NaN/Infinity/null nunca entram na conta). */
 const avancoValido = (x: number | null): number | null =>
@@ -278,7 +289,7 @@ export function consolidarMargem(input: {
     locacoes: so({ compras: input.compras.filter((c) => c.locacao) }),
   }
   // Pedidos que contam (mesma regra da Fase A) e têm documento: capacidade para casar pagamentos.
-  type Vaga = { obraId: string; origem: 'compras' | 'locacoes'; cap: number; folgaRe: number; folgaP: number }
+  type Vaga = { obraId: string; origem: 'compras' | 'locacoes'; cap: number; folgaRe: number; folgaP: number; diaPago: string | null }
   const vagasPorDoc = new Map<string, Vaga[]>()
   for (const c of input.compras) {
     if (!ids.has(c.obraId) || c.status !== 'emitido' || !c.fornecedorDocumento) continue
@@ -287,6 +298,7 @@ export function consolidarMargem(input: {
     const vaga: Vaga = {
       obraId: c.obraId, origem: c.locacao ? 'locacoes' : 'compras', cap: t,
       folgaRe: c.nf || c.pago_em ? 0 : t, folgaP: c.pago_em ? 0 : t,
+      diaPago: c.pago_em ? (diaBrt(c.pago_em) ?? '?') : null,
     }
     vagasPorDoc.set(c.fornecedorDocumento, [...(vagasPorDoc.get(c.fornecedorDocumento) ?? []), vaga])
   }
@@ -302,7 +314,10 @@ export function consolidarMargem(input: {
     const c = custoDoVinculo(v)
     const k = v.origem === 'caixinha_despesa' ? 'caixinha' : 'pagamentos'
     let resto = c
-    const vagas = v.origem === 'solicitacao' && v.fornecedorDocumento ? (vagasPorDoc.get(v.fornecedorDocumento) ?? []) : []
+    const dia = v.pagamentoData ? v.pagamentoData.slice(0, 10) : null
+    // Pedido em aberto, ou pago no MESMO dia deste pagamento (é ele mesmo).
+    const vagas = (v.origem === 'solicitacao' && v.fornecedorDocumento ? (vagasPorDoc.get(v.fornecedorDocumento) ?? []) : [])
+      .filter((x) => x.diaPago === null || (dia !== null && x.diaPago === dia))
     if (c.comprometido > 0 && vagas.some((x) => x.cap > 0)) {
       let restC = c.comprometido
       let usadoRe = 0

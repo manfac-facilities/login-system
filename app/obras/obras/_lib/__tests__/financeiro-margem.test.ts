@@ -237,11 +237,12 @@ describe('consolidarMargem — pagamento do Financeiro casado com pedido do Comp
     expect(r.vinculosComoPagamentoDePedido).toBe(2)
   })
 
-  it('locação já paga no Compras: o pagamento do Financeiro não soma de novo', () => {
+  it('locação paga no Compras pelo MESMO pagamento (mesmo dia BRT): o pagamento do Financeiro não soma de novo', () => {
     const r = consolidarMargem({
       ...vazio, obras, avanco: 0.5,
-      compras: [pedido({ locacao: true, total_centavos: 5_000, nf: '1', pago_em: '2026-10-01' })],
-      vinculos: [pago({ valorCentavos: 5_000 })],
+      // 02:00Z de 02/10 = 01/10 em Brasília
+      compras: [pedido({ locacao: true, total_centavos: 5_000, nf: '1', pago_em: '2026-10-02T02:00:00Z' })],
+      vinculos: [pago({ valorCentavos: 5_000, pagamentoData: '2026-10-01' })],
     })
     expect(r.origens.locacoes).toEqual({ comprometido: 5_000, realizado: 5_000, pago: 5_000 })
     expect(r.origens.pagamentos).toEqual({ comprometido: 0, realizado: 0, pago: 0 })
@@ -320,5 +321,40 @@ describe('consolidarMargem — revisão M1/M2', () => {
     expect(c.porOS[1].liberado).toBe(0)
     expect(c.total.liberado).toBe(0)
     expect(c.pendencias.liberadoNaoFaturado).toBe(0)
+  })
+})
+
+describe('consolidarMargem — revisão final M1 (pedido já pago)', () => {
+  const pedido = (over: Partial<import('../financeiro-obra').CompraPedido> = {}) => ({
+    obraId: 'm', status: 'emitido', total_centavos: 10_000, fornecedorDocumento: 'D1', ...over,
+  })
+  const pago = (over: Partial<VinculoCusto> = {}) => vin({ valorCentavos: 10_000, pagamentoSituacao: 'pago', fornecedorDocumento: 'D1', ...over })
+
+  it('pedido já pago no Compras em outro dia: o pagamento do Financeiro é custo próprio', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      compras: [pedido({ nf: '1', pago_em: '2026-10-01T15:00:00Z' })],
+      vinculos: [pago({ valorCentavos: 3_000, pagamentoData: '2026-10-20' }), pago({ valorCentavos: 2_000, pagamentoData: null })],
+    })
+    expect(r.origens.compras).toEqual({ comprometido: 10_000, realizado: 10_000, pago: 10_000 })
+    expect(r.origens.pagamentos).toEqual({ comprometido: 5_000, realizado: 5_000, pago: 5_000 })
+    expect(r.vinculosComoPagamentoDePedido).toBe(0)
+  })
+
+  it('fornecedor com um pedido pago e outro em aberto: absorve só no aberto, até o valor dele', () => {
+    const r = consolidarMargem({
+      ...vazio, obras, avanco: 0.5,
+      compras: [pedido({ pago_em: '2026-10-01T15:00:00Z' }), pedido({ obraId: 'f', total_centavos: 4_000 })],
+      vinculos: [pago({ valorCentavos: 6_000, pagamentoData: '2026-10-20' })],
+    })
+    expect(r.origens.compras).toEqual({ comprometido: 14_000, realizado: 14_000, pago: 14_000 })
+    expect(r.origens.pagamentos).toEqual({ comprometido: 2_000, realizado: 2_000, pago: 2_000 })
+    expect(r.porOS[1]).toMatchObject({ custoComprometido: 4_000, custoPago: 4_000 })
+  })
+
+  it('pedido com NF e ainda não pago: o pagamento quita (pago entra, realizado não dobra)', () => {
+    const r = consolidarMargem({ ...vazio, obras, avanco: 0.5, compras: [pedido({ nf: '7' })], vinculos: [pago({ pagamentoData: '2026-10-20' })] })
+    expect(r.origens.compras).toEqual({ comprometido: 10_000, realizado: 10_000, pago: 10_000 })
+    expect(r.origens.pagamentos.comprometido).toBe(0)
   })
 })

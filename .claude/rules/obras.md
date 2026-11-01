@@ -204,7 +204,8 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; 
   avanço → "—"); receita esperada exclui OS cancelada; sem valor receita a tela pede o valor em Dados da obra.
   Sem dupla contagem: vínculo com `de_medicao_fornecedor` fica fora (já está em Fornecedores); pedido de locação do
   Compras sai de "Compras" e entra em "Locações". Pagamento do Financeiro ao mesmo fornecedor (CPF/CNPJ, `fornecedor_documento`) de um
-  pedido do Compras da família quita o pedido (realizado/pago na origem do pedido, até o valor dele); só o
+  pedido do Compras da família quita o pedido (realizado/pago na origem do pedido, até o valor dele) só enquanto o pedido não está pago no
+  Compras — pedido com `pago_em` só absorve o pagamento do mesmo dia BRT (é o mesmo pagamento); só o
   excedente fica em "Pagamentos / rateio" (DIVIDAS M1). Margem projetada total e percentuais só sobre as OS
   com valor receita; liberado de OS cancelada fora; "liberado e não faturado" somado por OS. Tudo com o cliente da SESSÃO; valores só com
   `obras_pode_ver_valores` (a aba some para os demais). O painel só lê medições para os alertas quando
@@ -213,3 +214,7 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; 
 - **SQL e ordem de deploy:** Fase A (`sdd-sql-obras-financeiro-a.sql`) → Financeiro `044` → Compras `016` →
   Fornecedores `013` → `sdd-sql-obras-financeiro-bc.sql`; depois os apps. Teste de comportamento:
   `docs/obras/2026-11-01-verificacao-obras-financeiro-bc.sql` (rollback).
+- **Merge na master só DEPOIS do SQL B/C aplicado em produção** com a verificação pós-commit **24/24 OK** e o
+  teste de comportamento **114/114 OK**. Não há deploy por feature: qualquer deploy de outra coisa leva esta junto,
+  e sem o SQL a aba Financeiro fica sem margem e Medições/Locações só avisam. (Dados da obra aguenta: sem
+  `obras_cliente_pessoa`, o organograma mostra o aviso e "sem cadastro" continua com os botões de acesso e envio.)

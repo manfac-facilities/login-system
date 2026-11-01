@@ -103,3 +103,25 @@ export function reordenar(pessoas: Pessoa[], id: string, direcao: 'cima' | 'baix
   ;[lista[i], lista[j]] = [lista[j], lista[i]]
   return lista.map((p, k) => ({ id: p.id, ordem: k })).filter((x, k) => lista[k].ordem !== x.ordem)
 }
+
+/** O que continua ativo no e-mail ANTIGO de uma pessoa cujo e-mail mudou (revisão final M4). */
+export type PendenteEmailAntigo = { email: string; acesso: AcessoPortal | null; destinatario: Destinatario | null }
+
+/**
+ * Trocar o e-mail no organograma não mexe no envio nem no acesso ao portal do e-mail antigo
+ * (nada some em silêncio). Isto diz o que ficou ativo nele, para a tela perguntar se desativa.
+ * Sem e-mail antigo, e-mail igual ou nada ativo → null.
+ */
+export function pendenteDoEmailAntigo(
+  antigo: string | null,
+  novo: string | null,
+  destinatarios: Destinatario[],
+  acessos: AcessoPortal[],
+): PendenteEmailAntigo | null {
+  const a = chave(antigo)
+  if (!a || a === chave(novo)) return null
+  const est = estadoChips(a, destinatarios, acessos)
+  const acesso = est.portal ? est.acesso : null
+  const destinatario = est.destinatario && est.destinatario.ativo ? est.destinatario : null
+  return acesso || destinatario ? { email: a, acesso, destinatario } : null
+}

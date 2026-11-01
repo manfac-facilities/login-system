@@ -11,6 +11,8 @@ jest.mock('../../configuracoes/_actions-portal', () => ({
 
 import Organograma from '../_organograma'
 import { adicionarAcessoAction, alternarAcessoAction, removerAcessoAction } from '../../configuracoes/_actions-portal'
+import { salvarDestinatarioAction } from '../../configuracoes/_actions'
+import { salvarPessoaAction } from '../_actions'
 import { foraDoOrganograma, type Pessoa } from '../../../_lib/organograma'
 import type { Destinatario } from '../../configuracoes/_tipos'
 import type { AcessoPortal } from '../../configuracoes/_tipos-portal'
@@ -64,5 +66,54 @@ describe('e-mail da Manfac e funções da lista antiga', () => {
     await waitFor(() => expect(removerAcessoAction).toHaveBeenCalledWith('o1', 'a2'))
     fireEvent.click(within(fora).getByRole('button', { name: 'Editar envio' }))
     expect(within(fora).getByLabelText('Função')).toHaveValue('Gerente')
+  })
+})
+
+describe('organograma indisponível (SQL B/C não aplicado)', () => {
+  it('mostra o aviso, esconde "Adicionar" e mantém Remover acesso / Portal em "sem cadastro"', async () => {
+    jest.spyOn(window, 'confirm').mockReturnValue(true)
+    const acessos: AcessoPortal[] = [{ id: 'a2', email: 'bia@dpsp.com.br', nome: 'Bia', ativo: true }]
+    render(<Organograma obraId="o1" admin pessoas={[]} chips={{ destinatarios: [], acessos }} fora={foraDoOrganograma([], [], acessos)} erroChips={false} indisponivel />)
+    expect(screen.getByText(/Não deu para ler o organograma agora/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Adicionar pessoa' })).toBeNull()
+    const fora = screen.getByRole('region', { name: 'Sem cadastro no organograma' })
+    expect(within(fora).queryByRole('button', { name: 'Adicionar ao organograma' })).toBeNull()
+    fireEvent.click(within(fora).getByRole('button', { name: 'Portal' }))
+    await waitFor(() => expect(alternarAcessoAction).toHaveBeenCalledWith('o1', 'a2', false))
+    fireEvent.click(within(fora).getByRole('button', { name: 'Remover acesso' }))
+    await waitFor(() => expect(removerAcessoAction).toHaveBeenCalledWith('o1', 'a2'))
+  })
+})
+
+describe('trocar o e-mail de uma pessoa (revisão final M4)', () => {
+  const editarEmail = async (novo: string) => {
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    fireEvent.change(screen.getByLabelText('E-mail (opcional)'), { target: { value: novo } })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+  }
+  it('e-mail antigo com portal e envio ativos: avisa e desativa os dois com um clique', async () => {
+    ;(salvarPessoaAction as jest.Mock).mockResolvedValue({ ok: true })
+    const d: Destinatario = { id: 'd1', email: 'ana@dpsp.com.br', nome: 'Ana', funcao: null, lado: 'cliente', tipos: ['diario'], ativo: true }
+    montar([ana], [d], [{ id: 'a1', email: 'ana@dpsp.com.br', nome: 'Ana', ativo: true }])
+    await editarEmail('ana.nova@dpsp.com.br')
+    const aviso = await screen.findByRole('status')
+    expect(aviso).toHaveTextContent('ana@dpsp.com.br continua com acesso ao portal ativo e recebe os envios')
+    fireEvent.click(within(aviso).getByRole('button', { name: 'Desativar acesso antigo' }))
+    await waitFor(() => expect(salvarDestinatarioAction).toHaveBeenCalledWith('o1', expect.objectContaining({ id: 'd1', ativo: false })))
+    expect(alternarAcessoAction).toHaveBeenCalledWith('o1', 'a1', false)
+    await waitFor(() => expect(screen.queryByText(/continua com/)).toBeNull())
+  })
+  it('"Manter" fecha o aviso sem mexer; sem nada ativo no antigo não avisa', async () => {
+    ;(salvarPessoaAction as jest.Mock).mockResolvedValue({ ok: true })
+    const { unmount } = montar([ana], [], [{ id: 'a1', email: 'ana@dpsp.com.br', nome: 'Ana', ativo: true }])
+    await editarEmail('ana.nova@dpsp.com.br')
+    fireEvent.click(within(await screen.findByRole('status')).getByRole('button', { name: 'Manter' }))
+    expect(alternarAcessoAction).not.toHaveBeenCalled()
+    expect(screen.queryByText(/continua com/)).toBeNull()
+    unmount()
+    montar([ana], [], [{ id: 'a1', email: 'ana@dpsp.com.br', nome: 'Ana', ativo: false }])
+    await editarEmail('ana.nova@dpsp.com.br')
+    await waitFor(() => expect(salvarPessoaAction).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText(/continua com/)).toBeNull()
   })
 })

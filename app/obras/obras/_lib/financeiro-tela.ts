@@ -218,6 +218,7 @@ export function montarFinanceiro(p: {
       solicitacaoValorCentavos: opcional(r.solicitacao_valor_centavos),
       relatorioStatus: txt(r.relatorio_status),
       fornecedorDocumento: txt(r.fornecedor_documento),
+      pagamentoData: txt(r.pagamento_data),
     }))
     const mc: MedicaoCliente[] = medicoesCliente.map((r) => ({ obraId: String(r.obra_id), situacao: String(r.situacao ?? ''), valorCentavos: valor(r.valor_centavos) }))
     const c = consolidarMargem({ compras: cp, fornecedores: md, notas: nt, vinculos: vc, medicoesCliente: mc, obras: refs, avanco: p.avanco ?? null })

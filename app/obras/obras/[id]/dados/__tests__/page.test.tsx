@@ -13,6 +13,7 @@ jest.mock('../_receita', () => ({ __esModule: true, default: (p: unknown) => (re
 jest.mock('../_organograma', () => ({ __esModule: true, default: (p: unknown) => (orgProps(p), null) }))
 
 import DadosDaObraPage from '../page'
+import { isAdmin } from '@/lib/auth/roles'
 
 const OBRA = '11111111-1111-4111-8111-111111111111'
 const FILHA = '22222222-2222-4222-8222-222222222222'
@@ -51,5 +52,21 @@ describe('Dados da obra: valor receita só para quem vê valores', () => {
       expect.objectContaining({ id: OBRA, receitaCentavos: 43_777_241, cancelada: false }),
       expect.objectContaining({ id: FILHA, receitaCentavos: 3_850_000, cancelada: true }),
     ])
+  })
+})
+
+describe('Dados da obra: sem a tabela do organograma (SQL B/C não aplicado)', () => {
+  it('admin continua com "sem cadastro" (acessos e envios da Leva 5) e o aviso de organograma indisponível', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValueOnce(true)
+    f.rpcs.obras_pode_ver_valores = () => ({ data: false, error: null })
+    f.erroLeitura.obras_cliente_pessoa = { message: 'relation "obras_cliente_pessoa" does not exist', code: '42P01' }
+    f.db.obras_destinatario = [{ id: 'd1', obra_id: OBRA, email: 'bia@dpsp.com.br', nome: 'Bia', funcao: null, lado: 'cliente', tipos: ['diario'], ativo: true }]
+    f.db.obras_portal_acesso = [{ id: 'a1', obra_id: OBRA, email: 'bia@dpsp.com.br', nome: 'Bia', ativo: true }]
+    await montar()
+    const p = orgProps.mock.calls[0][0] as { indisponivel: boolean; pessoas: unknown[]; chips: unknown; fora: { email: string }[] }
+    expect(p.indisponivel).toBe(true)
+    expect(p.pessoas).toEqual([])
+    expect(p.chips).not.toBeNull()
+    expect(p.fora.map((x) => x.email)).toEqual(['bia@dpsp.com.br'])
   })
 })

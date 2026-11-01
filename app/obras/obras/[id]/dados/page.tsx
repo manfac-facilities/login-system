@@ -94,18 +94,17 @@ export default async function DadosDaObraPage({ params }: { params: Promise<{ id
         Só administrador edita. Engenheiro e supervisor veem; valores só para quem vê o Financeiro.
       </p>
       {valores ? <ValorReceita obraId={id} oss={oss} admin={admin} /> : null}
-      {pessoasR.error ? (
-        <Aviso>Não deu para ler o organograma agora. Recarregue em instantes.</Aviso>
-      ) : (
-        <Organograma
-          obraId={id}
-          admin={admin}
-          pessoas={pessoas}
-          chips={chipsOk ? { destinatarios, acessos } : null}
-          fora={chipsOk ? foraDoOrganograma(pessoas, destinatarios, acessos) : []}
-          erroChips={admin && !chipsOk}
-        />
-      )}
+      {/* Sem a tabela do organograma (SQL B/C não aplicado): pessoas = [] e tudo cai em "sem cadastro",
+          com Remover acesso / Desativar portal / Editar envio — o admin nunca perde como revogar acesso. */}
+      <Organograma
+        obraId={id}
+        admin={admin}
+        pessoas={pessoas}
+        chips={chipsOk ? { destinatarios, acessos } : null}
+        fora={chipsOk ? foraDoOrganograma(pessoas, destinatarios, acessos) : []}
+        erroChips={admin && !chipsOk}
+        indisponivel={!!pessoasR.error}
+      />
     </div>
   )
 }
