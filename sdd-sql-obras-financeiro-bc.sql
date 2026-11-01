@@ -26,6 +26,10 @@
 --      aprovada_em; autoria forçada no INSERT e nunca reescrita no UPDATE.
 --      Grava: obras_engenheiro_ou_admin_mae(obra). Lê: obras_pode_ver_valores(obra).
 --      Apaga: só administrador (a nota do Financeiro aponta para a medição).
+--      Medição LIGADA A NOTA (fin_fat_nota_medicoes, só leitura): ninguém (nem admin,
+--      nem sem JWT) apaga, muda percentual/valor ou tira de 'aprovada' — desligar a
+--      nota no Financeiro antes. Datas (BRT) não podem estar no futuro e a aprovação
+--      não pode ser antes do envio.
 --      Máquina de estados (com JWT de não administrador):
 --        INSERT só como 'enviada';
 --        enviada -> enviada | aprovada | recusada;
@@ -37,7 +41,8 @@
 --   4. obras_locacao_estado (devolvida/renovada da locação): cmp_pedido_id ÚNICO
 --      (SEM FK, como obras_restricao.cmp_pedido_id), obra_id, devolvida_em,
 --      renovada_ate, autoria. O pedido tem de existir (produção), ser de LOCAÇÃO e
---      a solicitação dele ser desta obra — vale para qualquer role. Grava:
+--      a solicitação dele ser desta obra e o pedido estar EMITIDO — vale para qualquer
+--      role; renovada_ate > coalesce(locacao_fim, dia da entrega). Grava:
 --      obras_engenheiro_ou_admin_mae(obra); lê: obras_has_access(); apaga: admin.
 --   5. Leituras (security definer, search_path fixo, stable, EXECUTE para
 --      authenticated e service_role, nunca anon/public; obra + filhas diretas;
@@ -154,6 +159,8 @@ begin
     'fin_caixinha_despesas.data', 'fin_caixinha_despesas.titulo', 'fin_caixinha_despesas.valor_centavos',
     'fin_caixinha_despesas.tipo_nome', 'fin_caixinha_despesas.centro_custo_nome',
     'fin_caixinha_relatorios.ambiente', 'fin_caixinha_relatorios.vex_id', 'fin_caixinha_relatorios.status',
+    'fin_solicitacao_integracoes.ambiente', 'fin_solicitacao_integracoes.origem',
+    'fin_solicitacao_integracoes.chave', 'fin_solicitacao_integracoes.solicitacao_id',
     'fin_solicitacao_rateio.solicitacao_id', 'fin_solicitacao_rateio.departamento_descricao',
     'fin_solicitacao_rateio.valor_centavos',
     'frn_medicoes.fin_solicitacao_id', 'frn_medicoes.id', 'frn_medicoes.numero', 'frn_medicoes.contrato_id',
@@ -303,6 +310,7 @@ drop policy if exists "obras admin delete" on public.obras_cliente_pessoa;
 create policy "obras admin delete" on public.obras_cliente_pessoa for delete to authenticated
   using ((select public.obras_is_admin()));
 revoke all on public.obras_cliente_pessoa from anon;
+revoke truncate on public.obras_cliente_pessoa from authenticated;
 
 -- ============================================================
 -- 3. obras_medicao_cliente (medição/liberação do cliente por OS)
@@ -346,6 +354,7 @@ declare
   v_livre boolean;   -- administrador ou sem JWT (service role/postgres)
   v_soma bigint;
   v_checar_soma boolean;
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
 begin
   v_livre := v_email is null or public.obras_is_admin() is true;
 
@@ -353,6 +362,11 @@ begin
     if v_livre is not true then
       raise exception 'OBRAS_MEDICAO_CLIENTE: só administrador apaga medição ao cliente'
         using errcode = '42501';
+    end if;
+    -- Nota ligada (Financeiro, sem FK): ninguém apaga, nem admin nem sem JWT.
+    if exists (select 1 from public.fin_fat_nota_medicoes nm where nm.medicao_id = old.id) then
+      raise exception 'OBRAS_MEDICAO_CLIENTE: medição com nota emitida não se apaga — desligue a nota no Financeiro antes'
+        using errcode = '23503';
     end if;
     return old;
   end if;
@@ -409,6 +423,15 @@ begin
       end if;
     end if;
 
+    -- Nota ligada (qualquer role, inclusive admin): % e valor fixos, não sai de aprovada.
+    if (new.percentual_centesimos is distinct from old.percentual_centesimos
+        or new.valor_centavos is distinct from old.valor_centavos
+        or (old.situacao = 'aprovada' and new.situacao is distinct from 'aprovada'))
+       and exists (select 1 from public.fin_fat_nota_medicoes nm where nm.medicao_id = old.id) then
+      raise exception 'OBRAS_MEDICAO_CLIENTE: medição com nota emitida: percentual, valor e aprovação não mudam — desligue a nota no Financeiro antes'
+        using errcode = '23503';
+    end if;
+
     -- Reenviar (recusada -> enviada): conta de novo a partir de agora.
     if old.situacao = 'recusada' and new.situacao = 'enviada'
        and new.enviada_em is not distinct from old.enviada_em then
@@ -424,10 +447,14 @@ begin
                      or new.situacao is distinct from old.situacao;
   end if;
 
-  -- Datas no futuro (folga de 1 dia para relógio/fuso da tela).
-  if new.enviada_em > now() + interval '1 day'
-     or (new.aprovada_em is not null and new.aprovada_em > now() + interval '1 day') then
+  -- Datas pelo dia de Brasília: nada no futuro; aprovação não antes do envio.
+  if (new.enviada_em at time zone 'America/Sao_Paulo')::date > v_hoje
+     or (new.aprovada_em is not null and (new.aprovada_em at time zone 'America/Sao_Paulo')::date > v_hoje) then
     raise exception 'OBRAS_MEDICAO_CLIENTE: data de envio/aprovação no futuro' using errcode = '23514';
+  end if;
+  if new.aprovada_em is not null
+     and (new.aprovada_em at time zone 'America/Sao_Paulo')::date < (new.enviada_em at time zone 'America/Sao_Paulo')::date then
+    raise exception 'OBRAS_MEDICAO_CLIENTE: a aprovação não pode ser antes do envio' using errcode = '23514';
   end if;
 
   -- Soma das liberações NÃO recusadas da OS <= 100% (qualquer role).
@@ -494,7 +521,9 @@ language plpgsql
 security definer
 set search_path = pg_catalog, public
 as $$
-declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+declare
+  v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+  v_fim_atual date;
 begin
   if tg_op = 'DELETE' then
     -- Cascata da obra apagada passa (obra só é apagada por admin ou sem JWT).
@@ -512,19 +541,36 @@ begin
   end if;
 
   if tg_op = 'INSERT' then
-    -- Qualquer role: o pedido existe, é de LOCAÇÃO e a solicitação é desta obra.
+    -- Qualquer role: o pedido existe, foi EMITIDO, é de LOCAÇÃO e a solicitação é desta obra.
     if not exists (
          select 1
            from public.cmp_pedidos p
            join public.cmp_solicitacoes s on s.id = p.solicitacao_id
           where p.id = new.cmp_pedido_id
             and p.ambiente = 'producao'
+            and p.situacao = 'emitido'
             and s.ambiente = 'producao'
             and s.tipo = 'locacao'
             and s.obra_id = new.obra_id) then
-      raise exception 'OBRAS_LOCACAO: o pedido não existe, não é de locação ou não é desta obra'
+      raise exception 'OBRAS_LOCACAO: o pedido não existe, não foi emitido, não é de locação ou não é desta obra'
         using errcode = '23514';
     end if;
+  end if;
+
+  -- renovada_ate depois do fim atual (locacao_fim do Compras, ou o dia da entrega).
+  if new.renovada_ate is not null
+     and (tg_op = 'INSERT' or new.renovada_ate is distinct from old.renovada_ate) then
+    select coalesce(s.locacao_fim, (p.entrega_em at time zone 'America/Sao_Paulo')::date) into v_fim_atual
+      from public.cmp_pedidos p
+      join public.cmp_solicitacoes s on s.id = p.solicitacao_id
+     where p.id = new.cmp_pedido_id;
+    if v_fim_atual is not null and new.renovada_ate <= v_fim_atual then
+      raise exception 'OBRAS_LOCACAO: renovada até tem de ser depois do fim atual da locação (%)', v_fim_atual
+        using errcode = '23514';
+    end if;
+  end if;
+
+  if tg_op = 'INSERT' then
     new.criado_por := v_email;
     new.criado_em := now();
     new.atualizado_por := null;
@@ -567,6 +613,7 @@ drop policy if exists "obras admin delete" on public.obras_locacao_estado;
 create policy "obras admin delete" on public.obras_locacao_estado for delete to authenticated
   using ((select public.obras_is_admin()));
 revoke all on public.obras_locacao_estado from anon;
+revoke truncate on public.obras_locacao_estado from authenticated;
 
 -- ============================================================
 -- 5. Leituras (obra + filhas diretas). Zero linhas sem permissão.
@@ -588,8 +635,14 @@ revoke all on public.obras_locacao_estado from anon;
 --       rateio_obras_centavos    = soma do rateio em CC de OBRAS/SPOT (NULL na
 --                                  caixinha e na solicitação sem rateio);
 --       solicitacao_valor_centavos = total da solicitação (todas as obras e CCs).
---     frn_medicao_id: a solicitação foi gerada por medição de FORNECEDOR — já conta
---     em obras_fin_fornecedores; a consolidação NÃO soma as duas (Task 7).
+--     de_medicao_fornecedor = a solicitação veio da integração de medição do
+--     Fornecedores (fin_solicitacao_integracoes, origem 'fornecedores_medicao',
+--     gravada na MESMA transação da solicitação) ou o Fornecedores já gravou o
+--     fin_solicitacao_id na medição. Essa solicitação já conta em
+--     obras_fin_fornecedores: a consolidação NÃO soma as duas — a regra de exclusão
+--     é esta coluna (Task 7). frn_medicao_id = a medição pela chave da integração
+--     (tentativa 1: chave = id da medição) ou por frn_medicoes.fin_solicitacao_id
+--     (tentativas 2+ usam chave derivada); pode vir NULL com a coluna true.
 --     Todas as etapas vêm (recusada/cancelada inclusive): a tela decide o que conta.
 create or replace function public.obras_fin_vinculos(p_obra uuid)
 returns table (
@@ -618,6 +671,7 @@ returns table (
   pagamento_data date,
   pagamento_valor_pago_centavos bigint,
   frn_medicao_id uuid,
+  de_medicao_fornecedor boolean,
   vex_despesa_id bigint,
   despesa_data date,
   despesa_titulo text,
@@ -645,7 +699,8 @@ as $$
          s.id, s.numero, s.tipo, s.etapa, s.fornecedor_razao_social, s.categoria_descricao, s.descricao,
          s.valor_centavos, s.vencimento, s.enviado_em,
          po.situacao, po.data_pagamento, po.valor_pago_centavos,
-         fm.id,
+         coalesce(mi.id, fm.id),
+         (ig.solicitacao_id is not null or fm.id is not null),
          v.vex_despesa_id, d.data, d.titulo, d.tipo_nome, d.centro_custo_nome, r.status
     from alvo a
     join public.fin_obra_vinculos v
@@ -668,6 +723,10 @@ as $$
        where s.id is not null and m.fin_solicitacao_id = s.id
        order by m.seq limit 1
     ) fm on true
+    left join public.fin_solicitacao_integracoes ig
+      on ig.solicitacao_id = s.id and ig.origem = 'fornecedores_medicao'
+    left join public.frn_medicoes mi
+      on mi.id::text = lower(ig.chave)
     left join public.fin_caixinha_despesas d
       on v.origem = 'caixinha_despesa' and d.ambiente = v.ambiente and d.vex_id = v.vex_despesa_id
     left join public.fin_caixinha_relatorios r
@@ -682,18 +741,19 @@ grant execute on function public.obras_fin_vinculos(uuid) to authenticated, serv
 --     categoria variável) e não têm vínculo ativo — contagem GLOBAL (não por obra:
 --     a despesa sem obra ainda não é de obra nenhuma). p_obra só decide a permissão
 --     (obras_pode_ver_valores). Sempre UMA linha para quem pode; zero para os demais.
+--     SÓ A QUANTIDADE (sem R$): o valor é da empresa toda, não da obra.
 --     Todos os status do relatório entram (a fila do Financeiro é a mesma regra).
-create or replace function public.obras_fin_caixinha_sem_obra(p_obra uuid)
+drop function if exists public.obras_fin_caixinha_sem_obra(uuid);
+create function public.obras_fin_caixinha_sem_obra(p_obra uuid)
 returns table (
-  quantidade bigint,
-  valor_centavos bigint
+  quantidade bigint
 )
 language sql
 stable
 security definer
 set search_path = pg_catalog, public
 as $$
-  select count(*), coalesce(sum(d.valor_centavos), 0)::bigint
+  select count(*)
     from public.fin_caixinha_despesas d
    where d.ambiente = 'producao'
      and public.fin_obra_exige(d.centro_custo_nome, d.tipo_nome) is true
@@ -826,7 +886,7 @@ as $$
   select a.id, a.os,
          m.id, m.numero, m.status, c.id, c.numero, fo.razao_social,
          m.item, m.descricao, m.competencia, m.valor, m.solicitado_em,
-         (current_date - (m.solicitado_em at time zone 'America/Sao_Paulo')::date)::integer,
+         ((now() at time zone 'America/Sao_Paulo')::date - (m.solicitado_em at time zone 'America/Sao_Paulo')::date)::integer,
          m.pre_aprovado_em,
          case when m.pre_aprovado_em is null and a.engenheiro is not null then 'engenheiro' else 'eduardo' end
     from alvo a
@@ -1121,6 +1181,19 @@ from (values
       (select (prosrc like '%fin_obra_exige(r.departamento_descricao, null) is true%'
                and prosrc like '%round(v.valor_centavos::numeric * rt.obras_centavos / s.valor_centavos)%'
                and pg_get_function_result(oid) like '%rateio_obras_centavos bigint%')::text
-         from pg_proc where oid = 'public.obras_fin_vinculos(uuid)'::regprocedure))
+         from pg_proc where oid = 'public.obras_fin_vinculos(uuid)'::regprocedure)),
+  (21, 'authenticated sem TRUNCATE nas 3 tabelas', '0',
+      (select count(*)::text
+         from (values ('public.obras_cliente_pessoa'), ('public.obras_medicao_cliente'), ('public.obras_locacao_estado')) t(tab)
+        where has_table_privilege('authenticated', t.tab, 'TRUNCATE'))),
+  (22, 'medição trava com nota (fin_fat_nota_medicoes); vínculos marcam origem por fin_solicitacao_integracoes; caixinha sem R$', 'true',
+      (select (p1.prosrc like '%fin_fat_nota_medicoes nm where nm.medicao_id = old.id%'
+               and p2.prosrc like '%fin_solicitacao_integracoes ig%'
+               and pg_get_function_result(p2.oid) like '%de_medicao_fornecedor boolean%'
+               and pg_get_function_result(p3.oid) not like '%valor%')::text
+         from pg_proc p1, pg_proc p2, pg_proc p3
+        where p1.oid = 'public.obras_medicao_cliente_guarda()'::regprocedure
+          and p2.oid = 'public.obras_fin_vinculos(uuid)'::regprocedure
+          and p3.oid = 'public.obras_fin_caixinha_sem_obra(uuid)'::regprocedure))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

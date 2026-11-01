@@ -81,6 +81,13 @@ create function pg_temp.rec(p_msg text, p_tag text) returns text language sql as
               then 'RECUSADO' else p_msg end;
 $$;
 
+-- Comparação: 'ok:...' e 'RECUSADO' têm de ser IGUAIS (nada de 'ok:1' aceitar 'ok:12');
+-- mensagens de erro esperadas continuam por trecho (strpos, sem curinga).
+create function pg_temp.passou(p_obtido text, p_esperado text) returns boolean language sql as $$
+  select coalesce(case when p_esperado like 'ok:%' or p_esperado = 'RECUSADO' then p_obtido = p_esperado
+                       else strpos(p_obtido, p_esperado) > 0 end, false);
+$$;
+
 create function pg_temp.admin_email() returns text language sql as $$
   select lower(trim(user_email)) from public.hub_user_roles where nivel = 'administrador' order by lower(trim(user_email)) limit 1;
 $$;
@@ -107,12 +114,12 @@ insert into public.fin_papeis (user_email, papel) values ('fin.teste@teste.inval
 -- Linha de base da caixinha sem obra (GLOBAL: o banco real já tem despesas),
 -- lida como administrador ANTES das despesas da fixture.
 do $$
-declare v_q bigint; v_v bigint;
+declare v_q bigint;
 begin
   perform pg_temp.como('authenticated', pg_temp.admin_email());
-  select quantidade, valor_centavos into v_q, v_v
+  select quantidade into v_q
     from public.obras_fin_caixinha_sem_obra('00000000-0000-4000-8000-0000000bc001');
-  raise exception 'base:%|%', coalesce(v_q, 0), coalesce(v_v, 0);
+  raise exception 'base:%', coalesce(v_q, 0);
 exception when others then
   insert into _base values (sqlerrm);
 end $$;
@@ -196,8 +203,14 @@ select x.id, x.amb, x.numero, 'lancada', 'solicitante@teste.invalid', 'Solicitan
   from (values ('00000000-0000-4000-8000-0000000bc051'::uuid, 'producao', 999000301::bigint, 100000::bigint),
                ('00000000-0000-4000-8000-0000000bc052'::uuid, 'producao', 999000302::bigint, 50000::bigint),
                ('00000000-0000-4000-8000-0000000bc053'::uuid, 'producao', 999000303::bigint, 20000::bigint),
-               ('00000000-0000-4000-8000-0000000bc054'::uuid, 'teste',    999000304::bigint, 10000::bigint))
+               ('00000000-0000-4000-8000-0000000bc054'::uuid, 'teste',    999000304::bigint, 10000::bigint),
+               ('00000000-0000-4000-8000-0000000bc055'::uuid, 'producao', 999000305::bigint, 7000::bigint))
        as x(id, amb, numero, valor);
+
+-- S5 nasceu pela integração de medição do Fornecedores (chave = id da medição MF8),
+-- e o Fornecedores ainda não gravou o fin_solicitacao_id na medição.
+insert into public.fin_solicitacao_integracoes (ambiente, origem, chave, solicitacao_id)
+values ('producao', 'fornecedores_medicao', '00000000-0000-4000-8000-0000000bc078', '00000000-0000-4000-8000-0000000bc055');
 
 -- Rateio de S1: só 33,333% em CC de OBRAS; o resto em ADM (o vínculo cobre 100% do total).
 insert into public.fin_solicitacao_rateio
@@ -236,6 +249,8 @@ values ('producao', 'solicitacao', '00000000-0000-4000-8000-0000000bc051', null,
         'TESTE-FIN-BC-MAE', 10000, 20000, 'fin.teste@teste.invalid', 'Fin Teste', now(), 'fin.teste@teste.invalid'),
        ('teste', 'solicitacao', '00000000-0000-4000-8000-0000000bc054', null, '00000000-0000-4000-8000-0000000bc001',
         'TESTE-FIN-BC-MAE', 10000, 10000, 'fin.teste@teste.invalid', 'Fin Teste', null, null),
+       ('producao', 'solicitacao', '00000000-0000-4000-8000-0000000bc055', null, '00000000-0000-4000-8000-0000000bc001',
+        'TESTE-FIN-BC-MAE', 10000, 7000, 'fin.teste@teste.invalid', 'Fin Teste', null, null),
        ('producao', 'caixinha_despesa', null, 999000011, '00000000-0000-4000-8000-0000000bc001',
         'TESTE-FIN-BC-MAE', 10000, 1500, 'fin.teste@teste.invalid', 'Fin Teste', null, null),
        ('producao', 'caixinha_despesa', null, 999000016, '00000000-0000-4000-8000-0000000bc001',
@@ -277,6 +292,7 @@ select x.id, x.seq, x.numero, x.contrato, 'mo', 'servico', 'Medição BC', 100, 
                ('00000000-0000-4000-8000-0000000bc073'::uuid, 9999990073::bigint, 'MD-TBC-3', '00000000-0000-4000-8000-0000000bc062'::uuid, 'aprovada', 20, '00000000-0000-4000-8000-0000000bc001'::uuid, true),
                ('00000000-0000-4000-8000-0000000bc074'::uuid, 9999990074::bigint, 'MD-TBC-4', '00000000-0000-4000-8000-0000000bc063'::uuid, 'solicitada', 15, '00000000-0000-4000-8000-0000000bc003'::uuid, false),
                ('00000000-0000-4000-8000-0000000bc075'::uuid, 9999990075::bigint, 'MD-TBC-5', '00000000-0000-4000-8000-0000000bc062'::uuid, 'pagamento_solicitado', 30, '00000000-0000-4000-8000-0000000bc001'::uuid, true),
+               ('00000000-0000-4000-8000-0000000bc078'::uuid, 9999990078::bigint, 'MD-TBC-8', '00000000-0000-4000-8000-0000000bc062'::uuid, 'aprovada', 25, '00000000-0000-4000-8000-0000000bc001'::uuid, true),
                ('00000000-0000-4000-8000-0000000bc076'::uuid, 9999990076::bigint, 'MD-TBC-6', '00000000-0000-4000-8000-0000000bc064'::uuid, 'solicitada', 12, '00000000-0000-4000-8000-0000000bc001'::uuid, false),
                ('00000000-0000-4000-8000-0000000bc077'::uuid, 9999990077::bigint, 'MD-TBC-7', '00000000-0000-4000-8000-0000000bc064'::uuid, 'solicitada', 14, '00000000-0000-4000-8000-0000000bc003'::uuid, false))
        as x(id, seq, numero, contrato, status, dias, obra, pre)
@@ -480,11 +496,13 @@ end $$;
 
 do $$ begin
   perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
-  update public.obras_medicao_cliente set percentual_centesimos = 8001
-   where id = '00000000-0000-4000-8000-0000000bc081';
+  insert into public.obras_medicao_cliente (id, obra_id, periodo_inicio, periodo_fim, percentual_centesimos, valor_centavos)
+  values ('00000000-0000-4000-8000-0000000bc0f3', '00000000-0000-4000-8000-0000000bc001', date '2026-11-01', date '2026-11-15', 1000, 100000);
+  update public.obras_medicao_cliente set percentual_centesimos = 5001
+   where id = '00000000-0000-4000-8000-0000000bc0f3';
   raise exception 'NAO_FALHOU';
 exception when others then
-  perform pg_temp.reg(19, 'medição: aumentar % passando de 100% recusado (20% + 80,01%)', 'passaria de 100%', sqlerrm);
+  perform pg_temp.reg(19, 'medição: aumentar % passando de 100% recusado (50% + 50,01%)', 'passaria de 100%', sqlerrm);
 end $$;
 
 do $$ begin
@@ -620,7 +638,7 @@ do $$ begin
   raise exception 'ok:%', (select situacao || '|' || coalesce(aprovada_em::text, 'NULL')
                              from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc082');
 exception when others then
-  perform pg_temp.reg(34, 'medição: administrador reabre a aprovada (aprovada_em limpa)', 'ok:enviada|NULL', sqlerrm);
+  perform pg_temp.reg(34, 'medição: nem administrador reabre aprovada que tem nota no Financeiro', 'medição com nota emitida', sqlerrm);
 end $$;
 
 do $$ begin
@@ -670,12 +688,12 @@ end $$;
 
 do $$ begin
   perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
-  update public.obras_medicao_cliente set numero = 77, criado_por = 'forjado@teste.invalid', valor_centavos = 300001
+  update public.obras_medicao_cliente set numero = 77, criado_por = 'forjado@teste.invalid', periodo_fim = date '2026-10-20'
    where id = '00000000-0000-4000-8000-0000000bc081';
-  raise exception 'ok:%', (select numero || '|' || coalesce(criado_por, 'null') || '|' || valor_centavos
+  raise exception 'ok:%', (select numero || '|' || coalesce(criado_por, 'null') || '|' || periodo_fim
                              from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc081');
 exception when others then
-  perform pg_temp.reg(40, 'medição: número e autoria nunca reescritos no UPDATE (valor muda)', 'ok:1|null|300001', sqlerrm);
+  perform pg_temp.reg(40, 'medição: número e autoria nunca reescritos no UPDATE (período muda)', 'ok:1|null|2026-10-20', sqlerrm);
 end $$;
 
 do $$
@@ -889,8 +907,8 @@ do $$ begin
                                                          or vex_despesa_id = 999000016)
                              from public.obras_fin_vinculos('00000000-0000-4000-8000-0000000bc001'));
 exception when others then
-  perform pg_temp.reg(62, 'vínculos(mãe): 3 linhas (atribuído 20000 + 13333 + 1800), mãe + filha; sem outra obra, desfeito ou teste',
-    'ok:3|35133|2|0', sqlerrm);
+  perform pg_temp.reg(62, 'vínculos(mãe): 4 linhas (atribuído 20000 + 13333 + 7000 + 1800), mãe + filha; sem outra obra, desfeito ou teste',
+    'ok:4|42133|2|0', sqlerrm);
 end $$;
 
 do $$ begin
@@ -898,7 +916,8 @@ do $$ begin
   raise exception 'ok:%', (select pagamento_situacao || '|' || frn_medicao_id || '|' || solicitacao_valor_centavos || '|' || percentual_centesimos
                                   || '|' || valor_centavos || '|' || vinculo_valor_centavos || '|' || rateio_obras_centavos
                              from public.obras_fin_vinculos('00000000-0000-4000-8000-0000000bc001')
-                            where origem = 'solicitacao' and obra_id = '00000000-0000-4000-8000-0000000bc001');
+                            where origem = 'solicitacao' and obra_id = '00000000-0000-4000-8000-0000000bc001'
+                              and solicitacao_id = '00000000-0000-4000-8000-0000000bc051');
 exception when others then
   perform pg_temp.reg(63, 'vínculos: pago; medição de fornecedor de origem; atribuído = 60000 × 33333 ÷ 100000 = 20000 (bruto 60000)',
     'ok:pago|00000000-0000-4000-8000-0000000bc075|100000|6000|20000|60000|33333', sqlerrm);
@@ -943,18 +962,18 @@ end $$;
 -- obras_fin_caixinha_sem_obra (contagem global)
 -- ============================================================
 do $$
-declare v_base text; v_q0 bigint; v_v0 bigint; v_q bigint; v_v bigint;
+declare v_q0 bigint; v_q bigint;
 begin
-  select substr(valor, strpos(valor, 'base:') + 5) into v_base from _base;
-  v_q0 := split_part(v_base, '|', 1)::bigint;
-  v_v0 := split_part(v_base, '|', 2)::bigint;
+  select substr(valor, strpos(valor, 'base:') + 5)::bigint into v_q0 from _base;
   perform pg_temp.como('authenticated', pg_temp.admin_email());
-  select quantidade, valor_centavos into v_q, v_v
+  select quantidade into v_q
     from public.obras_fin_caixinha_sem_obra('00000000-0000-4000-8000-0000000bc001');
-  raise exception 'ok:%|%', v_q - v_q0, v_v - v_v0;
+  raise exception 'ok:%|%', v_q - v_q0,
+    (select count(*) from pg_proc p, unnest(p.proargnames) as x(nome)
+      where p.oid = 'public.obras_fin_caixinha_sem_obra(uuid)'::regprocedure and x.nome like '%valor%');
 exception when others then
-  perform pg_temp.reg(67, 'caixinha sem obra: +2 despesas (+1000): SPOT/Material e vínculo desfeito; fixa, ADM, teste e ligada fora',
-    'ok:2|1000', sqlerrm);
+  perform pg_temp.reg(67, 'caixinha sem obra: +2 despesas (SPOT/Material e vínculo desfeito; fixa, ADM, teste e ligada fora); só a contagem',
+    'ok:2|0', sqlerrm);
 end $$;
 
 do $$ begin
@@ -1198,8 +1217,8 @@ do $$ begin
                                   || count(*) filter (where medicao_id = '00000000-0000-4000-8000-0000000bc077')
                              from public.obras_fin_fornecedores('00000000-0000-4000-8000-0000000bc001'));
 exception when others then
-  perform pg_temp.reg(91, 'fornecedores(mãe): 4 do contrato da obra + 1 do GLOBAL pela medição (valor do contrato NULL); global de outra obra fora',
-    'ok:5|1|t|0', sqlerrm);
+  perform pg_temp.reg(91, 'fornecedores(mãe): 5 do contrato da obra + 1 do GLOBAL pela medição (valor do contrato NULL); global de outra obra fora',
+    'ok:6|1|t|0', sqlerrm);
 end $$;
 
 do $$ begin
@@ -1212,11 +1231,122 @@ exception when others then
 end $$;
 
 -- ============================================================
+-- Fix round 1: origem fornecedor, medição com nota, locação, datas, truncate
+-- ============================================================
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  raise exception 'ok:%', (select frn_medicao_id || '|' || pg_temp.tf(de_medicao_fornecedor) || '|' || valor_centavos
+                             from public.obras_fin_vinculos('00000000-0000-4000-8000-0000000bc001')
+                            where solicitacao_id = '00000000-0000-4000-8000-0000000bc055');
+exception when others then
+  perform pg_temp.reg(93, 'vínculos: solicitação da integração (sem write-back no Fornecedores) marcada, medição pela chave',
+    'ok:00000000-0000-4000-8000-0000000bc078|t|7000', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  raise exception 'ok:%', (select count(*) filter (where de_medicao_fornecedor) || '|' || count(*) || '|'
+                                  || count(*) filter (where de_medicao_fornecedor is null)
+                             from public.obras_fin_vinculos('00000000-0000-4000-8000-0000000bc001'));
+exception when others then
+  perform pg_temp.reg(94, 'vínculos: S1 (mãe e filha, pelo fin_solicitacao_id) e S5 marcadas; caixinha não; nunca NULL', 'ok:3|4|0', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  delete from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc081';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(95, 'medição: administrador não apaga medição com nota', 'medição com nota emitida não se apaga', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  delete from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc081';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(96, 'medição: sem JWT (service role) também não apaga medição com nota', 'medição com nota emitida não se apaga', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  update public.obras_medicao_cliente set valor_centavos = 299999 where id = '00000000-0000-4000-8000-0000000bc081';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(97, 'medição: administrador não muda valor de medição com nota', 'medição com nota emitida: percentual', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  delete from public.fin_fat_nota_medicoes where medicao_id = '00000000-0000-4000-8000-0000000bc082';
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  update public.obras_medicao_cliente set situacao = 'enviada' where id = '00000000-0000-4000-8000-0000000bc082';
+  raise exception 'ok:%', (select situacao || '|' || coalesce(aprovada_em::text, 'NULL')
+                             from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc082');
+exception when others then
+  perform pg_temp.reg(98, 'medição: sem nota, administrador reabre a aprovada (aprovada_em limpa)', 'ok:enviada|NULL', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  update public.obras_medicao_cliente set situacao = 'aprovada', aprovada_em = now() - interval '3 days'
+   where id = '00000000-0000-4000-8000-0000000bc081';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(99, 'medição: aprovação antes do envio recusada', 'a aprovação não pode ser antes do envio', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  insert into public.obras_locacao_estado (cmp_pedido_id, obra_id, devolvida_em)
+  values ('00000000-0000-4000-8000-0000000bc045', '00000000-0000-4000-8000-0000000bc001', current_date);
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(100, 'locação: pedido ainda não emitido recusado', 'não foi emitido', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  update public.obras_locacao_estado set renovada_ate = current_date + 30
+   where id = '00000000-0000-4000-8000-0000000bc092';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(101, 'locação: renovada até = fim do Compras recusada (tem de ser depois)', 'tem de ser depois do fim atual', sqlerrm);
+end $$;
+
+do $$
+declare v text := '';
+begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  begin
+    truncate public.obras_cliente_pessoa;
+    v := 'truncou';
+  exception when others then
+    v := 'negado:' || pg_temp.tf(strpos(sqlerrm, 'permission denied') > 0);
+  end;
+  begin
+    truncate public.obras_locacao_estado;
+    v := v || '|truncou';
+  exception when others then
+    v := v || '|negado:' || pg_temp.tf(strpos(sqlerrm, 'permission denied') > 0);
+  end;
+  begin
+    truncate public.obras_medicao_cliente;
+    v := v || '|truncou';
+  exception when others then
+    v := v || '|negado:' || pg_temp.tf(strpos(sqlerrm, 'permission denied') > 0);
+  end;
+  raise exception 'ok:%', v;
+exception when others then
+  perform pg_temp.reg(102, 'authenticated (até admin) não faz TRUNCATE nas 3 tabelas', 'ok:negado:t|negado:t|negado:t', sqlerrm);
+end $$;
+
+-- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
--- Comparação por strpos (no LIKE o '_' dos nomes é curinga).
+-- Comparação por pg_temp.passou: exata para 'ok:'/'RECUSADO', por trecho para erro.
 -- ============================================================
 select n, teste, esperado, obtido,
-       case when strpos(obtido, esperado) > 0 then 'OK' else '*** FALHOU ***' end as resultado
+       case when pg_temp.passou(obtido, esperado) then 'OK' else '*** FALHOU ***' end as resultado
   from _v order by n;
 
 do $$
@@ -1225,15 +1355,15 @@ declare
   v_ok    int;
   v_falhas text;
 begin
-  select count(*), count(*) filter (where strpos(obtido, esperado) > 0),
+  select count(*), count(*) filter (where pg_temp.passou(obtido, esperado)),
          string_agg(n::text || ' (' || coalesce(obtido, 'NULL') || ')', '; ' order by n)
-           filter (where obtido is null or strpos(obtido, esperado) = 0)
+           filter (where not pg_temp.passou(obtido, esperado))
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 92 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 92 testes rodaram';
+  if v_total <> 102 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 102 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/92 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/102 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end
     using errcode = 'P0001';
 end $$;

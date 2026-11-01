@@ -425,3 +425,8 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
 - As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
 - Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).
+
+## 01/11/2026 — Obras Financeiro da obra, Fases B/C, SQL do hub (`feat/obras-financeiro-bc`, Task 5), deixado de propósito
+- **Pedido do Compras pago por solicitação do Financeiro conta duas vezes.** Nem `fin_solicitacoes` nem `fin_obra_vinculos` guardam o pedido do Compras (`cmp_pedidos`), então se alguém pedir no Financeiro o pagamento da NF de um pedido do Compras (CC de OBRAS → o 044 obriga vínculo), o custo entra em `obras_fin_compras` e em `obras_fin_vinculos`. Não há chave para deduplicar em SQL. A Task 7 deve rotular/alertar; ou combinar com o José a regra "pedido do Compras não vira solicitação no Financeiro".
+- `obras_medicao_cliente` com nota ligada fica travada (nem admin apaga, muda %/valor ou tira de aprovada); a checagem lê `fin_fat_nota_medicoes` na hora, sem trava contra o Financeiro ligar uma nota no mesmo instante. Janela de corrida aceita (o Financeiro liga nota a medição aprovada, que o engenheiro já não altera).
+- Datas da medição (`enviada_em`/`aprovada_em`) só têm limite superior (hoje, BRT) e coerência (aprovação não antes do envio); retroagir livremente continua possível. Combinar com o José se quer um limite inferior.
