@@ -28,7 +28,7 @@ async function avancoDe(supabase: Parameters<typeof lerObraGrande>[0], osId: str
   const r = await lerObraGrande(supabase, osId, hojeISO())
   const pct = r.ok ? r.dados.calc?.realizado : undefined
   if (pct === undefined || pct === null || !Number.isFinite(pct)) return null
-  return Math.min(10000, Math.max(0, Math.round(pct * 100)))
+  return Math.min(10000, Math.max(0, Math.round(pct * 10000)))
 }
 
 export async function salvarMedicaoAction(paginaId: string, m: MedicaoEntrada): Promise<Resultado> {

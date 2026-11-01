@@ -6,7 +6,7 @@ jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn(async () => f.
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn(async (_s: unknown, e: string) => e === 'adm@manfac.com.br') }))
 jest.mock('../../../../_lib/leitura', () => ({
-  lerObraGrande: jest.fn(async () => ({ ok: true, dados: { calc: { realizado: 52.345 } } })),
+  lerObraGrande: jest.fn(async () => ({ ok: true, dados: { calc: { realizado: 0.5235 } } })),
 }))
 
 import { apagarMedicaoAction, mudarSituacaoMedicaoAction, salvarMedicaoAction } from '../_actions'

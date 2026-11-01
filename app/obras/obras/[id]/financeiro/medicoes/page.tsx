@@ -82,7 +82,7 @@ export default async function MedicoesPage({ params }: { params: Promise<{ id: s
         cancelada: !!o.cancelado_em,
         // OS cancelada: as medições dela continuam na lista, mas não entra no seletor nem recebe gravação.
         podeGravar: !o.cancelado_em && (admin || (!!email && (eng(o.engenheiro_email) === email || engMae === email))),
-        avancoCentesimos: o.id === id && realizado !== undefined && Number.isFinite(realizado) ? Math.round(realizado * 100) : null,
+        avancoCentesimos: o.id === id && realizado !== undefined && Number.isFinite(realizado) ? Math.round(realizado * 10000) : null,
       }
     })
 
