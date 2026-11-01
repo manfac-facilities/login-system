@@ -227,7 +227,9 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
   antes × depois); permissão `mapa/_permissao.ts` (engenheiro com acesso `obras` ou admin, igual ao banco).
 - **Diário:** com pelo menos um ambiente, o passo Fotos ganha "Por ponto (ronda)", "Por atividade" e "+ Foto avulsa",
   e `registrarFotoAction` exige ambiente ou ponto (regra só do app). Obra sem ambiente: diário de sempre.
-- **Planta:** só imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+- **Planta:** o servidor só recebe imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+  PDF é aceito na tela de montar: a 1ª página vira imagem no navegador (`montar/_pdf-para-imagem.ts`, `pdfjs-dist` por `import()`
+  dinâmico; worker em `montar/_pdf-worker.ts`, separado porque `import.meta` não roda no Jest).
 - **Portal (aba Mapa):** `portal-obra/(obra)/_lib/mapa.ts` (`lerMapaDoPortal`, `obraTemMapa`); aba só com ≥ 1 ambiente,
   página 404 sem mapa. Fotos só de RDO validado/enviado (filtro no banco e no código), impedimento só aberto e
   `exibir_ao_cliente`, atividade pelo código e pela situação do cronograma do portal, ponto só pelo número.
