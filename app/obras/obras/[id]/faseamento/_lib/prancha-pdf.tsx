@@ -31,6 +31,7 @@ const A3 = { w: 1190.55, h: 841.89 }
 const MARGEM = 24
 const COLUNA = 440
 const GAP = 16
+const RODAPE = 20
 const U = 1000
 const ORDEM: GrupoCamada[] = ['zona', 'linha', 'porta', 'fluxo', 'icone']
 const GRUPO_DE = (t: TipoCamada) => TIPOS[t].grupo
@@ -67,7 +68,31 @@ function seta(p: Ponto[], V: number, cor: string) {
   )
 }
 
-function Camada1({ c, V }: { c: Camada; V: number }) {
+const EM = 0.58 // largura média de um caractere em "em" (Inter bold, caixa alta)
+const MIN_ROTULO_PT = 6
+
+/** Rótulo da zona: fonte (em pt) reduzida até caber na largura útil, no mínimo 6 pt; se ficar pequena, quebra em 2 linhas. */
+export function ajustarRotulo(texto: string, larguraPt: number, maxPt: number): { linhas: string[]; pt: number } {
+  const util = Math.max(larguraPt - 8, 1)
+  const cabe = (t: string) => util / (Math.max(t.length, 1) * EM)
+  const s1 = Math.min(maxPt, cabe(texto))
+  const palavras = texto.split(' ')
+  if (s1 >= 9 || palavras.length < 2) return { linhas: [texto], pt: Math.max(s1, MIN_ROTULO_PT) }
+  let melhor: string[] = [texto]
+  let pior = Infinity
+  for (let i = 1; i < palavras.length; i++) {
+    const l = [palavras.slice(0, i).join(' '), palavras.slice(i).join(' ')]
+    const m = Math.max(l[0].length, l[1].length)
+    if (m < pior) {
+      pior = m
+      melhor = l
+    }
+  }
+  const s2 = Math.min(maxPt, cabe(melhor[0].length >= melhor[1].length ? melhor[0] : melhor[1]))
+  return s2 > s1 ? { linhas: melhor, pt: Math.max(s2, MIN_ROTULO_PT) } : { linhas: [texto], pt: Math.max(s1, MIN_ROTULO_PT) }
+}
+
+function Camada1({ c, V, esc }: { c: Camada; V: number; esc: number }) {
   const def = TIPOS[c.t]
   if ('r' in c) {
     const x = c.r[0] * U
@@ -93,11 +118,18 @@ function Camada1({ c, V }: { c: Camada; V: number }) {
               <Path key={i} d={`M${a.toFixed(1)} ${b.toFixed(1)} L${d.toFixed(1)} ${e.toFixed(1)}`} stroke="#b42318" strokeOpacity={0.45} strokeWidth={2} />
             ))
           : null}
-        {c.rot ? (
-          <Text x={x + w / 2} y={y + h / 2 + 5} textAnchor="middle" fill={ESCURO} fillOpacity={0.8} style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: w < 200 ? 12 : 16 }}>
-            {c.rot}
-          </Text>
-        ) : null}
+        {c.rot
+          ? (() => {
+              const { linhas, pt } = ajustarRotulo(c.rot, w * esc, w * esc < 200 ? 12 : 16)
+              const f = pt / esc
+              const topo = y + h / 2 - ((linhas.length - 1) * f * 1.15) / 2 + f * 0.35
+              return linhas.map((ln, i) => (
+                <Text key={i} x={x + w / 2} y={topo + i * f * 1.15} textAnchor="middle" fill={ESCURO} fillOpacity={0.8} style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: f }}>
+                  {ln}
+                </Text>
+              ))
+            })()
+          : null}
       </G>
     )
   }
@@ -198,12 +230,16 @@ export function PranchaFaseamento(d: DadosPrancha) {
   const prop = d.planta && d.planta.largura > 0 && d.planta.altura > 0 ? d.planta.largura / d.planta.altura : 1000 / 700
   const caixaW = A3.w - 2 * MARGEM - COLUNA - GAP
   const caixaH = A3.h - 2 * MARGEM
-  let w = caixaW
+  // Moldura externa = coluna inteira (menos a borda e o rodapé); o desenho cabe dentro dela, centralizado.
+  const areaW = caixaW - 2
+  const areaH = caixaH - 2 - RODAPE
+  let w = areaW
   let h = w / prop
-  if (h > caixaH) {
-    h = caixaH
+  if (h > areaH) {
+    h = areaH
     w = h * prop
   }
+  const esc = w / U
   const V = U / prop
   const comPlanta = !!(d.plantaUrl && d.planta)
   const visiveis = d.camadas.filter((c) => !c.oculta)
@@ -222,23 +258,25 @@ export function PranchaFaseamento(d: DadosPrancha) {
   return (
     <Document title={`${d.carimbo.titulo || d.fase.nome} ${rev}`} author="Manfac">
       <Page size="A3" orientation="landscape" style={[estilos.pagina, { paddingTop: MARGEM, paddingBottom: MARGEM, paddingHorizontal: MARGEM, flexDirection: 'row' }]}>
-        <View style={{ width: caixaW, height: caixaH, justifyContent: 'flex-start' }}>
-          <View style={{ width: w, height: h, position: 'relative' }}>
-            {comPlanta ? <Image src={d.plantaUrl as string} style={{ position: 'absolute', left: 0, top: 0, width: w, height: h, objectFit: 'fill' }} /> : null}
-            <Svg width={w} height={h} viewBox={`0 0 ${U} ${V.toFixed(2)}`} style={{ position: 'absolute', left: 0, top: 0 }}>
-              {!comPlanta ? <Rect x={0} y={0} width={U} height={V} fill="#fff" /> : null}
-              {camadas.map((c) => (
-                <Camada1 key={c.id} c={c} V={V} />
-              ))}
-              {/* Moldura desenhada por dentro do próprio Svg: não empurra a imagem nem as camadas. */}
-              <Rect x={1} y={1} width={U - 2} height={V - 2} fill="none" stroke="#222" strokeWidth={2} />
-            </Svg>
+        <View style={{ width: caixaW, height: caixaH, borderWidth: 1, borderColor: '#222' }}>
+          <View style={{ height: areaH, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: w, height: h, position: 'relative' }}>
+              {comPlanta ? <Image src={d.plantaUrl as string} style={{ position: 'absolute', left: 0, top: 0, width: w, height: h, objectFit: 'fill' }} /> : null}
+              <Svg width={w} height={h} viewBox={`0 0 ${U} ${V.toFixed(2)}`} style={{ position: 'absolute', left: 0, top: 0 }}>
+                {!comPlanta ? <Rect x={0} y={0} width={U} height={V} fill="#fff" /> : null}
+                {camadas.map((c) => (
+                  <Camada1 key={c.id} c={c} V={V} esc={esc} />
+                ))}
+                {/* Contorno do desenho por dentro do próprio Svg: não empurra a imagem nem as camadas. */}
+                <Rect x={1} y={1} width={U - 2} height={V - 2} fill="none" stroke="#9aa3b2" strokeWidth={1.5} />
+              </Svg>
+            </View>
+          </View>
+          <View style={{ height: RODAPE, borderTopWidth: 0.75, borderTopColor: T.border, justifyContent: 'center', paddingHorizontal: 8 }}>
             {!comPlanta ? (
-              <Text style={{ position: 'absolute', left: 8, bottom: 6, fontSize: 8, color: T.mutedTexto }}>Sem planta enviada: camadas sobre quadro branco</Text>
+              <Text style={{ fontSize: 8.5, color: T.mutedTexto }}>Sem planta enviada: camadas sobre quadro branco</Text>
             ) : (
-              <Text style={[estilos.mono, { position: 'absolute', left: 8, bottom: 6, fontSize: 7, color: '#444', fontWeight: 700 }]}>
-                {`BASE: ${(d.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}`}
-              </Text>
+              <Text style={[estilos.mono, { fontSize: 7.5, color: '#444', fontWeight: 700 }]}>{`BASE: ${(d.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}`}</Text>
             )}
           </View>
         </View>
@@ -254,7 +292,7 @@ export function PranchaFaseamento(d: DadosPrancha) {
             {legendaDe(visiveis).map((l) => (
               <View key={l.t} style={{ width: '50%', flexDirection: 'row', alignItems: 'center', marginBottom: 1, paddingRight: 4 }}>
                 <Amostra t={l.t} />
-                <Text style={{ fontSize: 7, marginLeft: 5, flex: 1 }}>{l.nome}</Text>
+                <Text style={{ fontSize: 8.5, marginLeft: 5, flex: 1 }}>{l.nome}</Text>
               </View>
             ))}
           </View>
@@ -268,7 +306,7 @@ export function PranchaFaseamento(d: DadosPrancha) {
 
           {d.travaTexto ? (
             <View style={{ borderWidth: 1, borderColor: '#b42318', padding: 5, marginBottom: 8 }}>
-              <Text style={{ fontSize: 7.5, color: '#b42318', lineHeight: 1.2 }}>{d.travaTexto}</Text>
+              <Text style={{ fontSize: 8.5, color: '#b42318', lineHeight: 1.2 }}>{d.travaTexto}</Text>
             </View>
           ) : null}
 

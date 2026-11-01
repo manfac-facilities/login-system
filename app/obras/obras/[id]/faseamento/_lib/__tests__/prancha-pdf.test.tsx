@@ -26,7 +26,7 @@ jest.mock('@react-pdf/renderer', () => {
 })
 
 import { render } from '@testing-library/react'
-import { PranchaFaseamento, fonteDasRegras, type DadosPrancha } from '../prancha-pdf'
+import { PranchaFaseamento, ajustarRotulo, fonteDasRegras, type DadosPrancha } from '../prancha-pdf'
 import { CAMADAS_EXEMPLO_FASE1 } from '../camadas'
 import { textoDaTrava } from '../trava'
 
@@ -99,5 +99,24 @@ describe('fonteDasRegras', () => {
     expect(fonteDasRegras(['x'.repeat(1500)])).toBe(10)
     expect(fonteDasRegras(['x'.repeat(1501)])).toBe(9)
     expect(fonteDasRegras(Array.from({ length: 12 }, () => 'x'.repeat(200)))).toBe(9)
+  })
+})
+
+describe('ajustarRotulo', () => {
+  it('rótulo curto numa zona larga fica numa linha no corpo máximo', () => {
+    expect(ajustarRotulo('SALÃO', 400, 16)).toEqual({ linhas: ['SALÃO'], pt: 16 })
+  })
+
+  it('zona estreita: quebra em 2 linhas e a linha mais larga cabe', () => {
+    const r = ajustarRotulo('COPA 9,97 m² · EM USO', 105, 12)
+    expect(r.linhas.length).toBe(2)
+    expect(r.linhas.join(' ')).toBe('COPA 9,97 m² · EM USO')
+    const maior = Math.max(...r.linhas.map((l) => l.length))
+    expect(maior * 0.58 * r.pt).toBeLessThanOrEqual(105 - 8 + 0.001)
+    expect(r.pt).toBeGreaterThanOrEqual(6)
+  })
+
+  it('nunca abaixo de 6 pt', () => {
+    expect(ajustarRotulo('PALAVRAMUITOLONGASEMESPACO', 30, 12).pt).toBe(6)
   })
 })
