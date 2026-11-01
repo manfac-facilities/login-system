@@ -152,7 +152,7 @@ export default async function LookaheadPage({
                           {x.pedido ? <span className="text-[#5a7380]"> · {textoDatasPedido(x.pedido)}</span> : null}
                           {prontaParaLiberar(x) ? <span className="ml-1 rounded-full border border-[#136c38] px-1.5 text-[#136c38]">Pronta para liberar</span> : null}
                           {x.tipo === 'material' ? (
-                            <a href={`/compras/solicitacoes/nova?obra=${id}`} className="ml-2 inline-flex min-h-11 items-center font-medium text-[#b94606] underline">
+                            <a href={`/compras/solicitacoes/nova?obra=${id}`} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex min-h-11 items-center font-medium text-[#b94606] underline">
                               Pedir material
                             </a>
                           ) : null}

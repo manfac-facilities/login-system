@@ -82,7 +82,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
       <div className="flex justify-end">
         {/* Compras é outra app: <a> comum, nunca next/link. Pedir não mostra valores — qualquer usuário do Obras. */}
         <a
-          href={`/compras/solicitacoes/nova?obra=${id}`}
+          href={`/compras/solicitacoes/nova?obra=${id}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
         >
           Pedir material

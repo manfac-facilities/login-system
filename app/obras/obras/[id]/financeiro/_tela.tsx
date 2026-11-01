@@ -51,7 +51,7 @@ export default function TelaFinanceiro({ fin, obras, obraId, lidoEm }: { fin: Fi
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="obra-num text-[13px] text-(--obra-muted-texto)">Dados até {diaBr(lidoEm)} · lidos agora do Compras, da Gestão de Fornecedores e do Financeiro</p>
         <a
-          href={`/compras/solicitacoes/nova?obra=${obraId}`}
+          href={`/compras/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-white px-3 text-sm font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
         >
           Pedir material

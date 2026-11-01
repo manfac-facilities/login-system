@@ -64,7 +64,7 @@ export default function PedidoDaRestricaoBloco({
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <a href={`/compras/solicitacoes/nova?obra=${obraId}`} className={btn + ' inline-flex items-center'}>
+        <a href={`/compras/solicitacoes/nova?obra=${obraId}`} target="_blank" rel="noopener noreferrer" className={btn + ' inline-flex items-center'}>
           Pedir material
         </a>
         {!aberto ? (
