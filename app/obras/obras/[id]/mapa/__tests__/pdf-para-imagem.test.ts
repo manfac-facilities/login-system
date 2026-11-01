@@ -36,3 +36,19 @@ it('PDF que o pdfjs recusa vira PdfIlegivelError', async () => {
   getDocument.mockReturnValue({ promise: Promise.reject(new Error('PasswordException')), destroy })
   await expect(pdfParaImagem(arquivo)).rejects.toBeInstanceOf(PdfIlegivelError)
 })
+
+it('PDF recusado ainda destrói a tarefa do pdfjs (não deixa worker preso)', async () => {
+  getDocument.mockReturnValue({ promise: Promise.reject(new Error('PasswordException')), destroy })
+  await expect(pdfParaImagem(arquivo)).rejects.toBeInstanceOf(PdfIlegivelError)
+  expect(destroy).toHaveBeenCalled()
+})
+
+it('página muito alta fica abaixo de 16 Mpx (Safari do iPad desenha em branco acima disso)', async () => {
+  getPage.mockResolvedValue({
+    getViewport: ({ scale }: { scale: number }) => ({ width: 600 * scale, height: 3000 * scale }),
+    render: jest.fn(() => ({ promise: Promise.resolve() })),
+  })
+  const r = await pdfParaImagem(arquivo)
+  expect(r.largura * r.altura).toBeLessThanOrEqual(16_000_000)
+  expect(r.largura).toBeLessThan(2400)
+})

@@ -5,6 +5,8 @@
  */
 
 export const LARGURA_MAXIMA_PDF = 2400
+/** Teto de área do canvas: o Safari do iPad/iPhone não desenha acima de ~16,7 Mpx (sai em branco). */
+export const AREA_MAXIMA_PDF = 16_000_000
 
 export class PdfIlegivelError extends Error {
   constructor() {
@@ -30,12 +32,16 @@ export async function pdfParaImagem(arquivo: Blob): Promise<PlantaDoPdf> {
     const [pdfjs, { URL_WORKER_PDFJS }] = await Promise.all([import('pdfjs-dist'), import('./_pdf-worker')])
     pdfjs.GlobalWorkerOptions.workerSrc = URL_WORKER_PDFJS
     const tarefa = pdfjs.getDocument({ data: new Uint8Array(await arquivo.arrayBuffer()) })
-    const doc = await tarefa.promise
     try {
+      const doc = await tarefa.promise
       if (doc.numPages < 1) throw new PdfIlegivelError()
       const pagina = await doc.getPage(1)
       const base = pagina.getViewport({ scale: 1 })
-      const viewport = pagina.getViewport({ scale: LARGURA_MAXIMA_PDF / base.width })
+      const escala = Math.min(
+        LARGURA_MAXIMA_PDF / base.width,
+        Math.sqrt(AREA_MAXIMA_PDF / (base.width * base.height)),
+      )
+      const viewport = pagina.getViewport({ scale: escala })
       const canvas = document.createElement('canvas')
       canvas.width = Math.round(viewport.width)
       canvas.height = Math.round(viewport.height)
