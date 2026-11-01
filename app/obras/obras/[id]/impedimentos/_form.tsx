@@ -21,6 +21,7 @@ import {
 
 export type OrientacaoOpcao = { id: string; descricao: string; abertoEm: string }
 export type AtividadeOpcao = { numero: number; descricao: string }
+export type AmbienteOpcao = { id: string; nome: string }
 
 const campo = 'min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-3 text-base text-[#333336]'
 
@@ -45,6 +46,7 @@ export default function FormImpedimento({
   dataDiario,
   atividades,
   orientacoes,
+  ambientes = [],
 }: {
   obraId: string
   rdoId?: string | null
@@ -52,6 +54,8 @@ export default function FormImpedimento({
   dataDiario?: string
   atividades: AtividadeOpcao[]
   orientacoes: OrientacaoOpcao[]
+  /** Ambientes do mapa (Leva 6); sem mapa, o campo não aparece. */
+  ambientes?: AmbienteOpcao[]
 }) {
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
@@ -60,6 +64,7 @@ export default function FormImpedimento({
   const [responsavel, setResponsavel] = useState<ResponsavelImp | null>(null)
   const [exibir, setExibir] = useState<boolean | null>(null) // null = padrão do responsável
   const [atividade, setAtividade] = useState('')
+  const [ambiente, setAmbiente] = useState('')
   const [descricao, setDescricao] = useState('')
   const [pessoa, setPessoa] = useState('')
   const [trava, setTrava] = useState(false)
@@ -101,6 +106,7 @@ export default function FormImpedimento({
         exibirAoCliente: exibirEfetivo,
         rdoId,
         abertoEm: dataDiario,
+        ambienteId: ambiente || null,
       }
       if (modo === 'orientacao') {
         const r = await registrarOrientacaoAction(obraId, comum)
@@ -120,7 +126,7 @@ export default function FormImpedimento({
         }
       }
       setOk(true)
-      setTipo(null); setResponsavel(null); setExibir(null); setAtividade(''); setDescricao('')
+      setTipo(null); setResponsavel(null); setExibir(null); setAtividade(''); setAmbiente(''); setDescricao('')
       setPessoa(''); setTrava(false); setImpacto(''); setOrientacaoId(''); setFoto(null)
       if (input.current) input.current.value = ''
       router.refresh()
@@ -172,6 +178,18 @@ export default function FormImpedimento({
           ))}
         </select>
       </label>
+
+      {ambientes.length ? (
+        <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
+          Ambiente no mapa (opcional)
+          <select value={ambiente} onChange={(e) => setAmbiente(e.target.value)} className={campo}>
+            <option value="">—</option>
+            {ambientes.map((a) => (
+              <option key={a.id} value={a.id}>{a.nome}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <label className="flex flex-col gap-1 text-xs text-[#5a7380]">
         {modo === 'impedimento' ? 'O que aconteceu' : 'O que o cliente orientou'}

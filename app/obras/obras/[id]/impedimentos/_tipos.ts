@@ -68,6 +68,8 @@ export type NovoImpedimento = {
   /** Ausente = hoje. */
   abertoEm?: string
   rdoId?: string | null
+  /** Ambiente do mapa (Leva 6), opcional: o ▲ aparece lá enquanto aberto. */
+  ambienteId?: string | null
 }
 
 export type NovaOrientacao = {
@@ -78,4 +80,5 @@ export type NovaOrientacao = {
   exibirAoCliente?: boolean
   abertoEm?: string
   rdoId?: string | null
+  ambienteId?: string | null
 }

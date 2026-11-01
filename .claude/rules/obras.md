@@ -190,3 +190,15 @@ Spec: `docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md
 - **SQL:** `sdd-sql-obras-leva5.sql` aplicado em 31/10/2026 (ver `.claude/rules/sql.md`). Ordem obrigatória no deploy: SQL antes do app
   (sem `obras_situacao_cliente`, a Visão geral do portal, o semanal e o relatório de período dão 500). Teste de
   comportamento: `docs/obras/2026-10-31-verificacao-obras-leva5.sql` (116 casos, rollback).
+
+### Mapa da obra e fotos por ponto (Leva 6, branch `feat/obras-leva6`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
+
+- **Onde fica:** regras puras em `obras/_lib/mapa.ts`, leitura em `_lib/mapa-leitura.ts`; telas em `obras/[id]/mapa/`
+  (`_tela` + `_desenho` SVG relativo 0–1; `montar/_editor` com arrasto por ponteiro; `ponto/[pontoId]/_comparar`
+  antes × depois); permissão `mapa/_permissao.ts` (engenheiro com acesso `obras` ou admin, igual ao banco).
+- **Diário:** com pelo menos um ambiente, o passo Fotos ganha "Por ponto (ronda)", "Por atividade" e "+ Foto avulsa",
+  e `registrarFotoAction` exige ambiente ou ponto (regra só do app). Obra sem ambiente: diário de sempre.
+- **Planta:** só imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+- **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy** (o diário consulta `obras_ambiente`).

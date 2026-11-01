@@ -15,7 +15,9 @@ import { segundaDaSemana } from '../../_lib/last-planner'
 import { lerPlano } from '../../_lib/leitura'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
-import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
+import { lerFotosDoMapa, lerMapa } from '../../_lib/mapa-leitura'
+import { montarMapaDiario } from './_mapa-diario'
+import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo, MapaDiario } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,7 +96,15 @@ export default async function DiarioObraPage({
         .createSignedUrls(linhasFoto.map((f) => f.path as string), 600)
       for (const s of assinadas ?? []) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl)
     }
-    fotos = linhasFoto.map((f) => ({ id: f.id, path: f.path, legenda: f.legenda ?? null, url: urls.get(f.path) ?? null }))
+    fotos = linhasFoto.map((f) => ({
+      id: f.id,
+      path: f.path,
+      legenda: f.legenda ?? null,
+      url: urls.get(f.path) ?? null,
+      ambienteId: f.ambiente_id ?? null,
+      pontoId: f.ponto_id ?? null,
+      atividadeNumero: f.atividade_numero ?? null,
+    }))
   } else {
     const { data: u } = await supabase
       .from('obras_rdo')
@@ -131,6 +141,28 @@ export default async function DiarioObraPage({
     avancosSalvos,
     ultimo,
   })
+
+  // Leva 6: mapa da obra para a ronda de fotos. Sem ambiente → null (diário de sempre).
+  let mapaDiario: MapaDiario | null = null
+  const mapaR = await lerMapa(supabase, id)
+  if (!mapaR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
+  if (mapaR.dados.ambientes.length) {
+    const fotosR = await lerFotosDoMapa(supabase, id)
+    if (!fotosR.ok) return <EstadoVazio>Não deu para carregar o diário. Recarregue a página.</EstadoVazio>
+    const entrada = {
+      mapa: mapaR.dados,
+      fotos: fotosR.fotos,
+      data,
+      atividades: plano.map((p) => ({ numero: p.numero, descricao: p.descricao })),
+    }
+    const caminhos = montarMapaDiario(entrada)?.caminhos ?? []
+    const urlsRef = new Map<string, string>()
+    if (caminhos.length) {
+      const { data: assinadas } = await supabase.storage.from('obras-fotos').createSignedUrls(caminhos, 600)
+      for (const s of assinadas ?? []) if (s.path && s.signedUrl) urlsRef.set(s.path, s.signedUrl)
+    }
+    mapaDiario = montarMapaDiario({ ...entrada, urls: urlsRef })?.mapa ?? null
+  }
 
   // Plano da semana do dia do diário: suas atividades vêm primeiro (falha de leitura = sem selo).
   const planoR = await lerPlano(supabase, id, segundaDaSemana(data))
@@ -237,6 +269,7 @@ export default async function DiarioObraPage({
         noPlano={noPlano}
         fotos={fotos}
         validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
+        mapa={mapaDiario}
         impedimentosHoje={
           r.dados.impedimentos.filter(
             (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
@@ -250,6 +283,7 @@ export default async function DiarioObraPage({
               rdoId={rdo?.id ?? null}
               dataDiario={data}
               atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
+              ambientes={mapaR.dados.ambientes.map((a) => ({ id: a.id, nome: a.nome }))}
               orientacoes={r.dados.impedimentos
                 .filter((i) => i.categoria === 'orientacao')
                 .map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}

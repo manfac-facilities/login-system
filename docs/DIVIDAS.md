@@ -425,3 +425,18 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
 - As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
 - Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).
+
+## 01/11/2026 — Obras Leva 6, mapa e fotos (`feat/obras-leva6`, Task 3), deixado de propósito
+- **Planta só como imagem (JPG/PNG/WebP), PDF não** (chamada da spec §4). O projeto não tem dependência leve
+  para renderizar a 1ª página do PDF no navegador (`@react-pdf/renderer` só gera PDF; `pdfjs-dist` não está
+  instalado e é pesado). A tela de montar recusa PDF com a orientação de exportar a 1ª página como imagem.
+- **Trocar a planta deixa a imagem antiga no bucket** (`<obra>/mapa/`): a policy não deixa apagar pelo navegador e
+  não há limpeza. Volume pequeno (uma imagem por troca).
+- **Ponto desativado não é barrado no banco para foto nova** (Task 1, ponto 2): a ronda só lista pontos ativos,
+  mas uma chamada direta à action com o id de um ponto desativado grava.
+- **Diário lê todas as fotos ligadas ao mapa da obra** (`lerFotosDoMapa`) para achar a referência de ângulo de
+  cada ponto. Uma consulta indexada; cresce com a obra. Se pesar, ler só a última por ponto (rpc ou `distinct on`).
+- **Editor do mapa sem desfazer e sem atalho de teclado para mover/redimensionar** (só ponteiro e os botões
+  "+ Ambiente"/"Pôr no desenho"). O mockup mostrava "Desfazer"; como tudo grava na hora, ficou de fora.
+- **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
+  `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.
