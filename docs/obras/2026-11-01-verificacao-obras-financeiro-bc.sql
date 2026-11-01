@@ -603,11 +603,14 @@ exception when others then
 end $$;
 
 do $$ begin
+  -- M1 tem nota ligada na fixture: desliga só dentro deste bloco (o raise desfaz).
+  perform pg_temp.jwt(null);
+  delete from public.fin_fat_nota_medicoes where medicao_id = '00000000-0000-4000-8000-0000000bc081';
   perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
   update public.obras_medicao_cliente set situacao = 'recusada' where id = '00000000-0000-4000-8000-0000000bc081';
   raise exception 'ok:%', (select situacao from public.obras_medicao_cliente where id = '00000000-0000-4000-8000-0000000bc081');
 exception when others then
-  perform pg_temp.reg(30, 'medição: enviada -> recusada', 'ok:recusada', sqlerrm);
+  perform pg_temp.reg(30, 'medição: enviada -> recusada (sem nota)', 'ok:recusada', sqlerrm);
 end $$;
 
 do $$ begin
@@ -1423,6 +1426,30 @@ exception when others then
   perform pg_temp.reg(111, 'compras recriada: quem não vê valores continua sem linhas', 'ok:0', sqlerrm);
 end $$;
 
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  update public.obras_medicao_cliente set situacao = 'recusada' where id = '00000000-0000-4000-8000-0000000bc081';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(112, 'medição com nota: engenheiro não recusa (enviada -> recusada)', 'não pode ser recusada', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  update public.obras_medicao_cliente set situacao = 'recusada' where id = '00000000-0000-4000-8000-0000000bc084';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(113, 'medição com nota: nem administrador recusa', 'não pode ser recusada', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  update public.obras_medicao_cliente set situacao = 'recusada' where id = '00000000-0000-4000-8000-0000000bc084';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(114, 'medição com nota: sem JWT também não recusa', 'não pode ser recusada', sqlerrm);
+end $$;
+
 -- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por pg_temp.passou: exata para 'ok:'/'RECUSADO', por trecho para erro.
@@ -1442,10 +1469,10 @@ begin
            filter (where not pg_temp.passou(obtido, esperado))
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 111 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 111 testes rodaram';
+  if v_total <> 114 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 114 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/111 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/114 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end
     using errcode = 'P0001';
 end $$;

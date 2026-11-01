@@ -27,8 +27,8 @@
 --      Grava: obras_engenheiro_ou_admin_mae(obra). Lê: obras_pode_ver_valores(obra).
 --      Apaga: só administrador (a nota do Financeiro aponta para a medição).
 --      Medição LIGADA A NOTA (fin_fat_nota_medicoes, só leitura): ninguém (nem admin,
---      nem sem JWT) apaga, muda percentual/valor ou tira de 'aprovada' — desligar a
---      nota no Financeiro antes. Datas (BRT) não podem estar no futuro e a aprovação
+--      nem sem JWT) apaga, muda percentual/valor, tira de 'aprovada' ou recusa —
+--      desligar a nota no Financeiro antes. Datas (BRT) não podem estar no futuro e a aprovação
 --      não pode ser antes do envio.
 --      Máquina de estados (com JWT de não administrador):
 --        INSERT só como 'enviada';
@@ -49,8 +49,10 @@
 --      só ambiente 'producao'; ZERO linhas sem permissão; service role sem JWT
 --      recebe vazio):
 --        obras_fin_vinculos(p_obra)               — pagamentos/rateio e caixinha
---                                                   ligados à obra (fin_obra_vinculos ativos)
---        obras_fin_caixinha_sem_obra(p_obra)      — UMA linha: quantidade e valor das
+--                                                   ligados à obra (fin_obra_vinculos ativos),
+--                                                   com custo atribuído, de_medicao_fornecedor
+--                                                   e fornecedor_documento (CPF/CNPJ só [0-9A-Z])
+--        obras_fin_caixinha_sem_obra(p_obra)      — UMA linha: só a QUANTIDADE (sem R$) das
 --                                                   despesas de caixinha que exigem obra
 --                                                   e não têm vínculo (GLOBAL, não por obra;
 --                                                   p_obra só decide a permissão)
@@ -70,6 +72,9 @@
 --      do contrato (valor_mo/mat, aditivos) vêm NULL quando o contrato não é desta
 --      obra (global), para a tela não somar o contrato global inteiro na obra.
 --      As medições de fornecedor (atrasadas) usam a mesma regra de obra.
+--      obras_fin_compras(p_obra) é RECRIADA (drop + create, mesmos grants): corpo da
+--      Fase A + coluna fornecedor_documento (cmp_mapa_fornecedores.documento, só
+--      [0-9A-Z]) — a aba casa o pagamento do Financeiro com o pedido do Compras.
 --   6. obras_obra_valor_guarda (BEFORE UPDATE OF valor): obras_obra.valor é o
 --      "valor receita" da OBRA (base da margem). Em obra da modalidade 'obra' (antes
 --      ou depois da gravação), com JWT, só administrador do Obras muda o valor
@@ -434,12 +439,14 @@ begin
       end if;
     end if;
 
-    -- Nota ligada (qualquer role, inclusive admin): % e valor fixos, não sai de aprovada.
+    -- Nota ligada (qualquer role, inclusive admin): % e valor fixos, não sai de aprovada e
+    -- não vira recusada (recusar devolveria o % ao restante da OS com a nota contando no faturado).
     if (new.percentual_centesimos is distinct from old.percentual_centesimos
         or new.valor_centavos is distinct from old.valor_centavos
-        or (old.situacao = 'aprovada' and new.situacao is distinct from 'aprovada'))
+        or (old.situacao = 'aprovada' and new.situacao is distinct from 'aprovada')
+        or (new.situacao = 'recusada' and old.situacao is distinct from 'recusada'))
        and exists (select 1 from public.fin_fat_nota_medicoes nm where nm.medicao_id = old.id) then
-      raise exception 'OBRAS_MEDICAO_CLIENTE: medição com nota emitida: percentual, valor e aprovação não mudam — desligue a nota no Financeiro antes'
+      raise exception 'OBRAS_MEDICAO_CLIENTE: medição com nota emitida: percentual, valor e aprovação não mudam e ela não pode ser recusada — desligue a nota no Financeiro antes'
         using errcode = '23503';
     end if;
 
