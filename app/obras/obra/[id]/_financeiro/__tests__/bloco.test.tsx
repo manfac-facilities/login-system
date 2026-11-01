@@ -23,10 +23,10 @@ const dados = {
   fin: {
     semLancamentos: false,
     resumo: { ok: true, dados: { origens: { compras: custo, fornecedores: zero, pagamentos: zero, caixinha: zero, locacoes: zero } } },
-    pendencias: { comprasSemEntrega: 0, medicoesFornecedorAtrasadas: null, caixinhaSemObra: 2, locacoes: null },
-    compras: { ok: true, dados: [] },
+    pendencias: { comprasSemEntrega: 3, medicoesFornecedorAtrasadas: { quantidade: 1, maisDias: 12 }, caixinhaSemObra: 2, locacoes: null },
+    compras: { ok: true, dados: [{ chave: 'c1', os: 'x', solicitacaoNumero: 7, descricao: 'Cimento', etapa: null, fornecedor: 'Forn', valorCentavos: 1000, valorEstimado: false, previsao: null, entrega: 'Entregue', entregaEm: null, nf: '55', pagoEm: '2026-10-20', status: 'Pago', link: null }] },
     fornecedores: { ok: true, dados: [] },
-    faturamento: { ok: true, dados: [] },
+    faturamento: { ok: true, dados: [{ chave: 'n1', os: 'x', numero: '700', tomador: null, situacao: 'Autorizada', parcelaCentavos: 1000000, totalCentavos: 2500000, emitidaEm: '2026-10-02', contaNaReceita: true }] },
   },
   resumo: {
     valorCentavos: 17205355, faturadoCentavos: 15641232, faturadoPct: 90, faltaCentavos: 1564123, acimaDoValorCentavos: null,
@@ -34,6 +34,9 @@ const dados = {
     margemRealizadaCentavos: 10641232, margemRealizadaPct: 68,
   },
   locacoes: [{
+    pedidoId: 'p-dev', obraId: OBRA, os: null, item: 'Betoneira', solicitacaoNumero: 2, fornecedor: 'Loc SA', totalCentavos: null,
+    inicio: '2026-04-01', locacaoFim: '2026-05-09', fim: '2026-05-09', semPeriodo: false, estado: 'devolvida', devolvidaEm: '2026-05-09', renovadaAte: null,
+  }, {
     pedidoId: PEDIDO, obraId: OBRA, os: null, item: 'Andaime', solicitacaoNumero: 1, fornecedor: 'Loc SA', totalCentavos: 100000,
     inicio: '2026-10-01', locacaoFim: '2026-11-10', fim: '2026-11-10', semPeriodo: false, estado: 'ativa', devolvidaEm: null, renovadaAte: null,
   }],
@@ -49,6 +52,45 @@ describe('BlocoFinanceiroSpot', () => {
     expect(screen.getByText(/90% · 2 notas · falta R\$ 15\.641,23/)).toBeInTheDocument()
     expect(screen.getByText('Nota fora do sistema: faturado considerado pelo valor da OS.')).toBeInTheDocument()
     expect(screen.getByText(/Dados até/)).toBeInTheDocument()
+  })
+
+  it('Resumo: coluna Pendências, Realizado (NF) e linha Total', () => {
+    render(<BlocoFinanceiroSpot obraId={OBRA} dados={dados} hoje="2026-11-01" />)
+    expect(screen.getByRole('columnheader', { name: 'Pendências' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Realizado (NF)' })).toBeInTheDocument()
+    expect(screen.getByText('3 sem entrega')).toBeInTheDocument()
+    expect(screen.getByText('1 medição há 12 dias em aprovação')).toBeInTheDocument()
+    const total = screen.getByRole('cell', { name: 'Total' }).closest('tr') as HTMLElement
+    expect(total).toHaveTextContent('R$ 80.000,00')
+    expect(total).toHaveTextContent('R$ 50.000,00')
+    expect(total).toHaveTextContent('R$ 30.000,00')
+  })
+
+  it('Compras mostra a data de pagamento', async () => {
+    render(<BlocoFinanceiroSpot obraId={OBRA} dados={dados} hoje="2026-11-01" />)
+    await userEvent.click(screen.getByRole('tab', { name: 'Compras' }))
+    expect(screen.getByRole('columnheader', { name: 'Pago' })).toBeInTheDocument()
+    expect(screen.getByText('20/10/2026')).toBeInTheDocument()
+  })
+
+  it('Faturamento: barra, Valor da nota e Falta faturar', async () => {
+    render(<BlocoFinanceiroSpot obraId={OBRA} dados={dados} hoje="2026-11-01" />)
+    await userEvent.click(screen.getByRole('tab', { name: 'Faturamento' }))
+    expect(screen.getByText('Faturado sobre o valor da OS')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Valor da nota' })).toBeInTheDocument()
+    expect(screen.getByText('R$ 25.000,00')).toBeInTheDocument()
+    expect(screen.getByText('Falta faturar').closest('tr')).toHaveTextContent('R$ 15.641,23')
+  })
+
+  it('Locações: devolvida mostra a data', async () => {
+    render(<BlocoFinanceiroSpot obraId={OBRA} dados={dados} hoje="2026-11-01" />)
+    await userEvent.click(screen.getByRole('tab', { name: 'Locações' }))
+    expect(screen.getByText('devolvida 09/05')).toBeInTheDocument()
+  })
+
+  it('Dados até mostra data e hora', () => {
+    render(<BlocoFinanceiroSpot obraId={OBRA} dados={dados} hoje="2026-11-01" />)
+    expect(screen.getByText('Dados até 01/11/2026 12:00')).toBeInTheDocument()
   })
 
   it('sub-aba Faturamento mostra a NFS-e 735', async () => {

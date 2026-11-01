@@ -25,6 +25,9 @@ const td = 'px-2 py-1.5 align-top text-sm text-[#e8eef7]'
 const num = td + ' text-right whitespace-nowrap font-mono'
 const botao = 'min-h-11 rounded-lg border border-[#1e3a5f] px-3 text-sm font-medium text-[#e8eef7] hover:border-[#f05a28] disabled:opacity-45'
 const data = (v: string | null) => (v ? diaBr(v) : '—')
+const ddmm = (v: string) => `${v.slice(8, 10)}/${v.slice(5, 7)}`
+const fmtHora = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
+const dataHora = (iso: string) => fmtHora.format(new Date(iso)).replace(',', '')
 
 const Tabela = ({ children }: { children: ReactNode }) => (
   <div className="overflow-x-auto">
@@ -52,17 +55,38 @@ const ORIGENS: { id: OrigemCusto; rotulo: string }[] = [
   { id: 'locacoes', rotulo: 'Locações' },
 ]
 
-function TabelaOrigens({ d, ids }: { d: Ok; ids: OrigemCusto[] }) {
+function pendenciasDe(id: OrigemCusto, p: Ok['fin']['pendencias']): string[] {
+  if (id === 'compras') return p.comprasSemEntrega > 0 ? [`${p.comprasSemEntrega} sem entrega`] : []
+  if (id === 'fornecedores') {
+    if (p.medicoesFornecedorAtrasadas === null) return ['não deu para ler as medições em aprovação']
+    const m = p.medicoesFornecedorAtrasadas
+    if (m.quantidade === 0) return []
+    return [m.quantidade === 1 ? `1 medição há ${m.maisDias} dias em aprovação` : `${m.quantidade} medições há mais de 10 dias em aprovação (a mais antiga, ${m.maisDias} dias)`]
+  }
+  if (id === 'caixinha') {
+    if (p.caixinhaSemObra === null) return ['não deu para ler as despesas sem obra']
+    return p.caixinhaSemObra > 0 ? [p.caixinhaSemObra === 1 ? '1 despesa sem obra no CC' : `${p.caixinhaSemObra} despesas sem obra no CC`] : []
+  }
+  if (id === 'locacoes') {
+    if (p.locacoes === null) return ['não deu para ler as locações']
+    return p.locacoes.quantidade === 0 ? [] : [p.locacoes.quantidade === 1 ? p.locacoes.primeira : `${p.locacoes.quantidade} vencendo · ${p.locacoes.primeira}`]
+  }
+  return []
+}
+
+function TabelaOrigens({ d, ids, completa = false }: { d: Ok; ids: OrigemCusto[]; completa?: boolean }) {
   const origens = d.fin.resumo.ok ? d.fin.resumo.dados.origens : null
   if (!origens) return <Falha />
+  const t = d.resumo.custo
   return (
     <Tabela>
       <thead>
         <tr className="border-b border-[#1e3a5f]">
           <th className={th}>Origem</th>
           <th className={th + ' text-right'}>Comprometido</th>
-          <th className={th + ' text-right'}>Realizado</th>
+          <th className={th + ' text-right'}>Realizado (NF)</th>
           <th className={th + ' text-right'}>Pago</th>
+          <th className={th}>Pendências</th>
         </tr>
       </thead>
       <tbody>
@@ -72,8 +96,18 @@ function TabelaOrigens({ d, ids }: { d: Ok; ids: OrigemCusto[] }) {
             <td className={num}>{brl(origens[o.id].comprometido)}</td>
             <td className={num}>{brl(origens[o.id].realizado)}</td>
             <td className={num}>{brl(origens[o.id].pago)}</td>
+            <td className={td + ' text-xs text-[#fbbf24]'}>{pendenciasDe(o.id, d.fin.pendencias).join(' · ') || '—'}</td>
           </tr>
         ))}
+        {completa ? (
+          <tr className="font-semibold">
+            <td className={td}>Total</td>
+            <td className={num}>{brl(t.comprometido)}</td>
+            <td className={num}>{brl(t.realizado)}</td>
+            <td className={num}>{brl(t.pago)}</td>
+            <td className={td}></td>
+          </tr>
+        ) : null}
       </tbody>
     </Tabela>
   )
@@ -83,7 +117,7 @@ function Resumo({ d }: { d: Ok }) {
   const r = d.resumo
   return (
     <div className="flex flex-col gap-3">
-      <TabelaOrigens d={d} ids={ORIGENS.map((o) => o.id)} />
+      <TabelaOrigens d={d} ids={ORIGENS.map((o) => o.id)} completa />
       <p className="text-sm text-[#94a3b8]">
         Margem realizada: <span className="font-mono text-[#e8eef7]">{brl(r.margemRealizadaCentavos)}</span>
         {r.margemRealizadaPct === null ? '' : ` (${pctTexto(r.margemRealizadaPct)})`}
@@ -105,6 +139,7 @@ function Compras({ d }: { d: Ok }) {
           <th className={th + ' text-right'}>Valor</th>
           <th className={th}>Entrega</th>
           <th className={th}>NF</th>
+          <th className={th}>Pago</th>
           <th className={th}>Status</th>
         </tr>
       </thead>
@@ -127,6 +162,7 @@ function Compras({ d }: { d: Ok }) {
             </td>
             <td className={td}>{c.entrega ?? '—'}</td>
             <td className={td}>{c.nf ?? '—'}</td>
+            <td className={td}>{data(c.pagoEm)}</td>
             <td className={td}>{c.status}</td>
           </tr>
         ))}
@@ -170,17 +206,7 @@ function Fornecedores({ d }: { d: Ok }) {
 }
 
 function Pagamentos({ d }: { d: Ok }) {
-  const q = d.fin.pendencias.caixinhaSemObra
-  return (
-    <div className="flex flex-col gap-2">
-      <TabelaOrigens d={d} ids={['pagamentos', 'caixinha']} />
-      {q === null ? (
-        <p className="text-xs text-[#94a3b8]">Não deu para ler as despesas sem obra.</p>
-      ) : q > 0 ? (
-        <p className="text-xs text-[#fbbf24]">{q === 1 ? '1 despesa sem obra no CC' : `${q} despesas sem obra no CC`}</p>
-      ) : null}
-    </div>
-  )
+  return <TabelaOrigens d={d} ids={['pagamentos', 'caixinha']} />
 }
 
 function Acoes({ obraId, pedidoId, hoje }: { obraId: string; pedidoId: string; hoje: string }) {
@@ -192,10 +218,13 @@ function Acoes({ obraId, pedidoId, hoje }: { obraId: string; pedidoId: string; h
   async function rodar(f: () => ReturnType<typeof marcarDevolvidaSpotAction>) {
     setIndo(true)
     setErro(null)
-    const r = await f()
-    setIndo(false)
-    if (!r.ok) return setErro(r.erro)
-    router.refresh()
+    try {
+      const r = await f()
+      if (!r.ok) return setErro(r.erro)
+      router.refresh()
+    } finally {
+      setIndo(false)
+    }
   }
   return (
     <div className="flex flex-col gap-1.5">
@@ -232,7 +261,11 @@ function Locacoes({ d, obraId, hoje }: { d: Ok; obraId: string; hoje: string }) 
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h4 className="text-sm font-semibold text-[#e8eef7]">{l.item}</h4>
               <span className="text-xs text-[#94a3b8]">
-                {l.estado === 'devolvida' ? 'devolvida' : l.estado === 'renovada' ? 'renovada · em uso' : 'em uso'}
+                {l.estado === 'devolvida'
+                  ? `devolvida${l.devolvidaEm ? ` ${ddmm(l.devolvidaEm)}` : ''}`
+                  : l.estado === 'renovada'
+                    ? `renovada${l.renovadaAte ? ` até ${diaBr(l.renovadaAte)}` : ''} · em uso`
+                    : 'em uso'}
               </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
@@ -257,39 +290,59 @@ function Locacoes({ d, obraId, hoje }: { d: Ok; obraId: string; hoje: string }) 
 function Faturamento({ d }: { d: Ok }) {
   const b = d.fin.faturamento
   if (!b.ok) return <Falha />
-  if (!b.dados.length && !d.externas.length) return <Vazio />
+  const r = d.resumo
+  const pct = r.faturadoPct === null ? 0 : Math.min(100, Math.max(0, r.faturadoPct))
   return (
-    <Tabela>
-      <thead>
-        <tr className="border-b border-[#1e3a5f]">
-          <th className={th}>NF</th>
-          <th className={th}>Emitida</th>
-          <th className={th}>Situação</th>
-          <th className={th + ' text-right'}>Valor</th>
-        </tr>
-      </thead>
-      <tbody>
-        {b.dados.map((n) => (
-          <tr key={n.chave} className="border-b border-[#1e3a5f]">
-            <td className={td}>{n.numero ? `NFS-e ${n.numero}` : 'sem número'}</td>
-            <td className={td}>{data(n.emitidaEm)}</td>
-            <td className={td}>
-              {n.situacao}
-              {!n.contaNaReceita ? <span className="block text-[11px] text-[#94a3b8]">não conta na receita</span> : null}
-            </td>
-            <td className={num}>{n.parcelaCentavos === null ? '—' : brl(n.parcelaCentavos)}</td>
+    <div className="flex flex-col gap-3">
+      <div>
+        <div className="mb-1 flex justify-between text-sm">
+          <span>Faturado sobre o valor da OS</span>
+          <b className="font-mono">{pctTexto(r.faturadoPct)}</b>
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-[#0a1628]" role="img" aria-label={`Faturado sobre o valor da OS: ${pctTexto(r.faturadoPct)}`}>
+          <div className="h-full rounded-full bg-[#f05a28]" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      {!b.dados.length && !d.externas.length ? <Vazio /> : null}
+      <Tabela>
+        <thead>
+          <tr className="border-b border-[#1e3a5f]">
+            <th className={th}>NF</th>
+            <th className={th}>Emitida</th>
+            <th className={th}>Situação</th>
+            <th className={th + ' text-right'}>Valor da nota</th>
+            <th className={th + ' text-right'}>Parte desta OS</th>
           </tr>
-        ))}
-        {d.externas.map((n) => (
-          <tr key={`ext-${n.nfse}`} className="border-b border-[#1e3a5f]">
-            <td className={td}>NFS-e {n.nfse}</td>
-            <td className={td}>{data(n.emitidaEm)}</td>
-            <td className={td}>Emitida fora do sistema</td>
-            <td className={num}>{brl(n.valorCentavos)}</td>
+        </thead>
+        <tbody>
+          {b.dados.map((n) => (
+            <tr key={n.chave} className="border-b border-[#1e3a5f]">
+              <td className={td}>{n.numero ? `NFS-e ${n.numero}` : 'sem número'}</td>
+              <td className={td}>{data(n.emitidaEm)}</td>
+              <td className={td}>
+                {n.situacao}
+                {!n.contaNaReceita ? <span className="block text-[11px] text-[#94a3b8]">não conta na receita</span> : null}
+              </td>
+              <td className={num}>{n.totalCentavos === null ? '—' : brl(n.totalCentavos)}</td>
+              <td className={num}>{n.parcelaCentavos === null ? '—' : brl(n.parcelaCentavos)}</td>
+            </tr>
+          ))}
+          {d.externas.map((n, i) => (
+            <tr key={`ext-${i}-${n.nfse}`} className="border-b border-[#1e3a5f]">
+              <td className={td}>NFS-e {n.nfse}</td>
+              <td className={td}>{data(n.emitidaEm)}</td>
+              <td className={td}>Emitida fora do sistema</td>
+              <td className={num}>{brl(n.valorCentavos)}</td>
+              <td className={num}>{brl(n.valorCentavos)}</td>
+            </tr>
+          ))}
+          <tr className="font-semibold">
+            <td className={td} colSpan={4}>Falta faturar</td>
+            <td className={num}>{r.faltaCentavos === null ? '—' : brl(r.faltaCentavos)}</td>
           </tr>
-        ))}
-      </tbody>
-    </Tabela>
+        </tbody>
+      </Tabela>
+    </div>
   )
 }
 
@@ -309,11 +362,11 @@ export default function BlocoFinanceiroSpot({ obraId, dados, hoje }: { obraId: s
     <section aria-label="Financeiro da OS" className="flex flex-col gap-3 rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-[#e8eef7]">Financeiro da OS</h2>
-        <span className="text-xs text-[#94a3b8]">Dados até {diaBr(dados.lidoEm)}</span>
+        <span className="text-xs text-[#94a3b8]">Dados até {dataHora(dados.lidoEm)}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Total rotulo="Valor da OS" valor={r.valorCentavos === null ? '—' : brl(r.valorCentavos)} />
+        <Total rotulo="Valor da OS" valor={r.valorCentavos === null ? '—' : brl(r.valorCentavos)} sub="receita esperada" />
         <Total
           rotulo="Faturado"
           valor={brl(r.faturadoCentavos)}
