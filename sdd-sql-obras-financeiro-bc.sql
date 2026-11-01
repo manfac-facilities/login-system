@@ -100,9 +100,9 @@
 -- ROLLBACK (só depois de reverter o app):
 --   drop function public.obras_fin_vinculos(uuid), public.obras_fin_caixinha_sem_obra(uuid),
 --                 public.obras_fin_locacoes(uuid), public.obras_fin_medicoes_fornecedor_atrasadas(uuid);
---   reaplicar as seções 3b e 3c de sdd-sql-obras-financeiro-a.sql (obras_fin_fornecedores e
---     obras_fin_notas da Fase A) — antes: drop function public.obras_fin_notas(uuid),
---     public.obras_fin_fornecedores(uuid);
+--   reaplicar as seções 3a, 3b e 3c de sdd-sql-obras-financeiro-a.sql (obras_fin_compras,
+--     obras_fin_fornecedores e obras_fin_notas da Fase A) — antes: drop function
+--     public.obras_fin_compras(uuid), public.obras_fin_notas(uuid), public.obras_fin_fornecedores(uuid);
 --   drop table public.obras_locacao_estado, public.obras_medicao_cliente,
 --              public.obras_cliente_pessoa;   -- apaga dados (exportar antes)
 --   drop function public.obras_locacao_estado_guarda(), public.obras_medicao_cliente_guarda(),
@@ -160,7 +160,7 @@ begin
     'fin_solicitacoes.id', 'fin_solicitacoes.ambiente', 'fin_solicitacoes.numero', 'fin_solicitacoes.etapa',
     'fin_solicitacoes.tipo', 'fin_solicitacoes.fornecedor_razao_social', 'fin_solicitacoes.categoria_descricao',
     'fin_solicitacoes.descricao', 'fin_solicitacoes.valor_centavos', 'fin_solicitacoes.vencimento',
-    'fin_solicitacoes.enviado_em',
+    'fin_solicitacoes.enviado_em', 'fin_solicitacoes.fornecedor_documento',
     'fin_pagamentos_omie.solicitacao_id', 'fin_pagamentos_omie.situacao', 'fin_pagamentos_omie.data_pagamento',
     'fin_pagamentos_omie.valor_pago_centavos',
     'fin_caixinha_despesas.ambiente', 'fin_caixinha_despesas.vex_id', 'fin_caixinha_despesas.relatorio_vex_id',
@@ -188,7 +188,10 @@ begin
     'cmp_pedidos.mapa_fornecedor_id', 'cmp_pedidos.total_centavos', 'cmp_pedidos.situacao',
     'cmp_pedidos.omie_numero', 'cmp_pedidos.previsao_entrega', 'cmp_pedidos.entrega_situacao',
     'cmp_pedidos.entrega_em',
-    'cmp_mapa_fornecedores.id', 'cmp_mapa_fornecedores.razao_social'
+    'cmp_solicitacoes.etapa', 'cmp_solicitacoes.enviado_em', 'cmp_solicitacoes.valor_estimado_centavos',
+    'cmp_pedidos.criado_em', 'cmp_pedidos.nf_numero', 'cmp_pedidos.nf_em', 'cmp_pedidos.pago_em',
+    'cmp_pedidos.concluido_em',
+    'cmp_mapa_fornecedores.id', 'cmp_mapa_fornecedores.razao_social', 'cmp_mapa_fornecedores.documento'
   ] loop
     if not exists (select 1 from information_schema.columns
                     where table_schema = 'public'
@@ -652,7 +655,13 @@ revoke truncate on public.obras_locacao_estado from authenticated;
 --     (tentativa 1: chave = id da medição) ou por frn_medicoes.fin_solicitacao_id
 --     (tentativas 2+ usam chave derivada); pode vir NULL com a coluna true.
 --     Todas as etapas vêm (recusada/cancelada inclusive): a tela decide o que conta.
-create or replace function public.obras_fin_vinculos(p_obra uuid)
+--     fornecedor_documento = CPF/CNPJ do fornecedor da solicitação, só [0-9A-Z] (NULL
+--     na caixinha): a tela casa com o documento do pedido do Compras da mesma família
+--     (obras_fin_compras.fornecedor_documento) e trata o vínculo como PAGAMENTO do
+--     pedido, não custo a mais (decisão M3 da revisão da Task 7).
+--     O retorno mudou (fornecedor_documento) -> drop e create.
+drop function if exists public.obras_fin_vinculos(uuid);
+create function public.obras_fin_vinculos(p_obra uuid)
 returns table (
   obra_id uuid,
   obra_os text,
@@ -685,7 +694,8 @@ returns table (
   despesa_titulo text,
   despesa_tipo_nome text,
   despesa_centro_custo_nome text,
-  relatorio_status text
+  relatorio_status text,
+  fornecedor_documento text
 )
 language sql
 stable
@@ -709,7 +719,8 @@ as $$
          po.situacao, po.data_pagamento, po.valor_pago_centavos,
          coalesce(mi.id, fm.id),
          (ig.solicitacao_id is not null or fm.id is not null),
-         v.vex_despesa_id, d.data, d.titulo, d.tipo_nome, d.centro_custo_nome, r.status
+         v.vex_despesa_id, d.data, d.titulo, d.tipo_nome, d.centro_custo_nome, r.status,
+         nullif(upper(regexp_replace(coalesce(s.fornecedor_documento, ''), '[^0-9A-Za-z]', '', 'g')), '')
     from alvo a
     join public.fin_obra_vinculos v
       on v.obra_id = a.id and v.ambiente = 'producao' and v.desfeito_em is null
@@ -1041,6 +1052,65 @@ $$;
 revoke execute on function public.obras_fin_notas(uuid) from public, anon;
 grant execute on function public.obras_fin_notas(uuid) to authenticated, service_role;
 
+-- 5g. obras_fin_compras: corpo da Fase A + fornecedor_documento (no fim) — CPF/CNPJ
+--     do fornecedor do mapa (cmp_mapa_fornecedores.documento), só [0-9A-Z], NULL sem
+--     pedido/documento. Serve para casar o pagamento do Financeiro (obras_fin_vinculos)
+--     com o pedido. O retorno muda -> drop e create; mesmos grants da Fase A.
+drop function if exists public.obras_fin_compras(uuid);
+create function public.obras_fin_compras(p_obra uuid)
+returns table (
+  obra_id uuid,
+  obra_os text,
+  solicitacao_id uuid,
+  solicitacao_numero bigint,
+  solicitacao_tipo text,
+  solicitacao_etapa text,
+  solicitacao_motivo text,
+  prazo_necessario date,
+  solicitacao_enviado_em timestamptz,
+  valor_estimado_centavos bigint,
+  pedido_id uuid,
+  pedido_sequencia smallint,
+  fornecedor_razao_social text,
+  pedido_situacao text,
+  omie_numero text,
+  total_centavos bigint,
+  pedido_criado_em timestamptz,
+  previsao_entrega date,
+  entrega_situacao text,
+  entrega_em timestamptz,
+  nf_numero text,
+  nf_em timestamptz,
+  pago_em timestamptz,
+  concluido_em timestamptz,
+  fornecedor_documento text
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  with alvo as (
+    select o.id, o.os
+      from public.obras_obra o
+     where public.obras_pode_ver_valores(p_obra) is true
+       and (o.id = p_obra or o.obra_pai_id = p_obra)
+  )
+  select a.id, a.os,
+         s.id, s.numero, s.tipo, s.etapa, s.motivo, s.prazo_necessario, s.enviado_em, s.valor_estimado_centavos,
+         p.id, p.sequencia, f.razao_social, p.situacao, p.omie_numero, p.total_centavos,
+         p.criado_em, p.previsao_entrega, p.entrega_situacao, p.entrega_em, p.nf_numero, p.nf_em,
+         p.pago_em, p.concluido_em,
+         nullif(upper(regexp_replace(coalesce(f.documento, ''), '[^0-9A-Za-z]', '', 'g')), '')
+    from alvo a
+    join public.cmp_solicitacoes s on s.obra_id = a.id and s.ambiente = 'producao'
+    left join public.cmp_pedidos p on p.solicitacao_id = s.id and p.ambiente = 'producao'
+    left join public.cmp_mapa_fornecedores f on f.id = p.mapa_fornecedor_id
+   order by s.numero, p.sequencia;
+$$;
+revoke execute on function public.obras_fin_compras(uuid) from public, anon;
+grant execute on function public.obras_fin_compras(uuid) to authenticated, service_role;
+
 -- ============================================================
 -- 6. Valor receita da OBRA: só administrador (SPOT inalterado)
 -- ============================================================
@@ -1237,6 +1307,13 @@ from (values
                and bool_and(not has_function_privilege('authenticated', p.oid, 'EXECUTE')))::text
          from pg_trigger t join pg_proc p on p.oid = t.tgfoid
         where t.tgname = 'obras_obra_valor_guarda' and t.tgrelid = 'public.obras_obra'::regclass
-          and not t.tgisinternal and t.tgenabled = 'O'))
+          and not t.tgisinternal and t.tgenabled = 'O')),
+  (24, 'compras e vínculos trazem fornecedor_documento; compras definer, EXECUTE só authenticated/service_role', 'true',
+      (select (bool_and(pg_get_function_result(oid) like '%fornecedor_documento text%')
+               and bool_and(prosecdef)
+               and bool_and(has_function_privilege('authenticated', oid, 'EXECUTE'))
+               and bool_and(not has_function_privilege('anon', oid, 'EXECUTE')))::text
+         from pg_proc where oid in (to_regprocedure('public.obras_fin_compras(uuid)'),
+                                    to_regprocedure('public.obras_fin_vinculos(uuid)'))))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;

@@ -167,9 +167,10 @@ select ('00000000-0000-4000-8000-0000000bc02' || k)::uuid, ('00000000-0000-4000-
        1, 'aprovado', 'comprador@teste.invalid'
   from unnest(array['1','2','3','4','5']) k;
 
-insert into public.cmp_mapa_fornecedores (id, mapa_id, ordem, razao_social, frete_tipo)
+-- Só o fornecedor 1 tem documento (formatado, como pode vir do mapa): a leitura devolve só [0-9A-Z].
+insert into public.cmp_mapa_fornecedores (id, mapa_id, ordem, razao_social, frete_tipo, documento)
 select ('00000000-0000-4000-8000-0000000bc03' || k)::uuid, ('00000000-0000-4000-8000-0000000bc02' || k)::uuid,
-       1, 'Locadora Teste ' || k, 'incluso'
+       1, 'Locadora Teste ' || k, 'incluso', case when k = '1' then '12.345.678/0001-90' else '' end
   from unnest(array['1','2','3','4','5']) k;
 
 insert into public.cmp_pedidos
@@ -1394,6 +1395,35 @@ exception when others then
 end $$;
 
 -- ============================================================
+-- fornecedor_documento (revisão da Task 7, M3): casar pagamento do Financeiro com pedido
+-- ============================================================
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  raise exception 'ok:%', (select coalesce(max(fornecedor_documento) filter (where pedido_id = '00000000-0000-4000-8000-0000000bc041'), 'null')
+                                  || '|' || coalesce(max(fornecedor_documento) filter (where pedido_id = '00000000-0000-4000-8000-0000000bc042'), 'null')
+                             from public.obras_fin_compras('00000000-0000-4000-8000-0000000bc001'));
+exception when others then
+  perform pg_temp.reg(109, 'compras: fornecedor_documento só [0-9A-Z] (12.345.678/0001-90 → 12345678000190); vazio → NULL',
+    'ok:12345678000190|null', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  raise exception 'ok:%', (select max(fornecedor_documento) filter (where solicitacao_id = '00000000-0000-4000-8000-0000000bc051')
+                                  || '|' || count(*) filter (where origem = 'caixinha_despesa' and fornecedor_documento is not null)
+                             from public.obras_fin_vinculos('00000000-0000-4000-8000-0000000bc001'));
+exception when others then
+  perform pg_temp.reg(110, 'vínculos: fornecedor_documento da solicitação; caixinha sem documento', 'ok:99999999000191|0', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  raise exception 'ok:%', (select count(*) from public.obras_fin_compras('00000000-0000-4000-8000-0000000bc001'));
+exception when others then
+  perform pg_temp.reg(111, 'compras recriada: quem não vê valores continua sem linhas', 'ok:0', sqlerrm);
+end $$;
+
+-- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por pg_temp.passou: exata para 'ok:'/'RECUSADO', por trecho para erro.
 -- ============================================================
@@ -1412,10 +1442,10 @@ begin
            filter (where not pg_temp.passou(obtido, esperado))
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 108 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 108 testes rodaram';
+  if v_total <> 111 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 111 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/108 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/111 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end
     using errcode = 'P0001';
 end $$;
