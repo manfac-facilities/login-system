@@ -21,3 +21,11 @@ Texto literal, colado do chat.
 ## Pedido no mesmo dia
 > o botão de pedir material seria ideal que abrisse em uma nova aba, para nao perder ali as informações da obra
 (feito: master 3727295)
+
+## Segunda rodada (01/11/2026) — literal
+Perguntas enviadas: (1) aba Dados da obra/organograma — o que entra; (2) lista de custos fixos × obrigatórios (proposta: obrigatório Material/Material Aplicado, Mão de Obra Terceirizada, Serviços de Terceiros, Locação de Equipamentos, Máquinas e Equipamentos, Ferramentas, Taxa de ART, Hospedagem, Estacionamento, Alimentação; fixo Remuneração PJ, Prêmios, Aluguel de Veículos, Combustível/Abastecimento, Manutenção de Veículos, Multas, Seguro de Vida, Vale Refeição, ASOs, Comissões); (3) caixinha do VEX sem obra — quem completa; (4) % avanço × % liberado × % faturado.
+
+Resposta:
+> 1=acho que a principio só nome, cargo e e-mail (nao obrigatorio), pq ai já aproveitamos também para o cadastro de emails do cliente. ao inves de valor vendido pode colocar só valor receita. 2=estacionamento pode ir para fixo. 3=quem completa é o supervisor da despesa
+
+(4 sem resposta — segue o entendimento enviado, sem objeção.)
