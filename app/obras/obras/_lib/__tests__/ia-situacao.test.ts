@@ -7,9 +7,9 @@
  * validação do que vai ser publicado e do formato congelado.
  */
 const createMock = jest.fn()
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({ beta: { messages: { create: (...a: unknown[]) => createMock(...a) } } })),
+  default: jest.fn().mockImplementation(() => ({ responses: { create: (...a: unknown[]) => createMock(...a) } })),
 }))
 
 import { ESQUEMA_SITUACAO, INSTRUCOES_SITUACAO, comporSituacao, entradaDaIa, numerosDoCliente } from '../ia-situacao'
@@ -17,21 +17,24 @@ import { nomeDoEmail, situacaoParaCliente, situacaoRelatorioValida, situacaoRowD
 import { pontosAExplicar, respostasParaCliente } from '../analista'
 import { imp, obraGrandePdf } from '../../_pdf/__tests__/fixtures/rdo'
 
-const ORIGINAL = process.env.ANTHROPIC_API_KEY
+const ORIGINAL = process.env.OPENAI_API_KEY
 beforeEach(() => {
   createMock.mockReset()
-  process.env.ANTHROPIC_API_KEY = 'sk-teste'
+  process.env.OPENAI_API_KEY = 'sk-teste'
 })
 afterAll(() => {
-  if (ORIGINAL === undefined) delete process.env.ANTHROPIC_API_KEY
-  else process.env.ANTHROPIC_API_KEY = ORIGINAL
+  if (ORIGINAL === undefined) delete process.env.OPENAI_API_KEY
+  else process.env.OPENAI_API_KEY = ORIGINAL
 })
 
 const BOA = {
   explicacao: 'O atraso é de responsabilidade da Manfac: o drywall levou mais tempo que o planejado. Reforçamos a equipe desde 23/11.',
   acoes: [{ oque: 'Segunda equipe de drywall', quando: 'desde 23/11', efeito: 'recupera cerca de 2 dias úteis' }],
 }
-const resposta = (texto: string, stop = 'end_turn') => ({ stop_reason: stop, content: [{ type: 'text', text: texto }] })
+const resposta = (texto: string, recusa = false) => ({
+  status: 'completed',
+  output: [{ type: 'message', content: recusa ? [{ type: 'refusal', refusal: 'não' }] : [{ type: 'output_text', text: texto }] }],
+})
 const entrada = { loja: 'DP Macaé 3', numeros: ['Avanço realizado: 52%; previsto até hoje: 58% (6 p.p. abaixo do previsto).'], respostas: [{ fato: 'Avanço abaixo.', resposta: 'Segunda equipe desde 23/11' }] }
 
 describe('comporSituacao', () => {
@@ -41,15 +44,14 @@ describe('comporSituacao', () => {
     expect(r).toEqual({ ok: true, situacao: BOA, origem: 'ia' })
     const [args] = createMock.mock.calls[0]
     expect(args).toMatchObject({
-      model: 'claude-opus-5-5',
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: ESQUEMA_SITUACAO } },
-      system: INSTRUCOES_SITUACAO,
+      model: 'gpt-5.4-mini',
+      reasoning: { effort: 'low' },
+      text: { format: { type: 'json_schema', name: 'situacao', schema: ESQUEMA_SITUACAO, strict: true } },
+      instructions: INSTRUCOES_SITUACAO,
     })
     expect(INSTRUCOES_SITUACAO).toContain('responsabilidade da Manfac')
     expect(INSTRUCOES_SITUACAO).toMatch(/R\$/)
-    expect(args.messages[0].content).toContain('Segunda equipe desde 23/11')
+    expect(args.input).toContain('Segunda equipe desde 23/11')
   })
 
   it.each([
@@ -70,7 +72,7 @@ describe('comporSituacao', () => {
   })
 
   it('recusa: mensagem amigável', async () => {
-    createMock.mockResolvedValue(resposta(JSON.stringify(BOA), 'refusal'))
+    createMock.mockResolvedValue(resposta(JSON.stringify(BOA), true))
     const r = await comporSituacao(entrada)
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.erro).toMatch(/à mão/)
@@ -82,8 +84,8 @@ describe('comporSituacao', () => {
     expect(r).toEqual({ ok: false, erro: expect.stringMatching(/Tente de novo/) })
   })
 
-  it('sem ANTHROPIC_API_KEY: rascunho simples com as respostas, sem chamar o SDK', async () => {
-    delete process.env.ANTHROPIC_API_KEY
+  it('sem OPENAI_API_KEY: rascunho simples com as respostas, sem chamar o SDK', async () => {
+    delete process.env.OPENAI_API_KEY
     const r = await comporSituacao({ ...entrada, respostas: [{ fato: 'f', resposta: 'Segunda equipe desde 23/11' }, { fato: 'g', resposta: 'Material chega dia 01/12.' }] })
     expect(createMock).not.toHaveBeenCalled()
     expect(r).toEqual({

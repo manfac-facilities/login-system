@@ -29,7 +29,7 @@ export default function FormSemanal({
   observacoes: string
   /** Engenheiro da obra ou admin. */
   podeEnviar: boolean
-  /** ANTHROPIC_API_KEY configurada no servidor. */
+  /** OPENAI_API_KEY configurada no servidor. */
   ia: boolean
   temClienteSemanal: boolean
 }) {

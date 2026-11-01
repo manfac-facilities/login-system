@@ -38,7 +38,7 @@ export default function QuadroAnalista({
   abertas: PerguntaTela[]
   respondidas: number
   publicada: PublicadaTela | null
-  /** ANTHROPIC_API_KEY configurada (senão o rascunho é simples). */
+  /** OPENAI_API_KEY configurada (senão o rascunho é simples). */
   ia: boolean
 }) {
   const n = abertas.length

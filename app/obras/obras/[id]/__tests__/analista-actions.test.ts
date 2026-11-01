@@ -40,15 +40,15 @@ jest.mock('../../_lib/leitura', () => ({
   ...jest.requireActual('../../_lib/leitura'),
   lerObraGrande: (...a: unknown[]) => lerObraGrandeMock(...a),
 }))
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({ beta: { messages: { create: (...a: unknown[]) => createMock(...a) } } })),
+  default: jest.fn().mockImplementation(() => ({ responses: { create: (...a: unknown[]) => createMock(...a) } })),
 }))
 
 import { montarSituacaoAction, publicarSituacaoAction, responderPerguntaAction } from '../_analista-actions'
 
 const OBRA = '00000000-0000-4000-8000-0000000000a1'
-const ORIGINAL = process.env.ANTHROPIC_API_KEY
+const ORIGINAL = process.env.OPENAI_API_KEY
 
 function obra() {
   const og = obraGrandePdf()
@@ -61,7 +61,7 @@ function obra() {
 beforeEach(() => {
   escritas.length = 0
   createMock.mockReset()
-  delete process.env.ANTHROPIC_API_KEY
+  delete process.env.OPENAI_API_KEY
   getUserMock.mockResolvedValue({ data: { user: { email: 'eng@manfac.com.br' } } })
   lerObraGrandeMock.mockResolvedValue({ ok: true, dados: obra() })
   db = {
@@ -73,8 +73,8 @@ beforeEach(() => {
   }
 })
 afterAll(() => {
-  if (ORIGINAL === undefined) delete process.env.ANTHROPIC_API_KEY
-  else process.env.ANTHROPIC_API_KEY = ORIGINAL
+  if (ORIGINAL === undefined) delete process.env.OPENAI_API_KEY
+  else process.env.OPENAI_API_KEY = ORIGINAL
 })
 
 describe('responderPerguntaAction', () => {
@@ -130,13 +130,13 @@ describe('montarSituacaoAction', () => {
   })
 
   it('com chave: o prompt não leva resposta interna', async () => {
-    process.env.ANTHROPIC_API_KEY = 'sk-teste'
+    process.env.OPENAI_API_KEY = 'sk-teste'
     db.obras_situacao_pergunta = [
       { obra_id: OBRA, chave: 'desvio:obra', resposta: 'Segredo do setor de compras', interno: true, aberta: false, contexto: { impressao: '-6' } },
     ]
-    createMock.mockResolvedValue({ stop_reason: 'end_turn', content: [{ type: 'text', text: '{"explicacao":"Texto.","acoes":[]}' }] })
+    createMock.mockResolvedValue({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{"explicacao":"Texto.","acoes":[]}' }] }] })
     await montarSituacaoAction(OBRA)
-    expect(createMock.mock.calls[0][0].messages[0].content).not.toContain('setor de compras')
+    expect(createMock.mock.calls[0][0].input).not.toContain('setor de compras')
   })
 })
 

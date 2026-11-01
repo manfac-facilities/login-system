@@ -181,8 +181,12 @@ Spec: `docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md
   (`obras_portal_acesso.ativo`) é relido a cada request, então desativar derruba a sessão.
 - **Modalidade:** página, PDF, documento e mensagem do cliente recusam obra que não é `modalidade = 'obra'`.
 - **Env:** `PORTAL_OBRA_SEGREDO` (≥ 32 caracteres; só no EasyPanel). Sem ele, ou curto, o portal falha fechado.
+- **IA (desde 01/11/2026 na OpenAI, não mais Anthropic):** uma chamada só, `pedirAoModelo` em `_lib/ia-semanal.ts`
+  (Responses API, SDK `openai`), usada pelo semanal/relatórios e pela Situação (`_lib/ia-situacao.ts`, JSON com
+  esquema estrito). Env `OPENAI_API_KEY` (sem ela o botão some e a Situação sai em rascunho simples) e
+  `OPENAI_MODEL` opcional (padrão `gpt-5.4-mini`, escolha do José).
 - **IP do limite:** o **último** salto do `x-forwarded-for` (o que o Traefik do EasyPanel acrescenta). Pressupõe
   o Traefik em publish mode **host**; em ingress todos chegam com o mesmo IP e o limite de 20/h vira global.
-- **SQL:** `sdd-sql-obras-leva5.sql` **NÃO aplicado** (31/10/2026). Ordem obrigatória no deploy: SQL antes do app
+- **SQL:** `sdd-sql-obras-leva5.sql` aplicado em 31/10/2026 (ver `.claude/rules/sql.md`). Ordem obrigatória no deploy: SQL antes do app
   (sem `obras_situacao_cliente`, a Visão geral do portal, o semanal e o relatório de período dão 500). Teste de
   comportamento: `docs/obras/2026-10-31-verificacao-obras-leva5.sql` (116 casos, rollback).

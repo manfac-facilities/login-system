@@ -5,15 +5,14 @@
  *     atraso com oculto que não é da Manfac em "outros fatores");
  *   - respostas do engenheiro NÃO internas (`respostasParaCliente`), cada uma
  *     com o fato em versão cliente.
- * Mesmo modelo e parâmetros da IA do semanal (`ia-semanal.ts`): claude-opus-5-5,
- * effort low, fallback do servidor; saída estruturada JSON validada por
+ * Mesma chamada da IA do semanal (`pedirAoModelo` em `ia-semanal.ts`, OpenAI),
+ * com saída estruturada JSON (esquema estrito) validada por
  * `validarSituacao(…, 'ia')` antes de voltar ao formulário. Recusa ou saída
- * inválida → mensagem amigável. Sem `ANTHROPIC_API_KEY`: rascunho simples
+ * inválida → mensagem amigável. Sem `OPENAI_API_KEY`: rascunho simples
  * juntando as respostas. Nada é salvo aqui: o engenheiro revisa e publica.
  */
-import Anthropic from '@anthropic-ai/sdk'
 import { dataBr, pct, quebraDoAtraso, textoDesvio } from './email-diario'
-import { iaDisponivel } from './ia-semanal'
+import { iaDisponivel, pedirAoModelo } from './ia-semanal'
 import type { ObraGrande } from './leitura'
 import { LIMITES_SITUACAO, validarSituacao, type SituacaoTexto } from './situacao'
 
@@ -93,21 +92,14 @@ export async function comporSituacao(p: {
 }): Promise<{ ok: true; situacao: SituacaoTexto; origem: 'ia' | 'simples' } | { ok: false; erro: string }> {
   if (!iaDisponivel()) return { ok: true, situacao: rascunhoSimples(p), origem: 'simples' }
   try {
-    const client = new Anthropic()
-    const r = await client.beta.messages.create({
-      model: 'claude-opus-5-5',
-      max_tokens: 1500,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: ESQUEMA_SITUACAO as unknown as Record<string, unknown> } },
-      system: INSTRUCOES_SITUACAO,
-      messages: [{ role: 'user', content: entradaDaIa(p) }],
+    const r = await pedirAoModelo({
+      instrucoes: INSTRUCOES_SITUACAO,
+      entrada: entradaDaIa(p),
+      esquema: { nome: 'situacao', schema: ESQUEMA_SITUACAO as unknown as Record<string, unknown> },
     })
-    if (r.stop_reason === 'refusal') return { ok: false, erro: RECUSOU }
-    const texto = r.content
-      .flatMap((b) => (b.type === 'text' ? [b.text] : []))
-      .join('')
-      .trim()
+    if (r.tipo === 'recusa') return { ok: false, erro: RECUSOU }
+    if (r.tipo === 'vazio') return { ok: false, erro: INVALIDA }
+    const texto = r.texto
     let json: unknown
     try {
       json = JSON.parse(texto)

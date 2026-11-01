@@ -72,9 +72,9 @@ jest.mock('../../../../../../_pdf/carregar-periodo', () => ({
   ...jest.requireActual('../../../../../../_pdf/carregar-periodo'),
   renderizarPeriodo: (...a: unknown[]) => renderMock(...(a as [])),
 }))
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({ beta: { messages: { create: (...a: unknown[]) => createMock(...a) } } })),
+  default: jest.fn().mockImplementation(() => ({ responses: { create: (...a: unknown[]) => createMock(...a) } })),
 }))
 jest.mock('@react-pdf/renderer', () => ({
   renderToBuffer: jest.fn(),
@@ -99,7 +99,7 @@ const entrada = (over: Partial<{ observacoes: string; marcados: string[]; livre:
   livre: 'Equipe elogiada pelo cliente',
   ...over,
 })
-const ORIGINAL_KEY = process.env.ANTHROPIC_API_KEY
+const ORIGINAL_KEY = process.env.OPENAI_API_KEY
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -127,11 +127,11 @@ beforeEach(() => {
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
   lerObraGrandeMock.mockImplementation(async () => ({ ok: true, dados: obraPeriodo() }))
   enviarEmailMock.mockImplementation(async ({ para }: { para: string[] }) => ({ ok: true, aceitos: para, falhas: [] }))
-  process.env.ANTHROPIC_API_KEY = 'sk-teste'
+  process.env.OPENAI_API_KEY = 'sk-teste'
 })
 afterAll(() => {
-  if (ORIGINAL_KEY === undefined) delete process.env.ANTHROPIC_API_KEY
-  else process.env.ANTHROPIC_API_KEY = ORIGINAL_KEY
+  if (ORIGINAL_KEY === undefined) delete process.env.OPENAI_API_KEY
+  else process.env.OPENAI_API_KEY = ORIGINAL_KEY
 })
 
 describe('guarda', () => {
@@ -329,12 +329,12 @@ describe('validarEEnviarRelatorioAction', () => {
 describe('sugerirObservacoesRelatorioIaAction', () => {
   it('manda só o resumo do cliente com as instruções do período e não grava nada', async () => {
     await salvarRascunhoRelatorioAction(OBRA, 'fase', '10', entrada({ observacoes: 'Observação antiga' }))
-    createMock.mockResolvedValue({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Rascunho da IA.' }] })
+    createMock.mockResolvedValue({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'Rascunho da IA.' }] }] })
     expect(await sugerirObservacoesRelatorioIaAction(OBRA, 'fase', '10')).toEqual({ ok: true, texto: 'Rascunho da IA.' })
     const args = createMock.mock.calls[0][0]
-    expect(args.system).toMatch(/relatório de fase/)
-    expect(args.model).toBe('claude-opus-5-5')
-    const conteudo = args.messages[0].content as string
+    expect(args.instructions).toMatch(/relatório de fase/)
+    expect(args.model).toBe('gpt-5.4-mini')
+    const conteudo = args.input as string
     expect(conteudo).toMatch(/^Dados do período:/)
     expect(conteudo).not.toMatch(/R\$|98765|123456|Pedreiro faltou|Observação antiga|antecipada:/)
     expect(conteudo).toContain('Aprovar layout')
@@ -342,7 +342,7 @@ describe('sugerirObservacoesRelatorioIaAction', () => {
   })
 
   it('refusal: mensagem amigável', async () => {
-    createMock.mockResolvedValue({ stop_reason: 'refusal', content: [] })
+    createMock.mockResolvedValue({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'não' }] }] })
     expect(await sugerirObservacoesRelatorioIaAction(OBRA, 'fase', '10')).toEqual({ ok: false, erro: expect.stringMatching(/à mão/) })
   })
 })

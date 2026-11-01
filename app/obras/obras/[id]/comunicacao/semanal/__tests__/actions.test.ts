@@ -66,9 +66,9 @@ jest.mock('../../../../_pdf/carregar-semanal', () => ({
   ...jest.requireActual('../../../../_pdf/carregar-semanal'),
   renderizarSemanal: (...a: unknown[]) => renderMock(...(a as [])),
 }))
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({ beta: { messages: { create: (...a: unknown[]) => createMock(...a) } } })),
+  default: jest.fn().mockImplementation(() => ({ responses: { create: (...a: unknown[]) => createMock(...a) } })),
 }))
 jest.mock('@react-pdf/renderer', () => ({
   renderToBuffer: jest.fn(),
@@ -88,7 +88,7 @@ const USU = 'usu@manfac.com.br'
 const ADM = 'adm@manfac.com.br'
 const logar = (email: string | null) => getUserMock.mockResolvedValue({ data: { user: email ? { email } : null } })
 const semanal = (over: Linha = {}) => ({ id: 's1', obra_id: OBRA, semana_inicio: SEG, estado: 'rascunho', observacoes: 'Texto salvo.', ...over })
-const ORIGINAL_KEY = process.env.ANTHROPIC_API_KEY
+const ORIGINAL_KEY = process.env.OPENAI_API_KEY
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -115,11 +115,11 @@ beforeEach(() => {
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
   lerObraGrandeMock.mockResolvedValue({ ok: true, dados: obraGrandePdf() })
   enviarEmailMock.mockImplementation(async ({ para }: { para: string[] }) => ({ ok: true, aceitos: para, falhas: [] }))
-  process.env.ANTHROPIC_API_KEY = 'sk-teste'
+  process.env.OPENAI_API_KEY = 'sk-teste'
 })
 afterAll(() => {
-  if (ORIGINAL_KEY === undefined) delete process.env.ANTHROPIC_API_KEY
-  else process.env.ANTHROPIC_API_KEY = ORIGINAL_KEY
+  if (ORIGINAL_KEY === undefined) delete process.env.OPENAI_API_KEY
+  else process.env.OPENAI_API_KEY = ORIGINAL_KEY
 })
 
 describe('guarda', () => {
@@ -251,16 +251,16 @@ describe('validarEEnviarSemanalAction', () => {
 
 describe('sugerirObservacoesIaAction', () => {
   it('sem chave: recusa e não chama o SDK', async () => {
-    delete process.env.ANTHROPIC_API_KEY
+    delete process.env.OPENAI_API_KEY
     expect((await sugerirObservacoesIaAction(OBRA, SEG)).ok).toBe(false)
     expect(createMock).not.toHaveBeenCalled()
   })
 
   it('manda só o resumo do cliente e não grava nada', async () => {
     db.obras_semanal = [semanal({ observacoes: 'Observação antiga' })]
-    createMock.mockResolvedValue({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Rascunho da IA.' }] })
+    createMock.mockResolvedValue({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'Rascunho da IA.' }] }] })
     expect(await sugerirObservacoesIaAction(OBRA, SEG)).toEqual({ ok: true, texto: 'Rascunho da IA.' })
-    const conteudo = createMock.mock.calls[0][0].messages[0].content as string
+    const conteudo = createMock.mock.calls[0][0].input as string
     expect(conteudo).not.toMatch(/R\$|98765|123456/)
     expect(conteudo).not.toContain('Pedreiro faltou')
     expect(conteudo).not.toContain('Área já liberada')
@@ -271,7 +271,7 @@ describe('sugerirObservacoesIaAction', () => {
   })
 
   it('refusal: mensagem amigável', async () => {
-    createMock.mockResolvedValue({ stop_reason: 'refusal', content: [] })
+    createMock.mockResolvedValue({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'não' }] }] })
     const r = await sugerirObservacoesIaAction(OBRA, SEG)
     expect(r).toEqual({ ok: false, erro: expect.stringMatching(/à mão/) })
   })
