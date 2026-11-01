@@ -43,8 +43,8 @@ export async function pdfParaImagem(arquivo: Blob): Promise<PlantaDoPdf> {
       )
       const viewport = pagina.getViewport({ scale: escala })
       const canvas = document.createElement('canvas')
-      canvas.width = Math.round(viewport.width)
-      canvas.height = Math.round(viewport.height)
+      canvas.width = Math.floor(viewport.width)
+      canvas.height = Math.floor(viewport.height)
       const ctx = canvas.getContext('2d')
       if (!ctx) throw new PdfIlegivelError()
       await pagina.render({ canvas, canvasContext: ctx, viewport }).promise
