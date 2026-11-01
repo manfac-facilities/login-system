@@ -75,9 +75,11 @@ export default function TelaFaseamento({
   const [aviso, setAviso] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState<'emitir' | 'enviar' | null>(null)
   const [novaFase, setNovaFase] = useState<string | null>(null)
+  /** Troca de fase pedida com alterações não salvas: o destino, à espera de Descartar/Voltar. */
+  const [trocarPara, setTrocarPara] = useState<string | null>(null)
 
   const emitida = revisao?.status === 'emitida'
-  const leitura = !podeEditar || !revisao || emitida
+  const leitura = !podeEditar || !revisao || emitida || !!revisao.ilegivel
   const temRascunho = !!fase?.revisoes.some((r) => r.status === 'rascunho')
   const pdf = revisao ? `/obras/obras/${obraId}/faseamento/${revisao.id}/pdf` : null
   const regras = regrasDeTexto(regrasTexto)
@@ -150,6 +152,18 @@ export default function TelaFaseamento({
     router.refresh()
   }
 
+  /** Rascunho com alterações não salvas: salva antes e só então abre o PDF (a aba nasce no clique, para não ser bloqueada). */
+  async function gerarPdf() {
+    if (!pdf) return
+    const janela = window.open('', '_blank')
+    if (!(await salvar('Rascunho salvo. Abrindo o PDF.'))) {
+      janela?.close()
+      return
+    }
+    if (janela) janela.location.href = pdf
+    else window.open(pdf, '_blank', 'noopener')
+  }
+
   async function criarFase() {
     const nome = (novaFase ?? '').trim()
     const r = await rodar(() => criarFaseAction(obraId, nome), 'Fase criada.')
@@ -201,6 +215,7 @@ export default function TelaFaseamento({
 
       {semPlanta ? <AvisoSemPlanta /> : null}
       {erro ? <p role="alert" className="rounded-lg bg-[#fdecea] px-3 py-2 text-sm text-(--obra-vermelho-texto)">{erro}</p> : null}
+      {revisao?.ilegivel ? <p role="alert" className="rounded-lg border border-[#b42318] bg-[#fdecea] px-3 py-2 text-sm text-(--obra-vermelho-texto)">{revisao.ilegivel}</p> : null}
       {aviso ? <p role="status" className="text-sm text-(--obra-verde-texto)">{aviso}</p> : null}
 
       {fases.length ? (
@@ -213,6 +228,11 @@ export default function TelaFaseamento({
                 key={f.id}
                 href={`/obras/obras/${obraId}/faseamento?fase=${f.id}`}
                 aria-current={atual ? 'page' : undefined}
+                onClick={(e) => {
+                  if (!sujo || atual) return
+                  e.preventDefault()
+                  setTrocarPara(`/obras/obras/${obraId}/faseamento?fase=${f.id}`)
+                }}
                 className={`flex min-h-11 flex-col rounded-xl border px-3 py-2 text-sm ${atual ? 'border-(--obra-orange-texto) bg-(--obra-card)' : 'border-(--obra-border) bg-(--obra-card)'}`}
               >
                 <b className="text-(--obra-ink)">
@@ -223,7 +243,30 @@ export default function TelaFaseamento({
             )
           })}
         </nav>
-      ) : (
+      ) : null}
+      {trocarPara ? (
+        <div role="alertdialog" aria-label="Alterações não salvas" className="flex flex-col gap-2 rounded-xl border border-(--obra-orange-texto) bg-[#fff4ec] p-3 text-sm text-(--obra-text)">
+          <p>Esta revisão tem alterações não salvas. Trocar de fase descarta essas alterações.</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={botaoPri}
+              onClick={() => {
+                const destino = trocarPara
+                setTrocarPara(null)
+                setSujo(false)
+                router.push(destino)
+              }}
+            >
+              Descartar alterações
+            </button>
+            <button type="button" className={botao} onClick={() => setTrocarPara(null)}>
+              Voltar
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {fases.length ? null : (
         <p className="rounded-xl border border-dashed border-(--obra-border) bg-(--obra-card) px-6 py-10 text-center text-sm text-(--obra-muted-texto)">
           Nenhuma fase ainda.{podeEditar ? ' Use "+ Nova fase" para começar.' : ' Quem cria é o engenheiro da obra, o coordenador ou um administrador.'}
         </p>
@@ -255,7 +298,7 @@ export default function TelaFaseamento({
                 Revisão R{revisao.revisao} · {emitida ? 'emitida' : 'rascunho'}
                 {sujo ? ' · alterações não salvas' : ''}
               </span>
-              {podeEditar && !emitida ? (
+              {!leitura ? (
                 <span className="hidden flex-wrap gap-2 md:flex">
                   <button type="button" disabled={ocupado || !sujo} className={botao} onClick={() => void salvar()}>
                     Salvar rascunho
@@ -270,7 +313,12 @@ export default function TelaFaseamento({
                   Nova revisão
                 </button>
               ) : null}
-              {pdf ? (
+              {pdf && sujo && !leitura ? (
+                // Alterações não salvas: o PDF sai do salvo, então salva antes de abrir.
+                <button type="button" disabled={ocupado} className={botao} onClick={() => void gerarPdf()}>
+                  Gerar PDF
+                </button>
+              ) : pdf ? (
                 <a href={pdf} target="_blank" rel="noopener" className={botao}>
                   Gerar PDF
                 </a>
@@ -358,7 +406,8 @@ export default function TelaFaseamento({
                   base={base}
                 />
                 <p className="text-xs text-(--obra-muted-texto)">
-                  Prévia da folha A3 paisagem (420 × 297 mm) com o que está na tela{emitida ? '' : ', inclusive o que ainda não foi salvo'}. O PDF oficial sai em &quot;Gerar PDF&quot;.
+                  Prévia aproximada da folha A3 paisagem (420 × 297 mm), com o que está na tela. O PDF sai sempre do que está salvo
+                  {leitura ? '' : ': com alterações pendentes, "Gerar PDF" salva o rascunho antes de abrir'}.
                 </p>
               </section>
             )}

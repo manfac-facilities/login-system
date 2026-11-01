@@ -16,10 +16,9 @@ import { createElement } from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { registrarFontes } from '../../_pdf/base'
-import { camadasSchema, regrasSchema } from './_lib/camadas'
 import { PranchaFaseamento, type DadosPrancha } from './_lib/prancha-pdf'
 import { textoDaTrava, type TravaSnapshot } from './_lib/trava'
-import { carimboDe } from './_regras'
+import { avisoDeLeitura, carimboDe, lerCamadas, lerRegras } from './_regras'
 
 export const VALIDADE_URL_S = 600
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -78,20 +77,22 @@ export async function carregarPrancha(supabase: SupabaseClient, obraId: string, 
 
   const plantaUrl = await assinarPlanta(supabase, base.path)
   const temDim = !!(base.largura && base.altura)
-  const camadas = camadasSchema.safeParse(rev.camadas)
-  const regras = regrasSchema.safeParse(rev.regras ?? [])
+  // Gravado que o schema recusa: desenha/imprime o que é válido, um a um, e avisa no rodapé (nunca some em silêncio).
+  const camadas = lerCamadas(rev.camadas)
+  const regras = lerRegras(rev.regras)
   const nomeObra = String(obra.loja ?? obra.descricao ?? obra.os ?? 'Obra').trim() || 'Obra'
 
   const dados: DadosPrancha = {
     obra: { nome: nomeObra, os: String(obra.os ?? '—') },
     fase,
     revisao: { revisao: Number(rev.revisao), emitidaEm: emitida ? String(rev.emitida_em) : null },
-    camadas: camadas.success ? camadas.data : [],
-    regras: regras.success ? regras.data : [],
+    camadas: camadas.camadas,
+    regras: regras.regras,
     carimbo: carimboDe(rev.carimbo, fase.numero, obra.cliente),
     travaTexto: emitida ? textoDaTrava((rev.trava_snapshot ?? null) as TravaSnapshot | null) : rev.usa_trava ? TRAVA_NO_RASCUNHO : null,
     plantaUrl: plantaUrl && temDim ? plantaUrl : null,
     planta: plantaUrl && temDim ? { largura: Number(base.largura), altura: Number(base.altura) } : null,
+    avisoLeitura: avisoDeLeitura(camadas, regras),
   }
   const nomeArquivo = `faseamento-${slug(nomeObra)}-fase${fase.numero}-R${dados.revisao.revisao}${emitida ? '' : '-rascunho'}.pdf`
   return { ok: true, dados, nomeArquivo, revisao: rev, obra }

@@ -2,11 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import AvisoMapa from '../mapa/_aviso'
-import { camadasSchema, regrasSchema } from './_lib/camadas'
 import { textoDaTrava, type TravaSnapshot } from './_lib/trava'
 import { assinarPlanta, UUID } from './_pdf'
 import { podeFasear } from './_permissao'
-import { carimboDe, revisaoAberta } from './_regras'
+import { carimboDe, carimboLegivel, faltaSqlFaseamento, lerCamadas, lerRegras, revisaoAberta } from './_regras'
 import TelaFaseamento from './_tela'
 import type { BaseDesenho, FaseTela, RevisaoResumo, RevisaoTela } from './_tipos'
 
@@ -15,6 +14,7 @@ export const dynamic = 'force-dynamic'
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const ERRO_LEITURA = 'Não deu para carregar o faseamento. Recarregue a página.'
+const INDISPONIVEL = 'Faseamento ainda não está disponível nesta obra.'
 
 /**
  * Planta de faseamento (Leva 6b §4). Lê pela sessão (RLS `obras_has_access`);
@@ -50,6 +50,8 @@ export default async function FaseamentoPage({
     supabase.from('obras_fase_revisao').select('id, fase_id, revisao, status, emitida_em').eq('obra_id', id).order('revisao'),
     supabase.from('obras_envio').select('fase_revisao_id, enviado_em, resultado').eq('obra_id', id).eq('tipo', 'faseamento'),
   ])
+  // Sem o SQL da leva 6b (coluna/tabela ausente): aviso, não erro.
+  if ([oR.error, fR.error, rR.error].some(faltaSqlFaseamento)) return <AvisoMapa>{INDISPONIVEL}</AvisoMapa>
   if (oR.error || fR.error || rR.error) return <AvisoMapa>{ERRO_LEITURA}</AvisoMapa>
   const obra = oR.data as Linha | null
   if (!obra || obra.modalidade !== 'obra') return <AvisoMapa>Obra não encontrada</AvisoMapa>
@@ -97,20 +99,27 @@ export default async function FaseamentoPage({
     }
     const url = await assinarPlanta(supabase, planta?.planta_path)
     base = { url, largura: url ? (planta?.planta_largura ?? null) : null, altura: url ? (planta?.planta_altura ?? null) : null }
-    const camadas = camadasSchema.safeParse(r.camadas)
-    const regras = regrasSchema.safeParse(r.regras ?? [])
+    // Gravado que o schema recusa: mostra só o válido, avisa e deixa a revisão em leitura (nunca troca por [] calado).
+    const camadas = lerCamadas(r.camadas)
+    const regras = lerRegras(r.regras)
+    const problemas = [
+      camadas.ok ? null : 'Há camadas que não puderam ser lidas',
+      regras.ok ? null : 'Há regras que não puderam ser lidas',
+      carimboLegivel(r.carimbo) ? null : 'O carimbo gravado não pôde ser lido',
+    ].filter(Boolean)
     revisao = {
       id: String(r.id),
       faseId: fase.id,
       revisao: Number(r.revisao),
       status: emitida ? 'emitida' : 'rascunho',
-      camadas: camadas.success ? camadas.data : [],
-      regras: regras.success ? regras.data : [],
+      camadas: camadas.camadas,
+      regras: regras.regras,
       carimbo: carimboDe(r.carimbo, emitida ? Number(r.fase_numero) : fase.numero, obra.cliente),
       usaTrava: r.usa_trava === true,
       emitidaEm: r.emitida_em ?? null,
       emitidaPor: r.emitida_por ?? null,
       travaTexto: emitida ? textoDaTrava((r.trava_snapshot ?? null) as TravaSnapshot | null) : null,
+      ilegivel: problemas.length ? `${problemas.join('; ')}. A revisão fica em leitura até um administrador corrigir.` : null,
     }
   } else {
     // Sem fase ainda: o aviso de "sem planta" já vale para a primeira.

@@ -240,3 +240,50 @@ describe('enviar ao cliente', () => {
     expect(enviarEmailMock).not.toHaveBeenCalled()
   })
 })
+
+describe('rodada de correções da revisão', () => {
+  const emitida = async () => {
+    await salvarRascunhoAction(R0, entrada())
+    await emitirRevisaoAction(R0)
+  }
+
+  it('M4: o e-mail sai mas o registro do envio falha: ok false com "Enviado a N, mas…"', async () => {
+    await emitida()
+    b.erro['obras_envio.insert'] = { message: 'OBRAS_ENVIO: fase_revisao_id não é revisão emitida', code: '23514' }
+    const r = await enviarFaseamentoAction(R0)
+    expect(r.ok).toBe(false)
+    expect(r).toMatchObject({ enviados: 2 })
+    expect((r as { erro: string }).erro).toMatch(/^Enviado a 2 destinatário\(s\), mas: .*registro do envio \(cliente\) falhou/)
+  })
+
+  it('M4: o provedor recusa todos: grava resultado falha e devolve "O e-mail não saiu"', async () => {
+    await emitida()
+    enviarEmailMock.mockImplementation(async (p: { para: string[] }) => ({ aceitos: [], falhas: p.para.map((para) => ({ para, erro: 'recusado' })) }))
+    const r = await enviarFaseamentoAction(R0)
+    expect(r.ok).toBe(false)
+    expect((r as { erro: string }).erro).toMatch(/^O e-mail não saiu: /)
+    expect(b.db.obras_envio).toEqual([
+      expect.objectContaining({ lado: 'cliente', resultado: 'falha', destinatarios: [], detalhe: 'Falhou: cli@dpsp.com.br (recusado)' }),
+      expect.objectContaining({ lado: 'interno', resultado: 'falha', destinatarios: [] }),
+    ])
+  })
+
+  it('M2: falha do render do PDF devolve mensagem genérica (o detalhe só no console)', async () => {
+    await emitida()
+    const erroConsole = jest.spyOn(console, 'error').mockImplementation(() => {})
+    renderMock.mockRejectedValueOnce(new Error('fetch https://assinada/segredo falhou'))
+    expect(await enviarFaseamentoAction(R0)).toEqual({ ok: false, erro: 'Não foi possível gerar o PDF. Tente de novo.' })
+    expect(erroConsole).toHaveBeenCalled()
+    expect(enviarEmailMock).not.toHaveBeenCalled()
+    erroConsole.mockRestore()
+  })
+
+  it('M3: rascunho com camada gravada ilegível não é sobrescrito nem emitido', async () => {
+    r0().camadas = [{ id: 'c1', t: 'extintor', at: [0.1, 0.1] }, { t: 'drywall', p: Array.from({ length: 60 }, () => [0.1, 0.1]) }]
+    const ilegivel = { ok: false, erro: expect.stringContaining('não puderam ser lidos') }
+    expect(await salvarRascunhoAction(R0, entrada())).toEqual(ilegivel)
+    expect(await emitirRevisaoAction(R0)).toEqual(ilegivel)
+    expect(r0().camadas).toHaveLength(2)
+    expect(r0().status).toBe('rascunho')
+  })
+})

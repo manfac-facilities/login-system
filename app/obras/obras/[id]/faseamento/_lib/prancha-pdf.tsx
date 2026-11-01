@@ -25,6 +25,8 @@ export type DadosPrancha = {
   /** URL assinada (ou dados) da planta; com `planta` (dimensões) ou ambos nulos. */
   plantaUrl: string | null
   planta: { largura: number; altura: number } | null
+  /** Nota discreta no rodapé da moldura quando algo gravado não pôde ser lido (ex.: "1 camada não pôde ser desenhada"). */
+  avisoLeitura?: string | null
 }
 
 const A3 = { w: 1190.55, h: 841.89 }
@@ -272,12 +274,13 @@ export function PranchaFaseamento(d: DadosPrancha) {
               </Svg>
             </View>
           </View>
-          <View style={{ height: RODAPE, borderTopWidth: 0.75, borderTopColor: T.border, justifyContent: 'center', paddingHorizontal: 8 }}>
+          <View style={{ height: RODAPE, borderTopWidth: 0.75, borderTopColor: T.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 }}>
             {!comPlanta ? (
               <Text style={{ fontSize: 8.5, color: T.mutedTexto }}>Sem planta enviada: camadas sobre quadro branco</Text>
             ) : (
               <Text style={[estilos.mono, { fontSize: 7.5, color: '#444', fontWeight: 700 }]}>{`BASE: ${(d.carimbo.base || 'PLANTA DO MAPA').toUpperCase()}`}</Text>
             )}
+            {d.avisoLeitura ? <Text style={{ fontSize: 7.5, color: T.mutedTexto }}>{d.avisoLeitura}</Text> : null}
           </View>
         </View>
 

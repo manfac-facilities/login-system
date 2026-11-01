@@ -116,3 +116,33 @@ describe('conteúdo', () => {
     expect(dadosRenderizados()).toMatchObject({ plantaUrl: null, planta: null })
   })
 })
+
+describe('rodada de correções da revisão', () => {
+  it('M2: falha do render vira 500 com texto genérico (o detalhe só no console)', async () => {
+    const erroConsole = jest.spyOn(console, 'error').mockImplementation(() => {})
+    renderMock.mockRejectedValueOnce(new Error('fetch https://assinada/segredo falhou'))
+    const res = await pedir(R0)
+    expect(res.status).toBe(500)
+    expect(await res.text()).toBe('Não foi possível gerar o PDF. Tente de novo.')
+    expect(erroConsole).toHaveBeenCalled()
+    erroConsole.mockRestore()
+  })
+
+  it('M3: na emitida, desenha as camadas válidas uma a uma e avisa no rodapé o que foi descartado', async () => {
+    b.db.obras_fase_revisao[0].camadas = [
+      { id: 'c1', t: 'extintor', at: [0.5, 0.5] },
+      { id: 'c2', t: 'drywall', p: Array.from({ length: 60 }, () => [0.1, 0.1]) },
+      { t: 'emerg', at: [0.2, 0.2] },
+      { id: 'c4', t: 'emerg', at: [0.3, 0.3] },
+    ]
+    expect((await pedir(R0)).status).toBe(200)
+    const d = dadosRenderizados()
+    expect(d.camadas.map((c) => c.id)).toEqual(['c1', 'c4'])
+    expect(d.avisoLeitura).toBe('2 camadas não puderam ser desenhadas')
+  })
+
+  it('M3: tudo legível não leva nota', async () => {
+    await pedir(R0)
+    expect(dadosRenderizados().avisoLeitura).toBeNull()
+  })
+})

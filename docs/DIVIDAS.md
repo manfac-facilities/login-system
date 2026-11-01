@@ -473,9 +473,9 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 
 ## 01/11/2026 — Obras Leva 6b, planta de faseamento, telas do hub (`feat/obras-leva6b-faseamento`, Task 3), deixado de propósito
 
-- **Deploy: `sdd-sql-obras-leva6b.sql` antes do app.** Sem ele a aba Faseamento dá aviso de erro e a Comunicação inteira
-  falha (o `select` de `obras_envio` passou a pedir `fase_revisao_id`). Dados da obra aguenta (o coordenador é leitura
-  própria; sem a coluna só o campo some).
+- **Deploy: `sdd-sql-obras-leva6b.sql` antes do app.** Se o app subir antes, a aba Faseamento mostra "Faseamento ainda
+  não está disponível nesta obra"; a Comunicação relê os envios sem `fase_revisao_id` (42703) e segue sem o faseamento;
+  Dados da obra aguenta (o coordenador é leitura própria; sem a coluna só o campo some). Corrigido na revisão (I1).
 - **Destinatários do envio `faseamento` = os do relatório de fase** (tipos `semanal` ou `mensal`): não existe tipo
   `fase` em `obras_destinatario` (o CHECK só aceita diario/semanal/mensal/imediato). Reenviar manda de novo a todos (cada
   clique é um envio registrado), sem pular quem já recebeu.

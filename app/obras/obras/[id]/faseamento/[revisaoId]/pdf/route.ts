@@ -32,7 +32,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const r = await carregarPrancha(supabase, id, revisaoId)
   if (!r.ok) return texto(r.status, r.erro)
 
-  const pdf = await renderizarPrancha(r.dados)
+  let pdf: Buffer
+  try {
+    pdf = await renderizarPrancha(r.dados)
+  } catch (e) {
+    // O detalhe (pode trazer a URL assinada da planta) fica só no log do servidor.
+    console.error('faseamento: falha ao gerar o PDF da revisão', revisaoId, e)
+    return texto(500, 'Não foi possível gerar o PDF. Tente de novo.')
+  }
   return new Response(new Uint8Array(pdf), {
     status: 200,
     headers: {

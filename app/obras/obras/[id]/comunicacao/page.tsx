@@ -8,6 +8,7 @@ import { lerAgenda } from '../../_lib/envios-agenda'
 import { etapasDaObra } from '../../_lib/relatorio-periodo'
 import { obraConcluida, relatorioValido, ultimoMesDoMensal } from '../../_pdf/carregar-periodo'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
+import { faltaSqlFaseamento } from '../faseamento/_regras'
 import Agenda, { tipoAgendaDe } from './_agenda'
 import FormImediata from './_imediata-form'
 import LinhaDoTempo from './_linha-do-tempo'
@@ -53,13 +54,16 @@ export default async function ComunicacaoPage({
   const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
   const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
 
-  const [envR, regR, destR, relR, agenda, msgR, docR, fasR] = await Promise.all([
+  const COLUNAS_ENVIO = 'id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id'
+  const lerEnvios = (comFase: boolean) =>
     supabase
       .from('obras_envio')
-      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id, fase_revisao_id')
+      .select(comFase ? `${COLUNAS_ENVIO}, fase_revisao_id` : COLUNAS_ENVIO)
       .eq('obra_id', id)
       .order('enviado_em', { ascending: false })
-      .limit(150),
+      .limit(150)
+  const [envR1, regR, destR, relR, agenda, msgR, docR, fasR] = await Promise.all([
+    lerEnvios(true),
     supabase
       .from('obras_registro')
       .select('*')
@@ -80,6 +84,8 @@ export default async function ComunicacaoPage({
     // Faseamento (Leva 6b): só rótulo e link do PDF da revisão emitida (congelados nela).
     supabase.from('obras_fase_revisao').select('id, revisao, fase_numero, fase_nome').eq('obra_id', id).eq('status', 'emitida'),
   ])
+  // Sem o SQL da leva 6b (coluna fase_revisao_id ausente): relê sem ela e segue sem o faseamento (faseRevisao: null).
+  const envR = envR1.error && faltaSqlFaseamento(envR1.error) ? await lerEnvios(false) : envR1
   if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
   }

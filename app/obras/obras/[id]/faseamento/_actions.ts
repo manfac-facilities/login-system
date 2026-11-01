@@ -25,12 +25,13 @@ import { camadasSchema, carimboSchema, regrasSchema } from './_lib/camadas'
 import { dataBR } from './_lib/trava'
 import { podeFasear } from './_permissao'
 import { carregarPrancha, renderizarPrancha, UUID } from './_pdf'
-import { MAX_NOME_FASE, carimboPadrao } from './_regras'
+import { MAX_NOME_FASE, carimboLegivel, carimboPadrao, lerCamadas, lerRegras } from './_regras'
 import type { EntradaRevisao, Resultado } from './_tipos'
 
 const SEM_PERMISSAO = 'Só o engenheiro da obra, o coordenador ou um administrador mexe na planta de faseamento'
 const EMITIDA = 'Revisão emitida não muda. Use "Nova revisão" para alterar.'
 const MAX_DESTINATARIOS = 40
+const ILEGIVEL = 'Há camadas, regras ou carimbo gravados nesta revisão que não puderam ser lidos. Ela fica em leitura até um administrador corrigir.'
 /** Mesmos destinatários do relatório de fase (spec §2.3): tipos semanal ou mensal. */
 const TIPOS_DESTINATARIO_FASE = ['semanal', 'mensal']
 
@@ -40,6 +41,8 @@ type Lado = 'cliente' | 'interno'
 type Contexto = { supabase: SupabaseClient; email: string; obra: Linha }
 
 const falha = (erro: string): Erro => ({ ok: false, erro })
+/** O gravado passa inteiro nos schemas? Se não, nada de sobrescrever nem emitir (o descartado se perderia). */
+const legivel = (l: Linha) => lerCamadas(l.camadas).ok && lerRegras(l.regras).ok && carimboLegivel(l.carimbo)
 const maiuscula = (t: string) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t)
 
 /** Erro do banco → pt-BR. */
@@ -151,6 +154,7 @@ export async function salvarRascunhoAction(revisaoId: string, entrada: EntradaRe
   const ctx = await autorizarPor('obras_fase_revisao', revisaoId)
   if ('ok' in ctx) return ctx
   if (ctx.linha.status !== 'rascunho') return falha(EMITIDA)
+  if (!legivel(ctx.linha)) return falha(ILEGIVEL)
   if (x.usaTrava && ctx.obra.atividade_trava == null) {
     return falha('A obra não tem atividade-trava definida: desligue a trava ou peça ao administrador para defini-la em Dados da obra')
   }
@@ -171,6 +175,7 @@ export async function emitirRevisaoAction(revisaoId: string): Promise<Resultado>
   const ctx = await autorizarPor('obras_fase_revisao', revisaoId)
   if ('ok' in ctx) return ctx
   if (ctx.linha.status !== 'rascunho') return falha('Esta revisão já foi emitida')
+  if (!legivel(ctx.linha)) return falha(ILEGIVEL)
   const { error } = await ctx.supabase.rpc('obras_emitir_fase_revisao', { p_revisao: revisaoId })
   if (error) return erroFaseamento('emitir a revisão', error)
   revalidar(String(ctx.obra.id))
@@ -250,7 +255,9 @@ export async function enviarFaseamentoAction(revisaoId: string): Promise<Resulta
   try {
     pdf = await renderizarPrancha(c.dados)
   } catch (e) {
-    return falha(`Não deu para gerar o PDF da prancha (${e instanceof Error ? e.message : 'erro'})`)
+    // O detalhe do react-pdf (pode trazer a URL assinada da planta) fica só no log do servidor.
+    console.error('faseamento: falha ao gerar o PDF para envio', revisaoId, e)
+    return falha('Não foi possível gerar o PDF. Tente de novo.')
   }
 
   const hoje = hojeISO()

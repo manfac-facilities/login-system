@@ -120,3 +120,13 @@ describe('ajustarRotulo', () => {
     expect(ajustarRotulo('PALAVRAMUITOLONGASEMESPACO', 30, 12).pt).toBe(6)
   })
 })
+
+describe('aviso de leitura no rodapé (revisão da Task 3, M3)', () => {
+  it('imprime a nota quando algo gravado foi descartado; sem nota quando não há', () => {
+    const com = render(<PranchaFaseamento {...dados({ avisoLeitura: '1 camada não pôde ser desenhada' })} />)
+    expect(com.container.textContent).toContain('1 camada não pôde ser desenhada')
+    com.unmount()
+    const sem = render(<PranchaFaseamento {...dados()} />)
+    expect(sem.container.textContent).not.toContain('não pôde ser desenhada')
+  })
+})

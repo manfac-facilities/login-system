@@ -27,6 +27,8 @@ export type RevisaoTela = {
   emitidaPor: string | null
   /** Texto impresso da trava (só na emitida com trava). */
   travaTexto: string | null
+  /** Algo gravado não passou no schema (camadas, regras ou carimbo): aviso, e a revisão fica em leitura. */
+  ilegivel: string | null
 }
 
 /** Base do desenho: a planta (URL assinada curta) ou quadro branco. */

@@ -13,7 +13,8 @@ jest.mock('../_actions', () => ({
   novaRevisaoAction: jest.fn(),
   enviarFaseamentoAction: jest.fn(),
 }))
-jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('next/navigation', () => ({ useRouter: () => ({ refresh: jest.fn(), push: mockPush }) }))
 
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
@@ -139,6 +140,7 @@ const revisao = (status: 'rascunho' | 'emitida'): RevisaoTela => ({
   emitidaEm: status === 'emitida' ? '2026-10-30T15:00:00Z' : null,
   emitidaPor: null,
   travaTexto: null,
+  ilegivel: null,
 })
 const tela = (p: { status?: 'rascunho' | 'emitida'; base?: BaseDesenho; podeEditar?: boolean } = {}) =>
   render(
@@ -234,5 +236,108 @@ describe('prévia da prancha (sem iframe: o hub manda X-Frame-Options DENY)', ()
     expect(previa.textContent).toContain('Regra nova ainda não salva')
     expect(previa.textContent).toContain('RASCUNHO')
     expect(previa.textContent).toContain('Macaé 3 · OS 24.0871')
+  })
+})
+
+describe('rodada de correções da revisão', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('M3: gravado ilegível mostra o aviso e deixa o rascunho em leitura', () => {
+    render(
+      <TelaFaseamento
+        obraId={OBRA}
+        obra={{ nome: 'Macaé 3', os: '24.0871' }}
+        fases={fases('rascunho')}
+        faseId="f1"
+        revisao={{ ...revisao('rascunho'), ilegivel: 'Há camadas que não puderam ser lidas. A revisão fica em leitura até um administrador corrigir.' }}
+        base={PLANTA}
+        podeEditar
+        temTrava
+      />,
+    )
+    expect(screen.getByRole('alert').textContent).toContain('Há camadas que não puderam ser lidas')
+    expect(screen.queryByRole('button', { name: 'Salvar rascunho' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Emitir revisão' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Zona de obra' })).toBeNull()
+  })
+
+  const duasFases = (): FaseTela[] => [
+    ...fases('rascunho'),
+    { id: 'f2', numero: 2, nome: 'Piso do salão', revisoes: [{ id: 'r9', revisao: 0, status: 'rascunho', emitidaEm: null, enviadaEm: null }] },
+  ]
+  const telaDuas = () =>
+    render(<TelaFaseamento obraId={OBRA} obra={{ nome: 'Macaé 3', os: '24.0871' }} fases={duasFases()} faseId="f1" revisao={revisao('rascunho')} base={PLANTA} podeEditar temTrava />)
+  const sujar = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Prancha A3' }))
+    fireEvent.change(screen.getByLabelText(/Regras impressas/), { target: { value: 'Regra mudada' } })
+  }
+
+  it('M1: trocar de fase com alteração não salva pede confirmação (Voltar mantém, Descartar navega)', () => {
+    telaDuas()
+    fireEvent.click(screen.getByRole('link', { name: /Fase 2 · Piso do salão/ }))
+    expect(screen.queryByRole('alertdialog')).toBeNull() // sem alteração: navega direto (o Link cuida)
+    sujar()
+    fireEvent.click(screen.getByRole('link', { name: /Fase 2 · Piso do salão/ }))
+    expect(screen.getByRole('alertdialog', { name: 'Alterações não salvas' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(mockPush).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('link', { name: /Fase 2 · Piso do salão/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar alterações' }))
+    expect(mockPush).toHaveBeenCalledWith(`/obras/obras/${OBRA}/faseamento?fase=f2`)
+  })
+
+  it('M1: Gerar PDF com alteração não salva salva antes e só então abre o PDF', async () => {
+    const janela = { location: { href: '' }, close: jest.fn() }
+    const abrir = jest.spyOn(window, 'open').mockReturnValue(janela as unknown as Window)
+    salvarMock.mockResolvedValue({ ok: true })
+    tela()
+    sujar()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Gerar PDF' }))
+    })
+    expect(salvarMock).toHaveBeenCalledWith('r0', expect.objectContaining({ regras: ['Regra mudada'] }))
+    expect(janela.location.href).toBe(`/obras/obras/${OBRA}/faseamento/r0/pdf`)
+    expect(janela.close).not.toHaveBeenCalled()
+    abrir.mockRestore()
+  })
+
+  it('M1: se o salvar falha, mostra o erro e não abre o PDF', async () => {
+    const janela = { location: { href: '' }, close: jest.fn() }
+    const abrir = jest.spyOn(window, 'open').mockReturnValue(janela as unknown as Window)
+    salvarMock.mockResolvedValue({ ok: false, erro: 'Não deu para salvar' })
+    tela()
+    sujar()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Gerar PDF' }))
+    })
+    expect(janela.close).toHaveBeenCalled()
+    expect(janela.location.href).toBe('')
+    expect(screen.getByRole('alert').textContent).toContain('Não deu para salvar')
+    abrir.mockRestore()
+  })
+
+  it('M6: Enter e Esc digitados num campo não terminam nem cancelam a linha', () => {
+    ultimas = []
+    render(
+      <>
+        <input aria-label="campo" />
+        <Editor />
+      </>,
+    )
+    const svg = svgDoEditor()
+    ferramenta('Drywall piso a teto')
+    fireEvent.pointerDown(svg, { clientX: 100, clientY: 100 })
+    fireEvent.pointerDown(svg, { clientX: 500, clientY: 100 })
+    const campo = screen.getByLabelText('campo')
+    act(() => {
+      fireEvent.keyDown(campo, { key: 'Enter' })
+      fireEvent.keyDown(campo, { key: 'Escape' })
+    })
+    expect(ultimas).toEqual([])
+    act(() => {
+      fireEvent.keyDown(window, { key: 'Enter' })
+    })
+    expect(ultimas).toEqual([{ id: 'c1', t: 'drywall', p: [[0.1, 0.2], [0.5, 0.2]] }])
   })
 })

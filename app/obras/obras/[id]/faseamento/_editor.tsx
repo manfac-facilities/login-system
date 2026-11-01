@@ -121,6 +121,9 @@ export default function EditorCamadas({
   useEffect(() => {
     if (!rascunho || !('p' in rascunho)) return
     const tecla = (e: KeyboardEvent) => {
+      // Digitando num campo (rótulo da zona, regras, carimbo): Enter e Esc são do campo, não do desenho.
+      const alvo = e.target as HTMLElement | null
+      if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.isContentEditable)) return
       if (e.key === 'Escape') {
         setRascunho(null)
         setAviso('Desenho cancelado.')
