@@ -101,15 +101,23 @@ function fichaProps(overObra: Partial<ObraRow> = {}, historico: LinhaHistorico[]
   }
 }
 
-describe('Botão "Solicitar compra" (spec 16/10/2026 §4.7)', () => {
-  it('obra ativa: link para o Compras com a obra, em nova aba, e as notas do mockup', () => {
+describe('Quadro "Pedir a partir desta OS" (spec 01/11/2026)', () => {
+  it('obra ativa: os 4 links, em nova aba, com a obra', () => {
     const { container } = render(<Ficha {...fichaProps()} />)
-    const link = screen.getByRole('link', { name: 'Solicitar compra' })
-    expect(link).toHaveAttribute('href', '/compras/solicitacoes/nova?obra=o1')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link.getAttribute('rel')).toContain('noopener')
-    expect(container).toHaveTextContent('Pedir a partir desta obra')
-    expect(container).toHaveTextContent('Abre o Compras em nova aba, com esta obra.')
+    const esperado: Record<string, string> = {
+      'Pedir material': '/compras/solicitacoes/nova?obra=o1',
+      'Pedir pagamento': '/financeiro/solicitacoes/nova?obra=o1',
+      'Pedir medição': '/fornecedores/medicoes/nova?obra=o1',
+      'Nova locação': '/compras/solicitacoes/nova?obra=o1&tipo=locacao',
+    }
+    for (const [nome, href] of Object.entries(esperado)) {
+      const link = screen.getByRole('link', { name: new RegExp(nome) })
+      expect(link).toHaveAttribute('href', href)
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link.getAttribute('rel')).toContain('noopener')
+    }
+    expect(container).toHaveTextContent('Pedir a partir desta OS')
+    expect(container).toHaveTextContent('Cada botão abre o outro sistema em nova aba, já com esta OS.')
   })
 
   it('obra cancelada: o link não existe', () => {
@@ -125,12 +133,15 @@ describe('Botão "Solicitar compra" (spec 16/10/2026 §4.7)', () => {
         })}
       />
     )
-    expect(screen.queryByRole('link', { name: 'Solicitar compra' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Pedir material/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Nova locação/ })).not.toBeInTheDocument()
   })
 
-  it('não existe botão de medição', () => {
-    const { container } = render(<Ficha {...fichaProps()} />)
-    expect(container).not.toHaveTextContent('Solicitar medição')
+  it('SPOT com financeiro: o bloco aparece, inclusive em OS cancelada; sem financeiro, não', () => {
+    const { rerender } = render(<Ficha {...fichaProps()} />)
+    expect(screen.queryByRole('region', { name: 'Financeiro da OS' })).not.toBeInTheDocument()
+    rerender(<Ficha {...fichaProps({ etapa: 'cancelado', cancelado_por: 'cliente', cancelado_em: '2026-09-23T13:42:00Z', cancelado_etapa_anterior: 'andamento' })} financeiro={{ ok: false, motivo: 'leitura' }} />)
+    expect(screen.getByRole('region', { name: 'Financeiro da OS' })).toBeInTheDocument()
   })
 })
 
