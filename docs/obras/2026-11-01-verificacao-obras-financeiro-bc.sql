@@ -97,7 +97,8 @@ select pg_temp.jwt(null);
 -- Obras (sem JWT: a guarda de parâmetros só confere a estrutura mãe/filha)
 insert into public.obras_obra (id, os, modalidade, engenheiro_email)
 values ('00000000-0000-4000-8000-0000000bc001', 'TESTE-FIN-BC-MAE',   'obra', 'eng.a@teste.invalid'),
-       ('00000000-0000-4000-8000-0000000bc003', 'TESTE-FIN-BC-OUTRA', 'obra', 'eng.b@teste.invalid');
+       ('00000000-0000-4000-8000-0000000bc003', 'TESTE-FIN-BC-OUTRA', 'obra', 'eng.b@teste.invalid'),
+       ('00000000-0000-4000-8000-0000000bc004', 'TESTE-FIN-BC-SPOT',  'spot', null);
 insert into public.obras_obra (id, os, modalidade, engenheiro_email, obra_pai_id)
 values ('00000000-0000-4000-8000-0000000bc002', 'TESTE-FIN-BC-FILHA', 'obra', 'eng.f@teste.invalid',
         '00000000-0000-4000-8000-0000000bc001');
@@ -1342,6 +1343,57 @@ exception when others then
 end $$;
 
 -- ============================================================
+-- Follow-up: valor receita (obras_obra.valor) só admin em OBRA
+-- ============================================================
+do $$ begin
+  perform pg_temp.como('authenticated', 'eng.a@teste.invalid');
+  update public.obras_obra set valor = 123456.78 where id = '00000000-0000-4000-8000-0000000bc001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(103, 'valor receita: engenheiro da OBRA não altera', 'OBRAS_VALOR: só administrador', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  update public.obras_obra set valor = 123456.78 where id = '00000000-0000-4000-8000-0000000bc001';
+  raise exception 'NAO_FALHOU';
+exception when others then
+  perform pg_temp.reg(104, 'valor receita: usuário do Obras não altera em OBRA', 'OBRAS_VALOR: só administrador', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', pg_temp.admin_email());
+  update public.obras_obra set valor = 123456.78 where id = '00000000-0000-4000-8000-0000000bc001';
+  raise exception 'ok:%', (select valor from public.obras_obra where id = '00000000-0000-4000-8000-0000000bc001');
+exception when others then
+  perform pg_temp.reg(105, 'valor receita: administrador altera em OBRA', 'ok:123456.78', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  update public.obras_obra set valor = 999.5 where id = '00000000-0000-4000-8000-0000000bc004';
+  raise exception 'ok:%', (select valor from public.obras_obra where id = '00000000-0000-4000-8000-0000000bc004');
+exception when others then
+  perform pg_temp.reg(106, 'valor: usuário do Obras continua alterando em SPOT', 'ok:999.5', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.jwt(null);
+  update public.obras_obra set valor = 777 where id = '00000000-0000-4000-8000-0000000bc001';
+  raise exception 'ok:%', (select valor from public.obras_obra where id = '00000000-0000-4000-8000-0000000bc001');
+exception when others then
+  perform pg_temp.reg(107, 'valor receita: sem JWT (service role / sync) altera em OBRA', 'ok:777', sqlerrm);
+end $$;
+
+do $$ begin
+  perform pg_temp.como('authenticated', 'usuario.obras@teste.invalid');
+  update public.obras_obra set descricao = 'Outra descrição', valor = valor where id = '00000000-0000-4000-8000-0000000bc001';
+  raise exception 'ok:%', (select descricao from public.obras_obra where id = '00000000-0000-4000-8000-0000000bc001');
+exception when others then
+  perform pg_temp.reg(108, 'valor receita: gravar outra coluna (valor igual) na OBRA continua livre', 'ok:Outra descrição', sqlerrm);
+end $$;
+
+-- ============================================================
 -- Relatório (a tabela abaixo; no SQL Editor vale a mensagem do bloco final)
 -- Comparação por pg_temp.passou: exata para 'ok:'/'RECUSADO', por trecho para erro.
 -- ============================================================
@@ -1360,10 +1412,10 @@ begin
            filter (where not pg_temp.passou(obtido, esperado))
     into v_total, v_ok, v_falhas
     from _v;
-  if v_total <> 102 then
-    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 102 testes rodaram';
+  if v_total <> 108 then
+    v_falhas := coalesce(v_falhas || '; ', '') || 'só ' || v_total || ' de 108 testes rodaram';
   end if;
-  raise exception 'RESUMO: %/102 OK%  (rollback: nada foi gravado)', v_ok,
+  raise exception 'RESUMO: %/108 OK%  (rollback: nada foi gravado)', v_ok,
     case when v_falhas is null then '' else ' — FALHOU: ' || v_falhas end
     using errcode = 'P0001';
 end $$;

@@ -70,6 +70,12 @@
 --      do contrato (valor_mo/mat, aditivos) vêm NULL quando o contrato não é desta
 --      obra (global), para a tela não somar o contrato global inteiro na obra.
 --      As medições de fornecedor (atrasadas) usam a mesma regra de obra.
+--   6. obras_obra_valor_guarda (BEFORE UPDATE OF valor): obras_obra.valor é o
+--      "valor receita" da OBRA (base da margem). Em obra da modalidade 'obra' (antes
+--      ou depois da gravação), com JWT, só administrador do Obras muda o valor
+--      (is not true = falha fechada). Sem JWT (service role, sync do Field) passa.
+--      SPOT segue como hoje: a ficha SPOT deixa o usuário do Obras editar o valor.
+--      A sync do Field não grava valor (só loja/cliente/descricao/fonte/field_id/os).
 --
 -- PRÉ-REQUISITO (a seção 0 confere):
 --   * sdd-sql-obras-financeiro-a.sql aplicado (e tudo antes dele);
@@ -101,6 +107,8 @@
 --              public.obras_cliente_pessoa;   -- apaga dados (exportar antes)
 --   drop function public.obras_locacao_estado_guarda(), public.obras_medicao_cliente_guarda(),
 --                 public.obras_cliente_pessoa_guarda(), public.obras_engenheiro_ou_admin_mae(uuid);
+--   drop trigger obras_obra_valor_guarda on public.obras_obra;
+--   drop function public.obras_obra_valor_guarda();
 -- ============================================================
 
 begin;
@@ -1033,6 +1041,32 @@ $$;
 revoke execute on function public.obras_fin_notas(uuid) from public, anon;
 grant execute on function public.obras_fin_notas(uuid) to authenticated, service_role;
 
+-- ============================================================
+-- 6. Valor receita da OBRA: só administrador (SPOT inalterado)
+-- ============================================================
+create or replace function public.obras_obra_valor_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  if new.valor is distinct from old.valor
+     and (new.modalidade = 'obra' or old.modalidade = 'obra')
+     and nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
+     and public.obras_is_admin() is not true then
+    raise exception 'OBRAS_VALOR: só administrador altera o valor receita de obra da modalidade OBRA'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_obra_valor_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_obra_valor_guarda on public.obras_obra;
+create trigger obras_obra_valor_guarda
+  before update of valor on public.obras_obra
+  for each row execute function public.obras_obra_valor_guarda();
+
 commit;
 
 -- ============================================================
@@ -1194,6 +1228,15 @@ from (values
          from pg_proc p1, pg_proc p2, pg_proc p3
         where p1.oid = 'public.obras_medicao_cliente_guarda()'::regprocedure
           and p2.oid = 'public.obras_fin_vinculos(uuid)'::regprocedure
-          and p3.oid = 'public.obras_fin_caixinha_sem_obra(uuid)'::regprocedure))
+          and p3.oid = 'public.obras_fin_caixinha_sem_obra(uuid)'::regprocedure)),
+  (23, 'trigger obras_obra_valor_guarda ligado (before update of valor), só admin em OBRA, falha fechada', 'true',
+      (select (count(*) = 1
+               and bool_and(pg_get_triggerdef(t.oid) like '%BEFORE UPDATE OF valor ON public.obras_obra%')
+               and bool_and(p.prosrc like '%obras_is_admin() is not true%')
+               and bool_and(p.prosrc like '%modalidade = ''obra''%')
+               and bool_and(not has_function_privilege('authenticated', p.oid, 'EXECUTE')))::text
+         from pg_trigger t join pg_proc p on p.oid = t.tgfoid
+        where t.tgname = 'obras_obra_valor_guarda' and t.tgrelid = 'public.obras_obra'::regclass
+          and not t.tgisinternal and t.tgenabled = 'O'))
 ) as t(n, verificacao, esperado, encontrado)
 order by n;
