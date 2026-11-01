@@ -51,11 +51,11 @@ beforeEach(() => {
     obras_fase_revisao: [
       {
         id: R0, fase_id: FASE, obra_id: O, revisao: 0, status: 'emitida', emitida_em: '2026-10-30T15:00:00Z', usa_trava: false,
-        camadas: [], regras: [], carimbo: {}, planta_path: `${O}/mapa/R0.png`, planta_largura: 1200, planta_altura: 840, fase_nome: 'Congelada R0', fase_numero: 1,
+        camadas: [], regras: [], carimbo: {}, planta_path: `${O}/mapa/00000000-0000-4000-8000-0000000000a0.png`, planta_largura: 1200, planta_altura: 840, fase_nome: 'Congelada R0', fase_numero: 1,
       },
       {
         id: R1, fase_id: FASE, obra_id: O, revisao: 1, status: 'emitida', emitida_em: '2026-10-31T15:00:00Z', usa_trava: false,
-        camadas: [], regras: [], carimbo: {}, planta_path: `${O}/mapa/R1.png`, planta_largura: 1200, planta_altura: 840, fase_nome: 'Congelada R1', fase_numero: 1,
+        camadas: [], regras: [], carimbo: {}, planta_path: `${O}/mapa/00000000-0000-4000-8000-0000000000a1.png`, planta_largura: 1200, planta_altura: 840, fase_nome: 'Congelada R1', fase_numero: 1,
       },
       { id: R2, fase_id: FASE, obra_id: O, revisao: 2, status: 'rascunho', usa_trava: false, camadas: [], regras: [], carimbo: {} },
       {
@@ -95,7 +95,7 @@ describe('o que vira PDF', () => {
     expect(res.status).toBe(200)
     expect(res.headers.get('Content-Type')).toBe('application/pdf')
     expect(res.headers.get('Cache-Control')).toBe('private, no-store')
-    expect(b.assinadas).toEqual([`${O}/mapa/R1.png`])
+    expect(b.assinadas).toEqual([`${O}/mapa/00000000-0000-4000-8000-0000000000a1.png`])
     expect(dadosRenderizados()).toMatchObject({ fase: { numero: 1, nome: 'Congelada R1' }, revisao: { revisao: 1, emitidaEm: '2026-10-31T15:00:00Z' } })
   })
 
@@ -125,6 +125,20 @@ describe('o que vira PDF', () => {
 
   it('obra que não é modalidade obra (SPOT): 404', async () => {
     b.db.obras_obra[0].modalidade = 'spot'
+    expect((await pedir(R1)).status).toBe(404)
+    semRender()
+  })
+
+  it('planta congelada fora do caminho canônico da obra: não assina, sai em quadro branco', async () => {
+    b.db.obras_fase_revisao[1].planta_path = `${OUTRA}/mapa/x.png`
+    const res = await pedir(R1)
+    expect(res.status).toBe(200)
+    expect(b.assinadas).toEqual([])
+    expect(dadosRenderizados()).toMatchObject({ plantaUrl: null, planta: null })
+  })
+
+  it('sem o SQL da 6b (tabela ausente): 404', async () => {
+    b.erro['obras_fase_revisao.select'] = { message: 'x', code: 'PGRST205' }
     expect((await pedir(R1)).status).toBe(404)
     semRender()
   })

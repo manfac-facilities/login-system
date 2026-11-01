@@ -31,14 +31,22 @@ export type FaseCliente = {
   plantaAltura: number | null
 }
 
-/** Última emitida de cada fase da obra (maior `revisao`), por número da fase. Lança em falha de leitura. */
+/** Tabela/coluna ausente (app subiu antes do SQL da 6b): o faseamento some, o resto do portal segue. */
+const SEM_SQL = new Set(['PGRST205', '42P01', '42703'])
+const semSql = (e: { code?: string } | null) => !!e && !!e.code && SEM_SQL.has(e.code)
+
+/**
+ * Passo leve: a última emitida de cada fase (maior `revisao`), por número da fase, SEM o jsonb das camadas.
+ * Lança em falha de leitura; SQL da 6b ausente = lista vazia.
+ */
 async function ultimasEmitidas(admin: Admin, obraId: string): Promise<Linha[]> {
   const { data, error } = await admin
     .from('obras_fase_revisao')
-    .select('id, obra_id, fase_id, revisao, status, camadas, emitida_em, planta_path, planta_largura, planta_altura, fase_nome, fase_numero')
+    .select('id, obra_id, fase_id, revisao, status, emitida_em, planta_path, planta_largura, planta_altura, fase_nome, fase_numero')
     .eq('obra_id', obraId)
     .eq('status', 'emitida')
     .order('revisao', { ascending: false })
+  if (semSql(error)) return []
   if (error) throw new Error('portal-obra: falha ao ler o faseamento')
   const ultimas = new Map<string, Linha>()
   for (const r of (data ?? []) as Linha[]) {
@@ -52,6 +60,17 @@ async function ultimasEmitidas(admin: Admin, obraId: string): Promise<Linha[]> {
 /** [] = nada emitido (a seção não aparece). Lança em falha de leitura. */
 export async function lerFaseamentoDoPortal(admin: Admin, obraId: string): Promise<FaseCliente[]> {
   const linhas = await ultimasEmitidas(admin, obraId)
+  if (!linhas.length) return []
+  // Passo 2: as camadas só das vencedoras (continua filtrando pela obra e pelo status).
+  const { data: pesadas, error } = await admin
+    .from('obras_fase_revisao')
+    .select('id, obra_id, status, camadas')
+    .eq('obra_id', obraId)
+    .eq('status', 'emitida')
+    .in('id', linhas.map((l) => l.id))
+  if (semSql(error)) return []
+  if (error) throw new Error('portal-obra: falha ao ler o faseamento')
+  const camadasDe = new Map(((pesadas ?? []) as Linha[]).filter((x) => x.obra_id === obraId && x.status === 'emitida').map((x) => [String(x.id), x.camadas]))
   const storage = admin.storage.from('obras-fotos')
   return Promise.all(
     linhas.map(async (r) => {
@@ -61,7 +80,7 @@ export async function lerFaseamentoDoPortal(admin: Admin, obraId: string): Promi
         const { data } = await storage.createSignedUrl(path, VALIDADE_URL_FASEAMENTO_S)
         plantaUrl = data?.signedUrl ?? null
       }
-      const c = camadasSchema.safeParse(r.camadas)
+      const c = camadasSchema.safeParse(camadasDe.get(String(r.id)))
       return {
         revisaoId: String(r.id),
         faseId: String(r.fase_id),
@@ -87,11 +106,12 @@ export async function obraTemFaseamento(obraId: string): Promise<boolean> {
 /**
  * A revisão pode virar PDF no portal? Só se for a ÚLTIMA emitida da sua fase nesta obra
  * (é a única que a seção mostra; uma revisão antiga já substituída não é aberta por id).
+ * Devolve a linha leve (planta_path etc., sem camadas), false se não pode, 'erro' se a leitura falhou.
  */
-export async function revisaoAbrivelNoPortal(admin: Admin, obraId: string, revisaoId: string): Promise<boolean | 'erro'> {
+export async function revisaoAbrivelNoPortal(admin: Admin, obraId: string, revisaoId: string): Promise<Linha | false | 'erro'> {
   if (!UUID.test(revisaoId)) return false
   try {
-    return (await ultimasEmitidas(admin, obraId)).some((r) => r.id === revisaoId)
+    return (await ultimasEmitidas(admin, obraId)).find((r) => r.id === revisaoId) ?? false
   } catch {
     return 'erro'
   }

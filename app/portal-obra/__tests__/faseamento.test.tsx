@@ -85,6 +85,17 @@ beforeEach(() => {
   mockLerMapa.mockResolvedValue({ ok: true, dados: { configurado: true, mapa: { modo: 'croqui', plantaPath: null, plantaLargura: null, plantaAltura: null }, ambientes: [], pontos: [], vinculos: [] } })
 })
 
+/** Obra com um ambiente: o fake do banco não tem is/not, então os impedimentos vêm de uma cadeia vazia. */
+function comMapa() {
+  mockLerMapa.mockResolvedValue({ ok: true, dados: { configurado: true, mapa: { modo: 'croqui', plantaPath: null, plantaLargura: null, plantaAltura: null }, ambientes: [{ id: u(5), nome: 'Salão', areaM2: null, x: 0.1, y: 0.1, w: 0.5, h: 0.5, ordem: 1 }], pontos: [], vinculos: [] } })
+  const adm = mockAdmin as unknown as { from: (t: string) => unknown }
+  const from = adm.from.bind(adm)
+  const vazia: Record<string, unknown> = {}
+  for (const m of ['select', 'eq', 'is', 'not']) vazia[m] = () => vazia
+  vazia.then = (ok: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(ok)
+  adm.from = (t: string) => (t === 'obras_impedimento' ? vazia : from(t))
+}
+
 describe('lerFaseamentoDoPortal', () => {
   it('só a última emitida de cada fase; rascunho e revisão de outra obra fora', async () => {
     const r = await lerFaseamentoDoPortal(mockAdmin as never, O)
@@ -140,6 +151,28 @@ describe('página da aba Mapa', () => {
     await expect(pagina(O)).rejects.toThrow('NOT_FOUND')
   })
 
+  it.each(['PGRST205', '42P01', '42703'])('sem o SQL da 6b (%s): obra só com mapa abre normal, sem faixa de erro', async (code) => {
+    comMapa()
+    b.erro['obras_fase_revisao.select'] = { message: 'tabela ausente', code }
+    const html = renderToStaticMarkup(await pagina(O))
+    expect(html).toContain('Salão')
+    expect(html).not.toContain('role="alert"')
+    expect(html).not.toContain('Faseamento')
+  })
+
+  it('sem o SQL da 6b e sem ambiente (URL direta): 404, não a faixa de erro', async () => {
+    b.erro['obras_fase_revisao.select'] = { message: 'tabela ausente', code: 'PGRST205' }
+    await expect(pagina(O)).rejects.toThrow('NOT_FOUND')
+  })
+
+  it('erro de banco qualquer no faseamento, com mapa: mapa abre e a faixa de erro aparece na seção', async () => {
+    comMapa()
+    b.erro['obras_fase_revisao.select'] = { message: 'queda', code: '57014' }
+    const html = renderToStaticMarkup(await pagina(O))
+    expect(html).toContain('Salão')
+    expect(html).toContain('Não foi possível carregar o faseamento')
+  })
+
   it('obra de outro cliente: 404 antes de ler o faseamento', async () => {
     await expect(pagina(OUTRA)).rejects.toThrow('NOT_FOUND')
     expect(mockLerObra).not.toHaveBeenCalled()
@@ -151,7 +184,7 @@ describe('aba Mapa', () => {
 
   it('obraTemMapa: só faseamento emitido = true; só rascunho = false; só ambiente = true', async () => {
     expect(await obraTemMapa(O)).toBe(true)
-    banco([rev(u(12), F1, 2, 'rascunho')])
+    banco([{ ...rev(u(12), F1, 2, 'rascunho'), obra_id: u(31) }])
     expect(await obraTemMapa(u(31))).toBe(false)
     banco([], { obras_ambiente: [{ id: u(5), obra_id: u(32) }] })
     expect(await obraTemMapa(u(32))).toBe(true)
