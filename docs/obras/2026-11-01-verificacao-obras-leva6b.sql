@@ -129,7 +129,7 @@ values ('00000000-0000-4000-8000-00000000a060', 'planta',
         '00000000-0000-4000-8000-00000000a060/mapa/55555555-5555-4555-8555-555555555555.png', 1200, 840);
 
 insert into public.obras_cronograma_versao (id, obra_id, numero, criada_por, salva_em, salva_por)
-values ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-00000000a060', 1, 'verificacao', now(), 'verificacao'),
+values ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-00000000a060', 1, 'verificacao', null, null),
        ('00000000-0000-4000-8000-0000000c0602', '00000000-0000-4000-8000-00000000a060', 2, 'verificacao', null, null);
 insert into public.obras_atividade (versao_id, obra_id, numero, descricao, duracao, bloqueia_por_trava)
 values ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-00000000a060', 6, 'Escoramento provisório', 3, false),
@@ -138,6 +138,10 @@ values ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-0000000
        ('00000000-0000-4000-8000-0000000c0601', '00000000-0000-4000-8000-00000000a060', 12, 'Demolição da parede', 2, true),
        ('00000000-0000-4000-8000-0000000c0602', '00000000-0000-4000-8000-00000000a060', 6, 'Escoramento V2', 3, false),
        ('00000000-0000-4000-8000-0000000c0602', '00000000-0000-4000-8000-00000000a060', 13, 'Só na V2', 2, true);
+-- A V1 só é salva depois das atividades: em produção `obras_atividade_imutavel` recusa
+-- atividade nova em versão já salva.
+update public.obras_cronograma_versao set salva_em = now(), salva_por = 'verificacao'
+ where id = '00000000-0000-4000-8000-0000000c0601';
 insert into public.obras_atividade_exec (obra_id, numero, status, percentual)
 values ('00000000-0000-4000-8000-00000000a060', 6, 'em_andamento', 0.4),
        ('00000000-0000-4000-8000-00000000a060', 11, 'bloqueado', 0);
@@ -622,6 +626,15 @@ end $$;
 do $$
 declare v int;
 begin
+  -- Em produção, obra com cronograma salvo não se apaga (obras_versao_imutavel e
+  -- obras_atividade_imutavel recusam a cascata). Este caso testa só a cascata do
+  -- faseamento: desliga as duas travas aqui dentro; a exceção do bloco desfaz o ALTER.
+  if exists (select 1 from pg_trigger where tgname = 'obras_versao_imutavel') then
+    alter table public.obras_cronograma_versao disable trigger obras_versao_imutavel;
+  end if;
+  if exists (select 1 from pg_trigger where tgname = 'obras_atividade_imutavel') then
+    alter table public.obras_atividade disable trigger obras_atividade_imutavel;
+  end if;
   perform pg_temp.jwt(null);
   delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a060';
   raise exception 'ok:%|%|%',
@@ -825,6 +838,15 @@ exception when others then
 end $$;
 
 do $$ begin
+  -- Em produção, obra com cronograma salvo não se apaga (obras_versao_imutavel e
+  -- obras_atividade_imutavel recusam a cascata). Este caso testa só a cascata do
+  -- faseamento: desliga as duas travas aqui dentro; a exceção do bloco desfaz o ALTER.
+  if exists (select 1 from pg_trigger where tgname = 'obras_versao_imutavel') then
+    alter table public.obras_cronograma_versao disable trigger obras_versao_imutavel;
+  end if;
+  if exists (select 1 from pg_trigger where tgname = 'obras_atividade_imutavel') then
+    alter table public.obras_atividade disable trigger obras_atividade_imutavel;
+  end if;
   perform pg_temp.como('authenticated', pg_temp.admin_email());
   delete from public.obras_obra where id = '00000000-0000-4000-8000-00000000a060';
   raise exception 'ok:%|%|%',
