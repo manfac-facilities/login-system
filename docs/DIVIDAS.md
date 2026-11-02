@@ -482,3 +482,15 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - **Inserir/apagar `obras_nota_externa` não reavalia a etapa do SPOT.** A nota externa só entra na soma quando o
   Financeiro chama `obras_marcar_faturada` (próxima NFS-e da OS) ou `obras_desmarcar_faturada`. Uma nota externa que
   sozinha fecha o valor deixa a OS em "Pendente faturamento" até alguém mudar a etapa na ficha ou a próxima nota chegar.
+
+## 01/11/2026 — Obras Financeiro da OS no SPOT, app e documentação (`feat/obras-spot-financeiro`, Tasks 2–10), deixado de propósito
+- **Sobrefaturamento do SPOT só gera aviso:** a parte acima do saldo da OS é permitida (a OS passa a `faturado` e o
+  excedente fica visível), não é recusada.
+- **Parciais devolvidos por `obras_marcar_faturada` não são gravados na linha do tempo do Financeiro:** o "falta" é
+  recalculado por `faltaSpot` a cada leitura.
+- **Aviso de vencimento de locação na ficha SPOT ignora feriados** (conta dias corridos).
+- **Leitura do financeiro do SPOT é tudo-ou-nada:** falha de uma RPC (caixinha, medições atrasadas) derruba o bloco
+  inteiro; a página das OBRAS tolera leitura parcial.
+- **Faturamento parcial das OBRAS fora:** decisão de 01/11 — "somente ao SPOT por enquanto".
+- **Visão consolidada de margem no painel:** etapa própria, ainda não feita.
+- **Teste "044: nota ↔ medição" do Financeiro é instável:** pega nota rascunho por uuid aleatório (repo `financeiro`).

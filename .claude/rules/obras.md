@@ -236,3 +236,22 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
   insert quando preenchidas); só as telas do mapa dão erro.
 - **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
   `lerReferenciasDosPontos` (1 foto por ponto). Nunca ler as fotos da obra inteira.
+
+### Financeiro da OS no SPOT (branch `feat/obras-spot-financeiro`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
+
+- **Onde fica:** `app/obras/obra/[id]/_financeiro/` — `resumo-spot.ts` (regras puras: faturado, falta, `faltaSpot`),
+  `dados.ts` (leitura), `_actions.ts` (locação, nota externa) e `bloco.tsx` (a aba na ficha SPOT).
+- **Quem vê valores:** no SPOT, qualquer usuário com acesso ao Obras; na OBRA, igual a hoje (`obras_pode_ver_valores`).
+- **Locação do SPOT:** devolvida/renovada marcada por qualquer usuário do Obras (não só o analista; ver `docs/DIVIDAS.md`).
+  OBRAS continuam só com engenheiro da obra/mãe ou admin.
+- **Faturamento parcial é só SPOT.** Soma das PARTES da obra nas notas autorizada/enviada não devolvidas
+  (`fin_fat_nota_obras`) + `obras_nota_externa`; só vira `faturado` quando a soma >= valor. `fat_nfse` guarda a lista
+  separada por vírgula ("735, 812"). Faturamento parcial das OBRAS ficou de fora (decisão de 01/11).
+- **`obras_nota_externa`:** NF emitida fora do módulo de faturamento do Financeiro. Só administrador insere/apaga
+  (`criado_por` = e-mail do JWT); inserir/apagar não reavalia a etapa sozinho.
+- **Ordem de deploy:** `sdd-sql-obras-spot-financeiro.sql` (hub) → Financeiro `045` → app do Financeiro (branch
+  `feat/spot-faturamento-parcial`, repo `financeiro`) → app do hub → `docs/obras/2026-11-01-macae2-nf735.sql`.
+- **SQL NÃO aplicado** (verificação em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`). Não fazer merge
+  na master antes de aplicado e verificado.
