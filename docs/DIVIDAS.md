@@ -494,3 +494,15 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
 - **Faturamento parcial das OBRAS fora:** decisão de 01/11 — "somente ao SPOT por enquanto".
 - **Visão consolidada de margem no painel:** etapa própria, ainda não feita.
 - **Teste "044: nota ↔ medição" do Financeiro é instável:** pega nota rascunho por uuid aleatório (repo `financeiro`).
+
+## 01/11/2026 — Financeiro da OS no SPOT, revisão final da branch (hub + `financeiro` `feat/spot-faturamento-parcial`), deixado de propósito
+- **Desmarcar um SPOT ainda coberto por outras notas o devolve em `marcadas`:** `obras_desmarcar_faturada` mantém a OS
+  em `faturado`, mas a linha do tempo do Financeiro diz "de volta a pendente faturamento".
+- **Baixa parcial gera o evento "0 obra(s) em faturado"** na linha do tempo do Financeiro quando nenhuma OS fechou.
+- **SPOT com valor 0 nunca entra numa nota no Financeiro** (saldo 0, fora da fila), enquanto o hub o faturaria na hora
+  na primeira NFS-e.
+- **A fila de um lote de teste (homologação) usa o saldo de produção** (`saldosSpot` só conta notas de produção).
+- **Qualquer usuário do Obras edita `obras_obra.valor` de um SPOT**, e esse valor agora move saldo, fila e faturado.
+  Pré-existente (policy "obras access"); é a próxima borda de dinheiro a fechar.
+- **Rascunhos antigos de nota SPOT com várias obras, no dia do deploy, vão pedir a parte de cada obra** (a trava
+  recusa parte vazia). Avisar a equipe do Financeiro antes do deploy.

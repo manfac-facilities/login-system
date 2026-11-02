@@ -31,7 +31,7 @@ export function resumoSpot(p: {
 }): ResumoSpot {
   const contam = p.notas.filter((n) => n.contaNaReceita)
   let faturado =
-    contam.reduce((s, n) => s + (n.parcelaCentavos ?? 0), 0) +
+    contam.reduce((s, n) => s + (n.parcelaCentavos ?? n.totalCentavos ?? 0), 0) +
     p.externas.reduce((s, n) => s + n.valorCentavos, 0)
   let foraDoSistema = false
   if (faturado === 0 && p.etapa === 'faturado' && p.fatNfse && p.fatNfse.trim() !== '') {

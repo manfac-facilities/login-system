@@ -88,6 +88,7 @@ describe('sdd-sql-obras-spot-financeiro.sql', () => {
     expect(f).toMatch(/situacao in \('autorizada', 'enviada'\)/)
     expect(f).toMatch(/obras_devolvidas_em is null/)
     expect(f).toMatch(/obras_nota_externa/)
+    expect(f).toMatch(/sum\(coalesce\(nob\.valor_centavos, n\.valor_total_centavos\)\)/)
   })
 
   it('marcar/desmarcar/faturado não são concedidos a authenticated nem anon', () => {

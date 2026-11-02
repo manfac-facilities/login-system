@@ -31,6 +31,10 @@ describe('resumoSpot', () => {
     expect(r.faturadoCentavos).toBe(0)
     expect(r.foraDoSistema).toBe(false)
   })
+  it('parte nula conta o total da nota (regra do Financeiro)', () => {
+    const r = resumoSpot({ ...base, notas: [{ ...nota(0), parcelaCentavos: null, totalCentavos: 7000 }] })
+    expect(r.faturadoCentavos).toBe(7000)
+  })
   it('nota cancelada não soma', () => {
     const r = resumoSpot({ ...base, notas: [nota(5000, false, 'cancelada'), nota(1000)] })
     expect(r.faturadoCentavos).toBe(1000)

@@ -241,17 +241,21 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
 
 Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
 
-- **Onde fica:** `app/obras/obra/[id]/_financeiro/` — `resumo-spot.ts` (regras puras: faturado, falta, `faltaSpot`),
-  `dados.ts` (leitura), `_actions.ts` (locação, nota externa) e `bloco.tsx` (a aba na ficha SPOT).
+- **Onde fica:** `app/obras/obra/[id]/_financeiro/` — `resumo-spot.ts` (regras puras: faturado, falta, margem),
+  `dados.ts` (leitura), `_actions.ts` (só locação: devolvida/renovada) e `bloco.tsx` (a aba na ficha SPOT). O
+  `faltaSpot` (saldo para a fila e a trava) mora no Financeiro, `lib/faturamento/saldo-spot.ts`, não no hub.
 - **Quem vê valores:** no SPOT, qualquer usuário com acesso ao Obras; na OBRA, igual a hoje (`obras_pode_ver_valores`).
 - **Locação do SPOT:** devolvida/renovada marcada por qualquer usuário do Obras (não só o analista; ver `docs/DIVIDAS.md`).
   OBRAS continuam só com engenheiro da obra/mãe ou admin.
 - **Faturamento parcial é só SPOT.** Soma das PARTES da obra nas notas autorizada/enviada não devolvidas
-  (`fin_fat_nota_obras`) + `obras_nota_externa`; só vira `faturado` quando a soma >= valor. `fat_nfse` guarda a lista
+  (`fin_fat_nota_obras`; parte nula = total da nota, igual ao Financeiro) + `obras_nota_externa`; só vira `faturado` quando a soma >= valor. `fat_nfse` guarda a lista
   separada por vírgula ("735, 812"). Faturamento parcial das OBRAS ficou de fora (decisão de 01/11).
 - **`obras_nota_externa`:** NF emitida fora do módulo de faturamento do Financeiro. Só administrador insere/apaga
-  (`criado_por` = e-mail do JWT); inserir/apagar não reavalia a etapa sozinho.
+  (`criado_por` = e-mail do JWT), e só por SQL/admin — não há tela nem action no app; inserir/apagar não reavalia a
+  etapa sozinho.
 - **Ordem de deploy:** `sdd-sql-obras-spot-financeiro.sql` (hub) → Financeiro `045` → app do Financeiro (branch
-  `feat/spot-faturamento-parcial`, repo `financeiro`) → app do hub → `docs/obras/2026-11-01-macae2-nf735.sql`.
+  `feat/spot-faturamento-parcial`, repo `financeiro`; logo depois da `045`) → `docs/obras/2026-11-01-macae2-nf735.sql`
+  (antes de qualquer nota nova da 0426-012516; não depende do app do hub; se abortar com a OS já `faturado`, pedir
+  ajuda, não escrever variante) → app do hub.
 - **SQL NÃO aplicado** (verificação em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`). Não fazer merge
   na master antes de aplicado e verificado.

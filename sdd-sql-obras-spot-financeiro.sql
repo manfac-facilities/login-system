@@ -4,7 +4,8 @@
 -- Plano: docs/superpowers/plans/2026-11-01-obras-spot-financeiro.md, Task 1.
 --
 -- ESTADO: NÃO APLICADO. Rodar à mão no SQL Editor, projeto iyytcavcgukfjnjjrerx,
--- ANTES do deploy do app. Depois, o teste de comportamento
+-- ANTES do deploy do app. Ordem: este SQL -> Financeiro 045 -> app do Financeiro (logo
+-- depois da 045) -> docs/obras/2026-11-01-macae2-nf735.sql -> app do hub. Depois, o teste de comportamento
 -- docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql (rollback).
 --
 -- TERRITÓRIO DE DINHEIRO + AUTORIZAÇÃO (AGENTS.md): toda dúvida falha FECHADA.
@@ -27,7 +28,7 @@
 --      por (obra, nfse). Lê: obras_pode_ver_valores(obra). Insere/apaga: só
 --      administrador (criado_por = e-mail do JWT). Sem update.
 --   4. obras_spot_faturado_centavos(p_obra) -> bigint: soma da PARTE da obra
---      (fin_fat_nota_obras.valor_centavos) nas notas vivas de produção
+--      (fin_fat_nota_obras.valor_centavos; nula = total da nota, como no Financeiro) nas notas vivas de produção
 --      (situacao autorizada|enviada e obras_devolvidas_em nulo — a mesma regra de
 --      contaNaReceita em app/obras/obras/_lib/financeiro-tela.ts) + soma das notas
 --      externas. Só service_role (uso interno de marcar/desmarcar).
@@ -306,7 +307,8 @@ stable
 security definer
 set search_path = pg_catalog, public
 as $$
-  select coalesce((select sum(nob.valor_centavos)
+  -- Parte nula = total da nota (mesma regra do Financeiro).
+  select coalesce((select sum(coalesce(nob.valor_centavos, n.valor_total_centavos))
                      from public.fin_fat_nota_obras nob
                      join public.fin_fat_notas n on n.id = nob.nota_id
                     where nob.obra_id = p_obra
