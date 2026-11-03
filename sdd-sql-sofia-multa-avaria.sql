@@ -11,10 +11,11 @@
 -- SQL ANTES DO DEPLOY DO APP. App antigo depois deste SQL: Descontos/
 -- Multas antigos falham ao mudar status direto (por desenho).
 -- IDEMPOTENTE: if not exists / create or replace / drop ... if exists.
--- AJUSTE PÓS-SPEC (decisão do João, 03/11, docs/frotas/2026-11-03-
--- decisoes-terceira-bateria.md): foto avulsa ninguém apaga nem troca;
--- excluir o checklist/sinistro INTEIRO só o admin (sofia_is_admin() is
--- true), e aí a cascata leva fotos e avarias. Seções 6 e 8.
+-- CORREÇÕES DA REVISÃO INDEPENDENTE (docs/frotas/2026-11-03-revisao-sql-
+-- multa-avaria.md): B1 (valor/motorista congelam a partir do pedido),
+-- B2 = ajuste pós-spec do João (A1–A5: foto avulsa ninguém apaga; excluir
+-- checklist/sinistro inteiro só admin, com cascata e audit_log), N2, N3.
+-- N1 (3 multas já autorizadas) NÃO aplicado: aguarda decisão do João.
 -- ============================================================
 
 begin;
@@ -51,9 +52,13 @@ begin
     raise exception 'multas com autorizacao_status NULL — backfill de etapa não decide; corrigir antes';
   end if;
 
-  if exists (select 1 from public.checklist_fotos
-             where posicao is null
-                or posicao not in ('Frente','Traseira','Lateral Esq.','Lateral Dir.','Interna')) then
+  -- (só na primeira aplicação: depois do deploy o app grava 'Extra n'/'Avaria n')
+  if not exists (select 1 from information_schema.columns
+                 where table_schema = 'public' and table_name = 'checklist_fotos'
+                   and column_name = 'tipo_foto')
+     and exists (select 1 from public.checklist_fotos
+                 where posicao is null
+                    or posicao not in ('Frente','Traseira','Lateral Esq.','Lateral Dir.','Interna')) then
     raise exception 'checklist_fotos com posicao desconhecida — backfill de tipo_foto não decide';
   end if;
 
@@ -124,8 +129,16 @@ update public.multas set etapa = case
   end
 where etapa is null;
 
-update public.multas set prazo_indicacao = data_recebimento + 30
-where prazo_indicacao is null and data_recebimento is not null;
+-- (na reaplicação, com trg_multas_etapa ativa, postgres não passaria na guarda: só antes dela)
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'trg_multas_etapa'
+                 and tgrelid = 'public.multas'::regclass) then
+    update public.multas set prazo_indicacao = data_recebimento + 30
+    where prazo_indicacao is null and data_recebimento is not null;
+  end if;
+end;
+$$;
 
 alter table public.multas alter column etapa set default 'registrada';
 alter table public.multas alter column etapa set not null;
@@ -202,6 +215,15 @@ begin
       raise exception 'Multa nova não pode nascer com dados de etapas posteriores';
     end if;
     return new;
+  end if;
+
+  -- O que o admin autoriza (quanto, de quem, qual multa) congela a partir do pedido de desconto,
+  -- para qualquer role. Para corrigir: admin revoga → gestor cancela a solicitação → corrige → pede de novo.
+  if old.etapa in ('solicitado','autorizado','descontada')
+     and (new.valor, new.motorista_id, new.motorista_condutor_id, new.veiculo_id, new.data)
+         is distinct from
+         (old.valor, old.motorista_id, old.motorista_condutor_id, old.veiculo_id, old.data) then
+    raise exception 'Multa com desconto pedido ou autorizado: valor, motorista, veículo e data não mudam (cancele a solicitação antes)';
   end if;
 
   -- ---------- UPDATE sem mudar a etapa ----------
@@ -362,6 +384,10 @@ begin
     end if;
   end if;
 
+  if p_etapa = v_m.etapa and p_etapa <> 'condutor' then
+    raise exception 'A multa já está nesta etapa';
+  end if;
+
   case p_etapa
     when 'condutor' then
       if nullif(v_dados ->> 'motorista_id', '') is null then
@@ -457,8 +483,6 @@ grant execute on function public.sofia_multa_registrar_etapa(uuid, text, jsonb) 
 -- ============================================================
 create table if not exists public.checklist_avarias (
   id uuid primary key default gen_random_uuid(),
-  -- cascade: só o admin exclui o checklist inteiro; a trigger abaixo recusa
-  -- a cascata para qualquer outro (ajuste pós-spec)
   checklist_id uuid not null references public.checklist(id) on delete cascade,
   peca text not null constraint checklist_avarias_peca_nao_vazia check (btrim(peca) <> ''),
   tamanho text not null constraint checklist_avarias_tamanho_check check (tamanho in ('pequena','media','grande')),
@@ -497,13 +521,10 @@ set search_path = pg_catalog, public
 as $$
 begin
   if TG_OP = 'DELETE' then
-    -- Avaria avulsa: ninguém apaga. Só a cascata de o ADMIN excluir o
-    -- checklist inteiro (o checklist já não existe quando a cascata chega).
+    -- só sai na cascata de excluir o checklist inteiro (trg_excluir_so_admin já exigiu admin):
+    -- nesse momento o checklist pai não existe mais. Delete direto (pai existe) = recusado, qualquer role.
     if exists (select 1 from public.checklist c where c.id = old.checklist_id) then
       raise exception 'Avaria registrada não pode ser apagada';
-    end if;
-    if public.sofia_is_admin() is not true then
-      raise exception 'Só o administrador exclui checklist com avaria registrada';
     end if;
     return old;
   end if;
@@ -551,7 +572,7 @@ create trigger trg_checklist_avarias_guarda
 -- 7. checklist_fotos: avaria_id + tipo_foto (backfill ANTES da trigger)
 -- ============================================================
 alter table public.checklist_fotos
-  add column if not exists avaria_id uuid references public.checklist_avarias(id),
+  add column if not exists avaria_id uuid references public.checklist_avarias(id) on delete cascade,
   add column if not exists tipo_foto text;
 
 update public.checklist_fotos
@@ -570,10 +591,7 @@ alter table public.checklist_fotos add constraint checklist_fotos_avaria_coerent
 create index if not exists checklist_veiculo_data_idx on public.checklist (veiculo_id, data desc);
 
 -- ============================================================
--- 8. FOTOS IMUTÁVEIS (qualquer role). Única exceção: a cascata de o
---    ADMIN excluir o checklist/sinistro inteiro (ajuste pós-spec).
---    security definer: a conferência "o pai ainda existe?" não pode ser
---    enganada pela RLS de quem chama (pai invisível ≠ pai apagado).
+-- 8. FOTOS IMUTÁVEIS (qualquer role, inclusive cascata)
 -- ============================================================
 create or replace function public.sofia_fotos_imutaveis()
 returns trigger
@@ -585,8 +603,12 @@ begin
   if TG_OP = 'UPDATE' then
     raise exception 'Foto salva é prova e não pode ser alterada nem apagada';
   end if;
+
   if TG_OP = 'DELETE' then
-    -- foto avulsa (pai ainda existe): ninguém apaga, nem admin, nem postgres
+    -- Foto avulsa: recusada para QUALQUER role (inclusive admin, postgres, service_role).
+    -- Única saída: a cascata de excluir o checklist/sinistro inteiro, que trg_excluir_so_admin
+    -- já restringiu a admin e registrou no audit_log; nesse momento o pai não existe mais.
+    -- IF externo por tabela (regra do sql.md: old.<campo> não pode ser resolvido na tabela errada).
     if TG_TABLE_NAME = 'checklist_fotos' then
       if exists (select 1 from public.checklist c where c.id = old.checklist_id) then
         raise exception 'Foto salva é prova e não pode ser alterada nem apagada';
@@ -596,14 +618,11 @@ begin
         raise exception 'Foto salva é prova e não pode ser alterada nem apagada';
       end if;
     else
-      raise exception 'Foto salva é prova e não pode ser alterada nem apagada';
+      raise exception 'sofia_fotos_imutaveis ligada a tabela inesperada: %', TG_TABLE_NAME;
     end if;
-    -- cascata da exclusão do registro inteiro: só o administrador
-    if public.sofia_is_admin() is not true then
-      raise exception 'Só o administrador exclui registro com fotos salvas';
-    end if;
-    return old;
+    return old;  -- obrigatório: devolver NULL num BEFORE DELETE pularia a linha na cascata e deixaria órfã
   end if;
+
   -- INSERT
   if TG_TABLE_NAME = 'checklist_fotos' then
     if new.avaria_id is not null then
@@ -628,6 +647,58 @@ create trigger trg_fotos_imutaveis
 
 revoke update, delete, truncate on public.checklist_fotos from anon, authenticated;
 revoke update, delete, truncate on public.sinistro_fotos from anon, authenticated;
+
+-- ============================================================
+-- 8b. EXCLUIR CHECKLIST OU SINISTRO INTEIRO: só admin, com audit_log
+--     (ajuste do João, 03/11). A cascata leva fotos e avarias; os
+--     arquivos ficam no bucket (sem policy de DELETE) e os caminhos
+--     ficam em audit_log.dados para não se perder a prova.
+-- ============================================================
+create or replace function public.sofia_excluir_registro_so_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_fotos   jsonb := '[]'::jsonb;
+  v_avarias jsonb := '[]'::jsonb;
+begin
+  if public.sofia_is_admin() is not true then
+    raise exception 'Apenas administradores podem excluir checklist ou sinistro';
+  end if;
+
+  if TG_TABLE_NAME = 'checklist' then
+    select coalesce(jsonb_agg(to_jsonb(f) order by f.created_at), '[]'::jsonb) into v_fotos
+      from public.checklist_fotos f where f.checklist_id = old.id;
+    select coalesce(jsonb_agg(to_jsonb(a) order by a.created_at), '[]'::jsonb) into v_avarias
+      from public.checklist_avarias a where a.checklist_id = old.id;
+  elsif TG_TABLE_NAME = 'sinistros' then
+    select coalesce(jsonb_agg(to_jsonb(f) order by f.created_at), '[]'::jsonb) into v_fotos
+      from public.sinistro_fotos f where f.sinistro_id = old.id;
+  else
+    raise exception 'sofia_excluir_registro_so_admin ligada a tabela inesperada: %', TG_TABLE_NAME;
+  end if;
+
+  insert into public.audit_log (tabela, operacao, registro_id, descricao, usuario_id, usuario_email, dados)
+  values (TG_TABLE_NAME, 'excluiu', old.id::text,
+          case when TG_TABLE_NAME = 'checklist' then 'Checklist excluído pelo administrador'
+               else 'Sinistro excluído pelo administrador' end
+            || ' (' || jsonb_array_length(v_fotos) || ' foto(s))',
+          auth.uid(), lower(trim(auth.jwt() ->> 'email')),
+          jsonb_build_object('registro', to_jsonb(old), 'fotos', v_fotos, 'avarias', v_avarias));
+  return old;
+end;
+$$;
+
+drop trigger if exists trg_excluir_so_admin on public.checklist;
+create trigger trg_excluir_so_admin
+  before delete on public.checklist
+  for each row execute function public.sofia_excluir_registro_so_admin();
+drop trigger if exists trg_excluir_so_admin on public.sinistros;
+create trigger trg_excluir_so_admin
+  before delete on public.sinistros
+  for each row execute function public.sofia_excluir_registro_so_admin();
 
 -- ============================================================
 -- 9. STORAGE: leitura e upload só para quem tem o Sofia
@@ -727,18 +798,29 @@ select * from (values
    (select case when count(*) = 5 then 'OK' else '*** FALHOU *** ' || count(*) end from pg_policies
      where schemaname='public' and policyname='sofia access'
        and tablename in ('multas','checklist','checklist_fotos','sinistros','sinistro_fotos'))),
-  ('v21 fotos/avarias: só a cascata do admin apaga (definer + sofia_is_admin() is not true)',
-   (select case when count(*) = 2 and bool_and(prosecdef)
-                 and bool_and(prosrc like '%sofia_is_admin() is not true%')
-                 and bool_and(prosrc not like '%if not public.%') then 'OK' else '*** FALHOU ***' end
-      from pg_proc where oid in (to_regprocedure('public.sofia_fotos_imutaveis()'),
-                                 to_regprocedure('public.sofia_checklist_avarias_guarda()')))),
-  ('v22 checklist_avarias.checklist_id on delete cascade (admin exclui o checklist inteiro)',
-   (select case when count(*) = 1 then 'OK' else '*** FALHOU ***' end from pg_constraint
-     where conrelid = 'public.checklist_avarias'::regclass and contype = 'f'
-       and confrelid = 'public.checklist'::regclass and confdeltype = 'c'))
+  ('v21 trigger congela valor/motorista a partir do pedido',
+   (select case when prosrc like '%old.etapa in (''solicitado'',''autorizado'',''descontada'')%'
+                 and prosrc like '%new.valor, new.motorista_id%' then 'OK' else '*** FALHOU ***' end
+      from pg_proc where oid = to_regprocedure('public.sofia_multas_etapa_guarda()'))),
+  ('v22 trg_excluir_so_admin em checklist e sinistros, habilitado',
+   (select case when count(*) = 2 then 'OK' else '*** FALHOU *** ' || count(*) end from pg_trigger t join pg_proc p on p.oid = t.tgfoid
+     where t.tgname = 'trg_excluir_so_admin' and t.tgenabled <> 'D' and p.proname = 'sofia_excluir_registro_so_admin'
+       and t.tgrelid in ('public.checklist'::regclass, 'public.sinistros'::regclass))),
+  ('v23 exclusão: guarda sofia_is_admin() is not true + audit_log',
+   (select case when prosecdef and prosrc like '%sofia_is_admin() is not true%' and prosrc like '%insert into public.audit_log%'
+            then 'OK' else '*** FALHOU ***' end
+      from pg_proc where oid = to_regprocedure('public.sofia_excluir_registro_so_admin()'))),
+  ('v24 cascata: avaria→checklist e foto→avaria ON DELETE CASCADE',
+   (select case when count(*) = 2 then 'OK' else '*** FALHOU *** ' || count(*) end from pg_constraint
+     where contype = 'f' and confdeltype = 'c'
+       and ((conrelid = 'public.checklist_avarias'::regclass and confrelid = 'public.checklist'::regclass)
+         or (conrelid = 'public.checklist_fotos'::regclass and confrelid = 'public.checklist_avarias'::regclass)))),
+  ('v25 fotos: delete só com pai ausente, devolve old',
+   (select case when prosecdef and prosrc like '%exists (select 1 from public.checklist c where c.id = old.checklist_id)%'
+                 and prosrc like '%return old;%' then 'OK' else '*** FALHOU ***' end
+      from pg_proc where oid = to_regprocedure('public.sofia_fotos_imutaveis()')))
 ) as v(invariante, resultado);
--- Esperado: 21 linhas OK + v04 "AVISO 2" (ou o número medido na hora — anotar).
+-- Esperado: 24 linhas OK + v04 "AVISO 2" (ou o número medido na hora — anotar).
 
 -- ============================================================
 -- ROLLBACK (só depois de reverter o app; NÃO apaga dado de multa)
@@ -755,5 +837,8 @@ select * from (values
 -- drop trigger if exists trg_multas_etapa on public.multas;
 -- drop function if exists public.sofia_multas_etapa_guarda();
 -- drop function if exists public.sofia_multa_registrar_etapa(uuid, text, jsonb);
+-- drop trigger if exists trg_excluir_so_admin on public.checklist;
+-- drop trigger if exists trg_excluir_so_admin on public.sinistros;
+-- drop function if exists public.sofia_excluir_registro_so_admin();
 -- -- colunas, multa_etapas e checklist_avarias FICAM (guardam o que foi registrado); dropar só com export antes.
 -- commit;
