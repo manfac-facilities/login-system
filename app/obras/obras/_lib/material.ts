@@ -132,7 +132,19 @@ export type AvisoMaterial = {
 
 const ETAPA_TERMINADA_SEM_SUCESSO = ['cancelada', 'recusada']
 const ETAPA_ENTREGUE = ['atendida_estoque', 'concluida']
-const rotuloEtapa = (e: string) => (e === 'cotacao' ? 'cotação' : e.replace(/_/g, ' '))
+// Rótulos reais do Compras (lib/solicitacoes/tipos.ts, ROTULO_ETAPA).
+const ROTULO_ETAPA: Record<string, string> = {
+  decisao_estoque: 'Decisão de estoque',
+  aguardando_cotacao: 'Aguardando cotação',
+  em_cotacao: 'Em cotação',
+  aprovacao_solicitante: 'Aprovação do solicitante',
+  aprovacao_alcada: 'Aprovação da alçada',
+  pronta_para_pedido: 'Pronta para pedido',
+  gerando_no_omie: 'Gerando no Omie',
+  falha_no_omie: 'Falha no Omie',
+  pedido_emitido: 'Pedido emitido',
+}
+const rotuloEtapa = (e: string) => ROTULO_ETAPA[e] ?? e
 
 export function avisosMaterial(p: {
   atividades: AtividadeCalculada[]
@@ -182,7 +194,7 @@ export function avisosMaterial(p: {
           titulo: vencido
             ? pedirEm === p.hoje
               ? `Pedir hoje: ${r.descricao}`
-              : `Pedir, vencido em ${dm(pedirEm)}: ${r.descricao}`
+              : `Pedir: vencido em ${dm(pedirEm)}: ${r.descricao}`
             : `Pedir até ${dm(pedirEm)}: ${r.descricao}`,
           cadeia: [comeca, r.descricao, 'Ainda sem solicitação no Compras'],
           destino: 'compras',
@@ -190,8 +202,7 @@ export function avisosMaterial(p: {
       }
 
       if (p.compras === null) {
-        // Sem leitura do Compras: só o que não depende dela. Ligação antiga (pedido manual) não é "sem pedido".
-        if (!r.cmpPedidoId) avisos.push(pedir())
+        // Sem leitura do Compras: "sem solicitação" só o Compras sabe; falha de leitura não vira aviso falso.
         continue
       }
 
@@ -230,7 +241,7 @@ export function avisosMaterial(p: {
           ...base,
           tipo: 'parada',
           nivel: 'amarelo',
-          titulo: `Solicitação #${sol.solicitacaoNumero} parada em ${rotuloEtapa(sol.etapa)}`,
+          titulo: `Solicitação #${sol.solicitacaoNumero} parada em: ${rotuloEtapa(sol.etapa)}`,
           cadeia: [comeca, r.descricao, `Solicitação #${sol.solicitacaoNumero} em ${rotuloEtapa(sol.etapa)}, data mínima ${diaBr(sol.dataMinima)}`],
           destino: 'lookahead',
         })

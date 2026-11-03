@@ -162,9 +162,15 @@ describe('avisosMaterial', () => {
     expect(av([ativ(1, '2026-11-06')], [rest('r1', 1)], c)).toEqual([])
   })
   it('parada só depois da data mínima', () => {
-    const mk = (dataMinima: string) => new Map([['r1', [compra({ dataMinima })]]])
+    const mk = (dataMinima: string) => new Map([['r1', [compra({ etapa: 'em_cotacao', dataMinima })]]])
     const a = av([ativ(1, '2026-11-20')], [rest('r1', 1)], mk('2026-10-30'))
-    expect(a[0]).toMatchObject({ tipo: 'parada', nivel: 'amarelo', destino: 'lookahead' })
+    expect(a[0]).toMatchObject({
+      tipo: 'parada',
+      nivel: 'amarelo',
+      destino: 'lookahead',
+      titulo: 'Solicitação #7 parada em: Em cotação',
+      cadeia: ['Atividade 1 começa 20/11/2026', 'Cimento', 'Solicitação #7 em Em cotação, data mínima 30/10/2026'],
+    })
     expect(av([ativ(1, '2026-11-20')], [rest('r1', 1)], mk('2026-11-09'))).toEqual([])
   })
   it('atendida_estoque e concluida: nada', () => {
@@ -179,9 +185,31 @@ describe('avisosMaterial', () => {
   it('restrição liberada: nada', () => {
     expect(av([ativ(1, '2026-11-10')], [rest('r1', 1, { situacao: 'liberada' })], new Map())).toEqual([])
   })
-  it('compras null: só sem_resposta/pedir; ligação antiga não vira pedir', () => {
-    const a = av([ativ(1, '2026-11-17'), ativ(2, '2026-11-17')], [rest('r1', 1), rest('r2', 2, { cmpPedidoId: 'p9' })], null)
-    expect(a.map((x) => x.restricaoId)).toEqual(['r1'])
+  it('compras null: sem aviso falso de pedir/nao_chega/parada; sem_resposta continua', () => {
+    const late = { ...rest('r2', 2, { cmpPedidoId: 'p9' }), pedido: { pedidoId: 'p9', solicitacaoNumero: null, pedidoSequencia: null, fornecedor: null, situacao: null, previsaoEntrega: '2026-11-20', entregaSituacao: null, entregaEm: null } }
+    const a = av([ativ(1, '2026-11-17'), ativ(2, '2026-11-06'), ativ(3, '2026-11-10')], [rest('r1', 1), late], null)
+    expect(a.map((x) => x.tipo)).toEqual(['sem_resposta'])
+    expect(a[0].atividade).toBe(3)
+  })
+  it('pedir vencido: título da spec', () => {
+    expect(av([ativ(1, '2026-11-06')], [rest('r1', 1)], new Map())[0].titulo).toBe('Pedir: vencido em 30/10: Cimento')
+  })
+  it('sem resposta vencida: venceu em dd/mm', () => {
+    expect(av([ativ(1, '2026-11-06')], [], new Map())[0].titulo).toBe('Ninguém respondeu e o prazo para pedir venceu em 30/10')
+  })
+  it('ligação antiga com compras: pedido atrasado vira nao_chega; solicitação da origem manda', () => {
+    const pedido = { pedidoId: 'p9', solicitacaoNumero: null, pedidoSequencia: null, fornecedor: null, situacao: null, previsaoEntrega: '2026-11-20', entregaSituacao: null, entregaEm: null }
+    const r = { ...rest('r1', 1, { cmpPedidoId: 'p9' }), pedido }
+    expect(av([ativ(1, '2026-11-06')], [r], new Map())[0].tipo).toBe('nao_chega')
+    const c = new Map([['r1', [compra({ etapa: 'pedido_emitido', pedidos: [{ previsaoEntrega: '2026-11-05', entregue: false }] })]]])
+    expect(av([ativ(1, '2026-11-06')], [r], c)).toEqual([])
+  })
+  it('solicitação concluída mais recente vale sobre a antiga em andamento', () => {
+    const c = new Map([['r1', [
+      compra({ solicitacaoNumero: 5, etapa: 'em_cotacao', enviadoEm: '2026-10-01T12:00:00Z', dataMinima: '2026-10-05' }),
+      compra({ solicitacaoNumero: 6, etapa: 'concluida', enviadoEm: '2026-10-20T12:00:00Z' }),
+    ]]])
+    expect(av([ativ(1, '2026-11-06')], [rest('r1', 1)], c)).toEqual([])
   })
   it('ordem: vermelhos antes, depois início', () => {
     const a = av([ativ(1, '2026-11-17'), ativ(2, '2026-11-10'), ativ(3, '2026-11-12')], [rest('r1', 1), rest('r2', 2), rest('r3', 3)], new Map())
