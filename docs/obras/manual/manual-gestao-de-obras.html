@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manual Gestão de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* Mesmo esqueleto visual do manual-padrão (docs/fornecedores/manual/manual-uso-padrao-cliente.html):
+     capa navy, rótulo com losango laranja, Archivo nos títulos, Source Serif no texto, notas, "duas", fluxo,
+     chips, perguntas e rodapé. Adaptação: na tela as páginas crescem com o conteúdo e cabem a 400px;
+     na impressão viram folhas A4. */
+  @page { size: A4; margin: 0; }
+  :root {
+    color-scheme: light;
+    --navy: #0a1628;
+    --laranja: #f05a28;
+    --laranja-texto: #b94606;
+    --texto: #1a2433;
+    --suave: #5b6b82;
+    --linha: #e3e8ef;
+    --fundo: #f4f6f9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Source Serif 4", Georgia, serif; color: var(--texto); background: #e6eaf0; font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pagina { max-width: 210mm; margin: 24px auto; background: #fff; padding: 16mm 18mm 12mm; position: relative; box-shadow: 0 1px 3px rgba(10,22,40,.12); scroll-margin-top: 12px; }
+  .capa { background: var(--navy); color: #fff; display: flex; flex-direction: column; justify-content: space-between; min-height: 260mm; padding: 24mm 20mm 22mm; }
+  .capa img { width: 52mm; max-width: 60%; }
+  .capa h1 { font-family: Archivo, sans-serif; font-weight: 700; font-size: 40px; line-height: 1.1; margin: 0 0 4mm; letter-spacing: -0.01em; }
+  .capa .sub { color: var(--laranja); font-family: Archivo, sans-serif; font-size: 16px; font-weight: 500; }
+  .capa .meta { margin-top: 12mm; border-top: 1px solid #1e3352; padding-top: 5mm; display: flex; flex-wrap: wrap; gap: 4mm 10mm; font-family: Archivo, sans-serif; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #9fb0c6; }
+  .capa .meta b { color: #fff; font-weight: 600; }
+  .rotulo { font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); display: flex; align-items: center; gap: 6px; margin: 0 0 3mm; }
+  .rotulo::before { content: ""; width: 6px; height: 6px; background: var(--laranja); transform: rotate(45deg); display: inline-block; flex: none; }
+  h2 { font-family: Archivo, sans-serif; font-weight: 700; font-size: 25px; line-height: 1.2; margin: 0 0 5mm; color: var(--navy); letter-spacing: -0.01em; }
+  h2.linha { border-bottom: 1.5px solid var(--navy); padding-bottom: 3mm; }
+  h3 { font-family: Archivo, sans-serif; font-weight: 600; font-size: 17px; margin: 6mm 0 2mm; color: var(--navy); }
+  p { margin: 0 0 3mm; }
+  .lead { font-size: 17.5px; color: #3b4a5f; }
+  .sm { font-size: 13.5px; color: var(--suave); }
+  strong { font-weight: 600; color: var(--navy); }
+  a { color: var(--laranja-texto); }
+  ul { margin: 0 0 3mm; padding-left: 0; list-style: none; }
+  ul li { position: relative; padding-left: 5mm; margin-bottom: 1.6mm; }
+  ul li::before { content: "•"; color: var(--laranja); position: absolute; left: 0.5mm; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 15px; }
+  th { font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); text-align: left; padding: 2.2mm 3mm 2.2mm 0; border-bottom: 1.5px solid var(--navy); }
+  td { padding: 1.8mm 3mm 1.8mm 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
+  td.em { font-style: italic; color: #47566b; }
+  td.n { font-family: Archivo, sans-serif; font-weight: 700; color: var(--laranja-texto); width: 7mm; }
+  td.msg { font-family: Archivo, sans-serif; font-weight: 600; color: var(--navy); font-size: 14px; }
+  .nota { background: var(--fundo); border-left: 3px solid var(--laranja); padding: 3mm 5mm; margin: 3mm 0 4mm; font-size: 15px; }
+  .tres { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--linha); margin: 2mm 0 6mm; }
+  .tres > div { padding: 4mm 5mm 4mm 0; }
+  .tres > div + div { border-left: 1px solid var(--linha); padding-left: 5mm; }
+  .tres .num { font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--laranja-texto); text-transform: uppercase; margin-bottom: 2mm; }
+  .tres h4 { font-family: Archivo, sans-serif; font-size: 17px; margin: 0 0 2mm; color: var(--navy); }
+  .quatro { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1.5px solid var(--navy); border-bottom: 1px solid var(--linha); margin: 2mm 0 5mm; }
+  .quatro > div { padding: 3.5mm 4mm 3.5mm 0; font-size: 15px; }
+  .quatro > div:nth-child(2n) { border-left: 1px solid var(--linha); padding-left: 4mm; }
+  .quatro > div:nth-child(n+3) { border-top: 1px solid var(--linha); }
+  .quatro b { display: block; font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--laranja-texto); margin-bottom: 1.5mm; }
+  .formula { font-family: Archivo, sans-serif; font-weight: 600; font-size: 16px; color: var(--navy); background: var(--fundo); padding: 3mm 4mm; margin: 2mm 0 4mm; text-align: center; }
+  .formula span { color: var(--laranja-texto); }
+  .fluxo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; margin: 3mm 0 5mm; }
+  .fluxo.f3 { grid-template-columns: repeat(3, 1fr); }
+  .fluxo div { background: var(--fundo); border-top: 3px solid var(--navy); padding: 2.5mm 2.5mm; font-family: Archivo, sans-serif; font-size: 13px; line-height: 1.3; color: var(--navy); font-weight: 600; min-height: 17mm; }
+  .fluxo div small { display: block; font-weight: 500; color: var(--suave); margin-top: 1mm; font-size: 12px; }
+  .fluxo div.fim { border-top-color: var(--laranja); }
+  .chips { display: flex; flex-wrap: wrap; gap: 2mm; margin: 2mm 0 4mm; }
+  .chips span { font-family: Archivo, sans-serif; font-size: 12.5px; border: 1px solid #cdd5e0; background: var(--fundo); padding: 1.2mm 2.5mm; color: #3b4a5f; }
+  .chips span.on { border-color: var(--laranja); color: var(--laranja-texto); background: #fff4ef; }
+  .sumario ol { margin: 0 0 4mm; padding-left: 7mm; columns: 2; column-gap: 10mm; font-family: Archivo, sans-serif; font-size: 15px; }
+  .sumario li { margin-bottom: 1.6mm; break-inside: avoid; }
+  .sumario li::marker { color: var(--laranja-texto); font-weight: 700; }
+  .sumario a { color: var(--navy); text-decoration: none; border-bottom: 1px solid var(--linha); }
+  .sumario a:hover { color: var(--laranja-texto); border-color: var(--laranja); }
+  .rodape { margin-top: 8mm; display: flex; justify-content: space-between; gap: 4mm; border-top: 1px solid var(--linha); padding-top: 2.5mm; font-family: Archivo, sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
+  .pergunta { margin-bottom: 4mm; }
+  .pergunta b { display: block; font-family: Archivo, sans-serif; font-weight: 600; color: var(--navy); font-size: 15.5px; margin-bottom: 0.8mm; }
+
+  @media (max-width: 760px) {
+    body { background: #fff; font-size: 15.5px; }
+    .pagina { margin: 0; padding: 28px 16px 18px; box-shadow: none; border-bottom: 10px solid #e6eaf0; }
+    .capa { min-height: 88vh; padding: 40px 16px 32px; }
+    .capa h1 { font-size: 34px; }
+    h2 { font-size: 22px; }
+    .tres, .quatro { grid-template-columns: 1fr; }
+    .tres > div + div { border-left: 0; border-top: 1px solid var(--linha); padding-left: 0; }
+    .quatro > div:nth-child(2n) { border-left: 0; padding-left: 0; }
+    .quatro > div + div { border-top: 1px solid var(--linha); }
+    .fluxo, .fluxo.f3 { grid-template-columns: 1fr 1fr; }
+    .fluxo div { min-height: 0; }
+    .sumario ol { columns: 1; }
+    table { font-size: 14px; }
+    th, td { padding-right: 2mm; }
+    .rodape { flex-direction: column; gap: 1mm; }
+    table.err, table.err tbody, table.err tr, table.err td { display: block; width: 100%; }
+    table.err tr:first-child { display: none; }
+    table.err tr { border-bottom: 1px solid var(--linha); padding: 2mm 0; }
+    table.err td { border: 0; padding: 0.5mm 0; }
+    table.err td:nth-child(2)::before { content: "O que fazer: "; color: var(--suave); }
+  }
+
+  @media print {
+    body { background: #fff; font-size: 10pt; }
+    .pagina { width: 210mm; max-width: none; min-height: 297mm; margin: 0; box-shadow: none; padding: 16mm 18mm 20mm; page-break-after: always; break-after: page; }
+    .pagina:last-child { page-break-after: auto; break-after: auto; }
+    .capa { height: 297mm; }
+    .capa h1 { font-size: 30pt; }
+    h2 { font-size: 17pt; } h3 { font-size: 11pt; } .lead { font-size: 11.5pt; }
+    table, .nota, .quatro > div, .quatro b, .pergunta b, .tres h4 { font-size: inherit; }
+    table { font-size: 9.6pt; } th { font-size: 7pt; }
+    .rodape { position: absolute; left: 18mm; right: 18mm; bottom: 9mm; margin: 0; font-size: 6.8pt; }
+    tr, .nota, .pergunta, .quatro, .tres, .fluxo { break-inside: avoid; }
+    h2, h3 { break-after: avoid; }
+    a { color: var(--navy); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<section class="pagina capa">
+  <img src="data:image/png;base64,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" alt="Manfac engenharia">
+  <div>
+    <h1>Gestão de Obras</h1>
+    <div class="sub">Manual de uso e de método — modalidade OBRA</div>
+    <div class="meta">
+      <span>Onde fica · <b>hub.manfac.com.br</b></span>
+      <span>Card · <b>Gestão de Obras › OBRAS</b></span>
+      <span>Obra modelo · <b>MACAÉ 3 (DPSP)</b></span>
+    </div>
+  </div>
+</section>
+
+<section class="pagina" id="comecar">
+  <div class="rotulo">Para começar</div>
+  <h2>Quem usa, e o que muda</h2>
+  <p class="lead">Este manual é para quem toca obra: o engenheiro, o supervisor ou encarregado de campo, o analista ou coordenador da obra e o gestor. Ele ensina os botões, mas principalmente ensina <strong>o jeito de trabalhar</strong> que o sistema pede.</p>
+  <p>O Gestão de Obras já existia para os serviços pequenos (SPOT). As obras de médio e grande porte, como a <strong>MACAÉ 3</strong> da DPSP, ganharam uma modalidade própria, a <strong>OBRA</strong>, com cronograma por atividade, diário de obra no celular, restrições, plano da semana e uma página para o cliente acompanhar tudo.</p>
+  <p>Por trás das telas existe um método de planejamento usado no mundo inteiro em obra, chamado <strong>Last Planner</strong> (em português, "o último planejador": quem está no campo e sabe o que dá para fazer de verdade). Você não precisa decorar o nome. Precisa entender três ideias, que este manual explica com calma:</p>
+  <ul>
+    <li><strong>Planejar em camadas:</strong> do plano da obra inteira até o que cada um faz amanhã.</li>
+    <li><strong>Tirar o que impede antes da hora:</strong> olhar algumas semanas à frente e resolver material, liberação e decisão do cliente antes de a equipe chegar.</li>
+    <li><strong>Prometer e medir:</strong> combinar o que sai na semana e conferir, na sexta, quanto do prometido saiu.</li>
+  </ul>
+  <h3>Como entrar</h3>
+  <p>Não existe senha separada. Entre no hub com o seu login, abra o card <strong>Gestão de Obras</strong> e clique na aba <strong>OBRAS</strong>. Cada obra aparece num cartão com o sinal (No prazo, Atenção ou Atrasado). Clique na obra para abrir.</p>
+  <p>Dentro da obra, o menu lateral azul tem: <strong>Painel, Cronograma, Diário, Impedimentos, Comunicação, Lookahead, Apresentação, Dados da obra, Mapa e Faseamento</strong>. Quem pode ver valores vê também <strong>Financeiro</strong>, e o administrador vê <strong>Configurações</strong>. No celular, os quatro primeiros ficam no menu de baixo (Painel, Cronograma, Diário, Impedimentos) e o resto fica em <strong>Mais</strong>.</p>
+  <div class="nota"><strong>Se o card não aparecer</strong>, o seu acesso ao Gestão de Obras ainda não foi liberado. Peça a um administrador do hub. Se a tela disser "Esta tela é de quem é responsável pelas obras", é o mesmo caso.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="sumario">
+  <div class="rotulo">Sumário</div>
+  <h2>O que tem neste manual</h2>
+  <nav class="sumario" aria-label="Sumário">
+    <ol>
+      <li><a href="#so-uma-parte">Se você ler só uma parte</a></li>
+      <li><a href="#camadas">O método: planejar em camadas</a></li>
+      <li><a href="#rotina">A rotina da obra, dia a dia e semana a semana</a></li>
+      <li><a href="#palavras">Palavras que aparecem na tela</a></li>
+      <li><a href="#cronograma">Cronograma: o plano mestre</a></li>
+      <li><a href="#previsto">Previsto, projetado e realizado</a></li>
+      <li><a href="#cronograma-passos">Cronograma: passo a passo</a></li>
+      <li><a href="#diario">Diário de obra: por que todo dia</a></li>
+      <li><a href="#diario-passos">Diário no celular: passo a passo</a></li>
+      <li><a href="#fotos">Fotos e pontos fixos</a></li>
+      <li><a href="#validar">Validar e enviar o diário</a></li>
+      <li><a href="#impedimentos">Impedimentos</a></li>
+      <li><a href="#lookahead">Lookahead e restrições</a></li>
+      <li><a href="#quadro">O quadro de restrições</a></li>
+      <li><a href="#plano">Plano da semana e PPC</a></li>
+      <li><a href="#painel">Painel: sinal, curva S e desvio</a></li>
+      <li><a href="#alertas">Alertas e analista da obra</a></li>
+      <li><a href="#comunicacao">Comunicação: histórico e registros</a></li>
+      <li><a href="#relatorios">Agenda e relatórios ao cliente</a></li>
+      <li><a href="#apresentacao">Apresentação</a></li>
+      <li><a href="#portal">Página do cliente</a></li>
+      <li><a href="#mapa">Mapa da obra</a></li>
+      <li><a href="#faseamento">Planta de faseamento</a></li>
+      <li><a href="#dados">Dados da obra e Configurações</a></li>
+      <li><a href="#financeiro">Financeiro da obra</a></li>
+      <li><a href="#papeis">Quem faz o quê</a></li>
+      <li><a href="#faq">Perguntas frequentes</a></li>
+      <li><a href="#mensagens">Mensagens que podem aparecer</a></li>
+      <li><a href="#glossario">Glossário</a></li>
+    </ol>
+  </nav>
+  <div class="nota">Cada conceito do manual segue a mesma ordem: <strong>o que é</strong>, <strong>por que importa</strong> (o que dá errado sem ele), <strong>como fazer no sistema</strong> e <strong>o que o sistema faz com o que você preencheu</strong>. Os exemplos são da obra piloto MACAÉ 3; datas e números dos exemplos são ilustrativos.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="so-uma-parte">
+  <div class="rotulo">Leia isto, se for ler só uma parte</div>
+  <h2 class="linha">As três coisas que fazem a obra se explicar sozinha</h2>
+  <div class="tres">
+    <div>
+      <div class="num">01 · Todo dia útil</div>
+      <h4>Preencha o diário</h4>
+      <p>Equipe, clima, fotos, o <strong>%</strong> de cada atividade que andou e os impedimentos. O engenheiro valida e o cliente recebe no mesmo dia.</p>
+    </div>
+    <div>
+      <div class="num">02 · Toda semana</div>
+      <h4>Tire as restrições antes da hora</h4>
+      <p>No <strong>Lookahead</strong>, olhe as próximas semanas e registre o que falta (material, liberação, decisão do cliente) <strong>antes</strong> de a equipe precisar.</p>
+    </div>
+    <div>
+      <div class="num">03 · Toda sexta</div>
+      <h4>Prometa e confira</h4>
+      <p>Feche o <strong>plano da semana</strong> com a meta de cada atividade. Na sexta, avalie: cumpriu ou não, e por quê. Isso vira o <strong>PPC</strong>.</p>
+    </div>
+  </div>
+  <h3>O que acontece quando alguém pula uma delas</h3>
+  <table>
+    <tr><th>Se ninguém…</th><th>O que dá errado</th></tr>
+    <tr><td class="em">preenche o % no diário</td><td>O avanço realizado fica parado. A curva S mostra um atraso que não existe, o sinal fica vermelho e o cliente recebe um relatório errado dizendo que a obra parou.</td></tr>
+    <tr><td class="em">registra o impedimento do cliente</td><td>O atraso entra na conta da Manfac. Semanas depois, ninguém prova que a loja não liberou a área. Foi exatamente isso que já aconteceu em obras passadas.</td></tr>
+    <tr><td class="em">olha o lookahead</td><td>A equipe chega e não tem material, a área não está liberada ou falta a decisão do cliente. Dia de equipe parada é dinheiro perdido e prazo que não volta.</td></tr>
+    <tr><td class="em">fecha e avalia o plano da semana</td><td>Não existe PPC. A Manfac não sabe se o problema é planejar mal ou executar mal, e as mesmas causas se repetem toda semana.</td></tr>
+    <tr><td class="em">tira as fotos dos pontos fixos</td><td>Não há "antes e depois" do mesmo ângulo. Numa discussão de serviço danificado ou de medição, falta prova.</td></tr>
+  </table>
+  <div class="nota"><strong>A regra de ouro do sistema é "registrar uma vez, usar em tudo".</strong> O que o supervisor preenche no diário vira o cronograma, o painel, a curva S, o e-mail do cliente, o relatório semanal, o mensal, a apresentação e a página do cliente. Ninguém redigita nada. Por isso um dado errado ou faltando aparece errado em todo lugar.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="camadas">
+  <div class="rotulo">O método</div>
+  <h2>Planejar em camadas</h2>
+  <p class="lead">Ninguém consegue planejar uma obra de meses no detalhe do dia. E ninguém consegue tocar o dia sem saber para onde a obra vai. A solução é planejar em camadas, cada uma mais perto da execução e mais detalhada que a anterior.</p>
+  <div class="fluxo f4">
+    <div>1 · Plano mestre<small>Cronograma da obra inteira</small></div>
+    <div>2 · Lookahead<small>3 a 6 semanas à frente</small></div>
+    <div>3 · Plano da semana<small>O que prometemos entregar</small></div>
+    <div class="fim">4 · Diário<small>O que saiu hoje</small></div>
+  </div>
+  <table>
+    <tr><th>Camada</th><th>Pergunta que responde</th><th>Quem cuida</th><th>Onde no sistema</th></tr>
+    <tr><td><strong>Plano mestre</strong></td><td>O que precisa ser feito, em que ordem e até quando a obra termina?</td><td>Engenheiro</td><td>Cronograma</td></tr>
+    <tr><td><strong>Lookahead</strong></td><td>O que vai começar nas próximas semanas, e o que ainda impede cada atividade de começar?</td><td>Engenheiro, com supervisor e administrativo</td><td>Lookahead (aba Lookahead e Quadro)</td></tr>
+    <tr><td><strong>Plano da semana</strong></td><td>Do que está pronto para executar, o que nos comprometemos a entregar até sexta, e até que %?</td><td>Engenheiro</td><td>Lookahead › Plano da semana</td></tr>
+    <tr><td><strong>Diário</strong></td><td>O que de fato andou hoje, com quem, com que clima e o que travou?</td><td>Supervisor no campo; engenheiro valida</td><td>Diário</td></tr>
+  </table>
+  <h3>Por que assim, e não só com o cronograma</h3>
+  <p>O cronograma diz o que <em>deveria</em> acontecer. Mas uma atividade só acontece quando tudo o que ela precisa está pronto: área liberada, material na obra, equipe, projeto, decisão do cliente. O cronograma não enxerga isso. O lookahead enxerga.</p>
+  <p>Exemplo da MACAÉ 3: no cronograma, a <strong>atividade 12 (Descarte de gôndolas e geladeira)</strong> está prevista logo depois do projeto de reforço. Mas ela só pode acontecer com o <strong>termo de baixa de patrimônio da DPSP</strong>. Se ninguém pedir esse termo com semanas de antecedência, a equipe chega, as gôndolas continuam lá e o dia se perde. No lookahead, essa necessidade vira uma <strong>restrição</strong> com responsável (Cliente) e prazo, e é cobrada antes.</p>
+  <div class="nota"><strong>Resumo do método:</strong> o cronograma diz o que deveria acontecer; o lookahead garante que pode acontecer; o plano da semana diz o que vai acontecer; o diário registra o que aconteceu. A diferença entre o prometido e o feito é o PPC, e a causa de cada diferença ensina a planejar melhor.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="rotina">
+  <div class="rotulo">O método</div>
+  <h2>A rotina da obra</h2>
+  <p class="lead">O sistema foi desenhado para esta rotina, combinada com a engenharia. Se a rotina acontece, os relatórios saem praticamente prontos.</p>
+  <table>
+    <tr><th>Quando</th><th>Quem</th><th>O que fazer</th><th>Onde</th></tr>
+    <tr><td><strong>Todo dia útil, no fim do expediente</strong></td><td>Supervisor / encarregado</td><td>Preenche o diário: equipe, clima, fotos, % do que andou, impedimentos e a programação de amanhã</td><td>Diário (celular)</td></tr>
+    <tr><td><strong>Logo depois</strong></td><td>Engenheiro</td><td>Revisa, corrige se preciso e clica em <strong>Validar e enviar</strong>. O % vai para o cronograma e o cliente recebe o e-mail</td><td>Diário</td></tr>
+    <tr><td><strong>Durante a semana</strong></td><td>Engenheiro, supervisor, administrativo</td><td>Registra e move as restrições no quadro; registra reuniões, ligações e visitas</td><td>Lookahead, Comunicação</td></tr>
+    <tr><td><strong>Sexta-feira</strong></td><td>Engenheiro</td><td>Avalia o plano da semana (cumprido ou não, e a causa), fecha o plano da próxima semana, responde o analista da obra e envia o <strong>relatório semanal</strong></td><td>Lookahead, Painel, Comunicação › Semanal</td></tr>
+    <tr><td><strong>Último dia útil do mês</strong></td><td>Engenheiro, com o financeiro</td><td>Atualiza as medições ao cliente e envia o <strong>relatório mensal</strong></td><td>Financeiro › Medições ao cliente, Comunicação › Mensal</td></tr>
+    <tr><td><strong>Quando uma etapa termina</strong></td><td>Engenheiro</td><td>Envia o <strong>relatório de fase</strong>; no fim da obra, o <strong>relatório de entrega</strong></td><td>Comunicação</td></tr>
+    <tr><td><strong>Quando surge risco sério</strong></td><td>Engenheiro</td><td>Não espera o relatório: manda uma <strong>comunicação imediata</strong></td><td>Comunicação</td></tr>
+  </table>
+  <div class="nota"><strong>Se a sexta for feriado</strong>, o semanal antecipa para o dia útil anterior. O sistema já calcula isso, e a aba <strong>Agenda</strong> da Comunicação mostra o que deve sair e quando.</div>
+  <h3>Por que horário e ritmo fixos</h3>
+  <p>O cliente para de perguntar "como está a obra?" quando sabe que a resposta chega sozinha, todo dia, no mesmo horário. Diário que sai um dia sim, outro não, passa a impressão de obra desorganizada, mesmo quando ela está andando bem.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="palavras">
+  <div class="rotulo">Para começar</div>
+  <h2>Palavras que aparecem na tela</h2>
+  <p>As principais. A lista completa está no <a href="#glossario">Glossário</a>, no fim.</p>
+  <table>
+    <tr><th>Palavra</th><th>O que quer dizer</th></tr>
+    <tr><td><strong>OBRA / SPOT</strong></td><td>As duas modalidades do Gestão de Obras. SPOT é serviço pequeno e rápido; OBRA é obra de médio ou grande porte, com tudo o que está neste manual.</td></tr>
+    <tr><td><strong>Linha de base (v1)</strong></td><td>O primeiro cronograma salvo: a promessa original. Nunca muda.</td></tr>
+    <tr><td><strong>Revisão (v2, v3…)</strong></td><td>Um cronograma replanejado, salvo com data, autor e motivo. A base continua guardada para comparar.</td></tr>
+    <tr><td><strong>Previsto</strong></td><td>Quanto já deveria estar pronto hoje, pela versão vigente do cronograma.</td></tr>
+    <tr><td><strong>Realizado</strong></td><td>Quanto está pronto de fato, pelo que foi lançado no diário e no status.</td></tr>
+    <tr><td><strong>Projetado</strong></td><td>Quando a atividade (ou a obra) deve terminar, pelo ritmo real.</td></tr>
+    <tr><td><strong>Desvio (p.p.)</strong></td><td>Realizado menos previsto, em pontos percentuais.</td></tr>
+    <tr><td><strong>Atividade-trava</strong></td><td>Atividade que, enquanto não termina, bloqueia outras. Na MACAÉ 3, o escoramento (nº 6).</td></tr>
+    <tr><td><strong>RDO / Diário</strong></td><td>Relatório Diário de Obra: o registro do dia.</td></tr>
+    <tr><td><strong>Impedimento</strong></td><td>Algo que <em>já está</em> segurando a obra agora, com responsável e dias de impacto.</td></tr>
+    <tr><td><strong>Restrição</strong></td><td>Algo que <em>vai</em> impedir uma atividade de começar, se não for resolvido antes.</td></tr>
+    <tr><td><strong>Lookahead</strong></td><td>A janela de 3 a 6 semanas à frente, onde se caçam as restrições.</td></tr>
+    <tr><td><strong>Plano da semana</strong></td><td>As atividades que a obra se compromete a entregar na semana, com meta de %.</td></tr>
+    <tr><td><strong>PPC</strong></td><td>Percentual do Plano Cumprido: itens cumpridos ÷ itens planejados na semana.</td></tr>
+    <tr><td><strong>Curva S</strong></td><td>Gráfico do avanço acumulado da obra ao longo do tempo: base, previsto e realizado.</td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+
+<section class="pagina" id="cronograma">
+  <div class="rotulo">Plano mestre</div>
+  <h2>Cronograma: linha de base e revisões</h2>
+  <div class="quatro">
+    <div><b>O que é</b>A lista de todas as atividades da obra, agrupadas por etapa, com a duração em dias úteis e quem vem antes de quem (as <strong>predecessoras</strong>). Na MACAÉ 3 são 28 atividades em 7 etapas, de "Mobilização e isolamento" a "Acabamentos e entrega".</div>
+    <div><b>Por que importa</b>Sem cronograma não existe "previsto", e sem previsto não dá para dizer se a obra está atrasada. Também não existe diário: <strong>o diário só começa depois que a base é salva</strong>.</div>
+    <div><b>Como fazer</b>Em <strong>Cronograma</strong>, o engenheiro monta (ou ajusta) o rascunho e clica em <strong>Salvar base</strong>. Depois disso, mudança de data é sempre por <strong>Nova revisão</strong>.</div>
+    <div><b>O que o sistema faz</b>Calcula as datas sozinho (dias úteis, feriados, predecessoras), o % previsto de cada dia, a curva S, o sinal da obra e a agenda de relatórios.</div>
+  </div>
+  <h3>A linha de base nunca é apagada. Por quê?</h3>
+  <p>A <strong>linha de base (v1)</strong> é a fotografia da promessa feita ao cliente no começo da obra. Quando algo muda (o cliente atrasou uma liberação, o projeto mudou, choveu uma semana), o engenheiro faz uma <strong>revisão</strong>: v2, v3 e assim por diante, cada uma com data, autor e <strong>motivo</strong>.</p>
+  <p>A base fica guardada para sempre, e isso protege a Manfac. Se o cronograma fosse simplesmente "corrigido", em três meses ninguém conseguiria mostrar que a entrega era 17/02, passou para 24/02 e que 4 desses dias foram do cliente. Com a base e as revisões, o painel mostra <strong>Dias vs base</strong> com a quebra por responsável, e a história fica contada sozinha.</p>
+  <div class="nota"><strong>Versão salva é só leitura.</strong> Se você abrir a v1 e tentar mudar, a tela avisa: "v1 é uma versão salva — só leitura. Para alterar datas, clique em 'Nova revisão'." Isso é de propósito, inclusive no banco de dados.</div>
+  <h3>Dias úteis e feriados</h3>
+  <p>Toda duração é em <strong>dias úteis</strong>: segunda a sexta, sem feriados. O sistema já conhece os feriados nacionais. Feriados municipais e recessos (por exemplo, o recesso do centro comercial) são cadastrados por obra em <strong>Configurações › Feriados da obra</strong>.</p>
+  <p>Exemplo: na MACAÉ 3, com data-base em 26/10/2026, o escoramento (atividade 6, 5 dias úteis) vai de 26/10 a 30/10. A demolição de forro (atividade 21) só começa depois dele. Como 02/11 é Finados, ela começa em 03/11.</p>
+  <h3>A atividade-trava</h3>
+  <p>Algumas atividades são perigosas se começarem antes de outra terminar. Na MACAÉ 3, <strong>nenhuma demolição pode começar antes de o escoramento provisório (nº 6) estar concluído</strong>: as atividades 11, 12, 13, 14 e 21 ficam travadas. No sistema, a trava é de verdade:</p>
+  <ul>
+    <li>a atividade travada aparece com <strong>cadeado</strong> no cronograma, no diário e no status, e não dá para lançar avanço nela;</li>
+    <li>o painel mostra a faixa <strong>Trava ativa</strong> com as atividades presas;</li>
+    <li>o e-mail do cliente mostra a trava em "Onde está travado".</li>
+  </ul>
+  <p>A atividade-trava de cada obra é definida pelo administrador em <strong>Configurações</strong>; quais atividades ela segura é marcado com o cadeado no cronograma, em modo de edição.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="previsto">
+  <div class="rotulo">Plano mestre</div>
+  <h2>Previsto, projetado e realizado</h2>
+  <p class="lead">São três números diferentes para a mesma atividade. Confundir um com o outro é a causa número um de relatório mal lido.</p>
+  <table>
+    <tr><th>Número</th><th>Pergunta</th><th>De onde vem</th></tr>
+    <tr><td><strong>Previsto</strong></td><td>Quanto já deveria estar pronto hoje?</td><td>Das datas da versão vigente. Atividade de 5 dias úteis, hoje no 3º dia: previsto 60%.</td></tr>
+    <tr><td><strong>Realizado</strong></td><td>Quanto está pronto de fato?</td><td>Do % lançado no diário validado ou no <strong>Atualizar status</strong>.</td></tr>
+    <tr><td><strong>Projetado</strong></td><td>Pelo ritmo real, quando termina?</td><td>Do ritmo e, se informado, dos <strong>dias restantes</strong>. Aparece no Gantt como extensão vermelha e na <strong>Entrega prevista</strong>.</td></tr>
+    <tr><td><strong>Base</strong></td><td>O que tinha sido prometido no começo?</td><td>Da v1, que nunca muda.</td></tr>
+  </table>
+  <h3>O peso de cada atividade</h3>
+  <p>O avanço da obra não é a média simples das atividades. Uma reunião de partida de 1 dia não pode valer o mesmo que a nova laje de piso. Cada atividade tem um <strong>peso</strong>, e o avanço da obra é a soma de peso × % de cada uma. O critério fica em <strong>Configurações › Peso do avanço</strong>:</p>
+  <table>
+    <tr><th>Critério</th><th>Como pesa</th></tr>
+    <tr><td><strong>Por valor</strong></td><td>Cada atividade pesa pelo valor contratado ligado a ela (o valor é interno: o cliente nunca vê).</td></tr>
+    <tr><td><strong>Por duração</strong></td><td>Cada atividade pesa pelos dias de duração.</td></tr>
+    <tr><td><strong>Automático</strong></td><td>Por valor se todas as atividades têm peso de valor; senão, por duração.</td></tr>
+  </table>
+  <div class="nota"><strong>Atenção:</strong> trocar o critério muda o % de avanço do painel, da curva S e dos relatórios, inclusive do histórico. Os e-mails já enviados não mudam. Defina no começo da obra e não mexa mais.</div>
+  <h3>Situação de cada atividade</h3>
+  <div class="chips"><span>Concluída</span><span>Em andamento</span><span>Não iniciada</span><span class="on">Atrasada</span><span>Início atrasado</span><span class="on">Aguardando cliente</span><span>Travada</span></div>
+  <ul>
+    <li><strong>Atrasada:</strong> passou do fim previsto e não terminou.</li>
+    <li><strong>Início atrasado:</strong> já deveria ter começado e não começou.</li>
+    <li><strong>Aguardando cliente:</strong> parada por um impedimento do cliente. O atraso <strong>conta igual</strong> (empurra as sucessoras e pode mover a entrega), mas fica atribuído ao cliente. É por isso que registrar o impedimento importa tanto.</li>
+    <li><strong>Travada:</strong> presa pela atividade-trava.</li>
+  </ul>
+  <h3>Dias restantes</h3>
+  <p>Às vezes o % não conta a história. O piso está em 80%, mas o que falta é a cura da laje, que leva 7 dias. No <strong>Atualizar status</strong>, o campo <strong>Dias restantes</strong> (opcional) resolve: quando informado, ele <strong>manda</strong> na previsão de término daquela atividade, contado a partir da data de status. Quando o diário avançar ou concluir a atividade, ele volta a ficar em branco.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="cronograma-passos">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Cronograma: como usar a tela</h2>
+  <p>No computador, a tela é dividida: a <strong>tabela em árvore</strong> à esquerda (etapas que abrem e fecham, com as atividades dentro) e o <strong>Gantt</strong> à direita. No celular aparece só a lista. Quem edita é o <strong>engenheiro da obra</strong> ou um <strong>administrador</strong>; os demais veem.</p>
+  <h3>A barra de ferramentas</h3>
+  <table>
+    <tr><th>Botão</th><th>Para que serve</th></tr>
+    <tr><td><strong>Tabela / Gantt</strong></td><td>Alterna a visão</td></tr>
+    <tr><td><strong>Expandir tudo / Recolher tudo</strong></td><td>Abre ou fecha todas as etapas</td></tr>
+    <tr><td><strong>Versão</strong></td><td>Escolhe qual versão ver (v1 base, v2, v3…)</td></tr>
+    <tr><td><strong>Mostrar base</strong></td><td>Liga ou desliga a sombra tracejada da base no Gantt</td></tr>
+    <tr><td><strong>Semana / Dia</strong></td><td>Escala do Gantt</td></tr>
+    <tr><td><strong>Hoje</strong></td><td>Rola o Gantt até hoje (linha laranja)</td></tr>
+    <tr><td><strong>Atualizar status</strong></td><td>Abre a gaveta para lançar % e dias restantes</td></tr>
+    <tr><td><strong>Salvar base</strong></td><td>Grava a v1 (só enquanto ela não foi salva)</td></tr>
+    <tr><td><strong>Nova revisão</strong> · <strong>Salvar revisão</strong></td><td>Cria o rascunho da próxima versão; salva com o <strong>Motivo da revisão</strong></td></tr>
+  </table>
+  <h3>Colunas da árvore</h3>
+  <p>Atividade, <strong>Situação</strong>, <strong>%</strong>, Dias úteis, Início, Fim, <strong>Início base</strong>, <strong>Fim base</strong>, <strong>Δ dias</strong> (dias úteis do fim projetado contra a base: "+5" em vermelho é atraso, negativo em verde é adiantamento) e Predecessoras.</p>
+  <h3>Montar ou revisar o cronograma</h3>
+  <ul>
+    <li>Obra sem cronograma: clique em <strong>Criar cronograma</strong>. Comece por <strong>+ Etapa</strong>; cada etapa nasce com uma atividade.</li>
+    <li>Edite na própria célula: nome, dias úteis, Início, Fim, Pred. 1 e Pred. 2.</li>
+    <li><strong>Digitar o Início</strong> fixa a data de começo; se cair em fim de semana ou feriado, vai para o próximo dia útil, com aviso. Clicar no ícone do início fixo volta a seguir as predecessoras.</li>
+    <li><strong>Digitar o Fim</strong> recalcula a duração em dias úteis.</li>
+    <li>Atividade marcada para começar antes de a predecessora terminar fica com <strong>alerta amarelo</strong>.</li>
+    <li>Pronto: <strong>Salvar base</strong> (primeira vez) ou escreva o <strong>Motivo da revisão</strong> e clique em <strong>Salvar revisão</strong>.</li>
+  </ul>
+  <h3>Atualizar status (fora do diário)</h3>
+  <ul>
+    <li>Clique em <strong>Atualizar status</strong>. No topo fica a <strong>Data de status</strong> (padrão hoje; não aceita data futura).</li>
+    <li>Aparecem as atividades em andamento e as que já deveriam ter começado, por etapa.</li>
+    <li>Em cada uma: o <strong>%</strong> (arrastando ou digitando), <strong>Dias restantes</strong> (opcional), <strong>Concluir</strong>, <strong>Início real</strong> e <strong>Fim real</strong> (preenchidos sozinhos, editáveis).</li>
+    <li>Clique em <strong>Salvar</strong>.</li>
+  </ul>
+  <div class="nota"><strong>O % não volta para trás</strong> no Atualizar status. E a atividade travada mostra "Libera quando a atividade 6 for concluída." Use o Atualizar status para acertos do engenheiro; o caminho normal do % é o diário de cada dia.</div>
+  <h3>Legenda do Gantt</h3>
+  <div class="chips"><span>Previsto</span><span class="on">Realizado (%)</span><span>Projeção além do previsto</span><span>Base (v1)</span><span class="on">Hoje</span><span>Etapa</span></div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="diario">
+  <div class="rotulo">Execução</div>
+  <h2>Diário de obra: por que todo dia</h2>
+  <div class="quatro">
+    <div><b>O que é</b>O registro do dia, o RDO: quantas pessoas, que clima, o que andou e quanto, fotos, o que travou e o que vem amanhã. Um diário por obra por dia útil.</div>
+    <div><b>Por que importa</b>É a única fonte do <strong>realizado</strong>. Sem diário, o cronograma não anda, a curva S para e o cliente fica sem notícia. E é a prova escrita do que aconteceu em cada dia.</div>
+    <div><b>Como fazer</b>O supervisor preenche no celular, no fim do expediente, em 5 passos. O engenheiro confere e clica em <strong>Validar e enviar</strong>.</div>
+    <div><b>O que o sistema faz</b>Ao validar, o % vai para o cronograma, o diário fica congelado, o e-mail sai para o cliente e para a equipe interna, e tudo entra no semanal, no mensal e na página do cliente.</div>
+  </div>
+  <h3>O diário protege a Manfac</h3>
+  <p>Em obras passadas, o cliente pediu para não molhar o piso, a loja lavou todo dia e depois a cobrança de correção e atraso caiu sobre a Manfac. Em outras, a loja não liberou a área e o cliente achou que o atraso era nosso. Nos dois casos faltou <strong>registro escrito, com data, foto e responsável, que chegasse ao cliente</strong>. O diário é esse registro.</p>
+  <h3>Mesmo sem execução, tem diário</h3>
+  <p>Dia útil sem trabalho também se registra: marque <strong>Sem execução hoje</strong> e diga o motivo (por exemplo, "área não liberada pela loja"). Dia útil sem diário aparece como atraso na <strong>Agenda</strong> e nos alertas do painel.</p>
+  <h3>Os três estados do diário</h3>
+  <div class="fluxo f3">
+    <div>Rascunho<small>Supervisor e administrativo preenchem</small></div>
+    <div>Validado<small>Engenheiro conferiu: congela</small></div>
+    <div class="fim">Enviado<small>Cliente e equipe interna receberam</small></div>
+  </div>
+  <p>Enquanto está em rascunho, qualquer pessoa com acesso à obra pode completar (o administrativo pode ajudar o supervisor). Depois de validado, <strong>ninguém altera</strong>: nem texto, nem %, nem fotos. Isso é o que dá valor de prova ao diário.</p>
+  <div class="nota"><strong>Exemplo de consequência:</strong> o supervisor da MACAÉ 3 esquece o % do escoramento por três dias. O realizado da obra fica parado, o desvio cresce, o sinal vira <strong>Atrasado</strong>, o alerta pede "comunicar o cliente hoje" e o e-mail diário mostra uma obra que não andou. Tudo isso por falta de um número.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="diario-passos">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Diário no celular, em 5 passos</h2>
+  <p>Abra a obra, toque em <strong>Diário</strong> no menu de baixo. O dia de hoje já vem aberto; use <strong>← dia anterior</strong> e <strong>próximo dia →</strong> para navegar. Cada passo é um bloco que abre e fecha, com um resumo do que já foi preenchido.</p>
+  <table>
+    <tr><th></th><th>Passo</th><th>O que preencher</th><th>Por que</th></tr>
+    <tr><td class="n">1</td><td><strong>Equipe</strong></td><td><strong>Efetivo (nº de pessoas)</strong>, <strong>Empresa / equipe</strong> (ex.: "equipe própria + 2 da elétrica") e o clima de <strong>Manhã</strong> e <strong>Tarde</strong>: Sol, Nublado, Chuva ou Impraticável</td><td>Mostra ao cliente que havia gente trabalhando, e o clima explica dia perdido por chuva</td></tr>
+    <tr><td class="n">2</td><td><strong>Fotos</strong></td><td>Várias por dia, com legenda opcional. Se a obra tem mapa, por ponto ou por atividade (próxima página)</td><td>Prova visual; viram galeria, comparação antes × depois e relatório</td></tr>
+    <tr><td class="n">3</td><td><strong>O que andou</strong></td><td>O % de cada atividade em andamento ou prevista até hoje. As do plano da semana vêm primeiro, com o selo <strong>no plano</strong>. <strong>Concluída hoje</strong> marca o fim. Se uma atividade não andou, toque na causa</td><td>É o que move o cronograma, a curva S e o PPC</td></tr>
+    <tr><td class="n">4</td><td><strong>Impedimentos</strong></td><td>Registre o que segurou a obra hoje, ou marque <strong>Sem impedimentos hoje</strong>. Os abertos de dias anteriores continuam aparecendo</td><td>É a proteção da Manfac; o do cliente sai por escrito no e-mail do dia</td></tr>
+    <tr><td class="n">5</td><td><strong>Amanhã</strong></td><td>A <strong>Programação de amanhã</strong>, que já vem sugerida pelo cronograma</td><td>O cliente sabe o que vai acontecer, e a loja se prepara</td></tr>
+  </table>
+  <h3>Lançar o % sem medo</h3>
+  <ul>
+    <li>Arraste a barra (de 5 em 5%) ou digite o número.</li>
+    <li>Lance o que está <strong>pronto de verdade</strong>, não o que foi "mexido". 50% é metade do serviço entregue.</li>
+    <li>Atividade que não andou mostra "não andou → por quê?" e os botões: <strong>Cliente / loja, Material, Equipe, Clima, Projeto, Outro</strong>. Escolha um: a causa vai para o relatório e para a análise da obra.</li>
+    <li>Se você baixar o % de uma atividade, o sistema exige o motivo ("o percentual caiu — diga por quê").</li>
+    <li>Precisa lançar algo que não está na lista? Use <strong>Incluir outra atividade</strong>.</li>
+    <li>Atividade com <strong>cadeado</strong> está travada e não aceita lançamento.</li>
+  </ul>
+  <div class="nota"><strong>Salve sempre.</strong> O botão <strong>Salvar rascunho</strong> fica fixo embaixo da tela; a tela confirma "Rascunho salvo às hh:mm". Se a conexão do canteiro cair, aparece "Não deu para salvar. Confira a conexão e tente de novo." e nada se perde do que está na tela.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="fotos">
+  <div class="rotulo">Execução</div>
+  <h2>Fotos e pontos fixos de foto</h2>
+  <div class="quatro">
+    <div><b>O que é</b>Um <strong>ponto fixo de foto</strong> é um lugar marcado no mapa da obra (ponto 1, ponto 2…) que se fotografa sempre do mesmo ângulo. Fotografar todos os pontos é a <strong>ronda</strong>.</div>
+    <div><b>Por que importa</b>Foto solta mostra que alguém esteve lá. Foto do mesmo ponto, dia após dia, mostra a <strong>evolução</strong>. Na hora de provar um serviço danificado ou de discutir medição, é ela que resolve.</div>
+    <div><b>Como fazer</b>No passo Fotos, escolha <strong>Por ponto (ronda)</strong>: cada ponto mostra a última foto dele como referência de ângulo. Fotografe igual.</div>
+    <div><b>O que o sistema faz</b>Liga a foto ao ambiente, ao ponto e à atividade. Ela aparece no mapa, na comparação antes × depois, na galeria do cliente e nos relatórios.</div>
+  </div>
+  <h3>Os três jeitos de tirar foto (obra com mapa)</h3>
+  <table>
+    <tr><th>Modo</th><th>Quando usar</th></tr>
+    <tr><td><strong>Por ponto (ronda)</strong></td><td>Todo dia, para cobrir os pontos fixos. O passo mostra "ronda incompleta (x de y)" enquanto faltar ponto.</td></tr>
+    <tr><td><strong>Por atividade</strong></td><td>Para documentar uma atividade: escolha a atividade e aparecem os ambientes e pontos dela.</td></tr>
+    <tr><td><strong>+ Foto avulsa</strong></td><td>Para o que não tem ponto (um detalhe, um problema). Escolha o ambiente da foto.</td></tr>
+  </table>
+  <p>Obra sem mapa usa o diário simples: <strong>Tirar ou escolher fotos</strong>, com legenda opcional. Ronda incompleta <strong>não impede</strong> validar o diário, mas deixa buraco na história da obra.</p>
+  <h3>Dicas que fazem diferença</h3>
+  <ul>
+    <li>Mesmo lugar, mesma altura, mesmo enquadramento da foto de referência.</li>
+    <li>Legenda curta e objetiva: "Escoramento sob a treliça, vão P3–P4, encunhado".</li>
+    <li>O sistema comprime a foto no próprio celular antes de enviar. Se aparecer "A foto precisa ser JPEG e ter até 5 MB", tente de novo ou tire outra.</li>
+    <li>Depois que o diário é validado, as fotos congelam: não dá para trocar nem apagar.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="validar">
+  <div class="rotulo">Passo a passo</div>
+  <h2>Validar e enviar o diário</h2>
+  <p class="lead">Quem valida é o <strong>engenheiro da obra</strong> (definido nas Configurações) ou um <strong>administrador</strong>. O supervisor preenche; o engenheiro assina embaixo.</p>
+  <ul>
+    <li>Abra o <strong>Diário</strong> do dia e confira cada passo. Pode corrigir o que precisar.</li>
+    <li>Clique em <strong>Ver prévia</strong> para ver o e-mail do cliente como ele vai chegar.</li>
+    <li>Clique em <strong>Validar e enviar</strong>. A tela avisa: "Ao validar, o avanço do dia vai para o cronograma e o diário não pode mais ser alterado. O que está na tela é salvo antes de enviar."</li>
+    <li>A confirmação diz para quantas pessoas foi: "Diário enviado para N destinatário(s)."</li>
+    <li>Se o e-mail falhar, o diário fica <strong>Validado</strong> e aparece <strong>Enviar de novo</strong>, que manda só para quem ainda não recebeu.</li>
+    <li>Com o diário validado ou enviado, <strong>Gerar PDF</strong> abre o RDO em PDF (versão do cliente).</li>
+  </ul>
+  <h3>O que o cliente recebe</h3>
+  <table>
+    <tr><th>No e-mail do cliente</th><th>No e-mail interno, além disso</th></tr>
+    <tr><td>Sinal da obra e previsão de entrega; % previsto, % realizado e dias de impacto do cliente; <strong>Onde está travado</strong>; <strong>O que a Manfac fez hoje</strong> (de → para em cada atividade, com fotos); <strong>Não avançou hoje</strong>; orientações à loja; <strong>Amanhã</strong>; o link <strong>Ver a obra completa</strong></td><td>O bloco <strong>Só interno · Não foi ao cliente</strong>, com os impedimentos que não foram mostrados ao cliente</td></tr>
+  </table>
+  <div class="nota"><strong>O cliente nunca vê</strong> valor em R$, peso de atividade, item marcado como interno nem a área interna da Manfac. Impedimento da Manfac aparece só como "Manfac".</div>
+  <h3>Quem recebe</h3>
+  <p>Do lado do cliente, as pessoas do <strong>Organograma do cliente</strong> (em Dados da obra) com o chip <strong>Diário</strong> ligado. Do lado interno, os <strong>Destinatários internos</strong> das Configurações. Todo envio fica registrado na <strong>Comunicação</strong>, com destinatários e resultado, e não se apaga.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+
+<section class="pagina" id="impedimentos">
+  <div class="rotulo">Execução</div>
+  <h2>Impedimentos</h2>
+  <div class="quatro">
+    <div><b>O que é</b>Tudo o que <strong>já está</strong> segurando a obra: área não liberada, cliente no local, serviço danificado, material que não chegou, chuva. Tem tipo, <strong>responsável</strong>, data e, se possível, foto.</div>
+    <div><b>Por que importa</b>Atraso sem registro vira atraso da Manfac. Com o registro, o painel e o cliente veem quantos dias de atraso são de cada responsável.</div>
+    <div><b>Como fazer</b>No passo 4 do diário, ou em <strong>Impedimentos</strong> no menu: escolha o tipo, confira o responsável, descreva e clique em <strong>Registrar impedimento</strong>.</div>
+    <div><b>O que o sistema faz</b>Conta os dias, mostra no painel por responsável, põe no e-mail do dia (se for para o cliente ver) e repete em todo diário enquanto estiver aberto.</div>
+  </div>
+  <h3>Tipos e responsável</h3>
+  <p>Ao escolher o tipo, o sistema já sugere o responsável. Confira e troque se não for o caso.</p>
+  <table>
+    <tr><th>Tipo</th><th>Responsável sugerido</th></tr>
+    <tr><td>Área não liberada · Cliente no local · Serviço danificado pelo cliente · Orientação descumprida · Decisão pendente do cliente · Material do cliente</td><td><strong>Cliente</strong></td></tr>
+    <tr><td>Material Manfac · Equipe</td><td><strong>Manfac</strong></td></tr>
+    <tr><td>Clima</td><td><strong>Clima</strong></td></tr>
+    <tr><td>Outro</td><td>Você escolhe (Cliente, Manfac, Terceiro ou Clima)</td></tr>
+  </table>
+  <h3>Os campos</h3>
+  <ul>
+    <li><strong>Atividade afetada</strong> e <strong>Ambiente no mapa</strong> (opcionais): ligam o impedimento ao cronograma e ao mapa.</li>
+    <li><strong>O que aconteceu:</strong> fatos, sem opinião. O ditado por voz do teclado do celular serve.</li>
+    <li><strong>Pessoa do cliente</strong> (opcional): quem estava envolvido, por nome e função.</li>
+    <li><strong>Trava a atividade (não dá para executar):</strong> marque se a atividade parou de vez. Aí contam os dias úteis em que o impedimento ficou aberto. Se só atrapalhou, deixe desmarcado e informe o <strong>Impacto estimado em dias</strong> (aceita meio dia: 0,5).</li>
+    <li><strong>Mostrar ao cliente:</strong> já vem marcado quando o responsável é Cliente ou Clima, e desmarcado quando é Manfac ou Terceiro. O que não é mostrado sai só no e-mail interno.</li>
+    <li><strong>Anexar foto</strong> (opcional, e quase sempre vale a pena).</li>
+  </ul>
+  <h3>Orientação do cliente</h3>
+  <p>Combinou algo com a loja? Por exemplo, "não molhar o piso por 72 horas". Registre como <strong>Orientação do cliente</strong>: o que foi orientado, quem recebeu e foto. Ela sai no diário do dia em "Orientações à loja". Se depois for descumprida, registre um impedimento do tipo <strong>Orientação descumprida</strong> e escolha qual orientação foi descumprida: fica a prova de que a Manfac avisou.</p>
+  <h3>Encerrar</h3>
+  <p>Impedimento fica aberto até alguém encerrar (<strong>Encerrar hoje</strong>, ou na data do dia que você está vendo). Enquanto aberto, aparece em todo diário com a contagem de dias, por exemplo "aguardando o cliente desde 23/10".</p>
+  <div class="nota"><strong>Impedimento × restrição:</strong> o impedimento é o problema que já está acontecendo. A restrição é o problema que ainda vai acontecer se ninguém agir. Boa gestão transforma impedimentos em restrições: resolve antes de virar atraso.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="lookahead">
+  <div class="rotulo">Olhar à frente</div>
+  <h2>Lookahead e restrições</h2>
+  <div class="quatro">
+    <div><b>O que é</b>O <strong>lookahead</strong> ("olhar à frente") é a lista das atividades que vão começar nas próximas 3, 4 ou 6 semanas. Para cada uma você pergunta: <strong>o que ainda impede de começar?</strong> Cada resposta é uma <strong>restrição</strong>.</div>
+    <div><b>Por que importa</b>Material tem prazo de compra, decisão do cliente leva dias, empresa de sondagem tem agenda. Quem descobre a falta no dia não tem mais como resolver. Quem descobre com 4 semanas, tem.</div>
+    <div><b>Como fazer</b>Toda semana, abra <strong>Lookahead</strong>, percorra semana por semana e, em cada atividade, clique em <strong>+ Restrição</strong> para registrar o que falta.</div>
+    <div><b>O que o sistema faz</b>Marca a atividade como <strong>Pronta</strong> ou <strong>Com restrição</strong>, monta o quadro, cobra os prazos vencidos no painel e mostra ao cliente o que depende dele.</div>
+  </div>
+  <h3>Por que 3 a 6 semanas</h3>
+  <p>Uma semana é pouco: não dá tempo de comprar nem de o cliente decidir. Três meses é muito: o plano muda antes de chegar lá. Entre 3 e 6 semanas é a janela em que dá para agir. O padrão do sistema é <strong>4 semanas</strong>; os botões <strong>3</strong>, <strong>4</strong> e <strong>6</strong> mudam a janela.</p>
+  <h3>Os tipos de restrição</h3>
+  <div class="chips"><span>Acesso/área</span><span>Material</span><span>Mão de obra</span><span>Projeto/informação</span><span class="on">Decisão do cliente</span><span>Equipamento</span><span>Outro</span></div>
+  <p>Cada restrição tem descrição ("O que impede de começar?"), <strong>responsável</strong> (Cliente, Manfac ou Terceiro) e <strong>Prazo para liberar</strong>.</p>
+  <h3>Exemplos da MACAÉ 3</h3>
+  <table>
+    <tr><th>Atividade</th><th>Restrição</th><th>Tipo · responsável</th></tr>
+    <tr><td>12 · Descarte de gôndolas e geladeira</td><td>Autorização de baixa de patrimônio da DPSP</td><td>Decisão do cliente · Cliente</td></tr>
+    <tr><td>11 · Abertura de porta com retirada de vidro</td><td>Se o vidro for de fachada, autorização do condomínio</td><td>Acesso/área · Cliente</td></tr>
+    <tr><td>8 · Estudo de solo (SPT)</td><td>Agenda da empresa de sondagem</td><td>Mão de obra · Terceiro</td></tr>
+    <tr><td>9 · Projeto estrutural de reforço</td><td>Laudo de sondagem entregue</td><td>Projeto/informação · Terceiro</td></tr>
+    <tr><td>24 · Drywall novo com reforço em MDF</td><td>Placas e MDF comprados e entregues</td><td>Material · Manfac</td></tr>
+  </table>
+  <h3>Pronta para executar</h3>
+  <p>Uma atividade é <strong>Pronta</strong> quando todas as restrições dela estão liberadas. Só atividade pronta deveria entrar no plano da semana. Prometer o que não está pronto é prometer o que não vai sair.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="quadro">
+  <div class="rotulo">Olhar à frente</div>
+  <h2>O quadro de restrições</h2>
+  <p class="lead">Na aba <strong>Quadro</strong> do Lookahead, cada restrição é um cartão numa de três colunas. O trabalho da semana é fazer os cartões andarem da esquerda para a direita.</p>
+  <div class="fluxo f3">
+    <div>Identificada<small>Sabemos que falta</small></div>
+    <div>Em tratativa<small>Alguém já está resolvendo</small></div>
+    <div class="fim">Liberada<small>Resolvido: não impede mais</small></div>
+  </div>
+  <ul>
+    <li>Use <strong>Avançar →</strong> e <strong>← Voltar</strong> no cartão para mudar de coluna.</li>
+    <li>Filtre por responsável (<strong>Todos, Cliente, Manfac, Terceiro</strong>) ou clique em <strong>Só atrasadas</strong>. Restrição com prazo vencido mostra "atrasada".</li>
+    <li>Quem registra e move: o engenheiro, o administrativo, qualquer pessoa com acesso à obra. Quem apaga: o autor ou um administrador.</li>
+  </ul>
+  <h3>Restrição de material e o Compras</h3>
+  <ul>
+    <li>No cartão de material, <strong>Pedir material</strong> abre o Compras em outra aba, já com a obra.</li>
+    <li>Com o pedido feito, use <strong>Ligar a um pedido do Compras</strong> e escolha o pedido (a lista não mostra valores). A restrição passa a mostrar a previsão e a entrega do pedido.</li>
+    <li>Quando o Compras marca o pedido como entregue, aparece o selo <strong>Pronta para liberar</strong>. <strong>Quem libera é o engenheiro</strong>: o material chegou, mas só quem está na obra confirma que está certo e no lugar. A restrição não fecha sozinha.</li>
+  </ul>
+  <h3>O que o sistema faz com o quadro</h3>
+  <table>
+    <tr><th>Situação</th><th>Onde aparece</th></tr>
+    <tr><td>Restrição do cliente aberta</td><td>Alerta no painel ("decisões/restrições aguardando o cliente"), relatório semanal e <strong>Aguardando vocês</strong> na página do cliente</td></tr>
+    <tr><td>Restrição vencida</td><td>Alerta vermelho no painel e pergunta do analista da obra ("O que falta para liberar e qual o novo prazo?")</td></tr>
+    <tr><td>Liberada depois do prazo</td><td>Pergunta do analista sobre o efeito na obra</td></tr>
+    <tr><td>Atividade com restrição aberta</td><td>Selo <strong>Com restrição</strong> no lookahead e aviso ao montar o plano da semana</td></tr>
+  </table>
+  <div class="nota"><strong>Restrição do cliente com prazo é a forma educada de cobrar.</strong> Em vez de "estamos esperando vocês", o cliente vê na página dele: o que falta, desde quando e até quando precisamos. Fica claro, por escrito, de quem é a vez.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="plano">
+  <div class="rotulo">Prometer e medir</div>
+  <h2>Plano da semana e PPC</h2>
+  <div class="quatro">
+    <div><b>O que é</b>O <strong>compromisso</strong> da obra para a semana (segunda a sexta): quais atividades e até que % cada uma chega. O <strong>PPC</strong> (Percentual do Plano Cumprido) mede quanto desse compromisso foi entregue.</div>
+    <div><b>Por que importa</b>Sem compromisso, todo resultado parece aceitável. Com ele, a obra aprende: se o PPC é baixo sempre pela mesma causa, a causa vira prioridade. PPC alto e estável é obra previsível, e o cliente confia em obra previsível.</div>
+    <div><b>Como fazer</b>Em <strong>Lookahead › Plano da semana</strong>: monte e clique em <strong>Fechar plano</strong>. Na data do semanal, avalie cada item e clique em <strong>Salvar avaliação</strong>.</div>
+    <div><b>O que o sistema faz</b>Põe as atividades do plano no topo do diário com o selo "no plano", calcula se cada uma foi cumprida, o PPC, o gráfico <strong>PPC por semana</strong> do painel e o bloco do semanal.</div>
+  </div>
+  <h3>Montar o plano</h3>
+  <ul>
+    <li>Use <strong>Semana atual</strong> ou <strong>Próxima semana</strong>. O ideal é fechar o plano da próxima semana na sexta.</li>
+    <li>As atividades <strong>Prontas</strong> do lookahead já vêm marcadas. Uma com restrição aberta pode entrar, mas aparece "Atenção: com restrição aberta". Pense duas vezes.</li>
+    <li>Defina a <strong>Meta %</strong> de cada uma ao fim da semana. Meta realista: a equipe deve conseguir cumprir.</li>
+    <li>Clique em <strong>Fechar plano</strong>. <strong>Plano fechado não muda.</strong> É compromisso.</li>
+  </ul>
+  <h3>Avaliar e calcular o PPC</h3>
+  <p>A avaliação abre na data de envio do semanal (a tela avisa "A avaliação abre em dd/mm"). Para cada item, o sistema mostra "Meta X% · realizado Y%" e diz <strong>Cumprido</strong> (realizado maior ou igual à meta) ou <strong>Não cumprido</strong>. Para cada não cumprido, escolha a <strong>Causa</strong>: Cliente / loja, Material, Equipe, Clima, Projeto ou Outro.</p>
+  <div class="formula">PPC = itens <span>cumpridos</span> ÷ itens <span>planejados</span></div>
+  <p>Exemplo: o plano tinha 5 atividades. A demolição de forro chegou a 100% (meta 100%), o drywall a 60% (meta 50%), a elétrica a 40% (meta 40%), o ar-condicionado a 100% (meta 100%) e a pintura ficou em 20% contra meta de 50%, por falta de material. PPC = 4 ÷ 5 = <strong>80%</strong>, com uma causa: Material (Manfac).</p>
+  <h3>Como ler o PPC e o que fazer com as causas</h3>
+  <table>
+    <tr><th>PPC</th><th>Leitura</th></tr>
+    <tr><td><strong>80% ou mais</strong></td><td>Plano confiável. Vira destaque nos relatórios.</td></tr>
+    <tr><td><strong>Entre 60% e 80%</strong></td><td>Olhe as causas: há algo se repetindo?</td></tr>
+    <tr><td><strong>Abaixo de 60%</strong></td><td>O plano está prometendo o que não está pronto, ou a execução tem um problema. Reveja o lookahead e as restrições.</td></tr>
+  </table>
+  <ul>
+    <li>Causa <strong>Material</strong> repetida: as restrições de material estão sendo registradas tarde. Puxe o lookahead para 6 semanas.</li>
+    <li>Causa <strong>Cliente / loja</strong> ou <strong>Projeto</strong>: registre restrição do cliente com prazo e leve à reunião.</li>
+    <li>Causa <strong>Equipe</strong>: o dimensionamento da equipe está errado para a meta.</li>
+  </ul>
+  <p class="sm">As faixas acima são orientação de leitura; o sistema não pinta o PPC por faixa. Ele só marca como destaque a semana com PPC de 80% ou mais.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="painel">
+  <div class="rotulo">Acompanhar</div>
+  <h2>Painel: sinal, curva S e desvio</h2>
+  <p class="lead">O Painel é a primeira tela da obra. Em um minuto ele responde: estamos no prazo? onde está travado? o que a Manfac evoluiu? É a mesma "primeira tela" do e-mail do cliente.</p>
+  <h3>O sinal da obra</h3>
+  <table>
+    <tr><th>Sinal</th><th>Quando aparece</th></tr>
+    <tr><td><strong>No prazo</strong></td><td>Realizado igual ou acima do previsto, sem impedimento do cliente aberto</td></tr>
+    <tr><td><strong>Atenção</strong></td><td>Realizado até 5 p.p. abaixo do previsto, ou há impedimento do cliente aberto</td></tr>
+    <tr><td><strong>Atrasado</strong></td><td>Realizado mais de 5 p.p. abaixo do previsto, ou a entrega prevista passou da entrega da base</td></tr>
+  </table>
+  <h3>Desvio em pontos percentuais (p.p.)</h3>
+  <p>Desvio é <strong>realizado menos previsto</strong>. Se a obra deveria estar em 32% e está em 28%, o desvio é <strong>−4 p.p.</strong> ("4 pontos abaixo"). Não é "4% de atraso": são 4 pontos da obra inteira que deveriam estar prontos e não estão. Com −4 p.p. o sinal é Atenção; passando de −5 p.p., Atrasado.</p>
+  <h3>Os indicadores do topo</h3>
+  <table>
+    <tr><th>Indicador</th><th>O que mostra</th></tr>
+    <tr><td><strong>Avanço realizado</strong></td><td>O % pronto da obra, com o previsto ao lado</td></tr>
+    <tr><td><strong>Desvio vs previsto</strong></td><td>Em p.p., acima ou abaixo do previsto</td></tr>
+    <tr><td><strong>Dias vs base</strong></td><td>Quantos dias úteis a entrega está além da base, com a quebra por responsável (ex.: "+5 dias: 4 do cliente, 1 da Manfac")</td></tr>
+    <tr><td><strong>Entrega prevista</strong></td><td>A data projetada de término</td></tr>
+    <tr><td><strong>Impedimentos abertos</strong></td><td>Quantos, e quantos são do cliente</td></tr>
+  </table>
+  <h3>Como ler a curva S</h3>
+  <p>A <strong>Curva S</strong> mostra o avanço acumulado da data-base ao término. Tem esse nome porque obra começa devagar (mobilização), acelera no meio e desacelera no fim (acabamentos), desenhando um S deitado.</p>
+  <ul>
+    <li><strong>Base</strong> (cinza tracejada): a promessa original.</li>
+    <li><strong>Previsto</strong> (azul): o plano vigente.</li>
+    <li><strong>Realizado</strong> (laranja): o que foi feito, até a data dos dados.</li>
+  </ul>
+  <p>Laranja abaixo do azul é atraso; a distância vertical entre eles é o desvio. Laranja ficando plano por vários dias quer dizer obra parada <strong>ou diário sem %</strong>: confira o diário antes de tirar conclusão.</p>
+  <h3>Os outros cartões</h3>
+  <ul>
+    <li><strong>Avanço físico:</strong> três barras, Base, Previsto e Realizado, com "Dados até dd/mm".</li>
+    <li><strong>PPC por semana:</strong> as últimas 8 semanas avaliadas.</li>
+    <li><strong>Progresso por período:</strong> p.p. de avanço em cada semana ou mês.</li>
+    <li><strong>Evolução por etapa:</strong> realizado (laranja), previsto hoje (marcador), base (tracejado) e Δ dias de cada etapa.</li>
+    <li><strong>Impedimentos abertos</strong> por responsável, <strong>Diário de hoje</strong> (estado e último envio) e <strong>Pedem atenção</strong> (atividades atrasadas e aguardando o cliente).</li>
+  </ul>
+  <div class="nota"><strong>Tudo em % físico</strong>, nunca em R$. "Dados até dd/mm" no cabeçalho diz a data do último diário validado ou status lançado: se está velha, os números estão velhos.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="alertas">
+  <div class="rotulo">Acompanhar</div>
+  <h2>Alertas e analista da obra</h2>
+  <h3>A faixa de alertas</h3>
+  <p>No topo do Painel aparece só o que está valendo agora, cada um com um botão que leva à ação.</p>
+  <table>
+    <tr><th>Alerta</th><th>Botão</th><th>O que fazer</th></tr>
+    <tr><td class="msg">N atividades atrasadas — comunicar o cliente hoje</td><td>Comunicação imediata</td><td>Avise o cliente hoje, sem esperar o semanal</td></tr>
+    <tr><td class="msg">Desvio de −N p.p. — definir ação de recuperação e registrar no semanal</td><td>Abrir semanal</td><td>Defina o plano de recuperação e escreva nas observações</td></tr>
+    <tr><td class="msg">… atrasado, sem envio ao cliente / Enviar hoje: …</td><td>Abrir rascunho / Ver agenda</td><td>Diário ou relatório que já deveria ter saído, ou que sai hoje</td></tr>
+    <tr><td class="msg">N decisões/restrições aguardando o cliente</td><td>Ver quadro</td><td>Cobre o cliente, com prazo</td></tr>
+    <tr><td class="msg">N restrições vencidas</td><td>Ver quadro</td><td>Trate ou reprograme o prazo</td></tr>
+    <tr><td class="msg">Locação vencendo</td><td>Ver locações</td><td>Devolva ou renove</td></tr>
+    <tr><td class="msg">Medição há N dias aguardando o cliente</td><td>Ver medições</td><td>Cobre a aprovação (aparece para quem vê valores)</td></tr>
+  </table>
+  <p>No topo do Painel ficam também os atalhos <strong>Pedir pagamento</strong>, <strong>Pedir medição</strong> e <strong>Pedir material</strong>, que abrem o Financeiro, a Gestão de Fornecedores e o Compras já com a obra. Pedir não mostra valores.</p>
+  <h3>Analista da obra</h3>
+  <div class="quatro">
+    <div><b>O que é</b>Um quadro no Painel que olha os números e faz <strong>perguntas objetivas</strong> ao engenheiro sobre o que precisa ser explicado.</div>
+    <div><b>Por que importa</b>Atraso sem explicação gera desconfiança. Atraso explicado, com ação e data, gera confiança. O analista garante que nenhuma pergunta difícil fique sem resposta antes de o cliente perguntar.</div>
+    <div><b>Como fazer</b>Responda cada pergunta em texto curto e clique em <strong>Salvar resposta</strong>. Marque <strong>Não é para o cliente</strong> se a resposta for só interna.</div>
+    <div><b>O que o sistema faz</b>Com as respostas, <strong>Montar situação para o cliente</strong> escreve a explicação e as ações de recuperação. O engenheiro revisa e clica em <strong>Publicar para o cliente</strong>.</div>
+  </div>
+  <p>O analista pergunta, por exemplo, quando o avanço está mais de 2 p.p. abaixo do previsto, quando a entrega prevista mudou, quando uma atividade passou da duração planejada, quando uma restrição venceu, quando um item do plano não foi cumprido ou quando um impedimento está aberto há mais de 3 dias úteis. Exemplo de pergunta: "Drywall do salão: 13 dias úteis em execução contra 9 planejados. O que causou e qual a ação para recuperar? Até quando?"</p>
+  <ul>
+    <li>A <strong>Situação para o cliente</strong> tem a <strong>Explicação (2 a 4 frases, sem valores)</strong> e até 5 ações (o quê, quando, efeito esperado). Edite à vontade.</li>
+    <li>Nada vai ao cliente sem <strong>Publicar para o cliente</strong>. Publicada, aparece na página do cliente e entra no semanal e no mensal.</li>
+    <li>Sem a IA ligada, o botão monta um rascunho simples juntando as suas respostas.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+
+<section class="pagina" id="comunicacao">
+  <div class="rotulo">Comunicação com o cliente</div>
+  <h2>Comunicação: histórico e registros</h2>
+  <div class="quatro">
+    <div><b>O que é</b>O <strong>histórico de tudo o que foi comunicado</strong> na obra, numa linha do tempo só: diários, relatórios, atas, ligações, visitas, comunicações imediatas, mensagens do cliente e plantas de faseamento enviadas.</div>
+    <div><b>Por que importa</b>"Combinamos por telefone" não vale nada três meses depois. O que está registrado, com data e participantes, vale. É a memória da obra quando alguém questiona.</div>
+    <div><b>Como fazer</b>Em <strong>Comunicação</strong>, use <strong>Novo registro</strong> para tudo o que foi tratado fora do sistema: reunião, ligação, visita.</div>
+    <div><b>O que o sistema faz</b>Põe na linha do tempo (mais recente primeiro), gera o PDF da ata e registra cada envio com destinatários e resultado. Envio feito não se apaga.</div>
+  </div>
+  <p>A tela tem duas abas, <strong>Histórico</strong> e <strong>Agenda</strong>. O histórico filtra por tipo: Tudo, Diários, Semanais, Relatórios, Mensagens, Reuniões, Ligações, Visitas, Outros e Imediatas. Cada envio tem <strong>Abrir PDF</strong>.</p>
+  <h3>Novo registro (qualquer pessoa com acesso à obra)</h3>
+  <ul>
+    <li>Escolha o tipo: <strong>Reunião (ata)</strong>, <strong>Ligação</strong>, <strong>Visita</strong> ou <strong>Outro</strong>.</li>
+    <li>Informe a <strong>Data</strong> (não pode ser futura) e os <strong>Participantes (um por linha)</strong>.</li>
+    <li>Ligação, visita e outro: escreva <strong>O que foi tratado</strong>.</li>
+    <li>Reunião: preencha a <strong>Pauta</strong>, as <strong>decisões</strong> (<strong>Mais uma decisão</strong>) e as <strong>pendências</strong>, cada uma com o quê, responsável e prazo (<strong>Mais uma pendência</strong>).</li>
+    <li>Clique em <strong>Registrar</strong>.</li>
+  </ul>
+  <p>Na ata registrada aparecem <strong>Baixar PDF</strong> e <strong>Enviar por e-mail</strong> (você escolhe os destinatários, clica em <strong>Revisar envio</strong> e confirma em <strong>Enviar a N</strong>). Quem escreveu pode <strong>Editar</strong> ou <strong>Apagar</strong> até 24 horas depois; o administrador, a qualquer tempo. Apagar não apaga os envios já feitos.</p>
+  <div class="nota"><strong>Ata boa é ata com dono e prazo.</strong> "Definir revestimento" não é pendência. "Definir revestimento do salão · DPSP (coordenador) · até 14/11" é.</div>
+  <h3>Comunicação imediata (engenheiro ou administrador)</h3>
+  <p>Para risco sério de atraso, custo adicional ou decisão urgente do cliente, <strong>não espere o relatório</strong>. Em <strong>Comunicação imediata</strong>: nível (<strong>Atenção</strong> ou <strong>Urgente</strong>), <strong>Assunto</strong>, <strong>Texto</strong> e, se quiser, o impedimento ou a atividade ligados. Clique em <strong>Revisar e enviar</strong>, confira e confirme em <strong>Enviar a N</strong>. Vai a quem tem o tipo <strong>Imediato</strong>.</p>
+  <h3>Responder ao cliente e Documentos</h3>
+  <p>As mensagens que o cliente escreve na página dele aparecem na linha do tempo. O engenheiro ou o administrador responde em <strong>Responder ao cliente</strong>. No mesmo painel lateral, o engenheiro sobe os <strong>Documentos</strong> que o cliente vê na página dele.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="relatorios">
+  <div class="rotulo">Comunicação com o cliente</div>
+  <h2>Agenda e relatórios ao cliente</h2>
+  <h3>A Agenda</h3>
+  <p>A aba <strong>Agenda</strong> calcula, a partir do cronograma, o que deve sair e quando: um diário por dia útil, o semanal de cada sexta (antecipado em feriado), o mensal no último dia útil, um relatório de fase quando cada etapa termina e o de entrega no fim. Se o cronograma muda, a agenda se recalcula sozinha.</p>
+  <div class="chips"><span>Enviado no prazo</span><span>Enviado com atraso</span><span class="on">ATRASADO</span><span class="on">ENVIAR HOJE</span><span>Programado</span><span>Antes do sistema</span></div>
+  <p>Cada item tem <strong>Abrir</strong> (já enviado) ou <strong>Abrir rascunho</strong>. Filtre por Diários, Semanais, Mensais, Fases ou Entrega.</p>
+  <h3>O relatório semanal (toda sexta)</h3>
+  <ul>
+    <li>Em <strong>Comunicação</strong>, clique em <strong>Semanal</strong>. O rascunho já vem montado com os dados da semana: avanço planejado × realizado e desvio, previsão de entrega, PPC e itens não cumpridos com a causa, atividades concluídas e em andamento, programação da próxima semana, o que depende do cliente, impedimentos e fotos da semana (até 8, dos diários).</li>
+    <li>Escreva as <strong>Observações da engenharia</strong>: desvios, gargalos e ações de recuperação. <strong>Sugerir texto com IA</strong> escreve um rascunho a partir dos números; você revisa, ajusta e salva. Nada vai sem a sua revisão.</li>
+    <li>Use <strong>Cliente</strong> e <strong>Interna</strong> para ver a prévia de cada versão.</li>
+    <li>Clique em <strong>Salvar rascunho</strong> e depois em <strong>Validar e enviar</strong>. Depois de validado, o conteúdo não muda mais. Se alguém ficou sem receber, <strong>Enviar a quem falta</strong>.</li>
+  </ul>
+  <h3>Mensal, de fase e de entrega</h3>
+  <table>
+    <tr><th>Relatório</th><th>Quando</th><th>O que tem a mais</th></tr>
+    <tr><td><strong>Mensal</strong></td><td>Último dia útil do mês</td><td>Curva S até o fim do mês, marcos, PPC médio, fotos do período (até 12)</td></tr>
+    <tr><td><strong>Fase</strong></td><td>Quando uma etapa é concluída</td><td>O período da etapa, do início real à conclusão</td></tr>
+    <tr><td><strong>Entrega</strong></td><td>No fim da obra</td><td>Comparativo base × final: término base, término real e dias de desvio por responsável</td></tr>
+  </table>
+  <p>Os três seguem o mesmo fluxo do semanal (rascunho, validar, enviar, PDF). Eles trazem <strong>destaques</strong> automáticos, que você pode desmarcar, mais um <strong>Destaque livre (opcional)</strong>: etapa concluída antes da base, atividade concluída antes do previsto, semana com PPC de 80% ou mais, impedimento do cliente resolvido e desvio recuperado.</p>
+  <h3>Cliente × interno</h3>
+  <p>Todo relatório tem duas versões. A do <strong>cliente</strong> fala do que interessa a ele, nunca mostra valor, peso, item interno nem a área da Manfac que causou algo. A <strong>interna</strong> mostra também o que não foi ao cliente, para a equipe da Manfac.</p>
+  <table>
+    <tr><th>Relatório</th><th>Quem do cliente recebe</th></tr>
+    <tr><td>Diário</td><td>Quem tem o chip <strong>Diário</strong></td></tr>
+    <tr><td>Semanal</td><td>Quem tem o chip <strong>Semanal</strong></td></tr>
+    <tr><td>Mensal</td><td>Quem tem o chip <strong>Mensal</strong></td></tr>
+    <tr><td>Fase, entrega e planta de faseamento</td><td>Quem tem <strong>Semanal</strong> ou <strong>Mensal</strong></td></tr>
+    <tr><td>Comunicação imediata</td><td>Quem tem o tipo <strong>Imediato</strong></td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="apresentacao">
+  <div class="rotulo">Comunicação com o cliente</div>
+  <h2>Apresentação</h2>
+  <p class="lead">Para reunião com o cliente, o sistema monta uma apresentação com dados reais, sem ninguém copiar número para slide.</p>
+  <ul>
+    <li>Em <strong>Apresentação</strong>, escolha o período: <strong>Esta semana</strong>, <strong>Este mês</strong>, <strong>Desde o início</strong> ou <strong>Personalizado</strong> (De … até …).</li>
+    <li>Marque os blocos: Capa; Resumo e sinal; Avanço e curva S; Cronograma por etapa; Marcos e destaques; Fotos; Impedimentos e "Aguardando vocês"; PPC (cumprimento do planejado); Próximos passos (3 semanas). Bloco sem dado no período some sozinho.</li>
+    <li>Escolha as <strong>Fotos</strong> (até 12, dos diários validados do período) e clique em <strong>Atualizar prévia</strong>.</li>
+    <li><strong>Apresentar em tela cheia</strong>: setas do teclado ou toque para passar, <strong>Tela cheia (F)</strong>, <strong>Sair (Esc)</strong>. Ou <strong>Baixar PDF</strong> (paisagem).</li>
+  </ul>
+  <div class="nota">A apresentação é sempre a <strong>versão do cliente</strong> e não grava nada. Qualquer pessoa com acesso à obra pode montar.</div>
+  <h3>Antes da reunião</h3>
+  <ul>
+    <li>Confira se o diário de ontem foi validado: a apresentação usa os dados validados.</li>
+    <li>Publique a <strong>Situação para o cliente</strong> no Painel: é a explicação que o cliente lê na página da obra, e ela deve dizer o mesmo que você vai dizer na reunião.</li>
+    <li>Depois da reunião, registre a ata em <strong>Comunicação › Novo registro › Reunião (ata)</strong>.</li>
+  </ul>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="portal">
+  <div class="rotulo">Comunicação com o cliente</div>
+  <h2>Página do cliente</h2>
+  <div class="quatro">
+    <div><b>O que é</b>Um endereço próprio, <strong>hub.manfac.com.br/portal-obra</strong>, onde o cliente acompanha a obra a qualquer hora, sem senha: digita o e-mail cadastrado e recebe um código.</div>
+    <div><b>Por que importa</b>O cliente para de perguntar "como está a obra?" e passa a ver. As decisões combinadas saem do WhatsApp e ficam registradas na obra.</div>
+    <div><b>Como fazer</b>Em <strong>Dados da obra › Organograma do cliente</strong>, o administrador liga o chip <strong>Portal</strong> da pessoa. Todo e-mail do cliente traz o link <strong>Ver a obra completa</strong>.</div>
+    <div><b>O que o sistema faz</b>Mostra só as obras em que aquele e-mail está cadastrado, com os mesmos dados (versão cliente) dos relatórios.</div>
+  </div>
+  <h3>Como o cliente entra</h3>
+  <ul>
+    <li>Digita o <strong>E-mail cadastrado</strong> e clica em <strong>Receber código</strong>.</li>
+    <li>Recebe um <strong>código de 6 dígitos</strong>, que vale por 10 minutos e só uma vez. Digita e clica em <strong>Entrar</strong>.</li>
+    <li>A sessão dura 7 dias e se renova com o uso. <strong>Sair</strong> encerra. Se o administrador desativar o acesso, a pessoa sai no próximo clique.</li>
+  </ul>
+  <h3>As abas que o cliente vê</h3>
+  <table>
+    <tr><th>Aba</th><th>O que tem</th></tr>
+    <tr><td><strong>Visão geral</strong></td><td>Sinal, avanço base × previsto × realizado, curva, previsão de entrega, a <strong>Situação da obra</strong> publicada, "Aguardando vocês", avanço por etapa e últimas comunicações</td></tr>
+    <tr><td><strong>Cronograma</strong></td><td>Etapas com barras base × previsto × realizado</td></tr>
+    <tr><td><strong>Aguardando vocês</strong></td><td>"Estão segurando a obra" (impedimentos do cliente) e "Decisões e liberações pendentes" (restrições do cliente), com prazo e desde quando</td></tr>
+    <tr><td><strong>Diários e relatórios</strong></td><td>Tudo o que foi enviado ao cliente, com o PDF: relatórios, diários e atas</td></tr>
+    <tr><td><strong>Galeria</strong></td><td>Fotos de diários validados, <strong>Por data</strong> ou <strong>Por etapa</strong></td></tr>
+    <tr><td><strong>Mapa</strong></td><td>O mapa colorido pelo avanço e, se houver, a planta de faseamento emitida (só aparece se a obra tiver mapa ou faseamento)</td></tr>
+    <tr><td><strong>Documentos</strong></td><td>Pastas Projetos, Laudos, ART, Layout, Termos e Outros, para baixar</td></tr>
+    <tr><td><strong>Mensagens</strong></td><td>Conversa com a engenharia da Manfac. Mensagem nova do cliente gera e-mail ao engenheiro e aos internos com tipo Imediato</td></tr>
+  </table>
+  <div class="nota"><strong>O cliente nunca vê</strong> valores, margem, fornecedor, peso, item ou impedimento marcado como interno, a área interna da Manfac, rascunho de nada nem obra em que não está cadastrado.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="mapa">
+  <div class="rotulo">Mapa e fotos</div>
+  <h2>Mapa da obra</h2>
+  <div class="quatro">
+    <div><b>O que é</b>A obra dividida em <strong>ambientes</strong> (salão, mezanino, copa…), cada um ligado às atividades do cronograma que acontecem nele, com os <strong>pontos de foto</strong> marcados.</div>
+    <div><b>Por que importa</b>Cliente e diretoria entendem planta melhor que tabela. E o ponto fixo dá o "antes e depois" do mesmo ângulo.</div>
+    <div><b>Como fazer</b>O engenheiro ou o administrador abre <strong>Mapa › Montar o mapa</strong>, escolhe o modo, desenha os ambientes, liga as atividades e põe os pontos.</div>
+    <div><b>O que o sistema faz</b>Colore cada ambiente pelo avanço das atividades ligadas, organiza a ronda no diário e mostra o mapa ao cliente.</div>
+  </div>
+  <h3>Três modos, o mesmo dado</h3>
+  <table>
+    <tr><th>Modo</th><th>Quando usar</th></tr>
+    <tr><td><strong>Planta</strong></td><td>Há layout aprovado: envie a imagem (JPG, PNG ou WebP) ou PDF (usa a 1ª página), até 15 MB, e desenhe por cima</td></tr>
+    <tr><td><strong>Croqui</strong></td><td>Não há planta: desenhe retângulos no próprio sistema</td></tr>
+    <tr><td><strong>Só ambientes</strong></td><td>Só a lista de ambientes, sem desenho</td></tr>
+  </table>
+  <p>Dá para trocar de modo depois sem perder nada. Tudo é salvo na hora. No celular, o mapa vira a lista de ambientes.</p>
+  <h3>Montar o mapa</h3>
+  <ul>
+    <li><strong>+ Ambiente (arraste no desenho)</strong>: desenhe o retângulo e dê nome (e área, se quiser).</li>
+    <li>Escolha as atividades do cronograma que acontecem naquele ambiente.</li>
+    <li><strong>+ Ponto de foto (toque no ambiente)</strong>: o ponto ganha número e nome. Ponto que não serve mais se <strong>desativa</strong>, não se apaga, para não perder as fotos.</li>
+    <li><strong>Escolher e arrastar</strong> para ajustar posições.</li>
+  </ul>
+  <h3>Ponto de foto: antes × depois</h3>
+  <p>Clique num ponto para ver a linha do tempo dele e comparar duas fotos, arrastando a divisória: <strong>Início × hoje</strong>, <strong>Ontem × hoje</strong> ou <strong>Escolher datas</strong>.</p>
+  <h3>As cores</h3>
+  <p>Cada ambiente é pintado pelo avanço das atividades ligadas a ele, pelo mesmo peso do cronograma, em faixas de 0, 1–25, 26–50, 51–75 e 76–100%. Ambiente sem atividade ligada fica sem cor ("—"). Impedimento aberto com ambiente aparece no mapa enquanto estiver aberto.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="faseamento">
+  <div class="rotulo">Mapa e fotos</div>
+  <h2>Planta de faseamento</h2>
+  <div class="quatro">
+    <div><b>O que é</b>Uma prancha A3 por <strong>fase</strong> da obra: a planta da loja como base e, por cima, as zonas de obra e de loja em operação, o drywall, as portas, os fluxos de cliente e de obra, extintor e luminária de emergência, mais as regras e o carimbo.</div>
+    <div><b>Por que importa</b>Obra com loja funcionando é convivência. A prancha diz a todos (equipe, loja, condomínio) onde é obra, por onde passa o cliente e o que não pode. Na MACAÉ 3, por exemplo: nenhuma demolição antes do escoramento da viga principal; clientes só pela entrada existente.</div>
+    <div><b>Como fazer</b>Em <strong>Faseamento</strong>: <strong>+ Nova fase</strong>, desenhe em <strong>Editar camadas</strong>, preencha <strong>Prancha A3</strong>, <strong>Emitir revisão</strong> e <strong>Enviar ao cliente</strong>.</div>
+    <div><b>O que o sistema faz</b>Gera o PDF A3, congela a revisão emitida, mostra a última emitida de cada fase na página do cliente e registra o envio em Comunicação.</div>
+  </div>
+  <h3>Quem faz</h3>
+  <p>O <strong>engenheiro da obra</strong>, o <strong>coordenador</strong> (e-mail cadastrado em Dados da obra) ou um <strong>administrador</strong>. Os demais veem. O editor funciona em tela de computador ou tablet; no celular aparecem a prévia e o PDF.</p>
+  <h3>Passo a passo</h3>
+  <ul>
+    <li><strong>+ Nova fase</strong>, dê o nome (ex.: "Demolição e reforço") e <strong>Criar fase</strong>.</li>
+    <li>Em <strong>Editar camadas</strong>, escolha o tipo e desenhe: zonas (Zona de obra, Salão em operação, Atendimento, Área em uso, Circulação restrita), linhas (Drywall piso a teto, Balcão fechado), portas (Nova porta, Entrada existente), fluxos com seta e ícones. A legenda se monta sozinha.</li>
+    <li>Em <strong>Prancha A3</strong>, preencha o carimbo (título, cliente, desenho, base, <strong>Responsável técnico (nome · CREA)</strong>) e as <strong>Regras impressas</strong>, uma por linha (até 12).</li>
+    <li>Se quiser, marque <strong>Usar a trava estrutural</strong>: a prancha imprime o status da atividade-trava e das bloqueadas no dia da emissão.</li>
+    <li><strong>Salvar rascunho</strong> quantas vezes precisar; <strong>Gerar PDF</strong> mostra como vai ficar (rascunho sai marcado RASCUNHO).</li>
+    <li><strong>Emitir revisão</strong>: R0, R1… Depois de emitida, <strong>não muda mais</strong>. Para alterar, <strong>Nova revisão</strong> (copia a última emitida).</li>
+    <li><strong>Enviar ao cliente</strong>: vai por e-mail aos destinatários do relatório de fase e fica registrado em Comunicação.</li>
+  </ul>
+  <div class="nota"><strong>Obra sem planta no Mapa</strong> faz a prancha num quadro branco, com aviso. Para usar o layout da loja como base, envie a planta em <strong>Mapa › Montar o mapa</strong> (JPG, PNG ou PDF).</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+
+<section class="pagina" id="dados">
+  <div class="rotulo">Cadastro da obra</div>
+  <h2>Dados da obra e Configurações</h2>
+  <p class="lead">Duas telas guardam o cadastro da obra. Todo mundo do Gestão de Obras vê <strong>Dados da obra</strong>; só o administrador vê <strong>Configurações</strong>. Em ambas, quem altera é o administrador.</p>
+  <h3>Dados da obra</h3>
+  <table>
+    <tr><th>Bloco</th><th>Para que serve</th></tr>
+    <tr><td><strong>Organograma do cliente</strong></td><td>As pessoas do cliente: nome, cargo e e-mail (opcional). É o cadastro de e-mails do cliente. Em cada pessoa com e-mail, os chips <strong>Portal</strong>, <strong>Diário</strong>, <strong>Semanal</strong>, <strong>Mensal</strong> e <strong>Imediato</strong> dizem o que ela recebe e se entra na página do cliente. Use <strong>+ Adicionar pessoa</strong></td></tr>
+    <tr><td><strong>Valor receita por OS</strong></td><td>Quanto a obra vai receber, por OS (a obra principal e cada aditivo). Só aparece para quem pode ver valores</td></tr>
+    <tr><td><strong>Coordenador (e-mail)</strong></td><td>Quem, além do engenheiro, pode montar e emitir a planta de faseamento</td></tr>
+  </table>
+  <div class="nota"><strong>Mantenha o organograma em dia.</strong> Se o coordenador do cliente mudou e ninguém atualizou, o semanal vai para a pessoa errada e quem decide fica sem saber. Tirar uma pessoa do organograma não corta os envios nem o acesso dela: para isso, desligue os chips ou use <strong>Remover acesso</strong>.</div>
+  <h3>Configurações (só administrador)</h3>
+  <table>
+    <tr><th>Bloco</th><th>O que tem</th></tr>
+    <tr><td><strong>Configuração</strong></td><td><strong>Engenheiro (valida o diário)</strong>, <strong>Data-base</strong> (não muda depois que a base é salva) e <strong>Atividade-trava (número)</strong></td></tr>
+    <tr><td><strong>Peso do avanço</strong></td><td>Automático, Por valor ou Por duração (veja <a href="#previsto">Previsto, projetado e realizado</a>)</td></tr>
+    <tr><td><strong>Feriados da obra</strong></td><td>Data, descrição e abrangência (Municipal, Facultativo, Estadual). Atenção: muda as datas calculadas do cronograma, inclusive as da base</td></tr>
+    <tr><td><strong>Aditivo (OS filha)</strong></td><td>"Esta obra é aditivo de…": liga um aditivo à obra principal (mãe), que soma custos e receitas</td></tr>
+    <tr><td><strong>Documentos</strong></td><td>Arquivos para a página do cliente, nas pastas Projetos, Laudos, ART, Layout, Termos e Outros (PDF, JPG, PNG, DWG, XLSX ou DOCX, até 25 MB). Apagar tira também da página do cliente</td></tr>
+    <tr><td><strong>Destinatários internos</strong></td><td>Os e-mails da Manfac que recebem as versões internas</td></tr>
+  </table>
+  <h3>Tornar OBRA</h3>
+  <p>Uma obra nasce no Field Control como qualquer OS. Para ela virar OBRA, o administrador clica em <strong>Tornar OBRA</strong> na ficha da obra (e <strong>Voltar para SPOT</strong> desfaz). OBRA sem cronograma aparece na aba OBRAS como "Sem cronograma" e não cobra diário.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="financeiro">
+  <div class="rotulo">Interno</div>
+  <h2>Financeiro da obra</h2>
+  <p class="lead">A aba <strong>Financeiro</strong> junta, numa tela, o que a obra recebe e o que ela custa, lido do Compras, da Gestão de Fornecedores e do Financeiro. Ninguém digita custo aqui: ele vem de onde já foi lançado.</p>
+  <div class="nota"><strong>Quem vê:</strong> o engenheiro da obra, a administração do Gestão de Obras e as pessoas com papel de financeiro ou diretor no Financeiro. Para os demais, o item nem aparece no menu. O supervisor e o cliente nunca veem valores.</div>
+  <h3>O Resumo</h3>
+  <table>
+    <tr><th>Na tela</th><th>O que significa</th></tr>
+    <tr><td><strong>Receita esperada</strong></td><td>A soma do valor receita das OS (Dados da obra). Sem o valor, a tela pede "Informe o valor receita em Dados da obra"</td></tr>
+    <tr><td><strong>Faturado</strong></td><td>As notas fiscais emitidas ao cliente para esta obra</td></tr>
+    <tr><td><strong>Custo comprometido</strong></td><td>O que a obra já assumiu pagar: pedido emitido, medição de fornecedor aprovada, pagamento pedido, caixinha não reprovada</td></tr>
+    <tr><td><strong>Realizado</strong> e <strong>Pago</strong></td><td>Do comprometido, o que já tem nota ou lançamento, e o que já saiu do caixa</td></tr>
+    <tr><td><strong>Margem projetada</strong></td><td>Receita esperada menos o custo projetado no fim (o custo comprometido esticado pelo avanço físico). Sem avanço, aparece "—"</td></tr>
+    <tr><td><strong>Margem realizada</strong></td><td>Faturado menos custo realizado. Negativa no meio da obra é normal enquanto o faturamento está atrás do gasto</td></tr>
+  </table>
+  <p>O bloco <strong>Avanço × liberado × faturado</strong> compara o avanço físico com quanto o cliente já liberou e quanto foi faturado. Duas pendências aparecem em destaque: <strong>Liberado e ainda não faturado</strong> (selo "emitir nota") e <strong>Avanço à frente do liberado</strong> (selo "negociar liberação"). Os custos aparecem por origem: Compras (pedidos), Fornecedores (medições), Pagamentos / rateio no Financeiro, Caixinha e Locações.</p>
+  <div class="nota"><strong>Por que a margem depende do diário:</strong> a margem projetada usa o avanço físico. Se o % do diário está atrasado, a obra parece gastar muito para pouco avanço e a margem projetada cai sem motivo real.</div>
+  <h3>Medições ao cliente</h3>
+  <ul>
+    <li>Em <strong>Financeiro › Medições ao cliente</strong>, o engenheiro registra cada liberação de faturamento negociada: <strong>+ Nova medição</strong>, a OS, o período, o % <strong>ou</strong> o valor (um calcula o outro sobre o valor receita da OS) e <strong>Registrar medição</strong>.</li>
+    <li>Depois marque o retorno: <strong>Cliente aprovou</strong> ou <strong>Cliente recusou</strong> (e <strong>Reenviar</strong>). Aprovada aparece como "aprovada · falta nota" até o Financeiro emitir a nota e ligar à medição.</li>
+    <li>A soma das liberações de uma OS não passa de 100%. Medição há mais de 10 dias aguardando o cliente vira alerta no Painel.</li>
+  </ul>
+  <h3>Locações</h3>
+  <p><strong>+ Nova locação</strong> abre o Compras em outra aba, já com a obra e o tipo Locação. Quando o pedido é emitido, a locação aparece aqui sozinha. O sistema avisa 5 dias úteis antes do fim e no dia do vencimento, para o engenheiro decidir: <strong>Marcar devolvida</strong> ou <strong>Renovar</strong>. Locação esquecida é custo correndo sem ninguém ver.</p>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="papeis">
+  <div class="rotulo">Responsabilidades</div>
+  <h2>Quem faz o quê</h2>
+  <table>
+    <tr><th>Papel</th><th>O que faz no sistema</th></tr>
+    <tr><td><strong>Supervisor / encarregado de campo</strong></td><td>Preenche o diário todo dia útil (equipe, clima, fotos, ronda, %, impedimentos, amanhã). Registra impedimentos e orientações. Registra restrições que enxerga no campo</td></tr>
+    <tr><td><strong>Administrativo da obra</strong></td><td>Completa o rascunho do diário, registra e move restrições no quadro, faz registros de comunicação (ligações, visitas, atas)</td></tr>
+    <tr><td><strong>Engenheiro da obra</strong></td><td>Monta e revisa o cronograma, atualiza status, valida e envia o diário, fecha e avalia o plano da semana, responde o analista e publica a situação, envia semanal, mensal, fase e entrega, comunicação imediata, responde mensagens do cliente, sobe documentos, monta o mapa e o faseamento, registra medições ao cliente, vê o Financeiro da obra</td></tr>
+    <tr><td><strong>Coordenador da obra</strong></td><td>O que qualquer pessoa da obra faz e, com o e-mail cadastrado em Dados da obra, monta, emite e envia a planta de faseamento</td></tr>
+    <tr><td><strong>Analista / gestor</strong></td><td>Acompanha Painel, alertas, PPC e Comunicação; monta apresentações; registra reuniões. Vê o Financeiro se tiver papel de financeiro ou diretor no Financeiro</td></tr>
+    <tr><td><strong>Administrador</strong></td><td>Tudo o que o engenheiro faz, mais Configurações (engenheiro, data-base, atividade-trava, peso, feriados, aditivo, destinatários internos), Dados da obra (organograma, chips, valor receita, coordenador) e Tornar OBRA</td></tr>
+    <tr><td><strong>Cliente</strong></td><td>Recebe os e-mails, acessa a página do cliente com código, lê, baixa documentos e escreve mensagens. Não altera nada da obra</td></tr>
+  </table>
+  <h3>Quem pode o quê, em resumo</h3>
+  <table>
+    <tr><th>Ação</th><th>Quem</th></tr>
+    <tr><td>Preencher diário, registrar impedimento, restrição e registro de comunicação, montar apresentação</td><td>Qualquer pessoa com acesso ao Gestão de Obras</td></tr>
+    <tr><td>Editar cronograma, Atualizar status, validar e enviar diário, fechar e avaliar plano, enviar relatórios e comunicação imediata, responder ao cliente, montar o mapa</td><td>Engenheiro da obra ou administrador</td></tr>
+    <tr><td>Faseamento</td><td>Engenheiro, coordenador ou administrador</td></tr>
+    <tr><td>Ver valores (Financeiro, valor receita)</td><td>Engenheiro, administrador, papéis financeiro e diretor do Financeiro</td></tr>
+    <tr><td>Configurações e cadastro em Dados da obra</td><td>Administrador</td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="faq">
+  <div class="rotulo">Dúvidas</div>
+  <h2>Perguntas frequentes</h2>
+  <div class="pergunta"><b>Não teve trabalho hoje. Preciso fazer diário?</b>Sim. Marque <strong>Sem execução hoje</strong> e diga o motivo. Dia útil sem diário aparece como atraso na Agenda e o cliente fica sem notícia, que é pior do que uma notícia ruim.</div>
+  <div class="pergunta"><b>Errei o % no diário e já validei. E agora?</b>Diário validado não muda. O engenheiro acerta pelo <strong>Atualizar status</strong> no Cronograma, se for para cima. Se o erro foi para mais, o sistema não deixa baixar o % por ali: fale com o suporte do hub.</div>
+  <div class="pergunta"><b>O cliente atrasou a liberação. O cronograma vai mostrar atraso da Manfac?</b>Não, se o impedimento foi registrado com responsável <strong>Cliente</strong>. A atividade aparece como <strong>Aguardando cliente</strong>, o atraso conta no prazo, mas o painel e os relatórios mostram de quem são os dias.</div>
+  <div class="pergunta"><b>Posso mudar a data de uma atividade no cronograma salvo?</b>Não direto. Clique em <strong>Nova revisão</strong>, altere no rascunho e salve com o motivo. A base continua guardada para comparação.</div>
+  <div class="pergunta"><b>Qual a diferença entre impedimento e restrição?</b>Impedimento já está segurando a obra hoje. Restrição é o que vai impedir uma atividade de começar, se ninguém resolver antes. A restrição vive no Lookahead; o impedimento, no diário.</div>
+  <div class="pergunta"><b>Por que o PPC deu baixo se a obra está andando?</b>O PPC mede o cumprimento do <strong>prometido</strong>, não o avanço. Obra que anda mas não entrega o que prometeu está planejando mal. Olhe as causas dos itens não cumpridos.</div>
+  <div class="pergunta"><b>Posso incluir no plano da semana uma atividade com restrição?</b>Pode, com aviso. Mas é o caminho mais curto para um item não cumprido.</div>
+  <div class="pergunta"><b>O material chegou. A restrição fecha sozinha?</b>Não. Aparece <strong>Pronta para liberar</strong>; o engenheiro confere e move para Liberada.</div>
+  <div class="pergunta"><b>O cliente vê o que eu marco como "não mostrar"?</b>Não. Impedimento sem <strong>Mostrar ao cliente</strong>, resposta marcada <strong>Não é para o cliente</strong> e tudo de valores ficam só no lado interno.</div>
+  <div class="pergunta"><b>A IA escreve e manda sozinha?</b>Não. <strong>Sugerir texto com IA</strong> e <strong>Montar situação para o cliente</strong> só preenchem o campo. Nada vai ao cliente sem você validar ou publicar.</div>
+  <div class="pergunta"><b>O cliente diz que não recebeu o código.</b>Confira se o e-mail dele está no Organograma do cliente com o chip <strong>Portal</strong>. O código vale 10 minutos; ele pode pedir outro. Peça para olhar a caixa de spam.</div>
+  <div class="pergunta"><b>Mandei o diário e um destinatário ficou de fora.</b>Ligue o chip Diário da pessoa em Dados da obra e use <strong>Enviar de novo</strong> no diário: vai só para quem ainda não recebeu.</div>
+  <div class="pergunta"><b>Por que não vejo a aba Financeiro?</b>Ela é só para o engenheiro da obra, a administração e quem tem papel de financeiro ou diretor no Financeiro.</div>
+  <div class="pergunta"><b>A obra não aparece na aba OBRAS.</b>Ela ainda é SPOT. O administrador usa <strong>Tornar OBRA</strong> na ficha.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="mensagens">
+  <div class="rotulo">Quando algo dá errado</div>
+  <h2>Mensagens que podem aparecer</h2>
+  <table class="err">
+    <tr><th>Na tela</th><th>O que fazer</th></tr>
+    <tr><td class="msg">Esta tela é de quem é responsável pelas obras</td><td>Você não tem acesso ao Gestão de Obras. Peça a um administrador do hub</td></tr>
+    <tr><td class="msg">Sem cronograma — o diário começa quando a base for salva</td><td>O engenheiro precisa salvar a base no Cronograma</td></tr>
+    <tr><td class="msg">vN é uma versão salva — só leitura</td><td>Para mudar datas, use Nova revisão</td></tr>
+    <tr><td class="msg">Diga o motivo de não ter tido execução hoje</td><td>Escreva o motivo no campo do "Sem execução hoje"</td></tr>
+    <tr><td class="msg">Atividade N: o percentual caiu — diga por quê</td><td>Escolha a causa da atividade, ou volte o % ao valor anterior</td></tr>
+    <tr><td class="msg">Não deu para salvar. Confira a conexão e tente de novo.</td><td>Sinal fraco no canteiro. Espere a conexão e salve de novo; o que está na tela continua lá</td></tr>
+    <tr><td class="msg">A foto precisa ser JPEG e ter até 5 MB.</td><td>Tire a foto de novo pela câmera do sistema</td></tr>
+    <tr><td class="msg">Escolha o ambiente da foto avulsa.</td><td>Na foto avulsa, escolha o ambiente antes de fotografar</td></tr>
+    <tr><td class="msg">Diário já validado — não dá mais para alterar.</td><td>É o comportamento esperado. Ajustes vão pelo Atualizar status</td></tr>
+    <tr><td class="msg">Diário já validado, mas o e-mail não saiu</td><td>Clique em Enviar de novo</td></tr>
+    <tr><td class="msg">A avaliação abre em dd/mm (data de envio do semanal)</td><td>Espere a data para avaliar o plano</td></tr>
+    <tr><td class="msg">Nenhum destinatário do cliente com o tipo Semanal</td><td>Ligue o chip Semanal de alguém no Organograma do cliente</td></tr>
+    <tr><td class="msg">A data não pode ser no futuro</td><td>Registro de comunicação é do que já aconteceu</td></tr>
+    <tr><td class="msg">Informe a pauta da reunião</td><td>Ata precisa de pauta</td></tr>
+    <tr><td class="msg">Esta OS não tem valor receita</td><td>O administrador informa o valor receita em Dados da obra</td></tr>
+  </table>
+  <div class="nota">Se aparecer algo que este manual não explica, fale com o suporte do hub <strong>antes de repetir o que estava fazendo</strong>: repetir pode duplicar um envio ou um registro.</div>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+<section class="pagina" id="glossario">
+  <div class="rotulo">Consulta</div>
+  <h2>Glossário</h2>
+  <table>
+    <tr><th>Termo</th><th>Significado</th></tr>
+    <tr><td><strong>Agenda</strong></td><td>Lista calculada do que deve ser enviado ao cliente e quando, com a situação de cada envio</td></tr>
+    <tr><td><strong>Aguardando cliente</strong></td><td>Situação da atividade parada por impedimento do cliente; o atraso conta, atribuído ao cliente</td></tr>
+    <tr><td><strong>Aguardando vocês</strong></td><td>Aba da página do cliente com o que depende dele: impedimentos e restrições do cliente abertos</td></tr>
+    <tr><td><strong>Ambiente</strong></td><td>Parte da obra no mapa (salão, mezanino, copa), ligada às atividades que acontecem nela</td></tr>
+    <tr><td><strong>Analista da obra</strong></td><td>Quadro do Painel que faz perguntas ao engenheiro sobre o que precisa ser explicado</td></tr>
+    <tr><td><strong>Atividade-trava</strong></td><td>Atividade que bloqueia outras enquanto não é concluída</td></tr>
+    <tr><td><strong>Base (linha de base, v1)</strong></td><td>Primeiro cronograma salvo; nunca muda</td></tr>
+    <tr><td><strong>Causa</strong></td><td>Motivo de uma atividade não andar ou de um item do plano não ser cumprido: Cliente / loja, Material, Equipe, Clima, Projeto, Outro</td></tr>
+    <tr><td><strong>Comunicação imediata</strong></td><td>E-mail de alerta ao cliente fora dos relatórios, nível Atenção ou Urgente</td></tr>
+    <tr><td><strong>Curva S</strong></td><td>Gráfico do avanço acumulado: base, previsto e realizado</td></tr>
+    <tr><td><strong>Data-base</strong></td><td>Data de início do planejamento da obra</td></tr>
+    <tr><td><strong>Data de status</strong></td><td>Data a que se refere um lançamento de % no Atualizar status</td></tr>
+    <tr><td><strong>Dados até</strong></td><td>Data do último dado de campo (diário validado ou status)</td></tr>
+    <tr><td><strong>Desvio (p.p.)</strong></td><td>Realizado menos previsto, em pontos percentuais da obra</td></tr>
+    <tr><td><strong>Dias restantes</strong></td><td>Quantos dias úteis faltam para terminar a atividade; quando informado, manda na previsão</td></tr>
+    <tr><td><strong>Dias úteis</strong></td><td>Segunda a sexta, sem feriados nacionais e da obra</td></tr>
+    <tr><td><strong>Δ dias</strong></td><td>Diferença em dias úteis entre o fim projetado e o fim da base</td></tr>
+    <tr><td><strong>Faseamento</strong></td><td>Prancha A3 de cada fase com zonas, fluxos, regras e carimbo</td></tr>
+    <tr><td><strong>Gantt</strong></td><td>Gráfico de barras das atividades no tempo</td></tr>
+    <tr><td><strong>Impedimento</strong></td><td>Algo que já está segurando a obra, com responsável e dias de impacto</td></tr>
+    <tr><td><strong>Last Planner</strong></td><td>Método de planejamento em camadas, com lookahead, plano da semana e PPC</td></tr>
+    <tr><td><strong>Lookahead</strong></td><td>Janela de 3 a 6 semanas à frente para identificar e tirar restrições</td></tr>
+    <tr><td><strong>Margem projetada / realizada</strong></td><td>Receita menos custo, projetado para o fim ou pelo que já foi faturado e realizado</td></tr>
+    <tr><td><strong>Medição ao cliente</strong></td><td>Liberação de faturamento negociada com o cliente, em % ou valor da OS</td></tr>
+    <tr><td><strong>Orientação do cliente</strong></td><td>Combinado registrado com a loja (ex.: não molhar o piso); se descumprido, vira impedimento</td></tr>
+    <tr><td><strong>Peso</strong></td><td>Quanto cada atividade vale no avanço da obra (por valor ou por duração)</td></tr>
+    <tr><td><strong>Plano da semana</strong></td><td>Compromisso de atividades e metas de % para a semana; fechado, não muda</td></tr>
+    <tr><td><strong>Ponto fixo de foto</strong></td><td>Lugar marcado no mapa, fotografado sempre do mesmo ângulo</td></tr>
+    <tr><td><strong>PPC</strong></td><td>Percentual do Plano Cumprido: cumpridos ÷ planejados</td></tr>
+    <tr><td><strong>Predecessora</strong></td><td>Atividade que precisa terminar antes de outra começar</td></tr>
+    <tr><td><strong>Previsto / Projetado / Realizado</strong></td><td>O que deveria estar pronto / quando deve terminar pelo ritmo real / o que está pronto</td></tr>
+    <tr><td><strong>Pronta</strong></td><td>Atividade do lookahead sem restrição aberta</td></tr>
+    <tr><td><strong>RDO</strong></td><td>Relatório Diário de Obra, o diário</td></tr>
+    <tr><td><strong>Restrição</strong></td><td>O que vai impedir uma atividade de começar; anda de Identificada a Em tratativa a Liberada</td></tr>
+    <tr><td><strong>Revisão (v2, v3…)</strong></td><td>Cronograma replanejado, salvo com motivo</td></tr>
+    <tr><td><strong>Ronda</strong></td><td>Fotografar todos os pontos fixos no dia</td></tr>
+    <tr><td><strong>Sinal</strong></td><td>No prazo, Atenção ou Atrasado</td></tr>
+    <tr><td><strong>Situação para o cliente</strong></td><td>Explicação e ações de recuperação publicadas pelo engenheiro na página do cliente</td></tr>
+  </table>
+  <div class="rodape"><span>Manfac Engenharia · Hub · Gestão de Obras</span><span>Manual de uso</span></div>
+</section>
+
+</body>
+</html>
