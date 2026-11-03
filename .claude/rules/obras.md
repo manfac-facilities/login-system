@@ -287,4 +287,4 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
   (antes de qualquer nota nova da 0426-012516; não depende do app do hub; se abortar com a OS já `faturado`, pedir
   ajuda, não escrever variante) → app do hub.
 - **SQL aplicado** (constatado em 03/11/2026 pelos tipos gerados do banco; o Financeiro `045` também). Teste de comportamento
-  com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. Falta: app do Financeiro → script da MACAÉ 2 → app do hub.
+  com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. **No ar desde 03/11/2026:** app do Financeiro (main `b543501`), script da MACAÉ 2 aplicado (NF 735 em `obras_nota_externa`, valor de volta a R$ 156.412,32) e app do hub (master `79b5c3d`, chunks 15:52 BRT).
