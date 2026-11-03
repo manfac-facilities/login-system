@@ -1715,3 +1715,14 @@ ficou → merge → build → push → João clica Deploy → conferir chunks.
    e assinar URL dos dois buckets do Sofia; corrigido (§3.7).
 10. **Dados legados**: 2 multas `pendente/autorizado` e 1 `validada/autorizado` sem recebimento; a regra de derivação do
     mockup não as descreve — tratadas em §3.4 sem reescrever o que está gravado.
+
+---
+
+## AJUSTE OBRIGATÓRIO pós-spec (decisão do João, 03/11) — prevalece sobre o texto acima
+
+Colisão 3 (fotos × exclusão) resolvida: **foto avulsa** nunca é apagada nem trocada por ninguém (DELETE/UPDATE em
+`checklist_fotos`/`sinistro_fotos` e nos objetos do bucket bloqueados para todos). **Excluir o checklist ou o sinistro
+inteiro continua permitido, só para admin** (`is_admin() is true`, guarda que falha fechada), registrando no `audit_log`,
+e nesse caso a cascata das fotos é permitida. O bloqueio de exclusão do pai que a spec propunha NÃO deve ser
+implementado; ajustar SQL (§3.8), teste (§3.9: assert "admin exclui checklist com foto → passa"; "gestor/usuário exclui
+→ falha"; "ninguém apaga foto avulsa, nem admin → falha") e a action de exclusão. Fonte: docs/frotas/2026-11-03-decisoes-terceira-bateria.md.

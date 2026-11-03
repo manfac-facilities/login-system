@@ -37,3 +37,9 @@ Schema aprovado (conforme listado ao João):
 - Planilha real de revisões do Igor: não recebida. A importação tem passo de mapeamento de colunas, então sai assim;
   conferir com a planilha real antes da primeira carga.
 - Ritmo: de dia no máximo 2 agentes; implementação pesada só depois do sinal do João (madrugada).
+
+## Decisão posterior (03/11, depois da spec)
+
+Pergunta: "nenhuma foto apagada" colide com o `ON DELETE CASCADE` das fotos — excluir checklist/sinistro apagaria fotos.
+Resposta do João (opção escolhida, literal): **"Admin exclui tudo (Recomendado)"** — ninguém apaga ou troca foto avulsa;
+excluir o checklist/sinistro inteiro continua possível só para admin, com registro no log de auditoria.
