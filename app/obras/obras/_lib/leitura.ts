@@ -10,6 +10,7 @@ import type { PontoHist } from './curvas'
 import type { PlanoSemana, Restricao } from './last-planner'
 import { pedidoDeLinha, type PedidoDaRestricao } from './restricao-pedido'
 import { CAUSA, type CausaRdo } from './causas'
+import { PRAZOS_PADRAO_COMPRAS, comprasDeLinhas, prazosDeLinha, type CompraDaRestricao, type PrazosCompras } from './material'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
@@ -370,6 +371,29 @@ export async function lerPedidosDaObra(supabase: SupabaseClient, obraId: string)
   const { data, error } = await supabase.rpc('obras_restricao_pedidos', { p_obra: obraId })
   if (error) return null
   return ((data ?? []) as Linha[]).map(pedidoDeLinha)
+}
+
+// ── Material antecipado — todas com o cliente da SESSÃO e falha fechada (o SQL pode não estar aplicado) ──
+
+/** Prazos vigentes do Compras (`obras_compras_prazos`). Erro ou sem linha → padrão do Compras. */
+export async function lerPrazosCompras(supabase: SupabaseClient): Promise<PrazosCompras> {
+  const { data, error } = await supabase.rpc('obras_compras_prazos')
+  if (error) return PRAZOS_PADRAO_COMPRAS
+  return prazosDeLinha(((data ?? []) as { prazos: unknown; expediente: unknown }[])[0] ?? null)
+}
+
+/** Solicitações do Compras ligadas pela origem, por restrição (`obras_restricao_compras`, SEM valores). Erro → null. */
+export async function lerComprasDasRestricoes(supabase: SupabaseClient, obraId: string): Promise<Map<string, CompraDaRestricao[]> | null> {
+  const { data, error } = await supabase.rpc('obras_restricao_compras', { p_obra: obraId })
+  if (error) return null
+  return comprasDeLinhas((data ?? []) as Linha[])
+}
+
+/** Atividades respondidas "não precisa". Erro → null: a tela não mostra o "Vem aí" (não pergunta de novo). */
+export async function lerNaoPrecisa(supabase: SupabaseClient, obraId: string): Promise<Set<number> | null> {
+  const { data, error } = await supabase.from('obras_material_resposta').select('atividade_numero').eq('obra_id', obraId)
+  if (error) return null
+  return new Set(((data ?? []) as Linha[]).map((l) => Number(l.atividade_numero)))
 }
 
 export async function lerRestricoes(

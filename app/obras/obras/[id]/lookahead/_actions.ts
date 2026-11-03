@@ -11,6 +11,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
+import { hojeISO } from '../../../_lib/tipos'
+import { lerObraGrande, lerPrazosCompras } from '../../_lib/leitura'
+import { pedirAte } from '../../_lib/material'
 import {
   RESPONSAVEIS_RESTRICAO,
   SITUACOES,
@@ -35,7 +38,12 @@ async function autorizar(): Promise<{ supabase: SupabaseClient; email: string; a
   return falha('Sem acesso ao Gestão de Obras')
 }
 
+const TRAVA_MATERIAL = 'OBRAS_MATERIAL:'
+
 function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
+  // Trava do banco: restrição com solicitação ativa no Compras não é apagada nem troca de tipo.
+  const i = e.message?.indexOf(TRAVA_MATERIAL) ?? -1
+  if (i >= 0) return falha(e.message.slice(i + TRAVA_MATERIAL.length).trim())
   if (e.code === '42501' || e.message.includes('row-level security')) return falha('Você não tem permissão para isso.')
   if (e.code === '23503') return falha('Referência inválida (a obra não existe mais).')
   if (e.code === '23514') return falha('Dados inválidos: confira tipo, responsável e descrição.')
@@ -187,4 +195,70 @@ export async function apagarRestricaoAction(id: string): Promise<Resultado> {
   if (error) return erroBanco('apagar a restrição', error)
   revalidar(r.obra_id as string)
   return { ok: true }
+}
+
+// ── Material antecipado: respostas do "Vem aí" (qualquer usuário de `obras` ou admin) ──
+
+const revalidarMaterial = (obraId: string) => {
+  revalidar(obraId)
+  revalidatePath(`/obras/obras/${obraId}/diario`)
+}
+
+/** "Não precisa de material". Autoria/data vêm do banco. Já respondido (23505) = sucesso. */
+export async function responderNaoPrecisaAction(obraId: string, atividadeNumero: number): Promise<Resultado> {
+  const auth = await autorizar()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (!(Number.isInteger(atividadeNumero) && atividadeNumero > 0)) return falha('Atividade inválida')
+  const naoExiste = await atividadeNaVersaoVigente(supabase, obraId, atividadeNumero)
+  if (naoExiste) return naoExiste
+  const { error } = await supabase.from('obras_material_resposta').insert({ obra_id: obraId, atividade_numero: atividadeNumero })
+  if (error && error.code !== '23505') return erroBanco('registrar a resposta', error)
+  revalidarMaterial(obraId)
+  return { ok: true }
+}
+
+/** Desfaz o "não precisa": a atividade volta ao "Vem aí". */
+export async function desfazerNaoPrecisaAction(obraId: string, atividadeNumero: number): Promise<Resultado> {
+  const auth = await autorizar()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (!(Number.isInteger(atividadeNumero) && atividadeNumero > 0)) return falha('Atividade inválida')
+  const { error } = await supabase
+    .from('obras_material_resposta')
+    .delete()
+    .eq('obra_id', obraId)
+    .eq('atividade_numero', atividadeNumero)
+  if (error) return erroBanco('desfazer a resposta', error)
+  revalidarMaterial(obraId)
+  return { ok: true }
+}
+
+/**
+ * "Precisa": cria a restrição de material da Manfac com prazo = "pedir até". O início vem do
+ * cronograma vigente lido aqui no servidor (igual ao Lookahead), nunca do cliente.
+ */
+export async function responderPrecisaAction(
+  obraId: string,
+  atividadeNumero: number,
+  material: string,
+): Promise<Resultado & { id?: string }> {
+  const auth = await autorizar()
+  if ('ok' in auth) return auth
+  const { supabase } = auth
+  if (!(Number.isInteger(atividadeNumero) && atividadeNumero > 0)) return falha('Atividade inválida')
+  const descricao = (material ?? '').trim()
+  if (!descricao) return falha('Diga qual é o material.')
+  if (descricao.length > 500) return falha('Descreva o material em até 500 caracteres.')
+
+  const r = await lerObraGrande(supabase, obraId, hojeISO())
+  if (!r.ok) return falha('Não foi possível ler o cronograma. Tente de novo em instantes.')
+  if (!r.dados.calc) return falha('A obra ainda não tem cronograma')
+  const a = r.dados.calc.atividades.find((x) => x.numero === atividadeNumero)
+  if (!a) return falha('Atividade não encontrada no cronograma vigente')
+  const prazo = pedirAte(a.inicioProjetado || a.inicioPrevisto, await lerPrazosCompras(supabase))
+
+  const res = await criarRestricaoAction(obraId, { atividadeNumero, tipo: 'material', descricao, responsavel: 'manfac', prazo })
+  if (res.ok) revalidarMaterial(obraId)
+  return res
 }
