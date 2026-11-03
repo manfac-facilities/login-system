@@ -3,7 +3,7 @@
 -- Spec: docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md §3.2 e §4.
 -- Plano: docs/superpowers/plans/2026-11-01-obras-spot-financeiro.md, Task 1.
 --
--- ESTADO: NÃO APLICADO. Rodar à mão no SQL Editor, projeto iyytcavcgukfjnjjrerx,
+-- ESTADO: APLICADO (constatado em 03/11/2026). Rodar à mão no SQL Editor, projeto iyytcavcgukfjnjjrerx,
 -- ANTES do deploy do app. Ordem: este SQL -> Financeiro 045 -> app do Financeiro (logo
 -- depois da 045) -> docs/obras/2026-11-01-macae2-nf735.sql -> app do hub. Depois, o teste de comportamento
 -- docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql (rollback).

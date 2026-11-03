@@ -257,5 +257,5 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
   `feat/spot-faturamento-parcial`, repo `financeiro`; logo depois da `045`) → `docs/obras/2026-11-01-macae2-nf735.sql`
   (antes de qualquer nota nova da 0426-012516; não depende do app do hub; se abortar com a OS já `faturado`, pedir
   ajuda, não escrever variante) → app do hub.
-- **SQL NÃO aplicado** (verificação em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`). Não fazer merge
-  na master antes de aplicado e verificado.
+- **SQL aplicado** (constatado em 03/11/2026 pelos tipos gerados do banco; o Financeiro `045` também). Teste de comportamento
+  com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. Falta: app do Financeiro → script da MACAÉ 2 → app do hub.
