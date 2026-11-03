@@ -3,7 +3,10 @@
 -- Sofia — multa por etapa, avaria, fotos imutáveis, storage: TESTE DE COMPORTAMENTO
 -- Rodar DEPOIS de sdd-sql-sofia-multa-avaria.sql, como postgres, projeto iyytcavcgukfjnjjrerx.
 -- TERMINA EM ERRO DE PROPÓSITO (o raise final é o relatório e o rollback).
--- Esperado: "RESUMO: 42/42 OK".
+-- Esperado: "RESUMO: 49/49 OK".
+-- AJUSTE PÓS-SPEC (decisão do João, 03/11): foto avulsa ninguém apaga (nem
+-- admin); excluir checklist/sinistro inteiro só o admin, com cascata das
+-- fotos e avarias. Casos novos: p3, u15, a4–a8.
 -- Fixture que falhar por coluna NOT NULL não prevista = deriva de schema:
 -- ajustar a fixture, nunca o teste.
 -- ============================================================
@@ -34,6 +37,11 @@ declare
   av3 uuid := gen_random_uuid();   -- avaria criada por U
   s1  uuid := gen_random_uuid();
   sf1 uuid := gen_random_uuid();
+  c3  uuid := gen_random_uuid();   -- checklist com foto e avaria que o ADMIN exclui inteiro
+  f3  uuid := gen_random_uuid();
+  av4 uuid := gen_random_uuid();
+  s2  uuid := gen_random_uuid();   -- sinistro com foto que o ADMIN exclui inteiro
+  sf2 uuid := gen_random_uuid();
   r   text[] := '{}';
   n_ok int := 0;
   n_total int := 0;
@@ -62,13 +70,20 @@ begin
     (m1, v1, current_date - 10, current_date - 5, 'teste-ma', 100),
     (m2, v1, current_date - 10, current_date - 5, 'teste-ma', 100),
     (m3, v1, current_date - 10, current_date - 5, 'teste-ma', 100);
-  insert into public.checklist (id, tipo, veiculo_id) values (c1, 'retorno', v1), (c2, 'retorno', v1);
+  insert into public.checklist (id, tipo, veiculo_id, equipe_id) values
+    (c1, 'retorno', v1, e1), (c2, 'retorno', v1, e1), (c3, 'retorno', v1, e1);
   insert into public.checklist_avarias (id, checklist_id, peca, tamanho) values
-    (av1, c1, 'Porta direita', 'media'), (av2, c2, 'Retrovisor', 'pequena');
+    (av1, c1, 'Porta direita', 'media'), (av2, c2, 'Retrovisor', 'pequena'), (av4, c3, 'Pneu / roda', 'grande');
   insert into public.checklist_fotos (id, checklist_id, storage_path, posicao, tipo_foto) values
-    (f1, c1, '__teste_ma/c1/Frente.jpg', 'Frente', 'obrigatoria');
-  insert into public.sinistros (id, veiculo_id, data, descricao) values (s1, v1, current_date, 'teste-ma');
-  insert into public.sinistro_fotos (id, sinistro_id, storage_path) values (sf1, s1, '__teste_ma/s1/dano.jpg');
+    (f1, c1, '__teste_ma/c1/Frente.jpg', 'Frente', 'obrigatoria'),
+    (f3, c3, '__teste_ma/c3/Frente.jpg', 'Frente', 'obrigatoria');
+  insert into public.checklist_fotos (checklist_id, storage_path, posicao, tipo_foto, avaria_id) values
+    (c3, '__teste_ma/c3/av-peca.jpg', 'Avaria 1 peça', 'avaria_peca', av4),
+    (c3, '__teste_ma/c3/av-dano.jpg', 'Avaria 1 dano', 'avaria_dano', av4);
+  insert into public.sinistros (id, veiculo_id, data, descricao) values
+    (s1, v1, current_date, 'teste-ma'), (s2, v1, current_date, 'teste-ma');
+  insert into public.sinistro_fotos (id, sinistro_id, storage_path) values
+    (sf1, s1, '__teste_ma/s1/dano.jpg'), (sf2, s2, '__teste_ma/s2/dano.jpg');
   insert into storage.objects (bucket_id, name) values ('checklist-fotos', '__teste_ma/c1/Frente.jpg');
 
   -- (p1) postgres sem JWT não avança etapa
@@ -89,6 +104,16 @@ begin
   exception when others then
     if sqlstate = 'P0001' then n_ok := n_ok + 1; r := r || '(p2) postgres apagando foto: OK (barrado)'::text;
     else r := r || ('(p2) *** FALHOU *** erro inesperado: ' || sqlerrm)::text; end if;
+  end;
+
+  -- (p3) postgres sem JWT exclui checklist com foto: barrado (não é admin; a cascata bate na trigger)
+  n_total := n_total + 1;
+  begin
+    delete from public.checklist where id = c3;
+    r := r || '(p3) postgres sem JWT exclui checklist com foto: *** FALHOU *** (passou)'::text;
+  exception when others then
+    if sqlstate = 'P0001' then n_ok := n_ok + 1; r := r || '(p3) postgres sem JWT exclui checklist com foto: OK (barrado)'::text;
+    else r := r || ('(p3) *** FALHOU *** erro inesperado: ' || sqlerrm)::text; end if;
   end;
 
   -- ================= USUÁRIO COMUM (U) =================
@@ -238,6 +263,16 @@ begin
   if v_int = 1 then n_ok := n_ok + 1; r := r || '(u14) U lê objeto do bucket: OK'::text;
   else r := r || '(u14) U lê objeto do bucket: *** FALHOU ***'::text; end if;
 
+  -- (u15) U exclui checklist com foto e avaria: barrado (só admin exclui o registro inteiro)
+  n_total := n_total + 1;
+  begin
+    delete from public.checklist where id = c3;
+    r := r || '(u15) U exclui checklist com foto: *** FALHOU *** (passou)'::text;
+  exception when others then
+    if sqlstate in ('P0001','42501') then n_ok := n_ok + 1; r := r || '(u15) U exclui checklist com foto: OK (barrado)'::text;
+    else r := r || ('(u15) *** FALHOU *** ' || sqlerrm)::text; end if;
+  end;
+
   -- ================= SEM SOFIA (N) =================
   perform set_config('request.jwt.claims',
     json_build_object('sub', uid_n, 'email', mail_n, 'role', 'authenticated')::text, true);
@@ -346,17 +381,17 @@ begin
     else r := r || ('(g8) *** FALHOU *** ' || sqlerrm)::text; end if;
   end;
 
-  -- (g9) G exclui o checklist com foto (cascata não pode levar a foto)
+  -- (g9) G exclui o checklist com foto (só admin exclui o registro inteiro)
   n_total := n_total + 1;
   begin
     delete from public.checklist where id = c1;
     r := r || '(g9) G exclui checklist com foto: *** FALHOU *** (passou)'::text;
   exception when others then
-    if sqlstate in ('P0001','23503') then n_ok := n_ok + 1; r := r || '(g9) G exclui checklist com foto: OK (barrado)'::text;
+    if sqlstate = 'P0001' then n_ok := n_ok + 1; r := r || '(g9) G exclui checklist com foto: OK (barrado)'::text;
     else r := r || ('(g9) *** FALHOU *** ' || sqlerrm)::text; end if;
   end;
 
-  -- (g10) G exclui sinistro com foto (gestor pode excluir sinistro, mas a cascata bate na foto)
+  -- (g10) G exclui sinistro com foto (gestor exclui sinistro sem foto; com foto, só admin)
   n_total := n_total + 1;
   begin
     delete from public.sinistros where id = s1;
@@ -437,6 +472,78 @@ begin
   exception when others then
     if sqlstate in ('P0001','42501') then n_ok := n_ok + 1; r := r || '(a3) A apaga foto de sinistro: OK (barrado)'::text;
     else r := r || ('(a3) *** FALHOU *** ' || sqlerrm)::text; end if;
+  end;
+
+  -- (a4) A apaga foto avulsa de checklist: barrado (ninguém apaga foto avulsa, nem admin)
+  n_total := n_total + 1;
+  -- como role postgres com o JWT do admin: o privilégio revogado não ajuda,
+  -- só a trigger pode barrar (prova a trigger, não o revoke)
+  begin
+    perform set_config('role', 'postgres', true);
+    delete from public.checklist_fotos where id = f1;
+    perform set_config('role', 'authenticated', true);
+    r := r || '(a4) A apaga foto avulsa de checklist: *** FALHOU *** (passou)'::text;
+  exception when others then
+    perform set_config('role', 'authenticated', true);
+    if sqlstate = 'P0001' then n_ok := n_ok + 1; r := r || '(a4) A apaga foto avulsa de checklist: OK (barrado pela trigger)'::text;
+    else r := r || ('(a4) *** FALHOU *** ' || sqlerrm)::text; end if;
+  end;
+
+  -- (a5) A troca o arquivo de uma foto: barrado
+  n_total := n_total + 1;
+  begin
+    update public.checklist_fotos set storage_path = 'outro.jpg' where id = f1;
+    r := r || '(a5) A troca arquivo da foto: *** FALHOU *** (passou)'::text;
+  exception when others then
+    if sqlstate in ('P0001','42501') then n_ok := n_ok + 1; r := r || '(a5) A troca arquivo da foto: OK (barrado)'::text;
+    else r := r || ('(a5) *** FALHOU *** ' || sqlerrm)::text; end if;
+  end;
+
+  -- (a6) A apaga avaria avulsa: barrado
+  n_total := n_total + 1;
+  -- como role postgres com o JWT do admin: o privilégio revogado não ajuda,
+  -- só a trigger pode barrar (prova a trigger, não o revoke)
+  begin
+    perform set_config('role', 'postgres', true);
+    delete from public.checklist_avarias where id = av2;
+    perform set_config('role', 'authenticated', true);
+    r := r || '(a6) A apaga avaria avulsa: *** FALHOU *** (passou)'::text;
+  exception when others then
+    perform set_config('role', 'authenticated', true);
+    if sqlstate = 'P0001' then n_ok := n_ok + 1; r := r || '(a6) A apaga avaria avulsa: OK (barrado pela trigger)'::text;
+    else r := r || ('(a6) *** FALHOU *** ' || sqlerrm)::text; end if;
+  end;
+
+  -- (a7) A exclui o checklist c3 inteiro (foto + avaria + fotos da avaria): passa, cascata leva tudo
+  n_total := n_total + 1;
+  begin
+    delete from public.checklist where id = c3;
+    get diagnostics v_int = row_count;
+    perform set_config('role', 'postgres', true);
+    if v_int = 1
+       and not exists (select 1 from public.checklist_fotos where checklist_id = c3)
+       and not exists (select 1 from public.checklist_avarias where checklist_id = c3) then
+      n_ok := n_ok + 1; r := r || '(a7) A exclui checklist com foto e avaria: OK (cascata)'::text;
+    else r := r || ('(a7) A exclui checklist: *** FALHOU *** linhas=' || v_int)::text; end if;
+    perform set_config('role', 'authenticated', true);
+  exception when others then
+    perform set_config('role', 'authenticated', true);
+    r := r || ('(a7) A exclui checklist com foto: *** FALHOU *** ' || sqlerrm)::text;
+  end;
+
+  -- (a8) A exclui o sinistro s2 inteiro (com foto): passa
+  n_total := n_total + 1;
+  begin
+    delete from public.sinistros where id = s2;
+    get diagnostics v_int = row_count;
+    perform set_config('role', 'postgres', true);
+    if v_int = 1 and not exists (select 1 from public.sinistro_fotos where sinistro_id = s2) then
+      n_ok := n_ok + 1; r := r || '(a8) A exclui sinistro com foto: OK (cascata)'::text;
+    else r := r || ('(a8) A exclui sinistro: *** FALHOU *** linhas=' || v_int)::text; end if;
+    perform set_config('role', 'authenticated', true);
+  exception when others then
+    perform set_config('role', 'authenticated', true);
+    r := r || ('(a8) A exclui sinistro com foto: *** FALHOU *** ' || sqlerrm)::text;
   end;
 
   -- ================= GESTOR de novo =================
