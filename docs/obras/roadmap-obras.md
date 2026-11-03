@@ -1,6 +1,6 @@
 # OBRAS — roadmap consolidado (vivo)
 
-Atualizado em 31/10/2026. Junta tudo o que foi pedido e ainda não foi feito, de quatro fontes:
+Atualizado em 03/11/2026. Junta tudo o que foi pedido e ainda não foi feito, de quatro fontes:
 - **SGO** = especificação do Eduardo (`docs/cliente/2026-10-29-sgo-especificacao-eduardo.md`)
 - **Fase** = fases da spec da modalidade OBRA (`docs/superpowers/specs/2026-10-29-obras-modalidade-obra-design.md` §6)
 - **A#** = mapa de ajustes pós-teste (`docs/cliente/2026-10-29-obras-ajustes-pos-teste.md`)
@@ -23,3 +23,8 @@ Fase 1 (29/10) · Leva 1 (30/10: A1, A2, A3, A5, A13, A14, A18 + identidade Manf
 
 ## Dívidas pequenas conhecidas
 Em `docs/DIVIDAS.md` (seções 29/10, 30/10 e 31/10): arrastar com o mouse no cronograma, edição de estrutura também no Gantt, foco após renomear etapa, setas de dependência no Gantt, foto redimensionada no e-mail, entre outras.
+
+## Estado em 03/11/2026
+**No ar (master):** levas 1–6b (inclui a planta de faseamento), Financeiro A/B/C e Financeiro da OS no SPOT. **Construído, aguardando SQL + deploy:** Material antecipado (A19: o "Vem aí" do diário, trilha de compras no Lookahead e avisos no painel e no e-mail interno), na ordem Compras `017` → `sdd-sql-obras-material.sql` → app do Compras → app do hub.
+
+**Próximos, na ordem combinada com o José em 03/11:** 1) visão de portfólio do CEO (A12); 2) papéis do SGO (COP, Compras, Financeiro). **Ainda em "Depois":** orçamento/PEF (etapa final do financeiro), cronograma sugerido por IA (A9), assistente no WhatsApp (A8).

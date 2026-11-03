@@ -288,3 +288,36 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
   ajuda, não escrever variante) → app do hub.
 - **SQL aplicado** (constatado em 03/11/2026 pelos tipos gerados do banco; o Financeiro `045` também). Teste de comportamento
   com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. **No ar desde 03/11/2026:** app do Financeiro (main `b543501`), script da MACAÉ 2 aplicado (NF 735 em `obras_nota_externa`, valor de volta a R$ 156.412,32) e app do hub (master `79b5c3d`, chunks 15:52 BRT).
+
+### Material antecipado (branch `feat/obras-material-antecipado` + Compras `feat/obras-restricao-origem`, 03/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-03-obras-material-antecipado-design.md`. A atividade que vem aí (próximas 4 semanas)
+pergunta "precisa de material?" antes de o prazo de pedir passar; "precisa" vira restrição `material` e o link leva ao Compras.
+
+- **Onde fica:** regras puras em `app/obras/obras/_lib/material.ts` (janela, `pedirAte`, avisos, etapas); leituras em
+  `app/obras/obras/_lib/leitura.ts` (`lerAvisosMaterial`, `lerPrazosCompras`, `comprasDeLinhas`, `lerNaoPrecisa`); actions
+  (precisa / não precisa / desfazer) em `app/obras/obras/[id]/lookahead/_actions.ts`; passo "Vem aí" do diário em
+  `diario/_vem-ai.tsx`; trilha Restrição → Solicitação → Cotação → Pedido → Entrega no Lookahead; alerta id `'material'`
+  em `alertas.ts` (painel); seção **"Materiais" só no e-mail interno** (nunca no lado cliente, nunca valores em R$).
+- **Janela e lista:** atividades da versão vigente com execução `nao_iniciado` e início até hoje + **28 dias**, **incluindo
+  início já passado**. Saem da lista as com "não precisa" ou com qualquer restrição `material`.
+- **Pedir até:** início − (`folga_processo_dias` + `entrega_material_dias`) dias de **expediente do Compras**, lidos de
+  `obras_compras_prazos()` (chaves `prazos` e `expediente` de `cmp_configuracoes`). Se a leitura falhar ou vier null, vale o
+  padrão do Compras **4 + 5 = 9**; produção hoje tem linha `prazos` com **3 + 2 = 5** (seg–sex). Atenção: o prazo gravado
+  na restrição com o padrão 9 fica assim (ver `docs/DIVIDAS.md`).
+- **Etapas do Compras:** `cancelada`/`recusada` não contam (volta a "Pedir até"); `atendida_estoque` e `concluida` =
+  **entregue**; várias solicitações/pedidos = vale a **pior previsão**, e "entregue" só com todos entregues.
+- **Leituras falham fechadas:** erro ao ler Compras/prazos/respostas nunca vira aviso falso — some só o aviso que dependia
+  da leitura (`lerNaoPrecisa` devolve `null`; a restrição mostra "andamento indisponível").
+- **Trava do hub `obras_restricao_compra_ativa_guarda`** (before delete / update of `tipo` em `obras_restricao`): recusa
+  apagar ou trocar o tipo de restrição com solicitação ligada pela origem e **ainda não cancelada/recusada**. Mensagem
+  `OBRAS_MATERIAL:` (as actions de apagar/editar mapeiam). Decisões: **dispara também no cascade ao apagar a obra** (falha
+  fechada, não sobra id órfão; para apagar a obra, cancele a compra antes); **`concluida`/`atendida_estoque` e ambiente
+  `teste` também travam** (literal da spec; restrição entregue só se libera, não se apaga).
+- **Guarda do Compras (017):** trigger em `cmp_solicitacoes.obras_restricao_id` (restrição existe, `tipo = 'material'`,
+  mesmo `obra_id`; coluna imutável depois de gravada), lendo a restrição com **`FOR SHARE`** (segura DELETE e UPDATE OF
+  tipo concorrentes). **Sem FK**, como manda o Compras (`tests/hub-install-safety.test.ts`).
+- **Ordem de deploy:** Compras `017` → `sdd-sql-obras-material.sql` → app do Compras → app do hub. Depois do 017 rodar
+  **`npm run types` no Compras** (regenera `types/supabase.ts`). Sem o SQL o hub mostra a lista sem "pedir até" e sem
+  andamento; sem o app do Compras o link funciona como hoje.
+- **Estado:** construído e revisado; SQL **NÃO APLICADO** e nada no ar (ver `.claude/rules/sql.md`).
