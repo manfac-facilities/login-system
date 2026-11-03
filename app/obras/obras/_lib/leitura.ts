@@ -11,7 +11,7 @@ import type { PlanoSemana, Restricao } from './last-planner'
 import { pedidoDeLinha, type PedidoDaRestricao } from './restricao-pedido'
 import { CAUSA, type CausaRdo } from './causas'
 import {
-  PRAZOS_PADRAO_COMPRAS, avisosMaterial, comprasDeLinhas, prazosDeLinha,
+  avisosMaterial, comprasDeLinhas, prazosDeLinha,
   type AvisoMaterial, type CompraDaRestricao, type PrazosCompras,
 } from './material'
 import type { AtividadeCalculada } from './cronograma'
@@ -379,10 +379,13 @@ export async function lerPedidosDaObra(supabase: SupabaseClient, obraId: string)
 
 // ── Material antecipado — todas com o cliente da SESSÃO e falha fechada (o SQL pode não estar aplicado) ──
 
-/** Prazos vigentes do Compras (`obras_compras_prazos`). Erro ou sem linha → padrão do Compras. */
-export async function lerPrazosCompras(supabase: SupabaseClient): Promise<PrazosCompras> {
+/**
+ * Prazos vigentes do Compras (`obras_compras_prazos`). Sem linha ou campo ausente → padrão do Compras.
+ * ERRO → null: um prazo inventado viraria aviso falso e ficaria gravado na restrição (spec §4.5).
+ */
+export async function lerPrazosCompras(supabase: SupabaseClient): Promise<PrazosCompras | null> {
   const { data, error } = await supabase.rpc('obras_compras_prazos')
-  if (error) return PRAZOS_PADRAO_COMPRAS
+  if (error) return null
   return prazosDeLinha(((data ?? []) as { prazos: unknown; expediente: unknown }[])[0] ?? null)
 }
 
@@ -403,7 +406,7 @@ export async function lerNaoPrecisa(supabase: SupabaseClient, obraId: string): P
 /**
  * Avisos de material da obra (painel e e-mail interno). As restrições já lidas entram por parâmetro.
  * Respostas não lidas → sem os avisos "sem resposta" (nunca aviso falso); os da restrição seguem.
- * Compras não lido → `avisosMaterial` já omite o que dependia dele.
+ * Compras ou prazos não lidos → `avisosMaterial` já omite o que dependia deles.
  */
 export async function lerAvisosMaterial(
   supabase: SupabaseClient,

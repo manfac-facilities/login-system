@@ -153,7 +153,7 @@ export default async function LookaheadPage({
   const linhaMaterial = (numero: number, inicio: string) => {
     if (porNumero.get(numero)?.status !== 'nao_iniciado') return null
     const mats = rr.restricoes.filter((x) => x.tipo === 'material' && x.atividadeNumero === numero)
-    const limite = `Pedir até ${dm(pedirAte(inicio, prazos))}`
+    const limite = `Pedir até ${prazos ? dm(pedirAte(inicio, prazos)) : '—'}`
     if (mats.length) {
       // As abertas aparecem com a trilha logo abaixo; aqui só as já liberadas.
       const liberadas = mats.filter((x) => x.situacao === 'liberada')

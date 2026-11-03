@@ -155,11 +155,12 @@ export function TrilhaMaterial({
   atividade: { numero: number; nome: string; inicio: string }
   compras: CompraDaRestricao[] | null
   hoje: string
-  prazos: PrazosCompras
+  /** null = prazos do Compras não lidos: sem "pedir até" e sem contagem de dias úteis. */
+  prazos: PrazosCompras | null
   selecionada?: boolean
 }) {
   const inicio = atividade.inicio
-  const limite = pedirAte(inicio, prazos)
+  const limite = prazos ? pedirAte(inicio, prazos) : null
   const sol = compras ? solicitacaoVigente(compras) : undefined
   const entrega = `precisa estar na obra em ${dm(inicio)}`
   const marcos: Marco[] = [{ estado: 'ok', titulo: 'Restrição', detalhe: r.descricao }]
@@ -172,7 +173,7 @@ export function TrilhaMaterial({
     marcos.push({
       estado: 'ok',
       titulo: `Solicitação #${sol.solicitacaoNumero}`,
-      detalhe: enviada ? `enviada ${dm(enviada)}${enviada <= limite ? ' · no prazo' : ' · depois do pedir até'}` : '',
+      detalhe: enviada ? `enviada ${dm(enviada)}${limite === null ? '' : enviada <= limite ? ' · no prazo' : ' · depois do pedir até'}` : '',
     })
     acao = { rotulo: 'Ver no Compras', href: `/compras/solicitacoes/${sol.solicitacaoNumero}` }
     if (ETAPA_ENTREGUE.includes(sol.etapa)) {
@@ -190,7 +191,7 @@ export function TrilhaMaterial({
           ? {
               estado: 'ruim',
               titulo: 'Cotação parada',
-              detalhe: `data mínima do Compras era ${dm(minima)} · ${diasUteisEntre(minima, hoje, prazos.diasExpediente)} dia(s) útil(eis) além`,
+              detalhe: `data mínima do Compras era ${dm(minima)}${prazos ? ` · ${diasUteisEntre(minima, hoje, prazos.diasExpediente)} dia(s) útil(eis) além` : ''}`,
             }
           : { estado: 'agora', titulo: rotuloEtapa(sol.etapa), detalhe: minima ? `data mínima ${dm(minima)}` : '' },
         { estado: 'futuro', titulo: 'Pedido', detalhe: '' },
@@ -217,7 +218,7 @@ export function TrilhaMaterial({
           marcos.push({
             estado: 'ruim',
             titulo: `Previsão ${dm(pior)}`,
-            detalhe: `${diasUteisEntre(inicio, pior, prazos.diasExpediente)} dia(s) útil(eis) depois do início (${dm(inicio)})`,
+            detalhe: `${prazos ? `${diasUteisEntre(inicio, pior, prazos.diasExpediente)} dia(s) útil(eis) ` : ''}depois do início (${dm(inicio)})`,
           })
           selo = { texto: 'Não chega a tempo', cor: VERMELHO }
         } else marcos.push({ estado: 'agora', titulo: `Previsão ${dm(pior)}`, detalhe: `antes do início (${dm(inicio)})` })
@@ -233,9 +234,9 @@ export function TrilhaMaterial({
   } else if (compras === null) {
     marcos.push({ estado: 'futuro', titulo: 'Compra', detalhe: 'andamento indisponível agora' })
   } else {
-    const vencido = limite <= hoje
+    const vencido = limite !== null && limite <= hoje
     marcos.push(
-      { estado: vencido ? 'ruim' : 'agora', titulo: `Pedir até ${dm(limite)}`, detalhe: 'nenhuma solicitação ainda' },
+      { estado: vencido ? 'ruim' : 'agora', titulo: `Pedir até ${limite ? dm(limite) : '—'}`, detalhe: 'nenhuma solicitação ainda' },
       { estado: 'futuro', titulo: 'Cotação', detalhe: '' },
       { estado: 'futuro', titulo: 'Pedido', detalhe: '' },
       { estado: 'futuro', titulo: 'Entrega', detalhe: entrega },

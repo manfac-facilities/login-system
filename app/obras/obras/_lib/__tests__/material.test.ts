@@ -127,6 +127,36 @@ describe('listaVemAi', () => {
   })
 })
 
+describe('listaVemAi sem prazos do Compras (leitura falhou)', () => {
+  it('lista sem "pedir até", ordenada pelo início', () => {
+    const r = listaVemAi({ restricoes: [], naoPrecisa: new Set(), hoje: HOJE, prazos: null, atividades: [ativ(1, '2026-11-10'), ativ(2, '2026-10-30')] })
+    expect(r).toEqual([
+      { numero: 2, nome: 'Atividade 2', inicio: '2026-10-30', pedirAte: null },
+      { numero: 1, nome: 'Atividade 1', inicio: '2026-11-10', pedirAte: null },
+    ])
+  })
+})
+
+describe('avisosMaterial sem prazos do Compras (leitura falhou)', () => {
+  it('omite sem_resposta e pedir (dependem do N); mantém nao_chega e parada', () => {
+    const c = new Map([
+      ['r2', [compra({ etapa: 'pedido_emitido', pedidos: [{ previsaoEntrega: '2026-11-11', entregue: false }] })]],
+      ['r3', [compra({ etapa: 'em_cotacao', dataMinima: '2026-10-30' })]],
+    ])
+    const a = avisosMaterial({
+      naoPrecisa: new Set(),
+      hoje: HOJE,
+      prazos: null,
+      atividades: [ativ(1, '2026-11-06'), ativ(2, '2026-11-06'), ativ(3, '2026-11-20'), ativ(4, '2026-11-06')],
+      restricoes: [rest('r1', 1), rest('r2', 2), rest('r3', 3)],
+      compras: c,
+    })
+    expect(a.map((x) => `${x.tipo}:${x.atividade}`)).toEqual(['nao_chega:2', 'parada:3'])
+    // Sem expediente lido, não inventa a contagem de dias úteis.
+    expect(a[0].titulo).toBe('Material chega depois do início')
+  })
+})
+
 describe('avisosMaterial', () => {
   const base = { naoPrecisa: new Set<number>(), hoje: HOJE, prazos: P32 }
   const av = (atividades: AtividadeCalculada[], restricoes: Restricao[], compras: Map<string, CompraDaRestricao[]> | null) =>

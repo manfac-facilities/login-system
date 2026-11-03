@@ -256,7 +256,9 @@ export async function responderPrecisaAction(
   if (!r.dados.calc) return falha('A obra ainda não tem cronograma')
   const a = r.dados.calc.atividades.find((x) => x.numero === atividadeNumero)
   if (!a) return falha('Atividade não encontrada no cronograma vigente')
-  const prazo = pedirAte(a.inicioProjetado || a.inicioPrevisto, await lerPrazosCompras(supabase))
+  // Prazos não lidos → restrição sem prazo (nunca um "pedir até" calculado com o padrão inventado).
+  const prazos = await lerPrazosCompras(supabase)
+  const prazo = prazos ? pedirAte(a.inicioProjetado || a.inicioPrevisto, prazos) : null
 
   const res = await criarRestricaoAction(obraId, { atividadeNumero, tipo: 'material', descricao, responsavel: 'manfac', prazo })
   if (res.ok) revalidarMaterial(obraId)

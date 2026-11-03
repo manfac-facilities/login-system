@@ -101,21 +101,25 @@ export function comprasDeLinhas(linhas: Record<string, unknown>[]): Map<string, 
 const JANELA_DIAS = 28
 const inicioDe = (a: AtividadeCalculada) => a.inicioProjetado || a.inicioPrevisto
 
-export type ItemVemAi = { numero: number; nome: string; inicio: string; pedirAte: string }
+/** `pedirAte` null = prazos do Compras não lidos (spec §7: a lista aparece sem "pedir até"). */
+export type ItemVemAi = { numero: number; nome: string; inicio: string; pedirAte: string | null }
 
 export function listaVemAi(p: {
   atividades: AtividadeCalculada[]
   restricoes: Restricao[]
   naoPrecisa: ReadonlySet<number>
   hoje: string
-  prazos: PrazosCompras
+  /** null = leitura dos prazos do Compras falhou. */
+  prazos: PrazosCompras | null
 }): ItemVemAi[] {
+  const prazos = p.prazos
   const limite = somarDias(p.hoje, JANELA_DIAS)
   const comMaterial = new Set(p.restricoes.filter((r) => r.tipo === 'material').map((r) => r.atividadeNumero))
   return p.atividades
     .filter((a) => a.status === 'nao_iniciado' && inicioDe(a) <= limite && !p.naoPrecisa.has(a.numero) && !comMaterial.has(a.numero))
-    .map((a) => ({ numero: a.numero, nome: a.descricao, inicio: inicioDe(a), pedirAte: pedirAte(inicioDe(a), p.prazos) }))
-    .sort((x, y) => x.pedirAte.localeCompare(y.pedirAte) || x.numero - y.numero)
+    .map((a) => ({ numero: a.numero, nome: a.descricao, inicio: inicioDe(a), pedirAte: prazos ? pedirAte(inicioDe(a), prazos) : null }))
+    // `pedirAte` cresce com o início: sem prazos, ordenar pelo início dá a mesma ordem.
+    .sort((x, y) => (x.pedirAte ?? x.inicio).localeCompare(y.pedirAte ?? y.inicio) || x.numero - y.numero)
 }
 
 // --- avisos ---
@@ -159,8 +163,10 @@ export function avisosMaterial(p: {
   naoPrecisa: ReadonlySet<number>
   compras: Map<string, CompraDaRestricao[]> | null
   hoje: string
-  prazos: PrazosCompras
+  /** null = prazos do Compras não lidos: sem "sem resposta" e sem "pedir" (dependem do N). */
+  prazos: PrazosCompras | null
 }): AvisoMaterial[] {
+  const prazos = p.prazos
   const avisos: AvisoMaterial[] = []
   const materiais = p.restricoes.filter((r) => r.tipo === 'material')
   const comMaterial = new Set(materiais.map((r) => r.atividadeNumero))
@@ -169,11 +175,11 @@ export function avisosMaterial(p: {
   for (const a of p.atividades) {
     if (a.status !== 'nao_iniciado') continue
     const inicio = inicioDe(a)
-    const pedirEm = pedirAte(inicio, p.prazos)
+    const pedirEm = prazos ? pedirAte(inicio, prazos) : null
     const comeca = `Atividade ${a.numero} começa ${diaBr(inicio)}`
 
     // Sem resposta
-    if (inicio <= limite && !p.naoPrecisa.has(a.numero) && !comMaterial.has(a.numero) && pedirEm <= p.hoje) {
+    if (pedirEm !== null && inicio <= limite && !p.naoPrecisa.has(a.numero) && !comMaterial.has(a.numero) && pedirEm <= p.hoje) {
       avisos.push({
         tipo: 'sem_resposta',
         nivel: 'vermelho',
@@ -192,7 +198,7 @@ export function avisosMaterial(p: {
     for (const r of materiais) {
       if (r.atividadeNumero !== a.numero || r.situacao === 'liberada') continue
       const base = { atividade: a.numero, inicio, restricaoId: r.id }
-      const pedir = (): AvisoMaterial => {
+      const pedir = (pedirEm: string): AvisoMaterial => {
         const vencido = pedirEm <= p.hoje
         return {
           ...base,
@@ -218,7 +224,7 @@ export function avisosMaterial(p: {
       // Pedido manual antigo vale quando não há solicitação ligada pela origem.
       const pedidos = sol ? sol.pedidos : r.pedido ? [{ previsaoEntrega: r.pedido.previsaoEntrega, entregue: pedidoEntregue(r.pedido) }] : []
       if (!sol && !r.pedido) {
-        if (!r.cmpPedidoId) avisos.push(pedir())
+        if (!r.cmpPedidoId && pedirEm !== null) avisos.push(pedir(pedirEm))
         continue
       }
       if (sol && ETAPA_ENTREGUE.includes(sol.etapa)) continue
@@ -227,12 +233,14 @@ export function avisosMaterial(p: {
         const atrasadas = pedidos.filter((x) => !x.entregue && x.previsaoEntrega && x.previsaoEntrega > inicio)
         if (atrasadas.length > 0) {
           const pior = atrasadas.map((x) => x.previsaoEntrega!).sort().at(-1)!
-          const n = diasUteisEntre(inicio, pior, p.prazos.diasExpediente)
           avisos.push({
             ...base,
             tipo: 'nao_chega',
             nivel: 'vermelho',
-            titulo: `Material chega ${n} dia(s) útil(eis) depois do início`,
+            // Sem expediente lido, sem a contagem de dias úteis (nada de número inventado).
+            titulo: prazos
+              ? `Material chega ${diasUteisEntre(inicio, pior, prazos.diasExpediente)} dia(s) útil(eis) depois do início`
+              : 'Material chega depois do início',
             cadeia: [comeca, r.descricao, `${sol ? `Solicitação #${sol.solicitacaoNumero}` : 'Pedido ligado'}: previsão ${diaBr(pior)}`],
             destino: 'lookahead',
           })
@@ -254,6 +262,15 @@ export function avisosMaterial(p: {
   }
 
   return avisos.sort((x, y) => (x.nivel === y.nivel ? 0 : x.nivel === 'vermelho' ? -1 : 1) || x.inicio.localeCompare(y.inicio) || x.atividade - y.atividade)
+}
+
+/**
+ * "Sem resposta" agrupado num item só (painel e e-mail interno): no primeiro dia a obra inteira
+ * pode estar sem resposta, e um alerta por atividade viraria ruído (spec §3).
+ */
+export function semRespostaAgrupado(avisos: AvisoMaterial[]): { texto: string; atividades: number[] } | null {
+  const atividades = avisos.filter((a) => a.tipo === 'sem_resposta').map((a) => a.atividade)
+  return atividades.length ? { texto: `${atividades.length} atividade(s) sem resposta sobre material com prazo de pedir vencido`, atividades } : null
 }
 
 export function linkPedirMaterial(p: { obraId: string; restricao: Restricao; atividade: { numero: number; nome: string; inicio: string } }): string {

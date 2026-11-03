@@ -155,6 +155,25 @@ describe('calcularAlertas — material antecipado', () => {
     expect(m[1].acao.href).toContain('restricao=r15')
   })
 
+  it('sem_resposta agrupado num alerta só (sem ruído no primeiro dia); os demais um por aviso', () => {
+    const a = calcularAlertas({
+      ...base,
+      material: [
+        aviso({ tipo: 'sem_resposta', destino: 'diario', restricaoId: null, atividade: 16 }),
+        aviso({ tipo: 'sem_resposta', destino: 'diario', restricaoId: null, atividade: 18 }),
+        aviso({ tipo: 'sem_resposta', destino: 'diario', restricaoId: null, atividade: 21 }),
+        aviso({}),
+      ],
+    }).filter((x) => x.id === 'material')
+    expect(a).toHaveLength(2)
+    expect(a[0]).toEqual({
+      id: 'material', tom: 'negativo',
+      texto: '3 atividade(s) sem resposta sobre material com prazo de pedir vencido',
+      acao: { rotulo: 'Responder', href: '/obras/obras/o1/diario' },
+    })
+    expect(a[1].texto).toContain('Material chega 3 dia(s) útil(eis) depois do início')
+  })
+
   it('material null ou ausente: nenhum alerta de material', () => {
     expect(ids({ material: null })).toEqual([])
     expect(ids({})).toEqual([])

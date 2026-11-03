@@ -67,6 +67,15 @@ describe('TrilhaMaterial', () => {
     )
   })
 
+  it('prazos do Compras não lidos: "Pedir até —", sem selo de vencido, botão de pedir segue', () => {
+    render(
+      <TrilhaMaterial obraId="o1" restricao={restricao()} atividade={{ ...atividade, inicio: '2026-11-04' }} compras={[]} hoje="2026-11-03" prazos={null} />,
+    )
+    expect(screen.getByText('Pedir até —')).toBeInTheDocument()
+    expect(screen.queryByText(/Pedir hoje|vencido/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Pedir no Compras' })).toBeInTheDocument()
+  })
+
   it('leitura do Compras falhou: "andamento indisponível agora", sem botão de pedir', () => {
     montar(restricao(), null)
     expect(screen.getByText(/andamento indisponível agora/)).toBeInTheDocument()

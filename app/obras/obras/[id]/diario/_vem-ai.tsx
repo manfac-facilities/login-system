@@ -11,9 +11,9 @@ const btn =
 const btnPrim = 'min-h-11 flex-1 rounded-lg bg-(--obra-orange-texto) px-3 text-sm font-semibold text-white disabled:opacity-45'
 const selo = 'flex-none rounded-full border px-2 py-0.5 text-xs font-semibold'
 
-/** Selo do item: vence hoje / venceu em vermelho; senão "Sem resposta". */
-function Selo({ pedirAte, hoje }: { pedirAte: string; hoje: string }) {
-  if (pedirAte > hoje) return <span className={`${selo} border-(--obra-border) text-(--obra-muted-texto)`}>Sem resposta</span>
+/** Selo do item: vence hoje / venceu em vermelho; senão (ou sem "pedir até") "Sem resposta". */
+function Selo({ pedirAte, hoje }: { pedirAte: string | null; hoje: string }) {
+  if (pedirAte === null || pedirAte > hoje) return <span className={`${selo} border-(--obra-border) text-(--obra-muted-texto)`}>Sem resposta</span>
   return (
     <span className={`${selo} border-(--obra-vermelho-texto) text-(--obra-vermelho-texto)`}>
       {pedirAte === hoje ? 'Pedir hoje' : `Vencido em ${dm(pedirAte)}`}
@@ -76,7 +76,9 @@ function Cartao({
         </p>
         {criada ? null : <Selo pedirAte={item.pedirAte} hoje={hoje} />}
       </div>
-      <p className="obra-num text-xs text-(--obra-muted-texto)">{`Começa ${dm(item.inicio)} · Pedir até ${dm(item.pedirAte)}`}</p>
+      <p className="obra-num text-xs text-(--obra-muted-texto)">
+        {item.pedirAte ? `Começa ${dm(item.inicio)} · Pedir até ${dm(item.pedirAte)}` : `Começa ${dm(item.inicio)}`}
+      </p>
       {criada ? (
         <>
           <p className="text-sm text-(--obra-verde-texto)">Restrição criada: {criada.descricao}</p>
@@ -148,8 +150,8 @@ export default function VemAi({
 }: {
   obraId: string
   hoje: string
-  /** Folga do processo + entrega de material do Compras, em dias úteis. */
-  diasCompras: number
+  /** Folga do processo + entrega de material do Compras, em dias úteis; null = prazos não lidos. */
+  diasCompras: number | null
   itens: ItemVemAi[] | null
 }) {
   const [lista, setLista] = useState(itens ?? [])
@@ -163,8 +165,15 @@ export default function VemAi({
       ) : (
         <>
           <p className="text-sm text-(--obra-muted-texto)">
-            Atividades que começam nas próximas 4 semanas. O Compras precisa de <span className="obra-num">{diasCompras}</span> dias
-            úteis; o &quot;pedir até&quot; já desconta isso.
+            Atividades que começam nas próximas 4 semanas.
+            {diasCompras === null ? (
+              ' O prazo do Compras não carregou agora.'
+            ) : (
+              <>
+                {' '}O Compras precisa de <span className="obra-num">{diasCompras}</span> dias úteis; o &quot;pedir até&quot; já desconta
+                isso.
+              </>
+            )}
           </p>
           {anotado !== null ? (
             <p role="status" className="text-xs text-(--obra-verde-texto)">

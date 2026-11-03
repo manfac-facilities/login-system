@@ -184,7 +184,7 @@ export default async function DiarioObraPage({
     const [restR, naoPrecisa, prazos] = await Promise.all([lerRestricoes(supabase, id), lerNaoPrecisa(supabase, id), lerPrazosCompras(supabase)])
     const itens =
       restR.ok && naoPrecisa ? listaVemAi({ atividades: calc.atividades, restricoes: restR.restricoes, naoPrecisa, hoje, prazos }) : null
-    vemAi = <VemAi obraId={id} hoje={hoje} diasCompras={prazos.folga + prazos.entregaMaterial} itens={itens} />
+    vemAi = <VemAi obraId={id} hoje={hoje} diasCompras={prazos ? prazos.folga + prazos.entregaMaterial : null} itens={itens} />
   }
 
   // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).

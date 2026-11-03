@@ -7,7 +7,7 @@ import type { ItemAgenda } from './agenda'
 import type { ResultadoCronograma } from './cronograma'
 import type { Restricao } from './last-planner'
 import { avisoLocacao, textoAviso } from './locacao'
-import { linkPedirMaterial, type AvisoMaterial } from './material'
+import { linkPedirMaterial, semRespostaAgrupado, type AvisoMaterial } from './material'
 import { diasDesde, LIMITE_DIAS_AGUARDANDO } from './medicao'
 
 export type Alerta = {
@@ -171,8 +171,11 @@ export function calcularAlertas(p: {
       acao: { rotulo: 'Ver financeiro', href: `${raiz}/financeiro` },
     })
   }
-  // Material antecipado (spec §4.5/§5.4): um alerta por aviso, com a cadeia e o botão para onde se resolve.
-  for (const m of p.material ?? []) {
+  // Material antecipado (spec §4.5/§5.4): "sem resposta" agrupado num alerta só; os demais, um por
+  // aviso, com a cadeia e o botão para onde se resolve.
+  const semResposta = semRespostaAgrupado(p.material ?? [])
+  if (semResposta) out.push({ id: 'material', tom: 'negativo', texto: semResposta.texto, acao: { rotulo: 'Responder', href: `${raiz}/diario` } })
+  for (const m of (p.material ?? []).filter((x) => x.tipo !== 'sem_resposta')) {
     out.push({
       id: 'material',
       tom: m.nivel === 'vermelho' ? 'negativo' : 'atencao',
@@ -185,7 +188,6 @@ export function calcularAlertas(p: {
 
 function acaoMaterial(p: { obraId: string; calc: ResultadoCronograma | null; restricoes: Restricao[] }, m: AvisoMaterial): Alerta['acao'] {
   const raiz = `/obras/obras/${p.obraId}`
-  if (m.destino === 'diario') return { rotulo: 'Responder', href: `${raiz}/diario` }
   const restricao = m.restricaoId ? p.restricoes.find((r) => r.id === m.restricaoId) : undefined
   const a = p.calc?.atividades.find((x) => x.numero === m.atividade)
   if (m.destino === 'compras' && restricao && a) {

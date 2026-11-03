@@ -82,6 +82,14 @@ describe('VemAi', () => {
     expect(screen.getByText('Tudo respondido nas próximas 4 semanas.')).toBeInTheDocument()
   })
 
+  it('prazos do Compras não lidos: lista sem "pedir até" e sem selo "Pedir hoje"/"Vencido"', () => {
+    const semPrazo: ItemVemAi[] = [{ numero: 16, nome: 'Nova laje de piso armada', inicio: '2026-11-04', pedirAte: null }]
+    const { container } = render(<VemAi obraId="o1" hoje="2026-11-03" diasCompras={null} itens={semPrazo} />)
+    expect(within(cartao(16)).getByText('Começa 04/11')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/[Pp]edir até|Pedir hoje|Vencido|dias\s+úteis/)
+    expect(within(cartao(16)).getByRole('button', { name: 'Precisa' })).toBeInTheDocument()
+  })
+
   it('respostas não carregadas → aviso e nenhum botão', () => {
     montar(null)
     expect(screen.getByText('Não deu para carregar as respostas agora.')).toBeInTheDocument()

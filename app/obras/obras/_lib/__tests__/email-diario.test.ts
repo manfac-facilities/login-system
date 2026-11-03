@@ -337,6 +337,20 @@ describe('seção "Materiais" (material antecipado)', () => {
     expect(texto).toContain('Atividade 15 começa 12/11/2026 ← Brita 1 e pó de pedra ← Ainda sem solicitação no Compras')
   })
 
+  it('interno: sem_resposta vira uma linha só com os números das atividades', () => {
+    const sem = (atividade: number): AvisoMaterial => ({
+      tipo: 'sem_resposta', nivel: 'vermelho', atividade, inicio: '2026-11-10', titulo: 'Ninguém respondeu e o prazo para pedir vence hoje',
+      cadeia: [`Atividade ${atividade} começa 10/11/2026`, 'Material sem resposta'], destino: 'diario', restricaoId: null,
+    })
+    const { html, texto } = comMateriais('interno', [sem(16), sem(18), ...avisos])
+    const linha = '2 atividade(s) sem resposta sobre material com prazo de pedir vencido — atividades 16, 18'
+    for (const s of [html, texto]) {
+      expect(s.split(linha)).toHaveLength(2)
+      expect(s).not.toContain('Ninguém respondeu')
+      expect(s).toContain('Pedir hoje: Brita 1 e pó de pedra')
+    }
+  })
+
   it('cliente com os mesmos avisos: nada de material', () => {
     const { html, texto } = comMateriais('cliente', avisos)
     for (const s of [html, texto]) {

@@ -62,7 +62,7 @@ jest.mock('../../../_lib/leitura', () => ({
 
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
-import { lerComprasDasRestricoes, lerNaoPrecisa, lerObraGrande, lerPrazosCompras } from '../../../_lib/leitura'
+import { lerAvisosMaterial, lerComprasDasRestricoes, lerNaoPrecisa, lerObraGrande, lerPrazosCompras } from '../../../_lib/leitura'
 import { PRAZOS_PADRAO_COMPRAS } from '../../../_lib/material'
 import {
   apagarRestricaoAction,
@@ -96,13 +96,22 @@ beforeEach(() => {
 
 describe('leituras falham fechadas (SQL ainda não aplicado)', () => {
   const sb = () => cliente() as any
-  it('prazos: linha vigente vira PrazosCompras; erro ou sem linha → padrão do Compras', async () => {
+  it('prazos: linha vigente vira PrazosCompras; sem linha → padrão do Compras; ERRO → null (nunca o padrão)', async () => {
     rpcs.obras_compras_prazos = PRAZOS_PRODUCAO
     expect(await lerPrazosCompras(sb())).toEqual({ diasExpediente: [1, 2, 3, 4, 5], folga: 3, entregaMaterial: 2 })
     rpcs.obras_compras_prazos = { data: [], error: null }
     expect(await lerPrazosCompras(sb())).toEqual(PRAZOS_PADRAO_COMPRAS)
     rpcs.obras_compras_prazos = { data: null, error: { message: 'function does not exist', code: '42883' } }
-    expect(await lerPrazosCompras(sb())).toEqual(PRAZOS_PADRAO_COMPRAS)
+    expect(await lerPrazosCompras(sb())).toBeNull()
+  })
+  it('avisos com prazos não lidos: sem "sem resposta" nem "pedir" (dependem do N)', async () => {
+    rpcs.obras_compras_prazos = { data: null, error: { message: 'x' } }
+    const atividades = [{ numero: 3, descricao: 'A3', status: 'nao_iniciado', inicioPrevisto: '2026-11-04', inicioProjetado: '' }] as any
+    const restricoes = [{ id: 'r1', atividadeNumero: 3, tipo: 'material', descricao: 'Cimento', situacao: 'identificada' }] as any
+    expect(await lerAvisosMaterial(sb(), OBRA, { atividades, restricoes: [], hoje: '2026-11-03' })).toEqual([])
+    expect(await lerAvisosMaterial(sb(), OBRA, { atividades, restricoes, hoje: '2026-11-03' })).toEqual([])
+    rpcs.obras_compras_prazos = PRAZOS_PRODUCAO
+    expect((await lerAvisosMaterial(sb(), OBRA, { atividades, restricoes: [], hoje: '2026-11-03' })).map((a) => a.tipo)).toEqual(['sem_resposta'])
   })
   it('compras: linhas agrupadas por restrição; erro → null', async () => {
     rpcs.obras_restricao_compras = {
@@ -179,12 +188,17 @@ describe('precisa', () => {
       descricao: 'Porcelanato 60x60', responsavel: 'manfac', prazo: '2026-11-09',
     })
   })
-  it('usa o início projetado quando houver; sem leitura de prazos vale o padrão do Compras (9 dias)', async () => {
+  it('usa o início projetado quando houver; sem linha de prazos vale o padrão do Compras (9 dias)', async () => {
     obraCom(atividade(3, '2026-11-09', '2026-11-16'))
-    rpcs.obras_compras_prazos = { data: null, error: { message: 'x' } }
+    rpcs.obras_compras_prazos = { data: [], error: null }
     await responderPrecisaAction(OBRA, 3, 'Porcelanato')
     // seg 16/11 − 9 dias úteis = ter 03/11.
     expect(db.obras_restricao[0].prazo).toBe('2026-11-03')
+  })
+  it('leitura dos prazos falhou: grava a restrição com prazo null (nunca o padrão inventado)', async () => {
+    rpcs.obras_compras_prazos = { data: null, error: { message: 'x' } }
+    expect(await responderPrecisaAction(OBRA, 3, 'Porcelanato')).toEqual({ ok: true, id: 'id1' })
+    expect(db.obras_restricao[0].prazo).toBeNull()
   })
   it('sem acesso falha fechado', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
