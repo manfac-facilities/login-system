@@ -71,6 +71,8 @@ import SeletorEtapa from './_etapa'
 import BlocoAutorizacao from './_bloco-autorizacao'
 import BlocoIdentificacao from './_bloco-identificacao'
 import BlocoCronograma from './_bloco-cronograma'
+import BlocoFinanceiroSpot from './_financeiro/bloco'
+import type { FinanceiroSpot } from './_financeiro/dados'
 import Historico from './_historico'
 import CorrigirFechamento, { type CorrigirDataFechamento } from './_corrigir-fechamento'
 import FaixaCancelar from './_cancelar-obra'
@@ -555,6 +557,7 @@ export default function Ficha({
   edicoes = {},
   historico,
   admin = false,
+  financeiro,
 }: {
   obra: Obra
   diario: DiarioRow[]
@@ -576,6 +579,8 @@ export default function Ficha({
   historico: LinhaHistorico[]
   /** Administrador vê o botão de reclassificar SPOT/OBRA. */
   admin?: boolean
+  /** Financeiro da OS SPOT, lido no servidor; ausente = obra não é SPOT. */
+  financeiro?: FinanceiroSpot
 }) {
   const ultimos = diario.slice(-8)
   const comFoto = ultimos.filter((d) => !!d.foto_path).length
@@ -608,17 +613,27 @@ export default function Ficha({
             aria-label="Pedir a outros sistemas"
             className="w-full rounded-lg border border-[#1e3a5f] bg-[#0d2050] p-3 sm:w-auto sm:min-w-64"
           >
-            <div className="text-[11px] uppercase tracking-wider text-[#94a3b8]">Pedir a partir desta obra</div>
-            {/* <a> e não <Link>: o Compras é app separada no mesmo domínio (AGENTS.md). */}
-            <a
-              href={`/compras/solicitacoes/nova?obra=${obra.id}`}
-              target="_blank"
-              rel="noopener"
-              className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#f05a28] px-3.5 py-2.5 text-sm font-semibold text-white hover:brightness-110"
-            >
-              Solicitar compra <span aria-hidden="true" className="text-xs opacity-85">↗</span>
-            </a>
-            <p className="mt-1.5 text-xs text-[#94a3b8]">Abre o Compras em nova aba, com esta obra.</p>
+            <div className="text-[11px] uppercase tracking-wider text-[#94a3b8]">Pedir a partir desta OS</div>
+            {/* <a> e não <Link>: Compras, Financeiro e Fornecedores são apps separadas no mesmo domínio (AGENTS.md). */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {[
+                { t: 'Pedir material', h: `/compras/solicitacoes/nova?obra=${obra.id}`, p: true },
+                { t: 'Pedir pagamento', h: `/financeiro/solicitacoes/nova?obra=${obra.id}`, p: false },
+                { t: 'Pedir medição', h: `/fornecedores/medicoes/nova?obra=${obra.id}`, p: false },
+                { t: 'Nova locação', h: `/compras/solicitacoes/nova?obra=${obra.id}&tipo=locacao`, p: false },
+              ].map((l) => (
+                <a
+                  key={l.t}
+                  href={l.h}
+                  target="_blank"
+                  rel="noopener"
+                  className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold hover:brightness-110 ${l.p ? 'border-[#f05a28] bg-[#f05a28] text-white' : 'border-[#1e3a5f] text-[#e8eef7]'}`}
+                >
+                  {l.t} <span aria-hidden="true" className="text-xs opacity-85">↗</span>
+                </a>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-[#94a3b8]">Cada botão abre o outro sistema em nova aba, já com esta OS.</p>
           </div>
         )}
       </header>
@@ -848,6 +863,9 @@ export default function Ficha({
             cadastrarMotivo={cadastrarMotivoRemarcacaoAction}
             somenteLeitura={cancelada(obra)}
           />
+
+          {/* ---------- financeiro da OS (só SPOT; a page lê com o cliente da sessão) ---------- */}
+          {financeiro ? <BlocoFinanceiroSpot obraId={obra.id} dados={financeiro} hoje={hoje} /> : null}
 
           {/* ---------- o que o campo devolveu ----------
               Início real e bloqueio atual não são editáveis e não estão em

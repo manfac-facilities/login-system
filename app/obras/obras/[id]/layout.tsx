@@ -7,6 +7,7 @@ import { hojeISO } from '../../_lib/tipos'
 import ShellObra from '../_ui/shell'
 import SimboloManfac from '../_ui/simbolo-manfac'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
+import { podeVerValoresDaRequisicao } from './_pode-ver-valores'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,9 +42,8 @@ export default async function ObraLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  const permitido =
-    !!user?.email &&
-    ((await hasSystemAccess(supabase, user.email, 'obras')) || (await isAdmin(supabase, user.email)))
+  const admin = !!user?.email && (await isAdmin(supabase, user.email))
+  const permitido = !!user?.email && (admin || (await hasSystemAccess(supabase, user.email, 'obras')))
   if (!permitido) return <Aviso>Esta tela é de quem é responsável pelas obras</Aviso>
 
   const r = await lerObraDaRequisicao(id, hojeISO())
@@ -51,10 +51,14 @@ export default async function ObraLayout({
   const { obra } = r.dados
   if (obra.modalidade !== 'obra') return <Aviso>Obra não encontrada ou não é da modalidade OBRA</Aviso>
 
+  // Item Financeiro: só quem pode ver valores. Cliente da SESSÃO (com o admin volta false); erro → false.
+  // Memorizada por requisição: o painel da obra reaproveita a mesma resposta.
+  const financeiro = await podeVerValoresDaRequisicao(id)
+
   // Só o que o shell mostra vai para o cliente (nada de valor/custo no payload).
   const doShell = { id: obra.id, os: obra.os, loja: obra.loja, cliente: obra.cliente, descricao: obra.descricao }
   return (
-    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente}>
+    <ShellObra obra={doShell} sinal={r.dados.sinal} dadosAte={r.dados.dadosAte} versao={r.dados.versaoVigente} admin={admin} financeiro={financeiro}>
       {children}
     </ShellObra>
   )

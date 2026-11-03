@@ -5,6 +5,23 @@ const nextConfig: NextConfig = {
   // o rastreio de arquivos não enxerga esse caminho sozinho.
   outputFileTracingIncludes: {
     '/api/obras/relatorio-diario': ['./app/api/obras/relatorio-diario/_fontes/*.ttf'],
+    // PDF do diário (react-pdf): TTF e logo lidos em runtime em `app/obras/obras/_pdf/base.tsx`.
+    '/obras/obras/[id]/diario/pdf/[data]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Ata de reunião: rota do PDF e a página da Comunicação (a action de envio anexa o PDF).
+    '/obras/obras/[id]/comunicacao/ata/[registro]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    '/obras/obras/[id]/comunicacao': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Relatórios de período (Leva 4): rota do PDF e a página (a action de envio anexa o PDF).
+    '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    '/obras/obras/[id]/comunicacao/relatorio/[tipo]/[referencia]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Apresentação ao cliente (Leva 4): PDF paisagem.
+    '/obras/obras/[id]/apresentacao/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Portal do cliente (Leva 5): "Abrir PDF" dos documentos enviados ao cliente.
+    '/portal-obra/obras/[obraId]/pdf/[envioId]': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Faseamento no portal (Leva 6b): PDF da última revisão emitida.
+    '/portal-obra/obras/[obraId]/faseamento/[revisaoId]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    // Planta de faseamento (Leva 6b): rota do PDF e a página (a action de envio anexa a prancha).
+    '/obras/obras/[id]/faseamento/[revisaoId]/pdf': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
+    '/obras/obras/[id]/faseamento': ['./app/obras/obras/_pdf/fontes/*.ttf', './public/logo.png'],
   },
   async headers() {
     return [

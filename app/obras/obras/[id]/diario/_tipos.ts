@@ -29,6 +29,8 @@ export type RascunhoRdo = {
   climaManha: Clima | null
   climaTarde: Clima | null
   programacaoAmanha: string | null
+  /** "Sem impedimentos hoje" (item 7 da reunião de 31/10): passo 4 preenchido sem registrar nada. */
+  semImpedimento: boolean
   avancos: AvancoRdo[]
 }
 
@@ -43,4 +45,27 @@ export type AtividadeDiario = {
   motivoTrava: string | null
 }
 
-export type FotoRdo = { id: string; path: string; legenda: string | null; url: string | null }
+export type FotoRdo = {
+  id: string
+  path: string
+  legenda: string | null
+  url: string | null
+  /** Vínculos do mapa (Leva 6); nulos em foto antiga ou de obra sem mapa. */
+  ambienteId?: string | null
+  pontoId?: string | null
+  atividadeNumero?: number | null
+}
+
+/** Onde a foto nova fica no mapa (Leva 6). Com ponto, o ambiente é o do ponto. */
+export type VinculoFoto = { ambienteId?: string | null; pontoId?: string | null; atividadeNumero?: number | null }
+
+/**
+ * O que o passo Fotos recebe quando a obra tem mapa (pelo menos um ambiente).
+ * Sem mapa, `null`: o diário fica como sempre foi (ambiente não obrigatório).
+ */
+export type MapaDiario = {
+  ambientes: { id: string; nome: string; atividades: number[] }[]
+  /** Só os pontos ativos (a ronda), por número, com a última foto anterior como referência de ângulo. */
+  pontos: { id: string; numero: number; nome: string; ambienteId: string; referenciaUrl: string | null; referenciaData: string | null }[]
+  atividades: { numero: number; descricao: string }[]
+}

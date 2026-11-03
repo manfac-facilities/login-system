@@ -42,6 +42,7 @@ function obraGrande(over: Partial<ObraGrande> = {}): ObraGrande {
     exec,
     impedimentos: IMPEDIMENTOS,
     feriados: new Set<string>(),
+    criterioPeso: 'valor',
     calc: {
       atividades: [], previsto: 0.08, realizado: 0.06, desvioPP: -2,
       terminoPrevisto: '2027-02-12', terminoProjetado: '2027-02-12',
@@ -89,6 +90,20 @@ describe('montarEmailDiario', () => {
       expect(s).not.toContain('123456')
       expect(s).not.toContain('Já resolvido antes')
     }
+  })
+
+  it('impedimento cita o código exibido da atividade, nunca o numero interno', () => {
+    // numero 12 é a 2ª atividade da etapa B: código 2.2. Sem cálculo da atividade: "fora da versão vigente".
+    const at = (numero: number, etapa: string) =>
+      ({ numero, etapa, peso: 1, duracao: 5, percentual: 0, inicioPrevisto: '2026-10-26', fimPrevisto: '2026-10-30',
+         inicioProjetado: '2026-10-26', fimProjetado: '2026-10-30' }) as unknown as NonNullable<ObraGrande['calc']>['atividades'][number]
+    const base = obraGrande().calc!
+    const { html, texto } = montar('cliente', { calc: { ...base, atividades: [at(1, 'A'), at(11, 'B'), at(12, 'B')] } })
+    for (const s of [html, texto]) {
+      expect(s).toContain('trava a atividade 2.2 (Atividade 12)')
+      expect(s).not.toContain('atividade 12 (')
+    }
+    expect(montar('cliente').texto).toContain('trava uma atividade fora da versão vigente')
   })
 
   it('impedimento da Manfac aparece ao cliente como "Manfac", sem o tipo interno', () => {
@@ -183,6 +198,38 @@ describe('montarEmailDiario', () => {
     expect(html).toContain('Concluir escoramento')
   })
 
+  describe('não avançou hoje (item 12)', () => {
+    const avancos = [
+      { numero: 6, de: 0.5, para: 0.5, concluida: false, causa: 'cliente' as const },
+      { numero: 2, de: 0.2, para: 0.2, concluida: false, causa: 'material' as const },
+      { numero: 4, de: 0, para: 0, concluida: false, causa: 'projeto' as const },
+      { numero: 3, de: 0, para: 0, concluida: false, causa: null },
+      { numero: 1, de: 0.4, para: 1, concluida: true, causa: null },
+    ]
+
+    it('cliente: bloco com atividade e causa; causa interna da Manfac aparece só como "Manfac"', () => {
+      const { html, texto } = montar('cliente', {}, { avancos })
+      for (const t of [html, texto]) {
+        expect(t).toMatch(/n[ãÃ]o avan[çÇ]ou hoje/i)
+        expect(t).toContain('Escoramento da viga principal (50%) — causa: Cliente / loja · responsável: Cliente')
+        expect(t).toContain('Atividade 2 (20%) — responsável: Manfac')
+        expect(t).toContain('Atividade 4 (0%) — causa: Projeto · responsável: Cliente')
+        expect(t).not.toContain('Material')
+        expect(t).not.toContain('Atividade 3 (')
+      }
+    })
+
+    it('interno: mostra a causa detalhada', () => {
+      const { texto } = montar('interno', {}, { avancos })
+      expect(texto).toContain('Atividade 2 (20%) — causa: Material · responsável: Manfac')
+    })
+
+    it('sem causa informada ou dia sem execução: sem bloco', () => {
+      expect(montar('cliente').texto).not.toMatch(/não avançou hoje/i)
+      expect(montar('cliente', {}, { semExecucao: true, motivoSemExecucao: 'x', avancos }).texto).not.toMatch(/não avançou hoje/i)
+    })
+  })
+
   it('dia sem execução mostra a frase no lugar dos avanços', () => {
     const { html, texto } = montar('cliente', {}, { semExecucao: true, motivoSemExecucao: 'Área não liberada pela loja', avancos: [] })
     expect(html).toContain('Sem execução hoje — Área não liberada pela loja')
@@ -246,5 +293,23 @@ describe('clima no e-mail', () => {
   it('sem nenhum clima, não há linha de clima', () => {
     const m = montarEmailDiario({ ...base, rdo: rdo() })
     expect(m.texto).not.toMatch(/Clima:|Manhã:/)
+  })
+})
+
+describe('link "Ver a obra completa" no diário', () => {
+  const LINK = 'https://hub.exemplo.test/portal-obra'
+  const com = (lado: 'cliente' | 'interno') =>
+    montarEmailDiario({
+      lado, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z',
+      diaN: 4, fotosCid: [], linkObra: LINK,
+    })
+  it('só no cliente; sem link a saída não muda', () => {
+    const c = com('cliente')
+    expect(c.html).toContain(`href="${LINK}"`)
+    expect(c.texto).toContain(`Ver a obra completa: ${LINK}`)
+    const i = com('interno')
+    expect(i.html + i.texto).not.toContain('portal-obra')
+    const base = { lado: 'cliente' as const, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z', diaN: 4, fotosCid: [] }
+    expect(montarEmailDiario({ ...base, linkObra: null })).toEqual(montarEmailDiario(base))
   })
 })

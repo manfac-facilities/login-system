@@ -45,6 +45,15 @@ export function responsavelPadrao(tipo: string | null): ResponsavelImp | null {
 /** Cliente vê o que é dele ou do clima; manfac/terceiro ficam internos por padrão. */
 export const exibirAoClientePadrao = (r: ResponsavelImp | null): boolean => r === 'cliente' || r === 'clima'
 
+/**
+ * Data com que o botão "Encerrar" encerra: a de referência (data do diário ou
+ * hoje), mas nunca antes da abertura. Item 9 da reunião de 31/10: o impedimento
+ * aberto pelo diário de um dia posterior nasce com `aberto_em` = data do diário,
+ * e o botão mandava "hoje" — anterior à abertura, a action recusava.
+ */
+export const dataEncerramento = (abertoEm: string, referencia: string): string =>
+  referencia < abertoEm ? abertoEm : referencia
+
 export type NovoImpedimento = {
   tipo: string | null
   responsavel: ResponsavelImp | null
@@ -59,6 +68,8 @@ export type NovoImpedimento = {
   /** Ausente = hoje. */
   abertoEm?: string
   rdoId?: string | null
+  /** Ambiente do mapa (Leva 6), opcional: o ▲ aparece lá enquanto aberto. */
+  ambienteId?: string | null
 }
 
 export type NovaOrientacao = {
@@ -69,4 +80,5 @@ export type NovaOrientacao = {
   exibirAoCliente?: boolean
   abertoEm?: string
   rdoId?: string | null
+  ambienteId?: string | null
 }

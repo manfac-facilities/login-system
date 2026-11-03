@@ -5,7 +5,7 @@
 import { diasUteisEntre } from '../../_lib/calendario'
 import type { ImpedimentoRow } from '../../_lib/leitura'
 import BotaoEncerrar from './_encerrar'
-import { rotuloResponsavel } from './_tipos'
+import { dataEncerramento, rotuloResponsavel } from './_tipos'
 
 const dataBR = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`
 
@@ -23,9 +23,12 @@ export default function ListaImpedimentos({
   hoje,
   feriados,
   somenteAbertos = false,
+  dataReferencia,
 }: {
   itens: ImpedimentoRow[]
   hoje: string
+  /** Data com que "Encerrar" encerra (no diário, a data do diário). Sem ela, hoje. */
+  dataReferencia?: string
   feriados: ReadonlySet<string>
   somenteAbertos?: boolean
 }) {
@@ -50,7 +53,7 @@ export default function ListaImpedimentos({
               </p>
               <p className="mt-1 text-sm text-[#333336]">{i.descricao}</p>
             </div>
-            {!i.encerradoEm ? <BotaoEncerrar id={i.id} hoje={hoje} /> : null}
+            {!i.encerradoEm ? <BotaoEncerrar id={i.id} data={dataEncerramento(i.abertoEm, dataReferencia ?? hoje)} hoje={hoje} /> : null}
           </div>
         </li>
       ))}

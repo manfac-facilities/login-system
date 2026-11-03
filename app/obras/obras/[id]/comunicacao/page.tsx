@@ -1,103 +1,280 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { EstadoVazio } from '../../../_ui/primitivos'
-import Destinatarios from './_destinatarios'
-import ConfigObraForm from './_config'
-import type { Destinatario, Envio, Lado, TipoEnvio } from './_tipos'
+import { hojeISO } from '../../../_lib/tipos'
+import { lerAgenda } from '../../_lib/envios-agenda'
+import { etapasDaObra } from '../../_lib/relatorio-periodo'
+import { obraConcluida, relatorioValido, ultimoMesDoMensal } from '../../_pdf/carregar-periodo'
+import { lerObraDaRequisicao } from '../_obra-da-requisicao'
+import { faltaSqlFaseamento } from '../faseamento/_regras'
+import Agenda, { tipoAgendaDe } from './_agenda'
+import FormImediata from './_imediata-form'
+import LinhaDoTempo from './_linha-do-tempo'
+import ResponderForm from './_responder-form'
+import DocumentosObra from '../configuracoes/_documentos'
+import type { DocumentoLinha } from '../configuracoes/_tipos-portal'
+import FormRegistro, { botaoSecundario } from './_registro-form'
+import { FILTROS, filtroDe, montarLinhaDoTempo } from './_regras'
+import type { DestinatarioOpcao, Envio, Mensagem, Registro } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
-const dataBR = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—')
+type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 
-export default async function ComunicacaoPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Comunicação = histórico (Leva 2 §3.1): linha do tempo única, mais recente
+ * primeiro, com filtro por tipo; Novo registro (qualquer acesso obras) e
+ * Comunicação imediata (engenheiro/admin). Destinatários moram em /configuracoes.
+ */
+export default async function ComunicacaoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ tipo?: string; aba?: string }>
+}) {
   const { id } = await params
+  const { tipo, aba } = await searchParams
+  const naAgenda = aba === 'agenda'
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  const email = user?.email
+  const email = user?.email?.trim().toLowerCase() ?? ''
   const admin = !!email && (await isAdmin(supabase, email))
   const permitido = !!email && (admin || (await hasSystemAccess(supabase, email, 'obras')))
   if (!permitido) return <EstadoVazio>Esta tela é de quem é responsável pelas obras</EstadoVazio>
 
-  const [obraR, destR, envR, v1R] = await Promise.all([
-    supabase.from('obras_obra').select('engenheiro_email, data_base, atividade_trava').eq('id', id).maybeSingle(),
-    supabase.from('obras_destinatario').select('id, email, nome, funcao, lado, tipos, ativo').eq('obra_id', id).order('email'),
+  const hoje = hojeISO()
+  const lida = await lerObraDaRequisicao(id, hoje)
+  if (!lida.ok) return <EstadoVazio>{lida.erro}</EstadoVazio>
+  const { obra, plano, impedimentos } = lida.dados
+  const engenheiro = obra.engenheiro_email?.trim().toLowerCase() ?? ''
+  const podeEnviar = admin || (engenheiro !== '' && engenheiro === email)
+
+  const COLUNAS_ENVIO = 'id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe, registro_id, relatorio_id'
+  const lerEnvios = (comFase: boolean) =>
     supabase
       .from('obras_envio')
-      .select('id, tipo, referencia, lado, enviado_por, enviado_em, destinatarios, resultado, detalhe')
+      .select(comFase ? `${COLUNAS_ENVIO}, fase_revisao_id` : COLUNAS_ENVIO)
       .eq('obra_id', id)
       .order('enviado_em', { ascending: false })
-      .limit(50),
-    supabase.from('obras_cronograma_versao').select('salva_em').eq('obra_id', id).eq('numero', 1).maybeSingle(),
+      .limit(150)
+  const [envR1, regR, destR, relR, agenda, msgR, docR, fasR] = await Promise.all([
+    lerEnvios(true),
+    supabase
+      .from('obras_registro')
+      .select('*')
+      .eq('obra_id', id)
+      .order('data', { ascending: false })
+      .order('criado_em', { ascending: false })
+      .limit(100),
+    supabase.from('obras_destinatario').select('email, nome, lado, tipos').eq('obra_id', id).eq('ativo', true).order('email'),
+    supabase.from('obras_relatorio').select('id, tipo, referencia').eq('obra_id', id),
+    // Agenda (dado opcional): falha vira null e a aba avisa, sem derrubar a página.
+    naAgenda ? lerAgenda(supabase, id, lida.dados, hoje) : Promise.resolve(null),
+    supabase.from('obras_mensagem').select('id, autor_tipo, autor_email, texto, criado_em').eq('obra_id', id).order('criado_em', { ascending: false }).limit(200),
+    supabase
+      .from('obras_documento')
+      .select('id, pasta, nome, tamanho, criado_em, criado_por')
+      .eq('obra_id', id)
+      .order('criado_em', { ascending: false }),
+    // Faseamento (Leva 6b): só rótulo e link do PDF da revisão emitida (congelados nela).
+    supabase.from('obras_fase_revisao').select('id, revisao, fase_numero, fase_nome').eq('obra_id', id).eq('status', 'emitida'),
   ])
-  if (obraR.error || destR.error || envR.error) {
+  // Sem o SQL da leva 6b (coluna fase_revisao_id ausente): relê sem ela e segue sem o faseamento (faseRevisao: null).
+  const envR = envR1.error && faltaSqlFaseamento(envR1.error) ? await lerEnvios(false) : envR1
+  if (envR.error || regR.error || destR.error) {
     return <EstadoVazio>Não foi possível carregar a comunicação desta obra</EstadoVazio>
   }
 
-  const obra = obraR.data
-  const destinatarios: Destinatario[] = (destR.data ?? []).map((d) => ({
-    id: d.id as string,
-    email: d.email as string,
-    nome: (d.nome as string | null) ?? null,
-    funcao: (d.funcao as string | null) ?? null,
-    lado: ((d.lado as Lado | null) ?? 'cliente') as Lado,
-    tipos: (d.tipos ?? []) as TipoEnvio[],
-    ativo: d.ativo !== false,
-  }))
-  const envios: Envio[] = (envR.data ?? []).map((e) => ({
-    id: e.id as string,
-    tipo: e.tipo,
-    referencia: e.referencia,
-    lado: e.lado,
-    enviadoPor: e.enviado_por,
-    enviadoEm: e.enviado_em,
+  // Relatórios de período: o envio casa pelo relatorio_id; a fase aparece pelo nome atual da etapa (nunca o numero).
+  const etapas = etapasDaObra(lida.dados)
+  // Só rótulo e link do PDF: falha nesta leitura não derruba a página (o envio aparece sem o link).
+  const relatorios = new Map((relR.error ? [] : ((relR.data ?? []) as Linha[])).map((r) => [String(r.id), r]))
+  const relatorioDe = (relatorioId: unknown): Envio['relatorio'] => {
+    const r = relatorioId ? relatorios.get(String(relatorioId)) : undefined
+    if (!r || !relatorioValido(r.tipo, r.referencia)) return null
+    const referencia = String(r.referencia)
+    const e = r.tipo === 'fase' ? etapas.find((x) => x.referencia === referencia) : undefined
+    const rotulo =
+      r.tipo === 'mensal'
+        ? `mês ${referencia.slice(5, 7)}/${referencia.slice(0, 4)}`
+        : r.tipo === 'fase'
+          ? e ? `etapa ${e.ordem} — ${e.nome}` : 'etapa fora do cronograma vigente'
+          : 'entrega da obra'
+    return { tipo: r.tipo, referencia, rotulo }
+  }
+  // Só rótulo e link: falha nesta leitura não derruba a página (o envio aparece sem o link).
+  const revisoesFase = new Map((fasR.error ? [] : ((fasR.data ?? []) as Linha[])).map((r) => [String(r.id), r]))
+  const faseRevisaoDe = (revisaoId: unknown): Envio['faseRevisao'] => {
+    const r = revisaoId ? revisoesFase.get(String(revisaoId)) : undefined
+    return r ? { id: String(r.id), rotulo: `Fase ${r.fase_numero} · ${r.fase_nome} · R${r.revisao}` } : null
+  }
+  const envios: Envio[] = ((envR.data ?? []) as Linha[]).map((e) => ({
+    id: String(e.id),
+    tipo: e.tipo ?? null,
+    referencia: e.referencia ?? null,
+    lado: e.lado ?? null,
+    enviadoPor: e.enviado_por ?? null,
+    enviadoEm: String(e.enviado_em),
     destinatarios: e.destinatarios ?? [],
-    resultado: e.resultado,
-    detalhe: e.detalhe,
+    resultado: e.resultado ?? null,
+    detalhe: e.detalhe ?? null,
+    registroId: e.registro_id ?? null,
+    relatorio: relatorioDe(e.relatorio_id),
+    faseRevisao: faseRevisaoDe(e.fase_revisao_id),
+  }))
+  const registros: Registro[] = ((regR.data ?? []) as Linha[]).map((r) => ({
+    id: String(r.id),
+    tipo: r.tipo,
+    data: String(r.data),
+    participantes: r.participantes ?? null,
+    texto: r.texto ?? null,
+    ata: r.ata ?? null,
+    nivel: r.nivel ?? null,
+    impedimentoId: r.impedimento_id ?? null,
+    atividadeNumero: r.atividade_numero ?? null,
+    criadoPor: r.criado_por ?? null,
+    criadoEm: String(r.criado_em),
+    editadoEm: r.editado_em ?? null,
+  }))
+  // Mensagens são dado opcional: falha na leitura não derruba a página.
+  const mensagens: Mensagem[] = (msgR.error ? [] : ((msgR.data ?? []) as Linha[])).map((m) => ({
+    id: String(m.id),
+    autorTipo: m.autor_tipo === 'manfac' ? 'manfac' : 'cliente',
+    autorEmail: String(m.autor_email),
+    texto: String(m.texto),
+    criadoEm: String(m.criado_em),
+  }))
+  // Documentos (dado opcional): o engenheiro, que não abre as Configurações (só admin), sobe e apaga por aqui.
+  const documentos: DocumentoLinha[] = (docR.error ? [] : ((docR.data ?? []) as Linha[])).map((d) => ({
+    id: String(d.id),
+    pasta: String(d.pasta),
+    nome: String(d.nome),
+    tamanho: d.tamanho ?? null,
+    criadoEm: String(d.criado_em),
+    criadoPor: d.criado_por ?? null,
+  }))
+  const destinatarios: DestinatarioOpcao[] = ((destR.data ?? []) as Linha[]).map((d) => ({
+    email: String(d.email),
+    nome: d.nome ?? null,
+    lado: d.lado === 'interno' ? 'interno' : 'cliente',
+    tipos: d.tipos ?? [],
   }))
 
+  // Botões só dos relatórios disponíveis: mensal do mês da data-base ao mês do término; fase com etapa concluída
+  // (a mais recente; a tela lista as outras); entrega com a obra concluída.
+  const mesAtual = hoje.slice(0, 7)
+  const dataBase = (obra.data_base as string | null | undefined) ?? null
+  const ultimoMes = ultimoMesDoMensal(lida.dados)
+  const mensalDisponivel = !!dataBase && dataBase.slice(0, 7) <= mesAtual && (!ultimoMes || mesAtual <= ultimoMes)
+  const ultimaFase = etapas
+    .filter((e) => e.concluida && e.fimReal)
+    .sort((a, b) => b.fimReal!.localeCompare(a.fimReal!) || b.ordem - a.ordem)[0]
+
+  const filtro = filtroDe(tipo)
+  const itens = montarLinhaDoTempo({ envios, registros, mensagens, filtro, email, admin })
+  const base = `/obras/obras/${id}/comunicacao`
+  const chip = (ativo: boolean) =>
+    `flex min-h-11 items-center rounded-full border px-3 text-sm ${
+      ativo ? 'border-[#b94606] bg-[#b94606] font-semibold text-white' : 'border-[#dadad8] text-[#333336]'
+    }`
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-      <div className="flex flex-col gap-6">
-        <Destinatarios obraId={id} itens={destinatarios} admin={admin} />
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-bold text-[#00345e]">Histórico de envios</h2>
-          {envios.length === 0 ? (
-            <EstadoVazio>Nenhum envio ainda</EstadoVazio>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {envios.map((e) => (
-                <li key={e.id} className="rounded-xl border border-[#dadad8] p-3 text-sm text-[#333336]">
-                  <div className="flex flex-wrap justify-between gap-2">
-                    <strong>{e.tipo ?? 'envio'} · ref. {dataBR(e.referencia)} · {e.lado ?? '—'}</strong>
-                    <span className={e.resultado === 'ok' ? 'text-[#5a7380]' : 'text-[#b23232]'}>
-                      {e.resultado === 'ok' ? 'enviado' : e.resultado === 'falha' ? 'falhou' : '—'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#5a7380]">
-                    {new Date(e.enviadoEm).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-                    {e.enviadoPor ? ` · por ${e.enviadoPor}` : ''}
-                  </p>
-                  <p className="break-words text-xs text-[#5a7380]">Para: {e.destinatarios.join(', ') || '—'}</p>
-                  {e.detalhe ? <p className="text-xs text-[#5a7380]">{e.detalhe}</p> : null}
-                </li>
-              ))}
-            </ul>
-          )}
+    <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
+      <section className="flex min-w-0 flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-[#00345e]">Comunicação</h2>
+          <nav aria-label="Relatórios" className="flex flex-wrap gap-2">
+            <Link href={`${base}/semanal`} className={botaoSecundario}>
+              Semanal
+            </Link>
+            {mensalDisponivel ? (
+              <Link href={`${base}/relatorio/mensal/${mesAtual}`} className={botaoSecundario}>
+                Mensal
+              </Link>
+            ) : null}
+            {ultimaFase ? (
+              <Link href={`${base}/relatorio/fase/${ultimaFase.referencia}`} className={botaoSecundario}>
+                Fase
+              </Link>
+            ) : null}
+            {obraConcluida(lida.dados) ? (
+              <Link href={`${base}/relatorio/entrega/entrega`} className={botaoSecundario}>
+                Entrega
+              </Link>
+            ) : null}
+          </nav>
+        </div>
+        <nav aria-label="Abas da comunicação" className="flex gap-2">
+          <Link href={base} aria-current={naAgenda ? undefined : 'page'} className={chip(!naAgenda)}>
+            Histórico
+          </Link>
+          <Link href={`${base}?aba=agenda`} aria-current={naAgenda ? 'page' : undefined} className={chip(naAgenda)}>
+            Agenda
+          </Link>
+        </nav>
+        {naAgenda ? (
+          <Agenda
+            obraId={id}
+            agenda={agenda}
+            tipo={tipoAgendaDe(tipo)}
+            fases={new Map(etapas.map((e) => [e.referencia, e.nome]))}
+            hrefTipo={(t) => (t === 'todos' ? `${base}?aba=agenda` : `${base}?aba=agenda&tipo=${t}`)}
+          />
+        ) : (
+          <>
+        <nav aria-label="Filtrar por tipo" className="flex flex-wrap gap-2">
+          {FILTROS.map((f) => (
+            <Link
+              key={f.valor}
+              href={f.valor === 'todos' ? base : `${base}?tipo=${f.valor}`}
+              aria-current={filtro === f.valor ? 'page' : undefined}
+              className={chip(filtro === f.valor)}
+            >
+              {f.rotulo}
+            </Link>
+          ))}
+        </nav>
+        {itens.length === 0 ? (
+          <EstadoVazio>Nada registrado ainda</EstadoVazio>
+        ) : (
+          <LinhaDoTempo itens={itens} obraId={id} hoje={hoje} podeEnviar={podeEnviar} destinatarios={destinatarios} />
+        )}
+          </>
+        )}
+      </section>
+      <aside className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+          <h3 className="text-sm font-semibold text-[#00345e]">Novo registro</h3>
+          <FormRegistro obraId={id} hoje={hoje} />
         </section>
-      </div>
-      <ConfigObraForm
-        obraId={id}
-        admin={admin}
-        baseSalva={!!v1R.data?.salva_em}
-        inicial={{
-          engenheiroEmail: obra?.engenheiro_email ?? null,
-          dataBase: obra?.data_base ?? null,
-          atividadeTrava: obra?.atividade_trava ?? null,
-        }}
-      />
+        {podeEnviar ? (
+          <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <h3 className="text-sm font-semibold text-[#00345e]">Responder ao cliente</h3>
+            <ResponderForm obraId={id} />
+          </section>
+        ) : null}
+        {podeEnviar ? (
+          <section className="rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <DocumentosObra obraId={id} itens={documentos} pode />
+          </section>
+        ) : null}
+        {podeEnviar ? (
+          <section className="flex flex-col gap-3 rounded-xl border border-[#dadad8] bg-[#ffffff] p-3">
+            <h3 className="text-sm font-semibold text-[#00345e]">Comunicação imediata</h3>
+            <FormImediata
+              obraId={id}
+              destinatarios={destinatarios.filter((d) => d.tipos.includes('imediato'))}
+              impedimentos={impedimentos.filter((i) => !i.encerradoEm).map((i) => ({ id: i.id, descricao: i.descricao }))}
+              atividades={plano.map((a) => ({ numero: a.numero, descricao: a.descricao }))}
+            />
+          </section>
+        ) : null}
+      </aside>
     </div>
   )
 }

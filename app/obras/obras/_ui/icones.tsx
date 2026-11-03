@@ -169,3 +169,49 @@ export const IconeCamadas = (p: Props) => (
     <path d="m3 13 9 5 9-5" />
   </Base>
 )
+
+export const IconeConfiguracoes = (p: Props) => (
+  <Base {...p}>
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+    <circle cx="9" cy="6" r="2" fill="var(--obra-card, #fff)" />
+    <circle cx="15" cy="12" r="2" fill="var(--obra-card, #fff)" />
+    <circle cx="8" cy="18" r="2" fill="var(--obra-card, #fff)" />
+  </Base>
+)
+
+export const IconeFinanceiro = (p: Props) => (
+  <Base {...p}>
+    <rect x="2.5" y="6" width="19" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M6 9.5v5M18 9.5v5" />
+  </Base>
+)
+
+/** Dados da obra (Fases B/C): ficha com pessoas. */
+export const IconeDados = (p: Props) => (
+  <Base {...p}>
+    <rect x="3.5" y="3.5" width="17" height="17" rx="2" />
+    <circle cx="9" cy="10" r="2.25" />
+    <path d="M5.75 16.5c.6-1.8 1.8-2.75 3.25-2.75s2.65.95 3.25 2.75M14.5 9h3M14.5 12.5h3" />
+  </Base>
+)
+
+/** Mapa da obra (Leva 6): planta dobrada. */
+export const IconeMapa = (p: Props) => (
+  <Base {...p}>
+    <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" />
+    <path d="M9 4v13.5" />
+    <path d="M15 6.5V20" />
+  </Base>
+)
+
+/** Planta de faseamento (Leva 6b): prancha com zona e seta de fluxo. */
+export const IconeFaseamento = (p: Props) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />
+    <path d="M3.5 12h9V4.5" />
+    <path d="M15 16h4M17.5 14l1.5 2-1.5 2" />
+  </Base>
+)

@@ -28,6 +28,7 @@ import {
 } from '../../_lib/tipos'
 import Ficha, { type EdicoesPorBloco, type RemarcacaoNaFicha } from './_ficha'
 import Triagem from './_triagem'
+import { lerFinanceiroSpot } from './_financeiro/dados'
 import type { LinhaHistorico } from '../../_lib/historico'
 import { lerTodasAsLinhas } from '../../_lib/ler-paginas'
 
@@ -243,6 +244,12 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
     mapaPessoas[p.chave] = p
   })
 
+  // Financeiro só da OS SPOT (modalidade nula conta como SPOT, como a ficha). Cliente da sessão: as RPCs filtram por quem lê.
+  const financeiro =
+    (obra.modalidade ?? 'spot') === 'spot'
+      ? await lerFinanceiroSpot(supabase, { id: obra.id, valor: obra.valor, etapa: obra.etapa, fat_nfse: obra.fat_nfse ?? null }, hojeISO())
+      : undefined
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6">
       {voltar}
@@ -261,6 +268,7 @@ export default async function FichaDaObraPage({ params }: { params: Promise<{ id
         edicoes={ultimasEdicoes((historico ?? []) as LinhaHistorico[])}
         historico={(historico ?? []) as LinhaHistorico[]}
         admin={await isAdmin(supabase, user.email)}
+        financeiro={financeiro}
       />
     </div>
   )

@@ -39,6 +39,7 @@ async function autorizar(): Promise<{ supabase: SupabaseClient } | Erro> {
 }
 
 function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
+  if (e.message.includes('OBRAS_MAPA_VINCULO')) return falha('O ambiente escolhido não é desta obra.')
   if (e.code === '42501' || e.message.includes('row-level security')) return falha('Você não tem permissão para isso.')
   if (e.code === '23503') return falha('Referência inválida (obra, diário ou orientação não existe mais).')
   if (e.code === '23514') return falha('Dados inválidos: confira responsável e campos obrigatórios.')
@@ -46,6 +47,7 @@ function erroBanco(acao: string, e: { message: string; code?: string }): Erro {
 }
 
 const texto = (s: string | null | undefined) => (s ?? '').trim() || null
+const dataBR = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
 
 function revalidar(obraId: string) {
   revalidatePath(`/obras/obras/${obraId}/impedimentos`)
@@ -77,8 +79,8 @@ async function resolverRdo(
 /** Campos comuns; devolve erro ou o que vai ao banco. */
 function validarComum(
   obraId: string,
-  i: { descricao: string; atividadeNumero: number | null; fotoPath: string | null; abertoEm?: string },
-): Erro | { descricao: string; abertoEm: string } {
+  i: { descricao: string; atividadeNumero: number | null; fotoPath: string | null; abertoEm?: string; ambienteId?: string | null },
+): Erro | { descricao: string; abertoEm: string; ambienteId: string | null } {
   const descricao = texto(i.descricao)
   if (!descricao) return falha('Descreva o que aconteceu')
   const abertoEm = i.abertoEm ?? hojeISO()
@@ -87,7 +89,10 @@ function validarComum(
     return falha('Atividade inválida')
   }
   if (i.fotoPath !== null && !i.fotoPath.startsWith(`${obraId}/impedimento/`)) return falha('Foto inválida')
-  return { descricao, abertoEm }
+  // Ambiente de outra obra: o banco recusa (OBRAS_MAPA_VINCULO).
+  const ambienteId = i.ambienteId ?? null
+  if (ambienteId !== null && (typeof ambienteId !== 'string' || !ambienteId)) return falha('Ambiente inválido')
+  return { descricao, abertoEm, ambienteId }
 }
 
 export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento): Promise<Resultado & { id?: string }> {
@@ -124,10 +129,21 @@ export async function abrirImpedimentoAction(obraId: string, i: NovoImpedimento)
       exibir_ao_cliente: i.exibirAoCliente ?? exibirAoClientePadrao(i.responsavel),
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()
   if (error) return erroBanco('registrar o impedimento', error)
+  // Item 7: o diário em rascunho daquele dia deixa de estar marcado "sem impedimentos hoje".
+  const { error: errS } = await supabase
+    .from('obras_rdo')
+    .update({ sem_impedimento: false })
+    .eq('obra_id', obraId)
+    .eq('data', rdo.data ?? comum.abertoEm)
+    .eq('estado', 'rascunho')
+    .eq('sem_impedimento', true)
+  if (errS) console.warn(`[impedimento] não deu para desmarcar "sem impedimentos" do diário: ${errS.message}`)
   revalidar(obraId)
   return { ok: true, id: data.id as string }
 }
@@ -146,7 +162,12 @@ export async function encerrarImpedimentoAction(id: string, encerradoEm: string)
   if (e1) return erroBanco('ler o impedimento', e1)
   if (!imp) return falha('Impedimento não encontrado')
   if (imp.encerrado_em) return falha('Impedimento já encerrado')
-  if (encerradoEm < String(imp.aberto_em)) return falha('A data de encerramento não pode ser anterior à abertura')
+  const abertoEm = String(imp.aberto_em).slice(0, 10)
+  if (encerradoEm < abertoEm) {
+    return falha(
+      `A data de encerramento (${dataBR(encerradoEm)}) não pode ser anterior à abertura do impedimento (${dataBR(abertoEm)})`,
+    )
+  }
 
   const { error } = await supabase.from('obras_impedimento').update({ encerrado_em: encerradoEm }).eq('id', id)
   if (error) return erroBanco('encerrar o impedimento', error)
@@ -182,6 +203,8 @@ export async function registrarOrientacaoAction(obraId: string, o: NovaOrientaca
       exibir_ao_cliente: o.exibirAoCliente ?? true,
       aberto_em: rdo.data ?? comum.abertoEm,
       rdo_id: rdo.rdoId,
+      // Leva 6: só manda a coluna com ambiente (sem ele, o insert de antes da Leva 6).
+      ...(comum.ambienteId ? { ambiente_id: comum.ambienteId } : {}),
     })
     .select('id')
     .single()

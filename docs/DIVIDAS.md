@@ -350,3 +350,198 @@ menu inferior do diário.
   lançamento do mês anterior), não MAX−MIN como a tela Consumo do mês.
 - "Enviar para oficina" na gaveta do veículo (mockup) não entrou: depende de manutenção corretiva (rodada seguinte).
 - Chip "corrigido" do KM aparece só quando o valor atual difere do original (regra de `valorOriginalKm`).
+
+## 31/10/2026 — Obras Leva 1b, estrutura do cronograma + visão Tabela (`feat/obras-leva1b`, Task 3)
+
+- Reordenar com o mouse (arrastar) não entrou: ↑/↓ por etapa e por atividade na visão Tabela. Para trocar de etapa,
+  edita-se a célula Etapa (lista das etapas existentes).
+- A estrutura (+ Etapa, renomear, ↑/↓, + Atividade, excluir) ficou só na visão Tabela (padrão no rascunho); a árvore
+  da visão Gantt segue com a edição inline de antes, sem os botões de estrutura (linha de 44px casada com o Gantt).
+- Atividade criada pela tela nasce com `peso_valor = 0`; o engenheiro preenche na coluna "Valor (R$)" da Tabela
+  (decisão do José, 31/10, opção A). Enquanto ficar 0 não pesa no % físico; com Σ = 0 o motor dá 0% (regra atual).
+  A coluna só aparece no rascunho, para engenheiro/admin; "+ Atividade" cria a linha e o valor se digita nela.
+- Renomear etapa numa revisão: a comparação com a base por etapa (início/fim base da linha de etapa) é pelo nome, então
+  a etapa renomeada aparece sem base até a próxima base. A comparação por atividade (`numero`) não muda.
+- Excluir atividade deixa a linha de `obras_atividade_exec` (sem avanço; não há delete nela). O `numero` não é
+  reaproveitado (próximo = maior da obra em todas as versões e na execução + 1).
+- Lista de etapas na linha muda ao escolher (inclusive com as setas do teclado numa lista fechada no Windows, que grava
+  a cada seta); predecessoras idem.
+
+## 31/10/2026 — Obras Leva 3, Last Planner + semanal (`feat/obras-leva3`), revisão final
+
+- `obras_restricao.atualizado_por`: UPDATE sem JWT (service role, cron) herda o valor anterior. Só a service role
+  escreve sem JWT.
+- Admin apaga um plano já avaliado e os itens vão em cascata (poder de admin, sem UI).
+- Avaliação do plano grava item por item, sem transação: falha no meio deixa parte avaliada; o resto segue avaliável
+  (a checagem é por item).
+- Validar e enviar o semanal em duas abas/cliques ao mesmo tempo: as duas leem `obras_envio` antes de qualquer insert
+  e mandam duas vezes. O botão fica desabilitado enquanto envia.
+- Semanal validado com `conteudo` fora do formato (só possível escrevendo o jsonb à mão pela API): o app ignora e monta
+  na hora, ou seja, volta a mostrar o estado atual para esse semanal.
+- Cabeçalho do PDF do semanal congelado (OS, cliente, engenheiro) ainda sai da obra atual; o corpo é o congelado.
+
+## 31/10/2026 — Obras Leva 5, portal do cliente (`feat/obras-leva5`), deixado de propósito
+
+Fontes: `.superpowers/sdd/2026-10-31-obras-leva5/progress.md` (ledger) e `final-review.md` (revisão final).
+O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de operação e de produto.
+
+- **Verificações antigas não rodam de novo** (`docs/obras/2026-10-31-verificacao-obras-leva3.sql` caso 58 e `docs/obras/2026-10-31-verificacao-obras-leva4.sql` caso 57): elas
+  apagam obra com JWT de não-admin, e a Leva 5 passou a recusar isso (`obras_obra_delete_guarda`). Motivo: o teste
+  antigo não é reaproveitado; corrigir é trocar para JWT de admin quando alguém precisar rodá-lo. Consequência:
+  rodar de novo dá falso "FALHOU" nesses dois casos.
+- **Índice de IP não usado** (`obras_portal_codigo_ip_idx`, `sdd-sql-obras-leva5.sql`): o rpc conta por
+  `ip is not distinct from p_ip`, que não usa o índice. Motivo: volume baixo (códigos da última hora). Consequência:
+  varredura da tabela a cada pedido; vira problema só com dezenas de milhares de linhas (falta limpeza de códigos
+  antigos, ver abaixo).
+- **Cota da vítima** (`obras_portal_emitir_codigo`): quem sabe o e-mail do cliente pode pedir código por ele,
+  aposentar o código vivo e gastar os 5/h dele. Motivo: desenho do spec (resposta uniforme, sem enumeração);
+  não vaza nada. Consequência: o cliente pode ficar até 1 h sem conseguir entrar sob abuso.
+- **Obra com mensagem ou documento não se apaga** (FK `on delete restrict`; delete de obra só admin). Motivo:
+  mensagem é registro imutável. Consequência: apagar obra exige runbook (exportar e limpar antes, sem JWT).
+- **Linha órfã de documento sem objeto** no Storage só admin apaga (Task 3). Motivo: borda rara (falha entre
+  upload e insert). Consequência: o documento aparece e o download dá erro até um admin limpar.
+- **URL de foto do portal com 300 s** em thumbnail lazy (Task 4): a página aberta por muito tempo mostra foto
+  quebrada até recarregar. Motivo: URL curta é a proteção; recarregar resolve.
+- **Rate limit de mensagens do cliente não é atômico** (30/h por e-mail, `(obra)/_lib/mensagens.ts`). Motivo:
+  não é auth; o excesso numa corrida é de poucas unidades.
+- **Conferência do código usa o relógio do app** (`lib/portal-obra/codigo.ts`, `.gt('expira_em', agora)`): a
+  emissão já usa o relógio do banco (M1), mas a conferência compara com a hora do servidor Next. Motivo: só muda
+  a validade efetiva pelo tamanho do desvio de relógio (NTP nos dois); um rpc `obras_portal_usar_codigo` resolveria.
+- **Códigos e sessões vencidos não são apagados** (`obras_portal_codigo`, `obras_portal_sessao`). Motivo: volume
+  pequeno; sem cron de limpeza. Consequência: a tabela cresce devagar.
+- **Pergunta de execução/entrega pode voltar quase todo dia** (`app/obras/obras/_lib/analista.ts`, `impressao` =
+  duração + fim projetado; o fim de atividade em andamento sem `dias_restantes` anda com a data de status).
+  Motivo: é o que o spec diz ("sem mudança nos números não volta"); faixas (semana do término) dependem do José.
+- **Situação publicada fica no portal indefinidamente**, mesmo se os pontos somem; e se a última versão estiver
+  com formato inválido (só por escrita manual) nada aparece, sem cair para a anterior. Motivo: spec ("a última
+  publicada"). Consequência: o engenheiro publica uma nova quando a situação melhora.
+- **Restrição da Manfac/terceiros vai ao prompt** com tipo e código, sem descrição; a resposta do engenheiro pode
+  citar área interna. Motivo: desenho do spec; só a instrução da IA e a revisão humana antes de publicar protegem.
+- **Apresentação (`apresentacao.ts`) não leva a situação.** Motivo: o spec não pede.
+
+## 31/10/2026 — Obras Financeiro da obra, Fase A (`feat/obras-financeiro-a`), deixado de propósito
+- Falta índice em `frn_contratos.obra_id` (a leitura `obras_fin_fornecedores` filtra por ele). Sem custo hoje (poucos contratos); criar quando crescer.
+- Entrega com situação `divergencia` não conta como entregue no selo "Pronta para liberar" (só `confirmada`/`resolvida`). Confirmar com o José se está certo.
+- Uma RPC a mais (`obras_pode_ver_valores`) em toda página da obra, calculada no layout. Aceito; cachear se pesar.
+- As `obras_fin_*` ainda têm grant a `service_role`, inútil (retornam vazio sem e-mail). Não removido: o teste 13 de verificação chama como service_role.
+- Bloco Compras mostra pedido de solicitação cancelada com valor e status "Cancelada", sem esmaecer; o Resumo já o exclui (salvo com NF/pago).
+
+## 01/11/2026 — Obras Financeiro da obra, Fases B/C, SQL do hub (`feat/obras-financeiro-bc`, Task 5), deixado de propósito
+- **Pedido do Compras pago por solicitação do Financeiro conta duas vezes.** Nem `fin_solicitacoes` nem `fin_obra_vinculos` guardam o pedido do Compras (`cmp_pedidos`), então se alguém pedir no Financeiro o pagamento da NF de um pedido do Compras (CC de OBRAS → o 044 obriga vínculo), o custo entra em `obras_fin_compras` e em `obras_fin_vinculos`. Não há chave para deduplicar em SQL. A Task 7 deve rotular/alertar; ou combinar com o José a regra "pedido do Compras não vira solicitação no Financeiro". **Mitigado em 01/11/2026 (revisões da Task 7 e final):** a aba Financeiro casa pelo CPF/CNPJ do fornecedor (`fin_solicitacoes.fornecedor_documento` × `cmp_mapa_fornecedores.documento`). Regra exata (`consolidarMargem` em `app/obras/obras/_lib/financeiro-obra.ts`): um pagamento do Financeiro (vínculo de solicitação, em **qualquer OS da família** mãe + aditivos) ao mesmo documento de um pedido do Compras que conta (emitido; cancelado só com NF/pago) é tratado como quitação desse pedido, **só enquanto o pedido não está pago no Compras** (`cmp_pedidos.pago_em` vazio) e até o valor do pedido menos o que outros pagamentos já quitaram; o excedente fica em "Pagamentos / rateio". Pedido já pago no Compras não absorve nada, **exceto** o pagamento com a mesma data (dia BRT de `pago_em` = `fin_pagamentos_omie.data_pagamento`), que é o mesmo pagamento visto dos dois lados. Bordas que sobram: (1) um pagamento **avulso** (serviço extra, outra NF) ao mesmo fornecedor enquanto ele tem pedido **em aberto** na família é absorvido pelo pedido — o custo da obra fica menor até o Compras marcar o pedido como pago (aí, se as datas forem diferentes, volta a contar); (2) pedido quitado pelo Financeiro e marcado pago no Compras em **dia diferente** do pagamento conta duas vezes; (3) dois pagamentos no mesmo dia ao mesmo fornecedor com pedido pago: o segundo também é absorvido até o valor do pedido. A pílula "pagamentos casados com pedidos do Compras" deixa o casamento à vista. Apertar exige chave de verdade (número da NF na solicitação ou o id do pedido no vínculo) — levar ao José.
+- `obras_medicao_cliente` com nota ligada fica travada (nem admin apaga, muda %/valor ou tira de aprovada); a checagem lê `fin_fat_nota_medicoes` na hora, sem trava contra o Financeiro ligar uma nota no mesmo instante. Janela de corrida aceita (o Financeiro liga nota a medição aprovada, que o engenheiro já não altera).
+- Datas da medição (`enviada_em`/`aprovada_em`) só têm limite superior (hoje, BRT) e coerência (aprovação não antes do envio); retroagir livremente continua possível. Combinar com o José se quer um limite inferior.
+
+## 01/11/2026 — Obras Financeiro da obra, Fases B/C, telas do hub (`feat/obras-financeiro-bc`, Task 6), deixado de propósito
+- `obras_medicao_cliente.percentual_centesimos` é NOT NULL: OS sem valor receita não registra medição (a tela mostra o % como "—" e pede o valor receita em Dados da obra). Se o José quiser medição só por valor, o percentual precisa virar nulável.
+- Trocar o e-mail de uma pessoa do organograma não leva junto o destinatário/acesso do e-mail antigo: eles aparecem em "sem cadastro no organograma" até alguém acertar.
+- Funções da lista antiga sem tela: "Trazer destinatários do lado cliente" (`trazerDestinatariosClienteAction`) ficou sem botão (o organograma substitui). Remover acesso ao portal e editar destinatário do cliente voltaram em Dados da obra.
+- Avanço físico da medição é gravado no momento do registro (lido do cronograma da própria OS); aditivo sem cronograma grava NULL ("—").
+## 01/11/2026 — Obras Leva 6, mapa e fotos (`feat/obras-leva6`), deixado de propósito
+- ~~Planta só como imagem (PDF não)~~ **Resolvida em 01/11/2026** (`feat/obras-leva6b-pdf`): a tela de montar aceita
+  PDF e converte a 1ª página em imagem no navegador (`pdfjs-dist` 5.4.624 — a 6.x exige Node ≥22 e o Dockerfile usa node:20, import dinâmico, `montar/_pdf-para-imagem.ts`);
+  o servidor segue recebendo só imagem.
+- **Trocar a planta deixa a imagem antiga no bucket** (`<obra>/mapa/`): a policy não deixa apagar pelo navegador e
+  não há limpeza. Volume pequeno (uma imagem por troca).
+- **Ponto desativado não é barrado no banco para foto nova** (Task 1, ponto 2): a ronda só lista pontos ativos,
+  mas uma chamada direta à action com o id de um ponto desativado grava.
+- **Leituras de foto do mapa sempre ordenadas e limitadas** (fix 1 da revisão, contra o corte calado de 1000 linhas do
+  PostgREST): diário = 1 consulta `limit 1` por ponto ativo (referência de ângulo); mapa = 1 consulta por ambiente com as
+  6 mais novas; linha do tempo do ponto = páginas de 60 ("Ver mais fotos", até 600) + a primeira foto. Custo: N consultas
+  pequenas por tela (N = pontos ativos ou ambientes). Se pesar, trocar por um rpc com `distinct on`.
+- **Ordem por coluna do RDO** usa `order=obras_rdo(data)` (ordenação por relação to-one do PostgREST ≥ 11). Conferir na
+  primeira abertura em produção que a linha do tempo vem em ordem.
+- **Editor do mapa sem desfazer e sem atalho de teclado para mover/redimensionar** (só ponteiro e os botões
+  "+ Ambiente"/"Pôr no desenho"). O mockup mostrava "Desfazer"; como tudo grava na hora, ficou de fora.
+- **`salvarPlantaAction` não confere se o arquivo existe no bucket**: um caminho canônico válido mas não enviado deixa a
+  planta quebrada (a imagem não aparece). Só engenheiro/admin chega lá; reenviar a planta resolve.
+- **Deploy: `sdd-sql-obras-leva6.sql` antes do app** (verificação pós-commit 20/20 e teste
+  `docs/obras/2026-11-01-verificacao-obras-leva6.sql` 94/94). Se o app subir antes, o diário, a foto e o impedimento
+  continuam como antes da Leva 6 (leitura do mapa que falha = obra sem mapa; `ambiente_id`/`ponto_id`/`atividade_numero`
+  só vão no insert quando preenchidos); só as telas do mapa dão erro.
+- **Ambiente com impedimento (mesmo encerrado) nunca se apaga** (FK NO ACTION de `obras_impedimento.ambiente_id`) e não
+  há tela para desmarcar o ambiente do impedimento. Coerente com não apagar histórico; a mensagem orienta renomear.
+- **`atividade_numero` da foto não é conferido contra o cronograma** (nem no banco nem na action, só `>= 1`). A tela só
+  oferece atividades da versão vigente; uma chamada direta pode gravar número inexistente (a foto só não aparece na
+  atividade).
+- **Diário aberto antes de o mapa existir:** se o engenheiro cria o primeiro ambiente enquanto o supervisor está com o
+  diário aberto, a foto seguinte é recusada com "O mapa da obra mudou; recarregue a página…" e o arquivo enviado é
+  apagado na hora (sem órfão, salvo falha da própria remoção).
+- **Teste manual do editor do mapa pendente** (arrastar, redimensionar, pontos) em desktop e tablet antes do deploy; só
+  há testes em jsdom.
+- **Ambiente obrigatório só no app**, não no banco (Task 1, ponto 1): obra com mapa recusa foto sem ambiente/ponto em
+  `registrarFotoAction`; quem gravar direto pelo banco escapa. De propósito, para não quebrar obra sem mapa.
+
+## 01/11/2026 — Obras Leva 6b, planta de faseamento, telas do hub (`feat/obras-leva6b-faseamento`, Task 3), deixado de propósito
+
+- **Deploy: `sdd-sql-obras-leva6b.sql` antes do app.** Se o app subir antes, a aba Faseamento mostra "Faseamento ainda
+  não está disponível nesta obra"; a Comunicação relê os envios sem `fase_revisao_id` (42703) e segue sem o faseamento;
+  Dados da obra aguenta (o coordenador é leitura própria; sem a coluna só o campo some). Corrigido na revisão (I1).
+- **Destinatários do envio `faseamento` = os do relatório de fase** (tipos `semanal` ou `mensal`): não existe tipo
+  `fase` em `obras_destinatario` (o CHECK só aceita diario/semanal/mensal/imediato). Reenviar manda de novo a todos (cada
+  clique é um envio registrado), sem pular quem já recebeu.
+- **Prévia da prancha na tela é HTML/SVG, não o PDF**: o hub manda `X-Frame-Options: DENY` e `frame-ancestors 'none'`
+  em todas as rotas, então `<iframe>` do PDF não abre. A prévia segue o layout do PDF mas não é idêntica (fontes, quebra
+  das regras, rótulo da zona que encolhe só no PDF). O oficial é "Gerar PDF". Na revisão emitida, o título da prévia sem
+  carimbo usa o nome ATUAL da fase (o PDF usa o congelado).
+- **Planta com caminho mas sem largura/altura** (permitido pelo banco) sai em quadro branco no PDF (a prancha precisa da
+  proporção). O `salvarPlantaAction` sempre grava as dimensões, então não deve acontecer.
+- **Sem renomear, reordenar nem apagar fase pela tela**, e sem desfazer no editor de camadas (o rascunho só grava em
+  "Salvar rascunho"; recarregar descarta). Fora da spec.
+- **Filtro "Relatórios" da Comunicação não inclui o faseamento**: o envio aparece em "Todos".
+- **Teste manual do editor de camadas pendente** (zona por arrasto, linha com duplo clique/Enter/Esc, mover, ocultar)
+  em desktop e tablet, e conferência visual do PDF com planta real: só há testes em jsdom e o render do react-pdf é mockado
+  no Jest.
+
+### Revisão final da Leva 6b (01/11/2026)
+
+- ~~Planta em WEBP some do PDF em silêncio (C1)~~ **Resolvida na origem em 01/11/2026**: o `@react-pdf/image` só lê
+  JPEG e PNG. O conversor de PDF do mapa (`montar/_pdf-para-imagem.ts`) gera JPEG 0,9 (PNG se o navegador não gerar
+  JPEG) e o upload direto de WEBP é convertido para JPEG no navegador (`webpParaJpeg`, mesmos tetos de 2400 px e
+  16 Mpx). Servidor e policy continuam aceitando `.webp` (sem SQL). Se ainda assim houver planta `.webp` (enviada antes
+  ou gravada direto), o PDF sai sem a base e com "Formato da planta não suportado no PDF; envie JPG, PNG ou PDF em
+  Montar o mapa" no rodapé; a prévia e a tela mostram o mesmo aviso. Prova com o react-pdf real:
+  `scripts/verificar-prancha-formato-planta.tsx`. Em 01/11 não havia planta em produção (`obras_mapa.planta_path` vazio).
+  Revisão **emitida** com `.webp` congelado continuaria sem base para sempre; reenviar a planta e criar nova revisão
+  resolve. Converter no servidor (`sharp`) consertaria as antigas, mas exige declarar a dependência (OK do José).
+- **Planta WEBP fora do PDF sai no quadro padrão 1000×700**, não na proporção da planta: as camadas (0–1) ficam
+  esticadas em relação ao que o editor mostra. Só acontece com planta antiga ou gravada direto.
+- **Revisão ilegível (M2):** a "Nova revisão" copia só o legível da última emitida (camadas e regras uma a uma, carimbo
+  validado ou o padrão), então a emitida ilegível destrava por ela, sem avisar quantas camadas/regras foram descartadas.
+  Já um **rascunho** ilegível (só por SQL manual: o app nunca grava assim) continua em leitura, porque salvar apagaria o
+  descartado e não há tela de correção; a mensagem diz "peça ajuda ao suporte" e o conserto é por SQL.
+
+## 01/11/2026 — Obras Financeiro da OS no SPOT, SQL do hub (`feat/obras-spot-financeiro`, Task 1), deixado de propósito
+- **Locação do SPOT é marcável (devolvida/renovada) por qualquer usuário do Obras**, não só pelo analista da OS
+  (`obras_pode_marcar_locacao` em `sdd-sql-obras-spot-financeiro.sql`, fallback da spec
+  `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md` §4.2). Motivo: a ligação analista → e-mail
+  (`obras_obra.pcm` → `obras_pessoa.email`) não é confiável como guarda — as duas tabelas têm a policy "obras access"
+  `for all` (`sdd-sql-obras-v0.sql`), então qualquer usuário do Obras pode pôr a própria chave no `pcm` ou o próprio
+  e-mail numa pessoa. Restringir ao analista exige antes proteger essas colunas (só admin grava `obras_pessoa.email` e o
+  `pcm`, ou gatilho de guarda). OBRAS continuam só com engenheiro da obra/mãe ou admin.
+- **Inserir/apagar `obras_nota_externa` não reavalia a etapa do SPOT.** A nota externa só entra na soma quando o
+  Financeiro chama `obras_marcar_faturada` (próxima NFS-e da OS) ou `obras_desmarcar_faturada`. Uma nota externa que
+  sozinha fecha o valor deixa a OS em "Pendente faturamento" até alguém mudar a etapa na ficha ou a próxima nota chegar.
+
+## 01/11/2026 — Obras Financeiro da OS no SPOT, app e documentação (`feat/obras-spot-financeiro`, Tasks 2–10), deixado de propósito
+- **Sobrefaturamento do SPOT só gera aviso:** a parte acima do saldo da OS é permitida (a OS passa a `faturado` e o
+  excedente fica visível), não é recusada.
+- **Parciais devolvidos por `obras_marcar_faturada` não são gravados na linha do tempo do Financeiro:** o "falta" é
+  recalculado por `faltaSpot` a cada leitura.
+- **Aviso de vencimento de locação na ficha SPOT ignora feriados** (conta dias corridos).
+- **Leitura do financeiro do SPOT é tudo-ou-nada:** falha de uma RPC (caixinha, medições atrasadas) derruba o bloco
+  inteiro; a página das OBRAS tolera leitura parcial.
+- **Faturamento parcial das OBRAS fora:** decisão de 01/11 — "somente ao SPOT por enquanto".
+- **Visão consolidada de margem no painel:** etapa própria, ainda não feita.
+- **Teste "044: nota ↔ medição" do Financeiro é instável:** pega nota rascunho por uuid aleatório (repo `financeiro`).
+
+## 01/11/2026 — Financeiro da OS no SPOT, revisão final da branch (hub + `financeiro` `feat/spot-faturamento-parcial`), deixado de propósito
+- **Desmarcar um SPOT ainda coberto por outras notas o devolve em `marcadas`:** `obras_desmarcar_faturada` mantém a OS
+  em `faturado`, mas a linha do tempo do Financeiro diz "de volta a pendente faturamento".
+- **Baixa parcial gera o evento "0 obra(s) em faturado"** na linha do tempo do Financeiro quando nenhuma OS fechou.
+- **SPOT com valor 0 nunca entra numa nota no Financeiro** (saldo 0, fora da fila), enquanto o hub o faturaria na hora
+  na primeira NFS-e.
+- **A fila de um lote de teste (homologação) usa o saldo de produção** (`saldosSpot` só conta notas de produção).
+- **Qualquer usuário do Obras edita `obras_obra.valor` de um SPOT**, e esse valor agora move saldo, fila e faturado.
+  Pré-existente (policy "obras access"); é a próxima borda de dinheiro a fechar.
+- **Rascunhos antigos de nota SPOT com várias obras, no dia do deploy, vão pedir a parte de cada obra** (a trava
+  recusa parte vazia). Avisar a equipe do Financeiro antes do deploy.

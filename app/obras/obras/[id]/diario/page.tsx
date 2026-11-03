@@ -7,12 +7,17 @@ import { hojeISO } from '../../../_lib/tipos'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import { montarDiario } from './_preenchimento'
 import PassosDiario from './_passos'
-import ValidarDiario from './_validar'
+import SeletorDataDiario from './_seletor-data'
 import { montarEmailDiario } from '../../_lib/email-diario'
+import { linkPortalObra } from '../../_lib/link-portal'
 import { diasUteisEntre } from '../../_lib/calendario'
+import { segundaDaSemana } from '../../_lib/last-planner'
+import { lerPlano } from '../../_lib/leitura'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
-import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo } from './_tipos'
+import { lerMapa, lerReferenciasDosPontos } from '../../_lib/mapa-leitura'
+import { montarMapaDiario } from './_mapa-diario'
+import type { AvancoRdo, CausaNaoAndou, Clima, EstadoRdo, FotoRdo, MapaDiario } from './_tipos'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,7 +96,15 @@ export default async function DiarioObraPage({
         .createSignedUrls(linhasFoto.map((f) => f.path as string), 600)
       for (const s of assinadas ?? []) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl)
     }
-    fotos = linhasFoto.map((f) => ({ id: f.id, path: f.path, legenda: f.legenda ?? null, url: urls.get(f.path) ?? null }))
+    fotos = linhasFoto.map((f) => ({
+      id: f.id,
+      path: f.path,
+      legenda: f.legenda ?? null,
+      url: urls.get(f.path) ?? null,
+      ambienteId: f.ambiente_id ?? null,
+      pontoId: f.ponto_id ?? null,
+      atividadeNumero: f.atividade_numero ?? null,
+    }))
   } else {
     const { data: u } = await supabase
       .from('obras_rdo')
@@ -105,7 +118,7 @@ export default async function DiarioObraPage({
     if (u) ultimo = { efetivo: u.efetivo ?? null, equipeTexto: u.equipe_texto ?? null }
   }
 
-  const { inicial, atividades } = montarDiario({
+  const { inicial, atividades, outras } = montarDiario({
     calc,
     plano,
     exec,
@@ -122,11 +135,44 @@ export default async function DiarioObraPage({
           climaManha: (rdo.clima_manha ?? null) as Clima | null,
           climaTarde: (rdo.clima_tarde ?? null) as Clima | null,
           programacaoAmanha: rdo.programacao_amanha ?? null,
+          semImpedimento: !!rdo.sem_impedimento,
         }
       : null,
     avancosSalvos,
     ultimo,
   })
+
+  // Leva 6: mapa da obra para a ronda de fotos. Sem ambiente → null (diário de sempre).
+  // Falha ao ler o mapa (ex.: SQL da Leva 6 ainda não aplicado) também cai no diário de sempre:
+  // só a ronda some; o resto do diário não depende do mapa.
+  let mapaDiario: MapaDiario | null = null
+  const mapaR = await lerMapa(supabase, id)
+  if (!mapaR.ok) console.warn(`[diario-obra] mapa não lido, diário sem ronda: ${mapaR.erro}`)
+  const ambientesMapa = mapaR.ok ? mapaR.dados.ambientes : []
+  const refR =
+    mapaR.ok && ambientesMapa.length
+      ? await lerReferenciasDosPontos(supabase, id, mapaR.dados.pontos.filter((p) => p.ativo).map((p) => p.id), data)
+      : null
+  // Sem as referências a ronda continua (só sem a miniatura de ângulo).
+  if (refR && !refR.ok) console.warn(`[diario-obra] referências da ronda não lidas: ${refR.erro}`)
+  if (mapaR.ok && refR) {
+    const entrada = {
+      mapa: mapaR.dados,
+      referencias: refR.ok ? refR.referencias : new Map(),
+      atividades: plano.map((p) => ({ numero: p.numero, descricao: p.descricao })),
+    }
+    const caminhos = montarMapaDiario(entrada)?.caminhos ?? []
+    const urlsRef = new Map<string, string>()
+    if (caminhos.length) {
+      const { data: assinadas } = await supabase.storage.from('obras-fotos').createSignedUrls(caminhos, 600)
+      for (const s of assinadas ?? []) if (s.path && s.signedUrl) urlsRef.set(s.path, s.signedUrl)
+    }
+    mapaDiario = montarMapaDiario({ ...entrada, urls: urlsRef })?.mapa ?? null
+  }
+
+  // Plano da semana do dia do diário: suas atividades vêm primeiro (falha de leitura = sem selo).
+  const planoR = await lerPlano(supabase, id, segundaDaSemana(data))
+  const noPlano = planoR.ok && planoR.plano ? planoR.plano.itens.map((i) => i.numero) : []
 
   // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).
   const podeValidar =
@@ -164,12 +210,16 @@ export default async function DiarioObraPage({
       validadoEm: rdo.validado_em ?? new Date().toISOString(),
       diaN: diasUteisEntre(obra.data_base ?? data, data, feriados),
       fotosCid: comUrl.map((f) => ({ cid: f.id, legenda: f.legenda })),
+      linkObra: linkPortalObra(),
     }).html
     // Na prévia, a foto vem pela URL assinada no lugar do CID.
     for (const f of comUrl) html = html.split(`cid:${f.id}`).join(f.url!.replace(/&/g, '&amp;'))
     previaHtml = html
   }
 
+  // Sem RDO gravado também valida: o botão salva o que está na tela antes (item 10).
+  const mostraValidar =
+    podeValidar && (!rdo || rdo.estado === 'rascunho' || rdo.estado === 'validado' || (pendentes ?? 0) > 0)
   const base = `/obras/obras/${id}/diario`
   const navLink =
     'flex min-h-11 items-center rounded-lg border border-[#dadad8] px-3 text-sm text-[#333336] hover:border-[#b94606]'
@@ -184,6 +234,17 @@ export default async function DiarioObraPage({
             {rdo ? ` · ${rdo.estado === 'rascunho' ? 'rascunho' : rdo.estado}` : ' · ainda não iniciado'}
           </p>
         </div>
+        {rdo && (rdo.estado === 'validado' || rdo.estado === 'enviado') ? (
+          // Rota GET (não página): <a> comum, abre o PDF da versão cliente em outra aba.
+          <a
+            href={`${base}/pdf/${data}`}
+            target="_blank"
+            rel="noopener"
+            className="flex min-h-11 w-fit items-center rounded-lg bg-[#00345e] px-4 text-sm font-semibold text-white hover:bg-[#0d2050]"
+          >
+            Gerar PDF
+          </a>
+        ) : null}
         <nav aria-label="Escolher o dia" className="flex flex-wrap items-center gap-2">
           <Link href={`${base}?data=${deslocar(data, -1)}`} className={navLink}>
             ← dia anterior
@@ -198,18 +259,7 @@ export default async function DiarioObraPage({
               próximo dia →
             </Link>
           ) : null}
-          <form method="get" action={base} className="flex items-center gap-2">
-            <input
-              type="date"
-              name="data"
-              defaultValue={data}
-              aria-label="Data do diário"
-              className="min-h-11 rounded-lg border border-[#dadad8] bg-[#ffffff] px-2 text-sm text-[#333336]"
-            />
-            <button type="submit" className={navLink}>
-              ir
-            </button>
-          </form>
+          <SeletorDataDiario key={data} base={base} data={data} />
         </nav>
       </header>
 
@@ -221,15 +271,25 @@ export default async function DiarioObraPage({
         estado={(rdo?.estado ?? null) as EstadoRdo | null}
         inicial={inicial}
         atividades={atividades}
+        outras={outras}
+        noPlano={noPlano}
         fotos={fotos}
+        validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
+        mapa={mapaDiario}
+        impedimentosHoje={
+          r.dados.impedimentos.filter(
+            (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),
+          ).length
+        }
         impedimentos={
           <div className="flex flex-col gap-4">
-            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} feriados={feriados} somenteAbertos />
+            <ListaImpedimentos itens={r.dados.impedimentos} hoje={hoje} dataReferencia={data} feriados={feriados} somenteAbertos />
             <FormImpedimento
               obraId={id}
               rdoId={rdo?.id ?? null}
               dataDiario={data}
               atividades={plano.map((p) => ({ numero: p.numero, descricao: p.descricao }))}
+              ambientes={ambientesMapa.map((a) => ({ id: a.id, nome: a.nome }))}
               orientacoes={r.dados.impedimentos
                 .filter((i) => i.categoria === 'orientacao')
                 .map((o) => ({ id: o.id, descricao: o.descricao, abertoEm: o.abertoEm }))}
@@ -238,9 +298,6 @@ export default async function DiarioObraPage({
         }
       />
 
-      {previaHtml !== null ? (
-        <ValidarDiario obraId={id} data={data} estado={rdo!.estado as EstadoRdo} previaHtml={previaHtml} pendentes={pendentes} />
-      ) : null}
     </div>
   )
 }

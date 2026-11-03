@@ -1,0 +1,1102 @@
+-- ============================================================
+-- OBRAS — Leva 5 (página do cliente, 31/10/2026): acesso do cliente por
+-- e-mail + código, sessões do portal, documentos da obra e mensagens.
+-- Spec: docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md §3.1 e §5.
+-- Plano: docs/superpowers/plans/2026-10-31-obras-leva5.md, Task 1.
+--
+-- TERRITÓRIO DE AUTENTICAÇÃO/RLS (AGENTS.md): toda dúvida falha FECHADA.
+--
+-- O QUE FAZ
+--   0b. obras_obra: DELETE com JWT só administrador (trigger
+--      obras_obra_delete_guarda; sem JWT passa). Documentos e mensagens têm
+--      FK ON DELETE RESTRICT: obra com eles não se apaga.
+--   1. obras_portal_acesso: quem (e-mail de cliente) vê qual obra no portal.
+--      E-mail gravado lower(trim) (trigger normaliza; check confere), nunca
+--      @manfac.com.br nem subdomínio (interno usa o hub). unique(obra_id, email).
+--      criado_por (e-mail do JWT) e criado_em forçados no INSERT; no UPDATE
+--      ficam os antigos; obra_id e email imutáveis. RLS: select/insert/
+--      update/delete SÓ administrador (obras_is_admin()); o trigger repete a
+--      guarda (com JWT e não admin = erro).
+--   2. obras_portal_codigo e obras_portal_sessao: RLS ligada SEM NENHUMA
+--      policy (as existentes são apagadas a cada aplicação) e revoke all de
+--      anon/authenticated. Só a service role (servidor) lê e grava. Hash do
+--      código/token com ao menos 32 caracteres (nunca o código cru).
+--      obras_portal_emitir_codigo(email, ip, codigo_hash) -> boolean
+--      (só service role): travas por e-mail e IP, 5/h por e-mail, 20/h por
+--      IP (false = limite), aposenta os códigos vivos do e-mail e grava o novo
+--      com criado_em = clock_timestamp() (hora depois das travas) e
+--      expira_em = criado_em + 10 min (relógio do banco, não o do app).
+--   3. obras_documento: pasta fixa (projetos|laudos|art|layout|termos|outros),
+--      path no bucket obras-docs = '<obra_id>/<uuid>-<nome saneado>'
+--      (nome saneado = [A-Za-z0-9._-], 1..200), validado por trigger com ou
+--      sem JWT. criado_por/criado_em forçados no INSERT. Com JWT, INSERT e
+--      DELETE só engenheiro da obra ou admin (trigger); sem policy de UPDATE
+--      (e revoke update de authenticated); obra_id, path, criado_* imutáveis.
+--      RLS: select/insert/delete com obras_has_access().
+--   4. Bucket PRIVADO obras-docs (public = false, forçado também se já existir)
+--      e policies em storage.objects: upload e delete só engenheiro/admin da
+--      obra do prefixo (função obras_docs_pode_escrever(name)), leitura com
+--      obras_has_access() (o hub; o portal usa URL assinada curta gerada no
+--      servidor com service role). Sem policy de update: objeto não é
+--      sobrescrito nem movido.
+--   5. obras_mensagem: autor_tipo cliente|manfac, autor_email, texto 1..4000
+--      (não só brancos), criado_em forçado = now(). Sem UPDATE, DELETE nem
+--      TRUNCATE para NINGUÉM (triggers, inclusive service role; FK restrict,
+--      então não há cascata). Com JWT (hub): só autor_tipo 'manfac', autor_email =
+--      e-mail do JWT (forçado). Sem JWT (servidor do portal): autor_tipo
+--      'cliente' exige acesso ATIVO desse e-mail a essa obra.
+--      RLS: select obras_has_access(); insert com autor_tipo 'manfac' e
+--      autor_email = JWT.
+--   Código do portal NÃO entra em obras_envio (não é comunicação da obra).
+--   6. Analista da obra + Situação para o cliente (spec §7, Task 6):
+--      obras_situacao_pergunta: uma linha por ponto a explicar (chave estável
+--      tipo:alvo, unique(obra_id, chave)), com a pergunta, o contexto em
+--      números (jsonb objeto), a resposta do engenheiro, interno (não vai ao
+--      cliente) e aberta. Com JWT, INSERT/UPDATE só engenheiro da obra ou
+--      admin (trigger); respondida_por/em forçados (JWT, now()) quando há
+--      resposta; obra_id, chave e criado_em imutáveis; DELETE com JWT só
+--      admin (a cascata da obra, que só admin apaga). RLS: select/insert/
+--      update com obras_has_access(); sem policy de delete.
+--      obras_situacao_cliente: situação PUBLICADA (explicação 1..1200, até 5
+--      ações {oque, quando, efeito}, sem "R$", numeros = retrato interno dos
+--      números na publicação). Só INSERT: versao = max+1 da obra (trava por
+--      obra), publicada_por = JWT e publicada_em = now() forçados; com JWT só
+--      engenheiro/admin. UPDATE, DELETE e TRUNCATE recusados para NINGUÉM
+--      (imutável; FK restrict). RLS: select obras_has_access(); insert com
+--      publicada_por = JWT.
+--
+-- PRÉ-REQUISITO: sdd-sql-obras-leva4.sql aplicado (a seção 0 confere).
+-- Ordem: leva2 -> leva3 -> leva4 -> leva5.
+--
+-- COMO RODAR — em DOIS passos (o SQL Editor só mostra o último resultado):
+--   PASSO 1  do `begin;` até o `commit;`;
+--   PASSO 2  a consulta de VERIFICAÇÃO no fim — qualquer *** FALHOU *** = parar.
+--   Depois, o teste de comportamento (rollback, não grava nada):
+--   docs/obras/2026-10-31-verificacao-obras-leva5.sql.
+--
+-- IDEMPOTENTE: create ... if not exists, create or replace, drop ... if exists.
+--
+-- ARMADILHAS DO .claude/rules/sql.md: guardas usam `is not true` (sem NULL
+-- aberto); uma função de trigger por tabela, sem campo de outra tabela.
+--
+-- ROLLBACK (só depois de reverter o app):
+--   drop policy if exists "obras docs upload" on storage.objects;
+--   drop policy if exists "obras docs read" on storage.objects;
+--   drop policy if exists "obras docs delete" on storage.objects;
+--   drop function public.obras_docs_pode_escrever(text);
+--   drop trigger obras_obra_delete_guarda on public.obras_obra;
+--   drop function public.obras_obra_delete_guarda();
+--   drop function public.obras_portal_emitir_codigo(text, text, text);
+--   (bucket obras-docs: esvaziar pela API do Storage antes de apagar)
+--   drop table public.obras_situacao_cliente, public.obras_situacao_pergunta;
+--   drop function public.obras_situacao_cliente_guarda(), public.obras_situacao_cliente_sem_truncate(),
+--                 public.obras_situacao_pergunta_guarda();
+--   drop table public.obras_mensagem, public.obras_documento,
+--              public.obras_portal_sessao, public.obras_portal_codigo,
+--              public.obras_portal_acesso;  -- apaga dados (exportar antes)
+-- ============================================================
+
+begin;
+
+-- ============================================================
+-- 0. Pré-requisitos (Leva 4 e anteriores)
+-- ============================================================
+do $$
+begin
+  if to_regclass('public.obras_obra') is null
+     or to_regprocedure('public.obras_has_access()') is null
+     or to_regprocedure('public.obras_is_admin()') is null
+     or to_regprocedure('public.obras_engenheiro_ou_admin(uuid)') is null then
+    raise exception 'Pré-requisito ausente: sdd-sql-obras-modalidade-obra.sql e -2 não estão aplicados. Nada foi alterado.';
+  end if;
+  if to_regclass('public.obras_registro') is null
+     or to_regclass('public.obras_semanal') is null then
+    raise exception 'Pré-requisito ausente: sdd-sql-obras-leva2.sql / leva3.sql não estão aplicados. Nada foi alterado.';
+  end if;
+  if to_regclass('public.obras_relatorio') is null
+     or to_regprocedure('public.obras_relatorio_estado()') is null
+     or not exists (select 1 from information_schema.columns
+                     where table_schema = 'public' and table_name = 'obras_envio' and column_name = 'relatorio_id')
+     or not exists (select 1 from pg_constraint
+                     where conrelid = 'public.obras_envio'::regclass and conname = 'obras_envio_relatorio_obrigatorio') then
+    raise exception 'Pré-requisito ausente: sdd-sql-obras-leva4.sql não está aplicado. Nada foi alterado.';
+  end if;
+  if to_regclass('storage.buckets') is null or to_regclass('storage.objects') is null then
+    raise exception 'Pré-requisito ausente: schema storage (buckets/objects). Nada foi alterado.';
+  end if;
+  -- Bucket obras-docs, se já existir, tem de ser privado (a seção 4 força
+  -- public = false; isto só avisa que alguém o criou público à mão).
+  if exists (select 1 from storage.buckets where id = 'obras-docs' and public) then
+    raise notice 'Bucket obras-docs existia PÚBLICO; será tornado privado.';
+  end if;
+end $$;
+
+-- ============================================================
+-- 0b. Apagar obra: com JWT só administrador (sem JWT = service role passa).
+--     Antes, qualquer usuário do Obras apagava a obra pelo navegador (policy
+--     "obras access" é for all) e, em cascata, o acesso do portal (só admin).
+--     Documentos e mensagens têm FK restrict: obra com eles não se apaga.
+-- ============================================================
+create or replace function public.obras_obra_delete_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  if nullif(lower(trim(auth.jwt() ->> 'email')), '') is not null
+     and public.obras_is_admin() is not true then
+    raise exception 'OBRAS_OBRA: só administrador apaga obra' using errcode = '42501';
+  end if;
+  return old;
+end;
+$$;
+revoke execute on function public.obras_obra_delete_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_obra_delete_guarda on public.obras_obra;
+create trigger obras_obra_delete_guarda
+  before delete on public.obras_obra
+  for each row execute function public.obras_obra_delete_guarda();
+
+-- ============================================================
+-- 1. obras_portal_acesso (só administrador)
+-- ============================================================
+create table if not exists public.obras_portal_acesso (
+  id uuid primary key default gen_random_uuid(),
+  obra_id uuid not null references public.obras_obra(id) on delete cascade,
+  email text not null,
+  nome text,
+  ativo boolean not null default true,
+  criado_por text,
+  criado_em timestamptz not null default now(),
+  -- Normalizado pelo trigger; o check confere (inclusive para a service role).
+  -- Interno (@manfac.com.br e subdomínios) usa o hub, nunca o portal.
+  -- Só ASCII imprimível (fecha U+200B, espaço não-ASCII) e o ponto final de
+  -- FQDN ('x@manfac.com.br.') não escapa da recusa (rtrim).
+  constraint obras_portal_acesso_email_check check (
+    email = lower(btrim(email))
+    and char_length(email) between 3 and 254
+    and email ~ '^[\x21-\x7e]+$'
+    and email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    and rtrim(email, '.') not like '%@manfac.com.br'
+    and rtrim(email, '.') not like '%.manfac.com.br'),
+  constraint obras_portal_acesso_obra_email_key unique (obra_id, email)
+);
+create index if not exists obras_portal_acesso_email_idx on public.obras_portal_acesso (email) where ativo;
+
+create or replace function public.obras_portal_acesso_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  -- Com JWT: só administrador (a RLS já exige; aqui falha fechada de novo).
+  -- A cascata da obra apagada também passa por aqui: obra só é apagada por
+  -- administrador (obras_obra_delete_guarda) ou sem JWT.
+  if v_email is not null and public.obras_is_admin() is not true then
+    raise exception 'OBRAS_PORTAL_ACESSO: só administrador altera o acesso à página do cliente'
+      using errcode = '42501';
+  end if;
+
+  if tg_op = 'DELETE' then return old; end if;
+
+  new.email := lower(btrim(new.email));
+
+  if tg_op = 'INSERT' then
+    if v_email is not null then
+      new.criado_por := v_email;
+    end if;
+    new.criado_em := now();
+    return new;
+  end if;
+
+  -- UPDATE: autoria fica; id, obra e e-mail não mudam (apagar e cadastrar de novo).
+  if new.id is distinct from old.id or new.obra_id is distinct from old.obra_id
+     or new.email is distinct from old.email then
+    raise exception 'OBRAS_PORTAL_ACESSO: id, obra_id e email são imutáveis' using errcode = 'P0001';
+  end if;
+  new.criado_por := old.criado_por;
+  new.criado_em := old.criado_em;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_portal_acesso_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_portal_acesso_guarda on public.obras_portal_acesso;
+create trigger obras_portal_acesso_guarda
+  before insert or update or delete on public.obras_portal_acesso
+  for each row execute function public.obras_portal_acesso_guarda();
+
+alter table public.obras_portal_acesso enable row level security;
+-- Remove qualquer policy fora das 4 abaixo (falha fechada na reaplicação).
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+            where schemaname = 'public' and tablename = 'obras_portal_acesso'
+              and policyname not in ('obras admin select','obras admin insert','obras admin update','obras admin delete')
+  loop
+    execute format('drop policy %I on public.obras_portal_acesso', p.policyname);
+  end loop;
+end $$;
+drop policy if exists "obras admin select" on public.obras_portal_acesso;
+create policy "obras admin select" on public.obras_portal_acesso for select to authenticated
+  using ((select public.obras_is_admin()));
+drop policy if exists "obras admin insert" on public.obras_portal_acesso;
+create policy "obras admin insert" on public.obras_portal_acesso for insert to authenticated
+  with check ((select public.obras_is_admin()));
+drop policy if exists "obras admin update" on public.obras_portal_acesso;
+create policy "obras admin update" on public.obras_portal_acesso for update to authenticated
+  using ((select public.obras_is_admin())) with check ((select public.obras_is_admin()));
+drop policy if exists "obras admin delete" on public.obras_portal_acesso;
+create policy "obras admin delete" on public.obras_portal_acesso for delete to authenticated
+  using ((select public.obras_is_admin()));
+revoke all on public.obras_portal_acesso from anon;
+
+-- ============================================================
+-- 2. obras_portal_codigo e obras_portal_sessao (só service role)
+-- ============================================================
+create table if not exists public.obras_portal_codigo (
+  id uuid primary key default gen_random_uuid(),
+  email text not null
+    constraint obras_portal_codigo_email_check check (email = lower(btrim(email)) and email <> ''),
+  -- HMAC-SHA256 com PORTAL_OBRA_SEGREDO (nunca o código de 6 dígitos cru).
+  codigo_hash text not null
+    constraint obras_portal_codigo_hash_check check (char_length(codigo_hash) >= 32),
+  expira_em timestamptz not null,
+  tentativas int not null default 0
+    constraint obras_portal_codigo_tentativas_check check (tentativas >= 0),
+  usado_em timestamptz,
+  criado_em timestamptz not null default now(),
+  ip text,
+  constraint obras_portal_codigo_expira_check check (expira_em > criado_em)
+);
+-- Limites por hora (5 por e-mail, 20 por IP) e busca do código vigente.
+create index if not exists obras_portal_codigo_email_idx on public.obras_portal_codigo (email, criado_em desc);
+create index if not exists obras_portal_codigo_ip_idx on public.obras_portal_codigo (ip, criado_em desc);
+
+create table if not exists public.obras_portal_sessao (
+  id uuid primary key default gen_random_uuid(),
+  token_hash text not null
+    constraint obras_portal_sessao_hash_check check (char_length(token_hash) >= 32),
+  email text not null
+    constraint obras_portal_sessao_email_check check (email = lower(btrim(email)) and email <> ''),
+  criado_em timestamptz not null default now(),
+  expira_em timestamptz not null,
+  ultimo_uso timestamptz,
+  revogada_em timestamptz,
+  constraint obras_portal_sessao_token_hash_key unique (token_hash),
+  constraint obras_portal_sessao_expira_check check (expira_em > criado_em)
+);
+create index if not exists obras_portal_sessao_email_idx on public.obras_portal_sessao (email);
+
+alter table public.obras_portal_codigo enable row level security;
+alter table public.obras_portal_sessao enable row level security;
+-- NENHUMA policy: apaga qualquer uma que exista (inclusive criada à mão).
+do $$
+declare p record;
+begin
+  for p in select tablename, policyname from pg_policies
+            where schemaname = 'public' and tablename in ('obras_portal_codigo','obras_portal_sessao')
+  loop
+    execute format('drop policy %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
+revoke all on public.obras_portal_codigo from public, anon, authenticated;
+revoke all on public.obras_portal_sessao from public, anon, authenticated;
+grant select, insert, update, delete on public.obras_portal_codigo to service_role;
+grant select, insert, update, delete on public.obras_portal_sessao to service_role;
+
+-- Emissão do código com os limites por hora sem corrida: duas travas de
+-- transação (e-mail, depois IP — sempre nessa ordem), contagem, aposenta os
+-- códigos vivos do e-mail (um só código vale) e grava o novo.
+-- false = limite atingido (o app responde a mesma mensagem genérica).
+-- Só service role: execute revogado de public/anon/authenticated.
+-- criado_em = clock_timestamp() lido DEPOIS das travas (now() é o início da
+-- transação: num pedido duplo, o código gravado por último poderia ter
+-- criado_em menor que o aposentado). Validade de 10 min no relógio do banco.
+-- Assinatura antiga (com p_expira_em, nunca aplicada) apagada se existir.
+drop function if exists public.obras_portal_emitir_codigo(text, text, text, timestamptz);
+create or replace function public.obras_portal_emitir_codigo(
+  p_email text, p_ip text, p_codigo_hash text)
+returns boolean
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_email text := lower(btrim(p_email));
+  v_agora timestamptz;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('obras_portal:' || coalesce(v_email, ''), 0));
+  perform pg_advisory_xact_lock(hashtextextended('obras_portal_ip:' || coalesce(p_ip, ''), 0));
+  v_agora := clock_timestamp();
+
+  if (select count(*) from public.obras_portal_codigo c
+       where c.email = v_email and c.criado_em > now() - interval '1 hour') >= 5 then
+    return false;
+  end if;
+  -- IP nulo conta como um só balde (falha fechada, nunca sem limite).
+  if (select count(*) from public.obras_portal_codigo c
+       where c.ip is not distinct from p_ip and c.criado_em > now() - interval '1 hour') >= 20 then
+    return false;
+  end if;
+
+  update public.obras_portal_codigo
+     set usado_em = now()
+   where email = v_email and usado_em is null;
+
+  insert into public.obras_portal_codigo (email, codigo_hash, criado_em, expira_em, ip)
+  values (v_email, p_codigo_hash, v_agora, v_agora + interval '10 minutes', p_ip);
+  return true;
+end;
+$$;
+revoke execute on function public.obras_portal_emitir_codigo(text, text, text)
+  from public, anon, authenticated;
+grant execute on function public.obras_portal_emitir_codigo(text, text, text) to service_role;
+
+-- ============================================================
+-- 3. obras_documento (path validado; engenheiro/admin escreve)
+-- ============================================================
+create table if not exists public.obras_documento (
+  id uuid primary key default gen_random_uuid(),
+  -- RESTRICT: obra com documento não se apaga (apagar o documento e o objeto
+  -- no bucket antes); a FK é recriada assim abaixo, também na reaplicação.
+  obra_id uuid not null,
+  pasta text not null
+    constraint obras_documento_pasta_check
+    check (pasta in ('projetos','laudos','art','layout','termos','outros')),
+  nome text not null
+    constraint obras_documento_nome_check check (char_length(btrim(nome)) between 1 and 255),
+  -- '<obra_id>/<uuid>-<nome saneado>' no bucket obras-docs (trigger confere).
+  path text not null,
+  tamanho bigint
+    constraint obras_documento_tamanho_check check (tamanho is null or tamanho >= 0),
+  tipo text,
+  criado_por text,
+  criado_em timestamptz not null default now(),
+  constraint obras_documento_path_key unique (path)
+);
+create index if not exists obras_documento_obra_idx on public.obras_documento (obra_id, pasta, criado_em desc);
+
+-- Toda FK de obras_documento para obras_obra vira UMA, on delete restrict.
+do $$
+declare c record;
+begin
+  for c in select conname from pg_constraint
+            where conrelid = 'public.obras_documento'::regclass and contype = 'f'
+              and confrelid = 'public.obras_obra'::regclass
+  loop
+    execute format('alter table public.obras_documento drop constraint %I', c.conname);
+  end loop;
+end $$;
+alter table public.obras_documento
+  add constraint obras_documento_obra_id_fkey foreign key (obra_id)
+  references public.obras_obra(id) on delete restrict;
+
+create or replace function public.obras_documento_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if tg_op = 'DELETE' then
+    -- Com JWT só engenheiro/admin (não há cascata: FK restrict).
+    if v_email is not null
+       and public.obras_engenheiro_ou_admin(old.obra_id) is not true then
+      raise exception 'OBRAS_DOCUMENTO: só o engenheiro da obra ou administrador altera os documentos'
+        using errcode = '42501';
+    end if;
+    return old;
+  end if;
+
+  if v_email is not null
+     and (public.obras_engenheiro_ou_admin(new.obra_id) is not true
+          or (tg_op = 'UPDATE' and public.obras_engenheiro_ou_admin(old.obra_id) is not true)) then
+    raise exception 'OBRAS_DOCUMENTO: só o engenheiro da obra ou administrador altera os documentos'
+      using errcode = '42501';
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.obra_id is distinct from old.obra_id or new.path is distinct from old.path
+       or new.criado_por is distinct from old.criado_por or new.criado_em is distinct from old.criado_em then
+      raise exception 'OBRAS_DOCUMENTO: obra_id, path, criado_por e criado_em são imutáveis'
+        using errcode = 'P0001';
+    end if;
+    return new;
+  end if;
+
+  -- INSERT. Estrutural (vale sem JWT): o caminho é o da própria obra.
+  if new.obra_id is null
+     or new.path is null
+     or new.path !~ ('^' || new.obra_id::text
+                     || '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[A-Za-z0-9._-]{1,200}$') then
+    raise exception 'OBRAS_DOCUMENTO_CAMINHO: documento fora do caminho {obra_id}/{uuid}-{nome saneado}'
+      using errcode = '23514';
+  end if;
+  if v_email is not null then
+    new.criado_por := v_email;
+  end if;
+  new.criado_em := now();
+  return new;
+end;
+$$;
+revoke execute on function public.obras_documento_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_documento_guarda on public.obras_documento;
+create trigger obras_documento_guarda
+  before insert or update or delete on public.obras_documento
+  for each row execute function public.obras_documento_guarda();
+
+alter table public.obras_documento enable row level security;
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+            where schemaname = 'public' and tablename = 'obras_documento'
+              and policyname not in ('obras select','obras insert','obras delete')
+  loop
+    execute format('drop policy %I on public.obras_documento', p.policyname);
+  end loop;
+end $$;
+drop policy if exists "obras select" on public.obras_documento;
+create policy "obras select" on public.obras_documento for select to authenticated
+  using ((select public.obras_has_access()));
+drop policy if exists "obras insert" on public.obras_documento;
+create policy "obras insert" on public.obras_documento for insert to authenticated
+  with check ((select public.obras_has_access()));
+drop policy if exists "obras delete" on public.obras_documento;
+create policy "obras delete" on public.obras_documento for delete to authenticated
+  using ((select public.obras_has_access()));
+revoke all on public.obras_documento from anon;
+revoke update on public.obras_documento from authenticated;
+
+-- ============================================================
+-- 4. Bucket privado obras-docs + policies de storage
+-- ============================================================
+-- file_size_limit = 25 MB (26214400), imposto pelo Storage sobre os bytes reais.
+-- Sem allowed_mime_types (o tipo declarado pelo cliente é forjável e DWG/XLSX/DOCX
+-- chegam com MIME inconsistente).
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('obras-docs', 'obras-docs', false, 26214400)
+on conflict (id) do update set public = false, file_size_limit = 26214400;
+
+-- true/false (nunca NULL): nome '<obra_id existente>/<uuid>-<nome saneado>'
+-- e sessão = engenheiro dessa obra ou administrador. security definer para
+-- chamar obras_engenheiro_ou_admin (fechada para authenticated) e ler a obra
+-- por cima da RLS. O CASE garante que o ::uuid só roda com o formato certo.
+create or replace function public.obras_docs_pode_escrever(p_name text)
+returns boolean
+language plpgsql
+security definer
+stable
+set search_path = pg_catalog, public
+as $$
+declare v_obra uuid;
+begin
+  if p_name is null
+     or p_name !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[A-Za-z0-9._-]{1,200}$' then
+    return false;
+  end if;
+  v_obra := split_part(p_name, '/', 1)::uuid;
+  if not exists (select 1 from public.obras_obra o where o.id = v_obra) then
+    return false;
+  end if;
+  return coalesce(public.obras_engenheiro_ou_admin(v_obra), false);
+end;
+$$;
+revoke execute on function public.obras_docs_pode_escrever(text) from public, anon;
+grant execute on function public.obras_docs_pode_escrever(text) to authenticated;
+
+drop policy if exists "obras docs upload" on storage.objects;
+create policy "obras docs upload" on storage.objects for insert to authenticated
+  with check (bucket_id = 'obras-docs' and (select public.obras_has_access())
+              and public.obras_docs_pode_escrever(name) is true);
+
+-- Leitura no hub (lista/URL assinada pela sessão; o delete da API também
+-- precisa enxergar o objeto). Portal: URL assinada curta pela service role.
+drop policy if exists "obras docs read" on storage.objects;
+create policy "obras docs read" on storage.objects for select to authenticated
+  using (bucket_id = 'obras-docs' and (select public.obras_has_access()));
+
+drop policy if exists "obras docs delete" on storage.objects;
+create policy "obras docs delete" on storage.objects for delete to authenticated
+  using (bucket_id = 'obras-docs' and (select public.obras_has_access())
+         and public.obras_docs_pode_escrever(name) is true);
+-- Sem "obras docs update": documento não é sobrescrito nem movido.
+drop policy if exists "obras docs update" on storage.objects;
+
+-- ============================================================
+-- 5. obras_mensagem (registro: sem update/delete)
+-- ============================================================
+create table if not exists public.obras_mensagem (
+  id uuid primary key default gen_random_uuid(),
+  -- RESTRICT: obra com conversa não se apaga (registro); FK recriada abaixo.
+  obra_id uuid not null,
+  autor_tipo text not null
+    constraint obras_mensagem_autor_tipo_check check (autor_tipo in ('cliente','manfac')),
+  autor_email text not null
+    constraint obras_mensagem_autor_email_check check (autor_email = lower(btrim(autor_email)) and autor_email <> ''),
+  -- '\S': texto só de espaço, \n ou \t não passa.
+  texto text not null
+    constraint obras_mensagem_texto_check check (char_length(texto) between 1 and 4000 and texto ~ '\S'),
+  criado_em timestamptz not null default now()
+);
+create index if not exists obras_mensagem_obra_idx on public.obras_mensagem (obra_id, criado_em);
+
+do $$
+declare c record;
+begin
+  for c in select conname from pg_constraint
+            where conrelid = 'public.obras_mensagem'::regclass and contype = 'f'
+              and confrelid = 'public.obras_obra'::regclass
+  loop
+    execute format('alter table public.obras_mensagem drop constraint %I', c.conname);
+  end loop;
+end $$;
+alter table public.obras_mensagem
+  add constraint obras_mensagem_obra_id_fkey foreign key (obra_id)
+  references public.obras_obra(id) on delete restrict;
+
+create or replace function public.obras_mensagem_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if tg_op = 'UPDATE' then
+    raise exception 'OBRAS_MENSAGEM: mensagem é registro, não pode ser alterada' using errcode = '42501';
+  end if;
+  if tg_op = 'DELETE' then
+    -- Nunca, para nenhuma role (a FK restrict impede a cascata da obra).
+    raise exception 'OBRAS_MENSAGEM: mensagem é registro, não pode ser apagada' using errcode = '42501';
+  end if;
+
+  -- INSERT
+  new.criado_em := now();
+  if v_email is not null then
+    -- Hub: só a Manfac escreve, e o autor é quem está logado.
+    if new.autor_tipo is distinct from 'manfac' then
+      raise exception 'OBRAS_MENSAGEM: pelo hub só se grava mensagem da Manfac' using errcode = '42501';
+    end if;
+    new.autor_email := v_email;
+    return new;
+  end if;
+
+  -- Sem JWT (servidor do portal / service role): mensagem do cliente só de
+  -- e-mail com acesso ATIVO a esta obra.
+  new.autor_email := lower(btrim(new.autor_email));
+  if new.autor_tipo = 'cliente'
+     and not exists (select 1 from public.obras_portal_acesso a
+                      where a.obra_id = new.obra_id and a.email = new.autor_email and a.ativo) then
+    raise exception 'OBRAS_MENSAGEM: e-mail sem acesso ativo a esta obra' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_mensagem_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_mensagem_guarda on public.obras_mensagem;
+create trigger obras_mensagem_guarda
+  before insert or update or delete on public.obras_mensagem
+  for each row execute function public.obras_mensagem_guarda();
+
+-- TRUNCATE não dispara trigger de linha: fecha também (service role, postgres).
+create or replace function public.obras_mensagem_sem_truncate() returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $$
+begin
+  raise exception 'OBRAS_MENSAGEM: mensagem é registro, não pode ser apagada (truncate)' using errcode = '42501';
+end;
+$$;
+revoke execute on function public.obras_mensagem_sem_truncate() from public, anon, authenticated;
+
+drop trigger if exists obras_mensagem_sem_truncate on public.obras_mensagem;
+create trigger obras_mensagem_sem_truncate
+  before truncate on public.obras_mensagem
+  for each statement execute function public.obras_mensagem_sem_truncate();
+
+alter table public.obras_mensagem enable row level security;
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+            where schemaname = 'public' and tablename = 'obras_mensagem'
+              and policyname not in ('obras select','obras insert')
+  loop
+    execute format('drop policy %I on public.obras_mensagem', p.policyname);
+  end loop;
+end $$;
+drop policy if exists "obras select" on public.obras_mensagem;
+create policy "obras select" on public.obras_mensagem for select to authenticated
+  using ((select public.obras_has_access()));
+-- O BEFORE trigger já forçou autor_email = JWT; a policy confere de novo.
+drop policy if exists "obras insert" on public.obras_mensagem;
+create policy "obras insert" on public.obras_mensagem for insert to authenticated
+  with check ((select public.obras_has_access())
+              and autor_tipo = 'manfac'
+              and autor_email = (select nullif(lower(trim(auth.jwt() ->> 'email')), '')));
+revoke all on public.obras_mensagem from anon;
+revoke update, delete, truncate on public.obras_mensagem from authenticated;
+
+-- ============================================================
+-- 6. Analista da obra + Situação para o cliente (spec §7, Task 6)
+-- ============================================================
+-- 6a. Perguntas do analista (trabalho interno; o cliente nunca lê).
+create table if not exists public.obras_situacao_pergunta (
+  id uuid primary key default gen_random_uuid(),
+  obra_id uuid not null references public.obras_obra(id) on delete cascade,
+  chave text not null
+    constraint obras_situacao_pergunta_chave_check
+    check (chave ~ '^[a-z_]{1,40}:[A-Za-z0-9:._-]{1,150}$'),
+  pergunta text not null
+    constraint obras_situacao_pergunta_pergunta_check
+    check (char_length(pergunta) between 1 and 1000),
+  contexto jsonb not null default '{}'::jsonb
+    constraint obras_situacao_pergunta_contexto_check
+    check (jsonb_typeof(contexto) = 'object' and pg_column_size(contexto) <= 8192),
+  resposta text
+    constraint obras_situacao_pergunta_resposta_check
+    check (resposta is null or char_length(btrim(resposta)) between 1 and 2000),
+  interno boolean not null default false,
+  respondida_por text,
+  respondida_em timestamptz,
+  -- "Respondida" no sentido do banco. A pergunta VOLTA para o engenheiro quando os números
+  -- mudam (contexto->>'impressao' diferente da atual) — decisão do app; aqui ela segue false.
+  aberta boolean not null default true,
+  criado_em timestamptz not null default now(),
+  constraint obras_situacao_pergunta_obra_chave_key unique (obra_id, chave),
+  -- Fechada só com resposta e autoria.
+  constraint obras_situacao_pergunta_fechada_check
+    check (aberta or (resposta is not null and respondida_por is not null and respondida_em is not null))
+);
+
+create or replace function public.obras_situacao_pergunta_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+begin
+  if tg_op = 'DELETE' then
+    -- Com JWT só administrador (a cascata da obra, que só admin apaga).
+    if v_email is not null and public.obras_is_admin() is not true then
+      raise exception 'OBRAS_SITUACAO_PERGUNTA: pergunta do analista não se apaga'
+        using errcode = '42501';
+    end if;
+    return old;
+  end if;
+
+  if v_email is not null
+     and (public.obras_engenheiro_ou_admin(new.obra_id) is not true
+          or (tg_op = 'UPDATE' and public.obras_engenheiro_ou_admin(old.obra_id) is not true)) then
+    raise exception 'OBRAS_SITUACAO_PERGUNTA: só o engenheiro da obra ou administrador responde ao analista'
+      using errcode = '42501';
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.obra_id is distinct from old.obra_id or new.chave is distinct from old.chave
+       or new.criado_em is distinct from old.criado_em then
+      raise exception 'OBRAS_SITUACAO_PERGUNTA: obra_id, chave e criado_em são imutáveis'
+        using errcode = 'P0001';
+    end if;
+  else
+    new.criado_em := now();
+  end if;
+
+  -- Autoria da resposta: sempre de quem grava agora (JWT) e agora.
+  if new.resposta is null then
+    new.respondida_por := null;
+    new.respondida_em := null;
+  else
+    if v_email is not null then
+      new.respondida_por := v_email;
+    end if;
+    new.respondida_em := now();
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_situacao_pergunta_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_situacao_pergunta_guarda on public.obras_situacao_pergunta;
+create trigger obras_situacao_pergunta_guarda
+  before insert or update or delete on public.obras_situacao_pergunta
+  for each row execute function public.obras_situacao_pergunta_guarda();
+
+alter table public.obras_situacao_pergunta enable row level security;
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+            where schemaname = 'public' and tablename = 'obras_situacao_pergunta'
+              and policyname not in ('obras select','obras insert','obras update')
+  loop
+    execute format('drop policy %I on public.obras_situacao_pergunta', p.policyname);
+  end loop;
+end $$;
+drop policy if exists "obras select" on public.obras_situacao_pergunta;
+create policy "obras select" on public.obras_situacao_pergunta for select to authenticated
+  using ((select public.obras_has_access()));
+drop policy if exists "obras insert" on public.obras_situacao_pergunta;
+create policy "obras insert" on public.obras_situacao_pergunta for insert to authenticated
+  with check ((select public.obras_has_access()));
+drop policy if exists "obras update" on public.obras_situacao_pergunta;
+create policy "obras update" on public.obras_situacao_pergunta for update to authenticated
+  using ((select public.obras_has_access()))
+  with check ((select public.obras_has_access()));
+revoke all on public.obras_situacao_pergunta from anon;
+revoke delete, truncate on public.obras_situacao_pergunta from authenticated;
+
+-- 6b. Situação para o cliente publicada (imutável; nova versão = nova linha).
+create table if not exists public.obras_situacao_cliente (
+  id uuid primary key default gen_random_uuid(),
+  obra_id uuid not null references public.obras_obra(id) on delete restrict,
+  versao int not null
+    constraint obras_situacao_cliente_versao_check check (versao >= 1),
+  explicacao text not null
+    constraint obras_situacao_cliente_explicacao_check
+    check (char_length(btrim(explicacao)) between 1 and 1200 and strpos(explicacao, 'R$') = 0),
+  acoes jsonb not null default '[]'::jsonb
+    constraint obras_situacao_cliente_acoes_check
+    check (jsonb_typeof(acoes) = 'array' and jsonb_array_length(acoes) <= 5 and strpos(acoes::text, 'R$') = 0),
+  numeros jsonb not null default '{}'::jsonb
+    constraint obras_situacao_cliente_numeros_check
+    check (jsonb_typeof(numeros) = 'object' and pg_column_size(numeros) <= 4096),
+  publicada_por text not null
+    constraint obras_situacao_cliente_publicada_por_check check (publicada_por ~ '^[^@\s]+@[^@\s]+$'),
+  publicada_em timestamptz not null default now(),
+  constraint obras_situacao_cliente_obra_versao_key unique (obra_id, versao)
+);
+create index if not exists obras_situacao_cliente_obra_idx on public.obras_situacao_cliente (obra_id, versao desc);
+
+create or replace function public.obras_situacao_cliente_guarda() returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_email text := nullif(lower(trim(auth.jwt() ->> 'email')), '');
+  v_acao  jsonb;
+  v_chave text;
+begin
+  if tg_op = 'UPDATE' then
+    raise exception 'OBRAS_SITUACAO: situação publicada é imutável (publique uma nova versão)' using errcode = '42501';
+  end if;
+  if tg_op = 'DELETE' then
+    raise exception 'OBRAS_SITUACAO: situação publicada é registro, não pode ser apagada' using errcode = '42501';
+  end if;
+
+  -- INSERT
+  if v_email is not null then
+    if public.obras_engenheiro_ou_admin(new.obra_id) is not true then
+      raise exception 'OBRAS_SITUACAO: só o engenheiro da obra ou administrador publica a situação'
+        using errcode = '42501';
+    end if;
+    new.publicada_por := v_email;
+  else
+    new.publicada_por := lower(btrim(new.publicada_por));
+  end if;
+  new.publicada_em := now();
+
+  -- Cada ação: objeto só com oque (1..200), quando (0..80) e efeito (0..200), textos.
+  if jsonb_typeof(new.acoes) is distinct from 'array' then
+    raise exception 'OBRAS_SITUACAO_ACOES: ações têm de ser uma lista' using errcode = '23514';
+  end if;
+  for v_acao in select value from jsonb_array_elements(new.acoes) loop
+    if jsonb_typeof(v_acao) is distinct from 'object'
+       or jsonb_typeof(v_acao -> 'oque') is distinct from 'string'
+       or jsonb_typeof(v_acao -> 'quando') is distinct from 'string'
+       or jsonb_typeof(v_acao -> 'efeito') is distinct from 'string'
+       or char_length(btrim(v_acao ->> 'oque')) not between 1 and 200
+       or char_length(v_acao ->> 'quando') > 80
+       or char_length(v_acao ->> 'efeito') > 200 then
+      raise exception 'OBRAS_SITUACAO_ACOES: ação fora do formato {oque, quando, efeito}' using errcode = '23514';
+    end if;
+    for v_chave in select jsonb_object_keys(v_acao) loop
+      if v_chave not in ('oque', 'quando', 'efeito') then
+        raise exception 'OBRAS_SITUACAO_ACOES: campo desconhecido na ação' using errcode = '23514';
+      end if;
+    end loop;
+  end loop;
+
+  -- Versão: a próxima da obra, sem corrida (trava por obra na transação).
+  perform pg_advisory_xact_lock(hashtext('obras_situacao:' || new.obra_id::text));
+  select coalesce(max(s.versao), 0) + 1 into new.versao
+    from public.obras_situacao_cliente s where s.obra_id = new.obra_id;
+  return new;
+end;
+$$;
+revoke execute on function public.obras_situacao_cliente_guarda() from public, anon, authenticated;
+
+drop trigger if exists obras_situacao_cliente_guarda on public.obras_situacao_cliente;
+create trigger obras_situacao_cliente_guarda
+  before insert or update or delete on public.obras_situacao_cliente
+  for each row execute function public.obras_situacao_cliente_guarda();
+
+create or replace function public.obras_situacao_cliente_sem_truncate() returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $$
+begin
+  raise exception 'OBRAS_SITUACAO: situação publicada é registro, não pode ser apagada (truncate)' using errcode = '42501';
+end;
+$$;
+revoke execute on function public.obras_situacao_cliente_sem_truncate() from public, anon, authenticated;
+
+drop trigger if exists obras_situacao_cliente_sem_truncate on public.obras_situacao_cliente;
+create trigger obras_situacao_cliente_sem_truncate
+  before truncate on public.obras_situacao_cliente
+  for each statement execute function public.obras_situacao_cliente_sem_truncate();
+
+alter table public.obras_situacao_cliente enable row level security;
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+            where schemaname = 'public' and tablename = 'obras_situacao_cliente'
+              and policyname not in ('obras select','obras insert')
+  loop
+    execute format('drop policy %I on public.obras_situacao_cliente', p.policyname);
+  end loop;
+end $$;
+drop policy if exists "obras select" on public.obras_situacao_cliente;
+create policy "obras select" on public.obras_situacao_cliente for select to authenticated
+  using ((select public.obras_has_access()));
+-- O BEFORE trigger já forçou publicada_por = JWT; a policy confere de novo.
+drop policy if exists "obras insert" on public.obras_situacao_cliente;
+create policy "obras insert" on public.obras_situacao_cliente for insert to authenticated
+  with check ((select public.obras_has_access())
+              and publicada_por = (select nullif(lower(trim(auth.jwt() ->> 'email')), '')));
+revoke all on public.obras_situacao_cliente from anon;
+revoke update, delete, truncate on public.obras_situacao_cliente from authenticated;
+
+commit;
+
+-- ============================================================
+-- VERIFICAÇÃO (PASSO 2) — rodar depois do commit. Qualquer *** FALHOU *** = parar.
+-- ============================================================
+select n, verificacao, esperado, encontrado,
+       case when encontrado is not distinct from esperado then 'OK' else '*** FALHOU ***' end as resultado
+from (values
+  (1, 'RLS ligada nas 5 tabelas novas', '5',
+      (select count(*)::text from pg_class
+        where oid in (to_regclass('public.obras_portal_acesso'), to_regclass('public.obras_portal_codigo'),
+                      to_regclass('public.obras_portal_sessao'), to_regclass('public.obras_documento'),
+                      to_regclass('public.obras_mensagem'))
+          and relrowsecurity)),
+  (2, 'obras_portal_codigo e obras_portal_sessao: NENHUMA policy', '0',
+      (select count(*)::text from pg_policies where schemaname = 'public'
+         and tablename in ('obras_portal_codigo','obras_portal_sessao'))),
+  (3, 'codigo/sessao: nenhum privilégio para anon nem authenticated', 'false',
+      (select (has_table_privilege('authenticated', 'public.obras_portal_codigo', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+            or has_table_privilege('anon', 'public.obras_portal_codigo', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+            or has_table_privilege('authenticated', 'public.obras_portal_sessao', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+            or has_table_privilege('anon', 'public.obras_portal_sessao', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))::text)),
+  (4, 'codigo/sessao: service_role lê e grava', 'true',
+      (select (has_table_privilege('service_role', 'public.obras_portal_codigo', 'SELECT')
+           and has_table_privilege('service_role', 'public.obras_portal_codigo', 'INSERT')
+           and has_table_privilege('service_role', 'public.obras_portal_codigo', 'UPDATE')
+           and has_table_privilege('service_role', 'public.obras_portal_sessao', 'SELECT')
+           and has_table_privilege('service_role', 'public.obras_portal_sessao', 'INSERT')
+           and has_table_privilege('service_role', 'public.obras_portal_sessao', 'UPDATE'))::text)),
+  (5, 'colunas de obras_portal_codigo e obras_portal_sessao', '8|7',
+      (select (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_portal_codigo'
+                 and column_name in ('id','email','codigo_hash','expira_em','tentativas','usado_em','criado_em','ip'))::text
+              || '|' || (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_portal_sessao'
+                 and column_name in ('id','token_hash','email','criado_em','expira_em','ultimo_uso','revogada_em'))::text)),
+  (6, 'token_hash único', '1',
+      (select count(*)::text from pg_constraint where conrelid = 'public.obras_portal_sessao'::regclass
+         and contype = 'u' and conname = 'obras_portal_sessao_token_hash_key')),
+  (7, 'obras_portal_acesso: exatamente 4 policies, todas com obras_is_admin e sem obras_has_access', '4|4|0',
+      (select count(*)::text || '|'
+              || count(*) filter (where coalesce(qual, '') || coalesce(with_check, '') like '%obras_is_admin%')::text || '|'
+              || count(*) filter (where coalesce(qual, '') || coalesce(with_check, '') like '%obras_has_access%')::text
+         from pg_policies where schemaname = 'public' and tablename = 'obras_portal_acesso')),
+  (8, 'obras_portal_acesso: check do e-mail recusa manfac.com.br e exige lower/trim', 'true',
+      (select (pg_get_constraintdef(oid) like '%@manfac.com.br%' and pg_get_constraintdef(oid) like '%.manfac.com.br%'
+               and pg_get_constraintdef(oid) like '%lower(btrim(email))%')::text
+         from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass and conname = 'obras_portal_acesso_email_check')),
+  (9, 'obras_portal_acesso: único (obra_id, email)', '1',
+      (select count(*)::text from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass
+         and contype = 'u' and conname = 'obras_portal_acesso_obra_email_key')),
+  (10, 'triggers de guarda ligados (insert/update/delete) nas 3 tabelas', '3',
+      (select count(*)::text from pg_trigger
+        where not tgisinternal and tgenabled = 'O'
+          and (tgtype & 4) = 4 and (tgtype & 8) = 8 and (tgtype & 16) = 16
+          and ((tgname = 'obras_portal_acesso_guarda' and tgrelid = 'public.obras_portal_acesso'::regclass)
+            or (tgname = 'obras_documento_guarda' and tgrelid = 'public.obras_documento'::regclass)
+            or (tgname = 'obras_mensagem_guarda' and tgrelid = 'public.obras_mensagem'::regclass)))),
+  (11, 'funções de trigger: definer, fechadas para authenticated e anon', '3|false',
+      (select count(*) filter (where p.prosecdef)::text || '|'
+              || bool_or(has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                         or has_function_privilege('anon', p.oid, 'EXECUTE'))::text
+         from pg_proc p
+        where p.oid in (to_regprocedure('public.obras_portal_acesso_guarda()'),
+                        to_regprocedure('public.obras_documento_guarda()'),
+                        to_regprocedure('public.obras_mensagem_guarda()')))),
+  (12, 'obras_documento: policies = delete, insert, select (sem update)', 'obras delete,obras insert,obras select',
+      (select string_agg(policyname, ',' order by policyname) from pg_policies
+        where schemaname = 'public' and tablename = 'obras_documento')),
+  (13, 'obras_documento: 6 pastas fixas', 'true',
+      (select (pg_get_constraintdef(oid) like '%''projetos''%' and pg_get_constraintdef(oid) like '%''laudos''%'
+               and pg_get_constraintdef(oid) like '%''art''%' and pg_get_constraintdef(oid) like '%''layout''%'
+               and pg_get_constraintdef(oid) like '%''termos''%' and pg_get_constraintdef(oid) like '%''outros''%')::text
+         from pg_constraint where conrelid = 'public.obras_documento'::regclass and conname = 'obras_documento_pasta_check')),
+  (14, 'obras_documento_guarda valida o caminho e usa engenheiro/admin', 'true',
+      (select (prosrc like '%OBRAS_DOCUMENTO_CAMINHO%' and prosrc like '%obras_engenheiro_ou_admin(new.obra_id)%'
+               and prosrc like '%new.criado_por := v_email%')::text
+         from pg_proc where oid = 'public.obras_documento_guarda()'::regprocedure)),
+  (15, 'obras_mensagem: policies = insert, select (sem update/delete)', 'obras insert,obras select',
+      (select string_agg(policyname, ',' order by policyname) from pg_policies
+        where schemaname = 'public' and tablename = 'obras_mensagem')),
+  (16, 'obras_mensagem insert: autor_tipo manfac e autor_email = JWT', 'true',
+      (select (with_check like '%manfac%' and with_check like '%autor_email%' and with_check like '%jwt%'
+               and with_check like '%obras_has_access%')::text
+         from pg_policies where schemaname = 'public' and tablename = 'obras_mensagem' and policyname = 'obras insert')),
+  (17, 'obras_mensagem: texto 1..4000', 'true',
+      (select (pg_get_constraintdef(oid) like '%4000%')::text
+         from pg_constraint where conrelid = 'public.obras_mensagem'::regclass and conname = 'obras_mensagem_texto_check')),
+  (18, 'obras_mensagem_guarda bloqueia UPDATE e DELETE', 'true',
+      (select (prosrc like '%não pode ser alterada%' and prosrc like '%não pode ser apagada%'
+               and prosrc like '%new.autor_email := v_email%' and prosrc like '%new.criado_em := now()%')::text
+         from pg_proc where oid = 'public.obras_mensagem_guarda()'::regprocedure)),
+  (19, 'authenticated sem update/delete em obras_mensagem e sem update em obras_documento', 'false',
+      (select (has_table_privilege('authenticated', 'public.obras_mensagem', 'UPDATE,DELETE')
+            or has_table_privilege('authenticated', 'public.obras_documento', 'UPDATE'))::text)),
+  (20, 'anon sem privilégio nas 5 tabelas', 'false',
+      (select (has_table_privilege('anon', 'public.obras_portal_acesso', 'SELECT,INSERT,UPDATE,DELETE')
+            or has_table_privilege('anon', 'public.obras_documento', 'SELECT,INSERT,UPDATE,DELETE')
+            or has_table_privilege('anon', 'public.obras_mensagem', 'SELECT,INSERT,UPDATE,DELETE')
+            or has_table_privilege('anon', 'public.obras_portal_codigo', 'SELECT,INSERT,UPDATE,DELETE')
+            or has_table_privilege('anon', 'public.obras_portal_sessao', 'SELECT,INSERT,UPDATE,DELETE'))::text)),
+  (21, 'bucket obras-docs existe e é privado', 'false',
+      (select public::text from storage.buckets where id = 'obras-docs')),
+  (22, 'storage: policies obras docs = delete, read, upload (sem update)', 'obras docs delete,obras docs read,obras docs upload',
+      (select string_agg(policyname, ',' order by policyname) from pg_policies
+        where schemaname = 'storage' and tablename = 'objects' and policyname like 'obras docs%')),
+  (23, 'storage: upload e delete exigem obras_docs_pode_escrever', '2',
+      (select count(*)::text from pg_policies
+        where schemaname = 'storage' and tablename = 'objects'
+          and policyname in ('obras docs upload','obras docs delete')
+          and coalesce(qual, with_check) like '%obras_docs_pode_escrever%'
+          and coalesce(qual, with_check) like '%obras-docs%')),
+  (24, 'obras_docs_pode_escrever: definer, authenticated executa, anon não', 'true|true|false',
+      (select p.prosecdef::text || '|' || has_function_privilege('authenticated', p.oid, 'EXECUTE')::text
+              || '|' || has_function_privilege('anon', p.oid, 'EXECUTE')::text
+         from pg_proc p where p.oid = to_regprocedure('public.obras_docs_pode_escrever(text)'))),
+  (25, 'obras_engenheiro_ou_admin continua fechada para authenticated', 'false',
+      (select has_function_privilege('authenticated', 'public.obras_engenheiro_ou_admin(uuid)', 'EXECUTE')::text)),
+  (26, 'obras fotos (storage) intactas: 4 policies', '4',
+      (select count(*)::text from pg_policies where schemaname = 'storage' and tablename = 'objects'
+         and policyname in ('obras fotos upload','obras fotos read','obras fotos update','obras fotos delete'))),
+  (27, 'Leva 4 intacta: obras_relatorio_estado e relatorio_obrigatorio', 'true',
+      (select ((select prosrc like '%validar exige o conteudo%' from pg_proc
+                 where oid = 'public.obras_relatorio_estado()'::regprocedure)
+               and exists (select 1 from pg_constraint where conrelid = 'public.obras_envio'::regclass
+                            and conname = 'obras_envio_relatorio_obrigatorio'))::text)),
+  (28, 'colunas de obras_documento, obras_mensagem e obras_portal_acesso', '9|6|7',
+      (select (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_documento'
+                 and column_name in ('id','obra_id','pasta','nome','path','tamanho','tipo','criado_por','criado_em'))::text
+              || '|' || (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_mensagem'
+                 and column_name in ('id','obra_id','autor_tipo','autor_email','texto','criado_em'))::text
+              || '|' || (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_portal_acesso'
+                 and column_name in ('id','obra_id','email','nome','ativo','criado_por','criado_em'))::text)),
+  (29, 'obras_envio_tipo_check sem tipo do portal', 'false',
+      (select (pg_get_constraintdef(oid) like '%portal%')::text
+         from pg_constraint where conrelid = 'public.obras_envio'::regclass and conname = 'obras_envio_tipo_check')),
+  (30, 'trigger obras_obra_delete_guarda ligado (before delete), função definer e fechada', '1|true|false',
+      (select (select count(*) from pg_trigger where tgname = 'obras_obra_delete_guarda'
+                 and tgrelid = 'public.obras_obra'::regclass and not tgisinternal and tgenabled = 'O'
+                 and (tgtype & 2) = 2 and (tgtype & 8) = 8)::text
+              || '|' || (select prosecdef::text from pg_proc where oid = to_regprocedure('public.obras_obra_delete_guarda()'))
+              || '|' || (has_function_privilege('authenticated', 'public.obras_obra_delete_guarda()', 'EXECUTE')
+                      or has_function_privilege('anon', 'public.obras_obra_delete_guarda()', 'EXECUTE'))::text)),
+  (31, 'FK para obras_obra: documento restrict, mensagem restrict, acesso cascade (uma cada)', 'r|r|c',
+      (select (select string_agg(confdeltype::text, ',') from pg_constraint where conrelid = 'public.obras_documento'::regclass
+                 and contype = 'f' and confrelid = 'public.obras_obra'::regclass)
+              || '|' || (select string_agg(confdeltype::text, ',') from pg_constraint where conrelid = 'public.obras_mensagem'::regclass
+                 and contype = 'f' and confrelid = 'public.obras_obra'::regclass)
+              || '|' || (select string_agg(confdeltype::text, ',') from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass
+                 and contype = 'f' and confrelid = 'public.obras_obra'::regclass))),
+  (32, 'trigger obras_mensagem_sem_truncate ligado (before truncate)', '1',
+      (select count(*)::text from pg_trigger where tgname = 'obras_mensagem_sem_truncate'
+         and tgrelid = 'public.obras_mensagem'::regclass and not tgisinternal and tgenabled = 'O'
+         and (tgtype & 32) = 32)),
+  (33, 'obras_portal_emitir_codigo: definer | authenticated/anon executam | service_role executa', 'true|false|true',
+      (select p.prosecdef::text
+              || '|' || (has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                      or has_function_privilege('anon', p.oid, 'EXECUTE'))::text
+              || '|' || has_function_privilege('service_role', p.oid, 'EXECUTE')::text
+         from pg_proc p where p.oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text)'))),
+  (34, 'obras_portal_emitir_codigo trava e-mail e IP, aplica 5/h e 20/h, validade no banco; assinatura antiga ausente', 'true',
+      (select (prosrc like '%pg_advisory_xact_lock%obras_portal:%' and prosrc like '%obras_portal_ip:%'
+               and prosrc like '%>= 5%' and prosrc like '%>= 20%' and prosrc like '%set usado_em = now()%'
+               and prosrc like '%v_agora := clock_timestamp()%' and prosrc like '%v_agora + interval ''10 minutes''%'
+               and to_regprocedure('public.obras_portal_emitir_codigo(text,text,text,timestamptz)') is null)::text
+         from pg_proc where oid = to_regprocedure('public.obras_portal_emitir_codigo(text,text,text)'))),
+  (35, 'e-mail do portal: só ASCII imprimível e rtrim do ponto final', 'true',
+      (select (pg_get_constraintdef(oid) like '%rtrim(email%' and pg_get_constraintdef(oid) like '%x21%')::text
+         from pg_constraint where conrelid = 'public.obras_portal_acesso'::regclass and conname = 'obras_portal_acesso_email_check')),
+  (36, 'texto da mensagem exige caractere não-branco (\S)', 'true',
+      (select (strpos(pg_get_constraintdef(oid), '\S') > 0)::text
+         from pg_constraint where conrelid = 'public.obras_mensagem'::regclass and conname = 'obras_mensagem_texto_check')),
+  (37, 'bucket obras-docs: privado e limite de 25 MB (26214400)', 'false|26214400',
+      (select public::text || '|' || coalesce(file_size_limit::text, 'sem limite') from storage.buckets where id = 'obras-docs')),
+  (38, 'situação: RLS ligada em obras_situacao_pergunta e obras_situacao_cliente', '2',
+      (select count(*)::text from pg_class
+        where oid in (to_regclass('public.obras_situacao_pergunta'), to_regclass('public.obras_situacao_cliente'))
+          and relrowsecurity)),
+  (39, 'obras_situacao_pergunta: policies = insert, select, update (sem delete)', 'obras insert,obras select,obras update',
+      (select string_agg(policyname, ',' order by policyname) from pg_policies
+        where schemaname = 'public' and tablename = 'obras_situacao_pergunta')),
+  (40, 'obras_situacao_cliente: policies = insert, select (sem update/delete)', 'obras insert,obras select',
+      (select string_agg(policyname, ',' order by policyname) from pg_policies
+        where schemaname = 'public' and tablename = 'obras_situacao_cliente')),
+  (41, 'obras_situacao_cliente insert: publicada_por = JWT', 'true',
+      (select (with_check like '%publicada_por%' and with_check like '%jwt%' and with_check like '%obras_has_access%')::text
+         from pg_policies where schemaname = 'public' and tablename = 'obras_situacao_cliente' and policyname = 'obras insert')),
+  (42, 'triggers de guarda das 2 tabelas (insert/update/delete) + sem truncate', '2|1',
+      (select (select count(*) from pg_trigger
+                where not tgisinternal and tgenabled = 'O'
+                  and (tgtype & 4) = 4 and (tgtype & 8) = 8 and (tgtype & 16) = 16
+                  and ((tgname = 'obras_situacao_pergunta_guarda' and tgrelid = 'public.obras_situacao_pergunta'::regclass)
+                    or (tgname = 'obras_situacao_cliente_guarda' and tgrelid = 'public.obras_situacao_cliente'::regclass)))::text
+              || '|' || (select count(*) from pg_trigger where tgname = 'obras_situacao_cliente_sem_truncate'
+                 and tgrelid = 'public.obras_situacao_cliente'::regclass and not tgisinternal and tgenabled = 'O'
+                 and (tgtype & 32) = 32)::text)),
+  (43, 'funções de guarda da situação: definer, fechadas para authenticated e anon', '2|false',
+      (select count(*) filter (where p.prosecdef)::text || '|'
+              || bool_or(has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                         or has_function_privilege('anon', p.oid, 'EXECUTE'))::text
+         from pg_proc p
+        where p.oid in (to_regprocedure('public.obras_situacao_pergunta_guarda()'),
+                        to_regprocedure('public.obras_situacao_cliente_guarda()')))),
+  (44, 'obras_situacao_cliente_guarda: imutável, versão sob trava, autoria forçada', 'true',
+      (select (prosrc like '%imutável%' and prosrc like '%não pode ser apagada%'
+               and prosrc like '%pg_advisory_xact_lock%obras_situacao:%' and prosrc like '%new.publicada_por := v_email%'
+               and prosrc like '%new.publicada_em := now()%' and prosrc like '%obras_engenheiro_ou_admin(new.obra_id)%')::text
+         from pg_proc where oid = 'public.obras_situacao_cliente_guarda()'::regprocedure)),
+  (45, 'authenticated sem update/delete na situação e sem delete na pergunta; anon sem nada', 'false',
+      (select (has_table_privilege('authenticated', 'public.obras_situacao_cliente', 'UPDATE,DELETE')
+            or has_table_privilege('authenticated', 'public.obras_situacao_pergunta', 'DELETE')
+            or has_table_privilege('anon', 'public.obras_situacao_cliente', 'SELECT,INSERT,UPDATE,DELETE')
+            or has_table_privilege('anon', 'public.obras_situacao_pergunta', 'SELECT,INSERT,UPDATE,DELETE'))::text)),
+  (46, 'FK para obras_obra: pergunta cascade, situação restrict; únicos (obra,chave) e (obra,versao)', 'c|r|2',
+      (select (select string_agg(confdeltype::text, ',') from pg_constraint where conrelid = 'public.obras_situacao_pergunta'::regclass
+                 and contype = 'f' and confrelid = 'public.obras_obra'::regclass)
+              || '|' || (select string_agg(confdeltype::text, ',') from pg_constraint where conrelid = 'public.obras_situacao_cliente'::regclass
+                 and contype = 'f' and confrelid = 'public.obras_obra'::regclass)
+              || '|' || (select count(*) from pg_constraint where contype = 'u'
+                 and conname in ('obras_situacao_pergunta_obra_chave_key', 'obras_situacao_cliente_obra_versao_key'))::text)),
+  (47, 'colunas de obras_situacao_pergunta e obras_situacao_cliente', '11|8',
+      (select (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_situacao_pergunta'
+                 and column_name in ('id','obra_id','chave','pergunta','contexto','resposta','interno','respondida_por','respondida_em','aberta','criado_em'))::text
+              || '|' || (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'obras_situacao_cliente'
+                 and column_name in ('id','obra_id','versao','explicacao','acoes','numeros','publicada_por','publicada_em'))::text))
+) as t(n, verificacao, esperado, encontrado)
+order by n;

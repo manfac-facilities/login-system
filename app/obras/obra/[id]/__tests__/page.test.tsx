@@ -21,12 +21,16 @@ jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn() }))
 // `TextEncoder`, ausente no jsdom do Jest. Mesmo mock de
 // `app/obras/__tests__/ficha.test.ts`.
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
+jest.mock('../_financeiro/dados', () => ({
+  lerFinanceiroSpot: jest.fn(async () => ({ ok: false, motivo: 'sem-permissao' })),
+}))
 
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import FichaDaObraPage from '../page'
 import Ficha from '../_ficha'
+import { lerFinanceiroSpot } from '../_financeiro/dados'
 import Triagem from '../_triagem'
 
 const OK = { data: [], error: null }
@@ -219,5 +223,30 @@ describe('FichaDaObraPage — analistas por cliente (bug DML-58, 06/10/2026)', (
     expect(await analistasPara(null)).toEqual(
       ['ALINE', 'AMANDA', 'FELIPE', 'JOANA', 'JUAN', 'LEANDRO', 'LETICIA', 'MARIA']
     )
+  })
+})
+
+describe('FichaDaObraPage — financeiro da OS SPOT', () => {
+  const fichaDe = async () => {
+    const el = (await FichaDaObraPage({ params })) as React.ReactElement<{ children: React.ReactElement[] }>
+    return el.props.children.find((c) => c?.type === Ficha) as React.ReactElement<{ financeiro?: unknown }>
+  }
+
+  it('SPOT (e modalidade nula) lê o financeiro e passa à Ficha', async () => {
+    for (const modalidade of ['spot', null]) {
+      ;(lerFinanceiroSpot as jest.Mock).mockClear()
+      mockRespostas({ obra: { data: linhaObra({ modalidade }), error: null } })
+      const ficha = await fichaDe()
+      expect(lerFinanceiroSpot).toHaveBeenCalledTimes(1)
+      expect(ficha.props.financeiro).toEqual({ ok: false, motivo: 'sem-permissao' })
+    }
+  })
+
+  it('obra de modalidade obra não lê o financeiro', async () => {
+    ;(lerFinanceiroSpot as jest.Mock).mockClear()
+    mockRespostas({ obra: { data: linhaObra({ modalidade: 'obra' }), error: null } })
+    const ficha = await fichaDe()
+    expect(lerFinanceiroSpot).not.toHaveBeenCalled()
+    expect(ficha.props.financeiro).toBeUndefined()
   })
 })

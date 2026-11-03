@@ -1,6 +1,7 @@
 type Linha = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 let db: Record<string, Linha[]>
 let seq = 0
+let erroInsert: { message: string; code?: string } | null = null
 
 function construtor(tabela: string) {
   const filtros: ((l: Linha) => boolean)[] = []
@@ -9,6 +10,7 @@ function construtor(tabela: string) {
   const executar = (unico: boolean) => {
     const linhas = (db[tabela] ??= [])
     if (op === 'insert') {
+      if (erroInsert) return { data: null, error: erroInsert }
       const nova = { id: `id${++seq}`, ...payload }
       linhas.push(nova)
       return { data: unico ? nova : [nova], error: null }
@@ -45,7 +47,7 @@ import {
   ligarDescumprimentoAction,
   registrarOrientacaoAction,
 } from '../_actions'
-import { exibirAoClientePadrao, responsavelPadrao, type NovoImpedimento } from '../_tipos'
+import { dataEncerramento, exibirAoClientePadrao, responsavelPadrao, type NovoImpedimento } from '../_tipos'
 
 const OBRA = 'o1'
 const novo = (over: Partial<NovoImpedimento> = {}): NovoImpedimento => ({
@@ -63,6 +65,7 @@ const novo = (over: Partial<NovoImpedimento> = {}): NovoImpedimento => ({
 
 beforeEach(() => {
   seq = 0
+  erroInsert = null
   db = { obras_obra: [{ id: OBRA, modalidade: 'obra' }], obras_impedimento: [] }
   getUserMock.mockResolvedValue({ data: { user: { email: 'a@b.com' } } })
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
@@ -70,6 +73,12 @@ beforeEach(() => {
 })
 
 describe('regras puras', () => {
+  it('data de encerramento: a de referência (diário/hoje), nunca antes da abertura', () => {
+    expect(dataEncerramento('2026-10-20', '2026-10-31')).toBe('2026-10-31')
+    expect(dataEncerramento('2026-11-04', '2026-10-31')).toBe('2026-11-04')
+    expect(dataEncerramento('2026-11-04', '2026-11-04')).toBe('2026-11-04')
+  })
+
   it('responsável padrão por tipo', () => {
     expect(responsavelPadrao('Área não liberada')).toBe('cliente')
     expect(responsavelPadrao('Material do cliente')).toBe('cliente')
@@ -112,6 +121,21 @@ describe('abrirImpedimentoAction', () => {
     const r = await abrirImpedimentoAction(OBRA, novo({ fotoPath: 'outra/impedimento/x.jpg' }))
     expect(r.ok).toBe(false)
   })
+  it('Leva 6: ambiente opcional — sem ele não manda a coluna, com ele grava o ambiente', async () => {
+    await abrirImpedimentoAction(OBRA, novo())
+    await abrirImpedimentoAction(OBRA, novo({ ambienteId: 'a1' }))
+    await registrarOrientacaoAction(OBRA, { descricao: 'Usar a porta lateral', pessoaCliente: null, atividadeNumero: null, fotoPath: null, ambienteId: 'a1' })
+    expect(db.obras_impedimento.map((l) => l.ambiente_id)).toEqual([undefined, 'a1', 'a1'])
+    // sem ambiente, a coluna nem vai no insert (funciona antes do SQL da Leva 6)
+    expect('ambiente_id' in db.obras_impedimento[0]).toBe(false)
+  })
+  it('Leva 6: ambiente de outra obra -> recusa do banco em pt-BR', async () => {
+    erroInsert = { message: 'OBRAS_MAPA_VINCULO: o ambiente do impedimento não é desta obra', code: '23514' }
+    expect(await abrirImpedimentoAction(OBRA, novo({ ambienteId: 'amb-de-outra-obra' }))).toEqual({
+      ok: false,
+      erro: 'O ambiente escolhido não é desta obra.',
+    })
+  })
   it('sem acesso -> falha fechada', async () => {
     ;(hasSystemAccess as jest.Mock).mockResolvedValue(false)
     const r = await abrirImpedimentoAction(OBRA, novo())
@@ -142,6 +166,18 @@ describe('vínculo com o diário (rdoId)', () => {
     expect(o.ok).toBe(false)
     expect(db.obras_impedimento).toHaveLength(0)
   })
+  it('registrar impedimento desmarca o "sem impedimentos hoje" do diário em rascunho daquele dia (item 7)', async () => {
+    db.obras_rdo[0].sem_impedimento = true
+    db.obras_rdo[1].sem_impedimento = true
+    await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r1' }))
+    expect(db.obras_rdo[0].sem_impedimento).toBe(false)
+    // pela aba Impedimentos (sem rdoId), na data do diário: também desmarca; o validado não é tocado
+    db.obras_rdo[0].sem_impedimento = true
+    await abrirImpedimentoAction(OBRA, novo({ abertoEm: '2026-10-15' }))
+    expect(db.obras_rdo[0].sem_impedimento).toBe(false)
+    await abrirImpedimentoAction(OBRA, novo({ abertoEm: '2026-10-14' }))
+    expect(db.obras_rdo[1].sem_impedimento).toBe(true)
+  })
   it('com rdo válido, aberto_em é a data do diário e rdo_id é gravado', async () => {
     await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r1', abertoEm: '2026-10-29' }))
     await registrarOrientacaoAction(OBRA, { descricao: 'x', pessoaCliente: null, atividadeNumero: null, fotoPath: null, rdoId: 'r1' })
@@ -158,6 +194,21 @@ describe('encerrarImpedimentoAction', () => {
     const r = await encerrarImpedimentoAction('id1', '2026-10-19')
     expect(r.ok).toBe(false)
     expect(db.obras_impedimento[0].encerrado_em).toBeUndefined()
+  })
+  it('mensagem clara com as duas datas', async () => {
+    await abrirImpedimentoAction(OBRA, novo())
+    const r = await encerrarImpedimentoAction('id1', '2026-10-19')
+    expect(r).toEqual({
+      ok: false,
+      erro: 'A data de encerramento (19/10/2026) não pode ser anterior à abertura do impedimento (20/10/2026)',
+    })
+  })
+  it('aberto pelo diário de um dia posterior a hoje: encerrar na data do diário funciona (item 9)', async () => {
+    // Diário de 04/11 preenchido em 31/10: o impedimento nasce com aberto_em = data do diário.
+    db.obras_rdo = [{ id: 'r9', obra_id: OBRA, estado: 'rascunho', data: '2026-11-04' }]
+    await abrirImpedimentoAction(OBRA, novo({ rdoId: 'r9', abertoEm: '2026-11-04' }))
+    expect(db.obras_impedimento[0].aberto_em).toBe('2026-11-04')
+    expect(await encerrarImpedimentoAction('id1', dataEncerramento('2026-11-04', '2026-11-04'))).toEqual({ ok: true })
   })
   it('encerra com data válida e não encerra duas vezes', async () => {
     await abrirImpedimentoAction(OBRA, novo())

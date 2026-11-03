@@ -2,6 +2,8 @@
 paths:
   - "app/obras/**"
   - "app/api/obras/**"
+  - "app/portal-obra/**"
+  - "lib/portal-obra/**"
 ---
 
 # Módulo Controle de Obras
@@ -158,3 +160,131 @@ Spec: `docs/superpowers/specs/2026-10-30-obras-leva1-cronograma-design.md`.
   (`?status=1` abre a gaveta), `/previa-obras/diario`. Fixture de Macaé 3; 404 em produção; fica fora de /obras
   porque o middleware exige sessão lá.
 - **SQL:** `sdd-sql-obras-leva1.sql` aplicado em 30/10/2026 (ver `.claude/rules/sql.md`).
+
+### Portal do cliente (Leva 5, branch `feat/obras-leva5`, 31/10/2026)
+
+Spec: `docs/superpowers/specs/2026-10-31-obras-leva5-pagina-do-cliente-design.md`.
+
+- **Onde fica:** páginas em `app/portal-obra/` (`(entrada)` = e-mail + código; `(obra)` = obras da sessão,
+  guardas em `(obra)/_lib/guarda.ts`; `sair/` = logout por POST com conferência de Origin). Auth em
+  `lib/portal-obra/` (`codigo.ts` pedido/conferência do código, `sessao.ts`, `segredo.ts`, `acesso.ts`,
+  `limites.ts`). Lado do hub: configurações/comunicação/documentos em `app/obras/obras/`; analista e
+  "Situação para o cliente" em `app/obras/obras/_lib/analista.ts` + `[id]/_analista-actions.ts`.
+- **Não usa o Supabase Auth.** OTP próprio; o portal nunca importa `lib/supabase/server` nem `getUser`.
+  Tudo com o cliente admin (service role), e todo carregador recebe o cliente por parâmetro.
+- **Regras do código (OTP):** 6 dígitos, 10 min, uso único, 5 tentativas por código, 5 códigos/h por e-mail e
+  20/h por IP. Só o HMAC fica no banco. Emissão atômica no rpc `obras_portal_emitir_codigo` (travas por
+  e-mail e IP, aposenta os vivos, `criado_em = clock_timestamp()` e validade calculada **no banco**). A
+  conferência pega o código **vivo** (`usado_em is null`, não vencido) e conta tentativa/uso por
+  compare-and-swap. A resposta do pedido é sempre a mesma e o trabalho roda em `after()` (sem enumeração).
+  Sessão: cookie `httpOnly`/`secure`/`lax`, path `/portal-obra`, 7 dias renováveis com teto de 30; o acesso
+  (`obras_portal_acesso.ativo`) é relido a cada request, então desativar derruba a sessão.
+- **Modalidade:** página, PDF, documento e mensagem do cliente recusam obra que não é `modalidade = 'obra'`.
+- **Env:** `PORTAL_OBRA_SEGREDO` (≥ 32 caracteres; só no EasyPanel). Sem ele, ou curto, o portal falha fechado.
+- **IA (desde 01/11/2026 na OpenAI, não mais Anthropic):** uma chamada só, `pedirAoModelo` em `_lib/ia-semanal.ts`
+  (Responses API, SDK `openai`), usada pelo semanal/relatórios e pela Situação (`_lib/ia-situacao.ts`, JSON com
+  esquema estrito). Env `OPENAI_API_KEY` (sem ela o botão some e a Situação sai em rascunho simples) e
+  `OPENAI_MODEL` opcional (padrão `gpt-5.4-mini`, escolha do José).
+- **IP do limite:** o **último** salto do `x-forwarded-for` (o que o Traefik do EasyPanel acrescenta). Pressupõe
+  o Traefik em publish mode **host**; em ingress todos chegam com o mesmo IP e o limite de 20/h vira global.
+- **SQL:** `sdd-sql-obras-leva5.sql` aplicado em 31/10/2026 (ver `.claude/rules/sql.md`). Ordem obrigatória no deploy: SQL antes do app
+  (sem `obras_situacao_cliente`, a Visão geral do portal, o semanal e o relatório de período dão 500). Teste de
+  comportamento: `docs/obras/2026-10-31-verificacao-obras-leva5.sql` (116 casos, rollback).
+
+### Financeiro da obra — Fases B/C (branch `feat/obras-financeiro-bc`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-financeiro-fases-b-c-design.md`; plano `docs/superpowers/plans/2026-11-01-obras-financeiro-fases-b-c.md`.
+
+- **Onde fica:** aba Dados da obra em `obras/[id]/dados/` (valor receita por OS, organograma do cliente); sub-telas
+  `obras/[id]/financeiro/medicoes/` e `.../locacoes/`; o Resumo é `financeiro/page.tsx` → `_tela.tsx` + `_resumo.tsx`.
+  Regras puras: `_lib/financeiro-obra.ts` (`consolidarFinanceiro` da Fase A + `consolidarMargem`/`custoDoVinculo`),
+  montagem da tela em `_lib/financeiro-tela.ts`, % ⇄ valor em `_lib/medicao.ts`, aviso de locação em `_lib/locacao.ts`,
+  alertas > 10 dias (medição ao cliente e de fornecedor) em `_lib/alertas.ts` (faixa do painel da obra).
+- **Regras que mordem:** custo projetado = comprometido ÷ avanço físico da obra aberta (`calc.realizado`, 0–1; sem
+  avanço → "—"); receita esperada exclui OS cancelada; sem valor receita a tela pede o valor em Dados da obra.
+  Sem dupla contagem: vínculo com `de_medicao_fornecedor` fica fora (já está em Fornecedores); pedido de locação do
+  Compras sai de "Compras" e entra em "Locações". Pagamento do Financeiro ao mesmo fornecedor (CPF/CNPJ, `fornecedor_documento`) de um
+  pedido do Compras da família quita o pedido (realizado/pago na origem do pedido, até o valor dele) só enquanto o pedido não está pago no
+  Compras — pedido com `pago_em` só absorve o pagamento do mesmo dia BRT (é o mesmo pagamento); só o
+  excedente fica em "Pagamentos / rateio" (DIVIDAS M1). Margem projetada total e percentuais só sobre as OS
+  com valor receita; liberado de OS cancelada fora; "liberado e não faturado" somado por OS. Tudo com o cliente da SESSÃO; valores só com
+  `obras_pode_ver_valores` (a aba some para os demais). O painel só lê medições para os alertas quando
+  `podeVerValoresDaRequisicao` (`[id]/_pode-ver-valores.ts`, `cache` do React compartilhado com o layout) é true —
+  quem não vê valores não faz leitura extra (`[id]/_alertas-financeiros.ts`).
+- **SQL e ordem de deploy:** Fase A (`sdd-sql-obras-financeiro-a.sql`) → Financeiro `044` → Compras `016` →
+  Fornecedores `013` → `sdd-sql-obras-financeiro-bc.sql`; depois os apps. Teste de comportamento:
+  `docs/obras/2026-11-01-verificacao-obras-financeiro-bc.sql` (rollback).
+- **Merge na master só DEPOIS do SQL B/C aplicado em produção** com a verificação pós-commit **24/24 OK** e o
+  teste de comportamento **114/114 OK**. Não há deploy por feature: qualquer deploy de outra coisa leva esta junto,
+  e sem o SQL a aba Financeiro fica sem margem e Medições/Locações só avisam. (Dados da obra aguenta: sem
+  `obras_cliente_pessoa`, o organograma mostra o aviso e "sem cadastro" continua com os botões de acesso e envio.)
+### Mapa da obra e fotos por ponto (Leva 6, branch `feat/obras-leva6`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-leva6-mapa-fotos-design.md`.
+
+- **Onde fica:** regras puras em `obras/_lib/mapa.ts`, leitura em `_lib/mapa-leitura.ts`; telas em `obras/[id]/mapa/`
+  (`_tela` + `_desenho` SVG relativo 0–1; `montar/_editor` com arrasto por ponteiro; `ponto/[pontoId]/_comparar`
+  antes × depois); permissão `mapa/_permissao.ts` (engenheiro com acesso `obras` ou admin, igual ao banco).
+- **Diário:** com pelo menos um ambiente, o passo Fotos ganha "Por ponto (ronda)", "Por atividade" e "+ Foto avulsa",
+  e `registrarFotoAction` exige ambiente ou ponto (regra só do app). Obra sem ambiente: diário de sempre.
+- **Planta:** o servidor só recebe imagem (`<obra>/mapa/<uuid>.<jpg|png|webp>`), URL assinada de 600 s gerada no servidor.
+  PDF é aceito na tela de montar: a 1ª página vira imagem no navegador (`montar/_pdf-para-imagem.ts`, `pdfjs-dist` por `import()`
+  dinâmico; worker em `montar/_pdf-worker.ts`, separado porque `import.meta` não roda no Jest). **A planta nova nunca é WEBP:**
+  o PDF vira JPEG 0,9 (PNG se o navegador não gerar JPEG) e o WEBP enviado direto vira JPEG no navegador (`webpParaJpeg`),
+  porque o react-pdf da prancha de faseamento só lê JPEG/PNG. O servidor ainda aceita `.webp` (planta antiga): o PDF do
+  faseamento a trata como sem planta, com o aviso de formato no rodapé (`plantaEntraNoPdf`/`AVISO_FORMATO_PLANTA` em
+  `faseamento/_regras.ts`; prova real em `scripts/verificar-prancha-formato-planta.tsx`).
+- **Portal (aba Mapa):** `portal-obra/(obra)/_lib/mapa.ts` (`lerMapaDoPortal`, `obraTemMapa`); aba só com ≥ 1 ambiente,
+  página 404 sem mapa. Fotos só de RDO validado/enviado (filtro no banco e no código), impedimento só aberto e
+  `exibir_ao_cliente`, atividade pelo código e pela situação do cronograma do portal, ponto só pelo número.
+- **SQL:** `sdd-sql-obras-leva6.sql` **precisa estar aplicado antes do deploy** (20/20 + teste 94/94). Se o app subir
+  antes, diário, foto e impedimento seguem como antes da Leva 6 (mapa ilegível = obra sem mapa; colunas novas só vão no
+  insert quando preenchidas); só as telas do mapa dão erro.
+- **Fotos do mapa:** `lerFotosDoMapa` sempre ordena pela data do RDO e limita (padrão 500); diário usa
+  `lerReferenciasDosPontos` (1 foto por ponto). Nunca ler as fotos da obra inteira.
+
+### Planta de faseamento (Leva 6b, branch `feat/obras-leva6b-faseamento`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-leva6b-faseamento-design.md`.
+
+- **Onde fica:** `obras/[id]/faseamento/`. Regras puras, schemas (escritos à mão, API `safeParse`/`parse`) e a prancha
+  react-pdf em `_lib/` (`camadas.ts`, `trava.ts`, `prancha-pdf.tsx`); tela em `page.tsx` → `_tela.tsx` (fases, abas
+  "Editar camadas"/"Prancha A3", botões), editor SVG em `_editor.tsx` (arrasto por ponteiro, como o do mapa), desenho em
+  `_desenho.tsx`, prévia HTML/SVG da folha em `_previa.tsx`; carga e render do PDF em `_pdf.ts` (rota
+  `[revisaoId]/pdf` e envio); permissão em `_permissao.ts`. Coordenador em Dados da obra (`dados/_coordenador.tsx`).
+- **Quem edita/emite/envia:** admin, ou com acesso `obras` o engenheiro da obra ou o coordenador
+  (`obras_obra.coordenador_email`, só admin grava, direto na tabela). Igual a `obras_pode_fasear` (lower/trim; NULL/vazio
+  nunca passa). Os demais veem em leitura; o banco recusa mesmo assim.
+- **Regras que mordem:** coordenadas 0–1; ids únicos por camada (o schema recusa repetido); um rascunho por fase;
+  emitida é imutável (trigger) e congela base, fase e trava — PDF e portal da emitida usam `planta_*`/`fase_*` da própria
+  revisão, nunca o mapa vivo; rascunho usa a planta atual e sai com RASCUNHO. Obra sem planta = quadro branco + aviso.
+  Editor só em tela ≥ 768 px. **Prévia nunca em `<iframe>`:** o hub manda `X-Frame-Options: DENY`.
+- **Envio:** `obras_envio` tipo `faseamento` com `fase_revisao_id` (só emitida), um por lado, aos destinatários do
+  relatório de fase (tipos `semanal`/`mensal`); aparece na linha do tempo da Comunicação com "Abrir PDF".
+- **SQL:** `sdd-sql-obras-leva6b.sql` **precisa estar aplicado antes do deploy** (verificação 23/23 + teste 86/86). Sem
+  ele a aba Faseamento mostra "ainda não está disponível", a Comunicação relê os envios sem `fase_revisao_id` (42703) e o
+  portal ignora o faseamento (PGRST205/42P01/42703 = lista vazia).
+- **Portal (aba Mapa):** seção "Faseamento" (`portal-obra/(obra)/obras/[obraId]/mapa/_faseamento.tsx`, leitura em `_lib/faseamento.ts`) com só a **última emitida de cada fase** (base e nome congelados da revisão); sem emitida a seção some, e a aba Mapa aparece também só com faseamento (`obraTemMapa` = ambiente OU emitida). PDF em `faseamento/[revisaoId]/pdf` (sessão do portal, cliente admin, modalidade obra): 404 igual para rascunho, outra obra, id inválido **e revisão antiga já substituída** (só a última emitida abre).
+
+### Financeiro da OS no SPOT (branch `feat/obras-spot-financeiro`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
+
+- **Onde fica:** `app/obras/obra/[id]/_financeiro/` — `resumo-spot.ts` (regras puras: faturado, falta, margem),
+  `dados.ts` (leitura), `_actions.ts` (só locação: devolvida/renovada) e `bloco.tsx` (a aba na ficha SPOT). O
+  `faltaSpot` (saldo para a fila e a trava) mora no Financeiro, `lib/faturamento/saldo-spot.ts`, não no hub.
+- **Quem vê valores:** no SPOT, qualquer usuário com acesso ao Obras; na OBRA, igual a hoje (`obras_pode_ver_valores`).
+- **Locação do SPOT:** devolvida/renovada marcada por qualquer usuário do Obras (não só o analista; ver `docs/DIVIDAS.md`).
+  OBRAS continuam só com engenheiro da obra/mãe ou admin.
+- **Faturamento parcial é só SPOT.** Soma das PARTES da obra nas notas autorizada/enviada não devolvidas
+  (`fin_fat_nota_obras`; parte nula = total da nota, igual ao Financeiro) + `obras_nota_externa`; só vira `faturado` quando a soma >= valor. `fat_nfse` guarda a lista
+  separada por vírgula ("735, 812"). Faturamento parcial das OBRAS ficou de fora (decisão de 01/11).
+- **`obras_nota_externa`:** NF emitida fora do módulo de faturamento do Financeiro. Só administrador insere/apaga
+  (`criado_por` = e-mail do JWT), e só por SQL/admin — não há tela nem action no app; inserir/apagar não reavalia a
+  etapa sozinho.
+- **Ordem de deploy:** `sdd-sql-obras-spot-financeiro.sql` (hub) → Financeiro `045` → app do Financeiro (branch
+  `feat/spot-faturamento-parcial`, repo `financeiro`; logo depois da `045`) → `docs/obras/2026-11-01-macae2-nf735.sql`
+  (antes de qualquer nota nova da 0426-012516; não depende do app do hub; se abortar com a OS já `faturado`, pedir
+  ajuda, não escrever variante) → app do hub.
+- **SQL aplicado** (constatado em 03/11/2026 pelos tipos gerados do banco; o Financeiro `045` também). Teste de comportamento
+  com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. **No ar desde 03/11/2026:** app do Financeiro (main `b543501`), script da MACAÉ 2 aplicado (NF 735 em `obras_nota_externa`, valor de volta a R$ 156.412,32) e app do hub (master `79b5c3d`, chunks 15:52 BRT).

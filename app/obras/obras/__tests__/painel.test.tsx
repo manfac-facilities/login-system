@@ -11,7 +11,7 @@ const obra = {
 
 const base: ObraGrande = {
   obra, versaoBase: null, versaoVigente: null, rascunho: null,
-  plano: [], exec: [], impedimentos: [], feriados: new Set(),
+  plano: [], exec: [], impedimentos: [], feriados: new Set(), criterioPeso: 'valor',
   calc: null, calcBase: null, etapas: [], hist: [], dadosAte: null, terminoBase: null, sinal: null, atraso: null,
 }
 

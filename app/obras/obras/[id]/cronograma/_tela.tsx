@@ -8,17 +8,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type KeyboardEvent, type PointerEvent, type UIEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Arvore, { dataBR, type Edicoes, type LinhaVisivel } from './_arvore'
-import BarraFerramentas, { type Escala } from './_barra-ferramentas'
+import BarraFerramentas, { type Escala, type Visao } from './_barra-ferramentas'
+import TabelaEdicao, { type AcoesTabela } from './_tabela-edicao'
 import Gantt from './_gantt'
 import AtualizarStatus from './_atualizar-status'
 import {
+  adicionarAtividadeAction,
+  adicionarEtapaAction,
   criarRevisaoAction,
+  excluirAtividadeAction,
+  moverAtividadeAction,
+  moverEtapaAction,
+  renomearEtapaAction,
   definirFimAction,
   definirInicioAction,
   salvarLinhaRascunhoAction,
   salvarVersaoAction,
 } from './_actions'
-import type { DadosCronograma, LinhaAtividade, LinhaPlano, Resultado } from './_tipos'
+import type { DadosCronograma, LinhaPlano, Resultado, ResultadoNumero } from './_tipos'
 
 const chaveAberto = (obraId: string) => `obras:crono:aberto:${obraId}`
 
@@ -50,16 +57,6 @@ function gravarFechadas(obraId: string, fechadas: Set<string>) {
   }
 }
 
-const planoDaLinha = (a: LinhaAtividade): LinhaPlano => ({
-  numero: a.numero,
-  etapa: a.etapa,
-  descricao: a.descricao,
-  pred1: a.pred1,
-  pred2: a.pred2,
-  duracao: a.duracao,
-  bloqueiaPorTrava: a.bloqueiaPorTrava,
-})
-
 export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
   const router = useRouter()
   const [pendente, iniciar] = useTransition()
@@ -73,6 +70,11 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
   const [foco, setFoco] = useState<string | null>(null)
   const [split, setSplit] = useState(55)
   const [statusAberto, setStatusAberto] = useState(false)
+  // Visão escolhida vale para a versão em que foi escolhida; ao trocar de versão volta ao padrão
+  // (Tabela no rascunho editável, Gantt nas demais).
+  const [escolha, setEscolha] = useState<{ versaoId: string; visao: Visao } | null>(null)
+  const [focarNumero, setFocarNumero] = useState<number | null>(null)
+  const limparFoco = useCallback(() => setFocarNumero(null), [])
 
   const { obraId } = dados
   const mudarFechadas = (f: Set<string>) => {
@@ -110,11 +112,59 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
       router.refresh()
     })
 
+  // A revisão nova abre na tela já no rascunho. Só `refresh` mantinha o `?v=` de antes
+  // (versão salva, só leitura) — e o "Salvar revisão" gravava a revisão sem nenhuma mudança.
+  const novaRevisao = () =>
+    iniciar(async () => {
+      setErro(null)
+      const r = await criarRevisaoAction(obraId)
+      if (!r.ok) {
+        setErro(r.erro)
+        return
+      }
+      router.push(`?v=${r.numero}`)
+    })
+
   const versaoId = dados.versao.id
-  const salvarPlano = (numero: number, campos: Partial<LinhaPlano>) => {
-    const a = porNumero.get(numero)
-    if (!a) return
-    executar(() => salvarLinhaRascunhoAction(obraId, versaoId, { ...planoDaLinha(a), ...campos }))
+  const visao: Visao = escolha?.versaoId === versaoId ? escolha.visao : dados.editavel ? 'tabela' : 'gantt'
+  // Só o campo editado vai ao servidor: duas edições seguidas na mesma linha não se sobrescrevem.
+  const salvarPlano = (numero: number, campos: Partial<LinhaPlano>) =>
+    executar(() => salvarLinhaRascunhoAction(obraId, versaoId, { numero, ...campos }))
+
+  /** Como executar, mas devolve se gravou (a célula da tabela volta ao valor antigo se não). */
+  const gravar = (fn: () => Promise<Resultado | ResultadoNumero>, depois?: (r: ResultadoNumero) => void) =>
+    new Promise<boolean>((resolver) =>
+      iniciar(async () => {
+        setErro(null)
+        const r = await fn()
+        if (!r.ok) {
+          setErro(r.erro)
+          resolver(false)
+          return
+        }
+        if ('numero' in r) depois?.(r)
+        router.refresh()
+        resolver(true)
+      }),
+    )
+  const ultimaDaEtapa = (chave: string) => dados.etapas.find((e) => e.chave === chave)?.numeros.at(-1) ?? null
+  const acoesTabela: AcoesTabela = {
+    salvar: (ed) => gravar(() => salvarLinhaRascunhoAction(obraId, versaoId, ed)),
+    inicio: (n, d) => gravar(() => definirInicioAction(obraId, versaoId, n, d)),
+    fim: (n, d) => gravar(() => definirFimAction(obraId, versaoId, n, d)),
+    adicionarEtapa: (nome) => gravar(() => adicionarEtapaAction(obraId, versaoId, nome), (r) => r.ok && setFocarNumero(r.numero)),
+    renomearEtapa: (atual, novo) => gravar(() => renomearEtapaAction(obraId, versaoId, atual, novo)),
+    moverEtapa: (nome, d) => gravar(() => moverEtapaAction(obraId, versaoId, nome, d)),
+    // Atividade nova entra no fim da etapa, depois da última dela (predecessora = a última).
+    adicionarAtividade: (etapa) => {
+      const ultima = ultimaDaEtapa(etapa)
+      return gravar(
+        () => adicionarAtividadeAction(obraId, versaoId, etapa, { descricao: 'Nova atividade', duracao: 1, pred1: ultima, pred2: null }),
+        (r) => r.ok && setFocarNumero(r.numero),
+      )
+    },
+    moverAtividade: (n, d) => gravar(() => moverAtividadeAction(obraId, versaoId, n, d)),
+    excluirAtividade: (n) => gravar(() => excluirAtividadeAction(obraId, versaoId, n)),
   }
   const edicoes: Edicoes = {
     descricao: (n, v) => salvarPlano(n, { descricao: v }),
@@ -145,7 +195,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
   }, [])
   useEffect(() => {
     irParaHoje()
-  }, [escala, irParaHoje])
+  }, [escala, visao, irParaHoje])
 
   // Divisória arrastável entre árvore e Gantt (mouse/toque e setas do teclado).
   const areaRef = useRef<HTMLDivElement>(null)
@@ -171,11 +221,20 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
   }
 
   const { versao, rascunho, termino } = dados
-  const somenteLeitura = versao.salva && rascunho ? `v${versao.numero} é uma versão salva — só leitura.` : null
+  const noRascunho = !!rascunho && versao.id === rascunho.id
+  const somenteLeitura = !versao.salva
+    ? null
+    : rascunho
+      ? `v${versao.numero} é uma versão salva — só leitura. As alterações vão na revisão v${rascunho.numero} (rascunho).`
+      : dados.podeEditar && dados.temVigente
+        ? `v${versao.numero} é uma versão salva — só leitura. Para alterar datas, clique em “Nova revisão”.`
+        : null
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <BarraFerramentas
+        visao={visao}
+        onVisao={(v) => setEscolha({ versaoId, visao: v })}
         versoes={dados.versoes}
         versaoNumero={versao.numero}
         onVersao={(n) => router.push(`?v=${n}`)}
@@ -192,7 +251,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         temVigente={dados.temVigente}
         pendente={pendente}
         onAtualizarStatus={() => setStatusAberto(true)}
-        onNovaRevisao={() => executar(() => criarRevisaoAction(obraId))}
+        onNovaRevisao={novaRevisao}
         onSalvarVersao={(motivo, depois) => rascunho && executar(() => salvarVersaoAction(obraId, rascunho.id, motivo), depois)}
       />
 
@@ -203,9 +262,10 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         {pendente ? <span aria-live="polite">Salvando…</span> : null}
       </p>
 
-      {rascunho && versao.id === rascunho.id && dados.temVigente ? (
-        <p className="rounded-lg border border-[#efd77a] bg-[#fdf6d8] px-3 py-2 text-[13px] text-(--obra-yellow-texto)">
-          Revisão v{rascunho.numero} em rascunho — painel e diário seguem a versão vigente até ela ser salva.
+      {noRascunho && rascunho && dados.temVigente ? (
+        <p role="status" className="rounded-lg border border-[#efd77a] bg-[#fdf6d8] px-3 py-2 text-[13px] text-(--obra-yellow-texto)">
+          <b>Editando v{rascunho.numero} (rascunho)</b> — altere datas, dias úteis e predecessoras na tabela e depois
+          clique em “Salvar revisão”. Painel e diário seguem a versão vigente até lá.
         </p>
       ) : null}
       {rascunho && rascunho.numero === 1 && versao.id === rascunho.id ? (
@@ -215,7 +275,7 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
       ) : null}
       {somenteLeitura ? <p className="text-[13px] text-(--obra-muted-texto)">{somenteLeitura}</p> : null}
       {erro ? (
-        <div role="alert" className="flex items-start justify-between gap-3 rounded-lg border border-[#efc2c2] bg-[#fbecec] px-3 py-2 text-[13px] text-(--obra-vermelho-texto)">
+        <div role="alert" className="sticky top-2 z-30 flex items-start justify-between gap-3 rounded-lg border border-[#efc2c2] bg-[#fbecec] px-3 py-2 text-[13px] text-(--obra-vermelho-texto)">
           <span>{erro}</span>
           <button type="button" className="min-h-6 font-medium underline" onClick={() => setErro(null)}>
             Fechar
@@ -238,52 +298,66 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
         />
       ) : null}
 
-      <div
-        ref={areaRef}
-        className="flex min-w-0 overflow-hidden rounded-xl border border-(--obra-border) bg-(--obra-card) lg:h-[calc(100vh-300px)] lg:min-h-[440px]"
-        style={{ ['--split' as string]: `${split}%` }}
-      >
-        <div className="w-full min-w-0 lg:w-(--split) lg:shrink-0">
-          <Arvore
-            linhas={linhas}
-            editavel={dados.editavel}
-            pendente={pendente}
-            onAlternar={alternar}
-            edicoes={edicoes}
-            foco={foco}
-            onFoco={setFoco}
-            rolagemRef={arvoreRef}
-            onRolar={aoRolarArvore}
-          />
-        </div>
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Largura da tabela"
-          aria-valuenow={Math.round(split)}
-          aria-valuemin={30}
-          aria-valuemax={80}
-          tabIndex={0}
-          onPointerDown={arrastar}
-          onKeyDown={teclaDivisoria}
-          className="hidden w-1.5 shrink-0 cursor-col-resize touch-none bg-(--obra-border) hover:bg-(--obra-muted) lg:block"
+      {visao === 'tabela' ? (
+        <TabelaEdicao
+          etapas={dados.etapas}
+          atividades={dados.atividades}
+          editavel={dados.editavel}
+          acoes={acoesTabela}
+          focarNumero={focarNumero}
+          onFocado={limparFoco}
+          valores={dados.valores}
         />
-        <div className="hidden min-w-0 flex-1 lg:block">
-          <Gantt
-            linhas={linhas}
-            feriados={dados.feriados}
-            hoje={dados.hoje}
-            escala={escala}
-            mostrarBase={mostrarBase && dados.temBase}
-            foco={foco}
-            onFoco={setFoco}
-            rolagemRef={ganttRef}
-            onRolar={aoRolarGantt}
-          />
-        </div>
-      </div>
+      ) : (
+        <>
+          <div
+            ref={areaRef}
+            className="flex min-w-0 overflow-hidden rounded-xl border border-(--obra-border) bg-(--obra-card) lg:h-[calc(100vh-300px)] lg:min-h-[440px]"
+            style={{ ['--split' as string]: `${split}%` }}
+          >
+            <div className="w-full min-w-0 lg:w-(--split) lg:shrink-0">
+              <Arvore
+                linhas={linhas}
+                editavel={dados.editavel}
+                pendente={pendente}
+                onAlternar={alternar}
+                edicoes={edicoes}
+                foco={foco}
+                onFoco={setFoco}
+                rolagemRef={arvoreRef}
+                onRolar={aoRolarArvore}
+              />
+            </div>
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Largura da tabela"
+              aria-valuenow={Math.round(split)}
+              aria-valuemin={30}
+              aria-valuemax={80}
+              tabIndex={0}
+              onPointerDown={arrastar}
+              onKeyDown={teclaDivisoria}
+              className="hidden w-1.5 shrink-0 cursor-col-resize touch-none bg-(--obra-border) hover:bg-(--obra-muted) lg:block"
+            />
+            <div className="hidden min-w-0 flex-1 lg:block">
+              <Gantt
+                linhas={linhas}
+                feriados={dados.feriados}
+                hoje={dados.hoje}
+                escala={escala}
+                mostrarBase={mostrarBase && dados.temBase}
+                foco={foco}
+                onFoco={setFoco}
+                rolagemRef={ganttRef}
+                onRolar={aoRolarGantt}
+              />
+            </div>
+          </div>
 
-      <Legenda temBase={dados.temBase} />
+          <Legenda temBase={dados.temBase} />
+        </>
+      )}
     </div>
   )
 }

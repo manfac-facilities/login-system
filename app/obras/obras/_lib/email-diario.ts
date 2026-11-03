@@ -8,9 +8,11 @@
  *
  * HTML de e-mail: tabelas e estilos inline, largura 600 px.
  */
+import { htmlLinkObra, linkDoLado, textoLinkObra } from './link-portal'
 import { FUSO } from '../../_lib/tipos'
 import { diasUteisEntre } from './calendario'
-import { diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
+import { CAUSA, type CausaRdo } from './causas'
+import { codigosDeAtividades, diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
 
 export type ClimaRdo = 'sol' | 'nublado' | 'chuva' | 'impraticavel'
@@ -25,8 +27,11 @@ export type RdoCompleto = {
   clima?: ClimaRdo | null
   climaManha?: ClimaRdo | null
   climaTarde?: ClimaRdo | null
-  avancos: { numero: number; de: number; para: number; concluida: boolean }[]
+  avancos: { numero: number; de: number; para: number; concluida: boolean; causa?: CausaRdo | null }[]
 }
+
+/** Causa de "não andou" do diário (mesmos valores de `CausaNaoAndou` em `[id]/diario/_tipos.ts`). */
+export type { CausaRdo } from './causas'
 
 export type EmailDiario = { assunto: string; html: string; texto: string }
 
@@ -34,14 +39,14 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
 const num = (x: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(x)
-const pct = (x: number) => `${Math.round(x * 100)}%`
-const dataBr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`
+export const pct = (x: number) => `${Math.round(x * 100)}%`
+export const dataBr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`
 const DIA_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const diaSemana = (iso: string) => {
   const [a, m, d] = iso.split('-').map(Number)
   return DIA_SEMANA[new Date(Date.UTC(a, m - 1, d)).getUTCDay()]
 }
-const hora = (ts: string) =>
+export const hora = (ts: string) =>
   new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ts))
 
 const diaLocal = (ts: string) =>
@@ -64,47 +69,95 @@ const CLIMA: Record<ClimaRdo, { rotulo: string; cor: string }> = {
   impraticavel: { rotulo: 'Impraticável', cor: '#d64545' },
 }
 
-type Item = { rotulo: string; corpo: string; tecnico?: boolean }
 
-export function montarEmailDiario(p: {
+export type ItemDiario = { rotulo: string; corpo: string; tecnico?: boolean }
+type Item = ItemDiario
+export type FeitoDiario = { numero: number; descricao: string; de: number; para: number; concluida: boolean }
+/** `causa` é null quando não pode ir ao lado (causa da Manfac ao cliente); `responsavel` null em "outro". */
+export type NaoAvancouDiario = { numero: number; descricao: string; de: number; causa: string | null; responsavel: string | null }
+export type ClimaTurno = { turno: string; clima: ClimaRdo; rotulo: string; cor: string }
+
+/**
+ * Conteúdo do diário já filtrado por lado — fonte única do e-mail e do PDF
+ * (`_pdf/rdo.tsx`), para os dois mostrarem a mesma coisa ao cliente.
+ */
+export type ConteudoDiario = {
   lado: 'cliente' | 'interno'
-  obra: ObraGrande
-  rdo: RdoCompleto
-  validadoPor: string
-  validadoEm: string
-  diaN: number
-  fotosCid: { cid: string; legenda: string | null }[]
-  /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
-  fotosOmitidas?: number
-}): EmailDiario {
-  const { lado, obra: og, rdo } = p
-  const { obra, plano, exec, feriados } = og
-  const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
-  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || `Atividade ${n}`
+  loja: string
+  assunto: string
+  titulo: string
+  subtitulo: string
+  sinal: (typeof SINAL)[Sinal]
+  desvio: string
+  previsao: string
+  numeros: [string, string][]
+  travados: ItemDiario[]
+  /** Só no interno: impedimentos abertos com `exibirAoCliente = false`. */
+  ocultos: ItemDiario[]
+  orientacoes: string[]
+  clima: ClimaTurno[]
+  feitos: FeitoDiario[]
+  naoAvancou: NaoAvancouDiario[]
+  semExecucao: string | null
+  amanha: string
+}
 
-  // 1. Cabeçalho
-  const assunto = `Diário de obra · ${loja} · dia ${p.diaN} · ${dataBr(rdo.data)}${lado === 'interno' ? ' · interno' : ''}`
-  const titulo = `${loja} — dia ${p.diaN}`
-  const subtitulo = `${diaSemana(rdo.data)}, ${dataBr(rdo.data)} · validado por ${p.validadoPor} às ${hora(p.validadoEm)}`
+export type SinalVisual = (typeof SINAL)[Sinal]
+/** Visual do sinal (rótulo e cores), o mesmo no e-mail, no PDF e no semanal. */
+export const sinalVisual = (s: Sinal | null | undefined): SinalVisual => SINAL[s ?? 'verde']
 
-  // 2. Sinal + previsão
-  const calc = og.calc ?? { previsto: 0, realizado: 0, desvioPP: 0, terminoProjetado: rdo.data }
-  const sinal = SINAL[og.sinal ?? 'verde']
-  const desvio =
-    calc.desvioPP < 0
-      ? `${num(-calc.desvioPP)} p.p. abaixo do previsto`
-      : calc.desvioPP > 0
-        ? `${num(calc.desvioPP)} p.p. acima do previsto`
-        : 'em linha com o previsto'
-  // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
+export const textoDesvio = (desvioPP: number) =>
+  desvioPP < 0
+    ? `${num(-desvioPP)} p.p. abaixo do previsto`
+    : desvioPP > 0
+      ? `${num(desvioPP)} p.p. acima do previsto`
+      : 'em linha com o previsto'
+
+/**
+ * "Entrega prevista: dd/mm/aaaa (+N dias: …)" com a quebra por responsável.
+ * Ao cliente, dias de impedimento oculto que não são da Manfac vão para
+ * "outros fatores", nunca para "da Manfac". Fonte única do diário e do semanal.
+ */
+export function previsaoEntrega(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const q = quebraDoAtraso(lado, og, data)
+  return `Entrega prevista: ${dataBr(og.calc?.terminoProjetado ?? data)}${q ? ` (${q})` : ''}`
+}
+
+/**
+ * "+N dias: …" (atraso do término com a quebra por responsável, filtrada por
+ * lado como em `previsaoEntrega`); '' sem atraso.
+ */
+export function quebraDoAtraso(lado: 'cliente' | 'interno', og: ObraGrande, data: string): string {
+  const atraso = atrasoDoLado(lado, og, data)
+  let quebra = ''
+  if (atraso && atraso.total > 0) {
+    const a = atraso
+    const partes = [
+      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
+        .filter((r) => a[r] > 0)
+        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
+      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
+    ]
+    quebra = `+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''}`
+  }
+  return quebra
+}
+
+export type QuebraAtraso = { total: number; outros: number } & Record<Responsavel, number>
+
+/**
+ * Dias de atraso do término por responsável, filtrados por lado (a mesma regra
+ * de `quebraDoAtraso`): ao cliente, o impedimento oculto que não é da Manfac
+ * vai para `outros`. null sem base salva. Também usado pela página do cliente.
+ */
+export function atrasoDoLado(lado: 'cliente' | 'interno', og: ObraGrande, data: string): QuebraAtraso | null {
+  const { feriados } = og
   const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
-  type Quebra = { total: number; outros: number } & Record<Responsavel, number>
-  let atraso: Quebra | null = og.atraso ? { ...og.atraso, outros: 0 } : null
+  let atraso: QuebraAtraso | null = og.atraso ? { ...og.atraso, outros: 0 } : null
   if (lado === 'cliente' && og.atraso) {
-    // Dias de impedimento oculto que não são da Manfac vão para "outros fatores", nunca para "da Manfac".
-    const vis = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados)
+    const vis = diasDeImpacto(impedimentosCalcDe(visiveis), data, feriados)
     const ocultosNaoManfac = og.impedimentos.filter((i) => !i.exibirAoCliente && i.responsavel !== 'manfac')
-    const oc = diasDeImpacto(impedimentosCalcDe(ocultosNaoManfac), rdo.data, feriados)
+    const oc = diasDeImpacto(impedimentosCalcDe(ocultosNaoManfac), data, feriados)
     let restante = og.atraso.total
     const parte = (v: number) => {
       const x = Math.min(restante, Math.max(v, 0))
@@ -117,18 +170,36 @@ export function montarEmailDiario(p: {
     const outros = parte(oc.cliente + oc.clima + oc.terceiro)
     atraso = { total: og.atraso.total, cliente, clima, terceiro, outros, manfac: restante }
   }
-  let quebra = ''
-  if (atraso && atraso.total > 0) {
-    const a = atraso
-    const partes = [
-      ...(['cliente', 'manfac', 'terceiro', 'clima'] as Responsavel[])
-        .filter((r) => a[r] > 0)
-        .map((r) => `${num(a[r])} ${ATRASO_DE[r]}`),
-      ...(a.outros > 0 ? [`${num(a.outros)} em outros fatores`] : []),
-    ]
-    quebra = ` (+${num(a.total)} ${a.total === 1 ? 'dia' : 'dias'}${partes.length ? `: ${partes.join(', ')}` : ''})`
-  }
-  const previsao = `Entrega prevista: ${dataBr(calc.terminoProjetado)}${quebra}`
+  return atraso
+}
+
+export function montarConteudoDiario(p: {
+  lado: 'cliente' | 'interno'
+  obra: ObraGrande
+  rdo: RdoCompleto
+  validadoPor: string
+  validadoEm: string
+  diaN: number
+}): ConteudoDiario {
+  const { lado, obra: og, rdo } = p
+  const { obra, plano, exec, feriados } = og
+  const loja = obra.loja?.trim() || obra.descricao?.trim() || obra.os || 'Obra'
+  const descricao = (n: number) => plano.find((a) => a.numero === n)?.descricao || 'Atividade fora da versão vigente'
+  // Código exibido ("2.3"), nunca o numero interno.
+  const codigos = codigosDeAtividades(og.calc?.atividades ?? [], feriados)
+
+  // 1. Cabeçalho
+  const assunto = `Diário de obra · ${loja} · dia ${p.diaN} · ${dataBr(rdo.data)}${lado === 'interno' ? ' · interno' : ''}`
+  const titulo = `${loja} — dia ${p.diaN}`
+  const subtitulo = `${diaSemana(rdo.data)}, ${dataBr(rdo.data)} · validado por ${p.validadoPor} às ${hora(p.validadoEm)}`
+
+  // 2. Sinal + previsão
+  const calc = og.calc ?? { previsto: 0, realizado: 0, desvioPP: 0, terminoProjetado: rdo.data }
+  const sinal = SINAL[og.sinal ?? 'verde']
+  const desvio = textoDesvio(calc.desvioPP)
+  // Ao cliente, só contam os impedimentos que ele vê (`exibirAoCliente`); o interno vê tudo.
+  const visiveis = lado === 'interno' ? og.impedimentos : og.impedimentos.filter((i) => i.exibirAoCliente)
+  const previsao = previsaoEntrega(lado, og, rdo.data)
 
   // 3. Três números
   const impactoCliente = diasDeImpacto(impedimentosCalcDe(visiveis), rdo.data, feriados).cliente
@@ -153,9 +224,11 @@ export function montarEmailDiario(p: {
     const mostraTipo = lado === 'interno' || i.responsavel === 'cliente' || i.responsavel === 'clima'
     const extras = [
       mostraTipo && i.tipo ? i.tipo : null,
-      i.atividadeNumero !== null
-        ? `${i.travaAtividade ? 'trava' : 'afeta'} a atividade ${i.atividadeNumero} (${descricao(i.atividadeNumero)})`
-        : null,
+      i.atividadeNumero === null
+        ? null
+        : codigos.has(i.atividadeNumero)
+          ? `${i.travaAtividade ? 'trava' : 'afeta'} a atividade ${codigos.get(i.atividadeNumero)} (${descricao(i.atividadeNumero)})`
+          : `${i.travaAtividade ? 'trava' : 'afeta'} uma atividade fora da versão vigente`,
       !i.travaAtividade && i.impactoDias ? `~${num(i.impactoDias)} ${i.impactoDias === 1 ? 'dia' : 'dias'}` : null,
     ].filter(Boolean)
     return {
@@ -193,15 +266,25 @@ export function montarEmailDiario(p: {
     : rdo.avancos
         .filter((a) => a.concluida || a.para > a.de)
         .sort((a, b) => a.numero - b.numero)
-        .map((a) =>
-          a.concluida ? `✓ ${descricao(a.numero)} — concluída` : `▲ ${descricao(a.numero)}: ${pct(a.de)} → ${pct(a.para)}`,
-        )
+        .map((a): FeitoDiario => ({ numero: a.numero, descricao: descricao(a.numero), de: a.de, para: a.para, concluida: a.concluida }))
+  // 5b. Não avançou hoje (item 12 da reunião de 31/10): atividade sem avanço com causa informada.
+  // Ao cliente, causa da Manfac (material/equipe) aparece só como "Manfac", sem detalhar a área interna.
+  const naoAvancou = rdo.semExecucao
+    ? []
+    : rdo.avancos
+        .filter((a) => !a.concluida && a.para <= a.de && a.causa && a.causa in CAUSA)
+        .sort((a, b) => a.numero - b.numero)
+        .map((a): NaoAvancouDiario => {
+          const c = CAUSA[a.causa!]
+          return {
+            numero: a.numero,
+            descricao: descricao(a.numero),
+            de: a.de,
+            causa: lado === 'cliente' && c.resp === 'manfac' ? null : c.rotulo,
+            responsavel: c.resp ? RESP[c.resp] : null,
+          }
+        })
   const semExecucao = rdo.semExecucao ? `Sem execução hoje — ${rdo.motivoSemExecucao ?? ''}`.trim() : null
-  const omitidas = p.fotosOmitidas ?? 0
-  const notaOmitidas = omitidas
-    ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
-    : null
-
   // Clima: por turno; o legado (`clima`) só entra quando não há turno.
   const climaTurnos = [
     ['Manhã', rdo.climaManha],
@@ -209,17 +292,52 @@ export function montarEmailDiario(p: {
   ].filter((t): t is [string, ClimaRdo] => !!t[1] && t[1] in CLIMA)
   const climaPartes: [string, ClimaRdo][] =
     climaTurnos.length ? climaTurnos : rdo.clima && rdo.clima in CLIMA ? [['Clima', rdo.clima]] : []
-  const climaTexto = climaPartes.map(([t, c]) => `${t}: ${CLIMA[c].rotulo}`).join(' · ')
-  // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
-  const climaHtml = climaPartes
-    .map(
-      ([t, c]) =>
-        `<span style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${CLIMA[c].cor};border:1px solid #6e8894;vertical-align:middle"></span> <b>${esc(t)}:</b> ${esc(CLIMA[c].rotulo)}`,
-    )
-    .join('&nbsp;&nbsp;·&nbsp;&nbsp;')
+  const clima = climaPartes.map(([turno, c]): ClimaTurno => ({ turno, clima: c, rotulo: CLIMA[c].rotulo, cor: CLIMA[c].cor }))
 
   // 6. Amanhã
   const amanha = rdo.programacaoAmanha?.trim() || 'Sem programação informada.'
+
+  return {
+    lado, loja, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes,
+    clima, feitos, naoAvancou, semExecucao, amanha,
+  }
+}
+
+export function montarEmailDiario(p: {
+  lado: 'cliente' | 'interno'
+  obra: ObraGrande
+  rdo: RdoCompleto
+  validadoPor: string
+  validadoEm: string
+  diaN: number
+  fotosCid: { cid: string; legenda: string | null }[]
+  /** Fotos que não foram anexadas (grandes demais ou falha ao baixar). */
+  fotosOmitidas?: number
+  /** Só versão cliente: link "Ver a obra completa". */
+  linkObra?: string | null
+}): EmailDiario {
+  const c = montarConteudoDiario(p)
+  const { lado, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes, semExecucao, amanha } = c
+  const feitos = c.feitos.map((a) =>
+    a.concluida ? `✓ ${a.descricao} — concluída` : `▲ ${a.descricao}: ${pct(a.de)} → ${pct(a.para)}`,
+  )
+  const naoAvancou = c.naoAvancou.map((a) => {
+    const partes = [a.causa ? `causa: ${a.causa}` : null, a.responsavel ? `responsável: ${a.responsavel}` : null].filter(Boolean)
+    return `${a.descricao} (${pct(a.de)}) — ${partes.join(' · ')}`
+  })
+  const omitidas = p.fotosOmitidas ?? 0
+  const notaOmitidas = omitidas
+    ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
+    : null
+  const climaPartes = c.clima
+  const climaTexto = climaPartes.map((t) => `${t.turno}: ${t.rotulo}`).join(' · ')
+  // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
+  const climaHtml = climaPartes
+    .map(
+      (t) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:5px;background:${t.cor};border:1px solid #6e8894;vertical-align:middle"></span> <b>${esc(t.turno)}:</b> ${esc(t.rotulo)}`,
+    )
+    .join('&nbsp;&nbsp;·&nbsp;&nbsp;')
 
   // ---------- HTML ----------
   const secao = (tituloSecao: string, corpo: string) =>
@@ -280,8 +398,9 @@ ${ocultos.length ? secao('Só interno · Não foi ao cliente', ocultos.map(caixa
 ${orientacoes.length ? secao('Orientações à loja', orientacoes.map((t) => '<div style="border-left:3px solid #2563eb;background:#eff6ff;padding:6px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">' + esc(t) + '</div>').join('')) : ''}
 ${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a">${climaHtml}</div>`) : ''}
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
+${naoAvancou.length ? secao('Não avançou hoje', naoAvancou.map((t) => `<div style="border-left:3px solid #f59e0b;padding:3px 10px;margin-bottom:5px;font-size:14px;color:#0f172a">${esc(t)}</div>`).join('')) : ''}
 ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</div>`)}
-<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
+${htmlLinkObra(linkDoLado(lado, p.linkObra))}<tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">Manfac Facilities · e-mail automático do diário de obra.</td></tr>
 </table></td></tr></table></body></html>`
 
   // ---------- Texto ----------
@@ -305,9 +424,11 @@ ${secao('Amanhã', `<div style="font-size:14px;color:#0f172a">${esc(amanha)}</di
     ...(semExecucao ? [semExecucao] : feitos.length ? feitos : ['Nenhuma atividade avançou hoje.']),
     ...(p.fotosCid.length ? [`${p.fotosCid.length} ${p.fotosCid.length === 1 ? 'foto' : 'fotos'} no e-mail`] : []),
     ...(notaOmitidas ? [notaOmitidas] : []),
+    ...(naoAvancou.length ? ['', 'NÃO AVANÇOU HOJE', ...naoAvancou.map((t) => `- ${t}`)] : []),
     '',
     'AMANHÃ',
     amanha,
+    ...textoLinkObra(linkDoLado(lado, p.linkObra)),
   ]
   return { assunto, html, texto: linhas.join('\n') }
 }
