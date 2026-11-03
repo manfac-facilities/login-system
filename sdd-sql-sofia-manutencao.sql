@@ -12,7 +12,9 @@
 --   3. veiculos.intervalo_revisao_km integer, opcional (1.000 a 100.000).
 --   4. Tabela nova public.manutencoes (corretiva). RLS: ler = sofia_has_access();
 --      inserir = sofia_pode_gerir() + carimbo criado_por = e-mail do JWT;
---      atualizar = sofia_pode_gerir(). SEM DELETE (nem policy nem grant).
+--      atualizar = sofia_pode_gerir(), com grant de UPDATE só por coluna (veiculo_id,
+--      criado_por, tirou_da_equipe, data_entrada e created_at congelados).
+--      SEM DELETE (nem policy nem grant).
 --   5. Funções SECURITY INVOKER sofia_abrir_manutencao / sofia_concluir_manutencao,
 --      guardadas por sofia_pode_gerir() is not true, auditoria em audit_log.dados
 --      na mesma transação (padrão das F1–F3).
@@ -168,7 +170,12 @@ create policy manutencoes_atualizar on public.manutencoes
 
 revoke all on public.manutencoes from anon;
 revoke all on public.manutencoes from authenticated;
-grant select, insert, update on public.manutencoes to authenticated;
+grant select, insert on public.manutencoes to authenticated;
+-- UPDATE só nas colunas que mudam depois da abertura (revisão N1, 03/11): veiculo_id,
+-- criado_por, tirou_da_equipe, data_entrada e created_at ficam congelados.
+revoke update on public.manutencoes from authenticated;
+grant update (status, data_saida, custo, quem_arca, oficina, saida_prevista, observacoes, anexo_storage_path, updated_at)
+  on public.manutencoes to authenticated;
 
 -- ============================================================
 -- 5a. sofia_abrir_manutencao — cria a manutenção e, se pedido, tira o carro da equipe
@@ -443,10 +450,15 @@ from (values
        where schemaname = 'public' and tablename = 'manutencoes' and policyname = 'manutencoes_atualizar')),
   (14, 'anon sem privilégio em manutencoes', 'false',
       (select has_table_privilege('anon', 'public.manutencoes', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE')::text)),
-  (15, 'authenticated: SELECT/INSERT/UPDATE sim, DELETE/TRUNCATE não', 'true',
+  (15, 'authenticated: SELECT/INSERT sim; UPDATE só por coluna (status sim, veiculo_id/criado_por não); DELETE/TRUNCATE não', 'true',
       (select (has_table_privilege('authenticated', 'public.manutencoes', 'SELECT')
                and has_table_privilege('authenticated', 'public.manutencoes', 'INSERT')
-               and has_table_privilege('authenticated', 'public.manutencoes', 'UPDATE')
+               and not has_table_privilege('authenticated', 'public.manutencoes', 'UPDATE')
+               and has_column_privilege('authenticated', 'public.manutencoes', 'status', 'UPDATE')
+               and has_column_privilege('authenticated', 'public.manutencoes', 'anexo_storage_path', 'UPDATE')
+               and not has_column_privilege('authenticated', 'public.manutencoes', 'veiculo_id', 'UPDATE')
+               and not has_column_privilege('authenticated', 'public.manutencoes', 'criado_por', 'UPDATE')
+               and not has_column_privilege('authenticated', 'public.manutencoes', 'tirou_da_equipe', 'UPDATE')
                and not has_table_privilege('authenticated', 'public.manutencoes', 'DELETE')
                and not has_table_privilege('authenticated', 'public.manutencoes', 'TRUNCATE'))::text)),
   (16, '7 CHECKs em manutencoes', '7',

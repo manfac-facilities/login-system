@@ -59,7 +59,8 @@ begin
     (v3, '__TMN03', 'teste', 3000, null, 'inativo');
   insert into public.motoristas (id, nome, equipe_id, ativo) values (m1, '__teste_mn_m1', e1, true);
   insert into public.veiculo_responsabilidade_historico (veiculo_id, equipe_id, motorista_id, inicio) values
-    (v1, e1, m1, date '2000-01-01');
+    (v1, e1, m1, date '2000-01-01'),
+    (v2, e1, null, date '2000-01-01');
 
   -- ---------- (p1) postgres sem JWT é barrado pela guarda ----------
   n_total := n_total + 1;
@@ -87,6 +88,7 @@ begin
        and (select equipe_id from public.veiculos where id = v1) is null
        and (select previsao_retorno_oficina from public.veiculos where id = v1) = date '2000-02-05'
        and not exists (select 1 from public.veiculo_responsabilidade_historico where veiculo_id = v1 and fim is null)
+       and exists (select 1 from public.veiculo_responsabilidade_historico where veiculo_id = v2 and fim is null)
        and v_j ->> 'equipe_que_saiu' = '__TESTE_MN_E1'
        and exists (select 1 from public.audit_log l
                    where l.tabela = 'manutencoes' and l.operacao = 'criou' and l.registro_id = mg1::text
