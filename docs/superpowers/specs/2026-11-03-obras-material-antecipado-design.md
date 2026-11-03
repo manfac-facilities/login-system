@@ -161,7 +161,8 @@ JWT simulado, `RESUMO: n/N OK`, rollback; PGlite local). Cobrir: resposta duplic
 prazos nem compras; guarda do Compras recusa restrição de outra obra, de outro tipo e inexistente.
 
 ## 7. Ordem de deploy
-`sdd-sql-obras-material.sql` → Compras `017` → app do Compras → app do hub. Sem o SQL o hub mostra a lista sem "pedir
+Compras `017` → `sdd-sql-obras-material.sql` (a função e a trava do hub leem a coluna nova do Compras) → app do
+Compras → app do hub. Sem o SQL o hub mostra a lista sem "pedir
 até" e sem andamento (leituras falham fechadas como vazio, sem aviso falso); sem o app do Compras o link funciona como
 hoje (o Compras ignora parâmetros que não conhece).
 
