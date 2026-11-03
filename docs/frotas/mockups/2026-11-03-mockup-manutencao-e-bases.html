@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frotas - Manutenção e bases</title>
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --or:#f05a28; --mut:#94a3b8; --bd:#1e3a5f;
+  --tx:#e2e8f0; --wh:#ffffff; --orbg:rgba(240,90,40,.12); --orbd:rgba(240,90,40,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+body{overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color-scheme:dark}
+a{color:var(--or)}
+.mono{font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}
+.wh{color:var(--wh)}
+.or{color:var(--or)}
+.sm{font-size:.82rem}.xs{font-size:.74rem}
+.b{font-weight:600}
+
+/* barra do mockup */
+.mbar{position:sticky;top:0;z-index:40;background:var(--navy);border-bottom:1px solid var(--bd);padding:.55rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem .9rem;align-items:center}
+.mbar .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.mbar label{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--mut)}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:.5rem;overflow:hidden;flex-wrap:wrap}
+.seg button{padding:.32rem .65rem;font-size:.78rem;color:var(--mut);border-right:1px solid var(--bd)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--or);color:var(--wh)}
+.fld{width:100%;padding:.5rem .7rem;border-radius:.5rem;background:var(--bg);border:1px solid var(--bd);color:var(--wh);font-size:.86rem}
+.fld:focus{outline:none;border-color:var(--or)}
+.fld::placeholder{color:#4a6080}
+select.fld.auto{width:auto;padding:.3rem .5rem;font-size:.78rem}
+
+/* telas */
+.screens{display:flex;gap:.4rem;overflow-x:auto;padding:.7rem 1rem;border-bottom:1px solid var(--bd);background:var(--bg)}
+.screens button{white-space:nowrap;padding:.45rem .85rem;border-radius:.5rem;border:1px solid var(--bd);color:var(--mut);font-size:.85rem}
+.screens button.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+
+/* casca do app */
+.shell{display:flex;min-height:calc(100vh - 110px)}
+.side{width:210px;flex:0 0 210px;border-right:1px solid var(--bd);padding:1rem .6rem;background:var(--bg)}
+.side .grp{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:#4a6080;margin:.9rem .5rem .3rem}
+.side .it{display:block;width:100%;text-align:left;padding:.38rem .55rem;border-radius:.45rem;font-size:.84rem;color:var(--mut)}
+.side .it.on{background:var(--or);color:var(--wh)}
+.side .it.dim{opacity:.45;cursor:default}
+.main{flex:1;min-width:0;padding:1.5rem 1.75rem 4rem}
+@media (max-width:860px){.side{display:none}.main{padding:1rem 1rem 4rem}}
+
+/* tipografia de seção */
+h1.sec{font-size:1.35rem;font-weight:700;color:var(--wh);margin:0 0 .25rem;display:flex;align-items:center;gap:.55rem}
+h2.sec{font-size:1.05rem;font-weight:650;color:var(--wh);margin:2rem 0 .2rem;display:flex;align-items:center;gap:.5rem}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:1.7rem;height:1.7rem;padding:0 .35rem;border-radius:999px;background:var(--or);color:var(--wh);font-size:.78rem;font-weight:700;flex:0 0 auto}
+h2.sec .num{min-width:2.1rem;height:1.5rem;font-size:.72rem;border-radius:.4rem}
+.lead{color:var(--mut);font-size:.88rem;margin:.1rem 0 1rem}
+.why{border-left:3px solid var(--or);background:var(--navy);padding:.6rem .85rem;border-radius:0 .5rem .5rem 0;font-size:.82rem;color:var(--mut);margin:.6rem 0 1rem}
+.why b{color:var(--wh);font-weight:600}
+
+.card{border:1px solid var(--bd);background:var(--navy);border-radius:.75rem}
+.pad{padding:1rem 1.1rem}
+.grid{display:grid;gap:.8rem}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1000px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.g3,.g2{grid-template-columns:1fr}}
+
+.stat{text-align:left;padding:.9rem 1rem;border:1px solid var(--bd);background:var(--navy);border-radius:.75rem;width:100%;transition:border-color .15s}
+.stat:hover{border-color:var(--or)}
+.stat .l{font-size:.78rem;color:var(--mut)}
+.stat .v{font-size:1.7rem;font-weight:700;color:var(--wh);margin:.15rem 0}
+.stat .s{font-size:.74rem;color:var(--mut)}
+.stat.hot .v{color:var(--or)}
+.stat.new{border-style:dashed}
+
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .95rem;border-radius:.5rem;font-size:.85rem;font-weight:500;white-space:nowrap}
+.btn-p{background:var(--or);color:var(--wh)}
+.btn-s{border:1px solid var(--bd);color:var(--mut)}
+.btn-s:hover{border-color:var(--mut);color:var(--wh)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.chip{display:inline-block;padding:.12rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600;white-space:nowrap;border:1px solid var(--bd);color:var(--mut)}
+.chip.hot{background:var(--or);border-color:var(--or);color:var(--wh)}
+.chip.warn{border-color:var(--orbd);color:var(--or)}
+.chip.ok{color:var(--wh)}
+.chip.new{border-style:dashed;color:var(--mut)}
+
+/* barra de situação da frota */
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;border:1px solid var(--bd);margin:.8rem 0 .4rem}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font-size:.75rem;color:var(--mut)}
+.dot{display:inline-block;width:.6rem;height:.6rem;border-radius:2px;margin-right:.3rem;vertical-align:middle}
+
+/* lista de ação */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;border-top:1px solid var(--bd);text-align:left;width:100%}
+.act:first-child{border-top:0}
+.act:hover{background:rgba(255,255,255,.02)}
+.act .n{min-width:2.2rem;text-align:center;font-size:1.25rem;font-weight:700;color:var(--wh)}
+.act .n.hot{color:var(--or)}
+.act .t{flex:1;min-width:0}
+.act .t .a{color:var(--wh);font-size:.9rem}
+.act .t .d{color:var(--mut);font-size:.76rem;overflow:hidden;text-overflow:ellipsis}
+.act .go{color:var(--mut);font-size:.8rem;white-space:nowrap}
+
+/* tabela */
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:.75rem;background:var(--navy)}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--bd);white-space:nowrap;background:var(--navy);position:sticky;top:0}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--wh)}
+th .ar{color:var(--or);margin-left:.2rem}
+td{padding:.55rem .75rem;border-bottom:1px solid rgba(30,58,95,.6);font-size:.84rem;color:#cbd5e1;white-space:nowrap}
+tr.rowc{cursor:pointer}
+tr.rowc:hover td{background:rgba(240,90,40,.06)}
+td.r,th.r{text-align:right}
+tfoot td{color:var(--wh);font-weight:600;border-bottom:0;border-top:1px solid var(--bd)}
+.small-t table{min-width:0}
+
+/* filtros */
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:.6rem;margin-bottom:.8rem}
+.filters .lbl{display:block;font-size:.72rem;color:var(--mut);margin-bottom:.25rem}
+@media (max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.filters .wide{grid-column:1/-1}}
+@media (max-width:520px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin:.4rem 0 .8rem}
+.toolbar .l{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.pager{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;margin-top:.7rem;font-size:.8rem;color:var(--mut)}
+.pager .pg{display:flex;gap:.3rem}
+.pager .pg button{min-width:2rem;padding:.3rem .5rem;border:1px solid var(--bd);border-radius:.4rem;color:var(--mut)}
+.pager .pg button.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+.pager .pg button[disabled]{opacity:.4;cursor:default}
+
+.subtabs{display:flex;gap:.35rem;overflow-x:auto;margin:.2rem 0 1rem;border-bottom:1px solid var(--bd)}
+.subtabs button{padding:.55rem .8rem;font-size:.86rem;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap}
+.subtabs button.on{color:var(--wh);border-color:var(--or)}
+
+/* estados */
+.empty{border:1px dashed var(--bd);border-radius:.75rem;padding:2.2rem 1rem;text-align:center;color:var(--mut)}
+.empty .ic{font-size:1.6rem;opacity:.5;margin-bottom:.4rem}
+.err{border:1px solid var(--or);background:var(--orbg);border-radius:.75rem;padding:1.2rem 1.1rem;display:flex;gap:.8rem;align-items:flex-start}
+.err .ic{flex:0 0 auto;width:1.8rem;height:1.8rem;border-radius:999px;background:var(--or);color:var(--wh);font-weight:800;display:flex;align-items:center;justify-content:center}
+.err .t{color:var(--wh);font-weight:600}
+.err p{margin:.2rem 0 .7rem;font-size:.84rem;color:var(--tx)}
+.sk{background:linear-gradient(90deg,var(--navy) 0%,#13285a 50%,var(--navy) 100%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:.5rem}
+@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+.noperm{max-width:420px;margin:3rem auto;text-align:center}
+.banner{border:1px solid var(--orbd);background:var(--orbg);border-radius:.6rem;padding:.6rem .85rem;font-size:.83rem;color:var(--tx);margin-bottom:.8rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.info{border:1px solid var(--bd);border-radius:.6rem;padding:.6rem .85rem;font-size:.8rem;color:var(--mut);margin-bottom:.8rem}
+
+/* gaveta e modal */
+.ov{position:fixed;inset:0;background:rgba(5,10,20,.7);z-index:60;display:flex;justify-content:flex-end}
+.drawer{width:min(520px,100%);height:100%;overflow-y:auto;background:var(--bg);border-left:1px solid var(--bd);padding:1.2rem 1.2rem 3rem}
+.ov.c{justify-content:center;align-items:center;padding:1rem}
+.modal{width:min(560px,100%);max-height:92vh;overflow-y:auto;background:var(--bg);border:1px solid var(--bd);border-radius:.8rem;padding:1.2rem}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:.35rem .8rem;font-size:.85rem;margin:.6rem 0 1rem}
+.kv dt{color:var(--mut)}.kv dd{margin:0;color:var(--wh);overflow-wrap:anywhere}
+.tl{border-left:2px solid var(--bd);margin:.4rem 0 1rem .3rem;padding-left:.9rem;font-size:.82rem}
+.tl div{margin:.35rem 0;position:relative}
+.tl div::before{content:"";position:absolute;left:-1.24rem;top:.4rem;width:.5rem;height:.5rem;border-radius:999px;background:var(--bd)}
+.tl div.cur::before{background:var(--or)}
+.collist{columns:2;column-gap:1.2rem;font-size:.82rem;color:var(--tx);padding-left:1.1rem;margin:.4rem 0}
+@media (max-width:520px){.collist{columns:1}}
+.toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:80;width:calc(100% - 2rem);max-width:460px;background:var(--navy);border:1px solid var(--or);border-radius:.6rem;padding:.7rem .9rem;font-size:.85rem;color:var(--wh);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+
+/* extras deste mockup */
+.chip.new{border-style:dashed;color:var(--or);border-color:var(--orbd)}
+.chip.ex{color:var(--mut)}
+.lg{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;font-size:.76rem;color:var(--mut);margin:.2rem 0 .9rem}
+.dec{border:1px solid var(--bd);background:var(--navy);border-radius:.75rem;padding:1rem 1.1rem;margin-top:2rem}
+.dec h3{margin:0 0 .6rem;font-size:.98rem;color:var(--wh);display:flex;gap:.5rem;align-items:center}
+.dec ol{margin:0;padding:0;list-style:none;counter-reset:d}
+.dec li{counter-increment:d;position:relative;padding:.7rem 0 .7rem 2.4rem;border-top:1px solid var(--bd);font-size:.85rem}
+.dec li::before{content:"D" counter(d);position:absolute;left:0;top:.72rem;background:var(--or);color:var(--wh);border-radius:.35rem;font-size:.7rem;font-weight:700;padding:.1rem .35rem}
+.dec li .q{color:var(--wh);font-weight:600}
+.dec li .r{margin-top:.25rem;color:var(--tx)}
+.dec li .r b{color:var(--or)}
+.dec li .p{margin-top:.15rem;color:var(--mut);font-size:.8rem}
+.frame{width:100%}
+body.phone .frame{max-width:390px;margin:0 auto;border-left:1px solid var(--bd);border-right:1px solid var(--bd);min-height:100vh}
+body.phone .side{display:none}
+body.phone .main{padding:1rem .8rem 4rem}
+body.phone .g4,body.phone .g3,body.phone .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.phone .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.phone .filters .wide{grid-column:1/-1}
+body.phone .collist{columns:1}
+body.phone .hide-sm{display:none}
+.mbar select.fld.auto{width:auto}
+.lbl{display:block;font-size:.72rem;color:var(--mut);margin-bottom:.25rem}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.fgrid .full{grid-column:1/-1}
+body.phone .fgrid{grid-template-columns:1fr}
+.ferr{border:1px solid var(--or);background:var(--orbg);border-radius:.5rem;padding:.5rem .7rem;font-size:.82rem;color:var(--wh);margin:.4rem 0}
+.prev{border:1px dashed var(--orbd);border-radius:.6rem;padding:.6rem .8rem;font-size:.82rem;margin:.6rem 0;background:rgba(240,90,40,.06)}
+.prev b{color:var(--wh)}
+.steps{display:flex;gap:.4rem;margin-bottom:.8rem;font-size:.75rem}
+.steps span{padding:.2rem .6rem;border:1px solid var(--bd);border-radius:999px;color:var(--mut)}
+.steps span.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+.steps span.done{color:var(--wh)}
+.bars .row{display:grid;grid-template-columns:90px 1fr 70px;gap:.5rem;align-items:center;font-size:.8rem;margin:.3rem 0}
+.bars .tr{height:10px;background:var(--bg);border:1px solid var(--bd);border-radius:999px;overflow:hidden}
+.bars .tr i{display:block;height:100%;background:var(--or)}
+.radio{display:flex;gap:.5rem;align-items:flex-start;padding:.45rem .6rem;border:1px solid var(--bd);border-radius:.5rem;margin:.3rem 0;font-size:.84rem;cursor:pointer}
+.radio input{margin-top:.2rem}
+.radio.on{border-color:var(--or);background:var(--orbg)}
+tr.nov td{background:rgba(240,90,40,.07)}
+.nbd{overflow-x:auto}
+.nbd table{min-width:0}
+.nbd td,.nbd th{white-space:normal}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="ovl"></div>
+<div id="toast"></div>
+<script>
+
+const HOJE='2026-11-03';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf=n=>Number(n).toLocaleString('pt-BR');
+const brl=n=>n==null||n===''?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const dt=d=>d?d.split('-').reverse().join('/'):'—';
+const addDays=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+const diasAte=d=>Math.round((new Date(d+'T12:00:00Z')-new Date(HOJE+'T12:00:00Z'))/864e5);
+function rng(s){return()=>{s=(s*1664525+1013904223)%4294967296;return s/4294967296}}
+const MARGEM=1000;
+
+/* ================= dados de exemplo (fictícios) ================= */
+const VD=[
+['FKR2B41','HB20','Maestro','Equipe 01','Marcos Tavares',41230,85,40120],
+['FKR3C52','HB20','Maestro','Equipe 02','Rui Barreto',59320,92,50410],
+['GHT1D63','Argos','Maestro','Equipe 03','Célia Moura',69640,78,59800],
+['GHT5E74','Argos','Maestro','Equipe 04','Otávio Prado',80910,110,70250],
+['JLM9F85','Onix','Foco','Equipe 05','Nilton Rocha',33870,64,33100],
+['JLM2G96','Onix','Foco','Equipe 06','Sandra Vieira',24400,70,20350],
+['KPN4H07','Mobi','Locafácil','Equipe 07','Edson Carvalho',49100,55,40100],
+['KPN7J18','Mobi','Locafácil','Equipe 08','Lúcia Antunes',12560,48,9980],
+['LQS3K29','HB20','Maestro','Equipe 09','Heitor Dias',91050,120,80300],
+['LQS8L30','Argos','Maestro','Equipe 10','Paula Nogueira',71700,96,62010],
+['MRT6M41','Onix','Foco','Equipe 11','Fábio Lima',18300,60,10050],
+['MRT1N52','HB20','Maestro',null,null,52300,80,50200],
+['NVB5P63','Argos','Maestro','Equipe 12','Tânia Gomes',100480,130,90020],
+['PCX0Q74','Mobi','Locafácil','Equipe 13','Vitor Salles',5200,45,null]
+];
+const VEIC=VD.map(([placa,modelo,loc,equipe,motorista,km,media,ult])=>({placa,modelo,loc,equipe,motorista,km,media,ult,manut:false}));
+VEIC.find(v=>v.placa==='MRT1N52').manut=true;
+const PLACAS=VEIC.map(v=>v.placa);
+const NOMES=[...new Set(VEIC.map(v=>v.motorista).filter(Boolean))].sort();
+const OFIC=['Auto Center Beta','Oficina Prime Car','Concessionária Norte','Mecânica Rota 40','Oficina da locadora'];
+const PECAS=['Óleo 5W30 (4 L), filtro de óleo, filtro de ar','Óleo, filtros de óleo e de combustível, velas','Pastilhas dianteiras, óleo e filtros','Óleo, filtro de cabine, palhetas do limpador','Óleo e filtros; alinhamento e balanceamento'];
+const R=rng(11);
+let REV=[],rid=1;
+VEIC.forEach(v=>{ if(v.ult==null) return;
+  let km=v.ult, d=addDays(HOJE,-Math.round((v.km-v.ult)/v.media)), n=0;
+  while(km>2000 && n<3){
+    const corr=v.placa==='JLM9F85'&&n===0;
+    REV.push({id:rid++,placa:v.placa,tipo:corr?'corretiva':'preventiva',prever:!corr,data:d,km,oficina:OFIC[Math.floor(R()*5)],valor:corr?2890:Math.round(380+R()*900),pecas:corr?'Kit de embreagem completo':PECAS[Math.floor(R()*5)],obs:corr?'Embreagem patinando; não prever a próxima por KM':'',origem:'manual',proxManual:null});
+    km-=10000; d=addDays(d,-Math.round(10000/v.media)); n++;
+  }
+});
+const CORR_ST={aguardando_orcamento:'Aguardando orçamento',aguardando_aprovacao:'Aguardando aprovação',em_conserto:'Em conserto',concluida:'Concluída'};
+const ARCA={locadora:'Locadora',empresa:'Empresa',motorista:'Motorista (mau uso)'};
+let CORR=[
+{id:1,placa:'MRT1N52',defeito:'Câmbio com trepidação ao engatar a 3ª',oficina:'Concessionária Norte',entrada:'2026-10-27',saidaPrev:'2026-11-06',saida:null,custo:null,arca:'locadora',status:'aguardando_aprovacao',tirou:true,obs:'Orçamento enviado à locadora em 30/10.'},
+{id:2,placa:'GHT5E74',defeito:'Barulho na suspensão dianteira',oficina:'Mecânica Rota 40',entrada:'2026-11-03',saidaPrev:'2026-11-03',saida:null,custo:null,arca:'empresa',status:'aguardando_orcamento',tirou:false,obs:'Reparo de um dia; carro segue com a equipe.'},
+{id:3,placa:'JLM9F85',defeito:'Embreagem patinando',oficina:'Auto Center Beta',entrada:'2026-10-14',saidaPrev:'2026-10-17',saida:'2026-10-16',custo:2890,arca:'locadora',status:'concluida',tirou:true,obs:''},
+{id:4,placa:'KPN4H07',defeito:'Ar-condicionado sem gelar',oficina:'Oficina Prime Car',entrada:'2026-10-05',saidaPrev:'2026-10-07',saida:'2026-10-08',custo:640,arca:'empresa',status:'concluida',tirou:true,obs:''},
+{id:5,placa:'LQS3K29',defeito:'Troca de pneus dianteiros (desgaste irregular)',oficina:'Mecânica Rota 40',entrada:'2026-09-22',saidaPrev:'2026-09-22',saida:'2026-09-22',custo:1180,arca:'motorista',status:'concluida',tirou:false,obs:'Alinhamento fora do previsto.'},
+{id:6,placa:'FKR3C52',defeito:'Bateria descarregada',oficina:'Oficina da locadora',entrada:'2026-09-10',saidaPrev:'2026-09-10',saida:'2026-09-10',custo:0,arca:'locadora',status:'concluida',tirou:false,obs:''},
+{id:7,placa:'NVB5P63',defeito:'Vazamento de óleo no cárter',oficina:'Concessionária Norte',entrada:'2026-08-18',saidaPrev:'2026-08-21',saida:'2026-08-24',custo:1420,arca:'locadora',status:'concluida',tirou:true,obs:''},
+{id:8,placa:'JLM2G96',defeito:'Pastilhas e discos dianteiros',oficina:'Auto Center Beta',entrada:'2026-08-04',saidaPrev:'2026-08-05',saida:'2026-08-05',custo:960,arca:'empresa',status:'concluida',tirou:true,obs:''}
+];
+let cid=9;
+const R2=rng(5);
+const MULTAS=[];['Excesso de velocidade até 20%','Estacionar em local proibido','Avanço de sinal vermelho','Transitar em faixa exclusiva','Excesso de velocidade 20% a 50%','Não usar cinto de segurança'].forEach((inf,i)=>{
+  for(let k=0;k<5;k++){ const v=VEIC[Math.floor(R2()*13)]; const d=addDays(HOJE,-Math.round(R2()*95)); const val=[130.16,195.23,293.47,88.38,880.41][Math.floor(R2()*5)];
+    const sit=['pendente','validada','descontada'][Math.floor(R2()*3)];
+    MULTAS.push({id:MULTAS.length+1,data:d,placa:v.placa,motorista:v.motorista||'Marcos Tavares',inf,valor:val,desc:sit==='descontada'?val:0,sit,aut:sit==='pendente'?'sem_solicitacao':(sit==='validada'?'solicitado':'autorizado')}); }
+});
+const SIN=[
+['2026-10-29','GHT1D63','colisao','Colisão traseira em semáforo',4800,'em_tratativa'],['2026-10-12','FKR2B41','avaria','Retrovisor quebrado no estacionamento',380,'aberto'],
+['2026-09-30','LQS8L30','colisao','Batida lateral em manobra',2950,'em_tratativa'],['2026-09-14','JLM2G96','furto','Furto de estepe',620,'encerrado'],
+['2026-08-27','KPN7J18','avaria','Para-choque riscado',540,'encerrado'],['2026-08-02','NVB5P63','colisao','Colisão frontal leve',7300,'encerrado'],
+['2026-07-19','MRT6M41','avaria','Vidro lateral trincado',450,'encerrado'],['2026-11-01','PCX0Q74','outro','Alagamento no assoalho',1900,'aberto']
+].map((a,i)=>{const v=VEIC.find(x=>x.placa===a[1]);return{id:i+1,data:a[0],placa:a[1],motorista:v.motorista||'Marcos Tavares',tipo:a[2],desc:a[3],dano:a[4],descontado:a[5]==='encerrado'?Math.round(a[4]*.4):0,sit:a[5]}});
+const DOCS=[];const R3=rng(23);
+VEIC.forEach(v=>{[['seguro','Seguro'],['licenciamento','Licenciamento (CRLV)'],['ipva','IPVA']].forEach(([t,l])=>{
+  const off=Math.round(R3()*420-45); DOCS.push({id:DOCS.length+1,placa:v.placa,tipo:t,numero:t==='seguro'?'AP-'+Math.round(100000+R3()*899999):(t==='ipva'?'—':'CRLV-'+Math.round(1000000+R3()*8999999)),venc:addDays(HOJE,off)}); }); });
+DOCS.sort((a,b)=>a.venc<b.venc?-1:1).forEach((d,i)=>d.id=i+1);
+const DOC_L={seguro:'Seguro',licenciamento:'Licenciamento (CRLV)',ipva:'IPVA'};
+
+/* ================= regras (espelham lib/sofia/revisaoStatus.ts) ================= */
+const S={tela:'rev',papel:'gestor',estado:'dados',phone:false,intervalo:10000,sim:0,rfil:'',base:'rev',f:{},sort:{},pag:{},drawer:null,modal:null,imp:null,aviso:null,focus:null};
+const kmAtual=v=>v.km+Math.round(v.media*S.sim);
+const latest=p=>REV.filter(r=>r.placa===p).sort((a,b)=>b.km-a.km)[0]||null;
+const prox=v=>{const L=latest(v.placa); if(!L||!L.prever) return null; return L.proxManual!=null?L.proxManual:L.km+S.intervalo};
+function classif(v){
+  const L=latest(v.placa);
+  if(!L) return {s:'sembase'};
+  if(!L.prever) return {s:'semprev'};
+  const p=prox(v), k=kmAtual(v);
+  if(k>=p) return {s:'atrasada',pass:k-p,p};
+  const falta=p-k, dias=Math.ceil(falta/v.media);
+  return {s:falta<=MARGEM?'breve':'dia',falta,dias,p,quando:addDays(HOJE,S.sim+dias)};
+}
+const SIT_REV={atrasada:['Atrasada','hot'],breve:['Vence em breve','warn'],dia:['Em dia','ok'],semprev:['Sem previsão automática','ex'],sembase:['Sem revisão registrada','ex']};
+const sitChip=c=>`<span class="chip ${SIT_REV[c.s][1]}">${SIT_REV[c.s][0]}</span>`;
+const chipNovo='<span class="chip new">NOVO</span>', chipEx='<span class="chip ex">JÁ EXISTE</span>';
+const gestor=()=>S.papel==='gestor';
+
+/* ================= bases (motor único, mesmo padrão das 4 que já existem) ================= */
+function revRows(){
+  const lastIds=new Set(VEIC.map(v=>{const L=latest(v.placa);return L&&L.id}));
+  return REV.map(r=>{const v=VEIC.find(x=>x.placa===r.placa); const isL=lastIds.has(r.id);
+    return {...r,modelo:v.modelo,motorista:v.motorista||'—',isL,cls:isL?classif(v):null,proxKm:r.prever?(r.proxManual!=null?r.proxManual:r.km+S.intervalo):null}}).sort((a,b)=>a.data<b.data?1:-1);
+}
+const revSitKey=r=>r.cls?r.cls.s:'hist';
+const BASES={
+ rev:{nome:'Revisões',arquivo:'frotas-revisoes',novo:'Registrar revisão',temPeriodo:true,vazio:'Nenhuma revisão registrada ainda.',
+  rows:revRows,busca:r=>[r.placa,r.modelo,r.oficina,r.pecas,r.obs].join(' '),
+  filtros:['busca','de','ate','placa','sel0','sel1'],
+  sel:[{lbl:'Tipo',opts:[['preventiva','Preventiva'],['corretiva','Corretiva']],fn:(r,v)=>r.tipo===v},
+       {lbl:'Situação',opts:[['atrasada','Atrasada'],['breve','Vence em breve'],['dia','Em dia'],['semprev','Sem previsão automática'],['hist','Histórico (já superada)']],fn:(r,v)=>revSitKey(r)===v}],
+  cols:[{t:'Data feita',v:r=>dt(r.data),s:r=>r.data},{t:'Placa',v:r=>`<b class="wh">${r.placa}</b>`,s:r=>r.placa},{t:'Modelo',v:r=>r.modelo,s:r=>r.modelo},
+   {t:'Tipo',v:r=>r.tipo==='preventiva'?'Preventiva':'<span class="chip warn">Corretiva</span>',s:r=>r.tipo},{t:'Oficina',v:r=>esc(r.oficina),s:r=>r.oficina},
+   {t:'KM feita',r:1,v:r=>nf(r.km),s:r=>r.km},{t:'Valor',r:1,v:r=>brl(r.valor),s:r=>r.valor},
+   {t:'Próxima (KM)',r:1,v:r=>r.proxKm?nf(r.proxKm)+(r.proxManual==null?' <span class="chip new">auto</span>':''):'<span class="mut">sem previsão</span>',s:r=>r.proxKm||0},
+   {t:'Situação',v:r=>r.cls?sitChip(r.cls):'<span class="chip ex">Histórico</span>',s:r=>revSitKey(r)}],
+  total:rows=>`<td colspan="6">${nf(rows.length)} revisões</td><td class="r mono">${brl(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td colspan="2"></td>`,
+  planilha:['Data feita','Placa','Modelo','Tipo','Oficina','KM feita','Valor','Peças trocadas','Observações','Próxima (KM)','Próxima (data)','Situação','Origem (manual / importada)'],
+  detalhe:r=>[['Placa',r.placa+' · '+r.modelo],['Tipo',r.tipo],['Data / KM',dt(r.data)+' · '+nf(r.km)+' km'],['Oficina',esc(r.oficina)],['Valor',brl(r.valor)],['Peças trocadas',esc(r.pecas)],['Observações',r.obs?esc(r.obs):'—'],['Próxima',r.proxKm?nf(r.proxKm)+' km'+(r.proxManual==null?' (calculada: '+nf(r.km)+' + '+nf(S.intervalo)+')':' (informada à mão)'):'sem previsão automática'],['Origem',r.origem==='importacao'?'Importada da planilha':'Registrada à mão']]},
+ corr:{nome:'Manutenção corretiva',arquivo:'frotas-manutencao-corretiva',novo:'Registrar manutenção corretiva',temPeriodo:true,vazio:'Nenhuma manutenção corretiva registrada ainda.',
+  rows:()=>[...CORR].sort((a,b)=>a.entrada<b.entrada?1:-1).map(c=>({...c,data:c.entrada,motorista:(VEIC.find(v=>v.placa===c.placa)||{}).motorista||'—',dias:Math.max(0,diasAte(c.saida||HOJE)-diasAte(c.entrada))+1})),
+  busca:r=>[r.placa,r.defeito,r.oficina,r.obs].join(' '),filtros:['busca','de','ate','placa','sel0','sel1'],
+  sel:[{lbl:'Status',opts:Object.entries(CORR_ST),fn:(r,v)=>r.status===v},{lbl:'Quem arca',opts:Object.entries(ARCA),fn:(r,v)=>r.arca===v}],
+  cols:[{t:'Entrada',v:r=>dt(r.entrada),s:r=>r.entrada},{t:'Placa',v:r=>`<b class="wh">${r.placa}</b>`,s:r=>r.placa},{t:'Defeito',v:r=>esc(r.defeito),s:r=>r.defeito},{t:'Oficina',v:r=>esc(r.oficina),s:r=>r.oficina},
+   {t:'Saída',v:r=>r.saida?dt(r.saida):`<span class="mut">prev. ${dt(r.saidaPrev)}</span>`,s:r=>r.saida||r.saidaPrev},{t:'Dias parado',r:1,v:r=>r.tirou?r.dias:'<span class="mut">—</span>',s:r=>r.tirou?r.dias:0},
+   {t:'Custo',r:1,v:r=>r.custo==null?'<span class="mut">a definir</span>':brl(r.custo),s:r=>r.custo||0},{t:'Quem arca',v:r=>ARCA[r.arca],s:r=>r.arca},
+   {t:'Status',v:r=>`<span class="chip ${r.status==='concluida'?'ok':(r.status==='em_conserto'?'hot':'warn')}">${CORR_ST[r.status]}</span>`,s:r=>r.status}],
+  total:rows=>`<td colspan="5">${nf(rows.length)} manutenções</td><td class="r mono">${rows.filter(r=>r.tirou).reduce((s,r)=>s+r.dias,0)}</td><td class="r mono">${brl(rows.reduce((s,r)=>s+(r.custo||0),0))}</td><td colspan="2"></td>`,
+  planilha:['Entrada','Saída prevista','Saída real','Placa','Modelo','Motorista','Defeito','Oficina','Dias parado','Custo','Quem arca','Status','Carro saiu da equipe (sim/não)','Observações'],
+  detalhe:r=>[['Placa',r.placa],['Motorista',esc(r.motorista)],['Defeito',esc(r.defeito)],['Oficina',esc(r.oficina)],['Entrada',dt(r.entrada)],['Saída prevista',dt(r.saidaPrev)],['Saída real',r.saida?dt(r.saida):'ainda na oficina'],['Custo',r.custo==null?'a definir':brl(r.custo)],['Quem arca',ARCA[r.arca]],['Carro saiu da equipe',r.tirou?'Sim (veículo em manutenção)':'Não (reparo de um dia)'],['Observações',r.obs?esc(r.obs):'—']]},
+ multa:{nome:'Multas',arquivo:'frotas-multas',novo:'Registrar multa',temPeriodo:true,vazio:'Nenhuma multa registrada ainda.',
+  rows:()=>[...MULTAS].sort((a,b)=>a.data<b.data?1:-1),busca:r=>[r.placa,r.motorista,r.inf].join(' '),filtros:['busca','de','ate','placa','motorista','sel0','sel1'],
+  sel:[{lbl:'Situação',opts:[['pendente','Pendente'],['validada','Validada'],['descontada','Descontada']],fn:(r,v)=>r.sit===v},{lbl:'Autorização',opts:[['sem_solicitacao','Sem pedido'],['solicitado','Pedida'],['autorizado','Autorizada']],fn:(r,v)=>r.aut===v}],
+  cols:[{t:'Data da infração',v:r=>dt(r.data),s:r=>r.data},{t:'Placa',v:r=>`<b class="wh">${r.placa}</b>`,s:r=>r.placa},{t:'Motorista',v:r=>esc(r.motorista),s:r=>r.motorista},{t:'Infração',v:r=>esc(r.inf),s:r=>r.inf},
+   {t:'Valor',r:1,v:r=>brl(r.valor),s:r=>r.valor},{t:'Descontado',r:1,v:r=>r.desc?brl(r.desc):'—',s:r=>r.desc},
+   {t:'Situação',v:r=>`<span class="chip ${r.sit==='pendente'?'warn':'ok'}">${{pendente:'Pendente',validada:'Validada',descontada:'Descontada'}[r.sit]}</span>`,s:r=>r.sit},
+   {t:'Autorização',v:r=>({sem_solicitacao:'Sem pedido',solicitado:'Pedida',autorizado:'Autorizada'})[r.aut],s:r=>r.aut}],
+  total:rows=>`<td colspan="4">${nf(rows.length)} multas</td><td class="r mono">${brl(rows.reduce((s,r)=>s+r.valor,0))}</td><td class="r mono">${brl(rows.reduce((s,r)=>s+r.desc,0))}</td><td colspan="2"></td>`,
+  planilha:['Data da infração','Placa','Motorista','Infração','Valor','Valor descontado','Situação','Autorização'],
+  detalhe:r=>[['Placa',r.placa],['Motorista',esc(r.motorista)],['Infração',esc(r.inf)],['Data',dt(r.data)],['Valor',brl(r.valor)],['Descontado',brl(r.desc)],['Situação',r.sit],['Autorização',r.aut]]},
+ sin:{nome:'Sinistros',arquivo:'frotas-sinistros',novo:'Registrar sinistro',temPeriodo:true,vazio:'Nenhum sinistro registrado ainda.',
+  rows:()=>[...SIN].sort((a,b)=>a.data<b.data?1:-1),busca:r=>[r.placa,r.motorista,r.desc].join(' '),filtros:['busca','de','ate','placa','motorista','sel0','sel1'],
+  sel:[{lbl:'Tipo',opts:[['colisao','Colisão'],['furto','Furto'],['avaria','Avaria'],['outro','Outro']],fn:(r,v)=>r.tipo===v},{lbl:'Situação',opts:[['aberto','Aberto'],['em_tratativa','Em tratativa'],['encerrado','Encerrado']],fn:(r,v)=>r.sit===v}],
+  cols:[{t:'Data',v:r=>dt(r.data),s:r=>r.data},{t:'Placa',v:r=>`<b class="wh">${r.placa}</b>`,s:r=>r.placa},{t:'Motorista',v:r=>esc(r.motorista),s:r=>r.motorista},{t:'Tipo',v:r=>({colisao:'Colisão',furto:'Furto',avaria:'Avaria',outro:'Outro'})[r.tipo],s:r=>r.tipo},{t:'Descrição',v:r=>esc(r.desc),s:r=>r.desc},
+   {t:'Valor do dano',r:1,v:r=>brl(r.dano),s:r=>r.dano},{t:'Descontado',r:1,v:r=>r.descontado?brl(r.descontado):'—',s:r=>r.descontado},
+   {t:'Situação',v:r=>`<span class="chip ${r.sit==='encerrado'?'ok':'warn'}">${{aberto:'Aberto',em_tratativa:'Em tratativa',encerrado:'Encerrado'}[r.sit]}</span>`,s:r=>r.sit}],
+  total:rows=>`<td colspan="5">${nf(rows.length)} sinistros</td><td class="r mono">${brl(rows.reduce((s,r)=>s+r.dano,0))}</td><td class="r mono">${brl(rows.reduce((s,r)=>s+r.descontado,0))}</td><td></td>`,
+  planilha:['Data','Placa','Motorista','Tipo','Descrição','Valor do dano','Valor descontado','Situação','Desconto (tipo)'],
+  detalhe:r=>[['Placa',r.placa],['Motorista',esc(r.motorista)],['Tipo',r.tipo],['Data',dt(r.data)],['Descrição',esc(r.desc)],['Valor do dano',brl(r.dano)],['Descontado',brl(r.descontado)],['Situação',r.sit]]},
+ doc:{nome:'Documentos',arquivo:'frotas-documentos',novo:'Cadastrar documento',temPeriodo:false,vazio:'Nenhum documento cadastrado ainda.',
+  rows:()=>DOCS.map(d=>({...d,modelo:VEIC.find(v=>v.placa===d.placa).modelo,sit:docSit(d)})),busca:r=>[r.placa,r.numero,DOC_L[r.tipo]].join(' '),filtros:['busca','placa','sel0','sel1'],
+  sel:[{lbl:'Tipo',opts:Object.entries(DOC_L),fn:(r,v)=>r.tipo===v},{lbl:'Situação',opts:[['vencido','Vencido'],['vence30','Vence em 30 dias'],['dia','Em dia']],fn:(r,v)=>r.sit===v}],
+  cols:[{t:'Placa',v:r=>`<b class="wh">${r.placa}</b>`,s:r=>r.placa},{t:'Modelo',v:r=>r.modelo,s:r=>r.modelo},{t:'Tipo',v:r=>DOC_L[r.tipo],s:r=>r.tipo},{t:'Número',v:r=>r.numero,s:r=>r.numero},{t:'Vencimento',v:r=>dt(r.venc),s:r=>r.venc},
+   {t:'Situação',v:r=>r.sit==='vencido'?`<span class="chip hot">vencido há ${-diasAte(r.venc)} dias</span>`:(r.sit==='vence30'?`<span class="chip warn">vence em ${diasAte(r.venc)} dias</span>`:'<span class="chip ok">em dia</span>'),s:r=>r.venc}],
+  total:rows=>`<td colspan="6">${nf(rows.length)} documentos</td>`,
+  planilha:['Placa','Modelo','Tipo','Número','Vencimento','Situação','Dias para vencer'],
+  detalhe:r=>[['Placa',r.placa+' · '+r.modelo],['Tipo',DOC_L[r.tipo]],['Número',r.numero],['Vencimento',dt(r.venc)],['Situação',r.sit]]}
+};
+function docSit(d){const n=diasAte(d.venc);return n<0?'vencido':(n<=30?'vence30':'dia')}
+const fdef=b=>S.f[b]||(S.f[b]={busca:'',de:'',ate:'',placa:'',motorista:'',sel0:'',sel1:''});
+function filtrar(b){
+  const B=BASES[b],f=fdef(b),q=f.busca.trim().toLowerCase();
+  let rows=B.rows().filter(r=>{
+    if(q&&!B.busca(r).toLowerCase().includes(q))return false;
+    if(B.temPeriodo){if(f.de&&r.data<f.de)return false;if(f.ate&&r.data>f.ate)return false}
+    if(f.placa&&r.placa!==f.placa)return false;
+    if(f.motorista&&r.motorista!==f.motorista)return false;
+    if(f.sel0&&!B.sel[0].fn(r,f.sel0))return false;
+    if(f.sel1&&!B.sel[1].fn(r,f.sel1))return false;
+    return true});
+  const so=S.sort[b]; if(so){const c=B.cols[so.i];rows=[...rows].sort((x,y)=>{const a=c.s(x),z=c.s(y);return(a>z?1:a<z?-1:0)*so.dir})}
+  return rows;
+}
+function filtrosTexto(b){const f=fdef(b),B=BASES[b],p=[];
+  if(B.temPeriodo)p.push(`período ${f.de?dt(f.de):'início'} a ${f.ate?dt(f.ate):'hoje'}`);
+  if(f.placa)p.push('placa '+f.placa);if(f.motorista)p.push('motorista '+f.motorista);
+  B.sel.forEach((s,i)=>{const v=f['sel'+i];if(v)p.push(s.lbl.toLowerCase()+': '+(s.opts.find(o=>o[0]===v)||[0,v])[1].toLowerCase())});
+  if(f.busca)p.push('busca "'+f.busca+'"');return p.length?p.join(' · '):'sem filtro (tudo)'}
+
+/* ================= peças ================= */
+const head1=(n,t,sub)=>`<h1 class="sec"><span class="num">${n}</span>${t}</h1><p class="lead">${sub}</p>`;
+const head2=(n,t,sub)=>`<h2 class="sec"><span class="num">${n}</span>${t}</h2>${sub?`<p class="lead">${sub}</p>`:''}`;
+const why=h=>`<div class="why">${h}</div>`;
+const legenda=()=>`<div class="lg">${chipEx} já está no sistema hoje <span>·</span> ${chipNovo} seria criado nesta rodada</div>`;
+const emptyBox=(m,x)=>`<div class="empty"><div class="ic">○</div><div class="wh">${m}</div>${x||''}</div>`;
+const skel=(h,n)=>Array.from({length:n||1},()=>`<div class="sk" style="height:${h}px;margin-bottom:.6rem"></div>`).join('');
+const errBox=o=>`<div class="err"><div class="ic">!</div><div><div class="t">Não foi possível carregar ${o}</div><p>A conexão com o banco falhou. Nada foi apagado. Tente de novo em instantes.</p><button class="btn btn-p" data-act="estado" data-v="dados">Tentar de novo</button></div></div>`;
+function toast(m){$('#toast').innerHTML=`<div class="toast">${m}</div>`;clearTimeout(window._tt);window._tt=setTimeout(()=>$('#toast').innerHTML='',4200)}
+function decisoes(n,itens){return `<div class="dec"><h3><span class="num">${n}</span>Decisões em aberto</h3><ol>${itens.map(([q,r,p])=>`<li><div class="q">${q}</div><div class="r"><b>Recomendo:</b> ${r}</div><div class="p">${p}</div></li>`).join('')}</ol></div>`}
+
+function mbar(){
+  const est=[['dados','Com dados'],['carregando','Carregando'],['vazio','Vazio'],['erro','Erro']];
+  return `<div class="mbar"><span class="tag">Mockup · dados de exemplo · 03/11/2026</span>
+   <label>Ver como <select class="fld auto" data-act="papel-sel"><option value="gestor" ${S.papel==='gestor'?'selected':''}>Gestor de frotas / admin</option><option value="usuario" ${S.papel==='usuario'?'selected':''}>Usuário do Frotas</option></select></label>
+   <label>Estado <span class="seg">${est.map(([k,v])=>`<button class="${S.estado===k?'on':''}" data-act="estado" data-v="${k}">${v}</button>`).join('')}</span></label>
+   <label>Tela <span class="seg"><button class="${!S.phone?'on':''}" data-act="phone" data-v="0">Computador</button><button class="${S.phone?'on':''}" data-act="phone" data-v="1">Celular</button></span></label></div>
+  <div class="screens">${[['rev','1 · Revisão a cada 10 mil km'],['corr','2 · Manutenção corretiva'],['bases','3 · Bases em tabela'],['novo','4 · O que é novo no banco']].map(([k,v])=>`<button class="${S.tela===k?'on':''}" data-act="tela" data-v="${k}">${v}</button>`).join('')}</div>`}
+function side(){
+  const it=(l,on,act,v)=>`<button class="it ${on?'on':''}" data-act="${act}" data-v="${v||''}">${l}</button>`;
+  return `<nav class="side"><div class="wh b" style="padding:0 .5rem">Gestão de Frotas</div>
+   <div class="grp">Operação</div><button class="it dim">Visão geral</button><button class="it dim">Equipes</button><button class="it dim">Checklist</button>
+   <div class="grp">Bases</div><button class="it dim">Abastecimentos</button><button class="it dim">KM diário</button><button class="it dim">Motoristas</button><button class="it dim">Veículos</button>
+   <div class="grp">Ocorrências</div>${it('Multas',S.tela==='bases'&&S.base==='multa','nav','multa')}${it('Sinistros',S.tela==='bases'&&S.base==='sin','nav','sin')}<button class="it dim">Descontos</button>
+   <div class="grp">Manutenção</div>${it('Revisões',S.tela==='rev','nav','rev-tela')}${it('Manutenção corretiva <span class="chip new">NOVO</span>',S.tela==='corr','nav','corr-tela')}${it('Histórico de revisões',S.tela==='bases'&&S.base==='rev','nav','rev')}${it('Documentos',S.tela==='bases'&&S.base==='doc','nav','doc')}
+   <div class="grp">Gestão</div><button class="it dim">Custos</button><button class="it dim">Disponibilidade</button><button class="it dim">Pendências</button>
+   <div style="border-top:1px solid var(--bd);margin-top:1rem;padding:.7rem .5rem 0" class="xs mut">Entrou como<br><span class="wh">${S.papel==='gestor'?'Gestor de frotas':'Usuário do Frotas'}</span></div></nav>`}
+
+/* ================= tabela genérica ================= */
+function tabela(b){
+  const B=BASES[b],f=fdef(b);
+  let h=`<div class="toolbar"><div class="l">${gestor()||b==='rev'&&false?`<button class="btn btn-p" data-act="novo" data-v="${b}">+ ${B.novo}</button>`:''}<button class="btn btn-s" data-act="exportar" data-v="${b}" ${S.estado!=='dados'?'disabled':''}>⭳ Exportar Excel</button>${b==='rev'&&gestor()?`<button class="btn btn-s" data-act="imp-abrir">⇪ Importar planilha</button>`:''}</div><span class="xs mut">Clique na linha para ver o detalhe.</span></div>`;
+  const opt=(arr,sel,all)=>`<option value="">${all}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${x}</option>`).join('');
+  const fl=(k,html,c)=>`<label class="${c||''}"><span class="lbl">${k}</span>${html}</label>`;
+  const P={busca:fl('Buscar',`<input id="q_${b}" class="fld" placeholder="Placa, oficina, texto…" value="${esc(f.busca)}" data-act="f" data-k="busca">`,'wide'),
+   de:fl('De',`<input type="date" class="fld" value="${f.de}" data-act="f" data-k="de">`),ate:fl('Até',`<input type="date" class="fld" value="${f.ate}" data-act="f" data-k="ate">`),
+   placa:fl('Placa',`<select class="fld" data-act="f" data-k="placa">${opt(PLACAS,f.placa,'Todas')}</select>`),motorista:fl('Motorista',`<select class="fld" data-act="f" data-k="motorista">${opt(NOMES,f.motorista,'Todos')}</select>`)};
+  B.sel.forEach((s,i)=>P['sel'+i]=fl(s.lbl,`<select class="fld" data-act="f" data-k="sel${i}"><option value="">Todos</option>${s.opts.map(([v,l])=>`<option value="${v}" ${f['sel'+i]===v?'selected':''}>${l}</option>`).join('')}</select>`));
+  h+=`<div class="filters">${B.filtros.map(k=>P[k]).join('')}</div>`;
+  if(S.aviso&&S.aviso.base===b)h+=`<div class="banner"><span>${S.aviso.txt}</span><button class="btn btn-s" data-act="aviso-x">Fechar</button></div>`;
+  if(S.estado==='carregando')return h+skel(38,8);
+  if(S.estado==='erro')return h+errBox('a base de '+B.nome.toLowerCase());
+  if(S.estado==='vazio')return h+emptyBox(B.vazio,`<p class="sm">Quando o primeiro registro entrar, ele aparece aqui.</p>${gestor()?`<button class="btn btn-p" data-act="novo" data-v="${b}">+ ${B.novo}</button>`:''}`);
+  const rows=filtrar(b);
+  if(!rows.length)return h+emptyBox('Nenhum resultado com estes filtros.','<p class="sm">'+filtrosTexto(b)+'</p><button class="btn btn-s" data-act="limpar" data-v="'+b+'">Limpar filtros</button>');
+  const POR=12,tp=Math.ceil(rows.length/POR);let p=Math.min(S.pag[b]||1,tp);const page=rows.slice((p-1)*POR,p*POR),so=S.sort[b];
+  h+=`<div class="tw"><table><thead><tr>${B.cols.map((c,i)=>`<th class="sortable ${c.r?'r':''}" data-act="sort" data-v="${i}">${c.t}${so&&so.i===i?`<span class="ar">${so.dir>0?'▲':'▼'}</span>`:''}</th>`).join('')}</tr></thead>
+   <tbody>${page.map(r=>`<tr class="rowc ${r.id===S.novoId&&b===S.novoBase?'nov':''}" data-act="row" data-v="${r.id}">${B.cols.map(c=>`<td class="${c.r?'r mono':''}">${c.v(r)}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${B.total(rows)}</tr></tfoot></table></div>`;
+  const pg=[];for(let i=Math.max(1,p-2);i<=Math.min(tp,p+2);i++)pg.push(i);
+  h+=`<div class="pager"><span>Mostrando ${(p-1)*POR+1}–${Math.min(p*POR,rows.length)} de ${nf(rows.length)} · ${filtrosTexto(b)}</span><span class="pg"><button data-act="pag" data-v="${p-1}" ${p<=1?'disabled':''}>‹</button>${pg.map(i=>`<button class="${i===p?'on':''}" data-act="pag" data-v="${i}">${i}</button>`).join('')}<button data-act="pag" data-v="${p+1}" ${p>=tp?'disabled':''}>›</button></span></div>`;
+  return h;
+}
+
+/* ================= TELA 1: revisão automática ================= */
+function telaRev(){
+  let h=head1(1,'Revisão a cada 10 mil km','O sistema usa o KM diário que já existe para prever a próxima revisão de cada carro, mostra quando ela deve chegar e avisa antes de passar. Hoje a "próxima" é digitada à mão.')+legenda();
+  if(S.estado==='carregando')return h+skel(90,1)+skel(38,8);
+  if(S.estado==='erro')return h+errBox('as revisões');
+  if(S.estado==='vazio')return h+emptyBox('Nenhuma revisão registrada ainda.',gestor()?'<p class="sm">Importe a lista do Igor para o sistema já começar a prever.</p><button class="btn btn-p" data-act="imp-abrir">⇪ Importar planilha</button>':'');
+  const cs=VEIC.map(v=>({v,c:classif(v)}));
+  const cnt=k=>cs.filter(x=>x.c.s===k).length, n30=cs.filter(x=>x.c.s==='dia'&&x.c.dias<=30).length, nsp=cs.filter(x=>x.c.s==='semprev'||x.c.s==='sembase').length;
+  h+=`<div class="card pad" style="margin-bottom:.9rem"><div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
+    <div><div class="wh b">Intervalo entre revisões ${chipNovo}</div><div class="xs mut">Vale para todos os carros. Mude aqui e a tabela abaixo recalcula (o aviso de 1.000 km continua o de hoje).</div></div>
+    <label style="width:170px"><span class="lbl">KM entre revisões</span><input class="fld mono" type="number" min="1000" step="1000" value="${S.intervalo}" data-act="intervalo"></label></div>
+    <div style="border-top:1px solid var(--bd);margin-top:.8rem;padding-top:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><span class="xs mut">Simular o passar do tempo (usa a média de km/dia de cada carro):</span>
+    <span class="seg">${[[0,'Hoje'],[7,'+7 dias'],[15,'+15 dias'],[30,'+30 dias']].map(([d,l])=>`<button class="${S.sim===d?'on':''}" data-act="sim" data-v="${d}">${l}</button>`).join('')}</span></div></div>`;
+  const st=(k,l,n,s,hot,nw)=>`<button class="stat ${hot&&n?'hot':''} ${nw?'new':''}" data-act="rfil" data-v="${S.rfil===k?'':k}" style="${S.rfil===k?'border-color:var(--or)':''}"><div class="l">${l} ${nw?chipNovo:''}</div><div class="v">${n}</div><div class="s">${s}</div></button>`;
+  h+=`<div class="grid g4" style="margin-bottom:1rem">${st('atrasada','Atrasadas',cnt('atrasada'),'passaram do KM previsto',1)}${st('breve','Vencem em até 1.000 km',cnt('breve'),'hora de agendar',1)}${st('d30','Chegam em até 30 dias',n30,'pela média de km/dia',0,1)}${st('sp','Sem previsão automática',nsp,'corretiva recente ou sem histórico',0)}</div>`;
+  let lista=cs.filter(x=>!S.rfil||(S.rfil==='d30'?(x.c.s==='dia'&&x.c.dias<=30):(S.rfil==='sp'?(x.c.s==='semprev'||x.c.s==='sembase'):x.c.s===S.rfil)));
+  const ord={atrasada:0,breve:1,dia:2,semprev:3,sembase:4};lista.sort((a,b)=>ord[a.c.s]-ord[b.c.s]||(a.c.falta||0)-(b.c.falta||0));
+  h+=`<div class="toolbar"><div class="l">${gestor()?`<button class="btn btn-p" data-act="reg-rev" data-v="">+ Registrar revisão</button><button class="btn btn-s" data-act="imp-abrir">⇪ Importar planilha do Igor</button>`:''}${S.rfil?`<button class="btn btn-s" data-act="rfil" data-v="">Limpar filtro</button>`:''}</div><span class="xs mut">${lista.length} de ${VEIC.length} carros · ordenado do mais urgente</span></div>`;
+  h+=`<div class="tw"><table><thead><tr><th>Placa</th><th>Modelo</th><th>Equipe</th><th class="r">KM atual</th><th class="r">Última revisão</th><th class="r">Próxima (KM) ${chipNovo}</th><th class="r">Faltam</th><th class="r">Média km/dia ${chipNovo}</th><th>Chega em ${chipNovo}</th><th>Situação</th><th></th></tr></thead><tbody>
+  ${lista.map(({v,c})=>{const L=latest(v.placa);return `<tr class="rowc" data-act="reg-rev" data-v="${v.placa}"><td><b class="wh">${v.placa}</b></td><td>${v.modelo}</td><td>${v.manut?'<span class="chip warn">na oficina</span>':(v.equipe||'—')}</td><td class="r mono">${nf(kmAtual(v))}</td>
+   <td class="r mono">${L?nf(L.km)+` <span class="mut xs">${dt(L.data).slice(0,5)}${L.tipo==='corretiva'?' · corretiva':''}</span>`:'—'}</td>
+   <td class="r mono">${c.p?nf(c.p)+(L.proxManual==null?' <span class="chip new">auto</span>':''):'<span class="mut">—</span>'}</td>
+   <td class="r mono">${c.s==='atrasada'?`<b class="or">passou ${nf(c.pass)}</b>`:(c.falta!=null?nf(c.falta):'—')}</td><td class="r mono">${nf(v.media)}</td>
+   <td>${c.quando?`~${c.dias} dia${c.dias>1?'s':''} (${dt(c.quando).slice(0,5)})`:(c.s==='atrasada'?'<span class="or">já passou</span>':'—')}</td><td>${sitChip(c)}</td><td class="r">${gestor()?'<span class="or xs">registrar ›</span>':''}</td></tr>`}).join('')}</tbody></table></div>`;
+  // pendências automáticas
+  const pend=cs.filter(x=>x.c.s==='atrasada'||x.c.s==='breve'), pend0=S.sim===0?null:new Set(VEIC.filter(v=>{const k=v.km,L=latest(v.placa);if(!L||!L.prever)return false;return prox(v)-k<=MARGEM}).map(v=>v.placa));
+  h+=head2('1.1','O aviso: o que o sistema faz sozinho','José: "quando bater 10, já cria a tarefa de revisão". Reaproveita a tela Pendências e o e-mail diário que já existem.');
+  h+=`<div class="card pad">${pend.length?`<div class="wh b sm" style="margin-bottom:.4rem">${pend.length} pendência${pend.length>1?'s':''} de revisão aberta${pend.length>1?'s':''} ${S.sim?`(simulando ${S.sim} dias à frente)`:''}</div>`+pend.map(({v,c})=>`<div class="act" style="padding:.5rem 0"><div class="t"><div class="a">Revisão — ${v.placa} (${v.modelo})</div><div class="d">${c.s==='atrasada'?`passou ${nf(c.pass)} km do previsto (${nf(c.p)})`:`faltam ${nf(c.falta)} km para ${nf(c.p)} · chega em ~${c.dias} dias`}</div></div>${pend0&&!pend0.has(v.placa)?'<span class="chip hot">nova com o tempo simulado</span>':''}${sitChip(c)}</div>`).join(''):'<div class="mut sm">Nenhum carro perto da revisão com o tempo simulado.</div>'}
+   <div class="xs mut" style="margin-top:.6rem">Uma pendência por carro; some sozinha quando a revisão é registrada. O mesmo carro entra no bloco "Revisões" do e-mail diário.</div></div>`;
+  h+=decisoes(1,[
+   ['O intervalo de 10 mil é fixo para todos os carros ou muda por modelo?','10.000 km como padrão global (constante no código, como a margem de 1.000 km) e um campo opcional "intervalo próprio" no veículo, vazio por padrão.','O Igor e o José falaram "todos fazem de 10 em 10 mil", e o documento de processos diz o mesmo (9.1.2). Mas a Maestro tem plano de manutenção por KM por modelo (HB20 e Argos); o campo opcional custa pouco e evita refazer se um contrato exigir outro intervalo.'],
+   ['Quando a revisão é registrada, como se calcula a próxima?','Próxima = KM em que a revisão foi feita + intervalo, preenchida sozinha e ainda editável no formulário. Revisão corretiva não calcula próxima por padrão (caixa "não prever" já marcada).','É a conta que a planilha do Igor faz hoje (9.1.3), então não surpreende ninguém. A alternativa é arredondar para o múltiplo de 10 mil (revisão feita aos 61.800 gera a próxima aos 70.000): acompanha o plano da fabricante, mas dá resultado diferente do que o Igor espera ver. A corretiva sem previsão atende o caso da embreagem que ele citou ([13:29]).'],
+   ['Qual o formato da planilha do Igor e o que importar?','Aceitar .xlsx ou .csv com colunas mínimas Placa, KM da revisão e Data; opcionais Oficina, Valor, Peças e Observações. Importar todas as linhas como histórico (a próxima é calculada só a partir da de maior KM de cada carro). Prévia obrigatória antes de gravar; linhas com erro ficam de fora e saem num relatório; linha repetida (mesma placa e KM) é ignorada.','É uma carga única e errada silenciosa estragaria a previsão: uma linha com KM maior que o atual do carro deslocaria a próxima revisão (por isso "importar avisos" vem desmarcado). Antes de programar, pedir ao Igor a planilha real: o mapeamento de colunas do mockup é suposição minha.'],
+   ['O aviso cria pendência ou só aparece na tela e no e-mail?','Aparece na tela e no e-mail diário (já existem) e abre uma pendência por carro quando entra em "vence em breve", fechada ao registrar a revisão.','O José descreveu como "tarefa". Pendências já existe, então é pouca obra; a regra de uma por carro evita encher a lista. Se o João preferir mínimo, dá para ficar só em tela e e-mail nesta rodada.'],
+   ['A margem de 1.000 km antes do vencimento serve?','Manter 1.000 km e mostrar a data projetada ao lado, só como informação.','A 55 km/dia são 18 dias; a 130 km/dia são 8, e agendar com PCM e oficina leva dias (9.2). Antes de mudar a regra de alerta, vale ver a projeção funcionando no uso real; trocar para "dias projetados" depois é simples.']
+  ]);
+  return h;
+}
+
+/* ================= TELA 2: manutenção corretiva ================= */
+function telaCorr(){
+  let h=head1(2,'Manutenção corretiva','Registro manual de cada conserto que não é revisão: o carro quebra, vai à oficina, volta. Liga com o "enviar para a oficina" e a Disponibilidade que já existem.')+legenda();
+  const abertas=CORR.filter(c=>c.status!=='concluida'), mes=CORR.filter(c=>c.entrada>='2026-10-01'&&c.custo);
+  const dp={};CORR.filter(c=>c.tirou&&c.entrada>='2026-10-01').forEach(c=>dp[c.placa]=(dp[c.placa]||0)+Math.max(0,diasAte(c.saida||HOJE)-diasAte(c.entrada)+1));
+  h+=`<div class="grid g3" style="margin-bottom:1rem"><div class="stat ${abertas.length?'hot':''}"><div class="l">Em aberto ${chipNovo}</div><div class="v">${abertas.length}</div><div class="s">${abertas.filter(c=>c.tirou).length} com o carro parado na oficina</div></div>
+   <div class="stat"><div class="l">Custo de corretiva em outubro ${chipNovo}</div><div class="v">${brl(mes.reduce((s,c)=>s+c.custo,0))}</div><div class="s">${mes.length} serviços com valor lançado</div></div>
+   <div class="stat"><div class="l">Carros parados hoje</div><div class="v">${VEIC.filter(v=>v.manut).length}</div><div class="s">já aparece na Disponibilidade ${chipEx}</div></div></div>`;
+  h+=tabela('corr');
+  h+=head2('2.1','Como liga com a oficina que já existe','Hoje "Enviar para oficina" muda o veículo para Em manutenção, tira a equipe e guarda a previsão de retorno. O formulário novo faz isso no mesmo passo.');
+  h+=`<div class="grid g2"><div class="card pad"><div class="wh b sm">Ao registrar (caixa "Tirar o carro da equipe" marcada)</div><div class="tl"><div class="cur">Cria a manutenção corretiva com status e datas</div><div>Veículo vira <b class="wh">Em manutenção</b>; equipe fica sem carro</div><div>Previsão de retorno = saída prevista ${chipEx}</div><div>Entra no painel de Disponibilidade</div></div></div>
+   <div class="card pad"><div class="wh b sm">Ao concluir</div><div class="tl"><div class="cur">Informa a saída real e o custo final</div><div>Veículo volta a <b class="wh">Ativo</b> (igual ao "Retornar da oficina" de hoje) ${chipEx}</div><div>Dias parados = entrada até a saída real</div><div>A equipe é escolhida depois, pelo checklist de retorno ou troca</div></div></div></div>`;
+  h+=head2('2.2','Impacto na disponibilidade (outubro)','Os dias parados desta tabela alimentam o painel de Disponibilidade. Só conta o que tirou o carro da equipe.');
+  const mx=Math.max(1,...Object.values(dp));
+  h+=`<div class="card pad bars">${Object.keys(dp).length?Object.entries(dp).sort((a,b)=>b[1]-a[1]).map(([p,d])=>`<div class="row"><b class="wh">${p}</b><div class="tr"><i style="width:${d/mx*100}%"></i></div><span class="mono">${d} dia${d>1?'s':''}</span></div>`).join(''):'<div class="mut sm">Nenhum carro parado em outubro.</div>'}</div>`;
+  h+=decisoes(2,[
+   ['A corretiva fica na tabela de revisões (tipo "corretiva", que já existe) ou ganha tabela própria?','Tabela própria (manutencoes). A revisão continua sendo só preventiva; as corretivas antigas que já estejam em revisões ficam onde estão, sem migrar automático.','Corretiva tem defeito, entrada e saída, status do conserto e quem arca; revisão tem KM e próxima. Misturar enche a revisão de campos vazios e quebra a conta da próxima. Antes de decidir sobre migrar as antigas, contar quantas existem (consulta rápida).'],
+   ['Registrar a corretiva já tira o carro da equipe?','Sim, caixa marcada por padrão mostrando o efeito, mas desmarcável para reparo de um dia (como o 2º exemplo da tabela).','Hoje são dois passos separados e dá esquecimento; a oficina costuma segurar de um dia para o outro (9.5.4). Reparo de poucas horas não deveria desmontar a equipe, por isso a caixa é opcional.'],
+   ['Quem pode registrar e mudar o status?','Só gestor de frotas e administrador, a mesma regra do "enviar para oficina". Usuário do Frotas só consulta e exporta.','Muda status do veículo e vínculo da equipe, e tem custo envolvido. Se o Igor quiser que mais gente lance, dá para abrir depois; o contrário (fechar) é pior.'],
+   ['O campo "quem arca" (locadora, empresa, motorista) é obrigatório?','Opcional enquanto está aguardando orçamento, obrigatório para concluir.','O documento pede esse dado (9.8.1) e a regra muda por locadora (Foco e Locafácil, 90 a 95% da locadora; Maestro, o que está fora do plano). Na abertura ninguém sabe ainda; na conclusão precisa saber, senão o custo não rateia.'],
+   ['Custo: um valor só ou itemizado, e anexo?','Um valor total mais anexo do orçamento ou nota fiscal (o armazenamento de nota já existe nas revisões). Itens e peças ficam em observações.','É um registro manual feito pelo Igor; itemizar dobra o trabalho dele sem pedido claro na reunião. Se a locadora mandar detalhe, vai no anexo.']
+  ]);
+  return h;
+}
+
+/* ================= TELA 3: bases ================= */
+function telaBases(){
+  let h=head1(3,'Bases em tabela, com Exportar Excel','Mesmo padrão das bases de Abastecimentos, KM diário, Motoristas e Veículos (segunda bateria, 2.1 a 2.4): filtros em cima, tabela ordenável, total, "Exportar Excel" e botão de registrar.')+legenda();
+  const L=[['rev','3.1 Revisões'],['multa','3.2 Multas'],['sin','3.3 Sinistros'],['doc','3.4 Documentos']];
+  h+=`<div class="subtabs">${L.map(([k,v])=>`<button class="${S.base===k?'on':''}" data-act="base" data-v="${k}">${v}</button>`).join('')}</div>`;
+  const b=S.base;
+  h+={rev:'Uma linha por revisão feita (histórico completo, importado ou lançado). Só a mais recente de cada carro mostra a situação; as anteriores aparecem como "Histórico". A tela 1 é a visão "um carro por linha".',multa:'As multas de hoje em tabela. A seleção em massa e o pedido de desconto continuam como estão; só ganha filtro, ordenação e planilha.',sin:'Os sinistros de hoje em tabela, com tipo e situação filtráveis.',doc:'Seguro, licenciamento e IPVA de todos os carros numa lista só, ordenada por vencimento (clique em "Vencimento").'}[b]?`<p class="lead">${{rev:'Uma linha por revisão feita (histórico completo, importado ou lançado). Só a mais recente de cada carro mostra a situação; as anteriores aparecem como "Histórico". A tela 1 é a visão "um carro por linha".',multa:'As multas de hoje em tabela. A seleção em massa e o pedido de desconto continuam como estão; só ganha filtro, ordenação e planilha.',sin:'Os sinistros de hoje em tabela, com tipo e situação filtráveis.',doc:'Seguro, licenciamento e IPVA de todos os carros numa lista só. Clique em "Vencimento" para ordenar.'}[b]}</p>`:'';
+  h+=tabela(b);
+  h+=why('<b>Como funciona.</b> Clique no título de uma coluna para ordenar (de novo, inverte). 12 linhas por página neste mockup. O "Exportar Excel" leva <b>tudo o que está filtrado</b>, não só a página da tela, na ordem da tela.');
+  h+=decisoes(3,[
+   ['A base de Revisões mostra o histórico inteiro ou só a última de cada carro?','Histórico inteiro (uma linha por revisão), com a situação só na mais recente. A visão "um carro por linha" é a tela 1.','O Igor quer "entrar na revisão" e ver o que foi trocado (B6), e a planilha dele é histórico. Uma tabela serve às duas necessidades sem duplicar tela.'],
+   ['As corretivas aparecem na base de Revisões?','Não. Ficam na base própria da seção 2, com o mesmo padrão e Exportar.','Colunas diferentes (defeito, dias parado, quem arca). Misturar piora filtros e a planilha. Quem quiser tudo junto exporta as duas.'],
+   ['Documentos entra agora ou fica opcional?','Entra: é a mesma peça de código e o e-mail diário já cita Documentos.','Era a única das quatro que a segunda bateria deixou como "talvez". O custo é de uma linha de configuração; sem a base, o link do e-mail abre uma tela sem exportar.'],
+   ['Multas e Sinistros: o que fazer com as ações em massa e o botão de desconto?','Manter exatamente como estão; a tabela só substitui a lista.','O bug de desconto da multa (B2) e o do sinistro (B1) são frente separada. Misturar mudança de tela com mudança de comportamento dificulta conferir cada uma.'],
+   ['Quem pode exportar, e o que não vai na planilha?','Mesmo acesso das 4 bases atuais (quem vê, exporta). Dinheiro como número, sem caminhos de arquivo; autorização vai como "sim/não".','Evita regra nova de permissão e vazamento de endereço interno de armazenamento. Valores numéricos deixam o Excel somar.']
+  ]);
+  return h;
+}
+
+/* ================= TELA 4: banco ================= */
+function telaNovo(){
+  let h=head1(4,'O que é novo no banco','Resumo para conferir o tamanho da mudança. Nada é aplicado antes da aprovação deste mockup (migration manual, depois).');
+  const rows=[['manutencoes','TABELA NOVA','id, veiculo_id, defeito, oficina, data_entrada, saida_prevista, data_saida, custo, quem_arca, status, tirou_da_equipe, anexo, observações, criado_por, datas. RLS no padrão "sofia access" (acesso por hub_system_access), conferida com teste.'],
+   ['revisoes.prever_proxima','COLUNA NOVA','boolean, padrão verdadeiro. Falso na corretiva ou quando o Igor marca "não prever".'],
+   ['revisoes.origem','COLUNA NOVA','texto: manual ou importacao. Permite ver o que veio da planilha.'],
+   ['veiculos.intervalo_revisao_km','COLUNA NOVA (opcional)','inteiro, vazio por padrão. Só preenche se um carro tiver intervalo diferente de 10 mil (decisão 1.1).'],
+   ['revisoes.proxima_km','JÁ EXISTE','passa a ser preenchida sozinha ao salvar; continua editável.'],
+   ['KM diário, pendencias, e-mail diário, veiculos.status','JÁ EXISTE','usados como estão. A pendência automática pode pedir uma coluna para não duplicar por carro (a conferir no código de pendencias).'],
+   ['Bases de Revisões, Multas, Sinistros, Documentos','SEM TABELA','só leitura no servidor e a tela; reaproveitam o motor das 4 bases atuais.'],
+   ['Importação da planilha','SEM TABELA','grava em revisoes (origem = importacao) e no log de auditoria que já existe.']];
+  h+=`<div class="tw nbd"><table><thead><tr><th>Onde</th><th>O que é</th><th>Detalhe</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b class="wh">${r[0]}</b></td><td><span class="chip ${r[1].includes('NOVA')?'new':'ex'}">${r[1]}</span></td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>`;
+  h+=why('<b>Regra do projeto.</b> Toda tabela ou coluna nova passa pelo João antes de qualquer SQL, e a policy é conferida com teste antes de considerar pronta.');
+  return h;
+}
+
+/* ================= gaveta e modais ================= */
+function drawer(){
+  const d=S.drawer;if(!d)return'';const B=BASES[d.base],r=B.rows().find(x=>x.id==d.id);if(!r)return'';
+  let ac='';
+  if(d.base==='rev'&&gestor())ac=`<button class="btn btn-p" data-act="reg-rev" data-v="${r.placa}">Registrar a próxima revisão deste carro</button>`;
+  if(d.base==='corr'&&gestor()&&r.status!=='concluida'){
+    const nx={aguardando_orcamento:['aguardando_aprovacao','Orçamento recebido: aguardando aprovação'],aguardando_aprovacao:['em_conserto','Aprovado: carro em conserto'],em_conserto:null}[r.status];
+    ac=`<div style="display:flex;gap:.5rem;flex-wrap:wrap">${nx?`<button class="btn btn-s" data-act="corr-st" data-v="${r.id}|${nx[0]}">${nx[1]}</button>`:''}<button class="btn btn-p" data-act="corr-fim" data-v="${r.id}">Concluir e retornar o carro</button></div><div class="xs mut" style="margin-top:.4rem">Concluir pede a saída real, o custo e quem arca${r.tirou?'; o veículo volta a Ativo':''}.</div>`;
+  }
+  if(d.base==='corr'&&r.status==='concluida')ac='<div class="info">Manutenção concluída. Alterar depois exige gestor e fica no histórico de auditoria.</div>';
+  return `<div class="ov" data-act="fechar-ov"><aside class="drawer" data-stop="1"><div style="display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start"><div class="wh b">${B.nome} · ${r.placa||''}</div><button class="btn btn-s" data-act="fechar">Fechar</button></div>
+   <dl class="kv">${B.detalhe(r).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${ac}</aside></div>`;
+}
+const fld=(l,html,c)=>`<label class="${c||''}"><span class="lbl">${l}</span>${html}</label>`;
+const sel=(id,opts,v)=>`<select class="fld" id="${id}">${opts.map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${l}</option>`).join('')}</select>`;
+function modal(){
+  const m=S.modal;if(!m)return'';let t='',b='';
+  if(m.tipo==='exportar'){const B=BASES[m.b],n=filtrar(m.b).length;t='Exportar Excel · '+B.nome;
+   b=`<dl class="kv"><dt>Arquivo</dt><dd class="mono">${B.arquivo}-${HOJE}.xlsx</dd><dt>Linhas</dt><dd>${nf(n)} (tudo o que está filtrado, não só a página)</dd><dt>Filtros</dt><dd>${filtrosTexto(m.b)}</dd></dl><div class="sm mut">Colunas da planilha, nesta ordem:</div><ol class="collist" style="padding-left:1.3rem">${B.planilha.map(c=>`<li>${c}</li>`).join('')}</ol><div class="xs mut" style="margin:.6rem 0 1rem">Cabeçalho em negrito e congelado, com filtro do Excel ligado. Datas como data e valores como número.</div><div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="baixar">Baixar planilha</button></div>`}
+  if(m.tipo==='rev'){const v=VEIC.find(x=>x.placa===m.placa)||VEIC[0];t='Registrar revisão';
+   b=`<p class="xs mut" style="margin-top:0">O formulário que já existe, com a parte da próxima revisão agora calculada. ${chipNovo}</p><div class="fgrid">
+   ${fld('Veículo *',sel('r_placa',VEIC.map(x=>[x.placa,x.placa+' · '+x.modelo]),v.placa),'full')}${fld('Tipo *',sel('r_tipo',[['preventiva','Preventiva'],['corretiva','Corretiva']],'preventiva'))}${fld('Data realizada',`<input class="fld" type="date" id="r_data" value="${HOJE}">`)}
+   ${fld('KM realizada *',`<input class="fld mono" type="number" id="r_km" value="${v.km}">`)}${fld('Valor (R$)',`<input class="fld" type="number" id="r_valor" placeholder="0,00">`)}${fld('Oficina / fornecedor',sel('r_ofic',OFIC.map(o=>[o,o]),OFIC[0]),'full')}
+   ${fld('Peças trocadas',`<input class="fld" id="r_pecas" placeholder="Ex.: óleo 5W30 (4 litros), filtro de óleo, filtro de ar">`,'full')}</div>
+   <div class="wh b sm" style="margin:.8rem 0 .2rem">Próxima revisão ${chipNovo}</div>
+   <label class="radio on" id="rw_auto"><input type="radio" name="r_prox" value="auto" checked><span><b class="wh">Calcular sozinha</b><br><span class="xs mut">KM realizada + intervalo (${nf(S.intervalo)})</span></span></label>
+   <label class="radio" id="rw_man"><input type="radio" name="r_prox" value="manual"><span><b class="wh">Informar à mão</b> <input class="fld mono" style="width:130px;display:inline-block;margin-left:.4rem" type="number" id="r_pman" placeholder="KM"></span></label>
+   <label class="radio" id="rw_nao"><input type="radio" name="r_prox" value="nao"><span><b class="wh">Não prever a próxima</b><br><span class="xs mut">Use após uma corretiva (ex.: embreagem), como o Igor pediu.</span></span></label>
+   <div class="prev" id="r_prev"></div><div id="r_err"></div>
+   <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvar-rev">Salvar revisão</button></div>`}
+  if(m.tipo==='novo'){const b0=m.b;
+   if(b0==='corr'){t='Registrar manutenção corretiva';
+    b=`<p class="xs mut" style="margin-top:0">Formulário novo. ${chipNovo}</p><div class="fgrid">${fld('Veículo *',sel('c_placa',[['','Selecione…'],...VEIC.map(x=>[x.placa,x.placa+' · '+x.modelo+(x.manut?' (já na oficina)':'')])],''),'full')}
+    ${fld('Defeito *',`<input class="fld" id="c_def" placeholder="Ex.: embreagem patinando">`,'full')}${fld('Oficina',sel('c_ofic',OFIC.map(o=>[o,o]),OFIC[0]),'full')}
+    ${fld('Data de entrada *',`<input class="fld" type="date" id="c_ent" value="${HOJE}">`)}${fld('Saída prevista',`<input class="fld" type="date" id="c_prev" value="${addDays(HOJE,3)}">`)}
+    ${fld('Custo (R$) — pode vir depois',`<input class="fld" type="number" id="c_custo" placeholder="a definir">`)}${fld('Quem arca',sel('c_arca',Object.entries(ARCA),'locadora'))}
+    ${fld('Status',sel('c_st',Object.entries(CORR_ST).filter(x=>x[0]!=='concluida'),'aguardando_orcamento'),'full')}</div>
+    <label class="radio on" style="margin-top:.6rem"><input type="checkbox" id="c_tirar" checked><span><b class="wh">Tirar o carro da equipe (enviar para a oficina)</b><br><span class="xs mut" id="c_efeito"></span></span></label><div id="c_err"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvar-corr">Salvar</button></div>`}
+   else if(b0==='rev'){S.modal={tipo:'rev',placa:''};return modal()}
+   else{t=BASES[b0].novo;b=`<p class="xs mut" style="margin-top:0">É o formulário que já existe hoje; só ganhou o botão na base.</p><div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvar">Abrir formulário</button></div>`}}
+  if(m.tipo==='corrfim'){const c=CORR.find(x=>x.id==m.id);t='Concluir manutenção · '+c.placa;
+   b=`<div class="fgrid">${fld('Saída real *',`<input class="fld" type="date" id="f_saida" value="${HOJE}">`)}${fld('Custo final (R$) *',`<input class="fld" type="number" id="f_custo" value="${c.custo==null?'':c.custo}">`)}${fld('Quem arca *',sel('f_arca',Object.entries(ARCA),c.arca),'full')}</div>
+   ${c.tirou?'<div class="prev">Ao salvar, o veículo <b>'+c.placa+'</b> volta para <b>Ativo</b> (igual ao "Retornar da oficina" de hoje). A equipe é escolhida depois, no checklist.</div>':''}<div id="f_err"></div>
+   <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="salvar-fim" data-v="${c.id}">Concluir</button></div>`}
+  if(m.tipo==='imp')return impModal();
+  return `<div class="ov c" data-act="fechar-ov"><div class="modal" data-stop="1"><div class="wh b" style="margin-bottom:.6rem">${t}</div>${b}</div></div>`;
+}
+
+/* ===== importação ===== */
+const SHEET=[['PCX0Q74','4.980','2026-09-10','Auto Center Beta','Primeira revisão'],['KPN7J18','9.980','2026-10-11','Oficina Prime Car',''],['ZZZ9Z99','15.000','2026-08-02','Mecânica Rota 40',''],['MRT6M41','dez mil','2026-07-22','Auto Center Beta',''],['FKR2B41','30.050','2026-06-20','Concessionária Norte','Troca de correia'],['GHT1D63','79.900','2026-10-30','Mecânica Rota 40','Digitado errado?'],['JLM2G96','20.350','2026-09-01','Auto Center Beta',''],['LQS8L30','52.000','2027-01-05','Oficina Prime Car',''],['FKR3C52','40.200','2026-03-14','Oficina Prime Car',''],['KPN4H07','30.080','2026-05-02','Oficina da locadora','']];
+const CAMPOS=[['placa','Placa'],['km','KM da revisão'],['data','Data'],['oficina','Oficina'],['obs','Observações'],['ign','(ignorar)']];
+function valida(row){
+  const [placa,kms,data,ofic]=row, v=VEIC.find(x=>x.placa===placa), km=parseInt(kms.replace(/\./g,''),10);
+  if(!v)return['erro','Placa não cadastrada'];
+  if(isNaN(km))return['erro','KM inválido ("'+kms+'")'];
+  if(data>HOJE)return['erro','Data no futuro'];
+  if(REV.some(r=>r.placa===placa&&r.km===km))return['dup','Já existe (mesma placa e KM): ignorada'];
+  if(km>v.km)return['aviso','KM maior que o atual do carro ('+nf(v.km)+'): conferir'];
+  return['ok','Pronta para importar'];
+}
+function impModal(){
+  const I=S.imp,st=['Arquivo','Colunas','Prévia','Pronto'];let b='';
+  const bar=`<div class="steps">${st.map((s,i)=>`<span class="${I.step===i+1?'on':(I.step>i+1?'done':'')}">${i+1} · ${s}</span>`).join('')}</div>`;
+  if(I.step===1)b=`<p class="sm mut" style="margin-top:0">Envie a lista de revisões feitas (planilha .xlsx ou .csv). Colunas mínimas: Placa, KM da revisão, Data. É uma carga única; dá para repetir sem duplicar.</p>
+    <div class="empty" style="margin-bottom:.8rem">${I.arq?`<div class="wh b">revisoes-feitas-igor.xlsx</div><div class="sm">${SHEET.length} linhas lidas · 5 colunas</div>`:'<div class="ic">⇪</div><div class="sm">Nenhum arquivo escolhido</div>'}<div style="margin-top:.6rem"><button class="btn btn-s" data-act="imp-arq">${I.arq?'Trocar arquivo':'Escolher arquivo (simulado)'}</button> <button class="btn btn-s" data-act="toast" data-v="Baixa uma planilha modelo com os cabeçalhos certos.">Baixar modelo</button></div></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn btn-s" data-act="fechar">Cancelar</button><button class="btn btn-p" data-act="imp-ir" data-v="2" ${I.arq?'':'disabled'}>Continuar</button></div>`;
+  if(I.step===2){const heads=['Placa do carro','KM','Data feita','Oficina','Obs.'];
+    b=`<p class="sm mut" style="margin-top:0">Dissemos o que cada coluna da planilha é. Já sugeri pelo nome do cabeçalho; ajuste se errei.</p><div class="tw small-t" style="margin-bottom:.8rem"><table><thead><tr><th>Coluna da planilha</th><th>Exemplo</th><th>Vai para o campo</th></tr></thead><tbody>${heads.map((h,i)=>`<tr><td><b class="wh">${h}</b></td><td class="mut">${esc(SHEET[0][i])}</td><td><select class="fld auto" data-act="imp-map" data-i="${i}">${CAMPOS.map(([k,l])=>`<option value="${k}" ${I.map[i]===k?'selected':''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>
+    ${I.map.includes('placa')&&I.map.includes('km')&&I.map.includes('data')?'':'<div class="ferr">Placa, KM e Data precisam estar ligados a uma coluna.</div>'}
+    <div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn btn-s" data-act="imp-ir" data-v="1">Voltar</button><button class="btn btn-p" data-act="imp-ir" data-v="3" ${I.map.includes('placa')&&I.map.includes('km')&&I.map.includes('data')?'':'disabled'}>Ver prévia</button></div>`}
+  if(I.step===3){const V=SHEET.map(r=>({r,v:valida(r)})),c=k=>V.filter(x=>x.v[0]===k).length;
+    const lab={ok:['ok','OK'],aviso:['warn','Aviso'],erro:['hot','Erro'],dup:['ex','Repetida']};
+    b=`<div class="sm" style="margin-bottom:.5rem"><b class="wh">${c('ok')}</b> prontas · <b class="or">${c('aviso')}</b> avisos · <b class="or">${c('erro')}</b> erros · ${c('dup')} repetidas</div>
+    <div class="tw small-t" style="margin-bottom:.6rem;max-height:260px;overflow:auto"><table><thead><tr><th>Placa</th><th class="r">KM</th><th>Data</th><th>Resultado</th></tr></thead><tbody>${V.map(({r,v})=>`<tr><td><b class="wh">${r[0]}</b></td><td class="r mono">${esc(r[1])}</td><td>${dt(r[2])}</td><td><span class="chip ${lab[v[0]][0]}">${lab[v[0]][1]}</span> <span class="xs mut">${v[1]}</span></td></tr>`).join('')}</tbody></table></div>
+    <label class="radio ${I.av?'on':''}"><input type="checkbox" data-act="imp-av" ${I.av?'checked':''}><span>Importar também as linhas com aviso <span class="xs mut">(desmarcado: KM maior que o atual deslocaria a próxima revisão do carro)</span></span></label>
+    <div class="xs mut" style="margin:.4rem 0 .8rem">Linhas com erro não entram. Na versão real, elas saem num relatório para o Igor corrigir e reenviar.</div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap"><button class="btn btn-s" data-act="imp-ir" data-v="2">Voltar</button><button class="btn btn-p" data-act="imp-ok">Importar ${c('ok')+(I.av?c('aviso'):0)} revisões</button></div>`}
+  if(I.step===4)b=`<div class="empty" style="margin-bottom:.8rem"><div class="ic">✓</div><div class="wh b">${I.n} revisões importadas</div><p class="sm">A previsão da próxima já foi calculada para os carros afetados. A tela 1 e o histórico mostram as linhas novas (marcadas).</p></div><div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn btn-s" data-act="fechar">Fechar</button><button class="btn btn-p" data-act="imp-ver">Ver na tela 1</button></div>`;
+  return `<div class="ov c" data-act="fechar-ov"><div class="modal" data-stop="1" style="width:min(640px,100%)"><div class="wh b" style="margin-bottom:.6rem">Importar a lista de revisões</div>${bar}${b}</div></div>`;
+}
+
+/* ================= render e eventos ================= */
+function render(){
+  const corpo={rev:telaRev,corr:telaCorr,bases:telaBases,novo:telaNovo}[S.tela]();
+  document.body.classList.toggle('phone',S.phone);
+  $('#app').innerHTML=mbar()+`<div class="shell">${side()}<main class="main">${corpo}</main></div>`;
+  $('#ovl').innerHTML=drawer()+modal();
+  if(S.modal&&S.modal.tipo==='rev')updRev();
+  if(S.modal&&S.modal.tipo==='novo'&&S.modal.b==='corr')updCorr();
+  if(S.focus){const el=document.getElementById(S.focus);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(e){}}S.focus=null}
+}
+function updRev(){
+  const g=id=>document.getElementById(id);if(!g('r_placa'))return;
+  const v=VEIC.find(x=>x.placa===g('r_placa').value),km=parseInt(g('r_km').value,10),modo=(document.querySelector('input[name=r_prox]:checked')||{}).value;
+  ['auto','man','nao'].forEach(k=>g('rw_'+k).classList.toggle('on',(k==='auto'&&modo==='auto')||(k==='man'&&modo==='manual')||(k==='nao'&&modo==='nao')));
+  let p;if(modo==='nao')p='A próxima <b>não será prevista</b>: o carro sai da lista de alertas por KM até uma nova revisão.';
+  else{const pk=modo==='manual'?parseInt(g('r_pman').value,10):km+S.intervalo;
+   p=isNaN(pk)?'Informe o KM da próxima revisão.':`Próxima revisão em <b>${nf(pk)} km</b>`+(v&&!isNaN(pk)?` — o carro está em ${nf(v.km)} km e roda ~${v.media} km/dia, então chega em <b>~${Math.max(0,Math.ceil((pk-v.km)/v.media))} dias</b>.`:'.')}
+  g('r_prev').innerHTML=p;
+}
+function updCorr(){const g=id=>document.getElementById(id);if(!g('c_placa'))return;const v=VEIC.find(x=>x.placa===g('c_placa').value);
+  g('c_efeito').innerHTML=g('c_tirar').checked?(v?(v.equipe?`${v.equipe} fica sem carro até ${dt(g('c_prev').value)}; o veículo vira "Em manutenção".`:'O veículo vira "Em manutenção".'):'O veículo vira "Em manutenção" e a equipe fica sem carro até a saída prevista.'):'O carro continua com a equipe; só o registro e o custo ficam guardados (reparo de um dia).'}
+function irBase(b,aviso){S.tela='bases';S.base=b;S.aviso=null;window.scrollTo(0,0)}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act==='fechar-ov'&&e.target.closest('[data-stop]'))return;
+  const a=el.dataset.act,v=el.dataset.v;
+  switch(a){
+    case 'tela':S.tela=v;S.drawer=null;window.scrollTo(0,0);break;
+    case 'estado':S.estado=v;break;
+    case 'phone':S.phone=v==='1';break;
+    case 'nav':if(v==='rev-tela')S.tela='rev';else if(v==='corr-tela')S.tela='corr';else{S.tela='bases';S.base=v}S.aviso=null;window.scrollTo(0,0);break;
+    case 'base':S.base=v;S.aviso=null;break;
+    case 'sim':S.sim=+v;break;
+    case 'rfil':S.rfil=v;break;
+    case 'sort':{const b=S.tela==='corr'?'corr':S.base;const so=S.sort[b];S.sort[b]=so&&so.i===+v?{i:+v,dir:-so.dir}:{i:+v,dir:1};break}
+    case 'pag':S.pag[S.tela==='corr'?'corr':S.base]=+v;break;
+    case 'limpar':S.f[v]=null;fdef(v);S.aviso=null;break;
+    case 'aviso-x':S.aviso=null;break;
+    case 'row':S.drawer={base:S.tela==='corr'?'corr':S.base,id:v};break;
+    case 'exportar':S.modal={tipo:'exportar',b:v};break;
+    case 'novo':S.modal={tipo:'novo',b:v};break;
+    case 'reg-rev':if(!gestor()){toast('Só gestor de frotas ou administrador registra revisão.');return}S.drawer=null;S.modal={tipo:'rev',placa:v};break;
+    case 'baixar':S.modal=null;toast('Planilha gerada (no mockup não baixa arquivo).');break;
+    case 'salvar':S.modal=null;toast('Abre o formulário que já existe.');break;
+    case 'fechar':case 'fechar-ov':S.modal=null;S.drawer=null;S.imp=null;break;
+    case 'toast':toast(v);return;
+    case 'imp-abrir':S.imp={step:1,arq:false,map:['placa','km','data','oficina','obs'],av:false,n:0};S.modal={tipo:'imp'};break;
+    case 'imp-arq':S.imp.arq=true;break;
+    case 'imp-ir':S.imp.step=+v;break;
+    case 'imp-av':S.imp.av=el.checked;break;
+    case 'imp-ok':{const I=S.imp;let n=0;SHEET.forEach(r=>{const x=valida(r);if(x[0]==='ok'||(x[0]==='aviso'&&I.av)){REV.push({id:rid++,placa:r[0],tipo:'preventiva',prever:true,data:r[2],km:parseInt(r[1].replace(/\./g,''),10),oficina:r[3],valor:null,pecas:'',obs:r[4],origem:'importacao',proxManual:null});n++}});I.n=n;I.step=4;break}
+    case 'imp-ver':S.modal=null;S.imp=null;S.tela='rev';break;
+    case 'salvar-rev':{
+      const g=id=>document.getElementById(id),km=parseInt(g('r_km').value,10),placa=g('r_placa').value,modo=document.querySelector('input[name=r_prox]:checked').value,L=latest(placa);
+      let err='';if(isNaN(km))err='Informe o KM da revisão.';else if(L&&km<L.km&&g('r_data').value>=L.data)err='O KM ('+nf(km)+') é menor que o da última revisão deste carro ('+nf(L.km)+'). Confira o número.';else if(modo==='manual'&&isNaN(parseInt(g('r_pman').value,10)))err='Informe o KM da próxima revisão ou escolha outra opção.';
+      if(err){g('r_err').innerHTML='<div class="ferr">'+err+'</div>';return}
+      REV.push({id:rid++,placa,tipo:g('r_tipo').value,prever:modo!=='nao',data:g('r_data').value,km,oficina:g('r_ofic').value,valor:parseFloat(g('r_valor').value)||null,pecas:g('r_pecas').value,obs:'',origem:'manual',proxManual:modo==='manual'?parseInt(g('r_pman').value,10):null});
+      S.modal=null;toast('Revisão salva. '+(modo==='nao'?'Sem previsão da próxima para '+placa+'.':'Próxima de '+placa+' recalculada; a pendência aberta (se havia) foi fechada.'));break}
+    case 'salvar-corr':{
+      const g=id=>document.getElementById(id);let err='';
+      if(!g('c_placa').value)err='Escolha o veículo.';else if(!g('c_def').value.trim())err='Descreva o defeito.';else if(g('c_prev').value&&g('c_prev').value<g('c_ent').value)err='A saída prevista não pode ser antes da entrada.';
+      if(err){g('c_err').innerHTML='<div class="ferr">'+err+'</div>';return}
+      const tirar=g('c_tirar').checked,placa=g('c_placa').value,c=parseFloat(g('c_custo').value);
+      CORR.push({id:cid,placa,defeito:g('c_def').value.trim(),oficina:g('c_ofic').value,entrada:g('c_ent').value,saidaPrev:g('c_prev').value||g('c_ent').value,saida:null,custo:isNaN(c)?null:c,arca:g('c_arca').value,status:g('c_st').value,tirou:tirar,obs:''});
+      if(tirar)VEIC.find(x=>x.placa===placa).manut=true;
+      S.novoId=cid++;S.novoBase='corr';S.modal=null;toast('Manutenção registrada.'+(tirar?' O veículo '+placa+' passou para Em manutenção.':''));break}
+    case 'corr-st':{const[id,st]=v.split('|');CORR.find(c=>c.id==id).status=st;toast('Status atualizado: '+CORR_ST[st]+'.');break}
+    case 'corr-fim':S.drawer=null;S.modal={tipo:'corrfim',id:v};break;
+    case 'salvar-fim':{const g=id=>document.getElementById(id),c=CORR.find(x=>x.id==v),cu=parseFloat(g('f_custo').value);
+      if(isNaN(cu)){g('f_err').innerHTML='<div class="ferr">Informe o custo final (pode ser zero).</div>';return}
+      if(g('f_saida').value<c.entrada){g('f_err').innerHTML='<div class="ferr">A saída real não pode ser antes da entrada.</div>';return}
+      c.saida=g('f_saida').value;c.custo=cu;c.arca=g('f_arca').value;c.status='concluida';
+      if(c.tirou&&!CORR.some(x=>x.placa===c.placa&&x.status!=='concluida'&&x.id!==c.id))VEIC.find(x=>x.placa===c.placa).manut=false;
+      S.modal=null;toast('Manutenção concluída.'+(c.tirou?' '+c.placa+' voltou a Ativo.':''));break}
+    default:return;
+  }
+  render();
+});
+document.addEventListener('change',e=>{
+  const el=e.target,a=el.dataset.act;
+  if(a==='papel-sel'){S.papel=el.value;S.drawer=null;S.modal=null;render()}
+  else if(a==='f'&&el.dataset.k!=='busca'){const b=S.tela==='corr'?'corr':S.base;fdef(b)[el.dataset.k]=el.value;S.pag[b]=1;S.aviso=null;render()}
+  else if(a==='intervalo'){const n=parseInt(el.value,10);if(n>=1000){S.intervalo=n;render()}}
+  else if(a==='imp-map'){S.imp.map[+el.dataset.i]=el.value;render()}
+  else if(a==='imp-av'){S.imp.av=el.checked;render()}
+  else if(el.id==='c_tirar'||el.id==='c_placa'||el.id==='c_prev')updCorr();
+  else if(el.name==='r_prox')updRev();
+  else if(el.id==='r_placa'){const v=VEIC.find(x=>x.placa===el.value);document.getElementById('r_km').value=v.km;updRev()}
+  else if(el.id&&el.id.startsWith('r_'))updRev();
+});
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.act==='f'&&el.dataset.k==='busca'){const b=S.tela==='corr'?'corr':S.base;fdef(b).busca=el.value;S.pag[b]=1;S.focus=el.id;render()}
+  else if(el.id==='r_km'||el.id==='r_pman')updRev();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(S.modal||S.drawer)){S.modal=null;S.drawer=null;S.imp=null;render()}});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frotas - Multa, fotos e histórico do checklist</title>
+<style>
+:root{
+  --bg:#0a1628; --navy:#0d2050; --or:#f05a28; --mut:#94a3b8; --bd:#1e3a5f;
+  --tx:#e2e8f0; --wh:#ffffff; --orbg:rgba(240,90,40,.12); --orbd:rgba(240,90,40,.55);
+  --ok:#4ade80; --warn:#facc15; --bad:#f87171; --fld:#0f1f3d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+body{overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit;color-scheme:dark}
+.mut{color:var(--mut)}.wh{color:var(--wh)}.or{color:var(--or)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.sm{font-size:.82rem}.xs{font-size:.74rem}.b{font-weight:600}
+.mono{font-variant-numeric:tabular-nums}
+
+/* barra do mockup */
+.mbar{position:sticky;top:0;z-index:40;background:var(--navy);border-bottom:1px solid var(--bd);padding:.55rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center}
+.mbar .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:.5rem;overflow:hidden;flex-wrap:wrap}
+.seg button{padding:.32rem .65rem;font-size:.78rem;color:var(--mut);border-right:1px solid var(--bd)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--or);color:var(--wh)}
+.legend{display:flex;gap:.5rem;align-items:center;font-size:.74rem;color:var(--mut);margin-left:auto}
+
+.tabs{display:flex;gap:.4rem;overflow-x:auto;padding:.7rem 1rem;border-bottom:1px solid var(--bd)}
+.tabs button{white-space:nowrap;padding:.45rem .85rem;border-radius:.5rem;border:1px solid var(--bd);color:var(--mut);font-size:.85rem}
+.tabs button.on{background:var(--or);border-color:var(--or);color:var(--wh)}
+
+.stage{padding:1.2rem 1rem 4rem;display:flex;justify-content:center}
+.app{container-type:inline-size;width:100%;max-width:1100px;border:1px solid var(--bd);border-radius:.9rem;background:var(--bg);overflow:hidden;transition:max-width .2s}
+.app.mob{max-width:390px}
+.apphead{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;background:var(--navy);border-bottom:1px solid var(--bd)}
+.apphead .logo{width:1.6rem;height:1.6rem;border-radius:.4rem;background:var(--or);display:grid;place-items:center;font-weight:700;font-size:.8rem;color:#fff}
+.apphead .who{margin-left:auto;font-size:.74rem;color:var(--mut);text-align:right}
+.body{padding:1.1rem 1.1rem 1.6rem}
+
+h2.sec{font-size:1.15rem;font-weight:700;color:var(--wh);margin:0 0 .2rem}
+h3.sub{font-size:.95rem;font-weight:650;color:var(--wh);margin:1.4rem 0 .4rem}
+.lead{color:var(--mut);font-size:.86rem;margin:.1rem 0 .9rem}
+.card{border:1px solid var(--bd);background:var(--navy);border-radius:.75rem;padding:.9rem}
+.card.flat{background:transparent}
+.row{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}
+@container (max-width:700px){.grid2,.grid3{grid-template-columns:1fr}.hide-m{display:none!important}}
+
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.48rem .9rem;border-radius:.5rem;font-size:.84rem;font-weight:500}
+.btn-p{background:var(--or);color:var(--wh)}
+.btn-s{border:1px solid var(--bd);color:var(--mut)}
+.btn-s:hover{border-color:var(--mut);color:var(--wh)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.fld{width:100%;padding:.48rem .65rem;border-radius:.5rem;background:var(--fld);border:1px solid var(--bd);color:var(--wh);font-size:.84rem}
+.fld:focus{outline:none;border-color:var(--or)}
+label.l{display:block;font-size:.76rem;color:var(--mut);margin:.5rem 0 .2rem}
+
+.pill{display:inline-block;padding:.08rem .5rem;border-radius:999px;font-size:.7rem;font-weight:600;border:1px solid var(--bd);color:var(--mut);white-space:nowrap}
+.pill.new{background:var(--orbg);border-color:var(--orbd);color:var(--or)}
+.pill.ex{border-color:#2a5a3f;color:var(--ok)}
+.pill.am{border-color:#6b5a1a;color:var(--warn)}
+.pill.red{border-color:#7a2f2f;color:var(--bad);background:rgba(248,113,113,.08)}
+.pill.grn{border-color:#2a5a3f;color:var(--ok);background:rgba(74,222,128,.08)}
+.pill.yel{border-color:#6b5a1a;color:var(--warn);background:rgba(250,204,21,.08)}
+
+/* decisões */
+.dec{margin-top:1.6rem;border:1px solid var(--orbd);background:var(--orbg);border-radius:.75rem;padding:.9rem 1rem}
+.dec h4{margin:0 0 .5rem;font-size:.9rem;color:var(--wh)}
+.dec ol{margin:0;padding-left:1.25rem}
+.dec li{margin:.55rem 0;font-size:.84rem;color:var(--mut)}
+.dec li b.q{color:var(--wh);font-weight:600}
+.dec .rec{display:block;margin-top:.2rem;color:var(--tx)}
+.dec .rec::before{content:"Recomendo: ";color:var(--or);font-weight:700}
+
+/* multa */
+.mlist{display:flex;flex-direction:column;gap:.45rem}
+.mitem{display:flex;gap:.6rem;align-items:center;justify-content:space-between;padding:.55rem .7rem;border:1px solid var(--bd);border-radius:.6rem;text-align:left;width:100%}
+.mitem.on{border-color:var(--or);background:var(--orbg)}
+.stepper{list-style:none;margin:.2rem 0 0;padding:0}
+.stepper li{display:flex;gap:.7rem;padding:.55rem 0;border-left:2px solid var(--bd);margin-left:.8rem;padding-left:1rem;position:relative;cursor:pointer}
+.stepper li::before{content:attr(data-n);position:absolute;left:-.82rem;top:.5rem;width:1.5rem;height:1.5rem;border-radius:999px;background:var(--bg);border:2px solid var(--bd);display:grid;place-items:center;font-size:.7rem;color:var(--mut)}
+.stepper li.done{border-left-color:var(--ok)}
+.stepper li.done::before{background:var(--ok);border-color:var(--ok);color:#052e16;content:"\2713"}
+.stepper li.cur::before{border-color:var(--or);color:var(--or)}
+.stepper li.sel .t{color:var(--or)}
+.stepper .t{font-weight:600;color:var(--wh);font-size:.86rem}
+.stepper .s{font-size:.76rem;color:var(--mut)}
+.who-row{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0}
+.who-chip{font-size:.72rem;padding:.12rem .5rem;border-radius:.4rem;border:1px solid var(--bd);color:var(--mut)}
+.who-chip.yes{border-color:#2a5a3f;color:var(--ok)}
+.who-chip.me{outline:2px solid var(--or);outline-offset:1px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.2rem .8rem;font-size:.82rem}
+.kv dt{color:var(--mut)}.kv dd{margin:0;color:var(--wh)}
+.bar{height:.5rem;border-radius:999px;background:var(--bd);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+
+table.t{width:100%;border-collapse:collapse;font-size:.82rem}
+table.t th{text-align:left;color:var(--mut);font-weight:500;padding:.4rem .5rem;border-bottom:1px solid var(--bd);font-size:.74rem}
+table.t td{padding:.5rem;border-bottom:1px solid #16304f;vertical-align:top}
+.pend{display:flex;gap:.6rem;justify-content:space-between;align-items:flex-start;padding:.55rem .7rem;border:1px solid var(--bd);border-radius:.6rem;margin:.4rem 0;font-size:.82rem}
+.pend.late{border-left:3px solid var(--bad)}
+.pend.wait{border-left:3px solid var(--warn)}
+.pend.norm{border-left:3px solid var(--or)}
+.kpi{border:1px solid var(--bd);border-radius:.6rem;padding:.5rem .7rem;text-align:center}
+.kpi b{display:block;font-size:1.3rem;color:var(--wh)}
+
+/* fotos */
+.ph{width:100%;aspect-ratio:4/3;border-radius:.5rem;overflow:hidden;border:1px solid var(--bd);position:relative;background:#0f1f3d}
+.ph svg{width:100%;height:100%;display:block}
+.ph .cap{position:absolute;left:0;right:0;bottom:0;padding:.15rem .4rem;font-size:.66rem;background:rgba(10,22,40,.8);color:var(--tx)}
+.slot{aspect-ratio:4/3;border:1.5px dashed var(--bd);border-radius:.5rem;display:grid;place-items:center;text-align:center;color:var(--mut);font-size:.74rem;padding:.3rem;width:100%}
+.slot:hover{border-color:var(--or);color:var(--wh)}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+@container (max-width:700px){.photos{grid-template-columns:repeat(2,1fr)}}
+.photos .x{position:absolute;top:.2rem;right:.2rem;background:rgba(10,22,40,.85);border-radius:999px;width:1.3rem;height:1.3rem;font-size:.75rem;line-height:1.3rem;text-align:center;color:var(--tx)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.over{position:relative}
+.over .ph:last-child{position:absolute;inset:0;aspect-ratio:auto}
+.diff li{margin:.3rem 0;font-size:.82rem}
+.toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:var(--navy);border:1px solid var(--or);color:var(--wh);padding:.5rem .9rem;border-radius:.6rem;font-size:.82rem;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="mbar">
+  <span class="tag">Mockup 03/11/2026</span>
+  <span class="tag">Perfil:</span>
+  <div class="seg" id="segPerfil"></div>
+  <span class="tag">Tela:</span>
+  <div class="seg" id="segView"></div>
+  <div class="legend"><span class="pill ex">EXISTE</span><span class="pill am">AMPLIADO</span><span class="pill new">NOVO</span></div>
+</div>
+<div class="tabs" id="tabs"></div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <div class="apphead">
+      <div class="logo">GF</div>
+      <div><div class="wh b">Gestão de Frotas</div><div class="xs mut" id="crumb"></div></div>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="body" id="body"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ estado global ============ */
+const PERFIS = {
+  gestor:{nome:'Gestor de frotas', desc:'linha em sofia_gestores + acesso ao Sofia'},
+  admin:{nome:'Administrador', desc:'admin do hub'},
+  comum:{nome:'Usuário comum', desc:'tem acesso ao Sofia, sem papel'}
+};
+let perfil='gestor', view='desk', tab='multa';
+const $=s=>document.querySelector(s);
+const el=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild};
+function toast(t){const x=$('#toast');x.textContent=t;x.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>x.classList.remove('show'),2200)}
+const pode = lista => lista.includes(perfil);
+const fmt = d => d.toLocaleDateString('pt-BR');
+const HOJE = new Date(2026,10,3);
+const addDias=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+
+/* ============ MULTA: dados e fluxo ============ */
+const ETAPAS = [
+ {k:'registrada', t:'Multa registrada', ator:'Frotas (qualquer usuário com acesso)', tag:'am',
+  hoje:'Existe: data, recebimento, tipo, valor, descrição. Qualquer usuário com acesso registra.',
+  novo:'Novos campos: locadora, auto de infração, órgão autuador, pontos e PRAZO de indicação (padrão: recebimento + 30 dias).',
+  quem:['gestor','admin','comum'], acoes:[]},
+ {k:'condutor', t:'Confirmar o condutor', ator:'Frotas', tag:'new',
+  hoje:'Hoje: o Igor olha a planilha para ver quem estava com o carro no dia.',
+  novo:'O sistema sugere o motorista pelo histórico equipe x carro x motorista na data da infração. Frotas confirma ou troca, e confirma por WhatsApp.',
+  quem:['gestor','admin'], acoes:[{l:'Confirmar condutor sugerido', p:['gestor','admin']}]},
+ {k:'termo', t:'Motorista aceita o termo de responsabilidade', ator:'Motorista (pelo celular)', tag:'new',
+  hoje:'Existe só um "autorizou: sim/não" e upload do termo. O termo é impresso, assinado na base e escaneado.',
+  novo:'O motorista abre a multa no celular, lê o termo e aceita (data, hora e IP ficam gravados). O papel escaneado continua possível.',
+  quem:['gestor','admin'], acoes:[{l:'Simular: motorista aceita no celular', p:['gestor','admin','comum'], nota:'ação da tela do motorista'},{l:'Anexar termo em papel escaneado', p:['gestor','admin']}]},
+ {k:'indicado', t:'Indicar condutor ao órgão autuador', ator:'Frotas', tag:'new',
+  hoje:'Fora do sistema (e-mail da locadora, Correios). Só existe a data limite na planilha.',
+  novo:'Frotas marca "indicado em", protocolo e comprovante. Esta é a etapa com prazo: não espera a validação do gestor da equipe.',
+  quem:['gestor','admin'], acoes:[{l:'Registrar indicação feita', p:['gestor','admin']}]},
+ {k:'validada', t:'Gestor da equipe valida (RH em cópia)', ator:'Gestor da equipe', tag:'am',
+  hoje:'Existe o status "validada" pelo botão "Enviar para desconto", só para admin/gestor de frotas. A validação do gestor da equipe vai por e-mail e quase nunca volta.',
+  novo:'Registra quem validou, quando e por qual canal. Se o gestor contestar, a multa vai para "contestada" e não segue para desconto.',
+  quem:['gestor','admin'], acoes:[{l:'Registrar validação (em nome do gestor da equipe)', p:['gestor','admin']}]},
+ {k:'cobrada', t:'Boleto da locadora lançado para pagamento', ator:'Frotas', tag:'new',
+  hoje:'Fora do módulo (processo de pagamento do hub).',
+  novo:'Só um marcador "boleto lançado em" para a multa não ficar sem cobrança. Não integra com o Financeiro nesta rodada.',
+  quem:['gestor','admin'], acoes:[{l:'Marcar boleto lançado', p:['gestor','admin']}]},
+ {k:'solicitado', t:'Solicitar desconto', ator:'Gestor de frotas', tag:'ex',
+  hoje:'Existe o botão "Solicitar" (autorizacao_status = solicitado). Hoje o banco só deixa admin/gestor de frotas.',
+  novo:'Sem mudança de regra. A tela passa a mostrar o botão desabilitado, com o motivo, para quem não pode (hoje o botão aparece e não faz nada).',
+  quem:['gestor','admin'], acoes:[{l:'Solicitar desconto', p:['gestor','admin']}]},
+ {k:'autorizado', t:'Autorizar desconto', ator:'Administrador (proposto)', tag:'am',
+  hoje:'Hoje gestor de frotas e admin autorizam o que o próprio gestor solicitou.',
+  novo:'Proposta: separar quem pede de quem autoriza (decisão 3 abaixo). Mexe na trigger do banco.',
+  quem:['admin'], acoes:[{l:'Autorizar desconto', p:['admin']}]},
+ {k:'descontada', t:'RH desconta no contracheque', ator:'RH informa, Frotas registra', tag:'ex',
+  hoje:'Existe: registrar desconto (total ou parcial, valor descontado) na tela Descontos.',
+  novo:'Acrescenta a competência (mês do contracheque). Fecha a multa.',
+  quem:['gestor','admin'], acoes:[{l:'Registrar desconto efetuado', p:['gestor','admin']}]}
+];
+const STATUS_DE = e => e<4 ? 'pendente' : (e<8 ? 'validada' : 'descontada');
+const AUTORIZ_DE = e => e<6 ? 'sem_solicitacao' : (e<7 ? 'solicitado' : 'autorizado');
+
+let multas = [
+ {id:1, placa:'QRT4F21', mot:'Carlos Mendes', tipo:'Excesso de velocidade (até 20%)', valor:130.16, loc:'Locafácil', auto:'A-884201', orgao:'Prefeitura do Rio', pontos:4, rec:6,  et:0},
+ {id:2, placa:'BKN9C07', mot:'Rafael Duarte', tipo:'Estacionamento irregular', valor:195.23, loc:'Maestro', auto:'B-120553', orgao:'DETRAN-RJ', pontos:5, rec:21, et:2},
+ {id:3, placa:'LMP2D48', mot:'Aline Prado', tipo:'Avanço de sinal vermelho', valor:293.47, loc:'Foco', auto:'C-554019', orgao:'Prefeitura de Niterói', pontos:7, rec:12, et:6},
+ {id:4, placa:'TGH7A93', mot:'Bruno Lacerda', tipo:'Uso de celular ao volante', valor:293.47, loc:'Locafácil', auto:'D-331874', orgao:'DETRAN-RJ', pontos:7, rec:40, et:8}
+];
+const feitos = {}; // id -> {etapa:{quando, quem}}
+let multaSel = 1, etapaSel = 0, relogio = 0;
+const dias = m => m.rec + relogio;                // dias desde o recebimento
+const prazoDias = m => 30 - dias(m);               // dias restantes para indicar
+const prazoData = m => addDias(addDias(HOJE,-m.rec),30);
+function prazoPill(m){
+  if(m.et>=4) return '<span class="pill grn">indicado</span>';
+  const r=prazoDias(m);
+  if(r<0) return '<span class="pill red">prazo vencido: paga em dobro</span>';
+  if(r<=5) return `<span class="pill red">vence em ${r} d</span>`;
+  if(r<=10) return `<span class="pill yel">vence em ${r} d</span>`;
+  return `<span class="pill">vence em ${r} d</span>`;
+}
+// no estado inicial, as etapas "indicado" de multas já adiantadas estão feitas
+function motivoNegado(acao){
+  if(acao.p.includes('admin') && acao.p.length===1) return 'Só administrador pode (proposto; hoje o banco aceita gestor também).';
+  return 'Só gestor de frotas ou administrador (trava do banco, igual hoje).';
+}
+
+function viewMulta(){
+  const m = multas.find(x=>x.id===multaSel);
+  const e = ETAPAS[etapaSel];
+  const cur = m.et; // próxima etapa a fazer = índice cur+? : et = última etapa feita
+  const proxima = Math.min(m.et+1, ETAPAS.length-1);
+  let h = `<h2 class="sec">Multas: fluxo novo, passo a passo</h2>
+  <p class="lead">Baseado no processo 6 do documento do Igor e na fala do José em [02:32] ("esse processo de multa está mal feito"). Clique numa multa, depois numa etapa. O botão só funciona se o perfil escolhido na barra de cima puder.</p>
+  <div class="row" style="margin-bottom:.8rem">
+    <span class="xs mut">Simular o relógio:</span>
+    <input type="range" min="0" max="30" value="${relogio}" id="rel" style="accent-color:#f05a28;flex:1;min-width:140px">
+    <span class="sm wh mono">hoje + ${relogio} dias</span>
+    <button class="btn btn-s" id="resetM">Reiniciar demonstração</button>
+  </div>
+  <div class="grid2" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr)">
+   <div>
+    <div class="xs mut" style="margin-bottom:.3rem">Multas (dados fictícios)</div>
+    <div class="mlist">${multas.map(x=>`
+      <button class="mitem ${x.id===multaSel?'on':''}" data-m="${x.id}">
+        <span><span class="wh b sm">${x.placa}</span> <span class="mut xs">${x.loc}</span><br><span class="xs mut">${x.tipo} · R$ ${x.valor.toFixed(2).replace('.',',')}</span></span>
+        <span style="text-align:right">${prazoPill(x)}<br><span class="xs mut">${ETAPAS[x.et].t.split(' ').slice(0,3).join(' ')}</span></span>
+      </button>`).join('')}</div>
+    <div class="card" style="margin-top:.8rem">
+      <div class="xs mut">Como o status antigo fica (compatível com o banco)</div>
+      <div class="row" style="margin-top:.35rem"><span class="pill">status: ${STATUS_DE(m.et)}</span><span class="pill">autorização: ${AUTORIZ_DE(m.et)}</span></div>
+      <div class="xs mut" style="margin-top:.4rem">As telas de Descontos e Multas continuam lendo esses dois campos. A etapa é um campo a mais, que os alimenta.</div>
+    </div>
+   </div>
+   <div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><div><span class="wh b">${m.placa} · ${m.mot}</span><br><span class="xs mut">Auto ${m.auto} · ${m.orgao} · ${m.pontos} pontos</span></div>${prazoPill(m)}</div>
+      <div class="xs mut" style="margin-top:.4rem">Recebida em ${fmt(addDias(HOJE,-m.rec))} · prazo de indicação até ${fmt(prazoData(m))} (${m.loc})</div>
+      <ol class="stepper" style="margin-top:.7rem">${ETAPAS.map((s,i)=>{
+        const done=i<=m.et, curr=i===m.et+1;
+        return `<li data-e="${i}" data-n="${i+1}" class="${done?'done':''} ${curr?'cur':''} ${i===etapaSel?'sel':''}">
+          <div><div class="t">${s.t} <span class="pill ${s.tag}">${s.tag==='new'?'NOVO':s.tag==='am'?'AMPLIADO':'EXISTE'}</span></div>
+          <div class="s">${s.ator}${done&&feitos[m.id]&&feitos[m.id][i]?' · feito em '+feitos[m.id][i]:''}</div></div></li>`}).join('')}</ol>
+    </div>
+   </div>
+  </div>`;
+  // painel da etapa
+  h += `<div class="card" style="margin-top:.9rem">
+    <div class="row" style="justify-content:space-between"><span class="wh b">Etapa ${etapaSel+1}: ${e.t}</span><span class="pill ${e.tag}">${e.tag==='new'?'NOVO':e.tag==='am'?'AMPLIADO':'EXISTE'}</span></div>
+    <div class="grid2" style="margin-top:.5rem">
+      <div><div class="xs mut">Como é hoje</div><div class="sm">${e.hoje}</div></div>
+      <div><div class="xs or b">Como fica</div><div class="sm">${e.novo}</div></div>
+    </div>
+    <div class="xs mut" style="margin-top:.7rem">Quem pode executar no sistema (o seu perfil está contornado):</div>
+    <div class="who-row">${Object.keys(PERFIS).map(p=>`<span class="who-chip ${(e.quem.includes(p)||e.acoes.some(a=>a.p.includes(p)))?'yes':''} ${p===perfil?'me':''}">${PERFIS[p].nome}: ${(e.quem.includes(p)||e.acoes.some(a=>a.p.includes(p)))?'pode':'não pode'}</span>`).join('')}
+      ${e.k==='termo'?'<span class="who-chip yes">Motorista: aceita pelo celular</span>':''}${e.k==='validada'?'<span class="who-chip yes">Gestor da equipe: valida (ou Frotas em nome dele)</span>':''}</div>`;
+  if(etapaSel===m.et+1 && m.et<ETAPAS.length-1){
+    h += `<div class="row" style="margin-top:.4rem">${e.acoes.length?e.acoes.map((a,i)=>{
+      const ok=pode(a.p);
+      return `<button class="btn ${i===0?'btn-p':'btn-s'}" data-a="${i}" ${ok?'':'disabled'}>${a.l}</button>${ok?'':`<span class="xs bad">${motivoNegado(a)}</span>`}${a.nota&&ok?`<span class="xs mut">(${a.nota})</span>`:''}`}).join(''):''}</div>`;
+  } else if(etapaSel<=m.et){
+    h += `<div class="xs ok" style="margin-top:.4rem">Etapa concluída.</div>`;
+  } else {
+    h += `<div class="xs mut" style="margin-top:.4rem">Ainda não chegou nesta etapa: conclua a etapa ${m.et+2} antes.</div>`;
+  }
+  h += `</div>`;
+  // detalhes extras de etapa
+  if(e.k==='condutor') h += `<div class="card flat" style="margin-top:.7rem"><div class="xs mut">Sugestão do sistema para a data da infração (${fmt(addDias(HOJE,-m.rec-3))})</div><dl class="kv" style="margin-top:.3rem"><dt>Equipe</dt><dd>EQ-07</dd><dt>Carro</dt><dd>${m.placa}</dd><dt>Motorista no dia</dt><dd>${m.mot} <span class="pill new">NOVO</span> (pelo histórico equipe x carro x motorista)</dd></dl></div>`;
+  if(e.k==='indicado') h += `<div class="card flat" style="margin-top:.7rem"><div class="xs mut">Modo de indicação por locadora (do documento do Igor)</div><div class="sm">${m.loc==='Maestro'?'Maestro: papel pelos Correios, assinatura original do motorista. O sistema não substitui o papel; só controla o prazo e o envio.':m.loc==='Locafácil'?'Locafácil: habilitação + termo da locadora assinado, foto legível enviada por e-mail.':'Foco: envio da habilitação com dados pessoais por e-mail.'}</div></div>`;
+  if(e.k==='cobrada' && prazoDias(m)<0 && m.et<4) h+='';
+  if(m.et<4 && prazoDias(m)<0) h += `<div class="card" style="margin-top:.7rem;border-color:#7a2f2f"><div class="bad b sm">Prazo vencido: a multa será paga em dobro.</div><div class="xs mut">NOVO: campo "responsável pela perda do prazo" (empresa ou motorista) e valor extra. Frotas decide; não há desconto automático (decisão 4).</div></div>`;
+  h += decisoesMulta();
+  return h;
+}
+function decisoesMulta(){ return `<div class="dec"><h4>Decisões em aberto: multa</h4><ol>
+ <li><b class="q">Como o motorista assina o termo sem ir à base?</b> Aceite digital no celular, dentro do hub, ou foto do papel assinado?
+  <span class="rec">aceite digital com login do hub, mantendo o upload do papel como alternativa. O gargalo declarado é a assinatura presencial (6.10.1). Atenção: a Maestro exige o papel original para a indicação; o aceite do termo interno não substitui o formulário da locadora. Não verifiquei se todos os motoristas têm login no hub; se não tiverem, começar só com o upload.</span></li>
+ <li><b class="q">O gestor da equipe precisa de login para validar?</b>
+  <span class="rec">não nesta rodada. Frotas registra a validação "em nome de", com data e canal (e-mail ou WhatsApp). É o mesmo padrão do diário de obras. Resolve o problema real (ninguém registra a resposta) sem criar usuário novo.</span></li>
+ <li><b class="q">Quem autoriza o desconto?</b> Hoje o gestor de frotas pede e autoriza.
+  <span class="rec">gestor solicita, só o administrador autoriza. Quem pede não deveria aprovar o próprio pedido, e é dinheiro do motorista. Custo: mexer na trigger do banco (território de exceção do AGENTS.md: exige revisão independente). Se o João preferir não mexer agora, a etapa 8 fica igual a hoje.</span></li>
+ <li><b class="q">Multa paga em dobro por perda de prazo: repassa ao motorista?</b>
+  <span class="rec">só registrar o fato (responsável: empresa ou motorista, e o valor extra). Quem decide repassar é Frotas, caso a caso, como já é (6.7.6). Automatizar isso aqui geraria desconto indevido.</span></li>
+ <li><b class="q">Prazo de indicação: 30 dias contados de quê?</b>
+  <span class="rec">padrão de 30 dias contados do recebimento, editável por locadora, com alerta em 10, 5 e 2 dias no e-mail diário que já existe. Confirmar com o Igor se a locadora conta da infração ou da notificação; o documento diz só "normalmente 30 dias".</span></li>
+ <li><b class="q">Etapa nova no lugar do status de 3 valores, ou ao lado?</b>
+  <span class="rec">ao lado: campo "etapa" novo, e status/autorização continuam existindo, calculados a partir dela. Não quebra Descontos, Pendências nem a trigger de segurança. Trocar o status direto obrigaria refazer tudo isso de uma vez.</span></li>
+</ol></div>`; }
+
+/* ============ PENDÊNCIAS ============ */
+function regraAntiga(m){ return m.et<8; }
+function textoNovo(m){
+  const e=m.et;
+  const base=`${m.placa}, ${m.tipo.toLowerCase()}`;
+  if(e===0) return {txt:`Confirmar o condutor: ${base}`, k:'norm'};
+  if(e===1) return {txt:`Aguardando aceite do termo pelo motorista: ${base}`, k:'norm'};
+  if(e===2) return {txt:`Indicar o condutor ao órgão até ${fmt(prazoData(m))}: ${base}`, k:'norm', prazo:true};
+  if(e===3) return {txt:`Aguardando validação do gestor da equipe: ${base}`, k:'norm'};
+  if(e===4) return {txt:`Lançar o boleto da locadora: ${base}`, k:'norm'};
+  if(e===5) return {txt:`Solicitar o desconto: ${base}`, k:'norm'};
+  if(e===6) return {txt:`Multa enviada para desconto, aguardando autorização: ${base}`, k:'wait'};
+  if(e===7) return {txt:`Desconto autorizado, aguardando o RH descontar em folha: ${base}`, k:'wait'};
+  return null;
+}
+function viewPend(){
+  const ab = multas.filter(regraAntiga);
+  const novas = multas.map(m=>({m,n:textoNovo(m)})).filter(x=>x.n);
+  const atrasoNovo = novas.filter(x=>x.n.k==='norm' && x.n.prazo && prazoDias(x.m)<0).length + novas.filter(x=>x.n.k==='norm' && !x.n.prazo && x.m.et<4 && prazoDias(x.m)<0).length;
+  let h = `<h2 class="sec">Pendências: o que conta como "multa sem tratativa"</h2>
+  <p class="lead">Item B8 do diagnóstico de 23/10. A regra de hoje (<code>lib/sofia/pendencias.ts</code>) lista toda multa que não esteja "descontada", então uma multa que já foi enviada para desconto continua aparecendo como "sem tratativa", com prazo igual à data do fato. Use a mesma base de multas da aba anterior: avance uma etapa lá e volte aqui.</p>
+  <div class="row" style="margin-bottom:.6rem"><span class="xs mut">Simular o relógio:</span><input type="range" min="0" max="30" value="${relogio}" id="rel" style="accent-color:#f05a28;flex:1;min-width:140px"><span class="sm wh mono">hoje + ${relogio} dias</span></div>
+  <div class="grid2">
+   <div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">Hoje</span><span class="pill">regra atual</span></div>
+    <div class="xs mut" style="margin:.3rem 0 .5rem">Regra: <code>status != 'descontada'</code>. Prazo exibido = data da multa.</div>
+    ${ab.length?ab.map(m=>{const dd=dias(m)+3;return `<div class="pend ${dd>0?'late':''}"><div><b class="wh">Multa sem tratativa:</b> ${m.placa}, ${m.tipo.toLowerCase()}<br><span class="xs mut">Prazo: ${fmt(addDias(HOJE,-m.rec-3))} (data do fato)</span></div><span class="pill red">atrasada</span></div>`}).join(''):'<div class="xs mut">Nada.</div>'}
+    <div class="xs bad" style="margin-top:.5rem">Problema: ${ab.filter(m=>m.et>=6).length?'a multa com desconto solicitado/autorizado aparece como "sem tratativa" e atrasada.':'quando uma multa for enviada para desconto (etapa 7), ela continua aqui como "sem tratativa". Avance a multa da Aline até a etapa 7 para ver.'} Toda multa vira "atrasada" por ter data do fato no passado.</div>
+   </div>
+   <div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">Proposto</span><span class="pill new">NOVO</span></div>
+    <div class="xs mut" style="margin:.3rem 0 .5rem">Regra: texto e grupo pela <b>etapa</b>; prazo = prazo de indicação; multa em desconto vai para "Aguardando terceiros".</div>
+    <div class="xs or b">A fazer (Frotas)</div>
+    ${novas.filter(x=>x.n.k==='norm').map(x=>{const atras = x.m.et<4 && prazoDias(x.m)<0; const cl = atras?'late':'norm'; return `<div class="pend ${cl}"><div>${x.n.txt}<br><span class="xs mut">${x.m.et<4?'Prazo de indicação: '+fmt(prazoData(x.m)):'Indicação já feita'}</span></div>${atras?'<span class="pill red">prazo vencido</span>':x.m.et<4&&prazoDias(x.m)<=10?`<span class="pill yel">${prazoDias(x.m)} d</span>`:''}</div>`}).join('')||'<div class="xs mut">Nada.</div>'}
+    <div class="xs warn b" style="margin-top:.5rem">Aguardando terceiros (não conta como atrasada)</div>
+    ${novas.filter(x=>x.n.k==='wait').map(x=>`<div class="pend wait"><div>${x.n.txt}<br><span class="xs mut">Sem prazo em vermelho; sai quando o desconto for registrado.</span></div></div>`).join('')||'<div class="xs mut">Nenhuma multa em desconto agora. Avance uma multa até a etapa 7 na aba anterior.</div>'}
+    <div class="xs ok" style="margin-top:.5rem">Multas descontadas (${multas.filter(m=>m.et===8).length}) não aparecem.</div>
+   </div>
+  </div>
+  <div class="grid3" style="margin-top:.9rem">
+    <div class="kpi"><b>${ab.length}</b><span class="xs mut">multas em "sem tratativa" (regra atual)</span></div>
+    <div class="kpi"><b>${novas.filter(x=>x.n.k==='norm').length}</b><span class="xs mut">multas a fazer (proposto)</span></div>
+    <div class="kpi"><b>${atrasoNovo}</b><span class="xs mut">com prazo de indicação vencido (proposto)</span></div>
+  </div>
+  <div class="card flat" style="margin-top:.9rem"><div class="xs mut">Texto da regra, para a tela</div>
+    <div class="sm">"Multa a fazer": aparece enquanto Frotas ainda tem algo a fazer (confirmar condutor, indicar, lançar boleto, solicitar desconto). "Aguardando terceiros": multa já enviada para desconto, esperando a autorização ou o RH. Some quando o desconto é registrado. O prazo mostrado é o limite de indicação ao órgão, não a data da infração.</div></div>`;
+  h += `<div class="dec"><h4>Decisões em aberto: pendências</h4><ol>
+   <li><b class="q">Multa em desconto sai da lista ou vai para "Aguardando terceiros"?</b>
+    <span class="rec">ir para "Aguardando terceiros". Sumir de vez esconderia a multa que o RH esqueceu de descontar. O que o cliente reclamou foi o texto "sem tratativa"; o grupo novo resolve isso sem perder o acompanhamento.</span></li>
+   <li><b class="q">O prazo da multa passa a ser o limite de indicação?</b> Hoje é a data do fato, por isso toda multa antiga aparece vermelha.
+    <span class="rec">sim, e depois da indicação feita a multa não tem mais prazo. É o único prazo real do processo (6.6.1) e acaba com o "atrasado" falso.</span></li>
+   <li><b class="q">Sinistro segue a mesma regra?</b>
+    <span class="rec">não agora. A pendência do sinistro é encerrá-lo, e isso não depende de terceiros descontando. Mexer só em multa mantém a mudança pequena. Se o José pedir, replicamos depois.</span></li>
+  </ol></div>`;
+  return h;
+}
+
+/* ============ FOTOS ============ */
+function carSvg(pos, marks, tone){
+  marks = marks||[]; tone=tone||0;
+  const hues=['#27406b','#2f4a7a','#33507f'][tone%3];
+  let body='';
+  if(pos==='Frente'||pos==='Traseira'){
+    body=`<rect x="70" y="60" width="180" height="70" rx="14" fill="${hues}"/><rect x="88" y="42" width="144" height="34" rx="10" fill="#1a2f55"/><rect x="95" y="48" width="130" height="22" rx="6" fill="#0f1f3d"/>
+    <rect x="60" y="116" width="200" height="24" rx="8" fill="#223a64"/><circle cx="86" cy="150" r="14" fill="#0a1628"/><circle cx="234" cy="150" r="14" fill="#0a1628"/>
+    <rect x="80" y="92" width="26" height="12" rx="4" fill="${pos==='Frente'?'#facc15':'#f87171'}" opacity=".7"/><rect x="214" y="92" width="26" height="12" rx="4" fill="${pos==='Frente'?'#facc15':'#f87171'}" opacity=".7"/>`;
+  } else if(pos==='Interna'){
+    body=`<rect x="50" y="50" width="220" height="100" rx="12" fill="#1a2f55"/><circle cx="110" cy="105" r="30" fill="#0f1f3d" stroke="#33507f" stroke-width="4"/><rect x="170" y="80" width="80" height="45" rx="6" fill="#0f1f3d"/>`;
+  } else {
+    body=`<path d="M40 120 L60 80 Q80 55 130 55 L190 55 Q225 58 245 90 L275 105 L280 130 L40 130Z" fill="${hues}"/><path d="M85 80 Q100 62 130 62 L185 62 Q205 66 222 88Z" fill="#0f1f3d"/><circle cx="90" cy="138" r="18" fill="#0a1628"/><circle cx="230" cy="138" r="18" fill="#0a1628"/><circle cx="90" cy="138" r="8" fill="#33507f"/><circle cx="230" cy="138" r="8" fill="#33507f"/>`;
+  }
+  const mk = marks.map(m=>m.t==='crack'
+    ? `<path d="M${m.x} ${m.y} l8 -6 l-3 9 l9 -4" stroke="#f87171" stroke-width="3" fill="none"/>`
+    : m.t==='dent' ? `<ellipse cx="${m.x}" cy="${m.y}" rx="${m.r||13}" ry="${(m.r||13)*.7}" fill="rgba(0,0,0,.35)" stroke="#f87171" stroke-width="2"/>`
+    : `<path d="M${m.x} ${m.y} l${m.l||24} ${-(m.l||24)/3}" stroke="#f87171" stroke-width="3" stroke-linecap="round"/><path d="M${m.x+4} ${m.y+6} l${(m.l||24)-6} ${-(m.l||24)/4}" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>`).join('');
+  return `<svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="180" fill="#0c1a33"/><rect y="150" width="320" height="30" fill="#0a1220"/>${body}${mk}</svg>`;
+}
+const phHtml=(pos,marks,cap,tone,x)=>`<div class="ph">${carSvg(pos,marks,tone)}<div class="cap">${cap||pos}</div>${x?`<span class="x" data-rm="${x}" title="Remover">x</span>`:''}</div>`;
+
+// --- 3. fotos do checklist e aba de avaria
+const POS_OBR=['Frente','Traseira','Lateral Esq.','Lateral Dir.'];
+let fk={obr:{}, interna:false, extras:[], avarias:[], avSub:'lista'};
+let avDraft={peca:'',tamanho:'',acao:'',desc:'',fp:0,fa:0};
+let sinFotos=[1,2];
+let subFotos='check';
+function viewFotos(){
+  const nObr=Object.keys(fk.obr).length;
+  const total=nObr+(fk.interna?1:0)+fk.extras.length+fk.avarias.reduce((a,v)=>a+v.fp+v.fa,0);
+  let h=`<h2 class="sec">Fotos sem limite e aba de avaria</h2>
+  <p class="lead">Falas [21:05] a [22:31]: o José pediu "uma indicação de fotos, mas não delimitado"; o Igor pediu uma aba só para a avaria, com "foto da peça e foto da avaria". Clique nos espaços para simular a câmera.</p>
+  <div class="seg" style="margin-bottom:.9rem">${[['check','Checklist (celular)'],['sin','Sinistro']].map(([k,l])=>`<button data-sf="${k}" class="${subFotos===k?'on':''}">${l}</button>`).join('')}</div>`;
+  if(subFotos==='check'){
+    h+=`<div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">Novo checklist · tipo: troca · QRT4F21</span><span class="pill">${total} foto${total===1?'':'s'} no total</span></div>
+    <div class="row" style="margin-top:.6rem"><span class="b wh sm">Fotos do veículo</span><span class="pill ex">EXISTE</span><span class="xs mut">${nObr} de 4 obrigatórias · hoje: 1 foto por posição, nenhuma a mais</span></div>
+    <div class="photos" style="margin-top:.5rem">${POS_OBR.map(p=> fk.obr[p]? phHtml(p,fk.obr[p].marks,p,fk.obr[p].tone,'o:'+p) : `<button class="slot" data-obr="${p}">${p}<br>(obrigatória)<br>tocar para fotografar</button>`).join('')}
+      ${fk.interna? phHtml('Interna',[],'Interna',1,'i') : `<button class="slot" data-int="1">Interna<br>(opcional)</button>`}</div>
+    <div class="row" style="margin-top:.8rem"><span class="b wh sm">Fotos adicionais</span><span class="pill new">NOVO</span><span class="xs mut">sem limite na tela (teto técnico, decisão 1)</span></div>
+    <div class="photos" style="margin-top:.5rem">${fk.extras.map((x,i)=>phHtml('Lateral Dir.',x.marks,x.nome,i+1,'e:'+i)).join('')}
+      <button class="slot" data-ext="1" style="border-color:var(--orbd);color:var(--or)">+ Mais fotos<br>(ângulo livre)</button></div>
+
+    <div class="row" style="margin-top:1.1rem"><span class="b wh sm">Avarias</span><span class="pill new">NOVO</span><span class="xs mut">hoje: só "Avaria identificada? sim/não" e um campo de texto</span></div>
+    <div class="seg" style="margin-top:.4rem"><button data-av="lista" class="${fk.avSub==='lista'?'on':''}">Avarias do checklist (${fk.avarias.length})</button><button data-av="nova" class="${fk.avSub==='nova'?'on':''}">+ Registrar avaria</button></div>`;
+    if(fk.avSub==='lista'){
+      h+= fk.avarias.length? `<div class="grid2" style="margin-top:.6rem">${fk.avarias.map((a,i)=>`<div class="card flat"><div class="b wh sm">${a.peca}</div><div class="xs mut">${a.tamanho||'tamanho não informado'} · ${a.acao||'reparo ou troca: a definir'}</div><div class="sm" style="margin:.3rem 0">${a.desc||'<span class=mut>sem descrição</span>'}</div>
+        <div class="cmp">${phHtml('Lateral Esq.',[],'Foto da peça ('+a.fp+')',0)}${phHtml('Lateral Esq.',[{t:'scratch',x:120,y:100}],'Foto da avaria ('+a.fa+')',2)}</div></div>`).join('')}</div>` : `<div class="xs mut" style="margin-top:.6rem">Nenhuma avaria registrada neste checklist. Use "Registrar avaria".</div>`;
+    } else {
+      h+=`<div class="card flat" style="margin-top:.6rem"><div class="grid2">
+        <div><label class="l">Peça *</label><select class="fld" id="avPeca"><option value="">Selecione</option>${['Para-choque dianteiro','Para-choque traseiro','Porta esquerda','Porta direita','Retrovisor','Farol / lanterna','Pneu / roda','Para-brisa','Outra peça'].map(o=>`<option ${avDraft.peca===o?'selected':''}>${o}</option>`).join('')}</select>
+        <label class="l">Tamanho *</label><select class="fld" id="avTam"><option value="">Selecione</option>${['Pequena (até 5 cm)','Média (5 a 20 cm)','Grande (acima de 20 cm)'].map(o=>`<option ${avDraft.tamanho===o?'selected':''}>${o}</option>`).join('')}</select>
+        <label class="l">Precisa de reparo ou troca? <span class="mut">(opcional: o motorista pode não saber)</span></label><select class="fld" id="avAcao"><option value="">A definir por Frotas</option>${['Reparo','Troca'].map(o=>`<option ${avDraft.acao===o?'selected':''}>${o}</option>`).join('')}</select>
+        <label class="l">Descrição</label><textarea class="fld" id="avDesc" rows="3" placeholder="Ex.: risco horizontal na parte inferior, lado direito">${avDraft.desc}</textarea></div>
+        <div><label class="l">Foto da peça inteira * <span class="mut">(mostra onde fica)</span></label>
+          <div class="photos" style="grid-template-columns:repeat(2,1fr)">${Array.from({length:avDraft.fp},(_,i)=>phHtml('Frente',[],'Peça '+(i+1),0)).join('')}<button class="slot" data-fp="1">+ foto da peça</button></div>
+          <label class="l">Foto(s) da avaria * <span class="mut">(close, centralizada no dano)</span></label>
+          <div class="photos" style="grid-template-columns:repeat(2,1fr)">${Array.from({length:avDraft.fa},(_,i)=>phHtml('Frente',[{t:'scratch',x:110,y:120}],'Avaria '+(i+1),1)).join('')}<button class="slot" data-fa="1">+ foto da avaria</button></div></div></div>
+        <div class="row" style="margin-top:.7rem"><button class="btn btn-p" id="avSalvar">Adicionar avaria ao checklist</button><span class="xs mut" id="avMsg"></span></div></div>`;
+    }
+    h+=`<div class="row" style="margin-top:1rem"><button class="btn btn-p" id="ckSalvar" ${nObr<4?'disabled':''}>Salvar checklist</button><span class="xs mut">${nObr<4?'Faltam '+(4-nObr)+' foto(s) obrigatória(s) (regra que já existe).':'Pronto para salvar: '+total+' foto(s), '+fk.avarias.length+' avaria(s).'}</span></div></div>`;
+  } else {
+    h+=`<div class="grid2"><div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">Hoje</span><span class="pill ex">EXISTE</span></div><div class="xs mut" style="margin:.3rem 0">Sinistro novo: dois espaços fixos, "Dano 1" e "Dano 2".</div>
+      <div class="cmp">${phHtml('Lateral Dir.',[{t:'dent',x:140,y:100}],'Dano 1',0)}${phHtml('Lateral Dir.',[{t:'scratch',x:100,y:110}],'Dano 2',1)}</div><div class="xs bad" style="margin-top:.4rem">Não cabe a terceira foto.</div></div>
+    <div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">Proposto</span><span class="pill new">NOVO</span></div><div class="xs mut" style="margin:.3rem 0">Mesmo componente de "mais fotos" do checklist.</div>
+      <div class="photos" style="grid-template-columns:repeat(2,1fr)">${sinFotos.map((n,i)=>phHtml('Lateral Dir.',[{t:i%2?'scratch':'dent',x:100+i*8,y:105}],'Dano '+(i+1),i,'s:'+i)).join('')}<button class="slot" data-sin="1" style="border-color:var(--orbd);color:var(--or)">+ Mais fotos</button></div><div class="xs ok" style="margin-top:.4rem">${sinFotos.length} foto(s) do dano</div></div></div>`;
+  }
+  h+=`<div class="dec"><h4>Decisões em aberto: fotos e avaria</h4><ol>
+   <li><b class="q">"Sem limite" é sem limite mesmo?</b>
+    <span class="rec">sem limite na tela e um teto de segurança de 30 fotos por checklist ou sinistro, com a foto reduzida no celular antes de enviar. Ninguém vai chegar em 30; o teto só protege o armazenamento e o upload em rede fraca. Não verifiquei o tamanho atual do bucket.</span></li>
+   <li><b class="q">As fotos extras continuam só de câmera ao vivo?</b> Hoje o <code>CameraCapture</code> é câmera ao vivo.
+    <span class="rec">manter câmera ao vivo no checklist (prova que a foto é do momento) e liberar galeria só no sinistro, onde há foto de documento e do outro veículo, tirada antes do registro.</span></li>
+   <li><b class="q">O que a avaria exige para ser salva?</b>
+    <span class="rec">peça, tamanho, uma foto da peça e uma foto da avaria. Reparo ou troca fica opcional, porque o motorista não sabe; Frotas define depois. É o que o documento pede em 11.10.7 (peça afetada, tamanho, reparo ou troca) sem travar quem está na rua.</span></li>
+   <li><b class="q">A avaria vira um item com ciclo de vida (aberta, reparada)?</b>
+    <span class="rec">sim, e só o gestor de frotas ou admin marca "reparada". Mas não entrar na tela de Pendências nesta rodada: o documento diz que os carros têm muitas avarias acumuladas (11.7.2) e isso inundaria a lista. A lista de avarias abertas fica dentro do histórico do veículo.</span></li>
+   <li><b class="q">Quem pode apagar uma foto já salva?</b>
+    <span class="rec">ninguém na tela. Foto de checklist e de sinistro é prova. O "x" do mockup só existe no rascunho, antes de salvar.</span></li>
+  </ol></div>`;
+  return h;
+}
+
+/* ============ HISTÓRICO ============ */
+const ITENS=[['lataria','Lataria'],['vidros','Vidros'],['pneus','Pneus'],['combustivel','Combustível'],['internos','Itens internos'],['estepe','Estepe'],['macaco','Macaco'],['triangulo','Triângulo']];
+const CK=[
+ {id:'c1',data:'2026-08-12',tipo:'Recebimento (entrada)',km:41200,por:'Frotas',mot:'—',it:{},av:[],
+  fotos:{'Frente':[],'Traseira':[],'Lateral Esq.':[],'Lateral Dir.':[],'Interna':[]}},
+ {id:'c2',data:'2026-09-05',tipo:'Troca de carro',km:43980,por:'Frotas',mot:'Carlos Mendes',it:{lataria:0},av:[{id:'a1',peca:'Para-choque dianteiro',d:'Arranhão pequeno na parte inferior'}],
+  fotos:{'Frente':[{t:'scratch',x:120,y:122,l:22}],'Traseira':[],'Lateral Esq.':[],'Lateral Dir.':[],'Interna':[]}},
+ {id:'c3',data:'2026-10-02',tipo:'Retorno',km:46310,por:'Carlos Mendes',mot:'Carlos Mendes',it:{lataria:0,pneus:0},av:[{id:'a1',peca:'Para-choque dianteiro',d:'Arranhão pequeno na parte inferior'},{id:'a2',peca:'Porta direita',d:'Amassado médio perto da maçaneta'}],
+  fotos:{'Frente':[{t:'scratch',x:120,y:122,l:22}],'Traseira':[],'Lateral Esq.':[],'Lateral Dir.':[{t:'dent',x:150,y:100,r:15}],'Interna':[]}},
+ {id:'c4',data:'2026-10-28',tipo:'Troca de carro',km:48050,por:'Frotas',mot:'Rafael Duarte',it:{pneus:0},av:[{id:'a2',peca:'Porta direita',d:'Amassado médio perto da maçaneta'},{id:'a3',peca:'Retrovisor esquerdo',d:'Carcaça quebrada'}],
+  fotos:{'Frente':[],'Traseira':[],'Lateral Esq.':[{t:'crack',x:70,y:92}],'Lateral Dir.':[{t:'dent',x:150,y:100,r:15}],'Interna':[]}}
+];
+let hv={A:'c3',B:'c4',modo:'lado',op:50,lanc:true};
+function viewHist(){
+  const A=CK.find(c=>c.id===hv.A), B=CK.find(c=>c.id===hv.B);
+  const opts=sel=>CK.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${fmt(new Date(c.data+'T12:00'))} · ${c.tipo}</option>`).join('');
+  let h=`<h2 class="sec">Histórico do checklist e comparação de fotos</h2>
+  <p class="lead">Fala do Igor em [08:18]: "não consigo ter um histórico do checklist feito, abrir o último para comparar, principalmente nas fotos". Veículo fictício abaixo; no sistema o histórico fica dentro da ficha do veículo e na troca de carro.</p>
+  <div class="card"><div class="row" style="justify-content:space-between"><span class="wh b">QRT4F21 · Fiat Strada · EQ-07</span><span class="pill new">NOVO</span></div>
+   <table class="t" style="margin-top:.5rem"><thead><tr><th>Data</th><th>Tipo</th><th class="hide-m">Feito por</th><th>KM</th><th>Avarias</th></tr></thead><tbody>
+   ${CK.slice().reverse().map(c=>`<tr><td>${fmt(new Date(c.data+'T12:00'))}</td><td>${c.tipo}${c.id==='c1'?' <span class="pill">base</span>':''}</td><td class="hide-m">${c.por}</td><td class="mono">${c.km.toLocaleString('pt-BR')}</td><td>${c.av.length||'—'}</td></tr>`).join('')}</tbody></table>
+   <div class="xs mut" style="margin-top:.4rem">Hoje a lista de checklists mostra os 50 mais recentes de todos os carros, sem filtro por veículo e sem abrir dois ao mesmo tempo.</div></div>
+
+  <h3 class="sub">Comparar dois checklists do mesmo veículo</h3>
+  <div class="row"><div style="flex:1;min-width:150px"><label class="l">Antes</label><select class="fld" id="selA">${opts(hv.A)}</select></div>
+   <div style="flex:1;min-width:150px"><label class="l">Depois</label><select class="fld" id="selB">${opts(hv.B)}</select></div>
+   <div class="seg" style="align-self:flex-end"><button data-modo="lado" class="${hv.modo==='lado'?'on':''}">Lado a lado</button><button data-modo="sobre" class="${hv.modo==='sobre'?'on':''}">Sobrepor</button></div>
+   <button class="btn btn-s" style="align-self:flex-end" id="atalhoBase">Comparar com a entrada (base)</button></div>`;
+  if(A.id===B.id){ h+=`<div class="xs warn" style="margin-top:.7rem">Escolha dois checklists diferentes.</div>`; }
+  else {
+    const [ant,dep] = new Date(A.data)<new Date(B.data)?[A,B]:[B,A];
+    if(ant!==A) h+=`<div class="xs mut" style="margin-top:.5rem">As datas foram ordenadas: "antes" é sempre o mais antigo.</div>`;
+    h+=`<div class="grid2" style="margin-top:.8rem;grid-template-columns:1.4fr 1fr">
+     <div>${hv.modo==='sobre'?`<div class="xs mut">Arraste para ver a diferença entre ${fmt(new Date(ant.data+'T12:00'))} e ${fmt(new Date(dep.data+'T12:00'))}</div><input type="range" min="0" max="100" value="${hv.op}" id="op" style="width:100%;accent-color:#f05a28">`:''}
+      ${['Frente','Traseira','Lateral Esq.','Lateral Dir.'].map(p=>{
+        const a=phHtml(p,ant.fotos[p],p+' · '+fmt(new Date(ant.data+'T12:00')),0), b=phHtml(p,dep.fotos[p],p+' · '+fmt(new Date(dep.data+'T12:00')),1);
+        const diff = JSON.stringify(ant.fotos[p])!==JSON.stringify(dep.fotos[p]);
+        return `<div style="margin:.6rem 0"><div class="row" style="justify-content:space-between"><span class="sm wh b">${p}</span>${diff?'<span class="pill yel">mudou</span>':'<span class="pill grn">igual</span>'}</div>
+          ${hv.modo==='lado'?`<div class="cmp">${a}${b}</div>`:`<div class="over" style="position:relative">${a}<div style="position:absolute;inset:0;opacity:${hv.op/100}">${phHtml(p,dep.fotos[p],'',1).replace('<rect width="320" height="180" fill="#0c1a33"/>','').replace('class="ph"','class="ph" style="background:transparent;border-color:transparent"')}</div></div>`}</div>`}).join('')}
+     </div>
+     <div class="card"><div class="wh b sm">O que mudou (automático, só dos dados)</div><div class="xs mut">NOVO. Compara os itens e as avarias cadastradas; <b>não</b> compara imagens (decisão 2).</div>
+      <ul class="diff" style="padding-left:1.1rem">${diffList(ant,dep)}</ul></div></div>`;
+  }
+  h+=`<div class="card flat" style="margin-top:1rem"><div class="row" style="justify-content:space-between"><span class="wh b sm">Na hora de trocar o carro da equipe</span><span class="pill new">NOVO</span></div>
+   <div class="sm mut" style="margin:.3rem 0">Ao iniciar um checklist do tipo "troca", a tela mostra o último checklist do veículo ao lado, para o Igor comparar enquanto fotografa (documento 11.10.6). Não bloqueia nada.</div>
+   <div class="cmp">${phHtml('Frente',CK[3].fotos.Frente,'Último: Frente · '+fmt(new Date('2026-10-28T12:00')),1)}<button class="slot">Frente (nova foto)<br>tocar para fotografar</button></div></div>`;
+  h+=`<div class="dec"><h4>Decisões em aberto: histórico do checklist</h4><ol>
+   <li><b class="q">A comparação padrão é com qual checklist?</b>
+    <span class="rec">com o anterior do mesmo veículo, e um atalho fixo para a entrada (o primeiro checklist de cada carro é a base, 11.3.2). Foi o que o Igor descreveu: "abrir o último que foi feito".</span></li>
+   <li><b class="q">O sistema aponta diferença de imagem sozinho?</b>
+    <span class="rec">não. Só diferença de dados (item que passou de OK para problema, avaria nova, avaria sumida, KM). Comparar pixel de foto de celular gera falso alarme com luz e ângulo diferentes. O olho do Igor decide, com as duas fotos lado a lado.</span></li>
+   <li><b class="q">A tela da troca de carro mostra o último checklist, mas continua bloqueando sem checklist?</b> A trava é a decisão D1 da triagem (José quer tirar, João defendeu manter).
+    <span class="rec">entregar o painel do último checklist agora e deixar a trava como está até o João e o José decidirem. São duas mudanças independentes e a primeira não depende da segunda.</span></li>
+   <li><b class="q">Quem vê o histórico?</b>
+    <span class="rec">qualquer usuário com acesso ao Sofia (leitura), como as demais listas. Não verifiquei a policy atual do bucket de fotos do checklist; antes de implementar, conferir que a foto continua só acessível por URL assinada.</span></li>
+   <li><b class="q">Avaria resolvida: quem dá baixa?</b>
+    <span class="rec">gestor de frotas ou admin, uma ação "marcar como reparada" com data. O diff acima já mostraria o para-choque como resolvido. Motorista nunca dá baixa na própria avaria.</span></li>
+  </ol></div>`;
+  return h;
+}
+function diffList(a,b){
+  const out=[];
+  ITENS.forEach(([k,n])=>{const x=a.it[k]===0,y=b.it[k]===0; if(x!==y) out.push(y?`<li class="bad">${n}: OK passou para <b>problema</b></li>`:`<li class="ok">${n}: problema passou para OK</li>`);});
+  const ida=a.av.map(v=>v.id), idb=b.av.map(v=>v.id);
+  b.av.filter(v=>!ida.includes(v.id)).forEach(v=>out.push(`<li class="bad">Avaria nova: <b>${v.peca}</b>, ${v.d.toLowerCase()}</li>`));
+  a.av.filter(v=>!idb.includes(v.id)).forEach(v=>out.push(`<li class="ok">Avaria resolvida: <b>${v.peca}</b></li>`));
+  b.av.filter(v=>ida.includes(v.id)).forEach(v=>out.push(`<li class="mut">Avaria continua: ${v.peca}</li>`));
+  out.push(`<li class="mut">KM rodado entre os dois: ${Math.abs(b.km-a.km).toLocaleString('pt-BR')}</li>`);
+  return out.join('');
+}
+
+/* ============ DADOS NOVOS (resumo) ============ */
+function viewBanco(){
+  return `<h2 class="sec">O que muda no banco</h2><p class="lead">Resumo para a revisão de schema. Nada foi aplicado; migrations são manuais e passam pelo João.</p>
+  <div class="card"><div class="b wh sm">Multas <span class="pill am">AMPLIADO</span></div><div class="sm mut">Colunas novas em <code>multas</code>: etapa, locadora, auto_infracao, orgao_autuador, pontos, prazo_indicacao, motorista_condutor_id, indicado_em, protocolo_indicacao, boleto_lancado_em, pago_em_dobro, responsavel_dobro, desconto_competencia. Já existem e são reaproveitadas: data, data_recebimento, tipo_infracao, valor, status, autorizacao_status, autorizacao_assinada, autorizacao_storage_path, valor_descontado, tipo_desconto.</div>
+  <div class="b wh sm" style="margin-top:.7rem">Tabela nova <code>multa_etapas</code> <span class="pill new">NOVO</span></div><div class="sm mut">Um registro por etapa feita: multa_id, etapa, feito_em, feito_por, em_nome_de, canal, observacao. É o que prova quem validou e quando.</div>
+  <div class="b wh sm" style="margin-top:.7rem">Checklist <span class="pill am">AMPLIADO</span></div><div class="sm mut">Tabela nova <code>checklist_avarias</code> (checklist_id, peca, tamanho, acao, descricao, status, reparada_em, reparada_por, avaria_origem_id). Em <code>checklist_fotos</code>: coluna avaria_id e coluna tipo_foto. Fotos ilimitadas não exigem tabela nova (já é uma linha por foto); muda o código, que hoje guarda uma foto por posição.</div>
+  <div class="b wh sm" style="margin-top:.7rem">Histórico <span class="pill">sem tabela</span></div><div class="sm mut">Só consulta por veiculo_id e um índice em checklist (veiculo_id, data desc).</div>
+  <div class="b wh sm" style="margin-top:.7rem">Trigger de segurança <span class="pill red">exceção AGENTS.md</span></div><div class="sm mut">Só se a decisão 3 de multa for aceita (separar quem solicita de quem autoriza). Toca autorização: exige revisão independente.</div></div>`;
+}
+
+/* ============ render e eventos ============ */
+const TABS=[['multa','1. Fluxo da multa'],['pend','2. Pendências'],['fotos','3. Fotos e avaria'],['hist','4. Histórico do checklist'],['banco','Banco de dados']];
+function render(){
+  $('#segPerfil').innerHTML=Object.entries(PERFIS).map(([k,v])=>`<button data-p="${k}" class="${perfil===k?'on':''}" title="${v.desc}">${v.nome}</button>`).join('');
+  $('#segView').innerHTML=[['desk','Desktop'],['mob','Celular']].map(([k,l])=>`<button data-v="${k}" class="${view===k?'on':''}">${l}</button>`).join('');
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${tab===k?'on':''}">${l}</button>`).join('');
+  $('#app').classList.toggle('mob',view==='mob');
+  $('#who').innerHTML=`Logado como<br><b class="wh">${PERFIS[perfil].nome}</b>`;
+  $('#crumb').textContent=({multa:'Multas',pend:'Pendências',fotos:'Checklist e sinistros',hist:'Veículos · histórico do checklist',banco:'Resumo técnico'})[tab];
+  $('#body').innerHTML = tab==='multa'?viewMulta():tab==='pend'?viewPend():tab==='fotos'?viewFotos():tab==='hist'?viewHist():viewBanco();
+  bind();
+}
+function marcar(m,i){ feitos[m.id]=feitos[m.id]||{}; feitos[m.id][i]=fmt(HOJE)+' ('+PERFIS[perfil].nome+')'; }
+function bind(){
+  const q=(s,f)=>document.querySelectorAll(s).forEach(f);
+  q('#segPerfil button',b=>b.onclick=()=>{perfil=b.dataset.p;render()});
+  q('#segView button',b=>b.onclick=()=>{view=b.dataset.v;render()});
+  q('#tabs button',b=>b.onclick=()=>{tab=b.dataset.t;render();window.scrollTo({top:0})});
+  q('#rel',r=>r.oninput=()=>{relogio=+r.value;const y=window.scrollY;render();window.scrollTo(0,y)});
+  if(tab==='multa'){
+    q('[data-m]',b=>b.onclick=()=>{multaSel=+b.dataset.m;etapaSel=Math.min(multas.find(x=>x.id===multaSel).et+1,ETAPAS.length-1);render()});
+    q('.stepper li',li=>li.onclick=()=>{etapaSel=+li.dataset.e;render()});
+    q('[data-a]',b=>b.onclick=()=>{const m=multas.find(x=>x.id===multaSel);const a=ETAPAS[etapaSel].acoes[+b.dataset.a];
+      if(!pode(a.p)){toast(motivoNegado(a));return}
+      m.et=etapaSel;marcar(m,etapaSel);etapaSel=Math.min(m.et+1,ETAPAS.length-1);toast('Etapa registrada: '+ETAPAS[m.et].t);render()});
+    const r=$('#resetM'); if(r) r.onclick=()=>{multas.forEach((m,i)=>m.et=[0,2,6,8][i]);Object.keys(feitos).forEach(k=>delete feitos[k]);relogio=0;multaSel=1;etapaSel=1;render()};
+  }
+  if(tab==='fotos'){
+    q('[data-sf]',b=>b.onclick=()=>{subFotos=b.dataset.sf;render()});
+    q('[data-obr]',b=>b.onclick=()=>{const p=b.dataset.obr;fk.obr[p]={marks:p==='Frente'?[]:[],tone:Object.keys(fk.obr).length};render()});
+    q('[data-int]',b=>b.onclick=()=>{fk.interna=true;render()});
+    q('[data-ext]',b=>b.onclick=()=>{fk.extras.push({nome:'Extra '+(fk.extras.length+1),marks:[{t:'scratch',x:90+fk.extras.length*12,y:110}]});render()});
+    q('[data-rm]',b=>b.onclick=()=>{const [t,i]=b.dataset.rm.split(':');if(t==='o')delete fk.obr[i];if(t==='i')fk.interna=false;if(t==='e')fk.extras.splice(+i,1);if(t==='s')sinFotos.splice(+i,1);render()});
+    q('[data-sin]',b=>b.onclick=()=>{sinFotos.push(sinFotos.length+1);render()});
+    q('[data-av]',b=>b.onclick=()=>{fk.avSub=b.dataset.av;render()});
+    const keep=()=>{const g=id=>document.getElementById(id);if(g('avPeca')){avDraft.peca=g('avPeca').value;avDraft.tamanho=g('avTam').value;avDraft.acao=g('avAcao').value;avDraft.desc=g('avDesc').value}};
+    q('[data-fp]',b=>b.onclick=()=>{keep();avDraft.fp++;render()});
+    q('[data-fa]',b=>b.onclick=()=>{keep();avDraft.fa++;render()});
+    const s=$('#avSalvar'); if(s) s.onclick=()=>{keep();const falta=[];if(!avDraft.peca)falta.push('peça');if(!avDraft.tamanho)falta.push('tamanho');if(!avDraft.fp)falta.push('foto da peça');if(!avDraft.fa)falta.push('foto da avaria');
+      if(falta.length){$('#avMsg').textContent='Falta: '+falta.join(', ');$('#avMsg').className='xs bad';return}
+      fk.avarias.push({...avDraft});avDraft={peca:'',tamanho:'',acao:'',desc:'',fp:0,fa:0};fk.avSub='lista';toast('Avaria adicionada ao checklist');render()};
+    const c=$('#ckSalvar'); if(c) c.onclick=()=>toast('Checklist salvo (simulação)');
+  }
+  if(tab==='hist'){
+    const a=$('#selA'),b=$('#selB'); if(a) a.onchange=()=>{hv.A=a.value;render()}; if(b) b.onchange=()=>{hv.B=b.value;render()};
+    q('[data-modo]',x=>x.onclick=()=>{hv.modo=x.dataset.modo;render()});
+    const o=$('#op'); if(o) o.oninput=()=>{hv.op=+o.value;const y=window.scrollY;render();window.scrollTo(0,y);};
+    const t=$('#atalhoBase'); if(t) t.onclick=()=>{hv.A='c1';hv.B='c4';render()};
+  }
+}
+multas.forEach((m,i)=>m.et=[0,2,6,8][i]);
+etapaSel=1;
+render();
+</script>
+</body>
+</html>
