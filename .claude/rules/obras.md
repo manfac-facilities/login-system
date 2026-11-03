@@ -265,3 +265,26 @@ Spec: `docs/superpowers/specs/2026-11-01-obras-leva6b-faseamento-design.md`.
   ele a aba Faseamento mostra "ainda não está disponível", a Comunicação relê os envios sem `fase_revisao_id` (42703) e o
   portal ignora o faseamento (PGRST205/42P01/42703 = lista vazia).
 - **Portal (aba Mapa):** seção "Faseamento" (`portal-obra/(obra)/obras/[obraId]/mapa/_faseamento.tsx`, leitura em `_lib/faseamento.ts`) com só a **última emitida de cada fase** (base e nome congelados da revisão); sem emitida a seção some, e a aba Mapa aparece também só com faseamento (`obraTemMapa` = ambiente OU emitida). PDF em `faseamento/[revisaoId]/pdf` (sessão do portal, cliente admin, modalidade obra): 404 igual para rascunho, outra obra, id inválido **e revisão antiga já substituída** (só a última emitida abre).
+
+### Financeiro da OS no SPOT (branch `feat/obras-spot-financeiro`, 01/11/2026)
+
+Spec: `docs/superpowers/specs/2026-11-01-obras-spot-financeiro-design.md`.
+
+- **Onde fica:** `app/obras/obra/[id]/_financeiro/` — `resumo-spot.ts` (regras puras: faturado, falta, margem),
+  `dados.ts` (leitura), `_actions.ts` (só locação: devolvida/renovada) e `bloco.tsx` (a aba na ficha SPOT). O
+  `faltaSpot` (saldo para a fila e a trava) mora no Financeiro, `lib/faturamento/saldo-spot.ts`, não no hub.
+- **Quem vê valores:** no SPOT, qualquer usuário com acesso ao Obras; na OBRA, igual a hoje (`obras_pode_ver_valores`).
+- **Locação do SPOT:** devolvida/renovada marcada por qualquer usuário do Obras (não só o analista; ver `docs/DIVIDAS.md`).
+  OBRAS continuam só com engenheiro da obra/mãe ou admin.
+- **Faturamento parcial é só SPOT.** Soma das PARTES da obra nas notas autorizada/enviada não devolvidas
+  (`fin_fat_nota_obras`; parte nula = total da nota, igual ao Financeiro) + `obras_nota_externa`; só vira `faturado` quando a soma >= valor. `fat_nfse` guarda a lista
+  separada por vírgula ("735, 812"). Faturamento parcial das OBRAS ficou de fora (decisão de 01/11).
+- **`obras_nota_externa`:** NF emitida fora do módulo de faturamento do Financeiro. Só administrador insere/apaga
+  (`criado_por` = e-mail do JWT), e só por SQL/admin — não há tela nem action no app; inserir/apagar não reavalia a
+  etapa sozinho.
+- **Ordem de deploy:** `sdd-sql-obras-spot-financeiro.sql` (hub) → Financeiro `045` → app do Financeiro (branch
+  `feat/spot-faturamento-parcial`, repo `financeiro`; logo depois da `045`) → `docs/obras/2026-11-01-macae2-nf735.sql`
+  (antes de qualquer nota nova da 0426-012516; não depende do app do hub; se abortar com a OS já `faturado`, pedir
+  ajuda, não escrever variante) → app do hub.
+- **SQL aplicado** (constatado em 03/11/2026 pelos tipos gerados do banco; o Financeiro `045` também). Teste de comportamento
+  com rollback em `docs/obras/2026-11-01-verificacao-obras-spot-financeiro.sql`. Falta: app do Financeiro → script da MACAÉ 2 → app do hub.
