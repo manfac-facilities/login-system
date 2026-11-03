@@ -7,13 +7,17 @@ import type { ItemAgenda } from './agenda'
 import type { ResultadoCronograma } from './cronograma'
 import type { Restricao } from './last-planner'
 import { avisoLocacao, textoAviso } from './locacao'
+import { linkPedirMaterial, type AvisoMaterial } from './material'
 import { diasDesde, LIMITE_DIAS_AGUARDANDO } from './medicao'
 
 export type Alerta = {
-  id: 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas' | 'locacao' | 'medicao_cliente' | 'medicao_fornecedor'
+  id:
+    | 'atrasadas' | 'desvio' | 'comunicacao_atrasada' | 'comunicacao_hoje' | 'cliente' | 'vencidas' | 'locacao'
+    | 'medicao_cliente' | 'medicao_fornecedor' | 'material'
   tom: 'negativo' | 'atencao'
   texto: string
-  acao: { rotulo: string; href: string }
+  /** `externo`: outra app (Compras) — `<a>` comum em nova aba, nunca next/link. */
+  acao: { rotulo: string; href: string; externo?: boolean }
 }
 
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
@@ -60,6 +64,8 @@ export function calcularAlertas(p: {
   medicoesCliente?: { numero: number; os: string | null; enviadaEm: string; situacao: string }[] | null
   /** `obras_fin_medicoes_fornecedor_atrasadas` (já > 10 dias); ausente/null = sem alerta. */
   medicoesFornecedor?: { fornecedor: string | null; dias: number; aguardando: string | null }[] | null
+  /** Avisos do material antecipado (`avisosMaterial`), já ordenados; ausente/null = leitura falhou: sem alerta. */
+  material?: AvisoMaterial[] | null
 }): Alerta[] {
   const raiz = `/obras/obras/${p.obraId}`
   const out: Alerta[] = []
@@ -165,5 +171,29 @@ export function calcularAlertas(p: {
       acao: { rotulo: 'Ver financeiro', href: `${raiz}/financeiro` },
     })
   }
+  // Material antecipado (spec §4.5/§5.4): um alerta por aviso, com a cadeia e o botão para onde se resolve.
+  for (const m of p.material ?? []) {
+    out.push({
+      id: 'material',
+      tom: m.nivel === 'vermelho' ? 'negativo' : 'atencao',
+      texto: `${m.titulo} — ${m.cadeia.join(' ← ')}`,
+      acao: acaoMaterial(p, m),
+    })
+  }
   return out
+}
+
+function acaoMaterial(p: { obraId: string; calc: ResultadoCronograma | null; restricoes: Restricao[] }, m: AvisoMaterial): Alerta['acao'] {
+  const raiz = `/obras/obras/${p.obraId}`
+  if (m.destino === 'diario') return { rotulo: 'Responder', href: `${raiz}/diario` }
+  const restricao = m.restricaoId ? p.restricoes.find((r) => r.id === m.restricaoId) : undefined
+  const a = p.calc?.atividades.find((x) => x.numero === m.atividade)
+  if (m.destino === 'compras' && restricao && a) {
+    return {
+      rotulo: 'Pedir no Compras',
+      href: linkPedirMaterial({ obraId: p.obraId, restricao, atividade: { numero: a.numero, nome: a.descricao, inicio: m.inicio } }),
+      externo: true,
+    }
+  }
+  return { rotulo: 'Ver restrição', href: `${raiz}/lookahead${m.restricaoId ? `?restricao=${encodeURIComponent(m.restricaoId)}` : ''}` }
 }

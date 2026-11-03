@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
@@ -12,7 +13,9 @@ import { montarEmailDiario } from '../../_lib/email-diario'
 import { linkPortalObra } from '../../_lib/link-portal'
 import { diasUteisEntre } from '../../_lib/calendario'
 import { segundaDaSemana } from '../../_lib/last-planner'
-import { lerPlano } from '../../_lib/leitura'
+import { lerNaoPrecisa, lerPlano, lerPrazosCompras, lerRestricoes } from '../../_lib/leitura'
+import { listaVemAi } from '../../_lib/material'
+import VemAi from './_vem-ai'
 import FormImpedimento from '../impedimentos/_form'
 import ListaImpedimentos from '../impedimentos/_lista'
 import { lerMapa, lerReferenciasDosPontos } from '../../_lib/mapa-leitura'
@@ -174,6 +177,16 @@ export default async function DiarioObraPage({
   const planoR = await lerPlano(supabase, id, segundaDaSemana(data))
   const noPlano = planoR.ok && planoR.plano ? planoR.plano.itens.map((i) => i.numero) : []
 
+  // Material antecipado ("Vem aí"): só no diário de hoje. Sem respostas OU sem restrições lidas,
+  // a lista não aparece (pergunta repetida ou atividade com material listada de novo).
+  let vemAi: ReactNode = null
+  if (data === hoje) {
+    const [restR, naoPrecisa, prazos] = await Promise.all([lerRestricoes(supabase, id), lerNaoPrecisa(supabase, id), lerPrazosCompras(supabase)])
+    const itens =
+      restR.ok && naoPrecisa ? listaVemAi({ atividades: calc.atividades, restricoes: restR.restricoes, naoPrecisa, hoje, prazos }) : null
+    vemAi = <VemAi obraId={id} hoje={hoje} diasCompras={prazos.folga + prazos.entregaMaterial} itens={itens} />
+  }
+
   // Validar e enviar: engenheiro da obra ou admin (a action confere de novo).
   const podeValidar =
     admin || (!!obra.engenheiro_email && obra.engenheiro_email.trim().toLowerCase() === email)
@@ -276,6 +289,7 @@ export default async function DiarioObraPage({
         fotos={fotos}
         validacao={mostraValidar ? { previaHtml, pendentes } : undefined}
         mapa={mapaDiario}
+        vemAi={vemAi}
         impedimentosHoje={
           r.dados.impedimentos.filter(
             (i) => i.categoria === 'impedimento' && (i.abertoEm === data || (!!rdo && i.rdoId === rdo.id)),

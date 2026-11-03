@@ -14,6 +14,7 @@ import { diasUteisEntre } from './calendario'
 import { CAUSA, type CausaRdo } from './causas'
 import { codigosDeAtividades, diasDeImpacto, type Responsavel, type Sinal } from './cronograma'
 import { impedimentosCalcDe, type ImpedimentoRow, type ObraGrande } from './leitura'
+import type { AvisoMaterial } from './material'
 
 export type ClimaRdo = 'sol' | 'nublado' | 'chuva' | 'impraticavel'
 
@@ -315,6 +316,8 @@ export function montarEmailDiario(p: {
   fotosOmitidas?: number
   /** Só versão cliente: link "Ver a obra completa". */
   linkObra?: string | null
+  /** Avisos do material antecipado. Só entram no lado interno, e só com algum aviso. */
+  materiais?: AvisoMaterial[]
 }): EmailDiario {
   const c = montarConteudoDiario(p)
   const { lado, assunto, titulo, subtitulo, sinal, desvio, previsao, numeros, travados, ocultos, orientacoes, semExecucao, amanha } = c
@@ -329,6 +332,8 @@ export function montarEmailDiario(p: {
   const notaOmitidas = omitidas
     ? `${omitidas} ${omitidas === 1 ? 'foto omitida' : 'fotos omitidas'} (grande demais ou indisponível)`
     : null
+  // Material antecipado: NUNCA no lado cliente.
+  const materiais = lado === 'interno' ? (p.materiais ?? []) : []
   const climaPartes = c.clima
   const climaTexto = climaPartes.map((t) => `${t.turno}: ${t.rotulo}`).join(' · ')
   // Bolinha colorida (span estilizado) + rótulo em texto: não depende de emoji nem de imagem.
@@ -395,6 +400,7 @@ ${numeros
 </tr></table></td></tr>
 ${secao('Onde está travado', travados.length ? travados.map(caixa).join('') : '<div style="font-size:14px;color:#64748b">Nada travado hoje.</div>')}
 ${ocultos.length ? secao('Só interno · Não foi ao cliente', ocultos.map(caixa).join('')) : ''}
+${materiais.length ? secao('Materiais', materiais.map((m) => `<div style="border-left:3px solid ${m.nivel === 'vermelho' ? '#dc2626' : '#f59e0b'};padding:4px 10px;margin-bottom:6px;font-size:14px;color:#0f172a"><b>${esc(m.titulo)}.</b><br><span style="font-size:12px;color:#64748b">${esc(m.cadeia.join(' ← '))}</span></div>`).join('')) : ''}
 ${orientacoes.length ? secao('Orientações à loja', orientacoes.map((t) => '<div style="border-left:3px solid #2563eb;background:#eff6ff;padding:6px 10px;border-radius:4px;margin-bottom:6px;font-size:14px;color:#0f172a">' + esc(t) + '</div>').join('')) : ''}
 ${climaPartes.length ? secao('Clima', `<div style="font-size:14px;color:#0f172a">${climaHtml}</div>`) : ''}
 ${secao('O que a Manfac fez hoje', corpoFeito + blocoFotos)}
@@ -417,6 +423,7 @@ ${htmlLinkObra(linkDoLado(lado, p.linkObra))}<tr><td style="padding:12px 20px;bo
     'ONDE ESTÁ TRAVADO',
     ...(travados.length ? travados.map((it) => `- ${it.rotulo}: ${it.corpo}`) : ['Nada travado hoje.']),
     ...(ocultos.length ? ['', 'SÓ INTERNO · NÃO FOI AO CLIENTE', ...ocultos.map((it) => `- ${it.rotulo}: ${it.corpo}`)] : []),
+    ...(materiais.length ? ['', 'MATERIAIS', ...materiais.map((m) => `- ${m.titulo}. ${m.cadeia.join(' ← ')}`)] : []),
     ...(orientacoes.length ? ['', 'ORIENTAÇÕES À LOJA', ...orientacoes.map((t) => `- ${t}`)] : []),
     '',
     ...(climaTexto ? [climaTexto, ''] : []),

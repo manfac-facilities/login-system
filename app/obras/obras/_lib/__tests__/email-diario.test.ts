@@ -1,4 +1,5 @@
 import { montarEmailDiario, type RdoCompleto } from '../email-diario'
+import type { AvisoMaterial } from '../material'
 import type { ImpedimentoRow, ObraGrande } from '../leitura'
 import type { ObraRow } from '../../../_lib/tipos'
 
@@ -311,5 +312,44 @@ describe('link "Ver a obra completa" no diário', () => {
     expect(i.html + i.texto).not.toContain('portal-obra')
     const base = { lado: 'cliente' as const, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z', diaN: 4, fotosCid: [] }
     expect(montarEmailDiario({ ...base, linkObra: null })).toEqual(montarEmailDiario(base))
+  })
+})
+
+describe('seção "Materiais" (material antecipado)', () => {
+  const avisos: AvisoMaterial[] = [
+    {
+      tipo: 'pedir', nivel: 'vermelho', atividade: 15, inicio: '2026-11-12', titulo: 'Pedir hoje: Brita 1 e pó de pedra',
+      cadeia: ['Atividade 15 começa 12/11/2026', 'Brita 1 e pó de pedra', 'Ainda sem solicitação no Compras'],
+      destino: 'compras', restricaoId: 'r15',
+    },
+  ]
+  const comMateriais = (lado: 'cliente' | 'interno', materiais?: AvisoMaterial[]) =>
+    montarEmailDiario({
+      lado, obra: obraGrande(), rdo: rdo(), validadoPor: 'x', validadoEm: '2026-10-29T21:40:00Z', diaN: 4, fotosCid: [], materiais,
+    })
+
+  it('interno com avisos: html e texto têm "Materiais", o título e a cadeia', () => {
+    const { html, texto } = comMateriais('interno', avisos)
+    for (const s of [html, texto]) {
+      expect(s).toMatch(/Materiais/i)
+      expect(s).toContain('Pedir hoje: Brita 1 e pó de pedra')
+    }
+    expect(texto).toContain('Atividade 15 começa 12/11/2026 ← Brita 1 e pó de pedra ← Ainda sem solicitação no Compras')
+  })
+
+  it('cliente com os mesmos avisos: nada de material', () => {
+    const { html, texto } = comMateriais('cliente', avisos)
+    for (const s of [html, texto]) {
+      expect(s).not.toMatch(/Materiais/i)
+      expect(s).not.toContain('Brita 1')
+      expect(s).not.toContain('R$')
+    }
+  })
+
+  it('interno sem avisos: sem a seção', () => {
+    for (const m of [[], undefined]) {
+      const { html, texto } = comMateriais('interno', m)
+      expect(html + texto).not.toMatch(/Materiais/i)
+    }
   })
 })

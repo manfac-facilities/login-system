@@ -22,6 +22,7 @@ jest.mock('../../impedimentos/_form', () => ({
 }))
 jest.mock('../../impedimentos/_lista', () => ({ __esModule: true, default: () => null }))
 jest.mock('../_seletor-data', () => ({ __esModule: true, default: () => null }))
+jest.mock('../_vem-ai', () => ({ __esModule: true, default: () => null }))
 jest.mock('next/link', () => ({ __esModule: true, default: ({ children }: { children: React.ReactNode }) => <a>{children}</a> }))
 
 function chain(): Record<string, unknown> {

@@ -51,7 +51,7 @@ export function pedirAte(inicio: string, p: PrazosCompras): string {
 }
 
 /** Dias de expediente depois de `de` até `ate` (inclusive). */
-function diasUteisEntre(de: string, ate: string, dias: readonly number[]): number {
+export function diasUteisEntre(de: string, ate: string, dias: readonly number[]): number {
   let n = 0
   for (let d = somarDias(de, 1); d <= ate; d = somarDias(d, 1)) if (ehExpediente(d, dias)) n++
   return n
@@ -131,7 +131,7 @@ export type AvisoMaterial = {
 }
 
 const ETAPA_TERMINADA_SEM_SUCESSO = ['cancelada', 'recusada']
-const ETAPA_ENTREGUE = ['atendida_estoque', 'concluida']
+export const ETAPA_ENTREGUE = ['atendida_estoque', 'concluida']
 // Rótulos reais do Compras (lib/solicitacoes/tipos.ts, ROTULO_ETAPA).
 const ROTULO_ETAPA: Record<string, string> = {
   decisao_estoque: 'Decisão de estoque',
@@ -144,7 +144,14 @@ const ROTULO_ETAPA: Record<string, string> = {
   falha_no_omie: 'Falha no Omie',
   pedido_emitido: 'Pedido emitido',
 }
-const rotuloEtapa = (e: string) => ROTULO_ETAPA[e] ?? e
+export const rotuloEtapa = (e: string) => ROTULO_ETAPA[e] ?? e
+
+/** A solicitação que vale para a restrição: a mais recente não cancelada/recusada (spec §4.4). */
+export function solicitacaoVigente(compras: CompraDaRestricao[] | undefined): CompraDaRestricao | undefined {
+  return (compras ?? [])
+    .filter((c) => !ETAPA_TERMINADA_SEM_SUCESSO.includes(c.etapa))
+    .sort((x, y) => (y.enviadoEm ?? '').localeCompare(x.enviadoEm ?? '') || y.solicitacaoNumero - x.solicitacaoNumero)[0]
+}
 
 export function avisosMaterial(p: {
   atividades: AtividadeCalculada[]
@@ -206,10 +213,7 @@ export function avisosMaterial(p: {
         continue
       }
 
-      const vivas = (p.compras.get(r.id) ?? [])
-        .filter((c) => !ETAPA_TERMINADA_SEM_SUCESSO.includes(c.etapa))
-        .sort((x, y) => (y.enviadoEm ?? '').localeCompare(x.enviadoEm ?? '') || y.solicitacaoNumero - x.solicitacaoNumero)
-      const sol = vivas[0]
+      const sol = solicitacaoVigente(p.compras.get(r.id))
 
       // Pedido manual antigo vale quando não há solicitação ligada pela origem.
       const pedidos = sol ? sol.pedidos : r.pedido ? [{ previsaoEntrega: r.pedido.previsaoEntrega, entregue: pedidoEntregue(r.pedido) }] : []

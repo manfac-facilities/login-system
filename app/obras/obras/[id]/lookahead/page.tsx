@@ -6,12 +6,14 @@ import { EstadoVazio } from '../../../_ui/primitivos'
 import { hojeISO } from '../../../_lib/tipos'
 import { codigosDeAtividades } from '../../_lib/cronograma'
 import { lookahead } from '../../_lib/last-planner'
-import { lerPedidosDaObra, lerRestricoes } from '../../_lib/leitura'
+import { lerComprasDasRestricoes, lerNaoPrecisa, lerPedidosDaObra, lerPrazosCompras, lerRestricoes } from '../../_lib/leitura'
+import { pedirAte } from '../../_lib/material'
+import type { Restricao } from '../../_lib/last-planner'
 import { lerObraDaRequisicao } from '../_obra-da-requisicao'
 import Quadro, { type CartaoRestricao } from './_quadro'
 import RestricaoForm from './_restricao-form'
 import PlanoDaSemana from './_plano'
-import { prontaParaLiberar, textoDatasPedido } from '../../_lib/restricao-pedido'
+import { DesfazerNaoPrecisa, TrilhaMaterial } from './_pedido'
 import { RESPONSAVEIS_RESTRICAO, agruparQuadro, rotuloResponsavelRestricao, rotuloTipo } from './_tipos'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +25,7 @@ export default async function LookaheadPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ aba?: string; semana?: string; semanas?: string; resp?: string; atrasadas?: string }>
+  searchParams: Promise<{ aba?: string; semana?: string; semanas?: string; resp?: string; atrasadas?: string; restricao?: string }>
 }) {
   const { id } = await params
   const sp = await searchParams
@@ -120,6 +122,55 @@ export default async function LookaheadPage({
   }
 
   const semanas = lookahead(calc.atividades, rr.restricoes, hoje, n, codigos)
+  // Material antecipado: respostas, compras e prazos (cliente da SESSÃO; qualquer leitura pode falhar).
+  const [naoPrecisa, compras, prazos] = await Promise.all([
+    lerNaoPrecisa(supabase, id),
+    lerComprasDasRestricoes(supabase, id),
+    lerPrazosCompras(supabase),
+  ])
+  const porNumero = new Map(calc.atividades.map((a) => [a.numero, a]))
+  const atividadeDe = (numero: number) => {
+    const a = porNumero.get(numero)
+    return a ? { numero, nome: a.descricao, inicio: a.inicioProjetado || a.inicioPrevisto } : null
+  }
+  const trilha = (x: Restricao, selecionada = false) => {
+    const a = atividadeDe(x.atividadeNumero)
+    return a ? (
+      <TrilhaMaterial
+        obraId={id}
+        restricao={x}
+        atividade={a}
+        compras={compras === null ? null : (compras.get(x.id) ?? [])}
+        hoje={hoje}
+        prazos={prazos}
+        selecionada={selecionada}
+      />
+    ) : null
+  }
+  // Selecionada pelo alerta do painel (`?restricao=`): aparece no topo, mesmo fora da janela.
+  const selecionada = sp.restricao ? rr.restricoes.find((x) => x.id === sp.restricao && x.tipo === 'material') : undefined
+  /** Material da atividade não iniciada: a restrição manda sobre o "não precisa". */
+  const linhaMaterial = (numero: number, inicio: string) => {
+    if (porNumero.get(numero)?.status !== 'nao_iniciado') return null
+    const mats = rr.restricoes.filter((x) => x.tipo === 'material' && x.atividadeNumero === numero)
+    const limite = `Pedir até ${dm(pedirAte(inicio, prazos))}`
+    if (mats.length) {
+      // As abertas aparecem com a trilha logo abaixo; aqui só as já liberadas.
+      const liberadas = mats.filter((x) => x.situacao === 'liberada')
+      return liberadas.length ? <p className="text-xs text-[#5a7380]">Material liberado: {liberadas.map((x) => x.descricao).join('; ')}</p> : null
+    }
+    if (naoPrecisa === null) return null
+    if (naoPrecisa.has(numero)) {
+      return (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#5a7380]">
+          <span>Material: não precisa</span>
+          <DesfazerNaoPrecisa obraId={id} numero={numero} />
+        </div>
+      )
+    }
+    return <p className="obra-num text-xs text-[#5a7380]">{`Material: sem resposta · ${limite}`}</p>
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {abas}
@@ -129,6 +180,14 @@ export default async function LookaheadPage({
           <Link key={x} href={`${base}?semanas=${x}`} className={chip(n === x)}>{x}</Link>
         ))}
       </nav>
+      {selecionada ? (
+        <section aria-label="Restrição selecionada" className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-[#00345e]">
+            Restrição de material · atividade {`${codigos.get(selecionada.atividadeNumero) ?? ''} ${porNumero.get(selecionada.atividadeNumero)?.descricao ?? ''}`.trim()}
+          </h3>
+          {trilha(selecionada, true)}
+        </section>
+      ) : null}
       {semanas.map((s, i) => (
         <section key={s.segunda} className="flex flex-col gap-2">
           <h3 className="text-sm font-semibold text-[#00345e]">
@@ -144,20 +203,18 @@ export default async function LookaheadPage({
                   <p className="text-xs text-[#5a7380]">
                     {dm(it.inicio)} a {dm(it.termino)}
                   </p>
+                  {linhaMaterial(it.numero, it.inicio)}
                   {it.restricoesAbertas.length ? (
                     <ul className="mt-1 flex flex-col gap-1">
-                      {it.restricoesAbertas.map((x) => (
-                        <li key={x.id} className="text-xs text-[#b23232]">
-                          {rotuloTipo(x.tipo)} ({rotuloResponsavelRestricao(x.responsavel)}): {x.descricao}
-                          {x.pedido ? <span className="text-[#5a7380]"> · {textoDatasPedido(x.pedido)}</span> : null}
-                          {prontaParaLiberar(x) ? <span className="ml-1 rounded-full border border-[#136c38] px-1.5 text-[#136c38]">Pronta para liberar</span> : null}
-                          {x.tipo === 'material' ? (
-                            <a href={`/compras/solicitacoes/nova?obra=${id}`} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex min-h-11 items-center font-medium text-[#b94606] underline">
-                              Pedir material
-                            </a>
-                          ) : null}
-                        </li>
-                      ))}
+                      {it.restricoesAbertas.map((x) =>
+                        x.tipo === 'material' ? (
+                          <li key={x.id}>{trilha(x)}</li>
+                        ) : (
+                          <li key={x.id} className="text-xs text-[#b23232]">
+                            {rotuloTipo(x.tipo)} ({rotuloResponsavelRestricao(x.responsavel)}): {x.descricao}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   ) : null}
                 </div>

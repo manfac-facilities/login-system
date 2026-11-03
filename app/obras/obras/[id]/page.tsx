@@ -6,7 +6,7 @@ import { hojeISO } from '../../_lib/tipos'
 import { lerObraDaRequisicao } from './_obra-da-requisicao'
 import { podeVerValoresDaRequisicao } from './_pode-ver-valores'
 import { lerAlertasFinanceiros } from './_alertas-financeiros'
-import { lerPlanos, lerRestricoes } from '../_lib/leitura'
+import { lerAvisosMaterial, lerPlanos, lerRestricoes } from '../_lib/leitura'
 import { calcularAlertas } from '../_lib/alertas'
 import { itensDeLocacao } from './financeiro/locacoes/_tipos'
 import { lerAgenda } from '../_lib/envios-agenda'
@@ -67,6 +67,11 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
   }
   const estado = (rdoR.data?.estado as EstadoDiario | undefined) ?? 'nao_iniciado'
   const ultimoEnvio = envioR.ultimo.get(id) ?? null
+  // Material antecipado: sem as restrições lidas não há aviso (seria "sem resposta" falso).
+  const material =
+    restR.ok && r.dados.calc
+      ? await lerAvisosMaterial(supabase, id, { atividades: r.dados.calc.atividades, restricoes: restR.restricoes, hoje })
+      : null
   // Alertas (Leva 3 §2.4): leitura que falhou não vira alerta falso — a agenda (null) só some os alertas de comunicação.
   const alertas = calcularAlertas({
     obraId: id,
@@ -78,6 +83,7 @@ export default async function PainelDaObraPage({ params }: { params: Promise<{ i
     feriados: r.dados.feriados,
     medicoesCliente: finA.medicoesCliente,
     medicoesFornecedor: finA.medicoesFornecedor,
+    material,
   })
 
   // Analista da obra (Leva 5 §7): só com planos e restrições lidos (leitura que falhou não vira pergunta falsa).

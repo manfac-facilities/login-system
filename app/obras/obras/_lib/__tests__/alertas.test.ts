@@ -3,6 +3,7 @@ import type { ItemAgenda } from '../agenda'
 import { calcularAlertas, hrefDoItem } from '../alertas'
 import type { AtividadeCalculada, ResultadoCronograma } from '../cronograma'
 import type { Restricao } from '../last-planner'
+import type { AvisoMaterial } from '../material'
 
 const ativ = (numero: number, situacao: AtividadeCalculada['situacao']) => ({ numero, situacao }) as AtividadeCalculada
 const calc = (desvioPP: number, atividades: AtividadeCalculada[] = []): ResultadoCronograma => ({
@@ -19,7 +20,7 @@ const item = (tipo: ItemAgenda['tipo'], referencia: string, dataPrevista: string
 const base = {
   obraId: 'o1', hoje: '2026-10-28', calc: calc(0, [ativ(9, 'no_prazo')]), agenda: [] as ItemAgenda[] | null, restricoes: [] as Restricao[],
 }
-const ids = (p: Partial<typeof base>) => calcularAlertas({ ...base, ...p }).map((a) => a.id)
+const ids = (p: Partial<typeof base> & { material?: AvisoMaterial[] | null }) => calcularAlertas({ ...base, ...p }).map((a) => a.id)
 
 describe('calcularAlertas', () => {
   it('obra em dia: nenhum alerta', () => {
@@ -112,5 +113,50 @@ describe('calcularAlertas — medições > 10 dias (Fases B/C §2.4)', () => {
     expect(v.find((x) => x.id === 'medicao_fornecedor')!.texto).toBe('2 medições de fornecedor há mais de 10 dias em aprovação, a mais antiga há 20 dias')
     expect(ids({ medicoesFornecedor: null } as never)).toEqual([])
     expect(ids({ medicoesFornecedor: [] } as never)).toEqual([])
+  })
+})
+
+describe('calcularAlertas — material antecipado', () => {
+  const aviso = (over: Partial<AvisoMaterial>): AvisoMaterial => ({
+    tipo: 'nao_chega', nivel: 'vermelho', atividade: 14, inicio: '2026-11-06',
+    titulo: 'Material chega 3 dia(s) útil(eis) depois do início',
+    cadeia: ['Atividade 14 começa 06/11/2026', 'Aço CA-50', 'Solicitação #398: previsão 11/11/2026'],
+    destino: 'lookahead', restricaoId: 'r14', ...over,
+  })
+
+  it('nao_chega → alerta material negativo com a cadeia e "Ver restrição" no Lookahead', () => {
+    const a = calcularAlertas({ ...base, material: [aviso({})] })
+    expect(a).toHaveLength(1)
+    expect(a[0]).toMatchObject({
+      id: 'material', tom: 'negativo',
+      acao: { rotulo: 'Ver restrição', href: '/obras/obras/o1/lookahead?restricao=r14' },
+    })
+    expect(a[0].texto).toContain('Material chega 3 dia(s) útil(eis) depois do início')
+    expect(a[0].texto).toContain('Atividade 14 começa 06/11/2026 ← Aço CA-50 ← Solicitação #398: previsão 11/11/2026')
+  })
+
+  it('amarelo → atenção; diário → "Responder"; compras → link do Compras em nova aba', () => {
+    const r = restricao({ id: 'r15', atividadeNumero: 15, tipo: 'material', descricao: 'Brita 1', responsavel: 'manfac' })
+    const a = calcularAlertas({
+      ...base,
+      calc: calc(0, [{ ...ativ(15, 'no_prazo'), descricao: 'Base de brita', inicioPrevisto: '2026-11-12', inicioProjetado: '' } as AtividadeCalculada]),
+      restricoes: [r],
+      material: [
+        aviso({ tipo: 'sem_resposta', destino: 'diario', restricaoId: null, atividade: 16 }),
+        aviso({ tipo: 'pedir', nivel: 'amarelo', destino: 'compras', restricaoId: 'r15', atividade: 15, titulo: 'Pedir até 05/11: Brita 1' }),
+      ],
+    })
+    const m = a.filter((x) => x.id === 'material')
+    expect(m[0]).toMatchObject({ tom: 'negativo', acao: { rotulo: 'Responder', href: '/obras/obras/o1/diario' } })
+    expect(m[1].tom).toBe('atencao')
+    expect(m[1].acao.rotulo).toBe('Pedir no Compras')
+    expect(m[1].acao.externo).toBe(true)
+    expect(m[1].acao.href).toContain('/compras/solicitacoes/nova?obra=o1&tipo=material')
+    expect(m[1].acao.href).toContain('restricao=r15')
+  })
+
+  it('material null ou ausente: nenhum alerta de material', () => {
+    expect(ids({ material: null })).toEqual([])
+    expect(ids({})).toEqual([])
   })
 })

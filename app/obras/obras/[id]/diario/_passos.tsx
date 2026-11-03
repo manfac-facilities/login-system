@@ -325,6 +325,7 @@ export default function PassosDiario({
   impedimentosHoje = 0,
   validacao,
   mapa = null,
+  vemAi,
 }: {
   obraId: string
   data: string
@@ -345,6 +346,8 @@ export default function PassosDiario({
   validacao?: { previaHtml: string | null; pendentes: number | null }
   /** Leva 6: mapa da obra para a ronda de fotos; null = obra sem mapa (diário de sempre). */
   mapa?: MapaDiario | null
+  /** Material antecipado: passo "Vem aí" (opcional, não bloqueia o envio); ausente = sem o passo. */
+  vemAi?: ReactNode
 }) {
   // Itens do plano da semana que não estão na lista do dia entram já na lista (mesmo caminho do "Incluir").
   const doPlanoForaDaLista =
@@ -606,6 +609,19 @@ export default function PassosDiario({
           />
         </label>
       </Passo>
+
+      {vemAi ? (
+        <Passo
+          n={6}
+          titulo="Vem aí"
+          resumo="material das próximas 4 semanas · opcional"
+          feito={false}
+          aberto={aberto === 6}
+          onToggle={() => alternar(6)}
+        >
+          {vemAi}
+        </Passo>
+      ) : null}
 
       {erro ? (
         <p role="alert" className="rounded-lg border border-[#b23232] bg-[#d645451a] px-3 py-2 text-sm text-[#b23232]">

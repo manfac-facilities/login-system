@@ -10,7 +10,11 @@ import type { PontoHist } from './curvas'
 import type { PlanoSemana, Restricao } from './last-planner'
 import { pedidoDeLinha, type PedidoDaRestricao } from './restricao-pedido'
 import { CAUSA, type CausaRdo } from './causas'
-import { PRAZOS_PADRAO_COMPRAS, comprasDeLinhas, prazosDeLinha, type CompraDaRestricao, type PrazosCompras } from './material'
+import {
+  PRAZOS_PADRAO_COMPRAS, avisosMaterial, comprasDeLinhas, prazosDeLinha,
+  type AvisoMaterial, type CompraDaRestricao, type PrazosCompras,
+} from './material'
+import type { AtividadeCalculada } from './cronograma'
 import {
   atrasoPorResponsavel,
   calcularCronograma,
@@ -394,6 +398,25 @@ export async function lerNaoPrecisa(supabase: SupabaseClient, obraId: string): P
   const { data, error } = await supabase.from('obras_material_resposta').select('atividade_numero').eq('obra_id', obraId)
   if (error) return null
   return new Set(((data ?? []) as Linha[]).map((l) => Number(l.atividade_numero)))
+}
+
+/**
+ * Avisos de material da obra (painel e e-mail interno). As restrições já lidas entram por parâmetro.
+ * Respostas não lidas → sem os avisos "sem resposta" (nunca aviso falso); os da restrição seguem.
+ * Compras não lido → `avisosMaterial` já omite o que dependia dele.
+ */
+export async function lerAvisosMaterial(
+  supabase: SupabaseClient,
+  obraId: string,
+  p: { atividades: AtividadeCalculada[]; restricoes: Restricao[]; hoje: string },
+): Promise<AvisoMaterial[]> {
+  const [naoPrecisa, compras, prazos] = await Promise.all([
+    lerNaoPrecisa(supabase, obraId),
+    lerComprasDasRestricoes(supabase, obraId),
+    lerPrazosCompras(supabase),
+  ])
+  const avisos = avisosMaterial({ ...p, naoPrecisa: naoPrecisa ?? new Set(), compras, prazos })
+  return naoPrecisa === null ? avisos.filter((a) => a.tipo !== 'sem_resposta') : avisos
 }
 
 export async function lerRestricoes(
