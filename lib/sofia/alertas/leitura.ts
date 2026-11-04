@@ -3,6 +3,7 @@
  * segredo; não há usuário logado). Qualquer erro de leitura propaga — a rota manda o aviso de falha.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { buscarTudo } from '../bases/leitura'
 import { diaUtilAnterior, type EntradaAlertas } from './blocos'
 
 /** Data de hoje em Brasília, AAAA-MM-DD. */
@@ -28,9 +29,9 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
       admin.from('motoristas').select('id, nome, cnh_vencimento, equipe_id, ativo'),
       'motoristas'
     ),
-    ler<EntradaAlertas['revisoes'][number]>(
-      admin.from('revisoes').select('id, veiculo_id, tipo, km_realizada, data_realizada, proxima_data, proxima_km, prever_proxima, created_at'),
-      'revisoes'
+    // pagina: a tabela passa de 1.000 linhas e o corte do PostgREST esconderia a revisão vigente
+    buscarTudo<EntradaAlertas['revisoes'][number]>((a, b) =>
+      admin.from('revisoes').select('id, veiculo_id, tipo, km_realizada, data_realizada, proxima_data, proxima_km, prever_proxima, created_at').order('id').range(a, b)
     ),
     ler<EntradaAlertas['documentos'][number]>(admin.from('documentos_veiculo').select('veiculo_id, tipo, vencimento'), 'documentos_veiculo'),
     ler<{
