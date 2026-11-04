@@ -153,3 +153,60 @@ e o chip "corrigido"/"era X km" leem dali (`lib/sofia/correcoes.ts`, `getCorreco
 **Mensagem pós-ação pela URL:** só id + código fixo (`?corrigido=<veiculo_id>&aviso=registro`,
 `?editada=<equipe_id>`, `?corrigido=1`); o texto e os números são relidos do banco. Nunca
 renderizar texto livre de `searchParams` — link forjado mostraria mensagem falsa dentro do sistema.
+
+## Terceira bateria (03/11/2026) — revisão, manutenção, multa por etapa, fotos
+
+Specs: `docs/superpowers/specs/2026-11-03-frotas-manutencao-e-bases-design.md` e
+`...-frotas-multa-fotos-checklist-design.md`; decisões do João em
+`docs/frotas/2026-11-03-decisoes-terceira-bateria.md`. Código na branch
+`feat/frotas-terceira-integracao`. **Estado: `sdd-sql-sofia-manutencao.sql` e
+`sdd-sql-sofia-multa-avaria.sql` NÃO APLICADOS em 04/11 madrugada** — aplicar (cada um com o seu
+`-teste.sql`) **imediatamente antes do deploy**; o app novo lê colunas e chama RPCs que só existem
+depois deles. O de multa/avaria também troca 4 policies de storage.
+
+### Revisão (`lib/sofia/revisaoPrevisao.ts`)
+
+- **Revisão vigente = a de maior `km_realizada` do carro, de qualquer tipo** (empate: data, depois
+  `created_at`). Não é "a última lançada".
+- Intervalo: 10.000 km global; `veiculos.intervalo_revisao_km` (1.000–100.000, opcional) vale por carro.
+- `revisoes.prever_proxima` (false = sem previsão; as corretivas antigas viraram false) e
+  `revisoes.origem` (`manual` | `importacao`). Importação de planilha grava `origem = 'importacao'`.
+
+### Manutenção corretiva (`manutencoes`)
+
+- RLS: ler = `sofia_has_access()`; inserir/atualizar = `sofia_pode_gerir()`. **UPDATE só por coluna**
+  (grant): `veiculo_id`, `criado_por`, `tirou_da_equipe`, `data_entrada`, `created_at` são congelados.
+  **Ninguém apaga** (sem policy nem grant de DELETE).
+- Escrita pelas RPCs `sofia_abrir_manutencao` / `sofia_concluir_manutencao` (security **invoker**,
+  guarda `sofia_pode_gerir() is not true`, auditoria em `audit_log.dados` na mesma transação).
+
+### Multa por `etapa` — `multas.status` e `autorizacao_status` são derivados
+
+- Fluxo: `registrada → condutor → termo → indicado → validada|contestada → cobrada → solicitado →
+  autorizado → descontada`. `status`, `autorizacao_status`, `valor_descontado`, `tipo_desconto` e
+  `desconto_competencia` **não se escrevem direto**; a trigger `trg_multas_etapa` recusa.
+- **Escrita só pela RPC `sofia_multa_registrar_etapa`**; histórico em `multa_etapas` (sem UPDATE/DELETE).
+  Action antiga que fazia `update` de status/autorização quebra — migre para a RPC.
+- **Só admin autoriza e revoga** (`autorizado`); gestor não pula para `descontada`. A partir de
+  `solicitado`, valor/motorista/veículo/data da multa ficam **congelados** (cancele a solicitação antes).
+  `contestada` é final.
+- **`multas` tem 2 FKs para `motoristas`: sempre `motoristas!motorista_id(...)`** no select. Há teste que
+  varre o repo (`checklist/__tests__/page.select.test.ts`, `descontos/__tests__/page.embed.test.ts`);
+  `checklist` tem o mesmo problema com equipes e motoristas.
+
+### Fotos, checklist e avaria
+
+- **Foto salva é imutável**: UPDATE/DELETE em `checklist_fotos` e `sinistro_fotos` falham para todos, admin
+  incluso; os buckets não têm policy de UPDATE/DELETE.
+- **Excluir checklist ou sinistro inteiro: só admin** (`sofia_is_admin() is not true` bloqueia), grava em
+  `audit_log` e a cascata leva fotos e `checklist_avarias`. Gestor não exclui.
+- `checklist_avarias` (peça, tamanho, ação, `status` aberta/reparada, `avaria_origem_id`): só INSERT e baixa
+  (marcar reparada); sem DELETE.
+- Teto de **30 fotos** por checklist e por sinistro, conferido na tela e na action (não no banco).
+- Buckets `checklist-fotos` e `sofia-anexos`: policies exigem `sofia_has_access()`, não só login.
+
+### Pendências (`lib/sofia/pendencias.ts`)
+
+- Multas ganham grupo **"Aguardando terceiros"** (`solicitado`, `autorizado`): status `em_andamento`, nunca
+  atrasada. Etapas anteriores são "a fazer".
+- **O prazo da pendência de multa é `prazo_indicacao`** (recebimento + 30, editável), não a data da multa.
