@@ -133,8 +133,12 @@ export default function BaseTabela(props: Props) {
     return () => window.removeEventListener('keydown', h)
   }, [abertaId])
 
-  const muda = (parcial: Partial<FiltrosBase>) => { setF({ ...f, ...parcial }); setPagina(1) }
+  // Seleção em massa só vale para o que está na tela: qualquer mudança de filtro, busca, ordem ou página a zera.
+  const limpaSelecao = () => { if (props.selecao?.marcados.length) props.selecao.onChange([]) }
+  const irParaPagina = (n: number) => { limpaSelecao(); setPagina(n) }
+  const muda = (parcial: Partial<FiltrosBase>) => { limpaSelecao(); setF({ ...f, ...parcial }); setPagina(1) }
   const clica = (k: string) => {
+    limpaSelecao()
     setOrdem(ordem?.k === k ? { k, dir: ordem.dir === 1 ? -1 : 1 } : { k, dir: 1 })
     setPagina(1)
   }
@@ -247,7 +251,7 @@ export default function BaseTabela(props: Props) {
             <div className="rounded-xl border border-dashed border-[#1e3a5f] px-4 py-12 text-center text-[#94a3b8]">
               <p className="mb-1">Nenhum resultado com estes filtros.</p>
               <p className="mb-4 text-sm text-[#4a6080]">{descreverFiltros(base, f)}</p>
-              <button type="button" className={`${BTN} border border-[#1e3a5f] hover:border-[#94a3b8]`} onClick={() => { setF({ ...FILTROS_VAZIOS }); setPagina(1) }}>
+              <button type="button" className={`${BTN} border border-[#1e3a5f] hover:border-[#94a3b8]`} onClick={() => { limpaSelecao(); setF({ ...FILTROS_VAZIOS }); setPagina(1) }}>
                 Limpar filtros
               </button>
             </div>
@@ -328,9 +332,9 @@ export default function BaseTabela(props: Props) {
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#4a6080]">
                 <span>Mostrando {pag.de}–{pag.ate} de {filtradas.length.toLocaleString('pt-BR')} · {descreverFiltros(base, f)}</span>
                 <span className="flex gap-2">
-                  <button type="button" disabled={pag.pagina <= 1} onClick={() => setPagina(pag.pagina - 1)} className="rounded-lg border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:border-[#94a3b8] disabled:opacity-40">‹</button>
+                  <button type="button" disabled={pag.pagina <= 1} onClick={() => irParaPagina(pag.pagina - 1)} className="rounded-lg border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:border-[#94a3b8] disabled:opacity-40">‹</button>
                   <span className="px-2 py-1.5">{pag.pagina} / {pag.totalPaginas}</span>
-                  <button type="button" disabled={pag.pagina >= pag.totalPaginas} onClick={() => setPagina(pag.pagina + 1)} className="rounded-lg border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:border-[#94a3b8] disabled:opacity-40">›</button>
+                  <button type="button" disabled={pag.pagina >= pag.totalPaginas} onClick={() => irParaPagina(pag.pagina + 1)} className="rounded-lg border border-[#1e3a5f] px-3 py-1.5 text-[#94a3b8] hover:border-[#94a3b8] disabled:opacity-40">›</button>
                 </span>
               </div>
             </>

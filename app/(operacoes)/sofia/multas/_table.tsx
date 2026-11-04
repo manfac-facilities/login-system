@@ -2,7 +2,7 @@
 
 /**
  * Multas em tabela (BaseTabela base="multa"). Mesmas actions de antes: exclusão unitária
- * (excluirMultaAction) e em massa só da página visível (excluirMultasEmMassaAction, RPC que confere
+ * (excluirMultaAction) e em massa só do que está na tela (a seleção é zerada ao mudar filtro, busca, ordem ou página) (excluirMultasEmMassaAction, RPC que confere
  * o gestor). Etapa, desconto e autorização só mudam no fluxo da multa (/sofia/multas/[id]).
  */
 import { useState, useTransition } from 'react'
