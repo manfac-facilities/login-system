@@ -5,3 +5,7 @@ Repassado pelo João no chat em 04/11/2026, manhã, logo depois do deploy (build
 > o cliente falou: mano ja vi aqui que algumas coisas nao mudaram
 > com quem ta a medição? nao aparece
 > a gente clica ali em fila de aprovação e só ve la, mas com quem ta ? nao da pra saber...
+
+Logo em seguida, o João (literal):
+
+> Tira esse negocio de homologação também, o proprio sistema pode fazer essa homologação no Omie
