@@ -1,9 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import type { Multa, Sinistro, KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
+import type { Sinistro, KmExcedidoDesconto, AutorizacaoStatus } from '@/lib/sofia/types'
 import {
-  atualizarStatusMultaAction,
-  registrarDescontoMultaAction,
-  desfazerDescontoMultaAction,
   atualizarStatusDescontoSinistroAction,
   registrarDescontoSinistroAction,
   desfazerDescontoSinistroAction,
@@ -13,6 +10,8 @@ import { atualizarAutorizacaoSinistroAction } from '../sinistros/_actions'
 import { atualizarAutorizacaoKmExcedidoAction } from '../km/_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import { ehEtapaMulta, infoEtapa, type MultaComEtapa } from '@/lib/sofia/multaEtapas'
+import { DescontoMulta } from './_multa-acoes'
 
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro' | 'km_excedido'
@@ -29,6 +28,8 @@ type LinhaDesconto = {
   autorizacao_solicitado_em: string | null
   km_contratual?: number
   km_realizado?: number
+  /** só multa: etapa do fluxo (spec 2026-11-03); null antes do SQL aplicado */
+  etapa?: string | null
 }
 
 const statusStyle: Record<string, string> = {
@@ -53,7 +54,7 @@ export default async function DescontosPage() {
   ])
 
   const linhasMultas: LinhaDesconto[] = (multas ?? []).map(
-    (m: Multa & { veiculos: { placa: string } | null; motoristas: { nome: string } | null }) => ({
+    (m: MultaComEtapa & { veiculos: { placa: string } | null; motoristas: { nome: string } | null }) => ({
       origem: 'multa',
       id: m.id,
       data: m.data,
@@ -66,6 +67,7 @@ export default async function DescontosPage() {
       autorizacao_assinada: m.autorizacao_assinada,
       autorizacao_status: m.autorizacao_status,
       autorizacao_solicitado_em: m.autorizacao_solicitado_em,
+      etapa: ehEtapaMulta(m.etapa) ? m.etapa : null,
     })
   )
 
@@ -132,12 +134,9 @@ export default async function DescontosPage() {
           </thead>
           <tbody>
             {linhas.map((l) => {
-              const avancarAction =
-                l.origem === 'multa' ? atualizarStatusMultaAction : atualizarStatusDescontoSinistroAction
-              const registrarAction =
-                l.origem === 'multa' ? registrarDescontoMultaAction : registrarDescontoSinistroAction
-              const desfazerAction =
-                l.origem === 'multa' ? desfazerDescontoMultaAction : desfazerDescontoSinistroAction
+              const avancarAction = atualizarStatusDescontoSinistroAction
+              const registrarAction = registrarDescontoSinistroAction
+              const desfazerAction = desfazerDescontoSinistroAction
 
               const autorizacaoAction =
                 l.origem === 'multa'
@@ -183,23 +182,34 @@ export default async function DescontosPage() {
                         {l.status}
                       </span>
                     )}
+                    {l.origem === 'multa' && l.etapa && ehEtapaMulta(l.etapa) && (
+                      <p className="mt-1 text-xs text-[#94a3b8]">{infoEtapa(l.etapa).rotulo}</p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {podeGerir && l.origem !== 'km_excedido' && proximoStatus[l.status] && (
+                    {podeGerir && l.origem === 'multa' && (
+                      <DescontoMulta
+                        id={l.id}
+                        etapa={l.etapa ?? null}
+                        valorDescontado={l.valor_descontado}
+                        tipoDesconto={l.tipo_desconto}
+                      />
+                    )}
+                    {podeGerir && l.origem === 'sinistro' && proximoStatus[l.status] && (
                       <form action={avancarAction.bind(null, l.id, proximoStatus[l.status])}>
                         <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           → {proximoStatus[l.status]}
                         </button>
                       </form>
                     )}
-                    {podeGerir && l.origem !== 'km_excedido' && l.status === 'descontada' && (
+                    {podeGerir && l.origem === 'sinistro' && l.status === 'descontada' && (
                       <form action={desfazerAction.bind(null, l.id)} className="mt-1">
                         <button type="submit" className="text-xs text-[#4a6080] hover:text-[#94a3b8] active:scale-95 transition-[color,transform]">
                           desfazer desconto
                         </button>
                       </form>
                     )}
-                    {podeGerir && l.origem !== 'km_excedido' && l.status === 'validada' && (
+                    {podeGerir && l.origem === 'sinistro' && l.status === 'validada' && (
                       <details className="mt-1">
                         <summary className="text-xs text-[#f05a28] cursor-pointer hover:underline">desconto</summary>
                         <form
