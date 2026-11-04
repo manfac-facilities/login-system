@@ -330,7 +330,7 @@ pergunta "precisa de material?" antes de o prazo de pedir passar; "precisa" vira
   andamento; sem o app do Compras o link funciona como hoje.
 - **Estado:** construído e revisado; SQL **NÃO APLICADO** e nada no ar (ver `.claude/rules/sql.md`).
 
-### Visão do CEO (branch `feat/obras-visao-ceo`, 04/11/2026)
+### Visão do CEO (no ar desde 04/11/2026)
 
 - **Spec:** `docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md`.
 - **Onde fica:** página `app/obras/obras/visao-ceo/` (`_permissao.ts`, `_tela.tsx`); regras puras em `_lib/carteira.ts`; leitura
