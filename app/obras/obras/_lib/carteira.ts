@@ -25,6 +25,8 @@ export type DinheiroCarteira =
       ok: true; valor: number | null
       /** Faturado das OS com valor receita (mesma base de `percentuais.faturado` da aba); sem nenhuma OS com valor, o total. */
       faturado: number
+      /** Faturado de todas as OS — o mesmo R$ do KPI "Faturado" da aba Financeiro (total.receitaRealizada). */
+      faturadoTotal: number
       /** % faturado da aba Financeiro (0–100), o mesmo número. */
       faturadoPct: number | null
       aFaturar: number | null; acimaDoValor: boolean
@@ -251,6 +253,7 @@ export function dinheiroDaCarteira(l: LeituraFinanceiro): DinheiroCarteira {
     ok: true,
     valor,
     faturado,
+    faturadoTotal: t.receitaRealizada,
     faturadoPct: r.percentuais.faturado,
     aFaturar: valor === null ? null : Math.max(0, valor - faturado),
     acimaDoValor: valor !== null && faturado > valor,
@@ -335,17 +338,18 @@ export function excecoesDoDia(obras: ObraCarteira[]): Excecao[] {
 
 export function resumoCarteira(obras: ObraCarteira[]): {
   porSinal: Record<'vermelho' | 'amarelo' | 'verde' | 'sem', number>; faturando: number
-  faturado: number; aFaturar: number; valor: number; custoRealizado: number; foraDasSomas: number; semValor: number
+  faturado: number; aFaturar: number; valor: number; custoRealizado: number; foraDasSomas: number; semValor: number; valorIncompleto: number
 } {
-  const r = { porSinal: { vermelho: 0, amarelo: 0, verde: 0, sem: 0 }, faturando: 0, faturado: 0, aFaturar: 0, valor: 0, custoRealizado: 0, foraDasSomas: 0, semValor: 0 }
+  const r = { porSinal: { vermelho: 0, amarelo: 0, verde: 0, sem: 0 }, faturando: 0, faturado: 0, aFaturar: 0, valor: 0, custoRealizado: 0, foraDasSomas: 0, semValor: 0, valorIncompleto: 0 }
   for (const o of obras) {
     // O quadro "Como estão as obras" conta as em andamento; as faturando têm contagem própria.
     if (o.estado.tipo === 'faturando') r.faturando++
     else r.porSinal[o.estado.tipo === 'sem_cronograma' ? 'sem' : (o.sinal ?? 'sem')]++
     if (!o.dinheiro.ok) { r.foraDasSomas++; continue }
     r.custoRealizado += o.dinheiro.custoRealizado
-    // Sem valor informado (ou incompleto, com OS sem valor) não dá para comparar faturado × valor: fica fora das três somas.
-    if (o.dinheiro.valor === null || o.dinheiro.osSemValor > 0) { r.semValor++; continue }
+    // Sem valor informado, ou incompleto (com OS sem valor), não dá para comparar faturado × valor: fica fora das três somas.
+    if (o.dinheiro.valor === null) { r.semValor++; continue }
+    if (o.dinheiro.osSemValor > 0) { r.valorIncompleto++; continue }
     r.faturado += o.dinheiro.faturado
     r.aFaturar += o.dinheiro.aFaturar ?? 0
     r.valor += o.dinheiro.valor

@@ -31,7 +31,7 @@ const trava = (o: Partial<Trava>): Trava =>
   ({ origem: 'restricao', descricao: 'T', tipo: 'projeto', quem: 'cliente', desde: '2026-10-20', prazo: null, vencida: false, ...o })
 
 const dinheiroOk = (o: Partial<Extract<DinheiroCarteira, { ok: true }>> = {}): DinheiroCarteira =>
-  ({ ok: true, valor: 1000, faturado: 400, faturadoPct: 40, aFaturar: 600, acimaDoValor: false, osSemValor: 0, notas: 1, custoRealizado: 100, custoComprometido: 50, margemPct: 10, ...o })
+  ({ ok: true, valor: 1000, faturado: 400, faturadoTotal: 400, faturadoPct: 40, aFaturar: 600, acimaDoValor: false, osSemValor: 0, notas: 1, custoRealizado: 100, custoComprometido: 50, margemPct: 10, ...o })
 const obra = (o: Partial<ObraCarteira>): ObraCarteira => ({
   id: 'x', os: null, loja: 'L', engenheiro: null, sinal: 'verde', estado: { tipo: 'andando', comAtraso: false },
   realizado: null, previsto: null, terminoBase: null, terminoProjetado: null, desvioDiasUteis: null,
@@ -295,6 +295,9 @@ describe('dinheiroDaCarteira', () => {
     expect(d).toMatchObject({ ok: true, valor: 100_000, faturado: 40_000, aFaturar: 60_000, acimaDoValor: false, osSemValor: 1, notas: 2 })
     if (!d.ok) throw new Error('ok')
     expect(d.faturadoPct).toBe(l.fin.resumo.dados.percentuais.faturado)
+    // O R$ do detalhe é o do KPI da aba: soma também o aditivo sem valor.
+    expect(d.faturadoTotal).toBe(l.fin.resumo.dados.total.receitaRealizada)
+    expect(d.faturadoTotal).toBe(110_000)
     expect(ficaNaCarteira({ estado: { tipo: 'faturando' }, dinheiro: { ...d, aFaturar: 0 } })).toBe(true)
   })
   it('OS cancelada com nota não entra no faturado da obra (como na aba)', () => {
@@ -419,11 +422,11 @@ describe('resumoCarteira', () => {
     expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 1, foraDasSomas: 0 })
   })
 
-  it('obra com OS sem valor (valor incompleto): tratada como sem valor', () => {
+  it('obra com OS sem valor (valor incompleto): fora das somas, contada à parte de semValor', () => {
     const r = resumoCarteira([
       obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, osSemValor: 2, custoRealizado: 30 }) }),
       obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, custoRealizado: 20 }) }),
     ])
-    expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 1, foraDasSomas: 0 })
+    expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 0, valorIncompleto: 1, foraDasSomas: 0 })
   })
 })

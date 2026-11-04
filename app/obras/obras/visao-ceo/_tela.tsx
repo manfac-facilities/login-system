@@ -253,7 +253,7 @@ function Detalhe({ o }: { o: ObraCarteira }) {
               {d.valor !== null && d.osSemValor > 0 ? (
                 <dd className="col-span-2 text-right text-[12px] font-medium text-(--obra-orange-texto)">{incompleto(d.osSemValor)}</dd>
               ) : null}
-              {linha(`Faturado (${plural(d.notas, 'nota', 'notas')})`, brl(d.faturado))}
+              {linha(`Faturado (${plural(d.notas, 'nota', 'notas')})`, brl(d.faturadoTotal))}
               {linha('A faturar', d.acimaDoValor ? 'faturado acima do valor' : d.aFaturar === null ? '—' : brl(d.aFaturar), true)}
               {linha('Custo realizado', brl(d.custoRealizado))}
               {linha('Custo comprometido', brl(d.custoComprometido))}
@@ -447,7 +447,7 @@ export default function TelaVisaoCeo({ obras, hoje, lidoEm }: { obras: ObraCarte
         </Quadro>
 
         <Quadro titulo="Faturamento da carteira">
-          {somadas - resumo.semValor === 0 ? (
+          {somadas - resumo.semValor - resumo.valorIncompleto === 0 ? (
             <p className="text-[13px] text-(--obra-muted-texto)">Nenhuma obra com valores disponíveis.</p>
           ) : (
             <>
@@ -464,6 +464,9 @@ export default function TelaVisaoCeo({ obras, hoje, lidoEm }: { obras: ObraCarte
           )}
           {resumo.semValor > 0 ? (
             <p className="text-[12px] text-(--obra-muted-texto)">{plural(resumo.semValor, 'obra sem valor informado', 'obras sem valor informado')}</p>
+          ) : null}
+          {resumo.valorIncompleto > 0 ? (
+            <p className="text-[12px] text-(--obra-muted-texto)">{plural(resumo.valorIncompleto, 'obra com valor incompleto', 'obras com valor incompleto')}</p>
           ) : null}
           {fora}
         </Quadro>
