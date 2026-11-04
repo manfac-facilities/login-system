@@ -45,9 +45,9 @@ export function sugerirMapeamento(cabecalhos: string[]): CampoImportacao[] {
 }
 
 export function mapeamentoValido(mapa: CampoImportacao[]): boolean {
-  const reais = mapa.filter((m) => m !== 'ign')
+  const reais: CampoImportacao[] = mapa.filter((m) => m !== 'ign')
   if (new Set(reais).size !== reais.length) return false
-  return ['placa', 'km', 'data'].every((c) => reais.includes(c as CampoImportacao))
+  return (['placa', 'km', 'data'] as CampoImportacao[]).every((c) => reais.includes(c))
 }
 
 /** CSV UTF-8 com `;` ou `,` (o que mais aparece no cabeçalho), aspas duplas e "" como escape. */

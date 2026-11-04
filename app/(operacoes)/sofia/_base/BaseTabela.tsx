@@ -3,24 +3,36 @@
 /**
  * Base em tabela do Frotas (padrão da Base da Gestão de Obras): filtros, tabela ordenável,
  * 20 por página, total no rodapé, "Exportar Excel" e gaveta de detalhe/ficha.
- * Mockup aprovado: docs/frotas/mockups/2026-10-30-mockup-segunda-bateria.html (2.1–2.4).
+ * Mockup aprovado: docs/frotas/mockups/2026-10-30-mockup-segunda-bateria.html (2.1–2.4); bases novas
+ * (rev, corr, multa, sin, doc): docs/frotas/mockups/2026-11-03-mockup-manutencao-e-bases.html (tela 3).
+ * Filtros guiados por FILTROS_DA_BASE. Props opcionais (só client→client): `selecao`, `celula`,
+ * `acoesDetalhe`, `cabecalhoExtra`. Clique num controle da linha não abre a gaveta.
  */
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { dataBR, fmtBrl, fmtKm, fmtLitros } from '@/lib/sofia/correcoes'
-import { colunasDa, dataHoraSP, passouFranquia, retornoAtrasado, rodapeDa, SIT_LBL } from '@/lib/sofia/bases/colunas'
+import { colunasDa, dataHoraSP, passouFranquia, retornoAtrasado, rodapeDa, SIT_LBL, type Tom } from '@/lib/sofia/bases/colunas'
 import { descreverFiltros, filtrarLinhas, ordenarLinhas, paginar, type Ordem } from '@/lib/sofia/bases/filtro'
 import { baixarExcel } from '@/lib/sofia/bases/exportar'
 import {
-  FILTROS_VAZIOS, type AbastLinha, type BaseId, type FiltrosBase, type KmLinha, type Linha, type MotLinha, type VeicLinha,
+  BASES_NOVAS, FILTROS_DA_BASE, FILTROS_VAZIOS,
+  type AbastLinha, type BaseId, type FiltrosBase, type KmLinha, type Linha, type MotLinha, type RevLinha, type VeicLinha,
 } from '@/lib/sofia/bases/tipos'
 import CorrigirAbastecimentoButton from '../abastecimento/_corrigir'
 import { deletarAbastecimentoAction } from '../abastecimento/_actions'
 import CorrigirKmButton from '../km/_corrigir'
 import { deletarKmAction } from '../km/_actions'
 import { desativarMotoristaAction } from '../motoristas/_actions'
+import DetalheNovas from './DetalheNovas'
+
+export interface SelecaoBase {
+  marcados: string[]
+  onChange: (ids: string[]) => void
+  /** linha que pode ser marcada (padrão: todas) */
+  pode?: (r: Linha) => boolean
+}
 
 interface Props {
   base: BaseId
@@ -32,11 +44,20 @@ interface Props {
   equipes: string[]
   placas: string[]
   motoristas: string[]
-  novoHref: string
-  novoLabel: string
+  /** sem ele, sem botão de registrar */
+  novoHref?: string
+  novoLabel?: string
   vazio: string
   placeholderBusca: string
   subtitulo?: string
+  /** checkbox por linha; o do cabeçalho marca/desmarca só a página visível */
+  selecao?: SelecaoBase
+  /** sobrescreve uma célula (undefined = célula padrão) */
+  celula?: (k: string, r: Linha) => React.ReactNode | undefined
+  /** botões na gaveta das bases novas */
+  acoesDetalhe?: (r: Linha) => React.ReactNode
+  /** conteúdo entre o cabeçalho e os filtros (cartões) */
+  cabecalhoExtra?: React.ReactNode
 }
 
 const CAMPO =
@@ -44,7 +65,7 @@ const CAMPO =
 const BTN = 'px-4 py-2 rounded-lg text-sm font-medium transition-colors'
 const CHIP = 'ml-2 px-1.5 py-0.5 rounded text-[10px] align-middle font-medium'
 
-function Chip({ cor, children }: { cor: 'azul' | 'ambar' | 'vermelho' | 'verde' | 'cinza'; children: React.ReactNode }) {
+function Chip({ cor, children }: { cor: Tom; children: React.ReactNode }) {
   const c = {
     azul: 'bg-blue-900 text-blue-300', ambar: 'bg-amber-900 text-amber-300', vermelho: 'bg-red-900 text-red-300',
     verde: 'bg-green-900 text-green-300', cinza: 'bg-[#1e3a5f] text-[#94a3b8]',
@@ -66,8 +87,16 @@ function extra(base: BaseId, k: string, r: Linha, hoje: string) {
   if (base === 'mot' && k === 'ativo') return null
   if (base === 'veic' && k === 'kmMes' && passouFranquia(r as VeicLinha)) return <Chip cor="vermelho">passou</Chip>
   if (base === 'veic' && k === 'retorno' && retornoAtrasado(r as VeicLinha, hoje)) return <Chip cor="vermelho">atrasado</Chip>
+  if (base === 'rev' && k === 'proxKm' && (r as RevLinha).proxKm != null && (r as RevLinha).proxAuto) return <Chip cor="azul">auto</Chip>
   return null
 }
+
+const CHIP_SO = 'px-1.5 py-0.5 rounded text-[11px] font-medium whitespace-nowrap'
+const TOM_CLS: Record<Tom, string> = {
+  azul: 'bg-blue-900 text-blue-300', ambar: 'bg-amber-900 text-amber-300', vermelho: 'bg-red-900 text-red-300',
+  verde: 'bg-green-900 text-green-300', cinza: 'bg-[#1e3a5f] text-[#94a3b8]',
+}
+const parar = (e: React.SyntheticEvent) => e.stopPropagation()
 
 function Rotulo({ t, children }: { t: string; children: React.ReactNode }) {
   return (
@@ -128,8 +157,20 @@ export default function BaseTabela(props: Props) {
     </>
   )
 
-  const temPeriodo = base === 'abast' || base === 'km'
   const semDados = linhas.length === 0
+  const listas = { equipes: props.equipes, placas: props.placas, motoristas: props.motoristas }
+  const { selecao, celula } = props
+  const marcaveis = selecao ? pag.itens.filter((r) => selecao.pode?.(r) ?? true).map((r) => r.id) : []
+  const todosMarcados = marcaveis.length > 0 && marcaveis.every((id) => selecao?.marcados.includes(id))
+  const alternarPagina = () => {
+    if (!selecao) return
+    const fora = selecao.marcados.filter((id) => !marcaveis.includes(id))
+    selecao.onChange(todosMarcados ? fora : [...fora, ...marcaveis])
+  }
+  const alternar = (id: string) => {
+    if (!selecao) return
+    selecao.onChange(selecao.marcados.includes(id) ? selecao.marcados.filter((x) => x !== id) : [...selecao.marcados, id])
+  }
 
   return (
     <div className="p-4 sm:p-8">
@@ -139,9 +180,11 @@ export default function BaseTabela(props: Props) {
           {props.subtitulo && <p className="mt-1 text-sm capitalize text-[#4a6080]">{props.subtitulo}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={props.novoHref} className={`${BTN} bg-[#f05a28] text-white hover:bg-[#d94e22]`}>
-            + {props.novoLabel}
-          </Link>
+          {props.novoHref && (
+            <Link href={props.novoHref} className={`${BTN} bg-[#f05a28] text-white hover:bg-[#d94e22]`}>
+              + {props.novoLabel}
+            </Link>
+          )}
           <button
             type="button"
             onClick={exportar}
@@ -155,12 +198,15 @@ export default function BaseTabela(props: Props) {
       {erroExport && (
         <div className="mb-4 rounded-lg border border-red-600 bg-red-950 px-4 py-3 text-sm text-red-300">{erroExport}</div>
       )}
+      {props.cabecalhoExtra}
 
       {semDados ? (
         <div className="rounded-xl border border-dashed border-[#1e3a5f] px-4 py-12 text-center text-[#94a3b8]">
           <p className="mb-3">{props.vazio}</p>
           <p className="mb-4 text-sm text-[#4a6080]">Quando o primeiro registro entrar, ele aparece aqui.</p>
-          <Link href={props.novoHref} className={`${BTN} inline-block bg-[#f05a28] text-white hover:bg-[#d94e22]`}>+ {props.novoLabel}</Link>
+          {props.novoHref && (
+            <Link href={props.novoHref} className={`${BTN} inline-block bg-[#f05a28] text-white hover:bg-[#d94e22]`}>+ {props.novoLabel}</Link>
+          )}
         </div>
       ) : (
         <>
@@ -170,48 +216,31 @@ export default function BaseTabela(props: Props) {
                 <input type="search" className={CAMPO} value={f.q} placeholder={props.placeholderBusca} onChange={(e) => muda({ q: e.target.value })} />
               </Rotulo>
             </div>
-            {temPeriodo && (
-              <>
-                <Rotulo t="De"><input type="date" className={CAMPO} value={f.de} onChange={(e) => muda({ de: e.target.value })} /></Rotulo>
-                <Rotulo t="Até"><input type="date" className={CAMPO} value={f.ate} onChange={(e) => muda({ ate: e.target.value })} /></Rotulo>
-              </>
-            )}
-            <Rotulo t="Equipe">
-              <select className={CAMPO} value={f.equipe} onChange={(e) => muda({ equipe: e.target.value })}>{opcoes(props.equipes, 'Todas')}</select>
-            </Rotulo>
-            {(temPeriodo || base === 'veic') && (
-              <Rotulo t="Placa">
-                <select className={CAMPO} value={f.placa} onChange={(e) => muda({ placa: e.target.value })}>{opcoes(props.placas, 'Todas')}</select>
-              </Rotulo>
-            )}
-            {temPeriodo && (
-              <Rotulo t="Motorista">
-                <select className={CAMPO} value={f.motorista} onChange={(e) => muda({ motorista: e.target.value })}>{opcoes(props.motoristas, 'Todos')}</select>
-              </Rotulo>
-            )}
-            {base === 'mot' && (
-              <>
-                <Rotulo t="Situação">
-                  <select className={CAMPO} value={f.situacao} onChange={(e) => muda({ situacao: e.target.value })}>
-                    <option value="">Todos</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option>
+            {FILTROS_DA_BASE[base].map((c) => {
+              if (c.k === 'periodo') {
+                return (
+                  <div key="periodo" className="contents">
+                    <Rotulo t="De"><input type="date" className={CAMPO} value={f.de} onChange={(e) => muda({ de: e.target.value })} /></Rotulo>
+                    <Rotulo t="Até"><input type="date" className={CAMPO} value={f.ate} onChange={(e) => muda({ ate: e.target.value })} /></Rotulo>
+                  </div>
+                )
+              }
+              if ('lista' in c) {
+                return (
+                  <Rotulo key={c.k} t={c.t}>
+                    <select className={CAMPO} value={f[c.k]} onChange={(e) => muda({ [c.k]: e.target.value })}>{opcoes(listas[c.lista], c.todos)}</select>
+                  </Rotulo>
+                )
+              }
+              return (
+                <Rotulo key={c.k} t={c.t}>
+                  <select className={CAMPO} value={f[c.k]} onChange={(e) => muda({ [c.k]: e.target.value })}>
+                    <option value="">{c.todos}</option>
+                    {c.opcoes.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </Rotulo>
-                <Rotulo t="CNH">
-                  <select className={CAMPO} value={f.cnh} onChange={(e) => muda({ cnh: e.target.value })}>
-                    <option value="">Todas</option><option value="alerta">Vencida ou vencendo em 60 dias</option>
-                    <option value="vencendo">Vencendo em 60 dias</option><option value="vencida">Vencida</option>
-                  </select>
-                </Rotulo>
-              </>
-            )}
-            {base === 'veic' && (
-              <Rotulo t="Situação">
-                <select className={CAMPO} value={f.sit} onChange={(e) => muda({ sit: e.target.value })}>
-                  <option value="">Todas</option>
-                  {Object.entries(SIT_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </Rotulo>
-            )}
+              )
+            })}
           </div>
 
           {filtradas.length === 0 ? (
@@ -231,6 +260,11 @@ export default function BaseTabela(props: Props) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
+                      {selecao && (
+                        <th className="w-10 px-3 py-3">
+                          <input type="checkbox" aria-label="Marcar a página" checked={todosMarcados} disabled={marcaveis.length === 0} onChange={alternarPagina} />
+                        </th>
+                      )}
                       {cols.map((c) => (
                         <th key={c.k} aria-sort={ordem?.k === c.k ? (ordem.dir === 1 ? 'ascending' : 'descending') : 'none'} className={`px-4 py-3 font-medium text-[#94a3b8] ${c.r ? 'text-right' : 'text-left'}`}>
                           <button type="button" onClick={() => clica(c.k)} className="whitespace-nowrap hover:text-white">
@@ -249,12 +283,27 @@ export default function BaseTabela(props: Props) {
                         onKeyDown={(e) => e.key === 'Enter' && setAbertaId(r.id)}
                         className="cursor-pointer border-b border-[#1e3a5f] transition-colors hover:bg-[#0d2050] focus:bg-[#0d2050] focus:outline-none"
                       >
-                        {cols.map((c, i) => (
-                          <td key={c.k} className={`px-4 py-3 ${c.r ? 'text-right font-mono' : ''} ${i === 0 || c.k === 'placa' || c.k === 'nome' ? 'text-white' : 'text-[#94a3b8]'}`}>
-                            {c.texto(r)}
-                            {extra(base, c.k, r, hoje)}
+                        {selecao && (
+                          <td className="w-10 px-3 py-3" onClick={parar} onKeyDown={parar}>
+                            {(selecao.pode?.(r) ?? true) && (
+                              <input type="checkbox" aria-label="Marcar" checked={selecao.marcados.includes(r.id)} onChange={() => alternar(r.id)} />
+                            )}
                           </td>
-                        ))}
+                        )}
+                        {cols.map((c, i) => {
+                          const cls = `px-4 py-3 ${c.r ? 'text-right font-mono' : ''} ${i === 0 || c.k === 'placa' || c.k === 'nome' ? 'text-white' : 'text-[#94a3b8]'}`
+                          const propria = celula?.(c.k, r)
+                          if (propria !== undefined) {
+                            return <td key={c.k} className={cls} onClick={parar} onKeyDown={parar}>{propria}</td>
+                          }
+                          const tom = c.tom?.(r)
+                          return (
+                            <td key={c.k} className={cls}>
+                              {tom ? <span className={`${CHIP_SO} ${TOM_CLS[tom]}`}>{c.texto(r)}</span> : c.texto(r)}
+                              {extra(base, c.k, r, hoje)}
+                            </td>
+                          )
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -265,7 +314,7 @@ export default function BaseTabela(props: Props) {
                         const span = idx === -1 ? cols.length : idx
                         return (
                           <>
-                            <td className="px-4 py-3" colSpan={span}>{rodape.resumo}</td>
+                            <td className="px-4 py-3" colSpan={span + (selecao ? 1 : 0)}>{rodape.resumo}</td>
                             {cols.slice(span).map((c) => (
                               <td key={c.k} className={`px-4 py-3 ${c.r ? 'text-right font-mono' : ''}`}>{rodape.colunas[c.k] ?? ''}</td>
                             ))}
@@ -290,8 +339,10 @@ export default function BaseTabela(props: Props) {
       )}
 
       {aberta && (
-        <Gaveta onFechar={() => setAbertaId(null)} titulo={tituloGaveta(base, aberta)}>
-          <Detalhe base={base} r={aberta} hoje={hoje} podeGerir={podeGerir} />
+        <Gaveta onFechar={() => setAbertaId(null)} titulo={tituloGaveta(base, aberta, nome)}>
+          {BASES_NOVAS.includes(base)
+            ? <DetalheNovas base={base} r={aberta} hoje={hoje} podeGerir={podeGerir} acoes={props.acoesDetalhe?.(aberta)} />
+            : <Detalhe base={base} r={aberta} hoje={hoje} podeGerir={podeGerir} />}
         </Gaveta>
       )}
     </div>
@@ -300,7 +351,8 @@ export default function BaseTabela(props: Props) {
 
 // ---------------------------------------------------------------- gaveta
 
-function tituloGaveta(base: BaseId, r: Linha): string {
+function tituloGaveta(base: BaseId, r: Linha, nome: string): string {
+  if (BASES_NOVAS.includes(base)) return `${nome} · ${(r as { placa: string }).placa}`
   if (base === 'abast') return `Abastecimento · ${(r as AbastLinha).placa} · ${dataBR((r as AbastLinha).data)}`
   if (base === 'km') return `KM diário · ${(r as KmLinha).placa} · ${dataBR((r as KmLinha).data)}`
   if (base === 'mot') return (r as MotLinha).nome
