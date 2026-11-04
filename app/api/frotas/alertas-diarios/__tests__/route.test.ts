@@ -9,7 +9,7 @@ const tabelasLidas: string[] = []
 
 function cadeia(r: Resp) {
   const c: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'neq']) c[m] = jest.fn(() => c)
+  for (const m of ['select', 'eq', 'neq', 'order', 'range']) c[m] = jest.fn(() => c)
   c.then = (resolve: (v: Resp) => void) => resolve(r)
   return c
 }
