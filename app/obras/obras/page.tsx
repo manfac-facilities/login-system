@@ -128,9 +128,8 @@ export default async function ListaObrasPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const permitido =
-    !!user?.email &&
-    ((await hasSystemAccess(supabase, user.email, 'obras')) || (await isAdmin(supabase, user.email)))
+  const admin = !!user?.email && (await isAdmin(supabase, user.email))
+  const permitido = admin || (!!user?.email && (await hasSystemAccess(supabase, user.email, 'obras')))
   if (!permitido) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -161,11 +160,19 @@ export default async function ListaObrasPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:py-8">
       <header className="flex items-center gap-4">
         <SimboloManfac tamanho={40} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold tracking-[0.1em] text-(--obra-orange-texto) uppercase">Gestão de Obras</p>
           <h1 className="text-[26px] leading-tight font-semibold tracking-tight text-(--obra-ink)">OBRAS</h1>
           <p className="text-[13px] text-(--obra-muted-texto)">Obras grandes com cronograma, diário e comunicação ao cliente</p>
         </div>
+        {admin ? (
+          <Link
+            href="/obras/obras/visao-ceo"
+            className="inline-flex min-h-11 items-center rounded-lg border border-(--obra-border) bg-(--obra-card) px-3 text-[14px] font-medium text-(--obra-ink) hover:border-(--obra-orange-texto)"
+          >
+            Visão do CEO
+          </Link>
+        ) : null}
       </header>
 
       {error ? (
