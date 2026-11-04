@@ -47,7 +47,7 @@ export default async function DescontosPage() {
   const podeGerir = await podeGerirFrotas(supabase)
 
   const [{ data: multas }, { data: sinistros }, { data: excedidos }] = await Promise.all([
-    supabase.from('multas').select('*, veiculos(placa), motoristas(nome)').order('data', { ascending: false }),
+    supabase.from('multas').select('*, veiculos(placa), motoristas!motorista_id(nome)').order('data', { ascending: false }),
     supabase.from('sinistros').select('*, veiculos(placa), motoristas(nome)').order('data', { ascending: false }),
     supabase.from('km_excedido_desconto').select('*, veiculos(placa), motoristas(nome)').order('mes', { ascending: false }),
   ])
