@@ -80,7 +80,7 @@ export async function carregarVisaoGeral() {
       documentos: documentos.map((d) => ({ placa: placaRel(d.veiculos), tipo: d.tipo, vencimento: d.vencimento })),
       cnhVencidas: cnh.vencidas,
       cnhVencendo: cnh.vencendo,
-      multas: multasPendentes,
+      multas: multasPendentes as unknown as { etapa: string; valor: number }[],
       sinistros: sinistrosAbertos.map((x) => ({ placa: placaRel(x.veiculos), status: x.status })),
       veiculosOficinaAtrasados: oficinaAtrasada,
     },

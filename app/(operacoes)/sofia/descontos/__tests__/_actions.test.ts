@@ -32,10 +32,8 @@ jest.mock('@/lib/supabase/server', () => ({
 
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
+// Multas: ver _actions.multa.test.ts (fluxo de etapas, spec 2026-11-03).
 import {
-  atualizarStatusMultaAction,
-  registrarDescontoMultaAction,
-  desfazerDescontoMultaAction,
   atualizarStatusDescontoSinistroAction,
   registrarDescontoSinistroAction,
   desfazerDescontoSinistroAction,
@@ -52,7 +50,6 @@ function fd(fields: Record<string, string>): FormData {
 beforeEach(() => {
   currentUserEmail = 'operador@manfac.com.br'
   tableResults = {
-    multas: { data: { valor: 500 }, error: null },
     sinistros: { data: { valor_dano: 1000 }, error: null },
   }
   updateMock.mockReset()
@@ -60,14 +57,8 @@ beforeEach(() => {
   podeGerirMock.mockResolvedValue({ data: true, error: null })
 })
 
-describe('descontos/_actions — gate de gestor de frotas (as 6 actions)', () => {
+describe('descontos/_actions — gate de gestor de frotas (as 3 actions de sinistro)', () => {
   const casos: Array<[string, () => Promise<unknown>]> = [
-    ['atualizarStatusMultaAction', () => atualizarStatusMultaAction('m1', 'validada')],
-    [
-      'registrarDescontoMultaAction',
-      () => registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '100', tipo_desconto: 'parcial', autorizacao_assinada: 'true' })),
-    ],
-    ['desfazerDescontoMultaAction', () => desfazerDescontoMultaAction('m1')],
     ['atualizarStatusDescontoSinistroAction', () => atualizarStatusDescontoSinistroAction('s1', 'validada')],
     [
       'registrarDescontoSinistroAction',
@@ -102,24 +93,6 @@ describe('descontos/_actions — gate de gestor de frotas (as 6 actions)', () =>
 })
 
 describe('descontos/_actions — validação de valor', () => {
-  it('registrarDescontoMultaAction rejeita valor maior que o original', async () => {
-    await expect(
-      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '600', tipo_desconto: 'total', autorizacao_assinada: 'true' }))
-    ).rejects.toThrow('Valor do desconto não pode ser maior que o valor original')
-  })
-
-  it('registrarDescontoMultaAction rejeita valor negativo', async () => {
-    await expect(
-      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '-50', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
-    ).rejects.toThrow('Valor do desconto inválido')
-  })
-
-  it('registrarDescontoMultaAction aceita valor válido', async () => {
-    await expect(
-      registrarDescontoMultaAction(fd({ id: 'm1', valor_descontado: '200', tipo_desconto: 'parcial', autorizacao_assinada: 'true' }))
-    ).resolves.toBeUndefined()
-  })
-
   it('registrarDescontoSinistroAction rejeita valor maior que o dano original', async () => {
     await expect(
       registrarDescontoSinistroAction(fd({ id: 's1', valor_descontado: '2000', tipo_desconto: 'total', autorizacao_assinada: 'true' }))

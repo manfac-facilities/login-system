@@ -5,6 +5,12 @@ import { hojeBrasilia } from '../leitura'
 // 30/10/2026 é sexta-feira.
 const HOJE = '2026-10-30'
 
+type Rev = EntradaAlertas['revisoes'][number]
+const R = (id: string, veiculo_id: string, extra: Partial<Rev>): Rev => ({
+  id, veiculo_id, tipo: 'preventiva', km_realizada: null, data_realizada: null, proxima_data: null, proxima_km: null,
+  prever_proxima: true, created_at: '2026-09-01', ...extra,
+})
+
 const vazia = (): EntradaAlertas => ({
   hoje: HOJE,
   veiculos: [],
@@ -21,10 +27,10 @@ function cheia(): EntradaAlertas {
   return {
     ...vazia(),
     veiculos: [
-      { id: 'v1', placa: 'KPF7N16', km_atual: 50500, status: 'ativo', equipe_id: 'q1', previsao_retorno_oficina: null },
-      { id: 'v2', placa: 'RIO3D45', km_atual: 10000, status: 'ativo', equipe_id: 'q2', previsao_retorno_oficina: null },
-      { id: 'v3', placa: 'RUA3B76', km_atual: 1, status: 'manutencao', equipe_id: null, previsao_retorno_oficina: '2026-10-27' },
-      { id: 'v4', placa: 'ZZZ0000', km_atual: 1, status: 'inativo', equipe_id: 'q3', previsao_retorno_oficina: null },
+      { id: 'v1', placa: 'KPF7N16', km_atual: 50500, status: 'ativo', equipe_id: 'q1', previsao_retorno_oficina: null, intervalo_revisao_km: null },
+      { id: 'v2', placa: 'RIO3D45', km_atual: 10000, status: 'ativo', equipe_id: 'q2', previsao_retorno_oficina: null, intervalo_revisao_km: null },
+      { id: 'v3', placa: 'RUA3B76', km_atual: 1, status: 'manutencao', equipe_id: null, previsao_retorno_oficina: '2026-10-27', intervalo_revisao_km: null },
+      { id: 'v4', placa: 'ZZZ0000', km_atual: 1, status: 'inativo', equipe_id: 'q3', previsao_retorno_oficina: null, intervalo_revisao_km: null },
     ],
     equipes: [
       { id: 'q1', codigo: 'EQ-01', ativo: true },
@@ -39,10 +45,10 @@ function cheia(): EntradaAlertas {
       { nome: 'Inativo', cnh_vencimento: '2026-01-01', equipe_id: null, ativo: false },
     ],
     revisoes: [
-      // antiga (substituída) — não conta
-      { veiculo_id: 'v1', tipo: 'preventiva', proxima_data: '2020-01-01', proxima_km: null, created_at: '2026-01-01' },
-      { veiculo_id: 'v1', tipo: 'preventiva', proxima_data: null, proxima_km: 50000, created_at: '2026-09-01' },
-      { veiculo_id: 'v2', tipo: 'preventiva', proxima_data: null, proxima_km: 10500, created_at: '2026-09-01' },
+      // histórico importado DEPOIS, com KM menor — não é a vigente, não conta
+      R('r0', 'v1', { km_realizada: 10000, proxima_data: '2020-01-01', created_at: '2026-11-03' }),
+      R('r1', 'v1', { km_realizada: 40000, proxima_km: 50000, created_at: '2026-09-01' }),
+      R('r2', 'v2', { km_realizada: 500, proxima_km: 10500, created_at: '2026-09-01' }),
     ],
     documentos: [
       { veiculo_id: 'v1', tipo: 'ipva', vencimento: '2026-10-25' },
@@ -50,8 +56,12 @@ function cheia(): EntradaAlertas {
       { veiculo_id: 'v2', tipo: 'licenciamento', vencimento: '2026-12-31' },
     ],
     multas: [
-      { veiculo_id: 'v1', motorista_nome: 'Jefferson Alves', data: '2026-10-02', valor: 130.16, status: 'pendente' },
-      { veiculo_id: 'v2', motorista_nome: null, data: '2026-09-01', valor: 10, status: 'descontada' },
+      // prazo em 5 dias, antes da indicação → entra
+      { id: 'm1', veiculo_id: 'v1', motorista_nome: 'Jefferson Alves', data: '2026-10-02', valor: 130.16, etapa: 'condutor', prazo_indicacao: '2026-11-04' },
+      // já indicada → não entra, mesmo com prazo vencido
+      { id: 'm2', veiculo_id: 'v2', motorista_nome: null, data: '2026-09-01', valor: 10, etapa: 'indicado', prazo_indicacao: '2026-10-01' },
+      // prazo longe (> 10 dias) → não entra
+      { id: 'm3', veiculo_id: 'v2', motorista_nome: null, data: '2026-10-20', valor: 10, etapa: 'registrada', prazo_indicacao: '2026-11-25' },
     ],
     sinistros: [
       { veiculo_id: 'v2', data: '2026-10-10', tipo: 'colisao', status: 'em_tratativa' },
@@ -79,7 +89,7 @@ describe('montarAlertas', () => {
     expect(a.blocos).toEqual([])
   })
 
-  it('revisões: só a mais recente conta; atrasada por KM, chegando a 1.000 km', () => {
+  it('revisões: vale a vigente (maior KM), não a criada por último; atrasada por KM, chegando a 1.000 km', () => {
     const a = montarAlertas(cheia())
     const atr = bloco(a, 'revisoes_atrasadas')!
     expect(atr.itens).toHaveLength(1)
@@ -94,11 +104,24 @@ describe('montarAlertas', () => {
 
   it('revisão atrasada por data mostra dias de atraso', () => {
     const e = cheia()
-    e.revisoes = [{ veiculo_id: 'v1', tipo: 'x', proxima_data: '2026-10-20', proxima_km: null, created_at: '2026-09-01' }]
+    e.revisoes = [R('r1', 'v1', { proxima_data: '2026-10-20' })]
     const it = bloco(montarAlertas(e), 'revisoes_atrasadas')!.itens[0]
     expect(it.detalhe).toContain('por data')
     expect(it.detalhe).toContain('20/10/2026')
     expect(it.detalhe).toContain('10 dias')
+  })
+
+  it('revisão: próxima calculada sozinha (KM + intervalo do carro) e vigente sem previsão sai dos blocos', () => {
+    const e = cheia()
+    e.revisoes = [R('r1', 'v1', { km_realizada: 40000 }), R('r2', 'v2', { km_realizada: 9000 })]
+    e.veiculos[1].intervalo_revisao_km = 1500 // v2: próxima 10.500, carro em 10.000 → chegando
+    const a = montarAlertas(e)
+    // v1: 40.000 + 10.000 = 50.000, carro em 50.500 → passou 500
+    expect(bloco(a, 'revisoes_atrasadas')!.itens[0].detalhe).toContain('passou 500 km')
+    expect(bloco(a, 'revisoes_chegando')!.itens[0].detalhe).toContain('faltam 500 km')
+    // corretiva mais nova (KM maior, "não prever") vira a vigente → carro sai dos blocos
+    e.revisoes = [R('r1', 'v1', { km_realizada: 40000 }), R('r9', 'v1', { km_realizada: 50400, prever_proxima: false, tipo: 'corretiva' })]
+    expect(bloco(montarAlertas(e), 'revisoes_atrasadas')).toBeUndefined()
   })
 
   it('documentos: vencido e vencendo em 30 dias; fora da janela não entra', () => {
@@ -118,10 +141,25 @@ describe('montarAlertas', () => {
     expect(itens[1].vencido).toBe(false)
   })
 
-  it('multas sem tratativa e sinistros abertos ignoram descontada/encerrado', () => {
+  it('multas: só antes da indicação com prazo vencido ou em até 10 dias; link para a multa', () => {
     const a = montarAlertas(cheia())
-    expect(bloco(a, 'multas')!.itens).toHaveLength(1)
-    expect(bloco(a, 'multas')!.itens[0].detalhe).toContain('Jefferson Alves')
+    const itens = bloco(a, 'multas')!.itens
+    expect(itens).toHaveLength(1)
+    expect(itens[0].detalhe).toContain('Jefferson Alves')
+    expect(itens[0].detalhe).toContain('vence em 5 dias')
+    expect(itens[0].vencido).toBe(false)
+    expect(itens[0].caminho).toBe('/sofia/multas/m1')
+    const e = cheia()
+    e.multas = [{ ...e.multas[0], prazo_indicacao: '2026-10-29', etapa: 'termo' }]
+    const venc = bloco(montarAlertas(e), 'multas')!.itens[0]
+    expect(venc.detalhe).toContain('prazo vencido')
+    expect(venc.vencido).toBe(true)
+    e.multas = [{ ...e.multas[0], prazo_indicacao: null }]
+    expect(bloco(montarAlertas(e), 'multas')).toBeUndefined()
+  })
+
+  it('sinistros abertos ignoram encerrado', () => {
+    const a = montarAlertas(cheia())
     expect(bloco(a, 'sinistros')!.itens).toHaveLength(1)
     expect(bloco(a, 'sinistros')!.itens[0].rotulo).toBe('RIO3D45')
   })

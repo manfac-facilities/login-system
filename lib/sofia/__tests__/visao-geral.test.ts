@@ -116,7 +116,7 @@ describe('montarAcoes', () => {
     documentos: [] as { placa: string | null; tipo: string; vencimento: string }[],
     cnhVencidas: [] as { nome: string; cnh_vencimento: string | null }[],
     cnhVencendo: [] as { nome: string; cnh_vencimento: string | null }[],
-    multas: [] as { status: string; valor: number }[],
+    multas: [] as { etapa: string; valor: number }[],
     sinistros: [] as { placa: string | null; status: string }[],
     veiculosOficinaAtrasados: [] as string[],
   }
@@ -146,7 +146,10 @@ describe('descrições das ações', () => {
   it('multas, sinistros e CNH com o texto do mockup', () => {
     const r = montarAcoes({
       ...base,
-      multas: [{ status: 'pendente', valor: 100 }, { status: 'pendente', valor: 50 }, { status: 'validada', valor: 25.5 }],
+      multas: [
+        { etapa: 'registrada', valor: 100 }, { etapa: 'cobrada', valor: 50 }, { etapa: 'validada', valor: 25.5 },
+        { etapa: 'contestada', valor: 999 }, { etapa: 'descontada', valor: 999 },
+      ],
       sinistros: [{ placa: 'AAA', status: 'em_tratativa' }, { placa: 'BBB', status: 'aberto' }],
       cnhVencidas: [{ nome: 'Ana', cnh_vencimento: '2026-10-01' }],
       cnhVencendo: [{ nome: 'Bia', cnh_vencimento: '2026-12-20' }],
@@ -155,6 +158,17 @@ describe('descrições das ações', () => {
     expect(por.multas.descricao).toMatch(/^2 pendentes, 1 validada aguardando desconto · R\$\s175,50$/)
     expect(por.sinistros.descricao).toBe('AAA em tratativa · BBB aberto')
     expect(por.cnh.descricao).toBe('Ana venceu 01/10 · Bia vence 20/12')
+  })
+})
+
+describe('montarAcoes: multas pela etapa', () => {
+  it('contestada e descontada ficam fora da contagem e do valor', () => {
+    const r = montarAcoes({
+      revisoesAtrasadas: [], revisoesBreve: [], equipesSemKm: [], diaKm: null, documentos: [],
+      cnhVencidas: [], cnhVencendo: [], sinistros: [], veiculosOficinaAtrasados: [],
+      multas: [{ etapa: 'contestada', valor: 10 }, { etapa: 'descontada', valor: 10 }],
+    })
+    expect(r.find((a) => a.id === 'multas')).toBeUndefined()
   })
 })
 

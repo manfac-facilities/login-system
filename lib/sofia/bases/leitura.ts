@@ -10,6 +10,11 @@ import {
   montarAbastecimentos, montarKm, montarMotoristas, montarVeiculos,
   type AbastBruto, type EntradaMontagem, type EquipeBruta, type KmBruto, type MotoristaBruto, type VeiculoBruto,
 } from './montar'
+import {
+  montarCorretivas, montarDocumentos, montarMultas, montarRevisoes, montarSinistros,
+  type CorrBruta, type DocBruto, type KmRecente, type MultaBruta, type RevBruta, type SinBruto,
+} from './montar-novas'
+import { somarDias } from '../revisaoPrevisao'
 import type { TrechoBruto } from './responsabilidade'
 import type { BaseId, Linha } from './tipos'
 
@@ -52,7 +57,23 @@ const need = {
   km: ['equipes', 'motoristas', 'veiculos', 'km', 'correcoesKm'],
   mot: ['equipes', 'motoristas'],
   veic: ['equipes', 'motoristas', 'veiculos', 'responsabilidade', 'abastecimentos', 'km'],
+  rev: ['veiculos', 'revisoes', 'kmRecentes'],
+  corr: ['veiculos', 'responsabilidade', 'manutencoes'],
+  multa: ['veiculos', 'multas'],
+  sin: ['veiculos', 'sinistros'],
+  doc: ['veiculos', 'documentos'],
 } as const
+
+// Colunas explícitas; storage_path/anexo só para calcular "temArquivo" (nunca chegam à linha).
+const SEL_REV =
+  'id, veiculo_id, motorista_id, tipo, fornecedor, valor, data_realizada, km_realizada, proxima_km, proxima_data, prever_proxima, origem, observacoes, pecas_trocadas, created_at'
+const SEL_CORR =
+  'id, veiculo_id, defeito, oficina, data_entrada, saida_prevista, data_saida, custo, quem_arca, status, tirou_da_equipe, anexo_storage_path, observacoes, created_at'
+const SEL_MULTA =
+  'id, veiculo_id, motorista_id, data, tipo_infracao, descricao, valor, valor_descontado, status, autorizacao_status, autorizacao_solicitado_em, created_at, etapa, prazo_indicacao'
+const SEL_SIN =
+  'id, veiculo_id, motorista_id, data, tipo, descricao, valor_dano, valor_descontado, tipo_desconto, status, autorizacao_status, autorizacao_solicitado_em, created_at'
+const SEL_DOC = 'id, veiculo_id, tipo, numero, vencimento, storage_path'
 
 export async function carregarBase(base: BaseId): Promise<BaseCarregada> {
   const supabase = await createClient()
@@ -81,6 +102,16 @@ export async function carregarBase(base: BaseId): Promise<BaseCarregada> {
       ? buscarTudo<CorrecaoAudit>((a, b) => supabase.from('audit_log').select('registro_id, created_at, dados').eq('operacao', 'corrigiu').eq('tabela', 'km_diario').order('id').range(a, b))
       : vazio<CorrecaoAudit>(),
   ])
+  const [revisoes, kmRecentes, manutencoes, multas, sinistros, documentos] = await Promise.all([
+    quer.has('revisoes') ? buscarTudo<RevBruta>((a, b) => supabase.from('revisoes').select(SEL_REV).order('id').range(a, b)) : vazio<RevBruta>(),
+    quer.has('kmRecentes')
+      ? buscarTudo<KmRecente>((a, b) => supabase.from('km_diario').select('veiculo_id, data, km_atual').gte('data', somarDias(hoje, -30)).order('id').range(a, b))
+      : vazio<KmRecente>(),
+    quer.has('manutencoes') ? buscarTudo<CorrBruta>((a, b) => supabase.from('manutencoes').select(SEL_CORR).order('id').range(a, b)) : vazio<CorrBruta>(),
+    quer.has('multas') ? buscarTudo<MultaBruta>((a, b) => supabase.from('multas').select(SEL_MULTA).order('id').range(a, b)) : vazio<MultaBruta>(),
+    quer.has('sinistros') ? buscarTudo<SinBruto>((a, b) => supabase.from('sinistros').select(SEL_SIN).order('id').range(a, b)) : vazio<SinBruto>(),
+    quer.has('documentos') ? buscarTudo<DocBruto>((a, b) => supabase.from('documentos_veiculo').select(SEL_DOC).order('id').range(a, b)) : vazio<DocBruto>(),
+  ])
 
   const entrada: EntradaMontagem = {
     hoje, equipes, motoristas, veiculos, responsabilidade, abastecimentos, km,
@@ -92,7 +123,12 @@ export async function carregarBase(base: BaseId): Promise<BaseCarregada> {
     base === 'abast' ? montarAbastecimentos(entrada)
     : base === 'km' ? montarKm(entrada)
     : base === 'mot' ? montarMotoristas(entrada)
-    : montarVeiculos(entrada)
+    : base === 'veic' ? montarVeiculos(entrada)
+    : base === 'rev' ? montarRevisoes({ hoje, veiculos, motoristas, revisoes, kmRecentes })
+    : base === 'corr' ? montarCorretivas({ hoje, veiculos, motoristas, responsabilidade, manutencoes })
+    : base === 'multa' ? montarMultas({ veiculos, motoristas, multas })
+    : base === 'sin' ? montarSinistros({ veiculos, motoristas, sinistros })
+    : montarDocumentos({ hoje, veiculos, documentos })
 
   return {
     linhas,

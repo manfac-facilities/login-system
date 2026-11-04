@@ -17,6 +17,8 @@ export interface VeiculoBruto {
   km_contratual_mensal: number | null; valor_locacao_mensal: number | null
   status: 'ativo' | 'inativo' | 'manutencao'; equipe_id: string | null
   previsao_retorno_oficina: string | null; substituto_id: string | null
+  /** sdd-sql-sofia-manutencao.sql; NULL = padrão de 10.000 km */
+  intervalo_revisao_km?: number | null
 }
 export interface AbastBruto {
   id: string; veiculo_id: string; data: string; litros: number | null

@@ -1,12 +1,26 @@
 import { formatarKm, formatarDataIso } from './revisaoStatus'
+import type { MultaEtapa } from './multaEtapas'
 
 interface AutomaticInputs {
-  multas: { id: string; status: string; autorizacao_assinada: boolean; data: string; descricao: string | null }[]
+  multas: MultaPendenciaInput[]
   sinistros: { id: string; status: string; data: string; descricao: string }[]
   revisoesAtrasadas: { id: string; placa: string | null; proxima_data: string | null; proxima_km: number | null; km_passados: number | null; motivo?: 'data' | 'km' }[]
+  /** Revisões a até 1.000 km (regra da vigente, spec manutenção §1.5). Não conta como urgência alta. */
+  revisoesVenceEmBreve?: { id: string; placa: string | null; km_restantes: number; proxima_km: number | null }[]
   documentosVencendo: { id: string; tipo: string; vencimento: string }[]
   termosNaoAssinados: { id: string; nome: string }[]
 }
+
+export interface MultaPendenciaInput {
+  id: string
+  etapa: MultaEtapa
+  prazo_indicacao: string | null
+  placa: string | null
+  tipo_infracao: string | null
+  descricao: string | null
+}
+
+export type GrupoPendencia = 'a_fazer' | 'aguardando_terceiros'
 
 export interface PendenciaAutomatica {
   descricao: string
@@ -14,19 +28,66 @@ export interface PendenciaAutomatica {
   prazo: string | null
   // KM previsto, para pendência de revisão atrasada só por KM (não tem prazo em data).
   prazoKm?: number
+  // Multa: 'aguardando_terceiros' (pedido/autorizado) não conta como atrasada (spec 2026-11-03 §2.11).
+  grupo?: GrupoPendencia
+}
+
+/**
+ * Pendência de uma multa pela etapa atual (textos do mockup, spec §2.11).
+ * Reusada pelo e-mail diário. descontada/contestada → null (não aparece).
+ */
+export function pendenciaDaMulta(m: MultaPendenciaInput): PendenciaAutomatica | null {
+  const placa = m.placa?.trim() || 'veículo sem placa'
+  const tipo = m.tipo_infracao?.trim() ? m.tipo_infracao.trim().toLowerCase() : m.descricao?.trim() || 'sem detalhes adicionais'
+  const base = `${placa}, ${tipo}`
+  const prazo = m.prazo_indicacao ?? null
+  const aFazer = (descricao: string, comPrazo: boolean): PendenciaAutomatica => ({
+    descricao,
+    origem: 'multa',
+    prazo: comPrazo ? prazo : null,
+    grupo: 'a_fazer',
+  })
+  switch (m.etapa) {
+    case 'registrada':
+      return aFazer(`Confirmar o condutor: ${base}`, true)
+    case 'condutor':
+      return aFazer(`Aguardando aceite do termo pelo motorista: ${base}`, true)
+    case 'termo':
+      return aFazer(
+        prazo ? `Indicar o condutor ao órgão até ${formatarDataIso(prazo)}: ${base}` : `Indicar o condutor ao órgão: ${base}`,
+        true
+      )
+    case 'indicado':
+      return aFazer(`Aguardando validação do gestor da equipe: ${base}`, false)
+    case 'validada':
+      return aFazer(`Lançar o boleto da locadora: ${base}`, false)
+    case 'cobrada':
+      return aFazer(`Solicitar o desconto: ${base}`, false)
+    case 'solicitado':
+      return {
+        descricao: `Multa enviada para desconto, aguardando autorização: ${base}`,
+        origem: 'multa',
+        prazo: null,
+        grupo: 'aguardando_terceiros',
+      }
+    case 'autorizado':
+      return {
+        descricao: `Desconto autorizado, aguardando o RH descontar em folha: ${base}`,
+        origem: 'multa',
+        prazo: null,
+        grupo: 'aguardando_terceiros',
+      }
+    default:
+      return null
+  }
 }
 
 export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutomatica[] {
   const result: PendenciaAutomatica[] = []
 
   for (const m of inputs.multas) {
-    if (m.status !== 'descontada') {
-      result.push({
-        descricao: `Multa sem tratativa: ${m.descricao ?? 'sem detalhes adicionais'}`,
-        origem: 'multa',
-        prazo: m.data,
-      })
-    }
+    const p = pendenciaDaMulta(m)
+    if (p) result.push(p)
   }
   for (const s of inputs.sinistros) {
     if (s.status !== 'encerrado') {
@@ -49,6 +110,16 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
         prazo: r.proxima_data,
       })
     }
+  }
+  for (const r of inputs.revisoesVenceEmBreve ?? []) {
+    const placa = r.placa ?? 'veículo sem placa'
+    const para = r.proxima_km != null ? ` para ${formatarKm(r.proxima_km)}` : ''
+    // Sem prazo nem prazoKm: "chegando" não é atrasada e não conta como urgência alta.
+    result.push({
+      descricao: `Revisão chegando: ${placa} — faltam ${formatarKm(r.km_restantes)} km${para}`,
+      origem: 'manutencao',
+      prazo: null,
+    })
   }
   for (const d of inputs.documentosVencendo) {
     result.push({ descricao: `Documento (${d.tipo}) vencendo`, origem: 'documento', prazo: d.vencimento })

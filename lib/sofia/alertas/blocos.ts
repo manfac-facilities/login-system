@@ -3,15 +3,19 @@
  * Spec: docs/superpowers/specs/2026-10-30-frotas-segunda-bateria-design.md (decisões 5, 6, 7).
  * Mockup: docs/frotas/mockups/2026-10-30-mockup-segunda-bateria.html (seção 3).
  *
- * Reaproveita `classificarRevisao` (mesma conta da tela de Revisões) sem alterá-la.
+ * Revisões: `classificarFrota` (regra da vigente, spec 2026-11-03 manutenção §1.1), a mesma do painel.
  */
 import { DOCUMENTO_TIPO_LABELS } from '../enums'
-import { classificarRevisao, formatarDataIso, formatarKm } from '../revisaoStatus'
+import { formatarDataIso, formatarKm } from '../revisaoStatus'
+import { classificarFrota } from '../revisaoPrevisao'
 import type { DocumentoVeiculoTipo, VeiculoStatus } from '../types'
 
 export const DIAS_DOCUMENTO = 30
 // Mockup (bloco "CNH vencida ou vencendo em 60 dias") e `getMotoristasComCnhVencendo` usam 60.
 export const DIAS_CNH = 60
+// Multa: e-mail só sai seg–sex, então "≤ 10 dias" em vez de exatamente 10/5/2 (spec multa §2.12).
+export const DIAS_MULTA = 10
+const ETAPAS_ANTES_DA_INDICACAO = ['registrada', 'condutor', 'termo']
 
 export interface EntradaAlertas {
   /** AAAA-MM-DD, em horário de Brasília. */
@@ -23,18 +27,32 @@ export interface EntradaAlertas {
     status: VeiculoStatus
     equipe_id: string | null
     previsao_retorno_oficina: string | null
+    /** null = padrão de 10.000 km */
+    intervalo_revisao_km: number | null
   }[]
   equipes: { id: string; codigo: string; ativo: boolean }[]
   motoristas: { nome: string; cnh_vencimento: string | null; equipe_id: string | null; ativo: boolean }[]
   revisoes: {
+    id: string
     veiculo_id: string
     tipo: string
+    km_realizada: number | null
+    data_realizada: string | null
     proxima_data: string | null
     proxima_km: number | null
+    prever_proxima: boolean
     created_at: string
   }[]
   documentos: { veiculo_id: string; tipo: DocumentoVeiculoTipo; vencimento: string }[]
-  multas: { veiculo_id: string | null; motorista_nome: string | null; data: string; valor: number; status: string }[]
+  multas: {
+    id: string
+    veiculo_id: string | null
+    motorista_nome: string | null
+    data: string
+    valor: number
+    etapa: string
+    prazo_indicacao: string | null
+  }[]
   sinistros: { veiculo_id: string | null; data: string; tipo: string; status: string }[]
   /** Equipes que lançaram KM no dia útil anterior. */
   equipesComKmNoDiaUtilAnterior: string[]
@@ -124,26 +142,32 @@ export function montarAlertas(e: EntradaAlertas): Alertas {
     return (q && equipe.get(q)) || 'sem equipe'
   }
 
-  // Revisões: só a mais recente de cada veículo+tipo conta (mesma regra de queries.ts).
-  const maisRecente = new Map<string, EntradaAlertas['revisoes'][number]>()
-  for (const r of [...e.revisoes].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
-    const k = `${r.veiculo_id}::${r.tipo}`
-    if (!maisRecente.has(k)) maisRecente.set(k, r)
-  }
+  // Revisões: regra da vigente (spec manutenção §1.1, a mesma de queries.ts e do painel): por carro, a de
+  // maior KM realizado — nunca "a criada por último" (histórico importado depois não vira vigente).
+  const frota = classificarFrota(
+    e.veiculos.map((v) => ({
+      id: v.id, placa: v.placa, modelo: '', km_atual: Number(v.km_atual), status: v.status,
+      intervalo_revisao_km: v.intervalo_revisao_km ?? null,
+    })),
+    e.revisoes,
+    [],
+    hoje
+  )
   const atrasadas: Ordenavel[] = []
   const chegando: Ordenavel[] = []
-  for (const r of maisRecente.values()) {
-    const c = classificarRevisao(r, veiculo.get(r.veiculo_id)?.km_atual, hoje)
-    const base = { rotulo: placa(r.veiculo_id), caminho: '/sofia/revisoes', ordem: r.proxima_data ?? '9999' }
-    if (c.situacao === 'atrasada') {
+  for (const c of frota) {
+    const v = c.veiculo.id
+    const proxData = c.vigente?.proxima_data?.slice(0, 10) ?? null
+    const base = { rotulo: placa(v), caminho: '/sofia/revisoes', ordem: proxData ?? '9999' }
+    if (c.s === 'atrasada') {
       const partes: string[] = []
-      if (c.motivos.includes('km')) partes.push(`por KM: passou ${formatarKm(c.kmPassados ?? 0)} km do previsto`)
-      if (c.motivos.includes('data') && r.proxima_data) {
-        partes.push(`por data: prevista para ${formatarDataIso(r.proxima_data)} (${plural(diasEntre(r.proxima_data, hoje), 'dia', 'dias')} de atraso)`)
+      if (c.passou != null) partes.push(`por KM: passou ${formatarKm(c.passou)} km do previsto`)
+      if (c.porData && proxData) {
+        partes.push(`por data: prevista para ${formatarDataIso(proxData)} (${plural(diasEntre(proxData, hoje), 'dia', 'dias')} de atraso)`)
       }
-      atrasadas.push({ ...base, vencido: true, detalhe: `(${eqDoVeiculo(r.veiculo_id)}) — ${partes.join('; ')}` })
-    } else if (c.situacao === 'vence_em_breve') {
-      chegando.push({ ...base, vencido: false, detalhe: `(${eqDoVeiculo(r.veiculo_id)}) — faltam ${formatarKm(c.kmRestantes ?? 0)} km` })
+      atrasadas.push({ ...base, vencido: true, detalhe: `(${eqDoVeiculo(v)}) — ${partes.join('; ')}` })
+    } else if (c.s === 'breve') {
+      chegando.push({ ...base, vencido: false, detalhe: `(${eqDoVeiculo(v)}) — faltam ${formatarKm(c.falta ?? 0)} km` })
     }
   }
 
@@ -190,15 +214,23 @@ export function montarAlertas(e: EntradaAlertas): Alertas {
       }
     })
 
+  // Multas (spec multa §2.12): só antes da indicação, com prazo vencido ou vencendo em até 10 dias.
+  const limiteMulta = somarDias(hoje, DIAS_MULTA)
   const multas: Ordenavel[] = e.multas
-    .filter((m) => m.status !== 'descontada')
-    .map((m) => ({
-      rotulo: placa(m.veiculo_id),
-      detalhe: `— ${m.motorista_nome ?? 'sem motorista'}, ${formatarDataIso(m.data)}, ${brl(m.valor)} · ${m.status}`,
-      vencido: false,
-      caminho: '/sofia/multas',
-      ordem: m.data,
-    }))
+    .filter((m) => ETAPAS_ANTES_DA_INDICACAO.includes(m.etapa) && m.prazo_indicacao && m.prazo_indicacao <= limiteMulta)
+    .map((m) => {
+      const prazo = m.prazo_indicacao as string
+      const vencido = prazo < hoje
+      const n = diasEntre(hoje, prazo)
+      const quando = vencido ? 'prazo vencido' : n === 0 ? 'vence hoje' : `vence em ${plural(n, 'dia', 'dias')}`
+      return {
+        rotulo: placa(m.veiculo_id),
+        detalhe: `— ${m.motorista_nome ?? 'sem motorista'}, ${formatarDataIso(m.data)}, ${brl(m.valor)} · indicar até ${formatarDataIso(prazo)}: ${quando}`,
+        vencido,
+        caminho: `/sofia/multas/${m.id}`,
+        ordem: prazo,
+      }
+    })
 
   const sinistros: Ordenavel[] = e.sinistros
     .filter((s) => s.status !== 'encerrado')
@@ -229,7 +261,7 @@ export function montarAlertas(e: EntradaAlertas): Alertas {
     { chave: 'equipes_sem_km', titulo: `Equipes sem KM diário de ontem (${diaCurto(anterior)})`, itens: semKm },
     { chave: 'documentos', titulo: `Documentos vencidos ou vencendo em ${DIAS_DOCUMENTO} dias`, itens: ordenar(docs) },
     { chave: 'cnh', titulo: `CNH vencida ou vencendo em ${DIAS_CNH} dias`, itens: ordenar(cnh) },
-    { chave: 'multas', titulo: 'Multas sem tratativa', itens: ordenar(multas) },
+    { chave: 'multas', titulo: `Multas com prazo de indicação vencido ou vencendo em ${DIAS_MULTA} dias`, itens: ordenar(multas) },
     { chave: 'sinistros', titulo: 'Sinistros abertos', itens: ordenar(sinistros) },
     { chave: 'oficina', titulo: 'Volta da oficina atrasada', itens: ordenar(oficina) },
   ]

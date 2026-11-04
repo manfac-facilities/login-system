@@ -5,7 +5,9 @@ import type {
   MotoristaDocumento, VeiculoResponsabilidadeHistorico, CentroCustoHistorico, Pendencia, Checklist,
   KmExcedidoDesconto,
 } from './types'
-import { classificarRevisao, type RevisaoMotivo } from './revisaoStatus'
+import type { RevisaoMotivo } from './revisaoStatus'
+import { classificarFrota, type VeiculoPrev } from './revisaoPrevisao'
+import { buscarTudo, hojeSP } from './bases/leitura'
 
 /**
  * Loga o erro do Supabase com o nome da função de origem e propaga uma
@@ -118,39 +120,41 @@ export async function getRevisoes(veiculoId?: string): Promise<Revisao[]> {
 export type RevisaoAtrasada = Revisao & { placa: string | null; motivo: RevisaoMotivo; km_passados: number | null }
 export type RevisaoVenceEmBreve = Revisao & { placa: string | null; km_restantes: number }
 
-// Só a revisão mais recente de cada veículo+tipo conta; as anteriores foram substituídas.
-async function classificarRevisoesMaisRecentes() {
+// Regra da revisão vigente (spec 2026-11-03 manutenção §1.1, `classificarFrota`): por carro, a de maior
+// km_realizada (empate por data, depois created_at) — nunca "a criada por último", senão um histórico importado
+// depois viraria vigente. Próxima = proxima_km ou km_realizada + intervalo do carro; "não prever" fica de fora.
+// Carros inativos não entram. `proxima_km` devolvido é a próxima EFETIVA (inclusive a calculada sozinha).
+async function classificarRevisoesVigentes() {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('revisoes')
-    .select('*, veiculos(placa, km_atual)')
-    .order('created_at', { ascending: false })
-  if (error) throwQueryError('getRevisoesAtrasadas', error)
-  const hoje = new Date().toISOString().split('T')[0]
-  const maisRecentePorVeiculoETipo = new Map<string, Revisao & { veiculos?: { placa: string | null; km_atual: number | null } | null }>()
-  for (const r of data ?? []) {
-    const chave = `${r.veiculo_id}::${r.tipo}`
-    if (!maisRecentePorVeiculoETipo.has(chave)) maisRecentePorVeiculoETipo.set(chave, r)
-  }
-  return Array.from(maisRecentePorVeiculoETipo.values()).map(({ veiculos, ...r }) => ({
-    r,
-    placa: veiculos?.placa ?? null,
-    c: classificarRevisao(r, veiculos?.km_atual, hoje),
+  // Paginado: depois da importação da planilha, revisoes passa fácil das 1.000 linhas do PostgREST.
+  const [revisoes, veics] = await Promise.all([
+    buscarTudo<Revisao & { prever_proxima: boolean }>((a, b) => supabase.from('revisoes').select('*').order('id').range(a, b)),
+    buscarTudo<VeiculoPrev>((a, b) =>
+      supabase.from('veiculos').select('id, placa, modelo, km_atual, status, intervalo_revisao_km').order('id').range(a, b)),
+  ])
+  const hoje = hojeSP()
+  const porId = new Map(revisoes.map((r) => [r.id, r]))
+  const veiculos: VeiculoPrev[] = veics.map((v) => ({
+    id: v.id, placa: v.placa, modelo: v.modelo, km_atual: Number(v.km_atual), status: v.status,
+    intervalo_revisao_km: v.intervalo_revisao_km ?? null,
   }))
+  return classificarFrota(veiculos, revisoes, [], hoje)
+    .filter((i) => i.vigente)
+    .map((i) => ({ i, r: { ...(porId.get(i.vigente!.id) as Revisao), proxima_km: i.proxima }, placa: i.veiculo.placa }))
 }
 
 export async function getRevisoesAtrasadas(): Promise<RevisaoAtrasada[]> {
-  const todas = await classificarRevisoesMaisRecentes()
+  const todas = await classificarRevisoesVigentes()
   return todas
-    .filter(({ c }) => c.situacao === 'atrasada')
-    .map(({ r, placa, c }) => ({ ...r, placa, motivo: c.motivos.includes('data') ? 'data' : 'km', km_passados: c.kmPassados }))
+    .filter(({ i }) => i.s === 'atrasada')
+    .map(({ r, placa, i }) => ({ ...r, placa, motivo: i.porData ? 'data' : 'km', km_passados: i.passou }))
 }
 
 export async function getRevisoesVenceEmBreve(): Promise<RevisaoVenceEmBreve[]> {
-  const todas = await classificarRevisoesMaisRecentes()
+  const todas = await classificarRevisoesVigentes()
   return todas
-    .filter(({ c }) => c.situacao === 'vence_em_breve')
-    .map(({ r, placa, c }) => ({ ...r, placa, km_restantes: c.kmRestantes as number }))
+    .filter(({ i }) => i.s === 'breve')
+    .map(({ r, placa, i }) => ({ ...r, placa, km_restantes: i.falta as number }))
 }
 
 export async function getDocumentosVeiculo(veiculoId?: string): Promise<DocumentoVeiculo[]> {

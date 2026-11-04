@@ -3,6 +3,7 @@
  * segredo; não há usuário logado). Qualquer erro de leitura propaga — a rota manda o aviso de falha.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { buscarTudo } from '../bases/leitura'
 import { diaUtilAnterior, type EntradaAlertas } from './blocos'
 
 /** Data de hoje em Brasília, AAAA-MM-DD. */
@@ -20,7 +21,7 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
   const anterior = diaUtilAnterior(hoje)
   const [veiculos, equipes, motoristas, revisoes, documentos, multas, sinistros, km] = await Promise.all([
     ler<EntradaAlertas['veiculos'][number]>(
-      admin.from('veiculos').select('id, placa, km_atual, status, equipe_id, previsao_retorno_oficina'),
+      admin.from('veiculos').select('id, placa, km_atual, status, equipe_id, previsao_retorno_oficina, intervalo_revisao_km'),
       'veiculos'
     ),
     ler<EntradaAlertas['equipes'][number]>(admin.from('equipes').select('id, codigo, ativo'), 'equipes'),
@@ -28,13 +29,17 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
       admin.from('motoristas').select('id, nome, cnh_vencimento, equipe_id, ativo'),
       'motoristas'
     ),
-    ler<EntradaAlertas['revisoes'][number]>(
-      admin.from('revisoes').select('veiculo_id, tipo, proxima_data, proxima_km, created_at'),
-      'revisoes'
+    // pagina: a tabela passa de 1.000 linhas e o corte do PostgREST esconderia a revisão vigente
+    buscarTudo<EntradaAlertas['revisoes'][number]>((a, b) =>
+      admin.from('revisoes').select('id, veiculo_id, tipo, km_realizada, data_realizada, proxima_data, proxima_km, prever_proxima, created_at').order('id').range(a, b)
     ),
     ler<EntradaAlertas['documentos'][number]>(admin.from('documentos_veiculo').select('veiculo_id, tipo, vencimento'), 'documentos_veiculo'),
-    ler<{ veiculo_id: string | null; motorista_id: string | null; data: string; valor: number; status: string }>(
-      admin.from('multas').select('veiculo_id, motorista_id, data, valor, status').neq('status', 'descontada'),
+    ler<{
+      id: string; veiculo_id: string | null; motorista_id: string | null; data: string; valor: number
+      etapa: string; prazo_indicacao: string | null
+    }>(
+      // O bloco filtra a etapa (antes da indicação) e o prazo; aqui só tira as que já saíram do fluxo.
+      admin.from('multas').select('id, veiculo_id, motorista_id, data, valor, etapa, prazo_indicacao').neq('status', 'descontada'),
       'multas'
     ),
     ler<EntradaAlertas['sinistros'][number]>(
@@ -52,11 +57,13 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
     revisoes,
     documentos,
     multas: multas.map((m) => ({
+      id: m.id,
       veiculo_id: m.veiculo_id,
       motorista_nome: m.motorista_id ? (nomeDe.get(m.motorista_id) ?? null) : null,
       data: m.data,
       valor: m.valor,
-      status: m.status,
+      etapa: m.etapa,
+      prazo_indicacao: m.prazo_indicacao,
     })),
     sinistros,
     equipesComKmNoDiaUtilAnterior: km.map((k) => k.equipe_id),

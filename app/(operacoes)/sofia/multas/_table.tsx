@@ -1,185 +1,111 @@
 'use client'
 
+/**
+ * Multas em tabela (BaseTabela base="multa"). Mesmas actions de antes: exclusão unitária
+ * (excluirMultaAction) e em massa só do que está na tela (a seleção é zerada ao mudar filtro, busca, ordem ou página) (excluirMultasEmMassaAction, RPC que confere
+ * o gestor). Etapa, desconto e autorização só mudam no fluxo da multa (/sofia/multas/[id]).
+ */
 import { useState, useTransition } from 'react'
-import {
-  enviarParaDescontoEmMassaAction,
-  excluirMultaAction,
-  excluirMultasEmMassaAction,
-  atualizarAutorizacaoMultaAction,
-} from './_actions'
-
-import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
+import Link from 'next/link'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
-import type { MultaComRelacoes } from './page'
+import { classePrazo } from '@/lib/sofia/multaEtapas'
+import type { FiltrosBase, Linha, MultaLinha } from '@/lib/sofia/bases/tipos'
+import BaseTabela from '../_base/BaseTabela'
+import PillPrazo from './_pill'
+import { excluirMultaAction, excluirMultasEmMassaAction } from './_actions'
 
-const statusStyle: Record<string, string> = {
-  pendente: 'bg-amber-900 text-amber-300',
-  validada: 'bg-blue-900 text-blue-300',
-  descontada: 'bg-green-900 text-green-300',
-}
-
-export default function MultasTable({
-  multas,
-  podeGerir,
-}: {
-  multas: MultaComRelacoes[]
+export default function MultasTable(props: {
+  linhas: MultaLinha[]
+  filtrosIniciais: FiltrosBase
+  hoje: string
   podeGerir: boolean
+  equipes: string[]
+  placas: string[]
+  motoristas: string[]
+  subtitulo: string
 }) {
-  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set())
+  const { podeGerir, hoje } = props
+  const [marcados, setMarcados] = useState<string[]>([])
   const [isPending, startTransition] = useTransition()
   const [erro, setErro] = useState<string | null>(null)
 
-  function toggleUma(id: string) {
-    setSelecionadas((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  function toggleTodas() {
-    setSelecionadas((prev) => (prev.size === multas.length ? new Set() : new Set(multas.map((m) => m.id))))
-  }
-
-  function handleEnviarParaDesconto() {
-    if (!window.confirm(`Enviar ${selecionadas.size} multa(s) selecionada(s) para desconto?`))
-      return
+  function excluirSelecionadas() {
+    if (!window.confirm(`Excluir ${marcados.length} multa(s) selecionada(s)? Essa ação não pode ser desfeita.`)) return
     setErro(null)
     startTransition(async () => {
       try {
-        await enviarParaDescontoEmMassaAction(Array.from(selecionadas))
-        setSelecionadas(new Set())
-      } catch (e) {
-        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
+        await excluirMultasEmMassaAction(marcados)
+        setMarcados([])
+      } catch {
+        setErro('Erro ao excluir as multas selecionadas')
       }
     })
   }
 
-  function handleExcluirSelecionadas() {
-    if (!window.confirm(`Excluir ${selecionadas.size} multa(s) selecionada(s)? Essa ação não pode ser desfeita.`))
-      return
-    setErro(null)
-    startTransition(async () => {
-      try {
-        await excluirMultasEmMassaAction(Array.from(selecionadas))
-        setSelecionadas(new Set())
-      } catch (e) {
-        setErro(e instanceof Error ? e.message : 'Erro ao processar a ação')
-      }
-    })
-  }
-
-  return (
-    <>
-      {podeGerir && selecionadas.size > 0 && (
-        <div className="flex items-center gap-3 mb-3 px-4 py-2 rounded-lg border border-[#1e3a5f] bg-[#0d2050]">
-          <span className="text-sm text-[#94a3b8]">{selecionadas.size} selecionada(s)</span>
-          <button
-            onClick={handleEnviarParaDesconto}
-            disabled={isPending}
-            className="text-sm text-[#f05a28] hover:underline disabled:opacity-50 disabled:no-underline active:scale-95 transition-transform"
-          >
-            Enviar para desconto
-          </button>
-          {podeGerir && (
+  const barra =
+    podeGerir && (marcados.length > 0 || erro) ? (
+      <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-[#1e3a5f] bg-[#0d2050] px-4 py-2">
+        {marcados.length > 0 && (
+          <>
+            <span className="text-sm text-[#94a3b8]">{marcados.length} selecionada(s)</span>
             <button
-              onClick={handleExcluirSelecionadas}
+              type="button"
+              onClick={excluirSelecionadas}
               disabled={isPending}
-              className="text-sm text-red-400 hover:underline disabled:opacity-50 disabled:no-underline active:scale-95 transition-transform"
+              className="text-sm text-red-400 hover:underline disabled:opacity-50 disabled:no-underline"
             >
               Excluir selecionadas
             </button>
-          )}
-        </div>
-      )}
-
-      {erro && <p className="text-sm text-red-400 mb-3">{erro}</p>}
-
-      <div className="rounded-xl border border-[#1e3a5f] overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#1e3a5f] bg-[#0d2050]">
-              <th className="px-4 py-3">
-                {podeGerir && (
-                <input
-                  type="checkbox"
-                  checked={selecionadas.size === multas.length && multas.length > 0}
-                  onChange={toggleTodas}
-                  className="accent-[#f05a28]"
-                />
-                )}
-              </th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Data de recebimento</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Veículo</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Motorista</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Tipo de infração</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Descrição</th>
-              <th className="text-right px-4 py-3 text-[#4a6080] font-medium">Valor</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Desconto</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Autorização</th>
-              <th className="text-left px-4 py-3 text-[#4a6080] font-medium">Status</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {multas.map((m) => (
-              <tr key={m.id} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
-                <td className="px-4 py-3">
-                  {podeGerir && (
-                    <input
-                    type="checkbox"
-                    checked={selecionadas.has(m.id)}
-                    onChange={() => toggleUma(m.id)}
-                    className="accent-[#f05a28]"
-                  />
-                  )}
-                </td>
-                <td className="px-4 py-3 text-[#94a3b8]">{new Date(m.data).toLocaleDateString('pt-BR')}</td>
-                <td className="px-4 py-3 text-[#94a3b8]">
-                  {m.data_recebimento ? new Date(m.data_recebimento).toLocaleDateString('pt-BR') : '—'}
-                </td>
-                <td className="px-4 py-3 text-[#94a3b8] font-mono">{m.veiculos?.placa ?? '—'}</td>
-                <td className="px-4 py-3 text-[#94a3b8]">{m.motoristas?.nome ?? '—'}</td>
-                <td className="px-4 py-3 text-white">{m.tipo_infracao ?? '—'}</td>
-                <td className="px-4 py-3 text-white">{m.descricao ?? '—'}</td>
-                <td className="px-4 py-3 text-white text-right font-medium">R$ {Number(m.valor).toFixed(2)}</td>
-                <td className="px-4 py-3 text-[#94a3b8] text-sm">
-                  {m.tipo_desconto === 'nenhum'
-                    ? '—'
-                    : `${m.tipo_desconto === 'total' ? 'Total' : 'Parcial'} · R$ ${Number(m.valor_descontado ?? 0).toFixed(2)}`}
-                </td>
-                <td className="px-4 py-3">
-                  <AutorizacaoActions
-                    status={m.autorizacao_status ?? 'sem_solicitacao'}
-                    solicitadoEm={m.autorizacao_solicitado_em ?? null}
-                    action={atualizarAutorizacaoMultaAction.bind(null, m.id)}
-                    showActions={podeGerir}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle[m.status]}`}>
-                    {m.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {podeGerir && (
-                    <DeleteConfirmButton action={excluirMultaAction} id={m.id} label="Excluir" itemLabel={`multa de ${m.veiculos?.placa ?? 'veículo sem placa'} — R$ ${Number(m.valor).toFixed(2)}`} />
-                  )}
-                </td>
-              </tr>
-            ))}
-            {multas.length === 0 && (
-              <tr>
-                <td colSpan={12} className="px-4 py-12 text-center text-[#4a6080]">
-                  Nenhuma multa registrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          </>
+        )}
+        {erro && <span className="text-sm text-red-400">{erro}</span>}
       </div>
-    </>
+    ) : null
+
+  return (
+    <BaseTabela
+      base="multa"
+      nome="Multas"
+      subtitulo={props.subtitulo}
+      linhas={props.linhas as Linha[]}
+      filtrosIniciais={props.filtrosIniciais}
+      hoje={hoje}
+      podeGerir={podeGerir}
+      equipes={props.equipes}
+      placas={props.placas}
+      motoristas={props.motoristas}
+      novoHref="/sofia/multas/nova"
+      novoLabel="Registrar multa"
+      vazio="Nenhuma multa registrada."
+      placeholderBusca="Placa, motorista, infração…"
+      cabecalhoExtra={barra}
+      selecao={podeGerir ? { marcados, onChange: setMarcados } : undefined}
+      celula={(k, r) => {
+        if (k !== 'prazo') return undefined
+        const m = r as MultaLinha
+        return <PillPrazo prazo={classePrazo(m.prazo, m.sit, hoje)} />
+      }}
+      acoesDetalhe={(r) => {
+        const m = r as MultaLinha
+        return (
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href={`/sofia/multas/${m.id}`}
+              className="rounded-lg bg-[#f05a28] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94e22]"
+            >
+              Abrir no fluxo da multa
+            </Link>
+            {podeGerir && (
+              <DeleteConfirmButton
+                action={excluirMultaAction}
+                id={m.id}
+                label="Excluir"
+                itemLabel={`multa de ${m.placa} — R$ ${m.valor.toFixed(2)}`}
+              />
+            )}
+          </div>
+        )
+      }}
+    />
   )
 }

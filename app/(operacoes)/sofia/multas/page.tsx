@@ -1,48 +1,38 @@
-import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
-import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import { carregarBase } from '@/lib/sofia/bases/leitura'
+import { filtrosDaUrl } from '@/lib/sofia/bases/filtro'
+import { fmtBrl } from '@/lib/sofia/correcoes'
+import { ordemEtapa } from '@/lib/sofia/multaEtapas'
+import type { MultaLinha } from '@/lib/sofia/bases/tipos'
 import MultasTable from './_table'
-import type { Multa } from '@/lib/sofia/types'
 
-export type MultaComRelacoes = Multa & {
-  veiculos: { placa: string } | null
-  motoristas: { nome: string } | null
-}
+/**
+ * Base de Multas (motor lib/sofia/bases, BaseTabela base="multa"). A tratativa continua no fluxo de
+ * etapas de /sofia/multas/[id]; aqui ficam a lista, os filtros, o Excel, a exclusão (unitária e em massa).
+ */
+export default async function MultasPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const params = await searchParams
+  const base = await carregarBase('multa')
+  const linhas = base.linhas as MultaLinha[]
+  const soma = (f: (m: MultaLinha) => boolean) => linhas.filter(f).reduce((s, m) => s + m.valor, 0)
 
-export default async function MultasPage() {
-  const supabase = await createClient()
-  const [{ data: multas }, podeGerir] = await Promise.all([
-    supabase.from('multas').select('*, veiculos(placa), motoristas(nome)').order('data', { ascending: false }),
-    podeGerirFrotas(supabase),
-  ])
-
-  const totalPendente = (multas ?? [])
-    .filter((m: MultaComRelacoes) => m.status === 'pendente')
-    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
-
-  const totalValidada = (multas ?? [])
-    .filter((m: MultaComRelacoes) => m.status === 'validada')
-    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
+  // "a fazer" = ainda com o Frotas (registrada até cobrada); "em desconto" = solicitado/autorizado
+  const totalAFazer = soma((m) => m.sit !== 'contestada' && ordemEtapa(m.sit) <= ordemEtapa('cobrada'))
+  const totalEmDesconto = soma((m) => m.sit === 'solicitado' || m.sit === 'autorizado')
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Multas</h1>
-          <div className="flex gap-6 mt-2">
-            <p className="text-[#4a6080] text-sm">R$ {totalPendente.toFixed(2)} pendente de validação</p>
-            <p className="text-[#4a6080] text-sm">R$ {totalValidada.toFixed(2)} validada, não descontada</p>
-          </div>
-        </div>
-        <Link
-          href="/sofia/multas/nova"
-          className="px-4 py-2 rounded-lg bg-[#f05a28] text-white text-sm font-medium hover:bg-[#d94e22] transition-colors"
-        >
-          + Registrar Multa
-        </Link>
-      </div>
-
-      <MultasTable multas={multas ?? []} podeGerir={podeGerir} />
-    </div>
+    <MultasTable
+      linhas={linhas}
+      filtrosIniciais={filtrosDaUrl('multa', params, base.hoje)}
+      hoje={base.hoje}
+      podeGerir={base.podeGerir}
+      equipes={base.equipes}
+      placas={base.placas}
+      motoristas={base.motoristas}
+      subtitulo={`${fmtBrl(totalAFazer)} a fazer · ${fmtBrl(totalEmDesconto)} em desconto`}
+    />
   )
 }

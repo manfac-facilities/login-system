@@ -10,9 +10,11 @@ interface Props {
     lat: number | null,
     lng: number | null
   ) => void
+  /** false = só câmera ao vivo (checklist, decisão 2 de fotos). Padrão true (sinistro e outros usos). */
+  permitirGaleria?: boolean
 }
 
-export default function CameraCapture({ posicao, onCapture }: Props) {
+export default function CameraCapture({ posicao, onCapture, permitirGaleria = true }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -157,16 +159,18 @@ export default function CameraCapture({ posicao, onCapture }: Props) {
           >
             📷 {posicao}
           </button>
-          <label className="text-center text-xs text-[#4a6080] hover:text-[#f05a28] cursor-pointer transition-colors">
-            ou escolher da galeria
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
+          {permitirGaleria && (
+            <label className="text-center text-xs text-[#4a6080] hover:text-[#f05a28] cursor-pointer transition-colors">
+              ou escolher da galeria
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </label>
+          )}
         </div>
       )}
       <canvas ref={canvasRef} className="hidden" />

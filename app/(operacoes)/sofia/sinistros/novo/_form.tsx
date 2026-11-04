@@ -3,7 +3,8 @@ import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { criarSinistroAction } from '../_actions'
-import CameraCapture from '@/components/sofia/CameraCapture'
+import FotosAdicionais from '@/components/sofia/FotosAdicionais'
+import { TETO_FOTOS, type FotoRascunho } from '@/lib/sofia/fotosChecklist'
 import { createClient } from '@/lib/supabase/client'
 import { uploadFotos, type CapturedPhoto } from '@/lib/sofia/uploadFotos'
 import { useVeiculoMotoristaCascade } from '@/lib/sofia/useVeiculoMotoristaCascade'
@@ -20,7 +21,7 @@ export default function NovoSinistroForm({
   const [, startTransition] = useTransition()
   const router = useRouter()
   const [sinistroId] = useState(() => crypto.randomUUID())
-  const [fotos, setFotos] = useState<CapturedPhoto[]>([])
+  const [fotos, setFotos] = useState<FotoRascunho[]>([])
   const [uploadingFotos, setUploadingFotos] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const { veiculoId, motoristaId, onVeiculoChange, onMotoristaChange } = useVeiculoMotoristaCascade()
@@ -35,10 +36,6 @@ export default function NovoSinistroForm({
     }
   }, [state.success, state.sinistroId, router])
 
-  const handleCapture = (blob: Blob, posicao: string) => {
-    setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao, lat: null, lng: null }])
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setUploadError(null)
@@ -47,10 +44,16 @@ export default function NovoSinistroForm({
     const fd = new FormData(e.currentTarget)
     fd.set('id', sinistroId)
 
+    if (fotos.length > TETO_FOTOS) {
+      setUploadError(`Limite de ${TETO_FOTOS} fotos por sinistro`)
+      setSubmitting(false)
+      return
+    }
     if (fotos.length > 0) {
       setUploadingFotos(true)
       const supabase = createClient()
-      const resultado = await uploadFotos(supabase, 'sofia-anexos', `sinistros/${sinistroId}`, fotos)
+      const capturadas: CapturedPhoto[] = fotos.map((f, i) => ({ blob: f.blob, posicao: `Dano ${i + 1}`, lat: f.lat, lng: f.lng }))
+      const resultado = await uploadFotos(supabase, 'sofia-anexos', `sinistros/${sinistroId}`, capturadas)
       setUploadingFotos(false)
 
       if (!resultado.ok) {
@@ -155,11 +158,10 @@ export default function NovoSinistroForm({
         </div>
 
         <div>
-          <p className="text-sm text-[#94a3b8] mb-3">Fotos do dano <span className="text-[#4a6080]">(câmera ao vivo)</span></p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CameraCapture posicao="Dano 1" onCapture={handleCapture} />
-            <CameraCapture posicao="Dano 2" onCapture={handleCapture} />
-          </div>
+          <p className="text-sm text-[#94a3b8] mb-3">
+            Fotos do dano <span className="text-[#4a6080]">(câmera ou galeria, até {TETO_FOTOS})</span>
+          </p>
+          <FotosAdicionais fotos={fotos} onChange={setFotos} totalAtual={fotos.length} rotuloBotao="+ Mais fotos" />
           {fotos.length > 0 && (
             <p className="text-xs text-green-400 mt-2">{fotos.length} foto{fotos.length > 1 ? 's' : ''} capturada{fotos.length > 1 ? 's' : ''}</p>
           )}

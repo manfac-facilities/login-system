@@ -2,7 +2,7 @@ type TableResult = { data?: unknown; error?: unknown }
 
 function makeChainable(result: TableResult) {
   const chain: Record<string, unknown> = {}
-  const methods = ['select', 'eq', 'neq', 'order', 'lte', 'gte', 'single', 'is']
+  const methods = ['select', 'eq', 'neq', 'order', 'lte', 'gte', 'single', 'is', 'range']
   for (const m of methods) {
     chain[m] = jest.fn(() => chain)
   }
@@ -69,91 +69,70 @@ describe('getMultasPendentes', () => {
   })
 })
 
+// Regra da revisão vigente (spec 2026-11-03 manutenção §1.1): por carro, maior km_realizada; próxima efetiva.
+function porTabela(revisoes: unknown[], veiculos: unknown[]) {
+  fromMock = jest.fn((t: string) => makeChainable({ data: t === 'revisoes' ? revisoes : t === 'veiculos' ? veiculos : [] }))
+}
+const V = (id: string, km_atual: number, extra: Record<string, unknown> = {}) => ({
+  id, placa: 'P-' + id, modelo: 'Strada', km_atual, status: 'ativo', intervalo_revisao_km: null, ...extra,
+})
+const R = (id: string, veiculo_id: string, extra: Record<string, unknown>) => ({
+  id, veiculo_id, tipo: 'preventiva', km_realizada: null, data_realizada: null, created_at: '2026-06-01',
+  proxima_km: null, proxima_data: null, prever_proxima: true, ...extra,
+})
+
 describe('getRevisoesAtrasadas', () => {
-  it('does not let a newer corretiva entry mask an older overdue preventiva for the same vehicle', async () => {
-    const rows = [
-      { id: 'r-corretiva', veiculo_id: 'v1', tipo: 'corretiva', created_at: '2026-06-01', proxima_data: null },
-      { id: 'r-preventiva', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-01-01', proxima_data: '2020-01-01' },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
-    const result = await getRevisoesAtrasadas()
-
-    expect(result.map((r) => r.id)).toContain('r-preventiva')
+  it('vigente = maior KM realizado: histórico importado depois (KM menor) não vira vigente', async () => {
+    porTabela(
+      [
+        R('atual', 'v1', { km_realizada: 40000, created_at: '2026-01-01' }),
+        R('importada', 'v1', { km_realizada: 10000, created_at: '2026-11-03' }),
+      ],
+      [V('v1', 45000)]
+    )
+    // atual: próxima 50.000 (auto), carro em 45.000 → em dia; a importada (próxima 20.000) diria atrasada.
+    expect(await getRevisoesAtrasadas()).toEqual([])
   })
 
-  it('still flags only once per vehicle+tipo, using the most recent row of that tipo', async () => {
-    const rows = [
-      { id: 'r-new', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: '2020-01-01' },
-      { id: 'r-old', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-01-01', proxima_data: '2020-01-01' },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
+  it('próxima calculada sozinha (sem proxima_km) atrasa por KM e devolve a próxima efetiva', async () => {
+    porTabela([R('r1', 'v1', { km_realizada: 10000 })], [V('v1', 20250)])
     const result = await getRevisoesAtrasadas()
-
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('r-new')
+    expect(result[0]).toMatchObject({ id: 'r1', placa: 'P-v1', motivo: 'km', km_passados: 250, proxima_km: 20000 })
   })
 
-  it('does not flag a vehicle+tipo whose most recent row is not overdue', async () => {
-    const rows = [
-      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: '2099-01-01' },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
-    const result = await getRevisoesAtrasadas()
-
-    expect(result).toEqual([])
+  it('usa o intervalo próprio do carro', async () => {
+    porTabela([R('r1', 'v1', { km_realizada: 10000 })], [V('v1', 16000, { intervalo_revisao_km: 5000 })])
+    expect((await getRevisoesAtrasadas()).map((r) => r.id)).toEqual(['r1'])
   })
 
-  it('flags por KM quando km_atual do veículo >= proxima_km, informando km_passados', async () => {
-    const rows = [
-      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: 10250 } },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
-    const result = await getRevisoesAtrasadas()
-
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ id: 'r1', motivo: 'km', km_passados: 250 })
-    expect(result[0]).not.toHaveProperty('veiculos')
-  })
-
-  it('não flaga por KM quando km_atual é nulo ou ainda não chegou', async () => {
-    const rows = [
-      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: null } },
-      { id: 'r2', veiculo_id: 'v2', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 10000, veiculos: { km_atual: 9999 } },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
+  it('vigente com "não prever" e carro inativo ficam de fora', async () => {
+    porTabela(
+      [R('r1', 'v1', { km_realizada: 10000, prever_proxima: false }), R('r2', 'v2', { km_realizada: 10000 })],
+      [V('v1', 90000), V('v2', 90000, { status: 'inativo' })]
+    )
     expect(await getRevisoesAtrasadas()).toEqual([])
   })
 
   it('data vencida e KM vencido: motivo data, km_passados preenchido', async () => {
-    const rows = [
-      { id: 'r1', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: '2020-01-01', proxima_km: 10000, veiculos: { km_atual: 10000 } },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
-    const result = await getRevisoesAtrasadas()
-
-    expect(result[0]).toMatchObject({ motivo: 'data', km_passados: 0 })
+    porTabela([R('r1', 'v1', { km_realizada: 0, proxima_km: 10000, proxima_data: '2020-01-01' })], [V('v1', 10000)])
+    expect((await getRevisoesAtrasadas())[0]).toMatchObject({ motivo: 'data', km_passados: 0 })
   })
 })
 
 describe('getRevisoesVenceEmBreve', () => {
   it('lista só a que está a <= 1.000 km, com placa e km_restantes; atrasada fica de fora', async () => {
-    const rows = [
-      { id: 'breve', veiculo_id: 'v1', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 49000, veiculos: { placa: 'RTE-4F21', km_atual: 48360 } },
-      { id: 'atrasada', veiculo_id: 'v2', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 60000, veiculos: { placa: 'QXB-7J58', km_atual: 61230 } },
-      { id: 'longe', veiculo_id: 'v3', tipo: 'preventiva', created_at: '2026-06-01', proxima_data: null, proxima_km: 90000, veiculos: { placa: 'AAA-0A00', km_atual: 1000 } },
-    ]
-    fromMock = jest.fn(() => makeChainable({ data: rows }))
-
+    porTabela(
+      [
+        R('breve', 'v1', { km_realizada: 39000, proxima_km: 49000 }),
+        R('atrasada', 'v2', { km_realizada: 50000, proxima_km: 60000 }),
+        R('longe', 'v3', { km_realizada: 0, proxima_km: 90000 }),
+      ],
+      [V('v1', 48360), V('v2', 61230), V('v3', 1000)]
+    )
     const result = await getRevisoesVenceEmBreve()
-
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ id: 'breve', placa: 'RTE-4F21', km_restantes: 640 })
+    expect(result[0]).toMatchObject({ id: 'breve', placa: 'P-v1', km_restantes: 640 })
     expect((await getRevisoesAtrasadas()).map((r) => r.id)).toEqual(['atrasada'])
   })
 })

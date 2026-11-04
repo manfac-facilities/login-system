@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { requireGestorFrotas } from '@/lib/sofia/permissoes'
 import { MULTA_STATUS, isValidEnum } from '@/lib/sofia/enums'
+import { registrarEtapaMultaAction } from '../multas/_actions'
 
 function parseDescontoFormData(formData: FormData) {
   const id = formData.get('id') as string
@@ -13,54 +14,54 @@ function parseDescontoFormData(formData: FormData) {
   return { id, valor_descontado, tipo_desconto, autorizacao_assinada }
 }
 
-export async function atualizarStatusMultaAction(id: string, status: string) {
-  if (!isValidEnum(MULTA_STATUS, status)) throw new Error('Status de multa inválido')
+type State = { error?: string; success?: boolean }
+
+// ---------------------------------------------------------------------------
+// MULTA: pelo fluxo de etapas (spec 2026-11-03 §2.1/§2.6/§4.3). Depois de
+// sdd-sql-sofia-multa-avaria.sql, status/valor_descontado/tipo_desconto de multas
+// só mudam pela RPC sofia_multa_registrar_etapa (registrarEtapaMultaAction).
+// Avançar a multa (validar, cobrar...) é no detalhe /sofia/multas/[id]; o antigo
+// atualizarStatusMultaAction foi removido.
+// ---------------------------------------------------------------------------
+
+/** Registrar desconto = etapa "descontada" (só a partir de "autorizado"; o banco confere). */
+export async function registrarDescontoMultaAction(_prev: State, formData: FormData): Promise<State> {
+  const id = ((formData.get('id') as string | null) ?? '').trim()
+  const valorRaw = ((formData.get('valor_descontado') as string | null) ?? '').trim()
+  const tipo_desconto = ((formData.get('tipo_desconto') as string | null) ?? '').trim()
+  const competencia = ((formData.get('competencia') as string | null) ?? '').trim()
 
   const supabase = await createClient()
   const erroGestor = await requireGestorFrotas(supabase)
-  if (erroGestor) throw new Error(erroGestor)
+  if (erroGestor) return { error: erroGestor }
 
-  const { error } = await supabase.from('multas').update({ status }).eq('id', id)
-  if (error) throw error
-  revalidatePath('/sofia/multas')
-  revalidatePath('/sofia/descontos')
+  const valor_descontado = Number(valorRaw)
+  if (tipo_desconto !== 'total' && tipo_desconto !== 'parcial')
+    return { error: 'Informe o tipo de desconto (total ou parcial)' }
+  // tipo total: o valor é sempre o da multa (o digitado é ignorado)
+  if (!id || (tipo_desconto === 'parcial' && (valorRaw === '' || Number.isNaN(valor_descontado) || valor_descontado < 0)))
+    return { error: 'Valor do desconto inválido' }
+  if (!/^\d{4}-\d{2}$/.test(competencia)) return { error: 'Informe a competência (mês do contracheque)' }
+
+  const { data: multa, error } = await supabase.from('multas').select('valor').eq('id', id).single()
+  if (error || !multa) return { error: 'Multa não encontrada' }
+  const valorMulta = Number((multa as { valor: number }).valor)
+  if (tipo_desconto === 'parcial' && valor_descontado > valorMulta)
+    return { error: 'Valor do desconto não pode ser maior que o valor original' }
+
+  const dados = new FormData()
+  dados.set('valor_descontado', tipo_desconto === 'total' ? String(valorMulta) : valorRaw)
+  dados.set('tipo_desconto', tipo_desconto)
+  dados.set('competencia', competencia)
+  return registrarEtapaMultaAction(id, 'descontada', dados)
 }
 
-export async function registrarDescontoMultaAction(formData: FormData): Promise<void> {
-  const { id, valor_descontado, tipo_desconto, autorizacao_assinada } = parseDescontoFormData(formData)
-
+/** Desfazer desconto = descontada → autorizado (gestor/admin; o banco limpa valor/tipo/competência). */
+export async function desfazerDescontoMultaAction(id: string, _prev?: State): Promise<State> {
   const supabase = await createClient()
   const erroGestor = await requireGestorFrotas(supabase)
-  if (erroGestor) throw new Error(erroGestor)
-
-  if (Number.isNaN(valor_descontado) || valor_descontado < 0) {
-    throw new Error('Valor do desconto inválido')
-  }
-
-  const { data: multa } = await supabase.from('multas').select('valor').eq('id', id).single()
-  if (multa && valor_descontado > (multa as { valor: number }).valor) {
-    throw new Error('Valor do desconto não pode ser maior que o valor original')
-  }
-
-  const { error } = await supabase
-    .from('multas')
-    .update({ valor_descontado, tipo_desconto, autorizacao_assinada, status: 'descontada' })
-    .eq('id', id)
-
-  if (error) throw error
-  revalidatePath('/sofia/multas')
-  revalidatePath('/sofia/descontos')
-}
-
-export async function desfazerDescontoMultaAction(id: string) {
-  const supabase = await createClient()
-  const erroGestor = await requireGestorFrotas(supabase)
-  if (erroGestor) throw new Error(erroGestor)
-
-  const { error } = await supabase.from('multas').update({ status: 'validada' }).eq('id', id)
-  if (error) throw error
-  revalidatePath('/sofia/multas')
-  revalidatePath('/sofia/descontos')
+  if (erroGestor) return { error: erroGestor }
+  return registrarEtapaMultaAction(id, 'autorizado', new FormData())
 }
 
 export async function atualizarStatusDescontoSinistroAction(id: string, status: string) {

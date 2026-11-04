@@ -132,7 +132,11 @@ describe('variantes', () => {
   })
 
   it('com pendências → assunto e links', async () => {
-    respostas.multas = { data: [{ veiculo_id: null, motorista_id: null, data: '2026-10-02', valor: 100, status: 'pendente' }], error: null }
+    // prazo de indicação já vencido, antes da indicação → entra no bloco de multas (qualquer "hoje")
+    respostas.multas = {
+      data: [{ id: 'm1', veiculo_id: null, motorista_id: null, data: '2026-10-02', valor: 100, etapa: 'registrada', prazo_indicacao: '2026-10-05' }],
+      error: null,
+    }
     const r = await POST(req())
     expect((await r.json()).variante).toBe('com')
     const m = sendMailMock.mock.calls[0][0]
