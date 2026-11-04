@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import FotosAdicionais, { novoIdLocal } from './FotosAdicionais'
 import {
   PECAS_AVARIA,
@@ -7,6 +7,7 @@ import {
   contarFotos,
   rotuloTamanho,
   validarAvariaRascunho,
+  avariaRascunhoTemDados,
   type AvariaRascunho,
 } from '@/lib/sofia/fotosChecklist'
 
@@ -27,15 +28,22 @@ export default function RegistrarAvaria({
   onChange,
   totalOutras,
   permitirGaleria = false,
+  onPendenteChange,
 }: {
   avarias: AvariaRascunho[]
   onChange: (a: AvariaRascunho[]) => void
   totalOutras: number
   permitirGaleria?: boolean
+  onPendenteChange?: (pendente: boolean) => void
 }) {
   const [aba, setAba] = useState<'lista' | 'nova'>('lista')
   const [rascunho, setRascunho] = useState<AvariaRascunho>(vazia)
   const [msg, setMsg] = useState<string | null>(null)
+
+  const pendente = avariaRascunhoTemDados(rascunho)
+  useEffect(() => {
+    onPendenteChange?.(pendente)
+  }, [pendente, onPendenteChange])
 
   const totalGeral =
     totalOutras + contarFotos({ obrigatorias: 0, interna: 0, extras: 0, avarias: [...avarias, rascunho] })
@@ -68,6 +76,14 @@ export default function RegistrarAvaria({
 
   return (
     <div className="flex flex-col gap-3">
+      {pendente && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
+          <span>Você tem uma avaria não adicionada: adicione ou descarte antes de salvar.</span>
+          <button type="button" onClick={() => setRascunho(vazia())} className="shrink-0 underline">
+            Descartar
+          </button>
+        </div>
+      )}
       <div className="flex gap-1 p-1 rounded-lg border border-[#1e3a5f]">
         {botaoAba('lista', `Avarias do checklist (${avarias.length})`)}
         {botaoAba('nova', '+ Registrar avaria')}

@@ -97,3 +97,15 @@ export function posicaoExtra(n: number): string {
 export function posicaoAvaria(indiceAvaria: number, tipo: 'peca' | 'dano', n: number): string {
   return `Avaria ${indiceAvaria} ${tipo === 'peca' ? 'peça' : 'dano'} ${n}`
 }
+
+/** true se o rascunho de avaria tem qualquer dado (e portanto se perderia ao enviar sem adicionar). */
+export function avariaRascunhoTemDados(a: {
+  peca: string
+  tamanho: string
+  acao: string
+  descricao: string
+  fotosPeca: readonly unknown[]
+  fotosDano: readonly unknown[]
+}): boolean {
+  return !!(a.peca || a.tamanho || a.acao || a.descricao?.trim() || a.fotosPeca.length || a.fotosDano.length)
+}

@@ -58,6 +58,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
   const [extras, setExtras] = useState<FotoRascunho[]>([])
   const [avarias, setAvarias] = useState<AvariaRascunho[]>([])
+  const [avariaPendente, setAvariaPendente] = useState(false)
   // painel do último checklist na troca (só mostra; não bloqueia nada e não mexe na trava D1)
   const [ultimo, setUltimo] = useState<{ veiculoId: string; dados: UltimoChecklist } | null>(null)
   const mostraUltimo = tipo === 'troca' && !!veiculoIdManual
@@ -103,6 +104,10 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setUploadError(null)
+    if (avariaPendente) {
+      setUploadError('Você tem uma avaria não adicionada: adicione ou descarte antes de salvar')
+      return
+    }
     setSubmitting(true)
 
     const fd = new FormData(e.currentTarget)
@@ -428,7 +433,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
 
         <div>
           <p className="text-sm text-[#94a3b8] mb-2">Avarias</p>
-          <RegistrarAvaria avarias={avarias} onChange={setAvarias} totalOutras={totalSemAvarias} permitirGaleria={false} />
+          <RegistrarAvaria avarias={avarias} onChange={setAvarias} onPendenteChange={setAvariaPendente} totalOutras={totalSemAvarias} permitirGaleria={false} />
         </div>
 
         <div className="flex items-center gap-2">

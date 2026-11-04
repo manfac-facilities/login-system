@@ -35,7 +35,7 @@ export async function criarChecklistAction(
     avarias,
   } = input
   // derivados das avarias registradas (telas antigas continuam coerentes)
-  const avaria_identificada = avarias.length > 0
+  const avaria_identificada = avarias.length > 0 || Object.keys(itens_problemas).length > 0
   const avaria_descricao = avarias.length > 0 ? avarias.map((a) => a.peca).join(', ') : null
 
   const validationError = validateChecklistInput(input)

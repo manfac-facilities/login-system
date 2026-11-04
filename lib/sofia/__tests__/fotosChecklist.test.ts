@@ -9,6 +9,7 @@ import {
   posicaoExtra,
   rotuloTamanho,
   validarAvariaRascunho,
+  avariaRascunhoTemDados,
 } from '../fotosChecklist'
 
 describe('contarFotos e teto', () => {
@@ -68,4 +69,18 @@ describe('listas e posições', () => {
     expect(posicaoAvaria(1, 'peca', 1)).toBe('Avaria 1 peça 1')
     expect(posicaoAvaria(2, 'dano', 3)).toBe('Avaria 2 dano 3')
   })
+})
+
+describe('avariaRascunhoTemDados', () => {
+  const base = { peca: '', tamanho: '', acao: '', descricao: '', fotosPeca: [], fotosDano: [] }
+  it('vazio = false', () => expect(avariaRascunhoTemDados(base)).toBe(false))
+  it('descricao só com espaços = false', () => expect(avariaRascunhoTemDados({ ...base, descricao: '  ' })).toBe(false))
+  it.each([
+    ['peca', { peca: 'Porta' }],
+    ['tamanho', { tamanho: 'media' }],
+    ['acao', { acao: 'reparar' }],
+    ['descricao', { descricao: 'x' }],
+    ['fotosPeca', { fotosPeca: [{}] }],
+    ['fotosDano', { fotosDano: [{}] }],
+  ])('%s preenchido = true', (_n, extra) => expect(avariaRascunhoTemDados({ ...base, ...extra })).toBe(true))
 })

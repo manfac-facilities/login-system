@@ -115,3 +115,16 @@ it('erro ao gravar avarias devolve a mensagem fixa com o checklistId e não grav
   })
   expect(ordem).not.toContain('checklist_fotos')
 })
+
+it('avaria_identificada acende quando algum item e marcado Problema, mesmo sem avaria registrada', async () => {
+  const f = fd(OBR, [])
+  f.set('lataria_ok', 'false')
+  f.set('itens_problemas', JSON.stringify({ lataria: 'riscado' }))
+  await criarChecklistAction({}, f)
+  expect((inserts['checklist'] as { avaria_identificada: boolean }).avaria_identificada).toBe(true)
+})
+
+it('avaria_identificada fica false sem problema e sem avaria', async () => {
+  await criarChecklistAction({}, fd(OBR, []))
+  expect((inserts['checklist'] as { avaria_identificada: boolean }).avaria_identificada).toBe(false)
+})
