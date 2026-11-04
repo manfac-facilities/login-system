@@ -1,7 +1,9 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { podeGerirFrotas, requireGestorFrotas } from '@/lib/sofia/permissoes'
+import { requireGestorFrotas } from '@/lib/sofia/permissoes'
+import { ehAdminSofia } from '@/lib/sofia/multaPermissoes'
+import { TETO_FOTOS } from '@/lib/sofia/fotosChecklist'
 import { AUTORIZACAO_STATUS, SINISTRO_STATUS, isValidEnum } from '@/lib/sofia/enums'
 
 export async function atualizarAutorizacaoSinistroAction(id: string, formData: FormData): Promise<void> {
@@ -44,6 +46,7 @@ export async function criarSinistroAction(_prev: State, formData: FormData): Pro
 
   if (!data || !tipo || !descricao) return { error: 'Data, tipo e descrição são obrigatórios' }
   if (!id) return { error: 'Erro interno: identificador do sinistro ausente' }
+  if (Object.keys(fotos).length > TETO_FOTOS) return { error: `Limite de ${TETO_FOTOS} fotos por sinistro` }
 
   const supabase = await createClient()
   const { error } = await supabase
@@ -87,11 +90,17 @@ export async function excluirSinistroAction(_prev: State, formData: FormData): P
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await podeGerirFrotas(supabase)))
-    return { error: 'Apenas administradores ou gestores de frotas podem excluir sinistros' }
+  // Só o admin exclui o sinistro inteiro (decisão do João, 03/11): a cascata leva as
+  // fotos e a trigger trg_excluir_so_admin grava o audit_log com tudo.
+  if (!user?.email || !(await ehAdminSofia(supabase)))
+    return { error: 'Apenas administradores podem excluir sinistros' }
 
   const { error } = await supabase.from('sinistros').delete().eq('id', id)
-  if (error) return { error: 'Erro ao excluir sinistro' }
+  if (error) {
+    if ((error as { code?: string }).code === '23503')
+      return { error: 'Este registro tem vínculos (troca de responsabilidade/documentos) e não pode ser excluído' }
+    return { error: 'Erro ao excluir sinistro' }
+  }
   revalidatePath('/sofia/sinistros')
   revalidatePath('/sofia/descontos')
   return { success: true }

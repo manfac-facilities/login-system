@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import { hojeSP, ordemEtapa, type MultaComEtapa } from '@/lib/sofia/multaEtapas'
 import MultasTable from './_table'
-import type { Multa } from '@/lib/sofia/types'
 
-export type MultaComRelacoes = Multa & {
+export type MultaComRelacoes = MultaComEtapa & {
   veiculos: { placa: string } | null
   motoristas: { nome: string } | null
 }
@@ -12,26 +12,26 @@ export type MultaComRelacoes = Multa & {
 export default async function MultasPage() {
   const supabase = await createClient()
   const [{ data: multas }, podeGerir] = await Promise.all([
-    supabase.from('multas').select('*, veiculos(placa), motoristas(nome)').order('data', { ascending: false }),
+    supabase.from('multas').select('*, veiculos(placa), motoristas!motorista_id(nome)').order('data', { ascending: false }),
     podeGerirFrotas(supabase),
   ])
 
-  const totalPendente = (multas ?? [])
-    .filter((m: MultaComRelacoes) => m.status === 'pendente')
-    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
+  const lista = (multas ?? []) as MultaComRelacoes[]
+  const soma = (f: (m: MultaComRelacoes) => boolean) =>
+    lista.filter(f).reduce((s, m) => s + Number(m.valor), 0)
 
-  const totalValidada = (multas ?? [])
-    .filter((m: MultaComRelacoes) => m.status === 'validada')
-    .reduce((sum: number, m: MultaComRelacoes) => sum + Number(m.valor), 0)
+  // "a fazer" = ainda com o Frotas (registrada até cobrada); "em desconto" = solicitado/autorizado
+  const totalAFazer = soma((m) => m.etapa !== 'contestada' && ordemEtapa(m.etapa) <= ordemEtapa('cobrada'))
+  const totalEmDesconto = soma((m) => m.etapa === 'solicitado' || m.etapa === 'autorizado')
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Multas</h1>
-          <div className="flex gap-6 mt-2">
-            <p className="text-[#4a6080] text-sm">R$ {totalPendente.toFixed(2)} pendente de validação</p>
-            <p className="text-[#4a6080] text-sm">R$ {totalValidada.toFixed(2)} validada, não descontada</p>
+          <div className="flex flex-wrap gap-x-6 mt-2">
+            <p className="text-[#4a6080] text-sm">R$ {totalAFazer.toFixed(2)} a fazer</p>
+            <p className="text-[#4a6080] text-sm">R$ {totalEmDesconto.toFixed(2)} em desconto</p>
           </div>
         </div>
         <Link
@@ -42,7 +42,7 @@ export default async function MultasPage() {
         </Link>
       </div>
 
-      <MultasTable multas={multas ?? []} podeGerir={podeGerir} />
+      <MultasTable multas={lista} podeGerir={podeGerir} hoje={hojeSP()} />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarMultaAction } from '../_actions'
 import { TIPOS_INFRACAO } from '@/lib/sofia/multas'
+import { LOCADORAS_SUGERIDAS, prazoPadrao } from '@/lib/sofia/multaEtapas'
 import { useVeiculoMotoristaCascade } from '@/lib/sofia/useVeiculoMotoristaCascade'
 import type { Veiculo, Motorista } from '@/lib/sofia/types'
 
@@ -16,6 +17,7 @@ export default function NovaMultaForm({
 }) {
   const [state, action, isPending] = useActionState(criarMultaAction, {})
   const [tipoInfracao, setTipoInfracao] = useState('')
+  const [prazo, setPrazo] = useState('')
   const { veiculoId, motoristaId, onVeiculoChange, onMotoristaChange } = useVeiculoMotoristaCascade()
   const router = useRouter()
 
@@ -24,7 +26,7 @@ export default function NovaMultaForm({
   }, [state.success, router])
 
   return (
-    <div className="p-8 max-w-md">
+    <div className="p-4 md:p-8 max-w-md">
       <h1 className="text-2xl font-bold text-white mb-2">Registrar Multa</h1>
       <p className="text-[#4a6080] text-sm mb-8">
         Infração de trânsito vinculada a veículo/motorista
@@ -53,8 +55,48 @@ export default function NovaMultaForm({
               name="data_recebimento"
               type="date"
               required
+              onChange={(e) => setPrazo(prazoPadrao(e.target.value) ?? '')}
               className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm [color-scheme:dark]"
             />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-[#94a3b8]">Prazo de indicação do condutor</label>
+          <input
+            name="prazo_indicacao"
+            type="date"
+            value={prazo}
+            onChange={(e) => setPrazo(e.target.value)}
+            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm [color-scheme:dark]"
+          />
+          <p className="text-xs text-[#4a6080]">Padrão: recebimento + 30 dias. Ajuste se a locadora contar diferente.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-[#94a3b8]">Locadora</label>
+            <input name="locadora" list="locadoras-sugeridas" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm" />
+            <datalist id="locadoras-sugeridas">
+              {LOCADORAS_SUGERIDAS.map((l) => (
+                <option key={l} value={l} />
+              ))}
+            </datalist>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-[#94a3b8]">Auto de infração</label>
+            <input name="auto_infracao" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-[#94a3b8]">Órgão autuador</label>
+            <input name="orgao_autuador" placeholder="Ex: DETRAN-RJ" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-[#94a3b8]">Pontos</label>
+            <input name="pontos" type="number" min="0" step="1" className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm" />
           </div>
         </div>
 

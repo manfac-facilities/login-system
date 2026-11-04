@@ -2,9 +2,19 @@
 import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { criarChecklistAction } from '../_actions'
+import { criarChecklistAction, ultimoChecklistAction, type UltimoChecklist } from '../_actions'
 import { FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL } from '../_validation'
 import CameraCapture from '@/components/sofia/CameraCapture'
+import FotosAdicionais from '@/components/sofia/FotosAdicionais'
+import RegistrarAvaria from '@/components/sofia/RegistrarAvaria'
+import {
+  TETO_FOTOS,
+  contarFotos,
+  posicaoAvaria,
+  posicaoExtra,
+  type AvariaRascunho,
+  type FotoRascunho,
+} from '@/lib/sofia/fotosChecklist'
 import { createClient } from '@/lib/supabase/client'
 import { uploadFotos, type CapturedPhoto } from '@/lib/sofia/uploadFotos'
 import type { Equipe, Veiculo, Motorista } from '@/lib/sofia/types'
@@ -46,6 +56,26 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
 
   const [itens, setItens] = useState<Record<string, boolean | null>>({})
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
+  const [extras, setExtras] = useState<FotoRascunho[]>([])
+  const [avarias, setAvarias] = useState<AvariaRascunho[]>([])
+  // painel do último checklist na troca (só mostra; não bloqueia nada e não mexe na trava D1)
+  const [ultimo, setUltimo] = useState<{ veiculoId: string; dados: UltimoChecklist } | null>(null)
+  const mostraUltimo = tipo === 'troca' && !!veiculoIdManual
+  useEffect(() => {
+    if (!mostraUltimo) return
+    let vivo = true
+    ultimoChecklistAction(veiculoIdManual)
+      .then((dados) => {
+        if (vivo) setUltimo({ veiculoId: veiculoIdManual, dados })
+      })
+      .catch(() => {
+        if (vivo) setUltimo(null)
+      })
+    return () => {
+      vivo = false
+    }
+  }, [mostraUltimo, veiculoIdManual])
+  const painelUltimo = mostraUltimo && ultimo?.veiculoId === veiculoIdManual ? ultimo.dados : null
   const [uploadingFotos, setUploadingFotos] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -63,7 +93,8 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
   const fotosObrigatoriasCapturadas = FOTO_POSICOES_OBRIGATORIAS.filter((p) =>
     fotos.some((f) => f.posicao === p)
   ).length
-  const anyProblema = Object.values(itens).some((v) => v === false)
+  const totalSemAvarias = fotos.length + extras.length
+  const totalFotos = contarFotos({ obrigatorias: fotos.length, interna: 0, extras: extras.length, avarias })
 
   const handleCapture = (blob: Blob, posicao: string, lat: number | null, lng: number | null) => {
     setFotos((prev) => [...prev.filter((f) => f.posicao !== posicao), { blob, posicao, lat, lng }])
@@ -76,9 +107,30 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
 
     const fd = new FormData(e.currentTarget)
 
+    // obrigatórias + Interna (posição fixa), extras ("Extra n") e fotos de avaria ("Avaria n peça|dano m")
+    const todas: CapturedPhoto[] = [
+      ...fotos.map((f) => ({ ...f, tipo_foto: f.posicao === FOTO_POSICAO_OPCIONAL ? ('interna' as const) : ('obrigatoria' as const) })),
+      ...extras.map((f, i) => ({ blob: f.blob, posicao: posicaoExtra(i + 1), lat: f.lat, lng: f.lng, tipo_foto: 'extra' as const })),
+      ...avarias.flatMap((a, i) => [
+        ...a.fotosPeca.map((f, j) => ({
+          blob: f.blob, posicao: posicaoAvaria(i + 1, 'peca', j + 1), lat: f.lat, lng: f.lng,
+          tipo_foto: 'avaria_peca' as const, avaria_ref: a.id,
+        })),
+        ...a.fotosDano.map((f, j) => ({
+          blob: f.blob, posicao: posicaoAvaria(i + 1, 'dano', j + 1), lat: f.lat, lng: f.lng,
+          tipo_foto: 'avaria_dano' as const, avaria_ref: a.id,
+        })),
+      ]),
+    ]
+    if (todas.length > TETO_FOTOS) {
+      setUploadError(`Limite de ${TETO_FOTOS} fotos por checklist`)
+      setSubmitting(false)
+      return
+    }
+
     setUploadingFotos(true)
     const supabase = createClient()
-    const resultado = await uploadFotos(supabase, 'checklist-fotos', checklistId, fotos)
+    const resultado = await uploadFotos(supabase, 'checklist-fotos', checklistId, todas)
     setUploadingFotos(false)
 
     if (!resultado.ok) {
@@ -89,7 +141,12 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
 
     fd.set('id', checklistId)
     fd.set('fotos', JSON.stringify(resultado.fotos))
-    fd.set('avaria_identificada', String(anyProblema || fd.get('avaria_identificada') === 'true'))
+    fd.set(
+      'avarias',
+      JSON.stringify(
+        avarias.map((a) => ({ ref: a.id, peca: a.peca, tamanho: a.tamanho, acao: a.acao || null, descricao: a.descricao }))
+      )
+    )
 
     const itensProblemas: Record<string, string> = {}
     for (const item of ITENS_CHECKLIST) {
@@ -105,7 +162,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
   }
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       {equipeDestinoInicial && (
         <Link
           href={`/sofia/equipes/${equipeDestinoInicial.id}/editar`}
@@ -341,10 +398,37 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
             Fotos do Veículo <span className="text-[#4a6080]">({fotosObrigatoriasCapturadas} de {FOTO_POSICOES_OBRIGATORIAS.length} obrigatórias)</span>
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {POSICOES_FOTO.map((posicao) => (
-              <CameraCapture key={posicao} posicao={posicao} onCapture={handleCapture} />
-            ))}
+            {POSICOES_FOTO.map((posicao) => {
+              const anterior = painelUltimo?.fotos[posicao]
+              return (
+                <div key={posicao} className="flex flex-col gap-2">
+                  {painelUltimo && painelUltimo.ultimo && anterior && (
+                    <figure className="flex flex-col gap-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={anterior} alt={`Último: ${posicao}`} className="rounded-lg w-full object-cover max-h-40" />
+                      <figcaption className="text-xs text-[#94a3b8]">
+                        Último: {posicao} ·{' '}
+                        {new Date(painelUltimo.ultimo.data).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                      </figcaption>
+                    </figure>
+                  )}
+                  <CameraCapture posicao={posicao} onCapture={handleCapture} permitirGaleria={false} />
+                </div>
+              )
+            })}
           </div>
+          {painelUltimo && !painelUltimo.ultimo && (
+            <p className="text-xs text-[#94a3b8] mt-2">Primeiro checklist deste veículo.</p>
+          )}
+          <p className="text-sm text-[#94a3b8] mt-4 mb-2">
+            Mais fotos <span className="text-[#4a6080]">({totalFotos} de {TETO_FOTOS} no total)</span>
+          </p>
+          <FotosAdicionais fotos={extras} onChange={setExtras} totalAtual={totalFotos} permitirGaleria={false} />
+        </div>
+
+        <div>
+          <p className="text-sm text-[#94a3b8] mb-2">Avarias</p>
+          <RegistrarAvaria avarias={avarias} onChange={setAvarias} totalOutras={totalSemAvarias} permitirGaleria={false} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -354,27 +438,6 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
         <div className="flex items-center gap-2">
           <input type="checkbox" name="cartao_combustivel_entregue" value="true" id="cartao" className="accent-[#f05a28]" />
           <label htmlFor="cartao" className="text-sm text-[#94a3b8]">Cartão combustível entregue</label>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-[#94a3b8]">Avaria identificada (fora dos itens acima)?</label>
-          <select
-            name="avaria_identificada"
-            defaultValue="false"
-            disabled={anyProblema}
-            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white focus:outline-none focus:border-[#f05a28] text-sm disabled:opacity-60"
-          >
-            <option value="false">Não</option>
-            <option value="true">Sim</option>
-          </select>
-          {anyProblema && (
-            <p className="text-amber-400 text-xs">Marcado automaticamente — pelo menos um item foi sinalizado como Problema acima.</p>
-          )}
-          <textarea
-            name="avaria_descricao"
-            rows={2}
-            placeholder="Descreva avaria fora dos itens de verificação (se houver)"
-            className="px-3 py-2.5 rounded-lg bg-[#0f1f3d] border border-[#1e3a5f] text-white placeholder-[#4a6080] focus:outline-none focus:border-[#f05a28] text-sm resize-none"
-          />
         </div>
         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#1e3a5f]">
           <input type="checkbox" name="assinatura_motorista" value="true" id="assinatura" required className="accent-[#f05a28]" />
@@ -403,7 +466,7 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
           </button>
           <button
             type="submit"
-            disabled={jaSalvou || formInFlight || itensRespondidos < ITENS_CHECKLIST.length || fotosObrigatoriasCapturadas < FOTO_POSICOES_OBRIGATORIAS.length}
+            disabled={jaSalvou || formInFlight || itensRespondidos < ITENS_CHECKLIST.length || fotosObrigatoriasCapturadas < FOTO_POSICOES_OBRIGATORIAS.length || totalFotos > TETO_FOTOS}
             className="flex-1 py-3 rounded-lg bg-[#f05a28] text-white font-medium hover:bg-[#d94e22] disabled:opacity-50 transition-colors active:scale-95"
           >
             {uploadingFotos

@@ -60,4 +60,41 @@ describe('uploadFotos', () => {
     const [path] = upload.mock.calls[0]
     expect(path).toContain('sinistros/sinistro-9/Dano-1-')
   })
+
+  it('duas fotos com a mesma posição-base no mesmo ms geram caminhos diferentes', async () => {
+    const agora = jest.spyOn(Date, 'now').mockReturnValue(1700000000000)
+    const { supabase, upload } = makeSupabaseMock(async () => ({ error: null }))
+    await uploadFotos(supabase, 'checklist-fotos', 'c1', [
+      { blob, posicao: 'Extra 1', lat: null, lng: null },
+      { blob, posicao: 'Extra 1', lat: null, lng: null },
+    ])
+    const caminhos = upload.mock.calls.map((c) => c[0])
+    expect(new Set(caminhos).size).toBe(2)
+    agora.mockRestore()
+  })
+
+  it('repassa tipo_foto e avaria_ref no resultado', async () => {
+    const { supabase } = makeSupabaseMock(async () => ({ error: null }))
+    const r = await uploadFotos(supabase, 'checklist-fotos', 'c1', [
+      { blob, posicao: 'Avaria 1 dano 1', lat: null, lng: null, tipo_foto: 'avaria_dano', avaria_ref: 'av-a' },
+      { blob, posicao: 'Frente', lat: null, lng: null },
+    ])
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.fotos['Avaria 1 dano 1']).toEqual(expect.objectContaining({ tipo_foto: 'avaria_dano', avaria_ref: 'av-a' }))
+      expect(r.fotos.Frente.tipo_foto).toBeUndefined()
+    }
+  })
+
+  it('falha de um upload entre vários continua devolvendo ok: false sem caminhos', async () => {
+    let n = 0
+    const { supabase } = makeSupabaseMock(async () => ({ error: ++n === 3 ? { message: 'x' } : null }))
+    const r = await uploadFotos(supabase, 'checklist-fotos', 'c1', [
+      { blob, posicao: 'Extra 1', lat: null, lng: null },
+      { blob, posicao: 'Extra 2', lat: null, lng: null },
+      { blob, posicao: 'Extra 3', lat: null, lng: null },
+    ])
+    expect(r.ok).toBe(false)
+    expect('fotos' in r).toBe(false)
+  })
 })

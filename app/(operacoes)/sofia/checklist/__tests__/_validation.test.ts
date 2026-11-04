@@ -1,5 +1,5 @@
 // app/(operacoes)/sofia/checklist/__tests__/_validation.test.ts
-import { parseChecklistFormData, validateChecklistInput, FOTO_POSICOES_OBRIGATORIAS } from '../_validation'
+import { parseChecklistFormData, validateChecklistInput, FOTO_POSICOES_OBRIGATORIAS, validarFotosEAvarias, tipoDaFoto } from '../_validation'
 import type { ParsedChecklistInput } from '../_validation'
 
 function buildFormData(fields: Record<string, string>): FormData {
@@ -176,6 +176,7 @@ describe('validateChecklistInput', () => {
         triangulo_ok: false,
       },
       itens_problemas: {},
+      avarias: [],
       fotos: {
         Frente: { path: 'checklist-1/Frente-1.jpg', lat: null, lng: null },
         Traseira: { path: 'checklist-1/Traseira-1.jpg', lat: null, lng: null },
@@ -280,5 +281,78 @@ describe('validateChecklistInput', () => {
   it('não exige a foto Interna (opcional)', () => {
     const input = baseInput() // já não tem "Interna" em fotos
     expect(validateChecklistInput(input)).toBeNull()
+  })
+})
+
+describe('fotos extras, avarias e teto (spec 2026-11-03 §2.7/§2.8)', () => {
+  const OBR = {
+    Frente: { path: 'c/Frente.jpg', lat: null, lng: null },
+    Traseira: { path: 'c/Traseira.jpg', lat: null, lng: null },
+    'Lateral Esq.': { path: 'c/LE.jpg', lat: null, lng: null },
+    'Lateral Dir.': { path: 'c/LD.jpg', lat: null, lng: null },
+  }
+  const AV = { ref: 'av-1', peca: 'Porta direita', tamanho: 'media' as const, acao: null, descricao: null }
+  const fotoAv = (tipo: 'avaria_peca' | 'avaria_dano', ref = 'av-1') => ({
+    path: `c/${tipo}.jpg`, lat: null, lng: null, tipo_foto: tipo, avaria_ref: ref,
+  })
+
+  it('aceita extras e uma avaria com foto da peça e do dano', () => {
+    expect(
+      validarFotosEAvarias(
+        { ...OBR, 'Extra 1': { path: 'c/e1.jpg', lat: null, lng: null, tipo_foto: 'extra' }, 'Avaria 1 peça 1': fotoAv('avaria_peca'), 'Avaria 1 dano 1': fotoAv('avaria_dano') },
+        [AV]
+      )
+    ).toBeNull()
+  })
+
+  it('avaria sem foto do dano é recusada', () => {
+    expect(validarFotosEAvarias({ ...OBR, 'Avaria 1 peça 1': fotoAv('avaria_peca') }, [AV])).toBe(
+      'Avaria (Porta direita): falta foto da avaria'
+    )
+  })
+
+  it('avaria sem nenhuma foto lista as duas faltas', () => {
+    expect(validarFotosEAvarias(OBR, [AV])).toBe('Avaria (Porta direita): falta foto da peça, foto da avaria')
+  })
+
+  it('peça fora da lista e tamanho inválido são recusados', () => {
+    expect(validarFotosEAvarias(OBR, [{ ...AV, peca: 'Capô' }])).toBe('Avaria sem peça válida')
+    expect(validarFotosEAvarias(OBR, [{ ...AV, tamanho: 'enorme' as never }])).toBe('Avaria (Porta direita) sem tamanho válido')
+  })
+
+  it('foto de avaria apontando para avaria inexistente é recusada', () => {
+    expect(validarFotosEAvarias({ ...OBR, x: fotoAv('avaria_dano', 'av-9') }, [])).toBe('Foto de avaria sem avaria: x')
+  })
+
+  it('foto extra não pode carregar avaria_ref', () => {
+    expect(
+      validarFotosEAvarias({ ...OBR, 'Extra 1': { path: 'p', lat: null, lng: null, tipo_foto: 'extra', avaria_ref: 'av-1' } }, [AV])
+    ).toBe('Foto de avaria sem avaria: Extra 1')
+  })
+
+  it('31 fotos são recusadas; 30 passam', () => {
+    const muitas = (n: number) => {
+      const f: Record<string, { path: string; lat: null; lng: null; tipo_foto?: 'extra' }> = { ...OBR }
+      for (let i = 1; Object.keys(f).length < n; i++) f[`Extra ${i}`] = { path: `e${i}`, lat: null, lng: null, tipo_foto: 'extra' }
+      return f
+    }
+    expect(validarFotosEAvarias(muitas(30), [])).toBeNull()
+    expect(validarFotosEAvarias(muitas(31), [])).toBe('Limite de 30 fotos por checklist')
+  })
+
+  it('tipoDaFoto deduz interna/obrigatória das fotos antigas', () => {
+    expect(tipoDaFoto('Interna', { path: 'p', lat: null, lng: null })).toBe('interna')
+    expect(tipoDaFoto('Frente', { path: 'p', lat: null, lng: null })).toBe('obrigatoria')
+  })
+
+  it('parse lê avarias do JSON e JSON inválido vira avaria impossível (recusada)', () => {
+    const fd = new FormData()
+    fd.set('avarias', JSON.stringify([{ ref: 'av-1', peca: ' Retrovisor ', tamanho: 'pequena', acao: 'troca', descricao: '' }]))
+    expect(parseChecklistFormData(fd).avarias).toEqual([
+      { ref: 'av-1', peca: 'Retrovisor', tamanho: 'pequena', acao: 'troca', descricao: null },
+    ])
+    const ruim = new FormData()
+    ruim.set('avarias', '{quebrado')
+    expect(validarFotosEAvarias({}, parseChecklistFormData(ruim).avarias)).toBeTruthy()
   })
 })

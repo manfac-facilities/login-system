@@ -6,19 +6,26 @@ const multaUpdateEqMock = jest.fn()
 const multaDeleteEqSelectSingleMock = jest.fn()
 const multaDeleteInSelectMock = jest.fn()
 const rpcMock = jest.fn()
+const multaInsertPayload: unknown[] = []
 const podeGerirMock = jest.fn()
+const isAdminMock = jest.fn()
+const multaSelectSingleMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
     // sofia_pode_gerir (gate) fica separado do rpcMock (excluir_multas_em_massa)
     rpc: jest.fn((fn: string, args?: unknown) =>
-      fn === 'sofia_pode_gerir' ? podeGerirMock() : rpcMock(fn, args)
+      fn === 'sofia_pode_gerir' ? podeGerirMock() : fn === 'sofia_is_admin' ? isAdminMock() : rpcMock(fn, args)
     ),
     from: jest.fn((table: string) => {
       if (table === 'audit_log') return { insert: auditInsertMock }
       return {
-        insert: jest.fn(() => ({ select: jest.fn(() => ({ single: multaInsertMock })) })),
+        insert: jest.fn((payload: unknown) => {
+          multaInsertPayload.push(payload)
+          return { select: jest.fn(() => ({ single: multaInsertMock })) }
+        }),
+        select: jest.fn(() => ({ eq: jest.fn(() => ({ single: multaSelectSingleMock })) })),
         update: jest.fn(() => ({
           in: jest.fn(() => ({ eq: multaUpdateInEqMock })),
           eq: multaUpdateEqMock,
@@ -38,7 +45,6 @@ jest.mock('next/cache', () => ({
 
 import {
   criarMultaAction,
-  enviarParaDescontoEmMassaAction,
   excluirMultaAction,
   excluirMultasEmMassaAction,
   atualizarAutorizacaoMultaAction,
@@ -73,7 +79,6 @@ const NON_ADMIN_EMAIL = 'outro.usuario@manfac.com.br'
 const PODE = { data: true, error: null }
 const NAO_PODE = { data: false, error: null }
 const ERRO_RPC = { data: true, error: { message: 'x' } }
-const MSG = 'Apenas administradores ou gestores de frotas podem executar esta ação'
 const MSG_EXCLUIR = 'Apenas administradores ou gestores de frotas podem excluir multas'
 
 describe('criarMultaAction', () => {
@@ -117,35 +122,42 @@ describe('criarMultaAction', () => {
     expect(result).toEqual({ success: true })
   })
 
+  it('prazo de indicação vazio vira recebimento + 30 dias; campos novos vão no insert', async () => {
+    multaInsertPayload.length = 0
+    const result = await criarMultaAction(
+      {},
+      buildFormData({ data_recebimento: '2026-11-03', locadora: 'Maestro', auto_infracao: 'A-1', orgao_autuador: 'DETRAN-RJ', pontos: '4' })
+    )
+    expect(result).toEqual({ success: true })
+    expect(multaInsertPayload[0]).toEqual(
+      expect.objectContaining({
+        prazo_indicacao: '2026-12-03',
+        locadora: 'Maestro',
+        auto_infracao: 'A-1',
+        orgao_autuador: 'DETRAN-RJ',
+        pontos: 4,
+      })
+    )
+  })
+
+  it('prazo informado é respeitado; pontos vazio vira null', async () => {
+    multaInsertPayload.length = 0
+    await criarMultaAction({}, buildFormData({ prazo_indicacao: '2026-07-20', pontos: '' }))
+    expect(multaInsertPayload[0]).toEqual(expect.objectContaining({ prazo_indicacao: '2026-07-20', pontos: null }))
+  })
+
+  it.each(['-1', '2.5', 'abc'])('pontos inválido (%s) é recusado sem gravar', async (pontos) => {
+    const result = await criarMultaAction({}, buildFormData({ pontos }))
+    expect(result.error).toBeTruthy()
+    expect(multaInsertMock).not.toHaveBeenCalled()
+  })
+
   it('registers a normal multa and logs creation in audit_log', async () => {
     const result = await criarMultaAction({}, buildFormData())
     expect(result).toEqual({ success: true })
     expect(auditInsertMock).toHaveBeenCalledWith(
       expect.objectContaining({ tabela: 'multas', registro_id: 'multa-1', operacao: 'criou' })
     )
-  })
-})
-
-describe('enviarParaDescontoEmMassaAction', () => {
-  beforeEach(() => {
-    getUserMock.mockReset()
-    multaUpdateInEqMock.mockReset()
-    multaUpdateInEqMock.mockResolvedValue({ error: null })
-    ;podeGerirMock.mockReset()
-  })
-
-  it('rejects a non-admin user by throwing', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
-    ;podeGerirMock.mockResolvedValue(NAO_PODE)
-    await expect(enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])).rejects.toThrow(MSG)
-    expect(multaUpdateInEqMock).not.toHaveBeenCalled()
-  })
-
-  it('moves only pending multas to validada', async () => {
-    getUserMock.mockResolvedValue({ data: { user: { email: ADMIN_EMAIL } } })
-    ;podeGerirMock.mockResolvedValue(PODE)
-    await enviarParaDescontoEmMassaAction(['multa-1', 'multa-2'])
-    expect(multaUpdateInEqMock).toHaveBeenCalledWith('status', 'pendente')
   })
 })
 
@@ -212,6 +224,7 @@ describe('atualizarAutorizacaoMultaAction', () => {
     fd.set('status', 'autorizado')
     await atualizarAutorizacaoMultaAction('multa-1', fd)
     expect(multaUpdateEqMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 })
 
@@ -266,11 +279,6 @@ describe('erro na RPC sofia_pode_gerir nega (falha fechado)', () => {
     rpcMock.mockReset()
   })
 
-  it('enviarParaDescontoEmMassaAction', async () => {
-    await expect(enviarParaDescontoEmMassaAction(['multa-1'])).rejects.toThrow(MSG)
-    expect(multaUpdateInEqMock).not.toHaveBeenCalled()
-  })
-
   it('excluirMultaAction', async () => {
     expect(await excluirMultaAction({}, buildExclusaoFormData())).toEqual({ error: MSG_EXCLUIR })
     expect(multaDeleteEqSelectSingleMock).not.toHaveBeenCalled()
@@ -286,18 +294,49 @@ describe('erro na RPC sofia_pode_gerir nega (falha fechado)', () => {
     fd.set('status', 'autorizado')
     await atualizarAutorizacaoMultaAction('multa-1', fd)
     expect(multaUpdateEqMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 })
 
-describe('atualizarAutorizacaoMultaAction — gestor de frotas', () => {
-  it('gestor de frotas atualiza a autorização', async () => {
+describe('atualizarAutorizacaoMultaAction — agora pelo fluxo de etapas', () => {
+  beforeEach(() => {
+    getUserMock.mockReset()
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
+    podeGerirMock.mockReset()
     podeGerirMock.mockResolvedValue(PODE)
-    multaUpdateEqMock.mockReset()
-    multaUpdateEqMock.mockResolvedValue({ error: null })
+    isAdminMock.mockReset()
+    isAdminMock.mockResolvedValue(NAO_PODE)
+    rpcMock.mockReset()
+    rpcMock.mockResolvedValue({ data: 'x', error: null })
+    multaSelectSingleMock.mockReset()
+    auditInsertMock.mockReset()
+    auditInsertMock.mockResolvedValue({ error: null })
+  })
+
+  it('gestor de frotas solicita: chama a RPC com a etapa solicitado', async () => {
+    multaSelectSingleMock.mockResolvedValue({ data: { etapa: 'cobrada' }, error: null })
+    const fd = new FormData()
+    fd.set('status', 'solicitado')
+    await atualizarAutorizacaoMultaAction('multa-1', fd)
+    expect(rpcMock).toHaveBeenCalledWith('sofia_multa_registrar_etapa', {
+      p_multa_id: 'multa-1',
+      p_etapa: 'solicitado',
+      p_dados: {},
+    })
+  })
+
+  it('gestor de frotas NÃO autoriza: a RPC nem é chamada', async () => {
+    multaSelectSingleMock.mockResolvedValue({ data: { etapa: 'solicitado' }, error: null })
     const fd = new FormData()
     fd.set('status', 'autorizado')
     await atualizarAutorizacaoMultaAction('multa-1', fd)
-    expect(multaUpdateEqMock).toHaveBeenCalledWith('id', 'multa-1')
+    expect(rpcMock).not.toHaveBeenCalled()
+  })
+
+  it('sem_solicitacao vira "cobrada" (cancelar solicitação)', async () => {
+    const fd = new FormData()
+    fd.set('status', 'sem_solicitacao')
+    await atualizarAutorizacaoMultaAction('multa-1', fd)
+    expect(rpcMock).toHaveBeenCalledWith('sofia_multa_registrar_etapa', expect.objectContaining({ p_etapa: 'cobrada' }))
   })
 })

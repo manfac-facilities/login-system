@@ -3,11 +3,13 @@ import Link from 'next/link'
 import { excluirChecklistAction } from './_actions'
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import { badgeChecklist } from '@/lib/sofia/checklistBadge'
+import { ehAdminSofia } from '@/lib/sofia/multaPermissoes'
 
 interface ChecklistRow {
   id: string
   tipo: string
   created_at: string
+  veiculo_id: string
   equipes: { codigo: string } | null
   veiculos: { placa: string } | null
   motoristas: { nome: string } | null
@@ -15,14 +17,17 @@ interface ChecklistRow {
 
 export default async function ChecklistPage() {
   const supabase = await createClient()
-  const { data: checklists } = await supabase
-    .from('checklist')
-    .select('*, equipes!equipe_id(codigo), veiculos(placa), motoristas!motorista_id(nome)')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const [{ data: checklists }, ehAdmin] = await Promise.all([
+    supabase
+      .from('checklist')
+      .select('*, equipes!equipe_id(codigo), veiculos(placa), motoristas!motorista_id(nome)')
+      .order('created_at', { ascending: false })
+      .limit(50),
+    ehAdminSofia(supabase),
+  ])
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Checklist</h1>
@@ -42,7 +47,7 @@ export default async function ChecklistPage() {
           return (
           <div
             key={c.id}
-            className="flex items-center gap-4 px-4 py-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]"
+            className="flex flex-wrap items-center gap-4 px-4 py-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]"
           >
             <Link href={`/sofia/checklist/${c.id}`} className="flex items-center gap-4 flex-1 min-w-0">
               <span className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${badge.style}`}>
@@ -65,9 +70,18 @@ export default async function ChecklistPage() {
                 })}
               </p>
             </Link>
-            <div className="shrink-0">
-              <DeleteConfirmButton action={excluirChecklistAction} id={c.id} itemLabel={`checklist de ${c.motoristas?.nome ?? 'motorista não informado'} (${new Date(c.created_at).toLocaleDateString('pt-BR')})`} />
-            </div>
+            <Link
+              href={`/sofia/checklist/veiculo/${c.veiculo_id}`}
+              className="shrink-0 text-xs text-[#f05a28] hover:underline"
+            >
+              Histórico do veículo
+            </Link>
+            {/* excluir o checklist inteiro (com fotos e avarias) é só do admin */}
+            {ehAdmin && (
+              <div className="shrink-0">
+                <DeleteConfirmButton action={excluirChecklistAction} id={c.id} itemLabel={`checklist de ${c.motoristas?.nome ?? 'motorista não informado'} (${new Date(c.created_at).toLocaleDateString('pt-BR')})`} />
+              </div>
+            )}
           </div>
           )
         })}
