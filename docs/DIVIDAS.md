@@ -545,3 +545,82 @@ O que é auth/RLS foi corrigido na hora (I1, M1, M2); aqui ficam só bordas de o
   Pré-existente (policy "obras access"); é a próxima borda de dinheiro a fechar.
 - **Rascunhos antigos de nota SPOT com várias obras, no dia do deploy, vão pedir a parte de cada obra** (a trava
   recusa parte vazia). Avisar a equipe do Financeiro antes do deploy.
+
+## 03/11/2026 — Frotas: terceira bateria, manutenção e bases (branch `feat/frotas-manutencao`), deixado de propósito
+Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-manutencao-e-bases-design.md` §7, revisão SQL
+`docs/frotas/2026-11-03-revisao-sql-manutencao.md` (N2, N5–N8) e revisão de código
+`docs/frotas/2026-11-03-revisao-codigo-manutencao.md` (N2–N5, mais N6).
+- **Corretiva concluída não tem tela de edição nem de exclusão** (spec §7.1). Correção só por SQL; sem DELETE de propósito.
+- **"Enviar para oficina"/"Retornar da oficina" da ficha não criam nem fecham manutenção** (§7.2). Carro devolvido pela
+  ficha com manutenção aberta fica com ela aberta até alguém concluir.
+- **Conclusão pode devolver a Ativo um carro que está na oficina por outro episódio** (revisão SQL N2): corretiva aberta
+  com "tirar", retorno pela ficha, novo envio pela ficha e só então a conclusão da antiga. O carro vai para `ativo` e
+  perde `previsao_retorno_oficina` **e o substituto**. A ação é explícita do gestor; variação do item anterior.
+- **Disponibilidade, Custos e Visão geral não somam corretivas** (§7.3): dias parados e custo ficam só na tela de corretiva.
+- **As 20 corretivas antigas continuam em `revisoes`** (§7.4), sem migrar (decisão 2.1 da spec).
+- **Importação simultânea da mesma planilha por duas pessoas pode duplicar** (§7.5; revisão de código N4): a checagem de
+  repetida é no app, sem índice único `(veiculo_id, km_realizada)`. Só gestor importa e o botão trava durante o envio.
+- **UPDATE direto de gestor na manutenção** (§7.6): o grant de UPDATE por coluna congela `veiculo_id`, `criado_por`,
+  `tirou_da_equipe`, `data_entrada` e `created_at`, mas um gestor ainda pode reabrir uma concluída ou concluir direto por
+  UPDATE no PostgREST, sem passar pela RPC e sem auditoria. Fechar de vez exige trigger.
+- **`veiculos.intervalo_revisao_km` guardado só no app** (§7.7): o `sofia_bloquear_escrita_nao_admin` não foi estendido
+  para não mexer em trigger compartilhado.
+- **Base de Multas sem as colunas novas da outra frente** (§7.8) até a integração; ajustar colunas e planilha.
+- **"Registrar revisão" continua aberto a quem tem Sofia** (§7.9, colisão 2); fechar se o João confirmar.
+- **Média km/dia sem lançamentos recentes = "—" e sem "Chega em"** (§7.10).
+- **Fechamento do histórico de responsabilidade usa `current_date` (UTC)** mesmo com `data_entrada` passada (revisão SQL
+  N5); igual ao app.
+- **Abrir corretiva com "tirar" num carro já em `manutencao` sobrescreve `previsao_retorno_oficina`** (revisão SQL N6).
+- **Dado de produção: `EWH1B84` está em `status = 'manutencao'` com `equipe_id` preenchido** (revisão SQL N7, medido em
+  03/11). Se abrirem uma corretiva com "tirar" para ele, a equipe sai (efeito correto). Avisar o coordenador.
+- **Grants antigos de `anon` em `audit_log`** (revisão SQL N8, fora do SQL desta frente): INSERT, SELECT, UPDATE, DELETE,
+  TRUNCATE etc. A RLS `sofia access` barra o anon, então não é alcançável pelo PostgREST. Sugestão futura:
+  `revoke all on public.audit_log from anon`.
+- **Importação envia a prévia inteira à server action** (código N1): o limite padrão é 1 MB; planilha grande (aceita até
+  2 MB e 2.000 linhas) pode estourar e mostrar "Nada foi gravado". Não estraga dado. Correção: enviar só as linhas a gravar
+  (`linhasParaGravar`) ou configurar `serverActions.bodySizeLimit`.
+- **Anexo de manutenção trocado deixa o arquivo antigo órfão** em `sofia-anexos` (código N2). Só custa armazenamento.
+- **Importação aceita placa de carro inativo** (código N3): não causa dano, o inativo não aparece no painel. Se quiser
+  barrar, virar aviso.
+- **`concluirManutencaoAction` não chama `validarConclusao` no servidor** (código N5): a RPC valida tudo e devolve SOF01
+  com a mensagem certa; o resultado é o mesmo.
+- **Policies do bucket `sofia-anexos` deixavam qualquer logado enviar e ler** (código N6, pré-existente); o SQL de multa
+  as restringe ao Sofia (seção seguinte). Antes disso, um não gestor subia arquivo solto em `manutencoes/<id>/`.
+
+## 03/11/2026 — Frotas: terceira bateria, multa/fotos/checklist (branch `feat/frotas-multa-fotos-checklist`), deixado de propósito
+Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-multa-fotos-checklist-design.md` §7, revisão SQL
+`docs/frotas/2026-11-03-revisao-sql-multa-avaria.md` (N1, N4–N9) e revisão de código
+`docs/frotas/2026-11-03-revisao-codigo-multa-fotos.md` (menores 6–8).
+- **Aceite digital do termo pelo motorista não existe** (spec §7.1, §2.3): motoristas não têm login no hub. Hoje é só o
+  upload do termo em papel pelo gestor. Exige ligar `motoristas` a usuário do hub: decisão de cadastro, não de código.
+- **Comprovante da indicação** (§7.2): só protocolo e data; não há coluna para o arquivo.
+- **Multa contestada é final** (§7.3): reabrir não existe; correção por SQL com o contorno documentado.
+- **Valor extra da multa em dobro não tem coluna** (§7.4): a tela usa `valor`.
+- **Atomicidade do checklist** (§7.5; código 8): checklist, avarias e fotos são escritas separadas (mesmo padrão de antes).
+  Falha no meio deixa um checklist sem avarias/fotos ("Checklist salvo, mas…"), que só o admin exclui.
+- **Checklist sem KM e "feito por" ilegível** no histórico (§7.6): `created_by` é uuid de `auth.users`.
+- **`avaria_origem_id` criado sem uso** (§7.7; SQL N6): quando passar a ser usado, excluir um checklist cuja avaria é
+  origem de outra vai falhar, e `set null` bateria na guarda da avaria. Decidir junto com o uso.
+- **Gestor pode gravar linha avulsa em `multa_etapas`** (§7.8), com o próprio e-mail: é registro; a etapa só muda pela trigger.
+- **Teto de 30 fotos só no app** (§7.9), não no banco.
+- **Alerta de multa no e-mail é "≤ 10 dias"**, não 10/5/2 (§7.10).
+- **Arquivos órfãos no storage** (§7.11): 139 objetos em `checklist-fotos` para 126 linhas (uploads que falharam depois).
+  Não apagar: são do mesmo tipo de prova.
+- **Arquivos órfãos após exclusão de checklist/sinistro pelo admin:** a cascata apaga as linhas de foto, mas os objetos
+  ficam no bucket (não há policy de DELETE de propósito). Os caminhos ficam em `audit_log.dados.fotos`, de onde dá para
+  localizar e, se um dia valer, limpar por SQL.
+- **N1 em aberto (decisão do João):** as 3 multas que já estavam `autorizado` em 03/11 viram etapa `autorizado`, e o
+  gestor pode registrar `descontada` sem nova confirmação do admin. Se o João quiser a regra nova valendo para elas,
+  trocar no backfill `then 'autorizado'` por `then 'solicitado'`.
+- **Teste SQL não cobre "gestor insere multa já autorizada"** (SQL N4); a trigger cobre (INSERT exige `registrada`).
+- **`sem_solicitacao → cobrada` em `atualizarAutorizacaoMultaAction` falha a partir de `autorizado`** (SQL N5): a
+  "revogação" antiga do admin vira dois passos (`solicitado`, depois `cobrada`).
+- **`avaria_origem_id` e exclusão:** ver acima (SQL N6).
+- **`multa_etapas` some junto com a multa** (SQL N7, cascade): excluir multa já vai para `audit_log`, mas sem a trilha das
+  etapas. Se importar, copiar a trilha em `audit_log.dados` de `excluir_multas_em_massa`.
+- **Storage** (SQL N8): `service_role` continua podendo apagar objetos pela API (fora do alcance do usuário); só registrar.
+- **Usuário comum altera `valor`/`descricao` antes do pedido de desconto** (SQL N9): aceitável, o valor congela em `solicitado`.
+- **`marcarAvariaReparadaAction` diz sucesso sem atualizar linha** numa avaria já reparada, e não recusa data de reparo
+  anterior ao checklist (código 6). Sem dano: o banco não deixa voltar nem alterar a baixa.
+- **Qualquer usuário do Sofia insere avaria ou foto em checklist antigo pelo PostgREST** (código 7): as policies de INSERT
+  são só `sofia_has_access`. Só acrescenta, não apaga nem altera prova. Travar por janela de tempo se o João quiser.
