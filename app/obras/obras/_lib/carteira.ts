@@ -3,7 +3,7 @@
  * Datas `AAAA-MM-DD`; percentuais em fração 0–1; dinheiro em centavos.
  * Spec: docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md (§5, §6b).
  */
-import { diasUteisEntre } from './calendario'
+import { diasUteisEntre, ehDiaUtil } from './calendario'
 import type { ResultadoCronograma, Sinal } from './cronograma'
 import type { PontoHist } from './curvas'
 import { causasNaoCumpridas, ppc, type PlanoSemana, type Restricao } from './last-planner'
@@ -37,6 +37,14 @@ export type Excecao = { obraId: string; obra: string; texto: string; quem: Quem 
 
 const ROTULO_QUEM: Record<Quem, string> = { cliente: 'Cliente', manfac: 'Manfac', terceiros: 'Terceiros' }
 
+/** Dias úteis decorridos de `a` até `b`, sem contar o dia de partida (seg → qua = 2). */
+function diasUteisDecorridos(a: string, b: string, feriados: ReadonlySet<string>): number {
+  return Math.max(0, diasUteisEntre(a, b, feriados) - (ehDiaUtil(a, feriados) ? 1 : 0))
+}
+
+const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
+const diasUteisTexto = (n: number) => plural(n, 'dia útil', 'dias úteis')
+
 /** dd/mm de uma data `AAAA-MM-DD`. */
 const ddmm = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`
 
@@ -67,7 +75,7 @@ export function estadoDaObra(p: {
   if (p.calc.atividades.every((a) => a.situacao === 'concluida')) return { tipo: 'faturando' }
   const desde = ultimoAvanco(p.hist) ?? p.dataBase
   if (desde) {
-    const dias = diasUteisEntre(desde, p.hoje, p.feriados)
+    const dias = diasUteisDecorridos(desde, p.hoje, p.feriados)
     if (dias >= 3) return { tipo: 'parada', diasUteis: dias }
   }
   if (p.impedimentosAbertos > 0) return { tipo: 'frente_parada' }
@@ -139,7 +147,7 @@ export function sinaisDoCliente(p: {
   restricoes: Restricao[] | null; mensagens: Mensagem[] | null; agenda: ItemAgenda[] | null
   hoje: string; feriados: ReadonlySet<string>
 }): SinalCliente[] {
-  const du = (desde: string) => diasUteisEntre(desde, p.hoje, p.feriados)
+  const du = (desde: string) => diasUteisDecorridos(desde, p.hoje, p.feriados)
 
   let entrega: SinalCliente
   if (!p.terminoBase) entrega = { chave: 'entrega', tom: 'ok', texto: 'sem data base', curto: null }
@@ -162,7 +170,7 @@ export function sinaisDoCliente(p: {
       const vencida = abertas.some((r) => r.prazo !== null && r.prazo < p.hoje)
       pendencias = {
         chave: 'pendencias', tom: vencida || idade >= 5 ? 'ruim' : 'atencao',
-        texto: `${abertas.length} pendências com o cliente, a mais antiga há ${idade} dias úteis`,
+        texto: `${plural(abertas.length, 'pendência', 'pendências')} com o cliente, a mais antiga há ${diasUteisTexto(idade)}`,
         curto: `${abertas.length} pendência(s) do cliente`,
       }
     }
@@ -180,7 +188,7 @@ export function sinaisDoCliente(p: {
       const semResposta = ordem.slice(i)
       mensagens = {
         chave: 'mensagens', tom: 'ruim',
-        texto: `${semResposta.length} mensagens do cliente sem resposta desde ${ddmm(diaBrt(semResposta[0].criadoEm))}`,
+        texto: `${plural(semResposta.length, 'mensagem', 'mensagens')} do cliente sem resposta desde ${ddmm(diaBrt(semResposta[0].criadoEm))}`,
         curto: `${semResposta.length} mensagem(ns) sem resposta`,
       }
     } else mensagens = { chave: 'mensagens', tom: 'ok', texto: ordem.length ? 'mensagens respondidas' : 'sem mensagens no portal', curto: null }
@@ -283,10 +291,10 @@ export function excecoesDoDia(obras: ObraCarteira[]): Excecao[] {
       ex.push({ obraId: o.id, obra: nomeDaObra(o), texto, quem, gravidade })
     const tp = o.travaPrincipal
     if (o.sinal === 'vermelho') {
-      const desvio = o.desvioDiasUteis !== null && o.desvioDiasUteis > 0 ? ` (entrega +${o.desvioDiasUteis} dias úteis)` : ''
+      const desvio = o.desvioDiasUteis !== null && o.desvioDiasUteis > 0 ? ` (entrega +${diasUteisTexto(o.desvioDiasUteis)})` : ''
       add(0, `atrasada${desvio}${comTrava(tp)}`, tp?.quem ?? null)
     }
-    if (o.estado.tipo === 'parada') add(1, `parada há ${o.estado.diasUteis} dias úteis${comTrava(tp)}`, tp?.quem ?? null)
+    if (o.estado.tipo === 'parada') add(1, `parada há ${diasUteisTexto(o.estado.diasUteis)}${comTrava(tp)}`, tp?.quem ?? null)
     for (const t of o.travas.filter((x) => x.vencida))
       add(2, `restrição vencida em ${ddmm(t.prazo!)}: ${t.descricao} (${ROTULO_QUEM[t.quem]})`, t.quem)
     const msg = o.sinais.find((s) => s.chave === 'mensagens')

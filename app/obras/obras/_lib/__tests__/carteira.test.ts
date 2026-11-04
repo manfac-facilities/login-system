@@ -67,11 +67,16 @@ describe('estadoDaObra', () => {
   it('todas concluídas → faturando', () => {
     expect(estadoDaObra({ ...base, calc: calcDe([ativ({ situacao: 'concluida' })]) })).toEqual({ tipo: 'faturando' })
   })
-  it('sem avanço há 3+ dias úteis → parada (cai na data base sem hist)', () => {
+  it('parada conta dias úteis decorridos: avanço segunda, hoje quarta (2) não; quinta (3) sim', () => {
     const calc = calcDe([ativ({})])
+    const seg: PontoHist[] = [{ numero: 1, dataStatus: '2026-11-02', percentual: 0.2 }]
+    expect(estadoDaObra({ ...base, calc, hist: seg, hoje: '2026-11-04' })).toEqual({ tipo: 'andando', comAtraso: false })
+    expect(estadoDaObra({ ...base, calc, hist: seg, hoje: '2026-11-05' })).toEqual({ tipo: 'parada', diasUteis: 3 })
     expect(estadoDaObra({ ...base, calc, hist: [{ numero: 1, dataStatus: '2026-10-29', percentual: 0.2 }] }))
-      .toEqual({ tipo: 'parada', diasUteis: 5 })
-    expect(estadoDaObra({ ...base, calc, dataBase: '2026-11-02' })).toEqual({ tipo: 'parada', diasUteis: 3 })
+      .toEqual({ tipo: 'parada', diasUteis: 4 })
+  })
+  it('sem hist, conta da data base', () => {
+    expect(estadoDaObra({ ...base, calc: calcDe([ativ({})]), dataBase: '2026-10-29' })).toEqual({ tipo: 'parada', diasUteis: 4 })
   })
   it('com avanço recente e impedimento aberto → frente_parada', () => {
     expect(estadoDaObra({ ...base, calc: calcDe([ativ({})]), hist: recente, impedimentosAbertos: 1 })).toEqual({ tipo: 'frente_parada' })
@@ -186,7 +191,9 @@ describe('sinaisDoCliente', () => {
     const nova = restr({ criadoEm: '2026-11-03T12:00:00Z' })
     const s1 = de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ responsavel: 'manfac' }), restr({ situacao: 'liberada' })] }), 'pendencias')
     expect(s1.tom).toBe('atencao')
-    expect(s1.texto).toBe('1 pendências com o cliente, a mais antiga há 2 dias úteis')
+    expect(s1.texto).toBe('1 pendência com o cliente, a mais antiga há 1 dia útil')
+    expect(de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ criadoEm: '2026-10-29T12:00:00Z' })] }), 'pendencias').texto)
+      .toBe('2 pendências com o cliente, a mais antiga há 4 dias úteis')
     expect(de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ criadoEm: '2026-10-20T12:00:00Z' })] }), 'pendencias').tom).toBe('ruim')
     expect(de(sinaisDoCliente({ ...base, restricoes: [restr({ criadoEm: '2026-11-03T12:00:00Z', prazo: '2026-11-03' })] }), 'pendencias').tom).toBe('ruim')
     expect(de(sinaisDoCliente({ ...base, restricoes: null }), 'pendencias'))
@@ -201,6 +208,11 @@ describe('sinaisDoCliente', () => {
     ] }), 'mensagens')
     expect(s).toMatchObject({ tom: 'ruim', texto: '2 mensagens do cliente sem resposta desde 29/10' })
     expect(s.curto).not.toBeNull()
+  })
+  it('mensagens: do cliente ontem (1 d.u.) ok; anteontem (2 d.u.) ruim, no singular', () => {
+    expect(de(sinaisDoCliente({ ...base, mensagens: [{ autorTipo: 'cliente', criadoEm: '2026-11-03T15:00:00Z' }] }), 'mensagens').tom).toBe('ok')
+    expect(de(sinaisDoCliente({ ...base, mensagens: [{ autorTipo: 'cliente', criadoEm: '2026-11-02T15:00:00Z' }] }), 'mensagens'))
+      .toMatchObject({ tom: 'ruim', texto: '1 mensagem do cliente sem resposta desde 02/11' })
   })
   it('mensagens: do cliente hoje (dia BRT) ainda ok; última da Manfac ok', () => {
     // 02:00Z de 05/11 ainda é 04/11 em Brasília.
