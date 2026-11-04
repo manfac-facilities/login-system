@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Frotas - Novidades de 04/11</title>
+<style>
+:root{--bg:#0a1628;--navy:#0d2050;--or:#f05a28;--mut:#94a3b8;--bd:#1e3a5f;--tx:#e2e8f0;--wh:#fff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 64px}
+header{background:var(--navy);border-bottom:1px solid var(--bd);padding:28px 16px}
+header .in{max-width:860px;margin:0 auto}
+header h1{margin:0 0 6px;color:var(--wh);font-size:1.6rem}
+header p{margin:0;color:var(--mut)}
+nav{background:var(--navy);border:1px solid var(--bd);border-radius:12px;padding:14px 18px;margin:24px 0}
+nav b{color:var(--wh)}
+nav ol{margin:8px 0 0;padding-left:20px;columns:2;column-gap:28px}
+nav a{color:var(--tx);text-decoration:none}
+nav a:hover{color:var(--or)}
+@media(max-width:600px){nav ol{columns:1}}
+section{margin-top:34px;padding-top:6px}
+h2{color:var(--wh);font-size:1.3rem;margin:0 0 4px;padding-bottom:8px;border-bottom:2px solid var(--or)}
+h3{color:var(--wh);font-size:1rem;margin:22px 0 6px}
+p{margin:8px 0}
+.mut{color:var(--mut)}
+.menu{display:inline-block;background:var(--navy);border:1px solid var(--bd);border-radius:6px;padding:1px 8px;color:var(--wh);font-size:.92rem}
+ol.pass,ul.l{padding-left:22px}
+ol.pass li,ul.l li{margin:6px 0}
+ol.pass li::marker{color:var(--or);font-weight:700}
+.quem{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+@media(max-width:600px){.quem{grid-template-columns:1fr}}
+.quem div{background:var(--navy);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font-size:.9rem}
+.quem b{display:block;color:var(--wh);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.sim{border-left:3px solid #3b8f5a}.nao{border-left:3px solid #8a3b3b}
+.box{background:var(--navy);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:12px 0}
+.aviso{border-color:var(--or);background:rgba(240,90,40,.1)}
+.aviso b{color:var(--or)}
+table{width:100%;border-collapse:collapse;font-size:.92rem;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.tw{overflow-x:auto}
+q{color:var(--wh);quotes:"“" "”"}
+footer{margin-top:44px;color:var(--mut);font-size:.88rem;border-top:1px solid var(--bd);padding-top:14px}
+</style>
+</head>
+<body>
+<header><div class="in">
+<h1>Gestão de Frotas: o que mudou</h1>
+<p>Manual das novidades de 04/11/2026. Para o José Guilherme e o Igor.</p>
+</div></header>
+<div class="wrap">
+
+<div class="box aviso">
+<b>Aviso de primeiro uso: multas antigas com "prazo vencido".</b>
+<p>Na primeira vez que abrir <span class="menu">Pendências</span>, as multas que já existiam vão aparecer com <q>prazo vencido</q>. É esperado: o sistema ainda não sabe que a indicação do condutor já foi feita fora dele (e-mail, Correios etc.).</p>
+<p>Para limpar a lista, o Igor avança essas multas até a etapa que já foi feita. O sistema deixa <b>pular etapas</b> para isso: não precisa registrar uma por uma. As etapas puladas ficam marcadas como "não registrada". A partir daí, só aparece o que realmente falta.</p>
+</div>
+
+<nav><b>Neste manual</b>
+<ol>
+<li><a href="#revisao">Revisão a cada 10 mil km</a></li>
+<li><a href="#importar">Importar planilha de revisões</a></li>
+<li><a href="#corretiva">Manutenção corretiva</a></li>
+<li><a href="#bases">Tabelas com filtro e Excel</a></li>
+<li><a href="#multa">Multa passo a passo</a></li>
+<li><a href="#pendencias">Pendências de multa</a></li>
+<li><a href="#fotos">Fotos do checklist e do sinistro</a></li>
+<li><a href="#avaria">Registrar avaria</a></li>
+<li><a href="#historico">Histórico e comparação do checklist</a></li>
+<li><a href="#apagar">Resumo: o que dá e o que não dá para apagar</a></li>
+</ol></nav>
+
+<section id="revisao">
+<h2>1. Revisão a cada 10 mil km</h2>
+<p>O sistema calcula sozinho quando cada carro precisa da próxima revisão: o KM em que a última foi feita mais 10.000 km. Mostra quais estão atrasadas, quais vencem em breve (faltam até 1.000 km) e em quantos dias, pela média de km rodados por dia.</p>
+<p><b>Onde fica:</b> <span class="menu">Manutenção &amp; Documentos</span> &rsaquo; <span class="menu">Revisões</span>.</p>
+<h3>Registrar uma revisão</h3>
+<ol class="pass">
+<li>Em Revisões, toque em <b>+ Registrar revisão</b> (ou clique na linha do carro na tabela).</li>
+<li>Escolha o veículo. O KM atual já vem preenchido; confira e ajuste para o KM em que a revisão foi feita.</li>
+<li>Escolha o <b>Tipo</b> (Preventiva ou Corretiva) e informe data, fornecedor (a oficina), valor e <b>Peças trocadas</b>.</li>
+<li>Em <b>Próxima revisão</b>, escolha uma das três opções: <b>Calcular sozinha</b> (KM feito + 10.000), <b>Informar à mão</b> ou <b>Não prever a próxima</b> (use depois de um conserto, como troca de embreagem).</li>
+<li>Toque em <b>Registrar Revisão</b>. A tabela se atualiza e o aviso daquele carro some.</li>
+</ol>
+<h3>Intervalo diferente para um carro</h3>
+<p>Dentro de <span class="menu">Veículos</span>, a ficha do carro tem a seção <b>Revisão</b> (só aparece para gestor e administrador).</p>
+<p>O padrão é 10.000 km para todos. Se algum carro tiver outro intervalo, o gestor ou o administrador ajusta na ficha do veículo, no campo <b>Intervalo entre revisões (km)</b>, e toca em <b>Salvar</b> (entre 1.000 e 100.000 km; vazio volta ao padrão de 10.000).</p>
+<div class="quem">
+<div class="sim"><b>Gestor / Admin</b>Importa planilha, muda o intervalo do carro, exclui revisão.</div>
+<div class="sim"><b>Qualquer usuário do Frotas</b>Consulta, exporta e registra revisão.</div>
+<div class="nao"><b>Sem acesso ao Frotas</b>Não vê nada.</div>
+</div>
+<h3>Mensagens comuns</h3>
+<ul class="l">
+<li><q>Informe o KM da revisão.</q> O KM é obrigatório porque a próxima depende dele.</li>
+<li><q>O KM (X) é menor que o da última revisão deste carro (Y). Confira o número.</q> Provável erro de digitação.</li>
+<li><q>Informe o KM da próxima revisão ou escolha outra opção.</q> Aparece se marcou "Informar à mão" e deixou vazio.</li>
+<li>Carro em <b>Sem previsão automática</b>: a última revisão foi marcada como "Não prever a próxima", ou ainda não há revisão registrada.</li>
+<li>Quando o carro passa do KM aparece <q>Atrasada por KM</q>; faltando pouco, <q>Vence em breve</q>. Os dois também aparecem em Pendências.</li>
+</ul>
+<h3>O que dá para apagar</h3>
+<ul class="l">
+<li>Uma revisão lançada errada pode ser excluída pelo gestor ou administrador, clicando na revisão em <span class="menu">Histórico de revisões</span> e tocando em <b>Excluir</b>. A exclusão fica registrada no histórico de auditoria.</li>
+<li>Se foi só o KM da próxima que ficou errado, não precisa apagar: registre uma nova revisão corrigindo.</li>
+</ul>
+</section>
+
+<section id="importar">
+<h2>2. Importar planilha de revisões</h2>
+<p>Serve para trazer de uma vez o histórico que o Igor tem em Excel.</p>
+<p><b>Onde fica:</b> <span class="menu">Manutenção &amp; Documentos</span> &rsaquo; <span class="menu">Revisões</span> &rsaquo; botão <b>Importar planilha</b> (aparece só para gestor e administrador).</p>
+<ol class="pass">
+<li>Toque em <b>Importar planilha</b> (abre a janela <q>Importar a lista de revisões</q>) e escolha o arquivo (.xlsx ou .csv, até 2.000 linhas). Se quiser, toque em <b>Baixar modelo</b> para ver as colunas.</li>
+<li>Em <b>Colunas</b>, confira o que o sistema entendeu de cada coluna da sua planilha e corrija se preciso. Placa, KM da revisão e Data são obrigatórias.</li>
+<li>Na <b>Prévia</b>, veja quantas linhas estão prontas, com aviso, com erro ou repetidas.</li>
+<li>Toque em <b>Importar N revisões</b> (o botão mostra quantas). Aparece o total importado e o botão <b>Ver na tela de revisões</b>.</li>
+</ol>
+<h3>Como ler a prévia</h3>
+<div class="tw"><table>
+<tr><th>Resultado</th><th>Significa</th></tr>
+<tr><td>Pronta</td><td>Entra normalmente.</td></tr>
+<tr><td>Aviso</td><td>O KM é maior que o atual do carro. Confira. Só entra se marcar "Importar também as linhas com aviso".</td></tr>
+<tr><td>Erro</td><td>Placa não cadastrada, KM ou data inválidos, ou data no futuro. Não entra; baixe o relatório de erros, corrija e envie de novo.</td></tr>
+<tr><td>Repetida</td><td>Já existe uma revisão com a mesma placa e KM. É ignorada.</td></tr>
+</table></div>
+<div class="quem">
+<div class="sim"><b>Gestor / Admin</b>Importa.</div>
+<div class="nao"><b>Usuário do Frotas</b>Não vê o botão (e, se tentar, o sistema recusa).</div>
+<div class="nao"><b>Sem acesso</b>Não vê.</div>
+</div>
+<p><b>Se apagar:</b> uma importação não tem botão de "desfazer tudo". As revisões importadas ficam marcadas como "importada" e podem ser excluídas uma a uma pelo gestor. Por isso vale conferir a prévia antes de importar.</p>
+</section>
+
+<section id="corretiva">
+<h2>3. Manutenção corretiva</h2>
+<p>Registro dos consertos: defeito, oficina, datas, custo e quem paga. Ao registrar, o carro pode sair da equipe e ficar "Em manutenção" no mesmo passo.</p>
+<p><b>Onde fica:</b> <span class="menu">Manutenção &amp; Documentos</span> &rsaquo; <span class="menu">Manutenção corretiva</span>.</p>
+<h3>Registrar</h3>
+<ol class="pass">
+<li>Toque em <b>+ Registrar manutenção corretiva</b> (o botão só aparece para gestor e administrador).</li>
+<li>Escolha o <b>Veículo</b> e descreva o <b>Defeito</b> (os dois são obrigatórios).</li>
+<li>Informe <b>Oficina</b>, <b>Data de entrada</b>, <b>Saída prevista</b>, custo (pode vir depois) e <b>Quem arca</b> (Locadora, Empresa ou Motorista (mau uso); ou deixe "A definir"). Em <b>Status</b>, escolha em que pé está: Aguardando orçamento, Aguardando aprovação ou Em conserto.</li>
+<li>Deixe marcada a caixa <b>Tirar o carro da equipe (enviar para a oficina)</b> se o carro vai ficar parado. Desmarque para reparo de um dia. O texto abaixo da caixa mostra o efeito.</li>
+<li>Toque em <b>Salvar</b>.</li>
+</ol>
+<h3>Acompanhar e concluir</h3>
+<ol class="pass">
+<li>Clique na linha da manutenção para abrir os detalhes.</li>
+<li>Use o botão do próximo passo: <b>Orçamento recebido: aguardando aprovação</b> e depois <b>Aprovado: carro em conserto</b>.</li>
+<li>Quando o carro voltar, toque em <b>Concluir e retornar o carro</b>. Abre a janela <q>Concluir manutenção</q>: informe <b>Saída real</b>, <b>Custo final (R$)</b> e <b>Quem arca</b> (os três são obrigatórios) e toque em <b>Concluir</b>. Se o carro tinha saído da equipe, ele volta a <b>Ativo</b>. A equipe é escolhida depois, no checklist.</li>
+<li>Se quiser guardar o orçamento ou a nota, use <b>Anexar orçamento ou nota</b> (só gestor e administrador; um arquivo por manutenção, trocar substitui o anterior); depois, <b>Ver anexo</b> (todos veem).</li>
+</ol>
+<p>No alto da tela há os cartões <b>Em aberto</b>, <b>Custo de corretiva</b> do mês e <b>Carros parados hoje</b>, com o gráfico de dias parados por placa.</p>
+<div class="quem">
+<div class="sim"><b>Gestor / Admin</b>Registra, muda o status, conclui e anexa.</div>
+<div class="sim"><b>Usuário do Frotas</b>Só consulta, vê anexo e exporta.</div>
+<div class="nao"><b>Sem acesso</b>Não vê.</div>
+</div>
+<h3>Mensagens comuns</h3>
+<ul class="l">
+<li><q>Escolha o veículo.</q> / <q>Descreva o defeito.</q></li>
+<li><q>A saída prevista não pode ser antes da entrada.</q> / <q>O custo não pode ser negativo.</q></li>
+<li><q>A manutenção mudou enquanto você olhava. Recarregue.</q> Outra pessoa alterou o status ao mesmo tempo. Recarregue a página e repita.</li>
+<li>Usuário comum não vê o botão de registrar nem os de mudar status; aparece o aviso <q>Só gestores de frotas registram e mudam o status de uma manutenção.</q> Se abrir a tela de registro pelo endereço, é levado de volta à lista.</li>
+</ul>
+<p><b>Se apagar:</b> esta versão não traz botão de excluir manutenção. Para corrigir um dado, abra o registro e ajuste o status ou a conclusão. O botão "Enviar para oficina" da ficha do veículo continua funcionando como antes, em separado.</p>
+</section>
+
+<section id="bases">
+<h2>4. Tabelas com filtro e Excel</h2>
+<p>Histórico de revisões, manutenção corretiva, multas, sinistros e documentos agora têm o mesmo formato de tabela das quatro bases que já existiam: busca, filtros, ordenação e exportação para Excel.</p>
+<p><b>Onde fica:</b> <span class="menu">Manutenção &amp; Documentos</span> (Histórico de revisões, Manutenção corretiva, Documentos) e <span class="menu">Ocorrências</span> (Multas e Sinistros). Menu <span class="menu">Manutenção &amp; Documentos</span>: Revisões, <span class="menu">Histórico de revisões</span> e <span class="menu">Manutenção corretiva</span>, nesta ordem.</p>
+<ol class="pass">
+<li>Abra a tabela desejada e use os filtros do alto (busca, período, placa, motorista, situação etc.).</li>
+<li>Toque no título de uma coluna para ordenar; toque de novo para inverter.</li>
+<li>Clique numa linha para abrir os detalhes.</li>
+<li>Toque em <b>⭳ Exportar Excel</b>. O arquivo leva <b>tudo o que está filtrado</b>, não só a página que aparece na tela, na mesma ordem.</li>
+<li>O botão de registrar novo item fica no alto de cada tabela (por exemplo <b>+ Registrar sinistro</b>, <b>+ Cadastrar documento</b>).</li>
+</ol>
+<h3>Particularidades da tabela de Multas</h3>
+<ul class="l">
+<li>Há a coluna e o filtro <b>Etapa</b> (em que ponto do fluxo a multa está).</li>
+<li>A planilha do Excel traz, entre outras colunas, <b>Etapa</b>, <b>Autorização</b> e <b>Prazo de indicação</b>.</li>
+<li>No detalhe da multa, o link <b>Abrir no fluxo da multa</b> leva às etapas (seção 5).</li>
+<li><b>Excluir selecionadas</b> (gestor e administrador) vale só para as multas marcadas na <b>página que está na tela</b>, não para todas as filtradas.</li>
+</ul>
+<div class="quem">
+<div class="sim"><b>Todos com acesso ao Frotas</b>Veem, filtram e exportam.</div>
+<div class="sim"><b>Gestor / Admin</b>Também executam as ações de cada tela (conforme as seções abaixo).</div>
+<div class="nao"><b>Sem acesso</b>Não vê.</div>
+</div>
+<p><b>Se apagar:</b> filtrar, ordenar e exportar não alteram nada. Quem pode excluir cada item está no resumo da seção 10.</p>
+</section>
+
+<section id="multa">
+<h2>5. Multa passo a passo</h2>
+<p>A multa agora acompanha todo o caminho, da chegada até o desconto, com prazo de indicação do condutor e o registro de quem fez cada etapa.</p>
+<p><b>Onde fica:</b> <span class="menu">Ocorrências</span> &rsaquo; <span class="menu">Multas</span>. Para registrar, toque em <b>+ Registrar Multa</b>. Clique na multa para ver as etapas.</p>
+<h3>As etapas</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Etapa</th><th>Quem faz</th></tr>
+<tr><td>1</td><td>Multa registrada (placa, data, locadora, auto de infração, órgão, pontos e prazo de indicação)</td><td>Qualquer usuário do Frotas</td></tr>
+<tr><td>2</td><td>Confirmar o condutor</td><td>Gestor / Admin</td></tr>
+<tr><td>3</td><td>Termo de responsabilidade assinado (anexar o papel)</td><td>Gestor / Admin</td></tr>
+<tr><td>4</td><td>Indicar o condutor ao órgão autuador (data, protocolo)</td><td>Gestor / Admin</td></tr>
+<tr><td>5</td><td>Gestor da equipe valida (ou contesta)</td><td>Gestor / Admin, em nome do gestor da equipe</td></tr>
+<tr><td>6</td><td>Boleto da locadora lançado</td><td>Gestor / Admin</td></tr>
+<tr><td>7</td><td>Solicitar desconto</td><td>Gestor / Admin</td></tr>
+<tr><td>8</td><td>Autorizar desconto</td><td><b>Somente Admin</b></td></tr>
+<tr><td>9</td><td>RH desconta no contracheque (valor, total ou parcial, mês)</td><td>Gestor / Admin</td></tr>
+</table></div>
+<h3>Passo a passo</h3>
+<ol class="pass">
+<li><b>Registrar:</b> preencha os dados (data da infração, data de recebimento, tipo de infração e valor são obrigatórios; locadora, auto de infração, órgão autuador e pontos são opcionais). O <b>Prazo de indicação do condutor</b> vem sugerido em 30 dias após o recebimento; ajuste se a locadora tiver outro prazo (enquanto a indicação não foi feita, o botão <b>Alterar prazo</b> permite corrigir).</li>
+<li><b>Confirmar condutor:</b> o sistema sugere quem estava com o carro na data da infração, pelo histórico de equipe e motorista. Confirme ou troque.</li>
+<li><b>Termo:</b> o motorista não usa o sistema; o termo continua em papel. Escaneie ou fotografe o papel assinado e toque em <b>Anexar termo assinado</b> (PDF ou foto; outro tipo de arquivo é recusado).</li>
+<li><b>Indicação:</b> toque em <b>Registrar indicação feita</b> e informe a data (<b>Indicado em</b>) e o protocolo. Esta é a etapa com prazo e não depende da validação do gestor da equipe.</li>
+<li><b>Validação:</b> toque em <b>Registrar validação (em nome do gestor da equipe)</b> e informe <b>Em nome de</b>, o <b>Canal</b> (E-mail, WhatsApp, Telefone ou Presencial) e uma observação. Se ele contestar, use <b>Registrar contestação</b> com o motivo: a multa para ali e não segue para desconto.</li>
+<li><b>Boleto:</b> toque em <b>Marcar boleto lançado</b> e informe a data (<b>Boleto lançado em</b>). Se a multa foi contestada, o mesmo botão aparece no detalhe dela (campo <b>Data do lançamento do boleto</b>), para registrar o boleto mesmo sem seguir para desconto.</li>
+<li><b>Desconto:</b> o gestor toca em <b>Solicitar desconto</b>; o administrador toca em <b>Autorizar desconto</b>; depois o gestor ou o administrador toca em <b>Registrar desconto efetuado</b> com <b>Valor descontado (R$)</b>, <b>Tipo</b> (Total ou Parcial) e <b>Competência</b> (mês do contracheque).</li>
+</ol>
+<h3>Tela Descontos</h3>
+<p><b>Onde fica:</b> menu <span class="menu">Descontos</span>. Sinistro e KM excedido continuam como antes. Para a multa, a tela agora segue o fluxo:</p>
+<ul class="l">
+<li>Cada multa mostra a <b>etapa</b> em que está e o link <b>Abrir no fluxo da multa</b>.</li>
+<li>O formulário de desconto só aparece quando a multa está na etapa <b>autorizado</b>. Nele se informa o valor, o <b>Tipo</b> (Total ou Parcial) e a <b>Competência (mês do contracheque)</b>.</li>
+<li>Depois de descontada, aparece o botão <b>Desfazer desconto</b> (gestor ou administrador); a multa volta a "autorizado".</li>
+<li>O bloco de autorização mostra a recusa quando quem tenta não pode: <q>Só o administrador autoriza o desconto</q>.</li>
+</ul>
+<h3>Prazo vencido e multa em dobro</h3>
+<p>Se o prazo de indicação passa sem a indicação, aparece na lista o aviso <q>prazo vencido: paga em dobro</q> e, dentro da multa, <q>Prazo vencido: a multa será paga em dobro.</q> Toque em <b>Registrar multa em dobro</b> e escolha o <b>Responsável pela perda do prazo</b> (Empresa ou Motorista). O sistema <b>só registra</b>; não desconta nada sozinho. Quem decide repassar ao motorista é o Frotas, caso a caso.</p>
+<h3>Voltar uma etapa</h3>
+<ul class="l">
+<li>Autorização dada: só o administrador revoga (botão <b>Revogar autorização</b>).</li>
+<li>Desconto solicitado: o gestor ou o administrador cancela (botão <b>Cancelar solicitação</b>).</li>
+<li>Desconto registrado: o gestor ou o administrador desfaz (botão <b>Desfazer desconto</b>; a multa volta a "autorizado").</li>
+<li>As demais etapas não voltam. Pular para frente é permitido (veja o aviso de primeiro uso), exceto autorizar e descontar, que seguem a ordem.</li>
+</ul>
+<h3>Mensagens comuns</h3>
+<ul class="l">
+<li><q>Só administrador pode.</q> O gestor pede o desconto, mas quem autoriza (ou revoga) é o administrador. O botão aparece desabilitado, com esse motivo, para quem não pode. Se mesmo assim tentar, o sistema responde <q>Só o administrador autoriza o desconto</q>.</li>
+<li>Para as demais etapas, o botão desabilitado diz <q>Só gestor de frotas ou administrador.</q></li>
+<li><q>Não foi possível registrar o desconto. Informe valor (entre zero e o valor da multa), tipo e competência.</q> O desconto não pode passar do valor da multa.</li>
+<li>Se faltar dado numa etapa, o sistema diz o que falta (por exemplo <q>Anexe o termo assinado (PDF ou foto).</q>).</li>
+<li>Multa contestada é final: não segue para desconto.</li>
+</ul>
+<div class="quem">
+<div class="sim"><b>Admin</b>Todas as etapas, inclusive autorizar e revogar.</div>
+<div class="sim"><b>Gestor de frotas</b>Todas, menos autorizar e revogar.</div>
+<div class="nao"><b>Usuário do Frotas</b>Só registra a multa e consulta.</div>
+</div>
+<p><b>Se apagar:</b> a multa tem o botão <b>Excluir</b> na lista (e <b>Excluir selecionadas</b>), só para gestor e administrador, como antes desta entrega. As etapas já registradas ficam guardadas com data e responsável. Para corrigir, use os botões de voltar acima, em vez de excluir.</p>
+</section>
+
+<section id="pendencias">
+<h2>6. Pendências de multa</h2>
+<p>Antes, toda multa que ainda não tinha sido descontada aparecia como "sem tratativa" e atrasada. Agora a lista mostra o que o Frotas precisa fazer, com o prazo certo.</p>
+<p><b>Onde fica:</b> <span class="menu">Gestão</span> &rsaquo; <span class="menu">Pendências</span> (tela <q>Pendências &amp; Plano de Ação</q>).</p>
+<ul class="l">
+<li><b>Na lista principal:</b> multas em que ainda falta algo do Frotas, com textos como <q>Confirmar o condutor</q>, <q>Aguardando aceite do termo pelo motorista</q>, <q>Indicar o condutor ao órgão até dd/mm</q>, <q>Aguardando validação do gestor da equipe</q>, <q>Lançar o boleto da locadora</q> e <q>Solicitar o desconto</q>. O prazo exibido é o limite de indicação, não a data da infração.</li>
+<li><b>Aguardando terceiros (não conta como atrasada):</b> caixa separada com a multa já enviada para desconto, esperando autorização ou o RH.</li>
+<li>Multa descontada ou contestada não aparece. Depois de indicada, a multa não tem mais prazo.</li>
+<li>Revisões atrasadas ou perto de vencer também aparecem aqui.</li>
+</ul>
+<p>Sinistros continuam como eram nas pendências. Veja também o aviso de primeiro uso no alto deste manual.</p>
+<p><b>Se apagar:</b> a pendência some sozinha quando a etapa é cumprida; não há o que apagar aqui.</p>
+</section>
+
+<section id="fotos">
+<h2>7. Fotos do checklist e do sinistro</h2>
+<p>O checklist continua com as fotos obrigatórias (frente, traseira e laterais), a interna opcional, e agora aceita <b>fotos adicionais</b> em qualquer ângulo. O sinistro deixou de ter só dois espaços de foto.</p>
+<p><b>Onde fica:</b> <span class="menu">Operação</span> &rsaquo; <span class="menu">Checklist</span> e <span class="menu">Ocorrências</span> &rsaquo; <span class="menu">Sinistros</span>.</p>
+<ol class="pass">
+<li>No checklist ou no sinistro, tire as fotos obrigatórias como antes.</li>
+<li>Toque em <b>+ Mais fotos (ângulo livre)</b> no checklist, ou <b>+ Mais fotos</b> no sinistro, para acrescentar quantas precisar (limite de 30 por checklist ou sinistro, contando todas, inclusive as das avarias).</li>
+<li>No <b>checklist</b>, a foto é tirada na hora, com a câmera. No <b>sinistro</b>, também dá para escolher da galeria (útil para foto de documento ou do outro veículo).</li>
+<li>Antes de salvar, o <b>×</b> na miniatura remove a foto do rascunho. Salve o registro.</li>
+</ol>
+<ul class="l">
+<li>Ao chegar em 30, o botão some e aparece <q>Limite de 30 fotos</q>. No checklist, o título mostra quantas já foram usadas (<q>Mais fotos (N de 30 no total)</q>).</li>
+<li>As fotos são reduzidas no celular antes de enviar, para funcionar também com sinal fraco.</li>
+</ul>
+<div class="quem">
+<div class="sim"><b>Quem cria checklist/sinistro</b>Acrescenta fotos antes de salvar.</div>
+<div class="sim"><b>Todos com acesso</b>Veem as fotos.</div>
+<div class="nao"><b>Sem acesso</b>Não vê.</div>
+</div>
+<h3>O que dá e o que não dá para apagar</h3>
+<ul class="l">
+<li><b>Foto já salva: ninguém apaga nem troca, nem o administrador.</b> Foto é prova.</li>
+<li><b>Checklist ou sinistro inteiro:</b> só o administrador pode excluir (botão <b>Excluir</b> na lista, que só aparece para ele); com isso as fotos dele também saem. A exclusão fica no histórico de auditoria. Gestor e usuário comum não veem o botão e não conseguem.</li>
+</ul>
+</section>
+
+<section id="avaria">
+<h2>8. Registrar avaria</h2>
+<p>No checklist, o antigo "Avaria identificada? sim/não" mais texto foi trocado por um registro por avaria, com foto da peça e foto do dano.</p>
+<p><b>Onde fica:</b> dentro do checklist, na seção <b>Avarias</b>.</p>
+<ol class="pass">
+<li>Toque na aba <b>+ Registrar avaria</b> (a outra aba, <b>Avarias do checklist (N)</b>, mostra as já adicionadas).</li>
+<li>Escolha a <b>Peça</b> (para-choque dianteiro, para-choque traseiro, porta esquerda, porta direita, retrovisor, farol / lanterna, pneu / roda, para-brisa ou outra peça) e o <b>Tamanho</b> (Pequena até 5 cm, Média de 5 a 20 cm, Grande acima de 20 cm).</li>
+<li>Se souber, marque se precisa de reparo ou troca (<q>A definir por Frotas</q> é o padrão). A descrição é opcional.</li>
+<li>Tire a <b>Foto da peça inteira</b> (mostra onde fica, botão <b>+ foto da peça</b>) e a(s) <b>Foto(s) da avaria</b> (de perto, botão <b>+ foto da avaria</b>).</li>
+<li>Toque em <b>Adicionar avaria ao checklist</b>. Repita para outras avarias e salve o checklist. Para tirar uma avaria já adicionada (antes de salvar), use <b>Remover</b> na aba <b>Avarias do checklist</b>.</li>
+</ol>
+<p>Sem peça, tamanho, uma foto da peça e uma foto do dano, a avaria não é adicionada.</p>
+<div class="box aviso">
+<b>Avaria começada e não adicionada trava o envio.</b>
+<p>Se você começou a preencher uma avaria (escolheu peça, tamanho, pôs foto ou escreveu algo) e não tocou em <b>Adicionar avaria ao checklist</b>, aparece o aviso <q>Você tem uma avaria não adicionada: adicione ou descarte antes de salvar.</q>, com o botão <b>Descartar</b>. Ao tentar salvar o checklist assim, o sistema não envia e repete a mensagem. É para a avaria não se perder sem querer: adicione-a ou toque em <b>Descartar</b>, e então salve.</p>
+</div>
+<p>Depois de salva, a avaria fica <b>aberta</b> no histórico do veículo. Para ver, vá em <b>Checklist</b> &rsaquo; <b>Histórico do veículo</b>. Quando for consertada, o gestor ou o administrador toca em <b>Marcar como reparada</b> (data padrão: hoje; não aceita data futura). Também ali o gestor define <b>Reparo</b> ou <b>Troca</b> e toca em <b>Salvar</b>. Marcar como reparada não volta atrás.</p>
+<div class="quem">
+<div class="sim"><b>Quem faz o checklist</b>Registra avarias.</div>
+<div class="sim"><b>Gestor / Admin</b>Marca como reparada e define reparo ou troca depois.</div>
+<div class="nao"><b>Usuário comum</b>Botão "Marcar como reparada" desabilitado, com o motivo <q>Só gestor de frotas ou administrador.</q></div>
+</div>
+<p><b>Se apagar:</b> a avaria e as fotos salvas não podem ser apagadas. Só o administrador, excluindo o checklist inteiro. Avaria consertada não é excluída: é marcada como reparada e continua no histórico. Avarias não entram em Pendências, para não encher a lista.</p>
+</section>
+
+<section id="historico">
+<h2>9. Histórico e comparação do checklist</h2>
+<p>Agora dá para ver todos os checklists de um mesmo carro e comparar dois lado a lado, principalmente as fotos.</p>
+<p><b>Onde fica:</b> <span class="menu">Operação</span> &rsaquo; <span class="menu">Checklist</span>, link <b>Histórico do veículo</b> em cada linha. Também dá para chegar pela ficha do veículo, pelo link <b>Histórico do checklist</b>. A tela se chama <q>Histórico do checklist</q> e traz a placa.</p>
+<ol class="pass">
+<li>Abra o histórico do carro: data, tipo, motorista e número de avarias. O primeiro checklist do carro tem a marca <b>base</b> (entrada).</li>
+<li>Em <b>Comparar dois checklists do mesmo veículo</b>, escolha o <b>Antes</b> e o <b>Depois</b> e toque em <b>Comparar</b>. Por padrão o sistema compara o mais recente com o anterior. O atalho <b>Comparar com a entrada (base)</b> usa o primeiro.</li>
+<li>Escolha <b>Lado a lado</b> ou <b>Sobrepor</b> (arraste o controle para ver a diferença).</li>
+<li>Leia <b>O que mudou (automático, só dos dados)</b>: item que passou de OK para problema (ou o contrário), avaria nova, avaria resolvida e avaria que continua. Isso vem dos dados preenchidos; o sistema <b>não compara as imagens</b>. Quem decide pelas fotos é você.</li>
+</ol>
+<h3>Na troca de carro</h3>
+<p>Ao iniciar um checklist de <b>troca</b> e escolher o veículo, cada posição mostra, ao lado da câmera, a foto da mesma posição do último checklist ("Último: Frente · dd/mm/aaaa"). Serve só para comparar enquanto fotografa e não bloqueia nada. Se não houver checklist anterior, aparece "Primeiro checklist deste veículo."</p>
+<ul class="l">
+<li><q>Escolha dois checklists diferentes.</q> Aparece se "Antes" e "Depois" forem o mesmo.</li>
+</ul>
+<div class="quem">
+<div class="sim"><b>Todos com acesso ao Frotas</b>Veem e comparam.</div>
+<div class="sim"><b>Gestor / Admin</b>Também marcam avaria como reparada.</div>
+<div class="nao"><b>Sem acesso</b>Não vê.</div>
+</div>
+<p><b>Se apagar:</b> consultar e comparar não altera nada. As regras de exclusão são as da seção 7.</p>
+</section>
+
+<section id="apagar">
+<h2>10. Resumo: o que dá e o que não dá para apagar</h2>
+<div class="tw"><table>
+<tr><th>Item</th><th>Dá para apagar?</th><th>Quem</th></tr>
+<tr><td>Foto salva (checklist, sinistro, avaria)</td><td>Não</td><td>Ninguém, nem o admin</td></tr>
+<tr><td>Checklist ou sinistro inteiro (com as fotos)</td><td>Sim (botão Excluir na lista)</td><td>Somente Admin; fica no histórico de auditoria</td></tr>
+<tr><td>Avaria salva</td><td>Não (marca-se como reparada)</td><td>Gestor / Admin marcam</td></tr>
+<tr><td>Revisão</td><td>Sim (botão Excluir no detalhe do Histórico de revisões)</td><td>Gestor / Admin</td></tr>
+<tr><td>Manutenção corretiva</td><td>Não há botão de excluir nesta versão</td><td>-</td></tr>
+<tr><td>Etapa de multa</td><td>Não se apaga; voltam-se: autorização (Admin), solicitação e desconto (Gestor / Admin)</td><td>Conforme indicado</td></tr>
+<tr><td>Multa (Excluir e Excluir selecionadas)</td><td>Sim, como antes desta entrega (em massa, só as marcadas na página visível)</td><td>Gestor / Admin; fica no histórico de auditoria</td></tr>
+<tr><td>Sinistro</td><td>Sim (as fotos saem junto)</td><td>Somente Admin</td></tr>
+<tr><td>Documento</td><td>Não há botão de excluir nesta versão</td><td>-</td></tr>
+</table></div>
+<p class="mut">Em caso de dúvida antes de excluir, prefira corrigir ou voltar uma etapa: o que é apagado não volta.</p>
+</section>
+
+<footer>Gestão de Frotas, novidades de 04/11/2026. Dúvidas ou algo diferente do descrito: avise o João pelo WhatsApp.</footer>
+</div>
+</body>
+</html>
