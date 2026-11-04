@@ -1,18 +1,40 @@
 /**
  * Filtro, ordenação, paginação e leitura de query string das bases (funções puras).
  */
+import { DOCUMENTO_TIPO_LABELS } from '../enums'
 import { colunasDa } from './colunas'
 import type {
-  AbastLinha, BaseId, FiltrosBase, KmLinha, Linha, MotLinha, VeicLinha,
+  AbastLinha, BaseId, CampoSelecao, CorrLinha, DocLinha, FiltrosBase, KmLinha, Linha, MotLinha, MultaLinha, RevLinha,
+  SinLinha, VeicLinha,
 } from './tipos'
-import { FILTROS_VAZIOS } from './tipos'
+import { BASES_NOVAS, FILTROS_DA_BASE, FILTROS_VAZIOS, temPeriodo } from './tipos'
 
 export const POR_PAGINA = 20
 
 const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const ehData = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
 
-function textoBusca(base: BaseId, r: Linha): string {
+export function textoBusca(base: BaseId, r: Linha): string {
+  if (base === 'rev') {
+    const x = r as RevLinha
+    return [x.placa, x.modelo, x.oficina, x.pecas, x.obs].join(' ')
+  }
+  if (base === 'corr') {
+    const x = r as CorrLinha
+    return [x.placa, x.defeito, x.oficina, x.obs].join(' ')
+  }
+  if (base === 'multa') {
+    const x = r as MultaLinha
+    return [x.placa, x.motorista, x.infracao].join(' ')
+  }
+  if (base === 'sin') {
+    const x = r as SinLinha
+    return [x.placa, x.motorista, x.desc].join(' ')
+  }
+  if (base === 'doc') {
+    const x = r as DocLinha
+    return [x.placa, x.numero, DOCUMENTO_TIPO_LABELS[x.tipo]].join(' ')
+  }
   if (base === 'abast') {
     const a = r as AbastLinha
     return [a.placa, a.modelo, a.posto, a.motorista, a.equipe].join(' ')
@@ -33,6 +55,20 @@ export function filtrarLinhas<R extends Linha>(base: BaseId, rows: R[], f: Filtr
   const q = semAcento(f.q.trim())
   return rows.filter((r) => {
     if (q && !semAcento(textoBusca(base, r)).includes(q)) return false
+    if (BASES_NOVAS.includes(base)) {
+      // As linhas novas usam o mesmo nome de campo do filtro (placa, motorista, tipo, sit, status, arca, aut).
+      const x = r as unknown as Record<string, unknown>
+      if (temPeriodo(base) && (f.de || f.ate)) {
+        const d = x.data as string | null
+        if (!d || (f.de && d < f.de) || (f.ate && d > f.ate)) return false
+      }
+      for (const c of FILTROS_DA_BASE[base]) {
+        if (c.k === 'periodo') continue
+        const v = f[c.k]
+        if (v && x[c.k] !== v) return false
+      }
+      return true
+    }
     if (base === 'abast' || base === 'km') {
       const x = r as unknown as AbastLinha | KmLinha
       if (f.de && x.data < f.de) return false
@@ -91,15 +127,18 @@ export function paginar<T>(rows: T[], pagina: number, por = POR_PAGINA) {
 type Params = Record<string, string | string[] | undefined>
 const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? ''
 
-const CHAVES_FILTRO = ['q', 'busca', 'de', 'ate', 'equipe', 'placa', 'motorista', 'situacao', 'cnh', 'sit', 'status']
+const CHAVES_FILTRO = ['q', 'busca', 'de', 'ate', 'equipe', 'placa', 'motorista', 'situacao', 'cnh', 'sit', 'status', 'tipo', 'arca', 'aut']
 
 /**
  * Filtros iniciais a partir da URL. Parâmetros por base:
  *  abast/km: q, de, ate (AAAA-MM-DD), equipe (código), placa, motorista (nome)
  *  mot:      q, equipe, situacao (ativo|inativo), cnh (alerta|vencendo|vencida)
  *  veic:     q, equipe, placa, sit (uso|livre|oficina|fora); legado status=manutencao|inativo
+ *  rev/corr/multa/sin/doc: q, de, ate, placa, motorista e as listas de FILTROS_DA_BASE
+ *            (tipo, sit, status, arca, aut), só com valor da lista
  * Sem nenhum parâmetro de filtro, abast/km mostram o mês corrente (de = dia 1, ate = hoje);
- * com algum parâmetro, de/ate ausentes não limitam. Valor inválido é ignorado.
+ * as 5 novas mostram tudo (sem período). Com algum parâmetro, de/ate ausentes não limitam.
+ * Valor inválido é ignorado.
  */
 export function filtrosDaUrl(base: BaseId, params: Params, hoje: string): FiltrosBase {
   const f: FiltrosBase = { ...FILTROS_VAZIOS }
@@ -110,6 +149,15 @@ export function filtrosDaUrl(base: BaseId, params: Params, hoje: string): Filtro
   const de = um(params.de), ate = um(params.ate)
   if (ehData(de)) f.de = de
   if (ehData(ate)) f.ate = ate
+  if (BASES_NOVAS.includes(base)) {
+    f.equipe = ''
+    for (const c of FILTROS_DA_BASE[base]) {
+      if (!('opcoes' in c)) continue
+      const v = um(params[c.k])
+      if (c.opcoes.some(([k]) => k === v)) f[c.k as CampoSelecao] = v
+    }
+    return f
+  }
   const situacao = um(params.situacao)
   if (situacao === 'ativo' || situacao === 'inativo') f.situacao = situacao
   const cnh = um(params.cnh)
@@ -133,6 +181,18 @@ export function filtrosDaUrl(base: BaseId, params: Params, hoje: string): Filtro
 export function descreverFiltros(base: BaseId, f: FiltrosBase): string {
   const br = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
   const p: string[] = []
+  if (BASES_NOVAS.includes(base)) {
+    if (temPeriodo(base)) p.push(`período ${f.de ? br(f.de) : 'início'} a ${f.ate ? br(f.ate) : 'hoje'}`)
+    if (f.placa) p.push(`placa ${f.placa}`)
+    if (f.motorista) p.push(`motorista ${f.motorista}`)
+    for (const c of FILTROS_DA_BASE[base]) {
+      if (!('opcoes' in c)) continue
+      const v = f[c.k]
+      if (v) p.push(`${c.t.toLowerCase()}: ${(c.opcoes.find(([k]) => k === v)?.[1] ?? v).toLowerCase()}`)
+    }
+    if (f.q) p.push(`busca "${f.q}"`)
+    return p.length ? p.join(' · ') : 'sem filtro (tudo)'
+  }
   if (base === 'abast' || base === 'km') p.push(`período ${f.de ? br(f.de) : 'início'} a ${f.ate ? br(f.ate) : 'hoje'}`)
   if (f.equipe) p.push(`equipe ${f.equipe}`)
   if (f.placa) p.push(`placa ${f.placa}`)

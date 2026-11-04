@@ -34,3 +34,18 @@ export async function obterUrlDocumentoAction(storagePath: string): Promise<{ ur
   if (error || !data) return { error: 'Erro ao gerar link do arquivo' }
   return { url: data.signedUrl }
 }
+
+/** Base de Documentos: o caminho do arquivo é lido do banco pelo id (a linha da tabela não o carrega). */
+export async function obterUrlDocumentoPorIdAction(id: string): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Não autenticado' }
+
+  const { data: doc } = await supabase.from('documentos_veiculo').select('storage_path').eq('id', id).maybeSingle()
+  if (!doc?.storage_path) return { error: 'Documento sem arquivo' }
+  const { data, error } = await supabase.storage.from('sofia-anexos').createSignedUrl(doc.storage_path, 60)
+  if (error || !data) return { error: 'Erro ao gerar link do arquivo' }
+  return { url: data.signedUrl }
+}
