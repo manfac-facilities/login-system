@@ -26,7 +26,7 @@ jest.mock('@/lib/sofia/auditLog', () => ({ logAudit: (...a: unknown[]) => logAud
 
 import { importarRevisoesAction } from '../_actions'
 import { MSG_SEM_PERMISSAO_FROTAS } from '@/lib/sofia/permissoes'
-import type { LinhaImportada } from '@/lib/sofia/revisaoImportacao'
+import { linhasParaGravar, type LinhaImportada } from '@/lib/sofia/revisaoImportacao'
 
 const linha = (p: Partial<LinhaImportada>): LinhaImportada => ({
   linha: 2, placa: 'AAA1A11', kmTexto: '', km: 30000, data: '2026-06-01', oficina: 'Beta', valor: 500, pecas: null, obs: null,
@@ -47,6 +47,21 @@ beforeEach(() => {
 })
 
 describe('importarRevisoesAction', () => {
+  it('N1: a tela manda só linhasParaGravar (corpo pequeno) e o servidor grava exatamente essas', async () => {
+    const longa = 'x'.repeat(2000)
+    const previa: LinhaImportada[] = [
+      linha({ linha: 2, km: 30000, placa: 'AAA1A11', veiculo_id: 'v1' }),
+      ...Array.from({ length: 600 }, (_, i) => linha({ linha: 3 + i, resultado: 'erro', motivo: 'Placa não cadastrada', obs: longa, placa: 'ZZZ9Z99', veiculo_id: null })),
+      linha({ linha: 700, km: 40000, resultado: 'dup', motivo: 'Já existe', obs: longa }),
+    ]
+    const enviar = linhasParaGravar(previa, false)
+    expect(enviar.map((l) => l.linha)).toEqual([2])
+    expect(JSON.stringify(previa).length).toBeGreaterThan(1024 * 1024)
+    expect(JSON.stringify(enviar).length).toBeLessThan(10 * 1024)
+    expect(await importarRevisoesAction(enviar, false)).toMatchObject({ importadas: 1 })
+    expect(insertMock.mock.calls[0][0]).toHaveLength(1)
+  })
+
   it('sem gestor: mensagem padrão e nenhum insert', async () => {
     podeGerirMock.mockResolvedValue({ data: false, error: null })
     expect(await importarRevisoesAction([linha({})], false)).toEqual({ error: MSG_SEM_PERMISSAO_FROTAS })

@@ -133,7 +133,9 @@ function Assistente({ contexto, hoje, onFechar }: { contexto: Omit<ContextoImpor
     setErro(null)
     setOcupado(true)
     try {
-      const r = await importarRevisoesAction(previa, comAvisos)
+      // Só as linhas a gravar (o servidor revalida tudo de novo): a prévia inteira, com erros e
+      // repetidas, pode passar do limite de 1 MB do corpo da server action numa planilha grande.
+      const r = await importarRevisoesAction(linhasParaGravar(previa, comAvisos), comAvisos)
       if (r.error) return setErro(r.error)
       setFeitas(r.importadas ?? 0)
       setPasso(4)
