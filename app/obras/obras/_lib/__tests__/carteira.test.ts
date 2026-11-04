@@ -358,6 +358,15 @@ describe('resumoCarteira', () => {
     ])
     expect(r.porSinal).toEqual({ vermelho: 1, amarelo: 0, verde: 1, sem: 1 })
     expect(r.faturando).toBe(1)
-    expect(r).toMatchObject({ faturado: 1050, aFaturar: 600, valor: 1500, custoRealizado: 210, foraDasSomas: 1 })
+    // A sem valor fica fora de faturado/valor/aFaturar, mas o custo dela soma.
+    expect(r).toMatchObject({ faturado: 1000, aFaturar: 600, valor: 1500, custoRealizado: 210, foraDasSomas: 1, semValor: 1 })
+  })
+
+  it('obra sem valor informado: fora de faturado/valor/aFaturar, dentro do custo, contada em semValor', () => {
+    const r = resumoCarteira([
+      obra({ dinheiro: dinheiroOk({ valor: null, aFaturar: null, faturado: 900, custoRealizado: 30 }) }),
+      obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, custoRealizado: 20 }) }),
+    ])
+    expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 1, foraDasSomas: 0 })
   })
 })

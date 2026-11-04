@@ -308,18 +308,20 @@ export function excecoesDoDia(obras: ObraCarteira[]): Excecao[] {
 
 export function resumoCarteira(obras: ObraCarteira[]): {
   porSinal: Record<'vermelho' | 'amarelo' | 'verde' | 'sem', number>; faturando: number
-  faturado: number; aFaturar: number; valor: number; custoRealizado: number; foraDasSomas: number
+  faturado: number; aFaturar: number; valor: number; custoRealizado: number; foraDasSomas: number; semValor: number
 } {
-  const r = { porSinal: { vermelho: 0, amarelo: 0, verde: 0, sem: 0 }, faturando: 0, faturado: 0, aFaturar: 0, valor: 0, custoRealizado: 0, foraDasSomas: 0 }
+  const r = { porSinal: { vermelho: 0, amarelo: 0, verde: 0, sem: 0 }, faturando: 0, faturado: 0, aFaturar: 0, valor: 0, custoRealizado: 0, foraDasSomas: 0, semValor: 0 }
   for (const o of obras) {
     // O quadro "Como estão as obras" conta as em andamento; as faturando têm contagem própria.
     if (o.estado.tipo === 'faturando') r.faturando++
     else r.porSinal[o.estado.tipo === 'sem_cronograma' ? 'sem' : (o.sinal ?? 'sem')]++
     if (!o.dinheiro.ok) { r.foraDasSomas++; continue }
+    r.custoRealizado += o.dinheiro.custoRealizado
+    // Sem valor informado não dá para comparar faturado × valor: fica fora das três somas.
+    if (o.dinheiro.valor === null) { r.semValor++; continue }
     r.faturado += o.dinheiro.faturado
     r.aFaturar += o.dinheiro.aFaturar ?? 0
-    r.valor += o.dinheiro.valor ?? 0
-    r.custoRealizado += o.dinheiro.custoRealizado
+    r.valor += o.dinheiro.valor
   }
   return r
 }

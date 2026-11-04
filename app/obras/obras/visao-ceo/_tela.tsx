@@ -437,7 +437,7 @@ export default function TelaVisaoCeo({ obras, hoje, lidoEm }: { obras: ObraCarte
         </Quadro>
 
         <Quadro titulo="Faturamento da carteira">
-          {somadas === 0 ? (
+          {somadas - resumo.semValor === 0 ? (
             <p className="text-[13px] text-(--obra-muted-texto)">Nenhuma obra com valores disponíveis.</p>
           ) : (
             <>
@@ -452,6 +452,9 @@ export default function TelaVisaoCeo({ obras, hoje, lidoEm }: { obras: ObraCarte
               </p>
             </>
           )}
+          {resumo.semValor > 0 ? (
+            <p className="text-[12px] text-(--obra-muted-texto)">{plural(resumo.semValor, 'obra sem valor informado', 'obras sem valor informado')}</p>
+          ) : null}
           {fora}
         </Quadro>
 

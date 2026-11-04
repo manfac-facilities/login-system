@@ -121,4 +121,22 @@ describe('Visão do CEO: tela', () => {
     tela([verde, vermelha])
     expect(screen.getByText('2 de 2 obras ainda sem orçado. A comparação aparece quando o orçado da obra existir.')).toBeInTheDocument()
   })
+
+  it('faturamento: obra sem valor informado vira aviso e a barra não passa de 100%', () => {
+    const { container } = tela([
+      verde,
+      { ...vermelha, dinheiro: dinheiroOk({ valor: null, aFaturar: null, faturado: 500_000_00 }) },
+    ])
+    const quadro = screen.getByRole('region', { name: 'Faturamento da carteira' })
+    expect(within(quadro).getByText('1 obra sem valor informado')).toBeInTheDocument()
+    expect(within(quadro).getByText('R$ 40.000,00')).toBeInTheDocument()
+    const larguras = [...container.querySelectorAll<HTMLElement>('[style*="width"]')].map((e) => parseFloat(e.style.width))
+    expect(Math.max(...larguras)).toBeLessThanOrEqual(100)
+  })
+
+  it('faturamento: 2 obras sem valor → plural', () => {
+    const sv = dinheiroOk({ valor: null, aFaturar: null })
+    tela([{ ...verde, dinheiro: sv }, { ...vermelha, dinheiro: sv }])
+    expect(within(screen.getByRole('region', { name: 'Faturamento da carteira' })).getByText('2 obras sem valor informado')).toBeInTheDocument()
+  })
 })
