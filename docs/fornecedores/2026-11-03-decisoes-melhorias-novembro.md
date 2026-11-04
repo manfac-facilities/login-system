@@ -45,3 +45,10 @@ projeto entregue amanhã de manhã, no máximo."
   cliente já precisou lançar algo "que tem que pagar hoje".
 - **6. NF continua opcional.** Motivo: decisão do cliente de 08/10 ("a maioria nem tem NF"); o pedido de hoje
   fala da janela, não de obrigar NF.
+
+## Mockup aprovado (03/11/2026, noite)
+
+Mockup: https://claude.ai/artifact/JtmJCjR9DkX4kPvY53fDau (arquivo `docs/fornecedores/mockups/2026-11-03-melhorias-novembro.html`).
+João (literal): "mockuo aprovado, prossiga". Com isso, as 15 suposições da seção 8 do mockup ficam aprovadas
+— entre elas: sugestão do global Spot = `SPOT_MENSAL_CONSOLIDADO`; duração de 1 a 36 meses; janela do dia 25
+fecha só o lançamento (enviar medição / fechar o mês); Consulta sem tela nova; busca não procura no escopo.
