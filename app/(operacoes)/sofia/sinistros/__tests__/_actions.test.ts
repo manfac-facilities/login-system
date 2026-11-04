@@ -3,12 +3,17 @@ const eqMock = jest.fn()
 const getUserMock = jest.fn()
 const deleteEqMock = jest.fn()
 const podeGerirMock = jest.fn()
+const isAdminMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     auth: { getUser: getUserMock },
     rpc: jest.fn((fn: string) =>
-      fn === 'sofia_pode_gerir' ? podeGerirMock() : Promise.reject(new Error(`rpc inesperada: ${fn}`))
+      fn === 'sofia_pode_gerir'
+        ? podeGerirMock()
+        : fn === 'sofia_is_admin'
+          ? isAdminMock()
+          : Promise.reject(new Error(`rpc inesperada: ${fn}`))
     ),
     from: jest.fn(() => ({
       update: updateMock,
@@ -98,14 +103,16 @@ describe('atualizarAutorizacaoSinistroAction', () => {
   })
 })
 
-describe('excluirSinistroAction', () => {
-  const MSG = 'Apenas administradores ou gestores de frotas podem excluir sinistros'
+describe('excluirSinistroAction (só admin, decisão do João 03/11)', () => {
+  const MSG = 'Apenas administradores podem excluir sinistros'
   beforeEach(() => {
     getUserMock.mockReset()
     getUserMock.mockResolvedValue({ data: { user: { email: NON_ADMIN_EMAIL } } })
     deleteEqMock.mockReset()
     deleteEqMock.mockResolvedValue({ error: null })
     podeGerirMock.mockReset()
+    podeGerirMock.mockResolvedValue(PODE)
+    isAdminMock.mockReset()
   })
   const fdId = () => {
     const f = new FormData()
@@ -113,18 +120,32 @@ describe('excluirSinistroAction', () => {
     return f
   }
 
-  it('gestor de frotas exclui', async () => {
-    podeGerirMock.mockResolvedValue(PODE)
+  it('admin exclui', async () => {
+    isAdminMock.mockResolvedValue(PODE)
     expect(await excluirSinistroAction({}, fdId())).toEqual({ success: true })
     expect(deleteEqMock).toHaveBeenCalledWith('id', 'sinistro-1')
   })
 
   it.each([
-    ['não pode gerir', NAO_PODE],
+    ['gestor de frotas (não é admin)', NAO_PODE],
     ['erro na RPC', ERRO_RPC],
-  ])('nega quando %s', async (_n, resposta) => {
-    podeGerirMock.mockResolvedValue(resposta)
+  ])('nega quando %s, sem tentar excluir', async (_n, resposta) => {
+    isAdminMock.mockResolvedValue(resposta)
     expect(await excluirSinistroAction({}, fdId())).toEqual({ error: MSG })
     expect(deleteEqMock).not.toHaveBeenCalled()
+  })
+
+  it('erro de FK (23503) vira texto fixo de vínculo', async () => {
+    isAdminMock.mockResolvedValue(PODE)
+    deleteEqMock.mockResolvedValue({ error: { code: '23503', message: 'interno' } })
+    expect(await excluirSinistroAction({}, fdId())).toEqual({
+      error: 'Este registro tem vínculos (troca de responsabilidade/documentos) e não pode ser excluído',
+    })
+  })
+
+  it('outro erro do banco vira mensagem genérica (nunca a do banco)', async () => {
+    isAdminMock.mockResolvedValue(PODE)
+    deleteEqMock.mockResolvedValue({ error: { code: 'P0001', message: 'Apenas administradores podem excluir' } })
+    expect(await excluirSinistroAction({}, fdId())).toEqual({ error: 'Erro ao excluir sinistro' })
   })
 })

@@ -12,6 +12,18 @@ export async function podeAutorizarDescontoMulta(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>
 ): Promise<boolean> {
+  return ehAdminSofia(supabase)
+}
+
+/**
+ * Administrador do hub, perguntado ao banco (sofia_is_admin) — a mesma função
+ * das triggers trg_multas_etapa e trg_excluir_so_admin. Falha FECHADA.
+ * Usos: autorizar/revogar desconto de multa; excluir checklist/sinistro inteiro.
+ */
+export async function ehAdminSofia(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>
+): Promise<boolean> {
   try {
     const { data, error } = await supabase.rpc('sofia_is_admin')
     if (error) return false

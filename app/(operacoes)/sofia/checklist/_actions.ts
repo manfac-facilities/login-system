@@ -1,9 +1,9 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { parseChecklistFormData, validateChecklistInput } from './_validation'
+import { parseChecklistFormData, tipoDaFoto, validateChecklistInput } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
-import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import { ehAdminSofia } from '@/lib/sofia/multaPermissoes'
 import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
 type State = { error?: string; success?: boolean; checklistId?: string }
@@ -24,15 +24,17 @@ export async function criarChecklistAction(
     observacoes,
     latitude,
     longitude,
-    avaria_identificada,
-    avaria_descricao,
     chave_entregue,
     cartao_combustivel_entregue,
     assinatura_motorista,
     itens,
     itens_problemas,
     fotos,
+    avarias,
   } = input
+  // derivados das avarias registradas (telas antigas continuam coerentes)
+  const avaria_identificada = avarias.length > 0
+  const avaria_descricao = avarias.length > 0 ? avarias.map((a) => a.peca).join(', ') : null
 
   const validationError = validateChecklistInput(input)
   if (validationError) return { error: validationError }
@@ -65,6 +67,30 @@ export async function criarChecklistAction(
 
   if (error) return { error: 'Erro ao salvar checklist' }
 
+  // ordem obrigatória: checklist → avarias → fotos (a foto de avaria aponta para a avaria)
+  const idDaAvaria = new Map<string, string>()
+  if (avarias.length > 0) {
+    const avariaRows = avarias.map((a) => {
+      const avariaId = crypto.randomUUID()
+      idDaAvaria.set(a.ref, avariaId)
+      return {
+        id: avariaId,
+        checklist_id: id,
+        peca: a.peca,
+        tamanho: a.tamanho,
+        acao: a.acao,
+        descricao: a.descricao,
+      }
+    })
+    const { error: avariasError } = await supabase.from('checklist_avarias').insert(avariaRows)
+    if (avariasError) {
+      return {
+        error: 'Checklist salvo, mas as avarias não foram registradas. Contate o suporte.',
+        checklistId: id,
+      }
+    }
+  }
+
   const fotoRows = Object.entries(fotos).map(([posicao, foto]) => ({
     checklist_id: id,
     storage_path: foto.path,
@@ -72,6 +98,8 @@ export async function criarChecklistAction(
     latitude: foto.lat,
     longitude: foto.lng,
     tirada_em: new Date().toISOString(),
+    tipo_foto: tipoDaFoto(posicao, foto),
+    avaria_id: foto.avaria_ref ? (idDaAvaria.get(foto.avaria_ref) ?? null) : null,
   }))
   if (fotoRows.length > 0) {
     const { error: fotosError } = await supabase.from('checklist_fotos').insert(fotoRows)
@@ -152,11 +180,17 @@ export async function excluirChecklistAction(_prev: State, formData: FormData): 
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user?.email || !(await podeGerirFrotas(supabase)))
-    return { error: 'Apenas administradores ou gestores de frotas podem excluir checklists' }
+  // Só o admin exclui o checklist inteiro (decisão do João, 03/11): a cascata leva
+  // fotos e avarias, e a trigger trg_excluir_so_admin grava o audit_log com tudo.
+  if (!user?.email || !(await ehAdminSofia(supabase)))
+    return { error: 'Apenas administradores podem excluir checklists' }
 
   const { error } = await supabase.from('checklist').delete().eq('id', id)
-  if (error) return { error: 'Erro ao excluir checklist' }
+  if (error) {
+    if ((error as { code?: string }).code === '23503')
+      return { error: 'Este registro tem vínculos (troca de responsabilidade/documentos) e não pode ser excluído' }
+    return { error: 'Erro ao excluir checklist' }
+  }
   revalidatePath('/sofia/checklist')
   return { success: true }
 }

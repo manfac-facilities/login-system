@@ -1,4 +1,5 @@
 // app/(operacoes)/sofia/checklist/_validation.ts
+import { TETO_FOTOS, ehPecaValida, ehTamanhoValido, type AcaoAvaria, type TamanhoAvaria, type TipoFoto } from '@/lib/sofia/fotosChecklist'
 
 /** true = OK, false = Problema, null = não respondido ainda. */
 export type ChecklistItemStatus = boolean | null
@@ -18,6 +19,26 @@ export interface FotoUpload {
   path: string
   lat: number | null
   lng: number | null
+  /** ausente = deduzido da posição (Interna → interna; demais → obrigatoria) */
+  tipo_foto?: TipoFoto
+  /** referência local da avaria do formulário (só nas fotos de avaria) */
+  avaria_ref?: string
+}
+
+export interface AvariaInput {
+  ref: string
+  peca: string
+  tamanho: TamanhoAvaria
+  acao: AcaoAvaria | null
+  descricao: string | null
+}
+
+const TIPOS_FOTO: readonly TipoFoto[] = ['obrigatoria', 'interna', 'extra', 'avaria_peca', 'avaria_dano']
+
+/** tipo_foto efetivo de uma foto (o banco exige o campo; as antigas não mandavam). */
+export function tipoDaFoto(posicao: string, foto: FotoUpload): TipoFoto {
+  if (foto.tipo_foto) return foto.tipo_foto
+  return posicao === FOTO_POSICAO_OPCIONAL ? 'interna' : 'obrigatoria'
 }
 
 export const FOTO_POSICOES_OBRIGATORIAS = ['Frente', 'Traseira', 'Lateral Esq.', 'Lateral Dir.'] as const
@@ -42,6 +63,7 @@ export interface ParsedChecklistInput {
   itens: ChecklistItens
   itens_problemas: Record<string, string>
   fotos: Record<string, FotoUpload>
+  avarias: AvariaInput[]
 }
 
 function parseItemStatus(raw: string | null): ChecklistItemStatus {
@@ -105,6 +127,23 @@ export function parseChecklistFormData(formData: FormData): ParsedChecklistInput
     fotos = {}
   }
 
+  let avariasBrutas: unknown = []
+  try {
+    avariasBrutas = JSON.parse((formData.get('avarias') as string | null) || '[]')
+  } catch {
+    avariasBrutas = null
+  }
+  const avarias: AvariaInput[] = Array.isArray(avariasBrutas)
+    ? avariasBrutas.map((a) => ({
+        ref: String(a?.ref ?? ''),
+        peca: String(a?.peca ?? '').trim(),
+        tamanho: a?.tamanho,
+        acao: a?.acao === 'reparo' || a?.acao === 'troca' ? a.acao : null,
+        descricao: typeof a?.descricao === 'string' && a.descricao.trim() ? a.descricao.trim() : null,
+      }))
+    : // JSON inválido: uma avaria impossível, para a validação recusar (nunca ignorar em silêncio)
+      [{ ref: '', peca: '', tamanho: '' as TamanhoAvaria, acao: null, descricao: null }]
+
   return {
     id,
     tipo,
@@ -124,6 +163,7 @@ export function parseChecklistFormData(formData: FormData): ParsedChecklistInput
     itens,
     itens_problemas,
     fotos,
+    avarias,
   }
 }
 
@@ -157,5 +197,39 @@ export function validateChecklistInput(input: ParsedChecklistInput): string | nu
     return `Fotos obrigatórias faltando: ${fotosFaltando.join(', ')}`
   }
 
+  return validarFotosEAvarias(input.fotos, input.avarias)
+}
+
+/** Teto de 30, tipo_foto válido e cada avaria com peça, tamanho, ≥1 foto da peça e ≥1 da avaria. */
+export function validarFotosEAvarias(fotos: Record<string, FotoUpload>, avarias: AvariaInput[]): string | null {
+  const entradas = Object.entries(fotos)
+  if (entradas.length > TETO_FOTOS) return `Limite de ${TETO_FOTOS} fotos por checklist`
+
+  const refs = new Set<string>()
+  for (const a of avarias) {
+    if (!a.ref || refs.has(a.ref)) return 'Avaria inválida: registre a avaria de novo'
+    refs.add(a.ref)
+    if (!ehPecaValida(a.peca)) return 'Avaria sem peça válida'
+    if (!ehTamanhoValido(a.tamanho)) return `Avaria (${a.peca}) sem tamanho válido`
+  }
+
+  for (const [posicao, f] of entradas) {
+    if (!f?.path) return `Foto sem arquivo: ${posicao}`
+    const tipo = tipoDaFoto(posicao, f)
+    if (!TIPOS_FOTO.includes(tipo)) return `Tipo de foto inválido: ${posicao}`
+    const deAvaria = tipo === 'avaria_peca' || tipo === 'avaria_dano'
+    if (deAvaria !== !!f.avaria_ref) return `Foto de avaria sem avaria: ${posicao}`
+    if (deAvaria && !refs.has(f.avaria_ref as string)) return `Foto de avaria sem avaria: ${posicao}`
+  }
+
+  for (const a of avarias) {
+    const daAvaria = entradas.filter(([, f]) => f.avaria_ref === a.ref)
+    const peca = daAvaria.some(([p, f]) => tipoDaFoto(p, f) === 'avaria_peca')
+    const dano = daAvaria.some(([p, f]) => tipoDaFoto(p, f) === 'avaria_dano')
+    if (!peca || !dano) {
+      const falta = [!peca && 'foto da peça', !dano && 'foto da avaria'].filter(Boolean).join(', ')
+      return `Avaria (${a.peca}): falta ${falta}`
+    }
+  }
   return null
 }
