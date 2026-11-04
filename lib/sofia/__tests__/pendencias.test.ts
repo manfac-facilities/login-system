@@ -1,4 +1,10 @@
-import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos } from '../pendencias'
+import {
+  mapAutomaticPendencias,
+  calcularKpisPendencias,
+  agruparGargalos,
+  pendenciaDaMulta,
+  type MultaPendenciaInput,
+} from '../pendencias'
 
 describe('mapAutomaticPendencias', () => {
   it('revisão atrasada por KM cita a placa, quanto passou e guarda o KM previsto como prazo', () => {
@@ -23,40 +29,50 @@ describe('mapAutomaticPendencias', () => {
     }])
   })
 
-  it('flags a multa pendente without signed authorization', () => {
-    const result = mapAutomaticPendencias({
-      multas: [{ id: '1', status: 'pendente', autorizacao_assinada: false, data: '2026-06-01', descricao: 'Excesso de velocidade' }],
-      sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
-    })
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ origem: 'multa', descricao: expect.stringContaining('Excesso de velocidade') })
+  const M = (etapa: string, extra: Record<string, unknown> = {}) => ({
+    id: '1',
+    etapa: etapa as MultaPendenciaInput['etapa'],
+    prazo_indicacao: '2026-12-03',
+    placa: 'QRT4F21',
+    tipo_infracao: 'Excesso de velocidade (até 20%)',
+    descricao: 'detalhe',
+    ...extra,
+  })
+  const vazio = { sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [] }
+
+  it.each([
+    ['registrada', 'Confirmar o condutor: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', '2026-12-03'],
+    ['condutor', 'Aguardando aceite do termo pelo motorista: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', '2026-12-03'],
+    ['termo', 'Indicar o condutor ao órgão até 03/12/2026: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', '2026-12-03'],
+    ['indicado', 'Aguardando validação do gestor da equipe: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', null],
+    ['validada', 'Lançar o boleto da locadora: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', null],
+    ['cobrada', 'Solicitar o desconto: QRT4F21, excesso de velocidade (até 20%)', 'a_fazer', null],
+    ['solicitado', 'Multa enviada para desconto, aguardando autorização: QRT4F21, excesso de velocidade (até 20%)', 'aguardando_terceiros', null],
+    ['autorizado', 'Desconto autorizado, aguardando o RH descontar em folha: QRT4F21, excesso de velocidade (até 20%)', 'aguardando_terceiros', null],
+  ])('multa na etapa %s', (etapa, descricao, grupo, prazo) => {
+    expect(mapAutomaticPendencias({ multas: [M(etapa)], ...vazio })).toEqual([{ descricao, origem: 'multa', grupo, prazo }])
   })
 
-  it('flags a multa validada with signed authorization but not yet descontada', () => {
-    const result = mapAutomaticPendencias({
-      multas: [{ id: '1', status: 'validada', autorizacao_assinada: true, data: '2026-06-01', descricao: 'Excesso de velocidade' }],
-      sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
-    })
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ origem: 'multa', descricao: expect.stringContaining('Excesso de velocidade') })
+  it.each(['descontada', 'contestada'])('multa %s não aparece', (etapa) => {
+    expect(mapAutomaticPendencias({ multas: [M(etapa)], ...vazio })).toEqual([])
+    expect(pendenciaDaMulta(M(etapa))).toBeNull()
   })
 
-  it('falls back to a sensible default and never renders the literal "null" when descricao is null', () => {
-    const result = mapAutomaticPendencias({
-      multas: [{ id: '1', status: 'pendente', autorizacao_assinada: false, data: '2026-06-01', descricao: null }],
-      sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
+  it('termo sem prazo usa o texto sem data e prazo nulo', () => {
+    expect(pendenciaDaMulta(M('termo', { prazo_indicacao: null }))).toEqual({
+      descricao: 'Indicar o condutor ao órgão: QRT4F21, excesso de velocidade (até 20%)',
+      origem: 'multa',
+      prazo: null,
+      grupo: 'a_fazer',
     })
-    expect(result).toHaveLength(1)
-    expect(result[0].descricao).not.toMatch(/\bnull\b/)
-    expect(result[0]).toMatchObject({ origem: 'multa', descricao: 'Multa sem tratativa: sem detalhes adicionais' })
   })
 
-  it('does not flag a multa once it is descontada', () => {
-    const result = mapAutomaticPendencias({
-      multas: [{ id: '1', status: 'descontada', autorizacao_assinada: true, data: '2026-06-01', descricao: 'Excesso de velocidade' }],
-      sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
-    })
-    expect(result).toEqual([])
+  it('fallback sem placa e sem tipo nunca mostra "null"', () => {
+    const p = pendenciaDaMulta(M('registrada', { placa: null, tipo_infracao: null }))!
+    expect(p.descricao).toBe('Confirmar o condutor: veículo sem placa, detalhe')
+    const q = pendenciaDaMulta(M('registrada', { placa: null, tipo_infracao: null, descricao: null }))!
+    expect(q.descricao).toBe('Confirmar o condutor: veículo sem placa, sem detalhes adicionais')
+    expect(q.descricao).not.toMatch(/null/)
   })
 
   it('returns nothing when there is nothing pending', () => {
