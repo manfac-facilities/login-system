@@ -28,7 +28,7 @@ redundante abaixo é obrigatória, não excesso. **Revisão independente obrigat
 | Fotos do checklist | 4 obrigatórias + Interna, 1 por posição; câmera **e galeria** | + fotos extras ilimitadas na tela, teto 30; **só câmera ao vivo** no checklist |
 | Fotos do sinistro | 2 espaços fixos ("Dano 1", "Dano 2") | lista + "Mais fotos", galeria permitida, teto 30 |
 | Avaria | `avaria_identificada` + texto | tabela nova `checklist_avarias` (peça, tamanho, reparo/troca, aberta/reparada); baixa só gestor/admin |
-| Apagar foto salva | qualquer usuário do Sofia apaga a linha (`sofia access` ALL); excluir checklist/sinistro apaga as linhas em cascata | **ninguém**: privilégio revogado + trigger para qualquer role |
+| Apagar foto salva | qualquer usuário do Sofia apaga a linha (`sofia access` ALL); excluir checklist/sinistro apaga as linhas em cascata | **ninguém apaga nem troca foto avulsa** (privilégio revogado + trigger para qualquer role); **admin exclui o checklist/sinistro inteiro** (cascata permitida, com registro em `audit_log`) — ajuste pós-spec, ver fim do arquivo |
 | Bucket `checklist-fotos` e `sofia-anexos` | privados; **leitura e upload liberados a qualquer usuário logado do hub**, mesmo sem Sofia | leitura e upload exigem `sofia_has_access()`; continua sem UPDATE/DELETE; app continua por URL assinada |
 | Histórico do checklist | lista dos 50 últimos de todos os carros | página por veículo, comparação lado a lado / sobreposta, diff só dos dados, avarias abertas com baixa |
 | Troca de carro | — | painel do último checklist do veículo ao lado da câmera; **trava D1 intocada** |
@@ -158,11 +158,12 @@ e `desconto_competencia` (mês do contracheque, gravado como dia 1). É o que a 
   não passa nada.
 - **Fotos extras:** componente novo `components/sofia/FotosAdicionais.tsx` — lista de miniaturas + botão "+ Mais fotos
   (ângulo livre)", cada uma com "x" **só no rascunho** (antes de salvar; decisão 5). Posição gravada: `Extra 1`, `Extra 2`…
-- **Nenhuma foto salva pode ser apagada** (decisão 5 + pedido): §3.6. Consequência que o mockup não mostra: **excluir um
-  checklist ou um sinistro que tenha foto passa a ser recusado** (o FK é `ON DELETE CASCADE` e a cascata bate na trigger).
-  Como os 30 checklists de hoje têm foto, a exclusão de checklist fica, na prática, desativada. A action devolve
-  "Este checklist tem fotos salvas. Fotos são prova e não podem ser apagadas, por isso o checklist não pode ser excluído."
-  (idem sinistro). Ver §8 — é a colisão mais importante a confirmar com o João.
+- **Nenhuma foto avulsa pode ser apagada ou trocada** (decisão 5 + pedido): §3.6. **Ajuste pós-spec (decisão do João,
+  03/11, "Admin exclui tudo"):** excluir o checklist ou o sinistro inteiro continua possível, **só para admin**, com a
+  cascata das fotos e das avarias permitida e o registro (inclusive os caminhos das fotos) em `audit_log`. Gestor e usuário
+  comum recebem recusa do banco; a action `excluirChecklistAction`/`excluirSinistroAction` confere admin antes e o botão só
+  aparece para admin. O bloqueio de exclusão do pai que o texto original propunha **não é implementado**. Os arquivos
+  ficam no bucket (dívida registrada em `docs/DIVIDAS.md`).
 
 ### 2.8 Avaria
 
@@ -304,8 +305,11 @@ EXECUTE revogado de `public`/`anon`.
 ### 3.6 Fotos imutáveis
 
 - `revoke update, delete, truncate on checklist_fotos, sinistro_fotos from anon, authenticated`.
-- Trigger `trg_fotos_imutaveis` (BEFORE UPDATE OR DELETE, função `sofia_fotos_imutaveis`) nas duas tabelas: recusa
-  **sempre**, para qualquer role (inclusive a cascata vinda de excluir checklist/sinistro, e `postgres`/`service_role`).
+- Trigger `trg_fotos_imutaveis` (BEFORE UPDATE OR DELETE, função `sofia_fotos_imutaveis`, `security definer`) nas duas
+  tabelas: UPDATE é sempre recusado; DELETE de foto avulsa é recusado para qualquer role (inclusive `postgres`/`service_role`
+  e admin) e só passa **dentro da cascata**, quando o checklist/sinistro pai já não existe. Excluir o pai é permitido só a
+  admin (`trg_excluir_so_admin`, `sofia_excluir_registro_so_admin`, guarda `is not true`), que grava o `audit_log` antes.
+  A avaria tem FK em cascata e DELETE só sem o checklist pai.
   BEFORE INSERT em `checklist_fotos` confere a avaria do mesmo checklist (`if TG_TABLE_NAME` externo, regra do `sql.md`).
 - Storage: sem policy de UPDATE/DELETE nos dois buckets (conferido na seção 0 e na verificação) — o arquivo também não
   pode ser sobrescrito nem apagado por usuário.
@@ -1045,7 +1049,7 @@ Mesmo padrão de `sdd-sql-sofia-gestor-frotas-teste.sql`: JWT forjado, um `do` q
 -- Sofia — multa por etapa, avaria, fotos imutáveis, storage: TESTE DE COMPORTAMENTO
 -- Rodar DEPOIS de sdd-sql-sofia-multa-avaria.sql, como postgres, projeto iyytcavcgukfjnjjrerx.
 -- TERMINA EM ERRO DE PROPÓSITO (o raise final é o relatório e o rollback).
--- Esperado: "RESUMO: 42/42 OK".
+-- Esperado: "RESUMO: 51/51 OK" (ajustado pela revisão e pelo ajuste pós-spec; era 42/42).
 -- Fixture que falhar por coluna NOT NULL não prevista = deriva de schema:
 -- ajustar a fixture, nunca o teste.
 -- ============================================================
@@ -1663,13 +1667,14 @@ Notas para quem rodar:
 - Mensagem pós-ação pela URL só com id + código fixo (regra do `sofia.md`).
 - Tema do hub; telas usáveis a 375 px (mockup tem visão celular).
 - **SQL antes do deploy**: depois do SQL, o app antigo perde "Enviar para desconto", avançar/registrar/desfazer desconto
-  de multa (a trigger recusa escrita direta de status) e a exclusão de checklist/sinistro com foto. Aplicar e deployar
-  na mesma janela.
+  de multa (a trigger recusa escrita direta de status), e a tela Descontos perde a lista de multas (seleção
+  `motoristas(nome)` ambígua, PGRST201, corrigida no app novo com `motoristas!motorista_id(nome)`). Aplicar o SQL e
+  deployar na mesma janela.
 
 ## 6. Ordem de aplicação
 
 Revisão independente do SQL + teste → autorização escrita do João citando os 2 arquivos → aplicar
-`sdd-sql-sofia-multa-avaria.sql`, conferir verificação (19 OK + v04 AVISO) → rodar o teste (42/42) → conferir que nada
+`sdd-sql-sofia-multa-avaria.sql`, conferir verificação (24 OK + v04 AVISO) → rodar o teste (51/51) → conferir que nada
 ficou → merge → build → push → João clica Deploy → conferir chunks.
 
 ## 7. Fora do escopo / dívidas (vão para `docs/DIVIDAS.md`)
@@ -1700,9 +1705,9 @@ ficou → merge → build → push → João clica Deploy → conferir chunks.
 2. **"Existe … upload do termo"** — a coluna `multas.autorizacao_storage_path` existe, mas **nenhum código grava nela**;
    o "autorizou sim/não" é só `autorizacao_assinada`, marcado no formulário de registrar desconto.
 3. **"Nenhuma foto salva pode ser apagada"** × exclusão de checklist/sinistro: FK em cascata + todos os 30 checklists com
-   foto ⇒ **excluir checklist deixa de funcionar na prática**, e excluir sinistro com foto também. A spec entrega o
-   bloqueio (é o que o pedido diz); se o João quiser manter a exclusão do registro errado, a alternativa é "excluir"
-   virar "arquivar" — decisão dele, não tomada aqui.
+   foto. **Resolvida pelo João em 03/11 ("Admin exclui tudo")**: foto avulsa é imutável; excluir o checklist/sinistro
+   inteiro é permitido só a admin, com cascata e `audit_log` (ver o ajuste ao fim). O texto original, que bloqueava a
+   exclusão para todos, foi superado.
 4. **KM no histórico** — `checklist` não tem coluna de KM; coluna e "KM rodado entre os dois" saem.
 5. **"Feito por"** — só existe `created_by` (uuid de `auth.users`), ilegível pelo app; vira "Motorista".
 6. **Pill "mudou/igual" por posição** — calculada da imagem no mockup; a decisão 2 do histórico proíbe diff de imagem;
