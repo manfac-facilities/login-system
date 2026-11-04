@@ -6,6 +6,9 @@ import { softDeleteVeiculoAction, atualizarLocacaoVeiculoAction } from '../_acti
 import DeleteConfirmButton from '@/components/sofia/DeleteConfirmButton'
 import EditarEquipeVeiculoForm from '@/components/sofia/EditarEquipeVeiculoForm'
 import OficinaForm from '@/components/sofia/OficinaForm'
+import Link from 'next/link'
+import { podeGerirFrotas } from '@/lib/sofia/permissoes'
+import IntervaloRevisao from '../../revisoes/_intervalo'
 
 type HistoricoComRelacoes = VeiculoResponsabilidadeHistorico & {
   equipes: { codigo: string } | null
@@ -16,12 +19,13 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: veiculo }, historico, centroCusto, equipes, todosVeiculos] = await Promise.all([
+  const [{ data: veiculo }, historico, centroCusto, equipes, todosVeiculos, podeGerir] = await Promise.all([
     supabase.from('veiculos').select('*, equipes(codigo)').eq('id', id).single(),
     getResponsabilidadeHistorico(id),
     getCentroCustoHistorico(id),
     getEquipes(),
     getVeiculos(),
+    podeGerirFrotas(supabase),
   ])
 
   if (!veiculo) notFound()
@@ -53,6 +57,9 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white font-mono">{veiculo.placa}</h1>
         <p className="text-[#4a6080] text-sm mt-1">{veiculo.modelo}{veiculo.ano != null ? ` · ${veiculo.ano}` : ''}</p>
+        <Link href={`/sofia/checklist/veiculo/${veiculo.id}`} className="inline-block mt-2 text-sm text-[#f05a28] hover:underline">
+          Histórico do checklist →
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -117,6 +124,15 @@ export default async function VeiculoDetalhePage({ params }: { params: Promise<{
           )}
         </div>
       </div>
+
+      {podeGerir && (
+        <div className="mt-6">
+          <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Revisão</h2>
+          <div className="p-4 rounded-xl border border-[#1e3a5f] bg-[#0d2050]">
+            <IntervaloRevisao veiculoId={veiculo.id} atual={veiculo.intervalo_revisao_km ?? null} />
+          </div>
+        </div>
+      )}
 
       <div className="mt-6">
         <h2 className="text-sm font-medium text-[#4a6080] uppercase tracking-wider mb-3">Locação mensal</h2>

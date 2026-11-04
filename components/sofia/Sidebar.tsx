@@ -38,6 +38,8 @@ export const navSections: NavSection[] = [
     title: 'Manutenção & Documentos',
     items: [
       { label: 'Revisões', href: '/sofia/revisoes' },
+      { label: 'Histórico de revisões', href: '/sofia/revisoes/historico' },
+      { label: 'Manutenção corretiva', href: '/sofia/manutencoes' },
       { label: 'Documentos', href: '/sofia/documentos' },
       { label: 'Abastecimento', href: '/sofia/abastecimento' },
     ],
@@ -134,7 +136,10 @@ export function Sidebar() {
               const isActive =
                 item.href === '/sofia'
                   ? pathname === '/sofia'
-                  : pathname === item.href || pathname.startsWith(item.href + '/')
+                  : pathname === item.href ||
+                    (pathname.startsWith(item.href + '/') &&
+                      // /sofia/revisoes/historico tem item próprio: não acende "Revisões" junto
+                      !(item.href === '/sofia/revisoes' && pathname.startsWith('/sofia/revisoes/historico')))
               return (
                 <Link
                   key={item.href}
