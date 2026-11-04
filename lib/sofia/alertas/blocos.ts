@@ -13,6 +13,9 @@ import type { DocumentoVeiculoTipo, VeiculoStatus } from '../types'
 export const DIAS_DOCUMENTO = 30
 // Mockup (bloco "CNH vencida ou vencendo em 60 dias") e `getMotoristasComCnhVencendo` usam 60.
 export const DIAS_CNH = 60
+// Multa: e-mail só sai seg–sex, então "≤ 10 dias" em vez de exatamente 10/5/2 (spec multa §2.12).
+export const DIAS_MULTA = 10
+const ETAPAS_ANTES_DA_INDICACAO = ['registrada', 'condutor', 'termo']
 
 export interface EntradaAlertas {
   /** AAAA-MM-DD, em horário de Brasília. */
@@ -41,7 +44,15 @@ export interface EntradaAlertas {
     created_at: string
   }[]
   documentos: { veiculo_id: string; tipo: DocumentoVeiculoTipo; vencimento: string }[]
-  multas: { veiculo_id: string | null; motorista_nome: string | null; data: string; valor: number; status: string }[]
+  multas: {
+    id: string
+    veiculo_id: string | null
+    motorista_nome: string | null
+    data: string
+    valor: number
+    etapa: string
+    prazo_indicacao: string | null
+  }[]
   sinistros: { veiculo_id: string | null; data: string; tipo: string; status: string }[]
   /** Equipes que lançaram KM no dia útil anterior. */
   equipesComKmNoDiaUtilAnterior: string[]
@@ -203,15 +214,23 @@ export function montarAlertas(e: EntradaAlertas): Alertas {
       }
     })
 
+  // Multas (spec multa §2.12): só antes da indicação, com prazo vencido ou vencendo em até 10 dias.
+  const limiteMulta = somarDias(hoje, DIAS_MULTA)
   const multas: Ordenavel[] = e.multas
-    .filter((m) => m.status !== 'descontada')
-    .map((m) => ({
-      rotulo: placa(m.veiculo_id),
-      detalhe: `— ${m.motorista_nome ?? 'sem motorista'}, ${formatarDataIso(m.data)}, ${brl(m.valor)} · ${m.status}`,
-      vencido: false,
-      caminho: '/sofia/multas',
-      ordem: m.data,
-    }))
+    .filter((m) => ETAPAS_ANTES_DA_INDICACAO.includes(m.etapa) && m.prazo_indicacao && m.prazo_indicacao <= limiteMulta)
+    .map((m) => {
+      const prazo = m.prazo_indicacao as string
+      const vencido = prazo < hoje
+      const n = diasEntre(hoje, prazo)
+      const quando = vencido ? 'prazo vencido' : n === 0 ? 'vence hoje' : `vence em ${plural(n, 'dia', 'dias')}`
+      return {
+        rotulo: placa(m.veiculo_id),
+        detalhe: `— ${m.motorista_nome ?? 'sem motorista'}, ${formatarDataIso(m.data)}, ${brl(m.valor)} · indicar até ${formatarDataIso(prazo)}: ${quando}`,
+        vencido,
+        caminho: `/sofia/multas/${m.id}`,
+        ordem: prazo,
+      }
+    })
 
   const sinistros: Ordenavel[] = e.sinistros
     .filter((s) => s.status !== 'encerrado')
@@ -242,7 +261,7 @@ export function montarAlertas(e: EntradaAlertas): Alertas {
     { chave: 'equipes_sem_km', titulo: `Equipes sem KM diário de ontem (${diaCurto(anterior)})`, itens: semKm },
     { chave: 'documentos', titulo: `Documentos vencidos ou vencendo em ${DIAS_DOCUMENTO} dias`, itens: ordenar(docs) },
     { chave: 'cnh', titulo: `CNH vencida ou vencendo em ${DIAS_CNH} dias`, itens: ordenar(cnh) },
-    { chave: 'multas', titulo: 'Multas sem tratativa', itens: ordenar(multas) },
+    { chave: 'multas', titulo: `Multas com prazo de indicação vencido ou vencendo em ${DIAS_MULTA} dias`, itens: ordenar(multas) },
     { chave: 'sinistros', titulo: 'Sinistros abertos', itens: ordenar(sinistros) },
     { chave: 'oficina', titulo: 'Volta da oficina atrasada', itens: ordenar(oficina) },
   ]

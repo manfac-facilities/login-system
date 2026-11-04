@@ -33,8 +33,12 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
       'revisoes'
     ),
     ler<EntradaAlertas['documentos'][number]>(admin.from('documentos_veiculo').select('veiculo_id, tipo, vencimento'), 'documentos_veiculo'),
-    ler<{ veiculo_id: string | null; motorista_id: string | null; data: string; valor: number; status: string }>(
-      admin.from('multas').select('veiculo_id, motorista_id, data, valor, status').neq('status', 'descontada'),
+    ler<{
+      id: string; veiculo_id: string | null; motorista_id: string | null; data: string; valor: number
+      etapa: string; prazo_indicacao: string | null
+    }>(
+      // O bloco filtra a etapa (antes da indicação) e o prazo; aqui só tira as que já saíram do fluxo.
+      admin.from('multas').select('id, veiculo_id, motorista_id, data, valor, etapa, prazo_indicacao').neq('status', 'descontada'),
       'multas'
     ),
     ler<EntradaAlertas['sinistros'][number]>(
@@ -52,11 +56,13 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
     revisoes,
     documentos,
     multas: multas.map((m) => ({
+      id: m.id,
       veiculo_id: m.veiculo_id,
       motorista_nome: m.motorista_id ? (nomeDe.get(m.motorista_id) ?? null) : null,
       data: m.data,
       valor: m.valor,
-      status: m.status,
+      etapa: m.etapa,
+      prazo_indicacao: m.prazo_indicacao,
     })),
     sinistros,
     equipesComKmNoDiaUtilAnterior: km.map((k) => k.equipe_id),

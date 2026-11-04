@@ -56,8 +56,12 @@ function cheia(): EntradaAlertas {
       { veiculo_id: 'v2', tipo: 'licenciamento', vencimento: '2026-12-31' },
     ],
     multas: [
-      { veiculo_id: 'v1', motorista_nome: 'Jefferson Alves', data: '2026-10-02', valor: 130.16, status: 'pendente' },
-      { veiculo_id: 'v2', motorista_nome: null, data: '2026-09-01', valor: 10, status: 'descontada' },
+      // prazo em 5 dias, antes da indicação → entra
+      { id: 'm1', veiculo_id: 'v1', motorista_nome: 'Jefferson Alves', data: '2026-10-02', valor: 130.16, etapa: 'condutor', prazo_indicacao: '2026-11-04' },
+      // já indicada → não entra, mesmo com prazo vencido
+      { id: 'm2', veiculo_id: 'v2', motorista_nome: null, data: '2026-09-01', valor: 10, etapa: 'indicado', prazo_indicacao: '2026-10-01' },
+      // prazo longe (> 10 dias) → não entra
+      { id: 'm3', veiculo_id: 'v2', motorista_nome: null, data: '2026-10-20', valor: 10, etapa: 'registrada', prazo_indicacao: '2026-11-25' },
     ],
     sinistros: [
       { veiculo_id: 'v2', data: '2026-10-10', tipo: 'colisao', status: 'em_tratativa' },
@@ -137,10 +141,25 @@ describe('montarAlertas', () => {
     expect(itens[1].vencido).toBe(false)
   })
 
-  it('multas sem tratativa e sinistros abertos ignoram descontada/encerrado', () => {
+  it('multas: só antes da indicação com prazo vencido ou em até 10 dias; link para a multa', () => {
     const a = montarAlertas(cheia())
-    expect(bloco(a, 'multas')!.itens).toHaveLength(1)
-    expect(bloco(a, 'multas')!.itens[0].detalhe).toContain('Jefferson Alves')
+    const itens = bloco(a, 'multas')!.itens
+    expect(itens).toHaveLength(1)
+    expect(itens[0].detalhe).toContain('Jefferson Alves')
+    expect(itens[0].detalhe).toContain('vence em 5 dias')
+    expect(itens[0].vencido).toBe(false)
+    expect(itens[0].caminho).toBe('/sofia/multas/m1')
+    const e = cheia()
+    e.multas = [{ ...e.multas[0], prazo_indicacao: '2026-10-29', etapa: 'termo' }]
+    const venc = bloco(montarAlertas(e), 'multas')!.itens[0]
+    expect(venc.detalhe).toContain('prazo vencido')
+    expect(venc.vencido).toBe(true)
+    e.multas = [{ ...e.multas[0], prazo_indicacao: null }]
+    expect(bloco(montarAlertas(e), 'multas')).toBeUndefined()
+  })
+
+  it('sinistros abertos ignoram encerrado', () => {
+    const a = montarAlertas(cheia())
     expect(bloco(a, 'sinistros')!.itens).toHaveLength(1)
     expect(bloco(a, 'sinistros')!.itens[0].rotulo).toBe('RIO3D45')
   })
