@@ -1,16 +1,23 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { TipoFoto } from './fotosChecklist'
 
 export interface CapturedPhoto {
   blob: Blob
   posicao: string
   lat: number | null
   lng: number | null
+  /** checklist: obrigatoria | interna | extra | avaria_peca | avaria_dano (sinistro não usa) */
+  tipo_foto?: TipoFoto
+  /** checklist: referência LOCAL da avaria no formulário (não é o id do banco, que ainda não existe) */
+  avaria_ref?: string
 }
 
 export interface FotoUploadInfo {
   path: string
   lat: number | null
   lng: number | null
+  tipo_foto?: TipoFoto
+  avaria_ref?: string
 }
 
 export type UploadFotosResult =
@@ -33,12 +40,13 @@ export async function uploadFotos(
   fotos: CapturedPhoto[]
 ): Promise<UploadFotosResult> {
   const results = await Promise.all(
-    fotos.map(async (foto) => {
-      const path = `${prefix}/${foto.posicao.replace(/\s/g, '-')}-${Date.now()}.jpg`
+    fotos.map(async (foto, i) => {
+      // o índice evita colisão de duas fotos tiradas no mesmo milissegundo
+      const path = `${prefix}/${foto.posicao.replace(/\s/g, '-')}-${i}-${Date.now()}.jpg`
       const { error } = await supabase.storage.from(bucket).upload(path, foto.blob, {
         contentType: 'image/jpeg',
       })
-      return { posicao: foto.posicao, path, lat: foto.lat, lng: foto.lng, ok: !error }
+      return { posicao: foto.posicao, path, lat: foto.lat, lng: foto.lng, tipo_foto: foto.tipo_foto, avaria_ref: foto.avaria_ref, ok: !error }
     })
   )
 
@@ -52,6 +60,11 @@ export async function uploadFotos(
   }
 
   const fotosMap: Record<string, FotoUploadInfo> = {}
-  for (const r of results) fotosMap[r.posicao] = { path: r.path, lat: r.lat, lng: r.lng }
+  for (const r of results) {
+    const info: FotoUploadInfo = { path: r.path, lat: r.lat, lng: r.lng }
+    if (r.tipo_foto) info.tipo_foto = r.tipo_foto
+    if (r.avaria_ref) info.avaria_ref = r.avaria_ref
+    fotosMap[r.posicao] = info
+  }
   return { ok: true, fotos: fotosMap }
 }
