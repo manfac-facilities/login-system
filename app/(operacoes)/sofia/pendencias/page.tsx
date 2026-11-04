@@ -2,11 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import {
   getSinistrosAbertos,
   getRevisoesAtrasadas,
+  getRevisoesVenceEmBreve,
   getDocumentosVencendo,
   getMotoristas,
   getPendenciasManuais,
 } from '@/lib/sofia/queries'
-import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos } from '@/lib/sofia/pendencias'
+import { mapAutomaticPendencias, calcularKpisPendencias, agruparGargalos, type MultaPendenciaInput } from '@/lib/sofia/pendencias'
 import { formatarKm } from '@/lib/sofia/revisaoStatus'
 import { atualizarStatusPendenciaAction } from './_actions'
 import PendenciaForm from './_form'
@@ -50,24 +51,38 @@ export default async function PendenciasPage({
   const { q, page } = await searchParams
   const supabase = await createClient()
 
-  const [sinistros, revisoesAtrasadas, documentosVencendo, motoristas, manuais, { data: multasNaoDescontadas }, { data: termosAssinados }] =
+  const [sinistros, revisoesAtrasadas, revisoesBreve, documentosVencendo, motoristas, manuais, multasAbertas, { data: termosAssinados }] =
     await Promise.all([
       getSinistrosAbertos(),
       getRevisoesAtrasadas(),
+      getRevisoesVenceEmBreve(),
       getDocumentosVencendo(),
       getMotoristas(),
       getPendenciasManuais(),
-      supabase.from('multas').select('*').neq('status', 'descontada'),
+      // Pela etapa (spec multa §2.11): descontada e contestada não aparecem.
+      supabase
+        .from('multas')
+        .select('id, etapa, prazo_indicacao, tipo_infracao, descricao, veiculos(placa)')
+        .not('etapa', 'in', '(descontada,contestada)'),
       supabase.from('motorista_documentos').select('motorista_id').eq('tipo', 'termo_uso').eq('assinado', true),
     ])
+  // Erro aqui não pode virar "nenhuma multa pendente" em silêncio.
+  if (multasAbertas.error) throw new Error('Erro ao carregar dados do sistema. Recarregue a página; se persistir, avise o suporte.')
 
   const idsComTermo = new Set((termosAssinados ?? []).map((t) => t.motorista_id))
   const termosNaoAssinados = motoristas.filter((m) => m.ativo && !idsComTermo.has(m.id))
 
+  type MultaLida = Omit<MultaPendenciaInput, 'placa'> & { veiculos: { placa: string } | { placa: string }[] | null }
+  const placaDe = (v: MultaLida['veiculos']) => (Array.isArray(v) ? v[0]?.placa : v?.placa) ?? null
+
   const automaticas = mapAutomaticPendencias({
-    multas: (multasNaoDescontadas ?? []).map((m) => ({ id: m.id, status: m.status, autorizacao_assinada: m.autorizacao_assinada, data: m.data, descricao: m.descricao })),
+    multas: ((multasAbertas.data ?? []) as unknown as MultaLida[]).map((m) => ({
+      id: m.id, etapa: m.etapa, prazo_indicacao: m.prazo_indicacao, tipo_infracao: m.tipo_infracao, descricao: m.descricao,
+      placa: placaDe(m.veiculos),
+    })),
     sinistros: sinistros.map((s) => ({ id: s.id, status: s.status, data: s.data, descricao: s.descricao })),
     revisoesAtrasadas: revisoesAtrasadas.map((r) => ({ id: r.id, placa: r.placa, proxima_data: r.proxima_data, proxima_km: r.proxima_km, km_passados: r.km_passados, motivo: r.motivo })),
+    revisoesVenceEmBreve: revisoesBreve.map((r) => ({ id: r.id, placa: r.placa, km_restantes: r.km_restantes, proxima_km: r.proxima_km })),
     documentosVencendo: documentosVencendo.map((d) => ({ id: d.id, tipo: d.tipo, vencimento: d.vencimento })),
     termosNaoAssinados: termosNaoAssinados.map((m) => ({ id: m.id, nome: m.nome })),
   })
@@ -82,10 +97,20 @@ export default async function PendenciasPage({
     proxima_acao: string | null
     status: string
     updated_at: string
+    aguardandoTerceiros?: boolean
   }
 
+  // Multa em desconto (grupo "aguardando terceiros") entra como em_andamento: conta no KPI
+  // "Aguardando Terceiros", nunca fica vermelha e aparece num bloco próprio embaixo da tabela.
   const todas: Linha[] = [
-    ...automaticas.map((a): Linha => ({ id: null, descricao: a.descricao, origem: a.origem, responsavel: null, prazo: a.prazo, prazoKm: a.prazoKm, proxima_acao: null, status: 'aberta', updated_at: '' })),
+    ...automaticas.map((a): Linha => {
+      const aguardando = a.grupo === 'aguardando_terceiros'
+      return {
+        id: null, descricao: a.descricao, origem: a.origem, responsavel: null, prazo: aguardando ? null : a.prazo,
+        prazoKm: a.prazoKm, proxima_acao: null, status: aguardando ? 'em_andamento' : 'aberta', updated_at: '',
+        aguardandoTerceiros: aguardando,
+      }
+    }),
     ...manuais.map((p): Linha => ({ id: p.id, descricao: p.descricao, origem: p.origem, responsavel: p.responsavel, prazo: p.prazo, proxima_acao: p.proxima_acao, status: p.status, updated_at: p.updated_at })),
   ].sort((a, b) => {
     if (!a.prazo) return 1
@@ -97,7 +122,9 @@ export default async function PendenciasPage({
   const kpis = calcularKpisPendencias(todas, hoje)
   const gargalos = agruparGargalos(todas.map((t) => ({ origem: t.origem })))
 
-  const filtradas = q ? todas.filter((p) => p.descricao.toLowerCase().includes(q.toLowerCase())) : todas
+  const casaBusca = (p: Linha) => !q || p.descricao.toLowerCase().includes(q.toLowerCase())
+  const filtradas = todas.filter((p) => !p.aguardandoTerceiros && casaBusca(p))
+  const aguardando = todas.filter((p) => p.aguardandoTerceiros && casaBusca(p))
 
   const paginaAtual = Math.max(1, Number(page) || 1)
   const inicio = (paginaAtual - 1) * PAGE_SIZE
@@ -221,6 +248,31 @@ export default async function PendenciasPage({
                   Próxima
                 </Link>
               </div>
+            </div>
+          )}
+
+          <p className="text-xs text-[#4a6080]">
+            Multa: texto e grupo pela <b>etapa</b>; prazo = prazo de indicação ao órgão, não a data da infração. Multa em
+            desconto vai para &quot;Aguardando terceiros&quot;.
+          </p>
+
+          {aguardando.length > 0 && (
+            <div className="rounded-xl border border-[#1e3a5f] bg-[#0d2050] p-5">
+              <p className="text-amber-300 font-medium mb-1">Aguardando terceiros (não conta como atrasada)</p>
+              <p className="text-xs text-[#94a3b8] mb-3">
+                &quot;Aguardando terceiros&quot;: multa já enviada para desconto, esperando a autorização ou o RH. Some
+                quando o desconto é registrado.
+              </p>
+              <ul className="flex flex-col gap-2">
+                {aguardando.map((p, i) => (
+                  <li key={`ag-${i}`} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-white">{p.descricao}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusStyle.em_andamento}`}>
+                      {origemLabel[p.origem]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

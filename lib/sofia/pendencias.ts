@@ -5,6 +5,8 @@ interface AutomaticInputs {
   multas: MultaPendenciaInput[]
   sinistros: { id: string; status: string; data: string; descricao: string }[]
   revisoesAtrasadas: { id: string; placa: string | null; proxima_data: string | null; proxima_km: number | null; km_passados: number | null; motivo?: 'data' | 'km' }[]
+  /** Revisões a até 1.000 km (regra da vigente, spec manutenção §1.5). Não conta como urgência alta. */
+  revisoesVenceEmBreve?: { id: string; placa: string | null; km_restantes: number; proxima_km: number | null }[]
   documentosVencendo: { id: string; tipo: string; vencimento: string }[]
   termosNaoAssinados: { id: string; nome: string }[]
 }
@@ -108,6 +110,16 @@ export function mapAutomaticPendencias(inputs: AutomaticInputs): PendenciaAutoma
         prazo: r.proxima_data,
       })
     }
+  }
+  for (const r of inputs.revisoesVenceEmBreve ?? []) {
+    const placa = r.placa ?? 'veículo sem placa'
+    const para = r.proxima_km != null ? ` para ${formatarKm(r.proxima_km)}` : ''
+    // Sem prazo nem prazoKm: "chegando" não é atrasada e não conta como urgência alta.
+    result.push({
+      descricao: `Revisão chegando: ${placa} — faltam ${formatarKm(r.km_restantes)} km${para}`,
+      origem: 'manutencao',
+      prazo: null,
+    })
   }
   for (const d of inputs.documentosVencendo) {
     result.push({ descricao: `Documento (${d.tipo}) vencendo`, origem: 'documento', prazo: d.vencimento })

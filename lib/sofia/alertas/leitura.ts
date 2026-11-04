@@ -20,7 +20,7 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
   const anterior = diaUtilAnterior(hoje)
   const [veiculos, equipes, motoristas, revisoes, documentos, multas, sinistros, km] = await Promise.all([
     ler<EntradaAlertas['veiculos'][number]>(
-      admin.from('veiculos').select('id, placa, km_atual, status, equipe_id, previsao_retorno_oficina'),
+      admin.from('veiculos').select('id, placa, km_atual, status, equipe_id, previsao_retorno_oficina, intervalo_revisao_km'),
       'veiculos'
     ),
     ler<EntradaAlertas['equipes'][number]>(admin.from('equipes').select('id, codigo, ativo'), 'equipes'),
@@ -29,7 +29,7 @@ export async function lerEntradaDosAlertas(admin: SupabaseClient, hoje: string):
       'motoristas'
     ),
     ler<EntradaAlertas['revisoes'][number]>(
-      admin.from('revisoes').select('veiculo_id, tipo, proxima_data, proxima_km, created_at'),
+      admin.from('revisoes').select('id, veiculo_id, tipo, km_realizada, data_realizada, proxima_data, proxima_km, prever_proxima, created_at'),
       'revisoes'
     ),
     ler<EntradaAlertas['documentos'][number]>(admin.from('documentos_veiculo').select('veiculo_id, tipo, vencimento'), 'documentos_veiculo'),

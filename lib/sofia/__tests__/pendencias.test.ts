@@ -29,6 +29,17 @@ describe('mapAutomaticPendencias', () => {
     }])
   })
 
+  it('revisão chegando: texto com faltam/para, sem prazo nem prazoKm — não conta como urgência alta', () => {
+    const result = mapAutomaticPendencias({
+      multas: [], sinistros: [], revisoesAtrasadas: [], documentosVencendo: [], termosNaoAssinados: [],
+      revisoesVenceEmBreve: [{ id: 'c', placa: 'RTE-4F21', km_restantes: 640, proxima_km: 49000 }],
+    })
+    expect(result).toEqual([{ descricao: 'Revisão chegando: RTE-4F21 — faltam 640 km para 49.000', origem: 'manutencao', prazo: null }])
+    const kpis = calcularKpisPendencias(result.map((p) => ({ ...p, status: 'aberta', updated_at: '' })), '2026-11-03')
+    expect(kpis.urgenciaAlta).toBe(0)
+    expect(kpis.totalPendente).toBe(1)
+  })
+
   const M = (etapa: string, extra: Record<string, unknown> = {}) => ({
     id: '1',
     etapa: etapa as MultaPendenciaInput['etapa'],
