@@ -672,9 +672,12 @@ Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-multa-fotos-checklist-des
 - **A lista `/obras/obras` mostra canceladas e aditivos como cartões; a Visão do CEO não** (`obras/obras/_lib/carteira-leitura.ts`).
   Os totais das duas telas podem divergir no número de obras.
 - **Erro em `obras_rdo`/`obras_rdo_avanco` vira "sem diários" na obra aberta** (`_lib/carteira-leitura.ts`): a obra aparece
-  sem o dado de diário em vez de "indisponível". Impacto: "parada" pode não aparecer numa leitura que falhou.
+  sem o dado de diário em vez de "indisponível". Impacto só no bloco "Últimos diários": "parada" vem do histórico de
+  status (`hist`, `ultimoAvanco`), não dos diários.
+- **`lerObraGrande` com erro mostra a obra como "Sem cronograma"** (grupo 3) e os impedimentos somem das travas
+  (`_lib/carteira-leitura.ts`); ideal seria um estado "cronograma indisponível".
 - **Leitura sem limite de concorrência** (`_lib/carteira-leitura.ts`): ~15–20 consultas por obra, todas em paralelo. Ok com
   ~4 obras em modalidade OBRA; rever se a carteira crescer.
-- **Detalhes de tela em `visao-ceo/_tela.tsx`:** cores fixas fora dos tokens; `aria-controls` aponta para elemento ausente
-  com a linha fechada; clicar numa exceção não rola até a obra; "Não cumpridas:" sem singular.
+- **Detalhes de tela em `visao-ceo/_tela.tsx`:** cores fixas fora dos tokens; clicar numa exceção não rola até a obra.
+  (`aria-controls` e o singular de "Não cumprida" foram corrigidos na revisão final.)
 - **O orçado por obra não existe:** o bloco só mostra o aviso (depende do orçamento/PEF por obra, projeto à parte).

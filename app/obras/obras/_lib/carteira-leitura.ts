@@ -4,7 +4,6 @@
  * Spec: docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md (§5, §6b).
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { diasUteisEntre } from './calendario'
 import { lerObraGrande, lerPlanos, lerRestricoes } from './leitura'
 import { lerAgenda } from './envios-agenda'
 import { lerFinanceiroDaObra } from './financeiro-ler'
@@ -22,12 +21,6 @@ export type LinhaUniverso = {
 /** Obras da modalidade OBRA, sem canceladas e sem aditivos (filhas). */
 export function obrasDoUniverso(rows: LinhaUniverso[]): LinhaUniverso[] {
   return rows.filter((r) => r.modalidade === 'obra' && r.etapa !== 'cancelado' && !r.cancelado_em && !r.obra_pai_id)
-}
-
-/** Dias úteis a mais depois da base (`diasUteisEntre` conta as duas pontas); antes ou igual → 0. */
-export function desvioEmDiasUteis(base: string | null, projetado: string | null, feriados: ReadonlySet<string>): number | null {
-  if (!base || !projetado) return null
-  return projetado > base ? Math.max(0, diasUteisEntre(base, projetado, feriados) - 1) : 0
 }
 
 type RdoLinha = { id: string; data: string; sem_execucao: boolean | null; motivo_sem_execucao: string | null; efetivo: number | null }
@@ -87,7 +80,8 @@ async function lerObraDaCarteira(supabase: SupabaseClient, linha: LinhaUniverso,
   const travas = travasDaObra(restricoes ?? [], impedimentos, hoje)
   const terminoBase = d?.terminoBase ?? null
   const terminoProjetado = calc?.terminoProjetado || null
-  const desvioDiasUteis = desvioEmDiasUteis(terminoBase, terminoProjetado, feriados)
+  // Mesmo número do painel (`atrasoPorResponsavel`): dias úteis do fim projetado além da base.
+  const desvioDiasUteis = d?.atraso?.total ?? null
   const descricoes = new Map((calc?.atividades ?? []).map((a) => [a.numero, a.descricao]))
 
   return {
@@ -105,7 +99,7 @@ async function lerObraDaCarteira(supabase: SupabaseClient, linha: LinhaUniverso,
     terminoBase, terminoProjetado, desvioDiasUteis,
     travas, travaPrincipal: travaPrincipal(travas),
     sinais: sinaisDoCliente({ terminoBase, terminoProjetado, desvioDiasUteis, restricoes, mensagens, agenda, hoje, feriados }),
-    etapas: etapasDaCarteira(calc),
+    etapas: etapasDaCarteira(calc, d?.etapas ?? []),
     semana: d && planR.ok ? semanaDe(planR.planos, hoje) : null,
     diarios: d && diaR ? diariosDe(diaR.rdos, diaR.avancos, descricoes) : [],
     dinheiro: dinheiroDaCarteira(fin),

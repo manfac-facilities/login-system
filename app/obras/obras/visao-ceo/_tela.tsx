@@ -68,12 +68,13 @@ function textoEstado(estado: Estado, dinheiro: DinheiroCarteira): string {
   switch (estado.tipo) {
     case 'sem_cronograma': return 'Sem cronograma'
     case 'faturando':
-      return dinheiro.ok && dinheiro.aFaturar !== null
+      return dinheiro.ok && dinheiro.aFaturar !== null && dinheiro.osSemValor === 0
         ? `Execução concluída · faltam ${brl(dinheiro.aFaturar)} a faturar`
         : 'Execução concluída'
     case 'parada': return `Parada há ${plural(estado.diasUteis, 'dia útil', 'dias úteis')}`
     case 'frente_parada': return 'Andando, frente parada'
     case 'comecou': return `Começou em ${ddmm(estado.em)}`
+    case 'comeca': return `Começa em ${ddmm(estado.em)}`
     case 'andando': return estado.comAtraso ? 'Andando com atraso' : 'Andando'
   }
 }
@@ -87,6 +88,7 @@ function quandoTrava(t: Trava): { texto: string; vencida: boolean } {
 }
 
 const SEM_VALOR = { sem_permissao: 'Sem permissão para ver valores', leitura: 'Não foi possível ler os valores' } as const
+const incompleto = (n: number) => `valor incompleto (${plural(n, 'OS sem valor', 'OS sem valor')})`
 
 function Quadro({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
@@ -121,16 +123,21 @@ function DinheiroLinha({ d }: { d: DinheiroCarteira }) {
         <span className="text-[12px] text-(--obra-muted-texto)">Faturado <span className="obra-num text-(--obra-text)">{brl(d.faturado)}</span></span>
       </>
     )
-  const fat = d.valor > 0 ? d.faturado / d.valor : null
+  // O % é o da aba Financeiro (percentuais.faturado, 0–100), não uma conta própria.
+  const fat = d.faturadoPct === null ? null : d.faturadoPct / 100
   return (
     <>
       <span className="text-[12px] text-(--obra-muted-texto)">
         Faturado <span className="obra-num font-semibold text-(--obra-text)">{pct(fat)}</span> de <span className="obra-num">{brl(d.valor)}</span>
       </span>
       <Barra valor={fat} cor={T.ink} />
-      <span className="text-[12px] text-(--obra-muted-texto)">
-        {d.acimaDoValor ? 'Faturado acima do valor' : <>A faturar <span className="obra-num text-(--obra-text)">{brl(d.aFaturar ?? 0)}</span></>}
-      </span>
+      {d.osSemValor > 0 ? (
+        <span className="text-[12px] font-medium text-(--obra-orange-texto)">{incompleto(d.osSemValor)}</span>
+      ) : (
+        <span className="text-[12px] text-(--obra-muted-texto)">
+          {d.acimaDoValor ? 'Faturado acima do valor' : <>A faturar <span className="obra-num text-(--obra-text)">{brl(d.aFaturar ?? 0)}</span></>}
+        </span>
+      )}
     </>
   )
 }
@@ -176,13 +183,13 @@ function Detalhe({ o }: { o: ObraCarteira }) {
         </div>
         <div className="flex min-w-0 flex-col gap-3.5">
           <div className="flex flex-col gap-1.5">
-            <h3 className={h3}>Esta semana</h3>
+            <h3 className={h3}>{o.semana && !o.semana.corrente ? 'Semana passada' : 'Esta semana'}</h3>
             <p className="text-[13px] text-(--obra-text)">
               {o.semana === null
                 ? 'Sem plano da semana'
                 : `Plano com ${plural(o.semana.planejadas, 'atividade', 'atividades')}, ${plural(o.semana.cumpridas, 'concluída', 'concluídas')}` +
                   (o.semana.ppc === null ? '.' : ` (PPC ${pct(o.semana.ppc)}).`) +
-                  (o.semana.causas ? ` Não cumpridas: ${o.semana.causas}.` : '')}
+                  (o.semana.causas ? ` ${o.semana.naoCumpridas === 1 ? 'Não cumprida' : 'Não cumpridas'}: ${o.semana.causas}.` : '')}
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -243,6 +250,9 @@ function Detalhe({ o }: { o: ObraCarteira }) {
           {d.ok ? (
             <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-[13px]">
               {linha('Valor da obra', d.valor === null ? 'Valor da obra não informado' : brl(d.valor))}
+              {d.valor !== null && d.osSemValor > 0 ? (
+                <dd className="col-span-2 text-right text-[12px] font-medium text-(--obra-orange-texto)">{incompleto(d.osSemValor)}</dd>
+              ) : null}
               {linha(`Faturado (${plural(d.notas, 'nota', 'notas')})`, brl(d.faturado))}
               {linha('A faturar', d.acimaDoValor ? 'faturado acima do valor' : d.aFaturar === null ? '—' : brl(d.aFaturar), true)}
               {linha('Custo realizado', brl(d.custoRealizado))}
@@ -278,7 +288,7 @@ function Linha({ o, aberta, alternar }: { o: ObraCarteira; aberta: boolean; alte
       <button
         type="button"
         aria-expanded={aberta}
-        aria-controls={`obra-${o.id}`}
+        aria-controls={aberta ? `obra-${o.id}` : undefined}
         onClick={alternar}
         className={`grid ${COLUNAS} w-full cursor-pointer rounded-xl px-5 py-[18px] text-left hover:bg-[#fbfbfa]`}
       >

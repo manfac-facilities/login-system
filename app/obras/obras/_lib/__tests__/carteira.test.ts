@@ -4,7 +4,9 @@ import {
   travasDaObra, ultimoAvanco,
   type DinheiroCarteira, type ObraCarteira, type SinalCliente, type Trava,
 } from '../carteira'
-import type { AtividadeCalculada, ResultadoCronograma } from '../cronograma'
+import type { AtividadeCalculada, ResultadoCronograma, ResumoEtapa } from '../cronograma'
+import { montarFinanceiro } from '../financeiro-tela'
+import { linhasDeEtapa } from '../../_ui/evolucao-etapas'
 import type { PontoHist } from '../curvas'
 import type { PlanoSemana, Restricao } from '../last-planner'
 import type { ImpedimentoRow } from '../leitura'
@@ -29,7 +31,7 @@ const trava = (o: Partial<Trava>): Trava =>
   ({ origem: 'restricao', descricao: 'T', tipo: 'projeto', quem: 'cliente', desde: '2026-10-20', prazo: null, vencida: false, ...o })
 
 const dinheiroOk = (o: Partial<Extract<DinheiroCarteira, { ok: true }>> = {}): DinheiroCarteira =>
-  ({ ok: true, valor: 1000, faturado: 400, aFaturar: 600, acimaDoValor: false, notas: 1, custoRealizado: 100, custoComprometido: 50, margemPct: 10, ...o })
+  ({ ok: true, valor: 1000, faturado: 400, faturadoPct: 40, aFaturar: 600, acimaDoValor: false, osSemValor: 0, notas: 1, custoRealizado: 100, custoComprometido: 50, margemPct: 10, ...o })
 const obra = (o: Partial<ObraCarteira>): ObraCarteira => ({
   id: 'x', os: null, loja: 'L', engenheiro: null, sinal: 'verde', estado: { tipo: 'andando', comAtraso: false },
   realizado: null, previsto: null, terminoBase: null, terminoProjetado: null, desvioDiasUteis: null,
@@ -68,7 +70,7 @@ describe('estadoDaObra', () => {
     const estado = estadoDaObra({ ...base, calc: calcDe([]), hist: recente })
     expect(estado).toEqual({ tipo: 'sem_cronograma' })
     expect(ficaNaCarteira({ estado, dinheiro: dinheiroOk({ aFaturar: 0, faturado: 1000 }) })).toBe(true)
-    expect(etapasDaCarteira(calcDe([]))).toEqual([])
+    expect(etapasDaCarteira(calcDe([]), [])).toEqual([])
   })
   it('todas concluídas → faturando', () => {
     expect(estadoDaObra({ ...base, calc: calcDe([ativ({ situacao: 'concluida' })]) })).toEqual({ tipo: 'faturando' })
@@ -90,6 +92,10 @@ describe('estadoDaObra', () => {
   it('data base há menos de 10 d.u. → comecou', () => {
     expect(estadoDaObra({ ...base, calc: calcDe([ativ({})]), hist: recente, dataBase: '2026-10-26' }))
       .toEqual({ tipo: 'comecou', em: '2026-10-26' })
+  })
+  it('data base futura → comeca (nunca "Começou" no futuro); data base hoje → comecou', () => {
+    expect(estadoDaObra({ ...base, calc: calcDe([ativ({})]), dataBase: '2026-11-10' })).toEqual({ tipo: 'comeca', em: '2026-11-10' })
+    expect(estadoDaObra({ ...base, calc: calcDe([ativ({})]), hist: recente, dataBase: hoje })).toEqual({ tipo: 'comecou', em: hoje })
   })
   it('senão andando, com atraso quando o sinal não é verde', () => {
     const calc = calcDe([ativ({})])
@@ -134,24 +140,32 @@ describe('travaPrincipal', () => {
 })
 
 describe('etapasDaCarteira', () => {
-  it('null → []', () => expect(etapasDaCarteira(null)).toEqual([]))
-  it('agrupa na ordem, média ponderada e a pior situação', () => {
-    const e = etapasDaCarteira(calcDe([
-      ativ({ etapa: 'B', percentual: 1, percentualPrevisto: 1, peso: 3, situacao: 'concluida' }),
-      ativ({ etapa: 'A', percentual: 0, percentualPrevisto: 0, peso: 0, status: 'nao_iniciado' }),
-      ativ({ etapa: 'B', percentual: 0, percentualPrevisto: 0.5, peso: 1, situacao: 'atrasada' }),
-      ativ({ etapa: 'A', percentual: 0.5, percentualPrevisto: 1, peso: 0, situacao: 'aguardando_cliente' }),
-    ]))
+  // Resumo por etapa como o de `ObraGrande.etapas` (percentual já calculado por `resumirEtapas`).
+  const resumo = (etapa: string, numeros: number[], percentual: number): ResumoEtapa =>
+    ({ etapa, numeros, percentual, inicio: hoje, fim: hoje, diasUteis: 1, inicioProjetado: hoje, fimProjetado: hoje })
+  it('null → []', () => expect(etapasDaCarteira(null, [])).toEqual([]))
+  it('realizado vem do resumo da etapa e o previsto do mesmo cálculo do painel; pior situação', () => {
+    const atividades = [
+      ativ({ numero: 1, etapa: 'B', percentual: 1, percentualPrevisto: 1, peso: 3, situacao: 'concluida' }),
+      ativ({ numero: 2, etapa: 'A', percentual: 0, percentualPrevisto: 0, peso: 0, duracao: 1, status: 'nao_iniciado' }),
+      ativ({ numero: 3, etapa: 'B', percentual: 0, percentualPrevisto: 0.5, peso: 1, situacao: 'atrasada' }),
+      ativ({ numero: 4, etapa: 'A', percentual: 0.5, percentualPrevisto: 1, peso: 0, duracao: 3, situacao: 'aguardando_cliente' }),
+    ]
+    const etapas = [resumo('B', [1, 3], 0.75), resumo('A', [2, 4], 0.375)]
+    const e = etapasDaCarteira(calcDe(atividades), etapas)
     expect(e.map((x) => x.nome)).toEqual(['B', 'A'])
     expect(e[0]).toEqual({ nome: 'B', realizado: 0.75, previsto: 0.875, situacao: 'atrasada' })
-    expect(e[1]).toEqual({ nome: 'A', realizado: 0.25, previsto: 0.5, situacao: 'aguardando_cliente' })
+    // Etapa A soma peso 0: o painel pondera pela duração (1 e 3) → previsto 0,75, não a média simples 0,5.
+    expect(e[1]).toEqual({ nome: 'A', realizado: 0.375, previsto: 0.75, situacao: 'aguardando_cliente' })
+    const painel = linhasDeEtapa(etapas, atividades, null, F)
+    expect(e.map((x) => [x.realizado, x.previsto])).toEqual(painel.map((l) => [l.realizado, l.previsto]))
   })
   it('concluída só se todas concluídas; travada vem de travada/bloqueada', () => {
     const e = etapasDaCarteira(calcDe([
-      ativ({ etapa: 'C', situacao: 'concluida' }), ativ({ etapa: 'C', situacao: 'concluida' }),
-      ativ({ etapa: 'D', situacao: 'no_prazo', status: 'em_andamento' }), ativ({ etapa: 'D', situacao: 'no_prazo', travada: true }),
-      ativ({ etapa: 'D', situacao: 'inicio_atrasado' }),
-    ]))
+      ativ({ numero: 1, etapa: 'C', situacao: 'concluida' }), ativ({ numero: 2, etapa: 'C', situacao: 'concluida' }),
+      ativ({ numero: 3, etapa: 'D', situacao: 'no_prazo', status: 'em_andamento' }), ativ({ numero: 4, etapa: 'D', situacao: 'no_prazo', travada: true }),
+      ativ({ numero: 5, etapa: 'D', situacao: 'inicio_atrasado' }),
+    ]), [resumo('C', [1, 2], 1), resumo('D', [3, 4, 5], 0)])
     expect(e[0].situacao).toBe('concluida')
     expect(e[1].situacao).toBe('travada')
   })
@@ -165,13 +179,18 @@ describe('semanaDe', () => {
     expect(semanaDe([], hoje)).toBeNull()
     expect(semanaDe([plano('2026-11-09', [item(true)])], hoje)).toBeNull()
   })
-  it('plano mais recente com semanaInicio <= hoje; ppc e causas em texto', () => {
+  it('plano da semana corrente; ppc, causas em texto e quantas não cumpridas', () => {
     const s = semanaDe([
       plano('2026-10-26', [item(true)]),
       plano('2026-11-02', [item(true), item(false, 'cliente'), item(false, 'cliente'), item(false, 'cliente'), item(false, 'material'), item(null)]),
       plano('2026-11-09', []),
     ], hoje)
-    expect(s).toEqual({ planejadas: 6, cumpridas: 1, ppc: 0.2, causas: '3 por cliente, 1 por material' })
+    expect(s).toEqual({ corrente: true, planejadas: 6, cumpridas: 1, ppc: 0.2, causas: '3 por cliente, 1 por material', naoCumpridas: 4 })
+  })
+  it('sem plano desta semana: aceita o da semana anterior (corrente: false); mais antigo → null', () => {
+    expect(semanaDe([plano('2026-10-26', [item(false, 'clima')])], hoje))
+      .toEqual({ corrente: false, planejadas: 1, cumpridas: 0, ppc: 0, causas: '1 por clima', naoCumpridas: 1 })
+    expect(semanaDe([plano('2026-10-19', [item(true)])], hoje)).toBeNull()
   })
 })
 
@@ -246,24 +265,49 @@ describe('sinaisDoCliente', () => {
 })
 
 describe('dinheiroDaCarteira', () => {
-  const total = { receitaEsperada: 1000 as number | null, receitaRealizada: 400, custoRealizado: 300, custoComprometido: 200, margemPct: 25 }
-  const leitura = (t: typeof total, faturamento: { ok: boolean; dados?: unknown[] } = { ok: true, dados: [{}, {}] }): LeituraFinanceiro =>
-    ({ ok: true, obras: [], fin: { resumo: { ok: true, dados: { total: t } }, faturamento } }) as unknown as LeituraFinanceiro
+  const MAE = 'mae'
+  const FILHA = 'filha'
+  const nota = (o: Record<string, unknown> = {}) => ({
+    obra_id: MAE, obra_os: '0526-1', nota_id: 'n1', parcela_centavos: 40_000, nota_valor_total_centavos: 40_000,
+    nota_situacao: 'autorizada', nfse_numero: '1', tomador_nome: 'C', obras_devolvidas_em: null, ...o,
+  })
+  // Leitura real: o mesmo `montarFinanceiro` que alimenta a aba Financeiro.
+  const real = (obras: { id: string; receita: number | null; cancelada?: boolean }[], notas: Record<string, unknown>[]): LeituraFinanceiro => {
+    const of = obras.map((o) => ({ id: o.id, os: o.id, loja: 'L', paiId: o.id === MAE ? null : MAE, receitaCentavos: o.receita, cancelada: !!o.cancelada }))
+    return { ok: true, obras: of, fin: montarFinanceiro({ obraId: MAE, obras: of, compras: [], fornecedores: [], notas }) }
+  }
   it('falhas mantêm o motivo; nao_encontrada vira leitura; resumo falho vira leitura', () => {
     expect(dinheiroDaCarteira({ ok: false, motivo: 'sem_permissao' })).toEqual({ ok: false, motivo: 'sem_permissao' })
     expect(dinheiroDaCarteira({ ok: false, motivo: 'nao_encontrada' })).toEqual({ ok: false, motivo: 'leitura' })
     expect(dinheiroDaCarteira({ ok: false, motivo: 'leitura' })).toEqual({ ok: false, motivo: 'leitura' })
     expect(dinheiroDaCarteira({ ok: true, obras: [], fin: { resumo: { ok: false } } } as unknown as LeituraFinanceiro)).toEqual({ ok: false, motivo: 'leitura' })
   })
-  it('números do total e notas do faturamento', () => {
-    expect(dinheiroDaCarteira(leitura(total))).toEqual({
-      ok: true, valor: 1000, faturado: 400, aFaturar: 600, acimaDoValor: false, notas: 2, custoRealizado: 300, custoComprometido: 200, margemPct: 25,
+  it('números da aba Financeiro; notas só as que contam na receita', () => {
+    const l = real([{ id: MAE, receita: 100_000 }], [nota(), nota({ nota_id: 'n2', nota_situacao: 'rascunho' }), nota({ nota_id: 'n3', obras_devolvidas_em: '2026-11-01' })])
+    expect(dinheiroDaCarteira(l)).toMatchObject({
+      ok: true, valor: 100_000, faturado: 40_000, faturadoPct: 40, aFaturar: 60_000, acimaDoValor: false, osSemValor: 0, notas: 1,
     })
   })
-  it('faturado > valor → aFaturar 0 e acimaDoValor; valor null → aFaturar null; faturamento falho → 0 notas', () => {
-    expect(dinheiroDaCarteira(leitura({ ...total, receitaRealizada: 1200 }))).toMatchObject({ aFaturar: 0, acimaDoValor: true })
-    expect(dinheiroDaCarteira(leitura({ ...total, receitaEsperada: null }))).toMatchObject({ valor: null, aFaturar: null, acimaDoValor: false })
-    expect(dinheiroDaCarteira(leitura(total, { ok: false }))).toMatchObject({ notas: 0 })
+  it('mãe com valor + aditivo sem valor com nota: % igual ao da aba, faturado só das OS com valor, obra fica na carteira', () => {
+    const l = real([{ id: MAE, receita: 100_000 }, { id: FILHA, receita: null }], [nota(), nota({ nota_id: 'n2', obra_id: FILHA, obra_os: FILHA, parcela_centavos: 70_000 })])
+    if (!l.ok || !l.fin.resumo.ok) throw new Error('fin')
+    const d = dinheiroDaCarteira(l)
+    expect(d).toMatchObject({ ok: true, valor: 100_000, faturado: 40_000, aFaturar: 60_000, acimaDoValor: false, osSemValor: 1, notas: 2 })
+    if (!d.ok) throw new Error('ok')
+    expect(d.faturadoPct).toBe(l.fin.resumo.dados.percentuais.faturado)
+    expect(ficaNaCarteira({ estado: { tipo: 'faturando' }, dinheiro: { ...d, aFaturar: 0 } })).toBe(true)
+  })
+  it('OS cancelada com nota não entra no faturado da obra (como na aba)', () => {
+    const l = real([{ id: MAE, receita: 100_000 }, { id: FILHA, receita: 50_000, cancelada: true }], [nota(), nota({ nota_id: 'n2', obra_id: FILHA, obra_os: FILHA })])
+    expect(dinheiroDaCarteira(l)).toMatchObject({ valor: 100_000, faturado: 40_000, faturadoPct: 40, osSemValor: 0 })
+  })
+  it('faturado > valor → aFaturar 0 e acimaDoValor; sem valor → valor/aFaturar/% null; faturamento falho → 0 notas', () => {
+    expect(dinheiroDaCarteira(real([{ id: MAE, receita: 30_000 }], [nota()]))).toMatchObject({ aFaturar: 0, acimaDoValor: true })
+    expect(dinheiroDaCarteira(real([{ id: MAE, receita: null }], [nota()])))
+      .toMatchObject({ valor: null, faturado: 40_000, faturadoPct: null, aFaturar: null, acimaDoValor: false, osSemValor: 1 })
+    const l = real([{ id: MAE, receita: 100_000 }], [nota()])
+    if (!l.ok) throw new Error('ok')
+    expect(dinheiroDaCarteira({ ...l, fin: { ...l.fin, faturamento: { ok: false, motivo: 'leitura' } } } as LeituraFinanceiro)).toMatchObject({ notas: 0 })
   })
 })
 
@@ -275,6 +319,8 @@ describe('ficaNaCarteira', () => {
     expect(ficaNaCarteira({ estado: fat, dinheiro: dinheiroOk({ valor: null, aFaturar: null }) })).toBe(true)
     expect(ficaNaCarteira({ estado: fat, dinheiro: dinheiroOk() })).toBe(true)
     expect(ficaNaCarteira({ estado: { tipo: 'andando', comAtraso: false }, dinheiro: dinheiroOk({ aFaturar: 0 }) })).toBe(true)
+    // OS sem valor: o valor da obra não está provado (spec §5.1), então não sai.
+    expect(ficaNaCarteira({ estado: fat, dinheiro: dinheiroOk({ aFaturar: 0, faturado: 1000, osSemValor: 1 }) })).toBe(true)
   })
 })
 
@@ -346,6 +392,9 @@ describe('excecoesDoDia', () => {
     expect(ex[3].quem).toBe('manfac')
   })
   it('obra sem fato → nenhuma exceção', () => expect(excecoesDoDia([obra({})])).toEqual([]))
+  it('concluída (faturando) que terminou atrasada não vira exceção de "atrasada"', () => {
+    expect(excecoesDoDia([obra({ sinal: 'vermelho', estado: { tipo: 'faturando' }, desvioDiasUteis: 4 })])).toEqual([])
+  })
 })
 
 describe('resumoCarteira', () => {
@@ -365,6 +414,14 @@ describe('resumoCarteira', () => {
   it('obra sem valor informado: fora de faturado/valor/aFaturar, dentro do custo, contada em semValor', () => {
     const r = resumoCarteira([
       obra({ dinheiro: dinheiroOk({ valor: null, aFaturar: null, faturado: 900, custoRealizado: 30 }) }),
+      obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, custoRealizado: 20 }) }),
+    ])
+    expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 1, foraDasSomas: 0 })
+  })
+
+  it('obra com OS sem valor (valor incompleto): tratada como sem valor', () => {
+    const r = resumoCarteira([
+      obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, osSemValor: 2, custoRealizado: 30 }) }),
       obra({ dinheiro: dinheiroOk({ valor: 1000, faturado: 400, aFaturar: 600, custoRealizado: 20 }) }),
     ])
     expect(r).toMatchObject({ faturado: 400, valor: 1000, aFaturar: 600, custoRealizado: 50, semValor: 1, foraDasSomas: 0 })

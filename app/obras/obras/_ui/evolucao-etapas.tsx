@@ -1,4 +1,4 @@
-import { deltaDiasUteis, type AtividadeCalculada, type ResumoEtapa } from '../_lib/cronograma'
+import { deltaDiasUteis, previstoDaEtapa, type AtividadeCalculada, type ResumoEtapa } from '../_lib/cronograma'
 import { ddmm, pct } from './cartao-painel'
 import { CORES_ETAPA } from './tema'
 
@@ -15,14 +15,6 @@ export type LinhaEtapa = {
   realizado: number
   fimProjetado: string
   deltaDias: number | null
-}
-
-/** % previsto hoje da etapa, ponderado como `resumirEtapas` (peso; duração se a etapa soma peso 0). */
-function previstoDaEtapa(as: AtividadeCalculada[]): number {
-  const soma = as.reduce((s, a) => s + a.peso, 0)
-  const peso = (a: AtividadeCalculada) => (soma > 0 ? a.peso : Math.max(a.duracao, 1))
-  const total = as.reduce((s, a) => s + peso(a), 0)
-  return total > 0 ? as.reduce((s, a) => s + peso(a) * a.percentualPrevisto, 0) / total : 0
 }
 
 export function linhasDeEtapa(

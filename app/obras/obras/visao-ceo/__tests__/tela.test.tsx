@@ -3,7 +3,7 @@ import type { DinheiroCarteira, ObraCarteira, SinalCliente } from '../../_lib/ca
 import TelaVisaoCeo from '../_tela'
 
 const dinheiroOk = (o: Partial<Extract<DinheiroCarteira, { ok: true }>> = {}): DinheiroCarteira =>
-  ({ ok: true, valor: 100_000_00, faturado: 40_000_00, aFaturar: 60_000_00, acimaDoValor: false, notas: 2, custoRealizado: 10_000_00, custoComprometido: 5_000_00, margemPct: 12.5, ...o })
+  ({ ok: true, valor: 100_000_00, faturado: 40_000_00, faturadoPct: 40, aFaturar: 60_000_00, acimaDoValor: false, osSemValor: 0, notas: 2,custoRealizado: 10_000_00, custoComprometido: 5_000_00, margemPct: 12.5, ...o })
 
 const sinaisOk: SinalCliente[] = [
   { chave: 'entrega', tom: 'ok', texto: 'entrega mantida em 14/11', curto: null },
@@ -29,7 +29,7 @@ const vermelha = obra({
   estado: { tipo: 'parada', diasUteis: 6 }, realizado: 0.46, previsto: 0.61, terminoProjetado: '2026-12-09', terminoBase: '2026-11-28', desvioDiasUteis: 7,
   travas: [travaCliente], travaPrincipal: travaCliente,
   etapas: [{ nome: 'Forro e iluminação', realizado: 0.1, previsto: 0.45, situacao: 'aguardando_cliente' }],
-  semana: { planejadas: 9, cumpridas: 5, ppc: 0.52, causas: '3 por cliente' },
+  semana: { corrente: true, planejadas: 9, cumpridas: 5, ppc: 0.52, causas: '3 por cliente', naoCumpridas: 3 },
   diarios: [{ data: '2026-11-03', texto: 'Equipe de 8. Elétrica do salão.' }],
 })
 
@@ -132,6 +132,45 @@ describe('Visão do CEO: tela', () => {
     expect(within(quadro).getByText('R$ 40.000,00')).toBeInTheDocument()
     const larguras = [...container.querySelectorAll<HTMLElement>('[style*="width"]')].map((e) => parseFloat(e.style.width))
     expect(Math.max(...larguras)).toBeLessThanOrEqual(100)
+  })
+
+  it('aria-controls só com a linha aberta (aponta para o detalhe existente)', () => {
+    tela([verde])
+    const linha = within(lista()).getByRole('button', { expanded: false })
+    expect(linha).not.toHaveAttribute('aria-controls')
+    fireEvent.click(linha)
+    const id = linha.getAttribute('aria-controls')
+    expect(id).toBe('obra-g')
+    expect(document.getElementById(id!)).not.toBeNull()
+  })
+
+  it('semana: "Não cumprida" no singular; plano da semana anterior vira "Semana passada"', () => {
+    tela([{ ...vermelha, semana: { corrente: false, planejadas: 2, cumpridas: 1, ppc: 0.5, causas: '1 por clima', naoCumpridas: 1 } }])
+    fireEvent.click(within(lista()).getByRole('button', { expanded: false }))
+    expect(screen.getByText('Semana passada')).toBeInTheDocument()
+    expect(screen.queryByText('Esta semana')).toBeNull()
+    expect(screen.getByText(/Não cumprida: 1 por clima\./)).toBeInTheDocument()
+  })
+
+  it('semana: "Não cumpridas" no plural', () => {
+    tela([vermelha])
+    fireEvent.click(within(lista()).getByRole('button', { expanded: false }))
+    expect(screen.getByText('Esta semana')).toBeInTheDocument()
+    expect(screen.getByText(/Não cumpridas: 3 por cliente\./)).toBeInTheDocument()
+  })
+
+  it('data base futura: "Começa em dd/mm"', () => {
+    tela([obra({ id: 'n', estado: { tipo: 'comeca', em: '2026-11-10' } })])
+    expect(screen.getByText('Começa em 10/11')).toBeInTheDocument()
+  })
+
+  it('valor incompleto: aviso na linha e no detalhe, % da aba, fora das somas', () => {
+    tela([{ ...vermelha, dinheiro: dinheiroOk({ osSemValor: 1, faturadoPct: 40 }) }, obra({ id: 'b', loja: 'B', dinheiro: dinheiroOk({ osSemValor: 2 }) })])
+    expect(screen.getByText('valor incompleto (1 OS sem valor)')).toBeInTheDocument()
+    expect(screen.getByText('valor incompleto (2 OS sem valor)')).toBeInTheDocument()
+    fireEvent.click(within(lista()).getAllByRole('button', { expanded: false })[0])
+    expect(screen.getAllByText(/valor incompleto \(1 OS sem valor\)/)).toHaveLength(2)
+    expect(within(screen.getByRole('region', { name: 'Faturamento da carteira' })).getByText('Nenhuma obra com valores disponíveis.')).toBeInTheDocument()
   })
 
   it('faturamento: 2 obras sem valor → plural', () => {

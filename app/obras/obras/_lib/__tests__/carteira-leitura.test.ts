@@ -1,4 +1,5 @@
-import { desvioEmDiasUteis, diariosDe, lerCarteira, obrasDoUniverso, type LinhaUniverso } from '../carteira-leitura'
+import { diariosDe, lerCarteira, obrasDoUniverso, type LinhaUniverso } from '../carteira-leitura'
+import { atrasoPorResponsavel } from '../cronograma'
 
 const MAE = '11111111-1111-4111-8111-111111111111'
 const FILHA = '22222222-2222-4222-8222-222222222222'
@@ -23,15 +24,16 @@ describe('obrasDoUniverso', () => {
   })
 })
 
-describe('desvioEmDiasUteis', () => {
-  it('dias úteis a mais depois da base; igual ou antes → 0; faltando data → null', () => {
-    expect(desvioEmDiasUteis('2026-11-04', '2026-11-04', F)).toBe(0)
-    expect(desvioEmDiasUteis('2026-11-04', '2026-11-03', F)).toBe(0)
-    expect(desvioEmDiasUteis('2026-11-04', '2026-11-05', F)).toBe(1)
+describe('desvio em dias úteis = atraso.total do painel', () => {
+  // A carteira usa `og.dados.atraso?.total` (de `atrasoPorResponsavel`), o mesmo número do painel.
+  const desvio = (base: string, projetado: string) =>
+    atrasoPorResponsavel({ terminoBase: base, terminoProjetado: projetado, impacto: { cliente: 0, manfac: 0, terceiro: 0, clima: 0 }, feriados: F }).total
+  it('dias úteis a mais depois da base; igual ou antes → 0', () => {
+    expect(desvio('2026-11-04', '2026-11-04')).toBe(0)
+    expect(desvio('2026-11-04', '2026-11-03')).toBe(0)
+    expect(desvio('2026-11-04', '2026-11-05')).toBe(1)
     // qua 04 → seg 09: qui, sex, seg = 3
-    expect(desvioEmDiasUteis('2026-11-04', '2026-11-09', F)).toBe(3)
-    expect(desvioEmDiasUteis(null, '2026-11-09', F)).toBeNull()
-    expect(desvioEmDiasUteis('2026-11-04', null, F)).toBeNull()
+    expect(desvio('2026-11-04', '2026-11-09')).toBe(3)
   })
 })
 
@@ -123,6 +125,7 @@ describe('lerCarteira', () => {
     const o = r.obras[0]
     expect(o.estado).toEqual({ tipo: 'sem_cronograma' })
     expect(o.sinal).toBeNull()
+    expect(o.desvioDiasUteis).toBeNull()
     expect(o.etapas).toEqual([])
     expect(o.semana).toBeNull()
     expect(o.diarios).toEqual([])

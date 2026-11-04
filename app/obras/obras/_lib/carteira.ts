@@ -4,9 +4,9 @@
  * Spec: docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md (§5, §6b).
  */
 import { diasUteisEntre, ehDiaUtil } from './calendario'
-import type { ResultadoCronograma, Sinal } from './cronograma'
+import { previstoDaEtapa, type ResultadoCronograma, type ResumoEtapa, type Sinal } from './cronograma'
 import type { PontoHist } from './curvas'
-import { causasNaoCumpridas, ppc, type PlanoSemana, type Restricao } from './last-planner'
+import { causasNaoCumpridas, ppc, segundaDaSemana, type PlanoSemana, type Restricao } from './last-planner'
 import type { ImpedimentoRow } from './leitura'
 import type { ItemAgenda } from './agenda'
 import type { LeituraFinanceiro } from './financeiro-ler'
@@ -16,15 +16,29 @@ export type Quem = 'cliente' | 'manfac' | 'terceiros'
 export type Trava = { origem: 'restricao' | 'impedimento'; descricao: string; tipo: string; quem: Quem; desde: string; prazo: string | null; vencida: boolean }
 export type Estado =
   | { tipo: 'sem_cronograma' } | { tipo: 'faturando' } | { tipo: 'parada'; diasUteis: number }
-  | { tipo: 'frente_parada' } | { tipo: 'comecou'; em: string } | { tipo: 'andando'; comAtraso: boolean }
+  | { tipo: 'frente_parada' } | { tipo: 'comecou'; em: string } | { tipo: 'comeca'; em: string }
+  | { tipo: 'andando'; comAtraso: boolean }
 export type SinalCliente = { chave: 'entrega' | 'pendencias' | 'mensagens' | 'semanal'; tom: 'ruim' | 'atencao' | 'ok' | 'indisponivel'; texto: string; curto: string | null }
 export type EtapaCarteira = { nome: string; realizado: number; previsto: number; situacao: SituacaoExibida }
 export type DinheiroCarteira =
-  | { ok: true; valor: number | null; faturado: number; aFaturar: number | null; acimaDoValor: boolean; notas: number; custoRealizado: number; custoComprometido: number; margemPct: number | null }
+  | {
+      ok: true; valor: number | null
+      /** Faturado das OS com valor receita (mesma base de `percentuais.faturado` da aba); sem nenhuma OS com valor, o total. */
+      faturado: number
+      /** % faturado da aba Financeiro (0–100), o mesmo número. */
+      faturadoPct: number | null
+      aFaturar: number | null; acimaDoValor: boolean
+      /** OS não cancelada sem valor receita: o valor da obra está incompleto. */
+      osSemValor: number
+      /** Notas que contam na receita. */
+      notas: number
+      custoRealizado: number; custoComprometido: number; margemPct: number | null
+    }
   | { ok: false; motivo: 'sem_permissao' | 'leitura' }
 export type Mensagem = { autorTipo: 'cliente' | 'manfac'; criadoEm: string }
 export type Diario = { data: string; texto: string }
-export type Semana = { planejadas: number; cumpridas: number; ppc: number | null; causas: string } | null
+/** `corrente`: plano desta semana; false = da semana anterior (a última fechada). */
+export type Semana = { corrente: boolean; planejadas: number; cumpridas: number; ppc: number | null; causas: string; naoCumpridas: number } | null
 export type ObraCarteira = {
   id: string; os: string | null; loja: string | null; engenheiro: string | null
   sinal: Sinal | null; estado: Estado; realizado: number | null; previsto: number | null
@@ -80,6 +94,7 @@ export function estadoDaObra(p: {
     if (dias >= 3) return { tipo: 'parada', diasUteis: dias }
   }
   if (p.impedimentosAbertos > 0) return { tipo: 'frente_parada' }
+  if (p.dataBase && p.dataBase > p.hoje) return { tipo: 'comeca', em: p.dataBase }
   if (p.dataBase && diasUteisEntre(p.dataBase, p.hoje, p.feriados) < 10) return { tipo: 'comecou', em: p.dataBase }
   return { tipo: 'andando', comAtraso: p.sinal !== 'verde' }
 }
@@ -117,29 +132,33 @@ export function travaPrincipal(travas: Trava[]): Trava | null {
 
 const PIOR: SituacaoExibida[] = ['aguardando_cliente', 'atrasada', 'travada', 'inicio_atrasado', 'em_andamento', 'nao_iniciada', 'concluida']
 
-export function etapasDaCarteira(calc: ResultadoCronograma | null): EtapaCarteira[] {
+/** Por etapa, os mesmos números do painel: realizado de `ResumoEtapa.percentual`, previsto de `previstoDaEtapa`. */
+export function etapasDaCarteira(calc: ResultadoCronograma | null, etapas: ResumoEtapa[]): EtapaCarteira[] {
   if (!calc) return []
-  const grupos = new Map<string, ResultadoCronograma['atividades']>()
-  for (const a of calc.atividades) grupos.set(a.etapa, [...(grupos.get(a.etapa) ?? []), a])
-  return [...grupos].map(([nome, as]) => {
-    const pesoTotal = as.reduce((s, a) => s + a.peso, 0)
-    const media = (v: (a: (typeof as)[number]) => number) =>
-      pesoTotal > 0 ? as.reduce((s, a) => s + v(a) * a.peso, 0) / pesoTotal : as.reduce((s, a) => s + v(a), 0) / as.length
+  return etapas.map((e) => {
+    const nums = new Set(e.numeros)
+    const as = calc.atividades.filter((a) => nums.has(a.numero))
     const rank = Math.min(...as.map((a) => PIOR.indexOf(situacaoExibida(a.situacao, a.status, a.travada))))
-    return { nome, realizado: media((a) => a.percentual), previsto: media((a) => a.percentualPrevisto), situacao: PIOR[rank] }
+    return { nome: e.etapa, realizado: e.percentual, previsto: previstoDaEtapa(as), situacao: PIOR[rank] }
   })
 }
 
+/** Plano desta semana ou, sem ele, o da semana anterior (a última fechada); mais antigo não conta. */
 export function semanaDe(planos: PlanoSemana[], hoje: string): Semana {
+  const esta = segundaDaSemana(hoje)
+  const anterior = new Date(Date.parse(`${esta}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10)
   const plano = planos
-    .filter((p) => p.semanaInicio <= hoje)
+    .filter((p) => p.semanaInicio >= anterior && p.semanaInicio <= hoje)
     .reduce<PlanoSemana | null>((m, p) => (m === null || p.semanaInicio > m.semanaInicio ? p : m), null)
   if (!plano) return null
+  const causas = causasNaoCumpridas(plano.itens)
   return {
+    corrente: plano.semanaInicio >= esta,
     planejadas: plano.itens.length,
     cumpridas: plano.itens.filter((i) => i.cumprido === true).length,
     ppc: ppc(plano.itens),
-    causas: causasNaoCumpridas(plano.itens).map((c) => `${c.n} por ${c.causa}`).join(', '),
+    causas: causas.map((c) => `${c.n} por ${c.causa}`).join(', '),
+    naoCumpridas: causas.reduce((s, c) => s + c.n, 0),
   }
 }
 
@@ -221,16 +240,22 @@ export function sinaisDoCliente(p: {
 export function dinheiroDaCarteira(l: LeituraFinanceiro): DinheiroCarteira {
   if (!l.ok) return { ok: false, motivo: l.motivo === 'sem_permissao' ? 'sem_permissao' : 'leitura' }
   if (!l.fin.resumo.ok) return { ok: false, motivo: 'leitura' }
-  const t = l.fin.resumo.dados.total
+  const r = l.fin.resumo.dados
+  const t = r.total
   const valor = t.receitaEsperada
-  const faturado = t.receitaRealizada
+  // Mesma base de `percentuais.faturado` (consolidarMargem): só as OS com valor receita.
+  const faturado = valor === null
+    ? t.receitaRealizada
+    : r.porOS.filter((o) => o.receitaEsperada !== null).reduce((s, o) => s + o.receitaRealizada, 0)
   return {
     ok: true,
     valor,
     faturado,
+    faturadoPct: r.percentuais.faturado,
     aFaturar: valor === null ? null : Math.max(0, valor - faturado),
     acimaDoValor: valor !== null && faturado > valor,
-    notas: l.fin.faturamento.ok ? l.fin.faturamento.dados.length : 0,
+    osSemValor: r.osSemReceita,
+    notas: l.fin.faturamento.ok ? l.fin.faturamento.dados.filter((n) => n.contaNaReceita).length : 0,
     custoRealizado: t.custoRealizado,
     custoComprometido: t.custoComprometido,
     margemPct: t.margemPct,
@@ -238,7 +263,8 @@ export function dinheiroDaCarteira(l: LeituraFinanceiro): DinheiroCarteira {
 }
 
 export function ficaNaCarteira(o: Pick<ObraCarteira, 'estado' | 'dinheiro'>): boolean {
-  return !(o.estado.tipo === 'faturando' && o.dinheiro.ok && o.dinheiro.valor !== null && o.dinheiro.aFaturar === 0)
+  // OS sem valor: o valor da obra não está provado (spec §5.1), então a obra fica.
+  return !(o.estado.tipo === 'faturando' && o.dinheiro.ok && o.dinheiro.valor !== null && o.dinheiro.osSemValor === 0 && o.dinheiro.aFaturar === 0)
 }
 
 export function grupoDe(o: Pick<ObraCarteira, 'sinal' | 'estado'>): 0 | 1 | 2 | 3 | 4 {
@@ -291,7 +317,8 @@ export function excecoesDoDia(obras: ObraCarteira[]): Excecao[] {
     const add = (gravidade: number, texto: string, quem: Quem | null) =>
       ex.push({ obraId: o.id, obra: nomeDaObra(o), texto, quem, gravidade })
     const tp = o.travaPrincipal
-    if (o.sinal === 'vermelho') {
+    // Concluída que terminou atrasada: não há o que destravar, não vira exceção todo dia.
+    if (o.sinal === 'vermelho' && o.estado.tipo !== 'faturando') {
       const desvio = o.desvioDiasUteis !== null && o.desvioDiasUteis > 0 ? ` (entrega +${diasUteisTexto(o.desvioDiasUteis)})` : ''
       add(0, `atrasada${desvio}${comTrava(tp)}`, tp?.quem ?? null)
     }
@@ -317,8 +344,8 @@ export function resumoCarteira(obras: ObraCarteira[]): {
     else r.porSinal[o.estado.tipo === 'sem_cronograma' ? 'sem' : (o.sinal ?? 'sem')]++
     if (!o.dinheiro.ok) { r.foraDasSomas++; continue }
     r.custoRealizado += o.dinheiro.custoRealizado
-    // Sem valor informado não dá para comparar faturado × valor: fica fora das três somas.
-    if (o.dinheiro.valor === null) { r.semValor++; continue }
+    // Sem valor informado (ou incompleto, com OS sem valor) não dá para comparar faturado × valor: fica fora das três somas.
+    if (o.dinheiro.valor === null || o.dinheiro.osSemValor > 0) { r.semValor++; continue }
     r.faturado += o.dinheiro.faturado
     r.aFaturar += o.dinheiro.aFaturar ?? 0
     r.valor += o.dinheiro.valor

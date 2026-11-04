@@ -340,6 +340,8 @@ pergunta "precisa de material?" antes de o prazo de pedir passar; "precisa" vira
   por `obras_pode_ver_valores`, dentro de `lerFinanceiroDaObra`.
 - **O dinheiro reusa `lerFinanceiroDaObra`:** é o mesmo número da aba Financeiro. **Não recalcule por outro caminho.**
 - **Regras que mordem:** "parada" = 3+ dias úteis decorridos sem aumento de % (não `dadosAte`); a obra só sai da carteira com
-  execução 100% + valor informado + a faturar 0; obra sem valor fica fora das somas de faturamento (`semValor`); leitura que
+  execução 100% + valor informado em todas as OS + a faturar 0; obra sem valor ou com OS sem valor ("valor incompleto") fica
+  fora das somas de faturamento (`semValor`); faturado e % faturado são os da aba (`percentuais.faturado`, só OS com valor),
+  andamento por etapa é o do painel (`ResumoEtapa.percentual` + `previstoDaEtapa`), desvio é `atraso.total`; leitura que
   falha vira "indisponível"/"Não foi possível ler", **nunca zero**.
 - **Sem SQL novo.** Dívidas em `docs/DIVIDAS.md` (04/11).
