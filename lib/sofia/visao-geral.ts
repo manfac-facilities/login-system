@@ -104,7 +104,7 @@ export interface EntradaAcoes {
   documentos: { placa: string | null; tipo: string; vencimento: string }[]
   cnhVencidas: { nome: string; cnh_vencimento: string | null }[]
   cnhVencendo: { nome: string; cnh_vencimento: string | null }[]
-  multas: { status: string; valor: number | string }[]
+  multas: { etapa: string; valor: number | string }[]
   sinistros: { placa: string | null; status: string }[]
   veiculosOficinaAtrasados: string[]
 }
@@ -154,11 +154,13 @@ export function montarAcoes(e: EntradaAcoes, hoje?: string): AcaoHoje[] {
     ].join(' · '),
     href: '/sofia/motoristas?cnh=alerta', irPara: 'Motoristas',
   })
-  const pend = e.multas.filter((m) => m.status === 'pendente').length
-  const valid = e.multas.filter((m) => m.status === 'validada').length
-  const totalMultas = e.multas.reduce((s, m) => s + n(m.valor), 0)
+  // Mesma régua das Pendências: pela etapa; descontada e contestada não aparecem.
+  const abertas = e.multas.filter((m) => m.etapa !== 'descontada' && m.etapa !== 'contestada')
+  const valid = abertas.filter((m) => m.etapa === 'validada').length
+  const pend = abertas.length - valid
+  const totalMultas = abertas.reduce((s, m) => s + n(m.valor), 0)
   add({
-    id: 'multas', n: e.multas.length, urgente: false,
+    id: 'multas', n: abertas.length, urgente: false,
     titulo: 'Multas sem tratativa',
     descricao: `${pend} pendente${pend === 1 ? '' : 's'}, ${valid} validada${valid === 1 ? '' : 's'} aguardando desconto · ${totalMultas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
     href: '/sofia/multas', irPara: 'Multas',
