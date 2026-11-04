@@ -329,3 +329,17 @@ pergunta "precisa de material?" antes de o prazo de pedir passar; "precisa" vira
   **`npm run types` no Compras** (regenera `types/supabase.ts`). Sem o SQL o hub mostra a lista sem "pedir até" e sem
   andamento; sem o app do Compras o link funciona como hoje.
 - **Estado:** construído e revisado; SQL **NÃO APLICADO** e nada no ar (ver `.claude/rules/sql.md`).
+
+### Visão do CEO (branch `feat/obras-visao-ceo`, 04/11/2026)
+
+- **Spec:** `docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md`.
+- **Onde fica:** página `app/obras/obras/visao-ceo/` (`_permissao.ts`, `_tela.tsx`); regras puras em `_lib/carteira.ts`; leitura
+  em `_lib/carteira-leitura.ts` (`lerCarteira`); leitura do Financeiro em `_lib/financeiro-ler.ts`. Link "Visão do CEO" na
+  lista `app/obras/obras/page.tsx`, só para admin.
+- **Quem vê:** só admin do hub (`podeVerVisaoCeo` = `isAdmin`, falha fechada) até os papéis do SGO. Valores por obra passam
+  por `obras_pode_ver_valores`, dentro de `lerFinanceiroDaObra`.
+- **O dinheiro reusa `lerFinanceiroDaObra`:** é o mesmo número da aba Financeiro. **Não recalcule por outro caminho.**
+- **Regras que mordem:** "parada" = 3+ dias úteis decorridos sem aumento de % (não `dadosAte`); a obra só sai da carteira com
+  execução 100% + valor informado + a faturar 0; obra sem valor fica fora das somas de faturamento (`semValor`); leitura que
+  falha vira "indisponível"/"Não foi possível ler", **nunca zero**.
+- **Sem SQL novo.** Dívidas em `docs/DIVIDAS.md` (04/11).

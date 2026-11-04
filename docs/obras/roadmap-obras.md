@@ -27,4 +27,6 @@ Em `docs/DIVIDAS.md` (seções 29/10, 30/10 e 31/10): arrastar com o mouse no cr
 ## Estado em 03/11/2026
 **No ar (master):** levas 1–6b (inclui a planta de faseamento), Financeiro A/B/C e Financeiro da OS no SPOT. **Construído, aguardando SQL + deploy:** Material antecipado (A19: o "Vem aí" do diário, trilha de compras no Lookahead e avisos no painel e no e-mail interno), na ordem Compras `017` → `sdd-sql-obras-material.sql` → app do Compras → app do hub.
 
-**Próximos, na ordem combinada com o José em 03/11:** 1) visão de portfólio do CEO (A12); 2) papéis do SGO (COP, Compras, Financeiro). **Ainda em "Depois":** orçamento/PEF (etapa final do financeiro), cronograma sugerido por IA (A9), assistente no WhatsApp (A8).
+**Visão de portfólio do CEO (A12): construída em 04/11/2026** (branch `feat/obras-visao-ceo`, ainda não no ar; conferência com dados reais pendente).
+
+**Próximos, na ordem combinada com o José em 03/11:** 1) ~~visão de portfólio do CEO (A12)~~ construída; 2) papéis do SGO (COP, Compras, Financeiro). **Ainda em "Depois":** orçamento/PEF (etapa final do financeiro), cronograma sugerido por IA (A9), assistente no WhatsApp (A8).

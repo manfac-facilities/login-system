@@ -666,3 +666,15 @@ Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-multa-fotos-checklist-des
   (`_lib/material.ts`): início num dia fora do expediente (ex.: sábado, com expediente seg–sex) dá um "pedir até" **um
   dia de expediente mais tarde** que o necessário — pedindo nesse dia, o Compras calcula a chegada para o primeiro dia de
   expediente depois do início. Impacto: raro (início fora do expediente do Compras) e de um dia.
+
+## 04/11/2026 — Visão do CEO (`feat/obras-visao-ceo`), deixado de propósito
+
+- **A lista `/obras/obras` mostra canceladas e aditivos como cartões; a Visão do CEO não** (`obras/obras/_lib/carteira-leitura.ts`).
+  Os totais das duas telas podem divergir no número de obras.
+- **Erro em `obras_rdo`/`obras_rdo_avanco` vira "sem diários" na obra aberta** (`_lib/carteira-leitura.ts`): a obra aparece
+  sem o dado de diário em vez de "indisponível". Impacto: "parada" pode não aparecer numa leitura que falhou.
+- **Leitura sem limite de concorrência** (`_lib/carteira-leitura.ts`): ~15–20 consultas por obra, todas em paralelo. Ok com
+  ~4 obras em modalidade OBRA; rever se a carteira crescer.
+- **Detalhes de tela em `visao-ceo/_tela.tsx`:** cores fixas fora dos tokens; `aria-controls` aponta para elemento ausente
+  com a linha fechada; clicar numa exceção não rola até a obra; "Não cumpridas:" sem singular.
+- **O orçado por obra não existe:** o bloco só mostra o aviso (depende do orçamento/PEF por obra, projeto à parte).
