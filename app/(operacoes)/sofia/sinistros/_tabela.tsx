@@ -17,6 +17,8 @@ export default function SinistrosTabela(props: {
   filtrosIniciais: FiltrosBase
   hoje: string
   podeGerir: boolean
+  /** Excluir sinistro é só do admin (AJUSTE pós-spec; a action e o banco conferem de novo). */
+  ehAdmin: boolean
   equipes: string[]
   placas: string[]
   motoristas: string[]
@@ -58,7 +60,7 @@ export default function SinistrosTabela(props: {
             <Link href={`/sofia/sinistros/${s.id}`} className="rounded-lg bg-[#f05a28] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94e22]">
               Abrir sinistro
             </Link>
-            {podeGerir && (
+            {props.ehAdmin && (
               <DeleteConfirmButton action={excluirSinistroAction} id={s.id} label="Excluir" itemLabel={`sinistro de ${s.placa}`} />
             )}
           </div>
