@@ -11,6 +11,11 @@ import type { PlanoSemana, Restricao } from './last-planner'
 import { pedidoDeLinha, type PedidoDaRestricao } from './restricao-pedido'
 import { CAUSA, type CausaRdo } from './causas'
 import {
+  avisosMaterial, comprasDeLinhas, prazosDeLinha,
+  type AvisoMaterial, type CompraDaRestricao, type PrazosCompras,
+} from './material'
+import type { AtividadeCalculada } from './cronograma'
+import {
   atrasoPorResponsavel,
   calcularCronograma,
   criterioEfetivo,
@@ -370,6 +375,51 @@ export async function lerPedidosDaObra(supabase: SupabaseClient, obraId: string)
   const { data, error } = await supabase.rpc('obras_restricao_pedidos', { p_obra: obraId })
   if (error) return null
   return ((data ?? []) as Linha[]).map(pedidoDeLinha)
+}
+
+// ── Material antecipado — todas com o cliente da SESSÃO e falha fechada (o SQL pode não estar aplicado) ──
+
+/**
+ * Prazos vigentes do Compras (`obras_compras_prazos`). Sem linha ou campo ausente → padrão do Compras.
+ * ERRO → null: um prazo inventado viraria aviso falso e ficaria gravado na restrição (spec §4.5).
+ */
+export async function lerPrazosCompras(supabase: SupabaseClient): Promise<PrazosCompras | null> {
+  const { data, error } = await supabase.rpc('obras_compras_prazos')
+  if (error) return null
+  return prazosDeLinha(((data ?? []) as { prazos: unknown; expediente: unknown }[])[0] ?? null)
+}
+
+/** Solicitações do Compras ligadas pela origem, por restrição (`obras_restricao_compras`, SEM valores). Erro → null. */
+export async function lerComprasDasRestricoes(supabase: SupabaseClient, obraId: string): Promise<Map<string, CompraDaRestricao[]> | null> {
+  const { data, error } = await supabase.rpc('obras_restricao_compras', { p_obra: obraId })
+  if (error) return null
+  return comprasDeLinhas((data ?? []) as Linha[])
+}
+
+/** Atividades respondidas "não precisa". Erro → null: a tela não mostra o "Vem aí" (não pergunta de novo). */
+export async function lerNaoPrecisa(supabase: SupabaseClient, obraId: string): Promise<Set<number> | null> {
+  const { data, error } = await supabase.from('obras_material_resposta').select('atividade_numero').eq('obra_id', obraId)
+  if (error) return null
+  return new Set(((data ?? []) as Linha[]).map((l) => Number(l.atividade_numero)))
+}
+
+/**
+ * Avisos de material da obra (painel e e-mail interno). As restrições já lidas entram por parâmetro.
+ * Respostas não lidas → sem os avisos "sem resposta" (nunca aviso falso); os da restrição seguem.
+ * Compras ou prazos não lidos → `avisosMaterial` já omite o que dependia deles.
+ */
+export async function lerAvisosMaterial(
+  supabase: SupabaseClient,
+  obraId: string,
+  p: { atividades: AtividadeCalculada[]; restricoes: Restricao[]; hoje: string },
+): Promise<AvisoMaterial[]> {
+  const [naoPrecisa, compras, prazos] = await Promise.all([
+    lerNaoPrecisa(supabase, obraId),
+    lerComprasDasRestricoes(supabase, obraId),
+    lerPrazosCompras(supabase),
+  ])
+  const avisos = avisosMaterial({ ...p, naoPrecisa: naoPrecisa ?? new Set(), compras, prazos })
+  return naoPrecisa === null ? avisos.filter((a) => a.tipo !== 'sem_resposta') : avisos
 }
 
 export async function lerRestricoes(

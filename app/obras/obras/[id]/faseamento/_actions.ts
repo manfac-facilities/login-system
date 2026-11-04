@@ -53,6 +53,10 @@ function erroFaseamento(acao: string, e: { message: string; code?: string; detai
     if (e.message.includes(prefixo)) {
       const t = e.message.split(prefixo)[1]?.trim() ?? ''
       if (/só o engenheiro/i.test(t)) return falha(SEM_PERMISSAO)
+      // A mensagem do banco ainda diz "Dados da obra"; a atividade-trava fica em Configurações.
+      if (/atividade-trava definida/i.test(t)) {
+        return falha('A obra não tem atividade-trava definida; desligue a regra de trava ou defina a atividade em Configurações')
+      }
       if (/imutável/i.test(t)) return falha(EMITIDA)
       // Guarda do envio (só por corrida ou gravação direta): não mostra o nome da coluna ao usuário.
       if (/fase_revisao_id/.test(t)) {
@@ -161,7 +165,7 @@ export async function salvarRascunhoAction(revisaoId: string, entrada: EntradaRe
   if (ctx.linha.status !== 'rascunho') return falha(EMITIDA)
   if (!legivel(ctx.linha)) return falha(ILEGIVEL)
   if (x.usaTrava && ctx.obra.atividade_trava == null) {
-    return falha('A obra não tem atividade-trava definida: desligue a trava ou peça ao administrador para defini-la em Dados da obra')
+    return falha('A obra não tem atividade-trava definida: desligue a trava ou peça ao administrador para defini-la em Configurações')
   }
   const { data, error } = await ctx.supabase
     .from('obras_fase_revisao')

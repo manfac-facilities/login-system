@@ -166,6 +166,15 @@ describe('PassosDiario', () => {
       expect(validarEEnviarAction).not.toHaveBeenCalled()
     })
 
+    it('passo "Vem aí" é opcional: envia sem responder', async () => {
+      montar({ validacao: { previaHtml: null, pendentes: null }, vemAi: <p>Vem aí: precisa de material?</p> })
+      abrirPasso(/Vem aí/)
+      expect(screen.getByText('Vem aí: precisa de material?')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Validar e enviar' }))
+      await screen.findByText(/Diário enviado para 2/)
+      expect(validarEEnviarAction).toHaveBeenCalledWith('o1', '2026-10-29')
+    })
+
     it('já validado (reenvio): não tenta salvar', async () => {
       montar({ estado: 'validado', rdoId: 'r1', validacao: { previaHtml: '<p>x</p>', pendentes: null } })
       fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }))

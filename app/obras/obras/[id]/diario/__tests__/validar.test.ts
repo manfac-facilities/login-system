@@ -71,10 +71,16 @@ function construtor(tabela: string) {
 
 const getUserMock = jest.fn()
 const lerObraGrandeMock = jest.fn()
+const lerAvisosMaterialMock = jest.fn()
 const sendMail = jest.fn()
 const download = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(async () => ({ auth: { getUser: getUserMock }, from: (t: string) => construtor(t) })),
+  createClient: jest.fn(async () => ({
+    auth: { getUser: getUserMock },
+    from: (t: string) => construtor(t),
+    // RPCs do material antecipado: como antes do SQL aplicado (falham).
+    rpc: async () => ({ data: null, error: { message: 'function does not exist' } }),
+  })),
 }))
 jest.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ storage: { from: () => ({ download }) } }),
@@ -86,6 +92,7 @@ jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 jest.mock('../../../_lib/leitura', () => ({
   ...jest.requireActual('../../../_lib/leitura'),
   lerObraGrande: (...a: unknown[]) => lerObraGrandeMock(...a),
+  lerAvisosMaterial: (...a: unknown[]) => lerAvisosMaterialMock(...a),
 }))
 
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
@@ -167,6 +174,7 @@ beforeEach(() => {
   ;(hasSystemAccess as jest.Mock).mockResolvedValue(true)
   ;(isAdmin as jest.Mock).mockResolvedValue(false)
   lerObraGrandeMock.mockImplementation(async () => dadosObra())
+  lerAvisosMaterialMock.mockImplementation(jest.requireActual('../../../_lib/leitura').lerAvisosMaterial)
   sendMail.mockResolvedValue({})
   download.mockImplementation(async (path: string) => ({
     data: new Blob([path.endsWith('b.jpg') ? new Uint8Array(2_000_000) : new Uint8Array(1000)]),
@@ -348,6 +356,27 @@ describe('validarEEnviarAction', () => {
         expect.objectContaining({ lado: 'interno', resultado: 'ok', destinatarios: ['interno@manfac.com.br'] }),
       ]),
     )
+  })
+
+  it('material antecipado: seção "Materiais" só no e-mail interno', async () => {
+    lerAvisosMaterialMock.mockResolvedValueOnce([
+      {
+        tipo: 'pedir', nivel: 'vermelho', atividade: 9, inicio: '2026-11-05', titulo: 'Pedir hoje: Brita 1',
+        cadeia: ['Atividade 9 começa 05/11/2026', 'Brita 1', 'Ainda sem solicitação no Compras'], destino: 'compras', restricaoId: 'r9',
+      },
+    ])
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    const doCliente = sendMail.mock.calls.find((c) => c[0].to === 'ana@dpsp.com.br')![0]
+    const doInterno = sendMail.mock.calls.find((c) => c[0].to === 'interno@manfac.com.br')![0]
+    expect(doInterno.html).toContain('Materiais')
+    expect(doInterno.text).toContain('Pedir hoje: Brita 1')
+    expect(doCliente.html + doCliente.text).not.toMatch(/Materiais|Brita/)
+  })
+
+  it('material antecipado com o SQL ainda não aplicado: envia normal, sem a seção', async () => {
+    expect((await validarEEnviarAction(OBRA, DIA)).ok).toBe(true)
+    const doInterno = sendMail.mock.calls.find((c) => c[0].to === 'interno@manfac.com.br')![0]
+    expect(doInterno.html).not.toContain('Materiais')
   })
 
   it('atividade que não andou (com causa) sai no e-mail em "Não avançou hoje" (item 12)', async () => {

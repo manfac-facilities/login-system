@@ -59,7 +59,7 @@ export default function TelaFaseamento({
   revisao: RevisaoTela | null
   base: BaseDesenho
   podeEditar: boolean
-  /** A obra tem atividade-trava definida (Dados da obra). */
+  /** A obra tem atividade-trava definida (Configurações). */
   temTrava: boolean
 }) {
   const router = useRouter()
@@ -398,7 +398,7 @@ export default function TelaFaseamento({
                   <input type="checkbox" className="size-5" checked={usaTrava} disabled={leitura || (!temTrava && !usaTrava)} onChange={(e) => mudar(setUsaTrava)(e.target.checked)} />
                   Usar a trava estrutural (imprime o status da atividade-trava e das bloqueadas no dia da emissão)
                 </label>
-                {!temTrava ? <p className="text-xs text-(--obra-muted-texto)">A obra não tem atividade-trava definida em Dados da obra.</p> : null}
+                {!temTrava ? <p className="text-xs text-(--obra-muted-texto)">A obra não tem atividade-trava definida em Configurações.</p> : null}
                 <PreviaPrancha
                   obra={obra}
                   fase={{ numero: fase.numero, nome: fase.nome }}

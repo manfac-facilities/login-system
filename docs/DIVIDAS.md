@@ -624,3 +624,45 @@ Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-multa-fotos-checklist-des
   anterior ao checklist (código 6). Sem dano: o banco não deixa voltar nem alterar a baixa.
 - **Qualquer usuário do Sofia insere avaria ou foto em checklist antigo pelo PostgREST** (código 7): as policies de INSERT
   são só `sofia_has_access`. Só acrescenta, não apaga nem altera prova. Travar por janela de tempo se o João quiser.
+## 03/11/2026 — Obras material antecipado (`feat/obras-material-antecipado`), deixado de propósito
+- **Teste manual no celular do passo "Vem aí" do diário pendente:** só rodou em testes automatizados. Conferir toque
+  ≥ 44px e o fluxo precisa → pedir no Compras em tela real antes do uso em campo.
+- **Teste de concorrência real (duas sessões) do `FOR SHARE` do 017 pendente:** PGlite tem uma conexão só. Opcional antes
+  do 017; a corrida insert no Compras × delete da restrição fica coberta só pela leitura do código.
+- **Restrição malformada no link do Compras não mostra aviso** (Compras `page.tsx:203`, `preparar.ts:416`): o parâmetro é
+  ignorado em silêncio; a guarda do banco continua barrando a adulterada. Impacto: a pessoa abre o form sem a faixa de origem.
+- **Teste de revoke do Compras aceita "trigger functions can only be called as triggers"** (`hub-install-pglite.test.ts:783`):
+  trocar por `has_function_privilege`. Impacto: teste mais frouxo do que precisa.
+- **`lib/obras/leitura.ts` do Compras fora do escopo listado:** desvio consciente, risco baixo.
+- ~~**Trocar o tipo da solicitação para não-material mantém a ligação com a restrição**~~ — **resolvido na revisão final
+  (03/11):** `prepararEnvio` só manda `obras_restricao_id` em solicitação `material`, o form tira a ligação ao trocar o
+  tipo, e a guarda do 017 recusa restrição em solicitação de outro tipo (inclusive trocando o tipo depois).
+- **`types/supabase.ts` do Compras a regenerar depois do 017** (`npm run types`): item do checklist de deploy.
+- **Autoria sem JWT mantém o `criado_por` enviado** (`obras_material_resposta`): só a service role escapa; mesmo padrão da leva3.
+- **Rótulo do teste 25 da verificação** ("S1" deveria ser "R1 (S1/S2 ativas)"): só texto.
+- **Verificações 8 e 11 do SQL por `prosrc like`:** frágeis a reformatação do corpo da função.
+- **Legado com pedido atrasado não vira "não chega" quando `compras` é null** (`_lib/material.ts`): o dado do legado vem de
+  outra leitura; reavaliar. Impacto: some um aviso enquanto o Compras está fora do ar.
+- ~~**Prazo gravado com o padrão de 9 dias se a RPC de prazos falhar**~~ e ~~**`lerPrazosCompras` com erro cai em 9 dias →
+  "Pedir hoje" prematuro**~~ — **resolvidos na revisão final (03/11):** erro de leitura devolve `null`; a restrição é
+  gravada com `prazo: null` e os avisos "sem resposta"/"pedir" somem até a leitura voltar.
+- **Faltam testes de desfazer sem acesso e de erro não-23505 no "não precisa"** (`lookahead/__tests__`).
+- **Sem teste da regra "restrição manda sobre não precisa" nem de `?restricao=`** (`lookahead/page.tsx:1143-1162`).
+- **Seção da restrição selecionada fica sem conteúdo se a atividade não está no cronograma vigente** (`lookahead/page.tsx:1173`).
+- **Trilha sem "Ligar a um pedido existente" e sem "Replanejar"** (previstos no mockup): a ligação manual antiga segue na
+  tela da restrição.
+- **`lerAvisosMaterial` fora do `Promise.all` do painel** (`obras/[id]/page.tsx:73`): leitura em série, um pouco mais de latência.
+- **Sem limite de alertas de material na faixa do painel:** os "sem resposta" já viram um alerta só (revisão final, 03/11);
+  "pedir"/"não chega"/"parada" seguem um por aviso e ainda podem alongar a faixa.
+- **Foco não vai ao textarea "Qual material?"** ao tocar em "Precisa".
+- **"Não precisa" e restrição material podem coexistir:** a tela mostra a restrição (ela manda); a resposta antiga fica no banco.
+- **Duplo clique em "Precisa":** a tela desabilita o botão ao enviar, mas não há unique no banco; duas sessões ainda poderiam criar duas restrições.
+- ~~**Mensagens do Faseamento ainda dizem "Dados da obra" para a atividade-trava**~~ — **resolvido (03/11):** a action
+  diz "Configurações" e o erro da rpc é traduzido para "Configurações". A mensagem crua do banco
+  (`sdd-sql-obras-leva6b.sql`) ainda diz "Dados da obra"; mudar exigiria SQL, e o usuário não a vê mais.
+- **Pedido com situação `falha` conta como pedido** (`_lib/material.ts`, avisos e trilha): a solicitação com um pedido que
+  falhou no Omie sai de "parada" e passa a ser julgada pela previsão do pedido. Impacto: um "parada" pode não aparecer.
+- **`pedirAte` só é o inverso exato do `somarDiasDeExpediente` do Compras quando o início cai em dia de expediente**
+  (`_lib/material.ts`): início num dia fora do expediente (ex.: sábado, com expediente seg–sex) dá um "pedir até" **um
+  dia de expediente mais tarde** que o necessário — pedindo nesse dia, o Compras calcula a chegada para o primeiro dia de
+  expediente depois do início. Impacto: raro (início fora do expediente do Compras) e de um dia.

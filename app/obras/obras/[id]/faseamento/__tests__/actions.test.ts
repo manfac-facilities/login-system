@@ -139,7 +139,10 @@ describe('schemas da Task 2 antes de gravar', () => {
   })
   it('trava ligada sem atividade-trava na obra é recusada', async () => {
     b.db.obras_obra[0].atividade_trava = null
-    expect((await salvarRascunhoAction(R0, entrada({ usaTrava: true }))).ok).toBe(false)
+    expect(await salvarRascunhoAction(R0, entrada({ usaTrava: true }))).toEqual({
+      ok: false,
+      erro: 'A obra não tem atividade-trava definida: desligue a trava ou peça ao administrador para defini-la em Configurações',
+    })
     expect(r0().usa_trava).toBe(false)
   })
 })
@@ -174,14 +177,14 @@ describe('emitir e nova revisão', () => {
     expect(r0().regras).toEqual(['Nenhuma demolição antes do escoramento.'])
     expect((await emitirRevisaoAction(R0)).ok).toBe(false)
   })
-  it('erro da rpc vira pt-BR (trava sem atividade)', async () => {
+  it('erro da rpc vira pt-BR (trava sem atividade) e aponta Configurações, onde a trava fica hoje', async () => {
     b.erro['rpc.obras_emitir_fase_revisao'] = {
       message: 'OBRAS_FASEAMENTO: a obra não tem atividade-trava definida; desligue a regra de trava ou defina a atividade em Dados da obra',
       code: '23514',
     }
     expect(await emitirRevisaoAction(R0)).toEqual({
       ok: false,
-      erro: 'A obra não tem atividade-trava definida; desligue a regra de trava ou defina a atividade em Dados da obra',
+      erro: 'A obra não tem atividade-trava definida; desligue a regra de trava ou defina a atividade em Configurações',
     })
   })
   it('nova revisão copia a última emitida e nasce em rascunho R1', async () => {

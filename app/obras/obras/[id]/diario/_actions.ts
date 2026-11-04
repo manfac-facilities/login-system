@@ -21,10 +21,11 @@ import { createClient } from '@/lib/supabase/server'
 import { hasSystemAccess } from '@/lib/auth/systemAccess'
 import { isAdmin } from '@/lib/auth/roles'
 import { hojeISO } from '../../../_lib/tipos'
-import { lerObraGrande } from '../../_lib/leitura'
+import { lerAvisosMaterial, lerObraGrande, lerRestricoes } from '../../_lib/leitura'
 import { podeIniciar } from '../../_lib/cronograma'
 import { diasUteisEntre } from '../../_lib/calendario'
 import { montarEmailDiario, type RdoCompleto } from '../../_lib/email-diario'
+import type { AvisoMaterial } from '../../_lib/material'
 import { enviarEmail } from '../../_lib/enviar'
 import { linkPortalObra } from '../../_lib/link-portal'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -537,6 +538,16 @@ export async function validarEEnviarAction(
   }
   const diaN = diasUteisEntre(obra.data_base ?? data, data, relida.dados.feriados)
 
+  // Material antecipado: só no e-mail interno. Restrições não lidas → sem a seção (nunca aviso falso).
+  let materiais: AvisoMaterial[] | undefined
+  if (pendentes.interno.length && relida.dados.calc) {
+    const restR = await lerRestricoes(supabase, obraId)
+    if (restR.ok) {
+      const hoje = hojeISO()
+      materiais = await lerAvisosMaterial(supabase, obraId, { atividades: relida.dados.calc.atividades, restricoes: restR.restricoes, hoje })
+    }
+  }
+
   let enviados = 0
   let clienteRecebeu = false
   const falhas: string[] = []
@@ -547,6 +558,7 @@ export async function validarEEnviarAction(
     const msg = montarEmailDiario({
       lado, obra: relida.dados, rdo: rdoCompleto, validadoPor, validadoEm, diaN, fotosCid, fotosOmitidas,
       linkObra: linkPortalObra(),
+      materiais: lado === 'interno' ? materiais : undefined,
     })
     const r = await enviarEmail({ para, ...msg, anexos })
     enviados += r.aceitos.length
