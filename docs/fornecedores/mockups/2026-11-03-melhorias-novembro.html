@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fornecedores · melhorias nov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Tokens = os da app (app/globals.css + components/ui/ui.css). A app é só tema escuro. */
+:root{
+  --fundo:#0a1628; --navy:#0d2050; --laranja:#f05a28; --secundario:#94a3b8; --borda:#1e3a5f;
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --info:#60a5fa; --deep:#081226;
+  --mut:#94a3b8; --dim:#64748b; --ac:#f05a28; --bd:#1e3a5f; --navy-c:#0d2050; --global:#a78bfa;
+  --texto:#ffffff; --label:#4a6080;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark; } }
+:root[data-theme="dark"]{ color-scheme:dark; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--fundo);color:var(--texto);font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;font-size:14px}
+.mono,code{font-family:"Geist Mono",ui-monospace,Consolas,monospace}
+button,input,select,textarea{font:inherit;color:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+a{color:inherit}
+.pagina{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 14px;max-width:860px}
+.jump{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 22px}
+.jump a{background:var(--deep);border:1px solid var(--bd);color:var(--mut);border-radius:999px;padding:5px 11px;font-size:12.5px;text-decoration:none}
+.jump a:hover{color:#fff;border-color:var(--mut)}
+.jump a b{color:var(--ac);margin-right:4px}
+
+/* seção do mockup */
+.secao{border-top:1px solid var(--bd);padding:26px 0 8px;scroll-margin-top:10px}
+.secao>h2{font-size:18px;margin:0 0 6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.secao>h2 .n{color:var(--ac);font-family:"Geist Mono",monospace}
+.mudou{border-left:3px solid var(--ac);background:var(--deep);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13.5px;margin:0 0 10px;max-width:900px}
+.mudou b{color:var(--ac)}
+.hoje{font-size:12.5px;color:var(--mut);margin:0 0 14px;max-width:900px}
+.hoje b{color:#cbd5e1}
+.ctl-linha{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;margin:0 0 12px}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl>span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;color:var(--mut);border:0;padding:7px 12px;font-size:13px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--bd)}
+.seg button:hover{background:var(--bd);color:#fff}
+.seg button[aria-pressed="true"]{background:var(--ac);color:#fff}
+.moldura{border:1px dashed #2b4a73;border-radius:12px;padding:16px;background:var(--fundo)}
+.moldura>.tag{display:inline-block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--label);margin-bottom:10px}
+.grade2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start}
+.grade-campos{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.campo-g{display:flex;flex-direction:column;gap:4px;min-width:0}
+.novo{outline:1px solid color-mix(in srgb,var(--ac) 70%,transparent);outline-offset:6px;border-radius:6px;position:relative}
+.selo-novo{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;background:var(--ac);color:#fff;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:middle;line-height:16px}
+.escondido{display:none !important}
+.nota{font-size:12.5px;color:var(--mut);margin:10px 0 0}
+.nota b{color:#cbd5e1}
+
+/* ---- components/ui/ui.css (copiado) ---- */
+.pill{--c:var(--mut);display:inline-flex;align-items:center;gap:5px;border:1px solid var(--c);color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:500;white-space:nowrap;line-height:18px}
+.btn{cursor:pointer;border:1px solid var(--bd);background:transparent;color:inherit;border-radius:8px;padding:8px 14px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--mut)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.bad{border-color:color-mix(in srgb,var(--err) 70%,transparent);color:#fca5a5}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none}
+.btn.sm{padding:4px 10px;font-size:12px}
+.box{background:var(--navy-c);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.state{padding:38px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.state h4{margin:0;font-size:15px}
+.state p{margin:0;max-width:440px;color:var(--mut);font-size:13px}
+.state .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--deep);border:1px solid var(--bd);color:var(--mut)}
+.state.err{background:color-mix(in srgb,var(--err) 7%,var(--navy-c))}
+.state.err .ico{border-color:var(--err);color:var(--err)}
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--bd);border-radius:10px;padding:11px 14px;background:var(--deep);font-size:13px}
+.banner.ok{border-color:color-mix(in srgb,var(--ok) 60%,transparent);background:color-mix(in srgb,var(--ok) 9%,var(--navy-c))}
+.banner.warn{border-color:color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 8%,var(--navy-c))}
+.banner.bad{border-color:color-mix(in srgb,var(--err) 60%,transparent);background:color-mix(in srgb,var(--err) 9%,var(--navy-c))}
+.banner .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--mut)}
+.banner.ok .dot{background:var(--ok)}.banner.warn .dot{background:var(--warn)}.banner.bad .dot{background:var(--err)}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--deep);border:1px solid var(--bd)}
+.bar i{display:block;height:100%}
+.tr{display:grid;grid-template-columns:var(--cols);gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--bd)}
+.tr:last-child{border-bottom:0}
+.tr.head{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);padding-top:9px;padding-bottom:9px;background:var(--deep)}
+.td{min-width:0}
+.td.r{text-align:right}
+.campo{width:100%;background:var(--deep);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:inherit}
+.campo:focus{outline:none;border-color:var(--ac)}
+.campo[aria-invalid="true"]{border-color:var(--err)}
+.campo[disabled]{opacity:.45;cursor:not-allowed}
+@media (max-width:1100px){
+  .tr.head{display:none}
+  .tr{grid-template-columns:1fr 1fr !important;gap:8px 14px;padding:14px 16px}
+  .td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:1px}
+  .td.full{grid-column:1/-1}
+  .td.r{text-align:left}
+}
+/* ---- contratos/novo/_contrato.css (copiado) ---- */
+.rotulo{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.dica{font-size:12px;color:var(--mut);margin:0}
+.erro-campo{font-size:12.5px;color:#fca5a5;margin:0}
+.codigo{font-family:"Geist Mono",ui-monospace,monospace;font-size:12px;background:var(--deep);border:1px solid var(--bd);border-radius:5px;padding:1px 6px}
+.cartao{display:flex;flex-direction:column;gap:3px;background:var(--deep);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{cursor:pointer;border:1px solid var(--bd);background:transparent;color:inherit;border-radius:999px;padding:5px 12px;font-size:12.5px;display:inline-flex;gap:6px;align-items:center;text-decoration:none}
+.chip.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 16%,transparent);color:#fff}
+.chip .n{font-size:11px;color:var(--mut)}
+.chip .ck{display:inline-block;width:13px;height:13px;border:1px solid var(--mut);border-radius:3px;font-size:10px;line-height:11px;text-align:center}
+.chip.on .ck{background:var(--ac);border-color:var(--ac);color:#fff}
+.previa{display:grid;grid-template-columns:minmax(0,1fr) 70px 110px;gap:8px;padding:7px 12px;border-bottom:1px solid var(--bd)}
+.previa:last-child{border-bottom:0}
+.previa.cab{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);background:var(--deep)}
+.previa.soma{font-weight:600}
+.previa .r{text-align:right}
+.tabp{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.8fr) minmax(0,.8fr) 32px;gap:6px;align-items:center}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--navy-c);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.kpi b{font-size:17px}
+.mini{height:5px;border-radius:3px;background:var(--deep);border:1px solid var(--bd);overflow:hidden;margin-top:3px}
+.mini i{display:block;height:100%;background:var(--info)}
+.papel{background:#f8fafc;color:#0d2050;border-radius:6px;padding:28px 30px;font-family:Georgia,"Times New Roman",serif;font-size:13.5px;line-height:1.6;max-width:820px;margin:0 auto}
+.papel .ph{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0d2050;padding-bottom:10px;margin-bottom:16px;font-family:"Geist",sans-serif;gap:10px;flex-wrap:wrap}
+.papel .ph b{font-size:18px;letter-spacing:.06em}
+.papel .ph .o{color:#f05a28}
+.papel h5{font-family:"Geist",sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 4px;color:#0d2050}
+.papel p{margin:0 0 6px}
+.papel mark{background:#fed7aa;color:#7c2d12;padding:0 2px;border-radius:2px}
+@media (max-width:600px){.papel{padding:18px 16px}.tabp{grid-template-columns:1fr 1fr}}
+
+/* pedaços em Tailwind na app, reescritos aqui */
+.cab-cartao{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid var(--bd);padding:12px 16px}
+.corpo-cartao{padding:14px 16px;font-size:13.5px}
+.rodape-cartao{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;border-top:1px solid var(--bd);padding:12px 16px}
+.espera{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--bd);border-radius:8px;background:var(--fundo);padding:12px 14px;color:var(--mut);font-size:13px;margin:0 16px 14px}
+.espera b{color:#fff}
+.etapas{display:flex;flex-wrap:wrap;list-style:none;margin:4px 0 0;padding:0}
+.etapas li{flex:1;min-width:110px;display:flex;align-items:center;gap:8px;border:1px solid var(--bd);padding:7px 10px;font-size:12px;background:var(--fundo);color:var(--mut)}
+.etapas li:first-child{border-radius:8px 0 0 8px}.etapas li:last-child{border-radius:0 8px 8px 0}
+.etapas li .b{width:20px;height:20px;border-radius:50%;border:1px solid var(--bd);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.etapas li.feito{color:#fff}.etapas li.feito .b{background:var(--ok);border-color:var(--ok);color:#06210f}
+.etapas li.agora{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);color:#fff}
+.etapas li.agora .b{background:var(--ac);border-color:var(--ac);color:#fff}
+.lista-p{list-style:none;margin:6px 0 0;padding:0;border:1px solid var(--bd);border-radius:6px;font-size:12px}
+.lista-p li{display:flex;justify-content:space-between;gap:12px;padding:6px 10px;border-bottom:1px solid var(--bd)}
+.lista-p li:last-child{border-bottom:0}
+.caixa-cond{border:1px solid var(--bd);border-radius:6px;padding:10px;font-size:13px}
+.caixa-cond ul{list-style:none;margin:6px 0 0;padding:0;font-size:12px;display:grid;gap:2px}
+.t-sec{color:var(--mut)}.t-xs{font-size:12px}.b6{font-weight:600}
+.r-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:500;margin:14px 0 6px}
+.extenso{border:1px solid color-mix(in srgb,var(--ac) 60%,transparent);border-radius:10px;background:var(--deep);padding:12px 14px}
+.extenso .frase{font-size:13.5px;margin:0 0 10px}
+.tab-ext{width:100%;border-collapse:collapse;font-size:12.5px}
+.tab-ext th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);font-weight:500}
+.tab-ext td{padding:7px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
+.tab-ext tr:last-child td{border-bottom:0}
+.tab-ext .r{text-align:right;white-space:nowrap}
+.tab-ext tfoot td{font-weight:600;border-top:1px solid var(--bd)}
+.scroll-x{overflow-x:auto}
+
+/* app shell (menu lateral) */
+.shell{display:flex;border:1px solid var(--bd);border-radius:12px;overflow:hidden;min-height:430px}
+.lado{width:220px;flex:none;background:var(--navy);border-right:1px solid var(--bd);padding:14px 8px}
+.lado h3{font-size:14.5px;margin:2px 8px 2px}
+.lado .volta{font-size:12px;color:var(--mut);margin:0 8px 10px;display:block}
+.lado .g{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--label);padding:10px 8px 4px}
+.lado .it{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;font-size:13px;color:#cbd5e1}
+.lado .it.on{background:color-mix(in srgb,var(--ac) 16%,transparent);color:#fff;box-shadow:inset 2px 0 0 var(--ac)}
+.lado .selo{background:var(--ac);color:#fff;border-radius:999px;font-size:11px;padding:0 7px;line-height:17px}
+.lado .quem{font-size:12px;color:var(--mut);margin:16px 8px 0;border-top:1px solid var(--bd);padding-top:10px}
+.conteudo{flex:1;min-width:0;padding:16px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:760px){.shell{flex-direction:column}.lado{width:auto;border-right:0;border-bottom:1px solid var(--bd)}.lado .itens{display:flex;flex-wrap:wrap;gap:4px}.lado .g{width:100%}}
+
+/* e-mail */
+.email-cx{background:#e5e7eb;border-radius:10px;padding:14px}
+.email{background:#fff;color:#1a1a1a;border-radius:6px;max-width:680px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;font-size:14px;overflow:hidden}
+.email .cabe{background:#f4f6f8;border-bottom:1px solid #d1d5db;padding:10px 14px;font-size:12.5px;color:#374151;line-height:1.6}
+.email .cabe b{color:#111}
+.email .miolo{padding:14px 16px}
+.email p{margin:0 0 10px}
+.email table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 12px}
+.email th{text-align:left;color:#555;font-weight:normal;border-bottom:1px solid #d1d5db;padding:5px 4px;font-size:12px}
+.email td{border-bottom:1px solid #e5e7eb;padding:6px 4px;vertical-align:top}
+.email a{color:#1d4ed8}
+.email .parado{color:#b45309;font-weight:bold;white-space:nowrap}
+.email .rod{font-size:11.5px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:8px;margin-top:6px}
+@media (max-width:560px){.email table thead{display:none}.email table tr{display:block;border-bottom:1px solid #e5e7eb;padding:6px 0}.email table td{display:block;border:0;padding:1px 4px}}
+
+/* suposições */
+.sups{display:grid;gap:10px}
+.sup{border:1px solid var(--bd);border-radius:10px;background:var(--navy-c);padding:12px 14px}
+.sup h4{margin:0 0 4px;font-size:14px;display:flex;gap:8px;align-items:baseline}
+.sup h4 .n{color:var(--warn);font-family:"Geist Mono",monospace;font-size:12.5px}
+.sup p{margin:0;font-size:13px;color:#cbd5e1}
+.sup .veto{margin-top:6px;font-size:12.5px;color:var(--mut)}
+.sup .veto b{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="pagina">
+  <h1>Gestão de Fornecedores · melhorias de novembro</h1>
+  <p class="sub">Mockup interativo dos 7 itens aprovados em 03/11, desenhado em cima das telas de hoje (mesmos rótulos, campos e cores da app). Laranja contornado = o que é novo. Feedback por seção, pelo número, no WhatsApp.</p>
+  <nav class="jump" aria-label="Seções">
+    <a href="#s1"><b>1</b>Preço fixo no global</a>
+    <a href="#s2"><b>2</b>Vigência em meses</a>
+    <a href="#s3"><b>3</b>Resumo diário</a>
+    <a href="#s4"><b>4</b>Papel Consulta</a>
+    <a href="#s5"><b>5</b>Escopo e tipo de serviço</a>
+    <a href="#s6"><b>6</b>Janela do dia 25</a>
+    <a href="#s7"><b>7</b>Condição por extenso</a>
+    <a href="#s8"><b>8</b>Suposições</a>
+  </nav>
+
+  <!-- ===================================================== 1 -->
+  <section class="secao" id="s1">
+    <h2><span class="n">1</span> Novo contrato global: preço fixo por serviço</h2>
+    <p class="mudou"><b>O que mudou:</b> a tabela de preços deixa de depender da condição de pagamento. Uma pergunta própria ("Tem preço fixo por serviço?") decide se há tabela; a condição de pagamento vira um bloco separado e <code>SPOT_TABELA_FIXA</code> sai da lista para contratos novos.</p>
+    <p class="hoje"><b>Hoje:</b> a tabela só aparece se a condição escolhida for <code>SPOT_TABELA_FIXA</code> (que é a sugerida do Spot global). Preço e prazo de pagamento ficam misturados numa escolha só. Os contratos que já usam <code>SPOT_TABELA_FIXA</code> continuam funcionando como estão.</p>
+
+    <div class="ctl-linha">
+      <div class="ctl"><span>Ver</span>
+        <div class="seg" data-grupo="s1ver">
+          <button type="button" data-v="hoje">Hoje</button>
+          <button type="button" data-v="depois" aria-pressed="true">Com a mudança</button>
+        </div>
+      </div>
+      <div class="ctl"><span>Classificação</span>
+        <div class="seg" data-grupo="s1cls">
+          <button type="button" data-v="spot" aria-pressed="true">Spot</button>
+          <button type="button" data-v="manutencao">Manutenção</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="moldura">
+      <span class="tag">Contratos › Novo contrato</span>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-bottom:14px">
+        <div class="b6" style="font-size:17px">Novo contrato <span class="t-sec" style="font-weight:400;font-size:13px">· o número (controle interno) aparece depois do primeiro salvamento</span></div>
+        <span class="pill">Rascunho</span>
+      </div>
+      <div class="grade2">
+        <div class="col">
+          <div class="campo-g">
+            <span class="rotulo">Fornecedor</span>
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--bd);border-radius:8px;background:var(--deep);padding:8px 12px">
+              <div><b>Hidro Pipa Transportes Ltda</b> <span class="pill" style="--c:#60a5fa">do Omie</span><div class="t-sec t-xs">CNPJ 23.481.977/0001-05</div></div>
+              <button type="button" class="btn sm">Trocar</button>
+            </div>
+          </div>
+          <div class="campo-g">
+            <span class="rotulo">Tipo de contrato</span>
+            <div class="chips"><button type="button" class="chip">Específico de uma obra</button><button type="button" class="chip on">Global (guarda-chuva)</button></div>
+            <p class="dica">Contrato global não tem obra vinculada. Serve para serviços sob demanda (caminhão pipa, desentupimento, dedetização, munck): um valor teto, e cada medição é um serviço dentro desse saldo.</p>
+          </div>
+          <div class="campo-g">
+            <span class="rotulo">Classificação</span>
+            <div class="chips" id="s1-chips-cls"><button type="button" class="chip on" data-cls="spot">Spot</button><button type="button" class="chip" data-cls="manutencao">Manutenção</button></div>
+          </div>
+          <div class="grade-campos">
+            <label class="campo-g"><span class="rotulo">Centro de custo</span><select class="campo"><option>OBRAS/SPOT</option><option>MANUTENÇÃO PREDIAL</option></select><span class="dica">Obrigatório em toda contratação. Centro de custo de OBRAS/SPOT: a obra/OS é escolhida em cada medição.</span></label>
+          </div>
+          <label class="campo-g"><span class="rotulo">Escopo do serviço</span><textarea class="campo" rows="3">Fornecimento de água potável por caminhão pipa para as lojas da região de Campinas, sob demanda, com entrega em até 6 horas do chamado.</textarea></label>
+
+          <!-- NOVO: pergunta do preço fixo -->
+          <div class="campo-g novo depois-so" id="s1-pergunta">
+            <span class="rotulo">Tem preço fixo por serviço? <span class="selo-novo">novo</span></span>
+            <div class="chips"><button type="button" class="chip on" data-pf="sim">Sim</button><button type="button" class="chip" data-pf="nao">Não</button></div>
+            <div id="s1-pf-sim">
+              <p class="dica" style="margin-bottom:8px">Cada medição escolhe um serviço desta tabela; o valor é preço × quantidade.</p>
+              <div class="campo-g" id="s1-tabela-depois"></div>
+            </div>
+            <div id="s1-pf-nao" class="escondido">
+              <div class="banner warn"><span class="dot"></span><div><b>Linha de serviço variável:</b> o valor é informado em cada medição. <div class="t-sec t-xs">Quem lança a medição descreve o serviço e digita o valor; o sistema só confere o saldo.</div></div></div>
+            </div>
+          </div>
+
+          <div class="grade-campos">
+            <div class="campo-g" id="s1-teto">
+              <span class="rotulo">Valor global (teto) <span id="s1-teto-obr" class="t-sec" style="text-transform:none;letter-spacing:0">· obrigatório</span></span>
+              <input class="campo mono" id="s1-teto-in" inputmode="numeric" value="R$ 30.000,00">
+              <span class="erro-campo escondido" id="s1-teto-erro">Informe o valor.</span>
+              <span class="dica">Saldo que as medições vão consumindo.</span>
+            </div>
+          </div>
+          <div class="grade-campos">
+            <label class="campo-g"><span class="rotulo">Início</span><input type="date" class="campo" value="2026-11-01"></label>
+            <label class="campo-g"><span class="rotulo">Fim</span><input type="date" class="campo" value="2027-10-31"></label>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="campo-g" id="s1-bloco-cond">
+            <span class="rotulo">Condição de pagamento <span class="selo-novo depois-so">bloco separado</span></span>
+            <p class="dica depois-so">Quando o Financeiro paga. Não muda o jeito de medir: isso é a pergunta do preço fixo.</p>
+            <div class="banner warn"><span class="dot"></span><div><div><b>Sugerida:</b> <code class="codigo" id="s1-sug-cod"></code></div><div class="t-sec t-xs" id="s1-porque" style="margin-top:4px"></div></div></div>
+            <select class="campo" id="s1-sel" aria-label="Condição de pagamento"></select>
+            <p class="dica">Pode trocar se o caso pedir. José confere as condições antes de o contrato valer.</p>
+            <div class="cartao" id="s1-card"></div>
+          </div>
+          <div id="s1-tabela-hoje" class="campo-g hoje-so"></div>
+          <div class="banner" id="s1-previa"><span class="dot"></span><div><b>Contrato global · sem parcelas fixas</b><div class="t-sec t-xs" id="s1-previa-txt"></div></div></div>
+          <p class="nota depois-so">Lista de condições para global, lida de <code>frn_condicoes</code> (permite_global = true), sem <code>SPOT_TABELA_FIXA</code>.</p>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button type="button" class="btn">Salvar rascunho</button><button type="button" class="btn">Gerar documento</button><button type="button" class="btn pri" id="s1-enviar">Enviar para aprovação</button>
+      </div>
+      <p class="erro-campo escondido" id="s1-faltas" role="alert" style="margin-top:8px;text-align:right"></p>
+    </div>
+
+    <h3 style="font-size:15px;margin:22px 0 8px">A medição de um contrato global</h3>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Contrato</span>
+        <div class="seg" data-grupo="s1med">
+          <button type="button" data-v="var" aria-pressed="true">Sem preço fixo · CT-0031</button>
+          <button type="button" data-v="fixo">Com preço fixo · CT-0027</button>
+        </div>
+      </div>
+    </div>
+    <div class="moldura">
+      <span class="tag">Medição › Nova medição</span>
+      <div class="grade2">
+        <div class="col">
+          <section class="box" style="padding:16px;display:grid;gap:12px">
+            <div class="b6" id="s1m-tit"></div>
+            <div class="grade-campos">
+              <div><div class="t-sec" style="font-size:12px">Valor total</div><div class="b6 mono" style="font-size:16px" id="s1m-total"></div></div>
+              <div><div class="t-sec" style="font-size:12px">Já medido</div><div class="b6 mono" style="font-size:16px" id="s1m-medido"></div></div>
+              <div><div class="t-sec" style="font-size:12px">Saldo</div><div class="b6 mono" style="font-size:16px" id="s1m-saldo"></div></div>
+            </div>
+          </section>
+          <section class="box" style="padding:16px;display:grid;gap:12px">
+            <div id="s1m-var" class="grade-campos">
+              <label class="campo-g"><span class="rotulo">Serviço executado</span><input class="campo" value="Desentupimento de rede de esgoto, 12 m, com hidrojato"></label>
+              <label class="campo-g"><span class="rotulo">Data do serviço</span><input type="date" class="campo" value="2026-11-18"></label>
+              <label class="campo-g"><span class="rotulo">Valor (R$)</span><input class="campo mono" id="s1m-valor" inputmode="numeric" value="R$ 1.850,00"></label>
+            </div>
+            <div id="s1m-fixo" class="grade-campos escondido">
+              <label class="campo-g"><span class="rotulo">Serviço da tabela</span><select class="campo" id="s1m-serv"></select></label>
+              <label class="campo-g"><span class="rotulo">Quantidade</span><input class="campo" id="s1m-qtd" inputmode="decimal" value="3"></label>
+              <label class="campo-g"><span class="rotulo">Data do serviço</span><input type="date" class="campo" value="2026-11-18"></label>
+              <div style="align-self:end;font-size:13px">Valor: <b class="mono" id="s1m-calc"></b> <span class="t-sec">(preço × quantidade)</span></div>
+            </div>
+            <p class="dica" id="s1m-dica"></p>
+          </section>
+        </div>
+        <aside class="col">
+          <section class="box" style="padding:16px;display:grid;gap:10px">
+            <div class="b6">Acumulado</div>
+            <div class="bar"><i id="s1m-b1" style="background:var(--info)"></i><i id="s1m-b2" style="background:var(--warn)"></i></div>
+            <div style="font-size:13px" id="s1m-acum"></div>
+            <div class="banner bad escondido" id="s1m-bloq"><span class="dot"></span><div id="s1m-bloq-txt"></div></div>
+          </section>
+          <section class="box" style="padding:16px;font-size:13px"><div>Condição desta medição: <b>Spot padrão · único</b></div><div class="t-sec">O Financeiro programa D+15 da aprovação.</div></section>
+          <button type="button" class="btn pri" id="s1m-btn">Enviar medição para aprovação</button>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 2 -->
+  <section class="secao" id="s2">
+    <h2><span class="n">2</span> Vigência: data de fim ou duração em meses</h2>
+    <p class="mudou"><b>O que mudou:</b> ao lado de "Início", a pessoa escolhe como informar o fim: pela data, como hoje, ou por uma duração em meses. Nos meses, o sistema calcula o fim ao vivo, e o documento do contrato mostra as duas coisas.</p>
+    <p class="hoje"><b>Hoje:</b> só existem os campos "Início" e "Fim" (datas). O documento diz "Vigência de {início} a {fim}."</p>
+    <div class="moldura">
+      <span class="tag">Novo contrato › vigência</span>
+      <div class="grade2">
+        <div class="col">
+          <div class="grade-campos">
+            <label class="campo-g"><span class="rotulo">Início</span><input type="date" class="campo" id="s2-ini" value="2026-11-01"></label>
+            <div class="campo-g novo">
+              <span class="rotulo">Como informar o fim <span class="selo-novo">novo</span></span>
+              <div class="chips"><button type="button" class="chip" data-vm="data">Data de fim</button><button type="button" class="chip on" data-vm="meses">Duração em meses</button></div>
+            </div>
+          </div>
+          <div class="grade-campos">
+            <label class="campo-g escondido" id="s2-cx-fim"><span class="rotulo">Fim</span><input type="date" class="campo" id="s2-fim" value="2027-10-31"></label>
+            <label class="campo-g" id="s2-cx-meses"><span class="rotulo">Duração (meses)</span><input type="number" class="campo" id="s2-meses" min="1" max="36" step="1" value="12"><span class="erro-campo escondido" id="s2-meses-erro">De 1 a 36 meses.</span></label>
+            <div class="campo-g" id="s2-cx-calc"><span class="rotulo">Fim calculado</span><div class="campo mono" style="background:transparent;border-style:dashed" id="s2-fim-calc" aria-live="polite"></div></div>
+          </div>
+          <div class="cartao" id="s2-regra">
+            <b>Regra do cálculo</b>
+            <span class="t-sec t-xs">O fim é a <b style="color:#fff">véspera do mesmo dia, N meses depois</b>. Se esse dia não existe no mês (ex.: 31 em fevereiro), o fim é o último dia daquele mês.</span>
+            <ul class="t-xs" style="margin:6px 0 0;padding-left:18px">
+              <li>01/11/2026 + 12 meses → <b>31/10/2027</b></li>
+              <li>15/11/2026 + 12 meses → <b>14/11/2027</b></li>
+              <li>31/01/2027 + 1 mês → <b>28/02/2027</b></li>
+              <li>01/03/2027 + 6 meses → <b>31/08/2027</b></li>
+            </ul>
+          </div>
+          <div class="banner warn escondido" id="s2-aviso-mensal"><span class="dot"></span><div><b>Atenção na medição mensal.</b> <span id="s2-aviso-txt"></span></div></div>
+        </div>
+        <div class="col">
+          <span class="rotulo">Como sai no documento do contrato</span>
+          <div class="papel">
+            <div class="ph"><div><b>MAN<span class="o">FAC</span></b><div style="font-size:11px">Facilities</div></div><div style="font-size:11.5px;text-align:right">CONTRATO DE PRESTAÇÃO DE SERVIÇOS<br><b style="font-size:13px;letter-spacing:0">CT-0034</b></div></div>
+            <h5>Cláusula 2 — Valor e prazo</h5>
+            <p>Valor: R$ 48.000,00.</p>
+            <p id="s2-doc"></p>
+          </div>
+          <p class="nota">Com "Data de fim", o documento continua como hoje (só as datas).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 3 -->
+  <section class="secao" id="s3">
+    <h2><span class="n">3</span> E-mail de resumo diário das aprovações paradas</h2>
+    <p class="mudou"><b>O que mudou:</b> todo dia útil às 8h, quem tem aprovação esperando por ele recebe <b>um</b> e-mail com a lista: contratos e aditivos aguardando, há quantos dias, e o link. Sem pendência, não envia.</p>
+    <p class="hoje"><b>Hoje:</b> o e-mail sai uma vez só, na hora do evento ("CT-0034 aguarda sua aprovação"). Se ninguém abrir, nada lembra depois; só o selo do menu.</p>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Caixa de entrada de</span>
+        <div class="seg" data-grupo="s3">
+          <button type="button" data-v="eduardo" aria-pressed="true">Eduardo · contratações</button>
+          <button type="button" data-v="jose">José · condições de pagamento</button>
+          <button type="button" data-v="nada">Dia sem pendência</button>
+        </div>
+      </div>
+    </div>
+    <div class="email-cx">
+      <div class="email" id="s3-email"></div>
+    </div>
+    <p class="nota">Envio: segunda a sexta, 8h (Brasília). Feriado conta como dia útil, igual à regra que o sistema já usa nos prazos. "Parado há" conta a partir de quando o item chegou na etapa da pessoa (para o José, desde a aprovação do Eduardo). Os e-mails avulsos de hoje continuam.</p>
+  </section>
+
+  <!-- ===================================================== 4 -->
+  <section class="secao" id="s4">
+    <h2><span class="n">4</span> Papel "Consulta"</h2>
+    <p class="mudou"><b>O que mudou:</b> um papel novo que vê todos os contratos e medições, de qualquer solicitante, e não vê nenhum botão de aprovar, devolver ou alterar. A Roberta (robertha.barbosa@manfac.com.br, a do Compras no hub) recebe esse papel.</p>
+    <p class="hoje"><b>Hoje:</b> quem não é Eduardo, José ou admin do hub só vê os contratos que ele mesmo criou. Por isso o contrato criado à mão não aparecia para a Roberta.</p>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Entrar como</span>
+        <div class="seg" data-grupo="s4">
+          <button type="button" data-v="consulta" aria-pressed="true">Consulta · Roberta</button>
+          <button type="button" data-v="aprovador">Aprovador · Eduardo</button>
+          <button type="button" data-v="solicitante">Solicitante</button>
+        </div>
+      </div>
+      <div class="ctl"><span>Tela</span>
+        <div class="seg" data-grupo="s4tela">
+          <button type="button" data-v="contratos" aria-pressed="true">Contratos</button>
+          <button type="button" data-v="aprov">Aprovações</button>
+          <button type="button" data-v="fila">Fila de aprovação</button>
+        </div>
+      </div>
+    </div>
+    <div class="shell">
+      <aside class="lado">
+        <h3>Gestão de Fornecedores</h3><span class="volta">← Voltar ao hub</span>
+        <div class="itens">
+          <div class="g">Contratação</div>
+          <div class="it" data-t="contratos">Contratos</div>
+          <div class="it" data-t="aprov">Aprovações <span class="selo" id="s4-selo-a">3</span></div>
+          <div class="g">Medição</div>
+          <div class="it">Nova medição</div>
+          <div class="it" data-t="fila">Fila de aprovação <span class="selo" id="s4-selo-f">2</span></div>
+          <div class="it">Acompanhamento</div>
+        </div>
+        <div class="quem" id="s4-quem"></div>
+      </aside>
+      <div class="conteudo" id="s4-conteudo"></div>
+    </div>
+    <div class="grade2" style="margin-top:14px">
+      <div class="cartao">
+        <b>Onde se concede</b>
+        <span class="t-sec t-xs">O Fornecedores <b style="color:#fff">não tem tela de papéis</b> (só Configurações › Condições de pagamento e Modelo de contrato). Eduardo, José e o configurador foram concedidos direto no banco. O Consulta segue o mesmo caminho: uma linha <code class="codigo">consulta</code> em <code class="codigo">frn_papeis</code> com o e-mail da Roberta. Nenhuma tela nova.</span>
+      </div>
+      <div class="cartao">
+        <b>O que o Consulta vê e não vê</b>
+        <ul class="t-xs" style="margin:4px 0 0;padding-left:18px">
+          <li>Vê: todos os contratos, aditivos, medições, a fila e o acompanhamento, o documento do contrato e os anexos.</li>
+          <li>Não vê: botões de aprovar, devolver, alterar condição ou homologar; o grupo Configurações; selos de "aguardando você".</li>
+          <li>Continua podendo o que qualquer pessoa logada já pode: criar o próprio contrato e lançar medição.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 5 -->
+  <section class="secao" id="s5">
+    <h2><span class="n">5</span> Lista de contratos: escopo e filtro por tipo de serviço</h2>
+    <p class="mudou"><b>O que mudou:</b> coluna nova "Escopo" (uma linha, completo ao clicar) e o filtro de classificação passa a aceitar <b>vários tipos de serviço ao mesmo tempo</b>.</p>
+    <p class="hoje"><b>Hoje:</b> o escopo não aparece na lista (só abrindo o contrato) e os chips de classificação escolhem um por vez ("Todas as classificações", "Só contratos globais", Spot, Manutenção…).</p>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Estado da tela</span>
+        <div class="seg" data-grupo="s5est">
+          <button type="button" data-v="dados" aria-pressed="true">Com dados</button>
+          <button type="button" data-v="vazio">Vazio por filtro</button>
+          <button type="button" data-v="erro">Erro ao carregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="moldura">
+      <span class="tag">Contratação › Contratos</span>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px"><div class="b6" style="font-size:17px">Contratos</div><button type="button" class="btn pri">+ Novo contrato</button></div>
+      <div id="s5-ok">
+        <div class="kpis" style="margin-bottom:12px">
+          <div class="kpi"><span>Contratado (ativos)</span><b class="mono">R$ 312.640,00</b></div>
+          <div class="kpi"><span>Medido</span><b class="mono">R$ 128.905,00</b></div>
+          <div class="kpi"><span>Pago</span><b class="mono">R$ 97.310,00</b></div>
+          <div class="kpi"><span>Saldo a medir</span><b class="mono">R$ 183.735,00</b></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
+          <input class="campo" style="max-width:520px;flex:1;min-width:200px" type="search" placeholder="Buscar por fornecedor, CNPJ ou nº do contrato" aria-label="Buscar contratos">
+          <span class="t-sec t-xs" id="s5-cont" aria-live="polite"></span>
+        </div>
+        <div class="chips" style="margin-bottom:8px" aria-label="Filtrar por status">
+          <span class="chip on">Todos <span class="n">8</span></span><span class="chip">Rascunho <span class="n">1</span></span><span class="chip">Aguardando <span class="n">2</span></span><span class="chip">Devolvido <span class="n">0</span></span><span class="chip">Aprovado <span class="n">5</span></span><span class="chip">Encerrado <span class="n">0</span></span>
+        </div>
+        <div class="novo" style="margin:14px 0 14px;padding:2px 0">
+          <div class="rotulo" style="margin-bottom:6px">Tipo de serviço <span class="selo-novo">vários de uma vez</span></div>
+          <div class="chips" id="s5-tipos"></div>
+        </div>
+      </div>
+      <div id="s5-tabela"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 6 -->
+  <section class="secao" id="s6">
+    <h2><span class="n">6</span> Janela de medição até o dia 25</h2>
+    <p class="mudou"><b>O que mudou:</b> do dia 26 ao fim do mês, a nova medição (e com ela o envio da NF) fica fechada, com o aviso "a janela reabre no dia 1º". Contrato emergencial continua liberado. O pagamento segue a condição do contrato, como hoje.</p>
+    <p class="hoje"><b>Hoje:</b> depois do dia 25 a medição é aceita e cai na competência do mês seguinte ("Após o corte do dia 25: entra em Dezembro."). Nada é bloqueado.</p>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Data de hoje (simulada)</span>
+        <div class="seg" data-grupo="s6data">
+          <button type="button" data-v="2026-11-20" aria-pressed="true">20/11</button>
+          <button type="button" data-v="2026-11-25">25/11</button>
+          <button type="button" data-v="2026-11-27">27/11</button>
+          <button type="button" data-v="2026-11-30">30/11</button>
+          <button type="button" data-v="2026-12-01">01/12</button>
+        </div>
+      </div>
+      <div class="ctl"><span>Contrato</span>
+        <div class="seg" data-grupo="s6ct">
+          <button type="button" data-v="normal" aria-pressed="true">CT-0027 · Spot global</button>
+          <button type="button" data-v="emerg">CT-0036 · Emergencial</button>
+        </div>
+      </div>
+    </div>
+    <div class="moldura">
+      <span class="tag">Medição › Nova medição</span>
+      <div class="banner bad novo escondido" id="s6-fechada" style="margin-bottom:14px"><span class="dot"></span><div><b>A janela de medição deste mês fechou no dia 25.</b> Lançar medição e enviar NF ficam liberados até o dia 25 de cada mês. <b>A janela reabre no dia 1º</b> <span id="s6-reabre"></span>. <div class="t-sec t-xs" style="margin-top:3px">Contrato emergencial não segue essa janela.</div></div></div>
+      <div class="grade2">
+        <div class="col">
+          <section class="box" style="padding:16px;display:grid;gap:10px">
+            <div class="b6" id="s6-tit"></div>
+            <div class="grade-campos" id="s6-campos"></div>
+          </section>
+          <section class="box" style="padding:16px;display:grid;gap:12px">
+            <div class="b6">Documentos</div>
+            <div class="grade-campos">
+              <label class="campo-g"><span class="rotulo">NF (opcional)</span><input type="file" class="campo s6-trava" accept="application/pdf,image/jpeg,image/png"><span class="t-sec" style="font-size:12px">PDF, JPG ou PNG até 10 MB</span></label>
+              <label class="campo-g"><span class="rotulo">Evidência do serviço (obrigatória)</span><input type="file" class="campo s6-trava" accept="application/pdf,image/jpeg,image/png"><span class="t-sec" style="font-size:12px">PDF, JPG ou PNG até 10 MB</span></label>
+              <label class="campo-g"><span class="rotulo">Nº da NF (opcional)</span><input class="campo s6-trava"></label>
+            </div>
+          </section>
+        </div>
+        <aside class="col">
+          <div class="banner" id="s6-banner"><span class="dot"></span><div id="s6-banner-txt"></div></div>
+          <section class="box" style="padding:16px;font-size:13px"><div>Condição desta medição: <b id="s6-cond"></b></div><div class="t-sec" id="s6-cond2"></div></section>
+          <button type="button" class="btn pri" id="s6-btn"></button>
+          <div class="t-sec" style="font-size:12.5px" id="s6-sob"></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 7 -->
+  <section class="secao" id="s7">
+    <h2><span class="n">7</span> Aprovação de condição de pagamento: a condição por extenso</h2>
+    <p class="mudou"><b>O que mudou:</b> no cartão do José, a condição aparece escrita por extenso para aquele contrato: quantas parcelas, quando cada uma é liberada, quanto é em R$ e quando o Financeiro paga. Vale também para o aditivo de condição, que hoje mostra só o código.</p>
+    <p class="hoje"><b>Hoje:</b> o cartão de contrato mostra o nome da condição, os % com o gatilho e uma lista com % e R$, sem dizer quando o Financeiro paga cada parcela. O cartão de <b>aditivo de condição</b> mostra só "de → para" com código e nome, sem nenhum valor.</p>
+    <div class="ctl-linha">
+      <div class="ctl"><span>Ver</span>
+        <div class="seg" data-grupo="s7ver">
+          <button type="button" data-v="hoje">Hoje</button>
+          <button type="button" data-v="depois" aria-pressed="true">Com a mudança</button>
+        </div>
+      </div>
+      <div class="ctl"><span>Cartão</span>
+        <div class="seg" data-grupo="s7ct">
+          <button type="button" data-v="obra" aria-pressed="true">CT-0033 · obra 30/30/40</button>
+          <button type="button" data-v="mensal">CT-0034 · mensal 12 meses</button>
+          <button type="button" data-v="aditivo">CT-0019-3 · aditivo de condição</button>
+        </div>
+      </div>
+    </div>
+    <div class="moldura">
+      <span class="tag">Contratação › Aprovações (José)</span>
+      <article class="box" id="s7-cartao"></article>
+    </div>
+    <p class="nota"><b>Sobre o exemplo "30/60/90 dias":</b> o catálogo de condições (planilha Zeev) não tem parcelas por data. As parcelas são por etapa (mobilização, medição parcial, conclusão) e o prazo é "D+N após a aprovação da medição" ou "calendário financeiro". Datas por parcela só existem na medição mensal (segundo cartão). O extenso mostra exatamente isso.</p>
+  </section>
+
+  <!-- ===================================================== 8 -->
+  <section class="secao" id="s8">
+    <h2><span class="n">8</span> Suposições minhas</h2>
+    <p class="mudou"><b>O que é:</b> decisões que tomei sozinho para desenhar. Cada uma diz o que muda se você vetar.</p>
+    <div class="sups" id="s8-lista"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  function brl(c){ var neg=c<0; c=Math.abs(Math.round(c)); var r=Math.floor(c/100), cc=String(c%100).padStart(2,"0"); var s=String(r).replace(/\B(?=(\d{3})+(?!\d))/g,"."); return (neg?"- ":"")+"R$ "+s+","+cc; }
+  function pct(p){ return p.toFixed(2).replace(".",",")+"%"; }
+  function centavosDe(txt){ var d=String(txt).replace(/\D/g,""); return d? parseInt(d,10):0; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function dataBR(iso){ var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+  function mascara(input){ input.addEventListener("input",function(){ var c=centavosDe(input.value); input.value = c? brl(c) : ""; }); }
+  function seg(grupo, aoMudar){
+    var el=document.querySelector('.seg[data-grupo="'+grupo+'"]');
+    el.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return;
+      el.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed", x===b?"true":"false"); });
+      aoMudar(b.dataset.v); });
+    var on=el.querySelector('[aria-pressed="true"]'); return on? on.dataset.v : null;
+  }
+  function chips(container, attr, aoMudar){
+    container.addEventListener("click",function(e){ var b=e.target.closest("["+attr+"]"); if(!b) return;
+      container.querySelectorAll("["+attr+"]").forEach(function(x){ x.classList.toggle("on", x===b); x.setAttribute("aria-pressed", x===b); });
+      aoMudar(b.getAttribute(attr)); });
+  }
+
+  /* ---------------- catálogo real (002_frn_cadastros.sql, permite_global = true) ---------------- */
+  var CONDS = {
+    OBRA_MEDICAO_MENSAL:{nome:"Obra contínua · medição mensal", gatilho:"Medição mensal aprovada + NF", dias:null, modo:"mensal"},
+    SPOT_UNICO_D7:{nome:"Spot simples · único", gatilho:"Atendimento concluído + evidência + NF", dias:7, modo:"por_servico"},
+    SPOT_UNICO_D15:{nome:"Spot padrão · único", gatilho:"Atendimento concluído + NF aprovada", dias:15, modo:"por_servico"},
+    SPOT_MENSAL_CONSOLIDADO:{nome:"Spot recorrente · mensal consolidado", gatilho:"Fechamento mensal aprovado + NF consolidada", dias:null, modo:"consolidado"},
+    SPOT_TABELA_FIXA:{nome:"Spot com tabela de preço fixa", gatilho:"Serviço da tabela + evidência + NF", dias:null, modo:"tabela"},
+    EXCECAO_APROVACAO:{nome:"Exceção · fora do padrão", gatilho:"Conforme aprovação", dias:null, modo:"excecao"}
+  };
+  var ORDEM_HOJE = ["OBRA_MEDICAO_MENSAL","SPOT_UNICO_D7","SPOT_UNICO_D15","SPOT_MENSAL_CONSOLIDADO","SPOT_TABELA_FIXA","EXCECAO_APROVACAO"];
+  var ORDEM_DEPOIS = ORDEM_HOJE.filter(function(c){ return c!=="SPOT_TABELA_FIXA"; });
+  function prazoTexto(d){ if(d===null) return "O Financeiro programa pelo calendário financeiro"; if(d===0) return "O Financeiro programa na primeira janela de pagamento"; return "O Financeiro programa D+"+d; }
+
+  /* ================================================================ 1 */
+  var s1 = { ver:"depois", cls:"spot", pf:"sim", escolhida:null,
+    tabela:[{servico:"Caminhão pipa 15 m³",unidade:"viagem",preco:85000},{servico:"Caminhão pipa 8 m³",unidade:"viagem",preco:52000},{servico:"Hora de espera no local",unidade:"hora",preco:12000}] };
+  function s1Sug(){ if(s1.cls==="manutencao") return "OBRA_MEDICAO_MENSAL"; return s1.ver==="hoje" ? "SPOT_TABELA_FIXA" : "SPOT_MENSAL_CONSOLIDADO"; }
+  function s1Porque(){
+    if(s1.cls==="manutencao") return "Contrato global de manutenção: medição mensal.";
+    return s1.ver==="hoje" ? "Contrato global Spot: a tabela de preço fixa evita renegociar a cada atendimento. Se não houver tabela, use o mensal consolidado."
+      : "Contrato global Spot: os atendimentos do mês se acumulam e o fechamento vira uma medição só. Preço fixo, se houver, fica na tabela ao lado.";
+  }
+  function s1EditorTabela(){
+    var h='<span class="rotulo">Tabela de preços do contrato</span><div class="tabp t-sec t-xs"><span>Serviço</span><span>Unidade</span><span>Preço (R$)</span><span></span></div>';
+    s1.tabela.forEach(function(l,i){
+      h+='<div class="tabp"><input class="campo" data-i="'+i+'" data-k="servico" value="'+esc(l.servico)+'" placeholder="Ex.: Caminhão pipa 15 m³" aria-label="Serviço"><input class="campo" data-i="'+i+'" data-k="unidade" value="'+esc(l.unidade)+'" placeholder="viagem" aria-label="Unidade"><input class="campo mono" data-i="'+i+'" data-k="preco" inputmode="numeric" value="'+(l.preco?brl(l.preco):"")+'" aria-label="Preço"><button type="button" class="btn sm" data-rm="'+i+'" aria-label="Remover">×</button></div>';
+    });
+    h+='<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center"><button type="button" class="btn sm" data-add="1">+ Serviço</button><span class="dica">Na medição, quem pede escolhe o serviço e o valor vem daqui.</span></div>';
+    return h;
+  }
+  function s1LigarTabela(el){
+    el.oninput=function(e){ var t=e.target, i=t.dataset.i; if(i===undefined) return; var k=t.dataset.k;
+      if(k==="preco"){ var c=centavosDe(t.value); s1.tabela[i].preco=c; t.value=c?brl(c):""; } else s1.tabela[i][k]=t.value; };
+    el.onclick=function(e){ var b=e.target.closest("button"); if(!b) return;
+      if(b.dataset.rm!==undefined){ s1.tabela.splice(+b.dataset.rm,1); s1Render(); }
+      if(b.dataset.add){ s1.tabela.push({servico:"",unidade:"",preco:0}); s1Render(); } };
+  }
+  function s1Render(){
+    var depois = s1.ver==="depois";
+    document.querySelectorAll("#s1 .depois-so").forEach(function(x){ x.classList.toggle("escondido",!depois); });
+    document.querySelectorAll("#s1 .hoje-so").forEach(function(x){ x.classList.toggle("escondido",depois); });
+    var ordem = depois? ORDEM_DEPOIS : ORDEM_HOJE, sug=s1Sug();
+    if(s1.escolhida && ordem.indexOf(s1.escolhida)<0) s1.escolhida=null;
+    var atual = s1.escolhida || sug;
+    $("s1-sug-cod").textContent=sug; $("s1-porque").textContent=s1Porque();
+    $("s1-sel").innerHTML = ordem.map(function(c){ return '<option value="'+c+'"'+(c===atual?" selected":"")+'>'+c+(c===sug?" (sugerida)":"")+" — "+CONDS[c].nome+'</option>'; }).join("");
+    var k=CONDS[atual], trocada = s1.escolhida && s1.escolhida!==sug;
+    $("s1-card").innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><code class="codigo">'+atual+'</code>'+(trocada?'<span class="pill" style="--c:#f59e0b">trocada</span>':'<span class="pill" style="--c:#22c55e">sugerida</span>')+'</div><b>'+k.nome+'</b><div class="t-sec t-xs">'+(k.modo==="excecao"?"O Financeiro programa pelo prazo em dias da exceção (aprovado pelo José)":prazoTexto(k.dias))+'</div><div class="t-xs" style="margin-top:4px"><span class="t-sec">Gatilho:</span> '+k.gatilho+'</div>';
+    // tabela
+    var temTabela = depois ? (s1.pf==="sim") : (atual==="SPOT_TABELA_FIXA");
+    $("s1-pf-sim").classList.toggle("escondido", s1.pf!=="sim");
+    $("s1-pf-nao").classList.toggle("escondido", s1.pf!=="nao");
+    document.querySelectorAll('#s1-pergunta [data-pf]').forEach(function(x){ x.classList.toggle("on", x.dataset.pf===s1.pf); });
+    var alvoD=$("s1-tabela-depois"), alvoH=$("s1-tabela-hoje");
+    alvoD.innerHTML=""; alvoH.innerHTML="";
+    if(depois && s1.pf==="sim"){ alvoD.innerHTML=s1EditorTabela(); s1LigarTabela(alvoD); }
+    if(!depois && temTabela){ alvoH.innerHTML=s1EditorTabela(); s1LigarTabela(alvoH); }
+    // prévia
+    var teto=centavosDe($("s1-teto-in").value);
+    var como = temTabela ? "Cada medição é um serviço da tabela, com o preço dela."
+      : k.modo==="consolidado" ? "Os atendimentos do mês se acumulam e o fechamento mensal gera uma medição."
+      : depois ? "Cada medição é um serviço executado, com o valor informado na medição." : "Cada medição é um serviço executado.";
+    $("s1-previa-txt").textContent = como+" O sistema controla o saldo de "+(teto?brl(teto):"—")+".";
+    $("s1-teto-obr").textContent = depois && s1.pf==="nao" ? "· obrigatório (é o único limite do contrato)" : "· obrigatório";
+  }
+  s1.ver = seg("s1ver",function(v){ s1.ver=v; s1Render(); });
+  seg("s1cls",function(v){ s1.cls=v; s1.escolhida=null; document.querySelectorAll("#s1-chips-cls .chip").forEach(function(x){ x.classList.toggle("on",x.dataset.cls===v); }); s1Render(); });
+  chips($("s1-chips-cls"),"data-cls",function(v){ s1.cls=v; s1.escolhida=null; document.querySelectorAll('.seg[data-grupo="s1cls"] button').forEach(function(x){ x.setAttribute("aria-pressed",x.dataset.v===v); }); s1Render(); });
+  $("s1-pergunta").addEventListener("click",function(e){ var b=e.target.closest("[data-pf]"); if(!b) return; s1.pf=b.dataset.pf; s1Render(); });
+  $("s1-sel").addEventListener("change",function(e){ var c=e.target.value; s1.escolhida = c===s1Sug()? null : c; s1Render(); });
+  mascara($("s1-teto-in")); $("s1-teto-in").addEventListener("input",s1Render);
+  $("s1-enviar").addEventListener("click",function(){
+    var f=[]; if(!centavosDe($("s1-teto-in").value)) f.push("valor");
+    var depois=s1.ver==="depois"; var atual=s1.escolhida||s1Sug();
+    var precisaTab = depois ? s1.pf==="sim" : atual==="SPOT_TABELA_FIXA";
+    if(precisaTab && !s1.tabela.some(function(l){ return l.servico.trim()&&l.unidade.trim()&&l.preco>0; })) f.push("tabela de preços");
+    $("s1-teto-in").setAttribute("aria-invalid", f.indexOf("valor")>=0);
+    $("s1-teto-erro").classList.toggle("escondido", f.indexOf("valor")<0);
+    var el=$("s1-faltas"); el.classList.remove("escondido");
+    el.style.color = f.length? "" : "var(--ok)";
+    el.textContent = f.length ? "Faltam informações para enviar: "+f.join(", ")+"." : "Tudo certo para enviar (no mockup nada é gravado).";
+  });
+  s1Render();
+
+  /* medição do global */
+  var MED = {
+    var:{tit:"CT-0031 · Desentupidora Rápida ABC Ltda", sub:"Global · Spot padrão · único · sem preço fixo", total:2400000, medido:1735000},
+    fixo:{tit:"CT-0027 · Hidro Pipa Transportes Ltda", sub:"Global · Spot padrão · único · com preço fixo", total:3000000, medido:2210000}
+  };
+  var TAB27=[{s:"Caminhão pipa 15 m³",u:"viagem",p:85000},{s:"Caminhão pipa 8 m³",u:"viagem",p:52000},{s:"Hora de espera no local",u:"hora",p:12000}];
+  var s1m="var";
+  $("s1m-serv").innerHTML='<option value="">Escolha…</option>'+TAB27.map(function(l,i){ return '<option value="'+i+'"'+(i===0?" selected":"")+'>'+l.s+" — "+brl(l.p)+" / "+l.u+'</option>'; }).join("");
+  function s1mRender(){
+    var c=MED[s1m]; $("s1m-tit").innerHTML=esc(c.tit)+'<div class="t-sec" style="font-size:12.5px;font-weight:400">'+esc(c.sub)+'</div>';
+    $("s1m-total").textContent=brl(c.total); $("s1m-medido").textContent=brl(c.medido); $("s1m-saldo").textContent=brl(c.total-c.medido);
+    $("s1m-var").classList.toggle("escondido",s1m!=="var"); $("s1m-fixo").classList.toggle("escondido",s1m!=="fixo");
+    var v;
+    if(s1m==="var"){ v=centavosDe($("s1m-valor").value); $("s1m-dica").textContent="Linha de serviço variável: quem lança descreve o serviço e digita o valor. O sistema só confere o saldo."; }
+    else { var i=$("s1m-serv").value, q=parseFloat(String($("s1m-qtd").value).replace(",","."))||0; v = i===""? 0 : Math.round(TAB27[i].p*q); $("s1m-calc").textContent = v? brl(v):"—"; $("s1m-dica").textContent="Preço fixo: o valor vem da tabela do contrato e não pode ser digitado."; }
+    var a=c.medido/c.total*100, d=(c.medido+v)/c.total*100, estoura=c.medido+v>c.total;
+    $("s1m-b1").style.width=Math.min(a,100)+"%"; $("s1m-b2").style.width=Math.max(Math.min(d-a,100-a),0)+"%"; $("s1m-b2").style.background= estoura?"var(--err)":"var(--warn)";
+    $("s1m-acum").textContent=pct(a)+" → "+(v?pct(d):"—")+(v?" · esta medição "+brl(v):"");
+    $("s1m-bloq").classList.toggle("escondido",!estoura);
+    $("s1m-bloq-txt").textContent="Esta medição passa do saldo do contrato ("+brl(c.total-c.medido)+"). Para medir mais, peça um aditivo de valor.";
+    $("s1m-btn").disabled = !v || estoura;
+  }
+  seg("s1med",function(v){ s1m=v; s1mRender(); });
+  mascara($("s1m-valor"));
+  ["s1m-valor","s1m-qtd"].forEach(function(id){ $(id).addEventListener("input",s1mRender); });
+  $("s1m-serv").addEventListener("change",s1mRender);
+  s1mRender();
+
+  /* ================================================================ 2 */
+  function ultimoDia(a,m){ return new Date(Date.UTC(a,m+1,0)).getUTCDate(); } // m 0-based
+  function fimPorMeses(iso,n){
+    var p=iso.split("-").map(Number), a=p[0], m=p[1]-1, d=p[2];
+    var idx=m+n, ta=a+Math.floor(idx/12), tm=((idx%12)+12)%12;
+    var ud=ultimoDia(ta,tm), r;
+    if(d>ud) r=new Date(Date.UTC(ta,tm,ud));
+    else { r=new Date(Date.UTC(ta,tm,d)); r.setUTCDate(r.getUTCDate()-1); }
+    return r.toISOString().slice(0,10);
+  }
+  function mesesCalendario(ini,fim){ var a=ini.split("-").map(Number), b=fim.split("-").map(Number); return (b[0]-a[0])*12+b[1]-a[1]+1; }
+  var s2modo="meses";
+  function s2Render(){
+    var ini=$("s2-ini").value, meses=$("s2-meses").value, nm=parseInt(meses,10);
+    var porMeses = s2modo==="meses";
+    $("s2-cx-fim").classList.toggle("escondido",porMeses); $("s2-cx-meses").classList.toggle("escondido",!porMeses); $("s2-cx-calc").classList.toggle("escondido",!porMeses);
+    $("s2-regra").classList.toggle("escondido",!porMeses);
+    document.querySelectorAll("[data-vm]").forEach(function(x){ x.classList.toggle("on",x.dataset.vm===s2modo); });
+    var valido = ini && nm>=1 && nm<=36 && String(nm)===String(meses).trim();
+    $("s2-meses").setAttribute("aria-invalid", porMeses && !valido && !!ini);
+    $("s2-meses-erro").classList.toggle("escondido", !porMeses || valido || !ini);
+    var fim = porMeses ? (valido? fimPorMeses(ini,nm) : null) : $("s2-fim").value;
+    $("s2-fim-calc").textContent = fim? dataBR(fim) : "—";
+    var doc;
+    if(!ini || !fim) doc='Vigência de <span style="color:#94a3b8;font-style:italic">[a preencher]</span>.';
+    else if(porMeses) doc='Vigência de '+dataBR(ini)+' a '+dataBR(fim)+' <mark>('+nm+(nm===1?" mês":" meses")+')</mark>.';
+    else doc='Vigência de '+dataBR(ini)+' a '+dataBR(fim)+'.';
+    $("s2-doc").innerHTML=doc;
+    var aviso = porMeses && fim && ini.slice(8)!=="01";
+    $("s2-aviso-mensal").classList.toggle("escondido",!aviso);
+    if(aviso){ var mc=mesesCalendario(ini,fim); $("s2-aviso-txt").textContent="Com a condição de medição mensal, "+dataBR(ini)+" a "+dataBR(fim)+" toca "+mc+" meses do calendário, e o sistema gera uma parcela por mês do calendário: "+mc+" parcelas, não "+nm+". É a regra de hoje; só fica mais visível com a duração em meses."; }
+  }
+  $("s2-ini").addEventListener("input",s2Render); $("s2-meses").addEventListener("input",s2Render); $("s2-fim").addEventListener("input",s2Render);
+  document.querySelector("#s2").addEventListener("click",function(e){ var b=e.target.closest("[data-vm]"); if(!b) return; s2modo=b.dataset.vm; s2Render(); });
+  s2Render();
+
+  /* ================================================================ 3 */
+  var URL="https://hub.manfac.com.br/fornecedores";
+  var EMAILS = {
+    eduardo:{ para:"eduardo@manfac.com.br", saud:"Bom dia, Eduardo.", itens:[
+      {n:"CT-0034",f:"Refrigeração Polar Ltda",o:"Contrato · Manutenção · 0325-014508 · DP São José",v:"R$ 48.000,00",d:4,l:"/contratos/CT-0034"},
+      {n:"CT-0027-2",f:"Hidro Pipa Transportes Ltda",o:"Aditivo de valor do CT-0027 (+ R$ 6.000,00)",v:"+ R$ 6.000,00",d:2,l:"/contratos/CT-0027"},
+      {n:"CT-0037",f:"Elétrica Ponto Forte Ltda",o:"Contrato · Obra · 0325-014622 · DP Campinas Centro",v:"R$ 3.200,00",d:1,l:"/contratos/CT-0037"}],
+      papel:"contratação" },
+    jose:{ para:"jose@manfac.com.br", saud:"Bom dia, José.", itens:[
+      {n:"CT-0019-3",f:"Dedetiza Sul Controle de Pragas Ltda",o:"Aditivo de condição: SPOT_UNICO_D7 → SPOT_UNICO_D15",v:"—",d:6,l:"/contratos/CT-0019"},
+      {n:"CT-0033",f:"Construtora Vale Norte Ltda",o:"Condições do contrato (OBRA_MAIOR_30_30_40) · contratação aprovada pelo Eduardo em 31/10",v:"R$ 48.000,00",d:3,l:"/contratos/CT-0033"},
+      {n:"CT-0038",f:"Munck Express Içamentos Ltda",o:"Homologação do fornecedor novo + condições",v:"R$ 7.900,00",d:1,l:"/contratos/CT-0038"}],
+      papel:"condições de pagamento" }
+  };
+  function s3Render(v){
+    if(v==="nada"){ $("s3-email").innerHTML='<div class="miolo" style="text-align:center;padding:40px 16px;color:#374151"><p style="font-size:15px"><b>Nenhum e-mail sai neste dia.</b></p><p>Às 8h o sistema confere: se não há contrato nem aditivo esperando pela pessoa, ela não recebe nada. Nada de "você não tem pendências".</p></div>'; return; }
+    var e=EMAILS[v], n=e.itens.length;
+    var linhas=e.itens.map(function(i){ return '<tr><td><b>'+i.n+'</b><br><span style="color:#555">'+esc(i.f)+'</span></td><td>'+esc(i.o)+'</td><td style="white-space:nowrap">'+i.v+'</td><td class="parado">'+i.d+(i.d===1?" dia":" dias")+'</td><td><a href="#s3">Abrir</a></td></tr>'; }).join("");
+    $("s3-email").innerHTML='<div class="cabe"><b>De:</b> Gestão de Fornecedores &lt;fornecedores@manfac.com.br&gt;<br><b>Para:</b> '+e.para+'<br><b>Assunto:</b> [Fornecedores] Resumo do dia: '+n+' aprovações aguardando você<br><b>Data:</b> qua, 04/11/2026 08:00</div>'+
+      '<div class="miolo"><p>'+e.saud+'</p><p>Estes itens estão parados esperando a sua aprovação de '+e.papel+'. O mais antigo primeiro.</p>'+
+      '<table><thead><tr><th>Nº</th><th>O que é</th><th>Valor</th><th>Parado há</th><th></th></tr></thead><tbody>'+linhas+'</tbody></table>'+
+      '<p><a href="#s3">Abrir as aprovações no Hub</a> ('+URL+'/aprovacoes)</p>'+
+      '<p class="rod">Este resumo sai em dias úteis às 8h, só quando há algo esperando por você. Os avisos de cada evento continuam chegando na hora.</p></div>';
+  }
+  s3Render(seg("s3",s3Render));
+
+  /* ================================================================ 4 */
+  var CTS4 = [
+    {n:"CT-0038",f:"Munck Express Içamentos Ltda",o:"0425-015103 · DP Santo André",c:"Obra",v:"R$ 7.900,00",st:["Homologação · José","#f59e0b"],dono:"outro"},
+    {n:"CT-0037",f:"Elétrica Ponto Forte Ltda",o:"0325-014622 · DP Campinas Centro",c:"Obra",v:"R$ 3.200,00",st:["Aguardando Eduardo","#f59e0b"],dono:"eu"},
+    {n:"CT-0034",f:"Refrigeração Polar Ltda",o:"0325-014508 · DP São José",c:"Manutenção",v:"R$ 48.000,00",st:["Aguardando Eduardo","#f59e0b"],dono:"outro"},
+    {n:"CT-0033",f:"Construtora Vale Norte Ltda",o:"0325-014508 · DP São José",c:"Obra",v:"R$ 48.000,00",st:["Aguardando José","#f59e0b"],dono:"outro"},
+    {n:"CT-0031",f:"Desentupidora Rápida ABC Ltda",o:"— sem obra",c:"Spot",g:1,v:"R$ 24.000,00",st:["Aprovado","#22c55e"],dono:"eu"},
+    {n:"CT-0027",f:"Hidro Pipa Transportes Ltda",o:"— sem obra",c:"Spot",g:1,v:"R$ 30.000,00",st:["Aprovado","#22c55e"],dono:"outro"}
+  ];
+  var s4 = {papel:"consulta", tela:"contratos"};
+  var ROTULO_PAPEL={consulta:"Roberta · Consulta",aprovador:"Eduardo · Aprovador de contratação",solicitante:"Solicitante (sem papel)"};
+  function s4Render(){
+    var p=s4.papel, t=s4.tela;
+    document.querySelectorAll(".lado .it").forEach(function(x){ x.classList.toggle("on",x.dataset.t===t); });
+    $("s4-selo-a").classList.toggle("escondido",p!=="aprovador"); $("s4-selo-f").classList.toggle("escondido",p!=="aprovador");
+    $("s4-quem").innerHTML="Entrou como<br><b style='color:#fff'>"+ROTULO_PAPEL[p]+"</b>";
+    var h="";
+    var faixa = p==="consulta" ? '<div class="banner"><span class="dot" style="background:var(--info)"></span><div><b>Modo consulta.</b> <span class="t-sec">Você vê todos os contratos e medições. Aprovar e devolver ficam com Eduardo e José.</span></div></div>' : "";
+    if(t==="contratos"){
+      var lista = p==="solicitante" ? CTS4.filter(function(c){ return c.dono==="eu"; }) : CTS4;
+      h+='<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center"><div class="b6" style="font-size:16px">Contratos</div><button type="button" class="btn pri sm">+ Novo contrato</button></div>'+faixa;
+      h+='<div class="t-sec t-xs">'+(p==="solicitante"?"Você vê só os "+lista.length+" contratos que criou.":"Todos os "+lista.length+" contratos, de qualquer solicitante.")+'</div>';
+      h+='<div class="box" style="--cols:90px minmax(0,1.5fr) minmax(0,1.2fr) 120px 150px">';
+      h+='<div class="tr head"><div class="td">Nº</div><div class="td">Fornecedor</div><div class="td">Obra · classificação</div><div class="td r">Valor total</div><div class="td">Status</div></div>';
+      lista.forEach(function(c){ h+='<div class="tr"><div class="td mono b6" data-l="Nº">'+c.n+'</div><div class="td full" data-l="Fornecedor"><b>'+esc(c.f)+'</b></div><div class="td" data-l="Obra · classificação"><div class="t-xs">'+esc(c.o)+'</div><div style="margin-top:3px">'+(c.g?'<span class="pill" style="--c:#a78bfa">Global</span> ':'')+'<span class="pill">'+c.c+'</span></div></div><div class="td r mono" data-l="Valor total">'+c.v+'</div><div class="td" data-l="Status"><span class="pill" style="--c:'+c.st[1]+'">'+c.st[0]+'</span></div></div>'; });
+      h+='</div>';
+    } else if(t==="aprov"){
+      h+='<div class="b6" style="font-size:16px">Aprovações</div>'+faixa;
+      if(p==="solicitante"){
+        h+='<div class="box"><div class="state"><div class="ico">∅</div><h4>Nada esperando por você</h4><p>Aprovações são do Eduardo (contratação) e do José (condições). Acompanhe os seus contratos em Contratos.</p></div></div>';
+      } else {
+        h+='<article class="box"><div class="cab-cartao"><div><div class="b6"><span class="mono">CT-0034</span> · Refrigeração Polar Ltda</div><div class="t-sec t-xs">Específico · Manutenção · 0325-014508 · DP São José · MANUTENÇÃO PREDIAL · enviado por solicitante@manfac.com.br</div></div><div style="text-align:right"><b class="mono">R$ 48.000,00</b><div><span class="pill" style="--c:#f59e0b">Aguardando Eduardo</span></div></div></div>';
+        h+='<div class="corpo-cartao">'+etapas(1)+'<div class="t-sec t-xs" style="margin-top:10px">Escopo</div><div>Manutenção preventiva e corretiva das 14 máquinas de ar-condicionado da loja, com visita mensal e atendimento corretivo em até 24 h.</div></div>';
+        if(p==="aprovador") h+='<div class="rodape-cartao"><button type="button" class="btn bad">Devolver</button><button type="button" class="btn pri">Aprovar contratação</button></div>';
+        else h+='<div class="espera"><span>👁</span><div><b>Só consulta.</b> Aguardando a aprovação de contratação do Eduardo há 4 dias. Você acompanha por aqui; não há ação sua.</div></div>';
+        h+='</article>';
+      }
+    } else {
+      h+='<div class="b6" style="font-size:16px">Fila de aprovação</div>'+faixa;
+      var meds=[{n:"MD-0112",ct:"CT-0027 · Hidro Pipa Transportes Ltda",d:"Caminhão pipa 15 m³ — 3 × viagem",v:"R$ 2.550,00",dd:"2 dias"},{n:"MD-0109",ct:"CT-0031 · Desentupidora Rápida ABC Ltda",d:"Desentupimento de rede de esgoto, 12 m",v:"R$ 1.850,00",dd:"6 dias"}];
+      if(p==="solicitante") meds=meds.slice(1);
+      meds.forEach(function(m){
+        h+='<article class="box"><div class="cab-cartao"><div><div class="b6"><span class="mono">'+m.n+'</span> · '+m.ct+'</div><div class="t-sec t-xs">'+m.d+' · solicitada há '+m.dd+'</div></div><div style="text-align:right"><b class="mono">'+m.v+'</b><div><span class="pill" style="--c:#f59e0b">Solicitada</span></div></div></div>';
+        if(p==="aprovador") h+='<div class="rodape-cartao"><button type="button" class="btn bad">Devolver</button><button type="button" class="btn pri">Aprovar medição</button></div>';
+        else h+='<div class="espera" style="margin-top:12px"><span>⏳</span><div><b>'+(p==="consulta"?"Só consulta.":"Sua medição.")+'</b> Aguardando a aprovação do Eduardo.</div></div>';
+        h+='</article>';
+      });
+    }
+    $("s4-conteudo").innerHTML=h;
+  }
+  function etapas(atual){ var P=["Criado","Contratação · Eduardo","Condições · José","Aprovado"]; return '<ol class="etapas">'+P.map(function(r,i){ return '<li class="'+(i<atual?"feito":i===atual?"agora":"")+'"><span class="b">'+(i<atual?"✓":i+1)+'</span>'+r+'</li>'; }).join("")+'</ol>'; }
+  s4.papel=seg("s4",function(v){ s4.papel=v; s4Render(); });
+  s4.tela=seg("s4tela",function(v){ s4.tela=v; s4Render(); });
+  s4Render();
+
+  /* ================================================================ 5 */
+  var CTS5 = [
+    {n:"CT-0038",f:"Munck Express Içamentos Ltda",doc:"41.205.336/0001-72",o:"0425-015103 · DP Santo André",cl:"obra",cc:"OBRAS/SPOT",esc:"Içamento e posicionamento de 2 condensadoras de 15 TR na laje técnica, com caminhão munck de 20 t, isolamento da área e responsável técnico com ART.",v:790000,s:790000,st:["Homologação · José","#f59e0b"]},
+    {n:"CT-0037",f:"Elétrica Ponto Forte Ltda",doc:"30.118.442/0001-09",o:"0325-014622 · DP Campinas Centro",cl:"obra",cc:"OBRAS/SPOT",esc:"Troca do quadro de distribuição do salão de vendas, com 24 disjuntores novos, identificação dos circuitos e laudo de termografia ao final.",v:320000,s:320000,st:["Aguardando Eduardo","#f59e0b"]},
+    {n:"CT-0036",f:"Refrigeração Polar Ltda",doc:"12.345.678/0001-90",o:"0325-014508 · DP São José",cl:"emergencial",cc:"MANUTENÇÃO PREDIAL",esc:"Reparo emergencial da câmara fria de refrigerados: troca do compressor queimado e recarga de gás R-404A, com a loja aberta.",v:1260000,s:0,st:["Aprovado","#22c55e"]},
+    {n:"CT-0034",f:"Refrigeração Polar Ltda",doc:"12.345.678/0001-90",o:"0325-014508 · DP São José",cl:"manutencao",cc:"MANUTENÇÃO PREDIAL",esc:"Manutenção preventiva e corretiva das 14 máquinas de ar-condicionado da loja, com visita mensal e atendimento corretivo em até 24 h.",v:4800000,s:4800000,st:["Aguardando Eduardo","#f59e0b"]},
+    {n:"CT-0033",f:"Construtora Vale Norte Ltda",doc:"08.774.120/0001-33",o:"0325-014508 · DP São José",cl:"obra",cc:"OBRAS/SPOT",esc:"Reforma da fachada: remoção do revestimento solto, nova pastilha cerâmica em 180 m², pintura das esquadrias e troca do letreiro.",v:4800000,s:4800000,st:["Aguardando José","#f59e0b"]},
+    {n:"CT-0031",f:"Desentupidora Rápida ABC Ltda",doc:"19.663.507/0001-41",o:"— sem obra",g:1,cl:"spot",cc:"OBRAS/SPOT",esc:"Desentupimento de pias, ralos e redes de esgoto sob demanda, com hidrojato, para as lojas da região do ABC.",v:2400000,s:665000,st:["Aprovado","#22c55e"]},
+    {n:"CT-0027",f:"Hidro Pipa Transportes Ltda",doc:"23.481.977/0001-05",o:"— sem obra",g:1,cl:"spot",cc:"OBRAS/SPOT",esc:"Fornecimento de água potável por caminhão pipa para as lojas da região de Campinas, sob demanda, com entrega em até 6 horas do chamado.",v:3000000,s:790000,st:["Aprovado","#22c55e"]},
+    {n:"CT-0024",f:"Casa do Eletricista Materiais Ltda",doc:"05.932.611/0001-28",o:"0325-014622 · DP Campinas Centro",cl:"material",cc:"OBRAS/SPOT",esc:"Fornecimento de cabos, eletrodutos e disjuntores para a troca do quadro do salão, entregues na obra.",v:964000,s:0,st:["Aprovado","#22c55e"]}
+  ];
+  var TIPOS=[["spot","Spot"],["manutencao","Manutenção"],["obra","Obra"],["material","Material"],["emergencial","Emergencial"]];
+  var ROT={spot:"Spot",manutencao:"Manutenção",obra:"Obra",material:"Material",emergencial:"Emergencial"};
+  var s5={est:"dados", sel:[], global:false, abertos:{}};
+  function s5Chips(){
+    var h='<button type="button" class="chip'+(s5.sel.length===0&&!s5.global?" on":"")+'" data-tipo="todas">Todos os tipos</button>';
+    TIPOS.forEach(function(t){ var on=s5.sel.indexOf(t[0])>=0; var n=CTS5.filter(function(c){return c.cl===t[0];}).length;
+      h+='<button type="button" class="chip'+(on?" on":"")+'" data-tipo="'+t[0]+'" aria-pressed="'+on+'"><span class="ck">'+(on?"✓":"")+'</span>'+t[1]+' <span class="n">'+n+'</span></button>'; });
+    h+='<span style="width:1px;background:var(--bd);margin:0 4px"></span><button type="button" class="chip'+(s5.global?" on":"")+'" data-tipo="global" aria-pressed="'+s5.global+'"><span class="ck">'+(s5.global?"✓":"")+'</span>Só contratos globais</button>';
+    $("s5-tipos").innerHTML=h;
+  }
+  function s5Render(){
+    s5Chips();
+    var tab=$("s5-tabela");
+    $("s5-ok").classList.toggle("escondido", s5.est==="erro");
+    if(s5.est==="erro"){
+      tab.innerHTML='<div class="box"><div class="state err" role="alert"><div class="ico">!</div><h4>Não conseguimos carregar os contratos.</h4><p>Algo deu errado do nosso lado. Tente de novo em instantes.</p><button type="button" class="btn" id="s5-retry">Tentar de novo</button></div></div>';
+      $("s5-retry").onclick=function(){ s5.est="dados"; document.querySelectorAll('.seg[data-grupo="s5est"] button').forEach(function(x){ x.setAttribute("aria-pressed",x.dataset.v==="dados"); }); s5Render(); };
+      return;
+    }
+    if(s5.est==="vazio" && !(s5.sel.length===1&&s5.sel[0]==="material"&&s5.global)){ s5.sel=["material"]; s5.global=true; s5Chips(); }
+    var lista=CTS5.filter(function(c){ return (s5.sel.length===0||s5.sel.indexOf(c.cl)>=0) && (!s5.global||c.g); });
+    var filtrando = s5.sel.length>0||s5.global;
+    $("s5-cont").textContent = filtrando? lista.length+" de "+CTS5.length+" contratos" : CTS5.length+" contratos";
+    if(!lista.length){
+      var nomes=s5.sel.map(function(x){return ROT[x];}).join(", ");
+      tab.innerHTML='<div class="box"><div class="state"><div class="ico">∅</div><h4>Nenhum contrato com esses filtros</h4><p>Nenhum contrato '+(nomes?"do tipo "+esc(nomes):"")+(s5.global?(nomes?" entre os globais":" global")+".":".")+(s5.global&&s5.sel.indexOf("material")>=0?" Contrato global não pode ser de Material.":"")+'</p><button type="button" class="btn" id="s5-limpar">Limpar filtros</button></div></div>';
+      $("s5-limpar").onclick=function(){ s5.sel=[]; s5.global=false; s5.est="dados"; document.querySelectorAll('.seg[data-grupo="s5est"] button').forEach(function(x){ x.setAttribute("aria-pressed",x.dataset.v==="dados"); }); s5Render(); };
+      return;
+    }
+    var h='<div class="box" style="--cols:84px minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.6fr) 118px 118px 150px">';
+    h+='<div class="tr head"><div class="td">Nº</div><div class="td">Fornecedor</div><div class="td">Obra · classificação</div><div class="td" style="color:var(--ac)">Escopo</div><div class="td r">Valor total</div><div class="td r">Saldo</div><div class="td">Status</div></div>';
+    lista.forEach(function(c){
+      var ab=!!s5.abertos[c.n];
+      h+='<div class="tr"><div class="td mono b6" data-l="Nº">'+c.n+'</div>'+
+        '<div class="td full" data-l="Fornecedor"><b>'+esc(c.f)+'</b><div class="t-sec t-xs">'+c.doc+'</div></div>'+
+        '<div class="td" data-l="Obra · classificação"><div class="t-xs" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis'+(c.g?';color:var(--mut)':'')+'">'+esc(c.o)+'</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">'+(c.g?'<span class="pill" style="--c:#a78bfa">Global</span>':'')+'<span class="pill" style="--c:'+(c.cl==="emergencial"?"#ef4444":c.cl==="material"?"#38bdf8":"#94a3b8")+'">'+ROT[c.cl]+'</span></div><div class="t-sec t-xs">CC '+c.cc+'</div></div>'+
+        '<div class="td full" data-l="Escopo"><button type="button" data-esc="'+c.n+'" aria-expanded="'+ab+'" style="all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;font-size:12.5px;line-height:1.4;'+(ab?'white-space:normal':'white-space:nowrap;overflow:hidden;text-overflow:ellipsis')+'">'+esc(c.esc)+'</button><span class="t-xs" style="color:var(--ac);cursor:pointer" data-esc="'+c.n+'">'+(ab?"recolher":"ver completo")+'</span></div>'+
+        '<div class="td r mono" data-l="Valor total">'+brl(c.v)+'</div><div class="td r mono" data-l="Saldo">'+brl(c.s)+'</div>'+
+        '<div class="td" data-l="Status"><span class="pill" style="--c:'+c.st[1]+'">'+c.st[0]+'</span></div></div>';
+    });
+    h+='</div>';
+    tab.innerHTML=h;
+  }
+  $("s5-tipos").addEventListener("click",function(e){ var b=e.target.closest("[data-tipo]"); if(!b) return; var t=b.dataset.tipo;
+    if(t==="todas"){ s5.sel=[]; s5.global=false; } else if(t==="global") s5.global=!s5.global;
+    else { var i=s5.sel.indexOf(t); if(i>=0) s5.sel.splice(i,1); else s5.sel.push(t); }
+    s5.est="dados"; document.querySelectorAll('.seg[data-grupo="s5est"] button').forEach(function(x){ x.setAttribute("aria-pressed",x.dataset.v==="dados"); });
+    s5Render(); });
+  $("s5-tabela").addEventListener("click",function(e){ var b=e.target.closest("[data-esc]"); if(!b) return; var n=b.dataset.esc; s5.abertos[n]=!s5.abertos[n]; s5Render(); });
+  seg("s5est",function(v){ s5.est=v; if(v==="dados"){ s5.sel=[]; s5.global=false; } s5Render(); });
+  s5Render();
+
+  /* ================================================================ 6 */
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var s6={data:"2026-11-20", ct:"normal"};
+  var CT6={
+    normal:{tit:"CT-0027 · Hidro Pipa Transportes Ltda",sub:"Global · Spot padrão · único",cond:"Spot padrão · único",cond2:"O Financeiro programa D+15 da aprovação.",
+      campos:'<label class="campo-g"><span class="rotulo">Serviço da tabela</span><select class="campo s6-trava"><option>Caminhão pipa 15 m³ — R$ 850,00 / viagem</option></select></label><label class="campo-g"><span class="rotulo">Quantidade</span><input class="campo s6-trava" value="2"></label><label class="campo-g"><span class="rotulo">Obra/OS (obrigatória: CC de OBRAS/SPOT)</span><select class="campo s6-trava"><option>0325-014508 · DP São José</option></select></label>'},
+    emerg:{tit:"CT-0036 · Refrigeração Polar Ltda",sub:"0325-014508 · DP São José · Exceção · fora do padrão",cond:"Exceção · fora do padrão",cond2:"Exceção: à vista (primeira janela de pagamento)",
+      campos:'<label class="campo-g"><span class="rotulo">Valor (R$)</span><input class="campo mono s6-trava" value="R$ 12.600,00"></label><div class="banner bad" style="grid-column:1/-1"><span class="dot"></span><div><b>Emergencial.</b> Compressor da câmara fria queimou com a loja aberta; produto refrigerado em risco.</div></div>'}
+  };
+  function s6Render(){
+    var p=s6.data.split("-").map(Number), ano=p[0], mes=p[1], dia=p[2];
+    var apos=dia>25, emerg=s6.ct==="emerg", fechada=apos && !emerg;
+    var comp = apos ? MESES[mes%12] : MESES[mes-1];
+    var c=CT6[s6.ct];
+    $("s6-tit").innerHTML=esc(c.tit)+'<div class="t-sec" style="font-size:12.5px;font-weight:400">'+esc(c.sub)+'</div>';
+    $("s6-campos").innerHTML=c.campos;
+    $("s6-cond").textContent=c.cond; $("s6-cond2").textContent=c.cond2;
+    $("s6-fechada").classList.toggle("escondido",!fechada);
+    var prox = mes===12 ? "01/01/"+(ano+1) : "01/"+String(mes+1).padStart(2,"0")+"/"+ano;
+    $("s6-reabre").textContent="("+prox+")";
+    var ban=$("s6-banner"), txt;
+    ban.className="banner "+(fechada?"bad":apos?"warn":"ok");
+    if(fechada) txt="<b>Janela fechada.</b> Faltam "+(new Date(Date.UTC(ano,mes,0)).getUTCDate()-dia+1)+" dia(s) para reabrir, em "+prox+".";
+    else if(apos && emerg) txt="<b>Emergencial: liberado depois do dia 25.</b> Após o corte do dia 25: entra em "+comp+".";
+    else if(dia===25) txt="Hoje é o corte: entra em "+comp+". <b>Último dia para lançar medição e enviar NF.</b>";
+    else txt="Faltam "+(25-dia)+" dias para o corte de "+comp+".";
+    $("s6-banner-txt").innerHTML=txt;
+    document.querySelectorAll("#s6 .s6-trava").forEach(function(x){ x.disabled=fechada; });
+    var b=$("s6-btn"); b.disabled=fechada; b.textContent= fechada? "Janela fechada até "+prox : "Enviar medição para aprovação";
+    $("s6-sob").textContent = fechada ? "A medição e a NF podem ser lançadas a partir do dia 1º. Medições já lançadas continuam na fila e podem ser aprovadas normalmente." : "";
+  }
+  seg("s6data",function(v){ s6.data=v; s6Render(); });
+  seg("s6ct",function(v){ s6.ct=v; s6Render(); });
+  s6Render();
+
+  /* ================================================================ 7 */
+  var s7={ver:"depois", ct:"obra"};
+  function s7Cab(n,f,linha,valor,etapa){ return '<div class="cab-cartao"><div><div class="b6"><span class="mono">'+n+'</span> · '+esc(f)+'</div><div class="t-sec t-xs">'+esc(linha)+'</div></div><div style="text-align:right"><b class="mono">'+valor+'</b><div><span class="pill" style="--c:#f59e0b">'+etapa+'</span></div></div></div>'; }
+  function s7Render(){
+    var depois=s7.ver==="depois", h="";
+    if(s7.ct==="obra"){
+      h+=s7Cab("CT-0033","Construtora Vale Norte Ltda","Específico · Obra · 0325-014508 · DP São José · OBRAS/SPOT · enviado por solicitante@manfac.com.br","R$ 48.000,00","Aguardando José");
+      h+='<div class="corpo-cartao">'+etapas(2)+'<div class="t-sec t-xs" style="margin-top:10px">Vigência</div><div>01/11/2026 a 28/02/2027</div><div class="r-label">Condição de pagamento</div>';
+      if(!depois){
+        h+='<div class="caixa-cond"><div class="b6">Obra maior · 30% / 30% / 40%</div><div class="mono t-sec t-xs">OBRA_MAIOR_30_30_40 · Calendário financeiro (primeira janela)</div><ul><li>1ª · <b>30%</b> — Contrato aprovado + início/mobilização</li><li>2ª · <b>30%</b> — Medição parcial aprovada</li><li>3ª · <b>40%</b> — Conclusão + aceite final + NF</li></ul></div>';
+        h+='<div style="margin-top:6px"><span class="pill" style="--c:#22c55e">sugerida pela faixa</span></div>';
+        h+='<ul class="lista-p"><li><span>Contrato aprovado + início/mobilização</span><span class="mono">30,00% · R$ 14.400,00</span></li><li><span>Medição parcial aprovada</span><span class="mono">30,00% · R$ 14.400,00</span></li><li><span>Conclusão + aceite final + NF</span><span class="mono">40,00% · R$ 19.200,00</span></li></ul>';
+      } else {
+        h+='<div class="extenso novo"><p class="frase"><b>Obra maior · 30% / 30% / 40%</b> <code class="codigo">OBRA_MAIOR_30_30_40</code><br>Por extenso: <b>3 parcelas, total de R$ 48.000,00.</b> R$ 14.400,00 quando o contrato for aprovado e a obra começar; R$ 14.400,00 na medição parcial aprovada; R$ 19.200,00 na conclusão, só com aceite final e NF. Cada parcela é paga na primeira janela do calendário do Financeiro depois que a medição dela for aprovada.</p>'+
+          '<div class="scroll-x"><table class="tab-ext"><thead><tr><th>#</th><th>Liberada quando</th><th class="r">%</th><th class="r">Valor</th><th>Pagamento</th></tr></thead><tbody>'+
+          '<tr><td>1ª</td><td>Contrato aprovado + início/mobilização</td><td class="r mono">30%</td><td class="r mono">R$ 14.400,00</td><td>Calendário financeiro (primeira janela após aprovar a medição)</td></tr>'+
+          '<tr><td>2ª</td><td>Medição parcial aprovada</td><td class="r mono">30%</td><td class="r mono">R$ 14.400,00</td><td>Calendário financeiro</td></tr>'+
+          '<tr><td>3ª</td><td>Conclusão + aceite final + NF <span class="pill" style="--c:#f05a28">final</span></td><td class="r mono">40%</td><td class="r mono">R$ 19.200,00</td><td>Calendário financeiro, só com aceite operacional</td></tr>'+
+          '</tbody><tfoot><tr><td></td><td>Total da mão de obra</td><td class="r mono">100%</td><td class="r mono">R$ 48.000,00</td><td></td></tr></tfoot></table></div></div>';
+        h+='<div style="margin-top:6px"><span class="pill" style="--c:#22c55e">sugerida pela faixa</span></div>';
+      }
+      h+='<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><button type="button" class="btn">✎ Alterar condições</button><span class="t-sec t-xs">em vez de devolver, ajuste aqui e aprove</span></div></div>';
+      h+='<div class="rodape-cartao"><button type="button" class="btn bad">Devolver</button><button type="button" class="btn pri">Aprovar condições</button></div>';
+    } else if(s7.ct==="mensal"){
+      h+=s7Cab("CT-0034","Refrigeração Polar Ltda","Específico · Manutenção · 0325-014508 · DP São José · MANUTENÇÃO PREDIAL · enviado por solicitante@manfac.com.br","R$ 48.000,00","Aguardando José");
+      h+='<div class="corpo-cartao">'+etapas(2)+'<div class="t-sec t-xs" style="margin-top:10px">Vigência</div><div>01/11/2026 a 31/10/2027 <span class="t-sec t-xs">(12 meses)</span></div><div class="r-label">Condição de pagamento</div>';
+      var linhas=[], fimMes=["30/11/2026","31/12/2026","31/01/2027","28/02/2027","31/03/2027","30/04/2027","31/05/2027","30/06/2027","31/07/2027","31/08/2027","30/09/2027","31/10/2027"];
+      for(var i=0;i<12;i++){ var mi=(10+i)%12, an=2026+Math.floor((10+i)/12); linhas.push({n:MESES[mi]+"/"+an, ate:fimMes[i]}); }
+      if(!depois){
+        h+='<div class="caixa-cond"><div class="b6">Obra contínua · medição mensal</div><div class="mono t-sec t-xs">OBRA_MEDICAO_MENSAL · Calendário financeiro (primeira janela)</div><div class="t-xs" style="margin-top:6px">Medição mensal aprovada + NF</div></div>';
+        h+='<div style="margin-top:6px"><span class="pill" style="--c:#22c55e">sugerida pela faixa</span></div><ul class="lista-p">'+linhas.map(function(l,i){ return '<li><span>'+l.n+'</span><span class="mono">'+(i===11?"8,37%":"8,33%")+' · '+(i===11?"R$ 4.017,60":"R$ 3.998,40")+'</span></li>'; }).join("")+'</ul>';
+      } else {
+        h+='<div class="extenso novo"><p class="frase"><b>Obra contínua · medição mensal</b> <code class="codigo">OBRA_MEDICAO_MENSAL</code><br>Por extenso: <b>12 parcelas mensais, de novembro/2026 a outubro/2027, total de R$ 48.000,00</b> (11 de R$ 3.998,40 e a última de R$ 4.017,60, para fechar a conta). Cada mês só é pago com a medição do mês aprovada e NF, na primeira janela do calendário do Financeiro.</p>'+
+          '<div class="scroll-x"><table class="tab-ext"><thead><tr><th>#</th><th>Mês</th><th>Medir até</th><th class="r">%</th><th class="r">Valor</th></tr></thead><tbody>'+
+          linhas.map(function(l,i){ return '<tr><td>'+(i+1)+'ª</td><td>'+l.n+'</td><td class="mono">'+l.ate+'</td><td class="r mono">'+(i===11?"8,37%":"8,33%")+'</td><td class="r mono">'+(i===11?"R$ 4.017,60":"R$ 3.998,40")+'</td></tr>'; }).join("")+
+          '</tbody><tfoot><tr><td></td><td colspan="2">Total da mão de obra</td><td class="r mono">100%</td><td class="r mono">R$ 48.000,00</td></tr></tfoot></table></div>'+
+          '<p class="dica" style="margin-top:8px">Pagamento: calendário financeiro, depois da aprovação de cada medição mensal.</p></div>';
+        h+='<div style="margin-top:6px"><span class="pill" style="--c:#22c55e">sugerida pela faixa</span></div>';
+      }
+      h+='</div><div class="rodape-cartao"><button type="button" class="btn bad">Devolver</button><button type="button" class="btn pri">Aprovar condições</button></div>';
+    } else {
+      h+='<div class="cab-cartao"><div><div class="b6"><span class="mono">CT-0019-3</span> · Dedetiza Sul Controle de Pragas Ltda</div><div class="t-sec t-xs">Aditivo de condição · Contrato global — sem obra · pedido por solicitante@manfac.com.br</div></div><div style="text-align:right"><span class="pill" style="--c:#f59e0b">Aguardando aprovação</span></div></div>';
+      h+='<div class="corpo-cartao"><div class="t-sec t-xs">Motivo</div><div>Fornecedor pediu prazo maior por causa do volume de atendimentos no fim do ano.</div><div class="r-label">Condição de pagamento do CT-0019</div>';
+      if(!depois){
+        h+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center"><div><code style="color:var(--ac)" class="t-xs">SPOT_UNICO_D7</code><div class="t-xs">Spot simples · único</div></div><span class="t-sec">→</span><div><code style="color:var(--ac)" class="t-xs">SPOT_UNICO_D15</code><div class="t-xs">Spot padrão · único</div></div></div>';
+      } else {
+        h+='<div class="grade2 novo"><div class="extenso" style="border-color:var(--bd)"><div class="rotulo" style="margin-bottom:6px">Antes</div><p class="frase" style="margin:0"><b>Spot simples · único</b> <code class="codigo">SPOT_UNICO_D7</code><br>Sem parcelas fixas: cada atendimento vira uma medição e é pago <b>7 dias</b> depois da aprovação dela (atendimento concluído + evidência + NF).</p></div>'+
+          '<div class="extenso"><div class="rotulo" style="margin-bottom:6px;color:var(--ac)">Depois</div><p class="frase" style="margin:0"><b>Spot padrão · único</b> <code class="codigo">SPOT_UNICO_D15</code><br>Sem parcelas fixas: cada atendimento vira uma medição e é pago <b>15 dias</b> depois da aprovação dela (atendimento concluído + NF aprovada).</p></div></div>'+
+          '<div class="cartao" style="margin-top:10px"><b>O que muda em dinheiro</b><span class="t-xs">Teto do contrato: R$ 18.000,00 · já medido: R$ 11.240,00 · <b>saldo de R$ 6.760,00</b> passa a ser pago em D+15. Vale para as medições ainda não aprovadas (hoje: 1 medição de R$ 980,00 na fila).</span></div>';
+      }
+      h+='</div><div class="rodape-cartao"><button type="button" class="btn bad">Devolver</button><button type="button" class="btn pri">Aprovar aditivo</button></div>';
+    }
+    $("s7-cartao").innerHTML=h;
+  }
+  s7.ver=seg("s7ver",function(v){ s7.ver=v; s7Render(); });
+  s7.ct=seg("s7ct",function(v){ s7.ct=v; s7Render(); });
+  s7Render();
+
+  /* ================================================================ 8 */
+  var SUPS=[
+    ["1","“Tipo de serviço” é a classificação que já existe","Spot, Manutenção, Obra, Material e Emergencial, com várias ao mesmo tempo. Não cria cadastro nem campo novo.","Vetou: vira um campo novo (elétrica, hidráulica, refrigeração…), com lista a definir com o cliente e preenchimento nos contratos antigos."],
+    ["1","Spot global passa a sugerir o mensal consolidado","Sem SPOT_TABELA_FIXA, a sugestão do Spot global vira SPOT_MENSAL_CONSOLIDADO (era o plano B que a própria tela já citava). Manutenção global continua com a medição mensal.","Vetou: sugiro SPOT_UNICO_D15 (um pagamento por atendimento) no lugar."],
+    ["1","Preço fixo vale com qualquer condição","Com “Sim”, toda medição escolhe serviço × quantidade, mesmo se a condição for mensal consolidado (cada atendimento do mês sai da tabela).","Vetou: o “Sim” só fica disponível com as condições de pagamento por atendimento (D+7 / D+15)."],
+    ["1","Teto obrigatório também no “Sim”","O global continua exigindo valor teto nos dois casos, como hoje.","Vetou: no “Sim” o teto vira opcional e o saldo deixa de travar a medição."],
+    ["2","Regra do fim por meses","Fim = véspera do mesmo dia N meses depois; se o dia não existe no mês, último dia daquele mês. Duração de 1 a 36 meses (36 é o limite que o sistema já usa para as parcelas mensais).","Vetou: o fim passa a ser o último dia do mês N (ex.: início 15/11 + 12 → 31/10/2027) ou outro limite de meses."],
+    ["2","Com “Data de fim”, o documento fica como hoje","Só quem escolhe “Duração em meses” vê “(12 meses)” no documento.","Vetou: o documento sempre mostra a duração calculada, mesmo com data de fim (quando não for mês cheio, mostra em dias)."],
+    ["3","Resumo só de contratos e aditivos","Homologação de fornecedor novo entra na lista do José. Medições paradas na fila do Eduardo ficam de fora (já têm selo e o alerta de medição parada).","Vetou: o resumo do Eduardo inclui as medições aguardando aprovação."],
+    ["3","Feriado conta como dia útil","Segunda a sexta, 8h, sem calendário de feriados, igual à regra de prazo que o sistema já usa.","Vetou: precisa de uma lista de feriados (nacionais e de quais cidades)."],
+    ["4","Consulta sem tela nova","O papel é concedido no banco, como os outros três. Consulta também continua podendo criar o próprio contrato e lançar medição.","Vetou: crio uma tela de papéis em Configurações (passa da régua de menor mudança; precisa de RLS e regra de quem pode conceder) e/ou o Consulta fica só leitura total."],
+    ["5","Busca não procura dentro do escopo","A busca continua por fornecedor, CNPJ e nº. O escopo aparece na coluna, mas não entra na busca.","Vetou: a busca passa a achar texto do escopo (mudança pequena)."],
+    ["5","“Só contratos globais” vira um filtro à parte","Pode combinar com os tipos (ex.: Spot + só globais).","Vetou: o chip some e “Global” vira mais uma opção dentro de Tipo de serviço."],
+    ["6","Emergencial fica liberado do dia 25","Emergência não espera o mês virar. Continua caindo na competência do mês seguinte.","Vetou: emergencial também fecha no dia 26."],
+    ["6","NF continua opcional","Decisão do cliente de 08/10 (“a maioria nem tem NF”). Hoje a NF só entra junto da medição, então fechar a medição já fecha a NF.","Vetou: a NF vira obrigatória na medição."],
+    ["6","Só o lançamento fecha","Aprovar medição já lançada, devolver e registrar atendimento do mensal consolidado continuam abertos depois do dia 25; só “Enviar medição” e “Fechar o mês” travam. Medição devolvida depois do dia 25 é reenviada no dia 1º.","Vetou: o registro de atendimento também fecha, ou a medição devolvida pode ser reenviada fora da janela."],
+    ["7","Sem datas nas parcelas por etapa","O extenso mostra “quando é liberada” e o prazo do Financeiro. Data só aparece na medição mensal, porque o catálogo não tem parcelas por dia (30/60/90).","Vetou: precisa de um modo de condição novo, por dias (30/60/90), no catálogo das Configurações. É mudança de banco."]
+  ];
+  $("s8-lista").innerHTML=SUPS.map(function(s,i){ return '<div class="sup"><h4><span class="n">S'+(i+1)+' · item '+s[0]+'</span>'+esc(s[1])+'</h4><p>'+esc(s[2])+'</p><p class="veto"><b>Se vetar:</b> '+esc(s[3])+'</p></div>'; }).join("");
+})();
+</script>
+</body>
+</html>
