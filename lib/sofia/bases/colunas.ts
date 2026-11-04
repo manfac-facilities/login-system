@@ -145,6 +145,8 @@ export const COLUNAS_SIN: Coluna<SinLinha>[] = [
   { k: 'dano', t: 'Valor do dano', r: true, sort: (r) => r.dano, texto: (r) => (r.dano == null ? NV : fmtBrl(r.dano)) },
   { k: 'descontado', t: 'Descontado', r: true, sort: (r) => r.descontado, texto: (r) => (r.descontado ? fmtBrl(r.descontado) : NV) },
   { k: 'sit', t: 'Situação', sort: (r) => r.sit, texto: (r) => SIN_SIT_LBL[r.sit], tom: (r) => (r.sit === 'encerrado' ? 'verde' : 'ambar') },
+  // Não está nas colunas do mockup: mantém na lista as ações de autorização de hoje (decisão 3.4).
+  { k: 'aut', t: 'Autorização', sort: (r) => r.aut, texto: (r) => AUT_LBL[r.aut] },
 ]
 
 export function textoSituacaoDoc(r: DocLinha): string {
