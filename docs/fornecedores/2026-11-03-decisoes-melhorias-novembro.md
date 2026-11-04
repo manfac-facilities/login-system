@@ -23,6 +23,9 @@ projeto entregue amanhã de manhã, no máximo."
    pendência, não envia.
 4. **Papel "consulta".** Vê todos os contratos e medições, não aprova nada. Roberta recebe. **Falta o e-mail
    dela** (o papel fica pronto; a concessão espera o e-mail).
+   → João (literal): "no hub tem essa info". Consulta em produção (só leitura, 03/11): o único usuário do hub
+   que bate é `robertha.barbosa@manfac.com.br` (papel `compras` no Compras, último login 26/10). Em
+   `obras_pessoa` ela aparece como "Roberta Lima", área Compras, sem e-mail — tratado como a mesma pessoa.
 5. **Tabela de contratos.** Coluna "Escopo" (curto, completo ao clicar) e filtro "Tipo de serviço" com seleção
    múltipla.
 6. **Dia 25.** Lançamento de medição e envio de NF fechados do dia 26 ao fim do mês, com o aviso "a janela
