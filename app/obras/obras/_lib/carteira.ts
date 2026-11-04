@@ -71,7 +71,8 @@ export function estadoDaObra(p: {
   calc: ResultadoCronograma | null; sinal: Sinal | null; hist: PontoHist[]; impedimentosAbertos: number
   dataBase: string | null; hoje: string; feriados: ReadonlySet<string>
 }): Estado {
-  if (!p.calc) return { tipo: 'sem_cronograma' }
+  // Versão sem atividades não prova nada: sem isto o `every` vazio daria 'faturando'.
+  if (!p.calc || p.calc.atividades.length === 0) return { tipo: 'sem_cronograma' }
   if (p.calc.atividades.every((a) => a.situacao === 'concluida')) return { tipo: 'faturando' }
   const desde = ultimoAvanco(p.hist) ?? p.dataBase
   if (desde) {
@@ -171,7 +172,7 @@ export function sinaisDoCliente(p: {
       pendencias = {
         chave: 'pendencias', tom: vencida || idade >= 5 ? 'ruim' : 'atencao',
         texto: `${plural(abertas.length, 'pendência', 'pendências')} com o cliente, a mais antiga há ${diasUteisTexto(idade)}`,
-        curto: `${abertas.length} pendência(s) do cliente`,
+        curto: `${plural(abertas.length, 'pendência', 'pendências')} do cliente`,
       }
     }
   }
@@ -189,7 +190,7 @@ export function sinaisDoCliente(p: {
       mensagens = {
         chave: 'mensagens', tom: 'ruim',
         texto: `${plural(semResposta.length, 'mensagem', 'mensagens')} do cliente sem resposta desde ${ddmm(diaBrt(semResposta[0].criadoEm))}`,
-        curto: `${semResposta.length} mensagem(ns) sem resposta`,
+        curto: `${plural(semResposta.length, 'mensagem', 'mensagens')} sem resposta`,
       }
     } else mensagens = { chave: 'mensagens', tom: 'ok', texto: ordem.length ? 'mensagens respondidas' : 'sem mensagens no portal', curto: null }
   }

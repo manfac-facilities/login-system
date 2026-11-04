@@ -64,6 +64,12 @@ describe('estadoDaObra', () => {
   it('calc null → sem_cronograma mesmo com hist', () => {
     expect(estadoDaObra({ ...base, calc: null, hist: recente })).toEqual({ tipo: 'sem_cronograma' })
   })
+  it('calc com atividades vazias → sem_cronograma (nunca faturando) e fica na carteira', () => {
+    const estado = estadoDaObra({ ...base, calc: calcDe([]), hist: recente })
+    expect(estado).toEqual({ tipo: 'sem_cronograma' })
+    expect(ficaNaCarteira({ estado, dinheiro: dinheiroOk({ aFaturar: 0, faturado: 1000 }) })).toBe(true)
+    expect(etapasDaCarteira(calcDe([]))).toEqual([])
+  })
   it('todas concluídas → faturando', () => {
     expect(estadoDaObra({ ...base, calc: calcDe([ativ({ situacao: 'concluida' })]) })).toEqual({ tipo: 'faturando' })
   })
@@ -192,8 +198,10 @@ describe('sinaisDoCliente', () => {
     const s1 = de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ responsavel: 'manfac' }), restr({ situacao: 'liberada' })] }), 'pendencias')
     expect(s1.tom).toBe('atencao')
     expect(s1.texto).toBe('1 pendência com o cliente, a mais antiga há 1 dia útil')
-    expect(de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ criadoEm: '2026-10-29T12:00:00Z' })] }), 'pendencias').texto)
-      .toBe('2 pendências com o cliente, a mais antiga há 4 dias úteis')
+    expect(s1.curto).toBe('1 pendência do cliente')
+    const s2 = de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ criadoEm: '2026-10-29T12:00:00Z' })] }), 'pendencias')
+    expect(s2.texto).toBe('2 pendências com o cliente, a mais antiga há 4 dias úteis')
+    expect(s2.curto).toBe('2 pendências do cliente')
     expect(de(sinaisDoCliente({ ...base, restricoes: [nova, restr({ criadoEm: '2026-10-20T12:00:00Z' })] }), 'pendencias').tom).toBe('ruim')
     expect(de(sinaisDoCliente({ ...base, restricoes: [restr({ criadoEm: '2026-11-03T12:00:00Z', prazo: '2026-11-03' })] }), 'pendencias').tom).toBe('ruim')
     expect(de(sinaisDoCliente({ ...base, restricoes: null }), 'pendencias'))
@@ -206,13 +214,12 @@ describe('sinaisDoCliente', () => {
       { autorTipo: 'cliente', criadoEm: '2026-10-29T15:00:00Z' },
       { autorTipo: 'cliente', criadoEm: '2026-10-30T15:00:00Z' },
     ] }), 'mensagens')
-    expect(s).toMatchObject({ tom: 'ruim', texto: '2 mensagens do cliente sem resposta desde 29/10' })
-    expect(s.curto).not.toBeNull()
+    expect(s).toMatchObject({ tom: 'ruim', texto: '2 mensagens do cliente sem resposta desde 29/10', curto: '2 mensagens sem resposta' })
   })
   it('mensagens: do cliente ontem (1 d.u.) ok; anteontem (2 d.u.) ruim, no singular', () => {
     expect(de(sinaisDoCliente({ ...base, mensagens: [{ autorTipo: 'cliente', criadoEm: '2026-11-03T15:00:00Z' }] }), 'mensagens').tom).toBe('ok')
     expect(de(sinaisDoCliente({ ...base, mensagens: [{ autorTipo: 'cliente', criadoEm: '2026-11-02T15:00:00Z' }] }), 'mensagens'))
-      .toMatchObject({ tom: 'ruim', texto: '1 mensagem do cliente sem resposta desde 02/11' })
+      .toMatchObject({ tom: 'ruim', texto: '1 mensagem do cliente sem resposta desde 02/11', curto: '1 mensagem sem resposta' })
   })
   it('mensagens: do cliente hoje (dia BRT) ainda ok; última da Manfac ok', () => {
     // 02:00Z de 05/11 ainda é 04/11 em Brasília.
