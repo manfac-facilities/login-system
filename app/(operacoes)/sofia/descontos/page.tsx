@@ -10,6 +10,7 @@ import { atualizarAutorizacaoKmExcedidoAction } from '../km/_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import { ehEtapaMulta, infoEtapa, type MultaComEtapa } from '@/lib/sofia/multaEtapas'
+import { ehAdminSofia } from '@/lib/sofia/multaPermissoes'
 import { AutorizacaoMulta, DescontoMulta } from './_multa-acoes'
 
 type LinhaDesconto = {
@@ -45,6 +46,7 @@ const proximoStatus: Record<string, string> = {
 export default async function DescontosPage() {
   const supabase = await createClient()
   const podeGerir = await podeGerirFrotas(supabase)
+  const ehAdmin = await ehAdminSofia(supabase)
 
   const [{ data: multas }, { data: sinistros }, { data: excedidos }] = await Promise.all([
     supabase.from('multas').select('*, veiculos(placa), motoristas!motorista_id(nome)').order('data', { ascending: false }),
@@ -167,7 +169,8 @@ export default async function DescontosPage() {
                         id={l.id}
                         status={l.autorizacao_status}
                         solicitadoEm={l.autorizacao_solicitado_em}
-                        showActions={podeGerir}
+                        // Autorizar/Revogar é só do admin; o gestor só solicita
+                        showActions={ehAdmin || (podeGerir && (l.autorizacao_status ?? 'sem_solicitacao') === 'sem_solicitacao')}
                       />
                     ) : (
                       <AutorizacaoActions
@@ -195,6 +198,7 @@ export default async function DescontosPage() {
                       <DescontoMulta
                         id={l.id}
                         etapa={l.etapa ?? null}
+                        valorMulta={Number(l.valor)}
                         valorDescontado={l.valor_descontado}
                         tipoDesconto={l.tipo_desconto}
                       />

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { registrarDescontoMultaAction, desfazerDescontoMultaAction } from './_actions'
 import { atualizarAutorizacaoMultaAction } from '../multas/_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
@@ -23,13 +23,16 @@ export function DescontoMulta({
   etapa,
   valorDescontado,
   tipoDesconto,
+  valorMulta,
 }: {
   id: string
+  valorMulta: number
   etapa: string | null
   valorDescontado: number | null
   tipoDesconto: string
 }) {
   const [estadoRegistrar, registrar, registrando] = useActionState(registrarDescontoMultaAction, {})
+  const [tipo, setTipo] = useState(tipoDesconto === 'total' ? 'total' : 'parcial')
   const [estadoDesfazer, desfazer, desfazendo] = useActionState(desfazerDescontoMultaAction.bind(null, id), {})
 
   return (
@@ -60,18 +63,20 @@ export function DescontoMulta({
           >
             <input type="hidden" name="id" value={id} />
             <input
+              key={tipo}
               name="valor_descontado"
               type="number"
               step="0.01"
               min="0"
               required
               placeholder="Valor descontado"
-              defaultValue={valorDescontado ?? ''}
+              {...(tipo === 'total' ? { value: valorMulta, readOnly: true } : { defaultValue: valorDescontado ?? '' })}
               className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs"
             />
             <select
               name="tipo_desconto"
-              defaultValue={tipoDesconto === 'total' ? 'total' : 'parcial'}
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
               className="px-2 py-1.5 rounded bg-[#0f1f3d] border border-[#1e3a5f] text-white text-xs"
             >
               <option value="parcial">Parcial</option>

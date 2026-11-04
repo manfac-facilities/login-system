@@ -36,19 +36,21 @@ export async function registrarDescontoMultaAction(_prev: State, formData: FormD
   if (erroGestor) return { error: erroGestor }
 
   const valor_descontado = Number(valorRaw)
-  if (!id || valorRaw === '' || Number.isNaN(valor_descontado) || valor_descontado < 0)
-    return { error: 'Valor do desconto inválido' }
   if (tipo_desconto !== 'total' && tipo_desconto !== 'parcial')
     return { error: 'Informe o tipo de desconto (total ou parcial)' }
+  // tipo total: o valor é sempre o da multa (o digitado é ignorado)
+  if (!id || (tipo_desconto === 'parcial' && (valorRaw === '' || Number.isNaN(valor_descontado) || valor_descontado < 0)))
+    return { error: 'Valor do desconto inválido' }
   if (!/^\d{4}-\d{2}$/.test(competencia)) return { error: 'Informe a competência (mês do contracheque)' }
 
   const { data: multa, error } = await supabase.from('multas').select('valor').eq('id', id).single()
   if (error || !multa) return { error: 'Multa não encontrada' }
-  if (valor_descontado > Number((multa as { valor: number }).valor))
+  const valorMulta = Number((multa as { valor: number }).valor)
+  if (tipo_desconto === 'parcial' && valor_descontado > valorMulta)
     return { error: 'Valor do desconto não pode ser maior que o valor original' }
 
   const dados = new FormData()
-  dados.set('valor_descontado', valorRaw)
+  dados.set('valor_descontado', tipo_desconto === 'total' ? String(valorMulta) : valorRaw)
   dados.set('tipo_desconto', tipo_desconto)
   dados.set('competencia', competencia)
   return registrarEtapaMultaAction(id, 'descontada', dados)

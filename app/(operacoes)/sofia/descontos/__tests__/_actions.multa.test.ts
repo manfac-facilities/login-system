@@ -91,6 +91,19 @@ describe('registrarDescontoMultaAction — pela etapa "descontada"', () => {
     expect(r).toEqual({ success: true })
   })
 
+  it('tipo total força o valor da multa, ignorando o digitado (menor, vazio ou maior)', async () => {
+    for (const digitado of ['200', '', '900']) {
+      registrarMock.mockClear()
+      const r = await registrarDescontoMultaAction({}, fd({ ...DESCONTO_OK, valor_descontado: digitado, tipo_desconto: 'total' }))
+      expect(r).toEqual({ success: true })
+      expect(registrarMock).toHaveBeenCalledWith('sofia_multa_registrar_etapa', {
+        p_multa_id: 'm1',
+        p_etapa: 'descontada',
+        p_dados: { valor_descontado: '500', tipo_desconto: 'total', competencia: '2026-11-01' },
+      })
+    }
+  })
+
   it.each(['comum', 'erro', 'sem_usuario'] as const)('%s: negado antes de ler ou escrever', async (p) => {
     perfil(p)
     const r = await registrarDescontoMultaAction({}, fd(DESCONTO_OK))
