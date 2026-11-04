@@ -18,7 +18,7 @@ import {
   type MultaEtapa,
 } from '@/lib/sofia/multaEtapas'
 import PillPrazo from '../_pill'
-import { FormDobro, FormEtapa, FormPrazo } from './_fluxo'
+import { FormBoleto, FormDobro, FormEtapa, FormPrazo } from './_fluxo'
 
 type Trecho = TrechoBruto & { equipes: { codigo: string } | null; motoristas: { nome: string } | null }
 
@@ -273,6 +273,14 @@ export default async function MultaDetalhePage({
           <p className="text-sm text-[#94a3b8] mt-1">{modoLocadora}</p>
         </div>
       )}
+      {atual === 'contestada' &&
+        (multa.boleto_lancado_em ? (
+          <p className="text-sm text-[#94a3b8] mt-4">Boleto lançado em {fmtData(multa.boleto_lancado_em)}</p>
+        ) : (
+          <div className="rounded-xl border border-[#1e3a5f] p-4 mt-4">
+            <FormBoleto multaId={multa.id} permitido={podeGerir || ehAdmin} hoje={hoje} />
+          </div>
+        ))}
       {prazo?.tipo === 'vencido' && (
         <div className="rounded-xl border border-red-900 p-4 mt-4">
           <p className="text-sm font-bold text-red-300">Prazo vencido: a multa será paga em dobro.</p>

@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { comprimirImagem } from '@/lib/sofia/comprimirImagem'
-import { editarPrazoMultaAction, registrarDobroAction, registrarEtapaMultaAction } from '../_actions'
+import { editarPrazoMultaAction, marcarBoletoContestadaAction, registrarDobroAction, registrarEtapaMultaAction } from '../_actions'
 import type { AcaoMulta } from '@/lib/sofia/multaEtapas'
 
 type State = { error?: string; success?: boolean }
@@ -233,6 +233,30 @@ export function FormDobro({ multaId }: { multaId: string }) {
       >
         Registrar multa em dobro
       </button>
+      <Mensagem state={state} />
+    </form>
+  )
+}
+
+export function FormBoleto({ multaId, permitido, hoje }: { multaId: string; permitido: boolean; hoje: string }) {
+  const [state, action, pendente] = useActionState(
+    (_prev: State, fd: FormData) => marcarBoletoContestadaAction(multaId, fd),
+    {}
+  )
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-2 mt-2">
+      <label className="flex flex-col gap-1">
+        <span className={ROTULO}>Data do lançamento do boleto</span>
+        <input type="date" name="boleto_lancado_em" required defaultValue={hoje} disabled={!permitido} className={CAMPO} />
+      </label>
+      <button
+        type="submit"
+        disabled={!permitido || pendente}
+        className="px-3 py-2 rounded-lg border border-[#1e3a5f] text-[#94a3b8] text-sm hover:border-[#94a3b8] disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {pendente ? 'Salvando...' : 'Marcar boleto lançado'}
+      </button>
+      {!permitido && <span className="text-xs text-red-400">Só gestor de frotas ou administrador.</span>}
       <Mensagem state={state} />
     </form>
   )
