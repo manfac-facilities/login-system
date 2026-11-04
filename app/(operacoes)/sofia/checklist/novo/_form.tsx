@@ -2,7 +2,7 @@
 import { useActionState, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { criarChecklistAction } from '../_actions'
+import { criarChecklistAction, ultimoChecklistAction, type UltimoChecklist } from '../_actions'
 import { FOTO_POSICOES_OBRIGATORIAS, FOTO_POSICAO_OPCIONAL } from '../_validation'
 import CameraCapture from '@/components/sofia/CameraCapture'
 import FotosAdicionais from '@/components/sofia/FotosAdicionais'
@@ -58,6 +58,24 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
   const [fotos, setFotos] = useState<CapturedPhoto[]>([])
   const [extras, setExtras] = useState<FotoRascunho[]>([])
   const [avarias, setAvarias] = useState<AvariaRascunho[]>([])
+  // painel do último checklist na troca (só mostra; não bloqueia nada e não mexe na trava D1)
+  const [ultimo, setUltimo] = useState<{ veiculoId: string; dados: UltimoChecklist } | null>(null)
+  const mostraUltimo = tipo === 'troca' && !!veiculoIdManual
+  useEffect(() => {
+    if (!mostraUltimo) return
+    let vivo = true
+    ultimoChecklistAction(veiculoIdManual)
+      .then((dados) => {
+        if (vivo) setUltimo({ veiculoId: veiculoIdManual, dados })
+      })
+      .catch(() => {
+        if (vivo) setUltimo(null)
+      })
+    return () => {
+      vivo = false
+    }
+  }, [mostraUltimo, veiculoIdManual])
+  const painelUltimo = mostraUltimo && ultimo?.veiculoId === veiculoIdManual ? ultimo.dados : null
   const [uploadingFotos, setUploadingFotos] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -380,10 +398,28 @@ export default function ChecklistForm({ equipes, veiculos, motoristas, tipoInici
             Fotos do Veículo <span className="text-[#4a6080]">({fotosObrigatoriasCapturadas} de {FOTO_POSICOES_OBRIGATORIAS.length} obrigatórias)</span>
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {POSICOES_FOTO.map((posicao) => (
-              <CameraCapture key={posicao} posicao={posicao} onCapture={handleCapture} permitirGaleria={false} />
-            ))}
+            {POSICOES_FOTO.map((posicao) => {
+              const anterior = painelUltimo?.fotos[posicao]
+              return (
+                <div key={posicao} className="flex flex-col gap-2">
+                  {painelUltimo && painelUltimo.ultimo && anterior && (
+                    <figure className="flex flex-col gap-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={anterior} alt={`Último: ${posicao}`} className="rounded-lg w-full object-cover max-h-40" />
+                      <figcaption className="text-xs text-[#94a3b8]">
+                        Último: {posicao} ·{' '}
+                        {new Date(painelUltimo.ultimo.data).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                      </figcaption>
+                    </figure>
+                  )}
+                  <CameraCapture posicao={posicao} onCapture={handleCapture} permitirGaleria={false} />
+                </div>
+              )
+            })}
           </div>
+          {painelUltimo && !painelUltimo.ultimo && (
+            <p className="text-xs text-[#94a3b8] mt-2">Primeiro checklist deste veículo.</p>
+          )}
           <p className="text-sm text-[#94a3b8] mt-4 mb-2">
             Mais fotos <span className="text-[#4a6080]">({totalFotos} de {TETO_FOTOS} no total)</span>
           </p>

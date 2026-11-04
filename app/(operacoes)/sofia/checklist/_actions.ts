@@ -1,9 +1,11 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { parseChecklistFormData, tipoDaFoto, validateChecklistInput } from './_validation'
+import { FOTO_POSICOES_OBRIGATORIAS, parseChecklistFormData, tipoDaFoto, validateChecklistInput } from './_validation'
 import { logAudit } from '@/lib/sofia/auditLog'
 import { ehAdminSofia } from '@/lib/sofia/multaPermissoes'
+import { requireGestorFrotas } from '@/lib/sofia/permissoes'
+import { hojeSP } from '@/lib/sofia/multaEtapas'
 import { validarVinculoEquipeUnico } from '@/lib/sofia/veiculos'
 
 type State = { error?: string; success?: boolean; checklistId?: string }
@@ -193,4 +195,86 @@ export async function excluirChecklistAction(_prev: State, formData: FormData): 
   }
   revalidatePath('/sofia/checklist')
   return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// Histórico do checklist e avarias (spec 2026-11-03 §2.9/§2.10)
+// ---------------------------------------------------------------------------
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const DATA_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Baixa da avaria (sem volta). Quem deu baixa sai do JWT, na trigger — não daqui. */
+export async function marcarAvariaReparadaAction(id: string, data: string): Promise<State> {
+  if (!UUID_RE.test(id ?? '')) return { error: 'Avaria inválida' }
+  const hoje = hojeSP()
+  if (!DATA_RE.test(data ?? '') || data > hoje) return { error: 'Informe a data do reparo (hoje ou antes)' }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+
+  // hoje = agora; dia passado = meio-dia de São Paulo (a trigger recusa data no futuro)
+  const reparada_em = data === hoje ? new Date().toISOString() : `${data}T12:00:00-03:00`
+  const { error } = await supabase
+    .from('checklist_avarias')
+    .update({ status: 'reparada', reparada_em })
+    .eq('id', id)
+    .eq('status', 'aberta')
+  if (error) return { error: 'Não foi possível marcar a avaria como reparada' }
+  await logAudit('checklist_avarias', 'atualizou', id, `Avaria marcada como reparada em ${data}`)
+  revalidatePath('/sofia/checklist', 'layout')
+  return { success: true }
+}
+
+/** Reparo ou troca, definido depois por Frotas. */
+export async function definirAcaoAvariaAction(id: string, acao: string): Promise<State> {
+  if (!UUID_RE.test(id ?? '')) return { error: 'Avaria inválida' }
+  if (acao !== 'reparo' && acao !== 'troca') return { error: 'Escolha reparo ou troca' }
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+  const { error } = await supabase.from('checklist_avarias').update({ acao }).eq('id', id)
+  if (error) return { error: 'Não foi possível salvar reparo/troca' }
+  await logAudit('checklist_avarias', 'atualizou', id, `Avaria: ${acao}`)
+  revalidatePath('/sofia/checklist', 'layout')
+  return { success: true }
+}
+
+export interface UltimoChecklist {
+  ultimo: { id: string; data: string } | null
+  /** posição obrigatória → URL assinada (3600 s) */
+  fotos: Record<string, string>
+}
+
+/** Painel da troca: último checklist do veículo, só leitura (qualquer usuário do Sofia, pela RLS). */
+export async function ultimoChecklistAction(veiculoId: string): Promise<UltimoChecklist> {
+  const vazio: UltimoChecklist = { ultimo: null, fotos: {} }
+  if (!UUID_RE.test(veiculoId ?? '')) return vazio
+  const supabase = await createClient()
+  const { data: ultimo } = await supabase
+    .from('checklist')
+    .select('id, data')
+    .eq('veiculo_id', veiculoId)
+    .order('data', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!ultimo) return vazio
+
+  const { data: fotos } = await supabase
+    .from('checklist_fotos')
+    .select('storage_path, posicao')
+    .eq('checklist_id', ultimo.id)
+    .in('posicao', [...FOTO_POSICOES_OBRIGATORIAS])
+  const lista = fotos ?? []
+  if (lista.length === 0) return { ultimo, fotos: {} }
+  const { data: assinadas } = await supabase.storage
+    .from('checklist-fotos')
+    .createSignedUrls(lista.map((f) => f.storage_path), 3600)
+  const mapa: Record<string, string> = {}
+  for (const f of lista) {
+    const url = (assinadas ?? []).find((s) => s.path === f.storage_path)?.signedUrl
+    if (url && f.posicao) mapa[f.posicao] = url
+  }
+  return { ultimo, fotos: mapa }
 }
