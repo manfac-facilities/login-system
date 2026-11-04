@@ -52,3 +52,10 @@ Mockup: https://claude.ai/artifact/JtmJCjR9DkX4kPvY53fDau (arquivo `docs/fornece
 João (literal): "mockuo aprovado, prossiga". Com isso, as 15 suposições da seção 8 do mockup ficam aprovadas
 — entre elas: sugestão do global Spot = `SPOT_MENSAL_CONSOLIDADO`; duração de 1 a 36 meses; janela do dia 25
 fecha só o lançamento (enviar medição / fechar o mês); Consulta sem tela nova; busca não procura no escopo.
+
+## Autorização para a madrugada (03/11/2026, ~23h)
+
+João (literal): "nao trave nada do projeto por autorizacao, vou dormri agora e voce precisa rodar tudo sozinho".
+Entendido como autorização para: mergear em `main` do `fornecedores` depois da revisão independente, aplicar
+as migrations 014/015 em produção (`iyytcavcgukfjnjjrerx`) com conferência antes/depois e rollback pronto, e
+disparar o deploy. Limite que mantenho: nada fora do Fornecedores; nenhum segredo em arquivo versionado.
