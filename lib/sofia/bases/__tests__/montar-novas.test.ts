@@ -28,7 +28,7 @@ const corr = (p: Partial<CorrBruta>): CorrBruta => ({
 const multa = (p: Partial<MultaBruta>): MultaBruta => ({
   id: 'mu1', veiculo_id: 'v1', motorista_id: 'm1', data: '2026-10-10', tipo_infracao: null, descricao: 'Velocidade',
   valor: 130.16, valor_descontado: null, status: 'pendente', autorizacao_status: 'solicitado', autorizacao_solicitado_em: null,
-  created_at: '2026-10-10T10:00:00Z', ...p,
+  created_at: '2026-10-10T10:00:00Z', etapa: 'solicitado', prazo_indicacao: '2026-11-09', ...p,
 })
 const sin = (p: Partial<SinBruto>): SinBruto => ({
   id: 's1', veiculo_id: 'v2', motorista_id: null, data: '2026-10-29', tipo: 'colisao', descricao: 'Colisão traseira',
@@ -52,7 +52,7 @@ const CORRS = montarCorretivas({
   responsabilidade: [{ veiculo_id: 'v1', equipe_id: 'e1', motorista_id: 'm1', inicio: '2026-01-01', fim: '2026-11-03', created_at: '2026-01-01T00:00:00Z' }],
   manutencoes: [corr({}), corr({ id: 'c2', tirou_da_equipe: false, status: 'concluida', data_entrada: '2026-09-22', data_saida: '2026-09-22', custo: 1180, quem_arca: 'motorista', anexo_storage_path: null })],
 })
-const MULTAS = montarMultas({ veiculos: VEICS, motoristas: MOTS, multas: [multa({}), multa({ id: 'mu2', tipo_infracao: 'Sinal vermelho', status: 'descontada', valor_descontado: 293.47, valor: 293.47 })] })
+const MULTAS = montarMultas({ veiculos: VEICS, motoristas: MOTS, multas: [multa({}), multa({ id: 'mu2', tipo_infracao: 'Sinal vermelho', status: 'descontada', etapa: 'descontada', valor_descontado: 293.47, valor: 293.47 })] })
 const SINS = montarSinistros({ veiculos: VEICS, motoristas: MOTS, sinistros: [sin({})] })
 const DOCS = montarDocumentos({ hoje: HOJE, veiculos: VEICS, documentos: [doc({}), doc({ id: 'd2', vencimento: '2026-10-01', storage_path: null }), doc({ id: 'd3', vencimento: '2027-05-01' })] })
 
@@ -88,7 +88,7 @@ describe('planilhas das 5 bases = mockup', () => {
       'Quem arca', 'Status', 'Carro saiu da equipe (sim/não)', 'Observações',
     ])
     expect(EXCEL.multa.colunas.map((c) => c.t)).toEqual([
-      'Data da infração', 'Placa', 'Motorista', 'Infração', 'Valor', 'Valor descontado', 'Situação', 'Autorização',
+      'Data da infração', 'Placa', 'Motorista', 'Infração', 'Valor', 'Valor descontado', 'Etapa', 'Autorização', 'Prazo de indicação',
     ])
     expect(EXCEL.sin.colunas.map((c) => c.t)).toEqual([
       'Data', 'Placa', 'Motorista', 'Tipo', 'Descrição', 'Valor do dano', 'Valor descontado', 'Situação', 'Desconto (tipo)',
@@ -116,7 +116,9 @@ describe('planilhas das 5 bases = mockup', () => {
     }
     const m = linhasParaExcel('multa', MULTAS)[0]
     expect(typeof m[4]).toBe('number')
+    expect(m[6]).toBe('Solicitar desconto')
     expect(m[7]).toBe('Pedida')
+    expect(m[8]).toBeInstanceOf(Date) // prazo de indicação
     const c = linhasParaExcel('corr', CORRS)[0]
     expect(c[9]).toBeNull() // custo a definir
     expect(c[12]).toBe('sim')

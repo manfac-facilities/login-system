@@ -124,7 +124,7 @@ export default function DetalheNovas({
       <>
         <Kv itens={[
           ['Placa', x.placa], ['Motorista', x.motorista], ['Infração', x.infracao], ['Data', dataBR(x.data)],
-          ['Valor', fmtBrl(x.valor)], ['Descontado', x.desc ? fmtBrl(x.desc) : null], ['Situação', MULTA_SIT_LBL[x.sit]],
+          ['Valor', fmtBrl(x.valor)], ['Descontado', x.desc ? fmtBrl(x.desc) : null], ['Etapa', MULTA_SIT_LBL[x.sit] ?? x.sit], ['Prazo de indicação', x.prazo ? dataBR(x.prazo) : null],
           ['Autorização', AUT_LBL[x.aut]],
         ]} />
         {acoes}

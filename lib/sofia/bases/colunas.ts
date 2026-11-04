@@ -5,6 +5,7 @@
 import { dataBR, fmtBrl, fmtKm, fmtLitros } from '../correcoes'
 import { ARCA_LBL, STATUS_LBL } from '../manutencoes'
 import { DOCUMENTO_TIPO_LABELS } from '../enums'
+import { ordemEtapa } from '../multaEtapas'
 import {
   AUT_LBL, DOC_SIT_LBL, MULTA_SIT_LBL, REV_SIT_LBL, SIN_SIT_LBL, SIN_TIPO_LBL,
   type AbastLinha, type BaseId, type CorrLinha, type DocLinha, type KmLinha, type Linha, type MotLinha, type MultaLinha,
@@ -132,7 +133,12 @@ export const COLUNAS_MULTA: Coluna<MultaLinha>[] = [
   { k: 'infracao', t: 'Infração', sort: (r) => r.infracao, texto: (r) => r.infracao ?? NV },
   { k: 'valor', t: 'Valor', r: true, sort: (r) => r.valor, texto: (r) => fmtBrl(r.valor) },
   { k: 'desc', t: 'Descontado', r: true, sort: (r) => r.desc, texto: (r) => (r.desc ? fmtBrl(r.desc) : NV) },
-  { k: 'sit', t: 'Situação', sort: (r) => r.sit, texto: (r) => MULTA_SIT_LBL[r.sit], tom: (r) => (r.sit === 'pendente' ? 'ambar' : 'verde') },
+  {
+    k: 'sit', t: 'Etapa', sort: (r) => ordemEtapa(r.sit), texto: (r) => MULTA_SIT_LBL[r.sit] ?? r.sit,
+    tom: (r) => (r.sit === 'descontada' ? 'verde' : r.sit === 'contestada' ? 'cinza' : 'ambar'),
+  },
+  // a tela da base troca pela pill do prazo (MultasTable, celula 'prazo')
+  { k: 'prazo', t: 'Prazo de indicação', sort: (r) => r.prazo, texto: (r) => (r.prazo ? dataBR(r.prazo) : NV) },
   { k: 'aut', t: 'Autorização', sort: (r) => r.aut, texto: (r) => AUT_LBL[r.aut] },
 ]
 
@@ -374,8 +380,9 @@ export const EXCEL_MULTA: ColunaExcel<MultaLinha>[] = [
   { t: 'Infração', largura: 32, v: (r) => r.infracao },
   { t: 'Valor', largura: 13, fmt: FMT_MOEDA, v: (r) => r.valor },
   { t: 'Valor descontado', largura: 13, fmt: FMT_MOEDA, v: (r) => r.desc },
-  { t: 'Situação', largura: 12, v: (r) => MULTA_SIT_LBL[r.sit] },
+  { t: 'Etapa', largura: 22, v: (r) => MULTA_SIT_LBL[r.sit] ?? r.sit },
   { t: 'Autorização', largura: 12, v: (r) => AUT_LBL[r.aut] },
+  { t: 'Prazo de indicação', largura: 12, fmt: FMT_DATA, v: (r) => (r.prazo ? dataExcel(r.prazo) : null) },
 ]
 
 const DESCONTO_TXT = { nenhum: 'Nenhum', parcial: 'Parcial', total: 'Total' } as const

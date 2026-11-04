@@ -6,8 +6,9 @@
  */
 import type { ManutencaoStatus, QuemArca } from '../manutencoes'
 import type { SituacaoCarro } from '../revisaoPrevisao'
+import { ETAPAS_MULTA, type MultaEtapa } from '../multaEtapas'
 import type {
-  AutorizacaoStatus, DocumentoVeiculoTipo, MultaStatus, SinistroStatus, SinistroTipo, TipoDesconto,
+  AutorizacaoStatus, DocumentoVeiculoTipo, SinistroStatus, SinistroTipo, TipoDesconto,
 } from '../types'
 
 export type BaseId = 'abast' | 'km' | 'mot' | 'veic' | 'rev' | 'corr' | 'multa' | 'sin' | 'doc'
@@ -162,7 +163,10 @@ export interface MultaLinha {
   infracao: string | null
   valor: number
   desc: number | null
-  sit: MultaStatus
+  /** etapa do fluxo da multa (o filtro "sit" da base filtra por ela) */
+  sit: MultaEtapa
+  /** prazo de indicação ao órgão (AAAA-MM-DD) */
+  prazo: string | null
   aut: AutorizacaoStatus
   autSolicitadoEm: string | null
 }
@@ -240,7 +244,8 @@ const MOTORISTA: CampoFiltro = { k: 'motorista', t: 'Motorista', lista: 'motoris
 const PERIODO: CampoFiltro = { k: 'periodo' }
 
 export const AUT_LBL: Record<AutorizacaoStatus, string> = { sem_solicitacao: 'Sem pedido', solicitado: 'Pedida', autorizado: 'Autorizada' }
-export const MULTA_SIT_LBL: Record<MultaStatus, string> = { pendente: 'Pendente', validada: 'Validada', descontada: 'Descontada' }
+/** Etapa da multa → rótulo (textos do fluxo, lib/sofia/multaEtapas.ts). */
+export const MULTA_SIT_LBL = Object.fromEntries(ETAPAS_MULTA.map((e) => [e.k, e.rotulo])) as Record<MultaEtapa, string>
 export const SIN_TIPO_LBL: Record<SinistroTipo, string> = { colisao: 'Colisão', furto: 'Furto', avaria: 'Avaria', outro: 'Outro' }
 export const SIN_SIT_LBL: Record<SinistroStatus, string> = { aberto: 'Aberto', em_tratativa: 'Em tratativa', encerrado: 'Encerrado' }
 export const REV_SIT_LBL: Record<SituacaoRevLinha, string> = {
@@ -283,7 +288,7 @@ export const FILTROS_DA_BASE: Record<BaseId, CampoFiltro[]> = {
   ],
   multa: [
     PERIODO, PLACA, MOTORISTA,
-    { k: 'sit', t: 'Situação', todos: 'Todos', opcoes: opc(MULTA_SIT_LBL) },
+    { k: 'sit', t: 'Etapa', todos: 'Todas', opcoes: opc(MULTA_SIT_LBL) },
     { k: 'aut', t: 'Autorização', todos: 'Todos', opcoes: opc(AUT_LBL) },
   ],
   sin: [

@@ -9,6 +9,7 @@ import type { AutorizacaoStatus, DocumentoVeiculoTipo, MultaStatus, SinistroStat
 import type { MotoristaBruto, VeiculoBruto } from './montar'
 import { resolverNaData, type TrechoBruto } from './responsabilidade'
 import type { CorrLinha, DocLinha, MultaLinha, RevLinha, SinLinha, SituacaoDoc } from './tipos'
+import type { MultaEtapa } from '../multaEtapas'
 
 export interface RevBruta extends RevisaoPrev {
   motorista_id: string | null
@@ -30,6 +31,7 @@ export interface MultaBruta {
   id: string; veiculo_id: string | null; motorista_id: string | null; data: string
   tipo_infracao: string | null; descricao: string | null; valor: number; valor_descontado: number | null
   status: MultaStatus; autorizacao_status: AutorizacaoStatus | null; autorizacao_solicitado_em: string | null; created_at: string
+  etapa: MultaEtapa; prazo_indicacao: string | null
 }
 export interface SinBruto {
   id: string; veiculo_id: string | null; motorista_id: string | null; data: string; tipo: SinistroTipo
@@ -146,7 +148,8 @@ export function montarMultas(e: { veiculos: VeiculoBruto[]; motoristas: Motorist
       infracao: m.tipo_infracao ?? m.descricao,
       valor: Number(m.valor),
       desc: num(m.valor_descontado),
-      sit: m.status,
+      sit: m.etapa,
+      prazo: d10(m.prazo_indicacao),
       aut: m.autorizacao_status ?? 'sem_solicitacao',
       autSolicitadoEm: m.autorizacao_solicitado_em,
     }))

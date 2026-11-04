@@ -70,7 +70,7 @@ const SEL_REV =
 const SEL_CORR =
   'id, veiculo_id, defeito, oficina, data_entrada, saida_prevista, data_saida, custo, quem_arca, status, tirou_da_equipe, anexo_storage_path, observacoes, created_at'
 const SEL_MULTA =
-  'id, veiculo_id, motorista_id, data, tipo_infracao, descricao, valor, valor_descontado, status, autorizacao_status, autorizacao_solicitado_em, created_at'
+  'id, veiculo_id, motorista_id, data, tipo_infracao, descricao, valor, valor_descontado, status, autorizacao_status, autorizacao_solicitado_em, created_at, etapa, prazo_indicacao'
 const SEL_SIN =
   'id, veiculo_id, motorista_id, data, tipo, descricao, valor_dano, valor_descontado, tipo_desconto, status, autorizacao_status, autorizacao_solicitado_em, created_at'
 const SEL_DOC = 'id, veiculo_id, tipo, numero, vencimento, storage_path'
