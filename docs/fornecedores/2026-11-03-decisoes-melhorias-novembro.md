@@ -59,3 +59,12 @@ João (literal): "nao trave nada do projeto por autorizacao, vou dormri agora e 
 Entendido como autorização para: mergear em `main` do `fornecedores` depois da revisão independente, aplicar
 as migrations 014/015 em produção (`iyytcavcgukfjnjjrerx`) com conferência antes/depois e rollback pronto, e
 disparar o deploy. Limite que mantenho: nada fora do Fornecedores; nenhum segredo em arquivo versionado.
+
+### Limite real encontrado (03/11, ~23h30)
+
+O auto mode do Claude Code negou até **leitura** do banco de produção pelo PAT (`[Production Reads]`), mesmo com
+a autorização acima dada no chat: ele só libera com uma regra de permissão nas configurações, que o Claude não
+edita sozinho. O deploy do EasyPanel também exige login. Por isso a madrugada entrega tudo **pronto, revisado e
+integrado num PR com CI verde, sem merge em `main`** (merge antes do banco = app nova pedindo colunas que não
+existem, se alguém clicar em Deploy). De manhã: liberar o banco (regra de permissão ou rodar o roteiro), merge,
+Deploy.
