@@ -79,7 +79,6 @@ const NON_ADMIN_EMAIL = 'outro.usuario@manfac.com.br'
 const PODE = { data: true, error: null }
 const NAO_PODE = { data: false, error: null }
 const ERRO_RPC = { data: true, error: { message: 'x' } }
-const MSG = 'Apenas administradores ou gestores de frotas podem executar esta ação'
 const MSG_EXCLUIR = 'Apenas administradores ou gestores de frotas podem excluir multas'
 
 describe('criarMultaAction', () => {
