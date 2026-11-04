@@ -6,6 +6,7 @@ const selectSingleMock = jest.fn()
 const updateEqMock = jest.fn()
 const updatePayload: unknown[] = []
 const auditInsertMock = jest.fn()
+const etapasInsertMock = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
@@ -17,6 +18,7 @@ jest.mock('@/lib/supabase/server', () => ({
     }),
     from: jest.fn((table: string) => {
       if (table === 'audit_log') return { insert: auditInsertMock }
+      if (table === 'multa_etapas') return { insert: etapasInsertMock }
       return {
         select: jest.fn(() => ({ eq: jest.fn(() => ({ single: selectSingleMock })) })),
         update: jest.fn((p: unknown) => {
@@ -31,6 +33,7 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
 import {
+  atualizarAutorizacaoMultaAction,
   editarPrazoMultaAction,
   registrarDobroAction,
   registrarEtapaMultaAction,
@@ -53,13 +56,14 @@ function perfil(p: 'comum' | 'gestor' | 'admin') {
 }
 
 beforeEach(() => {
-  ;[getUserMock, podeGerirMock, isAdminMock, registrarMock, selectSingleMock, updateEqMock, auditInsertMock].forEach(
+  ;[getUserMock, podeGerirMock, isAdminMock, registrarMock, selectSingleMock, updateEqMock, auditInsertMock, etapasInsertMock].forEach(
     (m) => m.mockReset()
   )
   updatePayload.length = 0
   registrarMock.mockResolvedValue({ data: 'ok', error: null })
   updateEqMock.mockResolvedValue({ error: null })
   auditInsertMock.mockResolvedValue({ error: null })
+  etapasInsertMock.mockResolvedValue({ error: null })
 })
 
 describe('registrarEtapaMultaAction — autorização antes de qualquer escrita', () => {
@@ -206,3 +210,44 @@ describe('editarPrazoMultaAction / registrarDobroAction', () => {
     expect(updateEqMock).not.toHaveBeenCalled()
   })
 })
+
+describe('atualizarAutorizacaoMultaAction — a recusa chega à tela (revisão 03/11, não bloqueante 3)', () => {
+  function status(s: string) {
+    return fd({ status: s })
+  }
+
+  it('gestor tentando autorizar recebe "Só o administrador autoriza o desconto" e nada é gravado', async () => {
+    perfil('gestor')
+    selectSingleMock.mockResolvedValue({ data: { etapa: 'solicitado' }, error: null })
+    const r = await atualizarAutorizacaoMultaAction('m1', status('autorizado'))
+    expect(r).toEqual({ error: 'Só o administrador autoriza o desconto' })
+    expect(registrarMock).not.toHaveBeenCalled()
+  })
+
+  it('usuário comum recebe a mensagem de gestor', async () => {
+    perfil('comum')
+    expect(await atualizarAutorizacaoMultaAction('m1', status('solicitado'))).toEqual({ error: MSG_GESTOR })
+    expect(registrarMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa do banco (ex.: cancelar a partir de autorizado) vira mensagem fixa', async () => {
+    perfil('gestor')
+    registrarMock.mockResolvedValue({ data: null, error: { message: 'Transição de etapa não permitida' } })
+    const r = await atualizarAutorizacaoMultaAction('m1', status('sem_solicitacao'))
+    expect(r.error).toBeTruthy()
+    expect(r.error).not.toMatch(/Transição/)
+  })
+
+  it('status desconhecido é recusado sem chamar nada', async () => {
+    perfil('admin')
+    expect(await atualizarAutorizacaoMultaAction('m1', status('xyz'))).toEqual({ error: 'Status de autorização inválido' })
+    expect(registrarMock).not.toHaveBeenCalled()
+  })
+
+  it('admin autoriza: sucesso', async () => {
+    perfil('admin')
+    selectSingleMock.mockResolvedValue({ data: { etapa: 'solicitado' }, error: null })
+    expect(await atualizarAutorizacaoMultaAction('m1', status('autorizado'))).toEqual({ success: true })
+  })
+})
+

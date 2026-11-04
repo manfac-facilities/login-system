@@ -5,13 +5,12 @@ import {
   registrarDescontoSinistroAction,
   desfazerDescontoSinistroAction,
 } from './_actions'
-import { atualizarAutorizacaoMultaAction } from '../multas/_actions'
 import { atualizarAutorizacaoSinistroAction } from '../sinistros/_actions'
 import { atualizarAutorizacaoKmExcedidoAction } from '../km/_actions'
 import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
 import { podeGerirFrotas } from '@/lib/sofia/permissoes'
 import { ehEtapaMulta, infoEtapa, type MultaComEtapa } from '@/lib/sofia/multaEtapas'
-import { DescontoMulta } from './_multa-acoes'
+import { AutorizacaoMulta, DescontoMulta } from './_multa-acoes'
 
 type LinhaDesconto = {
   origem: 'multa' | 'sinistro' | 'km_excedido'
@@ -139,11 +138,7 @@ export default async function DescontosPage() {
               const desfazerAction = desfazerDescontoSinistroAction
 
               const autorizacaoAction =
-                l.origem === 'multa'
-                  ? atualizarAutorizacaoMultaAction
-                  : l.origem === 'sinistro'
-                  ? atualizarAutorizacaoSinistroAction
-                  : atualizarAutorizacaoKmExcedidoAction
+                l.origem === 'sinistro' ? atualizarAutorizacaoSinistroAction : atualizarAutorizacaoKmExcedidoAction
 
               return (
                 <tr key={`${l.origem}-${l.id}`} className="border-b border-[#1e3a5f] hover:bg-[#0d2050] transition-colors">
@@ -167,12 +162,21 @@ export default async function DescontosPage() {
                       : `R$ ${Number(l.valor).toFixed(2)}`}
                   </td>
                   <td className="px-4 py-3">
-                    <AutorizacaoActions
-                      status={l.autorizacao_status}
-                      solicitadoEm={l.autorizacao_solicitado_em}
-                      action={autorizacaoAction.bind(null, l.id)}
-                      showActions={podeGerir}
-                    />
+                    {l.origem === 'multa' ? (
+                      <AutorizacaoMulta
+                        id={l.id}
+                        status={l.autorizacao_status}
+                        solicitadoEm={l.autorizacao_solicitado_em}
+                        showActions={podeGerir}
+                      />
+                    ) : (
+                      <AutorizacaoActions
+                        status={l.autorizacao_status}
+                        solicitadoEm={l.autorizacao_solicitado_em}
+                        action={autorizacaoAction.bind(null, l.id)}
+                        showActions={podeGerir}
+                      />
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {l.origem === 'km_excedido' ? (

@@ -244,9 +244,10 @@ export async function registrarDobroAction(id: string, formData: FormData): Prom
  * solicitado → solicitado, autorizado → autorizado, sem_solicitacao → cobrada
  * (cancelar solicitação; de "autorizado" o banco recusa — o admin revoga antes).
  */
-export async function atualizarAutorizacaoMultaAction(id: string, formData: FormData): Promise<void> {
+export async function atualizarAutorizacaoMultaAction(id: string, formData: FormData): Promise<State> {
   const status = formData.get('status') as string
-  if (!isValidEnum(AUTORIZACAO_STATUS, status)) return
+  if (!isValidEnum(AUTORIZACAO_STATUS, status)) return { error: 'Status de autorização inválido' }
   const etapa: MultaEtapa = status === 'sem_solicitacao' ? 'cobrada' : status
-  await registrarEtapaMultaAction(id, etapa, new FormData())
+  // devolve a recusa (ex.: "Só o administrador autoriza o desconto") para a tela mostrar
+  return registrarEtapaMultaAction(id, etapa, new FormData())
 }

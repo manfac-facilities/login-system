@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 import { registrarDescontoMultaAction, desfazerDescontoMultaAction } from './_actions'
+import { atualizarAutorizacaoMultaAction } from '../multas/_actions'
+import AutorizacaoActions from '@/components/sofia/AutorizacaoActions'
+import type { AutorizacaoStatus } from '@/lib/sofia/types'
 
 type State = { error?: string; success?: boolean }
 
@@ -94,6 +97,30 @@ export function DescontoMulta({
           </form>
         </details>
       )}
+    </div>
+  )
+}
+
+/** Bloco de autorização da multa com a recusa visível (ex.: "Só o administrador autoriza o desconto"). */
+export function AutorizacaoMulta({
+  id,
+  status,
+  solicitadoEm,
+  showActions,
+}: {
+  id: string
+  status: AutorizacaoStatus
+  solicitadoEm: string | null
+  showActions: boolean
+}) {
+  const [estado, acao] = useActionState(
+    (_prev: State, fd: FormData): Promise<State> => atualizarAutorizacaoMultaAction(id, fd),
+    {}
+  )
+  return (
+    <div>
+      <AutorizacaoActions status={status} solicitadoEm={solicitadoEm} action={acao} showActions={showActions} />
+      <Erro state={estado} />
     </div>
   )
 }
