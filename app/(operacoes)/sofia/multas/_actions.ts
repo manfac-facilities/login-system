@@ -240,6 +240,47 @@ export async function registrarDobroAction(id: string, formData: FormData): Prom
 }
 
 /**
+ * Boleto da locadora numa multa CONTESTADA (spec §4.2). "contestada" é final, então
+ * não há etapa "cobrada" depois dela: o boleto vai por UPDATE simples (a trigger
+ * deixa gestor/admin mudar boleto_lancado_em sem mudar a etapa) e o registro de quem
+ * lançou vai para multa_etapas (policy: gestor/admin e feito_por = e-mail do JWT).
+ */
+export async function marcarBoletoContestadaAction(id: string, formData: FormData): Promise<State> {
+  const boleto = texto(formData, 'boleto_lancado_em')
+  if (!id) return { error: 'ID inválido' }
+
+  const supabase = await createClient()
+  const erroGestor = await requireGestorFrotas(supabase)
+  if (erroGestor) return { error: erroGestor }
+  if (!DATA_RE.test(boleto)) return { error: 'Informe a data em que o boleto foi lançado' }
+
+  const { data: atual, error: erroLeitura } = await supabase.from('multas').select('etapa').eq('id', id).single()
+  if (erroLeitura || !atual) return { error: 'Multa não encontrada' }
+  if (atual.etapa !== 'contestada')
+    return { error: 'Só para multa contestada; nas outras, registre a etapa "Boleto lançado"' }
+
+  const { error } = await supabase.from('multas').update({ boleto_lancado_em: boleto }).eq('id', id)
+  if (error) return { error: 'Não foi possível registrar o boleto' }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const { error: erroHistorico } = await supabase.from('multa_etapas').insert({
+    multa_id: id,
+    etapa: 'contestada',
+    etapa_anterior: 'contestada',
+    feito_por: (user?.email ?? '').trim().toLowerCase(),
+    observacao: `Boleto da locadora lançado em ${boleto}`,
+    dados: { boleto_lancado_em: boleto },
+  })
+  if (erroHistorico) return { error: 'Boleto registrado, mas o histórico da multa não foi gravado' }
+
+  await logAudit('multas', 'atualizou', id, `Boleto lançado (multa contestada): ${boleto}`)
+  revalidarMulta(id)
+  return { success: true }
+}
+
+/**
  * Assinatura antiga mantida (Descontos importa). Agora passa pelo fluxo de etapas:
  * solicitado → solicitado, autorizado → autorizado, sem_solicitacao → cobrada
  * (cancelar solicitação; de "autorizado" o banco recusa — o admin revoga antes).

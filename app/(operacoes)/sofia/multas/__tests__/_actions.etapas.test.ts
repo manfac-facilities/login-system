@@ -35,6 +35,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 import {
   atualizarAutorizacaoMultaAction,
   editarPrazoMultaAction,
+  marcarBoletoContestadaAction,
   registrarDobroAction,
   registrarEtapaMultaAction,
 } from '../_actions'
@@ -251,3 +252,56 @@ describe('atualizarAutorizacaoMultaAction — a recusa chega à tela (revisão 0
   })
 })
 
+describe('marcarBoletoContestadaAction — boleto de multa contestada (spec §4.2)', () => {
+  it('gestor registra: grava boleto_lancado_em e a linha em multa_etapas, sem mexer na etapa', async () => {
+    perfil('gestor')
+    selectSingleMock.mockResolvedValue({ data: { etapa: 'contestada' }, error: null })
+    const r = await marcarBoletoContestadaAction('m1', fd({ boleto_lancado_em: '2026-11-03' }))
+    expect(r).toEqual({ success: true })
+    expect(updatePayload).toEqual([{ boleto_lancado_em: '2026-11-03' }])
+    expect(etapasInsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        multa_id: 'm1',
+        etapa: 'contestada',
+        etapa_anterior: 'contestada',
+        feito_por: 'gestor@manfac.com.br',
+        dados: { boleto_lancado_em: '2026-11-03' },
+      })
+    )
+    expect(registrarMock).not.toHaveBeenCalled()
+  })
+
+  it('usuário comum é negado antes de ler ou escrever', async () => {
+    perfil('comum')
+    const r = await marcarBoletoContestadaAction('m1', fd({ boleto_lancado_em: '2026-11-03' }))
+    expect(r).toEqual({ error: MSG_GESTOR })
+    expect(selectSingleMock).not.toHaveBeenCalled()
+    expect(updatePayload).toEqual([])
+    expect(etapasInsertMock).not.toHaveBeenCalled()
+  })
+
+  it('data obrigatória', async () => {
+    perfil('gestor')
+    const r = await marcarBoletoContestadaAction('m1', fd({ boleto_lancado_em: '' }))
+    expect(r).toEqual({ error: 'Informe a data em que o boleto foi lançado' })
+    expect(updatePayload).toEqual([])
+  })
+
+  it('só vale para multa contestada (nas outras, o boleto é a etapa "cobrada")', async () => {
+    perfil('gestor')
+    selectSingleMock.mockResolvedValue({ data: { etapa: 'validada' }, error: null })
+    const r = await marcarBoletoContestadaAction('m1', fd({ boleto_lancado_em: '2026-11-03' }))
+    expect(r.error).toMatch(/contestada/)
+    expect(updatePayload).toEqual([])
+    expect(etapasInsertMock).not.toHaveBeenCalled()
+  })
+
+  it('recusa do banco no UPDATE não grava histórico', async () => {
+    perfil('gestor')
+    selectSingleMock.mockResolvedValue({ data: { etapa: 'contestada' }, error: null })
+    updateEqMock.mockResolvedValue({ error: { message: 'x' } })
+    const r = await marcarBoletoContestadaAction('m1', fd({ boleto_lancado_em: '2026-11-03' }))
+    expect(r).toEqual({ error: 'Não foi possível registrar o boleto' })
+    expect(etapasInsertMock).not.toHaveBeenCalled()
+  })
+})
