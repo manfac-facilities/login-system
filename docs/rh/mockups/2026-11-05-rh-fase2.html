@@ -1,0 +1,1068 @@
+<title>RH Fase 2</title>
+<style>
+:root{
+  color-scheme:dark;
+  --fundo:#0a1628;--navy:#0d2050;--laranja:#f05a28;--sec:#94a3b8;--borda:#1e3a5f;
+  --texto:#f1f5f9;--erro:#f2877f;--erro-fundo:#2a1320;--aviso:#e8c547;--aviso-fundo:#231f24;
+  --raio:10px;
+  --fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:#0a1628;-webkit-text-size-adjust:100%}
+body{margin:0;background:#0a1628;color:#f1f5f9;font:15px/1.5 var(--fonte);overflow-x:hidden}
+h1,h2,h3,p,ul,ol{margin:0;padding:0}
+ul,ol{list-style:none}
+a{color:var(--laranja)}
+h1{font-size:1.75rem;line-height:1.2;font-weight:650;letter-spacing:-.015em;color:var(--texto)}
+h1:focus{outline:none}
+h2{font-size:1.15rem;line-height:1.3;font-weight:650;color:var(--texto)}
+h3{font-size:.95rem;font-weight:650;color:var(--texto)}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lim{max-width:1120px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+.sec{color:var(--sec)}
+.peq{font-size:.82rem}
+.forte{font-weight:650}
+.eyebrow{font-size:.75rem;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--laranja)}
+.pilha>*+*{margin-top:12px}
+.pilha-g>*+*{margin-top:24px}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.entre{justify-content:space-between}
+.vazio-ok{color:var(--sec)}
+
+/* Faixa do mockup */
+.faixa{background:#0a1628;border-bottom:1px solid var(--borda)}
+.faixa .lim{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:8px 0}
+.selo{font-size:.78rem;color:var(--sec)}
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.78rem;color:var(--sec)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--borda);border-radius:8px;overflow:hidden;background:#0a1628}
+.seg button{appearance:none;border:0;border-right:1px solid var(--borda);background:transparent;color:var(--sec);font:inherit;font-size:.82rem;padding:6px 11px;min-height:34px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--texto);background:var(--navy)}
+.seg button[aria-pressed=true]{background:var(--navy);color:var(--texto);box-shadow:inset 0 -2px 0 var(--laranja);font-weight:600}
+.limpar{appearance:none;background:none;border:0;color:var(--sec);font:inherit;font-size:.78rem;text-decoration:underline;cursor:pointer;padding:6px 2px}
+.limpar:hover{color:var(--texto)}
+
+/* Cabeçalho como o do módulo real */
+header.modulo{position:sticky;top:0;z-index:10;background:rgba(10,22,40,.94);border-bottom:1px solid var(--borda)}
+@supports (backdrop-filter:blur(8px)){header.modulo{backdrop-filter:blur(8px)}}
+header.modulo .lim{display:flex;align-items:center;gap:12px;min-height:56px}
+.marca{font-weight:650;color:var(--texto);text-decoration:none;flex:none}
+nav.menu{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+nav.menu::-webkit-scrollbar{display:none}
+nav.menu ul{display:flex;gap:2px;width:max-content}
+nav.menu a{display:flex;gap:6px;align-items:center;padding:8px 10px;border-radius:8px;color:var(--sec);text-decoration:none;font-size:.88rem;white-space:nowrap;min-height:40px}
+nav.menu a span{font-size:.72rem;color:var(--sec);border:1px solid var(--borda);border-radius:5px;padding:0 5px}
+nav.menu a:hover{background:var(--navy);color:var(--texto)}
+nav.menu a[aria-current=page]{background:var(--navy);color:var(--texto);font-weight:600}
+nav.menu a[aria-current=page] span{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.quem{flex:none;text-align:right;font-size:.75rem;line-height:1.25}
+@media (max-width:900px){.quem{display:none}}
+
+main{padding-top:24px;padding-bottom:96px}
+.cabeca{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.cabeca p{color:var(--sec);max-width:70ch}
+
+/* Componentes */
+.card{background:var(--navy);border:1px solid var(--borda);border-radius:var(--raio);padding:16px}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:.9rem;font-weight:600;line-height:1.25;border-radius:8px;padding:9px 14px;min-height:42px;cursor:pointer;border:1px solid var(--borda);background:transparent;color:var(--texto);text-decoration:none;text-align:center}
+.btn:hover{background:#12295f}
+.btn-p{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.btn-p:hover{background:#f4714a}
+.btn-d{background:transparent;border-color:var(--erro);color:var(--erro)}
+.btn-d:hover{background:var(--erro-fundo)}
+.btn-dd{background:var(--erro);border-color:var(--erro);color:#0a1628}
+.btn-dd:hover{background:#f6a099}
+.btn[disabled]{opacity:.5;cursor:not-allowed;background:transparent;color:var(--sec);border-color:var(--borda)}
+.link{appearance:none;background:none;border:0;padding:0;font:inherit;color:var(--laranja);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--laranja);outline-offset:2px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap;border:1px solid var(--borda);color:var(--sec)}
+.p-prep{border-style:dashed}
+.p-conf{border-color:var(--laranja);color:var(--laranja)}
+.p-env{background:#1e3a5f;border-color:#1e3a5f;color:var(--texto)}
+.p-pago{background:var(--texto);border-color:var(--texto);color:#0a1628}
+.p-ar{background:var(--texto);border-color:var(--texto);color:#0a1628}
+.p-prox{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.p-novo{border-color:var(--laranja);color:var(--laranja)}
+.p-exi{border-color:var(--borda);color:var(--sec)}
+.p-rec{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.p-block{border-color:var(--erro);color:var(--erro)}
+.p-aviso{border-color:var(--aviso);color:var(--aviso)}
+.p-ok{color:var(--texto)}
+
+.nota{border:1px solid var(--borda);border-left-width:3px;border-radius:8px;padding:10px 12px;background:#0a1628}
+.nota.info{border-left-color:var(--sec)}
+.nota.dest{border-left-color:var(--laranja)}
+.nota.bloq{border-color:var(--erro);background:var(--erro-fundo)}
+.nota.aviso{border-left-color:var(--aviso);background:var(--aviso-fundo)}
+.nota .t{font-weight:650;color:var(--texto);display:block}
+.nota.bloq .t{color:var(--erro)}
+.nota.aviso .t{color:var(--aviso)}
+.card .nota{background:#0a1628}
+.card .nota.bloq{background:var(--erro-fundo)}
+
+.tbl{overflow-x:auto;border:1px solid var(--borda);border-radius:8px;background:var(--navy)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--borda);vertical-align:top;background:var(--navy);color:var(--texto)}
+th{font-size:.76rem;font-weight:600;color:var(--sec);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:650;border-top:2px solid var(--borda)}
+.d{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fixa th:first-child,.fixa td:first-child{position:sticky;left:0;z-index:1;box-shadow:1px 0 0 var(--borda)}
+tr.fora td{color:var(--sec)}
+
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.campo label,.rot{font-size:.84rem;font-weight:550;color:var(--texto)}
+input[type=text],input[type=date],input[type=month],input[type=email],input[type=number],select,textarea{width:100%;min-height:42px;background:#0a1628;color:#f1f5f9;border:1px solid var(--borda);border-radius:8px;padding:8px 10px;font:inherit;font-size:16px}
+input:disabled,select:disabled,textarea:disabled{opacity:.72;cursor:not-allowed}
+.ajuda{font-size:.78rem;color:var(--sec)}
+.erro-campo{font-size:.8rem;color:var(--erro)}
+.grade{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:640px){.grade{grid-template-columns:1fr 1fr}.grade .todo{grid-column:1/-1}}
+.chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer;min-height:28px}
+.chk input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--laranja);flex:none}
+.novo{border-left:3px solid var(--laranja);padding-left:10px}
+
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:18px}
+.passos button{appearance:none;width:100%;height:100%;text-align:left;background:transparent;border:1px solid var(--borda);border-radius:8px;padding:8px 10px;color:var(--sec);font:inherit;font-size:.84rem;cursor:pointer;min-height:44px;display:flex;gap:8px;align-items:center}
+.passos button:hover{background:var(--navy)}
+.passos b{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--borda);font-size:.74rem;font-weight:650}
+.passos button[aria-current=step]{background:var(--navy);color:var(--texto);border-color:var(--laranja);font-weight:600}
+.passos button[aria-current=step] b{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.passos .feito b{background:#1e3a5f;border-color:#1e3a5f;color:var(--texto)}
+
+/* Mapa */
+.mapa{position:relative}
+.mapa::before{content:"";position:absolute;left:15px;top:20px;bottom:20px;width:2px;background:var(--borda)}
+.fase{position:relative;padding-left:44px;margin-top:10px}
+.fase:first-child{margin-top:0}
+.fase .no{position:absolute;left:0;top:11px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:650;font-size:.88rem;border:2px solid var(--borda);background:#0a1628;color:var(--sec)}
+.fase.s-ar .no{background:var(--texto);border-color:var(--texto);color:#0a1628}
+.fase.s-prox .no{background:var(--laranja);border-color:var(--laranja);color:#0a1628}
+.fase-bt{appearance:none;width:100%;text-align:left;background:var(--navy);border:1px solid var(--borda);border-radius:var(--raio);padding:12px 14px;color:var(--texto);font:inherit;cursor:pointer;display:block}
+.fase-bt:hover{border-color:var(--sec)}
+.fase-bt[aria-expanded=true]{border-color:var(--laranja);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.fase-corpo{border:1px solid var(--laranja);border-top:0;border-radius:0 0 var(--raio) var(--raio);padding:14px;background:#0a1628}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--borda);border-radius:8px;padding:3px 9px;font-size:.84rem;background:var(--navy);color:var(--texto)}
+.duas{display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:760px){.duas{grid-template-columns:1fr 1fr}}
+.sist li{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid var(--borda)}
+.sist li:last-child{border-bottom:0}
+
+/* Competência */
+.resumo{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:760px){.resumo{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.resumo div b{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums;font-weight:650}
+.cartoes{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:640px){.cartoes{grid-template-columns:1fr 1fr}}
+@media (min-width:980px){.cartoes{grid-template-columns:1fr 1fr 1fr}}
+.pag{display:flex;flex-direction:column;gap:8px}
+.pag .val{font-size:1.4rem;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2}
+.pag .acoes{margin-top:auto;padding-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.pag .acoes .btn{font-size:.84rem;padding:7px 11px;min-height:40px}
+.pend li{padding:9px 0;border-bottom:1px solid var(--borda)}
+.pend li:last-child{border-bottom:0;padding-bottom:0}
+.pend li:first-child{padding-top:0}
+
+/* Financeiro (outro sistema) */
+.fin{border:1px solid var(--sec);border-radius:var(--raio);overflow:hidden;background:#0a1628}
+.fin-topo{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:10px 14px;background:#1e3a5f}
+.fin-corpo{padding:14px}
+.dados{display:grid;gap:10px 18px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.dados dt{font-size:.76rem;color:var(--sec)}
+.dados dd{margin:0}
+dl{margin:0}
+.origem{background:var(--laranja);color:#0a1628;border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700}
+
+/* Estados de demonstração */
+.demo{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:18px;font-size:.78rem;color:var(--sec)}
+.esq{border-radius:8px;background:linear-gradient(90deg,#0d2050 25%,#1e3a5f 50%,#0d2050 75%);background-size:200% 100%;animation:esq 1.4s linear infinite}
+@keyframes esq{to{background-position:-200% 0}}
+.est-vazio{border:2px dashed var(--borda);border-radius:var(--raio);padding:32px 20px;text-align:center}
+.est-erro{border:1px solid var(--erro);background:var(--erro-fundo);border-radius:var(--raio);padding:20px}
+.est-erro h2{color:var(--erro)}
+.est-vazio>*+*,.est-erro>*+*{margin-top:10px}
+
+dialog{border:1px solid var(--borda);border-radius:12px;background:#0d2050;color:#f1f5f9;padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto}
+dialog::backdrop{background:rgba(5,10,20,.75)}
+.dlg-c{padding:18px}
+.dlg-c>*+*{margin-top:12px}
+.dlg-c li{padding-left:14px;position:relative;margin-top:6px}
+.dlg-c li::before{content:"";position:absolute;left:2px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--sec)}
+.dlg-b{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:0 18px 18px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:#f1f5f9;color:#0a1628;font-weight:600;font-size:.88rem;border-radius:8px;padding:10px 14px;max-width:calc(100vw - 32px);width:max-content;display:none}
+#toast.on{display:block}
+.realce{animation:realce 1.8s ease-out 1}
+@keyframes realce{0%,50%{box-shadow:0 0 0 3px var(--laranja)}100%{box-shadow:0 0 0 0 transparent}}
+details summary{cursor:pointer;color:var(--laranja);min-height:32px}
+.susp li{padding:14px 0;border-bottom:1px solid var(--borda)}
+.susp li:first-child{padding-top:0}
+.susp li:last-child{border-bottom:0;padding-bottom:0}
+@media (max-width:480px){
+  h1{font-size:1.5rem}
+  .btn{width:100%}
+  .pag .acoes .btn{width:auto;flex:1 1 auto}
+  .dlg-b .btn{width:100%}
+  .marca{display:none}
+}
+@media (prefers-reduced-motion:reduce){.esq,.realce{animation:none}html{scroll-behavior:auto}}
+</style>
+
+<div class="faixa gutter"><div class="lim">
+  <span class="selo">Mockup com dados de exemplo</span>
+  <div class="linha">
+    <div class="ctrl"><span id="rot-papel">Ver como</span><span class="seg" role="group" aria-labelledby="rot-papel" id="seg-papel"></span></div>
+    <button class="limpar" data-act="reiniciar">Reiniciar demonstração</button>
+  </div>
+</div></div>
+<header class="modulo gutter"><div class="lim">
+  <a class="marca" href="#mapa">RH</a>
+  <nav class="menu" aria-label="Telas do mockup"><ul id="menu"></ul></nav>
+  <div class="quem"><div class="forte">Ana Exemplo</div><div class="sec" id="quem-papel"></div></div>
+</div></header>
+<main class="gutter"><div class="lim" id="tela"></div></main>
+<dialog id="dlg" aria-labelledby="dlg-t"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ---------- Dinheiro: tudo em centavos inteiros ---------- */
+function brl(c){var n=Math.abs(c),r=Math.floor(n/100),ct=String(n%100).padStart(2,"0");return (c<0?"-":"")+"R$ "+String(r).replace(/\B(?=(\d{3})+(?!\d))/g,".")+","+ct;}
+function brlSem(c){return brl(c).replace("R$ ","");}
+function lerValor(t){t=String(t).trim();if(!/^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/.test(t))return null;var p=t.replace(/\./g,"").split(",");return Number(p[0])*100+Number(((p[1]||"")+"00").slice(0,2));}
+function pct(cs){return String(Math.floor(cs/100))+","+String(cs%100).padStart(2,"0")+"%";}
+function lerPct(t){t=String(t).trim();if(!/^\d{1,3}(,\d{1,2})?$/.test(t))return null;var p=t.split(",");var v=Number(p[0])*100+Number(((p[1]||"")+"00").slice(0,2));return v<=10000?v:null;}
+function divInt(a,b){return (a-a%b)/b;}
+/* Divide por percentual; o que sobrar de centavo vai para a maior linha. */
+function ratear(total,linhas){
+  var saida=linhas.map(function(l){return {cc:l.cc,p:l.p,v:divInt(total*l.p,10000)};});
+  var soma=saida.reduce(function(s,l){return s+l.v;},0),maior=0;
+  saida.forEach(function(l,i){if(l.p>saida[maior].p)maior=i;});
+  if(saida.length)saida[maior].v+=total-soma;
+  return saida;
+}
+/* Percentual da solicitação: soma exatamente 100,00%; a diferença vai para a maior linha. */
+function fecharPct(linhas,total){
+  var somaP=0;
+  linhas.forEach(function(l){l.pct=total?divInt(l.valor*10000,total):0;somaP+=l.pct;});
+  if(linhas.length&&total)linhas[0].pct+=10000-somaP;
+}
+function consolidar(itens){
+  var mapa={},total=0;
+  itens.forEach(function(it){
+    total+=it.valor;
+    ratear(it.valor,rateioAtual(it.p).linhas).forEach(function(l){
+      var m=mapa[l.cc]||(mapa[l.cc]={cc:l.cc,nome:CC[l.cc].nome,ativo:CC[l.cc].ativo,valor:0,de:[]});
+      m.valor+=l.v;m.de.push({nome:it.p.nome,v:l.v,p:l.p});
+    });
+  });
+  var linhas=Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.valor-a.valor;});
+  fecharPct(linhas,total);
+  var somaV=linhas.reduce(function(s,l){return s+l.valor;},0);
+  return {total:total,linhas:linhas,confere:somaV===total,pessoas:itens.length};
+}
+/* Boleto manda no total: o valor calculado pelo cadastro serve só de peso entre os centros de custo. */
+function porPesos(total,c){
+  if(!c.total||!c.linhas.length)return {total:total,linhas:[],confere:false,pessoas:c.pessoas,calculado:c.total};
+  var linhas=c.linhas.map(function(l){return {cc:l.cc,nome:l.nome,ativo:l.ativo,de:l.de,valor:divInt(total*l.valor,c.total)};});
+  var soma=linhas.reduce(function(s,l){return s+l.valor;},0);
+  linhas[0].valor+=total-soma;
+  fecharPct(linhas,total);
+  return {total:total,linhas:linhas,confere:linhas.reduce(function(s,l){return s+l.valor;},0)===total,pessoas:c.pessoas,calculado:c.total};
+}
+
+/* ---------- Dados fictícios ---------- */
+var COMP="2026-11",COMP_NOME="novembro/2026",PERIODO="25/10/2026 a 24/11/2026";
+var TOLERANCIA=1000,JANELA="2026-11-12",LINHA_EX="99990.00001 00000.000000 00000.000000 1 94510000385240";
+var CC={adm:{nome:"Administrativo",ativo:true},man:{nome:"Manutenção Predial",ativo:true},obr:{nome:"Obras",ativo:true},fro:{nome:"Frotas",ativo:true},com:{nome:"Comercial",ativo:false}};
+function pessoasIniciais(){return [
+ {id:"helena",nome:"Helena Prado",cpf:"***.482.117-**",cargo:"Analista de DP",tipo:"clt",sub:"",status:"ativo",adm:"2021-03-15",email:"helena.prado@exemplo.com.br",sal:[{d:"2023-01",c:432000},{d:"2025-02",c:485000}],rat:[{d:"2023-01",linhas:[{cc:"adm",p:10000}]}],vr:true,vt:null,seg:true,cel:"(**) *****-1204",pix:"e-mail: he***@exemplo.com.br",hist:["10/02/2025: salário alterado para R$ 4.850,00, a partir de fevereiro/2025"]},
+ {id:"rafael",nome:"Rafael Nogueira",cpf:"***.713.260-**",cargo:"Técnico de manutenção",tipo:"clt",sub:"",status:"ativo",adm:"2022-08-01",email:"rafael.nogueira@exemplo.com.br",sal:[{d:"2022-08",c:342050}],rat:[{d:"2022-08",linhas:[{cc:"man",p:10000}]},{d:"2026-08",linhas:[{cc:"man",p:7000},{cc:"obr",p:3000}]}],vr:true,vt:1760,seg:true,cel:"(**) *****-3377",pix:"celular: (**) *****-4821",hist:["03/08/2026: rateio novo a partir de agosto/2026 (Manutenção Predial 70%, Obras 30%)"]},
+ {id:"marina",nome:"Marina Teixeira",cpf:"***.095.338-**",cargo:"Engenheira de obras",tipo:"clt",sub:"",status:"ativo",adm:"2020-05-04",email:"marina.teixeira@exemplo.com.br",sal:[{d:"2020-05",c:987000}],rat:[{d:"2020-05",linhas:[{cc:"obr",p:10000}]}],vr:true,vt:null,seg:true,cel:"(**) *****-9051",pix:"CPF: ***.095.338-**",hist:["04/05/2020: cadastrada"]},
+ {id:"bruno",nome:"Bruno Cardoso",cpf:"***.641.902-**",cargo:"Motorista",tipo:"clt",sub:"",status:"ativo",adm:"2024-01-22",email:"",sal:[],rat:[{d:"2024-01",linhas:[{cc:"fro",p:10000}]}],vr:true,vt:1320,seg:true,cel:"(**) *****-6612",pix:"Não informada",hist:["22/01/2024: cadastrado sem salário"]},
+ {id:"patricia",nome:"Patrícia Lemos",cpf:"***.327.514-**",cargo:"Assistente administrativa",tipo:"clt",sub:"",status:"afastado",adm:"2019-11-11",email:"patricia.lemos@exemplo.com.br",sal:[{d:"2019-11",c:278033}],rat:[{d:"2019-11",linhas:[{cc:"adm",p:10000}]}],vr:true,vt:null,seg:true,cel:"",pix:"e-mail: pa***@exemplo.com.br",hist:["14/09/2026: status alterado para Afastado"]},
+ {id:"tiago",nome:"Tiago Fontes",cpf:"***.850.476-**",cargo:"Eletricista",tipo:"clt",sub:"",status:"ativo",adm:"2023-06-12",email:"tiago.fontes@exemplo.com.br",sal:[],rat:[{d:"2023-06",linhas:[{cc:"man",p:5000},{cc:"obr",p:3333},{cc:"adm",p:1667}]}],vr:true,vt:1760,seg:true,cel:"(**) *****-2480",pix:"celular: (**) *****-7730",hist:["12/06/2023: cadastrado sem salário"]},
+ {id:"renata",nome:"Renata Vilela",cpf:"***.268.139-**",cargo:"Analista de contratos",tipo:"clt",sub:"",status:"ativo",adm:"2022-02-07",email:"renata.vilela@exemplo.com.br",sal:[{d:"2022-02",c:415000}],rat:[{d:"2022-02",linhas:[{cc:"obr",p:7000},{cc:"com",p:3000}]}],vr:true,vt:null,seg:false,cel:"",pix:"e-mail: re***@exemplo.com.br",hist:["07/02/2022: rateio inicial (Obras 70%, Comercial 30%)"]},
+ {id:"lucas",nome:"Lucas Amaral",cpf:"***.574.081-**",cargo:"Coordenador de obras",tipo:"pj",sub:"mei",status:"ativo",adm:"2023-09-01",email:"lucas.amaral@exemplo.com.br",sal:[{d:"2023-09",c:780000}],rat:[{d:"2023-09",linhas:[{cc:"obr",p:6000},{cc:"man",p:4000}]}],vr:false,vt:null,seg:false,cel:"(**) *****-5593",pix:"CNPJ: **.***.408/0001-**",hist:["01/09/2023: cadastrado como PJ"]}
+];}
+var ARQUIVO=[
+ {pid:"helena",nome:"Helena Prado",valor:501218},{pid:"rafael",nome:"Rafael Nogueira",valor:528440},
+ {pid:"marina",nome:"Marina Teixeira",valor:1135000},{pid:"bruno",nome:"Bruno Cardoso",valor:310477},
+ {pid:"patricia",nome:"Patrícia Lemos",valor:278033},{pid:"tiago",nome:"Tiago Fontes",valor:387705},
+ {pid:null,nome:"Sérgio Bastos",cpf:"***.903.641-**",valor:331842}
+];
+var VALOR_RENATA=421560;
+var LIMITE_DIF=20;
+var NOMES_PAG={folha:"Folha",vr:"VR/VA",vt:"Vale-transporte",seg:"Seguro de vida",cel:"Celulares",aj:"Ajuda de custo"};
+var ESTADOS={preparar:["A preparar","p-prep"],conferencia:["Em conferência","p-conf"],aguardando:["Aguardando validação","p-env"],devolvida:["Devolvida","p-aviso"],recusada:["Recusada","p-block"],lancada:["Lançada","p-env"],pago:["Pago","p-pago"],rateio:["Rateio pronto, caminho pendente","p-conf"],definir:["A definir","p-prep"]};
+var ENVIADOS=["aguardando","devolvida","recusada","lancada","pago"];
+var BOLETOS={vt:96800,seg:37440,cel:48012};
+var FORNECEDOR={vr:"Operadora de Benefícios Exemplo",vt:"Operadora de Transporte Exemplo",seg:"Seguradora Exemplo",cel:"Operadora de Telefonia Exemplo"};
+
+var S;
+function inicial(){
+  var s={papel:"rh",demo:{competencia:"dados",vr:"dados",folha:"dados",ficha:"dados"},pessoas:pessoasIniciais(),sel:"helena",foco:null,mapa:"2A",
+    pag:{folha:{estado:"preparar",rev:1},vr:{estado:"preparar",rev:1},vt:{estado:"pago",num:1826,rev:1},seg:{estado:"aguardando",num:1839,rev:1},cel:{estado:"lancada",num:1833,rev:1},aj:{estado:"definir",rev:1}},
+    vr:{passo:1,dia:"38,50",dias:"20",fora:foraInicial(),boleto:boletoVazio()},
+    folha:{passo:1,importado:false,linhas:[],conf:{},opc:"reg"},
+    proxNum:1871,enviando:null,draft:null};
+  S=s;
+  ["vt","seg","cel"].forEach(function(id){s.pag[id].foto=fotoAtual(id);s.pag[id].calculado=consolidar(porPessoa(id)).total;});
+  return s;
+}
+function foraInicial(){return {marina:{mot:"Férias",txt:""},patricia:{mot:"Afastado",txt:""}};}
+function boletoVazio(){return {linha:"",valor:"",venc:"",anexo:null};}
+function P(id){return S.pessoas.filter(function(p){return p.id===id;})[0];}
+function pode(){return S.papel==="rh";}
+function rateioAtual(p){var r=null;p.rat.forEach(function(v){if(v.d<=COMP&&(!r||v.d>r.d))r=v;});return r||p.rat[0];}
+function salarioAtual(p){return p.sal.length?p.sal[p.sal.length-1].c:null;}
+function usaInativo(p){return rateioAtual(p).linhas.some(function(x){return !CC[x.cc].ativo;});}
+function porPessoa(id){
+  if(id==="vt")return ["rafael","bruno","tiago"].map(function(i){return {p:P(i),valor:P(i).vt*20};});
+  if(id==="seg")return ["helena","rafael","marina","bruno","patricia","tiago"].map(function(i){return {p:P(i),valor:6240};});
+  if(id==="cel")return [["helena",5990],["rafael",8990],["marina",8990],["bruno",5990],["tiago",8990],["lucas",8990]].map(function(x){return {p:P(x[0]),valor:x[1]};});
+  return [];
+}
+function fotoAtual(id){
+  if(id==="vr"){var c=vrCalc(),b=lerValor(S.vr.boleto.valor);return b!==null&&b>0&&c.cons.total?porPesos(b,c.cons):c.cons;}
+  if(id==="folha")return folhaCons();
+  if(BOLETOS[id])return porPesos(BOLETOS[id],consolidar(porPessoa(id)));
+  return consolidar([]);
+}
+function foto(id){return S.pag[id].foto||fotoAtual(id);}
+function valorPag(id){
+  if(id==="aj")return null;
+  if(id==="folha"&&!S.pag.folha.foto&&!S.folha.importado)return null;
+  return foto(id).total;
+}
+function enviado(id){return ENVIADOS.indexOf(S.pag[id].estado)>=0;}
+function travaFolha(){return S.pag.folha.estado==="rateio";}
+
+/* ---------- VR/VA ---------- */
+function vrSit(p){
+  if(p.tipo!=="clt")return {entra:false,fixo:true,motivo:"PJ: pagamento continua como está (decisão 3)"};
+  if(!p.vr)return {entra:false,fixo:true,motivo:"A ficha diz que não recebe VR/VA"};
+  var f=S.vr.fora[p.id];
+  if(f)return {entra:false,marca:f,motivo:f.mot==="Outro"?(f.txt||""):f.mot};
+  return {entra:true,motivo:""};
+}
+function vrCalc(){
+  var dia=lerValor(S.vr.dia),dias=/^\d{1,2}$/.test(String(S.vr.dias).trim())?Number(S.vr.dias):null;
+  var okDia=dia!==null&&dia>0,okDias=dias!==null&&dias>0&&dias<=31;
+  var ok=okDia&&okDias,por=ok?dia*dias:0;
+  var entram=[],fora=[];
+  S.pessoas.forEach(function(p){var s=vrSit(p);(s.entra?entram:fora).push({p:p,s:s,valor:por});});
+  var semMotivo=fora.filter(function(x){return x.s.marca&&!x.s.motivo;}).length;
+  return {dia:dia,dias:dias,okDia:okDia,okDias:okDias,ok:ok,por:por,entram:entram,fora:fora,semMotivo:semMotivo,cons:consolidar(entram)};
+}
+function inativos(c){return c.linhas.filter(function(l){return !l.ativo&&l.valor>0;});}
+function donoInativo(cc){var d=null;S.pessoas.forEach(function(p){if(rateioAtual(p).linhas.some(function(l){return l.cc===cc;}))d=d||p;});return d;}
+function digitos(t){return String(t).replace(/\D/g,"").length;}
+function vrBloqueios(){
+  var c=vrCalc(),b=S.vr.boleto,bl=[],bv=lerValor(b.valor),f=fotoAtual("vr");
+  if(!c.ok)bl.push("Preencha valor por dia e dias úteis (Seção 3.1).");
+  if(c.semMotivo)bl.push("Informe o motivo de quem ficou de fora (Seção 3.1).");
+  if(!c.entram.length)bl.push("Ninguém entrou neste VR/VA (Seção 3.1).");
+  if(inativos(c.cons).length)bl.push("Troque o centro de custo inativo no rateio (Seção 3.3).");
+  var dig=digitos(b.linha);
+  if(!dig)bl.push("Preencha a linha digitável do boleto. Anexar o PDF não substitui esse campo (Seção 3.2).");
+  else if(dig!==47&&dig!==48)bl.push("A linha digitável está incompleta: tem "+dig+" números, e o boleto usa 47 ou 48 (Seção 3.2).");
+  if(bv===null||bv<=0)bl.push("Informe o valor do boleto (Seção 3.2).");
+  else if(c.ok&&Math.abs(bv-c.cons.total)>TOLERANCIA)bl.push("O boleto é de "+brl(bv)+" e o calculado é "+brl(c.cons.total)+". A diferença de "+brl(Math.abs(bv-c.cons.total))+" passa da tolerância de "+brl(TOLERANCIA)+" (Seção 3.2).");
+  if(!b.venc)bl.push("Informe o vencimento do boleto (Seção 3.2).");
+  if(f.linhas.some(function(l){return l.valor<=0;}))bl.push("Há centro de custo com valor zerado, que o Financeiro recusa (Seção 3.3).");
+  if(f.linhas.length>20)bl.push("São mais de 20 centros de custo, limite do Financeiro por solicitação (Seção 3.3).");
+  return bl;
+}
+
+/* ---------- Folha ---------- */
+function folhaItens(){return S.folha.linhas.filter(function(l){return l.pid;}).map(function(l){return {p:P(l.pid),valor:l.valor};});}
+function folhaCons(){return consolidar(folhaItens());}
+function folhaProblemas(){
+  var imp=[],at=[],presentes={};
+  S.folha.linhas.forEach(function(l){
+    if(!l.pid){imp.push({t:"nao",l:l});return;}
+    presentes[l.pid]=true;
+    var p=P(l.pid),s=salarioAtual(p);
+    if(s===null)imp.push({t:"semsal",l:l,p:p});
+    else{var dif=Math.abs(l.valor-s)*100/s;if(dif>LIMITE_DIF)at.push({t:"dif",l:l,p:p,s:s,dif:dif});}
+    if(usaInativo(p))imp.push({t:"inativo",p:p});
+  });
+  S.pessoas.forEach(function(p){if(p.tipo==="clt"&&!presentes[p.id])imp.push({t:"ausente",p:p});});
+  return {imp:imp,at:at};
+}
+
+/* ---------- Utilidades de tela ---------- */
+function h(t){return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mesNome(m){var n=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"],a=m.split("-");return n[Number(a[1])-1]+"/"+a[0];}
+function dataBr(d){if(!d)return "";var a=d.split("-");return a[2]+"/"+a[1]+"/"+a[0];}
+function plural(n,um,varios){return n+" "+(n===1?um:varios);}
+function pillEstado(id){var e=ESTADOS[S.pag[id].estado];return '<span class="pill '+e[1]+'">'+(S.pag[id].estado==="pago"?"✓ ":"")+e[0]+"</span>";}
+function seg(valor,opcoes,act){return opcoes.map(function(o){return '<button type="button" data-act="'+act+'" data-id="'+o[0]+'" aria-pressed="'+(o[0]===valor)+'">'+o[1]+"</button>";}).join("");}
+function cabeca(n,t,d){return '<div class="cabeca"><span class="eyebrow">Seção '+n+'</span><h1 tabindex="-1" id="h1">'+t+"</h1>"+(d?"<p>"+d+"</p>":"")+"</div>";}
+function bannerDir(){return S.papel==="diretoria"?'<div class="nota info" style="margin-bottom:16px"><span class="t">Você está como Diretoria</span><span class="sec peq">Vê tudo, mas não edita nem envia. O CPF aparece mascarado.</span></div>':"";}
+function tabelaCC(c){
+  if(!c.linhas.length)return '<p class="sec">Ainda não há valor para dividir entre os centros de custo.</p>';
+  var corpo=c.linhas.map(function(l){return "<tr><td>"+h(l.nome)+(!l.ativo?' <span class="pill p-block">inativo no Omie</span>':"")+'</td><td class="d">'+pct(l.pct)+'</td><td class="d">'+brl(l.valor)+"</td></tr>";}).join("");
+  var soma=c.linhas.reduce(function(s,l){return s+l.valor;},0),somaP=c.linhas.reduce(function(s,l){return s+l.pct;},0);
+  return '<div class="tbl" tabindex="0" role="region" aria-label="Valor por centro de custo"><table><thead><tr><th>Centro de custo</th><th class="d">Parte do total</th><th class="d">Valor</th></tr></thead><tbody>'+corpo+'</tbody><tfoot><tr><td>Total</td><td class="d">'+pct(somaP)+'</td><td class="d">'+brl(soma)+"</td></tr></tfoot></table></div>"+
+   (c.confere&&somaP===10000?'<p class="peq sec" style="margin-top:6px">✓ A soma das linhas é igual ao total: '+brl(c.total)+"</p>":'<p class="erro-campo" style="margin-top:6px">A soma das linhas não bate com o total. O envio fica bloqueado.</p>');
+}
+function deQuem(c,titulo){
+  return '<details><summary class="peq">'+titulo+'</summary><div class="tbl fixa" tabindex="0" role="region" aria-label="Composição por pessoa" style="margin-top:6px"><table style="min-width:440px"><thead><tr><th>Centro de custo</th><th>Pessoa</th><th class="d">Percentual</th><th class="d">Valor</th></tr></thead><tbody>'+
+   c.linhas.map(function(l){return l.de.map(function(x){return "<tr><td>"+h(l.nome)+"</td><td>"+h(x.nome)+'</td><td class="d">'+pct(x.p)+'</td><td class="d">'+brl(x.v)+"</td></tr>";}).join("");}).join("")+"</tbody></table></div></details>";
+}
+function notaInativo(c){
+  return inativos(c).map(function(l){var d=donoInativo(l.cc);return '<div class="nota bloq"><span class="t">'+h(l.nome)+' está inativo no Omie</span><span class="peq">O fechamento fica bloqueado. O sistema não redistribui esse valor sozinho: quem decide o novo centro de custo é o RH, no rateio de '+h(d?d.nome:"")+".</span>"+(d&&pode()?'<div style="margin-top:8px"><button class="btn" data-act="irFicha" data-id="'+d.id+'" data-foco="rateio">Corrigir o rateio de '+h(d.nome)+"</button></div>":"")+"</div>";}).join("");
+}
+
+/* ---------- Estados de demonstração ---------- */
+function alternador(r){return '<div class="demo"><span id="rot-demo">Demonstrar estado da tela:</span><span class="seg" role="group" aria-labelledby="rot-demo">'+seg(S.demo[r],[["dados","Com dados"],["carregando","Carregando"],["vazio","Vazio"],["erro","Erro"]],"demo")+"</span></div>";}
+var TEXTOS={
+ competencia:{nome:"a competência",v:"A competência de "+COMP_NOME+" ainda não foi aberta",d:"Primeiro abra a competência. O sistema guarda quem está no cadastro e prepara os pagamentos do mês.",b:"Abrir competência de "+COMP_NOME},
+ vr:{nome:"o VR/VA",v:"Ninguém marcado para receber VR/VA",d:"Primeiro marque na ficha quem recebe VR/VA. A lista deste passo sai de lá, sem digitação.",b:"Ir para a ficha do colaborador"},
+ folha:{nome:"a folha",v:"Nenhuma folha neste mês ainda",d:"Primeiro importe o arquivo que a contabilidade manda. A conferência por pessoa começa depois disso.",b:"Importar o arquivo da contabilidade"},
+ ficha:{nome:"os colaboradores",v:"Nenhum colaborador cadastrado ainda",d:"Primeiro importe a planilha de colaboradores ou cadastre uma pessoa. Salário, rateio e benefícios saem daqui para os pagamentos.",b:"Voltar para os colaboradores de exemplo"}
+};
+function telaEstado(r){
+  var t=TEXTOS[r],st=S.demo[r];
+  if(st==="carregando")return '<div role="status" aria-label="Carregando '+t.nome+'" class="pilha"><p class="sec">Carregando '+t.nome+'...</p><div class="esq" style="height:84px"></div><div class="resumo"><div class="esq" style="height:120px"></div><div class="esq" style="height:120px"></div><div class="esq" style="height:120px"></div><div class="esq" style="height:120px"></div></div><div class="esq" style="height:180px"></div></div>';
+  if(st==="vazio")return '<div class="est-vazio"><h2>'+t.v+'</h2><p class="sec" style="max-width:52ch;margin-inline:auto">'+t.d+"</p>"+(pode()||r==="ficha"?'<button class="btn btn-p" data-act="sairVazio" data-id="'+r+'">'+t.b+"</button>":'<p class="peq sec">Quem faz isso é o RH. Você verá os dados assim que ele começar.</p>')+"</div>";
+  return '<div class="est-erro" role="alert"><h2>Não deu para carregar '+t.nome+' agora</h2><p>Seus dados não foram perdidos. O que já estava salvo continua guardado, e nada foi enviado nem alterado no Financeiro.</p><p class="peq sec">Costuma ser instabilidade passageira. Se continuar depois de tentar de novo, avise quem cuida do sistema.</p><button class="btn" data-act="tentar" data-id="'+r+'">Tentar de novo</button></div>';
+}
+function semAcesso(n,t){return cabeca(n,t)+'<div class="pilha"><p class="sec">Você ainda não tem acesso a este cadastro. Peça à Controladoria para liberar o seu e-mail.</p><p class="peq sec" style="border-top:1px solid var(--borda);padding-top:10px">Nota do mockup: o menu continua visível só para você navegar nesta demonstração. As seções 1 e 6 explicam a proposta e não mostram dado de ninguém.</p></div>';}
+function tela(r,n,t,d,corpo){
+  if(S.papel==="sem")return semAcesso(n,t);
+  return cabeca(n,t,d)+alternador(r)+bannerDir()+(S.demo[r]==="dados"?corpo():telaEstado(r));
+}
+
+/* ---------- Tela 1: Mapa ---------- */
+var FASES=[
+ {n:"1",nome:"Cadastro",sit:"ar",ent:"Lista de colaboradores, ficha com salário, rateio por vigência e histórico.",por:"É o que já existe. As outras fases partem deste cadastro.",
+  areas:[["2","Admissão","parte"],["5","Levantamento de colaboradores ativos CLT","parte"],["7","Atestados e afastamentos","parte"],["9","Alterações cadastrais e funcionais","parte"],["10","Contratos PJ/MEI","parte"],["11","Desligamento e rescisão","parte"],["17","Atualizações mensais de controles","parte"]],
+  sist:[["Orçamento","Já puxa pessoas, salário e rateio do RH. É o único caminho automático que existe hoje.",true],["Financeiro","O RH lê os catálogos, como os centros de custo.",true]]},
+ {n:"2A",nome:"Base + VR/VA",sit:"prox",ent:"Competência mensal, ficha ampliada e o primeiro pagamento de ponta a ponta.",por:"O VR/VA vem antes da folha porque o desenho dele está fechado: um fornecedor, um boleto e o rateio pronto, formato que o Financeiro já aceita.",
+  areas:[["5","Levantamento de colaboradores ativos CLT",""],["15","Vale-refeição e vale-alimentação",""],["17.3","Atualizar planilha de chaves PIX","parte"]],
+  sist:[["Financeiro","Recebe a solicitação com o rateio pronto, marcada “Origem: RH”.",false],["Orçamento","Continua lendo pessoas, salário e rateio. Nenhum campo que ele usa muda.",false]],liga:[["competencia","Ver a competência do mês"],["vr","Ver o caminho do VR/VA"],["ficha","Ver a ficha ampliada"]]},
+ {n:"2B",nome:"Outros boletos",sit:"dep",ent:"Seguro de vida, vale-transporte e celular com rateio calculado.",por:"Repete o caminho do VR/VA: um fornecedor, um boleto. O total é o do boleto, e o cadastro dá os pesos do rateio.",
+  areas:[["13","Seguro de vida",""],["16.4","Gerar boleto do vale-transporte e subir no Hub para pagamento",""],["18.8","Subir conta dos celulares no Hub para pagamento",""]],
+  sist:[["Financeiro","Recebe uma solicitação por boleto, com o rateio pronto.",false]],liga:[["competencia","Ver os cartões na competência"]]},
+ {n:"2C",nome:"Folha",sit:"dep",pend:"Desenho depende da decisão 1",ent:"Valor por pessoa, rateio por centro de custo, conferência da prévia, FOPAG para a diretoria e contracheque. Só CLT.",por:"É a maior dor, mas ainda não tem caminho definido: uma solicitação paga um favorecido só, e a folha paga várias pessoas.",
+  areas:[["6","Folha de pagamento",""],["16.1 a 16.3","Solicitações e provisionamento da ajuda de custo",""],["16.5","Acompanhar confirmação do lançamento ou pagamento",""]],
+  sist:[["Financeiro","Caminho pendente: regularização, tipo novo, só o rateio ou uma por pessoa.",false],["Orçamento","Continua lendo pessoas, salário e rateio.",false],["Frotas","Descontos.",false]],liga:[["folha","Ver a folha e os 4 caminhos"]]},
+ {n:"3",nome:"Jornada da pessoa",sit:"dep",ent:"Checklists de admissão, alteração e desligamento, com pedido de acessos e benefícios.",por:"Precisa de uma peça nova no hub: hoje não existe porta para conceder acesso de fora.",
+  areas:[["2","Admissão",""],["9","Alterações cadastrais e funcionais",""],["11","Desligamento e rescisão",""],["17.1","Atualizar relação mensal de colaboradores ativos",""],["17.2","Atualizar relação de equipes de campo",""],["17.6","Conferir dados e salvar a versão atualizada",""]],
+  sist:[["Admin do hub","Pedido de acessos aos sistemas.",false],["Compras","Recursos de trabalho.",false],["Obras","Acessos e equipes.",false],["Frotas","Acessos e veículo.",false]]},
+ {n:"4",nome:"Prazos e vencimentos",sit:"dep",ent:"Férias, ASOs e contratos PJ/MEI, com aviso ao gestor.",por:"Aqui nasce o controle de férias que a fase 2 ainda não tem. Até lá, o RH marca à mão na competência.",
+  areas:[["8","Férias",""],["10","Contratos PJ/MEI",""],["14","Acompanhamento de ASOs",""]],
+  sist:[["Fornecedores","Onde já existe contrato.",false]]},
+ {n:"5",nome:"Ponto e jornada",sit:"dep",ent:"Fechamento de 25 a 24, banco de horas, horas extras, plantões, escala e atestados.",por:"Depende de saber qual sistema de ponto existe. Importando o arquivo da contabilidade, a folha não precisa esperar esta fase.",
+  areas:[["3","Ponto e banco de horas",""],["4","Validação de horas extras e plantões",""],["7","Atestados e afastamentos",""],["17.5","Solicitar escala de plantão para a operação",""]],
+  sist:[["Folha","Horas extras e plantões conferidos.",false],["Cockpit e Obras","Escala. Hipótese, ainda sem confirmação.",false]]},
+ {n:"6",nome:"Patrimônio",sit:"dep",ent:"Itens por pessoa, entrega e devolução, termos.",por:"A conta dos celulares (18.8) já vem antes, na 2B. Não existe módulo de almoxarifado hoje.",
+  areas:[["18","Controle de patrimônio, menos o item 18.8",""]],
+  sist:[["Compras (estoque e papel de almoxarifado)","Itens e estoque.",false],["Frotas","Veículos.",false]]},
+ {n:"7",nome:"Recrutamento e comunicação",sit:"dep",ent:"Vagas e candidatos; campanhas, comunicados e eventos.",por:"É a de menor ligação com dinheiro e com os outros sistemas.",
+  areas:[["1","Recrutamento e seleção",""],["12","Campanhas internas, comunicados e confraternizações",""]],
+  sist:[["Comunicados do hub","Disparo de comunicados.",false]]}
+];
+var SIT={ar:["No ar","p-ar"],prox:["Próxima","p-prox"],dep:["Depois","p-exi"]};
+function telaMapa(){
+  var itens=FASES.map(function(f){
+    var ab=S.mapa===f.n,s=SIT[f.sit];
+    var corpo=!ab?"":'<div class="fase-corpo" id="fase-'+f.n+'"><div class="pilha">'+
+      '<p class="linha">'+(f.sit==="ar"?'<span class="pill p-ar">Já existe</span>':'<span class="pill p-novo">Proposta, nada aprovado</span>')+(f.pend?'<span class="pill p-aviso">'+h(f.pend)+"</span>":"")+"</p><p>"+h(f.ent)+'</p><p class="sec peq"><span class="forte">Por que aqui: </span>'+h(f.por)+"</p>"+
+      '<div class="duas"><div><h3 style="margin-bottom:8px">Áreas do documento</h3><ul class="chips">'+f.areas.map(function(a){return '<li class="chip"><span class="sec">'+a[0]+"</span> "+h(a[1])+(a[2]?' <span class="sec peq">(parte)</span>':"")+"</li>";}).join("")+'</ul></div>'+
+      '<div><h3 style="margin-bottom:4px">Conversa com</h3><ul class="sist">'+f.sist.map(function(x){return '<li><span class="linha"><span class="forte">'+h(x[0])+'</span><span class="pill '+(x[2]?"p-ar":"p-exi")+'">'+(x[2]?"Já existe":"Proposta")+'</span></span><span class="sec peq">'+h(x[1])+"</span></li>";}).join("")+"</ul></div></div>"+
+      (f.liga?'<div class="linha">'+f.liga.map(function(l){return '<a class="btn" href="#'+l[0]+'">'+l[1]+"</a>";}).join("")+"</div>":"")+
+      "</div></div>";
+    return '<li class="fase s-'+f.sit+'"><span class="no" aria-hidden="true">'+f.n+'</span><button class="fase-bt" data-act="fase" data-id="'+f.n+'" aria-expanded="'+ab+'" aria-controls="fase-'+f.n+'"><span class="linha entre"><span class="forte">Fase '+f.n+": "+h(f.nome)+'</span><span class="pill '+s[1]+'">'+s[0]+'</span></span><span class="sec peq" style="display:block;margin-top:2px">Áreas '+f.areas.map(function(a){return a[0];}).join(", ")+" · "+f.sist.map(function(x){return x[0];}).join(", ")+"</span></button>"+corpo+"</li>";
+  }).join("");
+  return cabeca(1,"Mapa do RH","Hoje só a fase 1 está no ar. Todo o resto é proposta: nada foi aprovado, e este mockup detalha a fase 2. Clique em uma fase para ver as áreas do documento e com quais sistemas ela conversa.")+
+   '<ol class="mapa">'+itens+"</ol>"+
+   '<p class="peq sec" style="margin-top:14px">As 18 áreas do documento “Atividades de RH e DP” estão distribuídas nestas fases. Números das áreas conforme o documento.</p>';
+}
+
+/* ---------- Tela 2: Competência ---------- */
+function pendGlobais(){
+  var semSal=S.pessoas.filter(function(p){return salarioAtual(p)===null;});
+  var inat=S.pessoas.filter(usaInativo);
+  var itens=[];
+  if(semSal.length)itens.push('<li><div class="forte">'+plural(semSal.length,"colaborador sem salário","colaboradores sem salário")+'</div><div class="peq sec">Bloqueia o que depende de salário, como a folha. Nunca vira zero.</div><div class="linha peq sec">Corrigir: '+semSal.map(function(p){return '<button class="link" data-act="irFicha" data-id="'+p.id+'" data-foco="salario">'+h(p.nome)+"</button>";}).join(" · ")+"</div></li>");
+  if(inat.length)itens.push('<li><div class="forte">'+plural(inat.length,"rateio com centro de custo inativo no Omie","rateios com centro de custo inativo no Omie")+'</div><div class="peq sec">Bloqueia o fechamento. Nada é redistribuído sozinho.</div><div class="linha peq sec">Corrigir: '+inat.map(function(p){return '<button class="link" data-act="irFicha" data-id="'+p.id+'" data-foco="rateio">'+h(p.nome)+"</button>";}).join(" · ")+"</div></li>");
+  if(!S.folha.importado&&!S.pag.folha.foto)itens.push('<li><div class="forte">Falta o arquivo da folha da contabilidade</div><div class="peq"><a href="#folha">Importar na tela da folha</a></div></li>');
+  return itens;
+}
+function pendPag(id){
+  var q=S.pag[id];
+  if(q.estado==="pago")return "Nenhuma pendência";
+  if(q.estado==="aguardando")return "Com o Financeiro. Enviado não significa pago";
+  if(q.estado==="devolvida")return "O Financeiro devolveu para correção: "+(q.motivo||"linha digitável não confere");
+  if(q.estado==="recusada")return "O Financeiro recusou: "+(q.motivo||"boleto em duplicidade")+". Não será pago";
+  if(q.estado==="lancada")return q.pedido?"Você pediu o cancelamento. Aguardando o Financeiro":"Lançada no Omie. Ainda não foi paga";
+  if(id==="aj")return "O significado de “provisionar” está pendente (pergunta 6)";
+  if(id==="folha"){
+    if(q.estado==="rateio")return "Decisão 1 pendente. Nada foi enviado ao Financeiro";
+    if(!S.folha.importado)return "Falta o arquivo da contabilidade";
+    var pr=folhaProblemas();return pr.imp.length?plural(pr.imp.length,"item impede fechar o rateio","itens impedem fechar o rateio"):"Pronta para gerar o rateio";
+  }
+  if(id==="vr"){var bl=vrBloqueios();return bl.length?plural(bl.length,"item impede o envio","itens impedem o envio"):"Pronto para enviar";}
+  return "Nenhuma pendência";
+}
+function simBts(id){
+  var q=S.pag[id],a=[];
+  if(q.estado==="aguardando")a=[["devolveu","Financeiro devolveu"],["recusou","Financeiro recusou"],["lancou","Financeiro lançou"]];
+  if(q.estado==="lancada")a=q.pedido?[["cancelou","Financeiro cancelou"]]:[["pagou","Financeiro pagou"]];
+  if(!a.length||!pode())return "";
+  return '<div class="ctrl"><span>Só nesta demonstração:</span>'+a.map(function(x){return '<button class="limpar" data-act="simular" data-id="'+id+'" data-v="'+x[0]+'">'+x[1]+"</button>";}).join("")+"</div>";
+}
+function acoesEnvio(id){
+  var q=S.pag[id],a="";
+  if(!enviado(id)||!pode()||q.pedido)return "";
+  if(q.estado==="devolvida"||q.estado==="recusada")a='<button class="btn btn-p" data-act="reabrir" data-id="'+id+'">Corrigir e criar nova revisão</button>';
+  else a='<button class="btn" data-act="reabrir" data-id="'+id+'">Reabrir este pagamento</button>';
+  if(q.estado==="aguardando"||q.estado==="lancada"||q.estado==="devolvida")a+='<button class="btn btn-d" data-act="cancelarEnvio" data-id="'+id+'">Cancelar envio</button>';
+  return a;
+}
+function acoesPag(id){
+  var q=S.pag[id],a=[],rota=id==="vr"?"vr":id==="folha"?"folha":null;
+  if(id==="aj")a.push('<button class="btn" data-act="verAjuda">Ver por que está a definir</button>');
+  else if(rota)a.push('<a class="btn '+(pode()&&!enviado(id)&&!travaFolha()?"btn-p":"")+'" href="#'+rota+'">'+(pode()&&!enviado(id)?"Abrir ":"Ver ")+NOMES_PAG[id]+"</a>");
+  else a.push('<button class="btn" data-act="verRateio" data-id="'+id+'">Ver boleto e rateio</button>');
+  if(pode()&&!rota&&id!=="aj"){
+    if(q.estado==="preparar")a.push('<button class="btn btn-p" data-act="conferir" data-id="'+id+'">Começar conferência</button>');
+    if(q.estado==="conferencia")a.push('<button class="btn btn-p" data-act="enviarSimples" data-id="'+id+'"'+(S.enviando===id?" disabled":"")+">"+(S.enviando===id?"Enviando...":"Enviar "+brl(valorPag(id))+" ao Financeiro")+"</button>");
+  }
+  return a.join("")+acoesEnvio(id);
+}
+function legendaValor(id){
+  if(id==="folha")return S.pag.folha.foto||S.folha.importado?"Soma do arquivo da contabilidade":"";
+  if(id==="vr"&&!enviado("vr")){var b=lerValor(S.vr.boleto.valor);return b===null?"Calculado pelo cadastro. O total final será o do boleto":"Total do boleto";}
+  if(BOLETOS[id])return "Total do boleto";
+  if(id==="vr")return "Total do boleto";
+  return "";
+}
+function telaCompetencia(){
+  return tela("competencia",2,"Competência de "+COMP_NOME,"Período de "+PERIODO+". Um cartão por pagamento do mês: o RH prepara, confere e entrega com o rateio pronto.",function(){
+    var ids=["folha","vr","vt","seg","cel","aj"],tot=0,fin=0,pago=0,rh=0;
+    ids.forEach(function(id){var v=valorPag(id);if(v===null)return;tot+=v;var e=S.pag[id].estado;if(e==="pago")pago+=v;else if(e==="aguardando"||e==="lancada")fin+=v;else rh+=v;});
+    var p=pendGlobais();
+    var cart=ids.map(function(id){
+      var v=valorPag(id),q=S.pag[id],leg=legendaValor(id);
+      return '<article class="card pag" id="pag-'+id+'"><div class="linha entre"><h3>'+NOMES_PAG[id]+"</h3>"+pillEstado(id)+'</div><div class="val">'+(v===null?'<span class="sec" style="font-size:1rem;font-weight:500">'+(id==="aj"?"A definir":"Aguardando arquivo")+"</span>":brl(v))+"</div>"+(leg?'<div class="peq sec">'+leg+"</div>":"")+(q.num?'<div class="peq sec">Solicitação nº '+q.num+(q.rev>1?" · Revisão "+q.rev:"")+"</div>":q.rev>1?'<div class="peq sec">Preparando a revisão '+q.rev+"</div>":"")+'<div class="peq"><span class="sec">Pendências: </span>'+h(pendPag(id))+'</div><div class="acoes">'+acoesPag(id)+"</div>"+simBts(id)+"</article>";
+    }).join("");
+    return '<div class="pilha-g">'+
+     '<section class="card" aria-label="Resumo do mês"><div class="resumo"><div><span class="sec peq">Total conhecido</span><b>'+brl(tot)+'</b></div><div><span class="sec peq">Pago</span><b>'+brl(pago)+'</b></div><div><span class="sec peq">Com o Financeiro</span><b>'+brl(fin)+'</b></div><div><span class="sec peq">Com o RH</span><b>'+brl(rh)+'</b></div></div><p class="peq sec" style="margin-top:10px">Ajuda de custo'+(valorPag("folha")===null?" e folha ainda não entram":" ainda não entra")+" nesta conta.</p></section>"+
+     '<section><h2 style="margin-bottom:10px">Seção 2.1 · O que precisa de você</h2><div class="card">'+(p.length?'<ul class="pend">'+p.join("")+"</ul>":'<p>✓ Nenhuma pendência geral nesta competência.</p>')+"</div></section>"+
+     '<section><h2 style="margin-bottom:4px">Seção 2.2 · Pagamentos do mês</h2><p class="peq sec" style="margin-bottom:10px">Depois do envio, o estado vem do Financeiro: Aguardando validação, Devolvida, Recusada, Lançada ou Pago. Ter enviado não significa ter pago.</p><div class="cartoes">'+cart+"</div></section></div>";
+  });
+}
+
+/* ---------- Tela 3: VR/VA ---------- */
+function passos(lista,atual,act,feitoAte){
+  return '<ol class="passos">'+lista.map(function(t,i){var n=i+1,f=n<=feitoAte&&n!==atual;return '<li><button type="button" data-act="'+act+'" data-id="'+n+'" class="'+(f?"feito":"")+'"'+(n===atual?' aria-current="step"':"")+"><b>"+(f?"✓":n)+"</b><span>"+t+"</span></button></li>";}).join("")+"</ol>";
+}
+function bannerEnviado(id){
+  var q=S.pag[id];
+  if(!enviado(id))return "";
+  return '<div class="nota dest" style="margin-bottom:14px"><span class="t">'+ESTADOS[q.estado][0]+" · solicitação nº "+q.num+(q.rev>1?" · revisão "+q.rev:"")+'</span><span class="peq sec">'+(q.estado==="pago"?"O Financeiro já pagou.":"Enviado não significa pago.")+" O que foi enviado está guardado como foto: mudar o cadastro não altera este valor."+(pode()&&q.estado!=="pago"?" Para corrigir, crie uma nova revisão.":"")+"</span></div>";
+}
+function vrCalcHtml(){
+  var c=vrCalc(),trava=enviado("vr")||!pode();
+  var resumo=c.ok?'<div class="card"><span class="sec peq">Valor calculado, só para conferir com o boleto</span><div class="num" style="font-size:1.5rem;font-weight:650">'+brl(c.cons.total)+'</div><p class="peq sec">'+plural(c.entram.length,"pessoa","pessoas")+" × "+brl(c.dia)+" × "+plural(c.dias,"dia","dias")+"</p></div>":'<div class="nota aviso"><span class="t">Preencha valor e dias para calcular</span><span class="peq">Os dados de quem entra continuam aqui.</span></div>';
+  var ent=c.entram.length?'<div class="tbl fixa" tabindex="0" role="region" aria-label="Pessoas que entram"><table style="min-width:620px"><thead><tr><th>Pessoa</th><th>Rateio do cadastro</th><th class="d">Dias</th><th class="d">Calculado</th>'+(trava?"":"<th>Neste mês</th>")+"</tr></thead><tbody>"+c.entram.map(function(x){
+    return "<tr><td>"+h(x.p.nome)+'</td><td class="peq">'+rateioAtual(x.p).linhas.map(function(l){return h(CC[l.cc].nome)+" "+pct(l.p);}).join("<br>")+'</td><td class="d">'+(c.ok?c.dias:"")+'</td><td class="d">'+(c.ok?brl(x.valor):"")+"</td>"+(trava?"":'<td><button class="btn" style="min-height:34px;padding:4px 10px;width:auto" data-act="vrMarcarFora" data-id="'+x.p.id+'">Deixar de fora</button></td>')+"</tr>";
+  }).join("")+"</tbody></table></div>":'<p class="sec">Ninguém entra neste mês com as marcações atuais.</p>';
+  var fora=c.fora.length?'<ul class="pend card">'+c.fora.map(function(x){
+    if(x.s.fixo)return '<li><span class="forte">'+h(x.p.nome)+'</span><br><span class="peq sec">'+h(x.s.motivo)+"</span></li>";
+    var m=x.s.marca;
+    if(trava)return '<li><span class="forte">'+h(x.p.nome)+'</span><br><span class="peq sec">Marcado pelo RH: '+h(x.s.motivo||"sem motivo informado")+"</span></li>";
+    return '<li class="pilha"><div class="linha entre"><span class="forte">'+h(x.p.nome)+'</span><button class="btn" style="min-height:34px;padding:4px 10px;width:auto" data-act="vrIncluir" data-id="'+x.p.id+'">Incluir neste mês</button></div><div class="campo"><label for="m-'+x.p.id+'" class="peq">Motivo (marcado à mão pelo RH)</label><select id="m-'+x.p.id+'" data-in="vrMot" data-i="'+x.p.id+'">'+[["","Escolha o motivo"],["Férias","Férias"],["Afastado","Afastado"],["Outro","Outro motivo"]].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===m.mot?" selected":"")+">"+o[1]+"</option>";}).join("")+"</select>"+(m.mot==="Outro"?'<input type="text" aria-label="Descreva o motivo" autocomplete="off" data-in="vrTxt" data-i="'+x.p.id+'" value="'+h(m.txt)+'" placeholder="Descreva o motivo">':"")+(x.s.motivo?"":'<span class="erro-campo">Informe o motivo para seguir.</span>')+"</div></li>";
+  }).join("")+"</ul>":'<p class="sec">Ninguém fica de fora neste mês.</p>';
+  return resumo+'<div><h3 style="margin:16px 0 8px">Entram ('+c.entram.length+")</h3>"+ent+'</div><div><h3 style="margin:16px 0 4px">Ficam de fora ('+c.fora.length+')</h3><p class="peq sec" style="margin-bottom:8px">Nesta fase o sistema não controla férias nem afastamento. O RH marca à mão quem fica de fora neste mês e o motivo.</p>'+fora+"</div>";
+}
+function vrPasso1(){
+  var c=vrCalc(),trava=enviado("vr")||!pode();
+  return '<section class="pilha"><h2>Seção 3.1 · Quem entra</h2><p class="sec">A lista sai do cadastro: colaboradores CLT com VR/VA marcado na ficha. Altere o valor ou os dias e o cálculo muda na hora.</p>'+
+   '<div class="grade"><div class="campo"><label for="vr-dia">Valor por dia (R$)</label><input id="vr-dia" type="text" inputmode="decimal" autocomplete="off" data-in="vrDia" value="'+h(S.vr.dia)+'"'+(trava?" disabled":"")+'><span class="erro-campo" id="vr-dia-e" '+(c.okDia?"hidden":"")+'>Use um valor como 38,50.</span></div>'+
+   '<div class="campo"><label for="vr-dias">Dias úteis</label><input id="vr-dias" type="number" min="1" max="31" inputmode="numeric" data-in="vrDias" value="'+h(S.vr.dias)+'"'+(trava?" disabled":"")+'><span class="ajuda">No período há 22 dias de segunda a sexta, menos 2 feriados nacionais.</span><span class="erro-campo" id="vr-dias-e" '+(c.okDias?"hidden":"")+'>Use um número de 1 a 31.</span></div></div>'+
+   '<div id="vr-calc">'+vrCalcHtml()+"</div>"+
+   (pode()&&!enviado("vr")?'<button class="btn btn-p" id="vr-seg1" data-act="vrConfirmar"'+(c.ok&&c.entram.length&&!c.semMotivo?"":" disabled")+">Confirmar quem entra e ir para o boleto</button>":"")+"</section>";
+}
+function comparaHtml(){
+  var c=vrCalc(),b=S.vr.boleto,bv=lerValor(b.valor),ok=bv!==null&&bv>0,dif=ok&&c.ok?Math.abs(bv-c.cons.total):null,x;
+  x='<div class="card"><div class="resumo"><div><span class="sec peq">Total do boleto (é o que manda)</span><b>'+(ok?brl(bv):"Falta informar")+'</b></div><div><span class="sec peq">Calculado pelo cadastro</span><b>'+(c.ok?brl(c.cons.total):"Falta calcular")+'</b></div><div><span class="sec peq">Diferença</span><b>'+(dif===null?"Sem comparação":brl(dif))+'</b></div><div><span class="sec peq">Tolerância</span><b>'+brl(TOLERANCIA)+"</b></div></div></div>";
+  if(dif!==null)x+=dif>TOLERANCIA?'<div class="nota bloq"><span class="t">Diferença acima da tolerância: envio bloqueado</span><span class="peq">Confira com a operadora ou revise quem entra na Seção 3.1.</span></div>':'<div class="nota dest"><span class="t">Dentro da tolerância</span><span class="peq sec">O valor enviado será o do boleto, '+brl(bv)+'. O cadastro dá só os pesos do rateio.</span></div>';
+  if(b.venc&&b.venc<JANELA)x+='<div class="nota aviso"><span class="t">Vencimento antes da primeira janela do Financeiro</span><span class="peq">Vira pagamento emergencial e cai no diretor. Janela de exemplo: '+dataBr(JANELA)+".</span></div>";
+  return x;
+}
+function vrPasso2(){
+  var b=enviado("vr")?S.pag.vr.boleto:S.vr.boleto,ed=pode()&&!enviado("vr"),dis=ed?"":" disabled";
+  return '<section class="pilha"><h2>Seção 3.2 · Boleto</h2>'+
+   '<div class="card pilha">'+(ed?'<div class="linha entre"><span class="peq sec">Lê linha digitável, valor e vencimento. Simulado neste mockup.</span><button class="btn" data-act="vrLerPdf">Ler do PDF de exemplo</button></div>':"")+
+   '<div class="campo"><label for="b-linha">Linha digitável (obrigatória)</label><input id="b-linha" type="text" inputmode="numeric" autocomplete="off" data-in="bLinha" value="'+h(b.linha)+'" placeholder="Digite ou leia do PDF"'+dis+'><span class="ajuda">É com ela que o Financeiro paga. O anexo não substitui este campo.</span></div>'+
+   '<div class="grade"><div class="campo"><label for="b-val">Valor do boleto (R$)</label><input id="b-val" type="text" inputmode="decimal" autocomplete="off" data-in="bValor" value="'+h(b.valor)+'" placeholder="3.852,40"'+dis+'></div><div class="campo"><label for="b-venc">Vencimento</label><input id="b-venc" type="date" data-in="bVenc" value="'+h(b.venc)+'"'+dis+"></div></div>"+
+   '<div class="linha entre"><span class="peq"><span class="sec">Anexo (complemento): </span>'+(b.anexo?h(b.anexo):"nenhum")+"</span>"+(ed&&b.anexo?'<button class="btn" data-act="vrTirarAnexo">Retirar o anexo</button>':"")+"</div></div>"+
+   '<div id="vr-compara" class="pilha">'+(enviado("vr")?"":comparaHtml())+"</div>"+
+   (ed?'<button class="btn btn-p" data-act="vrPasso" data-id="3">Ir para o rateio e envio</button>':"")+"</section>";
+}
+function vrPasso3(){
+  var c=foto("vr"),env=enviado("vr"),calc=env?S.pag.vr.fotoCalc:vrCalc().cons,bl=env?[]:vrBloqueios(),envi=S.enviando==="vr";
+  return '<section class="pilha"><h2>Seção 3.3 · Rateio e envio</h2>'+
+   '<div class="nota dest"><span class="t">Ninguém digitou este rateio</span><span class="peq sec">O total é o do boleto. A divisão usa como peso o valor calculado de cada pessoa e o percentual da ficha, na vigência de '+COMP_NOME+". Se sobra um centavo, ele vai para a maior linha.</span></div>"+
+   tabelaCC(c)+deQuem(calc,"Ver os pesos por pessoa (só aqui no RH; o Financeiro não recebe isto)")+(env?"":notaInativo(calc))+
+   (env?'<button class="btn" data-act="vrPasso" data-id="4">Ver como aparece no Financeiro</button>':
+    '<p class="peq sec">Ao enviar, o sistema guarda uma foto de quem entrou, dos valores e do rateio. Mudar o cadastro depois não altera o que foi enviado, e clicar duas vezes não cria duas solicitações.</p>'+
+    (bl.length?'<div class="nota bloq"><span class="t">Ainda não dá para enviar</span><ul class="peq">'+bl.map(function(x){return "<li>"+h(x)+"</li>";}).join("")+"</ul></div>":'<div class="nota dest"><span class="t">Tudo certo para enviar</span><span class="peq sec">O Financeiro recebe uma solicitação de '+brl(c.total)+", com "+plural(c.linhas.length,"centro de custo","centros de custo")+".</span></div>")+
+    (pode()?'<button class="btn btn-p" data-act="vrEnviar"'+(bl.length||envi?" disabled":"")+">"+(envi?"Enviando...":"Enviar "+brl(c.total)+" ao Financeiro")+"</button>":""))+"</section>";
+}
+function cardFin(id){
+  var q=S.pag[id],c=foto(id),env=enviado(id),b=env?q.boleto:S.vr.boleto;
+  return '<div class="fin"><div class="fin-topo"><span class="forte">Financeiro · '+(env?"Solicitação nº "+q.num:"Solicitação ainda não criada")+(q.rev>1?" · Revisão "+q.rev:"")+'</span><span class="origem">Origem: RH</span></div><div class="fin-corpo pilha">'+
+   '<dl class="dados"><div><dt>Fornecedor</dt><dd>'+h(FORNECEDOR[id])+"</dd></div><div><dt>Descrição</dt><dd>VR/VA de "+COMP_NOME+" (período de "+PERIODO+")</dd></div><div><dt>Forma de pagamento</dt><dd>Boleto</dd></div><div><dt>Vencimento</dt><dd>"+(b.venc?dataBr(b.venc):"Falta informar")+'</dd></div><div><dt>Valor (do boleto)</dt><dd class="forte num">'+brl(c.total)+"</dd></div><div><dt>Etapa</dt><dd>"+(env?ESTADOS[q.estado][0]:"Prévia")+'</dd></div><div style="grid-column:1/-1"><dt>Linha digitável</dt><dd class="num" style="overflow-wrap:anywhere">'+(b.linha?h(b.linha):"Falta informar")+"</dd></div><div><dt>Anexo (complemento)</dt><dd>"+(b.anexo?h(b.anexo):"Nenhum")+"</dd></div></dl>"+
+   '<h3>Rateio (já preenchido)</h3>'+tabelaCC(c)+'<p class="peq sec">O Financeiro confere só o valor por centro de custo. O valor por pessoa fica no RH.</p></div></div>';
+}
+function vrPasso4(){
+  var env=enviado("vr");
+  return '<section class="pilha"><h2>Seção 3.4 · Como aparece no Financeiro</h2>'+(env?"":'<div class="nota info"><span class="t">Prévia: nada foi enviado ainda</span><span class="peq sec">É assim que ficará depois do envio, com os números de agora.</span></div>')+
+   cardFin("vr")+(env?'<div class="linha">'+acoesEnvio("vr")+"</div>"+simBts("vr"):"")+"</section>";
+}
+function telaVr(){
+  return tela("vr",3,"Gerar VR/VA de "+COMP_NOME,"O caminho completo, do cadastro até o Financeiro, sem digitar rateio. O total é o do boleto; o cadastro dá os pesos.",function(){
+    var e=S.pag.vr.estado,feito=enviado("vr")?4:e==="conferencia"?1:0,n=S.vr.passo;
+    return passos(["Quem entra","Boleto","Rateio e envio","No Financeiro"],n,"vrPasso",feito)+bannerEnviado("vr")+(n===1?vrPasso1():n===2?vrPasso2():n===3?vrPasso3():vrPasso4());
+  });
+}
+
+/* ---------- Tela 4: Folha ---------- */
+function probImp(x){
+  if(x.t==="nao")return '<div class="nota bloq"><span class="t">'+h(x.l.nome)+' está no arquivo, mas não está no cadastro</span><span class="peq">Valor no arquivo: '+brl(x.l.valor)+". Sem cadastro não há rateio para dividir esse valor.</span>"+(pode()?'<div class="linha" style="margin-top:8px"><button class="btn" data-act="cadastrarArq">Cadastrar '+h(x.l.nome)+'</button><button class="btn" data-act="retirarArq">Veio por engano: retirar desta folha</button></div>':"")+"</div>";
+  if(x.t==="ausente")return '<div class="nota bloq"><span class="t">'+h(x.p.nome)+' é CLT no cadastro, mas não está no arquivo</span><span class="peq">Confirme o valor com a contabilidade, para ninguém ficar sem pagamento.</span>'+(pode()?'<div class="linha" style="margin-top:8px;align-items:flex-end"><div class="campo" style="flex:1 1 180px"><label for="ausente-'+x.p.id+'">Valor confirmado pela contabilidade (R$)</label><input id="ausente-'+x.p.id+'" type="text" inputmode="decimal" autocomplete="off" value="'+brlSem(x.p.id==="renata"?VALOR_RENATA:(salarioAtual(x.p)||0))+'"><span class="erro-campo" id="ausente-e" hidden>Use um valor como 4.215,60.</span></div><button class="btn" data-act="incluirAusente" data-id="'+x.p.id+'">Incluir com este valor</button></div>':"")+"</div>";
+  if(x.t==="semsal")return '<div class="nota bloq"><span class="t">'+h(x.p.nome)+' está sem salário no cadastro</span><span class="peq">Valor no arquivo: '+brl(x.l.valor)+'. Sem salário não há o que comparar. O sistema não trata como zero: fica bloqueado até preencher.</span>'+(pode()?'<div style="margin-top:8px"><button class="btn" data-act="irFicha" data-id="'+x.p.id+'" data-foco="salario">Preencher o salário de '+h(x.p.nome)+"</button></div>":"")+"</div>";
+  return '<div class="nota bloq"><span class="t">O rateio de '+h(x.p.nome)+' usa um centro de custo inativo no Omie</span><span class="peq">O sistema não redistribui sozinho: o RH escolhe o novo centro de custo.</span>'+(pode()?'<div style="margin-top:8px"><button class="btn" data-act="irFicha" data-id="'+x.p.id+'" data-foco="rateio">Corrigir o rateio de '+h(x.p.nome)+"</button></div>":"")+"</div>";
+}
+function probAt(x){
+  var c=S.folha.conf[x.p.id];
+  return '<div class="nota aviso"><span class="t">'+h(x.p.nome)+": "+Math.round(x.dif)+'% de diferença</span><span class="peq">Salário no cadastro '+brl(x.s)+", valor no arquivo "+brl(x.l.valor)+'. Pode ser hora extra ou plantão. Não impede seguir.</span>'+(pode()&&!travaFolha()?'<label class="chk peq" style="margin-top:6px"><input type="checkbox" data-act="confDif" data-id="'+x.p.id+'"'+(c?" checked":"")+"><span>Conferi com a contabilidade: o valor está certo</span></label>":(c?'<div class="peq">✓ Conferido pelo RH</div>':""))+"</div>";
+}
+function folhaPasso1(){
+  var f=S.folha,trava=travaFolha();
+  if(f.importado)return '<section class="pilha"><h2>Seção 4.1 · Importar o arquivo da contabilidade</h2><div class="card"><div class="linha entre"><span><span class="forte">folha-novembro-exemplo.xlsx</span><br><span class="peq sec">'+plural(f.linhas.length,"pessoa","pessoas")+" no arquivo · "+brl(f.linhas.reduce(function(s,l){return s+l.valor;},0))+"</span></span>"+(pode()&&!trava?'<button class="btn" data-act="reimportar">Importar o arquivo de novo</button>':"")+"</div></div>"+(pode()&&!trava?'<button class="btn btn-p" data-act="folhaPasso" data-id="2">Ir para a conferência por pessoa</button>':"")+"</section>";
+  if(!pode())return '<section class="pilha"><h2>Seção 4.1 · Importar o arquivo da contabilidade</h2><p class="sec">O RH ainda não importou o arquivo deste mês.</p></section>';
+  return '<section class="pilha"><h2>Seção 4.1 · Importar o arquivo da contabilidade</h2><div class="card pilha"><p>Importe o arquivo com o valor de cada pessoa. O rateio vem do cadastro: você não digita valor nem percentual.</p><p class="peq sec">Neste mockup não há upload de verdade. O formato real depende do arquivo da contabilidade (ver Seção 6).</p><button class="btn btn-p" data-act="importar">Usar arquivo de exemplo</button></div></section>';
+}
+function exigeArquivo(){return '<section class="est-vazio"><h2>Falta importar o arquivo</h2><p class="sec">A conferência começa depois da importação.</p>'+(pode()?'<button class="btn btn-p" data-act="folhaPasso" data-id="1">Ir para a importação</button>':"")+"</section>";}
+function folhaPasso2(){
+  if(!S.folha.importado)return exigeArquivo();
+  var pr=folhaProblemas();
+  var linhas=S.folha.linhas.map(function(l){
+    var p=l.pid?P(l.pid):null,s=p?salarioAtual(p):null,dif=s!==null&&s?Math.round((l.valor-s)*100/s):null,tag;
+    if(!p||s===null||usaInativo(p))tag='<span class="pill p-block">Impede</span>';
+    else if(Math.abs(l.valor-s)*100/s>LIMITE_DIF)tag='<span class="pill p-aviso">Conferir</span>';
+    else tag='<span class="pill p-ok">✓ Ok</span>';
+    return "<tr><td>"+h(l.nome)+(l.manual?'<div class="peq sec">Valor informado pelo RH</div>':"")+'</td><td class="d">'+(!p?"Sem cadastro":s===null?"Sem salário":brl(s))+'</td><td class="d">'+brl(l.valor)+'</td><td class="d">'+(dif===null?"Sem comparação":(dif>0?"+":"")+dif+"%")+"</td><td>"+tag+"</td></tr>";
+  }).join("");
+  return '<section class="pilha"><h2>Seção 4.2 · Conferência por pessoa</h2>'+
+   (pr.imp.length?'<h3>Impedem fechar o rateio ('+pr.imp.length+")</h3>"+pr.imp.map(probImp).join(""):'<div class="nota dest"><span class="t">Nada impede fechar o rateio</span></div>')+
+   (pr.at.length?'<h3>Para conferir ('+pr.at.length+")</h3>"+pr.at.map(probAt).join(""):"")+
+   '<h3>Todas as pessoas do arquivo</h3><div class="tbl fixa" tabindex="0" role="region" aria-label="Conferência por pessoa"><table style="min-width:600px"><thead><tr><th>Pessoa</th><th class="d">Salário no cadastro</th><th class="d">Valor no arquivo</th><th class="d">Diferença</th><th>Situação</th></tr></thead><tbody>'+linhas+"</tbody></table></div>"+
+   '<p class="peq sec">Prestadores PJ não entram nesta folha (decisão 3). Diferença é marcada acima de '+LIMITE_DIF+"%.</p>"+
+   (pode()&&!travaFolha()?'<button class="btn btn-p" data-act="folhaPasso" data-id="3">Ver o total por centro de custo</button>':"")+"</section>";
+}
+function solitarios(c){return c.linhas.filter(function(l){return l.de.length===1;});}
+function folhaPasso3(){
+  if(!S.folha.importado&&!S.pag.folha.foto)return exigeArquivo();
+  var c=foto("folha");
+  return '<section class="pilha"><h2>Seção 4.3 · Total por centro de custo</h2>'+
+   '<div class="nota dest"><span class="t">Valor do arquivo, rateio do cadastro</span><span class="peq sec">Cada valor foi dividido pelo percentual da ficha, na vigência de '+COMP_NOME+". Quem ainda não está no cadastro não entra nesta conta.</span></div>"+
+   tabelaCC(c)+deQuem(c,"Ver de quem vem cada valor (só aqui no RH)")+
+   (pode()&&!travaFolha()?'<button class="btn btn-p" data-act="folhaPasso" data-id="4">Ir para o rateio pronto</button>':"")+"</section>";
+}
+function folhaPasso4(){
+  if(!S.folha.importado&&!S.pag.folha.foto)return exigeArquivo();
+  var pend='<div class="nota aviso"><span class="t">Caminho pendente: decisão 1</span><span class="peq">O RH entrega o rateio pronto. Como ele entra no Financeiro ainda não está decidido, e por isso esta tela não envia nada. Compare os caminhos na Seção 4.5.</span></div>';
+  if(travaFolha()){
+    var c=S.pag.folha.foto;
+    return '<section class="pilha"><h2>Seção 4.4 · Rateio pronto</h2>'+pend+'<div class="card pilha"><div class="linha entre"><h3>Folha de '+COMP_NOME+'</h3><span class="pill p-conf">Nada foi enviado ao Financeiro</span></div>'+tabelaCC(c)+"</div>"+(pode()?'<button class="btn" data-act="reabrirFolha">Reabrir a conferência da folha</button>':"")+"</section>";
+  }
+  var pr=folhaProblemas(),cf=folhaCons();
+  var dif=pr.at.filter(function(x){return !S.folha.conf[x.p.id];});
+  return '<section class="pilha"><h2>Seção 4.4 · Rateio pronto</h2>'+pend+
+   (pr.imp.length?'<div class="nota bloq"><span class="t">Ainda não dá para fechar: '+plural(pr.imp.length,"item impede","itens impedem")+'</span><ul class="peq">'+pr.imp.map(function(x){return "<li>"+h(x.t==="nao"?x.l.nome+": está no arquivo, não está no cadastro":x.t==="ausente"?x.p.nome+": está no cadastro, não está no arquivo":x.t==="semsal"?x.p.nome+": sem salário no cadastro":x.p.nome+": rateio com centro de custo inativo")+"</li>";}).join("")+'</ul><div style="margin-top:8px"><button class="btn" data-act="folhaPasso" data-id="2">Resolver na conferência</button></div></div>':
+    '<div class="nota dest"><span class="t">Pronto para fechar</span><span class="peq sec">'+plural(cf.pessoas,"pessoa","pessoas")+", "+brl(cf.total)+", "+plural(cf.linhas.length,"centro de custo","centros de custo")+".</span></div>")+
+   (dif.length&&!pr.imp.length?'<div class="nota aviso"><span class="t">'+plural(dif.length,"diferença ainda não foi conferida","diferenças ainda não foram conferidas")+'</span><span class="peq">Não impede, mas vale olhar antes: '+dif.map(function(x){return h(x.p.nome);}).join(", ")+".</span></div>":"")+
+   (pode()?'<button class="btn btn-p" data-act="gerarRateio"'+(pr.imp.length||!cf.total?" disabled":"")+">Gerar rateio pronto de "+brl(cf.total)+"</button>":"")+"</section>";
+}
+var OPC={
+ reg:{nome:"Regularização, após a saída do banco",rot:"Regularização",quando:"O dinheiro sai do banco primeiro e o lançamento vem depois.",custo:"Menor. O RH entrega o rateio e o Financeiro regulariza. Falta verificar se esse fluxo se aplica à folha.",
+  qtd:function(){return "1 regularização";},tab:"cc",quem:["Vê o total e o valor por centro de custo.","Vê o valor por pessoa aqui no RH. No Financeiro, o mesmo que o Financeiro.","Vê tudo.","Não vê a folha de ninguém."]},
+ tipo:{nome:"Tipo novo de solicitação para folha",rot:"Tipo novo",quando:"O Financeiro precisa programar a saída do dinheiro.",custo:"Maior. Altera o coração do Financeiro.",
+  qtd:function(){return "1 solicitação de tipo novo";},tab:"cc",quem:["Vê o total e o valor por centro de custo.","Vê o valor por pessoa aqui no RH. No Financeiro, o mesmo que o Financeiro.","Vê tudo.","Não vê a folha de ninguém."]},
+ rateio:{nome:"O RH só gera o rateio pronto",rot:"Só o rateio",quando:"A folha é lançada direto no Omie e não querem mudar isso.",custo:"Menor, mas não elimina o passo de lançar.",
+  qtd:function(){return "Nenhuma solicitação";},tab:"cc",quem:["Recebe o rateio pronto para lançar no Omie.","Vê o valor por pessoa aqui no RH.","Vê tudo.","Não vê a folha de ninguém."]},
+ pessoa:{nome:"Uma solicitação por pessoa",rot:"Uma por pessoa",quando:"Cada pessoa é paga individualmente pelo Financeiro.",custo:"Nenhuma das 8 pessoas de exemplo está ligada a fornecedor no Omie, e são muitos itens para validar.",
+  qtd:function(n){return plural(n,"solicitação","solicitações");},tab:"pessoa",quem:["Toda a equipe financeira vê o salário de cada pessoa.","Diretores veem o salário de cada pessoa também no Financeiro.","Vê tudo.","Não vê a folha de ninguém. Admins do hub, sim, enxergam as solicitações."]}
+};
+function folhaBase(){
+  if(S.folha.importado&&S.folha.linhas.some(function(l){return l.pid;}))return folhaItens();
+  return ARQUIVO.filter(function(l){return l.pid;}).map(function(l){return {p:P(l.pid),valor:l.valor};});
+}
+function comparacao(){
+  var o=S.folha.opc,d=OPC[o],base=folhaBase(),c=consolidar(base),sol=solitarios(c);
+  var partes=d.tab==="cc"?c.linhas.map(function(l){return [l.nome,l.valor];}):base.map(function(x){return [x.p.nome,x.valor];});
+  return '<section class="card pilha" id="comparar"><div class="linha entre"><h2>Seção 4.5 · Como a folha entra no Financeiro</h2><span class="pill p-aviso">Decisão 1, pendente</span></div>'+
+   '<p class="sec peq">Uma solicitação do Financeiro paga um favorecido só, e a folha paga várias pessoas. Sem resposta do cliente, há dois erros possíveis: pagar o total a uma única conta, ou lançar no Financeiro e também pagar por fora. Por isso nenhum caminho está decidido (pergunta 1).</p>'+
+   '<div class="seg" role="group" aria-label="Caminhos da decisão 1">'+seg(o,Object.keys(OPC).map(function(k){return [k,OPC[k].rot];}),"opc")+"</div>"+
+   '<div class="linha"><h3>'+d.nome+"</h3>"+(o==="reg"?'<span class="pill p-rec">Recomendação provisória, depende do cliente</span>':"")+"</div>"+
+   '<div class="resumo" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><span class="sec peq">O Financeiro receberia</span><b>'+d.qtd(base.length)+'</b></div><div><span class="sec peq">Somando</span><b>'+brl(c.total)+"</b></div></div>"+
+   '<p class="peq"><span class="forte">Quando serve: </span>'+h(d.quando)+'</p><p class="peq"><span class="forte">Custo: </span>'+h(d.custo)+"</p>"+
+   '<div class="tbl" tabindex="0" role="region" aria-label="Valores desta opção" style="max-height:220px;overflow-y:auto"><table><thead><tr><th>'+(d.tab==="cc"?"Linha de rateio":"Solicitação")+'</th><th class="d">Valor</th></tr></thead><tbody>'+partes.map(function(x){return "<tr><td>"+h(x[0])+'</td><td class="d">'+brl(x[1])+"</td></tr>";}).join("")+"</tbody></table></div>"+
+   '<h3>O que cada pessoa enxergaria</h3><div class="tbl" tabindex="0" role="region" aria-label="O que cada pessoa enxergaria"><table style="min-width:360px"><tbody>'+["Financeiro","Diretoria","RH","Colaborador"].map(function(q,i){return '<tr><td class="forte" style="width:110px">'+q+"</td><td>"+h(d.quem[i])+"</td></tr>";}).join("")+"</tbody></table></div>"+
+   (d.tab==="cc"?'<div class="nota aviso"><span class="t">Mesmo somado, um salário pode aparecer</span><span class="peq">Centro de custo com uma só pessoa revela o salário dela a quem vê a solicitação.'+(sol.length?" Neste exemplo: "+sol.map(function(l){return h(l.nome)+" ("+brl(l.valor)+")";}).join(", ")+".":"")+"</span></div>":"")+
+   "</section>";
+}
+function telaFolha(){
+  return tela("folha",4,"Lançar folha de "+COMP_NOME,"O valor vem do arquivo da contabilidade, o rateio vem do cadastro. O passo final entrega o rateio pronto; como ele entra no Financeiro ainda está pendente.",function(){
+    var n=S.folha.passo,fe=travaFolha()?4:S.folha.importado?1:0;
+    return '<div class="pilha-g"><div>'+passos(["Importar arquivo","Conferir por pessoa","Total por centro de custo","Rateio pronto"],n,"folhaPasso",fe)+(n===1?folhaPasso1():n===2?folhaPasso2():n===3?folhaPasso3():folhaPasso4())+"</div>"+comparacao()+"</div>";
+  });
+}
+
+/* ---------- Tela 5: Ficha ---------- */
+function tagNovo(){return '<span class="pill p-novo">Novo na fase 2</span>';}
+function novoDraft(p){return {pid:p.id,mes:COMP,linhas:rateioAtual(p).linhas.map(function(l){return {cc:l.cc,p:pct(l.p).replace("%","")};})};}
+function draftInfo(){
+  var d=S.draft,tot=0,inval=false,inat=false,rep={},dup=false;
+  d.linhas.forEach(function(l){var v=lerPct(l.p);if(v===null)inval=true;else tot+=v;if(!l.cc||!CC[l.cc])inval=true;else{if(!CC[l.cc].ativo)inat=true;if(rep[l.cc])dup=true;rep[l.cc]=1;}});
+  var m=null;
+  if(inval)m="Confira os percentuais: use números como 33,33.";
+  else if(dup)m="Cada centro de custo só pode aparecer uma vez.";
+  else if(tot!==10000)m="A soma precisa dar exatamente 100,00%. Hoje está em "+pct(tot)+".";
+  else if(inat)m="Troque o centro de custo inativo: o Financeiro não o aceita em solicitação nova.";
+  else if(!/^\d{4}-\d{2}$/.test(d.mes))m="Escolha o mês em que este rateio começa.";
+  return {tot:tot,msg:m};
+}
+function ratTotalHtml(){
+  var i=draftInfo();
+  return '<div class="linha entre"><span class="forte num">Total: '+pct(i.tot)+"</span></div>"+(i.msg?'<p class="erro-campo">'+h(i.msg)+"</p>":"");
+}
+function telaFicha(){
+  var nomes={ativo:"Ativo",afastado:"Afastado"};
+  return tela("ficha",5,"Ficha do colaborador","A ficha de hoje, mais o que a fase 2 acrescenta. O que é novo está marcado com a borda laranja.",function(){
+    var p=P(S.sel),ed=pode(),dis=ed?"":" disabled",sal=salarioAtual(p),rat=rateioAtual(p);
+    if(!S.draft||S.draft.pid!==p.id)S.draft=novoDraft(p);
+    var ops=Object.keys(CC);
+    var opEdit=S.draft.linhas.map(function(l,i){
+      return '<div class="linha" style="flex-wrap:nowrap"><select aria-label="Centro de custo" data-in="ratCc" data-i="'+i+'" style="flex:1;min-width:0">'+ops.map(function(k){return '<option value="'+k+'"'+(k===l.cc?" selected":"")+">"+h(CC[k].nome)+(CC[k].ativo?"":" (inativo)")+"</option>";}).join("")+'</select><input type="text" inputmode="decimal" aria-label="Percentual" data-in="ratP" data-i="'+i+'" value="'+h(l.p)+'" style="width:84px;flex:none"><button class="btn" data-act="ratTirar" data-id="'+i+'" aria-label="Retirar esta linha" style="width:auto;flex:none"'+(S.draft.linhas.length<2?" disabled":"")+">Retirar</button></div>";
+    }).join("");
+    var inat=rat.linhas.filter(function(l){return !CC[l.cc].ativo;});
+    return '<div class="pilha-g">'+
+     '<div class="grade" style="align-items:end"><div class="campo"><label for="sel-p">Colaborador</label><select id="sel-p" data-in="selP">'+S.pessoas.map(function(x){return '<option value="'+x.id+'"'+(x.id===p.id?" selected":"")+">"+h(x.nome)+(salarioAtual(x)===null?" (sem salário)":"")+"</option>";}).join("")+'</select></div><div class="linha"><span class="pill p-exi">Já existe hoje</span>'+tagNovo()+'<a class="btn" style="width:auto" href="#competencia">Ver a competência</a></div></div>'+
+     '<div><h2 style="font-size:1.5rem">'+h(p.nome)+'</h2><p class="sec num">'+(sal===null?'<span style="color:var(--aviso)">Salário não informado</span>':"Salário base: "+brl(sal))+"</p></div>"+
+     '<form id="f-cad" class="pilha" data-sub="salvarCad"><h2>Seção 5.1 · Cadastro</h2><div class="grade">'+
+      '<div class="campo todo"><span class="rot">Fornecedor no Omie</span><span class="sec">Não vinculado</span></div>'+
+      '<div class="campo"><label for="c-nome">Nome</label><input id="c-nome" type="text" value="'+h(p.nome)+'" autocomplete="off"'+dis+'></div>'+
+      '<div class="campo"><label for="c-cpf">CPF</label><input id="c-cpf" type="text" value="'+h(p.cpf)+'" disabled><span class="ajuda">'+(ed?"Neste mockup fica mascarado por ser exemplo. No sistema, o papel RH vê o número inteiro.":"Mascarado para a Diretoria.")+"</span></div>"+
+      '<div class="campo"><label for="c-cargo">Cargo</label><input id="c-cargo" type="text" value="'+h(p.cargo)+'" autocomplete="off"'+dis+"></div>"+
+      '<div class="campo"><label for="c-tipo">Tipo de contratação</label><select id="c-tipo"'+dis+">"+[["clt","CLT"],["pj","PJ"],["estagio","Estágio"],["extra","Extra"],["socio","Sócio"]].map(function(t){return '<option value="'+t[0]+'"'+(t[0]===p.tipo?" selected":"")+">"+t[1]+"</option>";}).join("")+"</select></div>"+
+      '<div class="campo"><label for="c-adm">Admissão</label><input id="c-adm" type="date" value="'+p.adm+'"'+dis+"></div>"+
+      '<div class="campo"><label for="c-des">Desligamento</label><input id="c-des" type="date" value=""'+dis+"></div>"+
+      '<div class="campo"><label for="c-st">Status</label><select id="c-st"'+dis+">"+["ativo","afastado"].map(function(t){return '<option value="'+t+'"'+(t===p.status?" selected":"")+">"+nomes[t]+"</option>";}).join("")+"</select></div>"+
+      '<div class="campo novo"><span class="linha"><label for="c-mail">E-mail corporativo</label>'+tagNovo()+'</span><input id="c-mail" type="email" autocomplete="off" placeholder="nome@empresa.com.br" value="'+h(p.email)+'"'+dis+'><span class="ajuda">Liga a pessoa ao login do hub e aos outros sistemas.</span></div>'+
+      '<div class="campo novo"><span class="linha"><label for="c-sub">Subtipo PJ/MEI</label>'+tagNovo()+'</span><select id="c-sub"'+(p.tipo==="pj"&&ed?"":" disabled")+"><option value=\"\""+(p.sub?"":" selected")+">"+(p.tipo==="pj"?"PJ":"Só para contratação PJ")+'</option><option value="mei"'+(p.sub==="mei"?" selected":"")+">MEI</option></select></div>"+
+      '<div class="campo novo"><span class="linha"><label for="c-cel">Linha de celular</label>'+tagNovo()+'</span><input id="c-cel" type="text" autocomplete="off" placeholder="Sem linha da empresa" value="'+h(p.cel)+'"'+dis+'><span class="ajuda">Base do rateio da conta de celulares.</span></div>'+
+      '<div class="campo novo"><span class="linha"><span class="rot">Chave PIX</span>'+tagNovo()+'</span><span class="num">'+h(p.pix)+'</span><span class="ajuda">Visível só para RH e Diretoria, mascarada. Nunca aparece em lista.</span></div>'+
+      '</div>'+
+      '<div class="novo pilha"><div class="linha"><h3>Benefícios e seguro</h3>'+tagNovo()+'</div>'+
+       '<div class="grade"><div class="campo"><label class="chk"><input id="c-vr" type="checkbox"'+(p.vr?" checked":"")+dis+'><span>Recebe VR/VA</span></label><span class="ajuda">Valor nesta competência: '+(lerValor(S.vr.dia)!==null?brl(lerValor(S.vr.dia)):"a definir")+' por dia, conforme a Seção 3.1.</span></div>'+
+       '<div class="campo"><label class="chk"><input id="c-vt" type="checkbox"'+(p.vt?" checked":"")+dis+'><span>Recebe vale-transporte</span></label><label for="c-vtv" class="peq">Valor por dia (R$)</label><input id="c-vtv" type="text" inputmode="decimal" autocomplete="off" value="'+(p.vt?brlSem(p.vt):"")+'"'+dis+"></div>"+
+       '<div class="campo"><label class="chk"><input id="c-seg" type="checkbox"'+(p.seg?" checked":"")+dis+'><span>Segurado no seguro de vida</span></label><span class="ajuda">Base do rateio do boleto do seguro.</span></div></div>'+
+       '<p class="peq sec">Férias e afastamento não são controlados nesta fase: o RH marca à mão, na competência, quem fica de fora e o motivo (Seção 3.1).</p></div>'+
+      (ed?'<div class="campo"><label for="c-mot">Motivo da alteração (opcional)</label><textarea id="c-mot" rows="2" placeholder="Fica registrado no histórico."></textarea></div><p class="erro-campo" id="c-erro" hidden></p><button class="btn btn-p" type="submit">Salvar alterações</button>':"")+
+     "</form>"+
+     '<section class="pilha novo" id="sec-salario"><div class="linha"><h2>Seção 5.2 · Salário com vigência</h2>'+tagNovo()+'</div><p class="peq sec">Hoje existe um salário só. Com a vigência, refazer um mês antigo usa o salário daquele mês.</p>'+
+      (p.sal.length?'<ul class="pilha">'+p.sal.slice().reverse().map(function(v,i){return '<li class="card"><span class="forte">A partir de '+mesNome(v.d)+"</span>"+(i===0?' <span class="sec peq">(mais recente)</span>':"")+'<br><span class="num">'+brl(v.c)+"</span></li>";}).join("")+"</ul>":'<div class="nota aviso"><span class="t">Salário não informado</span><span class="peq">Bloqueia o que depende de salário, como a conferência da folha. O sistema nunca trata como zero.</span></div>')+
+      (ed?'<form class="card pilha" data-sub="salvarSal"><div class="grade"><div class="campo"><label for="s-val">Novo salário (R$)</label><input id="s-val" type="text" inputmode="decimal" autocomplete="off" placeholder="2.584,31"></div><div class="campo"><label for="s-mes">A partir de</label><input id="s-mes" type="month" value="'+COMP+'"><span class="ajuda">Se já existir salário nesse mês, ele é substituído. Pagamento já enviado não muda.</span></div></div><p class="erro-campo" id="s-erro" hidden></p><button class="btn" type="submit">Salvar novo salário</button></form>':"")+"</section>"+
+     '<section class="pilha" id="sec-rateio"><div class="linha"><h2>Seção 5.3 · Vigências do rateio</h2><span class="pill p-exi">Já existe hoje</span></div>'+
+      (inat.length?'<div class="nota bloq"><span class="t">'+h(CC[inat[0].cc].nome)+' está inativo no Omie</span><span class="peq">O fechamento dos pagamentos com esta pessoa fica bloqueado. Nada é redistribuído sozinho: crie uma nova vigência sem esse centro de custo.</span></div>':"")+
+      '<ul class="pilha">'+p.rat.slice().sort(function(a,b){return a.d<b.d?1:-1;}).map(function(v,i){return '<li class="card"><span class="forte">A partir de '+mesNome(v.d)+"</span>"+(i===0?' <span class="sec peq">(mais recente)</span>':"")+'<div class="peq">'+v.linhas.map(function(l){return h(CC[l.cc].nome)+" "+pct(l.p);}).join(" · ")+"</div></li>";}).join("")+"</ul>"+
+      (ed?'<div class="card pilha"><h3>Nova vigência a partir de</h3><div class="campo" style="max-width:220px"><label for="r-mes">Mês</label><input id="r-mes" type="month" data-in="ratMes" value="'+h(S.draft.mes)+'"><span class="ajuda">Se já existir vigência nesse mês, ela é substituída.</span></div><div class="pilha">'+opEdit+'</div><div id="rat-total">'+ratTotalHtml()+'</div><div class="linha"><button class="btn" data-act="ratMais">Adicionar centro de custo</button><button class="btn btn-p" data-act="ratSalvar">Salvar rateio</button></div></div>':"")+"</section>"+
+     '<section class="pilha"><h2>Seção 5.4 · Histórico</h2><ul class="card pend peq">'+p.hist.slice().reverse().map(function(t){return "<li>"+h(t)+"</li>";}).join("")+"</ul></section></div>";
+  });
+}
+
+/* ---------- Tela 6: Suposições ---------- */
+function telaSup(){
+  function bloco(tit,itens){return '<section class="card"><h2 style="margin-bottom:12px">'+tit+'</h2><ul class="susp">'+itens.map(function(i){return '<li><div class="linha" style="margin-bottom:3px"><span class="forte">'+i[0]+"</span>"+(i[3]?'<a class="peq" href="#'+i[3]+'">'+i[4]+"</a>":"")+'</div><p class="peq">'+i[1]+"</p>"+(i[2]?'<p class="peq sec" style="margin-top:3px"><span class="forte">Se a resposta for outra: </span>'+i[2]+"</p>":"")+"</li>";}).join("")+"</ul></section>";}
+  return cabeca(6,"Suposições deste mockup","O que está desenhado aqui mas ainda depende de resposta. Nada disto foi aprovado.")+'<div class="pilha-g">'+
+   bloco("Seção 6.1 · Decisões pendentes",[
+    ["Decisão 1: como a folha entra no Financeiro","Uma solicitação tem um favorecido só, então a folha não cabe no formato de hoje. O mockup para no rateio pronto e não simula envio. Recomendação provisória: regularização, se a resposta confirmar o encaixe. Falta verificar se esse fluxo se aplica à folha.","o passo final da folha ganha o envio do caminho escolhido.","folha","Ver Seção 4.5"],
+    ["Decisão 2: de onde vem o valor da folha","O mockup supõe importar o valor por pessoa do arquivo da contabilidade e aplicar o rateio do cadastro (recomendada).","se o valor vier do salário do cadastro, somem a importação e a conferência, mas o custo por centro de custo fica errado sempre que houver hora extra, falta ou desconto.","folha","Ver Seção 4.1"],
+    ["Decisão 3: os prestadores PJ","O mockup supõe que ficam no cadastro para rateio e orçamento, e o pagamento segue como está nesta fase. Por isso não entram na folha nem no VR/VA.","a folha precisaria de uma linha de PJ, com fluxo de nota individual.","ficha","Ver a ficha de exemplo"]
+   ])+
+   bloco("Seção 6.2 · Perguntas ao cliente",[
+    ["1. Como o dinheiro da folha sai hoje?","Vocês pagam pelo banco com arquivo, a contabilidade paga, ou é pessoa por pessoa? E quem lança depois no Omie?","define qual dos 4 caminhos da decisão 1 serve.","folha","Ver Seção 4.5"],
+    ["2. A contabilidade manda a folha em algum arquivo com o valor de cada pessoa?","O mockup usa um arquivo inventado, com nome e valor. Falta um exemplo real.","muda a Seção 4.1 e o que dá para conferir na 4.2.","folha","Ver Seção 4.1"],
+    ["3. Como vocês calculam o vale-refeição?","O mockup supõe valor por dia vezes dias úteis, igual para todos. Falta saber o dia do crédito e o que acontece com quem entra no meio do mês ou está de férias. Férias parciais não estão desenhadas.","o passo 3.1 muda (valor fixo, valor por pessoa ou dias proporcionais).","vr","Ver Seção 3.1"],
+    ["4. Qual sistema vocês usam para o ponto? Dá para exportar as marcações?","Não afeta este mockup. Define a fase 5.","","mapa","Ver o mapa"],
+    ["5. Os prestadores PJ recebem como?","Cada um manda nota e entra como pagamento separado? Confirma a decisão 3.","","",""],
+    ["6. O que é “provisionar a ajuda de custo no Hub”?","O que é feito hoje? Quem recebe esse valor, a pessoa direto? Por isso o cartão de ajuda de custo está “A definir”.","o cartão ganha o fluxo certo: boleto, pagamento por pessoa ou outro.","competencia","Ver Seção 2.2"]
+   ])+
+   bloco("Seção 6.3 · Outras suposições do desenho",[
+    ["Categorias de pessoal liberadas no Financeiro","As categorias de pessoal precisam estar liberadas no Financeiro para centro de custo de obra. Senão a linha fica presa em “Sem obra”. VR e seguro já estão liberados; folha, VT, ajuda de custo e celular, não. O mockup supõe que isso será resolvido antes do uso.","o rateio com Obras fica travado, e a saída fácil seria jogar o custo de pessoal na obra errada.","vr","Ver Seção 3.3"],
+    ["Ajuda de custo","O significado de “provisionar” está pendente, e o Financeiro não tem provisionamento. O cartão fica como “A definir”, sem valor e sem envio.","","competencia","Ver Seção 2.2"],
+    ["Quem fica de fora","Nesta fase não existe controle de férias nem de afastamento. O RH marca à mão, na competência, quem fica de fora e o motivo. O controle nasce nas fases 4 e 5.","","vr","Ver Seção 3.1"],
+    ["Tolerância de "+brl(TOLERANCIA)+" entre boleto e calculado","Valor escolhido para este mockup, sem base no cliente. O total enviado é sempre o do boleto; acima da tolerância, o envio bloqueia.","","vr","Ver Seção 3.2"],
+    ["Ler o boleto do PDF","Simulado aqui. Sem essa leitura, alguém digita a linha digitável uma vez por mês em cada boleto.","","vr","Ver Seção 3.2"],
+    ["Cartões de VT, seguro e celular","Seguem o mesmo caminho do VR/VA (fase 2B). No mockup, os cartões mostram o resultado, não o passo a passo.","","competencia","Ver Seção 2.2"],
+    ["Nova revisão, reabrir e cancelar","O estado vem do Financeiro: Aguardando validação, Devolvida, Recusada, Lançada ou Pago. Corrigir depois do envio cria nova revisão. O mockup supõe que antes de validar o RH cancela a solicitação; depois de lançada, só com o Financeiro; depois de paga, não reabre, e a diferença vira outro pagamento. Hoje não existe caminho para outro sistema cancelar uma solicitação.","o fluxo de reabertura muda. Depende da decisão 7 da proposta.","competencia","Ver Seção 2.2"],
+    ["Vencimento curto","Vencimento antes da primeira janela do Financeiro vira emergencial e cai no diretor. A data da janela neste mockup é um exemplo.","","vr","Ver Seção 3.2"],
+    ["Período de 25 a 24","O documento cita esse período no fechamento do ponto. O mockup o aplica à competência inteira. Os dias úteis de exemplo descontam só feriados nacionais.","","competencia","Ver Seção 2"],
+    ["“Origem: RH” no Financeiro","A porta atual só aceita medição. A origem nova é alteração no Financeiro, e depende da decisão 7.","","vr","Ver Seção 3.4"],
+    ["Limite de "+LIMITE_DIF+"% para diferença grande na folha","Escolha deste mockup, sem base no cliente. Ajustável.","","folha","Ver Seção 4.2"]
+   ])+"</div>";
+}
+
+/* ---------- Render e rotas ---------- */
+var ROTAS=[["mapa","Mapa do RH"],["competencia","Competência do mês"],["vr","Gerar VR/VA"],["folha","Lançar folha"],["ficha","Ficha do colaborador"],["suposicoes","Suposições"]];
+var TELAS={mapa:telaMapa,competencia:telaCompetencia,vr:telaVr,folha:telaFolha,ficha:telaFicha,suposicoes:telaSup};
+function rota(){var r=(location.hash||"").replace("#","");return TELAS[r]?r:"mapa";}
+function $(id){return document.getElementById(id);}
+function render(){
+  var r=rota(),a=document.activeElement,chave=null,sel=null;
+  if(a&&a!==document.body&&$("tela").contains(a)){
+    if(a.id)chave="#"+CSS.escape(a.id);
+    else if(a.dataset.act)chave='[data-act="'+a.dataset.act+'"]'+(a.dataset.id?'[data-id="'+a.dataset.id+'"]':"");
+    else if(a.dataset.in)chave='[data-in="'+a.dataset.in+'"]'+(a.dataset.i?'[data-i="'+a.dataset.i+'"]':"");
+    if(a.type==="text")sel=a.selectionStart;
+  }
+  var rol=[].map.call(document.querySelectorAll("#tela .tbl"),function(t){return t.scrollLeft;});
+  $("menu").innerHTML=ROTAS.map(function(x,i){return '<li><a href="#'+x[0]+'"'+(x[0]===r?' aria-current="page"':"")+"><span>"+(i+1)+"</span>"+x[1]+"</a></li>";}).join("");
+  $("seg-papel").innerHTML=seg(S.papel,[["rh","RH"],["diretoria","Diretoria"],["sem","Sem papel"]],"papel");
+  $("quem-papel").textContent={rh:"Controladoria/RH",diretoria:"Diretoria",sem:"Sem papel"}[S.papel];
+  $("tela").innerHTML=TELAS[r]();
+  [].forEach.call(document.querySelectorAll("#tela .tbl"),function(t,i){if(rol[i])t.scrollLeft=rol[i];});
+  if(chave){var n=document.querySelector("#tela "+chave);if(n){n.focus({preventScroll:true});if(sel!==null&&n.setSelectionRange&&n.type==="text")n.setSelectionRange(sel,sel);}}
+  var ativo=document.querySelector("nav.menu a[aria-current=page]"),nav=document.querySelector("nav.menu");
+  if(ativo&&nav)nav.scrollLeft=ativo.offsetLeft-nav.offsetLeft-40;
+  if(S.foco&&r==="ficha"&&S.demo.ficha==="dados"){
+    var alvo=$("sec-"+S.foco);S.foco=null;
+    if(alvo){alvo.scrollIntoView({block:"start"});window.scrollBy(0,-70);alvo.classList.add("realce");}
+  }
+}
+function ir(r){if(rota()===r){render();}else{location.hash=r;}}
+window.addEventListener("hashchange",function(){var f=S.foco;render();if(!f){window.scrollTo(0,0);var t=$("h1");if(t)t.focus({preventScroll:true});}});
+var tmToast;
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(tmToast);tmToast=setTimeout(function(){el.classList.remove("on");},4200);}
+
+/* ---------- Diálogos ---------- */
+var dlgActs={};
+function dialogo(o){
+  var d=$("dlg");dlgActs={};
+  var bts=o.botoes.map(function(b,i){dlgActs[i]=b.f;return '<button type="button" class="btn '+(b.tipo||"")+'" data-dlg="'+i+'"'+(b.motivo?' data-precisa="1" disabled':"")+">"+h(b.t)+"</button>";}).join("");
+  d.innerHTML='<div class="dlg-c"><h2 id="dlg-t">'+h(o.titulo)+"</h2>"+(o.sub?'<p class="sec peq">'+h(o.sub)+"</p>":"")+o.corpo+(o.motivo?'<div class="campo"><label for="dlg-mot">Motivo (obrigatório, fica no histórico)</label><textarea id="dlg-mot" rows="2" data-motivo="1"></textarea></div>':"")+'</div><div class="dlg-b">'+bts+"</div>";
+  if(d.open)d.close();
+  d.showModal();
+}
+function fechar(){var d=$("dlg");if(d.open)d.close();}
+$("dlg").addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-dlg]");if(!b||b.disabled)return;
+  var f=dlgActs[b.dataset.dlg],m=$("dlg-mot");
+  var ret=f?f(m?m.value.trim():""):undefined;
+  if(ret!==false){fechar();render();}
+});
+$("dlg").addEventListener("input",function(ev){
+  if(ev.target.dataset.motivo){var ok=ev.target.value.trim().length>=3;[].forEach.call($("dlg").querySelectorAll("[data-precisa]"),function(x){x.disabled=!ok;});}
+});
+function nomeSol(id){return "solicitação nº "+S.pag[id].num;}
+function refazer(id){
+  if(id==="vr")return "Conferir quem entra, conferir o boleto com o calculado e enviar a nova revisão.";
+  return "Conferir o boleto e enviar a nova revisão.";
+}
+function dlgPago(id){
+  var q=S.pag[id];
+  dialogo({titulo:"Não é possível reabrir: já foi pago",sub:NOMES_PAG[id]+" de "+COMP_NOME+" · "+nomeSol(id),
+   corpo:"<p>O Financeiro já pagou "+brl(q.foto.total)+". O dinheiro saiu, então este pagamento não pode ser refeito: um novo envio correria o risco de pagar duas vezes.</p><h3>O que fazer se houver erro</h3><ul><li>Valor pago a menos: crie outro pagamento só com a diferença.</li><li>Valor pago a mais: combine o acerto com o Financeiro.</li><li>Rateio errado: peça o ajuste ao Financeiro. Aqui o registro continua como foi pago.</li></ul>",
+   botoes:[{t:"Entendi, manter como pago",tipo:"btn-p",f:function(){}}]});
+}
+function dlgLancada(id,titulo){
+  var q=S.pag[id];
+  dialogo({titulo:titulo,sub:NOMES_PAG[id]+" de "+COMP_NOME+" · "+nomeSol(id)+" · "+brl(q.foto.total),
+   corpo:"<p>O Financeiro já validou e lançou no Omie. Daqui o RH não consegue desfazer isso sozinho.</p><h3>O que acontece se você pedir</h3><ul><li>O Financeiro recebe o seu pedido e o motivo.</li><li>Até ele cancelar no Omie, o pagamento continua “Lançada” e pode ser pago.</li><li>Quando ele cancelar, o pagamento volta para “Em conferência” aqui no RH, como revisão "+(q.rev+1)+".</li></ul><h3>O que será refeito depois</h3><p>"+refazer(id)+"</p>",
+   motivo:true,
+   botoes:[{t:"Manter como está",f:function(){}},{t:"Pedir ao Financeiro o cancelamento",tipo:"btn-d",motivo:true,f:function(){q.pedido=true;toast("Pedido enviado ao Financeiro. Continua lançada até ele responder.");}}]});
+}
+function limparEnvio(q){q.foto=null;q.num=null;q.pedido=false;q.motivo=null;q.boleto=null;q.fotoCalc=null;q.calculado=null;}
+function novaRevisao(id){
+  var q=S.pag[id],n=q.num;
+  if(id==="vr")S.vr.boleto=Object.assign({},q.boleto);
+  q.estado="conferencia";q.rev=(q.rev||1)+1;limparEnvio(q);
+  if(id==="vr")S.vr.passo=1;
+  toast(NOMES_PAG[id]+": a solicitação nº "+n+" não vale mais. Revisão "+q.rev+" em conferência.");
+}
+function acaoReabrir(id){
+  var q=S.pag[id];
+  if(q.estado==="pago")return dlgPago(id);
+  if(q.estado==="lancada")return dlgLancada(id,"Reabrir competência já enviada: precisa do Financeiro");
+  if(q.estado==="devolvida"||q.estado==="recusada"){
+    dialogo({titulo:"Corrigir e criar nova revisão",sub:NOMES_PAG[id]+" de "+COMP_NOME+" · "+nomeSol(id)+" · "+ESTADOS[q.estado][0],
+     corpo:"<h3>No Financeiro</h3><ul><li>A "+nomeSol(id)+" continua registrada como “"+ESTADOS[q.estado][0]+"” e não será paga.</li><li>A correção entra como solicitação nova, com outro número.</li></ul><h3>Aqui no RH</h3><ul><li>"+NOMES_PAG[id]+" volta para “Em conferência”, como revisão "+(q.rev+1)+", com os dados que já estavam preenchidos.</li></ul><h3>O que será refeito</h3><p>"+refazer(id)+"</p>",
+     motivo:true,
+     botoes:[{t:"Agora não",f:function(){}},{t:"Criar revisão "+(q.rev+1),tipo:"btn-p",motivo:true,f:function(){novaRevisao(id);}}]});
+    return;
+  }
+  dialogo({titulo:"Reabrir competência já enviada",sub:NOMES_PAG[id]+" de "+COMP_NOME+" · "+nomeSol(id)+" · "+brl(q.foto.total),
+   corpo:"<h3>No Financeiro</h3><ul><li>A "+nomeSol(id)+" é cancelada e sai da fila de validação. O Financeiro é avisado e não paga mais esse valor.</li><li>Como ainda não foi validada, nada foi lançado no Omie.</li></ul><h3>Aqui no RH</h3><ul><li>"+NOMES_PAG[id]+" volta para “Em conferência”, como revisão "+(q.rev+1)+", com os dados e o boleto que já estavam preenchidos.</li><li>A foto do envio é descartada: se o cadastro mudou, o calculado e os pesos do rateio mudam.</li><li>Os outros pagamentos do mês não mudam.</li></ul><h3>O que será refeito</h3><p>"+refazer(id)+" A nova revisão gera uma solicitação com outro número.</p>",
+   motivo:true,
+   botoes:[{t:"Manter enviado",f:function(){}},{t:"Cancelar a solicitação e criar revisão "+(q.rev+1),tipo:"btn-dd",motivo:true,f:function(){novaRevisao(id);}}]});
+}
+function acaoCancelar(id){
+  var q=S.pag[id];
+  if(q.estado==="pago")return dlgPago(id);
+  if(q.estado==="lancada")return dlgLancada(id,"Cancelar envio: precisa do Financeiro");
+  var perde=id==="vr"?"O boleto e as marcações de quem fica de fora voltam ao início. O valor por dia e os dias úteis ficam como estão.":"A conferência deste pagamento é descartada.";
+  dialogo({titulo:"Cancelar envio",sub:NOMES_PAG[id]+" de "+COMP_NOME+" · "+nomeSol(id)+" · "+brl(q.foto.total),
+   corpo:"<h3>No Financeiro</h3><ul><li>A "+nomeSol(id)+" é cancelada e sai da fila. "+brl(q.foto.total)+" deixam de estar a caminho do pagamento.</li></ul><h3>Aqui no RH</h3><ul><li>"+NOMES_PAG[id]+" volta para “A preparar”.</li><li>"+perde+"</li><li>Os outros pagamentos do mês não mudam.</li></ul><p class=\"forte\">Se este pagamento ainda for necessário neste mês, será preciso refazer tudo desde o começo.</p>",
+   motivo:true,
+   botoes:[{t:"Manter enviado",f:function(){}},{t:"Cancelar a solicitação e voltar para A preparar",tipo:"btn-dd",motivo:true,f:function(){
+     var n=q.num;q.estado="preparar";limparEnvio(q);q.rev=1;
+     if(id==="vr"){S.vr.fora=foraInicial();S.vr.boleto=boletoVazio();S.vr.passo=1;}
+     toast(NOMES_PAG[id]+": a solicitação nº "+n+" foi cancelada no Financeiro. Voltou para A preparar.");
+   }}]});
+}
+function concluirEnvio(id,extra){
+  var q=S.pag[id];
+  if(S.enviando||enviado(id))return;
+  S.enviando=id;render();
+  setTimeout(function(){
+    if(S.enviando!==id)return;
+    q.foto=fotoAtual(id);q.num=S.proxNum;S.proxNum+=1;q.estado="aguardando";S.enviando=null;
+    if(extra)extra(q);
+    toast(NOMES_PAG[id]+": "+brl(q.foto.total)+" enviados. Solicitação nº "+q.num+", aguardando validação do Financeiro.");
+    render();
+  },600);
+}
+
+/* ---------- Ações ---------- */
+function carregarArquivo(){S.folha.linhas=ARQUIVO.map(function(l){return Object.assign({},l);});S.folha.importado=true;S.folha.conf={};if(S.pag.folha.estado==="preparar")S.pag.folha.estado="conferencia";}
+var A={
+ papel:function(id){S.papel=id;if(id==="diretoria"&&!S.folha.importado)carregarArquivo();render();},
+ reiniciar:function(){var hd=S.papel;inicial();S.papel=hd==="sem"?"rh":hd;if(S.papel==="diretoria")carregarArquivo();render();toast("Demonstração reiniciada.");},
+ demo:function(id){S.demo[rota()]=id;render();},
+ sairVazio:function(id){S.demo[id]="dados";if(id==="vr"){S.demo.ficha="dados";ir("ficha");return;}if(id==="folha")S.folha.passo=1;render();},
+ tentar:function(id){S.demo[id]="carregando";render();setTimeout(function(){if(S.demo[id]==="carregando"){S.demo[id]="dados";render();toast("Dados carregados. Nada foi perdido.");}},900);},
+ fase:function(id){S.mapa=S.mapa===id?null:id;render();},
+ irFicha:function(id,el){S.sel=id;S.draft=null;S.foco=el.dataset.foco||null;S.demo.ficha="dados";if(rota()==="ficha")render();else location.hash="ficha";},
+ verRateio:function(id){
+   var c=foto(id),q=S.pag[id],dif=c.calculado===undefined?null:Math.abs(c.total-c.calculado);
+   dialogo({titulo:NOMES_PAG[id]+" de "+COMP_NOME,sub:(q.num?"Solicitação nº "+q.num+" · ":"")+ESTADOS[q.estado][0]+" · "+FORNECEDOR[id],
+    corpo:'<dl class="dados"><div><dt>Total do boleto (é o que manda)</dt><dd class="forte num">'+brl(c.total)+'</dd></div><div><dt>Calculado pelo cadastro</dt><dd class="num">'+brl(c.calculado)+'</dd></div><div><dt>Diferença</dt><dd class="num">'+brl(dif)+" (tolerância de "+brl(TOLERANCIA)+")</dd></div></dl><div>"+tabelaCC(c)+'</div><p class="peq sec">Linha digitável obrigatória e anexo como complemento, como no VR/VA (Seção 3.2). O cadastro dá só os pesos do rateio.</p>',
+    botoes:[{t:"Fechar",f:function(){}}]});
+ },
+ verAjuda:function(){dialogo({titulo:"Ajuda de custo: a definir",corpo:'<p>O documento fala em “provisionar a ajuda de custo no Hub”, e o significado disso está pendente (pergunta 6 ao cliente). O Financeiro não tem provisionamento hoje.</p><p class="peq sec">Se cada pessoa recebe direto, a ajuda de custo tem o mesmo problema da folha: uma solicitação paga um favorecido só. Por isso este cartão fica sem valor e sem envio por enquanto.</p>',botoes:[{t:"Fechar",f:function(){}}]});},
+ conferir:function(id){S.pag[id].estado="conferencia";render();},
+ enviarSimples:function(id){concluirEnvio(id);},
+ reabrir:function(id){acaoReabrir(id);},
+ cancelarEnvio:function(id){acaoCancelar(id);},
+ simular:function(id,el){
+   var q=S.pag[id],v=el.dataset.v;
+   if(v==="devolveu"){q.estado="devolvida";q.motivo="linha digitável não confere";}
+   if(v==="recusou"){q.estado="recusada";q.motivo="boleto em duplicidade";}
+   if(v==="lancou")q.estado="lancada";
+   if(v==="pagou")q.estado="pago";
+   if(v==="cancelou"){novaRevisao(id);}
+   render();
+ },
+ vrPasso:function(id){S.vr.passo=Number(id);render();window.scrollTo(0,0);},
+ vrMarcarFora:function(id){S.vr.fora[id]={mot:"",txt:""};render();},
+ vrIncluir:function(id){delete S.vr.fora[id];render();},
+ vrConfirmar:function(){if(S.pag.vr.estado==="preparar")S.pag.vr.estado="conferencia";S.vr.passo=2;render();window.scrollTo(0,0);},
+ vrLerPdf:function(){S.vr.boleto={linha:LINHA_EX,valor:"3.852,40",venc:"2026-11-30",anexo:"boleto-vr-novembro-exemplo.pdf"};if(S.pag.vr.estado==="preparar")S.pag.vr.estado="conferencia";render();toast("Linha digitável, valor e vencimento lidos do PDF. Confira antes de enviar.");},
+ vrTirarAnexo:function(){S.vr.boleto.anexo=null;render();},
+ vrEnviar:function(){if(vrBloqueios().length)return;var b=Object.assign({},S.vr.boleto),calc=vrCalc().cons;concluirEnvio("vr",function(q){q.boleto=b;q.fotoCalc=calc;S.vr.passo=4;});},
+ folhaPasso:function(id){S.folha.passo=Number(id);render();var c=document.querySelector(".passos");if(c)c.scrollIntoView({block:"nearest"});},
+ importar:function(){carregarArquivo();S.folha.passo=2;render();toast("Arquivo importado: "+S.folha.linhas.length+" pessoas.");},
+ reimportar:function(){dialogo({titulo:"Importar o arquivo de novo",corpo:"<p>A conferência atual é descartada: os valores informados à mão e as marcações de “conferi com a contabilidade” se perdem. As pessoas cadastradas por aqui continuam no cadastro.</p>",botoes:[{t:"Manter a conferência atual",f:function(){}},{t:"Descartar a conferência e importar de novo",tipo:"btn-dd",f:function(){A.importar();if(P("sergio"))S.folha.linhas.forEach(function(l){if(!l.pid)l.pid="sergio";});}}]});},
+ confDif:function(id,el){S.folha.conf[id]=el.checked;render();},
+ retirarArq:function(){dialogo({titulo:"Retirar Sérgio Bastos desta folha",corpo:"<p>A linha sai desta conferência e "+brl(ARQUIVO[6].valor)+" deixam de entrar no total. Se o valor estiver certo e faltar só o cadastro, escolha cadastrar. Se retirar por engano, importe o arquivo de novo.</p>",botoes:[{t:"Manter no arquivo",f:function(){}},{t:"Retirar desta folha",tipo:"btn-d",f:function(){S.folha.linhas=S.folha.linhas.filter(function(l){return l.pid;});}}]});},
+ cadastrarArq:function(){
+   dialogo({titulo:"Cadastrar Sérgio Bastos",sub:"CPF ***.903.641-** · CLT · veio do arquivo da contabilidade",
+    corpo:'<div class="campo"><label for="n-cc">Centro de custo (rateio de 100%)</label><select id="n-cc">'+Object.keys(CC).filter(function(k){return CC[k].ativo;}).map(function(k){return '<option value="'+k+'">'+h(CC[k].nome)+"</option>";}).join("")+'</select></div><div class="campo"><label for="n-sal">Salário base (R$)</label><input id="n-sal" type="text" inputmode="decimal" autocomplete="off" value="3.200,00"><span class="erro-campo" id="n-e" hidden>Use um valor como 3.200,00.</span></div><p class="peq sec">O cadastro completo continua na ficha dele. Ele também passa a entrar no cálculo do VR/VA.</p>',
+    botoes:[{t:"Voltar sem cadastrar",f:function(){}},{t:"Cadastrar Sérgio Bastos",tipo:"btn-p",f:function(){
+      var v=lerValor($("n-sal").value);if(v===null||v<=0){$("n-e").hidden=false;return false;}
+      S.pessoas.push({id:"sergio",nome:"Sérgio Bastos",cpf:"***.903.641-**",cargo:"Auxiliar de manutenção",tipo:"clt",sub:"",status:"ativo",adm:"2026-11-03",email:"",sal:[{d:COMP,c:v}],rat:[{d:COMP,linhas:[{cc:$("n-cc").value,p:10000}]}],vr:true,vt:null,seg:false,cel:"",pix:"Não informada",hist:["05/11/2026: cadastrado a partir do arquivo da folha"]});
+      S.folha.linhas.forEach(function(l){if(!l.pid)l.pid="sergio";});
+      toast("Sérgio Bastos cadastrado. Ele também passa a entrar no cálculo do VR/VA.");
+    }}]});
+ },
+ incluirAusente:function(id){var inp=$("ausente-"+id),v=lerValor(inp.value);if(v===null||v<=0){$("ausente-e").hidden=false;inp.focus();return;}S.folha.linhas.push({pid:id,nome:P(id).nome,valor:v,manual:true});render();toast(P(id).nome+": incluído com "+brl(v)+".");},
+ opc:function(id){S.folha.opc=id;render();},
+ gerarRateio:function(){
+   if(folhaProblemas().imp.length)return;
+   var q=S.pag.folha;q.foto=folhaCons();q.estado="rateio";render();
+   toast("Rateio pronto. Nada foi enviado ao Financeiro: o caminho depende da decisão 1.");
+ },
+ reabrirFolha:function(){dialogo({titulo:"Reabrir a conferência da folha",sub:"Folha de "+COMP_NOME,corpo:"<p>O rateio pronto deixa de valer e a folha volta para “Em conferência”, com o arquivo e as correções como estão. Nada muda no Financeiro, porque nada foi enviado. Se alguém já usou este rateio para lançar, precisa refazer esse lançamento com o rateio novo.</p>",botoes:[{t:"Manter o rateio pronto",f:function(){}},{t:"Descartar o rateio e reabrir",tipo:"btn-dd",f:function(){var q=S.pag.folha;q.foto=null;q.estado="conferencia";S.folha.passo=2;}}]});},
+ ratTirar:function(id){S.draft.linhas.splice(Number(id),1);render();},
+ ratMais:function(){var usados={};S.draft.linhas.forEach(function(l){usados[l.cc]=1;});var k=Object.keys(CC).filter(function(x){return CC[x].ativo&&!usados[x];})[0]||"adm";S.draft.linhas.push({cc:k,p:""});render();},
+ ratSalvar:function(){
+   var i=draftInfo(),p=P(S.sel);
+   if(i.msg){toast(i.msg);return;}
+   var d=S.draft,linhas=d.linhas.map(function(l){return {cc:l.cc,p:lerPct(l.p)};});
+   p.rat=p.rat.filter(function(v){return v.d!==d.mes;});p.rat.push({d:d.mes,linhas:linhas});
+   p.hist.push("05/11/2026: rateio novo a partir de "+mesNome(d.mes)+" ("+linhas.map(function(l){return CC[l.cc].nome+" "+pct(l.p);}).join(", ")+")");
+   S.draft=null;render();toast("Rateio a partir de "+mesNome(d.mes)+" salvo. Pagamento já enviado não muda.");
+ }
+};
+document.addEventListener("click",function(ev){
+  var t=ev.target.closest("[data-act]");if(!t||t.disabled)return;
+  if(t.tagName!=="INPUT")ev.preventDefault();
+  var f=A[t.dataset.act];if(f)f(t.dataset.id,t);
+});
+document.addEventListener("change",function(ev){
+  var n=ev.target.dataset&&ev.target.dataset.in;if(!n)return;
+  if(n==="selP"){S.sel=ev.target.value;S.draft=null;render();}
+  if(n==="ratCc"){S.draft.linhas[Number(ev.target.dataset.i)].cc=ev.target.value;$("rat-total").innerHTML=ratTotalHtml();}
+  if(n==="vrMot"){var f=S.vr.fora[ev.target.dataset.i];f.mot=ev.target.value;render();}
+});
+document.addEventListener("input",function(ev){
+  var el=ev.target,n=el.dataset&&el.dataset.in;if(!n)return;
+  function seg1(){var c=vrCalc(),b=$("vr-seg1");if(b)b.disabled=!(c.ok&&c.entram.length&&!c.semMotivo);}
+  if(n==="vrDia"||n==="vrDias"){
+    if(n==="vrDia")S.vr.dia=el.value;else S.vr.dias=el.value;
+    var c=vrCalc();$("vr-calc").innerHTML=vrCalcHtml();$("vr-dia-e").hidden=c.okDia;$("vr-dias-e").hidden=c.okDias;seg1();
+  }
+  if(n==="vrTxt"){S.vr.fora[el.dataset.i].txt=el.value;seg1();}
+  if(n==="bLinha"){S.vr.boleto.linha=el.value;}
+  if(n==="bValor"||n==="bVenc"){if(n==="bValor")S.vr.boleto.valor=el.value;else S.vr.boleto.venc=el.value;$("vr-compara").innerHTML=comparaHtml();}
+  if(n==="ratP"){S.draft.linhas[Number(el.dataset.i)].p=el.value;$("rat-total").innerHTML=ratTotalHtml();}
+  if(n==="ratMes"){S.draft.mes=el.value;$("rat-total").innerHTML=ratTotalHtml();}
+});
+document.addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var f=ev.target,k=f.dataset.sub,p=P(S.sel);
+  if(k==="salvarSal"){
+    var v=lerValor($("s-val").value),m=$("s-mes").value,er=$("s-erro");
+    if(v===null||v<=0){er.textContent="Use um valor como 2.584,31.";er.hidden=false;$("s-val").focus();return;}
+    if(!/^\d{4}-\d{2}$/.test(m)){er.textContent="Escolha o mês em que este salário começa.";er.hidden=false;$("s-mes").focus();return;}
+    p.sal=p.sal.filter(function(x){return x.d!==m;});p.sal.push({d:m,c:v});p.sal.sort(function(a,b){return a.d<b.d?-1:1;});
+    p.hist.push("05/11/2026: salário alterado para "+brl(v)+", a partir de "+mesNome(m));
+    render();toast("Salário a partir de "+mesNome(m)+" salvo.");
+  }
+  if(k==="salvarCad"){
+    var er2=$("c-erro"),vtOn=$("c-vt").checked,vtv=$("c-vtv").value.trim(),vt=null;
+    if(vtOn){vt=lerValor(vtv);if(vt===null||vt<=0){er2.textContent="Informe o valor por dia do vale-transporte, como 17,60.";er2.hidden=false;$("c-vtv").focus();return;}}
+    var mail=$("c-mail").value.trim();
+    if(mail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){er2.textContent="Confira o e-mail corporativo.";er2.hidden=false;$("c-mail").focus();return;}
+    if(!$("c-nome").value.trim()){er2.textContent="O nome não pode ficar vazio.";er2.hidden=false;$("c-nome").focus();return;}
+    p.nome=$("c-nome").value.trim();p.cargo=$("c-cargo").value.trim();p.tipo=$("c-tipo").value;p.adm=$("c-adm").value;p.status=$("c-st").value;p.email=mail;p.sub=$("c-sub").value;p.vr=$("c-vr").checked;p.vt=vt;p.seg=$("c-seg").checked;p.cel=$("c-cel").value.trim();
+    var mot=$("c-mot").value.trim();
+    p.hist.push("05/11/2026: cadastro alterado"+(mot?". Motivo: "+mot:""));
+    render();toast("Alterações salvas.");
+  }
+});
+inicial();
+render();
+</script>
