@@ -1,5 +1,8 @@
 # RH: proposta de fases e decisões para o João (05/11/2026)
 
+**Atualização:** as respostas do cliente mudaram as decisões 1 a 3 e a ordem das fases. Onde houver conflito, vale
+`docs/rh/2026-11-05-impacto-respostas-do-cliente.md`.
+
 **Situação:** proposta do coordenador, nada aprovado. Já corrigida após revisão independente
 (`docs/rh/revisao-proposta-2026-11-05.md`), que derrubou a primeira versão da recomendação sobre a folha.
 Fontes: pedido em `docs/cliente/2026-11-05-rh-atividades-rh-dp.md`, direção em

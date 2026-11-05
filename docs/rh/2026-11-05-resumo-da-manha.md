@@ -1,5 +1,8 @@
 # RH: resumo da manhã (05/11/2026)
 
+**Atualização da tarde:** o cliente respondeu às 6 perguntas. Retome por `docs/rh/2026-11-05-impacto-respostas-do-cliente.md`.
+O mockup abaixo ainda não reflete as respostas.
+
 ## O que ficou pronto de madrugada
 
 - **Pedido salvo na íntegra:** `docs/cliente/2026-11-05-rh-atividades-rh-dp.md` (com o `.docx`) e suas mensagens em
