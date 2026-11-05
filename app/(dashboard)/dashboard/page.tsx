@@ -19,9 +19,15 @@ export default async function DashboardPage() {
   // Administrador abre tudo. Para os demais, uma consulta só traz os slugs com
   // acesso, em paralelo com a do nível (antes eram 1 + 5 consultas, cada uma
   // repetindo a do nível por dentro). Erro de consulta = nenhum acesso.
-  const [admin, slugs] = await Promise.all([
+  // RH: papéis ficam no próprio módulo (rh_papeis). `rh_pode_ver()` é a mesma
+  // regra que o módulo usa (papel rh/diretoria ou admin do hub). Erro = sem card.
+  const [admin, slugs, podeRh] = await Promise.all([
     isAdmin(supabase, user.email ?? ''),
     systemSlugsComAcesso(supabase, user.email ?? ''),
+    Promise.resolve(supabase.rpc('rh_pode_ver')).then(
+      ({ data, error }) => !error && data === true,
+      () => false
+    ),
   ])
   const [podeFrotas, podeManutencao, podeCrm, podeObras, podeOrcamento] = admin
     ?[true, true, true, true, true]
@@ -33,7 +39,7 @@ export default async function DashboardPage() {
         slugs.has('orcamento'),
       ]
   const semNada =
-    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !podeOrcamento && !admin
+    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !podeOrcamento && !podeRh && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -136,9 +142,10 @@ export default async function DashboardPage() {
             </div>
           </a>
           )}
-          {/* RH segue o Compras: app Next separada (basePath /rh), papéis no próprio
-              módulo, <a> normal e fora do matcher. O card aparece para todos; quem não tem
-              papel vê o aviso de acesso do próprio módulo. */}
+          {/* RH: app Next separada (basePath /rh), <a> normal e fora do matcher. Só aparece
+              para quem tem papel no módulo (rh/diretoria) ou é admin do hub; o próprio módulo
+              barra os demais em /rh/sem-acesso. */}
+          {podeRh && (
           <a
             href="/rh"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
@@ -153,6 +160,7 @@ export default async function DashboardPage() {
               </p>
             </div>
           </a>
+          )}
           {podeFrotas && (
           <Link
             href="/sofia"

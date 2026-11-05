@@ -2,8 +2,10 @@ import { render, screen } from '@testing-library/react'
 
 jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn() }))
 jest.mock('@/lib/auth/systemAccess', () => ({ systemSlugsComAcesso: jest.fn() }))
+const rpc = jest.fn()
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
+    rpc: (...args: unknown[]) => rpc(...args),
     auth: {
       getUser: jest.fn(async () => ({
         data: { user: { email: 'ana@manfac.com.br', user_metadata: { full_name: 'Ana Souza' } } },
@@ -23,7 +25,34 @@ function comAcessoA(...slugs: string[]) {
 }
 
 describe('DashboardPage', () => {
-  beforeEach(() => jest.clearAllMocks())
+  beforeEach(() => {
+    jest.clearAllMocks()
+    rpc.mockResolvedValue({ data: false, error: null })
+  })
+
+  it('RH: card só para quem o módulo libera (rh_pode_ver)', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    comAcessoA()
+    rpc.mockResolvedValue({ data: true, error: null })
+    render(await DashboardPage())
+    expect(rpc).toHaveBeenCalledWith('rh_pode_ver')
+    expect(screen.getByText('RH').closest('a')).toHaveAttribute('href', '/rh')
+  })
+
+  it('RH: sem papel, ou erro na consulta, o card não aparece (falha FECHADO)', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    comAcessoA('crm')
+    render(await DashboardPage())
+    expect(screen.queryByText('RH')).not.toBeInTheDocument()
+
+    rpc.mockResolvedValue({ data: null, error: { message: 'x' } })
+    render(await DashboardPage())
+    expect(screen.queryByText('RH')).not.toBeInTheDocument()
+
+    rpc.mockRejectedValue(new Error('rede'))
+    render(await DashboardPage())
+    expect(screen.queryByText('RH')).not.toBeInTheDocument()
+  })
 
   it('shows all three cards for an administrator', async () => {
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
