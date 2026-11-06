@@ -133,4 +133,19 @@ describe('árvore do cronograma', () => {
     expect(screen.queryByRole('button', { name: /^Editar / })).toBeNull()
     expect(within(screen.getByRole('table')).getAllByText('29/10').length).toBeGreaterThan(0)
   })
+
+  it('coluna Atividade acompanha o maior nome (teto 60ch) e mostra o nome inteiro no title', () => {
+    const nome = 'Execução de impermeabilização da laje técnica do bloco B'
+    render(<TelaCronograma dados={dados({ atividades: [ativ({ numero: 1, descricao: nome }), ativ({ numero: 2 }), ativ({ numero: 3, etapa: 'Pintura' })] })} />)
+    abrirGantt()
+    const tabela = screen.getAllByRole('table')[0]
+    expect(tabela.style.getPropertyValue('--nome')).toBe(`${Math.min(60, nome.length + 6)}ch`)
+    expect(within(tabela).getByTitle(nome)).toBeInTheDocument()
+  })
+
+  it('com nomes curtos a coluna fica no mínimo de 24ch', () => {
+    render(<TelaCronograma dados={dados({ atividades: [ativ({ numero: 1, descricao: 'Pó' })], etapas: [etapa({ nome: 'X', numeros: [1] })] })} />)
+    abrirGantt()
+    expect(screen.getAllByRole('table')[0].style.getPropertyValue('--nome')).toBe('24ch')
+  })
 })

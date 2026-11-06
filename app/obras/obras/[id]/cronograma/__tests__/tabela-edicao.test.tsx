@@ -306,4 +306,16 @@ describe('visão Tabela', () => {
     expect(m.adicionarEtapaAction).toHaveBeenCalledWith('o1', 'v1', 'Mobilização')
     expect(screen.getByLabelText('Nome da nova etapa')).toHaveValue('')
   })
+
+  it('campo Atividade cresce até o maior nome (mín. 28ch, teto 60ch)', () => {
+    const nome = 'Execução de impermeabilização da laje técnica do bloco B'
+    render(<TelaCronograma dados={dados({ atividades: [ativ({ numero: 1, descricao: nome }), ativ({ numero: 2, etapa: 'Estrutura' }), ativ({ numero: 7, etapa: 'Estrutura' })] })} />)
+    expect(screen.getByDisplayValue(nome).style.minWidth).toBe(`${nome.length + 2}ch`)
+  })
+
+  it('nome acima de 60 caracteres para no teto de 60ch', () => {
+    const nome = 'x'.repeat(90)
+    render(<TelaCronograma dados={dados({ atividades: [ativ({ numero: 1, descricao: nome }), ativ({ numero: 2, etapa: 'Estrutura' }), ativ({ numero: 7, etapa: 'Estrutura' })] })} />)
+    expect(screen.getByDisplayValue(nome).style.minWidth).toBe('60ch')
+  })
 })
