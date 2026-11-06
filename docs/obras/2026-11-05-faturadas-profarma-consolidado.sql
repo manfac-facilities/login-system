@@ -66,3 +66,24 @@ begin
       from obras_obra where os = r.os;
   end loop;
 end $$;
+
+-- 2ª parte, aplicada em 05/11/2026: o Jose confirmou que o valor da 3245574 é R$ 200,80 ("valor é 200,80 mesmo pode corrigir").
+-- 965/966 (possível duplicidade com 958/956): o Jose pediu para desconsiderar.
+do $$
+declare
+  qm text := 'carga-05-11 (Claude, a pedido do Jose Guilherme)';
+  n int;
+begin
+  update obras_obra set valor = 200.80, atualizacao = current_date where os = '3245574' and valor = 401.60 and etapa = 'pendFat';
+  get diagnostics n = row_count; if n <> 1 then raise exception 'valor 3245574'; end if;
+  insert into obras_historico (obra_id, bloco, campo, de, para, motivo, quem)
+    select id, 'Identificação', 'valor', 'R$ 401,60', 'R$ 200,80', 'Consolidado Profarma: valor confirmado pelo Jose Guilherme (= NF 1500)', qm
+    from obras_obra where os = '3245574';
+  update obras_obra set etapa = 'faturado', etapa_por = qm, etapa_em = now(), desde_etapa = current_date, atualizacao = current_date,
+    fat_nfse = '1500', fat_pedido = '4503312241', marco_faturou = '2026-10-16'
+  where os = '3245574' and etapa = 'pendFat' and fat_nfse is null and fat_pedido is null and valor = 200.80;
+  get diagnostics n = row_count; if n <> 1 then raise exception 'faturar 3245574'; end if;
+  insert into obras_historico (obra_id, bloco, campo, de, para, motivo, quem)
+    select id, 'Esteira', 'etapa', 'Pendente faturamento', 'Faturado', 'Consolidado Profarma: NF 1500 de 16/10 no Omie, pedido 4503312241', qm
+    from obras_obra where os = '3245574';
+end $$;
