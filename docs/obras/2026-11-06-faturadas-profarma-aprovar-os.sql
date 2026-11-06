@@ -51,3 +51,19 @@ begin
   get diagnostics n = row_count; if n <> 1 then raise exception 'nf 3018955'; end if;
   -- sem linha em obras_historico: o check não tem campo de NF/pedido (mesmo padrão da 0726-012477 em 30/10)
 end $$;
+
+-- 2ª parte, aplicada em 06/11/2026: o Jose autorizou corrigir a data ("pode corrigir a data, se realmente fizer sentido").
+-- 3018955: marco_faturou 06/11 (do clique do matheus.oliveira) -> 28/07 = emissão da NF 1027 no Omie.
+-- Coerente: aprovada 07/07, execução e relatório 08/07. marco_fechou_os e marco_liberou_fat (06/11) ficam como estão.
+do $$
+declare
+  qm text := 'carga-06-11 (Claude, a pedido do Jose Guilherme)';
+  n int;
+begin
+  update obras_obra set marco_faturou = '2026-07-28', atualizacao = current_date
+  where os = '3018955' and etapa = 'faturado' and fat_nfse = '1027' and marco_faturou = '2026-11-06';
+  get diagnostics n = row_count; if n <> 1 then raise exception 'marco 3018955'; end if;
+  insert into obras_historico (obra_id, bloco, campo, de, para, motivo, quem)
+    select id, 'Esteira', 'marco_faturou', '06/11/2026', '28/07/2026', 'Consolidado Profarma: data de emissão da NF 1027 no Omie', qm
+    from obras_obra where os = '3018955';
+end $$;
