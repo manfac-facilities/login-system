@@ -25,6 +25,10 @@ As perguntas estão em `docs/rh/2026-11-05-proposta-fases-e-decisoes.md`.
 >
 > @⁠⁨⁠J⁠o⁠a⁠o⁠⁩ segue api do VR PONTO e o email da contabilidade com a folha te enviei no gmail
 
+## Segunda rodada: 4 pontos (recebida em 06/11)
+
+> Fala mano bom dia é isso aí cara o VR é R$30 por dia  geralmente a gente faz o pagamento do boleto dia 10. PJ não recebe INSS IR bis não precisa se preocupar com isso que isso aí a gente trata lá pelo financeiro não não precisa olhar nada disso aí pelo pelo RH  quem é PJ não emite nota hoje a gente só paga o que serve de comprovante é nada é a palavra de cada um.  e a PI do VR. não tá contratada a gente precisa contratar tem o custo lá mensal pra pagar acho que a gente avaliar primeiro o que que dá pra pegar de informação pela pela a  pra gente tentar fazer isso tá e na verdade tentar ver se vai fazer sentido é isso
+
 ## Resposta 6 (ajuda de custo)
 
 > Sobre a parte de ajuda de custo é porque a gente não paga valetransporte então  tem uma ou outra pessoa que a gente faz um pagamento de. três pessoas na verdade que a gente faz esse pagamento de de vale-transporte mas que não é um vale-transporte é uma ajuda de custo. No caso tem duas pessoas internas aqui na empresa né que a gente até paga o boleto do do VT mas é o VT pessoa física deles não é como empresa entendeu.  mas a gente pode botar alguma coisa nesse sentido também vale transporte barra ajuda de custo alguma coisa assim
