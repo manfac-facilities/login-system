@@ -110,6 +110,46 @@ precisa incluir as categorias para centro de custo com OBRAS ou SPOT no nome. N�
 - **VR:** crédito à parte para quem entra no meio do mês.
 - **Novo:** portal PJ.
 
+## Atualização de 06/11: segunda rodada do cliente
+
+O João mandou prosseguir ("a gente tem que acabar esse sistema hoje"). Sem veto dele, sigo as recomendações, incluindo folha
+antes do VR. Aplicar schema e publicar em produção continuam precisando de autorização explícita.
+
+**Escopo de hoje:** folha CLT, FGTS/consignado, VR, VT/ajuda de custo e PJ. **Ficam para depois:** jornada da pessoa, prazos,
+ponto, patrimônio, recrutamento e comunicação.
+
+| Resposta | Efeito |
+|---|---|
+| VR é R$ 30 por dia; boleto no dia 10 | Regra confirmada. Em produção, o VR sai como QR Code ou chave PIX, então o campo é "código de pagamento", não só boleto |
+| PJ não recebe VR | VR só para os 24 CLT |
+| INSS, IRRF e PIS ficam com o Financeiro | Fora do RH. Do arquivo da contabilidade, o RH trata só líquidos, FGTS e consignado |
+| PJ sem nota: paga, sem comprovante | Regra simples: cadastro marca "emite nota". Quem não emite é pago com o valor do cadastro, sem anexo |
+| API não contratada, tem custo mensal | Nada de hoje depende dela. Ver avaliação abaixo |
+
+**Alerta de negócio, não bloqueia:** 55 de 61 pagamentos de "Remuneração PJ" estão em CPF, e parte não tem documento. O sistema
+reproduz a prática atual e deixa isso visível. Vale a Manfac confirmar com a contabilidade ou o jurídico. Não é parecer meu.
+
+### Avaliação da API do VR Ponto (só documentação; preço não consultado)
+
+**Recomendação: não contratar agora.** Primeiro fazer um piloto sem custo com um relatório exportado à mão.
+
+| Uso | Precisa da API? | Sem a API |
+|---|---|---|
+| Valor da folha | Não | Vem da contabilidade |
+| Dias do VR | Não | Dias úteis menos ausências marcadas pelo RH. Com a API viria de `reports/benefits` |
+| Férias e afastamentos | Ajuda | Marcação manual pelo RH |
+| **Validar horas extras com atendimentos** | **É onde ela teria valor** | Só por exportação manual |
+
+**O cruzamento parece viável, mas não está provado.** `reports/extra_times` traz data, marcações, extras e motivo por pessoa, e
+`reports/time_cards` traz horário e geolocalização. No Cockpit, `activities` tem técnico, `started_at` e `completed_at`. Falta
+confirmar que os horários de atendimento são confiáveis e que dá para ligar técnico à pessoa.
+
+**Piloto:** exportar as horas extras de outubro, se a tela do VR permitir (não verificado), e cruzar uma vez com o Cockpit. Se
+as divergências valerem o custo mensal, contrata. Se a exportação manual bastar, talvez nem precise.
+
+**Segurança:** a coleção pública traz um valor de `access-token` num exemplo. Não usei. Quando contratarem, o token deve ficar
+fora do repositório e a integração só deve ler.
+
 ## O que falta verificar
 
 - Layout dos PDFs, e se dá para extrair o valor e o CPF de cada pessoa.
