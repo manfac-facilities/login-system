@@ -666,3 +666,15 @@ Fontes: spec `docs/superpowers/specs/2026-11-03-frotas-multa-fotos-checklist-des
   (`_lib/material.ts`): início num dia fora do expediente (ex.: sábado, com expediente seg–sex) dá um "pedir até" **um
   dia de expediente mais tarde** que o necessário — pedindo nesse dia, o Compras calcula a chegada para o primeiro dia de
   expediente depois do início. Impacto: raro (início fora do expediente do Compras) e de um dia.
+
+## RH: pagamentos via Financeiro (06/11/2026)
+
+Só o que não é dinheiro nem acesso; o resto foi tratado na hora ou fica como decisão aberta. Revisões nos PRs `financeiro#16` e `rh#6`.
+
+- **Avisos `chegou_ao_financeiro`** (`financeiro`, `lib/integracoes/rh-pagamentos.ts`): pelo menos um por solicitação, cerca de 23 por folha. Só incomoda; decidir depois do primeiro uso.
+- **Sem tela de `vencimento_dia`** (`rh`, `004_rh_pagamentos.sql`, `rh_pagamento_padroes`): a sugestão de vencimento vem vazia e o RH digita. Só custa digitação.
+- **`rh_importar` não sugere `recebe_vr`:** CLT importado nasce sem VR marcado, porque corrigir exigiria recriar a função. O RH marca na ficha.
+- **Corrigir o total apaga todas as decisões escritas da folha** (`rh`, `components/pagamentos/tela-folha.tsx`): é o lado seguro, com custo de redigitar.
+- **Linha sem CPF pede "explique por escrito", mas a tela só oferece confirmar** (`rh`, `components/pagamentos/tela-folha.tsx`): texto confuso, sem efeito no valor.
+- **CNPJ alfanumérico é recusado** (`rh`, `lib/pagamentos`): falso bloqueio de PJ novo; nenhum pagamento sai errado.
+- **Motivo da liberação de duplicidade fora da linha do tempo** (`financeiro`, `lib/integracoes/rh-pagamentos.ts`): fica só no evento; quem valida vê a etiqueta `possivel_duplicidade`.
