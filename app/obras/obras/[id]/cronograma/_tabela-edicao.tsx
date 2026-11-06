@@ -76,12 +76,15 @@ function Campo({
   className = '',
   placeholder,
   modo,
+  largura,
 }: {
   valor: string
   rotulo: string
   placeholder?: string
   /** inputMode para texto (ex.: 'decimal' no valor). */
   modo?: 'decimal'
+  /** min-width do campo (ex.: '40ch'), para caber o texto inteiro. */
+  largura?: string
   tipo: 'text' | 'number' | 'date'
   linha: number
   col: Coluna | 'etapa-nome'
@@ -131,6 +134,7 @@ function Campo({
       data-col={col}
       data-numero={numero}
       className={CAMPO + (tipo === 'text' ? '' : ' obra-num') + ' ' + className}
+      style={largura ? { minWidth: largura } : undefined}
       placeholder={placeholder}
       value={texto}
       onChange={(e) => {
@@ -275,6 +279,8 @@ export default function TabelaEdicao({
   const comValor = !!valores
   const valorDe = (n: number) => valores?.[n] ?? 0
   const extra = comValor ? 1 : 0
+  // Coluna Atividade cresce até o maior nome (teto de 60ch; acima disso, rola dentro do campo).
+  const larguraNome = `${Math.min(60, Math.max(28, ...atividades.map((a) => a.descricao.length + 2)))}ch`
   const opcoesEtapa = etapas.map((e) => ({ valor: e.chave, rotulo: e.nome }))
   const opcoesPred = (self: number) => [
     { valor: '', rotulo: '—' },
@@ -397,6 +403,7 @@ export default function TabelaEdicao({
                           col="descricao"
                           numero={n}
                           className="w-full min-w-56"
+                          largura={larguraNome}
                           onSalvar={(v) => acoes.salvar({ numero: n, descricao: v })}
                         />
                       </Celula>

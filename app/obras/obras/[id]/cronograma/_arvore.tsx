@@ -149,6 +149,7 @@ export default function Arvore({
   onFoco,
   rolagemRef,
   onRolar,
+  larguraNome = 24,
 }: {
   linhas: LinhaVisivel[]
   editavel: boolean
@@ -159,6 +160,8 @@ export default function Arvore({
   onFoco: (chave: string | null) => void
   rolagemRef?: Ref<HTMLDivElement>
   onRolar?: (e: UIEvent<HTMLDivElement>) => void
+  /** Largura da coluna Atividade em `ch` (no computador), medida pelo maior nome. */
+  larguraNome?: number
 }) {
   const th = 'sticky top-0 z-10 h-12 bg-(--obra-surface) shadow-[inset_0_-1px_0_var(--obra-border)] px-2 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-(--obra-muted-texto) whitespace-nowrap'
   return (
@@ -172,13 +175,16 @@ export default function Arvore({
       className="relative h-full max-h-[calc(100dvh-8rem)] overflow-auto lg:max-h-none lg:overflow-x-scroll"
       aria-busy={pendente}
     >
-      <table className="w-full border-separate border-spacing-0 text-[13px] text-(--obra-text)">
+      <table
+        className="w-full border-separate border-spacing-0 text-[13px] text-(--obra-text)"
+        style={{ ['--nome' as string]: `${larguraNome}ch` }}
+      >
         <thead>
           <tr>
             <th className={th + ' left-0 z-20 w-14'} scope="col">
               Nº
             </th>
-            <th className={th + ' min-w-44 md:left-14 md:z-20 md:min-w-48'} scope="col">
+            <th className={th + ' min-w-44 md:left-14 md:z-20 md:min-w-(--nome)'} scope="col">
               Atividade
             </th>
             <th className={th} scope="col">Situação</th>
@@ -249,7 +255,7 @@ function LinhaDeEtapa({
           <Chevron aberto={l.aberta} tamanho={16} />
         </button>
       </td>
-      <td className={CELULA + ' max-w-48 md:sticky md:left-14 md:z-[1] md:max-w-72 ' + fundo}>
+      <td className={CELULA + ' max-w-48 md:sticky md:left-14 md:z-[1] md:min-w-(--nome) md:max-w-(--nome) ' + fundo}>
         <button
           type="button"
           className="flex w-full min-w-0 items-center gap-2 text-left"
@@ -257,7 +263,7 @@ function LinhaDeEtapa({
           onClick={() => onAlternar(e.chave)}
         >
           <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: e.cor }} />
-          <span className="truncate">{e.nome}</span>
+          <span className="truncate" title={e.nome}>{e.nome}</span>
           <span className="shrink-0 text-[12px] font-normal text-(--obra-muted-texto)">({e.numeros.length})</span>
         </button>
         <BarraMovel percentual={e.percentual} />
@@ -312,7 +318,7 @@ function LinhaDeAtividade({
           {a.numero}
         </span>
       </td>
-      <td className={CELULA + ' max-w-48 md:sticky md:left-14 md:z-[1] md:max-w-72 pl-5 ' + fundo}>
+      <td className={CELULA + ' max-w-48 md:sticky md:left-14 md:z-[1] md:min-w-(--nome) md:max-w-(--nome) pl-5 ' + fundo}>
         <span className="flex min-w-0 items-center gap-1.5">
           {a.travada ? (
             <span title="Travada pela atividade-trava" className="shrink-0 text-[#4f5b62]">
@@ -323,7 +329,7 @@ function LinhaDeAtividade({
           <Editavel
             editavel={editavel}
             rotulo={`Editar nome da atividade ${a.numero}`}
-            exibir={<span className="truncate">{a.descricao}</span>}
+            exibir={<span className="truncate" title={a.descricao}>{a.descricao}</span>}
             inicial={a.descricao}
             tipo="text"
             className="min-w-0 truncate"
