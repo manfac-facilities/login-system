@@ -19,3 +19,5 @@ E assim tudo que você fizer mano sempre se pergunte como que isso pode se integ
 > prossiga com o trabalho dos módulos
 
 > prossiga como que nao depender dessa decisao, nao podemos depender do cliente para prosseguir com o projeto
+
+> o sistema deve ser responsivo, nao so para celular
