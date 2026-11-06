@@ -9,3 +9,9 @@ Então mano esse é um sistema bem grande e complexo que eu já tinha te falado 
 ---
 
 E assim tudo que você fizer mano sempre se pergunte como que isso pode se integrar a outro sistema entendeu talvez você pode até perguntar isso pro próprio Cláudio.  E aí hoje eu acho que esse é o lado ruim de não tá tudo junto no mesmo repositório tá ligado porque ele não consulta automaticamente essas outras informações eu tô te falando isso porque por exemplo  o almoxarifado ele pode estar ligado ao compras ele pode estar ligado ao cockpit que já existe ele pode estar ligado até ao obras enfim várias coisas.  e a mesma coisa a questão do RH se você for ver aí tem várias etapas e tal enfim dá pra criar uma parada bem grande e bem maneira
+
+## Mensagens de 06/11/2026
+
+> Bom dia, Claude. O cliente acabou de mandar essa mensagem acima. Entenda ela e atua, prossiga. A gente tem que acabar esse sistema hoje.
+
+> Claude, a gente vai fazer tudo aqui, aplicar mudança no financeiro, nós vamos fazer tudo por aqui. Pode prosseguir aí.
