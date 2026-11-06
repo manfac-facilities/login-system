@@ -15,3 +15,7 @@ E assim tudo que você fizer mano sempre se pergunte como que isso pode se integ
 > Bom dia, Claude. O cliente acabou de mandar essa mensagem acima. Entenda ela e atua, prossiga. A gente tem que acabar esse sistema hoje.
 
 > Claude, a gente vai fazer tudo aqui, aplicar mudança no financeiro, nós vamos fazer tudo por aqui. Pode prosseguir aí.
+
+> prossiga com o trabalho dos módulos
+
+> prossiga como que nao depender dessa decisao, nao podemos depender do cliente para prosseguir com o projeto
