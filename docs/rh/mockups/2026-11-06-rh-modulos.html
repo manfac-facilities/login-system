@@ -1,0 +1,1425 @@
+<title>RH Módulos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{
+  color-scheme:light;
+  --fundo:#f3f5fa;--card:#ffffff;--inset:#eef2f9;--hover:#e3eaf6;--sel:#dfe8f8;
+  --borda:#c4d0e2;--texto:#0a1628;--sec:#475a76;
+  --acento:#f05a28;--acento-t:#b8390f;--on-acento:#0a1628;
+  --erro:#b3261e;--erro-fundo:#fdeceb;--aviso:#7a5200;--aviso-fundo:#fff3d1;
+  --raio:10px;
+  --fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --fundo:#0a1628;--card:#0d2050;--inset:#0a1628;--hover:#12295f;--sel:#12295f;
+    --borda:#1e3a5f;--texto:#f1f5f9;--sec:#94a3b8;
+    --acento-t:#f05a28;
+    --erro:#f2877f;--erro-fundo:#2a1320;--aviso:#e8c547;--aviso-fundo:#231f24;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --fundo:#0a1628;--card:#0d2050;--inset:#0a1628;--hover:#12295f;--sel:#12295f;
+  --borda:#1e3a5f;--texto:#f1f5f9;--sec:#94a3b8;
+  --acento-t:#f05a28;
+  --erro:#f2877f;--erro-fundo:#2a1320;--aviso:#e8c547;--aviso-fundo:#231f24;
+}
+*{box-sizing:border-box}
+html{background:var(--fundo);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fundo);color:var(--texto);font:15px/1.5 var(--fonte);overflow-x:hidden}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0;padding:0}
+ul,ol{list-style:none}
+h1{font-size:1.75rem;line-height:1.2;font-weight:650;letter-spacing:-.015em;display:flex;align-items:center;gap:10px}
+h1:focus{outline:none}
+h2{font-size:1.15rem;line-height:1.3;font-weight:650}
+h3{font-size:.95rem;font-weight:650}
+.letra{flex:none;display:inline-grid;place-items:center;width:1.55em;height:1.55em;border-radius:10px;background:var(--acento);color:var(--on-acento);font-weight:800}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lim{max-width:1120px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+.sec{color:var(--sec)}
+.peq{font-size:.82rem}
+.forte{font-weight:650}
+.pilha>*+*{margin-top:12px}
+.pilha-g>*+*{margin-top:24px}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.entre{justify-content:space-between}
+.grow{flex:1 1 220px;min-width:0}
+
+/* Barra de controle do mockup */
+.faixa{position:sticky;top:0;z-index:30;background:var(--fundo);border-bottom:1px solid var(--borda)}
+.faixa .lim{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.faixa-t{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--sec)}
+.ctrls{display:flex;flex-wrap:wrap;gap:6px 16px}
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.78rem;color:var(--sec)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--borda);border-radius:8px;overflow:hidden;background:var(--inset)}
+.seg button{appearance:none;border:0;border-right:1px solid var(--borda);background:transparent;color:var(--sec);font:inherit;font-size:.82rem;padding:6px 10px;min-height:34px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--texto);background:var(--hover)}
+.seg button[aria-pressed=true]{background:var(--sel);color:var(--texto);box-shadow:inset 0 -2px 0 var(--acento);font-weight:600}
+.seg button[disabled]{opacity:.5;cursor:not-allowed}
+.limpar{appearance:none;background:none;border:0;color:var(--sec);font:inherit;font-size:.78rem;text-decoration:underline;cursor:pointer;padding:4px 2px;min-height:30px}
+.limpar:hover{color:var(--texto)}
+
+/* Cabeçalho como o do módulo real */
+header.modulo{border-bottom:1px solid var(--borda);background:var(--fundo)}
+header.modulo .lim{display:flex;align-items:center;gap:12px;min-height:56px}
+.marca{font-weight:650;flex:none}
+@media (min-width:700px){nav.menu ul{flex-wrap:wrap;width:auto!important}}
+nav.menu{flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+nav.menu ul{display:flex;gap:2px;width:max-content;padding:4px 0}
+nav.menu button,nav.menu .off{appearance:none;background:none;border:0;display:flex;gap:6px;align-items:center;padding:8px 10px;border-radius:8px;color:var(--sec);font:inherit;font-size:.88rem;white-space:nowrap;min-height:40px;cursor:pointer}
+nav.menu .off{cursor:not-allowed;opacity:.75}
+nav.menu button:hover{background:var(--hover);color:var(--texto)}
+nav.menu button[aria-current=page]{background:var(--sel);color:var(--texto);font-weight:600;box-shadow:inset 0 -2px 0 var(--acento)}
+nav.menu .tag{font-size:.7rem;border:1px solid var(--borda);border-radius:5px;padding:0 5px;color:var(--sec)}
+nav.menu button[aria-current=page] .tag{background:var(--acento);border-color:var(--acento);color:var(--on-acento)}
+nav.menu .sepa{align-self:center;width:1px;height:22px;background:var(--borda);margin:0 6px}
+.quem{flex:none;text-align:right;font-size:.75rem;line-height:1.25}
+@media (max-width:900px){.quem{display:none}}
+
+main{padding-top:24px;padding-bottom:96px}
+.cabeca{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.cabeca p{color:var(--sec);max-width:72ch}
+
+/* Componentes */
+.card{background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:16px}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:.9rem;font-weight:600;line-height:1.25;border-radius:8px;padding:9px 14px;min-height:42px;cursor:pointer;border:1px solid var(--borda);background:transparent;color:var(--texto);text-align:center}
+.btn:hover{background:var(--hover)}
+.btn-p{background:var(--acento);border-color:var(--acento);color:var(--on-acento)}
+.btn-p:hover{background:#f4714a}
+.btn-d{border-color:var(--erro);color:var(--erro)}
+.btn-d:hover{background:var(--erro-fundo)}
+.btn-dd{background:var(--erro);border-color:var(--erro);color:#fff}
+.btn-dd:hover{filter:brightness(1.1)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;background:transparent;color:var(--sec);border-color:var(--borda)}
+.mini{min-height:34px;padding:4px 10px;font-size:.82rem}
+.link{appearance:none;background:none;border:0;padding:0;font:inherit;color:var(--acento-t);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap;border:1px solid var(--borda);color:var(--sec)}
+.pill svg{width:11px;height:11px;flex:none}
+.p-ok{background:var(--texto);border-color:var(--texto);color:var(--fundo)}
+.p-and{border-color:var(--acento-t);color:var(--acento-t)}
+.p-pend{border-style:dashed}
+.p-bloq{border-color:var(--erro);color:var(--erro)}
+.p-aviso{border-color:var(--aviso);color:var(--aviso)}
+.p-na{background:var(--inset);color:var(--sec)}
+.p-novo{background:var(--acento);border-color:var(--acento);color:var(--on-acento)}
+.sis{border-color:var(--acento-t);color:var(--acento-t);font-weight:650;background:transparent}
+.ref{display:inline-block;font-size:.68rem;font-weight:500;color:var(--sec);border:1px solid var(--borda);border-radius:4px;padding:0 4px;margin-right:3px;font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:1px}
+
+.nota{border:1px solid var(--borda);border-left-width:3px;border-radius:8px;padding:10px 12px;background:var(--inset)}
+.nota.info{border-left-color:var(--sec)}
+.nota.dest{border-left-color:var(--acento)}
+.nota.bloq{border-color:var(--erro);background:var(--erro-fundo)}
+.nota.aviso{border-left-color:var(--aviso);background:var(--aviso-fundo)}
+.nota .t{font-weight:650;display:block}
+.nota.bloq .t{color:var(--erro)}
+.nota.aviso .t{color:var(--aviso)}
+
+.tbl{overflow-x:auto;border:1px solid var(--borda);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+table.larga{min-width:640px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--borda);vertical-align:top;background:var(--card)}
+th{font-size:.76rem;font-weight:600;color:var(--sec);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.dest td{background:var(--aviso-fundo)}
+.d{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.div{font-weight:700;color:var(--erro);text-decoration:underline;text-decoration-style:wavy;text-underline-offset:3px}
+
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.campo label,.rot{font-size:.84rem;font-weight:550}
+input[type=text],input[type=date],input[type=email],input[type=number],select,textarea{width:100%;min-height:42px;background:var(--inset);color:var(--texto);border:1px solid var(--borda);border-radius:8px;padding:8px 10px;font:inherit;font-size:16px}
+textarea{min-height:84px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{opacity:.72;cursor:not-allowed}
+td input,td select{min-height:34px;font-size:14px;padding:4px 8px}
+.ajuda{font-size:.78rem;color:var(--sec)}
+.erro-campo{font-size:.8rem;color:var(--erro)}
+.grade{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:640px){.grade{grid-template-columns:1fr 1fr}.grade .todo{grid-column:1/-1}}
+.grade3{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:760px){.grade3{grid-template-columns:1fr 1fr 1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer;min-height:28px}
+.chk input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--acento);flex:none}
+
+.barra{height:8px;border-radius:4px;background:var(--inset);border:1px solid var(--borda);overflow:hidden}
+.barra i{display:block;height:100%;background:var(--acento)}
+
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.passos div{border:1px solid var(--borda);border-radius:8px;padding:8px 10px;color:var(--sec);font-size:.82rem;display:flex;gap:8px;align-items:center;min-height:44px}
+.passos b{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--borda);font-size:.74rem}
+.passos .feito b{background:var(--texto);border-color:var(--texto);color:var(--fundo)}
+.passos .atual{background:var(--sel);color:var(--texto);border-color:var(--acento);font-weight:600}
+.passos .atual b{background:var(--acento);border-color:var(--acento);color:var(--on-acento)}
+
+.lista>li{padding:12px 0;border-bottom:1px solid var(--borda)}
+.lista>li:last-child{border-bottom:0}
+.lista>li:first-child{padding-top:0}
+.etapas>li{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--borda)}
+.etapas>li:last-child{border-bottom:0}
+.etapas .sit{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.etapas select{width:auto;min-width:170px}
+.grupo{margin-top:6px;font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--acento-t)}
+.cartoes{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:980px){.cartoes{grid-template-columns:1fr 1fr}}
+.cartoes>.card{min-width:0}
+.valor{font-size:1.4rem;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2}
+.fin{border:1px solid var(--sec);border-radius:var(--raio);overflow:hidden;background:var(--inset)}
+.fin-topo{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--sel)}
+.fin-corpo{padding:14px}
+.dados{display:grid;gap:10px 18px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.dados dt{font-size:.76rem;color:var(--sec)}
+.drop{border:2px dashed var(--borda);border-radius:var(--raio);padding:18px;text-align:center}
+.est-vazio{border:2px dashed var(--borda);border-radius:var(--raio);padding:32px 20px;text-align:center}
+.est-erro{border:1px solid var(--erro);background:var(--erro-fundo);border-radius:var(--raio);padding:20px}
+.est-erro h2{color:var(--erro)}
+.est-vazio>*+*,.est-erro>*+*{margin-top:10px}
+.esq{border-radius:8px;height:64px;background:linear-gradient(90deg,var(--card) 25%,var(--sel) 50%,var(--card) 75%);background-size:200% 100%;animation:esq 1.4s linear infinite;border:1px solid var(--borda)}
+@keyframes esq{to{background-position:-200% 0}}
+.mail{border:1px solid var(--borda);border-radius:8px;background:var(--inset);padding:12px;font-size:.88rem;white-space:pre-wrap}
+.mail b{display:inline-block;min-width:64px}
+
+dialog{border:1px solid var(--borda);border-radius:12px;background:var(--card);color:var(--texto);padding:0;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto}
+dialog::backdrop{background:rgba(5,10,20,.7)}
+.dlg-c{padding:18px}
+.dlg-c>*+*{margin-top:12px}
+.dlg-c h2:focus{outline:none}
+.pontos li{padding-left:14px;position:relative;margin-top:6px}
+.pontos li::before{content:"";position:absolute;left:2px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--sec)}
+.dlg-b{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:0 18px 18px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--texto);color:var(--fundo);font-weight:600;font-size:.88rem;border-radius:8px;padding:10px 14px;max-width:calc(100vw - 32px);width:max-content;display:none}
+#toast.on{display:block}
+details>summary{cursor:pointer;color:var(--acento-t);min-height:32px;display:flex;align-items:center}
+.como{margin-top:40px;border-top:1px solid var(--borda);padding-top:16px}
+.como code{background:var(--inset);border:1px solid var(--borda);border-radius:5px;padding:1px 6px}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--sec)}
+@media (max-width:480px){
+  h1{font-size:1.45rem}
+  .btn{width:100%}
+  .mini,.seg button,.limpar{width:auto}
+  .dlg-b .btn{width:100%}
+  .marca{display:none}
+  .linha>.btn{flex:1 1 auto}
+}
+@media (prefers-reduced-motion:reduce){.esq{animation:none}html{scroll-behavior:auto}}
+</style>
+
+<div class="faixa gutter"><div class="lim">
+  <div class="faixa-t"><span><b>Mockup</b> · dados de exemplo, nenhuma pessoa é real</span><button type="button" class="limpar" id="btn-reiniciar" data-act="reiniciar">Reiniciar demonstração</button></div>
+  <div class="ctrls">
+    <div class="ctrl"><span id="rot-papel">Ver como</span><span class="seg" role="group" aria-labelledby="rot-papel" id="seg-papel"></span></div>
+    <div class="ctrl"><span id="rot-estado">Estado da tela</span><span class="seg" role="group" aria-labelledby="rot-estado" id="seg-estado"></span></div>
+  </div>
+</div></div>
+<header class="modulo gutter"><div class="lim">
+  <span class="marca">RH</span>
+  <nav class="menu" aria-label="Telas do RH"><ul id="menu"></ul></nav>
+  <div class="quem"><div class="forte" id="quem-nome"></div><div class="sec" id="quem-papel"></div></div>
+</div></header>
+<main class="gutter"><div class="lim" id="tela"></div></main>
+<dialog id="dlg" aria-labelledby="dlg-t"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============ Núcleo ============ */
+var HOJE="2026-11-06";
+var S,D,A={};
+var ROTULO={rh:"Controladoria/RH",dir:"Diretoria",nenhum:"Sem papel"};
+var CCS=["DPSP","Profarma","Administrativo"];
+var PES=[
+ {n:"Bruno Teixeira",cpf:"214.835.670-12",t:"CLT",em:"bruno.teixeira@exemplo.com.br",rat:[["DPSP",10000]]},
+ {n:"Carla Mendonça",cpf:"387.120.945-33",t:"CLT",em:"carla.mendonca@exemplo.com.br",rat:[["Profarma",10000]]},
+ {n:"Diego Albuquerque",cpf:"452.668.301-07",t:"CLT",em:"diego.albuquerque@exemplo.com.br",rat:[["DPSP",6000],["Profarma",4000]]},
+ {n:"Elisa Prado",cpf:"519.274.883-50",t:"CLT",em:"elisa.prado@exemplo.com.br",rat:[["Administrativo",10000]]},
+ {n:"Fábio Nogueira",cpf:"603.915.472-88",t:"CLT",em:"fabio.nogueira@exemplo.com.br",rat:[["Profarma",10000]]},
+ {n:"Gabriela Rocha",cpf:"728.340.116-24",t:"CLT",em:"gabriela.rocha@exemplo.com.br",rat:[["DPSP",10000]]},
+ {n:"Henrique Lacerda",cpf:"836.557.209-61",t:"CLT",em:"",rat:[["Profarma",10000]]},
+ {n:"Isabela Furtado",cpf:"941.082.735-19",t:"CLT",em:"isabela.furtado@exemplo.com.br",rat:[["Administrativo",10000]]},
+ {n:"Rodrigo Azevedo",cpf:"157.903.664-40",t:"CLT",em:"rodrigo.azevedo@exemplo.com.br",rat:[["DPSP",5000],["Administrativo",5000]]},
+ {n:"Patrícia Lins",cpf:"268.711.350-96",t:"CLT",em:"patricia.lins@exemplo.com.br",rat:[["Profarma",10000]]},
+ {n:"Júlio Cardoso",cpf:"379.456.128-05",t:"PJ",em:"julio.cardoso@exemplo.com.br",rat:[["DPSP",10000]]},
+ {n:"Rafael Duarte",cpf:"480.231.775-30",t:"PJ",em:"rafael.duarte@exemplo.com.br",rat:[["Profarma",10000]]},
+ {n:"Sandra Pires",cpf:"591.672.048-17",t:"PJ",em:"sandra.pires@exemplo.com.br",rat:[["DPSP",10000]]},
+ {n:"Tiago Bastos",cpf:"602.783.159-74",t:"PJ",em:"tiago.bastos@exemplo.com.br",rat:[["Profarma",10000]]},
+ {n:"Valéria Costa",cpf:"713.894.260-81",t:"PJ",em:"valeria.costa@exemplo.com.br",rat:[["Administrativo",10000]]}
+];
+function pes(n){return PES.filter(function(p){return p.n===n;})[0];}
+function pessoasOpt(tipo){return PES.filter(function(p){return !tipo||p.t===tipo;}).map(function(p){return [p.n,p.n];});}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function refs(h){return h.replace(/\[\[([\d.,\s]+)\]\]/g,function(m,a){return a.split(",").map(function(x){x=x.trim();return '<span class="ref" title="Item '+x+' da lista do RH">'+x+'</span>';}).join("");});}
+function fd(iso){if(!iso)return "—";var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+function dias(iso){var p=iso.split("-");return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-Date.UTC(2026,10,6))/86400000);}
+function somaDias(iso,n){var p=iso.split("-"),d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+n));return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");}
+function agora(){return fd(HOJE)+" "+new Date().toTimeString().slice(0,5);}
+function eu(){return S.papel==="rh"?"Ana Exemplo":"Marta Exemplo";}
+function brl(c){var n=Math.abs(c),r=Math.floor(n/100),ct=String(n%100).padStart(2,"0");return (c<0?"-":"")+"R$ "+String(r).replace(/\B(?=(\d{3})+(?!\d))/g,".")+","+ct;}
+function lerValor(t){t=String(t==null?"":t).trim();if(!/^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/.test(t))return null;var p=t.replace(/\./g,"").split(",");return Number(p[0])*100+Number(((p[1]||"")+"00").slice(0,2));}
+function hhmm(m){var s=m<0?"-":"+",a=Math.abs(m);return s+String(Math.floor(a/60)).padStart(2,"0")+":"+String(a%60).padStart(2,"0");}
+function hh(m){var a=Math.abs(m);return String(Math.floor(a/60)).padStart(2,"0")+":"+String(a%60).padStart(2,"0");}
+function souRH(){return S.papel==="rh";}
+function dis(){return souRH()?"":" disabled";}
+function disIf(c){return (c||!souRH())?" disabled":"";}
+function mask(cpf){return souRH()?cpf:"***."+cpf.slice(4,11)+"-**";}
+function toast(m){var t=$("#toast");t.textContent=m;t.className="on";clearTimeout(toast.t);toast.t=setTimeout(function(){t.className="";},4200);}
+function pill(t,c){return '<span class="pill '+(c||"")+'">'+t+'</span>';}
+function bt(t,act,a,cls,extra){var s='<button type="button" class="btn '+(cls||"")+'" data-act="'+act+'"';for(var k in (a||{}))s+=' data-'+k+'="'+esc(a[k])+'"';return s+(extra||"")+'>'+t+'</button>';}
+function lk(t,act,a){var s='<button type="button" class="link" data-act="'+act+'"';for(var k in (a||{}))s+=' data-'+k+'="'+esc(a[k])+'"';return s+'>'+t+'</button>';}
+function cab(l,t,s){return '<div class="cabeca"><h1 id="titulo" tabindex="-1"><span class="letra">'+l+'</span><span>'+esc(t)+'</span></h1>'+(s?'<p>'+s+'</p>':'')+'</div>';}
+function nota(tipo,t,corpo){return '<div class="nota '+tipo+'">'+(t?'<span class="t">'+t+'</span>':'')+corpo+'</div>';}
+function segHtml(k,ops,cur,rot){return '<div class="seg" role="group" aria-label="'+esc(rot)+'" style="margin-bottom:16px">'+ops.map(function(o){return '<button type="button" data-act="setS" data-k="'+k+'" data-v="'+o[0]+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>';}).join("")+'</div>';}
+function forma(f){
+  var svg={tri:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11.5 11H.5z" fill="currentColor"/></svg>',
+    dia:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .5 11.5 6 6 11.5.5 6z" fill="currentColor"/></svg>',
+    qua:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="currentColor"/></svg>',
+    cir:'<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>'};
+  return svg[f]||"";
+}
+/* campos ligados ao estado: o caminho usa "/" e procura ids em listas */
+function walk(cur,p){if(Array.isArray(cur)){if(/^\d+$/.test(p))return cur[+p];return cur.filter(function(x){return x.id===p;})[0];}return cur[p];}
+function setPath(path,v){var ps=path.split("/"),cur=D;for(var i=0;i<ps.length-1;i++)cur=walk(cur,ps[i]);var l=ps[ps.length-1];if(Array.isArray(cur)&&/^\d+$/.test(l))cur[+l]=v;else cur[l]=v;}
+function fld(id,rot,val,path,o){o=o||{};var d=o.dis===undefined?dis():(o.dis?" disabled":"");
+  return '<div class="campo'+(o.todo?' todo':'')+'"><label for="'+id+'">'+rot+'</label><input type="'+(o.type||"text")+'" id="'+id+'" value="'+esc(val)+'" data-bind="'+path+'"'+(o.re?' data-re="1"':'')+d+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+(o.err?' aria-invalid="true" aria-describedby="'+id+'-e"':'')+'>'+(o.aj?'<span class="ajuda">'+o.aj+'</span>':'')+(o.err?'<span class="erro-campo" id="'+id+'-e" role="alert">'+o.err+'</span>':'')+'</div>';}
+function selF(id,rot,val,ops,path,o){o=o||{};var d=o.dis===undefined?dis():(o.dis?" disabled":"");
+  return '<div class="campo'+(o.todo?' todo':'')+'"><label for="'+id+'">'+rot+'</label><select id="'+id+'" data-bind="'+path+'"'+(o.re?' data-re="1"':'')+d+'>'+ops.map(function(x){x=Array.isArray(x)?x:[x,x];return '<option value="'+esc(x[0])+'"'+(String(x[0])===String(val)?' selected':'')+'>'+esc(x[1])+'</option>';}).join("")+'</select>'+(o.aj?'<span class="ajuda">'+o.aj+'</span>':'')+'</div>';}
+function taF(id,rot,val,path,o){o=o||{};var d=o.dis===undefined?dis():(o.dis?" disabled":"");
+  return '<div class="campo'+(o.todo?' todo':'')+'"><label for="'+id+'">'+rot+'</label><textarea id="'+id+'" data-bind="'+path+'"'+d+'>'+esc(val)+'</textarea>'+(o.aj?'<span class="ajuda">'+o.aj+'</span>':'')+'</div>';}
+function chkF(id,rot,val,path,o){o=o||{};var d=o.dis===undefined?dis():(o.dis?" disabled":"");
+  return '<label class="chk" for="'+id+'"><input type="checkbox" id="'+id+'" data-bind="'+path+'" data-re="1"'+(val?' checked':'')+d+'><span>'+rot+'</span></label>';}
+/* diálogos */
+var focoAntes=null;
+function dl(titulo,corpo,botoes){return '<div class="dlg-c"><h2 id="dlg-t" tabindex="-1">'+titulo+'</h2>'+corpo+'<p class="erro-campo" id="dlg-erro" role="alert"></p></div><div class="dlg-b">'+botoes+'</div>';}
+function dlgAbrir(html){var d=$("#dlg");focoAntes=document.activeElement;d.innerHTML=refs(html);if(!d.open)d.showModal();var f=$("[data-foco]",d)||$("#dlg-t",d);if(f)f.focus();}
+function fecha(){var d=$("#dlg");if(d.open)d.close();}
+function erroDlg(m){var e=$("#dlg-erro");if(e)e.textContent=m;}
+function cancelar(){return bt("Cancelar","fechar",{},"");}
+function vIn(id){var e=document.getElementById(id);return e?e.value.trim():"";}
+function vCk(id){var e=document.getElementById(id);return !!(e&&e.checked);}
+function mailBox(para,assunto,corpo){return '<div class="mail"><div><b>Para:</b> '+esc(para)+'</div><div><b>Assunto:</b> '+esc(assunto)+'</div><br>'+esc(corpo)+'</div>';}
+function copiaTexto(txt){
+  function fb(){var t=document.createElement("textarea");t.value=txt;t.setAttribute("readonly","");t.style.cssText="position:fixed;left:-9999px;top:0";document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand("copy");}catch(e){}document.body.removeChild(t);return ok;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(txt).then(function(){return true;},function(){return fb();});}
+  return Promise.resolve(fb());
+}
+/* sistemas vizinhos */
+var SISN={pat:"Patrimônio",adm:"Admin do hub (acessos)",fro:"Frotas (veículo)",cmp:"Compras",com:"Comunicação"};
+function labs(s){return (s||"").split(",").filter(Boolean).map(function(k){return pill(SISN[k],"sis");}).join(" ");}
+var LINKS={"2.6":["C","Ver ASOs em Prazos"],"2.16":["H","Abrir o comunicado"],"2.17":["F","Abrir Patrimônio"],"2.18":["E","Abrir Seguro"],"2.11":["F","Abrir Patrimônio"]};
+
+/* etapas (modelo comum a Entrada, Alteração, Férias, ASO, Contrato e Campanha) */
+function listaDe(o){return o==="camp"?D.com.camp:D[o];}
+var DEP={"2.8":"2.7.5","2.9":"2.7.6","2.10":"2.7.7"};
+var DEPP={"2.5.1":"2.5","2.6.1":"2.6","2.6.2":"2.6","2.6.3":"2.6","2.6.4":"2.6","2.6.5":"2.6","9.6":"9.5"};
+function efSt(own,s){
+  var r=DEP[s.id];
+  if(r&&own.rec&&own.rec[r]&&own.rec[r].v==="na")return {st:"na",mot:"O item "+r+" está como Não se aplica",forced:true};
+  var p=DEPP[s.id];
+  if(p&&own.etapas){var ps=own.etapas.filter(function(x){return x.id===p;})[0];if(ps&&ps.st==="na")return {st:"na",mot:"A etapa "+p+" não se aplica",forced:true};}
+  return {st:s.st,mot:s.mot||"",forced:false};
+}
+function feitoSt(st){return st==="f"||st==="na"||st==="auto";}
+function stRow(o,own,s){
+  var e=efSt(own,s),id="st-"+o+"-"+own.id+"-"+s.id.replace(/\./g,"_"),campo;
+  var ops=[["p","Pendente"],["a","Em andamento"],["f","Feita"]].concat(s.ap?[["na","Não se aplica"]]:[]);
+  if(s.st==="auto")campo=pill("Automática ao concluir","p-na");
+  else if(e.forced)campo=pill("Não se aplica","p-na");
+  else campo='<select id="'+id+'" aria-label="Situação da etapa '+s.id+'" data-chg="stSet" data-o="'+o+'" data-i="'+own.id+'" data-s="'+s.id+'"'+dis()+'>'+ops.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===e.st?' selected':'')+'>'+x[1]+'</option>';}).join("")+'</select>';
+  var extra="";
+  if(s.data!==undefined)extra=fld("dt-"+o+"-"+own.id+"-"+s.id.replace(/\./g,"_"),"Data",s.data,(o==="camp"?"com/camp":o)+"/"+own.id+"/etapas/"+s.id+"/data",{type:"date"});
+  var lnk=LINKS[s.id]&&o==="movs"?lk(LINKS[s.id][1],"irAba",{a:LINKS[s.id][0]}):"";
+  var mot=(e.st==="na"&&e.mot)?'<div class="sec peq">Motivo: '+esc(e.mot)+(s.st==="na"&&souRH()?' · '+lk("Desfazer","stDesfaz",{o:o,i:own.id,s:s.id}):'')+'</div>':'';
+  return '<li><div class="linha"><span>[['+s.id+']] <span class="forte">'+esc(s.t)+'</span></span>'+(s.ap?pill("quando aplicável","p-na"):"")+(s.sis?labs(s.sis):"")+'</div><div class="sit">'+campo+'<span class="sec peq">Quem faz: '+esc(s.quem)+'</span>'+lnk+'</div>'+(extra?'<div style="max-width:220px">'+extra+'</div>':'')+mot+'</li>';
+}
+function mkEt(T){return T.map(function(x){return {id:x[0],g:x[1],t:x[2],quem:x[3],sis:x[4]||"",ap:!!x[5],st:x[6]||"p",mot:""};});}
+function marca(own,ids,st,mot){ids.forEach(function(i){var s=own.etapas.filter(function(x){return x.id===i;})[0];if(s){s.st=st;if(mot)s.mot=mot;}});}
+function etapaDe(own,id){return own.etapas.filter(function(x){return x.id===id;})[0];}
+
+/* ============ A. Rotina do mês ============ */
+function dRotina(){
+  var itens=[
+   {id:"a1",t:"Atualizar a relação mensal de colaboradores ativos [[17.1]]",d:"Levanta os CLT ativos [[5.1]], confere quem entrou de férias [[5.2]] e mantém na relação só quem está ativo [[5.3]].",q:"2026-11-05",feito:true,por:"Ana Exemplo",em:"05/11/2026 09:40"},
+   {id:"a2",t:"Atualizar a relação de equipes de campo [[17.2]]",d:"Quem está em qual equipe e em qual cliente neste mês.",q:"2026-11-10",feito:false,por:"",em:""},
+   {id:"a3",t:"Atualizar a planilha de chaves PIX [[17.3]]",d:"As chaves só aparecem para Controladoria/RH e Diretoria, nunca em lista.",q:"2026-11-10",feito:false,por:"",em:""},
+   {id:"a4",t:"Revisar as senhas dos portões [[17.4]]",d:"Só um lembrete: a revisão é feita no gerenciador de senhas da empresa.",q:"2026-11-10",feito:false,por:"",em:"",senha:true},
+   {id:"a5",t:"Solicitar a escala de plantão à operação [[17.5]]",d:"Para o ciclo que começa em 25/11. A escala é usada depois na conferência de plantões (Ponto).",q:"2026-11-20",feito:false,por:"",em:""},
+   {id:"a6",t:"Enviar a planilha de movimentação do seguro à seguradora [[13.4]]",d:"Prazo fixo: até o dia 25.",q:"2026-11-25",feito:false,por:"",em:"",irA:["E","Abrir Seguro em Pagamentos"]},
+   {id:"a7",t:"Fechar o ponto do ciclo 25/10 a 24/11 [[3.9]]",d:"O ciclo vai do dia 25 ao dia 24.",q:"2026-11-24",feito:false,por:"",em:"",irA:["D","Abrir Ponto e fechamento"]}
+  ];
+  return {itens:itens,versoes:[
+   {n:1,quando:"03/11/2026 09:12",por:"Ana Exemplo",obs:"Início do mês, antes dos ajustes de equipes.",foto:[["Relação mensal de colaboradores ativos",false],["Relação de equipes de campo",false]]},
+   {n:2,quando:"05/11/2026 09:41",por:"Ana Exemplo",obs:"Relação de ativos conferida.",foto:[["Relação mensal de colaboradores ativos",true],["Relação de equipes de campo",false]]}
+  ]};
+}
+function prazoPill(x){
+  if(x.feito)return pill("Feito em "+x.em+" por "+esc(x.por),"p-ok");
+  var d=dias(x.q);
+  if(d<0)return pill(forma("tri")+"Atrasado há "+(-d)+(d===-1?" dia":" dias"),"p-bloq");
+  if(d<=7)return pill(forma("dia")+"Até "+fd(x.q)+" · em "+d+(d===1?" dia":" dias"),"p-aviso");
+  return pill(forma("cir")+"Até "+fd(x.q)+" · em "+d+" dias","");
+}
+function vA(){
+  var it=D.rotina.itens,f=it.filter(function(x){return x.feito;}).length;
+  var h=cab("A","Rotina do mês","Novembro de 2026. O que precisa acontecer todo mês, com data. Hoje, no exemplo, é "+fd(HOJE)+".");
+  h+='<div class="card pilha"><div class="linha entre"><div><span class="forte num">'+f+' de '+it.length+' itens feitos</span><div class="barra" style="width:240px;max-width:100%;margin-top:6px"><i style="width:'+Math.round(f*100/it.length)+'%"></i></div></div>'+bt("Conferir e salvar versão","abrirVersao",{},"btn-p",disIf())+'</div><p class="sec peq">Conferir e salvar guarda uma foto da rotina com a data e quem salvou [[17.6]]. Depois ela pode ser consultada, mas não muda.</p></div>';
+  h+='<ul class="lista card" style="margin-top:14px">';
+  it.forEach(function(x){
+    h+='<li><div class="linha entre"><label class="chk" for="a-'+x.id+'"><input type="checkbox" id="a-'+x.id+'" data-chg="togA" data-id="'+x.id+'"'+(x.feito?' checked':'')+dis()+'><span><span class="forte">'+x.t+'</span><br><span class="sec peq">'+x.d+'</span></span></label>'+prazoPill(x)+'</div>';
+    if(x.senha)h+='<div style="margin-top:8px">'+nota("aviso","Este sistema não guarda senha de portão","Não escreva a senha aqui, nem em planilha, e-mail ou WhatsApp. Ela fica só no gerenciador de senhas da empresa, em local restrito. Aqui existe apenas o lembrete de revisar todo mês. Marque o item quando tiver revisado lá.")+'</div>';
+    if(x.irA)h+='<div style="margin-top:6px">'+lk(x.irA[1],"irAba",{a:x.irA[0]})+'</div>';
+    h+='</li>';
+  });
+  h+='</ul>';
+  h+='<h2 style="margin:24px 0 8px">Versões salvas</h2><div class="card"><ul class="lista">';
+  D.rotina.versoes.slice().reverse().forEach(function(v){
+    h+='<li><div class="linha entre"><div><span class="forte">Versão '+v.n+'</span> <span class="sec peq">· '+v.quando+' · '+esc(v.por)+'</span><div class="peq">'+esc(v.obs||"Sem observação")+'</div></div>'+bt("Ver a foto","verVersao",{n:v.n},"mini")+'</div></li>';
+  });
+  return h+'</ul></div>';
+}
+A.togA=function(d,el){var x=D.rotina.itens.filter(function(i){return i.id===d.id;})[0];x.feito=el.checked;x.por=el.checked?eu():"";x.em=el.checked?agora():"";render();};
+A.abrirVersao=function(){
+  var pend=D.rotina.itens.filter(function(x){return !x.feito;});
+  var c='<p>Isto guarda uma foto da rotina agora, com data, hora e o seu nome ('+esc(eu())+').</p>';
+  if(pend.length)c+=nota("aviso","Faltam "+pend.length+" itens","<ul class='pontos'>"+pend.map(function(x){return "<li>"+x.t+"</li>";}).join("")+"</ul>")+'<label class="chk" for="v-forcar"><input type="checkbox" id="v-forcar"><span>Salvar mesmo com itens pendentes</span></label>';
+  c+='<div class="campo"><label for="v-obs">Observação (opcional)</label><textarea id="v-obs" data-foco="1"></textarea></div>';
+  dlgAbrir(dl("Conferir e salvar versão",c,cancelar()+bt("Salvar versão","salvaVersao",{},"btn-p")));
+};
+A.salvaVersao=function(){
+  var pend=D.rotina.itens.filter(function(x){return !x.feito;});
+  if(pend.length&&!vCk("v-forcar")){erroDlg("Há itens pendentes. Marque a caixa para salvar mesmo assim, ou cancele e termine a rotina.");return;}
+  var n=D.rotina.versoes.length+1;
+  D.rotina.versoes.push({n:n,quando:agora(),por:eu(),obs:vIn("v-obs"),foto:D.rotina.itens.map(function(x){return [x.t.replace(/\s*\[\[[\d.,\s]+\]\]/g,""),x.feito];})});
+  fecha();render();toast("Versão "+n+" salva por "+eu()+".");
+};
+A.verVersao=function(d){
+  var v=D.rotina.versoes.filter(function(x){return x.n===+d.n;})[0];
+  dlgAbrir(dl("Versão "+v.n+" · "+v.quando,'<p class="sec peq">Salva por '+esc(v.por)+'. Esta foto não muda.</p><p>'+esc(v.obs||"Sem observação")+'</p><ul class="pontos">'+v.foto.map(function(f){return "<li>"+esc(f[0])+": <b>"+(f[1]?"feito":"pendente")+"</b></li>";}).join("")+'</ul>',bt("Fechar","fechar",{},"btn-p")));
+};
+
+/* ============ B. Movimentações ============ */
+var REC=[["2.7.1","Notebook","pat,cmp"],["2.7.2","Mala de ferramentas","pat,cmp"],["2.7.3","Veículo","fro"],["2.7.4","Uniforme","pat,cmp"],["2.7.5","E-mail corporativo","adm"],["2.7.6","Drive e acessos necessários","adm"],["2.7.7","Acessos aos sistemas","adm"],["2.7.8","Celular","pat"],["2.7.9","Crachá","pat"]];
+var GR={dados:"Dados confirmados",docs:"Documentos",cont:"Contabilidade e benefícios",aso:"ASO (exame de saúde)",rec:"Recursos de trabalho",ace:"Pedidos de acesso e entrega",dia:"Primeiro dia",com:"Controle e comunicado",seg:"Seguro de vida"};
+var GORD=["dados","docs","cont","aso","rec","ace","dia","com","seg"];
+var T_ENT=[
+ ["2.1","dados","Confirmar dados da contratação","RH"],
+ ["2.2","docs","Solicitar documentos ao candidato","RH"],
+ ["2.3","docs","Conferir documentos recebidos","RH"],
+ ["2.4","cont","Encaminhar dados admissionais à contabilidade","RH","",1],
+ ["2.5","cont","Cadastrar colaborador no site do VR","RH","",1],
+ ["2.5.1","cont","Solicitar cartão VR","RH","",1],
+ ["2.6","aso","Verificar necessidade de ASO","RH","",1],
+ ["2.6.1","aso","Agendar ASO na clínica","RH","",1],
+ ["2.6.2","aso","Informar data e horário ao candidato","RH","",1],
+ ["2.6.3","aso","Receber ASO da clínica","RH","",1],
+ ["2.6.4","aso","Encaminhar ASO ao SESMT","RH","",1],
+ ["2.6.5","aso","Arquivar ASO","RH","",1],
+ ["2.8","ace","Solicitar criação do e-mail corporativo","RH","adm",1],
+ ["2.9","ace","Solicitar criação do Drive e das pastas","RH","adm",1],
+ ["2.10","ace","Solicitar acessos aos sistemas","RH","adm",1],
+ ["2.11","ace","Acompanhar a entrega de equipamentos e recursos","RH","pat,cmp,fro"],
+ ["2.12","dia","Enviar orientações do primeiro dia","RH"],
+ ["2.13","dia","Agendar treinamento de integração","RH e gestor","",1],
+ ["2.14","dia","Realizar o onboarding do colaborador","RH e gestor"],
+ ["2.15","com","Atualizar o controle de colaboradores","Sistema","", 0,"auto"],
+ ["2.15.1","com","Atualizar a planilha de colaboradores","Sistema","",0,"auto"],
+ ["2.16","com","Enviar comunicado de novo colaborador","RH","com"],
+ ["2.17","com","Atualizar o controle de patrimônio","RH","pat"],
+ ["2.18","seg","Incluir o colaborador no seguro de vida","RH"]
+];
+var T_ALT=[
+ ["9.1","","Receber a solicitação de alteração","Gestor e RH"],
+ ["9.2","","Conferir a aprovação","RH"],
+ ["9.3","","Conferir os dados da alteração","RH"],
+ ["9.4","","Conferir a data de vigência","RH"],
+ ["9.5","","Encaminhar a alteração à contabilidade","RH","",1],
+ ["9.6","","Acompanhar a confirmação da contabilidade","RH","",1],
+ ["15.2","","Pedir a inclusão, exclusão ou alteração do cadastro no VR","RH","",1],
+ ["9.7","","Atualizar o cadastro do colaborador","Sistema","",0,"auto"]
+];
+var T_ENC=[
+ ["11.1","Receber os dados do encerramento","RH",""],
+ ["11.2","Solicitar à contabilidade a prévia do encerramento","RH",""],
+ ["11.3","Enviar à contabilidade os descontos a fazer (multas e avarias vêm da Frotas)","RH","fro"],
+ ["11.4","Enviar o saldo do banco de horas, quando houver","RH",""],
+ ["11.5","Encaminhar para o ASO de encerramento, quando aplicável","RH",""],
+ ["11.6","Solicitar o cancelamento dos benefícios (VR [[15.2]] e exclusão da relação de segurados [[13.3]])","RH",""],
+ ["11.7","Solicitar o cancelamento dos acessos","RH","adm"],
+ ["11.8","Acompanhar a assinatura do comunicado assinado","RH",""],
+ ["18.5","Conferir a devolução dos recursos de trabalho","RH","pat,fro"],
+ ["5.3","Manter a relação de colaboradores ativos só com quem está ativo","RH",""],
+ ["6.2","Reunir os dados no pacote da contabilidade","RH",""],
+ ["10.10","Se for contrato PJ: acompanhar a baixa do contrato","RH",""],
+ ["10.11","Se for contrato PJ: acompanhar a devolução de recursos","RH","pat"],
+ ["10.12","Se for contrato PJ: solicitar o cancelamento de acessos","RH","adm"]
+];
+function novaEntrada(id,nome,cargo,rem,cc,mod,ini,gestor,cpf){
+  var m={id:id,tipo:"entrada",nome:nome,cpf:cpf,cargo:cargo,rem:rem,cc:cc,mod:mod,inicio:ini,gestor:gestor,aberta:true,fim:"",etapas:mkEt(T_ENT),rec:{}};
+  REC.forEach(function(r){m.rec[r[0]]={v:"dec",mot:""};});
+  return m;
+}
+function novaAlt(id,nome,gestor,solic,campos,vig,aprov){
+  return {id:id,tipo:"alt",nome:nome,gestor:gestor,solic:solic,campos:campos,vig:vig,aprov:aprov,aberta:true,fim:"",etapas:mkEt(T_ALT)};
+}
+function dMovs(){
+  var m1=novaEntrada("M1","Larissa Matos","Analista de Operações","5400,00","DPSP","CLT","2026-11-16","Rodrigo Azevedo","531.642.870-09");
+  marca(m1,["2.1","2.2","2.3","2.4"],"f");marca(m1,["2.5"],"a");
+  m1.rec["2.7.1"].v="prec";m1.rec["2.7.2"]={v:"na",mot:"Função administrativa, não usa ferramentas."};m1.rec["2.7.3"]={v:"na",mot:"Não dirige a serviço."};m1.rec["2.7.4"].v="prec";m1.rec["2.7.5"].v="prec";
+  var m2=novaEntrada("M2","Marcos Vidal","Técnico de Manutenção","4300,00","Profarma","CLT","2026-11-23","Patrícia Lins","642.753.981-20");
+  marca(m2,["2.1"],"f");marca(m2,["2.2"],"a");
+  var m3=novaAlt("M3","Bruno Teixeira","Rodrigo Azevedo","Rodrigo Azevedo",{sal:{de:"6200,00",para:"6800,00"},rat:{de:[{cc:"DPSP",p:"100"}],para:[{cc:"DPSP",p:"60"},{cc:"Profarma",p:"40"}]}},"2026-12-01",{quem:"Diretoria (José)",em:"04/11/2026"});
+  marca(m3,["9.1","9.2"],"f");marca(m3,["9.3"],"a");
+  var m4=novaAlt("M4","Carla Mendonça","Patrícia Lins","Patrícia Lins",{cargo:{de:"Técnica N1",para:"Técnica N2"}},"2026-11-15",null);
+  marca(m4,["9.1"],"f");
+  return [m1,m2,m3,m4];
+}
+function movPorId(id){return D.movs.filter(function(m){return m.id===id;})[0];}
+function recDecididos(m){return REC.filter(function(r){return m.rec[r[0]].v!=="dec";}).length;}
+function prog(m){
+  var t=0,f=0;
+  m.etapas.forEach(function(s){if(s.st==="auto")return;t++;if(feitoSt(efSt(m,s).st))f++;});
+  if(m.tipo==="entrada"){t+=REC.length;f+=recDecididos(m);}
+  return {f:f,t:t};
+}
+function ratTxt(a){return a.map(function(r){return r.cc+" "+r.p+"%";}).join(" · ");}
+function ratSoma(a){return a.reduce(function(s,r){return s+(Number(r.p)||0);},0);}
+function bloqueios(m){
+  var b=[];
+  m.etapas.forEach(function(s){if(s.st!=="auto"&&!feitoSt(efSt(m,s).st))b.push("Etapa "+s.id+" ainda não está feita");});
+  if(m.tipo==="entrada"){
+    REC.forEach(function(r){if(m.rec[r[0]].v==="dec")b.push("Recurso "+r[0]+" ("+r[1]+"): decidir se precisa");});
+    if(lerValor(m.rem)===null)b.push("Remuneração com valor inválido");
+    if(!m.cargo.trim())b.push("Cargo em branco");
+  }else{
+    if(!m.aprov)b.push("Falta registrar a aprovação");
+    if(!m.vig)b.push("Falta a data de vigência");
+    else if((m.campos.sal||m.campos.rat)&&m.vig.slice(8)!=="01")b.push("Salário e rateio só mudam no dia 1: ajuste a vigência");
+    if(m.campos.sal&&lerValor(m.campos.sal.para)===null)b.push("Salário novo com valor inválido");
+    if(m.campos.rat&&ratSoma(m.campos.rat.para)!==100)b.push("O rateio novo precisa somar 100%");
+  }
+  return b;
+}
+function stepsHtml(o,m,ids){
+  var ul='<ul class="etapas">',gAnt="";
+  m.etapas.forEach(function(s){
+    if(ids&&ids.indexOf(s.id)<0)return;
+    if(s.g&&s.g!==gAnt){gAnt=s.g;ul+='<li style="border:0;padding:0"><div class="grupo">'+GR[s.g]+'</div></li>';}
+    ul+=stRow(o,m,s);
+    if(m.tipo==="entrada"&&s.id==="2.6.5"){}
+  });
+  return ul+'</ul>';
+}
+function vB(){
+  var h=cab("B","Movimentações","Entrada e Alteração de colaboradores, com etapas, quem faz cada uma e o que cada etapa pede aos outros sistemas. Os modelos de checklist ficam à parte.");
+  h+=segHtml("bSub",[["and","Processos em andamento"],["mod","Modelos de checklist"]],S.bSub,"Visão de movimentações");
+  if(S.bSub==="mod")return h+vModelos();
+  if(S.bSel)return h+vMovDet(movPorId(S.bSel));
+  h+='<div class="linha entre" style="margin-bottom:12px"><span class="sec">'+D.movs.filter(function(m){return m.aberta;}).length+' em andamento · '+D.movs.filter(function(m){return !m.aberta;}).length+' concluídos</span>'+bt("Iniciar novo processo","novoMov",{},"btn-p",disIf())+'</div><ul class="lista card">';
+  D.movs.forEach(function(m){
+    var p=prog(m),pc=Math.round(p.f*100/p.t);
+    var resumo=m.tipo==="entrada"?esc(m.cargo)+" · início em "+fd(m.inicio):"Vigência em "+fd(m.vig)+" · "+Object.keys(m.campos).map(function(k){return {sal:"Salário",rat:"Rateio",cargo:"Cargo"}[k];}).join(", ");
+    h+='<li><div class="linha entre"><div class="grow"><div class="linha"><span class="forte">'+esc(m.nome)+'</span>'+pill(m.tipo==="entrada"?"Entrada":"Alteração","p-and")+(m.aberta?"":pill("Concluída em "+m.fim,"p-ok"))+'</div><div class="sec peq">'+resumo+'</div><div class="linha" style="margin-top:6px"><div class="barra" style="width:160px"><i style="width:'+pc+'%"></i></div><span class="peq num">'+p.f+' de '+p.t+' etapas</span></div></div>'+bt("Abrir","abreMov",{id:m.id},"mini")+'</div></li>';
+  });
+  return h+'</ul>';
+}
+function vMovDet(m){
+  var rh=souRH(),p=prog(m),bl=bloqueios(m);
+  var h='<div style="margin-bottom:12px">'+bt("Voltar para a lista","voltaMov",{},"mini")+'</div>';
+  h+='<div class="card pilha"><div class="linha entre"><div><h2>'+esc(m.nome)+' '+pill(m.tipo==="entrada"?"Entrada":"Alteração","p-and")+'</h2><span class="sec peq">'+(m.tipo==="entrada"?"Início em "+fd(m.inicio)+" · gestor "+esc(m.gestor):"Pedida por "+esc(m.solic)+" · vigência em "+fd(m.vig))+'</span></div><div class="peq num">'+p.f+' de '+p.t+'</div></div><div class="barra"><i style="width:'+Math.round(p.f*100/p.t)+'%"></i></div></div>';
+  if(!m.aberta)h+='<div style="margin-top:12px">'+nota("dest","Concluída em "+m.fim,"O cadastro já foi atualizado. Para mudar algo agora, use a ficha em Colaboradores.")+'</div>';
+  h+='<div class="pilha-g" style="margin-top:16px">';
+  if(m.tipo==="entrada")h+=detEntrada(m);else h+=detAlt(m);
+  if(m.aberta){
+    h+='<div class="card pilha"><h2>Concluir</h2>';
+    if(bl.length)h+=nota("aviso","Ainda não dá para concluir ("+bl.length+")","<ul class='pontos'>"+bl.slice(0,6).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+(bl.length>6?"<li>e mais "+(bl.length-6)+"</li>":"")+"</ul>");
+    else h+=nota("dest","Tudo pronto","Revise o que muda antes de confirmar.");
+    h+='<div class="linha">'+bt(m.tipo==="entrada"?"Concluir a Entrada":"Concluir a Alteração","concluiMov",{id:m.id},"btn-p",disIf(bl.length>0))+(bl.length&&rh?bt("Atalho do mockup: marcar tudo como feito","atalhoMov",{id:m.id},"mini"):"")+'</div></div>';
+  }
+  return h+'</div>';
+}
+function detEntrada(m){
+  var h='<div class="card pilha"><div class="grupo">'+GR.dados+'</div><p class="sec peq">Estes dados [[2.1]] viram o cadastro do colaborador quando a Entrada for concluída.</p><div class="grade">';
+  var base="movs/"+m.id+"/";
+  h+=fld("e-"+m.id+"-cargo","Cargo [[2.1.1]]",m.cargo,base+"cargo");
+  h+=fld("e-"+m.id+"-rem","Remuneração mensal [[2.1.2]]",m.rem,base+"rem",{re:true,aj:"Exemplo: 5400,00",err:lerValor(m.rem)===null?"Informe um valor, como 5400,00.":""});
+  h+=selF("e-"+m.id+"-cc","Centro de custo [[2.1.3]]",m.cc,CCS,base+"cc");
+  h+=selF("e-"+m.id+"-mod","Modalidade de contratação [[2.1.4]]",m.mod,["CLT","PJ"],base+"mod");
+  h+=fld("e-"+m.id+"-ini","Data de início [[2.1.5]]",m.inicio,base+"inicio",{type:"date"});
+  h+='<div class="campo"><span class="rot">CPF</span><span>'+mask(m.cpf)+'</span>'+(souRH()?'':'<span class="ajuda">Escondido para quem não é da Controladoria/RH.</span>')+'</div></div></div>';
+  h+='<div class="card pilha"><div class="grupo">'+GR.rec+'</div><p class="sec peq">O que a pessoa vai precisar [[2.7]]. Cada item diz se precisa ou não se aplica; Não se aplica pede um motivo. Itens de e-mail, Drive e acessos que não se aplicam encerram o pedido correspondente.</p><ul class="etapas">';
+  REC.forEach(function(r){
+    var v=m.rec[r[0]],id="r-"+m.id+"-"+r[0].replace(/\./g,"_");
+    h+='<li><div class="linha"><span>[['+r[0]+']] <span class="forte">'+r[1]+'</span></span>'+labs(r[2])+(v.v==="dec"?pill("A decidir","p-pend"):v.v==="prec"?pill("Precisa","p-and"):pill("Não se aplica","p-na"))+'</div>'+
+     '<div class="sit"><span class="seg" role="group" aria-label="'+esc(r[1])+'"><button type="button" id="'+id+'-s" data-act="recSet" data-m="'+m.id+'" data-r="'+r[0]+'" data-v="prec" aria-pressed="'+(v.v==="prec")+'"'+dis()+'>Precisa</button><button type="button" id="'+id+'-n" data-act="recSet" data-m="'+m.id+'" data-r="'+r[0]+'" data-v="na" aria-pressed="'+(v.v==="na")+'"'+dis()+'>Não se aplica</button></span></div>'+(v.v==="na"?'<div class="sec peq">Motivo: '+esc(v.mot)+'</div>':'')+'</li>';
+  });
+  h+='</ul></div>';
+  h+='<div class="card pilha"><h2>Etapas</h2><p class="sec peq">Etapas marcadas como "quando aplicável" aceitam Não se aplica, com motivo.</p>'+stepsHtml("movs",m,m.etapas.filter(function(s){return s.g!=="dados"||s.id==="2.1";}).map(function(s){return s.id;}))+'</div>';
+  return h;
+}
+function detAlt(m){
+  var base="movs/"+m.id+"/",c=m.campos,h='<div class="card pilha"><div class="grupo">Alteração pedida</div><p class="sec peq">Pedida por '+esc(m.solic)+' [[9.1]]. Confira o que muda, de e para [[9.3]].</p>';
+  h+='<div class="tbl"><table class="larga"><thead><tr><th>O que muda</th><th>De</th><th>Para</th></tr></thead><tbody>';
+  if(c.sal)h+='<tr><td class="forte">Salário</td><td>'+brl(lerValor(c.sal.de))+'</td><td><div class="campo">'+fld("al-"+m.id+"-sal","Novo salário",c.sal.para,base+"campos/sal/para",{re:true,err:lerValor(c.sal.para)===null?"Valor inválido.":""}).replace('<label for="al-'+m.id+'-sal">Novo salário</label>','<label for="al-'+m.id+'-sal" class="sec peq">Novo salário</label>')+'</div></td></tr>';
+  if(c.rat){
+    h+='<tr><td class="forte">Rateio por centro de custo</td><td>'+esc(ratTxt(c.rat.de))+'</td><td>';
+    c.rat.para.forEach(function(r,i){h+=fld("al-"+m.id+"-rat"+i,esc(r.cc)+" (%)",r.p,base+"campos/rat/para/"+i+"/p",{re:true,type:"number"});});
+    var sm=ratSoma(c.rat.para);
+    h+=sm===100?'<div class="peq" style="margin-top:6px">Soma: 100%</div>':'<div class="erro-campo" role="alert" style="margin-top:6px">Soma: '+sm+'%. Precisa fechar 100%.</div>';
+    h+='</td></tr>';
+  }
+  if(c.cargo)h+='<tr><td class="forte">Cargo</td><td>'+esc(c.cargo.de)+'</td><td>'+fld("al-"+m.id+"-cargo","Novo cargo",c.cargo.para,base+"campos/cargo/para")+'</td></tr>';
+  h+='</tbody></table></div>';
+  var travaDia=(c.sal||c.rat)&&m.vig&&m.vig.slice(8)!=="01";
+  h+='<div class="grade">'+fld("al-"+m.id+"-vig","Data de vigência [[9.4]]",m.vig,base+"vig",{type:"date",re:true,err:travaDia?"Salário e rateio mudam sempre no dia 1.":"",aj:(c.sal||c.rat)?"Para salário e rateio a vigência é sempre o dia 1.":"Para cargo, qualquer data."})+'</div>';
+  if(travaDia){var prox=m.vig.slice(0,8)+"01";var d=new Date(Date.UTC(+m.vig.slice(0,4),+m.vig.slice(5,7),1));prox=d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-01";h+='<div>'+bt("Usar "+fd(prox),"vigDia1",{id:m.id,v:prox},"mini",disIf())+'</div>';}
+  h+='<div class="linha"><span class="rot">Aprovação [[9.2]]:</span>'+(m.aprov?pill("Aprovada por "+esc(m.aprov.quem)+" em "+m.aprov.em,"p-ok"):pill("Sem aprovação registrada","p-pend")+" "+bt("Registrar aprovação","abrirAprov",{id:m.id},"mini",disIf()))+'</div>';
+  h+=nota("info","Depois de concluir","O cadastro do colaborador passa a ter o valor novo e o Orçamento passa a ler esse valor a partir da vigência. O que já foi enviado ao Financeiro não muda.")+'</div>';
+  h+='<div class="card pilha"><h2>Etapas</h2>'+stepsHtml("movs",m)+'</div>';
+  return h;
+}
+function vModelos(){
+  function mod(id,tit,sub,corpo){return '<details class="card"'+(S.bOpen===id?" open":"")+' data-det="'+id+'"><summary><span class="forte">'+tit+'</span></summary><p class="sec peq" style="margin:6px 0">'+sub+'</p>'+corpo+'</details>';}
+  var h='<p class="sec" style="margin-bottom:12px">Um modelo é a lista de etapas copiada para cada processo novo. Ele não pertence a nenhuma pessoa.</p><div class="pilha">';
+  var e='<ul class="etapas">'+T_ENT.map(function(x){return '<li><div class="linha"><span>[['+x[0]+']] <span class="forte">'+x[2]+'</span></span>'+(x[5]?pill("quando aplicável","p-na"):"")+(x[4]?labs(x[4]):"")+'</div><span class="sec peq">Quem faz: '+x[3]+'</span></li>';}).join("")+REC.map(function(r){return '<li><div class="linha"><span>[['+r[0]+']] <span class="forte">Recurso: '+r[1]+'</span></div>'+labs(r[2])+'</li>';}).join("")+'</ul>';
+  h+=mod("ent","Entrada de colaborador",T_ENT.length+REC.length+" itens, de 2.1 a 2.18.",e);
+  var a='<ul class="etapas">'+T_ALT.map(function(x){return '<li><div class="linha"><span>[['+x[0]+']] <span class="forte">'+x[2]+'</span></span>'+(x[5]?pill("quando aplicável","p-na"):"")+'</div><span class="sec peq">Quem faz: '+x[3]+'</span></li>';}).join("")+'</ul>';
+  h+=mod("alt","Alteração cadastral e funcional",T_ALT.length+" etapas. Salário e rateio sempre com vigência no dia 1.",a);
+  var n='<ul class="etapas">'+T_ENC.map(function(x){return '<li><div class="linha"><span>[['+x[0]+']] <span class="forte">'+x[1]+'</span></span>'+(x[3]?labs(x[3]):"")+'</div><span class="sec peq">Quem faz: '+x[2]+'</span></li>';}).join("")+'</ul>';
+  h+=mod("enc","Encerramento de vínculo",T_ENC.length+" etapas. Modelo sem pessoa: só é usado quando o RH inicia o processo a partir da ficha.",n);
+  return h+'</div>';
+}
+A.abreMov=function(d){S.bSel=d.id;render();};
+A.voltaMov=function(){S.bSel=null;render();};
+A.stSet=function(d,el){
+  var own=listaDe(d.o).filter(function(x){return x.id===d.i;})[0],s=etapaDe(own,d.s);
+  if(el.value==="na"){
+    dlgAbrir(dl("Etapa "+d.s+": não se aplica",'<p>'+esc(s.t)+'</p><div class="campo"><label for="na-mot">Motivo (obrigatório)</label><textarea id="na-mot" data-foco="1"></textarea></div>',cancelar()+bt("Marcar como Não se aplica","stNa",{o:d.o,i:d.i,s:d.s},"btn-p")));
+    render();return;
+  }
+  s.st=el.value;s.mot="";render();
+};
+A.stNa=function(d){var m=vIn("na-mot");if(m.length<3){erroDlg("Escreva o motivo. Sem ele a etapa não pode ficar como Não se aplica.");return;}var own=listaDe(d.o).filter(function(x){return x.id===d.i;})[0];var s=etapaDe(own,d.s);s.st="na";s.mot=m;fecha();render();toast("Etapa "+d.s+" marcada como Não se aplica.");};
+A.stDesfaz=function(d){var own=listaDe(d.o).filter(function(x){return x.id===d.i;})[0];var s=etapaDe(own,d.s);s.st="p";s.mot="";render();};
+A.recSet=function(d){
+  var m=movPorId(d.m);
+  if(d.v==="na"){dlgAbrir(dl("Item "+d.r+": não se aplica",'<div class="campo"><label for="rec-mot">Motivo (obrigatório)</label><textarea id="rec-mot" data-foco="1"></textarea></div>',cancelar()+bt("Marcar como Não se aplica","recNa",{m:d.m,r:d.r},"btn-p")));return;}
+  m.rec[d.r]={v:"prec",mot:""};render();
+};
+A.recNa=function(d){var t=vIn("rec-mot");if(t.length<3){erroDlg("Escreva o motivo.");return;}movPorId(d.m).rec[d.r]={v:"na",mot:t};fecha();render();};
+A.vigDia1=function(d){movPorId(d.id).vig=d.v;render();};
+A.abrirAprov=function(d){dlgAbrir(dl("Registrar aprovação",'<p class="sec peq">A aprovação vem do gestor ou da diretoria por e-mail. O RH registra aqui.</p><div class="campo"><label for="ap-quem">Quem aprovou</label><input type="text" id="ap-quem" data-foco="1" value="Diretoria (José)"></div><div class="campo"><label for="ap-data">Data</label><input type="date" id="ap-data" value="'+HOJE+'"></div>',cancelar()+bt("Registrar aprovação","salvaAprov",{id:d.id},"btn-p")));};
+A.salvaAprov=function(d){var q=vIn("ap-quem"),dt=vIn("ap-data");if(!q||!dt){erroDlg("Preencha quem aprovou e a data.");return;}movPorId(d.id).aprov={quem:q,em:fd(dt)};fecha();render();};
+A.atalhoMov=function(d){var m=movPorId(d.id);m.etapas.forEach(function(s){if(s.st!=="auto"&&!s.ap)s.st="f";else if(s.st==="p"||s.st==="a")s.st="f";});if(m.rec)REC.forEach(function(r){if(m.rec[r[0]].v==="dec")m.rec[r[0]].v="prec";});render();};
+A.novoMov=function(){
+  dlgAbrir(dl("Iniciar novo processo",'<div class="campo"><label for="nm-tipo">Tipo</label><select id="nm-tipo" data-foco="1"><option value="entrada">Entrada de colaborador</option><option value="alt">Alteração cadastral</option></select></div><div class="campo"><label for="nm-pessoa">Nome da pessoa</label><input type="text" id="nm-pessoa" placeholder="Nome e sobrenome"></div><div class="campo"><label for="nm-data">Data de início (Entrada) ou de vigência (Alteração)</label><input type="date" id="nm-data" value="2026-12-01"></div>',cancelar()+bt("Iniciar processo","criaMov",{},"btn-p")));
+};
+A.criaMov=function(){
+  var t=vIn("nm-tipo"),n=vIn("nm-pessoa"),dt=vIn("nm-data");
+  if(n.length<3||!dt){erroDlg("Preencha o nome e a data.");return;}
+  var id="M"+(D.movs.length+1+Math.floor(Math.random()*90)),m;
+  if(t==="entrada")m=novaEntrada(id,n,"","","DPSP","CLT",dt,"","000.000.000-00");
+  else m=novaAlt(id,n,"","RH",{sal:{de:"0,00",para:"0,00"}},dt,null);
+  D.movs.push(m);S.bSel=id;fecha();render();toast("Processo iniciado. Preencha os dados e siga as etapas.");
+};
+A.concluiMov=function(d){
+  var m=movPorId(d.id),c;
+  if(m.tipo==="entrada"){
+    var seg=etapaDe(m,"2.18");
+    c='<p>Confira tudo o que acontece ao confirmar.</p><div class="grupo">O que muda</div><ul class="pontos"><li><b>Cadastro:</b> '+esc(m.nome)+' passa a existir em Colaboradores como ativo(a), '+esc(m.mod)+', cargo '+esc(m.cargo)+', centro de custo '+esc(m.cc)+', início em '+fd(m.inicio)+', remuneração '+brl(lerValor(m.rem)||0)+'.</li><li><b>Orçamento:</b> passa a contar essa pessoa e essa remuneração a partir de '+fd(m.inicio)+'.</li><li><b>Pagamentos:</b> a pessoa entra na lista de vale-refeição do mês com crédito à parte, por ter começado no meio do mês. A folha dela só aparece quando a contabilidade a incluir no arquivo mensal.</li><li><b>Seguro:</b> '+(seg.st==="na"?"não entra na relação de segurados.":"consta como inclusão do mês (Pagamentos, seção E).")+'</li></ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Pagamentos já enviados ao Financeiro e meses anteriores.</li><li>E-mail, Drive, acessos e equipamentos: continuam nos pedidos que as etapas já fizeram. Concluir não cria nem cancela nada neles.</li><li>Depois de concluir, os dados passam a ser editados na ficha em Colaboradores, não nesta tela.</li></ul>';
+  }else{
+    var l=[];
+    if(m.campos.sal)l.push("<li><b>Salário:</b> de "+brl(lerValor(m.campos.sal.de)||0)+" para "+brl(lerValor(m.campos.sal.para)||0)+", valendo a partir de "+fd(m.vig)+". Até lá o cadastro continua com o valor atual.</li>");
+    if(m.campos.rat)l.push("<li><b>Rateio:</b> de "+esc(ratTxt(m.campos.rat.de))+" para "+esc(ratTxt(m.campos.rat.para))+", a partir de "+fd(m.vig)+".</li>");
+    if(m.campos.cargo)l.push("<li><b>Cargo:</b> de "+esc(m.campos.cargo.de)+" para "+esc(m.campos.cargo.para)+", a partir de "+fd(m.vig)+".</li>");
+    var mes=m.vig.slice(5,7)+"/"+m.vig.slice(0,4);
+    c='<p>Confira tudo o que acontece ao confirmar.</p><div class="grupo">O que muda</div><ul class="pontos">'+l.join("")+((m.campos.sal||m.campos.rat)?'<li><b>Orçamento:</b> passa a ler o valor novo e o rateio novo a partir de '+mes+'. Os meses anteriores continuam como estavam.</li><li><b>Pagamentos:</b> a competência de '+mes+' em diante usa o rateio novo.</li>':'')+'</ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Pagamentos já enviados ao Financeiro.</li><li>O valor da folha, que vem do arquivo da contabilidade e não do cadastro.</li><li>Os meses anteriores à vigência.</li></ul>';
+  }
+  dlgAbrir(dl(m.tipo==="entrada"?"Concluir a Entrada de "+esc(m.nome)+"?":"Concluir a Alteração de "+esc(m.nome)+"?",c,cancelar()+bt("Sim, concluir e atualizar o cadastro","confirmaMov",{id:m.id},"btn-p")));
+};
+A.confirmaMov=function(d){var m=movPorId(d.id);m.aberta=false;m.fim=fd(HOJE);m.etapas.forEach(function(s){if(s.st==="auto")s.st="f";});S.bSel=null;fecha();render();toast(m.tipo==="entrada"?m.nome+" agora está no cadastro (exemplo).":"Cadastro de "+m.nome+" atualizado (exemplo).");};
+
+/* ============ C. Prazos ============ */
+var T_FER=[["8.5","","Receber o período solicitado","Colaborador e RH"],["8.6","","Encaminhar a solicitação para validação","RH e gestor"],["8.7","","Encaminhar os dados à contabilidade","RH"],["8.8","","Conferir o retorno da contabilidade","RH"],["8.9","","Acompanhar o aviso de férias","RH"],["8.10","","Acompanhar as assinaturas","RH"],["8.11","","Acompanhar o pagamento","RH"],["8.12","","Atualizar o controle de férias","RH"],["8.13","","Atualizar o ponto","RH"],["8.14","","Atualizar o calendário","RH"]];
+var T_ASO=[["14.4","","Solicitar a disponibilidade do colaborador","RH"],["14.5","","Agendar o exame na clínica","RH"],["14.6","","Informar data e horário ao colaborador","RH"],["14.7","","Acompanhar a realização e o envio do ASO","RH"],["14.8","","Cobrar documentos pendentes da clínica","RH","",1],["14.9","","Encaminhar o ASO ao SESMT","RH"],["14.10","","Arquivar o ASO e atualizar o controle","RH"]];
+var T_ASOPJ=[["14.11","","Verificar a documentação de saúde ocupacional do prestador PJ","RH","",1]];
+var T_CTR=[["10.5","","Elaborar o contrato","RH"],["10.6","","Acompanhar a assinatura","RH"],["10.7","","Arquivar a versão final do contrato","RH"],["10.8","","Atualizar a vigência contratual (aditivo de vigência)","RH","",1],["10.9","","Atualizar os valores contratuais (aditivo de valor)","RH","",1]];
+var TIPOP={fer:"Férias",aso:"ASO",ctr:"Contrato PJ"};
+var FX={v:["Vencido","tri","p-bloq"],"30":["Até 30 dias","dia","p-aviso"],"60":["Até 60 dias","qua","p-and"],"90":["Até 90 dias","cir",""]};
+function faixaDe(d){return d<0?"v":d<=30?"30":d<=60?"60":d<=90?"90":"mais";}
+function pz(id,tipo,nome,gestor,venc,ex){
+  var o={id:id,tipo:tipo,nome:nome,gestor:gestor,venc:venc,avisos:[]};
+  for(var k in ex)o[k]=ex[k];
+  o.etapas=mkEt(tipo==="fer"?T_FER:tipo==="aso"?(o.pj?T_ASO.concat(T_ASOPJ):T_ASO):T_CTR);
+  return o;
+}
+function dPrazos(){
+  var c2=pz("C2","fer","Diego Albuquerque","Rodrigo Azevedo","2026-11-20",{aqi:"2024-11-21",aqf:"2025-11-20",saldo:"30",pedi:"2026-11-30",pedd:"30"});
+  marca(c2,["8.5","8.6"],"f");marca(c2,["8.7"],"a");
+  var c5=pz("C5","aso","Henrique Lacerda","Patrícia Lins","2026-11-18",{kt:"Periódico",disp:"",clin:"Clínica Saúde Ocupacional (exemplo)",dex:"",hex:"",cobr:"",arq:""});
+  return [
+   pz("C1","fer","Fábio Nogueira","Patrícia Lins","2026-10-30",{aqi:"2024-10-31",aqf:"2025-10-30",saldo:"30",pedi:"",pedd:""}),
+   c2,
+   pz("C3","fer","Elisa Prado","Patrícia Lins","2027-01-04",{aqi:"2025-01-05",aqf:"2026-01-04",saldo:"20",pedi:"",pedd:""}),
+   pz("C4","fer","Gabriela Rocha","Rodrigo Azevedo","2027-01-15",{aqi:"2025-01-16",aqf:"2026-01-15",saldo:"30",pedi:"",pedd:""}),
+   c5,
+   pz("C6","aso","Isabela Furtado","Rodrigo Azevedo","2026-12-28",{kt:"Periódico",disp:"",clin:"",dex:"",hex:"",cobr:"",arq:""}),
+   pz("C7","aso","Bruno Teixeira","Rodrigo Azevedo","2026-10-30",{kt:"Periódico",disp:"",clin:"",dex:"",hex:"",cobr:"",arq:""}),
+   pz("C8","aso","Júlio Cardoso","Rodrigo Azevedo","2027-01-30",{kt:"Periódico",pj:true,disp:"",clin:"",dex:"",hex:"",cobr:"",arq:""}),
+   pz("C9","ctr","Rafael Duarte","Patrícia Lins","2026-11-30",{valor:"8500,00",ini:"2025-12-01",arq:"",adit:[]}),
+   pz("C10","ctr","Sandra Pires","Rodrigo Azevedo","2026-12-31",{valor:"7200,00",ini:"2026-01-01",arq:"contrato-sandra-pires-v2-assinado.pdf",adit:[]}),
+   pz("C11","ctr","Tiago Bastos","Patrícia Lins","2026-10-15",{valor:"6000,00",ini:"2025-10-16",arq:"",adit:[]}),
+   pz("C12","ctr","Valéria Costa","Rodrigo Azevedo","2027-01-31",{valor:"5800,00",ini:"2026-02-01",arq:"",adit:[]})
+  ];
+}
+function pzPorId(id){return D.prazos.filter(function(x){return x.id===id;})[0];}
+function pzDesc(x){
+  if(x.tipo==="fer")return "Limite para tirar as férias · saldo de "+esc(x.saldo)+" dias · período aquisitivo "+fd(x.aqi)+" a "+fd(x.aqf);
+  if(x.tipo==="aso")return "ASO "+esc(x.kt)+" vence em "+fd(x.venc)+(x.pj?" · prestador PJ":"");
+  return "Fim da vigência · valor "+brl(lerValor(x.valor)||0)+" por mês";
+}
+function vC(){
+  var h=cab("C","Prazos","Uma agenda só para férias [[8.1,8.2,8.3]], ASO [[14.2,14.3]] e contratos PJ [[10.1,10.2,10.3]]. A urgência aparece pela forma e pelo texto, não só pela cor.");
+  var base=D.prazos.filter(function(x){return faixaDe(dias(x.venc))!=="mais";});
+  var cont={todas:0,v:0,"30":0,"60":0,"90":0};
+  base.filter(function(x){return S.cTipo==="todos"||x.tipo===S.cTipo;}).forEach(function(x){cont.todas++;cont[faixaDe(dias(x.venc))]++;});
+  h+='<div class="linha" style="margin-bottom:6px">'+segHtml("cTipo",[["todos","Todos"],["fer","Férias"],["aso","ASO"],["ctr","Contratos PJ"]],S.cTipo,"Filtrar por tipo").replace(' style="margin-bottom:16px"','')+'</div>';
+  h+='<div class="seg" role="group" aria-label="Filtrar por faixa" style="margin-bottom:12px">'+[["todas","Todas ("+cont.todas+")"],["v","Vencido ("+cont.v+")"],["30","Até 30 dias ("+cont["30"]+")"],["60","Até 60 dias ("+cont["60"]+")"],["90","Até 90 dias ("+cont["90"]+")"]].map(function(o){return '<button type="button" data-act="setS" data-k="cFaixa" data-v="'+o[0]+'" aria-pressed="'+(S.cFaixa===o[0])+'">'+o[1]+'</button>';}).join("")+'</div>';
+  h+='<div class="legenda" style="margin-bottom:14px"><span>'+pill(forma("tri")+"Vencido","p-bloq")+'</span><span>'+pill(forma("dia")+"Até 30 dias","p-aviso")+'</span><span>'+pill(forma("qua")+"Até 60 dias","p-and")+'</span><span>'+pill(forma("cir")+"Até 90 dias","")+'</span></div>';
+  h+='<div class="card pilha" style="margin-bottom:14px"><div class="linha entre"><div><span class="forte">Fim do mês: pedir o controle de ASOs ao SESMT</span> [[14.1]]<div class="sec peq">'+(D.sesmtPedido?"Pedido registrado em "+D.sesmtPedido:"Ainda não pedido neste mês.")+'</div></div>'+bt("Registrar pedido ao SESMT","pedeSesmt",{},"mini",disIf())+'</div></div>';
+  var lista=base.filter(function(x){return (S.cTipo==="todos"||x.tipo===S.cTipo)&&(S.cFaixa==="todas"||faixaDe(dias(x.venc))===S.cFaixa);}).sort(function(a,b){return dias(a.venc)-dias(b.venc);});
+  if(!lista.length)return h+'<div class="est-vazio"><h2>Nada nesta combinação de filtros</h2><p class="sec">Mude o tipo ou a faixa para ver outros prazos.</p></div>';
+  h+='<ul class="lista card">';
+  lista.forEach(function(x){
+    var d=dias(x.venc),f=FX[faixaDe(d)],txt=d<0?"Venceu há "+(-d)+(d===-1?" dia":" dias"):d===0?"Vence hoje":"Vence em "+d+(d===1?" dia":" dias");
+    var av=x.avisos.length?'<div class="peq" style="margin-top:4px">Gestor avisado: '+esc(x.avisos[x.avisos.length-1].quem)+' em '+x.avisos[x.avisos.length-1].quando+(x.avisos.length>1?' (e mais '+(x.avisos.length-1)+')':'')+'</div>':'';
+    h+='<li><div class="linha entre"><div class="grow"><div class="linha">'+pill(forma(f[1])+f[0],f[2])+'<span class="forte">'+esc(x.nome)+'</span>'+pill(TIPOP[x.tipo],"p-na")+'<span class="peq num">'+txt+' · '+fd(x.venc)+'</span></div><div class="sec peq">'+pzDesc(x)+' · gestor '+esc(x.gestor)+'</div>'+av+'</div><div class="linha">'+bt(S.cSel===x.id?"Fechar":"Abrir","abrePz",{id:x.id},"mini")+bt("Avisar gestor","avisaGestor",{id:x.id},"mini",disIf())+'</div></div>';
+    if(S.cSel===x.id)h+=pzDet(x);
+    h+='</li>';
+  });
+  return h+'</ul>';
+}
+function pzDet(x){
+  var b="prazos/"+x.id+"/",p=x.id,h='<div class="card pilha" style="margin-top:12px;background:var(--inset)">';
+  if(x.tipo==="fer"){
+    h+='<h3>Férias de '+esc(x.nome)+'</h3><div class="grade">'+fld("f-"+p+"-aqi","Período aquisitivo: início [[8.1]]",x.aqi,b+"aqi",{type:"date"})+fld("f-"+p+"-aqf","Período aquisitivo: fim",x.aqf,b+"aqf",{type:"date"})+fld("f-"+p+"-saldo","Saldo de dias [[8.2]]",x.saldo,b+"saldo",{type:"number"})+fld("f-"+p+"-venc","Vencimento (limite para tirar) [[8.3]]",x.venc,b+"venc",{type:"date",re:true})+fld("f-"+p+"-pedi","Período pedido: início [[8.5]]",x.pedi,b+"pedi",{type:"date"})+fld("f-"+p+"-pedd","Período pedido: dias",x.pedd,b+"pedd",{type:"number"})+'</div>';
+    h+=nota("info","Quando as etapas 8.13 e 8.14 ficam feitas","O período aparece no Ponto (seção D) e no calendário. Antes disso nada é alterado lá.");
+  }else if(x.tipo==="aso"){
+    h+='<h3>ASO de '+esc(x.nome)+(x.pj?' (prestador PJ)':'')+'</h3><div class="grade">'+selF("a-"+p+"-tipo","Tipo de ASO",x.kt,["Periódico","Retorno ao trabalho","Mudança de função"],b+"kt")+fld("a-"+p+"-venc","Vencimento [[14.2]]",x.venc,b+"venc",{type:"date",re:true})+fld("a-"+p+"-disp","Disponibilidade do colaborador [[14.4]]",x.disp,b+"disp",{ph:"Ex.: manhãs de segunda e terça"})+fld("a-"+p+"-clin","Clínica [[14.5]]",x.clin,b+"clin")+fld("a-"+p+"-dex","Data do exame [[14.6]]",x.dex,b+"dex",{type:"date"})+fld("a-"+p+"-hex","Horário",x.hex,b+"hex",{ph:"09:30"})+taF("a-"+p+"-cobr","Cobrança de documento pendente da clínica [[14.8]]",x.cobr,b+"cobr",{todo:true,aj:"Anote quem foi cobrado e quando."})+'</div>';
+    h+='<div class="linha"><span class="rot">Arquivo do ASO [[14.10]]:</span>'+(x.arq?pill(esc(x.arq),"p-ok"):pill("Sem arquivo","p-pend")+" "+bt("Anexar o ASO (exemplo)","anexaAso",{id:p},"mini",disIf()))+'</div>';
+    h+=nota("info","Envio ao SESMT [[14.9]]","O ASO só é encaminhado depois de anexado. Para prestador PJ vale a etapa 14.11, sobre a documentação de saúde ocupacional.");
+  }else{
+    h+='<h3>Contrato de '+esc(x.nome)+'</h3><div class="grade">'+fld("c-"+p+"-valor","Valor mensal do contrato [[10.2]]",x.valor,b+"valor",{re:true,err:lerValor(x.valor)===null?"Valor inválido.":""})+fld("c-"+p+"-ini","Início da vigência",x.ini,b+"ini",{type:"date"})+fld("c-"+p+"-venc","Fim da vigência [[10.3]]",x.venc,b+"venc",{type:"date",re:true})+'</div>';
+    h+='<div class="linha"><span class="rot">Versão final assinada [[10.7]]:</span>'+(x.arq?pill(esc(x.arq),"p-ok"):pill("Sem arquivo","p-pend")+" "+bt("Anexar a versão final (exemplo)","anexaCtr",{id:p},"mini",disIf()))+'</div>';
+    h+='<div class="linha">'+bt("Registrar aditivo de valor","aditivo",{id:p,t:"valor"},"mini",disIf())+bt("Registrar aditivo de vigência","aditivo",{id:p,t:"vig"},"mini",disIf())+'</div>';
+    if(x.adit.length)h+='<ul class="pontos">'+x.adit.map(function(a){return '<li>'+esc(a)+'</li>';}).join("")+'</ul>';
+    h+=nota("dest","O valor do contrato alimenta o pagamento do PJ","Em Pagamentos, o pagamento do prestador usa este valor. Quem não emite nota é pago pelo valor do contrato, sem anexo.");
+    h+='<div>'+lk("Encerramento de contrato PJ: usar o modelo Encerramento de vínculo","irModelo",{m:"enc"})+' [[10.10,10.11,10.12]]</div>';
+  }
+  var ids=null;
+  h+='<h3>Etapas</h3>'+stepsHtml("prazos",x,ids);
+  if(x.avisos.length)h+='<h3>Quem foi avisado</h3><ul class="pontos">'+x.avisos.map(function(a){return '<li>'+esc(a.quem)+' · '+a.quando+'</li>';}).join("")+'</ul>';
+  return h+'</div>';
+}
+function mailAviso(x){
+  var g=x.gestor,corpo,ass;
+  if(x.tipo==="fer"){
+    var l=D.prazos.filter(function(y){return y.tipo==="fer"&&y.gestor===g&&dias(y.venc)<=90;});
+    ass="Férias próximas do vencimento na sua equipe";
+    corpo="Olá, "+g.split(" ")[0]+".\n\nA relação abaixo mostra quem está com férias perto do limite para serem tiradas [[8.4]]:\n\n"+l.map(function(y){return "- "+y.nome+": limite em "+fd(y.venc)+", saldo de "+y.saldo+" dias";}).join("\n")+"\n\nPode responder este e-mail com o período que cada um prefere? O RH registra a sua resposta no sistema.\n\nControladoria/RH";
+  }else if(x.tipo==="aso"){
+    ass="ASO de "+x.nome+" vence em "+fd(x.venc);
+    corpo="Olá, "+g.split(" ")[0]+".\n\nO ASO de "+x.nome+" vence em "+fd(x.venc)+". Para agendar o exame, precisamos saber em quais dias e horários "+x.nome.split(" ")[0]+" pode ir à clínica.\n\nResponda este e-mail com as opções. O RH agenda e confirma a data.\n\nControladoria/RH";
+  }else{
+    ass="Contrato de "+x.nome+" termina em "+fd(x.venc);
+    corpo="Olá, "+g.split(" ")[0]+".\n\nO contrato de "+x.nome+" termina em "+fd(x.venc)+" [[10.4]]. Precisamos saber se ele será renovado, se haverá mudança de valor ou se o contrato será encerrado.\n\nResponda este e-mail. O RH registra a decisão e cuida do aditivo ou do encerramento.\n\nControladoria/RH";
+  }
+  return {ass:ass,corpo:corpo.replace(/\[\[[\d.,\s]+\]\]/g,"")};
+}
+A.abrePz=function(d){S.cSel=S.cSel===d.id?null:d.id;render();};
+A.pedeSesmt=function(){D.sesmtPedido=agora();render();toast("Pedido ao SESMT registrado.");};
+A.avisaGestor=function(d){
+  var x=pzPorId(d.id),g=pes(x.gestor),m=mailAviso(x);
+  dlgAbrir(dl("Avisar o gestor",'<p class="sec peq">Prévia do e-mail. Nada é enviado de verdade neste mockup. O gestor não entra no sistema: ele responde por e-mail e o RH registra.</p>'+mailBox(x.gestor+" <"+(g?g.em:"")+">",m.ass,m.corpo)+'<p class="peq">Ao enviar, o sistema registra quem foi avisado e quando.</p>',cancelar()+bt("Enviar e registrar o aviso","enviaAviso",{id:d.id},"btn-p")));
+};
+A.enviaAviso=function(d){var x=pzPorId(d.id);x.avisos.push({quem:x.gestor+" (avisado por "+eu()+")",quando:agora()});fecha();render();toast(x.gestor+" avisado(a). Registro guardado.");};
+A.anexaAso=function(d){var x=pzPorId(d.id);x.arq="aso-"+x.nome.split(" ")[0].toLowerCase()+"-2026-11.pdf";render();toast("Arquivo anexado (exemplo).");};
+A.anexaCtr=function(d){var x=pzPorId(d.id);x.arq="contrato-"+x.nome.split(" ")[0].toLowerCase()+"-assinado.pdf";render();toast("Versão final anexada (exemplo).");};
+A.aditivo=function(d){
+  var x=pzPorId(d.id),v=d.t==="valor";
+  var c='<div class="grade">'+(v?'<div class="campo"><label for="ad-novo">Novo valor mensal</label><input type="text" id="ad-novo" data-foco="1" placeholder="Ex.: 9000,00"><span class="ajuda">Hoje: '+brl(lerValor(x.valor)||0)+'</span></div><div class="campo"><label for="ad-desde">Vale a partir de</label><input type="date" id="ad-desde" value="2026-12-01"></div>':'<div class="campo"><label for="ad-novo">Nova data de fim da vigência</label><input type="date" id="ad-novo" data-foco="1" value="2027-06-30"><span class="ajuda">Hoje: '+fd(x.venc)+'</span></div>')+'</div>';
+  c+='<div class="grupo">O que muda</div><ul class="pontos">'+(v?'<li>O contrato de '+esc(x.nome)+' passa a ter o valor novo a partir da data informada.</li><li>O pagamento do prestador em Pagamentos passa a usar esse valor, a partir da competência dessa data.</li>':'<li>O contrato de '+esc(x.nome)+' passa a terminar na data nova e sai da faixa de aviso atual.</li>')+'</ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Pagamentos já enviados ao Financeiro.</li><li>O aditivo em si precisa ser assinado: acompanhe nas etapas 10.6 e 10.7.</li></ul>';
+  dlgAbrir(dl(v?"Aditivo de valor":"Aditivo de vigência",c,cancelar()+bt("Registrar o aditivo","salvaAdit",{id:d.id,t:d.t},"btn-p")));
+};
+A.salvaAdit=function(d){
+  var x=pzPorId(d.id),n=vIn("ad-novo");
+  if(d.t==="valor"){var ds=vIn("ad-desde");if(lerValor(n)===null||!ds){erroDlg("Informe o valor (como 9000,00) e a data.");return;}x.adit.push("Aditivo de valor: de "+brl(lerValor(x.valor))+" para "+brl(lerValor(n))+", a partir de "+fd(ds)+" · registrado em "+agora());x.valor=n;}
+  else{if(!n){erroDlg("Informe a nova data.");return;}x.adit.push("Aditivo de vigência: fim de "+fd(x.venc)+" para "+fd(n)+" · registrado em "+agora());x.venc=n;}
+  fecha();render();toast("Aditivo registrado.");
+};
+A.irModelo=function(d){S.aba="B";S.bSub="mod";S.bSel=null;S.bOpen=d.m;S.foco=true;render();};
+
+/* ============ D. Ponto e fechamento ============ */
+function dPonto(){
+  return {
+   imp:{arq:"",quando:"",por:""},orient:"",
+   pend:[
+    {id:"p1",nome:"Diego Albuquerque",data:"2026-10-08",tipo:"Ausente",st:"aberta"},
+    {id:"p2",nome:"Gabriela Rocha",data:"2026-10-13",tipo:"Inconsistente",st:"just"},
+    {id:"p3",nome:"Henrique Lacerda",data:"2026-10-17",tipo:"Inconsistente",st:"aberta"},
+    {id:"p4",nome:"Isabela Furtado",data:"2026-10-20",tipo:"Ausente",st:"aj"}
+   ],
+   he:[
+    {id:"h1",nome:"Bruno Teixeira",data:"2026-10-09",tipo:"Hora extra",gestor:"Rodrigo Azevedo",apr:120,pt:120,es:120,st:""},
+    {id:"h2",nome:"Diego Albuquerque",data:"2026-10-14",tipo:"Hora extra",gestor:"Rodrigo Azevedo",apr:90,pt:150,es:90,st:""},
+    {id:"h3",nome:"Fábio Nogueira",data:"2026-10-18",tipo:"Plantão",gestor:"Patrícia Lins",apr:480,pt:480,es:480,ac:[2,1],st:""},
+    {id:"h4",nome:"Henrique Lacerda",data:"2026-10-21",tipo:"Compensação",gestor:"Patrícia Lins",apr:240,pt:240,es:240,st:""},
+    {id:"h5",nome:"Gabriela Rocha",data:"2026-10-22",tipo:"Hora extra",gestor:"Rodrigo Azevedo",apr:60,pt:60,es:0,st:""},
+    {id:"h6",nome:"Elisa Prado",data:"2026-10-23",tipo:"Plantão",gestor:"Patrícia Lins",apr:360,pt:360,es:360,ac:[1,1],st:""}
+   ],
+   heSemanal:false,heEnv:false,heConf:false,bancoSemanal:false,
+   banco:[
+    {id:"b1",nome:"Bruno Teixeira",mov:[{d:"2026-09-30",m:300,t:"Saldo anterior"},{d:"2026-10-09",m:120,t:"Hora extra aprovada"},{d:"2026-10-16",m:-180,t:"Compensação"}]},
+    {id:"b2",nome:"Diego Albuquerque",mov:[{d:"2026-09-30",m:60,t:"Saldo anterior"},{d:"2026-10-14",m:90,t:"Hora extra aprovada"}]},
+    {id:"b3",nome:"Gabriela Rocha",mov:[{d:"2026-09-30",m:-120,t:"Saldo anterior"},{d:"2026-10-22",m:60,t:"Hora extra aprovada"}]},
+    {id:"b4",nome:"Henrique Lacerda",mov:[{d:"2026-09-30",m:480,t:"Saldo anterior"},{d:"2026-10-21",m:-240,t:"Compensação"}]}
+   ],
+   bancoSel:null,
+   atest:[
+    {id:"t1",nome:"Elisa Prado",tipo:"Atestado",ini:"2026-10-05",dias:2,contab:true,sesmt:true,doc:"nao",ponto:true,folha:true,arq:"atestado-elisa-2026-10-05.pdf"},
+    {id:"t2",nome:"Carla Mendonça",tipo:"Afastamento",ini:"2026-10-12",dias:15,contab:true,sesmt:true,doc:"pend",ponto:true,folha:false,arq:"afastamento-carla-2026-10-12.pdf"},
+    {id:"t3",nome:"Henrique Lacerda",tipo:"Justificativa",ini:"2026-10-19",dias:1,contab:false,sesmt:false,doc:"nao",ponto:false,folha:false,arq:"justificativa-henrique-2026-10-19.pdf"}
+   ],
+   desc:[
+    {id:"dv1",nome:"Henrique Lacerda",tipo:"Multa de trânsito",ref:"Aviso 0042 · 11/10/2026",v:19554,ok:false},
+    {id:"dv2",nome:"Diego Albuquerque",tipo:"Avaria de veículo",ref:"Ocorrência 0017 · 02/10/2026",v:45000,ok:false}
+   ],
+   pac:{stage:0,log:[],prev1:false,prev2:false,prev3:false,corr:"",semCorr:false,aprov:false,ctrl:false},
+   fopag:null,
+   chq:[
+    {id:"q1",nome:"Bruno Teixeira",st:"ag"},{id:"q2",nome:"Carla Mendonça",st:"ag"},{id:"q3",nome:"Diego Albuquerque",st:"ag"},{id:"q4",nome:"Elisa Prado",st:"ag"},
+    {id:"q5",nome:"Fábio Nogueira",st:"ag"},{id:"q6",nome:"Gabriela Rocha",st:"ag"},{id:"q7",nome:"Henrique Lacerda",st:"ag"},{id:"q8",nome:"Isabela Furtado",st:"ag"}
+   ]
+  };
+}
+function divHE(x){return x.apr!==x.pt||x.apr!==x.es||(x.ac&&x.ac[0]!==x.ac[1]);}
+function heAbertas(){return D.ponto.he.filter(function(x){return divHE(x)&&x.st!=="res";});}
+function pendAbertas(){return D.ponto.pend.filter(function(x){return x.st!=="ok";});}
+function saldoB(b){return b.mov.reduce(function(s,m){return s+m.m;},0);}
+var ETP=[["Pacote enviado à contabilidade","6.7"],["Prévia recebida","6.8"],["Correções pedidas","6.9"],["Prévia retificada recebida","6.8"],["Folha definitiva recebida","6.11"],["Enviada ao eSocial","6.11"]];
+function pacoteLinhas(){
+  var P=D.ponto,L=[];
+  var ent=D.movs.filter(function(m){return m.tipo==="entrada"&&m.aberta;});
+  L.push({r:"Admissões",ref:"6.1",txt:ent.length+" entradas em andamento",f:ent.filter(function(m){return !feitoSt(etapaDe(m,"2.4").st);}).map(function(m){return "dados admissionais de "+m.nome+" ainda não foram à contabilidade (2.4)";})});
+  L.push({r:"Encerramentos de vínculo",ref:"6.2",txt:"Reunidos pelo modelo de checklist em Movimentações",f:[]});
+  var fer=D.prazos.filter(function(x){return x.tipo==="fer";});
+  L.push({r:"Férias",ref:"6.3",txt:fer.filter(function(x){return etapaDe(x,"8.5").st==="f";}).length+" pedidos registrados",f:fer.filter(function(x){return etapaDe(x,"8.5").st==="f"&&etapaDe(x,"8.7").st!=="f";}).map(function(x){return "férias de "+x.nome+" ainda sem envio à contabilidade (8.7)";})});
+  L.push({r:"Afastamentos",ref:"6.4",txt:P.atest.length+" registros no ciclo",f:P.atest.filter(function(a){return !a.contab;}).map(function(a){return "documento de "+a.nome+" ainda não foi à contabilidade (7.4)";})});
+  L.push({r:"Benefícios",ref:"6.5",txt:"Vale-refeição, vale-transporte e seguro seguem em Pagamentos",f:[]});
+  L.push({r:"Descontos variáveis",ref:"6.6",txt:P.desc.length+" descontos vindos da Frotas",sis:"fro",f:P.desc.filter(function(d){return !d.ok;}).map(function(d){return d.tipo+" de "+d.nome+" aguardando confirmação";})});
+  L.push({r:"Horas extras e plantões",ref:"3.10,4.9",txt:P.he.length+" lançamentos conferidos",f:heAbertas().map(function(x){return "divergência de "+x.nome+" em "+fd(x.data);})});
+  L.push({r:"Marcações de ponto",ref:"3.10",txt:P.pend.length+" pendências no ciclo",f:pendAbertas().map(function(x){return "marcação de "+x.nome+" em "+fd(x.data)+" ("+x.tipo.toLowerCase()+")";})});
+  var al=D.movs.filter(function(m){return m.tipo==="alt"&&m.aberta;});
+  L.push({r:"Alterações cadastrais",ref:"9.5",txt:al.length+" em andamento",f:al.filter(function(m){return !feitoSt(etapaDe(m,"9.5").st);}).map(function(m){return "alteração de "+m.nome+" ainda não foi à contabilidade (9.5)";})});
+  return L;
+}
+function vD(){
+  var P=D.ponto,rh=souRH();
+  var h=cab("D","Ponto e fechamento","Ciclo em fechamento: de 25/09 a 24/10 (competência de outubro). O próximo ciclo vai de 25/10 a 24/11 [[3.9]].");
+  h+=segHtml("dSub",[["imp","Importação"],["pen","Marcações"],["he","Horas extras e plantões"],["ban","Banco de horas"],["ate","Atestados"],["pac","Pacote da contabilidade"],["fec","Fechamento"]],S.dSub,"Partes do ponto e fechamento");
+  if(S.dSub==="imp"){
+    h+='<div class="card pilha"><h2>Relatório do VR Ponto</h2>'+nota("dest","Sem integração automática","A integração com o VR Ponto não foi contratada. O RH exporta o relatório no sistema de ponto e anexa aqui. Se um dia ela for contratada, este passo some.")+
+     '<div class="drop">'+(P.imp.arq?'<div class="forte">'+esc(P.imp.arq)+'</div><div class="sec peq">Anexado em '+P.imp.quando+' por '+esc(P.imp.por)+'</div><div class="peq" style="margin-top:6px">Lidas 24 pessoas no período 25/09 a 24/10.</div>':'<div class="sec">Nenhum relatório anexado para este ciclo.</div>')+'<div style="margin-top:10px">'+bt(P.imp.arq?"Trocar o relatório (exemplo)":"Anexar o relatório (exemplo)","anexaPonto",{},"btn-p",disIf())+'</div></div>'+
+     '<div class="linha entre"><div><span class="forte">Orientação sobre as marcações</span> [[3.1]]<div class="sec peq">'+(P.orient?"Enviada em "+P.orient:"Ainda não enviada neste ciclo.")+'</div></div>'+bt("Enviar orientação sobre as marcações","orientaPonto",{},"mini",disIf())+'</div></div>';
+  }
+  if(S.dSub==="pen"){
+    h+='<div class="card pilha"><h2>Marcações com problema</h2><p class="sec peq">Ausentes [[3.2]] e inconsistentes [[3.3]]. Peça a justificativa [[3.4]] ou o ajuste [[3.5]] e acompanhe aqui.</p>';
+    h+='<div class="tbl"><table class="larga"><thead><tr><th>Colaborador</th><th>Dia</th><th>Problema</th><th>Situação</th><th>Ação</th></tr></thead><tbody>';
+    P.pend.forEach(function(x){
+      var st={aberta:pill(forma("tri")+"Em aberto","p-bloq"),just:pill("Justificativa pedida","p-and"),aj:pill("Ajuste solicitado","p-and"),ok:pill("Resolvida","p-ok")}[x.st];
+      h+='<tr><td class="forte">'+esc(x.nome)+'</td><td class="num">'+fd(x.data)+'</td><td>'+x.tipo+'</td><td>'+st+'</td><td><div class="linha">'+(x.st!=="ok"?bt("Pedir justificativa","penAcao",{id:x.id,a:"just"},"mini",disIf(x.st==="just"))+bt("Pedir ajuste","penAcao",{id:x.id,a:"aj"},"mini",disIf(x.st==="aj"))+bt("Marcar como resolvida","penAcao",{id:x.id,a:"ok"},"mini",disIf()):'<span class="sec peq">Nada a fazer</span>')+'</div></td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
+  if(S.dSub==="he"){
+    h+='<div class="card pilha"><h2>Aprovado pelo gestor × ponto × escala</h2><p class="sec peq">Apontamentos recebidos de horas extras [[3.6]], plantões [[3.7]] e compensações [[3.8]], com a aprovação do gestor [[4.1]]. Datas [[4.2]] e horários [[4.3]] contra o ponto; informações contra a escala [[4.4]]; acionamentos [[4.5]] e horas de plantão [[4.6]]. Divergências aparecem destacadas [[4.7]].</p>';
+    h+='<div class="tbl"><table class="larga"><thead><tr><th>Colaborador</th><th>Dia</th><th>Tipo</th><th class="d">Aprovado</th><th class="d">Ponto</th><th class="d">Escala</th><th>Acionamentos</th><th>Situação</th><th>Ação</th></tr></thead><tbody>';
+    P.he.forEach(function(x){
+      var dv=divHE(x),res=x.st==="res";
+      var st=!dv?pill("Sem divergência","p-ok"):res?pill("Confirmada pelo gestor","p-ok"):x.st==="pedida"?pill(forma("dia")+"Correção pedida","p-and"):pill(forma("tri")+"Divergência","p-bloq");
+      h+='<tr'+(dv&&!res?' class="dest"':'')+'><td class="forte">'+esc(x.nome)+'<div class="sec peq">gestor '+esc(x.gestor)+'</div></td><td class="num">'+fd(x.data)+'</td><td>'+x.tipo+'</td><td class="d">'+hh(x.apr)+'</td><td class="d'+(x.pt!==x.apr&&!res?' div':'')+'">'+hh(x.pt)+'</td><td class="d'+(x.es!==x.apr&&!res?' div':'')+'">'+hh(x.es)+'</td><td class="num'+(x.ac&&x.ac[0]!==x.ac[1]&&!res?' div':'')+'">'+(x.ac?x.ac[0]+' informados, '+x.ac[1]+' no ponto':'—')+'</td><td>'+st+'</td><td>'+(dv&&!res?(x.st==="pedida"?bt("Registrar resposta do gestor","heResp",{id:x.id},"mini",disIf()):bt("Pedir correção ao gestor","hePede",{id:x.id},"mini",disIf())):'')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="linha entre"><label class="chk" for="he-semanal"><input type="checkbox" id="he-semanal" data-bind="ponto/heSemanal" data-re="1"'+(P.heSemanal?' checked':'')+dis()+'><span>Conferi esta semana as horas extras e os plantões [[3.14]]</span></label></div>';
+    var ab=heAbertas().length;
+    h+='<div class="linha">'+bt("Encaminhar para lançamento na folha","heEnvia",{},"btn-p",disIf(ab>0||P.heEnv))+(ab?'<span class="erro-campo">'+ab+' divergência(s) em aberto bloqueiam o envio [[4.9]].</span>':P.heEnv?pill("Encaminhado à contabilidade","p-ok"):'')+'</div>';
+    h+=chkF("he-conf","Conferi o lançamento na prévia da folha [[4.10]]",P.heConf,"ponto/heConf",{dis:!(P.heEnv&&souRH())});
+    h+='</div>';
+  }
+  if(S.dSub==="ban"){
+    h+='<div class="card pilha"><h2>Saldo do banco de horas</h2><p class="sec peq">Saldo [[3.12]] e histórico [[3.13]] por pessoa. Clique em uma pessoa para ver o histórico.</p><div class="tbl"><table class="larga"><thead><tr><th>Colaborador</th><th class="d">Saldo</th><th>Último movimento</th><th></th></tr></thead><tbody>';
+    P.banco.forEach(function(b){var u=b.mov[b.mov.length-1];h+='<tr><td class="forte">'+esc(b.nome)+'</td><td class="d forte">'+hhmm(saldoB(b))+'</td><td>'+fd(u.d)+' · '+esc(u.t)+'</td><td>'+bt(P.bancoSel===b.id?"Fechar histórico":"Ver histórico","bancoVer",{id:b.id},"mini")+'</td></tr>';});
+    h+='</tbody></table></div>';
+    if(P.bancoSel){var b=P.banco.filter(function(x){return x.id===P.bancoSel;})[0];h+='<div class="card pilha" style="background:var(--inset)"><h3>Histórico de '+esc(b.nome)+'</h3><ul class="lista">'+b.mov.slice().reverse().map(function(m){return '<li class="linha entre"><span>'+fd(m.d)+' · '+esc(m.t)+'</span><span class="num forte">'+hhmm(m.m)+'</span></li>';}).join("")+'</ul></div>';}
+    h+='<div class="linha">'+bt("Registrar compensação ou crédito","bancoNovo",{},"btn-p",disIf())+'</div>'+chkF("ban-semanal","Conferi esta semana o saldo e as compensações [[3.15]]",P.bancoSemanal,"ponto/bancoSemanal");
+    h+='</div>';
+  }
+  if(S.dSub==="ate"){
+    h+='<div class="card pilha"><h2>Atestados e afastamentos</h2>';
+    if(!rh)h+=nota("info","Visão da Diretoria","Aqui aparecem só os dias de afastamento. O documento e o que há dentro dele ficam restritos à Controladoria/RH.");
+    else h+='<p class="sec peq">Atestados [[7.1]] e justificativas [[7.2]] recebidos e registrados [[7.3]]. O controle de afastamentos é atualizado pelas colunas abaixo [[7.6]]. O arquivo só abre para a Controladoria/RH.</p>';
+    h+='<div class="tbl"><table class="larga"><thead><tr><th>Colaborador</th><th>Início</th><th class="d">Dias</th>'+(rh?'<th>Tipo</th><th>À contabilidade [[7.4]]</th><th>Ao SESMT [[7.5]]</th><th>Documento complementar [[7.7]]</th><th>Conferido no ponto [[7.8]]</th><th>Conferido na folha [[7.9]]</th><th>Documento</th>':'')+'</tr></thead><tbody>';
+    P.atest.forEach(function(a){
+      h+='<tr><td class="forte">'+esc(a.nome)+'</td><td class="num">'+fd(a.ini)+'</td><td class="d">'+a.dias+'</td>';
+      if(rh){
+        var b="ponto/atest/"+a.id+"/";
+        h+='<td>'+a.tipo+'</td><td><label class="chk"><input type="checkbox" id="at-'+a.id+'-c" data-bind="'+b+'contab" data-re="1"'+(a.contab?' checked':'')+' aria-label="Encaminhado à contabilidade"></label></td><td><label class="chk"><input type="checkbox" id="at-'+a.id+'-s" data-bind="'+b+'sesmt" data-re="1"'+(a.sesmt?' checked':'')+' aria-label="Encaminhado ao SESMT"></label></td><td><select id="at-'+a.id+'-d" data-bind="'+b+'doc" aria-label="Documento complementar"><option value="nao"'+(a.doc==="nao"?' selected':'')+'>Não precisa</option><option value="pend"'+(a.doc==="pend"?' selected':'')+'>Pendente</option><option value="rec"'+(a.doc==="rec"?' selected':'')+'>Recebido</option></select></td><td><label class="chk"><input type="checkbox" id="at-'+a.id+'-p" data-bind="'+b+'ponto" data-re="1"'+(a.ponto?' checked':'')+' aria-label="Conferido no ponto"></label></td><td><label class="chk"><input type="checkbox" id="at-'+a.id+'-f" data-bind="'+b+'folha" data-re="1"'+(a.folha?' checked':'')+' aria-label="Conferido na folha"></label></td><td>'+bt("Abrir documento","abreDoc",{id:a.id},"mini")+'</td>';
+      }
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>'+(rh?'<div>'+bt("Registrar atestado ou justificativa","novoAtest",{},"btn-p")+'</div>':'')+'</div>';
+  }
+  if(S.dSub==="pac")h+=vPacote();
+  if(S.dSub==="fec")h+=vFechamento();
+  return h;
+}
+function vPacote(){
+  var P=D.ponto,pc=P.pac,L=pacoteLinhas(),falta=[];
+  L.forEach(function(l){l.f.forEach(function(f){falta.push(f);});});
+  var h='<div class="card pilha"><h2>Pacote da contabilidade</h2><p class="sec peq">Tudo o que a contabilidade precisa para a folha, reunido em um lugar, com o que ainda falta.</p><div class="tbl"><table class="larga"><thead><tr><th>Parte</th><th>O que há</th><th>Situação</th></tr></thead><tbody>';
+  L.forEach(function(l){h+='<tr><td class="forte">[['+l.ref+']] '+l.r+(l.sis?" "+labs(l.sis):"")+'</td><td>'+l.txt+'</td><td>'+(l.f.length?pill(forma("tri")+"Falta "+l.f.length,"p-bloq")+'<ul class="peq" style="margin-top:4px">'+l.f.map(function(f){return "<li>"+esc(f)+"</li>";}).join("")+'</ul>':pill("Pronto","p-ok"))+'</td></tr>';});
+  h+='</tbody></table></div>';
+  h+='<h3>Descontos variáveis vindos da Frotas</h3><p class="sec peq">Multas e avarias de veículo chegam da Frotas. O RH confere a pessoa e confirma o desconto antes de ele seguir para a contabilidade [[6.6]].</p><ul class="lista">';
+  P.desc.forEach(function(d){h+='<li class="linha entre"><div>'+labs("fro")+' <span class="forte">'+esc(d.tipo)+'</span> · '+esc(d.nome)+'<div class="sec peq">'+esc(d.ref)+' · '+brl(d.v)+'</div></div><label class="chk" for="dv-'+d.id+'"><input type="checkbox" id="dv-'+d.id+'" data-bind="ponto/desc/'+d.id+'/ok" data-re="1"'+(d.ok?' checked':'')+dis()+'><span>Desconto confirmado</span></label></li>';});
+  h+='</ul></div>';
+  h+=nota("aviso","Depois do envio ao eSocial a folha não reabre","Se algo for descoberto depois disso, a correção vai para a competência seguinte. Confira tudo antes de registrar o envio.");
+  h+='<div class="card pilha" style="margin-top:14px"><h2>Andamento com a contabilidade</h2><div class="passos">'+ETP.map(function(e,i){return '<div class="'+(i<pc.stage?'feito':i===pc.stage?'atual':'')+'"><b>'+(i<pc.stage?'✓':i+1)+'</b><span>'+e[0]+' <span class="ref">'+e[1]+'</span></span></div>';}).join("")+'</div>';
+  if(pc.log.length)h+='<ul class="pontos peq">'+pc.log.map(function(l){return "<li>"+esc(l)+"</li>";}).join("")+'</ul>';
+  var proximo=pc.stage<ETP.length?ETP[pc.stage][0]:null,bloq=[];
+  if(pc.stage===0&&falta.length)bloq.push(falta.length+" pendência(s) no pacote");
+  if(pc.stage===1){}
+  if(pc.stage===2){
+    h+='<p class="rot">Conferir a prévia antes de pedir correções</p>'+chkF("pv1","Ponto conferido na prévia [[3.11]]",pc.prev1,"ponto/pac/prev1")+chkF("pv2","Horas extras e plantões conferidos na prévia [[4.10]]",pc.prev2,"ponto/pac/prev2")+chkF("pv3","Valores da prévia conferidos [[6.8]]",pc.prev3,"ponto/pac/prev3")+taF("pv-corr","Correções a pedir na prévia [[6.9]]",pc.corr,"ponto/pac/corr",{aj:"Descreva o que a contabilidade deve ajustar. Se não houver, marque a caixa abaixo."})+chkF("pv-sem","Não há correções a pedir",pc.semCorr,"ponto/pac/semCorr");
+    if(!(pc.prev1&&pc.prev2&&pc.prev3))bloq.push("conferir a prévia (3 itens)");
+    if(!pc.corr.trim()&&!pc.semCorr)bloq.push("escrever as correções ou marcar que não há");
+  }
+  if(pc.stage>=2)h+=chkF("pv-aprov","Aprovação interna acompanhada, quando prevista [[6.10]]",pc.aprov,"ponto/pac/aprov")+chkF("pv-ctrl","Controle mensal da folha atualizado [[6.11]]",pc.ctrl,"ponto/pac/ctrl");
+  if(pc.stage>=6)h+=nota("bloq","Folha fechada","A folha foi enviada ao eSocial e não reabre. Qualquer correção vai para a competência seguinte (novembro).");
+  else h+='<div class="linha">'+(proximo?bt(pc.stage===0?"Enviar o pacote à contabilidade":"Registrar: "+proximo,"pacAvanca",{},"btn-p",disIf(bloq.length>0)):"")+(bloq.length?'<span class="erro-campo">Falta: '+esc(bloq.join("; "))+'.</span>':'')+(souRH()&&pc.stage===0?bt("Atalho do mockup: resolver todas as pendências","pacAtalho",{},"mini"):"")+'</div>';
+  return h+'</div></div>';
+}
+function vFechamento(){
+  var P=D.ponto,pc=P.pac,def=pc.stage>=5,rh=souRH();
+  var h='<div class="card pilha"><h2>FOPAG consolidada</h2><p class="sec peq">Enviada a José e Eduardo depois que a folha definitiva chega [[6.12]].</p><div class="linha">'+bt("Enviar a FOPAG consolidada","fopagVer",{},"btn-p",disIf(!def||!!P.fopag))+(P.fopag?pill("Enviada em "+P.fopag,"p-ok"):!def?'<span class="sec peq">Liberado quando a folha definitiva for registrada, em Pacote da contabilidade.</span>':'')+'</div></div>';
+  h+='<div class="card pilha" style="margin-top:14px"><h2>Contracheques</h2><p class="sec peq">Enviados aos colaboradores CLT no dia do pagamento do salário, 07/11/2026 [[6.13]]. O envio usa o e-mail corporativo do cadastro.</p><div class="tbl"><table class="larga"><thead><tr><th>Colaborador</th><th>E-mail no cadastro</th><th>Situação</th><th></th></tr></thead><tbody>';
+  P.chq.forEach(function(q){
+    var p=pes(q.nome),sem=!p.em;
+    var st=q.st==="env"?pill("Enviado","p-ok"):q.st==="mao"?pill("Entregue em mãos (registrado)","p-ok"):sem?pill(forma("tri")+"Sem e-mail no cadastro","p-bloq"):pill("Aguardando o dia do pagamento","p-pend");
+    h+='<tr><td class="forte">'+esc(q.nome)+'</td><td>'+(sem?'<span class="erro-campo">Em branco</span>':esc(p.em))+'</td><td>'+st+'</td><td>'+(sem&&q.st==="ag"?bt("Registrar entrega em mãos","chqMao",{id:q.id},"mini",disIf()):'')+'</td></tr>';
+  });
+  var semMail=P.chq.filter(function(q){return !pes(q.nome).em&&q.st==="ag";}).length;
+  h+='</tbody></table></div><p class="peq sec">Mostrando 8 de 24 CLT, como exemplo.</p>'+(semMail?nota("aviso","Pessoa sem e-mail no cadastro","O contracheque dela não sai por e-mail. Preencha o e-mail na ficha em Colaboradores, ou registre a entrega em mãos.")+"":"")+'<div class="linha">'+bt("Enviar os contracheques de quem tem e-mail","chqEnvia",{},"btn-p",disIf(!def||P.chq.every(function(q){return q.st!=="ag"||!pes(q.nome).em;})))+(!def?'<span class="sec peq">Liberado com a folha definitiva.</span>':'')+'</div></div>';
+  h+='<div class="card" style="margin-top:14px;opacity:.75"><div class="linha entre"><div><h3>Cruzar horas extras com os atendimentos do Cockpit</h3><p class="sec peq">Depois do piloto. Só vale a pena se a integração com o VR Ponto for contratada. Antes disso, o piloto cruza uma vez, à mão, as horas extras exportadas com os atendimentos.</p></div>'+bt("Depois do piloto","",{},"mini",' disabled')+'</div></div>';
+  return h;
+}
+A.anexaPonto=function(){D.ponto.imp={arq:"vr-ponto-2026-09-25_a_2026-10-24.xlsx",quando:agora(),por:eu()};render();toast("Relatório anexado (exemplo).");};
+A.orientaPonto=function(){D.ponto.orient=agora();render();toast("Orientação registrada como enviada (exemplo).");};
+A.penAcao=function(d){var x=D.ponto.pend.filter(function(p){return p.id===d.id;})[0];x.st=d.a;render();toast({just:"Justificativa pedida a "+x.nome+".",aj:"Ajuste de ponto solicitado.",ok:"Marcação resolvida."}[d.a]);};
+A.hePede=function(d){var x=D.ponto.he.filter(function(h){return h.id===d.id;})[0];
+  dlgAbrir(dl("Pedir correção ao gestor",'<p class="sec peq">Prévia do e-mail. Nada é enviado de verdade.</p>'+mailBox(x.gestor,"Conferência de "+x.tipo.toLowerCase()+" de "+x.nome+" em "+fd(x.data),"Aprovado: "+hh(x.apr)+" · Ponto: "+hh(x.pt)+" · Escala: "+hh(x.es)+(x.ac?" · Acionamentos: "+x.ac[0]+" informados, "+x.ac[1]+" no ponto":"")+"\n\nOs valores não batem. Pode confirmar o valor aprovado ou corrigi-lo? Responda este e-mail; o RH registra [[4.8]].").replace(/\[\[[\d.,\s]+\]\]/g,""),cancelar()+bt("Enviar e registrar o pedido","heEnvPedido",{id:d.id},"btn-p")));};
+A.heEnvPedido=function(d){D.ponto.he.filter(function(h){return h.id===d.id;})[0].st="pedida";fecha();render();toast("Pedido de correção registrado.");};
+A.heResp=function(d){dlgAbrir(dl("Registrar a resposta do gestor",'<div class="campo"><label for="he-resp">O que o gestor respondeu</label><select id="he-resp" data-foco="1"><option value="conf">Confirmou o valor aprovado</option><option value="pt">Corrigiu para o valor do ponto</option></select></div>',cancelar()+bt("Registrar a resposta","heSalvaResp",{id:d.id},"btn-p")));};
+A.heSalvaResp=function(d){var x=D.ponto.he.filter(function(h){return h.id===d.id;})[0];if(vIn("he-resp")==="pt"){x.apr=x.pt;if(x.ac)x.ac[0]=x.ac[1];}x.st="res";fecha();render();toast("Resposta registrada.");};
+A.heEnvia=function(){D.ponto.heEnv=true;render();toast("Encaminhado para lançamento na folha.");};
+A.bancoVer=function(d){D.ponto.bancoSel=D.ponto.bancoSel===d.id?null:d.id;render();};
+A.bancoNovo=function(){dlgAbrir(dl("Registrar compensação ou crédito",'<div class="campo"><label for="bn-quem">Colaborador</label><select id="bn-quem" data-foco="1">'+D.ponto.banco.map(function(b){return '<option>'+esc(b.nome)+'</option>';}).join("")+'</select></div><div class="campo"><label for="bn-tipo">Tipo</label><select id="bn-tipo"><option value="c">Compensação (tira horas do saldo)</option><option value="x">Crédito (soma horas ao saldo)</option></select></div><div class="campo"><label for="bn-h">Horas</label><input type="text" id="bn-h" placeholder="02:30"></div><div class="campo"><label for="bn-d">Dia</label><input type="date" id="bn-d" value="'+HOJE+'"></div>',cancelar()+bt("Registrar","bancoSalva",{},"btn-p")));};
+A.bancoSalva=function(){var m=/^(\d{1,3}):([0-5]\d)$/.exec(vIn("bn-h"));if(!m||(+m[1]===0&&+m[2]===0)){erroDlg("Informe as horas no formato 02:30.");return;}var n=+m[1]*60+ +m[2],neg=vIn("bn-tipo")==="c",b=D.ponto.banco.filter(function(x){return x.nome===vIn("bn-quem");})[0];b.mov.push({d:vIn("bn-d")||HOJE,m:neg?-n:n,t:neg?"Compensação":"Crédito registrado pelo RH"});D.ponto.bancoSel=b.id;fecha();render();toast("Saldo de "+b.nome+" agora é "+hhmm(saldoB(b))+".");};
+A.abreDoc=function(d){var a=D.ponto.atest.filter(function(x){return x.id===d.id;})[0];dlgAbrir(dl("Documento de "+esc(a.nome),'<p class="sec peq">Só a Controladoria/RH abre este arquivo.</p><div class="mail">'+esc(a.arq)+'<br><span class="sec">(prévia do arquivo, exemplo)</span></div>',bt("Fechar","fechar",{},"btn-p")));};
+A.novoAtest=function(){dlgAbrir(dl("Registrar atestado ou justificativa",'<div class="grade"><div class="campo"><label for="na-quem">Colaborador</label><select id="na-quem" data-foco="1">'+PES.filter(function(p){return p.t==="CLT";}).map(function(p){return '<option>'+esc(p.n)+'</option>';}).join("")+'</select></div><div class="campo"><label for="na-tipo">Tipo</label><select id="na-tipo"><option>Atestado</option><option>Justificativa</option><option>Afastamento</option></select></div><div class="campo"><label for="na-ini">Início</label><input type="date" id="na-ini" value="'+HOJE+'"></div><div class="campo"><label for="na-dias">Dias</label><input type="number" id="na-dias" min="1" value="1"></div></div><p class="sec peq">O arquivo é anexado depois, na linha criada (exemplo).</p>',cancelar()+bt("Registrar","salvaAtest",{},"btn-p")));};
+A.salvaAtest=function(){var dd=+vIn("na-dias");if(!(dd>=1)||!vIn("na-ini")){erroDlg("Informe o início e a quantidade de dias.");return;}var n=D.ponto.atest.length+1;D.ponto.atest.push({id:"t"+n+"x",nome:vIn("na-quem"),tipo:vIn("na-tipo"),ini:vIn("na-ini"),dias:dd,contab:false,sesmt:false,doc:"nao",ponto:false,folha:false,arq:"documento-"+vIn("na-quem").split(" ")[0].toLowerCase()+".pdf"});fecha();render();toast("Registrado.");};
+A.pacAvanca=function(){var pc=D.ponto.pac,e=ETP[pc.stage];pc.log.push((pc.stage===0?"Pacote enviado":e[0])+" · "+agora()+" · "+eu());pc.stage++;render();toast(pc.stage===1?"Pacote enviado à contabilidade (exemplo).":"Registrado: "+e[0].toLowerCase()+".");};
+A.pacAtalho=function(){var P=D.ponto;P.pend.forEach(function(x){x.st="ok";});P.he.forEach(function(x){if(divHE(x))x.st="res";});P.atest.forEach(function(a){a.contab=true;});P.desc.forEach(function(x){x.ok=true;});D.prazos.forEach(function(x){if(x.tipo==="fer"&&etapaDe(x,"8.5").st==="f")etapaDe(x,"8.7").st="f";});D.movs.forEach(function(m){if(m.aberta){var s=etapaDe(m,m.tipo==="entrada"?"2.4":"9.5");if(s&&s.st!=="na")s.st="f";}});render();};
+A.fopagVer=function(){dlgAbrir(dl("Enviar a FOPAG consolidada",'<p class="sec peq">Prévia do e-mail. Nada é enviado de verdade.</p>'+mailBox("José e Eduardo (Diretoria)","FOPAG consolidada · competência de outubro","Segue a folha de pagamento consolidada da competência de outubro, já definitiva.\n\nAnexo: fopag-consolidada-2026-10.pdf\n\nControladoria/RH"),cancelar()+bt("Enviar e registrar","fopagEnvia",{},"btn-p")));};
+A.fopagEnvia=function(){D.ponto.fopag=agora();fecha();render();toast("FOPAG enviada (exemplo).");};
+A.chqMao=function(d){D.ponto.chq.filter(function(q){return q.id===d.id;})[0].st="mao";render();};
+A.chqEnvia=function(){var n=0;D.ponto.chq.forEach(function(q){if(q.st==="ag"&&pes(q.nome).em){q.st="env";n++;}});render();toast(n+" contracheques enviados. Quem está sem e-mail continua pendente.");};
+
+/* ============ E. Seguro e celular ============ */
+function dSeg(){
+  return {
+   seg:["Bruno Teixeira","Carla Mendonça","Diego Albuquerque","Elisa Prado","Fábio Nogueira","Gabriela Rocha","Isabela Furtado","Rodrigo Azevedo"],
+   exc:[],plan:null,conf:false,
+   pend:[{id:"sp1",t:"A seguradora pediu a conferência do CPF de Elisa Prado",res:false}],
+   bol:{valor:"",venc:"2026-11-30",cod:"",pdf:""},pag:null,prem:1840,
+   cel:{linhas:[
+     {id:"l1",num:"(11) 90000-0001",resp:"Bruno Teixeira",v:"79,90"},
+     {id:"l2",num:"(11) 90000-0002",resp:"Carla Mendonça",v:"79,90"},
+     {id:"l3",num:"(11) 90000-0003",resp:"Diego Albuquerque",v:"99,90"},
+     {id:"l4",num:"(11) 90000-0004",resp:"Rodrigo Azevedo",v:"79,90"},
+     {id:"l5",num:"(11) 90000-0005",resp:"Patrícia Lins",v:"129,90"},
+     {id:"l6",num:"(11) 90000-0006",resp:"",v:"59,90"}
+   ],total:"529,40",venc:"2026-11-28",cod:"",pdf:"",pag:null}
+  };
+}
+function distrib(total,pesos){
+  var W=pesos.reduce(function(s,p){return s+p[1];},0);
+  if(!W||total<=0)return pesos.map(function(p){return [p[0],0];});
+  var res=pesos.map(function(p){var n=BigInt(total)*BigInt(p[1]);return {k:p[0],v:Number(n/BigInt(W)),r:Number(n%BigInt(W))};});
+  var falta=total-res.reduce(function(s,x){return s+x.v;},0);
+  res.slice().sort(function(a,b){return b.r-a.r;}).slice(0,falta).forEach(function(x){x.v++;});
+  return res.map(function(x){return [x.k,x.v];});
+}
+function pesosCC(lista){ /* lista: [[pessoa, multiplicador]] */
+  var w={};CCS.forEach(function(c){w[c]=0;});
+  lista.forEach(function(it){var p=pes(it[0]),rt;if(p)rt=p.rat;else{var m=D.movs.filter(function(x){return x.nome===it[0]&&x.tipo==="entrada";})[0];rt=m?[[m.cc,10000]]:[];}rt.forEach(function(r){w[r[0]]+=r[1]*it[1];});});
+  return CCS.map(function(c){return [c,w[c]];}).filter(function(x){return x[1]>0;});
+}
+function segAtuais(){
+  var inc=D.movs.filter(function(m){return m.tipo==="entrada"&&etapaDe(m,"2.18").st!=="na";}).map(function(m){return m.nome;});
+  var base=D.seg.seg.filter(function(n){return D.seg.exc.indexOf(n)<0;});
+  return {base:base,inc:inc,todos:base.concat(inc)};
+}
+function ratTabela(rat,total){
+  return '<div class="tbl"><table><thead><tr><th>Centro de custo</th><th class="d">Parte</th><th class="d">Valor</th></tr></thead><tbody>'+rat.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td class="d">'+(total?(Math.round(r[1]*10000/total)/100).toString().replace(".",",")+"%":"—")+'</td><td class="d">'+brl(r[1])+'</td></tr>';}).join("")+'</tbody><tfoot><tr><td class="forte">Total</td><td></td><td class="d forte">'+brl(rat.reduce(function(s,r){return s+r[1];},0))+'</td></tr></tfoot></table></div>';
+}
+var PAGST={env:["Enviado ao Financeiro","p-and"],rec:["Recebido pelo Financeiro","p-and"],lan:["Lançado no Financeiro","p-ok"]};
+function pagBloco(pag,k){
+  if(!pag)return "";
+  var s=PAGST[pag.st];
+  return '<div class="fin"><div class="fin-topo"><span class="forte">Solicitação no Financeiro</span>'+pill(s[0],s[1])+'</div><div class="fin-corpo pilha"><dl class="dados"><div><dt>Valor</dt><dd class="forte num">'+brl(pag.valor)+'</dd></div><div><dt>Vencimento</dt><dd>'+fd(pag.venc)+'</dd></div><div><dt>Enviado em</dt><dd>'+pag.em+'</dd></div></dl>'+ratTabela(pag.rat,pag.valor)+'<p class="peq sec">Enviado não é pago. Aqui só aparece Lançado quando o Financeiro lançar; o pagamento em si é feito e conferido no Financeiro.</p>'+(pag.st!=="lan"?bt("Atualizar a situação (exemplo)","pagAtualiza",{k:k},"mini"):"")+'</div></div>';
+}
+function vE(){
+  var Sg=D.seg,C=Sg.cel,sa=segAtuais(),rh=souRH();
+  var h=cab("E","Seguro e celular em Pagamentos","Dois cartões novos na tela de Pagamentos, ao lado de Folha, Guias, Vale-refeição, Vale-transporte e Prestadores PJ, que já foram apresentados no mockup anterior.");
+  h+='<div class="cartoes">';
+  /* ---- Seguro ---- */
+  var N=sa.todos.length,esperado=N*Sg.prem,bv=lerValor(Sg.bol.valor),dif=bv===null?null:bv-esperado,tol=1000;
+  var bl=[];
+  if(!Sg.conf)bl.push("Conferir os dados da relação de segurados");
+  if(!Sg.plan)bl.push("Gerar a planilha para a seguradora");
+  if(Sg.pend.some(function(p){return !p.res;}))bl.push("Resolver as pendências da seguradora");
+  if(bv===null)bl.push("Informar o valor do boleto");
+  if(!Sg.bol.cod.trim())bl.push("Informar o código de pagamento (a linha digitável ou o código do QR)");
+  if(dif!==null&&Math.abs(dif)>tol)bl.push("Valor do boleto difere do esperado em mais de "+brl(tol));
+  var rat=bv!==null?distrib(bv,pesosCC(sa.todos.map(function(n){return [n,1];}))):[];
+  h+='<section class="card pilha" aria-labelledby="e-seg-t"><div class="linha entre"><h2 id="e-seg-t">Seguro de vida</h2>'+(Sg.pag?pill(PAGST[Sg.pag.st][0],PAGST[Sg.pag.st][1]):pill("Não enviado","p-pend"))+'</div>';
+  h+='<p class="sec peq">Relação de segurados mantida em dia [[13.1]]. Competência de novembro.</p>';
+  h+='<div class="tbl"><table><thead><tr><th>Segurado</th><th>CPF</th><th>Movimento</th></tr></thead><tbody>'+sa.base.map(function(n){return '<tr><td>'+esc(n)+'</td><td class="num">'+mask(pes(n).cpf)+'</td><td>—</td></tr>';}).join("")+sa.inc.map(function(n){var m=D.movs.filter(function(x){return x.nome===n&&x.tipo==="entrada";})[0];return '<tr class="dest"><td>'+esc(n)+'</td><td class="num">'+mask(m.cpf)+'</td><td>'+pill("Inclusão do mês","p-novo")+'</td></tr>';}).join("")+'</tbody></table></div>';
+  h+='<div><span class="rot">Inclusões do mês [[13.2]]</span>'+(sa.inc.length?'<ul class="pontos">'+sa.inc.map(function(n){return '<li>'+esc(n)+' · vem de Movimentações, etapa 2.18</li>';}).join("")+'</ul>':'<p class="sec peq">Nenhuma inclusão neste mês.</p>')+'</div>';
+  h+='<div><span class="rot">Exclusões do mês [[13.3]]</span>'+(Sg.exc.length?'<ul class="pontos">'+Sg.exc.map(function(n){return '<li>'+esc(n)+' · exclusão da relação de segurados</li>';}).join("")+'</ul>':'<p class="sec peq">Nenhuma exclusão registrada neste mês.</p>')+'<div style="margin-top:6px">'+bt("Registrar exclusão da relação de segurados","abreExcl",{},"mini",disIf())+'</div></div>';
+  h+=chkF("e-seg-conf","Conferi os dados da relação de segurados [[13.6]]",Sg.conf,"seg/conf");
+  h+='<div class="linha entre"><div><span class="rot">Planilha para a seguradora [[13.4]]</span><div class="sec peq">Até 25/11/2026 · em '+dias("2026-11-25")+' dias</div>'+(Sg.plan?'<div class="peq">'+esc(Sg.plan.arq)+' · gerada em '+Sg.plan.em+(Sg.plan.env?' · enviada':'')+'</div>':'')+'</div><div class="linha">'+bt(Sg.plan?"Gerar de novo":"Gerar a planilha","geraPlan",{},"mini",disIf(!Sg.conf))+(Sg.plan&&!Sg.plan.env?bt("Marcar como enviada à seguradora","enviaPlan",{},"mini",disIf()):"")+'</div></div>';
+  if(!Sg.conf)h+='<p class="peq sec">A planilha só é gerada depois de conferir a relação.</p>';
+  h+='<div><span class="rot">Retorno e pendências da seguradora [[13.5]]</span><ul class="lista">'+Sg.pend.map(function(p){return '<li class="linha entre"><span>'+esc(p.t)+'</span>'+(p.res?pill("Resolvida","p-ok"):bt("Marcar como resolvida","resPend",{id:p.id},"mini",disIf()))+'</li>';}).join("")+'</ul></div>';
+  h+='<div class="grupo">Boleto [[13.7]]</div><div class="grade">'+fld("e-seg-valor","Valor do boleto",Sg.bol.valor,"seg/bol/valor",{re:true,ph:"Ex.: 165,60",aj:"Esperado pela relação: "+brl(esperado)+" ("+N+" segurados × "+brl(Sg.prem)+")",err:Sg.bol.valor&&bv===null?"Valor inválido.":""})+fld("e-seg-venc","Vencimento",Sg.bol.venc,"seg/bol/venc",{type:"date"})+fld("e-seg-cod","Código de pagamento (linha digitável ou QR)",Sg.bol.cod,"seg/bol/cod",{re:true,todo:true,aj:"Obrigatório. Anexar o PDF não substitui este campo."})+'</div><div class="linha"><span class="rot">PDF do boleto:</span>'+(Sg.bol.pdf?pill(esc(Sg.bol.pdf),"p-ok"):pill("Sem arquivo","p-pend")+" "+bt("Anexar o PDF (exemplo)","anexaBol",{k:"seg"},"mini",disIf()))+'</div>';
+  if(dif!==null)h+=Math.abs(dif)>tol?nota("bloq","Diferença acima da tolerância","O boleto é "+brl(Math.abs(dif))+(dif>0?" maior":" menor")+" que o esperado. A tolerância é "+brl(tol)+". O total do boleto manda, mas uma diferença assim precisa ser conferida antes de enviar."):'<p class="peq sec">Diferença para o esperado: '+brl(dif)+' (dentro da tolerância de '+brl(tol)+').</p>';
+  if(rat.length)h+='<div><span class="rot">Rateio calculado pelos segurados</span>'+ratTabela(rat,bv)+'<p class="peq sec">O cadastro dá o peso de cada pessoa; o total do boleto manda. O último centavo vai para o maior resto, e a soma sempre fecha.</p></div>';
+  h+=pagBloco(Sg.pag,"seg");
+  if(!Sg.pag){if(bl.length)h+=nota("aviso","Para criar o pagamento falta ("+bl.length+")","<ul class='pontos'>"+bl.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul>");h+='<div>'+bt("Criar pagamento no Financeiro","criaPag",{k:"seg"},"btn-p",disIf(bl.length>0))+'</div>';}
+  h+='</section>';
+  /* ---- Celular ---- */
+  var sum=0,inv=false;C.linhas.forEach(function(l){var v=lerValor(l.v);if(v===null)inv=true;else sum+=v;});
+  var ct=lerValor(C.total),difc=ct===null?null:ct-sum,tolc=500,semResp=C.linhas.filter(function(l){return !l.resp;});
+  var bc=[];
+  if(semResp.length)bc.push(semResp.length+" linha(s) sem responsável");
+  if(inv)bc.push("Há linha com valor inválido");
+  if(ct===null)bc.push("Informar o total da conta");
+  if(!C.cod.trim())bc.push("Informar o código de pagamento");
+  if(difc!==null&&!inv&&Math.abs(difc)>tolc)bc.push("Total da conta difere da soma das linhas em mais de "+brl(tolc));
+  var ratc=(ct!==null&&!semResp.length&&!inv)?distrib(ct,pesosCC(C.linhas.map(function(l){var w=lerValor(l.v);return [l.resp,w];}))):[];
+  h+='<section class="card pilha" aria-labelledby="e-cel-t"><div class="linha entre"><h2 id="e-cel-t">Celular</h2>'+(C.pag?pill(PAGST[C.pag.st][0],PAGST[C.pag.st][1]):pill("Não enviado","p-pend"))+'</div><p class="sec peq">Conta dos celulares do mês, para pagamento pelo Financeiro [[18.8]]. Cada linha tem uma pessoa responsável.</p>';
+  h+='<div class="tbl"><table class="larga"><thead><tr><th>Linha</th><th>Responsável</th><th class="d">Valor</th></tr></thead><tbody>'+C.linhas.map(function(l){var v=lerValor(l.v);return '<tr'+(l.resp?'':' class="dest"')+'><td class="num">'+l.num+(l.resp?'':'<div class="erro-campo">'+forma("tri")+' Sem responsável: bloqueia o envio</div>')+'</td><td><select id="e-cel-resp-'+l.id+'" aria-label="Responsável pela linha '+l.num+'" data-bind="seg/cel/linhas/'+l.id+'/resp" data-re="1"'+dis()+'>'+[["","— sem responsável —"]].concat(pessoasOpt()).map(function(x){return '<option value="'+esc(x[0])+'"'+(x[0]===l.resp?' selected':'')+'>'+esc(x[1])+'</option>';}).join("")+'</select></td><td class="d"><input type="text" id="e-cel-v-'+l.id+'" aria-label="Valor da linha '+l.num+'" value="'+esc(l.v)+'" data-bind="seg/cel/linhas/'+l.id+'/v" data-re="1"'+dis()+' style="width:110px;text-align:right"'+(v===null?' aria-invalid="true"':'')+'>'+(v===null?'<div class="erro-campo">Inválido</div>':'')+'</td></tr>';}).join("")+'</tbody></table></div>';
+  h+='<div class="grade">'+fld("e-cel-total","Total da conta do mês",C.total,"seg/cel/total",{re:true,aj:"Soma das linhas: "+brl(sum)+". O total da conta manda.",err:C.total&&ct===null?"Valor inválido.":""})+fld("e-cel-venc","Vencimento",C.venc,"seg/cel/venc",{type:"date"})+fld("e-cel-cod","Código de pagamento",C.cod,"seg/cel/cod",{re:true,todo:true,aj:"Obrigatório. Anexar o PDF não substitui este campo."})+'</div><div class="linha"><span class="rot">PDF da conta:</span>'+(C.pdf?pill(esc(C.pdf),"p-ok"):pill("Sem arquivo","p-pend")+" "+bt("Anexar o PDF (exemplo)","anexaBol",{k:"cel"},"mini",disIf()))+'</div>';
+  if(difc!==null&&!inv)h+=Math.abs(difc)>tolc?nota("bloq","Diferença acima da tolerância","A conta é "+brl(Math.abs(difc))+(difc>0?" maior":" menor")+" que a soma das linhas. A tolerância é "+brl(tolc)+". Confira os valores antes de enviar."):'<p class="peq sec">Diferença entre a conta e a soma das linhas: '+brl(difc)+' (dentro da tolerância de '+brl(tolc)+').</p>';
+  if(ratc.length)h+='<div><span class="rot">Rateio calculado pelo cadastro de cada responsável</span>'+ratTabela(ratc,ct)+'</div>';
+  h+=pagBloco(C.pag,"cel");
+  if(!C.pag){if(bc.length)h+=nota(semResp.length?"bloq":"aviso",semResp.length?"Linha sem responsável bloqueia o envio":"Para criar o pagamento falta ("+bc.length+")","<ul class='pontos'>"+bc.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul>");h+='<div>'+bt("Criar pagamento no Financeiro","criaPag",{k:"cel"},"btn-p",disIf(bc.length>0))+'</div>';}
+  h+='</section></div>';
+  return h;
+}
+A.abreExcl=function(){dlgAbrir(dl("Registrar exclusão da relação de segurados",'<div class="campo"><label for="ex-quem">Segurado</label><select id="ex-quem" data-foco="1">'+segAtuais().base.map(function(n){return '<option>'+esc(n)+'</option>';}).join("")+'</select></div><div class="grupo">O que muda</div><ul class="pontos"><li>A pessoa sai da relação de segurados do mês e do rateio do boleto.</li><li>A exclusão entra na planilha enviada à seguradora.</li></ul><div class="grupo">O que não muda</div><ul class="pontos"><li>O cadastro do colaborador e os meses anteriores.</li></ul>',cancelar()+bt("Registrar a exclusão","salvaExcl",{},"btn-p")));};
+A.salvaExcl=function(){var n=vIn("ex-quem");if(!n){erroDlg("Escolha o segurado.");return;}D.seg.exc.push(n);D.seg.plan=null;D.seg.conf=false;fecha();render();toast("Exclusão registrada. Confira a relação e gere a planilha de novo.");};
+A.geraPlan=function(){var sa=segAtuais();D.seg.plan={arq:"movimentacao-seguro-2026-11.xlsx",em:agora(),env:false,ni:sa.inc.length,ne:D.seg.exc.length};render();toast("Planilha gerada com "+sa.inc.length+" inclusão(ões) e "+D.seg.exc.length+" exclusão(ões) (exemplo).");};
+A.enviaPlan=function(){D.seg.plan.env=true;render();toast("Planilha marcada como enviada à seguradora.");};
+A.resPend=function(d){D.seg.pend.filter(function(p){return p.id===d.id;})[0].res=true;render();};
+A.anexaBol=function(d){if(d.k==="seg")D.seg.bol.pdf="boleto-seguro-2026-11.pdf";else D.seg.cel.pdf="conta-celulares-2026-11.pdf";render();toast("PDF anexado (exemplo).");};
+A.criaPag=function(d){
+  var seg=d.k==="seg",sa=segAtuais(),C=D.seg.cel,rat,valor,venc,cat,fav;
+  if(seg){valor=lerValor(D.seg.bol.valor);venc=D.seg.bol.venc;cat="Seguro de Vida";fav="Seguradora (exemplo)";rat=distrib(valor,pesosCC(sa.todos.map(function(n){return [n,1];})));}
+  else{valor=lerValor(C.total);venc=C.venc;cat="Celular";fav="Operadora de telefonia (exemplo)";rat=distrib(valor,pesosCC(C.linhas.map(function(l){return [l.resp,lerValor(l.v)];})));}
+  var dv=dias(venc);
+  var c='<p class="forte">Isto vai para o Financeiro. Enviado não é pago.</p><dl class="dados"><div><dt>Favorecido</dt><dd>'+fav+'</dd></div><div><dt>Categoria</dt><dd>'+cat+'</dd></div><div><dt>Valor</dt><dd class="forte">'+brl(valor)+'</dd></div><div><dt>Vencimento</dt><dd>'+fd(venc)+'</dd></div></dl>'+ratTabela(rat,valor)+'<div class="grupo">O que muda</div><ul class="pontos"><li>O Financeiro recebe uma solicitação de pagamento com este valor e este rateio.</li><li>Aqui a situação fica como Enviado ao Financeiro até o Financeiro lançar.</li></ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Nada é pago por este botão. O pagamento é feito e conferido no Financeiro.</li><li>Depois de enviar, o valor e o rateio não são editados aqui. Uma correção gera uma nova solicitação.</li></ul>'+(dv<5?nota("aviso","Vencimento em "+dv+" dias","Prazo curto: o Financeiro pode tratar como emergencial e levar a aprovação ao diretor."):"");
+  dlgAbrir(dl("Criar o pagamento de "+cat.toLowerCase()+" no Financeiro?",c,cancelar()+bt("Sim, enviar ao Financeiro","confirmaPag",{k:d.k},"btn-p")));
+};
+A.confirmaPag=function(d){
+  var seg=d.k==="seg",sa=segAtuais(),C=D.seg.cel,valor,venc,rat;
+  if(seg){valor=lerValor(D.seg.bol.valor);venc=D.seg.bol.venc;rat=distrib(valor,pesosCC(sa.todos.map(function(n){return [n,1];})));D.seg.pag={st:"env",valor:valor,venc:venc,rat:rat,em:agora()};}
+  else{valor=lerValor(C.total);venc=C.venc;rat=distrib(valor,pesosCC(C.linhas.map(function(l){return [l.resp,lerValor(l.v)];})));C.pag={st:"env",valor:valor,venc:venc,rat:rat,em:agora()};}
+  fecha();render();toast("Enviado ao Financeiro. Ainda não está pago.");
+};
+A.pagAtualiza=function(d){var p=d.k==="seg"?D.seg.pag:D.seg.cel.pag;p.st=p.st==="env"?"rec":"lan";render();};
+
+/* ============ F. Patrimônio ============ */
+function dPat(){
+  return {
+   itens:[
+    {id:"PAT-0001",nome:"Notebook Dell Latitude 5420",serie:"DL-48213",resp:"Bruno Teixeira",loc:"Escritório",st:"uso",hist:[{d:"2026-03-10",t:"Entregue a Bruno Teixeira"}]},
+    {id:"PAT-0002",nome:"Notebook Lenovo ThinkPad E14",serie:"LN-77102",resp:"Elisa Prado",loc:"Escritório",st:"uso",hist:[{d:"2026-11-03",t:"Troca: entregue a Elisa Prado no lugar do PAT-0004"}]},
+    {id:"PAT-0003",nome:"Celular Samsung A54",serie:"SM-33901",resp:"Carla Mendonça",loc:"Em campo",st:"uso",hist:[{d:"2026-05-18",t:"Entregue a Carla Mendonça"}]},
+    {id:"PAT-0004",nome:"Notebook HP ProBook 440",serie:"HP-20988",resp:"Elisa Prado",loc:"Com a Elisa Prado",st:"dev",prazo:"2026-11-10",hist:[{d:"2026-01-12",t:"Entregue a Elisa Prado"},{d:"2026-11-03",t:"Trocado pelo PAT-0002; devolução pendente até 10/11/2026"}]},
+    {id:"PAT-0005",nome:"Mala de ferramentas MF-07",serie:"MF-07",resp:"Fábio Nogueira",loc:"Em campo",st:"uso",hist:[{d:"2026-02-02",t:"Entregue a Fábio Nogueira"}]},
+    {id:"PAT-0006",nome:"Crachá 0231",serie:"CR-0231",resp:"Gabriela Rocha",loc:"Escritório",st:"uso",hist:[{d:"2026-04-06",t:"Entregue a Gabriela Rocha"}]},
+    {id:"PAT-0007",nome:"Notebook Dell Inspiron 15 (reserva)",serie:"DL-55120",resp:"",loc:"Sala do RH",st:"livre",hist:[{d:"2026-08-20",t:"Entrou no controle"}]},
+    {id:"PAT-0008",nome:"Mala de ferramentas MF-08",serie:"MF-08",resp:"",loc:"Sala do RH",st:"livre",hist:[{d:"2026-08-20",t:"Entrou no controle"}]},
+    {id:"VEI-ABC1D23",nome:"Veículo ABC1D23 (utilitário)",serie:"",resp:"Fábio Nogueira",loc:"Em campo",st:"uso",frotas:true,hist:[]}
+   ],
+   termos:[
+    {id:"TE-0006",tipo:"Entrega",pessoa:"Bruno Teixeira",itens:"PAT-0001",st:"ass",arq:"termo-te-0006-assinado.pdf"},
+    {id:"TE-0007",tipo:"Entrega",pessoa:"Elisa Prado",itens:"PAT-0002",st:"ger",arq:""}
+   ],seq:8,cobr:[]
+  };
+}
+function patPorId(id){return D.pat.itens.filter(function(i){return i.id===id;})[0];}
+var PATST={uso:["Em uso",""],livre:["Disponível","p-na"],dev:["Devolução pendente","p-bloq"],baixa:["Baixado","p-na"]};
+function novoTermo(tipo,pessoa,itens){var id="TE-"+String(D.pat.seq).padStart(4,"0");D.pat.seq++;D.pat.termos.push({id:id,tipo:tipo,pessoa:pessoa,itens:itens,st:"ger",arq:""});return id;}
+function vF(){
+  var h=cab("F","Patrimônio","Itens por pessoa e por item: entrega, devolução, troca, transferência e baixa, com termo de entrega e devolução [[18.1,18.2,18.3,18.4,18.6,18.7]].");
+  h+=nota("info","Não existe almoxarifado no hub hoje","Estoque e compra do item ficam em Compras "+pill("Compras","sis")+". Aqui o RH controla quem está com o quê. O veículo aparece só para leitura, vindo da Frotas. A conta dos celulares é paga em Pagamentos, seção E [[18.8]].");
+  h+='<div style="height:12px"></div>'+segHtml("fSub",[["item","Por item"],["pes","Por pessoa"],["pen","Pendências de devolução"],["ter","Termos"]],S.fSub,"Visões do patrimônio");
+  var I=D.pat.itens.filter(function(i){return i.st!=="baixa";});
+  if(S.fSub==="item"){
+    h+='<div class="tbl"><table class="larga"><thead><tr><th>Código</th><th>Item</th><th>Responsável</th><th>Localização</th><th>Situação</th><th></th></tr></thead><tbody>';
+    D.pat.itens.forEach(function(i){var st=PATST[i.st];h+='<tr'+(i.st==="baixa"?' style="opacity:.6"':'')+'><td class="num">'+i.id+'</td><td class="forte">'+esc(i.nome)+(i.frotas?" "+labs("fro"):"")+'</td><td>'+(i.resp?esc(i.resp):'<span class="sec">—</span>')+'</td><td>'+esc(i.loc)+'</td><td>'+pill(st[0],st[1])+'</td><td>'+(i.frotas?'<span class="sec peq">Somente leitura</span>':bt(S.fSel===i.id?"Fechar":"Abrir","fAbre",{id:i.id},"mini"))+'</td></tr>';});
+    h+='</tbody></table></div>';
+    if(S.fSel){var i=patPorId(S.fSel);h+=fDet(i);}
+  }
+  if(S.fSub==="pes"){
+    var por={};I.forEach(function(i){if(i.resp){(por[i.resp]=por[i.resp]||[]).push(i);}});
+    h+='<ul class="lista card">';
+    Object.keys(por).sort().forEach(function(n){var ts=D.pat.termos.filter(function(t){return t.pessoa===n&&t.st==="ger";}).length;h+='<li><div class="linha entre"><span class="forte">'+esc(n)+'</span><span class="linha">'+pill(por[n].length+(por[n].length===1?" item":" itens"),"")+(ts?pill("Termo sem assinatura","p-aviso"):"")+'</span></div><ul class="pontos peq">'+por[n].map(function(i){return '<li>'+i.id+' · '+esc(i.nome)+' · '+pill(PATST[i.st][0],PATST[i.st][1])+(i.frotas?" "+labs("fro"):"")+'</li>';}).join("")+'</ul></li>';});
+    h+='</ul>';
+  }
+  if(S.fSub==="pen"){
+    var pd=I.filter(function(i){return i.st==="dev";});
+    h+='<div class="card pilha"><h2>Pendências de devolução</h2><p class="sec peq">Itens que precisam voltar [[18.5]].</p>';
+    h+=pd.length?'<ul class="lista">'+pd.map(function(i){var d=dias(i.prazo);return '<li><div class="linha entre"><div class="grow"><span class="forte">'+i.id+' · '+esc(i.nome)+'</span><div class="sec peq">Com '+esc(i.resp)+' · prazo '+fd(i.prazo)+'</div><div style="margin-top:4px">'+(d<0?pill(forma("tri")+"Atrasada há "+(-d)+" dias","p-bloq"):pill(forma("dia")+"Faltam "+d+" dias","p-aviso"))+(i.cobrado?" "+pill("Cobrada em "+i.cobrado,"p-and"):"")+'</div></div><div class="linha">'+bt("Cobrar a devolução","fCobra",{id:i.id},"mini",disIf())+bt("Registrar a devolução","fDevol",{id:i.id},"mini btn-p",disIf())+'</div></div></li>';}).join("")+'</ul>':'<p class="sec">Nenhuma devolução pendente.</p>';
+    h+='</div>';
+  }
+  if(S.fSub==="ter"){
+    h+='<div class="card pilha"><h2>Termos de entrega e devolução</h2><p class="sec peq">O termo é gerado quando a entrega ou a devolução é registrada. Depois de assinado, anexe o arquivo [[18.7]].</p><div class="tbl"><table class="larga"><thead><tr><th>Termo</th><th>Tipo</th><th>Pessoa</th><th>Itens</th><th>Situação</th><th></th></tr></thead><tbody>';
+    D.pat.termos.slice().reverse().forEach(function(t){h+='<tr><td class="num">'+t.id+'</td><td>'+t.tipo+'</td><td>'+esc(t.pessoa)+'</td><td>'+esc(t.itens)+'</td><td>'+(t.st==="ass"?pill("Assinado e anexado","p-ok"):pill("Gerado, aguardando assinatura","p-aviso"))+'</td><td><div class="linha">'+bt("Ver o termo","verTermo",{id:t.id},"mini")+(t.st==="ger"?bt("Anexar o assinado (exemplo)","anexaTermo",{id:t.id},"mini",disIf()):'<span class="peq sec">'+esc(t.arq)+'</span>')+'</div></td></tr>';});
+    h+='</tbody></table></div></div>';
+  }
+  return h;
+}
+function fDet(i){
+  var pode=souRH()&&i.st!=="baixa",b=function(t,a,c){return bt(t,a,{id:i.id},"mini "+(c||""),disIf(!pode));};
+  var h='<div class="card pilha" style="margin-top:12px;background:var(--inset)"><div class="linha entre"><h3>'+i.id+' · '+esc(i.nome)+'</h3>'+pill(PATST[i.st][0],PATST[i.st][1])+'</div><dl class="dados"><div><dt>Série</dt><dd>'+esc(i.serie||"—")+'</dd></div><div><dt>Responsável [[18.3]]</dt><dd>'+esc(i.resp||"—")+'</dd></div><div><dt>Localização</dt><dd>'+esc(i.loc)+'</dd></div></dl>';
+  h+='<div class="linha">'+(i.st==="livre"?b("Registrar entrega","fEntrega","btn-p"):"")+((i.st==="uso"||i.st==="dev")?b("Registrar devolução","fDevol"):"")+(i.st==="uso"?b("Trocar por outro item","fTroca")+b("Transferir","fTransf"):"")+(i.st!=="baixa"?b("Dar baixa","fBaixa","btn-d"):"")+'</div>';
+  h+='<h3>Histórico</h3><ul class="pontos">'+i.hist.slice().reverse().map(function(x){return '<li>'+fd(x.d)+' · '+esc(x.t)+'</li>';}).join("")+'</ul></div>';
+  return h;
+}
+function optPessoas(){return PES.filter(function(p){return p.t==="CLT";}).map(function(p){return '<option>'+esc(p.n)+'</option>';}).join("");}
+A.fAbre=function(d){S.fSel=S.fSel===d.id?null:d.id;render();};
+A.fEntrega=function(d){var i=patPorId(d.id);dlgAbrir(dl("Registrar entrega de "+i.id,'<p>'+esc(i.nome)+'</p><div class="campo"><label for="fe-quem">Entregar a</label><select id="fe-quem" data-foco="1">'+optPessoas()+'</select></div><div class="campo"><label for="fe-loc">Localização</label><input type="text" id="fe-loc" value="Escritório"></div><label class="chk" for="fe-termo"><input type="checkbox" id="fe-termo" checked><span>Gerar o termo de entrega agora</span></label>',cancelar()+bt("Registrar a entrega","fEntSalva",{id:d.id},"btn-p")));};
+A.fEntSalva=function(d){var i=patPorId(d.id),q=vIn("fe-quem"),loc=vIn("fe-loc");if(!loc){erroDlg("Informe a localização.");return;}i.resp=q;i.loc=loc;i.st="uso";i.hist.push({d:HOJE,t:"Entregue a "+q+" por "+eu()});var t=vCk("fe-termo")?novoTermo("Entrega",q,i.id):"";fecha();render();toast("Entrega registrada."+(t?" Termo "+t+" gerado.":""));};
+A.fDevol=function(d){var i=patPorId(d.id);dlgAbrir(dl("Registrar devolução de "+i.id,'<p>'+esc(i.nome)+(i.resp?' · com '+esc(i.resp):'')+'</p><div class="campo"><label for="fd-est">Estado do item</label><select id="fd-est" data-foco="1"><option>Bom estado</option><option>Com defeito</option></select></div><div class="campo"><label for="fd-loc">Guardar em</label><input type="text" id="fd-loc" value="Sala do RH"></div><div class="grupo">O que muda</div><ul class="pontos"><li>O item fica sem responsável e disponível.</li><li>A pendência de devolução, se houver, é encerrada.</li><li>Um termo de devolução é gerado.</li></ul>',cancelar()+bt("Registrar a devolução","fDevSalva",{id:d.id},"btn-p")));};
+A.fDevSalva=function(d){var i=patPorId(d.id),q=i.resp,loc=vIn("fd-loc");if(!loc){erroDlg("Informe onde o item será guardado.");return;}i.hist.push({d:HOJE,t:"Devolvido por "+q+" ("+vIn("fd-est").toLowerCase()+")"});var t=novoTermo("Devolução",q,i.id);i.resp="";i.loc=loc;i.st="livre";delete i.prazo;fecha();render();toast("Devolução registrada. Termo "+t+" gerado.");};
+A.fTroca=function(d){var i=patPorId(d.id),livres=D.pat.itens.filter(function(x){return x.st==="livre"&&!x.frotas;});dlgAbrir(dl("Trocar "+i.id,'<p>'+esc(i.nome)+' · com '+esc(i.resp)+'</p>'+(livres.length?'<div class="campo"><label for="ft-novo">Trocar por</label><select id="ft-novo" data-foco="1">'+livres.map(function(x){return '<option value="'+x.id+'">'+x.id+' · '+esc(x.nome)+'</option>';}).join("")+'</select></div><div class="campo"><label for="ft-prazo">Devolver o item antigo até</label><input type="date" id="ft-prazo" value="'+somaDias(HOJE,7)+'"></div><div class="grupo">O que muda</div><ul class="pontos"><li>O item novo passa para '+esc(i.resp)+' e um termo de entrega é gerado.</li><li>O item antigo fica com devolução pendente até a data escolhida.</li></ul>':'<p class="erro-campo">Não há item disponível. A compra do item fica em Compras.</p>'),cancelar()+bt("Registrar a troca","fTrocaSalva",{id:d.id},"btn-p",livres.length?"":" disabled")));};
+A.fTrocaSalva=function(d){var i=patPorId(d.id),n=patPorId(vIn("ft-novo")),pz=vIn("ft-prazo");if(!pz){erroDlg("Informe o prazo de devolução.");return;}n.resp=i.resp;n.loc=i.loc;n.st="uso";n.hist.push({d:HOJE,t:"Troca: entregue a "+i.resp+" no lugar do "+i.id});i.st="dev";i.prazo=pz;i.hist.push({d:HOJE,t:"Trocado pelo "+n.id+"; devolução pendente até "+fd(pz)});var t=novoTermo("Entrega",i.resp,n.id);fecha();render();toast("Troca registrada. Termo "+t+" gerado.");};
+A.fTransf=function(d){var i=patPorId(d.id);dlgAbrir(dl("Transferir "+i.id,'<div class="campo"><label for="ftr-quem">Transferir para</label><select id="ftr-quem" data-foco="1">'+optPessoas()+'</select></div><div class="campo"><label for="ftr-mot">Motivo</label><input type="text" id="ftr-mot" placeholder="Ex.: mudança de equipe"></div><div class="grupo">O que muda</div><ul class="pontos"><li>O responsável passa de '+esc(i.resp)+' para a pessoa escolhida.</li><li>Um termo de entrega é gerado para a pessoa nova.</li></ul>',cancelar()+bt("Registrar a transferência","fTransfSalva",{id:d.id},"btn-p")));};
+A.fTransfSalva=function(d){var i=patPorId(d.id),q=vIn("ftr-quem"),m=vIn("ftr-mot");if(m.length<3){erroDlg("Escreva o motivo.");return;}i.hist.push({d:HOJE,t:"Transferido de "+i.resp+" para "+q+" ("+m+")"});i.resp=q;var t=novoTermo("Entrega",q,i.id);fecha();render();toast("Transferência registrada. Termo "+t+" gerado.");};
+A.fBaixa=function(d){var i=patPorId(d.id);dlgAbrir(dl("Dar baixa em "+i.id+"?",'<p>'+esc(i.nome)+'</p><div class="campo"><label for="fb-mot">Motivo da baixa (obrigatório)</label><select id="fb-mot" data-foco="1"><option value="">Escolha…</option><option>Perda</option><option>Defeito sem conserto</option><option>Obsoleto</option><option>Outro</option></select></div><div class="campo"><label for="fb-obs">Explique</label><textarea id="fb-obs"></textarea></div><div class="grupo">O que muda</div><ul class="pontos"><li>O item sai do controle ativo: deixa de aparecer em Por pessoa e na lista de entregas.</li><li>Ele fica no histórico com o motivo, a data e quem deu a baixa.</li><li>'+(i.resp?'Deixa de constar como item de '+esc(i.resp)+'.':'Não estava com ninguém.')+'</li></ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Os termos já assinados continuam guardados.</li><li>Nada é comprado: a reposição é um pedido novo em Compras.</li><li>A baixa não é desfeita por esta tela. Para voltar, é preciso cadastrar o item de novo.</li></ul>',cancelar()+bt("Sim, dar baixa","fBaixaSalva",{id:d.id},"btn-dd")));};
+A.fBaixaSalva=function(d){var i=patPorId(d.id),m=vIn("fb-mot"),o=vIn("fb-obs");if(!m||o.length<3){erroDlg("Escolha o motivo e explique em uma frase.");return;}i.hist.push({d:HOJE,t:"Baixa: "+m+" — "+o+" ("+eu()+")"});i.st="baixa";i.resp="";i.loc="Fora do controle";delete i.prazo;S.fSel=null;fecha();render();toast("Baixa registrada.");};
+A.fCobra=function(d){var i=patPorId(d.id);i.cobrado=fd(HOJE);i.hist.push({d:HOJE,t:"Devolução cobrada de "+i.resp});render();toast("Cobrança registrada.");};
+A.verTermo=function(d){var t=D.pat.termos.filter(function(x){return x.id===d.id;})[0];dlgAbrir(dl("Termo "+t.id+" · "+t.tipo,'<div class="mail">TERMO DE '+t.tipo.toUpperCase()+' DE ITEM\n\nColaborador: '+esc(t.pessoa)+'\nItem(ns): '+esc(t.itens)+'\nData: '+fd(HOJE)+'\n\nDeclaro que '+(t.tipo==="Entrega"?"recebi":"devolvi")+' o(s) item(ns) acima em boas condições, e que ele(s) serve(m) apenas ao trabalho.\n\nAssinatura: ____________________________</div>',bt("Fechar","fechar",{},"btn-p")));};
+A.anexaTermo=function(d){var t=D.pat.termos.filter(function(x){return x.id===d.id;})[0];t.st="ass";t.arq="termo-"+t.id.toLowerCase()+"-assinado.pdf";render();toast("Termo assinado anexado (exemplo).");};
+
+/* ============ G. Recrutamento ============ */
+var ETV=["Solicitada","Divulgada","Triagem","Entrevista RH","Entrevista gestor","Decisão"];
+var NOMES_CV=["Caio Brandão","Débora Seixas","Eliane Cordeiro","Fernando Peixoto","Giovana Lemos"];
+function cand(id,nome,rec,reqs,f){return {id:id,nome:nome,rec:rec,reqs:reqs,f:Object.assign({conv:false,erh:false,enc:false,eg:false,par:false,dec:"",res:false},f||{}),rh:{d:"",h:"",link:""},eg:{d:"",h:""},par:{r:"apr",t:""},ent:""};}
+function dRec(){
+  var k1=cand("k1","Anderson Teles","2026-10-27",[true,true,true],{conv:true,erh:true,enc:true,eg:true});
+  k1.rh={d:"2026-10-30",h:"10:00",link:"https://meet.exemplo.com/abc-defg-hij"};k1.eg={d:"2026-11-04",h:"15:00"};
+  var k2=cand("k2","Bianca Rangel","2026-10-28",[true,true,false],{conv:true,erh:true});
+  k2.rh={d:"2026-11-02",h:"14:30",link:"https://meet.exemplo.com/klm-nopq-rst"};
+  var k3=cand("k3","Cláudio Esteves","2026-11-02",[true,false,false]);
+  var k4=cand("k4","Heloísa Barreto","2026-11-03",[true,true],{});
+  return {vagas:[
+   {id:"V1",cargo:"Técnico de Manutenção",req:"Experiência em manutenção predial\nNR-10 válida\nCNH categoria B",mod:"CLT",rem:"4300,00",inicio:"2026-12-07",gestor:"Patrícia Lins",solic:"2026-10-20",etapa:4,canais:"LinkedIn e indicações",divd:"2026-10-24",cands:[k1,k2,k3]},
+   {id:"V2",cargo:"Analista de Operações",req:"Experiência com rotinas de operação\nDomínio de planilhas",mod:"CLT",rem:"5400,00",inicio:"2026-12-14",gestor:"Rodrigo Azevedo",solic:"2026-11-02",etapa:2,canais:"LinkedIn",divd:"2026-11-03",cands:[k4]},
+   {id:"V3",cargo:"Auxiliar Administrativo",req:"Ensino médio completo\nBoa comunicação",mod:"CLT",rem:"2800,00",inicio:"2027-01-11",gestor:"Patrícia Lins",solic:"2026-11-05",etapa:0,canais:"",divd:"",cands:[]}
+  ],nomeIx:0};
+}
+function vagaPorId(id){return D.rec.vagas.filter(function(v){return v.id===id;})[0];}
+function candPorId(v,id){return v.cands.filter(function(c){return c.id===id;})[0];}
+function vG(){
+  var rh=souRH(),h=cab("G","Recrutamento","Vagas, currículos e entrevistas até a decisão. Aprovar um candidato cria a Entrada em Movimentações já com os dados.");
+  if(!rh)h+=nota("info","Visão da Diretoria","A Diretoria só lê esta tela. Quem registra as etapas é a Controladoria/RH.")+'<div style="height:10px"></div>';
+  h+=nota("aviso","Quanto tempo o currículo fica guardado","Suposição deste mockup: 12 meses depois do fim da vaga, e depois é apagado. O prazo exato ainda está para ser definido (veja Suposições, item 9).")+'<div style="height:14px"></div>';
+  if(S.gSel)return h+vVaga(vagaPorId(S.gSel));
+  h+='<div class="linha entre" style="margin-bottom:12px"><span class="sec">'+D.rec.vagas.length+' vagas</span>'+bt("Registrar vaga pedida pelo gestor","novaVaga",{},"btn-p",disIf())+'</div><ul class="lista card">';
+  D.rec.vagas.forEach(function(v){h+='<li><div class="linha entre"><div class="grow"><div class="linha"><span class="forte">'+esc(v.cargo)+'</span>'+pill(ETV[v.etapa],v.etapa===5?"p-ok":"p-and")+'</div><div class="sec peq">Gestor '+esc(v.gestor)+' · início previsto em '+fd(v.inicio)+' · '+v.cands.length+' currículos</div></div>'+bt("Abrir","abreVaga",{id:v.id},"mini")+'</div></li>';});
+  return h+'</ul>';
+}
+function vVaga(v){
+  var b="rec/vagas/"+v.id+"/",rh=souRH(),reqs=v.req.split("\n").filter(Boolean);
+  var h='<div style="margin-bottom:12px">'+bt("Voltar para as vagas","voltaVaga",{},"mini")+'</div><div class="card pilha"><div class="linha entre"><h2>'+esc(v.cargo)+'</h2>'+pill(ETV[v.etapa],"p-and")+'</div><div class="passos">'+ETV.map(function(e,i){return '<div class="'+(i<v.etapa?'feito':i===v.etapa?'atual':'')+'"><b>'+(i<v.etapa?'✓':i+1)+'</b><span>'+e+'</span></div>';}).join("")+'</div>'+(v.etapa<5?'<div>'+bt("Avançar a vaga para: "+ETV[v.etapa+1],"avancaVaga",{id:v.id},"mini",disIf())+'</div>':'')+'</div>';
+  h+='<div class="card pilha" style="margin-top:14px"><div class="grupo">Dados da vaga</div><p class="sec peq">Pedida pelo gestor '+esc(v.gestor)+' em '+fd(v.solic)+' [[1.1]]. Confirme os dados com ele [[1.2]].</p><div class="grade">'+fld("v-"+v.id+"-cargo","Cargo [[1.2.1]]",v.cargo,b+"cargo")+selF("v-"+v.id+"-mod","Modalidade de contratação [[1.2.3]]",v.mod,["CLT","PJ"],b+"mod")+fld("v-"+v.id+"-rem","Remuneração [[1.2.4]]",v.rem,b+"rem",{re:true,err:lerValor(v.rem)===null?"Valor inválido.":""})+fld("v-"+v.id+"-ini","Previsão de início [[1.2.5]]",v.inicio,b+"inicio",{type:"date"})+taF("v-"+v.id+"-req","Requisitos solicitados [[1.2.2]]",v.req,b+"req",{todo:true,aj:"Um requisito por linha."})+'</div></div>';
+  h+='<div class="card pilha" style="margin-top:14px"><div class="grupo">Divulgação</div><div class="grade">'+fld("v-"+v.id+"-canais","Onde foi divulgada [[1.3]]",v.canais,b+"canais")+fld("v-"+v.id+"-divd","Data da divulgação",v.divd,b+"divd",{type:"date"})+'</div><div>'+bt(v.etapa>=1?"Divulgação registrada":"Registrar a divulgação","divulga",{id:v.id},"mini",disIf(v.etapa>=1))+'</div></div>';
+  h+='<div class="card pilha" style="margin-top:14px"><div class="linha entre"><div class="grupo">Currículos [[1.4]]</div>'+bt("Registrar currículo recebido (exemplo)","novoCV",{id:v.id},"mini",disIf())+'</div>';
+  if(!v.cands.length)h+='<p class="sec">Nenhum currículo ainda. Eles aparecem aqui conforme chegam.</p>';
+  v.cands.forEach(function(c){
+    var n=reqs.filter(function(r,i){return c.reqs[i];}).length;
+    h+='<div class="card" style="background:var(--inset)"><div class="linha entre"><div><span class="forte">'+esc(c.nome)+'</span> <span class="sec peq">· recebido em '+fd(c.rec)+'</span><div class="peq">Atende '+n+' de '+reqs.length+' requisitos</div></div><div class="linha">'+(c.f.dec==="apr"?pill("Aprovado","p-ok"):c.f.dec==="nao"?pill("Não aprovado","p-na"):"")+(c.ent?lk("Ver a Entrada criada","irEntrada",{m:c.ent}):"")+bt(S.gCand===c.id?"Fechar":"Abrir","abreCand",{id:c.id},"mini")+'</div></div>';
+    if(S.gCand===c.id)h+=vCand(v,c,reqs);
+    h+='</div>';
+  });
+  return h+'</div>';
+}
+function vCand(v,c,reqs){
+  var p="rec/vagas/"+v.id+"/cands/"+c.id+"/",f=c.f,i=c.id,rh=souRH();
+  function lock(c1){return " disabled".slice(0,0)+(rh&&c1?"":" disabled");}
+  var h='<ul class="etapas" style="margin-top:10px">';
+  h+='<li><div class="linha"><span>[[1.5,1.9]] <span class="forte">Requisitos avaliados</span></span></div>'+reqs.map(function(r,k){return chkF("rq-"+i+"-"+k,esc(r),c.reqs[k],p+"reqs/"+k);}).join("")+'</li>';
+  h+='<li><div class="linha"><span>[[1.6,1.7,1.8]] <span class="forte">Entrevista online com o RH</span></span>'+(f.conv?pill("Convite enviado","p-ok"):pill("Convite não enviado","p-pend"))+'</div><div class="grade3">'+fld("rh-"+i+"-d","Data",c.rh.d,p+"rh/d",{type:"date"})+fld("rh-"+i+"-h","Horário",c.rh.h,p+"rh/h",{ph:"10:00"})+fld("rh-"+i+"-l","Link",c.rh.link,p+"rh/link",{ph:"https://"})+'</div><div class="linha">'+bt(f.conv?"Reenviar o convite":"Enviar o convite ao candidato","gConvite",{v:v.id,c:i},"mini",disIf())+chkF("erh-"+i,"Entrevista realizada",f.erh,p+"f/erh",{dis:!(rh&&f.conv)})+'</div></li>';
+  h+='<li><div class="linha"><span>[[1.10]] <span class="forte">Encaminhar ao gestor</span></span>'+(f.enc?pill("Encaminhado","p-ok"):"")+'</div>'+bt("Encaminhar ao gestor "+esc(v.gestor),"gEnc",{v:v.id,c:i},"mini",disIf(!f.erh||f.enc))+'</li>';
+  h+='<li><div class="linha"><span>[[1.11]] <span class="forte">Entrevista do candidato com o gestor</span></span>'+(f.eg?pill("Agendada","p-ok"):"")+'</div><div class="grade3">'+fld("eg-"+i+"-d","Data",c.eg.d,p+"eg/d",{type:"date",dis:!(rh&&f.enc)})+fld("eg-"+i+"-h","Horário",c.eg.h,p+"eg/h",{dis:!(rh&&f.enc),ph:"15:00"})+'</div>'+bt("Registrar o agendamento","gEg",{v:v.id,c:i},"mini",disIf(!f.enc||f.eg))+'</li>';
+  h+='<li><div class="linha"><span>[[1.12]] <span class="forte">Decisão e parecer do gestor</span></span>'+(f.par?pill("Parecer registrado","p-ok"):"")+'</div><div class="grade">'+selF("pa-"+i+"-r","O gestor diz",c.par.r,[["apr","Aprovar o candidato"],["nao","Não aprovar"]],p+"par/r",{dis:!(rh&&f.eg)})+fld("pa-"+i+"-t","Parecer em uma frase",c.par.t,p+"par/t",{dis:!(rh&&f.eg)})+'</div><p class="peq sec">O gestor responde por e-mail; o RH registra aqui.</p>'+bt("Registrar o parecer","gPar",{v:v.id,c:i},"mini",disIf(!f.eg||f.par))+'</li>';
+  h+='<li><div class="linha"><span>[[1.13]] <span class="forte">Registrar a decisão da vaga</span></span>'+(f.dec?pill(f.dec==="apr"?"Aprovado":"Não aprovado","p-ok"):"")+'</div><div class="linha">'+bt("Aprovar o candidato","gAprova",{v:v.id,c:i},"mini btn-p",disIf(!f.par||!!f.dec))+bt("Não aprovar","gNao",{v:v.id,c:i},"mini",disIf(!f.par||!!f.dec))+'</div></li>';
+  h+='<li><div class="linha"><span>[[1.14]] <span class="forte">Informar o resultado ao candidato</span></span>'+(f.res?pill("Informado","p-ok"):"")+'</div>'+bt("Informar o resultado","gRes",{v:v.id,c:i},"mini",disIf(!f.dec||f.res))+'</li></ul>';
+  return h;
+}
+A.abreVaga=function(d){S.gSel=d.id;S.gCand=null;render();};
+A.voltaVaga=function(){S.gSel=null;render();};
+A.abreCand=function(d){S.gCand=S.gCand===d.id?null:d.id;render();};
+A.avancaVaga=function(d){var v=vagaPorId(d.id);v.etapa=Math.min(5,v.etapa+1);render();};
+A.divulga=function(d){var v=vagaPorId(d.id);if(!v.canais.trim()){toast("Diga onde a vaga foi divulgada.");return;}v.etapa=Math.max(v.etapa,1);render();toast("Divulgação registrada.");};
+A.novaVaga=function(){dlgAbrir(dl("Registrar vaga pedida pelo gestor",'<div class="campo"><label for="nv-cargo">Cargo</label><input type="text" id="nv-cargo" data-foco="1"></div><div class="campo"><label for="nv-gestor">Gestor</label><select id="nv-gestor"><option>Patrícia Lins</option><option>Rodrigo Azevedo</option></select></div>',cancelar()+bt("Registrar a vaga","salvaVaga",{},"btn-p")));};
+A.salvaVaga=function(){var c=vIn("nv-cargo");if(c.length<3){erroDlg("Informe o cargo.");return;}var id="V"+(D.rec.vagas.length+1);D.rec.vagas.push({id:id,cargo:c,req:"",mod:"CLT",rem:"",inicio:"2027-01-11",gestor:vIn("nv-gestor"),solic:HOJE,etapa:0,canais:"",divd:"",cands:[]});S.gSel=id;fecha();render();toast("Vaga registrada. Confirme os dados com o gestor.");};
+A.novoCV=function(d){var v=vagaPorId(d.id),n=NOMES_CV[D.rec.nomeIx%NOMES_CV.length];D.rec.nomeIx++;v.cands.push(cand("k"+Date.now()%100000,n,HOJE,[],{}));v.etapa=Math.max(v.etapa,2);render();toast("Currículo de "+n+" registrado (exemplo).");};
+A.gConvite=function(d){var v=vagaPorId(d.v),c=candPorId(v,d.c);
+  if(!c.rh.d||!c.rh.h||!c.rh.link){toast("Preencha data, horário e link antes de enviar o convite.");return;}
+  dlgAbrir(dl("Enviar o convite da entrevista",'<p class="sec peq">Prévia do e-mail. Nada é enviado de verdade.</p>'+mailBox(c.nome,"Convite para entrevista online · "+v.cargo,"Olá, "+c.nome.split(" ")[0]+".\n\nSua entrevista online será em "+fd(c.rh.d)+", às "+c.rh.h+".\nLink: "+c.rh.link+"\n\nControladoria/RH"),cancelar()+bt("Enviar o convite","gConviteOk",{v:d.v,c:d.c},"btn-p")));};
+A.gConviteOk=function(d){var v=vagaPorId(d.v);candPorId(v,d.c).f.conv=true;v.etapa=Math.max(v.etapa,3);fecha();render();toast("Convite registrado como enviado.");};
+A.gEnc=function(d){var v=vagaPorId(d.v);candPorId(v,d.c).f.enc=true;v.etapa=Math.max(v.etapa,4);render();toast("Candidato encaminhado ao gestor.");};
+A.gEg=function(d){var v=vagaPorId(d.v),c=candPorId(v,d.c);if(!c.eg.d||!c.eg.h){toast("Informe data e horário.");return;}c.f.eg=true;render();};
+A.gPar=function(d){var v=vagaPorId(d.v),c=candPorId(v,d.c);c.f.par=true;render();toast("Parecer registrado.");};
+A.gNao=function(d){var v=vagaPorId(d.v);candPorId(v,d.c).f.dec="nao";render();toast("Decisão registrada.");};
+A.gRes=function(d){var v=vagaPorId(d.v),c=candPorId(v,d.c),ap=c.f.dec==="apr";
+  dlgAbrir(dl("Informar o resultado ao candidato",'<p class="sec peq">Prévia da mensagem. Nada é enviado de verdade.</p>'+mailBox(c.nome,"Resultado do processo seletivo · "+v.cargo,ap?"Olá, "+c.nome.split(" ")[0]+".\n\nQueremos muito contar com você. Em breve entramos em contato para combinar os próximos passos e a documentação.\n\nControladoria/RH":"Olá, "+c.nome.split(" ")[0]+".\n\nAgradecemos sua participação. Neste momento seguiremos com outro perfil, e manteremos seu currículo em nossa base.\n\nControladoria/RH"),cancelar()+bt("Registrar como informado","gResOk",{v:d.v,c:d.c},"btn-p")));};
+A.gResOk=function(d){var v=vagaPorId(d.v);candPorId(v,d.c).f.res=true;fecha();render();toast("Resultado registrado.");};
+A.gAprova=function(d){
+  var v=vagaPorId(d.v),c=candPorId(v,d.c);
+  dlgAbrir(dl("Aprovar "+esc(c.nome)+"?",'<p>Isto cria a Entrada em Movimentações já com os dados da vaga. Ninguém digita de novo.</p><dl class="dados"><div><dt>Nome</dt><dd>'+esc(c.nome)+'</dd></div><div><dt>Cargo</dt><dd>'+esc(v.cargo)+'</dd></div><div><dt>Remuneração</dt><dd>'+brl(lerValor(v.rem)||0)+'</dd></div><div><dt>Modalidade</dt><dd>'+v.mod+'</dd></div><div><dt>Previsão de início</dt><dd>'+fd(v.inicio)+'</dd></div><div><dt>Gestor</dt><dd>'+esc(v.gestor)+'</dd></div></dl><div class="campo"><label for="ga-cc">Centro de custo (a Entrada precisa dele)</label><select id="ga-cc" data-foco="1">'+CCS.map(function(x){return '<option>'+x+'</option>';}).join("")+'</select></div><div class="grupo">O que muda</div><ul class="pontos"><li>Nasce uma Entrada com as etapas de 2.1 a 2.18, em Movimentações.</li><li>A vaga vai para a etapa Decisão.</li></ul><div class="grupo">O que não muda</div><ul class="pontos"><li>Nenhum cadastro de colaborador é criado agora. Isso só acontece quando a Entrada for concluída.</li><li>O candidato não é avisado: o resultado é a etapa 1.14, à parte.</li></ul>',cancelar()+bt("Aprovar e criar a Entrada","gAprovaOk",{v:d.v,c:d.c},"btn-p")));
+};
+A.gAprovaOk=function(d){var v=vagaPorId(d.v),c=candPorId(v,d.c),id="M"+(D.movs.length+10);var m=novaEntrada(id,c.nome,v.cargo,v.rem,vIn("ga-cc")||"DPSP",v.mod,v.inicio,v.gestor,"000.000.000-00");marca(m,["2.1"],"a");D.movs.push(m);c.f.dec="apr";c.ent=id;v.etapa=5;fecha();render();toast("Entrada criada em Movimentações com os dados da vaga.");};
+A.irEntrada=function(d){S.aba="B";S.bSub="and";S.bSel=d.m;S.foco=true;render();};
+
+/* ============ H. Comunicação ============ */
+var T_CAMP=[["12.1.1","","Validar a campanha com a diretoria","RH e Diretoria"],["12.1.2","","Definir o início da campanha","RH"],["12.1.3","","Produzir a arte da campanha","RH"],["12.1.4","","Enviar a arte para impressão na gráfica","RH"],["12.1.5","","Organizar brindes da campanha ou da data comemorativa","RH","",1]];
+function camp(id,nome,ini,datas,sts){var c={id:id,nome:nome,ini:ini,etapas:mkEt(T_CAMP)};c.etapas.forEach(function(e,i){e.data=datas[i];e.st=sts[i]||"p";});return c;}
+function dCom(){
+  var k1=camp("K1","Novembro Azul","2026-11-03",["2026-10-20","2026-11-03","2026-10-27","2026-10-29","2026-11-02"],["f","f","f","f","na"]);k1.etapas[4].mot="Sem brindes nesta campanha.";
+  return {
+   camp:[k1,camp("K2","Natal Manfac","2026-12-01",["2026-11-10","2026-12-01","2026-11-17","2026-11-20","2026-11-27"],["a","p","p","p","p"]),camp("K3","Verão com segurança","2027-01-11",["2026-12-14","2027-01-11","2026-12-21","2026-12-28","2027-01-04"],[])],
+   coms:[
+    {id:"cm1",titulo:"Boas-vindas a Larissa Matos",origem:"Movimentações · Entrada de Larissa Matos, etapa 2.16",precisa:false,valid:"nao",por:"",env:"",zap:"",txt:"Hoje damos as boas-vindas a Larissa Matos, que chega como Analista de Operações e começa em 16/11. Desejamos uma ótima chegada!"},
+    {id:"cm2",titulo:"Horário especial de fim de ano",origem:"",precisa:true,valid:"pend",por:"",env:"",zap:"",txt:"Atenção, equipe! Entre 24/12 e 02/01 o atendimento terá horário especial. Os plantões seguem a escala já divulgada."},
+    {id:"cm3",titulo:"Campanha Novembro Azul",origem:"",precisa:true,valid:"ok",por:"Diretoria (José)",env:"03/11/2026 08:30",zap:"03/11/2026 08:41",txt:"Começou o Novembro Azul. Cuide da sua saúde: o RH pode ajudar a agendar seus exames."}
+   ],
+   comSel:"cm1",
+   conf:[
+    {id:"cf1",nome:"Confraternização de fim de ano",orc:"12000,00",data:"2026-12-18",hora:"18:30",comes:"Churrasco, saladas, refrigerantes e sobremesa",local:"Espaço de eventos (a definir)",prep:[{t:"Reservar o espaço",f:true},{t:"Contratar o buffet",f:false},{t:"Confirmar presenças",f:false}]},
+    {id:"cf2",nome:"Café de boas-vindas aos novos colaboradores",orc:"600,00",data:"2026-11-17",hora:"09:00",comes:"Café, pão de queijo e bolo",local:"Copa da sede",prep:[{t:"Pedir o café e os salgados",f:false}]}
+   ]
+  };
+}
+var MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function vH(){
+  var h=cab("H","Comunicação","Campanhas internas, comunicados e confraternizações. O envio de WhatsApp é manual: o sistema prepara o texto e você cola.");
+  h+=segHtml("hSub",[["camp","Calendário de campanhas"],["com","Comunicados"],["conf","Confraternizações"]],S.hSub,"Partes da comunicação");
+  if(S.hSub==="camp"){
+    h+='<p class="sec peq" style="margin-bottom:12px">Planejar o calendário de campanhas internas [[12.1]]. Cada etapa tem data e situação.</p><div class="pilha-g">';
+    var gr={};D.com.camp.slice().sort(function(a,b){return a.ini<b.ini?-1:1;}).forEach(function(c){var k=c.ini.slice(0,7);(gr[k]=gr[k]||[]).push(c);});
+    Object.keys(gr).sort().forEach(function(k){
+      h+='<section><h2 style="margin-bottom:8px">'+MESES[+k.slice(5)-1]+' de '+k.slice(0,4)+'</h2><div class="pilha">';
+      gr[k].forEach(function(c){
+        var f=c.etapas.filter(function(e){return feitoSt(e.st);}).length;
+        h+='<div class="card pilha"><div class="linha entre"><div><span class="forte">'+esc(c.nome)+'</span> <span class="sec peq">· começa em '+fd(c.ini)+'</span></div>'+pill(f+" de "+c.etapas.length+" etapas","")+'</div><ul class="etapas">'+c.etapas.map(function(e){return stRow("camp",c,e);}).join("")+'</ul>'+(c.etapas[0].st!=="f"?'<div class="linha">'+bt("Validar como Diretoria","validaCamp",{id:c.id},"mini",disIf(S.papel!=="dir"))+(S.papel==="rh"?'<span class="peq sec">A validação é feita pela Diretoria no sistema. Mude "Ver como" para Diretoria para testar.</span>':'')+'</div>':'')+'</div>';
+      });
+      h+='</div></section>';
+    });
+    h+='</div>';
+  }
+  if(S.hSub==="com"){
+    h+='<p class="sec peq" style="margin-bottom:12px">Comunicados [[12.2]]: conteúdo [[12.2.1]], validação da diretoria quando aplicável [[12.2.2]] e disparo por e-mail e WhatsApp quando aplicável [[12.2.3]].</p><div class="seg" role="group" aria-label="Comunicados" style="margin-bottom:14px">'+D.com.coms.map(function(c){return '<button type="button" data-act="setS" data-k="comSelX" data-v="'+c.id+'" aria-pressed="'+(D.com.comSel===c.id)+'">'+esc(c.titulo)+'</button>';}).join("")+'</div>';
+    var c=D.com.coms.filter(function(x){return x.id===D.com.comSel;})[0],b="com/coms/"+c.id+"/";
+    var podeEnviar=!c.precisa||c.valid==="ok";
+    h+='<div class="card pilha">'+(c.origem?'<div>'+pill("Veio de Movimentações","sis")+' <span class="sec peq">'+esc(c.origem)+'</span></div>':'')+fld("cm-titulo","Título",c.titulo,b+"titulo")+taF("cm-txt","Conteúdo do comunicado",c.txt,b+"txt",{aj:"O mesmo texto serve para o e-mail e para o WhatsApp."})+chkF("cm-prec","Precisa de validação da diretoria",c.precisa,b+"precisa");
+    h+='<div class="linha"><span class="rot">Validação:</span>'+(!c.precisa?pill("Não precisa","p-na"):c.valid==="ok"?pill("Validado por "+esc(c.por),"p-ok"):pill("Aguardando a diretoria","p-aviso")+bt("Validar como Diretoria","validaCom",{id:c.id},"mini",disIf(S.papel!=="dir")))+'</div>';
+    if(c.precisa&&c.valid!=="ok"&&S.papel==="rh")h+='<p class="peq sec">A validação é feita pela Diretoria no sistema. Mude "Ver como" para Diretoria para testar.</p>';
+    h+='<div class="linha">'+bt("Enviar por e-mail","emailCom",{id:c.id},"btn-p",disIf(!podeEnviar))+bt("Copiar texto para o WhatsApp","copiaZap",{id:c.id},"",disIf(!podeEnviar))+'</div>';
+    h+='<p class="peq sec">O envio de WhatsApp é manual: o botão copia o texto e você cola na conversa ou no grupo.</p>';
+    if(c.env||c.zap)h+='<ul class="pontos peq">'+(c.env?'<li>E-mail enviado em '+c.env+'</li>':'')+(c.zap?'<li>Texto copiado para o WhatsApp em '+c.zap+'</li>':'')+'</ul>';
+    if(!podeEnviar)h+='<p class="peq sec">Envio liberado depois da validação da diretoria.</p>';
+    h+='</div>';
+  }
+  if(S.hSub==="conf"){
+    h+='<p class="sec peq" style="margin-bottom:12px">Confraternizações [[12.3]]: planejar o evento [[12.3.1]] com orçamento [[12.3.2]], data [[12.3.3]], horário [[12.3.4]], comes e bebes [[12.3.5]], local [[12.3.6]] e preparativos [[12.3.7]].</p><div class="pilha">';
+    D.com.conf.forEach(function(e){
+      var b="com/conf/"+e.id+"/",f=e.prep.filter(function(p){return p.f;}).length;
+      h+='<div class="card pilha"><div class="linha entre"><h2>'+esc(e.nome)+'</h2>'+pill(f+" de "+e.prep.length+" preparativos","")+'</div><div class="grade">'+fld("cf-"+e.id+"-orc","Orçamento",e.orc,b+"orc",{re:true,err:lerValor(e.orc)===null?"Valor inválido.":"",aj:lerValor(e.orc)!==null?"Previsto: "+brl(lerValor(e.orc)):""})+fld("cf-"+e.id+"-data","Data",e.data,b+"data",{type:"date"})+fld("cf-"+e.id+"-hora","Horário",e.hora,b+"hora",{ph:"18:30"})+fld("cf-"+e.id+"-local","Local",e.local,b+"local")+taF("cf-"+e.id+"-comes","Comes e bebes",e.comes,b+"comes",{todo:true})+'</div><div class="rot">Preparativos</div><ul class="lista">'+e.prep.map(function(p,i){return '<li>'+chkF("cf-"+e.id+"-p"+i,esc(p.t),p.f,b+"prep/"+i+"/f")+'</li>';}).join("")+'</ul><div class="linha"><div class="campo grow"><label for="cf-'+e.id+'-novo">Novo preparativo</label><input type="text" id="cf-'+e.id+'-novo"'+dis()+'></div>'+bt("Adicionar","addPrep",{id:e.id},"mini",disIf())+'</div></div>';
+    });
+    h+='</div>';
+  }
+  return h;
+}
+A.validaCamp=function(d){var c=D.com.camp.filter(function(x){return x.id===d.id;})[0];c.etapas[0].st="f";render();toast("Campanha validada pela Diretoria.");};
+A.validaCom=function(d){var c=D.com.coms.filter(function(x){return x.id===d.id;})[0];c.valid="ok";c.por="Diretoria ("+eu()+")";render();toast("Comunicado validado.");};
+A.emailCom=function(d){
+  var c=D.com.coms.filter(function(x){return x.id===d.id;})[0],clt=PES.filter(function(p){return p.t==="CLT";}),com=clt.filter(function(p){return p.em;}).length;
+  dlgAbrir(dl("Enviar o comunicado por e-mail",'<p class="sec peq">Prévia. Nada é enviado de verdade.</p>'+mailBox("Colaboradores com e-mail corporativo ("+com+" de "+clt.length+" no exemplo)",c.titulo,c.txt+"\n\nControladoria/RH")+(com<clt.length?nota("aviso","Alguém ficará sem receber","Quem está sem e-mail corporativo no cadastro não recebe. Preencha na ficha em Colaboradores, ou avise por outro meio."):""),cancelar()+bt("Enviar e registrar","emailOk",{id:d.id},"btn-p")));
+};
+A.emailOk=function(d){D.com.coms.filter(function(x){return x.id===d.id;})[0].env=agora();fecha();render();toast("E-mail registrado como enviado.");};
+A.copiaZap=function(d){
+  var c=D.com.coms.filter(function(x){return x.id===d.id;})[0];
+  copiaTexto(c.titulo+"\n\n"+c.txt).then(function(ok){
+    if(ok){c.zap=agora();render();toast("Texto copiado. Cole no WhatsApp: o envio é manual.");}
+    else{dlgAbrir(dl("Copie o texto à mão",'<p class="sec peq">O navegador não deixou copiar sozinho. Selecione o texto abaixo, copie e cole no WhatsApp. O envio é manual.</p><div class="campo"><label for="zap-txt">Texto do comunicado</label><textarea id="zap-txt" readonly data-foco="1">'+esc(c.titulo+"\n\n"+c.txt)+'</textarea></div>',bt("Fechar","fechar",{},"btn-p")));var t=$("#zap-txt");if(t)t.select();}
+  });
+};
+A.addPrep=function(d){var e=D.com.conf.filter(function(x){return x.id===d.id;})[0],t=vIn("cf-"+d.id+"-novo");if(t.length<3){toast("Escreva o preparativo.");return;}e.prep.push({t:t,f:false});render();};
+
+/* ============ I. Suposições ============ */
+var SUPOS=[
+ ["O gestor não entra no sistema nesta rodada","Ele responde por e-mail (validação de horas, de férias, parecer de vaga) e o RH registra a resposta.","Se vetada: o gestor ganha acesso próprio. Cada aviso vira um pedido dentro do sistema, com mais telas e a regra de quem enxerga o quê."],
+ ["Senhas de portão ficam fora do sistema","A rotina do mês só lembra de revisar; a senha vive no gerenciador de senhas da empresa.","Se vetada: o sistema passaria a guardar senha. Isso exige cofre próprio e regra de acesso rígida, porque um vazamento tem efeito físico."],
+ ["O contrato PJ mora no RH, não no Gestão de Fornecedores","O RH cuida de valor, vigência, assinatura e aditivo dos prestadores PJ.","Se vetada: o contrato passa para o Gestão de Fornecedores e o RH só lê. Muda onde se avisa o gestor e de onde o pagamento pega o valor."],
+ ["O ponto vem de um relatório exportado, sem integração","A integração com o VR Ponto não está contratada. O RH anexa o relatório de cada ciclo.","Se vetada (integração contratada): a importação some, as marcações chegam sozinhas e o cruzamento com os atendimentos do Cockpit passa a ser possível. Tem custo mensal."],
+ ["O patrimônio mora no RH até existir almoxarifado","Estoque e compra do item ficam em Compras. O RH controla quem está com o quê.","Se vetada: o controle migra para um almoxarifado quando ele existir, e esta seção vira consulta."],
+ ["O WhatsApp é manual","O sistema prepara e copia o texto; a pessoa cola e envia.","Se vetada: seria preciso contratar um serviço de envio automático, com custo e aprovação do WhatsApp para a empresa."],
+ ["O e-mail corporativo precisa estar preenchido no cadastro","Sem ele a pessoa não recebe aviso, comunicado nem contracheque por e-mail.","Se vetada: haveria outro canal de envio ou o RH entregaria tudo à mão. O campo hoje não existe no cadastro dos 50."],
+ ["Seguro e Celular exigem ajustes no Financeiro","São dois tipos novos de pagamento aceitos pelo Financeiro e categorias novas na lista de fixas, a cargo do José.","Se vetada: os dois cartões ficam só como conferência de rateio, e o lançamento continua à mão."],
+ ["O currículo é guardado por um prazo a definir","Este mockup usa 12 meses depois do fim da vaga, e depois apaga.","Se vetada: pode ser mais curto, ou guardado até o candidato pedir a remoção. Muda a rotina de limpeza."],
+ ["O arquivo do atestado só abre para a Controladoria/RH","A Diretoria vê apenas os dias de afastamento, sem arquivo e sem diagnóstico.","Se vetada: a Diretoria passa a abrir o arquivo. Isso amplia o número de pessoas que veem dado de saúde."]
+];
+function vI(){
+  var h=cab("I","Suposições a vetar","Dez coisas que assumimos para desenhar as telas. Se alguma estiver errada, diga o número e o que muda.");
+  h+='<ol class="lista card">'+SUPOS.map(function(s,i){return '<li><div class="linha" style="align-items:flex-start"><span class="letra" style="width:2em;height:2em;font-size:.85rem">'+(i+1)+'</span><div class="grow"><div class="forte">'+s[0]+'</div><div class="peq">'+s[1]+'</div><div class="peq sec" style="margin-top:6px"><b>'+s[2].slice(0,s[2].indexOf(":")+1)+'</b>'+s[2].slice(s[2].indexOf(":")+1)+'</div></div></div></li>';}).join("")+'</ol>';
+  return h;
+}
+
+/* ============ J. Cobertura ============ */
+var COB=[
+ ["1","Recrutamento e seleção","G · Recrutamento","Neste mockup"],
+ ["2","Admissão","B · Movimentações (etapas 2.1 a 2.18). O cadastro final é a ficha de Colaboradores","Neste mockup + Já existe (cadastro)"],
+ ["3","Ponto e banco de horas","D · Importação, Marcações e Banco de horas. A: 3.9","Neste mockup"],
+ ["4","Validação de horas extras e plantões","D · Horas extras e plantões","Neste mockup"],
+ ["5","Levantamento de colaboradores ativos CLT","A · Rotina do mês (17.1 e 5.1 a 5.3). A lista fica em Colaboradores","Neste mockup + Já existe (lista)"],
+ ["6","Folha de pagamento","D · Pacote da contabilidade e Fechamento (6.1 a 6.13). O lançamento dos pagamentos individuais foi o mockup anterior","Neste mockup"],
+ ["7","Atestados e afastamentos","D · Atestados","Neste mockup"],
+ ["8","Férias","C · Prazos (filtro Férias)","Neste mockup"],
+ ["9","Alterações cadastrais e funcionais","B · Movimentações (Alteração)","Neste mockup"],
+ ["10","Contratos PJ/MEI","C · Prazos (filtro Contratos PJ). 10.10 a 10.12 no modelo de B. O pagamento do PJ está em Pagamentos (mockup anterior)","Neste mockup"],
+ ["11","Encerramento de vínculo","B · Modelos de checklist (só o modelo, sem pessoa nem lista)","Neste mockup (somente o modelo)"],
+ ["12","Campanhas, comunicados e confraternizações","H · Comunicação","Neste mockup"],
+ ["13","Seguro de vida","E · Pagamentos (13.1 e 13.3 a 13.7). 13.2 via Entrada em B. 13.4 também em A","Neste mockup"],
+ ["14","Acompanhamento de ASOs","C · Prazos (filtro ASO). 2.6 em B","Neste mockup"],
+ ["15","Vale-refeição e vale-alimentação","15.2 em B (Entrada, Alteração e o modelo). 15.1 e 15.3 a 15.7 em Pagamentos","15.2 neste mockup; o resto no mockup anterior"],
+ ["16","Ajuda de custo e vale-transporte","Pagamentos","Mockup anterior (fora deste)"],
+ ["17","Atualizações mensais de controles","A · Rotina do mês (17.1 a 17.6). 17.5 também em D","Neste mockup"],
+ ["18","Controle de patrimônio","F · Patrimônio. 18.8 (conta dos celulares) em E","Neste mockup"]
+];
+function vJ(){
+  var h=cab("J","Cobertura das 18 áreas","Para cada área da lista do cliente: onde está e se já existe. Nada foi escondido; o que ficou de fora está na última tabela.");
+  h+='<div class="tbl"><table class="larga"><thead><tr><th>Área</th><th>Onde está</th><th>Situação</th></tr></thead><tbody>'+COB.map(function(r){return '<tr><td class="forte">'+r[0]+'. '+r[1]+'</td><td>'+r[2]+'</td><td>'+(/Neste/.test(r[3])&&!/mockup anterior/.test(r[3])?pill(r[3],"p-novo"):pill(r[3],"p-na"))+'</td></tr>';}).join("")+'</tbody></table></div>';
+  h+='<h2 style="margin:24px 0 8px">O que ficou de fora, de verdade</h2><ul class="lista card">'+[
+   ["Envio automático de WhatsApp","Fica manual (suposição 6). O sistema só copia o texto."],
+   ["Integração com o VR Ponto","Não contratada (suposição 4). Entra o relatório anexado. O cruzamento com os atendimentos do Cockpit está desabilitado, Depois do piloto."],
+   ["Gestor com acesso próprio","Não nesta rodada (suposição 1)."],
+   ["Senhas de portão","Não ficam no sistema (suposição 2). Só o lembrete mensal."],
+   ["Calendário de campanhas em grade de dias","Mostrado como agenda por mês, com as datas de cada etapa."],
+   ["Anexos e envios reais","Arquivos, e-mails e envios ao Financeiro são simulados neste mockup."],
+   ["Áreas 15 (exceto 15.2) e 16","Foram desenhadas no mockup anterior de Pagamentos e não se repetem aqui."]
+  ].map(function(x){return '<li><span class="forte">'+x[0]+'.</span> <span class="sec">'+x[1]+'</span></li>';}).join("")+'</ul>';
+  return h;
+}
+
+/* ============ Estados, rotas e eventos ============ */
+var ABAS=[["A","Rotina"],["B","Movimentações"],["C","Prazos"],["D","Ponto"],["E","Pagamentos"],["F","Patrimônio"],["G","Recrutamento"],["H","Comunicação"]];
+var VAZIO={
+ A:["Nenhuma rotina criada para novembro","Quando houver, aqui aparece a lista do mês com data: relação de ativos, equipes de campo, chaves PIX, revisão das senhas, escala de plantão, planilha do seguro e fechamento de ponto.","Criar a rotina de novembro"],
+ B:["Nenhuma movimentação ainda","Aqui aparecem os processos de Entrada e de Alteração, cada um com suas etapas e quem faz cada uma.","Iniciar o primeiro processo"],
+ C:["Nenhum prazo na agenda","Aqui aparecem férias, ASO e contratos PJ por faixa de vencimento: vencido, até 30, 60 e 90 dias.","Cadastrar o primeiro período aquisitivo"],
+ D:["Nenhum relatório de ponto neste ciclo","Depois que o RH anexar o relatório do VR Ponto, aparecem as marcações com problema, as horas extras para conferir e o pacote da contabilidade.","Anexar o primeiro relatório"],
+ E:["Nenhum pagamento de seguro ou celular neste mês","Aqui aparecem a relação de segurados e a conta dos celulares, com o rateio pronto para enviar ao Financeiro.","Começar pelo seguro"],
+ F:["Nenhum item de patrimônio cadastrado","Aqui aparecem os itens por pessoa e por item, com entrega, devolução e termos.","Registrar o primeiro item"],
+ G:["Nenhuma vaga aberta","Aqui aparecem as vagas pedidas pelos gestores, com currículos e entrevistas até a decisão.","Registrar a primeira vaga"],
+ H:["Nada planejado ainda","Aqui aparecem as campanhas, os comunicados e as confraternizações.","Planejar a primeira campanha"]
+};
+function tituloDe(a){return {A:"Rotina do mês",B:"Movimentações",C:"Prazos",D:"Ponto e fechamento",E:"Seguro e celular em Pagamentos",F:"Patrimônio",G:"Recrutamento",H:"Comunicação"}[a];}
+function view(){
+  if(S.papel==="nenhum")return '<div class="est-vazio"><h1 id="titulo" tabindex="-1" style="justify-content:center">Você não tem acesso ao RH</h1><p class="sec">Sua conta não tem nenhum papel neste módulo. Peça a liberação à Controladoria/RH ou à Diretoria.</p>'+bt("Voltar ao Hub","voltaHub",{},"")+'</div>';
+  var a=S.aba;
+  if(a==="I")return vI();
+  if(a==="J")return vJ();
+  if(S.estado==="carregando")return cab(a,tituloDe(a),"Carregando…")+'<div class="pilha" aria-busy="true"><div class="esq"></div><div class="esq"></div><div class="esq"></div></div>';
+  if(S.estado==="erro")return cab(a,tituloDe(a))+'<div class="est-erro" role="alert"><h2>Não foi possível carregar esta tela</h2><p>Nada foi perdido: tudo o que já foi salvo continua guardado. Foi só a leitura que falhou.</p>'+bt("Tentar de novo","tentar",{},"btn-p")+'</div>';
+  if(S.estado==="vazio"){var v=VAZIO[a];return cab(a,tituloDe(a))+'<div class="est-vazio"><h2>'+v[0]+'</h2><p class="sec">'+v[1]+'</p>'+(souRH()?bt(v[2],"comecar",{},"btn-p"):'<p class="peq">A Controladoria/RH ainda não começou.</p>')+'</div>';}
+  return {A:vA,B:vB,C:vC,D:vD,E:vE,F:vF,G:vG,H:vH}[a]();
+}
+function comoResponder(){
+  return '<section class="como" aria-labelledby="como-t"><h2 id="como-t">Como responder</h2><p class="sec" style="max-width:70ch">Pelo WhatsApp, uma linha por seção, com a letra do título. Exemplo: <code>A aprovado</code>, <code>B ajustar: o motivo do Não se aplica deveria ser opcional</code>, <code>C aprovado</code>. Para as suposições, use o número: <code>I.4 vetada</code>. Os números pequenos nas telas (como 2.7.3) são os itens da lista de atividades do cliente.</p></section>';
+}
+function navBuild(){
+  var m='<li><button type="button" disabled class="off" title="Já existe no sistema" aria-label="Colaboradores, já existe no sistema">Colaboradores <span class="tag">já existe</span></button></li>';
+  ABAS.forEach(function(a){m+='<li><button type="button" data-act="aba" data-a="'+a[0]+'"'+(S.aba===a[0]?' aria-current="page"':'')+'>'+a[1]+' <span class="tag">'+a[0]+'</span></button></li>';});
+  m+='<li class="sepa" aria-hidden="true"></li>';
+  [["I","Suposições"],["J","Cobertura"]].forEach(function(a){m+='<li><button type="button" data-act="aba" data-a="'+a[0]+'"'+(S.aba===a[0]?' aria-current="page"':'')+'>'+a[1]+' <span class="tag">'+a[0]+'</span></button></li>';});
+  $("#menu").innerHTML=S.papel==="nenhum"?"":m;
+  $("#seg-papel").innerHTML=[["rh","Controladoria/RH"],["dir","Diretoria"],["nenhum","Sem papel"]].map(function(o){return '<button type="button" id="sp-'+o[0]+'" data-act="papel" data-v="'+o[0]+'" aria-pressed="'+(S.papel===o[0])+'">'+o[1]+'</button>';}).join("");
+  $("#seg-estado").innerHTML=[["dados","Com dados"],["carregando","Carregando"],["vazio","Vazio"],["erro","Erro de carregamento"]].map(function(o){return '<button type="button" id="se-'+o[0]+'" data-act="estado" data-v="'+o[0]+'" aria-pressed="'+(S.estado===o[0])+'">'+o[1]+'</button>';}).join("");
+  $("#quem-nome").textContent=S.papel==="nenhum"?"Pessoa Exemplo":eu();
+  $("#quem-papel").textContent=ROTULO[S.papel];
+}
+function render(){
+  var ae=document.activeElement,foco=ae&&ae.id,dentroDlg=ae&&$("#dlg").contains(ae);
+  $("#tela").innerHTML=refs(view()+comoResponder());
+  navBuild();
+  if(S.foco){S.foco=false;var t=$("#titulo");if(t)t.focus();window.scrollTo(0,0);}
+  else if(foco&&!dentroDlg){var n=document.getElementById(foco);if(n&&n!==document.activeElement&&n.focus)n.focus({preventScroll:true});}
+}
+function novoD(){return {rotina:dRotina(),movs:dMovs(),prazos:dPrazos(),sesmtPedido:"",ponto:dPonto(),seg:dSeg(),pat:dPat(),rec:dRec(),com:dCom()};}
+function reiniciar(){S={papel:"rh",estado:"dados",aba:"A",bSub:"and",bSel:null,bOpen:"",cTipo:"todos",cFaixa:"todas",cSel:null,dSub:"imp",fSub:"item",fSel:null,gSel:null,gCand:null,hSub:"camp",foco:false};D=novoD();}
+A.setS=function(d){if(d.k==="comSelX"){D.com.comSel=d.v;}else{S[d.k]=d.v;if(d.k==="bSub")S.bSel=null;}render();};
+A.aba=function(d){S.aba=d.a;S.foco=true;if(S.estado==="erro"||S.estado==="carregando"){}render();};
+A.irAba=function(d){S.aba=d.a;S.foco=true;render();};
+A.papel=function(d){S.papel=d.v;render();};
+A.estado=function(d){S.estado=d.v;render();};
+A.fechar=function(){fecha();};
+A.reiniciar=function(){fecha();var p=S.papel;reiniciar();S.papel=p;render();toast("Demonstração reiniciada.");};
+A.tentar=function(){S.estado="carregando";render();setTimeout(function(){if(S.estado==="carregando"){S.estado="dados";render();}},900);};
+A.comecar=function(){S.estado="dados";render();};
+A.voltaHub=function(){toast("No sistema real isto leva ao Hub.");};
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-act]");
+  if(!el||el.disabled)return;
+  var f=A[el.dataset.act];
+  if(f){e.preventDefault();f(el.dataset,el);}
+});
+document.addEventListener("change",function(e){
+  var el=e.target;
+  if(el.dataset&&el.dataset.bind){
+    var v=el.type==="checkbox"?el.checked:el.value;
+    setPath(el.dataset.bind,v);
+    if(el.dataset.re)render();
+  }else if(el.dataset&&el.dataset.chg&&A[el.dataset.chg])A[el.dataset.chg](el.dataset,el);
+});
+$("#dlg").addEventListener("close",function(){if(focoAntes&&document.contains(focoAntes)&&focoAntes.focus)focoAntes.focus();});
+reiniciar();
+render();
+</script>
