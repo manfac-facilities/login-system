@@ -19,18 +19,26 @@ Atualizado pela sessão de coordenação. O estado de cada frente fica no fim.
 - Existência da caixa `rh@manfac.com.br`, para os avisos por e-mail.
 - Tolerância do boleto do VR (hoje R$ 10,00) e Transporte Urbano como despesa fixa.
 
-## Estado das frentes
+## Estado das frentes (atualizado 07/11, noite)
 
-| Frente | Branch | Situação |
-|---|---|---|
-| Início, Pessoas, Movimentações, Agenda | `rh-modulos` | Pronto e revisado |
-| Ponto e fechamento | `rh-modulos` (junto em `3ba1606`) | Pronto, revisado; correções em `rh-f3fix` |
-| Férias e Exames | `rh-f2` | Em construção |
-| Contratos PJ | `rh-f2c` | Em construção |
-| Patrimônio | `rh-f4` | Em construção |
-| Recrutamento e Comunicação | `rh-f5` | Em construção |
-| Benefícios, seguro e celular | `rh-f6` e Financeiro `fin-seguro-celular` | Em construção |
+Todas as frentes foram revisadas, sem bloqueio, e juntadas em `rh-modulos` (`d3c64db`): tsc, 2182 testes, 15 migrations do zero, lint e build verdes. Revisão final do conjunto em andamento (`docs/rh/2026-11-07-revisao-final.md`).
 
-## Decididas
+| Item | Situação |
+|---|---|
+| RH `rh-modulos` | Junção pronta; aguardando revisão final |
+| Financeiro `fin-seguro-celular` | Revisado, 0 bloqueios |
+| Next 16.4.5 `rh-next-16-4` | Pronto, mas sobre a `main` antiga; **não autorizado**. Recomendo refazer sobre a `main` nova depois do merge |
+| Produção hoje | Só 001 a 004 do RH; nenhuma pasta `rh-*` no storage (consultado 07/11) |
+| Categorias Omie | `2.03.13` = "Seguro de Vida", `2.04.05` = "Telefonia", ativas no catálogo de produção (consultado 07/11) |
 
-- 07/11, João no chat: "ok, pode seguir com só salário". A correção do total da folha depois do eSocial fica liberada enquanto nenhum pagamento do tipo `salario` daquele mês tiver sido enviado ao Financeiro. Os outros tipos não travam. Implementado em `rh-f3fix` (`66b17b6`).
+Autorizado pelo João em 07/11 (`docs/cliente/2026-11-07-rh-autorizacao-producao.md`): migrations 005 a 015, pasta `rh-arquivos`, merges de `rh-modulos` e `fin-seguro-celular`. Executo só se a revisão final não tiver bloqueio. **O Deploy dos dois apps fica com o João**, primeiro o Financeiro (com o `RH_INTEGRACAO_SECRET` corrigido), depois o RH.
+
+## Decisões pequenas que deixei reversíveis
+
+- Cancelar férias no dia do início gasta 1 dia (tirar o `+ 1` em `rh_cancelar_gozo` se a regra for outra).
+- Reserva de e-mail presa 15 min libera reenvio (pode chegar duas vezes, em vez de nunca).
+- Admissão cancelada volta o candidato a "sem decisão".
+- E-mail do gestor de contrato visível ao admin sem papel (igual à lista de Pessoas).
+- Seguro sem prêmio informado não confere o valor do boleto.
+- Número completo da linha de celular visível ao admin sem papel (dá para mascarar).
+- Funcionário CLT afastado continua ganhando períodos de férias.
