@@ -257,9 +257,6 @@ dialog::backdrop{background:rgba(5,10,20,.65)}
 
 /* Início */
 .ini-g{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
-.ata{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:12px}
-.ata button{appearance:none;background:var(--inset);border:1px solid var(--borda-l);border-radius:8px;padding:10px;display:flex;gap:8px;align-items:center;text-align:left;cursor:pointer;min-height:44px;font-weight:600;color:inherit}
-.ata button:hover{background:var(--hover)}
 
 /* Monitor largo: aproveita a largura, com painel a mais */
 @media (min-width:1600px){
@@ -267,7 +264,7 @@ dialog::backdrop{background:rgba(5,10,20,.65)}
   main{padding:24px 32px 72px}.topo{padding:8px 32px}.rodape{padding:0 32px 20px}
   .lista-g.com-lado{grid-template-columns:minmax(0,1fr) 360px}
   .lista-lado{display:block}
-  .ini-g{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,.85fr)}
+  .ini-g{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
   .reg-g.com-lado{grid-template-columns:minmax(0,1fr) 400px}
   .kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
   .dia{min-height:96px}.dia-t{display:block}
@@ -275,10 +272,8 @@ dialog::backdrop{background:rgba(5,10,20,.65)}
 /* Notebook */
 @media (min-width:1100px) and (max-width:1599px){
   .ini-g{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  .ini-g>.ata-c{grid-column:1/-1}
   .reg-g.com-lado{grid-template-columns:minmax(0,1fr) 320px}
   .dia{min-height:76px}.dia-t{display:block}
-  .ata{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
 }
 /* Tablet: lateral recolhida em ícones, uma tabela com menos colunas */
 @media (min-width:641px) and (max-width:1099px){
@@ -294,7 +289,6 @@ dialog::backdrop{background:rgba(5,10,20,.65)}
   .quem-t{display:none}
   .btn,.aba,.barra-f select,.barra-f input,.campo input,.campo select{min-height:44px}
   .ini-g{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ini-g>.ata-c{grid-column:1/-1}
   .quadro{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
   .cartoes{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -987,7 +981,7 @@ V.inicio=()=>{
   h+='<div class="ini-g">'+painel("Precisa de você",'<ul>'+pr.map(x=>'<li><button type="button" class="li-b"'+(x.act?' data-act="'+x.act+'" data-i="'+x.i+'"':' data-act="ir" data-m="'+x.ir[0]+'" data-i="'+x.ir[1]+'" data-a=""')+'><span class="gr"><span class="forte" style="display:block">'+esc(x.t)+'</span><span class="sec peq">'+esc(x.s)+'</span></span>'+tagPrazo(x.q)+'</button></li>').join("")+'</ul>');
   var prox7=agenda().filter(x=>dias(x.d)>=0&&!x.feito).slice(0,7);
   h+=painel("Próximos dias",'<ul>'+prox7.map(agLi).join("")+'</ul>',lk("Ver agenda","ir",{m:"agenda",i:"",a:""}));
-  h+='<div class="ata-c">'+painel("Módulos",'<div class="ata">'+MODS.filter(m=>m.id!=="inicio").map(m=>'<button type="button" data-act="ir" data-m="'+m.id+'" data-i="" data-a="">'+ic(m.ic)+'<span>'+esc(m.t)+'</span></button>').join("")+'</div>')+'</div></div>';
+  h+='</div>';
   return h;
 };
 

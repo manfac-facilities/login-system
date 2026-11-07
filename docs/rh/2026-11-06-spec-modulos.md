@@ -242,8 +242,8 @@ os demais derivam suas pendências de `rh_movimentacoes` e de `rh_colaboradores`
 Todo módulo tem indicadores, busca, filtros, tabela, página do registro, estados de carregando, vazio e erro, e os quatro comportamentos da seção 9.
 
 ### Início (`/`), F1
-**Entra:** saudação com o nome da sessão; 8 indicadores (ativos CLT, ativos PJ, férias, exames, contratos, admissões, vagas, devoluções); "Precisa de você" (até 7, por prazo); "Próximos dias" (até 7); atalhos de módulos; alerta de alteração não aplicada. Cada dado vem do módulo pelo registro da seção 7.5.
-**Fica de fora:** gráfico, painel configurável. Módulo não ligado não aparece nem conta.
+**Entra:** saudação com o nome da sessão; 8 indicadores (ativos CLT, ativos PJ, férias, exames, contratos, admissões, vagas, devoluções); "Precisa de você" (até 7, por prazo); "Próximos dias" (até 7); alerta de alteração não aplicada. Cada dado vem do módulo pelo registro da seção 7.5.
+**Fica de fora:** gráfico, painel configurável, atalhos de módulos no fim da página (pedido do João em 07/11: os módulos ficam só na lateral que abre e fecha). Módulo não ligado não aparece nem conta.
 
 ### Pessoas (`/pessoas`), F1
 **Entra:** lista com filtros de vínculo, centro de custo, situação, sem e-mail; aba "Relação de ativos do mês" (5.1, 5.2, 17.1, 17.2); ficha com abas Dados, Férias, Exames, Ponto, Benefícios, Pagamentos, Patrimônio, Documentos, Histórico; preenchimento de e-mails em lote; ações Nova alteração e Encerramento de vínculo.
@@ -497,7 +497,7 @@ Quatro faixas, com nomes no `globals.css` (`--breakpoint-tab: 40.0625rem`, `--br
 | Tabela | Cartões | Colunas de prioridade 1 e 2 | Até prioridade 3 | Todas |
 | Indicadores | 2 por linha | 4 por linha | Automático, Início em 4 | Início em 8 |
 | Registro | Uma coluna; o painel "lado" desce | Uma coluna | Lado de 320 px | Lado de 400 px |
-| Início | Uma coluna | 2 colunas | 2 colunas, atalhos embaixo | 3 colunas |
+| Início | Uma coluna | 2 colunas | 2 colunas | 2 colunas |
 | Agenda | Lista como padrão | Mês | Mês com textos | Mês com textos altos |
 | Abas | Grade de 3 | Linha | Linha | Linha |
 | Diálogo | Folha inferior, até 92% da altura | Central | Central | Central |
