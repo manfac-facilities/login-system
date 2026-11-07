@@ -30,3 +30,7 @@ Atualizado pela sessão de coordenação. O estado de cada frente fica no fim.
 | Patrimônio | `rh-f4` | Em construção |
 | Recrutamento e Comunicação | `rh-f5` | Em construção |
 | Benefícios, seguro e celular | `rh-f6` e Financeiro `fin-seguro-celular` | Em construção |
+
+## Decididas
+
+- 07/11, João no chat: "ok, pode seguir com só salário". A correção do total da folha depois do eSocial fica liberada enquanto nenhum pagamento do tipo `salario` daquele mês tiver sido enviado ao Financeiro. Os outros tipos não travam. Implementado em `rh-f3fix` (`66b17b6`).
