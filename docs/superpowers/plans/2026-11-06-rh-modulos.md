@@ -205,6 +205,16 @@ Ver tela nas 4 larguras sem login e sem tocar no banco.
 
 ---
 
+## Condição de entrada de F2 a F6 (revisão da F0, 06/11)
+
+Relatório: `docs/rh/2026-11-06-revisao-f0.md`. Corrigir antes de qualquer frente que os use, por tarefa própria, com teste:
+
+- **B1:** `rh_etapas_listar` devolve `dados` inteiro a `diretoria` e a admin sem papel. Antes da primeira etapa com dado de saúde.
+- **B2:** a classe do arquivo vem do navegador, com padrão `geral`. A classe passa a ser decidida no servidor, por módulo, e nunca assume `geral` sozinha.
+- **B3:** `textoSeguro` deixa passar valor sem prefixo, CPF com espaços e CID. Antes do primeiro módulo que envia e-mail.
+
+---
+
 ## F2: Férias, Exames, Contratos PJ
 
 **Migrations:** `008_rh_ferias.sql`, `009_rh_exames.sql`, `010_rh_contratos_pj.sql`. **Arquivos da frente:** `lib/ferias/*`, `lib/exames/*`, `lib/contratos/*`, `app/(modulo)/{ferias,exames,contratos}/**`, `components/{ferias,exames,contratos}/*`, `app/(modulo)/pessoas/[id]/_abas/{ferias,exames}.tsx`, as linhas `ferias`, `exames` e `contratos` de `registro.ts`, `lib/vitrine/dados/{ferias,exames,contratos}.ts`.
