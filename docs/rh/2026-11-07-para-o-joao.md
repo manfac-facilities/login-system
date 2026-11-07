@@ -42,3 +42,7 @@ Autorizado pelo João em 07/11 (`docs/cliente/2026-11-07-rh-autorizacao-producao
 - Seguro sem prêmio informado não confere o valor do boleto.
 - Número completo da linha de celular visível ao admin sem papel (dá para mascarar).
 - Funcionário CLT afastado continua ganhando períodos de férias.
+
+## Decididas
+
+- 07/11, João no chat: "ok, pode seguir com só salário". A correção do total da folha depois do eSocial fica liberada enquanto nenhum pagamento do tipo `salario` daquele mês tiver sido enviado ao Financeiro. Os outros tipos não travam. Implementado em `rh-f3fix` (`66b17b6`).
