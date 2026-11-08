@@ -6,3 +6,11 @@ Texto literal:
 >  - juntar rh-modulos na main do RH e fin-seguro-celular na main do Financeiro.
 
 Dada em resposta à proposta: executar depois de a junção e a revisão final do conjunto passarem sem bloqueio. O Deploy (clique no EasyPanel) continua com o João.
+
+## Teste de fumaça (08/11/2026)
+
+Texto literal do João, no chat:
+
+> Faz o teste de fumaça
+
+Às 15h31 o teste **não rodou**: a porta do Financeiro respondeu 401. Nada foi criado em produção.
