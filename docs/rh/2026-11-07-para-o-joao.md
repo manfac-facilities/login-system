@@ -3,6 +3,7 @@
 ## Atualização de 08/11, 16h
 
 - **A porta do Financeiro aceita o segredo, e a versão nova dele está no ar** (às 15h59: 400 em pedido incompleto, reconhece `seguro` e `celular`). O 401 das conferências de 08/11 era erro do teste do Claude: `C:\Users\joao-\.manfac-rh-integracao-secret` guarda a linha inteira `RH_INTEGRACAO_SECRET=valor`. Para testar, envie só o valor.
+- **Correções do code review juntadas na `main` do RH**, com 2205/2205 testes. **Só valem depois de um novo Deploy do RH.** Até lá, ninguém envia seguro, celular nem VR pelo RH.
 
 ## Atualização de 07/11, 23h (depois que você saiu)
 
