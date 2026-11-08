@@ -28,6 +28,8 @@ investigação para ser descoberto. O `AGENTS.md` mantém o resumo e aponta para
 
 ## Como confirmar que o build subiu
 
+**Isso só vale para o hub.** Sem sessão, `/rh` e `/financeiro` redirecionam ao `/login`, e os chunks dessa página são do hub, não dessas apps (erro cometido em 07/11). Nas apps separadas, confira com uma sessão logada.
+
 Não confie no painel nem em "já cliquei". Pegue os `/_next/static/chunks/*.js` de
 `https://hub.manfac.com.br/login` e confira o `Last-Modified` de todos:
 

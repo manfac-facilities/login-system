@@ -2,7 +2,7 @@
 
 ## Atualização de 07/11, 23h (depois que você saiu)
 
-- **Deploy continua com você, amanhã.** Conferi às 22h40: RH e Financeiro ainda no build de 06/11.
+- **Deploy continua com você, amanhã.** Correção em 08/11: a conferência das 22h40 não valia, porque `/rh` e `/financeiro` sem sessão redirecionam ao `/login` e os chunks lidos eram do hub.
 - **Pendências da revisão final juntadas na `main` do RH** (`aabac50`), com code review e 2182/2182 testes:
   - aviso na tela de que diretoria e administradores leem o motivo de concluir e o de cancelar (BK1, só texto);
   - backlog da F6 em `DIVIDAS.md`, sem B1 e B3, que já estavam corrigidos (BK5);
