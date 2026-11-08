@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RH no layout do hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens: os mesmos de app/globals.css do hub. As cores de etiqueta são as classes Tailwind v4 que o Frotas usa. */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--orange:#f05a28;--orange-hover:#d94e22;
+  --muted:#94a3b8;--muted-dark:#4a6080;--border:#1e3a5f;--input-bg:#0f1f3d;--error:#ef4444;
+  --texto:#ffffff;--texto-suave:#e8eef7;--navy-hover:#10285f;
+  --verde-bg:#0d542b;--verde:#7bf1a8;--ambar-bg:#7b3306;--ambar:#ffd230;
+  --vermelho-bg:#82181a;--vermelho:#ffa2a2;--azul-bg:#1c398e;--azul:#8ec5ff;
+  --erro-borda:#e7000b;--erro-fundo:#460809;
+  --nota:#fbbf24;--nota-fundo:#2a2108;
+  --aux:var(--muted-dark);
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto);margin:0}
+body{font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,p,dl,dd,ul{margin:0;padding:0}
+ul{list-style:none}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* ------------------------------ fora da moldura: o mockup ------------------------------ */
+.m-pag{max-width:1760px;margin:0 auto;padding:24px 16px 64px}
+@media(min-width:900px){.m-pag{padding:32px 32px 80px}}
+.m-cab h1{font-size:24px;font-weight:700}
+.m-cab p{color:var(--muted);margin-top:4px;max-width:78ch}
+.m-sec{margin-top:32px}
+.m-sec>h2{font-size:18px;font-weight:600;margin-bottom:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.num-sec{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;border-radius:6px;background:var(--border);font-size:13px;font-weight:600}
+.cmp{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cmp-l{display:grid;grid-template-columns:1fr;gap:4px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.cmp-l:last-child{border-bottom:0}
+.cmp-l b{font-weight:600}
+.cmp-l .hj{color:var(--muted)}
+.cmp-l .hj::before{content:'Hoje: ';color:var(--muted);font-weight:600}
+.cmp-l .nv::before{content:'Novo: ';color:var(--orange);font-weight:600}
+.cmp-cab{display:none}
+@media(min-width:900px){
+  .cmp-l{grid-template-columns:170px 1fr 1fr;gap:16px}
+  .cmp-cab{display:grid;background:var(--navy);color:var(--muted);font-weight:500}
+  .cmp-l .hj::before,.cmp-l .nv::before{content:none}
+}
+.ctl{position:relative;z-index:60;background:var(--background);border:1px solid var(--border);border-radius:12px;padding:8px 12px}
+@media(min-width:900px){.ctl{position:sticky;top:8px}}
+.ctl-l{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ctl-r{color:var(--muted);font-size:12px}
+.ctl-r2{margin-left:8px}
+.sec-l{margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;font-weight:500}
+.seg button:hover{border-color:var(--muted);color:#fff}
+.seg button[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:#fff}
+.seg button small{font-size:11px;opacity:.75;font-weight:400;margin-left:4px}
+@media(max-width:899px){.seg button{min-height:44px}}
+.ctl-info{color:var(--muted);font-size:12px;margin-left:auto}
+.palco{margin-top:12px;overflow:hidden;position:relative}
+.quadro{position:absolute;top:0;left:0;transform-origin:top left;border:2px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background);display:flex;flex-direction:column}
+.url{flex:none;height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#07101f;border-bottom:1px solid var(--border);color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden}
+.url i{width:8px;height:8px;border-radius:50%;background:var(--border);flex:none}
+.notas{display:grid;gap:12px}
+@media(min-width:900px){.notas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.nota-d{border:1px solid var(--nota);background:var(--nota-fundo);border-radius:12px;padding:14px 16px;scroll-margin-top:150px}
+.nota-d.pisca{box-shadow:0 0 0 3px var(--nota)}
+.nota-d h3{font-size:14px;font-weight:600;color:var(--nota);margin-bottom:6px}
+.nota-d p{color:var(--texto-suave);margin-top:4px}
+.nota-d b{font-weight:600}
+.nota-d .seg{margin-top:8px}
+.m-rod{color:var(--muted);font-size:12px;margin-top:24px}
+.pin{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 5px;border-radius:5px;background:var(--nota);color:#1a1405;font:700 11px/1 var(--fonte);flex:none;vertical-align:middle}
+[data-pins=nao] .pin{display:none}
+
+/* ------------------------------ dentro da moldura: o RH simulado ------------------------------ */
+.sim{container:sim/inline-size;position:relative;flex:1;min-height:0;overflow:hidden;background:var(--background)}
+.app{display:flex;flex-direction:column;height:100%}
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.rola{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.area{container:area/inline-size}
+.pag{padding:16px}
+
+/* Lateral: components/sofia/Sidebar.tsx (w-64, p-4, bg navy, ativo laranja) */
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+[data-gaveta=sim] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:block}
+.volta{color:var(--muted);font-size:12px;text-decoration:none;display:inline-flex;align-items:center;transition:color .15s}
+.volta:hover{color:#fff}
+.lat-fecha{color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px}
+.lat-fecha:hover{color:#fff}
+.lat-grupo{margin-bottom:24px}
+.lat-tit{position:relative;color:var(--aux);font-size:12px;text-transform:uppercase;letter-spacing:.025em;font-weight:600;padding:0 8px;margin-bottom:8px}
+.lat-tit .pin{position:absolute;right:0;top:-2px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px;border-radius:4px;font-size:14px;margin-bottom:4px;color:var(--muted);text-decoration:none;transition:background-color .15s,color .15s,transform .15s}
+.item:hover{background:var(--border);color:#fff}
+.item:active{transform:scale(.95)}
+.item[aria-current=page]{background:var(--orange);color:#fff}
+.cont{min-width:20px;padding:0 6px;border-radius:999px;background:var(--border);color:#fff;font-size:11px;font-weight:500;line-height:18px;text-align:center}
+.item[aria-current=page] .cont{background:#fff;color:var(--orange-hover)}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.lat-pe .item{margin-bottom:4px}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+[data-gaveta=sim] .veu{display:block}
+
+/* Topo do celular: igual ao do Frotas (navy, nome, Voltar ao Hub, botão de menu) */
+.topo-cel{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:12px 16px}
+.topo-cel .volta{margin:-12px 0 -14px}
+.topo-cel-acoes{display:flex;align-items:center;gap:8px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+
+/* Topo do tablet para cima: busca, nome e papel. O Frotas não tem. */
+.topo{display:none;flex:none;height:56px;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--background);position:relative;z-index:20}
+.topo .ic-btn{width:36px;height:36px}
+.busca{position:relative;flex:1;max-width:448px;min-width:0}
+.busca svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.busca input{width:100%;height:36px;padding:0 12px 0 32px;border-radius:8px;background:var(--input-bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none}
+.busca input::placeholder{color:var(--muted-dark)}
+.busca input:focus{border-color:var(--orange)}
+.busca-res{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:40;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:8px;max-height:320px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.busca-res:empty{display:none}
+.busca-res p{color:var(--muted);padding:4px;font-size:13px}
+.res{display:block;width:100%;text-align:left;padding:8px;border-radius:6px;min-height:44px}
+.res:hover{background:var(--border)}
+.res b{display:block;font-weight:500;color:#fff;font-size:14px}
+.res span{display:block;color:var(--muted);font-size:12px}
+.quem{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
+.quem-txt{display:none;text-align:right;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500}
+.quem-txt span{color:var(--muted)}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;flex:none}
+.busca-cel{position:absolute;inset:0;z-index:45;background:var(--background);padding:12px 16px;display:none}
+.busca-cel.aberta{display:block}
+.busca-cel-l{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.busca-cel .busca{max-width:none}
+.busca-cel .busca input{height:44px;font-size:16px}
+.busca-cel .busca-res{position:static;margin-top:8px;box-shadow:none}
+
+/* Barra inferior do celular */
+.barra{flex:none;display:flex;background:var(--navy);border-top:1px solid var(--border)}
+[data-barra=nao] .barra{display:none}
+.barra button{flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:11px;position:relative}
+.barra button[aria-current=page]{color:var(--orange);font-weight:600}
+.barra .pin{position:absolute;top:4px;left:4px}
+
+/* Título, H2 e textos: app/(operacoes)/sofia/page.tsx */
+.cab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.cab h1{font-size:24px;line-height:1.33;font-weight:700;color:#fff;outline:none;overflow-wrap:anywhere}
+.lead{color:var(--aux);font-size:14px;margin-top:4px}
+.acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.h2{font-size:18px;font-weight:600;color:#fff;margin-bottom:4px}
+.h2-lead{color:var(--aux);font-size:14px;margin-bottom:16px}
+.h-det{font-size:14px;font-weight:500;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.bloco{margin-bottom:40px}
+.link{color:var(--orange);text-decoration:none;font-size:14px;display:inline-flex;align-items:center;text-align:left}
+.link:hover{text-decoration:underline}
+.volta-pag{color:var(--muted);font-size:14px;margin-bottom:8px;display:inline-flex;align-items:center;gap:4px}
+.volta-pag:hover{color:#fff}
+
+/* Botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;transition:background-color .15s,border-color .15s,transform .15s;text-decoration:none;text-align:center}
+.btn:active{transform:scale(.95)}
+.btn-p{background:var(--orange);color:#fff}
+.btn-p:hover{background:var(--orange-hover)}
+.btn-s{border:1px solid var(--border);color:var(--texto-suave)}
+.btn-s:hover{border-color:var(--muted)}
+
+/* Cartões */
+.card{border-radius:12px;padding:20px;border:1px solid var(--border);background:var(--navy);min-width:0}
+.card-clic{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;width:100%;text-align:left;transition:border-color .15s}
+.card-clic:hover,.card-clic.on{border-color:var(--orange)}
+.k-rot{font-size:12px;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;font-weight:500;margin-bottom:4px}
+.k-val{font-size:30px;line-height:1.2;font-weight:700;color:#fff}
+.k-val.din{font-size:20px;line-height:1.5;overflow-wrap:anywhere}
+.k-sub{font-size:12px;color:var(--aux);margin-top:4px}
+.k-sub.q{color:var(--orange)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.lista-c{border-radius:12px;border:1px solid var(--border);background:var(--navy)}
+.lista-c>li+li{border-top:1px solid var(--border)}
+.lin{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;width:100%;text-align:left;transition:background-color .15s}
+button.lin:hover{background:var(--navy-hover)}
+.lin-c{flex:1;min-width:0}
+.lin-c b{display:block;color:#fff;font-weight:500;overflow-wrap:anywhere}
+.lin-c span{display:block;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.lin-d{flex:none;color:var(--aux);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:2px}
+.duas{display:grid;gap:24px}
+.duas>*{min-width:0}
+
+/* Etiquetas: chips do BaseTabela. A forma fica, para o tom não depender só da cor. */
+.et{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap}
+.et::before{font-size:9px;line-height:1}
+.et.ok{background:var(--verde-bg);color:var(--verde)}.et.ok::before{content:'✓'}
+.et.av{background:var(--ambar-bg);color:var(--ambar)}.et.av::before{content:'◆'}
+.et.er{background:var(--vermelho-bg);color:var(--vermelho)}.et.er::before{content:'▲'}
+.et.in{background:var(--azul-bg);color:var(--azul)}.et.in::before{content:'●'}
+.et.ne{background:var(--border);color:var(--muted)}
+
+/* Abas: botões de /sofia/audit */
+.abas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:24px}
+.abas.duas-a{grid-template-columns:repeat(2,minmax(0,1fr))}
+.aba{padding:8px 12px;border-radius:8px;font-size:14px;border:1px solid var(--border);color:var(--muted);text-align:center;transition:border-color .15s}
+.aba:hover{border-color:var(--muted)}
+.aba[aria-current=page]{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* Filtros: BaseTabela */
+.filtros{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:16px;align-items:end}
+.filtros label{min-width:0;display:block}
+.filtros>button{justify-self:start}
+.filtros label>span{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.025em;color:var(--muted)}
+.campo-f{width:100%;border-radius:6px;border:1px solid var(--border);background:var(--background);padding:6px 8px;font-size:14px;color:var(--texto-suave);outline:none}
+.campo-f:focus{border-color:var(--orange)}
+.chk{display:flex!important;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.chk input{width:16px;height:16px;accent-color:var(--orange);flex:none}
+
+/* Tabela: BaseTabela; abaixo de 600 px de área vira cartões, como a TabelaResponsiva do RH */
+.tb-dica{margin-bottom:8px;font-size:12px;color:var(--aux);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tb{display:none;border-radius:12px;border:1px solid var(--border);overflow-x:auto}
+.tb table{width:100%;border-collapse:collapse;font-size:14px}
+.tb th{padding:12px 16px;font-weight:500;color:var(--muted);text-align:left;white-space:nowrap}
+.tb thead tr{border-bottom:1px solid var(--border);background:var(--navy)}
+.tb td{padding:12px 16px;color:var(--muted);border-bottom:1px solid var(--border);vertical-align:top;overflow-wrap:anywhere}
+.tb tbody tr:last-child td{border-bottom:0}
+.tb td:first-child{color:#fff}
+.tb tbody tr[data-acao]{cursor:pointer;transition:background-color .15s}
+.tb tbody tr[data-acao]:hover,.tb tbody tr[data-acao]:focus{background:var(--navy);outline:none}
+.tb .d,.tb th.d{text-align:right}
+.tb td.d{font-family:var(--mono);white-space:nowrap}
+.tb tfoot td{background:var(--navy);color:#fff;font-weight:500;border-bottom:0;border-top:1px solid var(--border)}
+.pr2,.pr3,.pr4{display:none}
+.cts{display:grid;gap:8px}
+.ct{display:block;border-radius:12px;border:1px solid var(--border);background:var(--navy);padding:12px;text-align:left;width:100%;transition:border-color .15s}
+.ct[data-acao]{cursor:pointer}
+.ct[data-acao]:hover{border-color:var(--orange)}
+.ct-t{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ct-t b{font-weight:500;color:#fff;min-width:0;overflow-wrap:anywhere}
+.ct dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin-top:8px;font-size:14px}
+.ct dt{color:var(--aux);font-size:12px}
+.ct dd{color:var(--texto-suave);overflow-wrap:anywhere;min-width:0}
+.tb-rod{margin-top:12px;font-size:12px;color:var(--aux)}
+
+/* Dados e custos: detalhe de veículo */
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;font-size:14px}
+.kv dt{color:var(--aux)}
+.kv dd{color:var(--texto-suave);overflow-wrap:anywhere}
+.linhas{border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.linhas>div{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
+.linhas>div:last-child{border-bottom:0}
+.linhas span:first-child{color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.linhas span:last-child{color:#fff;flex:none;font-variant-numeric:tabular-nums}
+.linhas .tot{background:var(--navy)}
+.linhas .tot span:first-child{color:#fff;font-weight:500}
+.linhas .tot span:last-child{color:var(--orange);font-weight:700}
+.tempo{display:flex;flex-direction:column;gap:12px;border-left:2px solid var(--border);padding-left:16px}
+.tempo div{position:relative}
+.tempo div::before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.tempo b{display:block;font-weight:400;color:#fff;font-size:14px}
+.tempo span{color:var(--aux);font-size:12px}
+
+/* Rateio: "Onde o gasto pesa" da Visão Geral */
+.rat{display:block;margin:10px 0}
+.rat-t{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted)}
+.rat-t span:first-child{min-width:0;overflow-wrap:anywhere}
+.rat-t span:last-child{color:#fff;flex:none;font-family:var(--mono);font-size:13px}
+.rat-t small{color:var(--aux);font-size:12px;margin-left:4px}
+.rat-b{display:block;height:6px;background:var(--background);border-radius:999px;margin-top:4px}
+.rat-b i{display:block;height:6px;background:var(--orange);border-radius:999px}
+.rat-tot{display:flex;justify-content:space-between;gap:8px;padding-top:10px;margin-top:12px;border-top:1px solid var(--border);font-weight:500}
+.rat-tot span:last-child{color:var(--orange);font-weight:700;font-family:var(--mono)}
+.grade-rat{display:grid;gap:24px;align-items:start}
+.grade-rat>*{min-width:0}
+
+/* Notas e avisos */
+.aviso{border-radius:8px;border:1px solid var(--ambar-bg);background:rgba(123,51,6,.25);padding:12px 16px;font-size:14px;color:var(--texto-suave);margin-bottom:24px}
+.aviso b{display:block;color:var(--ambar);font-weight:600;margin-bottom:2px}
+.aviso .acoes{margin-top:8px}
+
+/* Formulário: veiculos/novo/_form.tsx */
+.form{display:flex;flex-direction:column;gap:16px;max-width:896px}
+.f-g{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.f-c{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f-c label,.f-rot{font-size:14px;color:var(--muted)}
+.f-aj{font-size:12px;color:var(--aux)}
+.campo{width:100%;min-width:0;padding:10px 12px;border-radius:8px;background:var(--input-bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none}
+.campo::placeholder{color:var(--muted-dark)}
+.campo:focus{border-color:var(--orange)}
+.campo[type=date]{color-scheme:dark}
+.f-rat{border:1px solid var(--border);border-radius:12px;background:var(--navy);padding:16px;margin:0;min-width:0}
+.f-rat legend{font-size:14px;font-weight:500;padding:0 6px;color:#fff}
+.r-l{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:8px;margin-bottom:8px}
+.r-l>:first-child{grid-column:1/3}
+.r-rod{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.soma{font-weight:500;font-size:14px;font-variant-numeric:tabular-nums;color:#fff}
+.soma.ruim{color:var(--error)}
+.msg-er{padding:12px 16px;border-radius:8px;border:1px solid var(--erro-borda);background:var(--erro-fundo);color:var(--vermelho);font-size:14px}
+.msg-ok{padding:12px 16px;border-radius:8px;border:1px solid #008236;background:#052e16;color:var(--verde);font-size:14px}
+.f-bot{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.f-bot .btn{flex:1;min-width:140px;padding:10px 16px}
+.busca-omie{display:flex;gap:8px;flex-wrap:wrap}
+.busca-omie .campo{flex:1 1 200px}
+
+/* Estados: vazio é convite (tracejado, neutro); erro é alarme (vermelho cheio); sem acesso é cartão com cadeado */
+.e-vazio{border-radius:12px;border:1px dashed var(--border);padding:48px 16px;text-align:center;color:var(--muted)}
+.e-vazio svg{color:var(--muted-dark);margin-bottom:8px}
+.e-vazio h2{font-size:16px;font-weight:400;color:var(--muted);margin-bottom:4px}
+.e-vazio p{color:var(--aux);font-size:14px;max-width:60ch;margin:0 auto 16px}
+.e-erro{border-radius:12px;border:1px solid var(--erro-borda);background:var(--erro-fundo);padding:20px;color:var(--vermelho);font-size:14px}
+.e-erro h2{display:flex;align-items:center;gap:8px;color:#fff;font-size:16px;font-weight:600;margin-bottom:4px}
+.e-erro h2 svg{color:var(--error);flex:none}
+.e-erro p{margin-bottom:12px}
+.btn-er{border:1px solid var(--erro-borda);color:#fff}
+.btn-er:hover{background:var(--vermelho-bg)}
+.e-trava{border-radius:12px;border:1px solid var(--border);background:var(--navy);padding:24px;font-size:14px;display:flex;gap:12px;align-items:flex-start}
+.e-trava svg{color:var(--muted);flex:none}
+.e-trava h2{font-size:16px;font-weight:600;color:#fff;margin-bottom:2px}
+.e-trava p{color:var(--muted)}
+.esq{background:var(--navy);border-radius:8px;animation:pulsa 1.6s ease-in-out infinite}
+.esq-t{height:32px;width:220px;max-width:70%;margin-bottom:8px}
+.esq-l{height:16px;width:340px;max-width:90%;margin-bottom:24px}
+.esq-k{height:112px;border-radius:12px}
+.esq-r{height:44px;margin-bottom:8px}
+@keyframes pulsa{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.esq{animation:none}.lat,.item,.btn,.aba{transition:none}}
+.toast{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);z-index:70;background:#fff;color:var(--background);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast[hidden]{display:none}
+
+/* ------------- reações de largura: medem a área simulada, não a janela ------------- */
+/* Celular: alvos de 44 px e texto de 16 px em campo */
+@container sim (max-width:767.98px){
+  .item{min-height:44px}
+  .volta{min-height:44px}
+  .lat-fecha{width:44px;height:44px}
+  .btn{min-height:44px}
+  .aba{min-height:44px}
+  .link{min-height:44px}
+  .volta-pag{min-height:44px}
+  .campo,.campo-f{min-height:44px;font-size:16px}
+  .chk{min-height:44px}
+  .lin{min-height:44px}
+  .ct{min-height:44px}
+  .tb-dica .pin{min-height:22px}
+}
+@container sim (min-width:640px){
+  .pag{padding:32px}
+}
+/* md do Tailwind: é aí que o Frotas troca o topo do celular pela lateral fixa */
+@container sim (min-width:768px){
+  .topo-cel,.barra,.busca-cel,.veu{display:none!important}
+  .topo{display:flex}
+  .lat{position:static;transform:none;visibility:visible;height:100%;transition:none}
+  [data-lateral=fechada] .lat{display:none}
+  .lat-fecha{width:28px;height:28px}
+  .app{flex-direction:row}
+}
+@container sim (min-width:1024px){
+  .quem-txt{display:block}
+}
+@container area (min-width:500px){
+  .filtros{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filtros .fl2{grid-column:1/3}
+}
+@container area (min-width:560px){
+  .f-g{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .f-larga{grid-column:1/3}
+  .r-l{grid-template-columns:minmax(0,1fr) 96px auto}
+  .r-l>:first-child{grid-column:auto}
+}
+@container area (min-width:600px){
+  .tb{display:block}
+  .cts{display:none}
+  .pr2{display:table-cell}
+  .abas,.abas.duas-a{display:flex;flex-wrap:wrap}
+}
+@container area (min-width:700px){
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .kpis.k5 .card{padding:16px}
+  .filtros{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .duas{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container area (min-width:820px){
+  .pr3{display:table-cell}
+  .grade-rat{grid-template-columns:minmax(0,1fr) 340px}
+}
+@container area (min-width:1180px){
+  .pr4{display:table-cell}
+}
+</style>
+</head>
+<body>
+<div class="m-pag" id="pagina">
+
+  <header class="m-cab">
+    <h1>RH no layout do hub</h1>
+    <p>Mockup para decidir a moldura. Dados fictícios, nada aqui grava. Muda a aparência; módulos, regras, campos e fluxos do RH continuam os mesmos. Para comentar, cite no WhatsApp o número da seção.</p>
+  </header>
+
+  <section class="m-sec" aria-labelledby="s1">
+    <h2 id="s1"><span class="num-sec">1</span>Hoje x Novo: o que muda na moldura</h2>
+    <div class="cmp">
+      <div class="cmp-l cmp-cab"><span>Parte</span><span>Hoje no RH</span><span>Novo, como no Frotas</span></div>
+      <div class="cmp-l"><b>Tema e fonte</b><span class="hj">Claro ou escuro, conforme o aparelho; fonte Geist.</span><span class="nv">Tema único, o escuro do hub; fonte Inter.</span></div>
+      <div class="cmp-l"><b>Lateral</b><span class="hj">Com ícones: 68 px só de ícones no tablet, 252 px no notebook, 272 px no monitor.</span><span class="nv">Só texto, 256 px a partir de 768 px de largura, item ativo em laranja. Abre e fecha inteira.</span></div>
+      <div class="cmp-l"><b>Hub e Sair</b><span class="hj">Hub, Papéis e Sair juntos no pé da lateral.</span><span class="nv">"← Voltar ao Hub" sobe para baixo do nome do sistema. Papéis e Sair ficam no pé.</span></div>
+      <div class="cmp-l"><b>Topo</b><span class="hj">Faixa translúcida de 56 px com busca, nome, papel e iniciais.</span><span class="nv">Mesma faixa e mesma função, sólida, nas cores do hub. O Frotas não tem topo (D1).</span></div>
+      <div class="cmp-l"><b>Celular</b><span class="hj">Topo com menu à esquerda e barra inferior: Início, Pessoas, Agenda, Menu.</span><span class="nv">Topo navy igual ao do Frotas, menu à direita. Barra inferior mantida nas cores do hub (D2).</span></div>
+      <div class="cmp-l"><b>Conteúdo</b><span class="hj">Título de 30 px, margens de 24 px, cartões e tabelas do próprio RH.</span><span class="nv">Título de 24 px, margens de 32 px, cartões navy, filtros, tabela e etiquetas copiados do Frotas.</span></div>
+    </div>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s2">
+    <h2 id="s2"><span class="num-sec">2</span>Moldura: navegue pela lateral, é o RH simulado</h2>
+    <div class="ctl-l sec-l">
+      <span class="ctl-r">Seção</span>
+      <div class="seg" id="seg-tela" role="group" aria-label="Ir direto a uma seção"></div>
+    </div>
+    <div class="ctl" id="controles">
+      <div class="ctl-l">
+        <span class="ctl-r">Largura</span>
+        <div class="seg" id="seg-largura" role="group" aria-label="Largura simulada"></div>
+        <span class="ctl-r ctl-r2">Estado</span>
+        <div class="seg" id="seg-estado" role="group" aria-label="Estado da tela"></div>
+        <div class="seg" role="group" aria-label="Marcações de decisão">
+          <button type="button" id="b-pins" aria-pressed="true" data-m="pins">Marcas D1 a D7</button>
+        </div>
+        <span class="ctl-info" id="info-escala"></span>
+      </div>
+    </div>
+    <div class="palco" id="palco">
+      <div class="quadro" id="quadro">
+        <div class="url" aria-hidden="true"><i></i><i></i><i></i><span id="url"></span></div>
+        <div class="sim" id="sim" data-gaveta="nao" data-lateral="aberta" data-barra="sim" data-pins="sim">
+          <div class="app">
+            <div class="topo-cel">
+              <div>
+                <span class="lat-nome">RH</span>
+                <a class="volta" href="#" data-acao="hub">← Voltar ao Hub</a>
+              </div>
+              <div class="topo-cel-acoes">
+                <button type="button" class="pin" data-acao="nota" data-d="1" aria-label="Ver decisão D1">D1</button>
+                <button type="button" class="ic-btn" data-acao="busca-cel" aria-label="Buscar no RH"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg></button>
+                <button type="button" class="ic-btn" data-acao="menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+              </div>
+            </div>
+            <aside class="lat" id="lat" aria-label="Módulos"></aside>
+            <div class="col">
+              <div class="topo">
+                <button type="button" class="ic-btn" data-acao="alterna-lateral" id="b-lat" aria-label="Fechar a lateral"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+                <button type="button" class="pin" data-acao="nota" data-d="3" aria-label="Ver decisão D3">D3</button>
+                <div class="busca" data-busca>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
+                  <input type="search" placeholder="Buscar pessoa, vaga, item…" aria-label="Buscar no RH" autocomplete="off">
+                  <div class="busca-res" aria-live="polite"></div>
+                </div>
+                <button type="button" class="pin" data-acao="nota" data-d="1" aria-label="Ver decisão D1">D1</button>
+                <div class="quem">
+                  <div class="quem-txt"><b>Renata Moura</b><span>Controladoria/RH · Admin do hub</span></div>
+                  <span class="avatar" role="img" aria-label="Renata Moura, Controladoria/RH e Admin do hub">RM</span>
+                </div>
+              </div>
+              <main class="rola" id="rola"><div class="area"><div class="pag" id="conteudo"></div></div></main>
+            </div>
+            <nav class="barra" id="barra" aria-label="Atalhos"></nav>
+          </div>
+          <div class="busca-cel" id="busca-cel" role="dialog" aria-label="Buscar no RH">
+            <div class="busca-cel-l">
+              <div class="busca" data-busca>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
+                <input type="search" placeholder="Buscar pessoa, vaga, item…" aria-label="Buscar no RH" autocomplete="off">
+                <div class="busca-res" aria-live="polite"></div>
+              </div>
+              <button type="button" class="ic-btn" data-acao="busca-cel" aria-label="Fechar a busca">×</button>
+            </div>
+          </div>
+          <div class="veu" data-acao="fecha-gaveta"></div>
+          <div class="toast" id="toast" role="status" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s12">
+    <h2 id="s12"><span class="num-sec">12</span>Decisões para o João</h2>
+    <div class="notas">
+      <div class="nota-d" id="d1"><h3>D1 · Busca geral no topo</h3>
+        <p><b>Frotas:</b> não tem topo nem busca geral.</p>
+        <p><b>Aqui:</b> faixa de 56 px em cima do conteúdo com a busca, nome e papel. No celular, a busca vira um botão no topo navy.</p>
+        <p><b>Recomendo manter.</b> A busca atravessa os 13 módulos e é o caminho mais curto até a ficha de alguém. O preço são 56 px a menos de altura e uma diferença visível do Frotas. A alternativa é pôr o campo na lateral, mas aí some quando ela está fechada.</p></div>
+      <div class="nota-d" id="d2"><h3>D2 · Barra inferior no celular</h3>
+        <p><b>Frotas:</b> só o botão de menu no topo.</p>
+        <p><b>Aqui:</b> a barra continua, com Início, Pessoas, Agenda e Menu, e o menu do topo também fica, como é hoje.</p>
+        <p><b>Recomendo manter.</b> Três destinos ficam a um toque em vez de dois. O preço são 56 px de altura e um elemento que o Frotas não tem. Não medi quantos usam o RH pelo celular; se forem poucos, tirar é o mais coerente.</p>
+        <div class="seg" role="group" aria-label="Barra inferior"><button type="button" data-m="barra" data-v="sim">Com a barra</button><button type="button" data-m="barra" data-v="nao">Sem a barra</button></div></div>
+      <div class="nota-d" id="d3"><h3>D3 · Lateral que fecha do tablet para cima</h3>
+        <p><b>Frotas:</b> a partir de 768 px a lateral fica sempre aberta. <b>RH hoje:</b> no tablet encolhe para 68 px de ícones.</p>
+        <p><b>Aqui:</b> sem ícones, como no Frotas, e um botão no topo fecha a lateral inteira. No tablet ela começa aberta e sobram 564 px, então a lista vira cartões; fechada, volta a ser tabela.</p>
+        <p><b>Recomendo assim.</b> Mantém a função de abrir e fechar sem trazer um desenho que o hub não tem. O preço é perder a faixa de ícones de hoje. Se o tablet for muito usado, dá para ele começar com a lateral fechada.</p></div>
+      <div class="nota-d" id="d4"><h3>D4 · Contadores na lateral</h3>
+        <p><b>Frotas:</b> a lateral só tem nomes.</p>
+        <p><b>Aqui:</b> os números do RH continuam, em azul discreto para não competir com o laranja do item ativo.</p>
+        <p><b>Recomendo manter.</b> O número mostra pendência sem abrir o módulo. Tirar deixaria igual ao Frotas, mas o aviso passaria a existir só no Início.</p></div>
+      <div class="nota-d" id="d5"><h3>D5 · Papéis e Sair no pé da lateral</h3>
+        <p><b>Frotas:</b> tem só "← Voltar ao Hub", sem Papéis nem Sair.</p>
+        <p><b>Aqui:</b> Voltar ao Hub no lugar do Frotas; Papéis (só para admin do hub) e Sair no pé, atrás de uma linha.</p>
+        <p><b>Recomendo manter.</b> O RH é app separada e o Papéis só existe lá; sem o botão, sair exigiria voltar ao hub primeiro.</p></div>
+      <div class="nota-d" id="d6"><h3>D6 · Lista em cartões no celular</h3>
+        <p><b>Frotas:</b> a tabela continua tabela e rola de lado dentro da própria caixa.</p>
+        <p><b>Aqui:</b> abaixo de 600 px de área a lista vira cartões, como já é no RH, com o visual do hub. Do notebook para cima é a tabela do Frotas.</p>
+        <p><b>Recomendo manter.</b> Cartão se lê sem arrastar para o lado e a etiqueta de situação fica sempre à vista. O preço é uma diferença de comportamento entre os dois sistemas no celular.</p></div>
+      <div class="nota-d" id="d7"><h3>D7 · Texto auxiliar pouco legível</h3>
+        <p><b>Frotas:</b> descrições e rótulos em #4a6080. A conta dá 2,8:1 sobre o fundo e 2,4:1 sobre o cartão; o mínimo recomendado para texto é 4,5:1.</p>
+        <p><b>Aqui:</b> igual ao Frotas, porque o pedido é o mesmo layout. O botão abaixo mostra a outra opção, #94a3b8, a mesma cor já usada como texto secundário no hub.</p>
+        <p><b>Recomendo usar #94a3b8 no RH</b> e corrigir o Frotas depois, numa frente própria. No RH esses textos carregam informação, como "Sem e-mail" e prazos. O preço é os dois sistemas ficarem um pouco diferentes até essa correção.</p>
+        <div class="seg" role="group" aria-label="Cor do texto auxiliar"><button type="button" data-m="aux" data-v="frotas">Igual ao Frotas</button><button type="button" data-m="aux" data-v="legivel">Mais legível</button></div></div>
+    </div>
+  </section>
+  <p class="m-rod">Referência lida no código: Sidebar, Visão Geral e BaseTabela do Frotas; casca, menu lateral, barra inferior e registro de módulos do RH (main aabac50).</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+var HOJE="2026-11-08";
+var LARG={celular:{w:390,h:760,n:"Celular"},tablet:{w:820,h:820,n:"Tablet"},notebook:{w:1280,h:760,n:"Notebook"},monitor:{w:1680,h:860,n:"Monitor"}};
+var ESTADOS=[["dados","Com dados"],["carregando","Carregando"],["vazio","Vazio"],["erro","Erro de carregamento"],["semacesso","Sem permissão"]];
+/* Ordem do registro (lib/modulos/registro.ts); grupo só onde ele começa. */
+var MOD=[
+ {id:"inicio",r:"Início",rota:"/"},
+ {id:"pessoas",r:"Pessoas",rota:"/pessoas",g:"Pessoas"},
+ {id:"movimentacoes",r:"Admissões e alterações",rota:"/movimentacoes",c:2},
+ {id:"recrutamento",r:"Recrutamento",rota:"/recrutamento"},
+ {id:"ferias",r:"Férias",rota:"/ferias",g:"Departamento Pessoal"},
+ {id:"exames",r:"Exames (ASO)",rota:"/exames"},
+ {id:"contratos",r:"Contratos PJ",rota:"/contratos"},
+ {id:"ponto",r:"Ponto",rota:"/ponto",c:3},
+ {id:"folha",r:"Folha e pagamentos",rota:"/pagamentos"},
+ {id:"beneficios",r:"Benefícios",rota:"/beneficios"},
+ {id:"patrimonio",r:"Patrimônio",rota:"/patrimonio",c:1,g:"Operação e cultura"},
+ {id:"comunicacao",r:"Comunicação",rota:"/comunicacao"},
+ {id:"agenda",r:"Agenda",rota:"/agenda"}
+];
+var SEC=[["inicio","3","Início"],["pessoas","4","Pessoas: lista"],["ficha","5","Pessoas: ficha"],["folha","6","Folha: lista"],["competencia","7","Folha: competência"],["rateio","8","Folha: rateio"],["ferias","9","Férias"],["admissao","10","Nova admissão"],["recrutamento","11","Demais módulos"]];
+var CC={g:"Obra Galpão Guarulhos",c:"Obra Loja Campinas",f:"Contrato Rede de Farmácias SP",z:"Contrato Condomínios Zona Sul",m:"Manutenção Predial Centro",a:"Administrativo"};
+var P=[
+ {id:"p1",n:"Patrícia Lemos",v:"CLT",s:"Ativo",em:"patricia.lemos@exemplo.com.br",cpf:"000.482.117-00",ini:"2021-03-15",cargo:"Coordenadora de Contratos",ges:"Renata Moura",eq:"Contratos",sal:780000,rat:[["f",60],["a",40]],pix:"CPF, final 117"},
+ {id:"p2",n:"Thiago Barros",v:"CLT",s:"Ativo",em:"thiago.barros@exemplo.com.br",cpf:"000.915.340-00",ini:"2022-06-01",cargo:"Técnico de Manutenção",ges:"Eduardo Pacheco",eq:"Campo Norte",sal:385000,rat:[["m",100]],pix:"Celular, final 4412"},
+ {id:"p3",n:"Juliana Prado",v:"CLT",s:"Ativo",em:"juliana.prado@exemplo.com.br",cpf:"000.276.803-00",ini:"2023-01-16",cargo:"Analista de Departamento Pessoal",ges:"Renata Moura",eq:"Controladoria",sal:520000,rat:[["a",100]],pix:"E-mail, final .br"},
+ {id:"p4",n:"Marcos Vinícius Reis",v:"CLT",s:"Afastado",em:"marcos.reis@exemplo.com.br",cpf:"000.631.592-00",ini:"2020-09-08",cargo:"Eletricista Predial",ges:"Eduardo Pacheco",eq:"Campo Sul",sal:410000,rat:[["z",70],["m",30]],pix:"CPF, final 592"},
+ {id:"p5",n:"Fernanda Couto",v:"CLT",s:"Ativo",em:"fernanda.couto@exemplo.com.br",cpf:"000.148.725-00",ini:"2022-11-03",cargo:"Engenheira de Obras",ges:"Vanessa Rocha",eq:"Obras",sal:1120000,rat:[["g",50],["c",50]],pix:"CPF, final 725"},
+ {id:"p6",n:"Anderson Lima",v:"CLT",s:"Ativo",em:"anderson.lima@exemplo.com.br",cpf:"000.704.268-00",ini:"2019-05-20",cargo:"Encarregado de Obra",ges:"Vanessa Rocha",eq:"Obras",sal:640000,rat:[["g",100]],pix:"Celular, final 0931"},
+ {id:"p7",n:"Beatriz Sales",v:"CLT",s:"Ativo",em:"beatriz.sales@exemplo.com.br",cpf:"000.359.471-00",ini:"2024-02-05",cargo:"Assistente Administrativa",ges:"Renata Moura",eq:"Controladoria",sal:310000,rat:[["a",100]],pix:"CPF, final 471"},
+ {id:"p8",n:"Rafael Campos",v:"CLT",s:"Ativo",em:"rafael.campos@exemplo.com.br",cpf:"000.862.135-00",ini:"2023-08-14",cargo:"Técnico de Refrigeração",ges:"Eduardo Pacheco",eq:"Campo Sul",sal:430000,rat:[["f",50],["z",50]],pix:"CPF, final 135"},
+ {id:"p9",n:"Diego Tavares",v:"CLT",s:"Ativo",em:null,cpf:"000.517.946-00",ini:"2024-07-01",cargo:"Auxiliar de Manutenção",ges:"Eduardo Pacheco",eq:"Campo Norte",sal:245000,rat:[["m",60],["f",40]],pix:null},
+ {id:"p10",n:"Luana Freitas",v:"PJ",s:"Ativo",em:"luana.freitas@exemplo.com.br",cpf:"000.293.658-00",ini:"2024-12-01",cargo:"Arquiteta",ges:"Vanessa Rocha",eq:"Obras",sal:950000,rat:[["c",100]],pix:"CNPJ, final 01-58"},
+ {id:"p11",n:"Caio Menezes",v:"PJ",s:"Ativo",em:null,cpf:"000.746.021-00",ini:"2025-04-10",cargo:"Consultor de Segurança do Trabalho",ges:"Renata Moura",eq:"SESMT",sal:680000,rat:[["g",50],["z",50]],pix:"CNPJ, final 01-21"},
+ {id:"p12",n:"Sônia Ribeiro",v:"PJ",s:"Ativo",em:"sonia.ribeiro@exemplo.com.br",cpf:"000.185.379-00",ini:"2025-08-18",cargo:"Contadora Consultora",ges:"Renata Moura",eq:"Controladoria",sal:540000,rat:[["a",100]],pix:"CNPJ, final 01-79"}
+];
+var F=[
+ {id:"f1",p:"p2",ai:"2024-06-01",af:"2025-05-31",sd:30,lim:"2026-11-02",g:null,conf:true},
+ {id:"f2",p:"p3",ai:"2024-12-16",af:"2025-11-15",sd:30,lim:"2026-12-01",g:null,conf:true},
+ {id:"f3",p:"p4",ai:"2025-01-08",af:"2025-12-07",sd:20,lim:"2026-12-28",g:null,conf:false},
+ {id:"f4",p:"p5",ai:"2025-02-03",af:"2026-01-02",sd:30,lim:"2027-01-25",g:null,conf:true},
+ {id:"f5",p:"p1",ai:"2025-03-15",af:"2026-03-14",sd:20,lim:"2027-02-14",g:{ini:"2026-11-12",d:20,f:3,t:3},conf:true},
+ {id:"f6",p:"p6",ai:"2025-05-20",af:"2026-05-19",sd:0,lim:"2027-04-19",g:{ini:"2026-11-02",d:30,f:3,t:3},conf:true},
+ {id:"f7",p:"p7",ai:"2025-07-05",af:"2026-06-04",sd:30,lim:"2027-06-10",g:null,conf:true},
+ {id:"f8",p:"p8",ai:"2025-08-14",af:"2026-08-13",sd:30,lim:"2027-07-13",g:{ini:"2026-12-05",d:15,f:1,t:3},conf:true},
+ {id:"f9",p:"p9",ai:"2024-07-01",af:"2025-06-30",sd:0,lim:"2026-05-30",g:null,conf:true}
+];
+var GRUPOS=[
+ {id:"folha",n:"Folha CLT",sit:["Lançada","ok"],q:p=>p.v==="CLT"?p.sal:0,fa:"salario"},
+ {id:"guias",n:"FGTS e consignado",sit:["Aguardando validação","in"],q:p=>p.v==="CLT"?Math.round(p.sal*.08):0},
+ {id:"vr",n:"VR",sit:["Aguardando validação","in"],q:p=>p.v==="CLT"?78000:0},
+ {id:"vt",n:"VT e ajuda de custo",sit:["Ainda não enviado","ne"],q:p=>p.v==="CLT"?22000:0},
+ {id:"pj",n:"Prestadores PJ",sit:["Aguardando validação","in"],q:p=>p.v==="PJ"?p.sal:0},
+ {id:"seguro",n:"Seguro de vida",sit:["Lançada","ok"],q:p=>1800},
+ {id:"celular",n:"Conta de celular",sit:["Ainda não enviado","ne"],q:p=>p.v==="CLT"?6500:0}
+];
+var COMP=[
+ {id:"2026-11",m:"novembro de 2026",sit:["Com o Financeiro","in"],an:"4/9",es:"Não enviada"},
+ {id:"2026-10",m:"outubro de 2026",sit:["Lançada no Financeiro","ok"],an:"9/9",tot:8215480,pg:18,es:"07/11/2026"},
+ {id:"2026-09",m:"setembro de 2026",sit:["Lançada no Financeiro","ok"],an:"9/9",tot:8198320,pg:18,es:"07/10/2026"},
+ {id:"2026-08",m:"agosto de 2026",sit:["Lançada no Financeiro","ok"],an:"9/9",tot:8102410,pg:18,es:"08/09/2026"}
+];
+var PREC=[
+ {t:"Férias de Thiago Barros com limite vencido",s:"Saldo de 30 dias. Precisa marcar o início.",d:"2026-11-02",ir:"ferias"},
+ {t:"Exame periódico de Juliana Prado",s:"Exames (ASO)",d:"2026-11-08",ir:"exames"},
+ {t:"Fechamento do ponto de outubro",s:"Ponto · 3 pessoas com divergência a conferir",d:"2026-11-10",ir:"ponto"},
+ {t:"Admissão de Gustavo Arantes",s:"Admissões e alterações · falta o exame admissional",d:"2026-11-12",ir:"movimentacoes"},
+ {t:"Contrato PJ de Luana Freitas",s:"Contratos PJ · vence em dezembro",d:"2026-12-01",ir:"contratos"}
+];
+var PROX=[
+ {t:"Fechamento do ponto de outubro",d:"2026-11-10",ir:"ponto"},
+ {t:"Patrícia Lemos entra em férias",d:"2026-11-12",ir:"ferias"},
+ {t:"Exame periódico de Rafael Campos",d:"2026-11-16",ir:"exames"},
+ {t:"Devolução de notebook para troca: Anderson Lima",d:"2026-11-18",ir:"patrimonio"},
+ {t:"Envio do VR de dezembro ao Financeiro",d:"2026-11-25",ir:"folha"},
+ {t:"Vencimento da folha de novembro",d:"2026-12-05",ir:"folha"}
+];
+var ABAS=["Dados","Férias","Exames","Ponto","Benefícios","Pagamentos","Patrimônio","Documentos","Histórico"];
+var VINC=["CLT","PJ","Estágio","Extra","Sócio"];
+
+var S={tela:"inicio",estado:"dados",largura:"notebook",pessoa:"p1",aba:"Dados",grupo:"folha",sub:"todos",
+  fp:{busca:"",vin:"",cc:"",sit:"",sem:false},ff:{busca:"",ges:"",faixa:""},form:null,formMsg:null};
+
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function brl(c){return (c/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function db(d){return d?d.slice(8)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"—";}
+function dias(a,b){return Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/864e5);}
+function somaDias(d,n){var x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);}
+function pes(id){return P.find(function(p){return p.id===id;});}
+function et(t,c){return '<span class="et '+(c||"ne")+'">'+esc(t)+'</span>';}
+function pin(n){return '<button type="button" class="pin" data-acao="nota" data-d="'+n+'" aria-label="Ver decisão D'+n+'">D'+n+'</button>';}
+function btn(t,a,x,cl){return '<button type="button" class="btn '+(cl||"btn-s")+'" data-acao="'+a+'"'+(x||"")+'>'+esc(t)+'</button>';}
+function cab(t,d,ac){return '<div class="cab"><div style="min-width:0"><h1 tabindex="-1">'+esc(t)+'</h1>'+(d?'<p class="lead">'+esc(d)+'</p>':"")+'</div>'+(ac?'<div class="acoes">'+ac+'</div>':"")+'</div>';}
+function voltar(t,a,x){return '<button type="button" class="volta-pag" data-acao="'+a+'"'+(x||"")+'>← '+esc(t)+'</button>';}
+function kpi(k){
+  var inner='<p class="k-rot">'+esc(k.t)+'</p><p class="k-val'+(k.din?" din":"")+'">'+esc(k.v)+'</p>'+(k.s?'<p class="k-sub'+(k.q?" q":"")+'">'+esc(k.s)+'</p>':"");
+  return k.a?'<button type="button" class="card card-clic'+(k.on?" on":"")+'" data-acao="'+k.a+'"'+(k.x||"")+(k.on?' aria-pressed="true"':"")+'>'+inner+'</button>':'<div class="card">'+inner+'</div>';
+}
+function kpis(l,cl){return '<div class="kpis '+(cl||"")+'">'+l.map(kpi).join("")+'</div>';}
+/* Duas formas da mesma lista: cartões e tabela. Quem escolhe é a largura da área, por CSS. */
+function tabela(o){
+  var cols=o.cols,linha=function(r){return o.acao?' data-acao="'+o.acao+'" data-id="'+esc(r.id)+'" tabindex="0" role="button"':"";};
+  var cts='<ul class="cts">'+o.linhas.map(function(r){
+    var dem=cols.slice(1).filter(function(c){return !c.pr||c.pr<=2;}).filter(function(c){return !c.et;});
+    var tag=cols.find(function(c){return c.et;});
+    return '<li><div class="ct"'+linha(r)+'><div class="ct-t"><b>'+cols[0].f(r)+'</b>'+(tag?tag.f(r):"")+'</div><dl>'+dem.map(function(c){return '<div><dt>'+esc(c.t)+'</dt><dd>'+c.f(r)+'</dd></div>';}).join("")+'</dl></div></li>';
+  }).join("")+'</ul>';
+  var cl=function(c){return (c.pr>1?"pr"+c.pr+" ":"")+(c.d?"d":"");};
+  var tb='<div class="tb"><table><caption style="position:absolute;left:-9999px">'+esc(o.rot)+'</caption><thead><tr>'+cols.map(function(c){return '<th scope="col" class="'+cl(c)+'">'+esc(c.t)+'</th>';}).join("")+'</tr></thead><tbody>'+o.linhas.map(function(r){
+    return '<tr'+linha(r)+'>'+cols.map(function(c){return '<td class="'+cl(c)+'">'+c.f(r)+'</td>';}).join("")+'</tr>';
+  }).join("")+'</tbody></table></div>';
+  return (o.dica?'<p class="tb-dica">'+o.dica+'</p>':"")+cts+tb+(o.rod?'<p class="tb-rod">'+o.rod+'</p>':"");
+}
+var IC={
+ inbox:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg>',
+ alerta:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+ trava:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+};
+function eVazio(t,x,ac){return '<div class="e-vazio">'+IC.inbox+'<h2>'+esc(t)+'</h2>'+(x?'<p>'+esc(x)+'</p>':"")+(ac||"")+'</div>';}
+function eErro(t,x){return '<div class="e-erro" role="alert"><h2>'+IC.alerta+esc(t)+'</h2><p>'+esc(x||"Nada foi alterado. Recarregue a página; se continuar, avise quem cuida do sistema.")+'</p>'+btn("Tentar de novo","estado",' data-v="dados"',"btn-er")+'</div>';}
+function eTrava(x){return '<div class="e-trava">'+IC.trava+'<div><h2>Você não tem acesso a esta parte</h2><p>'+esc(x||"Peça à Controladoria/RH para liberar o seu e-mail.")+'</p></div></div>';}
+function eCarr(){
+  return '<div aria-busy="true"><span style="position:absolute;left:-9999px">Carregando…</span><div class="esq esq-t"></div><div class="esq esq-l"></div><div class="kpis">'+[1,2,3,4].map(function(){return '<div class="esq esq-k"></div>';}).join("")+'</div>'+[1,2,3,4,5].map(function(){return '<div class="esq esq-r"></div>';}).join("")+'</div>';
+}
+
+/* ---- Início ---- */
+function situacaoFerias(f){
+  var g=f.g;
+  if(g&&g.ini<=HOJE&&HOJE<=somaDias(g.ini,g.d-1))return ["Em férias","in"];
+  var d=dias(HOJE,f.lim);
+  if(f.sd>0&&d<0)return ["Vencidas","er"];
+  if(g&&g.ini>HOJE)return g.f>=g.t?["Programadas","ok"]:["Em andamento","in"];
+  if(f.sd>0)return d<=90?["A vencer","av"]:["No prazo","ok"];
+  return ["Gozadas","ne"];
+}
+function faixa(f){var d=dias(HOJE,f.lim);return d<0?"v":d<=30?"30":d<=60?"60":d<=90?"90":"mais";}
+function contaFaixa(k){return F.filter(function(f){return f.sd>0&&faixa(f)===k&&!f.g;}).length;}
+function prazoEt(d){
+  if(d<HOJE)return et("Venceu "+db(d),"er");
+  if(d===HOJE)return et("Hoje","av");
+  return et(db(d));
+}
+var V={};
+V.inicio=function(st){
+  var c=cab("Bom dia, Renata","domingo, 8 de novembro de 2026");
+  if(st==="semacesso")return c+eTrava();
+  var clt=P.filter(function(p){return p.v==="CLT";}).length,pj=P.length-clt;
+  var venc=contaFaixa("v"),fv=venc+contaFaixa("30")+contaFaixa("60")+contaFaixa("90");
+  var k=[
+   {t:"Ativos CLT",v:clt,a:"ir",x:' data-t="pessoas"'},{t:"Ativos PJ",v:pj,a:"ir",x:' data-t="pessoas"'},
+   {t:"Férias a vencer",v:fv,s:venc+" vencida",q:1,a:"ir",x:' data-t="ferias"'},{t:"Exames a vencer",v:2,a:"ir",x:' data-t="exames"'},
+   {t:"Contratos a vencer",v:1,a:"ir",x:' data-t="contratos"'},{t:"Admissões em andamento",v:2,a:"ir",x:' data-t="movimentacoes"'},
+   {t:"Vagas abertas",v:3,a:"ir",x:' data-t="recrutamento"'},{t:"Devoluções pendentes",v:1,s:"Patrimônio",a:"ir",x:' data-t="patrimonio"'}
+  ];
+  var aviso='<div class="aviso" role="alert"><b>Alterações sem aplicar</b>1 alteração vencida sem aplicar<div class="acoes">'+btn("Aplicar agora","toast",' data-m="Aplicar agora: no mockup nada é gravado."')+'</div></div>';
+  if(st==="vazio"){
+    k=k.map(function(x){return {t:x.t,v:0};});
+    return c+kpis(k)+'<div class="duas"><div><h2 class="h2">Precisa de você</h2><p class="h2-lead">Quando não há nada, o item some.</p>'+eVazio("Nada pendente","O que precisar da sua atenção aparece aqui.")+'</div><div><h2 class="h2">Próximos dias</h2><p class="h2-lead">Os prazos dos módulos, em ordem de data.</p>'+eVazio("Nenhum prazo chegando","Os prazos dos módulos aparecem aqui sozinhos.")+'</div></div>';
+  }
+  var erroTopo=st==="erro"?eErro("Não deu para carregar: Pessoas, Férias","O resto está aqui. Nada foi alterado. Recarregue a página; se continuar, avise quem cuida do sistema.")+'<div style="height:24px"></div>':"";
+  if(st==="erro")k=k.slice(3);
+  var prec='<ul class="lista-c">'+PREC.map(function(x){return '<li><button type="button" class="lin" data-acao="ir" data-t="'+x.ir+'"><span class="lin-c"><b>'+esc(x.t)+'</b><span>'+esc(x.s)+'</span></span>'+prazoEt(x.d)+'</button></li>';}).join("")+'</ul>';
+  var prox='<ul class="lista-c">'+PROX.map(function(x){return '<li><button type="button" class="lin" data-acao="ir" data-t="'+x.ir+'"><span class="lin-c"><b>'+esc(x.t)+'</b></span><span class="lin-d">'+db(x.d)+'</span></button></li>';}).join("")+'</ul>';
+  return c.replace('</p></div>',' '+pin(7)+'</p></div>')+erroTopo+aviso+kpis(k)+'<div class="duas"><div><h2 class="h2">Precisa de você</h2><p class="h2-lead">Do mais urgente para o menos urgente.</p>'+prec+'</div><div><div class="cab" style="margin:0;gap:8px;align-items:baseline"><h2 class="h2">Próximos dias</h2><button type="button" class="link" data-acao="ir" data-t="agenda">Ver agenda →</button></div><p class="h2-lead">Os prazos dos módulos, em ordem de data.</p>'+prox+'</div></div>';
+};
+
+/* ---- Pessoas ---- */
+function etSit(p){return et(p.s,p.s==="Afastado"?"av":"ok");}
+function nomeCC(p){return p.rat.map(function(r){return CC[r[0]];}).join(", ");}
+function emFerias(p){return F.some(function(f){return f.p===p.id&&situacaoFerias(f)[0]==="Em férias";});}
+V.pessoas=function(st){
+  var ac=btn("Preencher e-mails","toast",' data-m="Preencher e-mails: a tela de hoje, no mesmo padrão."')+btn("+ Nova admissão","ir",' data-t="admissao"',"btn-p");
+  var c=cab("Pessoas","Colaboradores e prestadores. Clique para abrir a ficha.",st==="semacesso"?"":ac);
+  if(st==="semacesso")return c+eTrava();
+  if(st==="erro")return c+eErro("Não deu para carregar as pessoas");
+  if(st==="vazio")return c+eVazio("Nenhuma pessoa cadastrada","A primeira pessoa entra por uma nova admissão.",btn("+ Nova admissão","ir",' data-t="admissao"',"btn-p"));
+  var f=S.fp;
+  var q=function(id,t,v,on,x){return {t:t,v:v,on:on,a:"filtro-p",x:' data-k="'+id+'"'};};
+  var h=c+kpis([
+    q("clt","CLT",P.filter(function(p){return p.v==="CLT";}).length,f.vin==="CLT"),
+    q("pj","PJ",P.filter(function(p){return p.v==="PJ";}).length,f.vin==="PJ"),
+    q("afa","Afastados",P.filter(function(p){return p.s==="Afastado";}).length,f.sit==="Afastado"),
+    q("sem","Sem e-mail",P.filter(function(p){return !p.em;}).length,f.sem)
+  ]);
+  h+='<div class="abas duas-a">'+[["todos","Todos"],["relacao","Relação de ativos do mês"]].map(function(a){return '<button type="button" class="aba" data-acao="sub" data-v="'+a[0]+'"'+(S.sub===a[0]?' aria-current="page"':"")+'>'+a[1]+'</button>';}).join("")+'</div>';
+  if(S.sub==="relacao"){
+    h+='<div class="aviso" style="border-color:var(--border);background:var(--navy)">Relação de novembro de 2026: quem está ativo como CLT, com quem está de férias e a equipe de campo. Serve para folha, vale-refeição e seguro.</div>';
+    h+=tabela({rot:"Relação de ativos do mês",acao:"ficha",linhas:P.filter(function(p){return p.v==="CLT";}),cols:[
+      {t:"Nome",f:function(p){return esc(p.n);}},
+      {t:"Situação",et:1,f:function(p){return emFerias(p)?et("Em férias","in"):etSit(p);}},
+      {t:"Equipe",pr:2,f:function(p){return esc(p.eq);}},
+      {t:"Cargo",pr:3,f:function(p){return esc(p.cargo);}},
+      {t:"Centro de custo",pr:3,f:function(p){return esc(nomeCC(p));}},
+      {t:"Gestor",pr:4,f:function(p){return esc(p.ges);}}
+    ]});
+    return h;
+  }
+  var op=function(l,sel,tod){return '<option value="">'+tod+'</option>'+l.map(function(x){var v=x[0],t=x[1];return '<option value="'+esc(v)+'"'+(v===sel?" selected":"")+'>'+esc(t)+'</option>';}).join("");};
+  h+='<form class="filtros" data-form="pessoas">'
+   +'<label class="fl2"><span>Buscar</span><input class="campo-f" name="busca" type="search" value="'+esc(f.busca)+'" placeholder="Nome, cargo, e-mail ou CPF"></label>'
+   +'<label><span>Vínculo</span><select class="campo-f" name="vin">'+op(VINC.map(function(v){return [v,v];}),f.vin,"Todos")+'</select></label>'
+   +'<label><span>Centro de custo</span><select class="campo-f" name="cc">'+op(Object.keys(CC).map(function(k){return [k,CC[k]];}),f.cc,"Todos")+'</select></label>'
+   +'<label><span>Situação</span><select class="campo-f" name="sit">'+op([["Ativo","Ativo"],["Afastado","Afastado"]],f.sit,"Todas")+'</select></label>'
+   +'<label class="chk"><input type="checkbox" name="sem"'+(f.sem?" checked":"")+'>Sem e-mail</label>'
+   +'<button type="submit" class="btn btn-s">Filtrar</button></form>';
+  var b=f.busca.toLowerCase();
+  var l=P.filter(function(p){
+    if(b&&(p.n+" "+p.cargo+" "+(p.em||"")+" "+p.cpf).toLowerCase().indexOf(b)<0)return false;
+    if(f.vin&&p.v!==f.vin)return false;
+    if(f.cc&&!p.rat.some(function(r){return r[0]===f.cc;}))return false;
+    if(f.sit&&p.s!==f.sit)return false;
+    if(f.sem&&p.em)return false;
+    return true;
+  });
+  if(!l.length)return h+'<div class="e-vazio">'+IC.inbox+'<h2>Ninguém com esses filtros</h2><p>Mude ou limpe os filtros para ver as pessoas.</p>'+btn("Limpar filtros","limpa-p")+'</div>';
+  return h+tabela({rot:"Pessoas",acao:"ficha",linhas:l,dica:"Clique na linha para abrir a ficha. "+pin(6),rod:l.length+(l.length===1?" pessoa":" pessoas")+" de "+P.length,cols:[
+    {t:"Nome",f:function(p){return esc(p.n);}},
+    {t:"Situação",et:1,f:etSit},
+    {t:"Vínculo",f:function(p){return esc(p.v);}},
+    {t:"E-mail",pr:2,f:function(p){return p.em?esc(p.em):et("Sem e-mail","av");}},
+    {t:"CPF",pr:3,f:function(p){return '<span style="font-variant-numeric:tabular-nums;white-space:nowrap">'+esc(p.cpf)+'</span>';}},
+    {t:"Início",pr:3,f:function(p){return '<span style="font-variant-numeric:tabular-nums;white-space:nowrap">'+db(p.ini)+'</span>';}},
+    {t:"Cargo",pr:4,f:function(p){return esc(p.cargo);}},
+    {t:"Centro de custo",pr:4,f:function(p){return esc(nomeCC(p));}},
+    {t:"Gestor",pr:4,f:function(p){return esc(p.ges);}}
+  ]});
+};
+function kv(l){return '<dl class="kv">'+l.map(function(x){return '<dt>'+esc(x[0])+'</dt><dd>'+x[1]+'</dd>';}).join("")+'</dl>';}
+function fichaHist(p){
+  return [{t:"Rateio revisado: "+nomeCC(p),d:"01/10/2026, por Juliana Prado"},{t:"E-mail corporativo atualizado",d:"12/08/2026, por Beatriz Sales"},{t:p.v==="PJ"?"Contrato iniciado":"Admissão concluída",d:db(p.ini)+", por Renata Moura"}];
+}
+V.ficha=function(st){
+  var p=pes(S.pessoa),pj=p.v==="PJ";
+  var vol=voltar("Voltar para Pessoas","ir",' data-t="pessoas"');
+  if(st==="semacesso")return vol+cab(p.n)+eTrava();
+  if(st==="erro")return vol+cab("Ficha")+eErro("Não deu para carregar esta pessoa");
+  var ac=et(p.v)+etSit(p)+btn("Nova alteração","ir",' data-t="movimentacoes"');
+  var h=vol+cab(p.n,p.cargo,ac);
+  h+='<div class="abas">'+ABAS.map(function(a){return '<button type="button" class="aba" data-acao="aba" data-v="'+a+'"'+(S.aba===a?' aria-current="page"':"")+'>'+a+'</button>';}).join("")+'</div>';
+  if(S.aba==="Dados"){
+    var vz=st==="vazio";
+    var val=pj?"Valor mensal e rateio":"Salário e rateio";
+    var cad=[["CPF",'<span style="font-variant-numeric:tabular-nums">'+esc(p.cpf)+'</span>'],["Vínculo",esc(p.v)],["Cargo",esc(p.cargo)],["Equipe",esc(p.eq)],["Gestor",esc(p.ges)],[pj?"Início do contrato":"Admissão",db(p.ini)],["E-mail",p.em?esc(p.em):et("Sem e-mail","av")],["Chave PIX",p.pix?esc(p.pix):et("Sem chave PIX","av")]];
+    var rat;
+    if(vz)rat='<div class="card"><p style="color:var(--muted)">Valor não informado ou fora do seu acesso.</p></div><div style="height:12px"></div>'+eVazio("Sem rateio ainda","O rateio entra pela admissão ou por uma alteração.");
+    else{
+      rat='<p class="lead" style="margin:0 0 8px">Desde outubro de 2026</p><div class="linhas">'+p.rat.map(function(r){return '<div><span>'+esc(CC[r[0]])+'</span><span>'+r[1]+'% · '+brl(Math.round(p.sal*r[1]/100))+'</span></div>';}).join("")+'<div class="tot"><span>'+(pj?"Valor mensal":"Salário")+'</span><span>'+brl(p.sal)+'</span></div></div>';
+    }
+    var situ=vz?'<p style="color:var(--muted)">Nada em aberto com esta pessoa nos módulos ligados.</p>':'<ul style="display:grid;gap:8px"><li><b style="font-weight:500;color:#fff">Férias:</b> <span style="color:var(--muted)">'+(F.some(function(f){return f.p===p.id;})?esc(situacaoFerias(F.find(function(f){return f.p===p.id;}))[0]):"sem período em aberto")+'</span></li><li><b style="font-weight:500;color:#fff">Exames:</b> <span style="color:var(--muted)">periódico em dia</span></li><li><b style="font-weight:500;color:#fff">Patrimônio:</b> <span style="color:var(--muted)">2 itens sob responsabilidade</span></li></ul>';
+    return h+'<div class="duas"><div><h2 class="h-det">Dados</h2><div class="card">'+kv(cad)+'</div></div><div><h2 class="h-det">'+val+'</h2>'+rat+'</div></div><div style="margin-top:24px"><h2 class="h-det">Situação agora</h2><div class="card">'+situ+'</div></div>';
+  }
+  if(pj&&(S.aba==="Férias"||S.aba==="Ponto"))return h+'<div class="card"><p style="color:var(--muted)">'+(S.aba==="Férias"?"Prestador PJ não tem controle de férias aqui.":"Prestador PJ não marca ponto.")+'</p></div>';
+  if(S.aba==="Histórico"&&st!=="vazio")return h+'<h2 class="h-det">Histórico</h2><div class="tempo">'+fichaHist(p).map(function(x){return '<div><b>'+esc(x.t)+'</b><span>'+esc(x.d)+'</span></div>';}).join("")+'</div>';
+  if(S.aba==="Férias"&&st!=="vazio"){
+    var pf=F.filter(function(f){return f.p===p.id;});
+    if(pf.length)return h+tabela({rot:"Períodos da pessoa",linhas:pf,cols:[
+      {t:"Período aquisitivo",f:function(f){return db(f.ai)+" a "+db(f.af);}},
+      {t:"Situação",et:1,f:function(f){var s=situacaoFerias(f);return et(s[0],s[1]);}},
+      {t:"Saldo",pr:2,f:function(f){return f.sd+" dias";}},{t:"Limite",pr:2,f:function(f){return db(f.lim);}}]});
+  }
+  return h+eVazio(S.aba+" sem registros","O que for desta pessoa em "+S.aba+" aparece aqui, no mesmo padrão de tabela.");
+};
+
+/* ---- Folha ---- */
+function valGrupo(g){return P.reduce(function(s,p){return s+g.q(p);},0);}
+function pessoasGrupo(g){return P.filter(function(p){return g.q(p)>0;});}
+function resumo(){
+  var r={tot:0,n:0,rh:0,fin:0,lan:0,tr:0,tf:0,tl:0};
+  GRUPOS.forEach(function(g){
+    var ps=pessoasGrupo(g),v=valGrupo(g),n=g.id==="folha"||g.id==="pj"?ps.length:1;
+    if(g.id==="folha"){
+      var sc=ps.filter(function(p){return !p.pix;});
+      var vs=sc.reduce(function(s,p){return s+p.sal;},0);
+      r.n+=n;r.rh+=sc.length;r.lan+=n-sc.length;r.tr+=vs;r.tl+=v-vs;r.tot+=v;return;
+    }
+    r.n+=n;r.tot+=v;
+    if(g.sit[1]==="ne"){r.rh+=n;r.tr+=v;}else if(g.sit[1]==="ok"){r.lan+=n;r.tl+=v;}else{r.fin+=n;r.tf+=v;}
+  });
+  return r;
+}
+V.folha=function(st){
+  var sel='<label class="filtros" style="margin:0;display:block"><span style="position:absolute;left:-9999px">Competência</span><select class="campo-f" style="min-width:170px" data-acao-sel="mes">'+COMP.map(function(c){return '<option>'+esc(c.m)+'</option>';}).join("")+'</select></label>';
+  var c=cab("Folha e pagamentos","Resumo por competência, com cada pagamento pronto para ir ao Financeiro com o rateio do cadastro.",st==="semacesso"?"":sel);
+  if(st==="semacesso")return c+eTrava();
+  if(st==="erro")return c+eErro("Não deu para carregar as competências","Nada foi perdido, e nada foi enviado nem alterado no Financeiro. Recarregue a página.");
+  if(st==="vazio")return c+eVazio("Nenhuma competência aberta","Escolha o mês acima para abrir a primeira.");
+  var r=resumo();
+  var nov=function(){return ' data-t="competencia"';};
+  var h=c+kpis([{t:"Pagamentos de novembro",v:r.n,a:"ir",x:nov()},{t:"Com o RH",v:r.rh,a:"ir",x:nov()},{t:"Com o Financeiro",v:r.fin,a:"ir",x:nov()},{t:"Lançados no Financeiro",v:r.lan,a:"ir",x:nov()}]);
+  h+='<div class="aviso"><b>Enviado não é pago</b>Quem valida e paga é o Financeiro; aqui o máximo que aparece é Lançada. INSS, IRRF e PIS continuam com o Financeiro.</div>';
+  return h+tabela({rot:"Competências",acao:"competencia",linhas:COMP,dica:"Clique na linha para abrir a competência.",cols:[
+    {t:"Competência",f:function(x){return esc(x.m.charAt(0).toUpperCase()+x.m.slice(1));}},
+    {t:"Situação",et:1,f:function(x){return et(x.sit[0],x.sit[1]);}},
+    {t:"Total",d:1,f:function(x){return brl(x.tot||r.tot);}},
+    {t:"Pagamentos",pr:2,d:1,f:function(x){return x.pg||r.n;}},
+    {t:"Andamento",pr:3,d:1,f:function(x){return x.an;}},
+    {t:"eSocial",pr:3,f:function(x){return x.es;}}
+  ]});
+};
+V.competencia=function(st){
+  var vol=voltar("Todas as competências","ir",' data-t="folha"');
+  var c=cab("Competência de novembro de 2026","Um cartão por pagamento do mês. O RH prepara e confere; o Financeiro valida e paga.");
+  if(st==="semacesso")return vol+c+eTrava();
+  if(st==="erro")return vol+c+eErro("Não deu para carregar a competência","Nada foi perdido, e nada foi enviado nem alterado no Financeiro. Recarregue a página.");
+  if(st==="vazio")return vol+c+eVazio("A competência de novembro de 2026 ainda não foi aberta","Primeiro abra a competência. Ela reúne os cinco pagamentos do mês: folha, FGTS e consignado, VR, VT e ajuda de custo, e PJ.",btn("Abrir competência","estado",' data-v="dados"',"btn-p"));
+  var r=resumo();
+  var h=vol+c+'<div class="abas">'+["Pagamentos","Andamento","Documentos","Histórico"].map(function(a,i){return '<button type="button" class="aba" data-acao="toast" data-m="Aba '+a+': conteúdo de hoje, no mesmo padrão."'+(i===0?' aria-current="page"':"")+'>'+a+'</button>';}).join("")+'</div>';
+  h+=kpis([{t:"Total conhecido",v:brl(r.tot),din:1},{t:"Lançado no Financeiro",v:brl(r.tl),din:1},{t:"Com o Financeiro",v:brl(r.tf),din:1},{t:"Com o RH",v:brl(r.tr),din:1}]);
+  var sc=P.filter(function(p){return p.v==="CLT"&&!p.pix;});
+  h+='<div class="bloco"><h2 class="h2">O que precisa de você</h2><p class="h2-lead">Quando não há nada, o item some.</p><ul class="lista-c"><li><div class="lin"><span class="lin-c"><b>'+sc.length+' pessoa sem chave PIX</b><span>Fica de fora dos pagamentos que dependem da chave até o cadastro no Omie ser corrigido: '+esc(sc.map(function(p){return p.n;}).join(", "))+'.</span></span></div></li></ul></div>';
+  h+='<h2 class="h2">Pagamentos do mês</h2><p class="h2-lead">Depois do envio, a situação vem do Financeiro. Ter enviado não significa ter pago.</p><div class="kpis" style="margin:0">'+GRUPOS.map(function(g){
+    return '<button type="button" class="card card-clic" data-acao="grupo" data-v="'+g.id+'"><p class="k-rot">'+esc(g.n)+'</p><p class="k-val din">'+brl(valGrupo(g))+'</p><p class="k-sub" style="margin:4px 0 8px">'+pessoasGrupo(g).length+' pessoas</p>'+et(g.sit[0],g.sit[1])+'</button>';
+  }).join("")+'</div>';
+  return h;
+};
+function rateioDe(g){
+  var m={},tot=0;
+  pessoasGrupo(g).forEach(function(p){var v=g.q(p),res=v;p.rat.forEach(function(r,i){var q=i===p.rat.length-1?res:Math.round(v*r[1]/100);res-=q;m[r[0]]=(m[r[0]]||0)+q;});tot+=v;});
+  return {t:tot,l:Object.keys(m).map(function(k){return [k,m[k]];}).sort(function(a,b){return b[1]-a[1];})};
+}
+V.rateio=function(st){
+  var g=GRUPOS.find(function(x){return x.id===S.grupo;}),vol=voltar("Competência de novembro","ir",' data-t="competencia"');
+  var c=cab(g.n,g.id==="folha"?"O relatório da contabilidade vira um pagamento por pessoa no Financeiro. O valor vem do relatório; o rateio, do cadastro.":"Cada pagamento vai ao Financeiro com o rateio do cadastro.");
+  if(st==="semacesso")return vol+c+eTrava();
+  if(st==="erro")return vol+c+eErro("Não deu para carregar a folha","Nada foi perdido, e nada foi enviado nem alterado no Financeiro. Recarregue a página.");
+  if(st==="vazio")return vol+c+eVazio("A competência ainda não foi aberta","Abra a competência primeiro, na tela anterior.",btn("Voltar para a competência","ir",' data-t="competencia"'));
+  var rat=rateioDe(g);
+  var pn='<div><h2 class="h-det">Rateio por centro de custo</h2><div class="card" style="padding:16px 20px">'+rat.l.map(function(x){var pc=Math.round(x[1]*1e4/rat.t)/100;return '<div class="rat"><span class="rat-t"><span>'+esc(CC[x[0]])+'</span><span>'+brl(x[1])+'<small>'+String(pc).replace(".",",")+'%</small></span></span><span class="rat-b"><i style="width:'+pc+'%"></i></span></div>';}).join("")+'<div class="rat-tot"><span>Total</span><span>'+brl(rat.t)+'</span></div><p class="k-sub" style="margin-top:12px">O rateio vem do cadastro de cada pessoa. Não precisa digitar.</p></div></div>';
+  var lista='<div><h2 class="h-det">Situação dos pagamentos</h2><p class="h2-lead">A situação vem do Financeiro. Enviado não significa pago.</p>'+tabela({rot:"Pagamentos por pessoa",acao:"ficha",linhas:pessoasGrupo(g),cols:[
+    {t:"Pessoa",f:function(p){return esc(p.n);}},
+    {t:"Situação",et:1,f:function(p){return g.id==="folha"&&!p.pix?et("Sem chave PIX","av"):et(g.sit[0],g.sit[1]);}},
+    {t:"Valor lido",d:1,f:function(p){return brl(g.q(p));}},
+    {t:"Rateio",pr:2,f:function(p){return esc(p.rat.map(function(r){return CC[r[0]]+" "+r[1]+"%";}).join(" · "));}},
+    {t:"Chave PIX",pr:4,f:function(p){return p.pix?esc(p.pix):"—";}}
+  ]})+'</div>';
+  return vol+c+'<div class="grade-rat">'+lista+pn+'</div>';
+};
+
+/* ---- Férias ---- */
+V.ferias=function(st){
+  var ac=btn("Gerar períodos","toast",' data-m="Gerar períodos: no mockup nada é gravado."')+btn("Registrar férias","toast",' data-m="Registrar férias: abre o formulário de hoje, com o visual novo."',"btn-p");
+  var c=cab("Férias","Períodos, saldos e limites de cada colaborador CLT.",st==="semacesso"?"":ac);
+  if(st==="semacesso")return c+eTrava();
+  if(st==="erro")return c+eErro("Não deu para carregar as férias");
+  if(st==="vazio")return c+eVazio("Nenhum período de férias","Os períodos aparecem aqui quando há colaboradores CLT com data de admissão. Use Gerar períodos para criá-los.",btn("Gerar períodos","toast",' data-m="Gerar períodos: no mockup nada é gravado."',"btn-p"));
+  var f=S.ff;
+  var k=function(id,t){return {t:t,v:F.filter(function(x){return x.sd>0&&faixa(x)===id;}).length,on:f.faixa===id,a:"filtro-f",x:' data-k="'+id+'"'};};
+  var ges=[];F.forEach(function(x){var g=pes(x.p).ges;if(ges.indexOf(g)<0)ges.push(g);});ges.sort();
+  var h=c+kpis([k("v","Limite vencido"),k("30","Até 30 dias"),k("60","Até 60 dias"),k("90","Até 90 dias"),{t:"Em férias agora",v:F.filter(function(x){return situacaoFerias(x)[0]==="Em férias";}).length}],"k5");
+  h+='<form class="filtros" data-form="ferias">'
+   +'<label class="fl2"><span>Nome da pessoa</span><input class="campo-f" type="search" name="busca" value="'+esc(f.busca)+'"></label>'
+   +'<label><span>Gestor</span><select class="campo-f" name="ges"><option value="">Todos</option>'+ges.map(function(g){return '<option'+(g===f.ges?" selected":"")+'>'+esc(g)+'</option>';}).join("")+'</select></label>'
+   +'<button type="submit" class="btn btn-s">Filtrar</button></form>';
+  var b=f.busca.toLowerCase();
+  var l=F.filter(function(x){var p=pes(x.p);
+    if(b&&p.n.toLowerCase().indexOf(b)<0)return false;
+    if(f.ges&&p.ges!==f.ges)return false;
+    if(f.faixa&&!(x.sd>0&&faixa(x)===f.faixa))return false;
+    return true;});
+  if(!l.length)return h+'<div class="e-vazio">'+IC.inbox+'<h2>Nenhum período com esses filtros</h2><p>Mude ou limpe os filtros para ver os períodos.</p>'+btn("Limpar filtros","limpa-f")+'</div>';
+  return h+tabela({rot:"Períodos de férias",acao:"periodo",linhas:l,dica:"Clique na linha para ver o período.",rod:l.length+" de "+F.length+" períodos",cols:[
+    {t:"Pessoa",f:function(x){return esc(pes(x.p).n);}},
+    {t:"Situação",et:1,f:function(x){var s=situacaoFerias(x);return et(s[0],s[1]);}},
+    {t:"Saldo",f:function(x){return '<span style="white-space:nowrap">'+x.sd+' dias</span>'+(x.conf?"":'<span style="display:block;font-size:12px;color:var(--aux);white-space:nowrap">a conferir</span>');}},
+    {t:"Limite",pr:2,f:function(x){return '<span style="white-space:nowrap">'+db(x.lim)+'</span>';}},
+    {t:"Início marcado",pr:2,f:function(x){return x.g?'<span style="white-space:nowrap">'+db(x.g.ini)+'</span>':"—";}},
+    {t:"Período aquisitivo",pr:3,f:function(x){return db(x.ai)+" a "+db(x.af);}},
+    {t:"Gestor",pr:3,f:function(x){return esc(pes(x.p).ges);}},
+    {t:"Andamento",pr:4,f:function(x){return x.g?x.g.f+"/"+x.g.t:"—";}}
+  ]});
+};
+
+/* ---- Nova admissão ---- */
+function formCheio(){return {nome:"Gustavo Arantes",cpf:"000.731.264-00",vin:"CLT",cargo:"Técnico de Manutenção",sal:"3.850,00",ini:"2026-12-01",ja:false,ges:"Eduardo Pacheco",eq:"Campo Sul",em:"gustavo.arantes@exemplo.com.br",rat:[{c:"m",p:"70"},{c:"z",p:"30"}]};}
+function formVazio(){return {nome:"",cpf:"",vin:"",cargo:"",sal:"",ini:HOJE,ja:false,ges:"",eq:"",em:"",rat:[{c:"",p:"100"}]};}
+function fCampo(id,r,inp,aj,lg){return '<div class="f-c'+(lg?" f-larga":"")+'"><label for="fa-'+id+'">'+esc(r)+'</label>'+inp+(aj?'<p class="f-aj">'+esc(aj)+'</p>':"")+'</div>';}
+function somaRat(){var t=S.form.rat.reduce(function(s,l){var n=parseFloat(String(l.p).replace(",","."));return s+(isNaN(n)?0:n);},0);return Math.round(t*100)/100;}
+function ratHtml(){
+  var ccs=Object.keys(CC),n=S.form.rat.length;
+  return S.form.rat.map(function(l,i){
+    return '<div class="r-l"><div><label for="r-c'+i+'" style="position:absolute;left:-9999px">Centro de custo da linha '+(i+1)+'</label><select id="r-c'+i+'" class="campo" data-r="c" data-i="'+i+'"><option value="">Escolha o centro de custo</option>'+ccs.map(function(k){return '<option value="'+k+'"'+(l.c===k?" selected":"")+'>'+esc(CC[k])+'</option>';}).join("")+'</select></div>'
+     +'<div><label for="r-p'+i+'" style="position:absolute;left:-9999px">Percentual da linha '+(i+1)+'</label><input id="r-p'+i+'" class="campo" inputmode="decimal" placeholder="%" data-r="p" data-i="'+i+'" value="'+esc(l.p)+'"></div>'
+     +'<button type="button" class="btn btn-s" data-acao="r-tira" data-i="'+i+'" aria-label="Tirar a linha '+(i+1)+'"'+(n===1?" disabled style=\"opacity:.4\"":"")+'>Tirar</button></div>';
+  }).join("");
+}
+function somaHtml(){var t=somaRat();return 'Soma: '+String(t).replace(".",",")+'%';}
+V.admissao=function(st){
+  var vol=voltar("Voltar para Admissões e alterações","ir",' data-t="movimentacoes"');
+  var c=cab("Nova admissão","A única porta de entrada de quem chega. Nada entra em Pessoas até a conclusão.");
+  if(st==="semacesso")return vol+c+eTrava();
+  if(st==="erro")return vol+c+eErro("Não deu para carregar os centros de custo");
+  if(!S.form)S.form=st==="vazio"?formVazio():formCheio();
+  var f=S.form,v=function(x){return ' value="'+esc(x)+'"';};
+  var opV='<option value="">Escolha</option>'+VINC.map(function(x){return '<option'+(f.vin===x?" selected":"")+'>'+x+'</option>';}).join("");
+  var opG='<option value="">Sem gestor</option>'+["Eduardo Pacheco","Renata Moura","Vanessa Rocha"].map(function(x){return '<option'+(f.ges===x?" selected":"")+'>'+x+'</option>';}).join("");
+  var msg=S.formMsg?(S.formMsg.ok?'<div class="msg-ok" role="status">'+esc(S.formMsg.t)+'</div>':'<div class="msg-er" role="alert">'+esc(S.formMsg.t)+'</div>'):"";
+  return vol+c+'<form class="form" data-form="admissao" novalidate>'
+   +'<div class="f-g">'
+   +'<div class="f-c f-larga"><label for="fa-omie">Buscar no catálogo do Omie</label><div class="busca-omie"><input id="fa-omie" class="campo" placeholder="Nome ou CPF"><button type="button" class="btn btn-s" data-acao="toast" data-m="No sistema, a busca preenche nome, CPF e fornecedor.">Buscar</button></div><p class="f-aj">Preenche nome, CPF e fornecedor. Também dá para digitar sem vínculo.</p></div>'
+   +fCampo("nome","Nome completo",'<input id="fa-nome" class="campo" data-f="nome"'+v(f.nome)+'>')
+   +fCampo("cpf","CPF",'<input id="fa-cpf" class="campo" data-f="cpf" inputmode="numeric" placeholder="000.000.000-00"'+v(f.cpf)+'>')
+   +fCampo("vin","Vínculo",'<select id="fa-vin" class="campo" data-f="vin">'+opV+'</select>')
+   +fCampo("cargo","Cargo",'<input id="fa-cargo" class="campo" data-f="cargo"'+v(f.cargo)+'>')
+   +fCampo("sal","Salário ou valor mensal",'<input id="fa-sal" class="campo" data-f="sal" inputmode="decimal"'+v(f.sal)+'>',"Como 3.500,00.")
+   +fCampo("ini","Data de início",'<input id="fa-ini" class="campo" type="date" data-f="ini"'+v(f.ini)+'>')
+   +'<label class="chk f-larga"><input type="checkbox" data-f="ja"'+(f.ja?" checked":"")+'>Já está trabalhando (aceita início no passado e conclui agora, sem os demais passos)</label>'
+   +fCampo("ges","Gestor",'<select id="fa-ges" class="campo" data-f="ges">'+opG+'</select>')
+   +fCampo("eq","Equipe",'<input id="fa-eq" class="campo" data-f="eq" maxlength="80"'+v(f.eq)+'>')
+   +fCampo("em","E-mail corporativo",'<input id="fa-em" class="campo" type="email" data-f="em"'+v(f.em)+'>',"Sem ele a pessoa não recebe aviso por e-mail.",1)
+   +'</div>'
+   +'<fieldset class="f-rat"><legend>Rateio por centro de custo</legend><div id="r-linhas">'+ratHtml()+'</div><div class="r-rod">'+btn("Mais um centro de custo","r-mais")+'<output class="soma'+(somaRat()===100?"":" ruim")+'" id="r-soma">'+somaHtml()+'</output></div></fieldset>'
+   +msg
+   +'<div class="f-bot"><button type="button" class="btn btn-s" data-acao="ir" data-t="movimentacoes">Cancelar</button><button type="submit" class="btn btn-p" id="fa-env">'+(f.ja?"Cadastrar e concluir":"Abrir admissão")+'</button></div>'
+   +'</form>';
+};
+
+/* ---- Demais módulos ---- */
+function modulo(id){return MOD.find(function(m){return m.id===id;});}
+function Vgen(id,st){
+  var m=modulo(id),t=m?m.r:"Papéis";
+  var c=cab(t,"Segue o mesmo padrão das telas ao lado.");
+  if(st==="semacesso")return c+eTrava();
+  if(st==="erro")return c+eErro("Não deu para carregar "+t);
+  if(st==="vazio")return c+eVazio("Nada em "+t+" ainda","Quando houver um registro, ele aparece aqui.");
+  var extra=id==="movimentacoes"?'<div style="margin-top:16px">'+btn("+ Nova admissão","ir",' data-t="admissao"',"btn-p")+'</div>':"";
+  return c+'<div class="card"><p style="color:var(--texto-suave)">'+esc(t)+' segue o mesmo padrão: título, cartões de indicador, filtros, tabela e ficha, com o visual do hub. Conteúdo, regras e campos não mudam.</p>'+extra+'</div>';
+}
+
+/* ---- Moldura ---- */
+function ativoDe(t){return {ficha:"pessoas",competencia:"folha",rateio:"folha",admissao:"movimentacoes"}[t]||t;}
+function rotaDe(){
+  var t=S.tela,base="hub.manfac.com.br/rh";
+  if(t==="ficha")return base+"/pessoas/"+S.pessoa;
+  if(t==="competencia")return base+"/pagamentos?mes=2026-11";
+  if(t==="rateio")return base+"/pagamentos/"+S.grupo+"?mes=2026-11";
+  if(t==="admissao")return base+"/movimentacoes/nova-admissao";
+  if(t==="papeis")return base+"/papeis";
+  var m=modulo(t);return base+(m&&m.rota!=="/"?m.rota:"");
+}
+function desenhaLateral(){
+  var at=ativoDe(S.tela);
+  var h='<div class="lat-cab"><div><span class="lat-nome">RH</span><a class="volta" href="#" data-acao="hub">← Voltar ao Hub</a></div><button type="button" class="lat-fecha" data-acao="fecha-lat" aria-label="Fechar menu">×</button></div>';
+  var abre=false;
+  MOD.forEach(function(m,i){
+    if(m.g||i===0){
+      if(abre)h+='</div>';
+      h+='<div class="lat-grupo">';abre=true;
+      if(m.g)h+='<div class="lat-tit">'+esc(m.g)+(m.g==="Departamento Pessoal"?" "+pin(4):"")+'</div>';
+    }
+    h+='<button type="button" class="item" data-acao="ir" data-t="'+m.id+'"'+(m.id===at?' aria-current="page"':"")+' aria-label="'+esc(m.r)+(m.c?", "+m.c+" pendentes":"")+'"><span>'+esc(m.r)+'</span>'+(m.c?'<span class="cont" aria-hidden="true">'+m.c+'</span>':"")+'</button>';
+  });
+  if(abre)h+='</div>';
+  h+='<div class="lat-pe"><div class="lat-tit" style="padding:0 8px;min-height:22px">'+pin(5)+'</div><button type="button" class="item" data-acao="ir" data-t="papeis"'+(S.tela==="papeis"?' aria-current="page"':"")+'>Papéis</button><button type="button" class="item" data-acao="toast" data-m="Sair: fecha a sessão, como hoje.">Sair</button></div>';
+  $("#lat").innerHTML=h;
+}
+function desenhaBarra(){
+  var at=ativoDe(S.tela);
+  var ic={inicio:'<path d="M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',pessoas:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/>',agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'};
+  var svg=function(p){return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';};
+  $("#barra").innerHTML=pin(2)+["inicio","pessoas","agenda"].map(function(id){return '<button type="button" data-acao="ir" data-t="'+id+'"'+(at===id?' aria-current="page"':"")+'>'+svg(ic[id])+'<span>'+modulo(id).r+'</span></button>';}).join("")+'<button type="button" data-acao="menu" aria-label="Menu">'+svg('<path d="M3 6h18M3 12h18M3 18h18"/>')+'<span>Menu</span></button>';
+  $("#barra").style.position="relative";
+}
+function desenhaControles(){
+  $("#seg-largura").innerHTML=Object.keys(LARG).map(function(k){return '<button type="button" data-m="largura" data-v="'+k+'" aria-pressed="'+(S.largura===k)+'">'+LARG[k].n+'<small>'+LARG[k].w+'</small></button>';}).join("");
+  $("#seg-estado").innerHTML=ESTADOS.map(function(e){return '<button type="button" data-m="estado" data-v="'+e[0]+'" aria-pressed="'+(S.estado===e[0])+'">'+e[1]+'</button>';}).join("");
+  var ativaSec=SEC.find(function(s){return s[0]===S.tela;});
+  var ehGen=!ativaSec;
+  $("#seg-tela").innerHTML=SEC.map(function(s){var on=s[0]===S.tela||(ehGen&&s[1]==="11");return '<button type="button" data-m="tela" data-v="'+s[0]+'" aria-pressed="'+on+'">'+s[1]+' · '+s[2]+'</button>';}).join("");
+  $$("[data-m=barra]").forEach(function(b){b.setAttribute("aria-pressed",String($("#sim").dataset.barra===b.dataset.v));});
+  $$("[data-m=aux]").forEach(function(b){b.setAttribute("aria-pressed",String((document.documentElement.dataset.aux||"frotas")===b.dataset.v));});
+}
+function escala(){
+  var pal=$("#palco"),q=$("#quadro"),l=LARG[S.largura],disp=pal.clientWidth;
+  var w=S.largura==="celular"?Math.min(l.w,disp):l.w;
+  var e=Math.min(1,disp/w);
+  q.style.width=w+"px";q.style.height=l.h+"px";
+  q.style.transform="translateX("+Math.max(0,(disp-w*e)/2)+"px) scale("+e+")";
+  pal.style.height=(l.h*e)+"px";
+  $("#info-escala").textContent=w+" px simulados"+(e<1?", exibidos a "+Math.round(e*100)+"% para caber nesta janela":"");
+}
+function render(manter){
+  var sim=$("#sim"),st=S.estado,t=S.tela;
+  var html;
+  if(st==="carregando")html=eCarr();
+  else if(V[t])html=V[t](st);
+  else html=Vgen(t,st);
+  $("#conteudo").innerHTML=html;
+  desenhaLateral();desenhaBarra();desenhaControles();
+  $("#url").textContent=rotaDe();
+  $("#b-lat").setAttribute("aria-label",sim.dataset.lateral==="aberta"?"Fechar a lateral":"Abrir a lateral");
+  if(!manter)$("#rola").scrollTop=0;
+  try{history.replaceState(null,"","#tela="+t+"&estado="+st+"&w="+S.largura);}catch(e){}
+}
+var tt;
+function toast(m){var el=$("#toast");el.textContent=m;el.hidden=false;clearTimeout(tt);tt=setTimeout(function(){el.hidden=true;},2800);}
+function ir(t){S.tela=t;S.estado="dados";S.formMsg=null;if(t==="admissao")S.form=null;fechaGaveta();render();var h=$("#conteudo h1");if(h&&document.activeElement&&sim().contains(document.activeElement)&&document.activeElement.tagName!=="BODY")h.focus({preventScroll:true});}
+function sim(){return $("#sim");}
+function fechaGaveta(){sim().dataset.gaveta="nao";}
+function ehLargo(){return sim().clientWidth>=768;}
+
+/* Busca geral */
+function buscar(txt){
+  var q=txt.trim().toLowerCase();
+  if(!q)return "";
+  if(q.length<2)return '<p>Digite pelo menos 2 letras.</p>';
+  var r=P.filter(function(p){return p.n.toLowerCase().indexOf(q)>=0||p.cargo.toLowerCase().indexOf(q)>=0;}).slice(0,5).map(function(p){return '<button type="button" class="res" data-acao="ficha" data-id="'+p.id+'"><b>'+esc(p.n)+'</b><span>Pessoas · '+esc(p.v)+', '+esc(p.cargo)+'</span></button>';});
+  [["Técnico de Refrigeração","Recrutamento · vaga aberta","recrutamento"],["Notebook 14 polegadas","Patrimônio · item","patrimonio"]].forEach(function(x){if(x[0].toLowerCase().indexOf(q)>=0)r.push('<button type="button" class="res" data-acao="ir" data-t="'+x[2]+'"><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></button>');});
+  return r.length?r.join(""):'<p>Nada encontrado.</p>';
+}
+function limpaBusca(){$$("[data-busca] input").forEach(function(i){i.value="";});$$(".busca-res").forEach(function(r){r.innerHTML="";});$("#busca-cel").classList.remove("aberta");}
+
+/* Cliques */
+var A={
+ ir:function(d){limpaBusca();ir(d.t);},
+ ficha:function(d){limpaBusca();S.pessoa=d.id;S.aba="Dados";ir("ficha");},
+ competencia:function(){ir("competencia");},
+ grupo:function(d){S.grupo=d.v;ir("rateio");},
+ periodo:function(d){var f=F.find(function(x){return x.id===d.id;});S.pessoa=f.p;S.aba="Férias";ir("ficha");},
+ sub:function(d){S.sub=d.v;render(true);},
+ aba:function(d){S.aba=d.v;render(true);},
+ estado:function(d){S.estado=d.v;S.form=null;render();},
+ toast:function(d){toast(d.m);},
+ hub:function(){toast("No sistema, volta para hub.manfac.com.br.");fechaGaveta();},
+ menu:function(){sim().dataset.gaveta="sim";var b=$("#lat .lat-fecha");if(b)b.focus({preventScroll:true});},
+ "fecha-gaveta":fechaGaveta,
+ "fecha-lat":function(){if(ehLargo()){sim().dataset.lateral="fechada";render(true);$("#b-lat").focus();}else{fechaGaveta();}},
+ "alterna-lateral":function(){var s=sim();s.dataset.lateral=s.dataset.lateral==="aberta"?"fechada":"aberta";render(true);},
+ "busca-cel":function(){var el=$("#busca-cel");el.classList.toggle("aberta");if(el.classList.contains("aberta"))$("input",el).focus({preventScroll:true});},
+ nota:function(d){var n=$("#d"+d.d);n.scrollIntoView({behavior:"smooth",block:"center"});n.classList.add("pisca");setTimeout(function(){n.classList.remove("pisca");},1600);},
+ "filtro-p":function(d){
+   var f=S.fp,k=d.k;
+   if(k==="clt")f.vin=f.vin==="CLT"?"":"CLT";
+   if(k==="pj")f.vin=f.vin==="PJ"?"":"PJ";
+   if(k==="afa")f.sit=f.sit==="Afastado"?"":"Afastado";
+   if(k==="sem")f.sem=!f.sem;
+   S.sub="todos";render(true);
+ },
+ "limpa-p":function(){S.fp={busca:"",vin:"",cc:"",sit:"",sem:false};render(true);},
+ "filtro-f":function(d){S.ff.faixa=S.ff.faixa===d.k?"":d.k;render(true);},
+ "limpa-f":function(){S.ff={busca:"",ges:"",faixa:""};render(true);},
+ "r-mais":function(){S.form.rat.push({c:"",p:""});atualizaRat();},
+ "r-tira":function(d){if(S.form.rat.length>1){S.form.rat.splice(+d.i,1);atualizaRat();}}
+};
+function atualizaRat(){$("#r-linhas").innerHTML=ratHtml();atualizaSoma();}
+function atualizaSoma(){var el=$("#r-soma");el.textContent=somaHtml();el.classList.toggle("ruim",somaRat()!==100);}
+
+document.addEventListener("click",function(e){
+  var m=e.target.closest("[data-m]");
+  if(m&&m.closest(".ctl,.nota-d")){
+    var d=m.dataset;
+    if(d.m==="largura"){S.largura=d.v;fechaGaveta();limpaBusca();escala();render(true);}
+    else if(d.m==="estado"){S.estado=d.v;S.form=null;S.formMsg=null;render();}
+    else if(d.m==="tela"){limpaBusca();S.tela=d.v;S.estado="dados";S.formMsg=null;S.form=null;fechaGaveta();render();}
+    else if(d.m==="barra"){sim().dataset.barra=d.v;desenhaControles();}
+    else if(d.m==="aux"){document.documentElement.dataset.aux=d.v;document.documentElement.style.setProperty("--aux",d.v==="legivel"?"var(--muted)":"var(--muted-dark)");desenhaControles();}
+    else if(d.m==="pins"){var on=sim().dataset.pins==="sim";sim().dataset.pins=on?"nao":"sim";m.setAttribute("aria-pressed",String(!on));}
+    return;
+  }
+  var el=e.target.closest("[data-acao]");
+  if(!el)return;
+  if(el.tagName==="A")e.preventDefault();
+  var fn=A[el.dataset.acao];
+  if(fn)fn(el.dataset);
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){fechaGaveta();$("#busca-cel").classList.remove("aberta");$$(".busca-res").forEach(function(r){r.innerHTML="";});return;}
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches('[role=button][data-acao]')){e.preventDefault();e.target.click();}
+});
+document.addEventListener("input",function(e){
+  var t=e.target,bq=t.closest("[data-busca]");
+  if(bq){$(".busca-res",bq).innerHTML=buscar(t.value);return;}
+  if(t.dataset.r){S.form.rat[+t.dataset.i][t.dataset.r]=t.value;atualizaSoma();return;}
+  if(t.dataset.f){S.form[t.dataset.f]=t.type==="checkbox"?t.checked:t.value;if(t.dataset.f==="ja")$("#fa-env").textContent=t.checked?"Cadastrar e concluir":"Abrir admissão";}
+});
+document.addEventListener("submit",function(e){
+  var f=e.target,q=f.dataset.form;
+  if(!q)return;
+  e.preventDefault();
+  if(q==="pessoas"){S.fp={busca:f.busca.value.trim(),vin:f.vin.value,cc:f.cc.value,sit:f.sit.value,sem:f.sem.checked};render(true);}
+  if(q==="ferias"){S.ff.busca=f.busca.value.trim();S.ff.ges=f.ges.value;render(true);}
+  if(q==="admissao"){
+    var v=S.form,er=!v.nome.trim()?"Preencha o nome completo.":!v.cpf.trim()?"Preencha o CPF.":!v.vin?"Escolha o vínculo.":!v.ini?"Preencha a data de início.":v.rat.some(function(l){return !l.c;})?"Escolha o centro de custo de cada linha do rateio.":somaRat()!==100?"O rateio precisa somar 100%.":null;
+    S.formMsg=er?{ok:false,t:er}:{ok:true,t:"No sistema, aqui a admissão abre e a tela segue para ela. No mockup nada foi gravado."};
+    render(true);
+    var alvo=$(".msg-er,.msg-ok");if(alvo)alvo.scrollIntoView({block:"center"});
+  }
+});
+
+/* Entrada: endereço direto (#tela=...&estado=...&w=...) e largura inicial pela janela */
+S.largura=window.innerWidth<700?"celular":window.innerWidth<1100?"tablet":"notebook";
+location.hash.replace(/^#/,"").split("&").forEach(function(p){
+  var kv=p.split("=");
+  if(kv[0]==="tela"&&kv[1])S.tela=kv[1];
+  if(kv[0]==="estado"&&ESTADOS.some(function(e){return e[0]===kv[1];}))S.estado=kv[1];
+  if(kv[0]==="w"&&LARG[kv[1]])S.largura=kv[1];
+});
+escala();render();
+if(window.ResizeObserver)new ResizeObserver(escala).observe($("#palco"));else window.addEventListener("resize",escala);
+})();
+</script>
+</body>
+</html>
