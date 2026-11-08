@@ -1,5 +1,9 @@
 # RH: o que é do João na manhã de 08/11
 
+## Atualização de 08/11, 16h
+
+- **A porta do Financeiro aceita o segredo, e a versão nova dele está no ar** (às 15h59: 400 em pedido incompleto, reconhece `seguro` e `celular`). O 401 das conferências de 08/11 era erro do teste do Claude: `C:\Users\joao-\.manfac-rh-integracao-secret` guarda a linha inteira `RH_INTEGRACAO_SECRET=valor`. Para testar, envie só o valor.
+
 ## Atualização de 07/11, 23h (depois que você saiu)
 
 - **Deploy continua com você, amanhã.** Correção em 08/11: a conferência das 22h40 não valia, porque `/rh` e `/financeiro` sem sessão redirecionam ao `/login` e os chunks lidos eram do hub.

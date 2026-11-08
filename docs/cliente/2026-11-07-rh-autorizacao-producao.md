@@ -13,4 +13,4 @@ Texto literal do João, no chat:
 
 > Faz o teste de fumaça
 
-Às 15h31 o teste **não rodou**: a porta do Financeiro respondeu 401. Nada foi criado em produção.
+Às 15h31 o teste **não rodou**. Nada foi criado em produção. O 401 que justificou isso era erro do teste do Claude: o arquivo local guarda a linha `RH_INTEGRACAO_SECRET=valor`, e o teste mandava a linha inteira. Às 15h59, mandando só o valor, a porta respondeu 400, como esperado.
