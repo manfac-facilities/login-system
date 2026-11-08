@@ -1,6 +1,31 @@
 # RH: o que é do João na manhã de 08/11
 
-Atualizado pela sessão de coordenação. O estado de cada frente fica no fim.
+## Feito na noite de 07/11 (com a autorização do João)
+
+- **Migrations:** 005 a 015 aplicadas em produção (`iyytcavcgukfjnjjrerx`), uma por vez, todas as verificações `OK`.
+  - Os 50 colaboradores estão lá antes e depois.
+  - O cron `rh-aplicar-vigencias` ficou agendado (`5 3 * * *`).
+- **Pasta `rh-arquivos`:** criada privada, com limite de 10 MB, só PDF, JPG e PNG, e sem policy. Todas as policies do storage filtram pelo nome da pasta.
+- **Junções:**
+  - `rh-modulos` na `main` do RH (`f2e30b7`), com os tipos do banco regenerados;
+  - `fin-seguro-celular` na `main` do Financeiro (`7d58a2a`).
+
+## Faça agora, nesta ordem (Deploy)
+
+**Enquanto o RH novo não subir, a tela antiga não deixa editar nem importar pessoa.** Ela recusa e nada se grava. Por isso o Deploy do RH logo cedo.
+
+1. **Financeiro:**
+   1. No EasyPanel, abra o app `financeiro` e a aba Environment.
+   2. Confira se `RH_INTEGRACAO_SECRET=` está igual ao arquivo `C:\Users\joao-\.manfac-rh-integracao-secret`, na mesma linha e sem espaço.
+   3. Clique em Save e depois em **Deploy**.
+2. **RH:**
+   1. No EasyPanel, abra o app `rh` e a aba Environment.
+   2. Confira `FINANCEIRO_URL=https://hub.manfac.com.br` e o mesmo `RH_INTEGRACAO_SECRET`.
+   3. **Opcional:** copie do app `compras` as cinco variáveis `SMTP_*`. Sem elas, os avisos ficam "sem configuração" e o RH registra o aviso à mão.
+   4. **Nunca** coloque `RH_VITRINE`.
+   5. Clique em Save e depois em **Deploy**.
+3. **Me avise "subiu".** Eu confiro os chunks, confiro se o 401 sumiu da porta do Financeiro e abro as telas com o papel `rh`.
+4. **Teste de fumaça** `TESTE - APAGAR`. Pede autorização separada e aviso ao Financeiro antes.
 
 ## Ações manuais
 
