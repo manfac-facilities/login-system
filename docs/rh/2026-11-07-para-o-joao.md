@@ -1,5 +1,20 @@
 # RH: o que é do João na manhã de 08/11
 
+## Atualização de 07/11, 23h (depois que você saiu)
+
+- **Deploy continua com você, amanhã.** Conferi às 22h40: RH e Financeiro ainda no build de 06/11.
+- **Pendências da revisão final juntadas na `main` do RH** (`aabac50`), com code review e 2182/2182 testes:
+  - aviso na tela de que diretoria e administradores leem o motivo de concluir e o de cancelar (BK1, só texto);
+  - backlog da F6 em `DIVIDAS.md`, sem B1 e B3, que já estavam corrigidos (BK5);
+  - teste do fuso corrigido no 012 e no 014 (BK7).
+- **Next 16.4.5 + nodemailer 10** prontos na branch `rh-next-16-4b`, **não juntados**, com code review sem bloqueio.
+  - `npm audit --omit=dev` cai de 11 vulnerabilidades (1 crítica) para 0.
+  - O limite do anexo de 10 MB passa a dar a mensagem certa.
+  - **Falta rodar o build e a suíte no último commit (`f089558`):** o sistema parou a verificação por falta de memória RAM. Esse commit só trocou o limite do proxy para 12mb e removeu `@types/nodemailer`. tsc e lint passaram. O commit anterior (`49e2805`) passou em tudo: build e 2182/2182 testes.
+  - Recomendo juntar **depois** do Deploy de amanhã confirmado, num segundo Deploy. Assim, se algo quebrar, dá para saber se foi o RH novo ou o Next. Para isso, escreva no chat: "junta o Next".
+- **Decisão nova sua (BK1 de fundo):** esconder no banco, para quem não é `rh`, o motivo de concluir e o de cancelar. Muda uma função do 006 em produção; hoje a tela só avisa quem lê.
+- **Disco C:** chegou a 2,2 GB livres; voltou a 8 GB sozinho. Nada foi apagado. Sua autorização está em `docs/cliente/2026-11-07-autorizacao-limpeza-disco.md`.
+
 ## Feito na noite de 07/11 (com a autorização do João)
 
 - **Migrations:** 005 a 015 aplicadas em produção (`iyytcavcgukfjnjjrerx`), uma por vez, todas as verificações `OK`.
