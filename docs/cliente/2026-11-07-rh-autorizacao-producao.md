@@ -22,3 +22,5 @@ Texto literal do João, no chat:
 > Aplica 016
 
 Pergunta a que responde: esconder no banco, para quem não é do RH, o motivo de cancelar e o de concluir um encerramento.
+
+Aplicada em 08/11/2026: 9 de 9 verificações `OK`; 50 colaboradores antes e depois.
