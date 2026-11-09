@@ -1,0 +1,1434 @@
+<title>Tour do RH</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens: os mesmos de app/globals.css do hub. As cores de etiqueta são as classes Tailwind v4 que o Frotas usa. */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--orange:#f05a28;--orange-hover:#d94e22;
+  --muted:#94a3b8;--muted-dark:#4a6080;--border:#1e3a5f;--input-bg:#0f1f3d;--error:#ef4444;
+  --texto:#ffffff;--texto-suave:#e8eef7;--navy-hover:#10285f;
+  --verde-bg:#0d542b;--verde:#7bf1a8;--ambar-bg:#7b3306;--ambar:#ffd230;
+  --vermelho-bg:#82181a;--vermelho:#ffa2a2;--azul-bg:#1c398e;--azul:#8ec5ff;
+  --erro-borda:#e7000b;--erro-fundo:#460809;
+  --nota:#fbbf24;--nota-fundo:#2a2108;
+  --aux:var(--muted-dark);
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto);margin:0}
+body{font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,p,dl,dd,ul{margin:0;padding:0}
+ul{list-style:none}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* ------------------------------ fora da moldura: o mockup ------------------------------ */
+.m-pag{max-width:1760px;margin:0 auto;padding:24px 16px 64px}
+@media(min-width:900px){.m-pag{padding:32px 32px 80px}}
+.m-cab h1{font-size:24px;font-weight:700}
+.m-cab p{color:var(--muted);margin-top:4px;max-width:78ch}
+.m-sec{margin-top:32px}
+.m-sec>h2{font-size:18px;font-weight:600;margin-bottom:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.num-sec{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;border-radius:6px;background:var(--border);font-size:13px;font-weight:600}
+.cmp{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cmp-l{display:grid;grid-template-columns:1fr;gap:4px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.cmp-l:last-child{border-bottom:0}
+.cmp-l b{font-weight:600}
+.cmp-l .hj{color:var(--muted)}
+.cmp-l .hj::before{content:'Hoje: ';color:var(--muted);font-weight:600}
+.cmp-l .nv::before{content:'Novo: ';color:var(--orange);font-weight:600}
+.cmp-cab{display:none}
+@media(min-width:900px){
+  .cmp-l{grid-template-columns:170px 1fr 1fr;gap:16px}
+  .cmp-cab{display:grid;background:var(--navy);color:var(--muted);font-weight:500}
+  .cmp-l .hj::before,.cmp-l .nv::before{content:none}
+}
+.ctl{position:relative;z-index:60;background:var(--background);border:1px solid var(--border);border-radius:12px;padding:8px 12px}
+@media(min-width:900px){.ctl{position:sticky;top:8px}}
+.ctl-l{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ctl-r{color:var(--muted);font-size:12px}
+.ctl-r2{margin-left:8px}
+.sec-l{margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;font-weight:500}
+.seg button:hover{border-color:var(--muted);color:#fff}
+.seg button[aria-pressed=true]{background:var(--orange);border-color:var(--orange);color:#fff}
+.seg button small{font-size:11px;opacity:.75;font-weight:400;margin-left:4px}
+@media(max-width:899px){.seg button{min-height:44px}}
+.ctl-info{color:var(--muted);font-size:12px;margin-left:auto}
+.palco{margin-top:12px;overflow:hidden;position:relative}
+.quadro{position:absolute;top:0;left:0;transform-origin:top left;border:2px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background);display:flex;flex-direction:column}
+.url{flex:none;height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#07101f;border-bottom:1px solid var(--border);color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden}
+.url i{width:8px;height:8px;border-radius:50%;background:var(--border);flex:none}
+.notas{display:grid;gap:12px}
+@media(min-width:900px){.notas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.nota-d{border:1px solid var(--nota);background:var(--nota-fundo);border-radius:12px;padding:14px 16px;scroll-margin-top:150px}
+.nota-d.pisca{box-shadow:0 0 0 3px var(--nota)}
+.nota-d h3{font-size:14px;font-weight:600;color:var(--nota);margin-bottom:6px}
+.nota-d p{color:var(--texto-suave);margin-top:4px}
+.nota-d b{font-weight:600}
+.nota-d .seg{margin-top:8px}
+.m-rod{color:var(--muted);font-size:12px;margin-top:24px}
+.pin{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 5px;border-radius:5px;background:var(--nota);color:#1a1405;font:700 11px/1 var(--fonte);flex:none;vertical-align:middle}
+[data-pins=nao] .pin{display:none}
+
+/* ------------------------------ dentro da moldura: o RH simulado ------------------------------ */
+.sim{container:sim/inline-size;position:relative;flex:1;min-height:0;overflow:hidden;background:var(--background)}
+.app{display:flex;flex-direction:column;height:100%}
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.rola{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.area{container:area/inline-size}
+.pag{padding:16px}
+
+/* Lateral: components/sofia/Sidebar.tsx (w-64, p-4, bg navy, ativo laranja) */
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+[data-gaveta=sim] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:block}
+.volta{color:var(--muted);font-size:12px;text-decoration:none;display:inline-flex;align-items:center;transition:color .15s}
+.volta:hover{color:#fff}
+.lat-fecha{color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px}
+.lat-fecha:hover{color:#fff}
+.lat-grupo{margin-bottom:24px}
+.lat-tit{position:relative;color:var(--aux);font-size:12px;text-transform:uppercase;letter-spacing:.025em;font-weight:600;padding:0 8px;margin-bottom:8px}
+.lat-tit .pin{position:absolute;right:0;top:-2px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px;border-radius:4px;font-size:14px;margin-bottom:4px;color:var(--muted);text-decoration:none;transition:background-color .15s,color .15s,transform .15s}
+.item:hover{background:var(--border);color:#fff}
+.item:active{transform:scale(.95)}
+.item[aria-current=page]{background:var(--orange);color:#fff}
+.cont{min-width:20px;padding:0 6px;border-radius:999px;background:var(--border);color:#fff;font-size:11px;font-weight:500;line-height:18px;text-align:center}
+.item[aria-current=page] .cont{background:#fff;color:var(--orange-hover)}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.lat-pe .item{margin-bottom:4px}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+[data-gaveta=sim] .veu{display:block}
+
+/* Topo do celular: igual ao do Frotas (navy, nome, Voltar ao Hub, botão de menu) */
+.topo-cel{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:12px 16px}
+.topo-cel .volta{margin:-12px 0 -14px}
+.topo-cel-acoes{display:flex;align-items:center;gap:8px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+
+/* Topo do tablet para cima: busca, nome e papel. O Frotas não tem. */
+.topo{display:none;flex:none;height:56px;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--background);position:relative;z-index:20}
+.topo .ic-btn{width:36px;height:36px}
+.busca{position:relative;flex:1;max-width:448px;min-width:0}
+.busca svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.busca input{width:100%;height:36px;padding:0 12px 0 32px;border-radius:8px;background:var(--input-bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none}
+.busca input::placeholder{color:var(--muted-dark)}
+.busca input:focus{border-color:var(--orange)}
+.busca-res{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:40;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:8px;max-height:320px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.busca-res:empty{display:none}
+.busca-res p{color:var(--muted);padding:4px;font-size:13px}
+.res{display:block;width:100%;text-align:left;padding:8px;border-radius:6px;min-height:44px}
+.res:hover{background:var(--border)}
+.res b{display:block;font-weight:500;color:#fff;font-size:14px}
+.res span{display:block;color:var(--muted);font-size:12px}
+.quem{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
+.quem-txt{display:none;text-align:right;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500}
+.quem-txt span{color:var(--muted)}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;flex:none}
+.busca-cel{position:absolute;inset:0;z-index:45;background:var(--background);padding:12px 16px;display:none}
+.busca-cel.aberta{display:block}
+.busca-cel-l{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.busca-cel .busca{max-width:none}
+.busca-cel .busca input{height:44px;font-size:16px}
+.busca-cel .busca-res{position:static;margin-top:8px;box-shadow:none}
+
+/* Barra inferior do celular */
+.barra{flex:none;display:flex;background:var(--navy);border-top:1px solid var(--border)}
+[data-barra=nao] .barra{display:none}
+.barra button{flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:11px;position:relative}
+.barra button[aria-current=page]{color:var(--orange);font-weight:600}
+.barra .pin{position:absolute;top:4px;left:4px}
+
+/* Título, H2 e textos: app/(operacoes)/sofia/page.tsx */
+.cab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.cab h1{font-size:24px;line-height:1.33;font-weight:700;color:#fff;outline:none;overflow-wrap:anywhere}
+.lead{color:var(--aux);font-size:14px;margin-top:4px}
+.acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.h2{font-size:18px;font-weight:600;color:#fff;margin-bottom:4px}
+.h2-lead{color:var(--aux);font-size:14px;margin-bottom:16px}
+.h-det{font-size:14px;font-weight:500;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.bloco{margin-bottom:40px}
+.link{color:var(--orange);text-decoration:none;font-size:14px;display:inline-flex;align-items:center;text-align:left}
+.link:hover{text-decoration:underline}
+.volta-pag{color:var(--muted);font-size:14px;margin-bottom:8px;display:inline-flex;align-items:center;gap:4px}
+.volta-pag:hover{color:#fff}
+
+/* Botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;transition:background-color .15s,border-color .15s,transform .15s;text-decoration:none;text-align:center}
+.btn:active{transform:scale(.95)}
+.btn-p{background:var(--orange);color:#fff}
+.btn-p:hover{background:var(--orange-hover)}
+.btn-s{border:1px solid var(--border);color:var(--texto-suave)}
+.btn-s:hover{border-color:var(--muted)}
+
+/* Cartões */
+.card{border-radius:12px;padding:20px;border:1px solid var(--border);background:var(--navy);min-width:0}
+.card-clic{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;width:100%;text-align:left;transition:border-color .15s}
+.card-clic:hover,.card-clic.on{border-color:var(--orange)}
+.k-rot{font-size:12px;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;font-weight:500;margin-bottom:4px}
+.k-val{font-size:30px;line-height:1.2;font-weight:700;color:#fff}
+.k-val.din{font-size:20px;line-height:1.5;overflow-wrap:anywhere}
+.k-sub{font-size:12px;color:var(--aux);margin-top:4px}
+.k-sub.q{color:var(--orange)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.lista-c{border-radius:12px;border:1px solid var(--border);background:var(--navy)}
+.lista-c>li+li{border-top:1px solid var(--border)}
+.lin{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;width:100%;text-align:left;transition:background-color .15s}
+button.lin:hover{background:var(--navy-hover)}
+.lin-c{flex:1;min-width:0}
+.lin-c b{display:block;color:#fff;font-weight:500;overflow-wrap:anywhere}
+.lin-c span{display:block;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.lin-d{flex:none;color:var(--aux);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:2px}
+.duas{display:grid;gap:24px}
+.duas>*{min-width:0}
+
+/* Etiquetas: chips do BaseTabela. A forma fica, para o tom não depender só da cor. */
+.et{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap}
+.et::before{font-size:9px;line-height:1}
+.et.ok{background:var(--verde-bg);color:var(--verde)}.et.ok::before{content:'✓'}
+.et.av{background:var(--ambar-bg);color:var(--ambar)}.et.av::before{content:'◆'}
+.et.er{background:var(--vermelho-bg);color:var(--vermelho)}.et.er::before{content:'▲'}
+.et.in{background:var(--azul-bg);color:var(--azul)}.et.in::before{content:'●'}
+.et.ne{background:var(--border);color:var(--muted)}
+
+/* Abas: botões de /sofia/audit */
+.abas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:24px}
+.abas.duas-a{grid-template-columns:repeat(2,minmax(0,1fr))}
+.aba{padding:8px 12px;border-radius:8px;font-size:14px;border:1px solid var(--border);color:var(--muted);text-align:center;transition:border-color .15s}
+.aba:hover{border-color:var(--muted)}
+.aba[aria-current=page]{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* Filtros: BaseTabela */
+.filtros{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:16px;align-items:end}
+.filtros label{min-width:0;display:block}
+.filtros>button{justify-self:start}
+.filtros label>span{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.025em;color:var(--muted)}
+.campo-f{width:100%;border-radius:6px;border:1px solid var(--border);background:var(--background);padding:6px 8px;font-size:14px;color:var(--texto-suave);outline:none}
+.campo-f:focus{border-color:var(--orange)}
+.chk{display:flex!important;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.chk input{width:16px;height:16px;accent-color:var(--orange);flex:none}
+
+/* Tabela: BaseTabela; abaixo de 600 px de área vira cartões, como a TabelaResponsiva do RH */
+.tb-dica{margin-bottom:8px;font-size:12px;color:var(--aux);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tb{display:none;border-radius:12px;border:1px solid var(--border);overflow-x:auto}
+.tb table{width:100%;border-collapse:collapse;font-size:14px}
+.tb th{padding:12px 16px;font-weight:500;color:var(--muted);text-align:left;white-space:nowrap}
+.tb thead tr{border-bottom:1px solid var(--border);background:var(--navy)}
+.tb td{padding:12px 16px;color:var(--muted);border-bottom:1px solid var(--border);vertical-align:top;overflow-wrap:anywhere}
+.tb tbody tr:last-child td{border-bottom:0}
+.tb td:first-child{color:#fff}
+.tb tbody tr[data-acao]{cursor:pointer;transition:background-color .15s}
+.tb tbody tr[data-acao]:hover,.tb tbody tr[data-acao]:focus{background:var(--navy);outline:none}
+.tb .d,.tb th.d{text-align:right}
+.tb td.d{font-family:var(--mono);white-space:nowrap}
+.tb tfoot td{background:var(--navy);color:#fff;font-weight:500;border-bottom:0;border-top:1px solid var(--border)}
+.pr2,.pr3,.pr4{display:none}
+.cts{display:grid;gap:8px}
+.ct{display:block;border-radius:12px;border:1px solid var(--border);background:var(--navy);padding:12px;text-align:left;width:100%;transition:border-color .15s}
+.ct[data-acao]{cursor:pointer}
+.ct[data-acao]:hover{border-color:var(--orange)}
+.ct-t{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ct-t b{font-weight:500;color:#fff;min-width:0;overflow-wrap:anywhere}
+.ct dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin-top:8px;font-size:14px}
+.ct dt{color:var(--aux);font-size:12px}
+.ct dd{color:var(--texto-suave);overflow-wrap:anywhere;min-width:0}
+.tb-rod{margin-top:12px;font-size:12px;color:var(--aux)}
+
+/* Dados e custos: detalhe de veículo */
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 12px;font-size:14px}
+.kv dt{color:var(--aux)}
+.kv dd{color:var(--texto-suave);overflow-wrap:anywhere}
+.linhas{border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.linhas>div{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
+.linhas>div:last-child{border-bottom:0}
+.linhas span:first-child{color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.linhas span:last-child{color:#fff;flex:none;font-variant-numeric:tabular-nums}
+.linhas .tot{background:var(--navy)}
+.linhas .tot span:first-child{color:#fff;font-weight:500}
+.linhas .tot span:last-child{color:var(--orange);font-weight:700}
+.tempo{display:flex;flex-direction:column;gap:12px;border-left:2px solid var(--border);padding-left:16px}
+.tempo div{position:relative}
+.tempo div::before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.tempo b{display:block;font-weight:400;color:#fff;font-size:14px}
+.tempo span{color:var(--aux);font-size:12px}
+
+/* Rateio: "Onde o gasto pesa" da Visão Geral */
+.rat{display:block;margin:10px 0}
+.rat-t{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted)}
+.rat-t span:first-child{min-width:0;overflow-wrap:anywhere}
+.rat-t span:last-child{color:#fff;flex:none;font-family:var(--mono);font-size:13px}
+.rat-t small{color:var(--aux);font-size:12px;margin-left:4px}
+.rat-b{display:block;height:6px;background:var(--background);border-radius:999px;margin-top:4px}
+.rat-b i{display:block;height:6px;background:var(--orange);border-radius:999px}
+.rat-tot{display:flex;justify-content:space-between;gap:8px;padding-top:10px;margin-top:12px;border-top:1px solid var(--border);font-weight:500}
+.rat-tot span:last-child{color:var(--orange);font-weight:700;font-family:var(--mono)}
+.grade-rat{display:grid;gap:24px;align-items:start}
+.grade-rat>*{min-width:0}
+
+/* Notas e avisos */
+.aviso{border-radius:8px;border:1px solid var(--ambar-bg);background:rgba(123,51,6,.25);padding:12px 16px;font-size:14px;color:var(--texto-suave);margin-bottom:24px}
+.aviso b{display:block;color:var(--ambar);font-weight:600;margin-bottom:2px}
+.aviso .acoes{margin-top:8px}
+
+/* Formulário: veiculos/novo/_form.tsx */
+.form{display:flex;flex-direction:column;gap:16px;max-width:896px}
+.f-g{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.f-c{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f-c label,.f-rot{font-size:14px;color:var(--muted)}
+.f-aj{font-size:12px;color:var(--aux)}
+.campo{width:100%;min-width:0;padding:10px 12px;border-radius:8px;background:var(--input-bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none}
+.campo::placeholder{color:var(--muted-dark)}
+.campo:focus{border-color:var(--orange)}
+.campo[type=date]{color-scheme:dark}
+.f-rat{border:1px solid var(--border);border-radius:12px;background:var(--navy);padding:16px;margin:0;min-width:0}
+.f-rat legend{font-size:14px;font-weight:500;padding:0 6px;color:#fff}
+.r-l{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:8px;margin-bottom:8px}
+.r-l>:first-child{grid-column:1/3}
+.r-rod{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.soma{font-weight:500;font-size:14px;font-variant-numeric:tabular-nums;color:#fff}
+.soma.ruim{color:var(--error)}
+.msg-er{padding:12px 16px;border-radius:8px;border:1px solid var(--erro-borda);background:var(--erro-fundo);color:var(--vermelho);font-size:14px}
+.msg-ok{padding:12px 16px;border-radius:8px;border:1px solid #008236;background:#052e16;color:var(--verde);font-size:14px}
+.f-bot{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.f-bot .btn{flex:1;min-width:140px;padding:10px 16px}
+.busca-omie{display:flex;gap:8px;flex-wrap:wrap}
+.busca-omie .campo{flex:1 1 200px}
+
+/* Estados: vazio é convite (tracejado, neutro); erro é alarme (vermelho cheio); sem acesso é cartão com cadeado */
+.e-vazio{border-radius:12px;border:1px dashed var(--border);padding:48px 16px;text-align:center;color:var(--muted)}
+.e-vazio svg{color:var(--muted-dark);margin-bottom:8px}
+.e-vazio h2{font-size:16px;font-weight:400;color:var(--muted);margin-bottom:4px}
+.e-vazio p{color:var(--aux);font-size:14px;max-width:60ch;margin:0 auto 16px}
+.e-erro{border-radius:12px;border:1px solid var(--erro-borda);background:var(--erro-fundo);padding:20px;color:var(--vermelho);font-size:14px}
+.e-erro h2{display:flex;align-items:center;gap:8px;color:#fff;font-size:16px;font-weight:600;margin-bottom:4px}
+.e-erro h2 svg{color:var(--error);flex:none}
+.e-erro p{margin-bottom:12px}
+.btn-er{border:1px solid var(--erro-borda);color:#fff}
+.btn-er:hover{background:var(--vermelho-bg)}
+.e-trava{border-radius:12px;border:1px solid var(--border);background:var(--navy);padding:24px;font-size:14px;display:flex;gap:12px;align-items:flex-start}
+.e-trava svg{color:var(--muted);flex:none}
+.e-trava h2{font-size:16px;font-weight:600;color:#fff;margin-bottom:2px}
+.e-trava p{color:var(--muted)}
+.esq{background:var(--navy);border-radius:8px;animation:pulsa 1.6s ease-in-out infinite}
+.esq-t{height:32px;width:220px;max-width:70%;margin-bottom:8px}
+.esq-l{height:16px;width:340px;max-width:90%;margin-bottom:24px}
+.esq-k{height:112px;border-radius:12px}
+.esq-r{height:44px;margin-bottom:8px}
+@keyframes pulsa{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.esq{animation:none}.lat,.item,.btn,.aba{transition:none}}
+.toast{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);z-index:70;background:#fff;color:var(--background);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast[hidden]{display:none}
+
+/* ------------- reações de largura: medem a área simulada, não a janela ------------- */
+/* Celular: alvos de 44 px e texto de 16 px em campo */
+@container sim (max-width:767.98px){
+  .item{min-height:44px}
+  .volta{min-height:44px}
+  .lat-fecha{width:44px;height:44px}
+  .btn{min-height:44px}
+  .aba{min-height:44px}
+  .link{min-height:44px}
+  .volta-pag{min-height:44px}
+  .campo,.campo-f{min-height:44px;font-size:16px}
+  .chk{min-height:44px}
+  .lin{min-height:44px}
+  .ct{min-height:44px}
+  .tb-dica .pin{min-height:22px}
+}
+@container sim (min-width:640px){
+  .pag{padding:32px}
+}
+/* md do Tailwind: é aí que o Frotas troca o topo do celular pela lateral fixa */
+@container sim (min-width:768px){
+  .topo-cel,.barra,.busca-cel,.veu{display:none!important}
+  .topo{display:flex}
+  .lat{position:static;transform:none;visibility:visible;height:100%;transition:none}
+  [data-lateral=fechada] .lat{display:none}
+  .lat-fecha{width:28px;height:28px}
+  .app{flex-direction:row}
+}
+@container sim (min-width:1024px){
+  .quem-txt{display:block}
+}
+@container area (min-width:500px){
+  .filtros{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filtros .fl2{grid-column:1/3}
+}
+@container area (min-width:560px){
+  .f-g{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .f-larga{grid-column:1/3}
+  .r-l{grid-template-columns:minmax(0,1fr) 96px auto}
+  .r-l>:first-child{grid-column:auto}
+}
+@container area (min-width:600px){
+  .tb{display:block}
+  .cts{display:none}
+  .pr2{display:table-cell}
+  .abas,.abas.duas-a{display:flex;flex-wrap:wrap}
+}
+@container area (min-width:700px){
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .kpis.k5 .card{padding:16px}
+  .filtros{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .duas{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container area (min-width:820px){
+  .pr3{display:table-cell}
+  .grade-rat{grid-template-columns:minmax(0,1fr) 340px}
+}
+@container area (min-width:1180px){
+  .pr4{display:table-cell}
+}
+
+/* ======================= Tour do RH: acréscimos ao mockup do layout ======================= */
+.m-pag{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media(min-width:900px){.m-pag{padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}}
+.m-sec{min-width:0}
+.cmp2 .cmp-l{grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.cmp2 .cmp-l{grid-template-columns:200px minmax(0,1fr)}}
+.ctl-l+.ctl-l{margin-top:8px}
+.ctl .campo-f{width:auto;max-width:100%;min-height:36px}
+.ctl label.ctl-r{display:inline}
+.ctl-info{margin-left:0}
+#st{color:var(--texto-suave);font-size:12px;flex:1 1 220px;min-width:0}
+.btn-mini{min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;font-weight:500}
+.btn-mini:hover{border-color:var(--muted);color:#fff}
+@media(max-width:899px){.btn-mini{min-height:44px}.ctl .campo-f{min-height:44px}}
+.cen{border:1px solid var(--border);background:var(--navy);border-radius:12px;padding:14px 16px;min-width:0}
+.cen h3{font-size:14px;font-weight:600;margin-bottom:4px;display:flex;gap:8px;align-items:baseline}
+.cen p{color:var(--texto-suave);margin-bottom:10px}
+.cen .seg{margin-top:4px}
+.rot{border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--navy);min-width:0}
+.rot>summary{cursor:pointer;padding:12px 16px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;list-style:none;min-height:44px}
+.rot>summary::-webkit-details-marker{display:none}
+.rot>summary::before{content:'▸';color:var(--orange);margin-right:2px}
+.rot[open]>summary::before{content:'▾'}
+.rot>summary b{font-weight:600}
+.rot>summary span{color:var(--muted);font-size:12px}
+.rot ol{padding:0 16px 12px 40px;margin:0;display:grid;gap:10px}
+.rot li{min-width:0;overflow-wrap:anywhere}
+.rot li b{font-weight:600;color:#fff}
+.rot li .rt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:var(--azul-bg);color:var(--azul);font-size:11px;font-weight:500;white-space:nowrap}
+.rot li small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.rot-b{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.nota-d .pr{display:block;margin-top:4px}
+.lat-pe .prog{padding:4px 8px 8px;color:var(--muted);font-size:12px}
+.lat-pe .prog-b{display:block;height:4px;background:var(--background);border-radius:999px;margin-top:4px}
+.lat-pe .prog-b i{display:block;height:4px;background:var(--orange);border-radius:999px}
+.sim .cartoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@container area (min-width:700px){.sim .cartoes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:24px}
+.cal b{font-size:11px;color:var(--muted);text-transform:uppercase;text-align:center;font-weight:500}
+.cal span{min-height:48px;border:1px solid var(--border);border-radius:6px;padding:4px;font-size:12px;color:var(--muted);overflow:hidden}
+.cal span i{display:block;font-style:normal;color:#fff;background:var(--azul-bg);border-radius:3px;padding:0 4px;margin-top:2px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.painel-t{margin-bottom:16px}
+.painel-t .h2{font-size:16px}
+.painel-t p{color:var(--muted);margin-bottom:8px}
+.painel-t p.ok{color:var(--texto-suave)}
+.fl-in{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+.fl-in label{display:grid;gap:4px;min-width:0}
+.fl-in label>span{font-size:11px;text-transform:uppercase;letter-spacing:.025em;color:var(--muted)}
+
+/* ---- o tour ---- */
+[data-tour=sim] .lat{transition:none}
+.tv{position:absolute;inset:0;z-index:90;display:none;overflow:hidden}
+.tv.on{display:block}
+.tv.cheio{background:rgba(3,8,18,.78)}
+.tv-furo{position:absolute;border:2px solid var(--orange);border-radius:10px;pointer-events:none;transition:left .2s,top .2s,width .2s,height .2s}
+.tv-vu{position:absolute;background:rgba(3,8,18,.78);transition:left .2s,top .2s,width .2s,height .2s}
+.tv.cheio .tv-vu{display:none}
+.tv.cheio .tv-furo{display:none}
+.bal{position:absolute;z-index:2;background:var(--navy);border:1px solid #2c4f7c;border-radius:12px;padding:16px;box-shadow:0 18px 48px rgba(0,0,0,.55);color:var(--texto-suave);max-height:calc(100% - 24px);overflow-y:auto;visibility:hidden}
+.bal.pronto{visibility:visible}
+.bal.fol{left:0;right:0;bottom:0;top:auto;width:auto;border-radius:16px 16px 0 0;border-bottom:0;max-height:62%;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.bal-n{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:4px}
+.bal h2{font-size:16px;line-height:1.35;font-weight:600;color:#fff;margin-bottom:6px;overflow-wrap:anywhere}
+.bal p.bal-x{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.bal-pg{display:flex;gap:4px;margin:12px 0}
+.bal-pg i{flex:1;height:4px;border-radius:2px;background:var(--border)}
+.bal-pg i.f{background:var(--orange)}
+.bal-b{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.bal-b .btn{flex:0 1 auto}
+.bal-b .btn[disabled]{opacity:.4;cursor:default}
+.bal-dica{font-size:12px;color:var(--ambar);margin-bottom:8px}
+.bal-dica:empty{display:none}
+.bal .msg-er{margin:0 0 10px;font-size:13px}
+.bal-lista{display:grid;gap:8px;margin:10px 0 12px}
+.bal-lista .btn{justify-content:flex-start;text-align:left}
+.bal.treme{animation:treme .3s}
+@keyframes treme{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){.tv-furo,.tv-vu{transition:none}.bal.treme{animation:none}[data-tour] .lat{transition:none}}
+.sim.tem-tour .toast{z-index:70}
+</style>
+<div class="m-pag" id="pagina">
+
+  <header class="m-cab">
+    <h1>Tour obrigatório do RH</h1>
+    <p>Mockup interativo para decidir como o tour funciona. Dados fictícios, nada aqui grava. O layout é o já aprovado. Para comentar, cite no WhatsApp o número da seção.</p>
+  </header>
+
+  <section class="m-sec" aria-labelledby="s1">
+    <h2 id="s1"><span class="num-sec">1</span>Como o tour funciona</h2>
+    <div class="cmp cmp2">
+      <div class="cmp-l"><b>Quando aparece</b><span>Por partes (decisão T1). No primeiro login, uma volta curta pelo menu e pelos módulos; logo em seguida o tour do Início, porque a pessoa já está nele. Depois, o tour de cada módulo na primeira vez que a pessoa abre aquele módulo.</span></div>
+      <div class="cmp-l"><b>Sobre a tela real</b><span>Véu escuro sobre a tela de verdade, destaque recortado no botão, campo ou filtro, e um balão com título, texto, “Etapa 2 de 5”, Voltar e Próximo.</span></div>
+      <div class="cmp-l"><b>Obrigatório</b><span>Sem botão de pular. Esc não fecha, clique fora não fecha, e a tela de trás fica bloqueada até a última etapa.</span></div>
+      <div class="cmp-l"><b>O que grava</b><span>Nada de RH. O tour não cria nem altera pessoa, pagamento ou qualquer registro. Só guarda que esta pessoa concluiu este tour (decisão T3).</span></div>
+      <div class="cmp-l"><b>Cada papel o seu</b><span>Etapa de botão que o papel não vê é omitida, e a contagem de etapas muda (decisão T2).</span></div>
+      <div class="cmp-l"><b>Tela sem dados</b><span>O destaque vai para cartões, abas, filtros e para a área da lista, que existem mesmo vazios. Quando o elemento não existe, o balão aparece centralizado, com um texto que serve sem ele.</span></div>
+      <div class="cmp-l"><b>Recarregar a página</b><span>Volta para a mesma etapa. O andamento fica no navegador da pessoa; só a conclusão vai para o banco.</span></div>
+      <div class="cmp-l"><b>Falha ao salvar</b><span>Na última etapa, se não deu para guardar a conclusão, a tela explica, oferece “Tentar de novo” e também “Liberar a tela”. O tour nunca prende a pessoa para sempre.</span></div>
+      <div class="cmp-l"><b>Rever tour</b><span>Botão no pé da lateral. Esse sim é opcional e tem Fechar. Esc e clique fora também fecham.</span></div>
+    </div>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s2">
+    <h2 id="s2"><span class="num-sec">2</span>Simulador: use como se fosse o primeiro acesso</h2>
+    <div class="ctl" id="controles">
+      <div class="ctl-l">
+        <span class="ctl-r">Papel (etapas no total)</span><div class="seg" id="seg-papel" role="group" aria-label="Papel simulado"></div>
+        <span class="ctl-r ctl-r2">Largura</span><div class="seg" id="seg-largura" role="group" aria-label="Largura simulada"></div>
+      </div>
+      <div class="ctl-l">
+        <span class="ctl-r">Dados</span><div class="seg" id="seg-dados" role="group" aria-label="Quantidade de dados"></div>
+        <span class="ctl-r ctl-r2">Salvar a conclusão</span><div class="seg" id="seg-salva" role="group" aria-label="Resultado ao salvar"></div>
+        <span class="ctl-r ctl-r2">T5, progresso</span><div class="seg" id="seg-prog" role="group" aria-label="Indicador de progresso"></div>
+      </div>
+      <div class="ctl-l">
+        <button type="button" class="btn-mini" data-ctl="zera">Primeiro acesso deste papel</button>
+        <button type="button" class="btn-mini" data-ctl="todos">Marcar tudo como visto</button>
+        <button type="button" class="btn-mini" data-ctl="recarrega">Recarregar a página</button>
+        <label class="ctl-r" for="sel-tour">Abrir o tour de</label>
+        <select id="sel-tour" class="campo-f"></select>
+      </div>
+      <div class="ctl-l"><span id="st" role="status" aria-live="polite"></span><span class="ctl-r" id="info-escala"></span></div>
+    </div>
+    <div class="palco" id="palco">
+      <div class="quadro" id="quadro">
+        <div class="url" aria-hidden="true"><i></i><i></i><i></i><span id="url"></span></div>
+        <div class="sim" id="sim" data-gaveta="nao" data-lateral="aberta" data-tour="nao">
+          <div class="app" id="app">
+            <div class="topo-cel">
+              <div><span class="lat-nome">RH</span><a class="volta" href="#" data-acao="hub">← Voltar ao Hub</a></div>
+              <div class="topo-cel-acoes">
+                <button type="button" class="ic-btn" data-acao="toast" data-tk="busca" aria-label="Buscar no RH"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg></button>
+                <button type="button" class="ic-btn" data-acao="menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+              </div>
+            </div>
+            <aside class="lat" id="lat" aria-label="Módulos"></aside>
+            <div class="col">
+              <div class="topo">
+                <button type="button" class="ic-btn" data-acao="alterna-lateral" id="b-lat" aria-label="Fechar a lateral"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+                <div class="busca" data-tk="busca">
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
+                  <input type="search" placeholder="Buscar pessoa, vaga, item…" aria-label="Buscar no RH" autocomplete="off">
+                </div>
+                <div class="quem" data-tk="quem">
+                  <div class="quem-txt"><b id="q-nome"></b><span id="q-papel"></span></div>
+                  <span class="avatar" id="q-ini"></span>
+                </div>
+              </div>
+              <main class="rola" id="rola"><div class="area"><div class="pag" id="conteudo"></div></div></main>
+            </div>
+            <nav class="barra" id="barra" aria-label="Atalhos"></nav>
+          </div>
+          <div class="veu" data-acao="fecha-gaveta"></div>
+          <div class="toast" id="toast" role="status" hidden></div>
+          <div class="tv" id="tv"></div>
+        </div>
+      </div>
+    </div>
+    <p class="m-rod">A tela atrás do véu é a do RH simulada com o mesmo CSS do layout aprovado. Os botões dela, quando liberada, só mostram um aviso: nada é gravado.</p>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s3">
+    <h2 id="s3"><span class="num-sec">3</span>Os oito estados para conferir</h2>
+    <p class="m-rod" style="margin:0 0 12px">Cada botão arruma o simulador e rola até ele.</p>
+    <div class="notas" id="cenarios"></div>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s4">
+    <h2 id="s4"><span class="num-sec">4</span>Roteiro completo, etapa por etapa</h2>
+    <p class="m-rod" style="margin:0 0 12px">O texto de cada etapa, para ler sem clicar. Em “Cita” está o nome exato do botão, campo ou filtro da tela real que a etapa destaca. A contagem varia por papel.</p>
+    <div class="rot-b">
+      <button type="button" class="btn-mini" data-ctl="abre-rot">Abrir todos</button>
+      <button type="button" class="btn-mini" data-ctl="fecha-rot">Fechar todos</button>
+    </div>
+    <div id="roteiro"></div>
+  </section>
+
+  <section class="m-sec" aria-labelledby="s5">
+    <h2 id="s5"><span class="num-sec">5</span>Decisões para o João</h2>
+    <div class="notas">
+      <div class="nota-d" id="t1"><h3>T1 · Por partes ou tudo de uma vez</h3>
+        <p><b>Mostrado aqui:</b> por partes. Escolha minha, porque você pediu para prosseguir sem decidir. Você pode mudar.</p>
+        <p><b>Recomendo por partes.</b> Cada tour aparece quando a pessoa abre o módulo, com o assunto na frente dela. Tudo de uma vez seriam <b id="n-tot">?</b> etapas no primeiro login, sobre botões que a pessoa só vai usar semanas depois.</p>
+        <p><b>Preço:</b> mais telas para montar e manter, porque cada módulo tem o próprio roteiro preso a botões reais. No primeiro login a pessoa faz a volta e o Início: <b id="n-prim">?</b> etapas, perto de 2 minutos, mais do que o 1 minuto inicial.</p></div>
+      <div class="nota-d" id="t2"><h3>T2 · Quem faz o tour</h3>
+        <p><b>Mostrado aqui:</b> todos os papéis. Controladoria/RH, Diretoria e Admin do hub, cada um com as etapas que consegue usar. Troque o papel no simulador e veja a contagem mudar.</p>
+        <p><b>Recomendo todos.</b> A Diretoria e o Admin também precisam saber, por exemplo, que o CPF aparece escondido e que o botão de editar não é para eles. Um tour só para a Controladoria/RH deixaria os outros sem explicação.</p>
+        <p><b>Preço:</b> quem só consulta passa por um tour obrigatório que não muda o trabalho dele. É o menor: de 3 a 6 etapas por módulo.</p></div>
+      <div class="nota-d" id="t3"><h3>T3 · Onde guardar quem concluiu</h3>
+        <p><b>Banco:</b> uma tabela nova, uma linha por pessoa e por tour. Vale em qualquer aparelho. <b>Navegador:</b> sem tabela, mas a pessoa repete o tour ao trocar de aparelho ou ao limpar o navegador, então o tour deixa de ser obrigatório de verdade.</p>
+        <p><b>Recomendo o banco.</b> É a única forma de “obrigatório” significar o que o nome diz.</p>
+        <p><b>Preço:</b> uma migration, aplicada à mão em produção (precisa da sua autorização escrita), mais a regra de acesso: cada pessoa lê e grava só as próprias linhas e ninguém altera as dos outros. Mesmo com o banco, o andamento dentro do tour fica no navegador. Em outro aparelho, a pessoa recomeça o módulo do começo, mas não o repete depois de concluir.</p></div>
+      <div class="nota-d" id="t4"><h3>T4 · Quando uma tela mudar no futuro</h3>
+        <p><b>Mostrado aqui:</b> o tour não reaparece sozinho. “Rever tour” continua no pé da lateral.</p>
+        <p><b>Recomendo assim, com uma exceção combinada com você.</b> Se uma mudança tirar ou trocar um botão que o tour cita, sobe a versão daquele tour e ele reaparece uma vez, com um aviso curto de “mudou”. Mudança pequena não reabre nada.</p>
+        <p><b>Preço:</b> uma coluna a mais na mesma tabela (a versão concluída) e a disciplina de subir a versão quando a tela mudar de verdade. Sem a coluna, o único jeito de reabrir é apagar a conclusão de todo mundo.</p></div>
+      <div class="nota-d" id="t5"><h3>T5 · Indicador “Módulos vistos: 3 de 13”</h3>
+        <p><b>Mostrado aqui:</b> como opção. Ligue em “T5, progresso” no simulador: ele aparece no pé da lateral, acima de Rever tour.</p>
+        <p><b>Recomendo mostrar.</b> Como cada módulo abre o tour na primeira vez, a pessoa vê quantos ainda faltam e deixa de ser surpreendida. Papéis fica fora da conta: só o admin tem.</p>
+        <p><b>Preço:</b> nenhum dado novo, porque sai das mesmas conclusões. Custa um pouco de espaço na lateral e uma linha a mais para manter. Se a lateral parecer cheia, é o primeiro item a cortar sem perder nada do tour.</p></div>
+    </div>
+  </section>
+  <p class="m-rod">Conteúdo conferido nas telas do branch rh-layout (nomes de botões, campos, filtros e abas). Dados de exemplo fictícios.</p>
+</div>
+<script>
+(function(){
+"use strict";
+/* ------------------------------------------------------------------------------------------
+   Roteiro: o conteúdo de cada tour. a = chave do elemento destacado (data-tk na tela simulada).
+   ed = só Controladoria/RH (botão de editar). p = papéis que veem a etapa. lat = o alvo está na
+   lateral (no celular a gaveta abre sozinha). tela = sub-tela. v = texto quando o alvo não existe.
+   ref = nome exato do botão, campo ou filtro na tela real.
+   ------------------------------------------------------------------------------------------ */
+var TR={};
+TR.volta=[
+ {a:"lat-modulos",lat:1,t:"Os módulos ficam na lateral",x:"Cada nome é um módulo do RH: clique para abrir. O número azul ao lado mostra o que está pendente naquele módulo, como em Ponto e Patrimônio.",ref:"Lista de módulos da lateral, com os contadores"},
+ {a:"lat-dp",lat:1,t:"Três grupos",x:"Os módulos estão em três grupos: Pessoas, Departamento Pessoal e Operação e cultura. O Início fica sempre no alto, sozinho.",ref:"Título de grupo “Departamento Pessoal”"},
+ {a:"busca",t:"Busca geral",x:"Digite o nome de uma pessoa, de uma vaga ou de um item do patrimônio para ir direto ao registro, sem passar pelos módulos.",ref:"Campo “Buscar pessoa, vaga, item…”"},
+ {a:"quem",t:"Seu papel decide o que você faz",x:function(p){return {rh:"Seu nome e seu papel ficam aqui. Como Controladoria/RH, você cadastra, edita, monta rateio e importa planilhas.",dir:"Seu nome e seu papel ficam aqui. Como Diretoria, você vê tudo, com o CPF escondido em parte, e não altera nada.",adm:"Seu nome e seu papel ficam aqui. Como admin do hub, você consulta os módulos e cuida da tela Papéis. Valores e CPF completo não aparecem para você."}[p];},ref:"Topo: nome e papel ao lado das iniciais"},
+ {a:"voltar-hub",lat:1,t:"Para trocar de sistema",x:"Para ir a outro sistema do Manfac, use “← Voltar ao Hub”, logo abaixo do nome RH.",ref:"Link “← Voltar ao Hub”"},
+ {a:"rever",lat:1,t:"Rever o tour quando quiser",x:"No pé da lateral, “Rever tour” mostra de novo esta volta ou o tour da tela em que você está. A partir de agora, cada módulo mostra o seu tour na primeira vez que você o abre.",ref:"Botão “Rever tour”, novo, no pé da lateral"}
+];
+TR.inicio=[
+ {a:"indicadores",t:"Os números do dia",x:"Cada cartão é um atalho: Ativos CLT, Em férias agora, Vagas abertas e os outros. Clique em um e a lista abre no módulo certo.",ref:"Cartões “Ativos CLT”, “Em férias agora”, “Vagas abertas”"},
+ {a:"precisa",t:"Precisa de você",x:"Do mais urgente para o menos urgente. Cada linha leva ao módulo onde se resolve. Quando não há nada, aparece “Nada pendente”.",ref:"Seção “Precisa de você”"},
+ {a:"proximos",t:"Próximos dias",x:"Os prazos de todos os módulos, em ordem de data. “Ver agenda” abre o calendário completo.",ref:"Seção “Próximos dias” e link “Ver agenda”"},
+ {a:"aplicar",ed:1,t:"Alterações sem aplicar",x:"Quando uma alteração já passou da data de vigência e ainda não foi aplicada, este aviso aparece. “Aplicar agora” aplica as que estão vencidas.",v:"Quando uma alteração passar da data de vigência sem ser aplicada, um aviso surge no alto do Início, com o botão “Aplicar agora”.",ref:"Aviso “Alterações sem aplicar” e botão “Aplicar agora”"}
+];
+TR.pessoas=[
+ {a:"indicadores",t:"Quem está no RH",x:"Os cartões contam CLT, PJ, Afastados e quem está Sem e-mail. Clique em um cartão e a lista abaixo se filtra.",ref:"Cartões “CLT”, “PJ”, “Afastados”, “Sem e-mail”"},
+ {a:"abas",t:"Duas vistas",x:"“Todos” mostra a lista completa. “Relação de ativos do mês” traz quem está ativo naquele mês e serve para folha, vale-refeição e seguro.",ref:"Abas “Todos” e “Relação de ativos do mês”"},
+ {a:"filtros",t:"Filtros",x:"Busque por nome, cargo, e-mail ou CPF e refine por Vínculo, Departamento e Situação. A caixa “Sem e-mail” mostra só quem ainda não tem. Depois, clique em Filtrar.",ref:"Campo Buscar (“Nome, cargo, e-mail ou CPF”), Vínculo, Departamento, Situação, “Sem e-mail” e botão Filtrar"},
+ {a:"linha-1",t:"Abrir a ficha",x:"Clique em uma linha para abrir a ficha. Ela tem as abas Dados, Férias, Exames, Ponto, Benefícios, Pagamentos, Patrimônio, Documentos e Histórico.",v:"Quando houver pessoas, clique em uma linha para abrir a ficha, que tem as abas Dados, Férias, Exames, Ponto, Benefícios, Pagamentos, Patrimônio, Documentos e Histórico.",ref:"Linha da tabela; abas da ficha"},
+ {a:"preencher-emails",ed:1,t:"Preencher e-mails",x:"Só aparece nessa tela quem está sem e-mail, e o que já está preenchido nunca é sobrescrito. Sem e-mail, a pessoa não recebe aviso.",ref:"Botão “Preencher e-mails”"},
+ {a:"nova-admissao",ed:1,t:"Nova admissão",x:"É o jeito de colocar em Pessoas quem está chegando. Nada entra na lista até a admissão ser concluída.",ref:"Botão “Nova admissão”"}
+];
+TR.movimentacoes=[
+ {a:"indicadores",t:"O que está em andamento",x:"Os cartões contam Admissões em andamento, Alterações em andamento e quantas estão Agendadas. Clique em um para ver só aquelas.",ref:"Cartões “Admissões em andamento”, “Alterações em andamento”, “Agendadas”"},
+ {a:"abas",t:"Admissões, Alterações e Modelos",x:"“Admissões” é quem está chegando. “Alterações” é o que muda no cadastro de quem já está. “Modelos” mostra os passos de cada tipo.",ref:"Abas “Admissões”, “Alterações”, “Modelos”"},
+ {a:"lista",t:"A lista",x:"Cada linha é uma movimentação, com a situação ao lado. Clique para abrir e acompanhar os passos. Sem nenhuma, aparece “Nenhuma admissão”.",ref:"Lista; estado vazio “Nenhuma admissão”"},
+ {a:"nova-admissao",ed:1,t:"Nova admissão",x:"Abre o cadastro de quem está chegando. É a única porta de entrada: nada entra em Pessoas até a conclusão.",ref:"Botão “Nova admissão”"},
+ {a:"nova-alteracao",ed:1,t:"Nova alteração",x:"Para mudar dados de quem já está, como cargo, salário ou rateio. Pede Quem aprovou e a Data da aprovação, e só vale depois de concluída.",ref:"Botão “Nova alteração”; campos “Quem aprovou” e “Data da aprovação”"}
+];
+TR.recrutamento=[
+ {a:"indicadores",t:"A fila de contratação",x:"Os cartões contam Vagas abertas, Candidatos em processo, os que estão Com o gestor ou em decisão e as Vagas sem divulgação.",ref:"Cartões “Vagas abertas”, “Candidatos em processo”, “Com o gestor ou em decisão”, “Vagas sem divulgação”"},
+ {a:"abas",t:"Vagas e Candidatos",x:"“Vagas” lista o que os gestores pediram. “Candidatos” mostra cada pessoa na sua etapa: Triagem, Entrevista RH, Gestor e Decisão.",ref:"Abas “Vagas” e “Candidatos”"},
+ {a:"lista",t:"A lista de vagas",x:"Uma linha por vaga pedida. Sem nenhuma, a tela diz “Nenhuma vaga aberta”: a primeira aparece quando o RH registrar o pedido de um gestor.",ref:"Lista; estado vazio “Nenhuma vaga aberta”"},
+ {a:"nova-vaga",ed:1,t:"Nova vaga",x:"Cada vaga tem Cargo, Requisitos, Modalidade de contratação, Remuneração, Centro de custo, Previsão de início e Gestor que pediu a vaga. O gestor não entra no sistema: ele responde por e-mail e o RH registra.",ref:"Botão “Nova vaga”; campo “Gestor que pediu a vaga”"},
+ {a:"novo-candidato",ed:1,t:"Novo candidato",x:"Cadastre com Nome e Vaga; CPF e e-mail são opcionais até a aprovação. Quando a decisão é positiva, “Aprovar e criar a admissão” leva os dados para a admissão, sem redigitar.",ref:"Botão “Novo candidato”; botão “Aprovar e criar a admissão”"},
+ {a:"curriculos",t:"Currículos guardados",x:function(p){return "Currículo é dado pessoal. Os currículos ficam guardados por um prazo depois que a vaga encerra; passado o prazo, o CPF e o e-mail são apagados e o arquivo sai da pasta."+(p==="rh"?" O botão “Apagar currículos vencidos” faz isso e não tem volta.":"");},ref:"Painel “Currículos guardados”; botão “Apagar currículos vencidos”"}
+];
+TR.ferias=[
+ {a:"indicadores",t:"Por prazo",x:"Os cartões separam os períodos por prazo: Limite vencido, Até 30 dias, Até 60 dias e Até 90 dias, mais quem está Em férias agora. Clique em um prazo para filtrar a lista.",ref:"Cartões “Limite vencido”, “Até 30 dias”, “Até 60 dias”, “Até 90 dias”, “Em férias agora”"},
+ {a:"filtros",t:"Filtros",x:"Procure pelo Nome da pessoa ou escolha um Gestor e clique em Filtrar.",ref:"Campos “Nome da pessoa” e “Gestor”; botão Filtrar"},
+ {a:"linha-1",t:"Os períodos",x:"Cada linha é um período de férias de alguém CLT, com saldo, limite e situação. Clique para abrir o período. Dentro dele, “Conferir o saldo” ajusta os dias de direito quando o sistema não sabe o que a pessoa já tirou.",v:"Cada linha é um período de férias de alguém CLT, com saldo, limite e situação. Quando houver períodos, clique em uma linha para abrir.",ref:"Linha da tabela; ação “Conferir o saldo”"},
+ {a:"gerar-periodos",ed:1,t:"Gerar períodos",x:"Cria os períodos de quem é CLT e já tem data de admissão. Se a lista estiver vazia, comece por aqui.",ref:"Botão “Gerar períodos”"},
+ {a:"nova-solicitacao",ed:1,t:"Nova solicitação",x:"Registra um pedido de férias: escolha Pessoa e período, o Início (não pode ser uma data que já passou) e os Dias.",ref:"Botão “Nova solicitação”; campos “Pessoa e período”, “Início”, “Dias”"},
+ {a:null,ed:1,t:"Avisar o gestor é manual",x:"Dentro do período, “Avisar gestor” prepara o texto. O envio por e-mail ainda não está ligado: copie o texto ou abra no seu e-mail, mande, e depois use “Registrar aviso” para ficar no histórico. Isso é assim por decisão, não é erro.",ref:"Botões “Avisar gestor”, “Abrir no meu e-mail” e “Registrar aviso”, dentro do período"}
+];
+TR.exames=[
+ {a:"indicadores",t:"Quanto falta",x:"Os cartões contam os exames por prazo: Vencidos, Até 30 dias, Até 60 dias e Até 90 dias. Clique em um para filtrar.",ref:"Cartões de prazo (Vencidos, Até 30/60/90 dias)"},
+ {a:"sesmt",t:"O controle vem do SESMT, e o pedido é manual",x:function(p){return "A regra é pedir o controle de exames ao técnico de segurança no fim de cada mês. "+(p==="rh"?"O botão “Registrar pedido” só anota que você pediu, na Agenda; o sistema não envia nada ao SESMT.":"O RH registra aqui quando o pedido foi feito; o sistema não envia nada ao SESMT.");},ref:"Painel “Controle de exames do SESMT”; botão “Registrar pedido”"},
+ {a:"filtros",t:"Filtros",x:"Procure pelo Nome da pessoa ou pelo Tipo de exame e clique em Filtrar.",ref:"Campos “Nome da pessoa” e “Tipo”; botão Filtrar"},
+ {a:"linha-1",t:"A lista de exames",x:"Cada linha é um exame, com a data de vencimento e a etiqueta de prazo. Clique para abrir.",v:"Cada linha é um exame, com a data de vencimento e a etiqueta de prazo. Quando houver exames cadastrados, clique em uma linha para abrir.",ref:"Linha da tabela"},
+ {a:"novo-exame",ed:1,t:"Novo exame",x:"Cadastre Pessoa, Tipo, Vence em, Clínica e Agendado para. Se a data de vencimento já passou, a tela avisa: “Este exame já está vencido”.",ref:"Botão “Novo exame”; campos “Pessoa”, “Tipo”, “Vence em”, “Clínica”, “Agendado para”"},
+ {a:"linha-1",ed:1,t:"Arquivar o ASO",x:"Quando o exame é feito, abra a linha e use “Arquivar o ASO”, com a Nova validade do ASO. O sistema abre sozinho o próximo exame periódico nessa data.",v:"Quando houver exames, abra a linha e use “Arquivar o ASO”, com a Nova validade do ASO. O sistema abre sozinho o próximo exame periódico nessa data.",ref:"Ação “Arquivar o ASO”; campo “Nova validade do ASO”"}
+];
+TR.contratos=[
+ {a:"indicadores",t:"Os contratos em números",x:function(p){return "Os cartões mostram Contratos, Vencidos e A vencer em 90 dias."+(p==="adm"?" O Valor mensal não aparece para o admin do hub.":" O Valor mensal aparece só para Controladoria/RH e Diretoria.");},ref:"Cartões “Contratos”, “Valor mensal”, “Vencidos”, “A vencer em 90 dias”"},
+ {a:"filtros",t:"Filtro",x:"Procure pelo Nome do prestador e clique em Filtrar.",ref:"Campo “Nome do prestador”; botão Filtrar"},
+ {a:"linha-1",t:"Os prestadores",x:"Cada linha é um contrato de prestador, com início, vencimento e prazo. O pagamento do prestador não sai aqui: sai em Folha e pagamentos.",v:"Cada linha é um contrato de prestador, com início, vencimento e prazo. O pagamento do prestador não sai aqui: sai em Folha e pagamentos.",ref:"Linha da tabela; texto “O pagamento sai por Folha e pagamentos”"},
+ {a:"novo-contrato",ed:1,t:"Novo contrato",x:"Informe Prestador, Início e Vencimento. O prestador vem de quem já está cadastrado como PJ.",ref:"Botão “Novo contrato”; campos “Prestador”, “Início”, “Vencimento”"},
+ {a:"linha-1",ed:1,t:"Aditivos",x:"Dentro do contrato há o Aditivo de vigência (nova data de vencimento) e o Aditivo de valor (novo valor mensal, válido a partir do dia 1). O aditivo de valor abre uma alteração de salário, com aprovação, e só vale depois dela.",v:"Dentro de cada contrato há o Aditivo de vigência (nova data de vencimento) e o Aditivo de valor (novo valor mensal, válido a partir do dia 1), que abre uma alteração com aprovação.",ref:"Ações “Aditivo de vigência” e “Aditivo de valor”"},
+ {a:null,ed:1,t:"Avisar o gestor também é manual",x:"“Avisar gestor” prepara o texto do vencimento. O envio por e-mail ainda não está ligado: copie o texto ou abra no seu e-mail e depois use “Registrar aviso”. É por decisão, não é erro.",ref:"Botões “Avisar gestor” e “Registrar aviso”"}
+];
+TR.ponto=[
+ {a:"indicadores",t:"O período em números",x:"Os cartões mostram Divergências abertas, Marcações ausentes, Marcações inconsistentes, Saldo do banco de horas e Atestados e justificativas.",ref:"Cartões “Divergências abertas”, “Marcações ausentes”, “Marcações inconsistentes”, “Saldo do banco de horas”, “Atestados e justificativas”"},
+ {a:"abas",t:"Cinco vistas",x:"Por período, Por pessoa, Banco de horas, Atestados e Fechamento. O período vai do dia 25 ao dia 24.",ref:"Abas “Por período”, “Por pessoa”, “Banco de horas”, “Atestados”, “Fechamento”"},
+ {a:"relatorio",t:"O ponto vem de relatório exportado",x:function(p){return "Isso é por decisão: não há integração com o VR Ponto. O RH exporta o relatório lá"+(p==="rh"?" e anexa aqui em “Anexar relatório do VR Ponto”":" e anexa aqui")+". O sistema só guarda o arquivo e não lê o conteúdo.";},ref:"Painel do período; botão “Anexar relatório do VR Ponto”"},
+ {a:"colar-lista",ed:1,t:"Colar lista",x:"Cole as linhas copiadas da planilha, uma por lançamento. A leitura não adivinha: o que estiver em branco fica sem valor e o que não der para entender vira erro. Você confere e só então usa “Gravar os lançamentos”.",ref:"Botão “Colar lista”; botão “Gravar os lançamentos”"},
+ {a:"novo-lancamento",ed:1,t:"Lançamento e atestado",x:"Para um lançamento só, digite em “Novo lançamento”. Ao lado, “Novo atestado” registra atestado ou justificativa. Como não há integração, quem registra é a Controladoria/RH.",ref:"Botões “Novo lançamento” e “Novo atestado”"},
+ {a:"lista",t:"Os lançamentos do período",x:"Marque “Só divergências” e clique em Filtrar para ver só o que precisa de conferência. Sem lançamentos, a tela diz “Nada neste período com estes filtros”.",ref:"Caixa “Só divergências”; botão Filtrar; lista “Lançamentos do período”"}
+];
+TR.folha=[
+ {a:"indicadores",t:"O mês em números",x:"Os cartões mostram os Pagamentos de novembro e onde cada um está: Com o RH, Com o Financeiro ou Lançados no Financeiro.",ref:"Cartões “Pagamentos de novembro”, “Com o RH”, “Com o Financeiro”, “Lançados no Financeiro”"},
+ {a:"nota-enviado",t:"Enviado não é pago",x:"Quem valida e paga é o Financeiro. Aqui o máximo que aparece é Lançada. INSS, IRRF e PIS continuam com o Financeiro.",ref:"Aviso “Enviado não é pago”"},
+ {a:"lista",t:"As competências",x:"Uma linha por mês. Clique para abrir. Se o mês ainda não foi aberto, o botão “Abrir competência” cria os cinco pagamentos dele.",ref:"Tabela “Competências”; botão “Abrir competência”"},
+ {a:"cartoes",tela:"comp",t:"Um cartão por pagamento",x:"Dentro do mês há um cartão para cada pagamento: Folha CLT, FGTS e consignado, VR, VT e ajuda de custo, Prestadores PJ, Seguro de vida e Conta de celular. O valor da folha vem do relatório da contabilidade, e o rateio vem do cadastro.",ref:"Cartões “Folha CLT”, “FGTS e consignado”, “VR”, “VT e ajuda de custo”, “Prestadores PJ”, “Seguro de vida”, “Conta de celular”"},
+ {a:"abas",tela:"comp",t:"Andamento e contracheque",x:"As abas são Pagamentos, Andamento, Documentos e Histórico. Em Andamento ficam os passos do mês. O contracheque é manual: o sistema não envia contracheque, o passo só registra que a entrega foi feita.",ref:"Abas “Pagamentos”, “Andamento”, “Documentos”, “Histórico”; texto “O sistema não envia contracheque”"},
+ {a:"cartao-seguro",tela:"comp",t:"Seguro de vida: nada vai à seguradora",x:"“Baixar a planilha da seguradora” gera o arquivo para você mandar por fora. Nada vai à seguradora por este sistema.",ref:"Cartão “Seguro de vida”; botão “Baixar a planilha da seguradora”"}
+];
+TR.beneficios=[
+ {a:"indicadores",t:"Os benefícios em números",x:"Os cartões mostram os Elegíveis ao VR, o Crédito do mês, os Pedidos abertos ao VR e o VT e ajuda no mês.",ref:"Cartões “Elegíveis ao VR”, “Crédito de novembro”, “Pedidos abertos ao VR”, “VT e ajuda no mês”"},
+ {a:"abas",t:"Duas vistas",x:"“Vale-refeição” e “Vale-transporte e ajuda de custo”. Quem recebe vem da ficha da pessoa, e o rateio vem do cadastro.",ref:"Abas “Vale-refeição” e “Vale-transporte e ajuda de custo”"},
+ {a:"lista",t:"Créditos do mês",x:"O pagamento do VR sai em Folha e pagamentos, pela cobrança da operadora. Aqui fica só o acompanhamento do crédito. Enviar ao Financeiro não significa ter pago.",ref:"Seção “Créditos do mês”; tabela “Créditos do VR”"},
+ {a:"pedir-alteracao-vr",ed:1,t:"VR não é enviado sozinho",x:"“Pedir alteração no cadastro do VR” abre um pedido. Nada é enviado à operadora pelo sistema: o pedido fica aberto até você fazer o que precisa fora e marcar “Feito no VR”. É por decisão, não é erro.",ref:"Botão “Pedir alteração no cadastro do VR”; marca “Feito no VR”"},
+ {a:"nova-solicitacao",ed:1,t:"Nova solicitação",x:"Registra uma solicitação de VT ou ajuda de custo: Pessoa, Tipo, Valor e Mês. A solicitação não muda a ficha; o pagamento do mês lê o valor da ficha.",ref:"Botão “Nova solicitação”; campos “Pessoa”, “Tipo”, “Valor (R$)”, “Mês”"}
+];
+TR.patrimonio=[
+ {a:"indicadores",t:"Quem está com o quê",x:"Os cartões contam Itens, Em uso, Disponíveis, Devolução pendente e Termos a assinar.",ref:"Cartões “Itens”, “Em uso”, “Disponíveis”, “Devolução pendente”, “Termos a assinar”"},
+ {a:"abas",t:"Itens e Termos",x:"“Itens” é o que a empresa tem e com quem está. Em “Termos” ficam os termos de cada entrega, que você abre para Imprimir.",ref:"Abas “Itens” e “Termos”"},
+ {a:"linha-1",t:"A ficha do item",x:function(p){return "Clique em uma linha para ver Código, Tipo, Número de série, Localização e Responsável."+(p==="rh"?" Lá dentro ficam as ações: Registrar entrega, Registrar devolução, Transferir ou trocar, Pedir devolução, Atualizar localização, Corrigir dados e Dar baixa.":"");},v:"Quando houver itens, clique em uma linha para ver a ficha do item, com Código, Tipo, Número de série, Localização e Responsável.",ref:"Linha da tabela; ações do item"},
+ {a:"novo-item",ed:1,t:"Novo item",x:"Cadastra um item novo. Depois, é na ficha do item que se registra a entrega.",ref:"Botão “Novo item”"},
+ {a:"nota-compras",t:"O que fica em outro lugar",x:"A conta dos celulares é paga em Folha e pagamentos. Estoque e compra de equipamento ficam em Compras. Veículo é controlado na Frotas, e este módulo não lê nada de lá.",ref:"Avisos “Conta dos celulares” e “Compras e Frotas”"}
+];
+TR.comunicacao=[
+ {a:"indicadores",t:"Em números",x:function(p){return "Os cartões mostram Campanhas planejadas, Comunicados a enviar e Eventos"+(p==="adm"?". O orçamento dos eventos não aparece para o admin do hub.":", mais o Orçamento dos eventos que vêm aí. Esse valor só Controladoria/RH e Diretoria veem.");},ref:"Cartões “Campanhas planejadas”, “Comunicados a enviar”, “Eventos”, “Orçamento dos eventos que vêm aí”"},
+ {a:"abas",t:"Campanhas, Comunicados e Eventos",x:"Três listas na mesma tela. Escolha a aba para ver cada uma.",ref:"Abas “Campanhas”, “Comunicados”, “Eventos”"},
+ {a:"filtros",t:"Busca",x:"Procure por nome ou título e clique em Filtrar.",ref:"Campo “Nome ou título”; botão Filtrar"},
+ {a:"nova-campanha",ed:1,t:"O botão muda com a aba",x:"Em Campanhas é “Nova campanha”; em Comunicados, “Novo comunicado”; em Eventos, “Novo evento”.",ref:"Botões “Nova campanha”, “Novo comunicado”, “Novo evento”"},
+ {a:"linha-1",t:"WhatsApp só copia o texto",x:"Dentro de um comunicado ou campanha, “Copiar texto para o WhatsApp” copia o texto pronto: quem cola e envia é você. O e-mail também é manual: “Copiar texto”, “Abrir no meu e-mail” e depois “Registrar aviso”, que anota no histórico que o envio foi feito à mão. É por decisão, não é erro.",v:"Dentro de um comunicado ou campanha, “Copiar texto para o WhatsApp” copia o texto pronto: quem cola e envia é você. O e-mail também é manual: “Copiar texto”, “Abrir no meu e-mail” e depois “Registrar aviso”.",ref:"Botões “Copiar texto para o WhatsApp”, “Copiar texto”, “Abrir no meu e-mail”, “Registrar aviso”"}
+];
+TR.agenda=[
+ {a:"visao",t:"Mês ou Lista",x:"A Agenda reúne os prazos de todos os módulos. Alterne entre Mês e Lista, escolha um Módulo e navegue com Anterior e Próximo.",ref:"Botões “Mês” e “Lista”; filtro “Módulo”; botões “Anterior” e “Próximo”"},
+ {a:"grade",t:"O mês",x:"Cada dia mostra o que vence. Em um dia sem nada, a tela diz “Nada nesta data”.",ref:"Calendário do mês; estado “Nada nesta data”"},
+ {a:"obrigacoes",t:"Obrigações do mês",x:function(p){return "Cada obrigação abre um detalhe com Prazo e Situação."+(p==="rh"?" O botão “Registrar” anota que foi feita, com observação opcional.":"")+" A própria tela avisa: “Este sistema não guarda senha de portão”.";},ref:"Painel “Obrigações do mês”; botão “Registrar”; aviso “Este sistema não guarda senha de portão”"},
+ {a:"novo-lembrete",ed:1,t:"Novo lembrete",x:"Para o que não é obrigação de nenhum módulo: O que lembrar e a Data.",ref:"Botão “Novo lembrete”; campos “O que lembrar” e “Data”"},
+ {a:"salvar-versao",ed:1,t:"Salvar versão",x:"“Salvar versão” abre “Conferir e salvar versão”, onde você revê o mês e pode escrever uma observação. As versões ficam listadas em “Versões salvas”.",ref:"Painel “Versões salvas”; botão “Salvar versão”"}
+];
+TR.papeis=[
+ {a:"papeis-texto",t:"Quem pode o quê",x:"Quem é da Controladoria/RH cadastra e edita colaboradores, monta o rateio e importa planilhas. Quem é da Diretoria vê tudo, com o CPF mascarado. Sem papel, e sem ser admin do hub, a pessoa não entra no RH.",ref:"Texto no alto da tela Papéis"},
+ {a:"form-conceder",t:"Conceder papel",x:"Digite o e-mail, escolha o papel (Controladoria/RH ou Diretoria) e clique em Conceder.",ref:"Cartão “Conceder papel”; campo de e-mail “pessoa@manfac.com.br”; campo “Escolha o papel”; botão “Conceder”"},
+ {a:"ativos",t:"Papéis ativos",x:"Lista quem tem papel, qual, quem concedeu e quando. O botão Revogar tira o papel; fica no histórico, e para voltar é preciso conceder de novo.",ref:"Tabela “Papéis ativos”; botão “Revogar”"},
+ {a:"historico",t:"Histórico de revogações",x:"Fica o registro de cada papel revogado, com quem concedeu, quem revogou e quando.",ref:"Tabela “Histórico de revogações”"}
+];
+/* ------------------------------ dados e estado ------------------------------ */
+var KEY="rh-tour-mockup-v1";
+var LARG={celular:{w:390,h:780,n:"Celular"},tablet:{w:820,h:820,n:"Tablet"},notebook:{w:1280,h:780,n:"Notebook"}};
+var PAP={
+ rh:{n:"Controladoria/RH",nome:"Renata Moura",ini:"RM",ed:true,adm:false},
+ dir:{n:"Diretoria",nome:"Helena Duarte",ini:"HD",ed:false,adm:false},
+ adm:{n:"Admin do hub",nome:"Otávio Brandão",ini:"OB",ed:false,adm:true}
+};
+var PK=["rh","dir","adm"];
+var MOD=[
+ {id:"inicio",r:"Início"},
+ {id:"pessoas",r:"Pessoas",g:"Pessoas"},
+ {id:"movimentacoes",r:"Admissões e alterações",c:2},
+ {id:"recrutamento",r:"Recrutamento"},
+ {id:"ferias",r:"Férias",g:"Departamento Pessoal"},
+ {id:"exames",r:"Exames (ASO)"},
+ {id:"contratos",r:"Contratos PJ"},
+ {id:"ponto",r:"Ponto",c:3},
+ {id:"folha",r:"Folha e pagamentos"},
+ {id:"beneficios",r:"Benefícios"},
+ {id:"patrimonio",r:"Patrimônio",c:1,g:"Operação e cultura"},
+ {id:"comunicacao",r:"Comunicação"},
+ {id:"agenda",r:"Agenda"}
+];
+var NOME={volta:"Volta pelo sistema",papeis:"Papéis"};
+MOD.forEach(function(m){NOME[m.id]=m.r;});
+var ORDEM=["volta"].concat(MOD.map(function(m){return m.id;}),["papeis"]);
+var ROTA={inicio:"",pessoas:"/pessoas",movimentacoes:"/movimentacoes",recrutamento:"/recrutamento",ferias:"/ferias",exames:"/exames",contratos:"/contratos",ponto:"/ponto",folha:"/pagamentos",beneficios:"/beneficios",patrimonio:"/patrimonio",comunicacao:"/comunicacao",agenda:"/agenda",papeis:"/papeis"};
+
+var S={papel:"rh",largura:"notebook",dados:"hoje",salva:"ok",prog:false,tela:"inicio",sub:"",
+  feitos:{rh:{},dir:{},adm:{}},tour:null,menuRev:false,falha:0,soltos:{}};
+var memoria=null;
+
+function persistivel(){
+  return {papel:S.papel,largura:S.largura,dados:S.dados,salva:S.salva,prog:S.prog,tela:S.tela,sub:S.sub,feitos:S.feitos,
+    tour:(S.tour&&!S.tour.rev)?{id:S.tour.id,i:S.tour.i,rev:false}:null};
+}
+function lembrar(){
+  var j=JSON.stringify(persistivel());
+  memoria=j;
+  try{localStorage.setItem(KEY,j);}catch(e){}
+}
+function carregar(j){
+  var o;
+  try{o=JSON.parse(j);}catch(e){return false;}
+  if(!o||!PAP[o.papel])return false;
+  S.papel=o.papel;
+  if(LARG[o.largura])S.largura=o.largura;
+  if(["hoje","cheio","vazio"].indexOf(o.dados)>=0)S.dados=o.dados;
+  S.salva=o.salva==="falha"?"falha":"ok";
+  S.prog=!!o.prog;
+  S.tela=(ORDEM.indexOf(o.tela)>=0&&o.tela!=="volta")?o.tela:"inicio";
+  S.sub=o.sub==="comp"?"comp":"";
+  if(o.feitos&&o.feitos.rh&&o.feitos.dir&&o.feitos.adm)S.feitos=o.feitos;
+  S.tour=(o.tour&&ORDEM.indexOf(o.tour.id)>=0)?{id:o.tour.id,i:+o.tour.i||0,rev:false}:null;
+  S.menuRev=false;S.falha=0;S.soltos={};
+  return true;
+}
+
+/* ------------------------------ utilidades ------------------------------ */
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function tk(k){return k?' data-tk="'+k+'"':"";}
+function sim(){return $("#sim");}
+function pp(){return PAP[S.papel];}
+function texto(s,p){return typeof s.x==="function"?s.x(p):s.x;}
+
+function passos(id,p){
+  p=p||S.papel;
+  if(id==="papeis"&&!PAP[p].adm)return [];
+  return (TR[id]||[]).filter(function(s){
+    if(s.ed&&!PAP[p].ed)return false;
+    if(s.p&&s.p.indexOf(p)<0)return false;
+    return true;
+  });
+}
+function feito(id){return !!S.feitos[S.papel][id];}
+function vz(id){
+  if(S.dados==="vazio")return true;
+  if(S.dados==="hoje")return id==="recrutamento"||id==="movimentacoes";
+  return false;
+}
+function dinheiro(v){return pp().adm?"—":v;}
+
+/* ------------------------------ peças da tela simulada ------------------------------ */
+function et(t,c){return '<span class="et '+(c||"ne")+'">'+esc(t)+'</span>';}
+function btn(t,k,pri,cl){return '<button type="button" class="btn '+(cl||(pri?"btn-p":"btn-s"))+'" data-acao="toast"'+tk(k)+'>'+esc(t)+'</button>';}
+function cab(t,d,ac){return '<div class="cab"><div style="min-width:0"><h1 tabindex="-1">'+esc(t)+'</h1>'+(d?'<p class="lead">'+esc(d)+'</p>':"")+'</div>'+(ac?'<div class="acoes"'+tk("acoes")+'>'+ac+'</div>':"")+'</div>';}
+function acoes(l){return l.filter(function(a){return !a[3]||pp().ed;}).map(function(a){return btn(a[1],a[0],a[2]);}).join("");}
+function kpis(l,k){
+  return '<div class="kpis'+(l.length===5?" k5":"")+'"'+tk(k||"indicadores")+'>'+l.map(function(x){
+    var v=String(x[1]);
+    return '<button type="button" class="card card-clic" data-acao="toast"><p class="k-rot">'+esc(x[0])+'</p><p class="k-val'+(v.length>6?" din":"")+'">'+esc(v)+'</p></button>';
+  }).join("")+'</div>';
+}
+function abas(l,k){return '<div class="abas'+(l.length===2?" duas-a":"")+'"'+tk(k||"abas")+'>'+l.map(function(a,i){return '<button type="button" class="aba" data-acao="toast"'+(i===0?' aria-current="page"':"")+'>'+esc(a)+'</button>';}).join("")+'</div>';}
+function filtros(l,k){
+  return '<form class="filtros" data-form="1"'+tk(k||"filtros")+'>'+l.map(function(f){
+    if(f[1]==="c")return '<label class="chk"><input type="checkbox">'+esc(f[0])+'</label>';
+    if(f[1]==="s")return '<label><span>'+esc(f[0])+'</span><select class="campo-f"><option>Todos</option></select></label>';
+    return '<label class="fl2"><span>'+esc(f[0])+'</span><input class="campo-f" type="search"'+(f[2]?' placeholder="'+esc(f[2])+'"':"")+'></label>';
+  }).join("")+'<button type="submit" class="btn btn-s">Filtrar</button></form>';
+}
+function eVazio(t,x,k){
+  return '<div class="e-vazio"'+tk(k)+'><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg><h2>'+esc(t)+'</h2>'+(x?'<p>'+esc(x)+'</p>':"")+'</div>';
+}
+function tabela(cols,rows,k){
+  var cl=function(i){return i>=5?"pr4":i===4?"pr3":i===3?"pr2":"";};
+  var cts='<ul class="cts">'+rows.map(function(r,i){
+    return '<li><div class="ct"'+(i===0?tk("linha-1"):"")+' data-acao="toast" tabindex="0" role="button"><div class="ct-t"><b>'+r[0]+'</b>'+r[1]+'</div><dl>'+[2,3].filter(function(j){return j<cols.length;}).map(function(j){return '<div><dt>'+esc(cols[j])+'</dt><dd>'+r[j]+'</dd></div>';}).join("")+'</dl></div></li>';
+  }).join("")+'</ul>';
+  var tb='<div class="tb"><table><thead><tr>'+cols.map(function(c,i){return '<th scope="col" class="'+cl(i)+'">'+esc(c)+'</th>';}).join("")+'</tr></thead><tbody>'+rows.map(function(r,i){
+    return '<tr'+(i===0?tk("linha-1"):"")+' data-acao="toast" tabindex="0" role="button">'+r.map(function(c,j){return '<td class="'+cl(j)+'">'+c+'</td>';}).join("")+'</tr>';
+  }).join("")+'</tbody></table></div>';
+  return '<div'+tk(k||"lista")+'>'+cts+tb+'</div>';
+}
+function painel(k,t,h){return '<div class="card painel-t"'+tk(k)+'><h2 class="h2">'+esc(t)+'</h2>'+h+'</div>';}
+
+/* Blocos genéricos dos módulos que seguem o mesmo molde: título, cartões, abas, filtros e lista. */
+function molde(o){
+  var h=cab(o.t,o.d,acoes(o.ac||[]));
+  if(o.nota)h+=o.nota;
+  if(o.kp)h+=kpis(o.kp);
+  if(o.ab)h+=abas(o.ab);
+  if(o.pre)h+=o.pre;
+  if(o.fl)h+=filtros(o.fl);
+  h+=o.vazio?eVazio(o.vazio[0],o.vazio[1],"lista"):tabela(o.cols,o.rows);
+  if(o.pos)h+=o.pos;
+  return h;
+}
+
+/* ------------------------------ as telas ------------------------------ */
+var TELA={};
+TELA.inicio=function(){
+  var v=vz("inicio"),p=pp();
+  var mov=vz("movimentacoes"),rec=vz("recrutamento");
+  var h=cab("Bom dia, "+p.nome.split(" ")[0],"domingo, 8 de novembro de 2026");
+  if(S.dados==="cheio"&&!v)h+='<div class="aviso" role="alert"'+tk("aplicar")+'><b>Alterações sem aplicar</b>1 alteração vencida sem aplicar'+(p.ed?'<div class="acoes">'+btn("Aplicar agora")+'</div>':"")+'</div>';
+  var z=function(n){return v?0:n;};
+  h+=kpis([["Ativos CLT",z(9)],["Ativos PJ",z(3)],["Admissões em andamento",mov?0:2],["Vagas abertas",rec?0:3],["Em férias agora",z(1)],["Exames vencidos ou a vencer em 30 dias",z(2)],["Contratos a vencer",z(1)],["Devoluções pendentes",z(1)]]);
+  var prec=[["Férias de Thiago Barros com limite vencido","Saldo de 30 dias. Precisa marcar o início.",et("Venceu 02/11/2026","er")],["Exame periódico de Juliana Prado","Exames (ASO)",et("Hoje","av")],["Fechamento do ponto de outubro","Ponto · 3 pessoas com divergência a conferir",et("10/11/2026")]];
+  var prox=[["Fechamento do ponto de outubro","10/11/2026"],["Patrícia Lemos entra em férias","12/11/2026"],["Exame periódico de Rafael Campos","16/11/2026"],["Vencimento da folha de novembro","05/12/2026"]];
+  var pl=prec.map(function(x){return '<li><button type="button" class="lin" data-acao="toast"><span class="lin-c"><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></span>'+x[2]+'</button></li>';}).join("");
+  var xl=prox.map(function(x){return '<li><button type="button" class="lin" data-acao="toast"><span class="lin-c"><b>'+esc(x[0])+'</b></span><span class="lin-d">'+x[1]+'</span></button></li>';}).join("");
+  h+='<div class="duas"><div'+tk("precisa")+'><h2 class="h2">Precisa de você</h2><p class="h2-lead">Do mais urgente para o menos urgente.</p>'+(v?eVazio("Nada pendente","O que precisar da sua atenção aparece aqui."):'<ul class="lista-c">'+pl+'</ul>')+'</div>';
+  h+='<div'+tk("proximos")+'><div class="cab" style="margin:0;gap:8px;align-items:baseline"><h2 class="h2">Próximos dias</h2><button type="button" class="link" data-acao="toast">Ver agenda →</button></div><p class="h2-lead">Os prazos dos módulos, em ordem de data.</p>'+(v?eVazio("Nenhum prazo chegando","Os prazos dos módulos aparecem aqui sozinhos."):'<ul class="lista-c">'+xl+'</ul>')+'</div></div>';
+  return h;
+};
+TELA.pessoas=function(){
+  var v=vz("pessoas");
+  return molde({t:"Pessoas",d:"Colaboradores e prestadores. Clique para abrir a ficha.",ac:[["preencher-emails","Preencher e-mails",0,1],["nova-admissao","Nova admissão",1,1]],
+    kp:[["CLT",v?0:9],["PJ",v?0:3],["Afastados",v?0:1],["Sem e-mail",v?0:2]],ab:["Todos","Relação de ativos do mês"],
+    fl:[["Buscar","t","Nome, cargo, e-mail ou CPF"],["Vínculo","s"],["Departamento","s"],["Situação","s"],["Sem e-mail","c"]],
+    vazio:v?["Nenhuma pessoa cadastrada","A primeira pessoa entra por uma nova admissão."]:null,
+    cols:["Nome","Situação","Vínculo","E-mail","Cargo"],
+    rows:[["Patrícia Lemos",et("Ativo","ok"),"CLT","patricia.lemos@exemplo.com.br","Coordenadora de Contratos"],["Thiago Barros",et("Ativo","ok"),"CLT","thiago.barros@exemplo.com.br","Técnico de Manutenção"],["Marcos Vinícius Reis",et("Afastado","av"),"CLT","marcos.reis@exemplo.com.br","Eletricista Predial"],["Luana Freitas",et("Ativo","ok"),"PJ","luana.freitas@exemplo.com.br","Arquiteta"]]});
+};
+TELA.movimentacoes=function(){
+  var v=vz("movimentacoes");
+  return molde({t:"Admissões e alterações",d:"Quem está chegando e o que está mudando no cadastro de quem já está aqui.",ac:[["nova-alteracao","Nova alteração",0,1],["nova-admissao","Nova admissão",1,1]],
+    kp:[["Admissões em andamento",v?0:2],["Alterações em andamento",v?0:1],["Agendadas",v?0:1]],ab:["Admissões","Alterações","Modelos"],
+    vazio:v?["Nenhuma admissão","Quem está chegando aparece aqui."]:null,
+    cols:["Pessoa","Situação","Cargo","Vínculo","Data"],
+    rows:[["Gustavo Arantes",et("Em andamento","in"),"Técnico de Manutenção","CLT","01/12/2026"],["Larissa Teixeira",et("Em andamento","in"),"Assistente Administrativa","CLT","14/12/2026"]]});
+};
+TELA.recrutamento=function(){
+  var v=vz("recrutamento"),ed=pp().ed;
+  var cur=painel("curriculos","Currículos guardados",'<p>Os currículos ficam guardados por um prazo depois que a vaga encerra. Depois, o CPF e o e-mail do candidato são apagados e o arquivo sai da pasta.</p><p class="ok">Nenhum currículo vencido para apagar.</p>'+(ed?btn("Apagar currículos vencidos","","","btn-er"):""));
+  return molde({t:"Recrutamento",d:"Vagas pedidas pelos gestores e candidatos em cada etapa.",ac:[["novo-candidato","Novo candidato",0,1],["nova-vaga","Nova vaga",1,1]],
+    kp:[["Vagas abertas",v?0:3],["Candidatos em processo",v?0:5],["Com o gestor ou em decisão",v?0:1],["Vagas sem divulgação",v?0:1]],ab:["Vagas","Candidatos"],
+    fl:[["Buscar","t"]],
+    vazio:v?["Nenhuma vaga aberta","Registre a primeira vaga pedida por um gestor."]:null,
+    cols:["Vaga","Situação","Modalidade","Início previsto"],
+    rows:[["Técnico de Refrigeração",et("Aberta","in"),"CLT","11/01/2027"],["Engenheiro de Obras",et("Aberta","in"),"CLT","01/02/2027"],["Auxiliar Administrativo",et("Aberta","in"),"CLT","15/02/2027"]],pos:'<div style="height:24px"></div>'+cur});
+};
+TELA.ferias=function(){
+  var v=vz("ferias");
+  return molde({t:"Férias",d:"Períodos, saldos e limites de cada colaborador CLT.",ac:[["gerar-periodos","Gerar períodos",0,1],["nova-solicitacao","Nova solicitação",1,1]],
+    kp:[["Limite vencido",v?0:1],["Até 30 dias",v?0:1],["Até 60 dias",v?0:1],["Até 90 dias",v?0:0],["Em férias agora",v?0:1]],
+    fl:[["Nome da pessoa","t"],["Gestor","s"]],
+    vazio:v?["Nenhum período de férias","Os períodos aparecem aqui quando há colaboradores CLT com data de admissão."]:null,
+    cols:["Pessoa","Situação","Saldo","Limite","Gestor"],
+    rows:[["Thiago Barros",et("Vencidas","er"),"30 dias","02/11/2026","Eduardo Pacheco"],["Juliana Prado",et("A vencer","av"),"30 dias","01/12/2026","Renata Moura"],["Patrícia Lemos",et("Programadas","ok"),"20 dias","14/02/2027","Renata Moura"]]});
+};
+TELA.exames=function(){
+  var v=vz("exames"),ed=pp().ed;
+  var ses=painel("sesmt","Controle de exames do SESMT",'<p class="ok">Pedir ao técnico de segurança no fim de cada mês. Ainda não foi pedido neste mês.</p>'+(ed?btn("Registrar pedido"):""));
+  return molde({t:"Exames (ASO)",d:"Vencimentos e agendamentos, com o controle vindo do SESMT.",ac:[["novo-exame","Novo exame",1,1]],
+    kp:[["Vencidos",v?0:1],["Até 30 dias",v?0:2],["Até 60 dias",v?0:1],["Até 90 dias",v?0:2]],pre:ses,
+    fl:[["Nome da pessoa","t"],["Tipo","s"]],
+    vazio:v?["Nenhum exame cadastrado","Cadastre os exames ou peça o controle ao SESMT."]:null,
+    cols:["Pessoa","Prazo","Tipo","Vence em","Agendado para"],
+    rows:[["Juliana Prado",et("Vence hoje","er"),"Periódico","08/11/2026","—"],["Rafael Campos",et("Em 8 dias","av"),"Periódico","16/11/2026","12/11/2026"],["Marcos Vinícius Reis",et("Em 54 dias","in"),"Periódico","31/12/2026","—"]]});
+};
+TELA.contratos=function(){
+  var v=vz("contratos"),p=pp();
+  var kp=[["Contratos",v?0:3]];
+  if(!p.adm)kp.push(["Valor mensal",v?"R$ 0,00":"R$ 21.700,00"]);
+  kp.push(["Vencidos",0],["A vencer em 90 dias",v?0:1]);
+  return molde({t:"Contratos PJ",d:"Prestadores e vencimentos. O pagamento sai por Folha e pagamentos.",ac:[["novo-contrato","Novo contrato",1,1]],
+    kp:kp,fl:[["Nome do prestador","t"]],
+    vazio:v?["Nenhum contrato PJ","Cadastre o primeiro contrato de prestador."]:null,
+    cols:["Prestador","Prazo","Início","Vencimento"],
+    rows:[["Luana Freitas",et("Em 23 dias","av"),"01/12/2024","01/12/2026"],["Caio Menezes",et("No prazo","ok"),"10/04/2025","10/04/2027"],["Sônia Ribeiro",et("No prazo","ok"),"18/08/2025","18/08/2027"]]});
+};
+TELA.ponto=function(){
+  var v=vz("ponto"),p=pp();
+  var rel=painel("relatorio","Período 25/10/2026 a 24/11/2026",'<p>Sem integração com o VR Ponto: o RH exporta o relatório e anexa aqui. O sistema guarda o arquivo e não lê o conteúdo; os lançamentos são digitados ou colados, e você confere antes de gravar.</p><p class="ok">Nenhum relatório anexado neste período.</p>'+(p.ed?btn("Anexar relatório do VR Ponto"):""));
+  return molde({t:"Ponto",d:"Período de 25 a 24, por pessoa, com banco de horas, atestados e o fechamento com a contabilidade.",
+    ac:[["colar-lista","Colar lista",0,1],["novo-lancamento","Novo lançamento",0,1],["novo-atestado","Novo atestado",0,1]],
+    kp:[["Divergências abertas",v?0:3],["Marcações ausentes",v?0:2],["Marcações inconsistentes",v?0:1],["Saldo do banco de horas",v?"0h00":"+14h30"],["Atestados e justificativas",v?0:2]],
+    ab:["Por período","Por pessoa","Banco de horas","Atestados","Fechamento"],pre:rel,
+    fl:[["Só divergências","c"]],
+    vazio:v?["Nada neste período com estes filtros",p.ed?"Sem integração com o VR Ponto, os lançamentos entram pelos botões do alto da página.":"Sem integração com o VR Ponto, quem registra os lançamentos é a Controladoria/RH."]:null,
+    cols:["Pessoa","Situação","Lançamento","Data"],
+    rows:[["Thiago Barros",et("Divergência","av"),"Hora extra","03/11/2026"],["Rafael Campos",et("Conferido","ok"),"Plantão","31/10/2026"],["Anderson Lima",et("Divergência","av"),"Compensação","05/11/2026"]]});
+};
+TELA.folha=function(){
+  var v=vz("folha");
+  var nota='<div class="aviso" style="border-color:var(--ambar-bg)"'+tk("nota-enviado")+'><b>Enviado não é pago</b>Quem valida e paga é o Financeiro; aqui o máximo que aparece é Lançada. INSS, IRRF e PIS continuam com o Financeiro.</div>';
+  return molde({t:"Folha e pagamentos",d:"Resumo por competência, com cada pagamento pronto para ir ao Financeiro com o rateio do cadastro.",
+    nota:'<div style="height:0"></div>',kp:[["Pagamentos de novembro",v?0:18],["Com o RH",v?0:3],["Com o Financeiro",v?0:8],["Lançados no Financeiro",v?0:7]],pre:nota,
+    vazio:v?["Nenhuma competência aberta","Escolha o mês acima para abrir a primeira."]:null,
+    cols:["Competência","Situação","Total","Pagamentos","eSocial"],
+    rows:[["Novembro de 2026",et("Com o Financeiro","in"),dinheiro("R$ 82.154,80"),"18","Não enviada"],["Outubro de 2026",et("Lançada no Financeiro","ok"),dinheiro("R$ 82.154,80"),"18","07/11/2026"],["Setembro de 2026",et("Lançada no Financeiro","ok"),dinheiro("R$ 81.983,20"),"18","07/10/2026"]]});
+};
+TELA.comp=function(){
+  var gr=[["Folha CLT",dinheiro("R$ 61.240,00"),"9 pessoas",et("Lançada","ok")],["FGTS e consignado",dinheiro("R$ 4.899,20"),"9 pessoas",et("Aguardando validação","in")],["VR",dinheiro("R$ 7.020,00"),"9 pessoas",et("Aguardando validação","in")],["VT e ajuda de custo",dinheiro("R$ 1.980,00"),"9 pessoas",et("Ainda não enviado")],["Prestadores PJ",dinheiro("R$ 21.700,00"),"3 pessoas",et("Aguardando validação","in")],["Seguro de vida",dinheiro("R$ 1.800,00"),"12 pessoas",et("Lançada","ok")],["Conta de celular",dinheiro("R$ 585,00"),"9 pessoas",et("Ainda não enviado")]];
+  var h='<button type="button" class="volta-pag" data-acao="toast">← Todas as competências</button>'+cab("Competência de novembro de 2026","Um cartão por pagamento do mês. O RH prepara e confere; o Financeiro valida e paga.");
+  h+=abas(["Pagamentos","Andamento","Documentos","Histórico"]);
+  h+=kpis([["Total conhecido",dinheiro("R$ 99.224,20")],["Lançado no Financeiro",dinheiro("R$ 63.040,00")],["Com o Financeiro",dinheiro("R$ 34.599,20")],["Com o RH",dinheiro("R$ 2.565,00")]],"totais");
+  h+='<h2 class="h2">Pagamentos do mês</h2><p class="h2-lead">Depois do envio, a situação vem do Financeiro. Ter enviado não significa ter pago.</p><div class="cartoes"'+tk("cartoes")+'>'+gr.map(function(g){
+    return '<button type="button" class="card card-clic" data-acao="toast"'+(g[0]==="Seguro de vida"?tk("cartao-seguro"):"")+'><p class="k-rot">'+esc(g[0])+'</p><p class="k-val din">'+esc(g[1])+'</p><p class="k-sub" style="margin:4px 0 8px">'+g[2]+'</p>'+g[3]+'</button>';
+  }).join("")+'</div>';
+  return h;
+};
+TELA.beneficios=function(){
+  var v=vz("beneficios");
+  var cre='<h2 class="h2">Créditos do mês</h2><p class="h2-lead">O pagamento do VR sai em Folha e pagamentos, pela cobrança da operadora. Aqui fica o acompanhamento do crédito. Ter enviado ao Financeiro não significa ter pago.</p>';
+  return molde({t:"Benefícios",d:"Vale-refeição, vale-transporte e ajuda de custo. Quem recebe vem da ficha; o rateio vem das pessoas.",
+    ac:[["pedir-alteracao-vr","Pedir alteração no cadastro do VR",0,1],["nova-solicitacao","Nova solicitação",1,1]],
+    kp:[["Elegíveis ao VR",v?0:9],["Crédito de novembro",v?"—":dinheiro("R$ 7.020,00")],["Pedidos abertos ao VR",v?0:1],["VT e ajuda no mês",v?0:7]],ab:["Vale-refeição","Vale-transporte e ajuda de custo"],pre:cre,
+    vazio:v?["Ninguém marcado para receber VR","A lista sai da ficha: marque o vale-refeição numa alteração da pessoa."]:null,
+    cols:["Mês","Situação","Crédito","Pagamento"],
+    rows:[["Novembro de 2026",et("Ainda não enviado"),dinheiro("R$ 7.020,00"),"05/11/2026"],["Outubro de 2026",et("Lançada no Financeiro","ok"),dinheiro("R$ 6.942,00"),"05/10/2026"]]});
+};
+TELA.patrimonio=function(){
+  var v=vz("patrimonio"),z=function(n){return v?0:n;};
+  var notas='<div class="duas" style="margin-top:24px;gap:12px"'+tk("nota-compras")+'><div class="card"><p class="k-rot">Conta dos celulares</p><p>É paga em Folha e pagamentos.</p></div><div class="card"><p class="k-rot">Compras e Frotas</p><p>Estoque e compra de equipamento ficam em Compras. Veículo é controlado na Frotas, e este módulo não lê nada de lá.</p></div></div>';
+  return molde({t:"Patrimônio",d:"Quem está com o quê. Estoque e compra ficam em Compras; veículo é controlado na Frotas.",ac:[["novo-item","Novo item",1,1]],
+    kp:[["Itens",z(24)],["Em uso",z(17)],["Disponíveis",z(6)],["Devolução pendente",z(1)],["Termos a assinar",z(2)]],ab:["Itens","Termos"],
+    vazio:v?["Nenhum item cadastrado","Os itens aparecem aqui depois do primeiro cadastro."]:null,
+    cols:["Item","Situação","Responsável","Localização"],
+    rows:[["Notebook 14 polegadas",et("Em uso","in"),"Anderson Lima","Obra Galpão Guarulhos"],["Furadeira de impacto",et("Disponível","ok"),"—","Almoxarifado"],["Celular corporativo",et("Em uso","in"),"Patrícia Lemos","Escritório"]],pos:notas});
+};
+TELA.comunicacao=function(){
+  var v=vz("comunicacao"),p=pp();
+  var z=function(n){return v?0:n;};
+  return molde({t:"Comunicação",d:"Campanhas, comunicados e eventos internos.",ac:[["nova-campanha","Nova campanha",1,1]],
+    kp:[["Campanhas planejadas",z(2)],["Comunicados a enviar",z(1)],["Eventos",z(3)]].concat(p.adm?[]:[["Orçamento dos eventos que vêm aí",v?"R$ 0,00":"R$ 4.500,00"]]),ab:["Campanhas","Comunicados","Eventos"],
+    fl:[["Buscar","t","Nome ou título"]],
+    vazio:v?["Nenhuma campanha ainda","Crie a primeira campanha do calendário, com o texto que será usado."]:null,
+    cols:["Campanha","Situação","Data","Canal"],
+    rows:[["Semana da segurança",et("Planejada","in"),"17/11/2026","E-mail"],["Confraternização de fim de ano",et("Planejada","in"),"18/12/2026","WhatsApp"]]});
+};
+TELA.agenda=function(){
+  var v=vz("agenda");
+  var dias="DSTQQSS".split("");
+  var cal='<div class="cal"'+tk("grade")+'>'+["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(function(d){return '<b>'+d+'</b>';}).join("");
+  for(var i=1;i<=14;i++){
+    var e="";
+    if(!v){if(i===8)e='<i>Exame periódico</i>';if(i===10)e='<i>Ponto: fechamento</i>';if(i===12)e='<i>Férias de Patrícia</i>';}
+    cal+='<span>'+i+e+'</span>';
+  }
+  cal+='</div>';
+  var obr=v?eVazio("Nada nesta data","Os prazos dos módulos aparecem aqui sozinhos."):'<ul class="lista-c"><li><button type="button" class="lin" data-acao="toast"><span class="lin-c"><b>Fechamento do ponto de outubro</b><span>Ponto</span></span>'+et("10/11/2026")+'</button></li><li><button type="button" class="lin" data-acao="toast"><span class="lin-c"><b>Vencimento da folha de novembro</b><span>Folha e pagamentos</span></span>'+et("05/12/2026")+'</button></li></ul>';
+  var ed=pp().ed;
+  var h=cab("Agenda","Prazos de todos os módulos numa só visão.",ed?btn("Novo lembrete","novo-lembrete"):"");
+  h+='<div class="fl-in"'+tk("visao")+'><div class="seg"><button type="button" aria-pressed="true" data-acao="toast">Mês</button><button type="button" aria-pressed="false" data-acao="toast">Lista</button></div><label><span>Módulo</span><select class="campo-f"><option>Todos</option></select></label><button type="submit" class="btn btn-s" data-acao="toast">Filtrar</button><button type="button" class="btn btn-s" data-acao="toast" aria-label="Mês anterior">Anterior</button><button type="button" class="btn btn-s" data-acao="toast" aria-label="Próximo mês">Próximo</button></div>';
+  h+=cal;
+  h+='<div class="duas"><div'+tk("obrigacoes")+'><h2 class="h2">Obrigações do mês</h2><p class="h2-lead">Cada uma abre um detalhe com prazo e situação.</p>'+obr+'</div><div'+tk("versoes")+'><div class="cab" style="margin:0;gap:8px;align-items:baseline"><h2 class="h2">Versões salvas</h2>'+(ed?btn("Salvar versão","salvar-versao"):"")+'</div><p class="h2-lead">Nenhuma versão salva neste mês.</p></div></div>';
+  return h;
+};
+TELA.papeis=function(){
+  var h='<div class="cab" style="display:block"><h1 tabindex="-1" style="margin-bottom:4px">Papéis</h1><p class="lead"'+tk("papeis-texto")+'>Quem é da Controladoria/RH cadastra e edita colaboradores, monta o rateio e importa planilhas. Quem é da Diretoria vê tudo, com o CPF mascarado. Sem papel (e sem ser admin do hub), a pessoa não entra no RH.</p></div>';
+  h+='<div class="card painel-t"'+tk("form-conceder")+'><h2 class="h2">Conceder papel</h2><div class="fl-in" style="margin-bottom:0"><label><span>E-mail</span><input class="campo-f" type="email" placeholder="pessoa@manfac.com.br"></label><label><span>Papel</span><select class="campo-f"><option>Escolha o papel</option></select></label>'+btn("Conceder","","1")+'</div></div>';
+  h+='<div class="painel-t"'+tk("ativos")+'><h2 class="h2">Papéis ativos</h2>'+tabela(["E-mail","Papel","Concedido por","Quando"],[["renata.moura@exemplo.com.br","Controladoria/RH","Otávio Brandão","10/08/2026"],["helena.duarte@exemplo.com.br","Diretoria","Otávio Brandão","10/08/2026"]],"tab-ativos").replace(/ data-tk="linha-1"/g,"")+'</div>';
+  h+='<div class="painel-t"'+tk("historico")+'><h2 class="h2">Histórico de revogações</h2><p class="lead" style="color:var(--muted)">Nenhum papel revogado até agora.</p></div>';
+  return h;
+};
+
+/* ------------------------------ a moldura ------------------------------ */
+function ativoDe(){return S.tela;}
+function desenhaLateral(){
+  var at=S.tela,p=pp();
+  var h='<div class="lat-cab"><div><span class="lat-nome">RH</span><a class="volta" href="#" data-acao="hub" data-tk="voltar-hub">← Voltar ao Hub</a></div><button type="button" class="lat-fecha" data-acao="fecha-lat" aria-label="Fechar menu">×</button></div>';
+  var abre=false;
+  MOD.forEach(function(m,i){
+    if(m.g||i===0){
+      if(abre)h+='</div>';
+      if(m.g==="Departamento Pessoal")h+='</div>';
+      if(i===0)h+='<div data-tk="lat-modulos">';
+      h+='<div class="lat-grupo">';abre=true;
+      if(m.g)h+='<div class="lat-tit"'+(m.g==="Departamento Pessoal"?tk("lat-dp"):"")+'>'+esc(m.g)+'</div>';
+    }
+    var c=(m.c&&!vz(m.id))?m.c:0;
+    h+='<button type="button" class="item" data-acao="ir" data-t="'+m.id+'"'+(m.id===at?' aria-current="page"':"")+' aria-label="'+esc(m.r)+(c?", "+c+" pendentes":"")+'"><span>'+esc(m.r)+'</span>'+(c?'<span class="cont" aria-hidden="true">'+c+'</span>':"")+'</button>';
+  });
+  if(abre)h+='</div>';
+  var vistos=MOD.filter(function(m){return feito(m.id);}).length;
+  h+='<div class="lat-pe"'+tk("lat-pe")+'>';
+  if(S.prog)h+='<div class="prog"'+tk("progresso")+'>Módulos vistos: '+vistos+' de '+MOD.length+'<span class="prog-b"><i style="width:'+Math.round(vistos*100/MOD.length)+'%"></i></span></div>';
+  h+='<button type="button" class="item" data-acao="rever"'+tk("rever")+'>Rever tour</button>';
+  if(p.adm)h+='<button type="button" class="item" data-acao="ir" data-t="papeis"'+(at==="papeis"?' aria-current="page"':"")+tk("lat-papeis")+'>Papéis</button>';
+  h+='<button type="button" class="item" data-acao="toast">Sair</button></div>';
+  $("#lat").innerHTML=h;
+}
+function desenhaBarra(){
+  var at=S.tela;
+  var ic={inicio:'<path d="M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',pessoas:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/>',agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'};
+  var svg=function(p){return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';};
+  $("#barra").innerHTML=["inicio","pessoas","agenda"].map(function(id){return '<button type="button" data-acao="ir" data-t="'+id+'"'+(at===id?' aria-current="page"':"")+'>'+svg(ic[id])+'<span>'+NOME[id]+'</span></button>';}).join("")+'<button type="button" data-acao="menu" aria-label="Menu">'+svg('<path d="M3 6h18M3 12h18M3 18h18"/>')+'<span>Menu</span></button>';
+}
+function passoAtual(){
+  var t=S.tour;if(!t)return null;
+  var ps=passos(t.id);
+  if(!ps.length)return null;
+  if(t.i>=ps.length)t.i=ps.length-1;
+  if(t.i<0)t.i=0;
+  return ps[t.i];
+}
+function chaveTela(){
+  var sp=passoAtual(),sub=S.sub;
+  if(S.tour&&sp&&sp.tela)sub=sp.tela;
+  else if(S.tour&&S.tour.id!=="volta")sub="";
+  return sub==="comp"&&S.tela==="folha"?"comp":S.tela;
+}
+var ultimaChave="";
+function render(){
+  var s=sim(),p=pp(),chave=chaveTela();
+  var html=(TELA[chave]||TELA.inicio)();
+  $("#conteudo").innerHTML=html;
+  $("#q-nome").textContent=p.nome;$("#q-papel").textContent=p.n;$("#q-ini").textContent=p.ini;
+  $("#q-ini").setAttribute("role","img");$("#q-ini").setAttribute("aria-label",p.nome+", "+p.n);
+  desenhaLateral();desenhaBarra();
+  var rota=(chave==="comp"?"/pagamentos?mes=2026-11":ROTA[S.tela]||"");
+  $("#url").textContent="hub.manfac.com.br/rh"+rota;
+  $("#b-lat").setAttribute("aria-label",s.dataset.lateral==="aberta"?"Fechar a lateral":"Abrir a lateral");
+  if(chave!==ultimaChave){$("#rola").scrollTop=0;ultimaChave=chave;}
+  desenhaControles();
+  desenhaTour();
+}
+
+/* ------------------------------ o tour ------------------------------ */
+var tt,tn;
+function toast(m,ms){var el=$("#toast");el.textContent=m;el.hidden=false;clearTimeout(tt);tt=setTimeout(function(){el.hidden=true;},ms||3000);}
+function acha(k){
+  var l=$$('#sim [data-tk="'+k+'"]');
+  for(var i=0;i<l.length;i++){
+    var r=l[i].getBoundingClientRect();
+    if(r.width>0&&r.height>0&&getComputedStyle(l[i]).visibility!=="hidden")return l[i];
+  }
+  return null;
+}
+function escalaAtual(){var s=sim();return s.getBoundingClientRect().width/s.offsetWidth||1;}
+function rel(el){
+  var s=sim().getBoundingClientRect(),r=el.getBoundingClientRect(),sc=escalaAtual();
+  return {l:(r.left-s.left)/sc,t:(r.top-s.top)/sc,r:(r.right-s.left)/sc,b:(r.bottom-s.top)/sc};
+}
+function rolaAte(el,topo,base){
+  var cont=el.closest(".rola,.lat");if(!cont)return;
+  var cr=rel(cont);
+  var j0=Math.max(topo,cr.t+8),j1=Math.min(base,cr.b-8);
+  for(var k=0;k<2;k++){
+    var r=rel(el);
+    if(r.b-r.t>j1-j0){cont.scrollTop+=(r.t-j0);}
+    else if(r.b>j1){cont.scrollTop+=(r.b-j1);}
+    else if(r.t<j0){cont.scrollTop-=(j0-r.t);}
+  }
+}
+function nudge(msg){
+  var b=$("#tv .bal");if(!b)return;
+  var d=$(".bal-dica",b);if(d)d.textContent=msg;
+  b.classList.remove("treme");void b.offsetWidth;b.classList.add("treme");
+}
+function lugarDoBalao(alvo,estreito){
+  var s=sim(),W=s.clientWidth,H=s.clientHeight,bal=$("#tv .bal");
+  bal.classList.remove("pronto");
+  var furo=$("#tv .tv-furo"),tv=$("#tv");
+  if(estreito){
+    bal.classList.add("fol");bal.style.left="";bal.style.top="";bal.style.width="";
+  }else{
+    bal.classList.remove("fol");bal.style.width=Math.min(340,W-24)+"px";
+  }
+  var bh=bal.offsetHeight,bw=bal.offsetWidth;
+  var folga=estreito?(bh+24)+"px":"";
+  $("#conteudo").style.paddingBottom=folga;$("#lat").style.paddingBottom=folga;
+  if(!alvo){
+    tv.classList.add("cheio");
+    if(!estreito){bal.style.left=Math.round((W-bw)/2)+"px";bal.style.top=Math.round(Math.max(12,(H-bh)/2))+"px";}
+    bal.classList.add("pronto");return;
+  }
+  tv.classList.remove("cheio");
+  if(estreito){
+    rolaAte(alvo,8,H-bh-10);
+  }else{
+    rolaAte(alvo,12,H-12);
+  }
+  var r=rel(alvo),pad=6;
+  var t=Math.max(r.t-pad,0),b=Math.min(r.b+pad,estreito?H-bh:H),l=Math.max(r.l-pad,0),rr=Math.min(r.r+pad,W);
+  var fw=Math.max(rr-l,8),fh=Math.max(b-t,8);
+  furo.style.left=l+"px";furo.style.top=t+"px";furo.style.width=fw+"px";furo.style.height=fh+"px";
+  var vu=$$("#tv .tv-vu");
+  var geo=[[0,0,W,t],[0,t+fh,W,H-t-fh],[0,t,l,fh],[l+fw,t,W-l-fw,fh]];
+  vu.forEach(function(v,i){v.style.left=geo[i][0]+"px";v.style.top=geo[i][1]+"px";v.style.width=Math.max(geo[i][2],0)+"px";v.style.height=Math.max(geo[i][3],0)+"px";});
+  if(!estreito){
+    var x,y,gap=14,cl=function(v,a,z){return Math.max(a,Math.min(v,z));};
+    if(alvo.closest(".lat")&&W-rr>=bw+gap+12){x=rr+gap;y=cl(t,12,H-bh-12);}
+    else if(H-b>=bh+gap+10){y=b+gap;x=cl(l,12,W-bw-12);}
+    else if(t>=bh+gap+10){y=t-bh-gap;x=cl(l,12,W-bw-12);}
+    else if(W-rr>=bw+gap+12){x=rr+gap;y=cl(t,12,H-bh-12);}
+    else if(l>=bw+gap+12){x=l-bw-gap;y=cl(t,12,H-bh-12);}
+    else{x=cl(l,12,W-bw-12);y=H-bh-12;}
+    bal.style.left=Math.round(x)+"px";bal.style.top=Math.round(y)+"px";
+  }
+  bal.classList.add("pronto");
+}
+function desenhaTour(){
+  var s=sim(),tv=$("#tv"),app=$("#app");
+  var sp=passoAtual();
+  if(S.tour&&!sp)S.tour=null;
+  if(!S.tour&&!S.menuRev){
+    var estava=s.dataset.tour==="sim";
+    $("#conteudo").style.paddingBottom="";$("#lat").style.paddingBottom="";
+    tv.className="tv";tv.innerHTML="";app.inert=false;s.dataset.tour="nao";
+    if(estava&&ehEstreito())s.dataset.gaveta="nao";
+    status();return;
+  }
+  app.inert=true;s.dataset.tour="sim";
+  var estreito=ehEstreito();
+  tv.className="tv on";
+  var h;
+  if(S.menuRev){
+    h='<div class="bal" role="dialog" aria-modal="true" aria-labelledby="bal-t"><p class="bal-n">Opcional</p><h2 id="bal-t">Rever tour</h2><p class="bal-x">Escolha o que rever. Aqui dá para fechar a qualquer momento.</p><div class="bal-lista">'
+      +'<button type="button" class="btn btn-s" data-tv="rev-volta">Volta pelo sistema</button>'
+      +(passos(S.tela).length?'<button type="button" class="btn btn-s" data-tv="rev-tela">Tour de '+esc(NOME[S.tela])+'</button>':"")
+      +'</div><div class="bal-b"><button type="button" class="btn btn-p" data-tv="fechar">Fechar</button></div></div><i class="tv-vu"></i><i class="tv-vu"></i><i class="tv-vu"></i><i class="tv-vu"></i><div class="tv-furo"></div>';
+    tv.innerHTML=h;
+    lugarDoBalao(null,estreito);
+    s.dataset.gaveta="nao";
+    var f0=$("#tv [data-tv]");if(f0)f0.focus({preventScroll:true});
+    status();return;
+  }
+  var t=S.tour,ps=passos(t.id),n=ps.length,i=t.i;
+  var ultimo=i===n-1,rev=t.rev;
+  var alvoEl=sp.a?(function(){
+    if(estreito)s.dataset.gaveta=sp.lat?"sim":"nao";
+    else s.dataset.gaveta="nao";
+    return acha(sp.a);
+  })():(function(){if(estreito)s.dataset.gaveta="nao";return null;})();
+  var tx=(!alvoEl&&sp.v)?sp.v:texto(sp,S.papel);
+  var dots="";for(var k=0;k<n;k++)dots+='<i'+(k<=i?' class="f"':"")+'></i>';
+  var corpo;
+  if(ultimo&&S.falha>0&&!rev){
+    corpo='<div class="msg-er" role="alert">'+(S.falha===1?"Não deu para guardar que você concluiu este tour. Pode ser a conexão. Tente de novo.":"Ainda não deu para guardar. Você pode liberar a tela agora; como não ficou guardado, o tour pode aparecer de novo no próximo acesso.")+'</div>'
+      +'<div class="bal-b"><button type="button" class="btn btn-s" data-tv="soltar">Liberar a tela</button><button type="button" class="btn btn-p" data-tv="prox">Tentar de novo</button></div>';
+  }else{
+    corpo='<div class="bal-b">'+(rev?'<button type="button" class="btn btn-s" data-tv="fechar">Fechar</button>':"")+'<button type="button" class="btn btn-s" data-tv="volta"'+(i===0?" disabled":"")+'>Voltar</button><button type="button" class="btn btn-p" data-tv="prox">'+(ultimo?"Concluir":"Próximo")+'</button></div>';
+  }
+  tv.innerHTML='<i class="tv-vu"></i><i class="tv-vu"></i><i class="tv-vu"></i><i class="tv-vu"></i><div class="tv-furo"></div><div class="bal" role="dialog" aria-modal="true" aria-labelledby="bal-t" aria-describedby="bal-x"><p class="bal-n">Etapa '+(i+1)+' de '+n+' · '+esc(NOME[t.id])+(rev?" · revisão":"")+'</p><h2 id="bal-t">'+esc(sp.t)+'</h2><p class="bal-x" id="bal-x">'+esc(tx)+'</p><div class="bal-pg" aria-hidden="true">'+dots+'</div><p class="bal-dica" role="status"></p>'+corpo+'</div>';
+  lugarDoBalao(alvoEl,estreito);
+  var foco=$("#tv [data-tv=prox]")||$("#tv [data-tv]");
+  if(foco&&(!document.activeElement||!tv.contains(document.activeElement)))foco.focus({preventScroll:true});
+  status();
+}
+function status(){
+  var el=$("#st");if(!el)return;
+  var t=S.tour;
+  if(S.menuRev)el.textContent="Rever tour aberto. Opcional: dá para fechar.";
+  else if(t){var n=passos(t.id).length;el.textContent=(t.rev?"Revisão":"Tour obrigatório")+": "+NOME[t.id]+", etapa "+(t.i+1)+" de "+n+". "+(t.rev?"Dá para fechar.":"Tela bloqueada até a última etapa.");}
+  else el.textContent="Nenhum tour aberto. Tela liberada.";
+}
+function ehEstreito(){return sim().clientWidth<768;}
+
+function inicia(id,rev){
+  S.menuRev=false;S.falha=0;
+  S.tour={id:id,i:0,rev:!!rev};
+  if(id!=="volta"&&id!=="papeis"&&S.tela!==id){S.tela=id;}
+  if(id==="papeis")S.tela="papeis";
+  if(id!=="folha")S.sub="";
+  render();lembrar();
+}
+function auto(){
+  if(S.tour||S.menuRev)return;
+  if(!feito("volta")&&!S.soltos.volta&&passos("volta").length){inicia("volta",false);return;}
+  var id=S.tela;
+  if(passos(id).length&&!feito(id)&&!S.soltos[id])inicia(id,false);
+}
+function ir(id){
+  S.tela=id;S.sub="";S.falha=0;
+  sim().dataset.gaveta="nao";
+  render();lembrar();auto();
+}
+function prox(){
+  var t=S.tour;if(!t)return;
+  var n=passos(t.id).length;
+  if(t.i<n-1){t.i++;S.falha=0;render();lembrar();return;}
+  concluir();
+}
+function volta(){
+  var t=S.tour;if(!t||t.i===0)return;
+  t.i--;S.falha=0;render();lembrar();
+}
+function concluir(){
+  var t=S.tour;if(!t)return;
+  if(t.rev){fecharRev();return;}
+  if(S.salva==="falha"){S.falha++;render();return;}
+  S.feitos[S.papel][t.id]=true;
+  var id=t.id;
+  S.tour=null;S.falha=0;S.sub="";
+  render();lembrar();
+  var seguinte=(id==="volta"&&passos(S.tela).length&&!feito(S.tela));
+  if(seguinte){auto();return;}
+  toast("Tour de "+NOME[id]+" concluído. A tela está liberada. Para rever, use “Rever tour”.",3800);
+}
+function soltar(){
+  var t=S.tour;if(!t)return;
+  S.soltos[t.id]=true;S.tour=null;S.falha=0;
+  render();lembrar();
+  toast("Tela liberada. O tour não ficou registrado e pode aparecer de novo no próximo acesso.",4200);
+}
+function fecharRev(){
+  S.tour=null;S.menuRev=false;S.falha=0;
+  render();lembrar();
+}
+function recarregar(msg){
+  var j=memoria||JSON.stringify(persistivel());
+  var t0=S.tour&&!S.tour.rev?S.tour:null;
+  carregar(j);
+  ultimaChave="";
+  render();escala();
+  if(msg!==false)toast(t0&&S.tour?"Página recarregada. Voltou para a etapa "+(S.tour.i+1)+" de "+passos(S.tour.id).length+" do tour de "+NOME[S.tour.id]+".":"Página recarregada. Nenhum tour estava no meio.",4200);
+}
+
+/* ------------------------------ controles ------------------------------ */
+function seg(id,lista,atual,chave){
+  $(id).innerHTML=lista.map(function(x){return '<button type="button" data-m="'+chave+'" data-v="'+x[0]+'" aria-pressed="'+(atual===x[0])+'">'+x[1]+(x[2]?'<small>'+x[2]+'</small>':"")+'</button>';}).join("");
+}
+function desenhaControles(){
+  seg("#seg-papel",PK.map(function(k){return [k,PAP[k].n,String(passos("volta",k).length+MOD.reduce(function(a,m){return a+passos(m.id,k).length;},0)+passos("papeis",k).length)];}),S.papel,"papel");
+  seg("#seg-largura",Object.keys(LARG).map(function(k){return [k,LARG[k].n,LARG[k].w];}),S.largura,"largura");
+  seg("#seg-dados",[["hoje","Como está hoje"],["cheio","Tudo com dados"],["vazio","Tudo vazio"]],S.dados,"dados");
+  seg("#seg-salva",[["ok","Salva"],["falha","Falha"]],S.salva,"salva");
+  seg("#seg-prog",[["nao","Sem indicador"],["sim","Com indicador"]],S.prog?"sim":"nao","prog");
+  var sel=$("#sel-tour");
+  if(!sel.options.length){
+    sel.innerHTML=ORDEM.map(function(id){return '<option value="'+id+'">'+esc(NOME[id])+(id==="papeis"?" (só Admin)":"")+'</option>';}).join("");
+  }
+}
+function escala(){
+  var pal=$("#palco"),q=$("#quadro"),l=LARG[S.largura],disp=pal.clientWidth;
+  if(!disp)return;
+  var w=S.largura==="celular"?Math.min(l.w,disp):l.w;
+  var e=Math.min(1,disp/w);
+  q.style.width=w+"px";q.style.height=l.h+"px";
+  q.style.transform="translateX("+Math.max(0,(disp-w*e)/2)+"px) scale("+e+")";
+  pal.style.height=(l.h*e)+"px";
+  $("#info-escala").textContent=w+" px simulados"+(e<1?", exibidos a "+Math.round(e*100)+"%":"");
+}
+function mudaLargura(v){
+  S.largura=v;sim().dataset.gaveta="nao";
+  escala();render();lembrar();
+}
+function vaiParaSim(){var p=$("#palco");if(p&&p.scrollIntoView)p.scrollIntoView({block:"start"});}
+function abre(id,i){
+  if(id==="papeis"&&!pp().adm)S.papel="adm";
+  S.menuRev=false;S.falha=0;
+  inicia(id,false);
+  var n=passos(id).length;
+  S.tour.i=Math.max(0,Math.min(i||0,n-1));
+  render();lembrar();vaiParaSim();
+}
+function zera(){S.feitos[S.papel]={};S.tour=null;S.menuRev=false;S.falha=0;S.soltos={};S.tela="inicio";S.sub="";render();lembrar();auto();}
+function todos(){ORDEM.forEach(function(id){S.feitos[S.papel][id]=true;});S.tour=null;S.menuRev=false;S.falha=0;render();lembrar();}
+
+var CEN=[
+ {t:"1 · Volta inicial completa, e o tour de cada módulo",x:"Zera o acesso deste papel e abre a volta do primeiro login. Ao concluir, o Início abre o tour dele. Depois, cada módulo abre o seu na primeira visita, e o Próximo troca a tela e o destaque.",b:[["Primeiro login",function(){S.dados="hoje";S.salva="ok";zera();vaiParaSim();}]]},
+ {t:"2 · Papel muda as etapas",x:"A Diretoria só consulta: o tour de Admissões e alterações perde as etapas dos botões de editar e a contagem cai.",b:[["Controladoria/RH: 5 etapas",function(){S.papel="rh";abre("movimentacoes",0);}],["Diretoria: 3 etapas",function(){S.papel="dir";abre("movimentacoes",0);}],["Admin do hub: Papéis",function(){S.papel="adm";abre("papeis",0);}]]},
+ {t:"3 · Tela sem dados",x:"Hoje há 0 vagas e 0 movimentações. A etapa da lista continua útil, e a etapa do aviso do Início, que não existe hoje, aparece com o balão centralizado.",b:[["Recrutamento sem vagas",function(){S.dados="hoje";S.papel="rh";abre("recrutamento",2);}],["Balão centralizado no Início",function(){S.dados="hoje";S.papel="rh";abre("inicio",3);}],["Pessoas sem nenhuma linha",function(){S.dados="vazio";S.papel="rh";abre("pessoas",3);}]]},
+ {t:"4 · Larguras",x:"No celular o balão vira folha inferior e não cobre o destaque. Quando o destaque está na lateral, a gaveta abre sozinha.",b:[["Celular: lateral",function(){mudaLargura("celular");S.papel="rh";abre("volta",0);}],["Celular: Pessoas",function(){mudaLargura("celular");S.papel="rh";abre("pessoas",2);}],["Tablet",function(){mudaLargura("tablet");S.papel="rh";abre("pessoas",2);}],["Notebook",function(){mudaLargura("notebook");S.papel="rh";abre("pessoas",2);}]]},
+ {t:"5 · Recarregar a página no meio",x:"Abre Férias na etapa 3 e recarrega. Volta para a mesma etapa. O andamento fica no navegador.",b:[["Etapa 3 de Férias e recarregar",function(){S.papel="rh";abre("ferias",2);recarregar();vaiParaSim();}]]},
+ {t:"6 · Falha ao salvar a conclusão",x:"Vai para a última etapa de Contratos PJ com o salvamento falhando. A mensagem é clara e há o que fazer: tentar de novo ou liberar a tela.",b:[["Concluir com falha",function(){S.salva="falha";S.papel="rh";abre("contratos",99);}],["Voltar a salvar normal",function(){S.salva="ok";render();lembrar();vaiParaSim();}]]},
+ {t:"7 · Fim do módulo, e módulo já concluído",x:"Concluir mostra uma mensagem curta e libera a tela. Abrir de novo um módulo já visto vai direto, sem tour.",b:[["Concluir Exames (última etapa)",function(){S.salva="ok";S.papel="rh";abre("exames",99);}],["Abrir Pessoas já concluído",function(){S.salva="ok";S.feitos[S.papel].pessoas=true;S.tour=null;ir("pessoas");vaiParaSim();}]]},
+ {t:"8 · Rever tour",x:"Botão no pé da lateral. É o único jeito opcional: tem Fechar, e Esc e clique fora também fecham. Para ver o botão de progresso (T5), ligue-o nos controles.",b:[["Abrir o Rever tour",function(){S.tour=null;S.menuRev=true;render();vaiParaSim();}],["Rever tour com progresso (T5)",function(){S.prog=true;S.menuRev=false;S.tour=null;render();lembrar();vaiParaSim();}]]}
+];
+function desenhaCenarios(){
+  $("#cenarios").innerHTML=CEN.map(function(c,i){return '<div class="cen"><h3>'+esc(c.t)+'</h3><p>'+esc(c.x)+'</p><div class="seg">'+c.b.map(function(b,j){return '<button type="button" data-cen="'+i+'.'+j+'">'+esc(b[0])+'</button>';}).join("")+'</div></div>';}).join("");
+}
+function desenhaRoteiro(){
+  var h="";
+  ORDEM.forEach(function(id){
+    var cont=(id==="papeis")?["Admin do hub "+passos(id,"adm").length]:PK.map(function(k){return PAP[k].n+" "+passos(id,k).length;});
+    var lista=TR[id]||[];
+    h+='<details class="rot"><summary><b>'+esc(NOME[id])+'</b><span>Etapas: '+cont.join(" · ")+'</span></summary><ol>';
+    lista.forEach(function(s){
+      var quem=(id==="papeis")?["adm"]:PK.filter(function(k){return (!s.ed||PAP[k].ed)&&(!s.p||s.p.indexOf(k)>=0);});
+      var tag=quem.length===3?"":('<span class="rt">'+(s.ed?"só Controladoria/RH":quem.map(function(k){return PAP[k].n;}).join(" e "))+'</span>');
+      var tx={};quem.forEach(function(k){var t=texto(s,k);(tx[t]=tx[t]||[]).push(PAP[k].n);});
+      var chaves=Object.keys(tx);
+      var corpo=chaves.map(function(t){return (chaves.length>1?'<i>'+esc(tx[t].join(" e "))+': </i>':"")+esc(t);}).join("<br>");
+      h+='<li><b>'+esc(s.t)+'</b>'+tag+'<br>'+corpo+'<small>Cita: '+esc(s.ref||"")+(s.a?"":" · balão centralizado de propósito")+(s.v?" · Sem o elemento: "+esc(s.v):"")+'</small></li>';
+    });
+    h+='</ol></details>';
+  });
+  $("#roteiro").innerHTML=h;
+  var tot=PK.map(function(k){return passos("volta",k).length+MOD.reduce(function(a,m){return a+passos(m.id,k).length;},0)+passos("papeis",k).length;});
+  var nt=$("#n-tot");if(nt)nt.textContent=tot[0]+" (Controladoria/RH)";
+  var np=$("#n-prim");if(np)np.textContent=passos("volta","rh").length+passos("inicio","rh").length+" (Controladoria/RH)";
+}
+
+/* ------------------------------ eventos ------------------------------ */
+var A={
+ ir:function(d){ir(d.t);},
+ toast:function(d){toast(d.m||"No mockup nada é gravado.");},
+ hub:function(){toast("No sistema, volta para hub.manfac.com.br.");sim().dataset.gaveta="nao";},
+ menu:function(){sim().dataset.gaveta="sim";var b=$("#lat .lat-fecha");if(b)b.focus({preventScroll:true});},
+ "fecha-gaveta":function(){sim().dataset.gaveta="nao";},
+ "fecha-lat":function(){if(!ehEstreito()){sim().dataset.lateral="fechada";render();$("#b-lat").focus();}else{sim().dataset.gaveta="nao";}},
+ "alterna-lateral":function(){var s=sim();s.dataset.lateral=s.dataset.lateral==="aberta"?"fechada":"aberta";render();},
+ rever:function(){S.menuRev=true;sim().dataset.gaveta="nao";render();}
+};
+document.addEventListener("click",function(e){
+  var c=e.target.closest("[data-ctl]");
+  if(c){
+    var k=c.dataset.ctl;
+    if(k==="zera"){zera();vaiParaSim();}
+    else if(k==="todos")todos();
+    else if(k==="recarrega"){recarregar();}
+    else if(k==="abre-rot")$$("#roteiro details").forEach(function(d){d.open=true;});
+    else if(k==="fecha-rot")$$("#roteiro details").forEach(function(d){d.open=false;});
+    return;
+  }
+  var cn=e.target.closest("[data-cen]");
+  if(cn){var p=cn.dataset.cen.split(".");CEN[+p[0]].b[+p[1]][1]();return;}
+  var m=e.target.closest("[data-m]");
+  if(m&&m.closest("#controles")){
+    var d=m.dataset;
+    if(d.m==="papel"){S.papel=d.v;S.tour=null;S.menuRev=false;S.falha=0;S.soltos={};S.tela="inicio";S.sub="";render();lembrar();auto();}
+    else if(d.m==="largura")mudaLargura(d.v);
+    else if(d.m==="dados"){S.dados=d.v;render();lembrar();}
+    else if(d.m==="salva"){S.salva=d.v;S.falha=0;render();lembrar();}
+    else if(d.m==="prog"){S.prog=d.v==="sim";render();lembrar();}
+    return;
+  }
+  var tvb=e.target.closest("[data-tv]");
+  if(tvb){
+    var a=tvb.dataset.tv;
+    if(a==="prox")prox();
+    else if(a==="volta")volta();
+    else if(a==="soltar")soltar();
+    else if(a==="fechar")fecharRev();
+    else if(a==="rev-volta"){S.menuRev=false;inicia("volta",true);}
+    else if(a==="rev-tela"){S.menuRev=false;inicia(S.tela,true);}
+    return;
+  }
+  if(e.target.id==="tv"||(e.target.classList&&e.target.classList.contains("tv-furo"))){
+    if(S.menuRev||(S.tour&&S.tour.rev))fecharRev();
+    else if(S.tour)nudge("Este tour é obrigatório. Use Próximo para continuar.");
+    return;
+  }
+  var el=e.target.closest("#sim [data-acao]");
+  if(!el||S.tour||S.menuRev)return;
+  if(el.tagName==="A")e.preventDefault();
+  var fn=A[el.dataset.acao];
+  if(fn)fn(el.dataset);
+});
+document.addEventListener("keydown",function(e){
+  var ativo=S.tour||S.menuRev;
+  if(e.key==="Escape"&&ativo){
+    e.preventDefault();
+    if(S.menuRev||S.tour.rev)fecharRev();
+    else nudge("Este tour é obrigatório. Esc não fecha. Use Próximo para continuar.");
+    return;
+  }
+  if(e.key==="Tab"&&ativo){
+    var tv=$("#tv");
+    if(!tv.contains(document.activeElement))return;
+    var bs=$$("#tv button:not([disabled])");
+    if(!bs.length)return;
+    var i=bs.indexOf(document.activeElement);
+    if(e.shiftKey&&i<=0){e.preventDefault();bs[bs.length-1].focus();}
+    else if(!e.shiftKey&&i===bs.length-1){e.preventDefault();bs[0].focus();}
+    return;
+  }
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('#sim [role=button][data-acao]')){e.preventDefault();e.target.click();}
+});
+document.addEventListener("submit",function(e){if(e.target.closest("#sim")){e.preventDefault();toast("Filtrar: no mockup nada é gravado.");}});
+document.addEventListener("change",function(e){
+  if(e.target.id==="sel-tour"){abre(e.target.value,0);}
+});
+
+/* ------------------------------ entrada ------------------------------ */
+var guardado=null;
+try{guardado=localStorage.getItem(KEY);}catch(e){}
+if(guardado){memoria=guardado;carregar(guardado);}
+else S.largura=window.innerWidth<700?"celular":window.innerWidth<1100?"tablet":"notebook";
+desenhaCenarios();desenhaRoteiro();
+escala();
+render();
+if(!S.tour)auto();
+if(window.ResizeObserver)new ResizeObserver(function(){escala();if(S.tour||S.menuRev)desenhaTour();}).observe($("#palco"));else window.addEventListener("resize",escala);
+})();
+</script>
