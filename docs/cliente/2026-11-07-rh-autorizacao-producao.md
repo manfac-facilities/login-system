@@ -24,3 +24,11 @@ Texto literal do João, no chat:
 Pergunta a que responde: esconder no banco, para quem não é do RH, o motivo de cancelar e o de concluir um encerramento.
 
 Aplicada em 08/11/2026: 9 de 9 verificações `OK`; 50 colaboradores antes e depois.
+
+## Migration 017 (09/11/2026)
+
+Texto literal do João, no chat:
+
+> Aplica 017
+
+Pergunta a que responde: aplicar em produção a `017_rh_tour.sql` (uma tabela e duas funções do tour, só aditiva), antes do Deploy do RH com layout e tour.
