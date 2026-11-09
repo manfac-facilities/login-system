@@ -32,3 +32,5 @@ Texto literal do João, no chat:
 > Aplica 017
 
 Pergunta a que responde: aplicar em produção a `017_rh_tour.sql` (uma tabela e duas funções do tour, só aditiva), antes do Deploy do RH com layout e tour.
+
+Aplicada em 09/11/2026 pela `main` do RH (`94c73ad`), no ref `iyytcavcgukfjnjjrerx`: 13 de 13 verificações `OK`; 50 colaboradores antes e depois; `rh_tour_conclusoes` vazia, com RLS ligada e uma policy. Falta o Deploy do RH.
