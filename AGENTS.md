@@ -127,7 +127,7 @@ aberto a todo o hub e precisou ser fechado às pressas.
 - Repositório: **`manfac-facilities/login-system`**. O hub roda no **EasyPanel**, app
   `manfac-login-system` no projeto `manfac`. Produção: `https://hub.manfac.com.br`.
 - **Push é livre desta máquina** desde 10/09/2026 — o Claude pusha sozinho. O que ainda barra é o
-  auto mode, com `[Sensitive-Source Provenance]` e `[Production Deploy]`: **é trava de permissão
+  auto mode, com `[Sensitive-Source Provenance]`, `[Production Deploy]` e `[Out-of-Place Publication]` (este último barrou o push do master em 10/11/2026 mesmo com o ok do Jose no chat; saída: ele roda `! git push`): **é trava de permissão
   pedindo autorização do João, não falha de credencial.** Não saia investigando token.
 - **Não há webhook de auto-deploy.** Push não sobe nada; alguém precisa clicar em Deploy.
 - **Nunca confie no painel para saber se subiu** — confira o `Last-Modified` dos chunks.
