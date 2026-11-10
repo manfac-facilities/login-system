@@ -45,3 +45,34 @@ begin
   end loop;
 
 end $$;
+
+-- 2ª parte, aplicada em 10/11/2026: o Jose mudou a decisão da VISA995 x TMO995 ("deixa o faturamento na os VISA995
+-- (faturamos a obra mas de fato ainda tem algumas pendencias pra finalizar mas foi faturado, inclusive ta no historico a
+-- pendencia) e cancela o TMO995 - SERVICOS ADICIONAIS"). Conferido depois: VISA995 faturada com NF 1506 (única OS na nota,
+-- R$ 2.525,10 = NF); TMO995 cancelada, sem NF/pedido/marco; 3 históricos novos.
+do $$
+declare
+  qm text := 'carga-10-11 (Claude, a pedido do Jose Guilherme)';
+  n int;
+begin
+  update obras_obra set etapa = 'andamento', fat_nfse = null, fat_pedido = null, marco_faturou = null
+  where os = 'TMO995 - SERVIÇOS ADICIONAIS' and etapa = 'faturado' and fat_nfse = '1506' and fat_pedido = '4503312224' and etapa_por = qm;
+  get diagnostics n = row_count; if n <> 1 then raise exception 'desfazer TMO995: % linhas', n; end if;
+  update obras_obra set etapa = 'cancelado', cancelado_por = 'manfac', cancelado_em = now(), cancelado_quem = qm,
+    cancelado_obs = 'Cancelada a pedido do Jose Guilherme: o faturamento (NF 1506, pedido 4503312224) fica na OS VISA995 (estava em Faturado)',
+    cancelado_etapa_anterior = 'andamento',
+    etapa_por = qm, etapa_em = now(), desde_etapa = current_date, atualizacao = current_date
+  where os = 'TMO995 - SERVIÇOS ADICIONAIS' and etapa = 'andamento';
+  get diagnostics n = row_count; if n <> 1 then raise exception 'cancelar TMO995: % linhas', n; end if;
+  insert into obras_historico (obra_id, bloco, campo, de, para, motivo, quem)
+    select id, 'Cancelamento', 'etapa', 'Faturado', 'Cancelada', cancelado_obs, qm from obras_obra where os = 'TMO995 - SERVIÇOS ADICIONAIS';
+
+  update obras_obra set etapa = 'faturado', etapa_por = qm, etapa_em = now(), desde_etapa = current_date, atualizacao = current_date,
+    fat_nfse = '1506', fat_pedido = '4503312224', marco_faturou = date '2026-10-16'
+  where os = 'VISA995' and etapa = 'paralisado' and fat_nfse is null and fat_pedido is null and valor = 2525.10;
+  get diagnostics n = row_count; if n <> 1 then raise exception 'faturar VISA995: % linhas', n; end if;
+  insert into obras_historico (obra_id, bloco, campo, de, para, motivo, quem)
+    select id, 'Esteira', 'etapa', 'Paralisado', 'Faturado',
+      'Consolidado Profarma: NF 1506 de 16/10 no Omie, pedido 4503312224 (faturada com pendências de finalização, ver histórico)', qm
+    from obras_obra where os = 'VISA995';
+end $$;
