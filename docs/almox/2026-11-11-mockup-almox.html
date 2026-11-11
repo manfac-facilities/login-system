@@ -1,0 +1,989 @@
+<title>Almoxarifado Manfac</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra do mockup fixa no topo, uma seção por vez; telas do hub dentro da moldura do Compras, telas do técnico dentro de um celular.
+   Tokens copiados de manfac-facilities/compras app/globals.css (paleta da marca, claro = :root, escuro = .dark). */
+:root{
+  --background:oklch(1 0 0);
+  --foreground:oklch(0.322 0.005 286.1);
+  --card:oklch(0.973 0.001 106.4);
+  --popover:oklch(1 0 0);
+  --primary:oklch(0.675 0.203 41.3);
+  --primary-foreground:oklch(1 0 0);
+  --secondary:oklch(0.955 0.006 240);
+  --secondary-foreground:oklch(0.32 0.09 249.7);
+  --muted:oklch(0.965 0.004 240);
+  --muted-foreground:oklch(0.556 0.035 227.6);
+  --accent:oklch(0.955 0.02 41.3);
+  --destructive:oklch(0.58 0.21 27);
+  --border:oklch(0.888 0.003 106.5);
+  --input:oklch(0.93 0.005 240);
+  --ring:oklch(0.675 0.203 41.3);
+  --marca:oklch(0.32 0.09 249.7);
+  --marca-fg:oklch(0.97 0.005 240);
+  --tab-on:oklch(0.32 0.09 249.7);
+  /* Semânticos que o Compras não tem: amarelo derivado do Yellow Jonquil, verde só para "pronto". */
+  --aviso:oklch(0.5 0.12 75);
+  --aviso-bg:oklch(0.856 0.172 92.6 / 0.28);
+  --ok:oklch(0.5 0.13 150);
+  --ok-bg:oklch(0.62 0.14 150 / 0.14);
+  --frame:oklch(0.25 0.02 250);
+  --radius:0.625rem;
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --background:oklch(0.16 0.018 250);--foreground:oklch(0.96 0.005 240);--card:oklch(0.2 0.022 250);--popover:oklch(0.21 0.022 250);
+  --primary:oklch(0.72 0.19 41.3);--primary-foreground:oklch(1 0 0);--secondary:oklch(0.25 0.025 250);--secondary-foreground:oklch(0.96 0.005 240);
+  --muted:oklch(0.24 0.022 250);--muted-foreground:oklch(0.68 0.03 227.6);--accent:oklch(0.28 0.04 41.3);--destructive:oklch(0.66 0.2 27);
+  --border:oklch(0.3 0.022 250);--input:oklch(0.34 0.025 250);--ring:oklch(0.72 0.19 41.3);--marca:oklch(0.13 0.02 250);--marca-fg:oklch(0.96 0.005 240);--tab-on:oklch(0.45 0.1 249.7);
+  --aviso:oklch(0.86 0.15 92);--aviso-bg:oklch(0.856 0.172 92.6 / 0.16);--ok:oklch(0.76 0.14 150);--ok-bg:oklch(0.62 0.14 150 / 0.18);--frame:oklch(0.08 0.01 250);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --background:oklch(0.16 0.018 250);--foreground:oklch(0.96 0.005 240);--card:oklch(0.2 0.022 250);--popover:oklch(0.21 0.022 250);
+  --primary:oklch(0.72 0.19 41.3);--primary-foreground:oklch(1 0 0);--secondary:oklch(0.25 0.025 250);--secondary-foreground:oklch(0.96 0.005 240);
+  --muted:oklch(0.24 0.022 250);--muted-foreground:oklch(0.68 0.03 227.6);--accent:oklch(0.28 0.04 41.3);--destructive:oklch(0.66 0.2 27);
+  --border:oklch(0.3 0.022 250);--input:oklch(0.34 0.025 250);--ring:oklch(0.72 0.19 41.3);--marca:oklch(0.13 0.02 250);--marca-fg:oklch(0.96 0.005 240);--tab-on:oklch(0.45 0.1 249.7);
+  --aviso:oklch(0.86 0.15 92);--aviso-bg:oklch(0.856 0.172 92.6 / 0.16);--ok:oklch(0.76 0.14 150);--ok-bg:oklch(0.62 0.14 150 / 0.18);--frame:oklch(0.08 0.01 250);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--background);color:var(--foreground);font-family:var(--font-sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11"}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--background)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid color-mix(in oklch,var(--ring) 50%,transparent);outline-offset:1px}
+h1,h2,h3{text-wrap:balance;margin:0;letter-spacing:-0.01em}
+p{margin:0}
+.n,.tab{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted-foreground)}
+.label-mono{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted-foreground)}
+.sp{flex:1}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Barra do mockup */
+.mk-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in oklch,var(--background) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.mk-in,.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mk-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:10px}
+.mk-tit{font-weight:600}
+.mk-tit small{display:block;font-weight:400;color:var(--muted-foreground);font-size:12px}
+.mk-tabs{display:flex;gap:4px;overflow-x:auto;min-width:0;max-width:100%}
+.mk-tab{border:1px solid var(--border);background:transparent;border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;cursor:pointer}
+.mk-tab[aria-selected="true"]{background:var(--tab-on);color:var(--marca-fg);border-color:var(--tab-on)}
+.mk-hora{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground)}
+.seg{display:inline-flex;border:1px dashed var(--muted-foreground);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:6px;padding:3px 9px;font-size:12px;cursor:pointer;color:var(--muted-foreground)}
+.seg button[aria-pressed="true"]{background:var(--secondary);color:var(--secondary-foreground);font-weight:600}
+.mk-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted-foreground);padding:8px 10px;border:1px dashed var(--border);border-radius:10px;background:var(--muted)}
+.mk-ctrl b{font-weight:600;color:var(--foreground)}
+
+main.pg{padding-block:24px 80px}
+.sec-h{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.sec-h h1{font-size:26px;font-weight:600;letter-spacing:-0.02em}
+.sec-h p{color:var(--muted-foreground);max-width:72ch}
+
+/* Componentes no padrão do Compras (shadcn base-nova) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;border:1px solid transparent;background:var(--primary);color:var(--primary-foreground);font-size:14px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background .15s,opacity .15s}
+.btn:hover{background:color-mix(in oklch,var(--primary) 85%,var(--background))}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn-outline{background:var(--background);border-color:var(--border);color:var(--foreground)}
+.btn-outline:hover{background:var(--muted)}
+.btn-secondary{background:var(--secondary);color:var(--secondary-foreground)}
+.btn-secondary:hover{background:color-mix(in oklch,var(--secondary) 80%,var(--foreground) 8%)}
+.btn-ghost{background:transparent;color:var(--foreground)}
+.btn-ghost:hover{background:var(--muted)}
+.btn-destructive{background:color-mix(in oklch,var(--destructive) 12%,transparent);color:var(--destructive)}
+.btn-destructive:hover{background:color-mix(in oklch,var(--destructive) 22%,transparent)}
+.btn-destructive-solid{background:var(--destructive);color:#fff}
+.btn-destructive-solid:hover{background:color-mix(in oklch,var(--destructive) 85%,black)}
+.btn-sm{height:28px;padding:0 10px;font-size:13px;border-radius:7px}
+.btn-xs{height:24px;padding:0 8px;font-size:12px;border-radius:6px}
+.btn-lg{height:44px;padding:0 16px;font-size:15px;border-radius:10px}
+.btn-block{width:100%}
+.badge{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:999px;border:1px solid transparent;font-size:12px;font-weight:500;white-space:nowrap;background:var(--primary);color:var(--primary-foreground)}
+.b-sec{background:var(--secondary);color:var(--secondary-foreground)}
+.b-out{background:transparent;border-color:var(--border);color:var(--foreground)}
+.b-des{background:color-mix(in oklch,var(--destructive) 12%,transparent);color:var(--destructive)}
+.b-avi{background:var(--aviso-bg);color:var(--aviso)}
+.b-ok{background:var(--ok-bg);color:var(--ok)}
+.card{background:var(--card);border-radius:14px;box-shadow:0 0 0 1px color-mix(in oklch,var(--foreground) 10%,transparent);padding:16px}
+.inp{height:32px;border:1px solid var(--input);background:var(--background);border-radius:8px;padding:0 10px;font-size:14px;min-width:0}
+.inp:focus{outline:none;border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 30%,transparent)}
+textarea.inp{height:auto;padding:8px 10px;resize:vertical;width:100%}
+select.inp{padding-right:6px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chk input{accent-color:var(--primary);width:15px;height:15px}
+
+/* Moldura do hub (cabeçalho do Compras) */
+.shell{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--background)}
+.sh-h{border-bottom:1px solid var(--border);background:color-mix(in oklch,var(--background) 85%,transparent)}
+.sh-in{display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;min-width:0}
+.sh-brand{font-weight:600;white-space:nowrap}
+.sh-nav{display:flex;gap:2px;overflow-x:auto;min-width:0;scrollbar-width:none}
+.sh-nav .btn{cursor:default}
+.sh-nav .is-on{background:var(--muted)}
+.sh-user{text-align:right;font-size:12px;line-height:1.3;white-space:nowrap}
+.sh-user .u-p{color:var(--muted-foreground)}
+.sh-main{padding:24px}
+@media (max-width:760px){.sh-user,.sh-hub{display:none}.sh-main{padding:16px}}
+
+/* Estados */
+.est{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:28px;border-radius:14px}
+.est h3{font-size:17px;font-weight:600}
+.est p{max-width:60ch;color:var(--muted-foreground)}
+.est-vazio{border:1px dashed var(--border);background:transparent}
+.est-erro{border:1px solid color-mix(in oklch,var(--destructive) 45%,transparent);background:color-mix(in oklch,var(--destructive) 7%,transparent)}
+.est-erro h3{color:var(--destructive)}
+.est-perm{border:1px solid var(--border);background:var(--muted)}
+.est-ok{border:1px dashed color-mix(in oklch,var(--ok) 50%,transparent)}
+.est .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:700}
+.est-vazio .ico{background:var(--muted);color:var(--muted-foreground)}
+.est-erro .ico{background:var(--destructive);color:#fff}
+.est-perm .ico{background:var(--marca);color:var(--marca-fg)}
+.est-ok .ico{background:var(--ok-bg);color:var(--ok)}
+.skel{background:linear-gradient(90deg,var(--muted) 0%,color-mix(in oklch,var(--muted) 60%,var(--border)) 50%,var(--muted) 100%);background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:6px;height:14px}
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* Seção 1 */
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.tile{padding:14px}
+.tile .v{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-top:4px}
+.tile .s{font-size:12px;color:var(--muted-foreground)}
+.tile.alerta .v{color:var(--destructive)}
+@media (max-width:1000px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile .v{font-size:19px}}
+.filtros{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:10px}
+.filtros .busca{flex:1 1 240px;min-width:0}
+.filtros .busca input{width:100%}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12px;color:var(--muted-foreground);margin-bottom:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;max-width:100%}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{height:40px;padding:0 10px;text-align:left;font-weight:500;white-space:nowrap;border-bottom:1px solid var(--border);background:var(--card)}
+.tbl td{padding:8px 10px;white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr.lin:hover td{background:color-mix(in oklch,var(--muted) 60%,transparent)}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl .col-on{box-shadow:inset 0 -2px 0 var(--primary)}
+.tbl .fix{position:sticky;left:0;z-index:1;background:var(--background)}
+.tbl th.fix{background:var(--card);z-index:2}
+.tbl tbody tr.lin:hover td.fix{background:color-mix(in oklch,var(--muted) 60%,var(--background))}
+.prod-btn{border:0;background:transparent;padding:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;max-width:280px}
+.prod-btn .nm{font-weight:500;white-space:normal;line-height:1.3}
+.prod-btn:hover .nm{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+.prod-btn .cd{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground)}
+td.c-red{background:color-mix(in oklch,var(--destructive) 13%,transparent);color:var(--destructive);font-weight:600}
+td.c-amb{background:var(--aviso-bg);color:var(--aviso);font-weight:600}
+.zero{color:var(--muted-foreground)}
+.eq-btn{border:1px solid var(--border);background:var(--background);border-radius:6px;padding:1px 8px;cursor:pointer;font-variant-numeric:tabular-nums}
+.eq-btn:hover{border-color:var(--primary)}
+.sub td{background:var(--muted);font-size:13px;white-space:normal}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:12px;background:var(--background)}
+.min-t{font-size:12px;color:var(--muted-foreground)}
+.atual{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pul 2.2s ease-in-out infinite}
+@keyframes pul{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Diálogo */
+dialog.dlg{border:0;padding:0;border-radius:16px;background:var(--popover);color:var(--foreground);width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 48px);box-shadow:0 20px 60px rgba(0,0,0,.35),0 0 0 1px var(--border)}
+dialog.dlg::backdrop{background:rgba(5,12,25,.55)}
+.dlg-in{display:flex;flex-direction:column;gap:14px;padding:20px;max-height:calc(100vh - 48px);overflow:auto}
+.dlg-h{display:flex;align-items:flex-start;gap:12px}
+.dlg-h h2{font-size:18px;font-weight:600}
+.dlg-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.conseq{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;background:color-mix(in oklch,var(--destructive) 7%,transparent);border:1px solid color-mix(in oklch,var(--destructive) 30%,transparent)}
+.conseq li{margin-left:2px}
+.conseq ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label{font-weight:500;font-size:13px}
+.erro-t{color:var(--destructive);font-size:13px}
+.hist{display:flex;flex-direction:column}
+.hist .h{display:grid;grid-template-columns:92px 1fr auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.hist .h:last-child{border:0}
+.hist .q{font-weight:600;font-variant-numeric:tabular-nums}
+.q.pos{color:var(--ok)}
+
+/* Seção 2: celular */
+.s2-grid{display:grid;grid-template-columns:400px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:900px){.s2-grid{grid-template-columns:minmax(0,1fr)}}
+.phone{width:390px;max-width:100%;height:800px;border:11px solid var(--frame);border-radius:46px;overflow:hidden;display:flex;flex-direction:column;background:var(--background);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);position:relative}
+.ph-notch{height:26px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600}
+@media (max-width:520px){.s2-grid .phone{width:100%;height:auto;min-height:680px;border:1px solid var(--border);border-radius:18px;box-shadow:none}.ph-notch{display:none}.phone .ph-body{overflow:visible}}
+.ph-head{flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--marca);color:var(--marca-fg)}
+.ph-head .t1{font-weight:600;font-size:15px;line-height:1.2}
+.ph-head .t2{font-size:12px;opacity:.8}
+.bell{position:relative;border:0;background:rgba(255,255,255,.12);color:inherit;width:38px;height:38px;border-radius:10px;cursor:pointer;display:grid;place-items:center}
+.bell .ct{position:absolute;top:-4px;right:-4px;background:var(--primary);color:#fff;border-radius:999px;font-size:11px;font-weight:700;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.ph-body{flex:1;overflow-y:auto;padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.ph-foot{flex:none;border-top:1px solid var(--border);background:var(--background);position:sticky;bottom:0}
+.tabs-b{display:grid;grid-template-columns:1fr 1fr}
+.tabs-b button{border:0;background:transparent;padding:12px 6px 14px;font-size:13px;font-weight:500;color:var(--muted-foreground);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs-b button[aria-current="page"]{color:var(--primary)}
+.tabs-b .ic{font-size:17px;line-height:1}
+.cartbar{display:flex;align-items:center;gap:10px;padding:10px 16px}
+.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 20px;text-align:center}
+.pin-logo{width:56px;height:56px;border-radius:16px;background:var(--marca);color:var(--marca-fg);display:grid;place-items:center;font-weight:700;font-size:20px}
+.pin-dots{display:flex;gap:12px;height:18px}
+.pin-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted-foreground)}
+.pin-dots span.f{background:var(--foreground);border-color:var(--foreground)}
+.keypad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
+.keypad button{height:60px;border-radius:16px;border:1px solid var(--border);background:var(--card);font-size:22px;font-weight:500;cursor:pointer}
+.keypad button:active{background:var(--muted)}
+.faixa{border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.faixa .al{display:flex;gap:8px;align-items:flex-start}
+.faixa .al .tx{flex:1}
+.al-avi{background:var(--aviso-bg);color:var(--foreground)}
+.al-des{background:color-mix(in oklch,var(--destructive) 12%,transparent)}
+.al-ok{background:var(--ok-bg)}
+.al-sec{background:var(--secondary)}
+.al .mk{font-weight:700;width:18px;text-align:center;flex:none}
+.al-avi .mk{color:var(--aviso)}.al-des .mk{color:var(--destructive)}.al-ok .mk{color:var(--ok)}.al-sec .mk{color:var(--secondary-foreground)}
+.al-x{border:0;background:transparent;cursor:pointer;color:var(--muted-foreground);font-size:12px;text-decoration:underline;padding:0}
+.ped{border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--card);cursor:pointer;text-align:left;width:100%}
+.ped:hover{border-color:var(--primary)}
+.ped .l1{display:flex;align-items:center;gap:8px}
+.ped .num{font-weight:600;font-family:var(--font-mono)}
+.mini-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.mini-steps i{height:4px;border-radius:2px;background:var(--border)}
+.mini-steps i.on{background:var(--primary)}
+.mini-steps i.bad{background:var(--destructive)}
+.mini-steps i.done{background:var(--ok)}
+.seg-big{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--muted);padding:4px;border-radius:12px}
+.seg-big button{border:0;background:transparent;border-radius:9px;padding:9px 6px;font-weight:500;cursor:pointer;font-size:13px;line-height:1.25}
+.seg-big button small{display:block;font-weight:400;font-size:11px;color:var(--muted-foreground)}
+.seg-big button[aria-pressed="true"]{background:var(--background);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.ph-search{position:relative}
+.ph-search input{width:100%;height:44px;border-radius:12px;font-size:16px;padding-left:38px}
+.ph-search .lupa{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted-foreground)}
+.mat{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.mat:last-child{border-bottom:0}
+.mat .info{flex:1;min-width:0}
+.mat .nm{font-weight:500;line-height:1.25}
+.mat .dp{font-size:12px;color:var(--muted-foreground)}
+.mat .dp b{color:var(--ok);font-weight:600}
+.mat.ast .dp{color:var(--aviso)}
+.mat.cinza{opacity:.45}
+.mat.cinza .nm{text-decoration:none}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.stepper button{width:36px;height:36px;border:0;background:var(--card);font-size:18px;cursor:pointer}
+.stepper span{min-width:34px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.add-btn{height:36px;border-radius:10px}
+.datas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.dt{flex:none;border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:var(--card);cursor:pointer;text-align:center;min-width:64px;line-height:1.2}
+.dt b{display:block;font-size:15px}
+.dt small{font-size:11px;color:var(--muted-foreground)}
+.dt[aria-pressed="true"]{border-color:var(--primary);box-shadow:0 0 0 2px color-mix(in oklch,var(--primary) 35%,transparent)}
+.dt[disabled]{opacity:.4;cursor:not-allowed}
+.dt .em{color:var(--destructive);font-size:10px;font-weight:600;display:block}
+.box{border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.box h4{margin:0;font-size:13px;font-weight:600}
+.vsteps{display:flex;flex-direction:column;gap:0}
+.vs{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.vs:last-child{padding-bottom:0}
+.vs::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--border)}
+.vs:last-child::before{display:none}
+.vs .c{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:var(--background);display:grid;place-items:center;font-size:11px;font-weight:700;z-index:1}
+.vs.done .c{background:var(--ok);border-color:var(--ok);color:#fff}
+.vs.cur .c{border-color:var(--primary);color:var(--primary)}
+.vs.bad .c{background:var(--destructive);border-color:var(--destructive);color:#fff}
+.vs .t{font-weight:500}
+.vs .w{font-size:12px;color:var(--muted-foreground)}
+.lado{display:flex;flex-direction:column;gap:14px;max-width:62ch}
+.lado h3{font-size:15px;font-weight:600}
+.lado ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted-foreground)}
+.lado li b{color:var(--foreground);font-weight:600}
+
+/* Seção 3 */
+.s3-grid{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:980px){.s3-grid{grid-template-columns:minmax(0,1fr)}}
+.fila{display:flex;flex-direction:column;gap:8px}
+.fi{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--card);cursor:pointer;display:flex;flex-direction:column;gap:6px;text-align:left;width:100%}
+.fi:hover{border-color:color-mix(in oklch,var(--primary) 60%,var(--border))}
+.fi[aria-current="true"]{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.fi .l1{display:flex;gap:8px;align-items:center}
+.fi .num{font-family:var(--font-mono);font-weight:600}
+.fi .bs{display:flex;flex-wrap:wrap;gap:4px}
+.det{display:flex;flex-direction:column;gap:14px;min-width:0}
+.det-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.det-h h2{font-size:22px;font-weight:600}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 16px}
+.info .k{font-size:12px;color:var(--muted-foreground)}
+.info .v{font-weight:500}
+.emerg{border:1px solid color-mix(in oklch,var(--destructive) 40%,transparent);background:color-mix(in oklch,var(--destructive) 7%,transparent);border-radius:10px;padding:10px 12px;font-size:13px}
+.qty{display:inline-flex;align-items:center;gap:4px}
+.tbl.ap th{white-space:normal;line-height:1.2;padding-block:6px;min-width:64px}
+.qty input{width:52px;-moz-appearance:textfield;text-align:right;font-variant-numeric:tabular-nums}
+.qty input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty button{width:26px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--background);cursor:pointer}
+tr.div td{background:var(--aviso-bg)}
+tr.div td.fix{background:color-mix(in oklch,var(--aviso-bg) 100%,var(--background))}
+tr.zer td{opacity:.55}
+.notas{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;white-space:normal}
+.depois{font-weight:600}
+.resumo{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border)}
+.corte{border-radius:10px;padding:10px 12px;background:var(--aviso-bg);font-size:13px}
+.corte b{color:var(--aviso)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.incl{position:relative;flex:1 1 260px;min-width:0}
+.incl input{width:100%}
+.incl-res{position:absolute;left:0;right:0;top:36px;z-index:5;background:var(--popover);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
+.incl-res button{display:flex;width:100%;border:0;background:transparent;padding:8px 10px;cursor:pointer;text-align:left;gap:8px;align-items:center}
+.incl-res button:hover{background:var(--muted)}
+.okmsg{border-radius:10px;padding:10px 12px;background:var(--ok-bg);font-size:13px}
+.okmsg b{color:var(--ok)}
+
+/* Seção 4 */
+.sup{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.sup .card{display:grid;grid-template-columns:28px 1fr;gap:10px}
+.sup .lt{font-family:var(--font-mono);font-weight:600;color:var(--primary)}
+</style>
+
+<div class="mk-bar">
+  <div class="mk-in">
+    <div class="mk-tit">Almoxarifado · mockup<small>Rodada 1 · 11/11/2026 · responda pelo WhatsApp citando o número da seção</small></div>
+    <div class="mk-tabs" role="tablist" aria-label="Seções do mockup">
+      <button class="mk-tab" role="tab" data-a="sec" data-v="1" id="tab-1">1 · Posição de estoque</button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="2" id="tab-2">2 · Pedido do técnico</button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="3" id="tab-3">3 · Aprovação</button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="4" id="tab-4">4 · Suposições</button>
+    </div>
+    <div class="sp"></div>
+    <div class="mk-hora">Hora simulada
+      <span class="seg" id="seg-hora"><button data-a="hora" data-v="09:30">qua 11/11 · 09:30</button><button data-a="hora" data-v="16:40">qua 11/11 · 16:40</button></span>
+    </div>
+  </div>
+</div>
+
+<main class="pg wrap">
+  <section id="sec-1" hidden></section>
+  <section id="sec-2" hidden></section>
+  <section id="sec-3" hidden></section>
+  <section id="sec-4" hidden></section>
+</main>
+
+<dialog class="dlg" id="dlg"><div class="dlg-in" id="dlg-in"></div></dialog>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const casa=(texto,q)=>{const t=norm(texto);return norm(q).split(/\s+/).filter(Boolean).every(k=>t.includes(k));};
+const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num=v=>Number(v).toLocaleString("pt-BR");
+const DIAS=["dom","seg","ter","qua","qui","sex","sáb"];
+const dia=(dd,mm=11)=>new Date(2026,mm-1,dd);
+const fmtD=x=>`${DIAS[x.getDay()]} ${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}`;
+const fmtH=x=>`${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`;
+const util=x=>x.getDay()>0&&x.getDay()<6;
+const addUteis=(x,n)=>{const r=new Date(x);while(n>0){r.setDate(r.getDate()+1);if(util(r))n--;}return r;};
+const mesmoDia=(a,b)=>a.toDateString()===b.toDateString();
+const G={hora:"09:30",sec:"1"};
+const agora=()=>{const[h,m]=G.hora.split(":").map(Number);return new Date(2026,10,11,h,m);};
+const hoje=()=>dia(11);
+const passouCorte=()=>agora().getHours()>=16;
+const retPadrao=()=>addUteis(hoje(),passouCorte()?2:1);
+const quando=x=>{const d=Math.round((x-hoje())/864e5);return d===0?"hoje":d===1?`amanhã (${fmtD(x)})`:fmtD(x);};
+const espera=env=>{const m=Math.max(0,Math.round((agora()-env)/6e4));if(m<60)return`${m} min`;const h=Math.floor(m/60),r=m%60;return r?`${h}h${String(r).padStart(2,"0")}`:`${h}h`;};
+const esperaH=env=>(agora()-env)/36e5;
+
+/* ---------- dados do mockup (fictícios) ---------- */
+const EQ=["MANFAC 1","MANFAC 2","MANFAC-25"];
+const LOCS=["BASE","DPSP","PROFARMA"];
+const P=[
+ {id:"disj20c",cod:"ELE-0201",d:"Disjuntor DIN 20A curva C",un:"un",f:"Elétrica",cmc:18.9,s:{BASE:12,DPSP:3,PROFARMA:8},comp:{DPSP:1},e:{"MANFAC 1":2,"MANFAC-25":1},min:{BASE:5,DPSP:6,PROFARMA:6},ec:{q:20,prev:"14/11"}},
+ {id:"disj20b",cod:"ELE-0200",d:"Disjuntor DIN 20A curva B",un:"un",f:"Elétrica",cmc:17.5,s:{BASE:5},e:{},min:{}},
+ {id:"disj32c",cod:"ELE-0203",d:"Disjuntor DIN 32A curva C",un:"un",f:"Elétrica",cmc:24.5,s:{BASE:6,DPSP:4},e:{"MANFAC 1":1},min:{DPSP:4,PROFARMA:3}},
+ {id:"cabo25",cod:"ELE-0410",d:"Cabo flexível 2,5mm² (metro)",un:"m",f:"Elétrica",cmc:3.1,s:{BASE:300,DPSP:120},e:{"MANFAC 2":30,"MANFAC-25":15},min:{BASE:100,DPSP:100,PROFARMA:80},ec:{q:200,prev:"13/11"}},
+ {id:"tomada",cod:"ELE-0520",d:"Tomada 2P+T 10A com placa",un:"un",f:"Elétrica",cmc:9.8,s:{BASE:25,DPSP:8,PROFARMA:11},e:{"MANFAC 1":2,"MANFAC 2":1},min:{DPSP:5,PROFARMA:5}},
+ {id:"ledtub",cod:"ILU-0118",d:"Lâmpada LED tubular 18W T8",un:"un",f:"Iluminação",cmc:14.2,s:{BASE:40,DPSP:22,PROFARMA:9},e:{"MANFAC 1":6,"MANFAC 2":4},min:{DPSP:20,PROFARMA:15},ec:{q:30,prev:"18/11"}},
+ {id:"led9",cod:"ILU-0109",d:"Lâmpada LED bulbo 9W E27",un:"un",f:"Iluminação",cmc:6.8,s:{BASE:60,DPSP:30,PROFARMA:35},e:{"MANFAC 1":5,"MANFAC 2":8,"MANFAC-25":3},min:{DPSP:25,PROFARMA:25}},
+ {id:"reator",cod:"ILU-0232",d:"Reator eletrônico 2x32W bivolt",un:"un",f:"Iluminação",cmc:39.9,s:{PROFARMA:2},e:{"MANFAC-25":1},min:{DPSP:3,PROFARMA:3},ec:{q:10,prev:"17/11"}},
+ {id:"fita",cod:"CON-0020",d:"Fita isolante 20m preta",un:"un",f:"Consumo",cmc:7.4,s:{BASE:80,DPSP:15,PROFARMA:18},e:{"MANFAC 1":3,"MANFAC 2":5,"MANFAC-25":2},min:{DPSP:10,PROFARMA:10}},
+ {id:"bucha",cod:"CON-0108",d:"Parafuso com bucha 8mm (cento)",un:"cto",f:"Consumo",cmc:16,s:{BASE:10,DPSP:4,PROFARMA:6},e:{"MANFAC 2":1},min:{}},
+ {id:"silicone",cod:"CON-0280",d:"Silicone acético incolor 280g",un:"un",f:"Consumo",cmc:19.9,s:{},e:{"MANFAC 1":2},min:{BASE:4},ec:{q:12,prev:"16/11"}},
+ {id:"sifao",cod:"HID-0310",d:"Sifão sanfonado universal",un:"un",f:"Hidráulica",cmc:11.3,s:{DPSP:5,PROFARMA:3},e:{},min:{}},
+ {id:"torneira",cod:"HID-0412",d:"Torneira de parede 1/2\"",un:"un",f:"Hidráulica",cmc:32,s:{},e:{},min:{DPSP:2},ec:{q:6,prev:"18/11"}},
+ {id:"luva",cod:"EPI-0011",d:"Luva de vaqueta",un:"par",f:"EPI",cmc:12.5,s:{BASE:30,DPSP:6,PROFARMA:10},e:{},min:{DPSP:10,PROFARMA:8}},
+ {id:"oculos",cod:"EPI-0030",d:"Óculos de proteção incolor",un:"un",f:"EPI",cmc:8.9,s:{BASE:20,DPSP:12,PROFARMA:7},e:{},min:{DPSP:5,PROFARMA:5}},
+ {id:"bota",cod:"EPI-0142",d:"Bota de segurança nº 42",un:"par",f:"EPI",cmc:89,s:{BASE:4},e:{},min:{}},
+ {id:"polo",cod:"UNI-0002",d:"Camisa polo Manfac tam. M",un:"un",f:"Uniforme",cmc:45,s:{BASE:15},e:{},min:{}},
+];
+const PID=Object.fromEntries(P.map(p=>[p.id,p]));
+const sal=(p,l)=>p.s[l]||0;
+const eqTem=(p,e)=>p.e[e]||0;
+const somaEq=p=>EQ.reduce((a,e)=>a+eqTem(p,e),0);
+const total=p=>LOCS.reduce((a,l)=>a+sal(p,l),0)+somaEq(p);
+const disp=(p,l)=>Math.max(0,sal(p,l)-((p.comp&&p.comp[l])||0));
+const familias=[...new Set(P.map(p=>p.f))];
+const abaixo=(p,l)=>p.min[l]!=null&&sal(p,l)<p.min[l];
+const algumAbaixo=p=>LOCS.some(l=>abaixo(p,l));
+const ehFicha=p=>p.f==="EPI"||p.f==="Uniforme";
+
+const OBRAS=[
+ {os:"48213",loja:"Loja 1123 · Pinheiros",desc:"Reforma do forro do salão"},
+ {os:"48190",loja:"Loja 0874 · Santo André",desc:"Troca da iluminação do estacionamento"},
+ {os:"48251",loja:"CD Duque de Caxias",desc:"Spot: vazamento no banheiro do térreo"},
+ {os:"48262",loja:"Loja 2210 · Campinas",desc:"Adequação elétrica da farmácia popular"},
+];
+
+const it=(id,pediu,ap,transf)=>({id,pediu,ap:ap??pediu,transf:transf||0,incl:false,os:null});
+const PED=[
+ {n:1042,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,11,8,40),ret:dia(12),emerg:false,motivo:"",etapa:"enviado",itens:[it("ledtub",6),it("fita",4),it("disj20c",4),it("cabo25",50)]},
+ {n:1044,tec:"Rafael Lima",eq:"MANFAC 1",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,11,7,5),ret:dia(11),emerg:true,motivo:"Loja 1123 com o salão de vendas sem luz. Disjuntor queimado, precisa trocar hoje.",etapa:"enviado",itens:[it("disj32c",2),it("luva",2)]},
+ {n:1045,tec:"Marcos Pereira",eq:"MANFAC-25",ct:"Obra/Spot",dest:"obra",os:["48213"],env:new Date(2026,10,10,15,20),ret:dia(12),emerg:false,motivo:"",etapa:"enviado",itens:[it("cabo25",100),it("tomada",10),it("bucha",2),it("sifao",2)]},
+ {n:1041,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,9,14,10),ret:dia(11),emerg:false,motivo:"",etapa:"separado",por:"Fernanda Rocha",itens:[it("led9",6),it("oculos",1)]},
+ {n:1040,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,10,9,30),ret:dia(13),emerg:false,motivo:"",etapa:"aprovado",por:"Fernanda Rocha",itens:[it("reator",2,2,2),it("fita",2)]},
+ {n:1039,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,10,8,5),ret:dia(12),emerg:false,motivo:"",etapa:"recusado",por:"Fernanda Rocha",recusa:"Pelo Omie a equipe já tem 8 lâmpadas bulbo. Confira o carro antes de pedir de novo.",itens:[it("led9",10,0)]},
+ {n:1036,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,6,10,0),ret:dia(10),emerg:false,motivo:"",etapa:"nao_retirado",por:"Fernanda Rocha",itens:[it("tomada",4),it("fita",2)]},
+];
+let proxNum=1043;
+const ETAPA={enviado:["Aguardando aprovação","b-avi"],aprovado:["Aprovado","b-sec"],separado:["Separado · pode retirar","b-ok"],retirado:["Retirado","b-out"],recusado:["Recusado","b-des"],nao_retirado:["Não retirado","b-des"],cancelado:["Cancelado","b-out"]};
+const badgeEtapa=e=>`<span class="badge ${ETAPA[e][1]}">${ETAPA[e][0]}</span>`;
+const locDe=pd=>pd.dest==="obra"?"BASE":pd.ct;
+
+/* ---------- estados genéricos ---------- */
+const ESTADOS=[["carregando","Carregando"],["dados","Com dados"],["vazio","Vazio"],["erro","Erro ao carregar"],["semperm","Sem permissão"]];
+function seletorEstado(sec,atual){
+  return `<div class="mk-ctrl"><b>Controle do mockup</b> Estado da tela:
+  <span class="seg">${ESTADOS.map(([k,r])=>`<button data-a="estado" data-s="${sec}" data-v="${k}" aria-pressed="${k===atual}">${r}</button>`).join("")}</span></div>`;
+}
+function bloco(tipo,titulo,texto,botoes=""){
+  const ico={vazio:"∅",erro:"!",perm:"⌂",ok:"✓"}[tipo];
+  return `<div class="est est-${tipo}"><div class="ico">${ico}</div><h3>${titulo}</h3><p>${texto}</p>${botoes?`<div class="acoes">${botoes}</div>`:""}</div>`;
+}
+function shell(nav,ativo,user,papel,corpo){
+  return `<div class="shell"><header class="sh-h"><div class="sh-in"><span class="sh-brand">Almoxarifado</span>
+  <nav class="sh-nav" aria-label="Menu do módulo">${nav.map(n=>`<span class="btn btn-ghost btn-sm ${n===ativo?"is-on":""}" title="${n===ativo?"":"Fora desta rodada do mockup"}">${n}</span>`).join("")}</nav>
+  <div class="sp"></div><div class="sh-user"><div class="u-n">${user}</div><div class="u-p">${papel}</div></div>
+  <span class="btn btn-ghost btn-sm sh-hub">Hub</span><span class="btn btn-outline btn-sm">Sair</span></div></header><main class="sh-main">${corpo}</main></div>`;
+}
+function tentar(estObj,render){estObj.estado="carregando";render();setTimeout(()=>{estObj.estado="dados";render();},900);}
+
+/* ---------- diálogo ---------- */
+const dlg=$("#dlg");
+function abrir(html){$("#dlg-in").innerHTML=html;if(!dlg.open)dlg.showModal();}
+function fechar(){if(dlg.open)dlg.close();}
+dlg.addEventListener("click",e=>{if(e.target===dlg)fechar();});
+
+/* =====================================================================
+   SEÇÃO 1 — POSIÇÃO DE ESTOQUE
+   ===================================================================== */
+const S1={estado:"dados",busca:"",est:"todos",fam:"todas",abaixo:false,saldo:false,abertos:new Set()};
+function s1Filtra(){
+  return P.filter(p=>{
+    if(S1.busca&&!casa(`${p.d} ${p.cod} ${p.f}`,S1.busca))return false;
+    if(S1.fam!=="todas"&&p.f!==S1.fam)return false;
+    const v=S1.est==="todos"?total(p):S1.est==="EQUIPES"?somaEq(p):sal(p,S1.est);
+    if(S1.saldo&&v<=0)return false;
+    if(S1.abaixo){if(S1.est==="todos"?!algumAbaixo(p):S1.est==="EQUIPES"?true:!abaixo(p,S1.est))return false;}
+    return true;
+  });
+}
+function cel(p,l){
+  const v=sal(p,l),m=p.min[l];let c="";
+  if(m!=null){if(v<m)c="c-red";else if(v<=m*1.2)c="c-amb";}
+  const on=S1.est===l?" col-on":"";
+  return `<td class="r n ${c}${on}" title="${m!=null?`Mínimo ${m}`:"Sem mínimo neste estoque"}">${v?num(v):'<span class="zero">0</span>'}</td>`;
+}
+function s1Linhas(){
+  const L=s1Filtra();
+  if(!L.length)return `<tr><td colspan="9" style="white-space:normal;padding:24px">${bloco("vazio","Nenhum produto com esses filtros","Tente outra palavra na busca ou desmarque “só abaixo do mínimo” e “só com saldo”.",`<button class="btn btn-outline btn-sm" data-a="s1-limpar">Limpar filtros</button>`)}</td></tr>`;
+  return L.map(p=>{
+    const t=total(p),aberto=S1.abertos.has(p.id);
+    const mins=LOCS.filter(l=>p.min[l]!=null).map(l=>`${l==="PROFARMA"?"Prof":l==="BASE"?"Base":"DPSP"} ${p.min[l]}`).join(" · ")||"—";
+    const eqOn=S1.est==="EQUIPES"?" col-on":"";
+    return `<tr class="lin"><td class="fix"><button class="prod-btn" data-a="s1-prod" data-v="${p.id}"><span class="nm">${esc(p.d)}</span><span class="cd">${p.cod} · ${p.f} · ${p.un}</span></button></td>
+      ${cel(p,"BASE")}${cel(p,"DPSP")}${cel(p,"PROFARMA")}
+      <td class="r n${eqOn}"><button class="eq-btn" data-a="s1-eq" data-v="${p.id}" aria-expanded="${aberto}" title="Ver por equipe">${num(somaEq(p))} ${aberto?"▴":"▾"}</button></td>
+      <td class="r n"><b>${num(t)}</b></td>
+      <td class="min-t">${mins}</td>
+      <td class="r n">${brl(t*p.cmc)}</td>
+      <td>${p.ec?`<span class="n">${num(p.ec.q)} ${p.un}</span> <span class="muted">· chega ${p.ec.prev}</span>`:'<span class="zero">—</span>'}</td></tr>
+      ${aberto?`<tr class="sub"><td colspan="9"><div class="chips">${EQ.map(e=>`<span class="chip">${e}: <b class="n">${num(eqTem(p,e))}</b></span>`).join("")}<span class="muted" style="font-size:12px;align-self:center">As outras 20 equipes não têm este item.</span></div></td></tr>`:""}`;
+  }).join("");
+}
+function s1Tabela(){
+  const h=(t,k,cls="r")=>`<th class="${cls}${S1.est===k?" col-on":""}">${t}</th>`;
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th class="fix">Produto</th>${h("Base","BASE")}${h("DPSP","DPSP")}${h("Profarma","PROFARMA")}${h("Equipes","EQUIPES")}<th class="r">Total</th><th>Mínimo</th><th class="r">Valor</th><th>Em compra</th></tr></thead><tbody id="s1-corpo">${s1Linhas()}</tbody></table></div>`;
+}
+function s1Tiles(){
+  const valor=P.reduce((a,p)=>a+total(p)*p.cmc,0);
+  const ab=P.filter(algumAbaixo).length;
+  const T=[["Valor em estoque",brl(valor),"Base, contratos e equipes, pelo custo médio do Omie",""],
+    ["Abaixo do mínimo",`${ab} itens`,"Clique para ver só esses","alerta","s1-so-abaixo"],
+    ["Divergências abertas","3","Contagem diferente do Omie, esperando ajuste",""],
+    ["Retiradas de hoje","4","3 já separadas · 1 emergencial",""],
+    ["Entregas de fornecedor hoje","2","1 atrasada desde ontem",""]];
+  return `<div class="tiles">${T.map(([k,v,s,c,a])=>`<div class="card tile ${c}" ${a?`data-a="${a}" style="cursor:pointer"`:""}><div class="label-mono">${k}</div><div class="v n">${v}</div><div class="s">${s}</div></div>`).join("")}</div>`;
+}
+function s1Corpo(){
+  const st=S1.estado;
+  if(st==="semperm")return bloco("perm","Esta tela é do Almoxarifado","Seu usuário (renata.alves@manfac.com.br) entra no hub, mas não tem papel de almoxarife, gestor ou administrador neste módulo. Peça a liberação a um administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao hub</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 style="font-size:28px;letter-spacing:-0.02em">Posição de estoque</h2><div class="sp"></div>${st==="dados"?`<span class="atual"><span class="dot"></span>Atualizado às ${fmtH(new Date(agora().getTime()-4*6e4))} · cópia do Omie a cada 10 min</span>`:""}<span class="btn btn-outline btn-sm" title="Existe, mas não é o caminho">Exportar Excel</span></div>`;
+  if(st==="carregando")return cab+`<div class="tiles">${"<div class='card tile'><div class='skel' style='width:60%'></div><div class='skel' style='height:22px;margin-top:10px;width:80%'></div></div>".repeat(5)}</div><div class="tbl-wrap" style="padding:14px;display:flex;flex-direction:column;gap:14px">${Array.from({length:7},(_,i)=>`<div style="display:grid;grid-template-columns:2fr repeat(5,1fr);gap:16px"><div class="skel" style="width:${60+i*5%30}%"></div>${"<div class='skel'></div>".repeat(5)}</div>`).join("")}</div><p class="muted" style="margin-top:10px;font-size:13px">Lendo a cópia do estoque…</p>`;
+  if(st==="vazio")return cab+bloco("vazio","Ainda não há estoque copiado do Omie","O sistema copia a posição dos 26 estoques do Omie a cada 10 minutos. Esta é a primeira vez que o módulo abre, e a primeira cópia ainda não terminou. Volte em alguns minutos; se continuar vazio depois de 15 minutos, avise o administrador do Almoxarifado.");
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar o estoque","O servidor não respondeu. Nenhum número foi mostrado para você não decidir em cima de dado velho. Confira a internet e tente de novo; se repetir, avise o administrador do Almoxarifado.",`<button class="btn btn-sm" data-a="s1-tentar">Tentar de novo</button>`);
+  return cab+s1Tiles()+`
+   <div class="filtros">
+     <div class="busca"><input class="inp" id="s1-busca" type="search" placeholder="Buscar produto (ex.: disj 20, led, epi)" value="${esc(S1.busca)}" autocomplete="off"></div>
+     <select class="inp" id="s1-est" aria-label="Estoque"><option value="todos">Todos os estoques</option>${["BASE","DPSP","PROFARMA"].map(l=>`<option value="${l}" ${S1.est===l?"selected":""}>${l==="PROFARMA"?"Profarma":l==="BASE"?"Base":"DPSP"}</option>`).join("")}<option value="EQUIPES" ${S1.est==="EQUIPES"?"selected":""}>Equipes</option></select>
+     <select class="inp" id="s1-fam" aria-label="Família"><option value="todas">Todas as famílias</option>${familias.map(f=>`<option ${S1.fam===f?"selected":""}>${f}</option>`).join("")}</select>
+     <label class="chk"><input type="checkbox" id="s1-abaixo" ${S1.abaixo?"checked":""}>Só abaixo do mínimo</label>
+     <label class="chk"><input type="checkbox" id="s1-saldo" ${S1.saldo?"checked":""}>Só com saldo</label>
+   </div>
+   <div class="legenda"><span><span class="sw" style="background:color-mix(in oklch,var(--destructive) 30%,transparent)"></span>Abaixo do mínimo</span><span><span class="sw" style="background:var(--aviso-bg);outline:1px solid var(--aviso)"></span>Até 20% acima do mínimo</span><span>Clique no produto para ver onde está e o que mexeu · clique em Equipes para abrir por MANFAC</span><span id="s1-cont" class="n"></span></div>
+   <div id="s1-tabela">${s1Tabela()}</div>`;
+}
+function s1Hist(p){
+  const H=[];
+  if(eqTem(p,"MANFAC 1"))H.push(["11/11 08:47","Saída automática (Field)","MANFAC 1",-1,"Aplicado na OS 48190"]);
+  if(sal(p,"DPSP")||eqTem(p,"MANFAC 2"))H.push(["11/11 08:12","Transferência","DPSP → MANFAC 2",2,"Pedido #1038 · retirado por Carlos Souza"]);
+  if(p.ec)H.push(["10/11 16:05","Entrada por compra","BASE",+Math.max(5,Math.round(p.ec.q/2)),"NF 55.812 · pedido de compra 3112"]);
+  if(sal(p,"PROFARMA"))H.push(["10/11 10:30","Transferência","BASE → PROFARMA",3,"Reposição do contrato"]);
+  if(sal(p,"DPSP"))H.push(["07/11 17:20","Ajuste de saldo","DPSP",-1,"Inventário, onda 3 · motivo: quebra"]);
+  if(eqTem(p,"MANFAC-25"))H.push(["06/11 09:02","Saída automática (Field)","MANFAC-25",-1,"Aplicado na OS 48120"]);
+  return H;
+}
+function s1Abrir(id){
+  const p=PID[id];const t=total(p);
+  const linhas=[...LOCS.map(l=>[l==="BASE"?"Base":l==="PROFARMA"?"Profarma":"DPSP",sal(p,l),p.min[l]]),...EQ.map(e=>[e,eqTem(p,e),null])];
+  const H=s1Hist(p);
+  abrir(`<div class="dlg-h"><div style="flex:1;min-width:0"><div class="label-mono">${p.cod} · ${p.f} · custo médio ${brl(p.cmc)}/${p.un}</div><h2>${esc(p.d)}</h2></div><button class="btn btn-ghost btn-sm" data-a="fechar" aria-label="Fechar">Fechar</button></div>
+   <div><h3 style="font-size:14px;margin-bottom:8px">Onde está · total ${num(t)} ${p.un} · ${brl(t*p.cmc)}</h3>
+   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Estoque</th><th class="r">Saldo</th><th class="r">Mínimo</th><th class="r">Valor</th></tr></thead><tbody>
+   ${linhas.map(([n,v,m])=>{let c="";if(m!=null){if(v<m)c="c-red";else if(v<=m*1.2)c="c-amb";}return`<tr><td>${n}</td><td class="r n ${c}">${num(v)}</td><td class="r n muted">${m??"—"}</td><td class="r n">${brl(v*p.cmc)}</td></tr>`;}).join("")}
+   </tbody></table></div>
+   ${p.ec?`<p style="margin-top:8px;font-size:13px">Em compra: <b>${num(p.ec.q)} ${p.un}</b>, previsão de entrega ${p.ec.prev} (pedido do Compras em aberto).</p>`:""}</div>
+   <div><h3 style="font-size:14px;margin-bottom:4px">Últimas movimentações no Omie</h3>
+   ${H.length?`<div class="hist">${H.map(([q,tp,l,v,o])=>`<div class="h"><span class="n muted" style="font-size:12px">${q}</span><span><b style="font-weight:500">${tp}</b> · ${l}<br><span class="muted" style="font-size:12px">${o}</span></span><span class="q ${v>0&&tp.startsWith("Entrada")?"pos":""}">${tp==="Transferência"?"":v>0?"+":"−"}${num(Math.abs(v))} ${p.un}</span></div>`).join("")}</div>`:`<p class="muted">Nenhuma movimentação nos últimos 90 dias.</p>`}</div>`);
+}
+function s1Render(){
+  $("#sec-1").innerHTML=`<div class="sec-h"><div class="label-mono">Almoxarife · computador ou celular</div><h1>Seção 1 — Posição de estoque</h1><p>A tela que substitui o Excel do Omie: quanto tem de cada produto em cada estoque, o que está abaixo do mínimo e o que já está comprado.</p></div>
+   ${seletorEstado("1",S1.estado)}<div style="height:14px"></div>
+   ${shell(["Início","Estoque","Pedidos","Separação","Recebimento","Inventário","Carga","Indicadores"],"Estoque","Paulo Mendes","Almoxarife",s1Corpo())}`;
+  s1Cont();
+}
+function s1Cont(){const c=$("#s1-cont");if(c)c.textContent=`· ${s1Filtra().length} de ${P.length} produtos`;}
+function s1Atualiza(){const b=$("#s1-corpo");if(b)b.innerHTML=s1Linhas();s1Cont();}
+
+/* =====================================================================
+   SEÇÃO 2 — PEDIDO DO TÉCNICO (celular)
+   ===================================================================== */
+const TEC={nome:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP"};
+const S2={estado:"dados",tela:"pin",pin:"",pinErr:0,dest:"man",os:null,osBusca:"",busca:"",cart:{},emerg:false,motivo:"",ret:null,erros:[],det:null,vistos:new Set(),faixaAberta:false,enviado:null};
+const locTec=()=>S2.dest==="obra"?"BASE":TEC.ct;
+function situacao(p,l){
+  const d=disp(p,l);if(d>0)return{t:"ok",d};
+  const outros=LOCS.filter(x=>x!==l).some(x=>sal(p,x)>0);
+  return outros?{t:"ast",d:0}:{t:"cinza",d:0};
+}
+function meus(){return PED.filter(p=>p.tec===TEC.nome).sort((a,b)=>b.n-a.n);}
+function alertas(){
+  const A=[];
+  for(const pd of meus()){
+    const k=`${pd.n}-${pd.etapa}`;
+    if(S2.vistos.has(k))continue;
+    if(pd.etapa==="enviado"){
+      if(!pd.emerg&&passouCorte()&&pd.ret<addUteis(hoje(),2))A.push([k,"al-des","!",`Pedido #${pd.n} não foi aprovado a tempo. Você não retira ${fmtD(pd.ret)}. Nova data: ${fmtD(addUteis(hoje(),2))}, se for aprovado até as 16h de amanhã.`]);
+      else if(pd.emerg)A.push([k,"al-avi","⏱",`Pedido emergencial #${pd.n} esperando aprovação. O aprovador e o gestor já receberam o alerta.`]);
+      else A.push([k,"al-avi","⏱",`Pedido #${pd.n} ainda não foi aprovado. Se não for aprovado até as 16h de hoje, você não retira ${fmtD(pd.ret)}.`]);
+    }
+    if(pd.etapa==="aprovado"){const tr=pd.itens.filter(i=>i.transf>0);A.push([k,"al-sec","✓",`Pedido #${pd.n} aprovado por ${pd.por}. O almox vai separar para ${fmtD(pd.ret)}.${tr.length?` ${tr.length===1?"1 item está":tr.length+" itens estão"} aguardando transferência de outro estoque; o almox avisa quando chegar.`:""}`]);}
+    if(pd.etapa==="separado")A.push([k,"al-ok","✓",`Pedido #${pd.n} separado. Retire ${quando(pd.ret)} até as 10h no balcão do almox. Leve o celular: você assina com o PIN.`]);
+    if(pd.etapa==="recusado")A.push([k,"al-des","✕",`Pedido #${pd.n} recusado por ${pd.por}: “${pd.recusa}”`]);
+    if(pd.etapa==="nao_retirado")A.push([k,"al-des","!",`Pedido #${pd.n} não foi retirado em ${fmtD(pd.ret)}. O material voltou para a prateleira. Abra o pedido para marcar outra data.`]);
+  }
+  return A;
+}
+function faixa(){
+  const A=alertas();if(!A.length)return"";
+  const mostra=S2.faixaAberta?A:A.slice(0,1);
+  return `<div style="display:flex;flex-direction:column;gap:6px">${mostra.map(([k,c,m,t])=>`<div class="faixa ${c}"><div class="al"><span class="mk">${m}</span><span class="tx">${esc(t)}</span></div><div style="text-align:right"><button class="al-x" data-a="t-visto" data-v="${k}">Entendi</button></div></div>`).join("")}
+  ${A.length>1?`<button class="btn btn-ghost btn-xs" data-a="t-faixa" style="align-self:flex-start">${S2.faixaAberta?"Mostrar só o mais importante":`Ver os outros ${A.length-1} avisos`}</button>`:""}</div>`;
+}
+const cartQtd=()=>Object.values(S2.cart).reduce((a,b)=>a+(b>0?1:0),0);
+function phHead(){
+  const n=alertas().length;
+  return `<div class="ph-head"><div style="flex:1;min-width:0"><div class="t1">Olá, Carlos</div><div class="t2">${TEC.eq} · contrato ${TEC.ct}</div></div><button class="bell" data-a="t-tela" data-v="pedidos" aria-label="${n} avisos">🔔${n?`<span class="ct">${n}</span>`:""}</button></div>`;
+}
+function phFoot(){
+  if(S2.tela==="novo"&&cartQtd())return `<div class="ph-foot"><div class="cartbar"><div style="flex:1"><b>${cartQtd()} ${cartQtd()===1?"item":"itens"}</b> no carrinho<div class="muted" style="font-size:12px">Sai do estoque ${locTec()==="BASE"?"BASE":TEC.ct}</div></div><button class="btn btn-lg" data-a="t-tela" data-v="carrinho">Revisar e enviar</button></div></div>`;
+  if(S2.tela==="carrinho")return "";
+  return `<div class="ph-foot"><div class="tabs-b"><button data-a="t-tela" data-v="pedidos" aria-current="${S2.tela==="pedidos"||S2.tela==="detalhe"?"page":"false"}"><span class="ic">☰</span>Meus pedidos</button><button data-a="t-tela" data-v="novo" aria-current="${S2.tela==="novo"?"page":"false"}"><span class="ic">＋</span>Novo pedido</button></div></div>`;
+}
+function telaPin(){
+  return `<div class="pin-wrap"><div class="pin-logo">M</div><div><h2 style="font-size:20px">Almoxarifado Manfac</h2><p class="muted" style="margin-top:4px">Olá, Carlos. Digite seu PIN para entrar.</p></div>
+  <div class="pin-dots" aria-label="${S2.pin.length} dígitos digitados">${Array.from({length:6},(_,i)=>`<span class="${i<S2.pin.length?"f":""}" ${i>=4&&i>=S2.pin.length?'style="opacity:.35"':""}></span>`).join("")}</div>
+  ${S2.pinErr?`<p class="erro-t">PIN errado. Mais ${5-S2.pinErr} ${5-S2.pinErr===1?"tentativa":"tentativas"} e o acesso fica bloqueado por 15 minutos.</p>`:`<p class="muted" style="font-size:12px">PIN de 4 a 6 números, criado no seu primeiro acesso.</p>`}
+  <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-a="t-dig" data-v="${n}">${n}</button>`).join("")}<button data-a="t-apaga" aria-label="Apagar">⌫</button><button data-a="t-dig" data-v="0">0</button><button data-a="t-entrar" style="font-size:15px;background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);opacity:${S2.pin.length<4?".4":"1"}" ${S2.pin.length<4?"disabled":""}>Entrar</button></div>
+  <p class="muted" style="font-size:12px">Esqueceu o PIN? Peça um convite novo no almoxarifado.</p>
+  <p class="mk-ctrl" style="font-size:11px">Mockup: qualquer PIN de 4 dígitos entra; 0000 mostra o erro.</p></div>`;
+}
+function skelLista(n=4){return Array.from({length:n},()=>`<div class="ped" style="cursor:default"><div class="skel" style="width:40%"></div><div class="skel" style="width:75%"></div><div class="skel" style="height:4px"></div></div>`).join("");}
+function erroCel(){return bloco("erro","Sem conexão com o almoxarifado","Não deu para carregar agora. O que você já colocou no carrinho continua guardado neste celular.",`<button class="btn btn-sm" data-a="t-tentar">Tentar de novo</button>`);}
+function telaPedidos(){
+  if(S2.estado==="carregando")return skelLista();
+  if(S2.estado==="erro")return erroCel();
+  const M=meus();
+  if(S2.estado==="vazio")return bloco("vazio","Você ainda não fez nenhum pedido","Para pedir material, toque em Novo pedido. Você escolhe os itens, o dia de retirada e manda tudo de uma vez.",`<button class="btn btn-sm" data-a="t-tela" data-v="novo">Fazer meu primeiro pedido</button>`);
+  return `${faixa()}<div style="display:flex;align-items:center"><h3 style="font-size:16px">Meus pedidos</h3><div class="sp"></div><span class="muted" style="font-size:12px">${M.length} pedidos</span></div>
+  ${M.map(pd=>{const feito={enviado:1,aprovado:2,separado:3,retirado:4,recusado:1,nao_retirado:3,cancelado:1}[pd.etapa];
+   const bad=["recusado","nao_retirado","cancelado"].includes(pd.etapa);
+   return `<button class="ped" data-a="t-det" data-v="${pd.n}"><div class="l1"><span class="num">#${pd.n}</span>${badgeEtapa(pd.etapa)}<span class="sp"></span><span class="muted" style="font-size:12px">${pd.itens.length} ${pd.itens.length===1?"item":"itens"}</span></div>
+   <div style="font-size:13px">${pd.dest==="obra"?`Obra/Spot · OS ${pd.os.join(", ")}`:"Manutenção"} · retirada <b>${fmtD(pd.ret)}</b>${pd.emerg?' <span class="badge b-des">Emergencial</span>':""}</div>
+   <div class="mini-steps">${[0,1,2,3].map(i=>`<i class="${bad&&i===feito?"bad":i<feito?"done":!bad&&i===feito?"on":""}"></i>`).join("")}</div></button>`;}).join("")}`;
+}
+function telaNovo(){
+  if(S2.estado==="carregando")return `<div class="skel" style="height:44px;border-radius:12px"></div>${skelLista(5)}`;
+  if(S2.estado==="erro")return erroCel();
+  const l=locTec();
+  let topo=`<div class="seg-big"><button data-a="t-dest" data-v="man" aria-pressed="${S2.dest==="man"}">Manutenção<small>sai do estoque ${TEC.ct}</small></button><button data-a="t-dest" data-v="obra" aria-pressed="${S2.dest==="obra"}">Obra / Spot<small>sai do BASE · precisa da OS</small></button></div>`;
+  if(S2.dest==="obra")topo+=osBox();
+  if(S2.estado==="vazio")return topo+bloco("vazio",`Nenhum material liberado para ${S2.dest==="obra"?"Obra/Spot":"o contrato "+TEC.ct}`,"O almoxarifado ainda não ligou os produtos do Omie a este estoque. Fale com o almox; enquanto isso, não dá para montar pedido por aqui.");
+  return topo+`<div class="ph-search"><span class="lupa">⌕</span><input class="inp" id="t-busca" type="search" placeholder="Buscar material (ex.: disj 20)" value="${esc(S2.busca)}" autocomplete="off"></div>
+  <div id="t-lista">${listaMat()}</div>`;
+}
+function osBox(){
+  if(S2.os){const o=OBRAS.find(x=>x.os===S2.os);return `<div class="box"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1"><b>OS ${o.os}</b> · ${esc(o.loja)}<div class="muted" style="font-size:12px">${esc(o.desc)}</div></div><button class="btn btn-ghost btn-xs" data-a="t-os-tira">Trocar</button></div></div>`;}
+  const R=S2.osBusca?OBRAS.filter(o=>casa(`${o.os} ${o.loja} ${o.desc}`,S2.osBusca)):OBRAS;
+  return `<div class="box"><h4>Para qual OS? <span class="erro-t" style="font-weight:400">obrigatório</span></h4><input class="inp" id="t-os" type="search" placeholder="Número da OS, loja ou descrição" value="${esc(S2.osBusca)}" style="height:40px" autocomplete="off">
+  <div id="t-os-res">${osRes(R)}</div></div>`;
+}
+function osRes(R){return R.length?R.slice(0,3).map(o=>`<button class="btn btn-outline btn-block" style="height:auto;padding:8px 10px;justify-content:flex-start;text-align:left;white-space:normal" data-a="t-os" data-v="${o.os}"><span><b>OS ${o.os}</b> · ${esc(o.loja)}<br><span class="muted" style="font-size:12px">${esc(o.desc)}</span></span></button>`).join(""):`<p class="muted" style="font-size:13px">Nenhuma OS encontrada no Gestão de Obras.</p>`;}
+function listaMat(){
+  const l=locTec();
+  const L=P.filter(p=>!S2.busca||casa(`${p.d} ${p.cod} ${p.f}`,S2.busca)).map(p=>({p,s:situacao(p,l)}));
+  const ord={ok:0,ast:1,cinza:2};L.sort((a,b)=>ord[a.s.t]-ord[b.s.t]);
+  if(!L.length)return `<p class="muted" style="padding:16px 0;text-align:center">Nada com “${esc(S2.busca)}”. Tente uma palavra só, como “disj” ou “led”.</p>`;
+  return L.map(({p,s})=>{
+    const q=S2.cart[p.id]||0;
+    const dp=s.t==="ok"?`<b>${num(s.d)} ${p.un}</b> disponíveis`:s.t==="ast"?`* Sem saldo aqui, o almox pode transferir`:`Sem estoque. Não dá para pedir agora`;
+    const ctrl=s.t==="cinza"?"":q?`<div class="stepper"><button data-a="t-menos" data-v="${p.id}" aria-label="Menos">−</button><span>${q}</span><button data-a="t-mais" data-v="${p.id}" aria-label="Mais">+</button></div>`:`<button class="btn btn-outline add-btn" data-a="t-mais" data-v="${p.id}">Adicionar</button>`;
+    return `<div class="mat ${s.t}"><div class="info"><div class="nm">${esc(p.d)}${s.t==="ast"?" *":""}</div><div class="dp">${dp}</div></div>${ctrl}</div>`;
+  }).join("");
+}
+function telaCarrinho(){
+  const l=locTec();const ids=Object.keys(S2.cart).filter(k=>S2.cart[k]>0);
+  const def=retPadrao();if(!S2.ret)S2.ret=def;
+  const opcoes=[hoje(),...Array.from({length:7},(_,i)=>{const x=new Date(hoje());x.setDate(x.getDate()+i+1);return x;})].filter(x=>x.getDay()!==0);
+  const err=S2.erros;
+  return `<div style="display:flex;align-items:center;gap:8px"><button class="btn btn-ghost btn-sm" data-a="t-tela" data-v="novo">← Voltar</button><h3 style="font-size:16px">Revisar pedido</h3></div>
+  <div class="box"><h4>Itens · ${ids.length}</h4>${ids.length?ids.map(id=>{const p=PID[id],s=situacao(p,l),q=S2.cart[id];
+    const nota=s.t==="ast"?`<span class="dp" style="color:var(--aviso)">* sem saldo aqui: vai como pedido de transferência</span>`:q>s.d?`<span class="dp" style="color:var(--aviso)">Disponível ${num(s.d)}; o que passar o almox tenta transferir</span>`:`<span class="dp">${num(s.d)} ${p.un} disponíveis</span>`;
+    return `<div class="mat"><div class="info"><div class="nm">${esc(p.d)}</div>${nota}</div><div class="stepper"><button data-a="t-menos" data-v="${id}" aria-label="Menos">−</button><span>${q}</span><button data-a="t-mais" data-v="${id}" aria-label="Mais">+</button></div></div>`;}).join(""):`<p class="muted">Carrinho vazio. Volte e adicione material.</p>`}</div>
+  <div class="box"><h4>Para onde vai</h4><div style="font-size:13px">${S2.dest==="obra"?`Obra/Spot · sai do BASE · ${S2.os?`<b>OS ${S2.os}</b>`:`<span class="erro-t">falta escolher a OS</span>`}`:`Manutenção · sai do estoque ${TEC.ct} para o estoque da ${TEC.eq}`}</div></div>
+  <div class="box"><h4>Quando você vai retirar</h4>
+   <p style="font-size:12px" class="muted">Retirada de segunda a sexta, até as 10h. Se o pedido for aprovado até as 16h, retira no dia útil seguinte; depois das 16h, em 2 dias úteis. Já deixamos marcada a primeira data possível (<b>${fmtD(def)}</b>); você pode escolher uma data depois.</p>
+   <div class="datas">${opcoes.map(x=>{const antes=x<def,sab=x.getDay()===6,emerg=antes||sab;const bloq=emerg&&!S2.emerg;
+     return `<button class="dt" data-a="t-data" data-v="${x.getDate()}" aria-pressed="${mesmoDia(x,S2.ret)}" ${bloq?"disabled":""} title="${bloq?"Só com “preciso antes (emergencial)”":""}"><small>${DIAS[x.getDay()]}</small><b>${String(x.getDate()).padStart(2,"0")}/11</b>${emerg?'<span class="em">emergencial</span>':`<small>até 10h</small>`}</button>`;}).join("")}</div>
+   <label class="chk" style="white-space:normal;align-items:flex-start"><input type="checkbox" id="t-emerg" ${S2.emerg?"checked":""}><span><b>Preciso antes (emergencial)</b><br><span class="muted" style="font-size:12px">Libera hoje, sábado e horário depois das 10h. O aprovador e o gestor recebem um alerta, e fica registrado como emergencial.</span></span></label>
+   ${S2.emerg?`<div class="campo"><label for="t-motivo">Por que é urgente? <span class="erro-t">obrigatório</span></label><textarea class="inp" id="t-motivo" rows="2" placeholder="Ex.: loja sem luz no salão, precisa trocar hoje">${esc(S2.motivo)}</textarea></div>`:""}
+  </div>
+  ${err.length?`<div class="faixa al-des">${err.map(e=>`<div class="al"><span class="mk">!</span><span class="tx">${e}</span></div>`).join("")}</div>`:""}
+  <button class="btn btn-lg btn-block" data-a="t-enviar">Enviar pedido</button>
+  <p class="muted" style="font-size:12px;text-align:center">Depois de enviar, o supervisor do ${S2.dest==="obra"?"Obras/Spot":TEC.ct} aprova. Você recebe o aviso aqui.</p>`;
+}
+function telaEnviado(){
+  const pd=PED.find(p=>p.n===S2.enviado);
+  return `<div class="pin-wrap" style="gap:12px"><div class="pin-logo" style="background:var(--ok)">✓</div><h2 style="font-size:20px">Pedido #${pd.n} enviado</h2>
+  <p class="muted">${pd.itens.length} ${pd.itens.length===1?"item":"itens"} · retirada ${fmtD(pd.ret)}${pd.emerg?" (emergencial)":" até as 10h"}.<br>${pd.emerg?`O supervisor do ${pd.dest==="obra"?"Obras/Spot":pd.ct} e o gestor receberam o alerta de emergencial.`:`Agora o supervisor do ${pd.dest==="obra"?"Obras/Spot":pd.ct} precisa aprovar até as 16h do dia útil anterior à retirada.`} Você recebe um aviso aqui quando ele aprovar.</p>
+  <p class="mk-ctrl" style="font-size:12px">Mockup: este pedido já aparece na fila da Seção 3. Aprove ou recuse lá e volte aqui para ver o aviso.</p>
+  <button class="btn btn-lg btn-block" data-a="t-tela" data-v="pedidos">Ver meus pedidos</button></div>`;
+}
+function telaDetalhe(){
+  const pd=PED.find(p=>p.n===S2.det);if(!pd)return"";
+  const passos=[["Enviado",`${fmtD(pd.env)} ${fmtH(pd.env)}`],["Aprovado",pd.por?`por ${pd.por}`:"aguardando o supervisor"],["Separado","o almox separa e avisa"],["Retirado",`${fmtD(pd.ret)} até 10h · assinatura com PIN`]];
+  const feito={enviado:1,aprovado:2,separado:3,retirado:4,recusado:1,nao_retirado:3,cancelado:1}[pd.etapa];
+  const fim=["recusado","nao_retirado","cancelado","retirado"].includes(pd.etapa);
+  const vs=passos.map(([t,w],i)=>{let c=i<feito?"done":(!fim&&i===feito)?"cur":"";
+    if(pd.etapa==="recusado"&&i===1){c="bad";t="Recusado";w=`por ${pd.por}: “${esc(pd.recusa)}”`;}
+    if(pd.etapa==="nao_retirado"&&i===3){c="bad";t="Não retirado";w=`ninguém retirou em ${fmtD(pd.ret)}; o material voltou à prateleira`;}
+    if(pd.etapa==="cancelado"&&i===1){c="bad";t="Cancelado";w="cancelado por você";}
+    return `<div class="vs ${c}"><span class="c">${c==="done"?"✓":c==="bad"?"✕":i+1}</span><div><div class="t">${t}</div><div class="w">${w}</div></div></div>`;}).join("");
+  const podeCancelar=["enviado","aprovado"].includes(pd.etapa);
+  const prox={enviado:"Simular: aprovador aprova",aprovado:"Simular: almox separa",separado:"Simular: técnico retira"}[pd.etapa];
+  return `<div style="display:flex;align-items:center;gap:8px"><button class="btn btn-ghost btn-sm" data-a="t-tela" data-v="pedidos">← Meus pedidos</button></div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="font-size:22px" class="mono">#${pd.n}</h2>${badgeEtapa(pd.etapa)}${pd.emerg?'<span class="badge b-des">Emergencial</span>':""}</div>
+  <div class="box"><div class="vsteps">${vs}</div></div>
+  <div class="box"><h4>Itens</h4>
+   <div class="tbl-wrap"><table class="tbl" style="font-size:13px"><thead><tr><th>Material</th><th class="r">Pedi</th><th class="r">Aprovado</th></tr></thead><tbody>
+   ${pd.itens.map(i=>{const p=PID[i.id];return `<tr><td style="white-space:normal">${esc(p.d)}${i.incl?' <span class="badge b-sec">incluído pelo supervisor</span>':""}${i.transf?` <span class="badge b-avi">${i.transf} aguardando transferência</span>`:""}</td><td class="r n">${i.incl?"—":i.pediu}</td><td class="r n">${pd.etapa==="enviado"?'<span class="muted">—</span>':i.ap}</td></tr>`;}).join("")}
+   </tbody></table></div></div>
+  <div class="box" style="font-size:13px"><div>${pd.dest==="obra"?`Obra/Spot · OS ${pd.os.join(", ")} · sai do BASE`:`Manutenção · sai do estoque ${pd.ct}`}</div><div>Retirada: <b>${fmtD(pd.ret)}</b>${pd.emerg?` · motivo: ${esc(pd.motivo)}`:" até as 10h"}</div></div>
+  ${pd.etapa==="nao_retirado"?`<button class="btn btn-lg btn-block" data-a="t-reagendar" data-v="${pd.n}">Retirar em ${fmtD(retPadrao())}</button><p class="muted" style="font-size:12px;text-align:center">O almox separa de novo para a data nova. Não precisa de outra aprovação.</p>`:""}
+  ${pd.etapa==="separado"?`<p class="faixa al-ok">No balcão, o almox confere com você e você assina com o PIN e o dedo na tela.</p>`:""}
+  ${podeCancelar?`<button class="btn btn-destructive btn-lg btn-block" data-a="t-cancelar" data-v="${pd.n}">Cancelar pedido</button>`:""}
+  ${pd.etapa==="separado"?`<p class="muted" style="font-size:12px;text-align:center">Pedido já separado não dá para cancelar pelo app. Fale com o almox.</p>`:""}
+  ${prox?`<button class="btn btn-outline btn-sm" style="border-style:dashed" data-a="t-avanca" data-v="${pd.n}">${prox} (controle do mockup)</button>`:""}`;
+}
+function s2Phone(){
+  if(S2.estado==="semperm")return `<div class="ph-body"><div class="pin-wrap">${bloco("perm","Seu acesso está bloqueado","Este celular não está liberado para pedir material, ou o seu convite venceu. Procure o almoxarifado: eles desbloqueiam ou mandam um convite novo pelo WhatsApp.")}</div></div>`;
+  if(S2.tela==="pin")return `<div class="ph-body" style="padding:0">${telaPin()}</div>`;
+  const corpo={pedidos:telaPedidos,novo:telaNovo,carrinho:telaCarrinho,detalhe:telaDetalhe,enviado:telaEnviado}[S2.tela]();
+  return phHead()+`<div class="ph-body" id="ph-body">${corpo}</div>`+(S2.tela==="enviado"?"":phFoot());
+}
+function s2Render(){
+  const scroll=$("#ph-body")?.scrollTop||0;
+  $("#sec-2").innerHTML=`<div class="sec-h"><div class="label-mono">Técnico · celular, sem conta no hub (link de convite + PIN)</div><h1>Seção 2 — Pedido do técnico</h1><p>O técnico monta um pedido só, com todos os itens e o dia de retirada, e acompanha cada etapa pelo celular.</p></div>
+  ${seletorEstado("2",S2.estado)}<div style="height:18px"></div>
+  <div class="s2-grid"><div class="phone"><div class="ph-notch"><span>${G.hora}</span><span>●●● 4G</span></div>${s2Phone()}</div>
+  <div class="lado">
+   <div class="mk-ctrl"><b>Ir direto para</b><span class="seg">${[["pin","Entrar com PIN"],["pedidos","Meus pedidos"],["novo","Novo pedido"],["carrinho","Carrinho"]].map(([k,r])=>`<button data-a="t-ir" data-v="${k}" aria-pressed="${S2.tela===k}">${r}</button>`).join("")}</span></div>
+   <h3>O que o técnico vê</h3>
+   <ul>
+    <li><b>Só o estoque do contrato dele</b> (a MANFAC 2 é DPSP). A única outra opção é Obra/Spot, que sai do BASE e pede a OS.</li>
+    <li><b>Busca a cada letra</b>, sem ligar para acento ou maiúscula: “disj 20” acha os dois disjuntores de 20A.</li>
+    <li><b>Asterisco</b>: não tem no estoque dele, mas tem em outro. Pode pedir; o almox decide de onde transferir. O técnico não vê de onde nem quanto.</li>
+    <li><b>Cinza</b>: não tem em lugar nenhum. Não dá para pedir; o caminho é o Compras.</li>
+    <li><b>Data de retirada</b> já vem marcada pela regra das 16h e das 10h. Troque a hora simulada no topo para ver a data mudar.</li>
+    <li><b>Faixa de avisos</b> no topo de Meus pedidos: não aprovado a tempo, aprovado, separado, recusado, aguardando transferência e não retirado.</li>
+   </ul>
+   <p class="muted" style="font-size:13px">Experimente: busque “reator” (asterisco) e “torneira” (cinza); troque para Obra/Spot; marque “preciso antes”; abra o #1042 e cancele para ver o aviso completo.</p>
+  </div></div>`;
+  const b=$("#ph-body");if(b)b.scrollTop=scroll;
+}
+function enviarPedido(){
+  const E=[];const ids=Object.keys(S2.cart).filter(k=>S2.cart[k]>0);
+  if(!ids.length)E.push("Coloque pelo menos um item no carrinho.");
+  if(S2.dest==="obra"&&!S2.os)E.push("Pedido de Obra/Spot precisa da OS. Volte e escolha a OS.");
+  if(S2.emerg&&S2.motivo.trim().length<5)E.push("Escreva por que é urgente. Sem o motivo, o pedido emergencial não sai.");
+  const def=retPadrao();
+  if(!S2.emerg&&(S2.ret<def||S2.ret.getDay()===6))E.push(`A data escolhida é antes de ${fmtD(def)}. Marque “preciso antes (emergencial)” ou escolha outra data.`);
+  S2.erros=E;if(E.length){s2Render();return;}
+  const n=proxNum++;
+  PED.push({n,tec:TEC.nome,eq:TEC.eq,ct:S2.dest==="obra"?"Obra/Spot":TEC.ct,dest:S2.dest,os:S2.os?[S2.os]:[],env:agora(),ret:S2.ret,emerg:S2.emerg,motivo:S2.motivo.trim(),etapa:"enviado",itens:ids.map(id=>it(id,S2.cart[id]))});
+  S2.cart={};S2.emerg=false;S2.motivo="";S2.ret=null;S2.os=null;S2.osBusca="";S2.busca="";S2.enviado=n;S2.tela="enviado";
+  if(!S3.sel)S3.sel=n;
+  s2Render();s3Render();
+}
+function cancelarDlg(n){
+  const pd=PED.find(p=>p.n===n);const ap=pd.etapa==="aprovado";
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Cancelar o pedido #${n}?</h2><p class="muted" style="margin-top:4px">${pd.itens.length} itens · retirada ${fmtD(pd.ret)}</p></div></div>
+  <div class="conseq"><b>O que acontece se você cancelar</b><ul>
+   <li>${ap?`O pedido sai da lista de separação do almoxarifado.`:`O pedido sai da fila de aprovação.`}</li>
+   <li>${ap?`${pd.por} (quem aprovou) e o almoxarifado recebem um e-mail avisando do cancelamento.`:`O supervisor do ${pd.ct} recebe um e-mail avisando que você cancelou.`}</li>
+   <li>Nenhum material se mexe: nada foi separado ainda${pd.itens.some(i=>i.transf)?", e a transferência que estava pendente é descartada":""}.</li>
+   <li>A retirada de ${fmtD(pd.ret)} deixa de existir.</li>
+   <li>Não dá para desfazer. Se ainda precisar do material, faça um pedido novo.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar, não cancelar</button><button class="btn btn-destructive-solid" data-a="t-cancela-ok" data-v="${n}">Cancelar pedido #${n}</button></div>`);
+}
+function aprovarPedido(pd){
+  const l=locDe(pd);
+  pd.itens=pd.itens.filter(i=>i.ap>0||!i.incl);
+  pd.itens.forEach(i=>{i.transf=Math.max(0,i.ap-disp(PID[i.id],l));});
+  if(!pd.emerg){const min=addUteis(hoje(),passouCorte()?2:1);if(pd.ret<min)pd.ret=min;}
+  pd.etapa="aprovado";pd.por="Fernanda Rocha";
+}
+
+/* =====================================================================
+   SEÇÃO 3 — APROVAÇÃO
+   ===================================================================== */
+const S3={estado:"dados",sel:1044,incl:"",msg:null,osNova:""};
+const APROVA_CT=["DPSP","Obra/Spot"];
+function fila(){return PED.filter(p=>p.etapa==="enviado"&&APROVA_CT.includes(p.ct)).sort((a,b)=>(a.ret-b.ret)||(a.env-b.env));}
+function novaRet(pd){if(pd.emerg)return pd.ret;const min=addUteis(hoje(),passouCorte()?2:1);return pd.ret<min?min:pd.ret;}
+function s3Fila(){
+  const F=fila();
+  return `<div class="fila"><div style="display:flex;align-items:center"><h3 style="font-size:15px">Esperando você</h3><div class="sp"></div><span class="badge b-sec n">${F.length}</span></div>
+  <p class="muted" style="font-size:12px">Primeiro os que retiram mais cedo; depois os que esperam há mais tempo.</p>
+  ${F.map(pd=>{const h=esperaH(pd.env);const r=quando(pd.ret);
+   return `<button class="fi" data-a="s3-sel" data-v="${pd.n}" aria-current="${S3.sel===pd.n}"><div class="l1"><span class="num">#${pd.n}</span><span style="font-weight:500">${pd.eq}</span><span class="sp"></span><span class="muted" style="font-size:12px">${pd.itens.length} itens</span></div>
+   <div style="font-size:13px">${pd.tec} · ${pd.dest==="obra"?`Obra/Spot · OS ${pd.os.join(", ")}`:`${pd.ct} · Manutenção`}</div>
+   <div class="bs"><span class="badge ${h>4?"b-avi":"b-out"}">esperando ${espera(pd.env)}</span>${pd.emerg?`<span class="badge b-des">Emergencial · retira ${r}</span>`:`<span class="badge ${mesmoDia(pd.ret,addUteis(hoje(),1))?"b-avi":"b-out"}">retira ${r}</span>`}</div></button>`;}).join("")}</div>`;
+}
+function linhaItem(pd,i,ix){
+  const p=PID[i.id],l=locDe(pd),d=disp(p,l),ja=eqTem(p,pd.eq);
+  const ficha=ehFicha(p),obra=pd.dest==="obra";
+  const div=!ficha&&!obra&&!i.incl&&i.pediu>0&&ja>=i.pediu;
+  const exc=Math.max(0,i.ap-d);
+  const depois=ficha?`<span class="muted" style="font-size:12px">vai para a ficha de ${pd.tec.split(" ")[0]}</span>`:obra?`<span class="muted" style="font-size:12px">não entra na equipe (baixa na OS)</span>`:`<span class="depois n">${num(ja+i.ap)}</span>`;
+  const notas=[];
+  if(i.incl)notas.push(`<span class="badge b-sec">incluído por você</span>`);
+  if(div)notas.push(`<span class="badge b-avi">Equipe já tem ${ja}. Confira antes de aprovar</span>`);
+  if(i.ap===0)notas.push(`<span class="badge b-out">não vai ser aprovado</span>`);
+  else if(exc>0)notas.push(`<span class="badge b-avi">${exc} ${exc>1?"vão":"vai"} para transferência</span>`);
+  const osCol=obra?`<td>${pd.os.length>1?`<select class="inp" data-os="${ix}" style="height:28px">${pd.os.map(o=>`<option ${i.os===o?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="n">${pd.os[0]||"—"}</span>`}</td>`:"";
+  return `<tr class="lin ${div?"div":""} ${i.ap===0?"zer":""}" id="r-${ix}"><td class="fix" style="white-space:normal;min-width:180px"><div style="font-weight:500">${esc(p.d)}</div><div class="notas" id="r-${ix}-n">${notas.join("")}</div></td>
+   <td class="r n">${i.incl?'<span class="muted">—</span>':num(i.pediu)}</td>
+   <td class="r"><span class="qty"><button data-a="s3-q" data-v="${ix}" data-d="-1" aria-label="Menos">−</button><input class="inp" type="number" min="0" step="1" inputmode="numeric" value="${i.ap}" data-q="${ix}" aria-label="Aprovar ${esc(p.d)}"><button data-a="s3-q" data-v="${ix}" data-d="1" aria-label="Mais">+</button></span>${i.incl?` <button class="btn btn-ghost btn-xs" data-a="s3-tira" data-v="${ix}">tirar</button>`:""}</td>
+   <td class="r n">${ficha||obra?'<span class="muted">—</span>':num(ja)}</td>
+   <td class="r" id="r-${ix}-d">${depois}</td>
+   <td class="r n">${num(d)} <span class="muted">${p.un}</span></td>${osCol}</tr>`;
+}
+function s3Resumo(pd){
+  const l=locDe(pd);
+  const ap=pd.itens.filter(i=>i.ap>0),zer=pd.itens.filter(i=>i.ap===0);
+  const tr=pd.itens.map(i=>({i,e:Math.max(0,i.ap-disp(PID[i.id],l))})).filter(x=>x.e>0);
+  const nr=novaRet(pd);const muda=!mesmoDia(nr,pd.ret);
+  return `${muda?`<div class="corte"><b>Já passou das 16h.</b> Aprovando agora, a retirada passa de <b>${fmtD(pd.ret)}</b> para <b>${fmtD(nr)}</b>. ${pd.tec.split(" ")[0]} recebe o aviso com a data nova.</div>`:""}
+  <div style="font-size:13px">Vai aprovar <b>${ap.length} de ${pd.itens.length}</b> itens${zer.length?` (${zer.length} zerado${zer.length>1?"s":""})`:""}. Retirada <b>${fmtD(nr)}</b>${pd.emerg?" (emergencial)":" até as 10h"}.${tr.length?` <br>Vai para o almox decidir a transferência: ${tr.map(x=>`${x.e} ${PID[x.i.id].un} de ${esc(PID[x.i.id].d)}`).join("; ")}.`:""}</div>
+  ${!ap.length?`<p class="erro-t">Tudo zerado. Para não aprovar nada, use “Recusar pedido”, que pede o motivo.</p>`:""}`;
+}
+function s3Det(){
+  const pd=PED.find(p=>p.n===S3.sel&&p.etapa==="enviado");
+  if(!pd)return S3.msg?`<div class="okmsg">${S3.msg}</div>`:bloco("vazio","Escolha um pedido na fila","Clique em um pedido à esquerda para ver os itens.");
+  const obra=pd.dest==="obra";const l=locDe(pd);
+  const cand=S3.incl?P.filter(p=>casa(`${p.d} ${p.cod} ${p.f}`,S3.incl)&&!pd.itens.some(i=>i.id===p.id)).slice(0,5):[];
+  return `${S3.msg?`<div class="okmsg">${S3.msg}</div>`:""}
+  <div class="det-h"><h2 class="mono">Pedido #${pd.n}</h2>${pd.emerg?'<span class="badge b-des">Emergencial</span>':""}<span class="badge b-avi">Aguardando aprovação</span></div>
+  <div class="info card" style="padding:14px">
+   <div><div class="k">Técnico</div><div class="v">${pd.tec}</div></div>
+   <div><div class="k">Equipe</div><div class="v">${pd.eq}</div></div>
+   <div><div class="k">Destino</div><div class="v">${obra?"Obra/Spot · sai do BASE":`Manutenção · sai do ${pd.ct}`}</div></div>
+   <div><div class="k">Retirada pedida</div><div class="v">${fmtD(pd.ret)}${pd.emerg?"":" até 10h"}</div></div>
+   <div><div class="k">Enviado</div><div class="v">${fmtD(pd.env)} ${fmtH(pd.env)} · há ${espera(pd.env)}</div></div>
+   ${obra?`<div><div class="k">OS</div><div class="v">${pd.os.map(o=>`<span class="chip">${o}</span>`).join(" ")}</div></div>`:""}
+  </div>
+  ${pd.emerg?`<div class="emerg"><b>Pedido emergencial.</b> Motivo do técnico: “${esc(pd.motivo)}”. O gestor também recebeu este alerta.</div>`:""}
+  ${obra?`<div class="acoes" style="font-size:13px"><span class="muted">Mais de uma OS? Informe e diga qual item vai para qual:</span><input class="inp" id="s3-os" placeholder="Nº da OS" style="width:120px" value="${esc(S3.osNova)}"><button class="btn btn-outline btn-sm" data-a="s3-os-add">Adicionar OS</button></div>`:""}
+  <div class="legenda"><span><span class="sw" style="background:var(--aviso-bg);outline:1px solid var(--aviso)"></span>A equipe já tem, pelo Omie, o mesmo ou mais do que pediu</span><span>“Saldo da equipe depois” = já tem + o que você aprovar</span></div>
+  <div class="tbl-wrap"><table class="tbl ap"><thead><tr><th class="fix">Item</th><th class="r">Pediu</th><th class="r">Aprovar</th><th class="r">Equipe já tem</th><th class="r">Saldo da equipe depois</th><th class="r">Disponível no ${obra?"BASE":"contrato"}</th>${obra?"<th>OS</th>":""}</tr></thead>
+  <tbody>${pd.itens.map((i,ix)=>linhaItem(pd,i,ix)).join("")}</tbody></table></div>
+  <div class="acoes"><div class="incl"><input class="inp" id="s3-incl" type="search" placeholder="Incluir item (ex.: fita, luva)" value="${esc(S3.incl)}" autocomplete="off">
+   ${cand.length?`<div class="incl-res">${cand.map(p=>`<button data-a="s3-add" data-v="${p.id}"><span style="flex:1">${esc(p.d)}</span><span class="muted n" style="font-size:12px">${num(disp(p,l))} ${p.un} no ${obra?"BASE":"contrato"}</span></button>`).join("")}</div>`:""}</div></div>
+  <div class="resumo" id="s3-resumo">${s3Resumo(pd)}</div>
+  <div class="acoes"><button class="btn btn-destructive" data-a="s3-recusar" data-v="${pd.n}">Recusar pedido</button><div class="sp"></div><button class="btn btn-lg" id="s3-aprovar" data-a="s3-aprovar" data-v="${pd.n}" ${pd.itens.some(i=>i.ap>0)?"":"disabled"}>Aprovar</button></div>`;
+}
+function s3Corpo(){
+  const st=S3.estado;
+  if(st==="semperm")return bloco("perm","Você não aprova pedidos de nenhum contrato","Seu usuário entra no Almoxarifado, mas não está cadastrado como aprovador de DPSP, Profarma ou Obras/Spot. Quem cadastra aprovadores é o administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 style="font-size:28px;letter-spacing:-0.02em">Aprovação de pedidos</h2><div class="sp"></div><span class="muted" style="font-size:13px">Você aprova: DPSP e Obras/Spot</span></div>`;
+  if(st==="carregando")return cab+`<div class="s3-grid"><div class="fila">${Array.from({length:3},()=>`<div class="fi" style="cursor:default"><div class="skel" style="width:50%"></div><div class="skel"></div><div class="skel" style="width:70%"></div></div>`).join("")}</div><div class="card" style="display:flex;flex-direction:column;gap:12px">${"<div class='skel'></div>".repeat(6)}</div></div>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar a fila","O servidor não respondeu, então não mostramos nada para você não aprovar sem ver o pedido inteiro. Os pedidos continuam esperando; nenhum prazo foi perdido por causa deste erro. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="s3-tentar">Tentar de novo</button>`);
+  if(st==="vazio"||!fila().length)return cab+(S3.msg?`<div class="okmsg" style="margin-bottom:12px">${S3.msg}</div>`:"")+bloco("ok","Nenhum pedido esperando você","Tudo o que chegou de DPSP e Obras/Spot já foi aprovado ou recusado. Quando um técnico mandar pedido novo, ele aparece aqui e você recebe um e-mail.");
+  return cab+`<div class="s3-grid">${s3Fila()}<div class="det" id="s3-det">${s3Det()}</div></div>`;
+}
+function s3Render(){
+  $("#sec-3").innerHTML=`<div class="sec-h"><div class="label-mono">Aprovador (supervisor / PCM) · computador ou celular</div><h1>Seção 3 — Aprovação</h1><p>O aprovador abre o pedido inteiro, ajusta o que precisar e aprova com um clique. A coluna “saldo da equipe depois” mostra com quanto a equipe vai ficar.</p></div>
+  ${seletorEstado("3",S3.estado)}<div style="height:14px"></div>
+  ${shell(["Início","Aprovação","Pedidos","Estoque"],"Aprovação","Fernanda Rocha","Aprovadora · DPSP e Obras/Spot",s3Corpo())}
+  <p class="muted" style="font-size:13px;margin-top:12px">Experimente: no #1042, zere a fita ou suba o disjuntor e veja as colunas recalcularem; troque a hora simulada para 16:40 e veja o aviso da data nova antes de aprovar.</p>`;
+}
+function s3AtualizaLinha(pd,ix){
+  const tr=$(`#r-${ix}`);if(!tr)return;
+  const tmp=document.createElement("tbody");tmp.innerHTML=linhaItem(pd,pd.itens[ix],ix);
+  const novo=tmp.firstElementChild;
+  tr.className=novo.className;
+  $(`#r-${ix}-n`).innerHTML=$(`#r-${ix}-n`,novo).innerHTML;
+  $(`#r-${ix}-d`).innerHTML=$(`#r-${ix}-d`,novo).innerHTML;
+  $("#s3-resumo").innerHTML=s3Resumo(pd);
+  $("#s3-aprovar").disabled=!pd.itens.some(i=>i.ap>0);
+}
+function recusarDlg(n,erro){
+  const pd=PED.find(p=>p.n===n);
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Recusar o pedido #${n} inteiro?</h2><p class="muted" style="margin-top:4px">${pd.tec} · ${pd.eq} · ${pd.itens.length} itens · retirada ${fmtD(pd.ret)}</p></div></div>
+  <div class="campo"><label for="dlg-motivo">Motivo (o técnico vai ler) <span class="erro-t">obrigatório</span></label><textarea class="inp" id="dlg-motivo" rows="3" placeholder="Ex.: a equipe já tem esse material pelo Omie; confira o carro antes de pedir de novo"></textarea>${erro?`<span class="erro-t">${erro}</span>`:""}</div>
+  <div class="conseq"><b>O que acontece se você recusar</b><ul>
+   <li>${pd.tec} (${pd.eq}) recebe o aviso no app com o seu motivo.</li>
+   <li>Nada é separado e nenhum material sai do estoque ${locDe(pd)}${pd.dest==="obra"?` nem é lançado na OS ${pd.os.join(", ")}`:""}.</li>
+   <li>A retirada de ${fmtD(pd.ret)} deixa de existir; o almoxarifado não vê este pedido.</li>
+   <li>O pedido fica como Recusado e não dá para reabrir. Se ainda precisar, o técnico faz um pedido novo.</li>
+   <li>Se quiser aprovar só uma parte, volte e zere os itens que não vão.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s3-recusa-ok" data-v="${n}">Recusar pedido #${n}</button></div>`);
+  setTimeout(()=>$("#dlg-motivo")?.focus(),30);
+}
+function proxSel(){const F=fila();S3.sel=F.length?F[0].n:null;}
+
+/* =====================================================================
+   SEÇÃO 4 — SUPOSIÇÕES
+   ===================================================================== */
+function s4Render(){
+  $("#sec-4").innerHTML=`<div class="sec-h"><div class="label-mono">Para confirmar</div><h1>Seção 4 — Suposições desta versão</h1><p>Duas coisas que o desenho deixou em aberto e que este mockup assumiu. Se alguma estiver errada, responda citando a letra.</p></div>
+  <div class="sup">
+   <div class="card"><span class="lt">a</span><p><b>Só o técnico abre pedido.</b> O supervisor ou PCM aprova, ajusta quantidades e inclui itens no pedido do técnico, mas não abre um pedido próprio.</p></div>
+   <div class="card"><span class="lt">b</span><p><b>O custo do material de Obra/Spot fica registrado no Almoxarifado, por OS,</b> e ainda não aparece dentro do sistema de Gestão de Obras.</p></div>
+  </div>`;
+}
+
+/* =====================================================================
+   NAVEGAÇÃO E EVENTOS
+   ===================================================================== */
+function renderTudo(){s1Render();s2Render();s3Render();s4Render();}
+function irSec(v){
+  G.sec=v;["1","2","3","4"].forEach(k=>{$(`#sec-${k}`).hidden=k!==v;$(`#tab-${k}`).setAttribute("aria-selected",String(k===v));});
+  if(location.hash!==`#secao-${v}`)history.replaceState(null,"",`#secao-${v}`);
+}
+function marcaHora(){document.querySelectorAll("#seg-hora button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===G.hora)));}
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-a]");if(!el)return;
+  const a=el.dataset.a,v=el.dataset.v;
+  switch(a){
+    case "sec":irSec(v);window.scrollTo({top:0});break;
+    case "hora":G.hora=v;marcaHora();S2.ret=null;renderTudo();break;
+    case "fechar":fechar();break;
+    case "estado":{const o={1:S1,2:S2,3:S3}[el.dataset.s];o.estado=v;if(el.dataset.s==="2"&&S2.tela==="pin"&&v!=="semperm"&&v!=="dados")S2.tela="pedidos";({1:s1Render,2:s2Render,3:s3Render})[el.dataset.s]();break;}
+    /* seção 1 */
+    case "s1-prod":s1Abrir(v);break;
+    case "s1-eq":S1.abertos.has(v)?S1.abertos.delete(v):S1.abertos.add(v);s1Atualiza();break;
+    case "s1-limpar":Object.assign(S1,{busca:"",est:"todos",fam:"todas",abaixo:false,saldo:false});s1Render();break;
+    case "s1-so-abaixo":Object.assign(S1,{abaixo:true});s1Render();break;
+    case "s1-tentar":tentar(S1,s1Render);break;
+    /* seção 2 */
+    case "t-ir":S2.tela=v;if(v==="pin")S2.pin="";S2.erros=[];s2Render();break;
+    case "t-dig":if(S2.pin.length<6){S2.pin+=v;s2Render();}break;
+    case "t-apaga":S2.pin=S2.pin.slice(0,-1);s2Render();break;
+    case "t-entrar":if(S2.pin==="0000"){S2.pinErr=Math.min(4,S2.pinErr+1);S2.pin="";}else if(S2.pin.length>=4){S2.pinErr=0;S2.pin="";S2.tela="pedidos";}s2Render();break;
+    case "t-tela":S2.tela=v;S2.erros=[];s2Render();break;
+    case "t-tentar":tentar(S2,s2Render);break;
+    case "t-faixa":S2.faixaAberta=!S2.faixaAberta;s2Render();break;
+    case "t-visto":S2.vistos.add(v);s2Render();break;
+    case "t-det":S2.det=Number(v);S2.tela="detalhe";s2Render();break;
+    case "t-dest":S2.dest=v;s2Render();break;
+    case "t-os":S2.os=v;s2Render();break;
+    case "t-os-tira":S2.os=null;S2.osBusca="";s2Render();break;
+    case "t-mais":S2.cart[v]=(S2.cart[v]||0)+1;s2Render();break;
+    case "t-menos":S2.cart[v]=Math.max(0,(S2.cart[v]||0)-1);if(!S2.cart[v])delete S2.cart[v];s2Render();break;
+    case "t-data":S2.ret=dia(Number(v));s2Render();break;
+    case "t-enviar":enviarPedido();break;
+    case "t-cancelar":cancelarDlg(Number(v));break;
+    case "t-cancela-ok":{const pd=PED.find(p=>p.n===Number(v));pd.etapa="cancelado";fechar();if(S3.sel===pd.n)proxSel();s2Render();s3Render();break;}
+    case "t-reagendar":{const pd=PED.find(p=>p.n===Number(v));pd.ret=retPadrao();pd.etapa="aprovado";s2Render();break;}
+    case "t-avanca":{const pd=PED.find(p=>p.n===Number(v));if(pd.etapa==="enviado")aprovarPedido(pd);else if(pd.etapa==="aprovado")pd.etapa="separado";else if(pd.etapa==="separado")pd.etapa="retirado";if(S3.sel===pd.n)proxSel();s2Render();s3Render();break;}
+    /* seção 3 */
+    case "s3-sel":S3.sel=Number(v);S3.msg=null;S3.incl="";s3Render();if(window.innerWidth<980)$("#s3-det")?.scrollIntoView({behavior:"smooth",block:"start"});break;
+    case "s3-q":{const pd=PED.find(p=>p.n===S3.sel);const i=pd.itens[Number(v)];i.ap=Math.max(0,i.ap+Number(el.dataset.d));const inp=document.querySelector(`[data-q="${v}"]`);if(inp)inp.value=i.ap;s3AtualizaLinha(pd,Number(v));break;}
+    case "s3-tira":{const pd=PED.find(p=>p.n===S3.sel);pd.itens.splice(Number(v),1);s3Render();break;}
+    case "s3-add":{const pd=PED.find(p=>p.n===S3.sel);const ni=it(v,0,1);ni.incl=true;ni.os=pd.os[0]||null;pd.itens.push(ni);S3.incl="";s3Render();break;}
+    case "s3-os-add":{const pd=PED.find(p=>p.n===S3.sel);const o=S3.osNova.trim();if(o&&!pd.os.includes(o))pd.os.push(o);pd.itens.forEach(i=>{if(!i.os)i.os=pd.os[0];});S3.osNova="";s3Render();break;}
+    case "s3-aprovar":{const pd=PED.find(p=>p.n===Number(v));const antes=pd.ret;aprovarPedido(pd);const tr=pd.itens.filter(i=>i.transf>0);
+      S3.msg=`<b>Pedido #${pd.n} aprovado.</b> ${pd.tec} foi avisado no app. Retirada: ${fmtD(pd.ret)}${mesmoDia(antes,pd.ret)?"":` (era ${fmtD(antes)})`}. O almoxarifado já vê o pedido na separação.${tr.length?` ${tr.map(i=>`${i.transf} ${PID[i.id].un} de ${esc(PID[i.id].d)}`).join("; ")} ${tr.length>1||tr[0].transf>1?"vão":"vai"} para o almox decidir a transferência.`:""}`;
+      proxSel();s3Render();s2Render();break;}
+    case "s3-recusar":recusarDlg(Number(v));break;
+    case "s3-recusa-ok":{const m=$("#dlg-motivo").value.trim();if(m.length<5){recusarDlg(Number(v),"Escreva o motivo. O técnico precisa saber por que foi recusado.");break;}
+      const pd=PED.find(p=>p.n===Number(v));pd.etapa="recusado";pd.recusa=m;pd.por="Fernanda Rocha";fechar();
+      S3.msg=`<b>Pedido #${pd.n} recusado.</b> ${pd.tec} recebeu o aviso com o seu motivo. Nada foi separado.`;proxSel();s3Render();s2Render();break;}
+    case "s3-tentar":tentar(S3,s3Render);break;
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.id==="s1-busca"){S1.busca=t.value;s1Atualiza();}
+  else if(t.id==="t-busca"){S2.busca=t.value;$("#t-lista").innerHTML=listaMat();}
+  else if(t.id==="t-os"){S2.osBusca=t.value;$("#t-os-res").innerHTML=osRes(OBRAS.filter(o=>casa(`${o.os} ${o.loja} ${o.desc}`,S2.osBusca)));}
+  else if(t.id==="t-motivo"){S2.motivo=t.value;}
+  else if(t.id==="s3-os"){S3.osNova=t.value;}
+  else if(t.id==="s3-incl"){S3.incl=t.value;const pos=t.selectionStart;s3Render();const n=$("#s3-incl");n.focus();n.setSelectionRange(pos,pos);}
+  else if(t.dataset.q!=null){const pd=PED.find(p=>p.n===S3.sel);const ix=Number(t.dataset.q);const v=Math.max(0,Math.floor(Number(t.value)||0));pd.itens[ix].ap=v;s3AtualizaLinha(pd,ix);}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="s1-est"){S1.est=t.value;$("#s1-tabela").innerHTML=s1Tabela();s1Cont();}
+  else if(t.id==="s1-fam"){S1.fam=t.value;s1Atualiza();}
+  else if(t.id==="s1-abaixo"){S1.abaixo=t.checked;s1Atualiza();}
+  else if(t.id==="s1-saldo"){S1.saldo=t.checked;s1Atualiza();}
+  else if(t.id==="t-emerg"){S2.emerg=t.checked;if(!S2.emerg){const d=retPadrao();if(S2.ret<d||S2.ret.getDay()===6)S2.ret=d;}s2Render();}
+  else if(t.dataset.os!=null){const pd=PED.find(p=>p.n===S3.sel);pd.itens[Number(t.dataset.os)].os=t.value;}
+});
+window.addEventListener("hashchange",()=>{const m=location.hash.match(/^#secao-([1-4])$/);if(m)irSec(m[1]);});
+
+marcaHora();renderTudo();
+{const m=location.hash.match(/^#secao-([1-4])$/);irSec(m?m[1]:"1");}
+</script>
