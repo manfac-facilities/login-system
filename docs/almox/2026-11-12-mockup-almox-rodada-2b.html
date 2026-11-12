@@ -1,0 +1,1780 @@
+<title>Almoxarifado Manfac</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: continuação da rodada 1 (2026-11-11-mockup-almox.html). Barra do mockup (âmbar tracejado, fora do produto) fixa no topo,
+   uma seção por vez; telas do hub dentro da moldura do hub (lateral navy de 256 px a partir de 768 px, topo navy com menu abaixo disso);
+   contagem de inventário dentro de um celular; assinatura dentro de um tablet. Tema único, o escuro do hub, de propósito:
+   tokens e componentes copiados sem mudança da rodada 1; o que é novo vem depois do bloco copiado. */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--navy-hover:#10285f;--orange:#f05a28;--orange-hover:#d94e22;
+  --muted:#94a3b8;--muted-dark:#4a6080;--border:#1e3a5f;--input-bg:#0f1f3d;--error:#ef4444;
+  --texto:#ffffff;--texto-suave:#e8eef7;
+  --verde-bg:#0d542b;--verde:#7bf1a8;--ambar-bg:#7b3306;--ambar:#ffd230;
+  --vermelho-bg:#82181a;--vermelho:#ffa2a2;--azul-bg:#1c398e;--azul:#8ec5ff;
+  --erro-borda:#e7000b;--erro-fundo:#460809;--ok-borda:#008236;--ok-fundo:#052e16;
+  --div-fundo:rgba(123,51,6,.42);--div-solido:#3a2219;
+  /* Texto auxiliar: #94a3b8, a opção legível da decisão D7 do RH. */
+  --aux:var(--muted);
+  /* Só do mockup: âmbar tracejado, para nunca parecer parte do produto. */
+  --nota:#fbbf24;--nota-fundo:#2a2108;--nota-borda:#7a5c0e;--mk-fundo:#060e1c;--frame:#050b16;
+  /* Nomes que o JavaScript usa em estilos inline. */
+  --primary:var(--orange);--primary-foreground:#ffffff;--aviso:var(--ambar);--aviso-bg:var(--div-fundo);--ok:var(--verde);--destructive:var(--vermelho);
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto)}
+body{margin:0;font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--mk-fundo)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+.n,.tab{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.label-mono{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:500;color:var(--aux)}
+.sp{flex:1}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ------------------------------ fora do produto: o mockup ------------------------------ */
+.mk-in,.wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mk-cab{background:var(--mk-fundo)}
+.mk-cab .wrap{padding-block:12px 4px}
+.mk-tit{font-weight:600;color:var(--nota)}
+.mk-tit small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.mk-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--mk-fundo);border-bottom:1px dashed var(--nota-borda)}
+.mk-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:8px}
+.mk-tabs{display:flex;gap:4px;min-width:0}
+.mk-tab{border:1px dashed var(--nota-borda);background:transparent;color:var(--texto-suave);border-radius:8px;min-height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
+.mk-tab:hover{border-color:var(--nota)}
+.mk-tab[aria-selected="true"]{background:var(--nota);border:1px solid var(--nota);color:#1a1405;font-weight:600}
+.mk-tab .tc{display:none}
+.mk-hora{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;border:1px dashed var(--nota-borda);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:6px;padding:4px 9px;font-size:12px;color:var(--texto-suave)}
+.seg button:hover{background:var(--nota-fundo)}
+.seg button[aria-pressed="true"]{background:var(--nota);color:#1a1405;font-weight:600}
+.mk-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--texto-suave);padding:8px 10px;border:1px dashed var(--nota-borda);border-radius:10px;background:var(--nota-fundo)}
+.mk-ctrl b{font-weight:600;color:var(--nota)}
+@media (max-width:640px){
+  .mk-in{gap:6px 8px;padding-block:6px}
+  .mk-in>.sp{display:none}
+  .mk-hora{margin-left:auto}
+  .mk-tabs{gap:3px}
+  .mk-tab{padding:0 7px;min-width:34px}
+  .mk-tab .tl,.mk-tab .tc{display:none}
+  .mk-tab[aria-selected="true"] .tc{display:inline}
+  .mk-hora .hd,.mk-hora .mk-hora-r{display:none}
+  .mk-hora .seg::before{content:"Hora";align-self:center;padding:0 1px 0 4px;font-size:10px;color:var(--muted)}
+  .mk-hora .seg button{padding:7px 5px}
+}
+
+main.pg{padding-block:20px 80px}
+.sec-h{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.sec-h h1{font-size:22px;font-weight:700;color:var(--texto)}
+.sec-h p{color:var(--muted);max-width:72ch}
+
+/* ------------------------------ componentes do hub ------------------------------ */
+/* Botões: btn-p, btn-s e btn-er do RH/Frotas */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 16px;border-radius:8px;border:1px solid transparent;background:var(--orange);color:#fff;font-size:14px;font-weight:500;white-space:nowrap;transition:background-color .15s,border-color .15s,transform .15s;text-decoration:none}
+.btn:hover{background:var(--orange-hover)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-outline{background:transparent;border-color:var(--border);color:var(--texto-suave)}
+.btn-outline:hover{background:transparent;border-color:var(--muted)}
+.btn-secondary{background:var(--border);color:#fff}
+.btn-secondary:hover{background:var(--navy-hover)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-ghost:hover{background:var(--border);color:#fff}
+.btn-destructive{background:transparent;border-color:var(--erro-borda);color:#fff}
+.btn-destructive:hover{background:var(--vermelho-bg)}
+.btn-destructive-solid{background:var(--erro-borda);color:#fff}
+.btn-destructive-solid:hover{background:#c10007}
+.btn-sm{min-height:32px;padding:0 12px;font-size:13px}
+.btn-xs{min-height:26px;padding:0 8px;font-size:12px;border-radius:6px}
+.btn-lg{min-height:44px;padding:0 18px;font-size:15px}
+.btn-block{width:100%}
+/* Etiquetas: chips do BaseTabela; a forma fica, para o tom não depender só da cor */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;line-height:1.45;white-space:nowrap;background:var(--border);color:var(--texto-suave)}
+.badge::before{font-size:9px;line-height:1}
+.b-ok{background:var(--verde-bg);color:var(--verde)}.b-ok::before{content:'✓'}
+.b-avi{background:var(--ambar-bg);color:var(--ambar)}.b-avi::before{content:'◆'}
+.b-des{background:var(--vermelho-bg);color:var(--vermelho)}.b-des::before{content:'▲'}
+.b-sec{background:var(--azul-bg);color:var(--azul)}.b-sec::before{content:'●'}
+.b-out{background:var(--border);color:var(--texto-suave)}
+/* Cartões navy */
+.card{background:var(--navy);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}
+/* Campos: veiculos/novo/_form.tsx */
+.inp{min-height:36px;border:1px solid var(--border);background:var(--input-bg);color:#fff;border-radius:8px;padding:0 12px;font-size:14px;min-width:0;outline:none}
+.inp::placeholder{color:var(--muted-dark)}
+.inp:focus{border-color:var(--orange)}
+textarea.inp{padding:10px 12px;resize:vertical;width:100%}
+select.inp{padding-right:8px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.chk input{accent-color:var(--orange);width:16px;height:16px;flex:none}
+
+/* Moldura do hub: lateral de components/sofia/Sidebar.tsx; abaixo de 768 px vira topo navy com menu, como no Frotas */
+.shell{container:sh/inline-size;position:relative;isolation:isolate;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background)}
+.sh-app{display:flex;flex-direction:column;min-height:560px}
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;max-width:85%;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+.shell[data-gaveta="sim"] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:block;color:#fff}
+.volta{color:var(--muted);font-size:12px;display:inline-flex;align-items:center}
+.lat-fecha{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px;width:44px;height:44px}
+.lat-fecha:hover{color:#fff}
+.lat-grupo{display:flex;flex-direction:column;gap:4px;margin-bottom:24px}
+.item{display:flex;align-items:center;width:100%;min-height:44px;padding:8px;border-radius:4px;font-size:14px;color:var(--muted);transition:background-color .15s,color .15s}
+.item[aria-disabled="true"]{cursor:default}
+.item[aria-disabled="true"]:hover{background:var(--border);color:#fff}
+.item[aria-current="page"]{background:var(--orange);color:#fff}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.quem{display:flex;align-items:center;gap:10px;padding:4px 8px 8px}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;color:#fff;flex:none}
+.quem-txt{min-width:0;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500;color:#fff;font-size:13px}
+.quem-txt span{color:var(--muted);overflow-wrap:anywhere}
+.topo-cel{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:10px 16px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+.shell[data-gaveta="sim"] .veu{display:block}
+.sh-main{container:area/inline-size;flex:1;min-width:0;padding:16px}
+@container sh (min-width:640px){.sh-main{padding:24px}}
+@container sh (min-width:1100px){.sh-main{padding:32px}}
+@container sh (min-width:768px){
+  .topo-cel,.veu{display:none!important}
+  .sh-app{flex-direction:row}
+  .lat{position:static;z-index:auto;transform:none;visibility:visible;max-width:none;transition:none}
+  .lat-fecha{display:none}
+  .item{min-height:0}
+}
+/* Título de página: app/(operacoes)/sofia/page.tsx */
+.pg-tit{font-size:24px;line-height:1.33;font-weight:700;color:#fff}
+
+/* Estados: vazio é convite (tracejado), erro é alarme (vermelho cheio), sem acesso é cartão navy */
+.est{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:24px;border-radius:12px;font-size:14px}
+.est h3{font-size:16px;font-weight:600;color:#fff}
+.est p{max-width:60ch;color:var(--muted)}
+.est .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:700}
+.est-vazio,.est-ok{border:1px dashed var(--border);align-items:center;text-align:center;padding:40px 16px}
+.est-vazio h3{font-weight:500;color:var(--texto-suave)}
+.est-vazio .ico{background:var(--border);color:var(--muted)}
+.est-ok .ico{background:var(--verde-bg);color:var(--verde)}
+.est-erro{border:1px solid var(--erro-borda);background:var(--erro-fundo)}
+.est-erro p{color:var(--vermelho)}
+.est-erro .ico{background:var(--erro-borda);color:#fff}
+.est-erro .btn{background:transparent;border-color:var(--erro-borda)}
+.est-erro .btn:hover{background:var(--vermelho-bg)}
+.est-perm{border:1px solid var(--border);background:var(--navy)}
+.est-perm .ico{background:var(--border);color:var(--muted)}
+.skel{background:var(--navy);border-radius:6px;height:14px;animation:sk 1.6s ease-in-out infinite}
+.card .skel,.fi .skel,.ped .skel{background:var(--border)}
+@keyframes sk{50%{opacity:.45}}
+
+/* Seção 1 */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+@container area (min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container area (min-width:860px){.tiles{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}}
+.tile{padding:16px;transition:border-color .15s}
+.tile[data-a]:hover{border-color:var(--orange)}
+.tile .v{font-size:22px;line-height:1.25;font-weight:700;color:#fff;margin-top:4px;overflow-wrap:anywhere}
+.tile .s{font-size:12px;color:var(--aux);margin-top:4px}
+.tile.alerta .v{color:var(--vermelho)}
+@container area (max-width:420px){.tile .v{font-size:19px}}
+.filtros{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px}
+.filtros .busca{flex:1 1 240px;min-width:0}
+.filtros .busca input{width:100%}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12px;color:var(--aux);margin-bottom:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+/* Tabela: BaseTabela do Frotas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{padding:10px 12px;text-align:left;font-weight:500;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border);background:var(--navy)}
+.tbl td{padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--texto-suave)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr.lin:hover td{background:var(--navy)}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td.r{font-variant-numeric:tabular-nums}
+.tbl .col-on{box-shadow:inset 0 -2px 0 var(--orange)}
+.tbl .fix{position:sticky;left:0;z-index:1;background:var(--background)}
+.tbl th.fix{background:var(--navy);z-index:2}
+.tbl tbody tr.lin:hover td.fix{background:var(--navy)}
+.prod-btn{border:0;background:transparent;padding:0;text-align:left;display:flex;flex-direction:column;max-width:280px;color:#fff}
+.prod-btn .nm{font-weight:500;white-space:normal;line-height:1.3}
+.prod-btn:hover .nm{color:var(--orange);text-decoration:underline;text-underline-offset:3px}
+.prod-btn .cd{font-family:var(--mono);font-size:11px;color:var(--aux)}
+.tbl td.c-red{background:var(--vermelho-bg);color:var(--vermelho);font-weight:600}
+.tbl td.c-amb{background:var(--ambar-bg);color:var(--ambar);font-weight:600}
+.zero{color:var(--muted-dark)}
+.tbl .zero{color:var(--aux)}
+.eq-btn{border:1px solid var(--border);background:transparent;color:var(--texto-suave);border-radius:6px;padding:2px 8px;font-variant-numeric:tabular-nums}
+.eq-btn:hover{border-color:var(--orange)}
+.tbl .sub td{background:var(--navy);font-size:13px;white-space:normal}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-block;border-radius:4px;padding:2px 8px;font-size:12px;background:var(--border);color:var(--texto-suave)}
+.chip b{color:#fff}
+.min-t{font-size:12px;color:var(--aux)}
+.atual{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--aux)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--verde);animation:pul 2.2s ease-in-out infinite}
+@keyframes pul{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Diálogo */
+dialog.dlg{border:1px solid var(--border);padding:0;border-radius:12px;background:var(--navy);color:#fff;width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 48px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
+dialog.dlg::backdrop{background:rgba(0,0,0,.6)}
+.dlg-in{display:flex;flex-direction:column;gap:14px;padding:20px;max-height:calc(100vh - 48px);overflow:auto}
+.dlg-h{display:flex;align-items:flex-start;gap:12px}
+.dlg-h h2{font-size:18px;font-weight:600}
+.dlg .tbl .fix,.dlg .tbl td{background:var(--navy)}
+.dlg .tbl th{background:var(--background)}
+.dlg-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.conseq{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-radius:8px;background:var(--erro-fundo);border:1px solid var(--erro-borda);color:var(--texto-suave)}
+.conseq b{color:#fff}
+.conseq ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label{font-size:14px;color:var(--muted)}
+.erro-t{color:var(--vermelho);font-size:13px}
+.hist{display:flex;flex-direction:column}
+.hist .h{display:grid;grid-template-columns:92px 1fr auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.hist .h:last-child{border:0}
+.hist .q{font-weight:600;font-variant-numeric:tabular-nums}
+.q.pos{color:var(--verde)}
+
+.s2-grid{display:grid;grid-template-columns:400px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:900px){.s2-grid{grid-template-columns:minmax(0,1fr)}}
+.phone{width:390px;max-width:100%;height:800px;border:11px solid var(--frame);border-radius:46px;overflow:hidden;display:flex;flex-direction:column;background:var(--background);box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px var(--border);position:relative}
+.ph-notch{height:26px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600;background:var(--navy);color:#fff}
+@media (max-width:520px){.s2-grid .phone{width:100%;height:auto;min-height:680px;border:1px solid var(--border);border-radius:12px;box-shadow:none}.ph-notch{display:none}.phone .ph-body{overflow:visible}}
+.ph-head{flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--navy);color:#fff}
+.ph-head .t1{font-weight:700;font-size:16px;line-height:1.25}
+.ph-head .t2{font-size:12px;color:var(--muted)}
+.bell{position:relative;border:1px solid var(--border);background:none;color:#fff;width:44px;height:44px;border-radius:8px;display:grid;place-items:center}
+.bell .ct{position:absolute;top:-6px;right:-6px;background:var(--orange);color:#fff;border-radius:999px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
+.ph-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.ph-foot{flex:none;border-top:1px solid var(--border);background:var(--navy);position:sticky;bottom:0}
+.tabs-b{display:grid;grid-template-columns:1fr 1fr}
+.tabs-b button{border:0;background:transparent;min-height:56px;padding:8px 6px;font-size:12px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tabs-b button[aria-current="page"]{color:var(--orange);font-weight:600}
+.tabs-b .ic{font-size:17px;line-height:1}
+.cartbar{display:flex;align-items:center;gap:10px;padding:10px 16px}
+.cartbar .muted{color:var(--muted)}
+.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 20px;text-align:center}
+.pin-logo{width:56px;height:56px;border-radius:14px;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:700;font-size:22px}
+.pin-wrap h2{color:#fff}
+.pin-dots{display:flex;gap:12px;height:18px}
+.pin-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted)}
+.pin-dots span.f{background:var(--orange);border-color:var(--orange)}
+.keypad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
+.keypad button{height:60px;border-radius:12px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:22px;font-weight:500}
+.keypad button:active{background:var(--navy-hover)}
+.faixa{border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--texto-suave);border:1px solid var(--border)}
+.faixa .al{display:flex;gap:8px;align-items:flex-start}
+.faixa .al .tx{flex:1}
+.al-avi{background:var(--div-fundo);border-color:var(--ambar-bg)}
+.al-des{background:var(--erro-fundo);border-color:var(--erro-borda)}
+.al-ok{background:var(--ok-fundo);border-color:var(--ok-borda)}
+.al-sec{background:rgba(28,57,142,.35);border-color:var(--azul-bg)}
+.al .mk{font-weight:700;width:18px;text-align:center;flex:none}
+.al-avi .mk{color:var(--ambar)}.al-des .mk{color:var(--vermelho)}.al-ok .mk{color:var(--verde)}.al-sec .mk{color:var(--azul)}
+.al-x{border:0;background:transparent;color:var(--muted);font-size:12px;text-decoration:underline;padding:6px 0;min-height:32px}
+.al-x:hover{color:#fff}
+.ped{border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--navy);color:var(--texto-suave);text-align:left;width:100%;transition:border-color .15s}
+.ped:hover{border-color:var(--orange)}
+.ped .l1{display:flex;align-items:center;gap:8px}
+.ped .num{font-weight:600;font-family:var(--mono);color:#fff}
+.ped b{color:#fff;font-weight:600}
+.mini-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.mini-steps i{height:4px;border-radius:2px;background:var(--border)}
+.mini-steps i.on{background:var(--orange)}
+.mini-steps i.bad{background:var(--error)}
+.mini-steps i.done{background:var(--verde)}
+.seg-big{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg-big button{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;padding:9px 6px;font-weight:500;font-size:13px;line-height:1.25;min-height:52px}
+.seg-big button small{display:block;font-weight:400;font-size:11px;color:var(--aux)}
+.seg-big button[aria-pressed="true"]{background:var(--navy);border-color:var(--orange);color:#fff;box-shadow:inset 0 0 0 1px var(--orange)}
+.ph-search{position:relative}
+.ph-search input{width:100%;min-height:44px;font-size:16px;padding-left:38px}
+.ph-search .lupa{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.mat{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.mat:last-child{border-bottom:0}
+.mat .info{flex:1;min-width:0}
+.mat .nm{font-weight:500;line-height:1.3;color:#fff}
+.mat .dp{font-size:12px;color:var(--muted)}
+.mat .dp b{color:var(--verde);font-weight:600}
+.mat.ast .dp{color:var(--ambar)}
+.mat.cinza{opacity:.55}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--navy)}
+.stepper button{width:40px;height:40px;border:0;background:transparent;color:#fff;font-size:18px}
+.stepper button:hover{background:var(--navy-hover)}
+.stepper span{min-width:34px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:#fff}
+.add-btn{min-height:40px}
+.datas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.dt{flex:none;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--background);color:#fff;text-align:center;min-width:64px;line-height:1.2}
+.dt b{display:block;font-size:15px}
+.dt small{font-size:11px;color:var(--muted)}
+.dt[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange);background:var(--navy-hover)}
+.dt[disabled]{opacity:.4;cursor:not-allowed}
+.dt .em{color:var(--vermelho);font-size:10px;font-weight:600;display:block}
+.box{border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--navy);color:var(--texto-suave)}
+.box h4{margin:0;font-size:13px;font-weight:600;color:#fff}
+.box b{color:#fff}
+.box .tbl th{background:var(--background)}
+.box .tbl td,.box .tbl .fix{background:var(--navy)}
+.vsteps{display:flex;flex-direction:column}
+.vs{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.vs:last-child{padding-bottom:0}
+.vs::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--border)}
+.vs:last-child::before{display:none}
+.vs .c{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:var(--navy);color:var(--muted);display:grid;place-items:center;font-size:11px;font-weight:700;z-index:1}
+.vs.done .c{background:var(--verde-bg);border-color:var(--verde);color:var(--verde)}
+.vs.cur .c{border-color:var(--orange);color:var(--orange)}
+.vs.bad .c{background:var(--vermelho-bg);border-color:var(--erro-borda);color:var(--vermelho)}
+.vs .t{font-weight:500;color:#fff}
+.vs .w{font-size:12px;color:var(--muted)}
+.lado{display:flex;flex-direction:column;gap:14px;max-width:62ch}
+.lado h3{font-size:15px;font-weight:600}
+.lado ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.lado li b{color:#fff;font-weight:600}
+.det{container:det/inline-size;display:flex;flex-direction:column;gap:14px;min-width:0}
+.det-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.det-h h2{font-size:20px;font-weight:600;color:#fff}
+.info.card{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 16px}
+.info .k{font-size:12px;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.info .v{font-weight:500;color:#fff}
+.emerg{border:1px solid var(--erro-borda);background:var(--erro-fundo);color:var(--texto-suave);border-radius:8px;padding:12px 16px;font-size:13px}
+.emerg b{color:var(--vermelho)}
+.qty{display:inline-flex;align-items:center;gap:4px}
+.tbl.ap th{white-space:normal;line-height:1.2;padding:8px;min-width:60px;vertical-align:bottom}
+.tbl.ap td{padding-inline:8px}
+.qty input{width:46px;min-height:32px;padding:0 6px;-moz-appearance:textfield;text-align:right;font-variant-numeric:tabular-nums}
+.qty input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty button{width:28px;height:32px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#fff}
+.qty button:hover{border-color:var(--orange)}
+.tbl tr.div td{background:var(--div-fundo)}
+.tbl tr.div td.fix{background:var(--div-solido)}
+.tbl tr.div:hover td{background:var(--div-solido)}
+.tbl tr.zer td{opacity:.55}
+.notas{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;white-space:normal}
+.depois{font-weight:600;color:#fff}
+.resumo{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-radius:12px;background:var(--navy);border:1px solid var(--border);color:var(--texto-suave)}
+.resumo b{color:#fff}
+.corte{border-radius:8px;padding:12px 16px;background:var(--div-fundo);border:1px solid var(--ambar-bg);font-size:13px;color:var(--texto-suave)}
+.corte b{color:var(--ambar)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.incl{position:relative;flex:1 1 260px;min-width:0}
+.incl input{width:100%}
+.incl-res{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:hidden}
+.incl-res button{display:flex;width:100%;border:0;background:transparent;color:#fff;padding:8px;min-height:40px;border-radius:6px;text-align:left;gap:8px;align-items:center}
+.incl-res button:hover{background:var(--border)}
+.okmsg{border-radius:8px;padding:12px 16px;border:1px solid var(--ok-borda);background:var(--ok-fundo);color:var(--texto-suave);font-size:13px}
+.okmsg b{color:var(--verde)}
+
+/* ------------------------------ novo na rodada 2B ------------------------------ */
+:root{
+  /* Séries de gráfico (validadas no fundo navy e no fundo da página: banda de luminosidade, croma, daltonismo, contraste) */
+  --s1:#3d8fe0;--s2:#e2541f;--s3:#9b6ae3;
+}
+.mk-tabs{flex-wrap:wrap}
+.mk-data{font-size:12px;color:var(--muted)}
+@media (max-width:640px){.mk-data{display:none}}
+.dlg-in{container:area/inline-size}
+.lado-p{font-size:13px;color:var(--muted)}
+.tabs-in{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.tab-in{border:0;background:none;color:var(--muted);padding:10px 12px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;min-height:44px}
+.tab-in:hover{color:#fff}
+.tab-in[aria-selected="true"]{color:#fff;border-bottom-color:var(--orange)}
+.pill-seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.pill-seg button{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:999px;padding:4px 12px;min-height:32px;font-size:13px}
+.pill-seg button:hover{border-color:var(--muted);color:#fff}
+.pill-seg button[aria-pressed="true"]{background:var(--navy);border-color:var(--orange);color:#fff}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.h3{font-size:16px;font-weight:600;color:#fff}
+.small{font-size:12px;color:var(--aux)}
+.risc{text-decoration:line-through;color:var(--muted-dark)}
+.neg{color:var(--vermelho)}.pos{color:var(--verde)}
+.num-in{width:72px;text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.num-in::-webkit-inner-spin-button{-webkit-appearance:none}
+.prog{height:8px;border-radius:4px;background:var(--border);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--orange);border-radius:4px;transition:width .2s}
+.prog.ok i{background:var(--verde)}
+.prog-l{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.prog-l b{color:#fff;font-weight:600}
+.pendbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid var(--ambar-bg);background:var(--div-fundo);color:var(--texto-suave);font-size:13px}
+.pendbar b{color:var(--ambar)}
+.lista-erros{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+
+.tbl tr.sel td{background:rgba(240,90,40,.08)}
+.tbl tr.apagado td{opacity:.55}
+/* Tabelas largas viram cartões quando a área é estreita (mesmo padrão da aprovação na rodada 1) */
+@container area (max-width:559.98px){
+  .tbl-wrap:has(.tbl.cv){border:0;border-radius:0;overflow:visible}
+  .tbl.cv thead{display:none}
+  .tbl.cv,.tbl.cv tbody{display:block}
+  .tbl.cv tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.cv tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--navy)}
+  .tbl.cv tr td,.tbl.cv tr.lin:hover td,.tbl.cv tr td.fix{background:transparent;padding:0;border:0;white-space:normal;text-align:left;position:static;min-width:0}
+  .tbl.cv td.wide,.tbl.cv td.fix{grid-column:1/-1;color:#fff}
+  .tbl.cv td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--aux);margin-bottom:2px;font-weight:400}
+  .tbl.cv td.r{font-size:15px}
+  .tbl.cv tr.div{background:var(--div-solido);border-color:var(--ambar-bg)}
+  .tbl.cv tr.sel{border-color:var(--orange)}
+  .tbl.cv tr.apagado{opacity:.6}
+  .tbl.cv .inp{width:100%!important;min-height:40px;font-size:16px}
+  .tbl.cv .num-in{width:100%!important;text-align:left}
+  .tbl.cv .qty{width:100%}
+  .tbl.cv .qty input{flex:1;width:auto}
+  .tbl.cv .qty button{width:40px;height:40px}
+  .tbl.cv td.ck{grid-column:1/-1}
+}
+.tbl td.ck,.tbl th.ck{width:36px}
+.ck input{accent-color:var(--orange);width:18px;height:18px}
+
+/* Seção 12: agenda de entregas */
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp-t{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;gap:6px;align-items:center}
+.grp-t.atr{color:var(--vermelho)}
+.ent{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--navy);color:var(--texto-suave)}
+.ent.atr{border-color:var(--erro-borda);background:linear-gradient(90deg,var(--erro-fundo),var(--navy) 60%)}
+.ent .l1{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ent .num{font-family:var(--mono);font-weight:600;color:#fff}
+.ent-f{font-weight:500;color:#fff}
+.ent-s{font-size:13px;color:var(--muted)}
+.ent-s b{color:var(--texto-suave);font-weight:500}
+@container area (max-width:480px){.ent{grid-template-columns:minmax(0,1fr)}.ent .btn{width:100%}}
+.foto{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);max-width:100%}
+.foto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.thumb{width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex:none}
+.res ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+
+/* Seção 14: celular de contagem */
+.ph-grid{display:grid;grid-template-columns:400px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:900px){.ph-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.ph-grid .phone{width:100%;height:auto;min-height:680px;border:1px solid var(--border);border-radius:12px;box-shadow:none}.ph-grid .ph-notch{display:none}.ph-grid .phone .ph-body{overflow:visible}}
+.cnt{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.cnt:last-child{border-bottom:0}
+.cnt .info{flex:1;min-width:0}
+.cnt .nm{font-weight:500;line-height:1.3;color:#fff}
+.cnt .dp{font-size:12px;color:var(--muted)}
+.cnt .ctl{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.cnt input{width:84px;min-height:44px;font-size:18px;text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.cnt input::-webkit-inner-spin-button{-webkit-appearance:none}
+.cnt.feito input{border-color:var(--ok-borda);background:var(--ok-fundo)}
+.cnt .nao{border:0;background:none;color:var(--muted);font-size:12px;text-decoration:underline;padding:2px 0;min-height:24px}
+.cnt .nao:hover{color:#fff}
+.est-btn{display:flex;flex-direction:column;gap:8px}
+
+/* Seção 16: tablet do balcão e assinatura */
+.tablet{max-width:860px;border:14px solid var(--frame);border-radius:30px;background:var(--background);box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px var(--border);overflow:hidden}
+.tb-top{display:flex;align-items:center;gap:10px;padding:10px 18px;background:var(--navy);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
+.tb-top b{color:#fff}
+.tb-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:640px){.tablet{border:1px solid var(--border);border-radius:12px;box-shadow:none}.tb-body{padding:14px}}
+.termo{background:var(--navy);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--texto-suave)}
+.termo h3{font-size:16px;color:#fff}
+.termo .txt{font-size:14px;line-height:1.6;max-width:70ch}
+.termo .tot{display:flex;justify-content:space-between;font-weight:600;color:#fff;border-top:1px solid var(--border);padding-top:8px}
+.sig-grid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}
+@media (max-width:760px){.sig-grid{grid-template-columns:minmax(0,1fr)}}
+.sig-box{display:flex;flex-direction:column;gap:6px;min-width:0}
+canvas.sig{display:block;width:100%;height:190px;border:1px dashed var(--muted-dark);border-radius:12px;background:var(--input-bg);touch-action:none;cursor:crosshair}
+.sig-l{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.pin-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.pin-col .keypad{grid-template-columns:repeat(3,64px);gap:8px}
+.pin-col .keypad button{height:50px;font-size:20px}
+.sig-img{max-width:100%;height:auto;max-height:140px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg)}
+.tl{display:flex;flex-direction:column}
+.tl .h{display:grid;grid-template-columns:86px minmax(0,1fr);gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.tl .h:last-child{border:0}
+.tl .h span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.ficha-h{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 16px}
+
+/* Seção 17: indicadores */
+.ind-grp{display:flex;flex-direction:column;gap:10px}
+.ind-grp>h2{font-size:15px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.ind-grp>h2::after{content:"";flex:1;height:1px;background:var(--border)}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:12px}
+.ind{display:flex;flex-direction:column;gap:10px;padding:16px}
+.ind h3{font-size:14px;font-weight:600;color:#fff}
+.ind .q{font-size:12px;color:var(--aux)}
+.big{font-size:30px;line-height:1.1;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.big small{font-size:14px;font-weight:500;color:var(--muted);margin-left:4px}
+.big-s{font-size:13px;color:var(--muted)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc{font-size:12px;color:var(--aux);border-top:1px solid var(--border);padding-top:8px;margin-top:auto}
+.hb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;font-size:13px}
+.hb .lb{grid-column:1/-1;color:var(--texto-suave);font-size:12px;line-height:1.3;margin-top:4px}
+.hb .tr{height:14px;display:flex;align-items:center}
+.hb .tr i{display:block;height:100%;min-width:2px;background:var(--s1);border-radius:0 4px 4px 0}
+.hb .tr i.dim{opacity:.35}
+.hb .vl{font-variant-numeric:tabular-nums;color:#fff;text-align:right;white-space:nowrap}
+.hb [data-tip]{cursor:default}
+.st100{display:flex;height:18px;gap:2px;border-radius:4px;overflow:hidden}
+.st100 i{display:block;height:100%}
+.st100 i:first-child{border-radius:4px 0 0 4px}.st100 i:last-child{border-radius:0 4px 4px 0}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--texto-suave)}
+.leg .sw{border-radius:3px}
+.leg b{font-variant-numeric:tabular-nums;color:#fff}
+.lc{width:100%;height:auto;display:block;overflow:visible}
+.lc text{font-size:10px;fill:var(--muted);font-family:var(--fonte)}
+.lc .vlab{fill:#fff;font-weight:600}
+.pend-v{border:1px dashed var(--nota-borda);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;color:var(--texto-suave);background:transparent}
+.pend-v .badge{align-self:flex-start}
+details.tv{font-size:12px;color:var(--muted)}
+details.tv summary{cursor:pointer;min-height:28px;display:flex;align-items:center}
+details.tv table{width:100%;border-collapse:collapse;margin-top:4px}
+details.tv td{padding:3px 0;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+details.tv td:last-child{text-align:right;color:#fff}
+.tip{position:fixed;z-index:200;pointer-events:none;background:var(--background);border:1px solid var(--muted-dark);border-radius:8px;padding:6px 10px;font-size:12px;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:240px}
+
+/* Seção 18 */
+.esc{display:flex;flex-direction:column;gap:8px;max-width:80ch}
+.esc .card{display:grid;grid-template-columns:36px 1fr;gap:10px;color:var(--texto-suave);padding:12px 16px}
+.esc .card b{color:#fff}
+.esc .lt{font-family:var(--mono);font-weight:700;color:var(--orange)}
+.esc h3{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:10px}
+</style>
+
+<header class="mk-cab"><div class="wrap"><div class="mk-tit">Almoxarifado · mockup<small>Rodada 2B · 12/11/2026 · responda pelo WhatsApp citando o número da seção</small></div></div></header>
+<div class="mk-bar">
+  <div class="mk-in">
+    <div class="mk-tabs" role="tablist" aria-label="Seções do mockup">
+      <button class="mk-tab" role="tab" data-a="sec" data-v="12" id="tab-12" title="Entregas de fornecedor e conferência">12<span class="tl"> · Entregas e conferência</span><span class="tc"> Entregas</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="13" id="tab-13" title="Mínimos e sugestão de reposição">13<span class="tl"> · Mínimos e reposição</span><span class="tc"> Reposição</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="14" id="tab-14" title="Inventário: contagem">14<span class="tl"> · Contagem</span><span class="tc"> Contagem</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="15" id="tab-15" title="Ajustes de inventário">15<span class="tl"> · Ajustes</span><span class="tc"> Ajustes</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="16" id="tab-16" title="Ferramentas e ficha do colaborador">16<span class="tl"> · Ferramentas e ficha</span><span class="tc"> Ferramentas</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="17" id="tab-17" title="Indicadores">17<span class="tl"> · Indicadores</span><span class="tc"> Indicadores</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="18" id="tab-18" title="Escolhas desta versão">18<span class="tl"> · Escolhas</span><span class="tc"> Escolhas</span></button>
+    </div>
+    <div class="sp"></div>
+    <span class="mk-data">Dia simulado: qui 12/11/2026 · dados fictícios</span>
+  </div>
+</div>
+
+<main class="pg wrap">
+  <section id="sec-12" hidden></section>
+  <section id="sec-13" hidden></section>
+  <section id="sec-14" hidden></section>
+  <section id="sec-15" hidden></section>
+  <section id="sec-16" hidden></section>
+  <section id="sec-17" hidden></section>
+  <section id="sec-18" hidden></section>
+</main>
+
+<dialog class="dlg" id="dlg"><div class="dlg-in" id="dlg-in"></div></dialog>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+"use strict";
+/* ---------- utilidades (as mesmas da rodada 1) ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const casa=(texto,q)=>{const t=norm(texto);return norm(q).split(/\s+/).filter(Boolean).every(k=>t.includes(k));};
+const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const brlS=v=>(v>0?"+":v<0?"−":"")+brl(Math.abs(v));
+const brlK=v=>v>=1000?`R$ ${(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})} mil`:brl(v);
+const num=v=>Number(v).toLocaleString("pt-BR");
+const pct=v=>`${Math.round(v)}%`;
+const DIAS=["dom","seg","ter","qua","qui","sex","sáb"];
+const dia=(dd,mm=11)=>new Date(2026,mm-1,dd);
+const fmtD=x=>`${DIAS[x.getDay()]} ${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}`;
+const fmtC=x=>`${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}`;
+const mesmoDia=(a,b)=>a.toDateString()===b.toDateString();
+const diasEntre=(a,b)=>Math.round((b-a)/864e5);
+const HOJE=dia(12);
+const T0=Date.now();
+const relogio=()=>{const m=9*60+40+Math.floor((Date.now()-T0)/6e4);return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;};
+const plural=(n,a,b)=>n===1?a:b;
+const locNome=l=>l==="BASE"?"Base":l==="PROFARMA"?"Profarma":l;
+
+/* ---------- dados do mockup (fictícios, os mesmos da rodada 1) ---------- */
+const EQ=["MANFAC 1","MANFAC 2","MANFAC-25"];
+const LOCS=["BASE","DPSP","PROFARMA"];
+const P=[
+ {id:"disj20c",cod:"ELE-0201",d:"Disjuntor DIN 20A curva C",un:"un",f:"Elétrica",cmc:18.9,s:{BASE:12,DPSP:3,PROFARMA:8},e:{"MANFAC 1":2,"MANFAC-25":1},min:{BASE:5,DPSP:6,PROFARMA:6},ecL:{DPSP:20}},
+ {id:"disj20b",cod:"ELE-0200",d:"Disjuntor DIN 20A curva B",un:"un",f:"Elétrica",cmc:17.5,s:{BASE:5},e:{},min:{}},
+ {id:"disj32c",cod:"ELE-0203",d:"Disjuntor DIN 32A curva C",un:"un",f:"Elétrica",cmc:24.5,s:{BASE:6,DPSP:4},e:{"MANFAC 1":1},min:{DPSP:4,PROFARMA:3}},
+ {id:"cabo25",cod:"ELE-0410",d:"Cabo flexível 2,5mm² (metro)",un:"m",f:"Elétrica",cmc:3.1,s:{BASE:300,DPSP:120},e:{"MANFAC 2":30,"MANFAC-25":15},min:{BASE:100,DPSP:100,PROFARMA:80},ecL:{BASE:200}},
+ {id:"tomada",cod:"ELE-0520",d:"Tomada 2P+T 10A com placa",un:"un",f:"Elétrica",cmc:9.8,s:{BASE:25,DPSP:8,PROFARMA:11},e:{"MANFAC 1":2,"MANFAC 2":1},min:{DPSP:5,PROFARMA:5}},
+ {id:"ledtub",cod:"ILU-0118",d:"Lâmpada LED tubular 18W T8",un:"un",f:"Iluminação",cmc:14.2,s:{BASE:40,DPSP:22,PROFARMA:9},e:{"MANFAC 1":6,"MANFAC 2":4},min:{DPSP:20,PROFARMA:15},ecL:{BASE:30}},
+ {id:"led9",cod:"ILU-0109",d:"Lâmpada LED bulbo 9W E27",un:"un",f:"Iluminação",cmc:6.8,s:{BASE:60,DPSP:30,PROFARMA:35},e:{"MANFAC 1":5,"MANFAC 2":8,"MANFAC-25":3},min:{DPSP:25,PROFARMA:25}},
+ {id:"reator",cod:"ILU-0232",d:"Reator eletrônico 2x32W bivolt",un:"un",f:"Iluminação",cmc:39.9,s:{PROFARMA:2},e:{"MANFAC-25":1},min:{DPSP:3,PROFARMA:3},ecL:{PROFARMA:10}},
+ {id:"fita",cod:"CON-0020",d:"Fita isolante 20m preta",un:"un",f:"Consumo",cmc:7.4,s:{BASE:80,DPSP:15,PROFARMA:18},e:{"MANFAC 1":3,"MANFAC 2":5,"MANFAC-25":2},min:{DPSP:10,PROFARMA:10}},
+ {id:"bucha",cod:"CON-0108",d:"Parafuso com bucha 8mm (cento)",un:"cto",f:"Consumo",cmc:16,s:{BASE:10,DPSP:4,PROFARMA:6},e:{"MANFAC 2":1},min:{}},
+ {id:"silicone",cod:"CON-0280",d:"Silicone acético incolor 280g",un:"un",f:"Consumo",cmc:19.9,s:{},e:{"MANFAC 1":2},min:{BASE:4},ecL:{BASE:12}},
+ {id:"sifao",cod:"HID-0310",d:"Sifão sanfonado universal",un:"un",f:"Hidráulica",cmc:11.3,s:{DPSP:5,PROFARMA:3},e:{},min:{}},
+ {id:"torneira",cod:"HID-0412",d:"Torneira de parede 1/2\"",un:"un",f:"Hidráulica",cmc:32,s:{},e:{},min:{DPSP:2},ecL:{DPSP:6}},
+ {id:"luva",cod:"EPI-0011",d:"Luva de vaqueta",un:"par",f:"EPI",cmc:12.5,s:{BASE:30,DPSP:6,PROFARMA:10},e:{},min:{DPSP:10,PROFARMA:8}},
+ {id:"oculos",cod:"EPI-0030",d:"Óculos de proteção incolor",un:"un",f:"EPI",cmc:8.9,s:{BASE:20,DPSP:12,PROFARMA:7},e:{},min:{DPSP:5,PROFARMA:5}},
+ {id:"bota",cod:"EPI-0142",d:"Bota de segurança nº 42",un:"par",f:"EPI",cmc:89,s:{BASE:4},e:{},min:{}},
+ {id:"polo",cod:"UNI-0002",d:"Camisa polo Manfac tam. M",un:"un",f:"Uniforme",cmc:45,s:{BASE:15},e:{},min:{}},
+];
+const PID=Object.fromEntries(P.map(p=>[p.id,p]));
+const sal=(p,l)=>p.s[l]||0;
+const ehFicha=p=>p.f==="EPI"||p.f==="Uniforme";
+const NAV=["Início","Estoque","Pedidos","Separação","Recebimento","Reposição","Inventário","Ajustes","Ferramentas","Colaboradores","Indicadores"];
+
+/* ---------- estados genéricos (iguais à rodada 1) ---------- */
+const ESTADOS=[["carregando","Carregando"],["dados","Com dados"],["vazio","Vazio"],["erro","Erro ao carregar"],["semperm","Sem permissão"]];
+function seletorEstado(sec,atual,extra=""){
+  return `<div class="mk-ctrl"><b>Controle do mockup</b> Estado da tela:
+  <span class="seg">${ESTADOS.map(([k,r])=>`<button data-a="estado" data-s="${sec}" data-v="${k}" aria-pressed="${k===atual}">${r}</button>`).join("")}</span>${extra}</div>`;
+}
+function bloco(tipo,titulo,texto,botoes=""){
+  const ico={vazio:"∅",erro:"!",perm:"⌂",ok:"✓"}[tipo];
+  return `<div class="est est-${tipo}"><div class="ico">${ico}</div><h3>${titulo}</h3><p>${texto}</p>${botoes?`<div class="acoes">${botoes}</div>`:""}</div>`;
+}
+function shell(ativo,user,papel,corpo){
+  const ini=user.split(" ").map(x=>x[0]).slice(0,2).join("");
+  const nome=`<div><span class="lat-nome">Almoxarifado</span><span class="volta">← Voltar ao Hub</span></div>`;
+  return `<div class="shell" data-gaveta="nao"><div class="sh-app">
+  <div class="topo-cel">${nome}<button type="button" class="ic-btn" data-a="sh-menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button></div>
+  <aside class="lat" aria-label="Menu do módulo"><div class="lat-cab">${nome}<button type="button" class="lat-fecha" data-a="sh-fecha" aria-label="Fechar menu">×</button></div>
+  <nav class="lat-grupo">${NAV.map(n=>n===ativo?`<span class="item" aria-current="page">${n}</span>`:`<span class="item" aria-disabled="true" title="Fora desta seção do mockup">${n}</span>`).join("")}</nav>
+  <div class="lat-pe"><div class="quem"><span class="avatar" aria-hidden="true">${ini}</span><div class="quem-txt"><b>${user}</b><span>${papel}</span></div></div><span class="item" aria-disabled="true">Sair</span></div></aside>
+  <main class="sh-main">${corpo}</main></div><div class="veu" data-a="sh-fecha"></div></div>`;
+}
+function tentar(o,render){o.estado="carregando";render();setTimeout(()=>{o.estado="dados";render();},900);}
+function skel(linhas=6,tiles=4){
+  return `<div class="tiles">${"<div class='card tile'><div class='skel' style='width:60%'></div><div class='skel' style='height:22px;margin-top:10px;width:80%'></div></div>".repeat(tiles)}</div>
+  <div class="tbl-wrap" style="padding:14px;display:flex;flex-direction:column;gap:14px">${Array.from({length:linhas},(_,i)=>`<div style="display:grid;grid-template-columns:2fr repeat(4,1fr);gap:16px"><div class="skel" style="width:${55+(i*13)%40}%"></div>${"<div class='skel'></div>".repeat(4)}</div>`).join("")}</div>
+  <p class="muted" style="margin-top:10px;font-size:13px">Carregando…</p>`;
+}
+const tile=(k,v,s,cls="")=>`<div class="card tile ${cls}"><div class="label-mono">${k}</div><div class="v n">${v}</div><div class="s">${s}</div></div>`;
+const tiles=arr=>`<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))">${arr.join("")}</div>`;
+const okmsg=m=>m?`<div class="okmsg">${m}</div>`:"";
+
+/* ---------- diálogo ---------- */
+const dlg=$("#dlg");
+function abrir(html){$("#dlg-in").innerHTML=html;if(!dlg.open)dlg.showModal();}
+function fechar(){if(dlg.open)dlg.close();}
+dlg.addEventListener("click",e=>{if(e.target===dlg)fechar();});
+const dlgCab=(t,sub="")=>`<div class="dlg-h"><div style="flex:1;min-width:0"><h2>${t}</h2>${sub?`<p class="muted" style="margin-top:4px">${sub}</p>`:""}</div><button class="btn btn-ghost btn-sm" data-a="fechar" aria-label="Fechar">Fechar</button></div>`;
+
+/* ---------- importação de planilha (usada nas seções 13 e 16) ---------- */
+let IMP=null;
+function importDlg(cfg){IMP={cfg,res:null,arq:""};renderImp();}
+function lerCSV(txt){
+  const L=txt.replace(/\r/g,"").split("\n");
+  return L.map((l,i)=>({n:i+1,c:l.split(/[;,\t]/).map(x=>x.trim())})).filter((r,i)=>i>0&&r.c.some(Boolean));
+}
+function processaImp(txt,nome){IMP.arq=nome;IMP.res=IMP.cfg.validar(lerCSV(txt));renderImp();}
+function renderImp(){
+  const c=IMP.cfg,r=IMP.res;
+  let res="";
+  if(r&&r.xlsx)res=`<div class="faixa al-avi"><div class="al"><span class="mk">◆</span><span class="tx">No mockup só dá para ler arquivo .csv. No sistema, a planilha do Excel (.xlsx) entra direto. Use um dos exemplos abaixo ou salve a planilha como CSV.</span></div></div>`;
+  else if(r&&r.erros.length)res=`<div class="est est-erro" style="padding:16px"><h3>${r.erros.length} ${plural(r.erros.length,"linha com erro","linhas com erro")} em “${esc(IMP.arq)}”</h3>
+    <ul class="lista-erros" style="color:var(--vermelho)">${r.erros.map(e=>`<li><b style="color:#fff">Linha ${e.l}:</b> ${e.m}</li>`).join("")}</ul>
+    <p><b style="color:#fff">Nada foi importado.</b> Corrija essas linhas na planilha e envie de novo. As outras ${r.ok.length} linhas estão certas.</p></div>`;
+  else if(r)res=`<div class="okmsg"><b>${r.ok.length} linhas certas em “${esc(IMP.arq)}”.</b> ${r.resumo}</div>${r.previa||""}`;
+  abrir(`${dlgCab(c.titulo,c.sub)}
+   <div class="box"><h4>Colunas da planilha, nesta ordem</h4><div class="mono" style="font-size:12px;overflow-wrap:anywhere">${c.colunas}</div><p class="muted" style="font-size:12px">${c.dica}</p></div>
+   <div class="campo"><label for="imp-file">Arquivo (.xlsx ou .csv)</label><input class="inp" id="imp-file" type="file" accept=".csv,.xlsx,text/csv" style="padding:6px"></div>
+   <div class="mk-ctrl"><b>Mockup</b> Sem arquivo à mão? <button class="btn btn-outline btn-xs" style="border-style:dashed" data-a="imp-ex" data-v="erro">Usar exemplo com erro</button><button class="btn btn-outline btn-xs" style="border-style:dashed" data-a="imp-ex" data-v="certo">Usar exemplo certo</button></div>
+   ${res}
+   <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="imp-ok" ${r&&!r.xlsx&&!r.erros.length&&r.ok.length?"":"disabled"}>${c.botao(r&&r.ok?r.ok.length:0)}</button></div>`);
+}
+
+/* =====================================================================
+   SEÇÃO 12 — ENTREGAS DE FORNECEDOR E CONFERÊNCIA
+   ===================================================================== */
+const PC=[
+ {n:"3109",forn:"Casa do EPI Ltda",prev:dia(10),dest:"BASE",comp:"Juliana Prado",itens:[{id:"luva",q:40},{id:"oculos",q:30},{id:"bota",q:6}],st:"aberto"},
+ {n:"3110",forn:"Hidráulica Central",prev:dia(11),dest:"DPSP",comp:"Juliana Prado",itens:[{id:"sifao",q:10}],st:"aberto"},
+ {n:"3115",forn:"Fixar Distribuidora",prev:dia(12),dest:"BASE",comp:"Renato Dias",itens:[{id:"fita",q:50},{id:"bucha",q:10}],st:"aberto"},
+ {n:"3117",forn:"Iluminar Comércio de Lâmpadas",prev:dia(12),dest:"PROFARMA",comp:"Renato Dias",itens:[{id:"led9",q:60}],st:"aberto"},
+ {n:"3112",forn:"Distribuidora Luz Forte",prev:dia(13),dest:"BASE",comp:"Juliana Prado",itens:[{id:"cabo25",q:200}],st:"aberto"},
+ {n:"3120",forn:"Elétrica Paulista",prev:dia(16),antes:dia(14),dest:"DPSP",comp:"Renato Dias",itens:[{id:"disj20c",q:20}],st:"aberto"},
+ {n:"3121",forn:"Vedax Materiais",prev:dia(16),dest:"BASE",comp:"Juliana Prado",itens:[{id:"silicone",q:12}],st:"aberto"},
+ {n:"3122",forn:"Iluminar Comércio de Lâmpadas",prev:dia(17),dest:"PROFARMA",comp:"Renato Dias",itens:[{id:"reator",q:10}],st:"aberto"},
+ {n:"3124",forn:"Iluminar Comércio de Lâmpadas",prev:dia(18),dest:"BASE",comp:"Renato Dias",itens:[{id:"ledtub",q:30}],st:"aberto"},
+ {n:"3125",forn:"Hidráulica Central",prev:dia(18),dest:"DPSP",comp:"Juliana Prado",itens:[{id:"torneira",q:6}],st:"aberto"},
+];
+const FALTA=[
+ {n:"3106",forn:"Casa do EPI Ltda",conf:dia(11),por:"Paulo Mendes",res:"div",chegou:[["bota",4]],nota:"Pedido de 6 pares; faltaram 2. O Compras já cobrou o fornecedor."},
+ {n:"3104",forn:"Fixar Distribuidora",conf:dia(9),por:"Paulo Mendes",res:"ok",chegou:[["bucha",5]]},
+ {n:"3101",forn:"Elétrica Paulista",conf:dia(5),por:"Fernanda Rocha",res:"ok",chegou:[["tomada",30],["disj32c",10]]},
+];
+const LIM_OMIE=3;
+const SIT={ok:"Chegou certo",falta:"Faltou",errado:"Item errado",avaria:"Avariado"};
+const S12={estado:"dados",vis:"agenda",pc:null,conf:[],erro:false,msg:null};
+const divItem=(it,c)=>c.q!==it.q||c.sit!=="ok";
+const itensTxt=pc=>pc.itens.map(i=>`${esc(PID[i.id].d)} <b>${num(i.q)} ${PID[i.id].un}</b>`).join(" · ");
+function s12Card(pc){
+  const d=diasEntre(pc.prev,HOJE);
+  const bd=d>0?`<span class="badge b-des">Atrasada · ${d} ${plural(d,"dia","dias")}</span>`:d===0?`<span class="badge b-avi">Chega hoje</span>`:`<span class="badge b-out">Previsão ${fmtD(pc.prev)}</span>`;
+  const mud=pc.antes?`<div class="ent-s">A previsão mudou no Compras: <span class="risc">${fmtD(pc.antes)}</span> → <b>${fmtD(pc.prev)}</b></div>`:"";
+  return `<div class="ent${d>0?" atr":""}"><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="l1"><span class="num">Pedido ${pc.n}</span>${bd}</div>
+   <div class="ent-f">${esc(pc.forn)}</div><div class="ent-s">${itensTxt(pc)}</div>
+   <div class="ent-s">Entra no estoque <b>${locNome(pc.dest)}</b> · comprador ${pc.comp}</div>${mud}</div>
+   <button class="btn btn-sm${d<0?" btn-outline":""}" data-a="s12-abrir" data-v="${pc.n}">Conferir</button></div>`;
+}
+const grupo=(t,L,c="")=>`<div class="grp"><h3 class="grp-t ${c}">${c==="atr"?"▲ ":""}${t} <span class="n">(${L.length})</span></h3>${L.map(s12Card).join("")}</div>`;
+function s12Falta(){
+  const cab=`<div class="row"><h3 class="h3">Conferido pelo almox, falta entrada no Omie</h3><span class="badge b-sec n">${FALTA.length}</span></div>
+   <p class="small">O almox já conferiu, mas o saldo do Omie ainda não subiu: falta compras/fiscal lançar a nota (Recebimento de NF-e). Em vermelho, os que estão assim há ${LIM_OMIE} dias ou mais. O Compras vê esta mesma lista.</p>`;
+  if(!FALTA.length)return cab+bloco("ok","Nenhum pedido esperando entrada no Omie","Tudo o que o almox conferiu já entrou no estoque do Omie.");
+  return cab+`<div class="tbl-wrap"><table class="tbl cv"><thead><tr><th>Pedido</th><th>Conferido</th><th>Resultado</th><th>O que chegou de fato</th><th class="r">Sem entrada há</th></tr></thead><tbody>
+  ${FALTA.map(f=>{const d=diasEntre(f.conf,HOJE);return `<tr class="lin"><td class="wide" data-l="Pedido"><span class="mono" style="color:#fff;font-weight:600">${f.n}</span> · ${esc(f.forn)}</td>
+   <td data-l="Conferido">${fmtD(f.conf)} · ${f.por}</td>
+   <td data-l="Resultado">${f.res==="ok"?'<span class="badge b-ok">Sem divergência</span>':'<span class="badge b-avi">Com divergência</span>'}</td>
+   <td class="wide" data-l="O que chegou de fato" style="white-space:normal">${f.chegou.map(([id,q])=>`<b class="n" style="color:#fff">${num(q)} ${PID[id].un}</b> ${esc(PID[id].d)}`).join("<br>")}${f.nota?`<div class="small">${esc(f.nota)}</div>`:""}</td>
+   <td class="r" data-l="Sem entrada no Omie há"><span class="badge ${d>=LIM_OMIE?"b-des":"b-out"} n">${d} ${plural(d,"dia","dias")}</span></td></tr>`;}).join("")}
+  </tbody></table></div>`;
+}
+function s12Agenda(){
+  const ab=PC.filter(p=>p.st==="aberto").sort((a,b)=>a.prev-b.prev);
+  const atr=ab.filter(p=>p.prev<HOJE),hj=ab.filter(p=>mesmoDia(p.prev,HOJE)),fut=ab.filter(p=>p.prev>HOJE);
+  const fora=FALTA.filter(f=>diasEntre(f.conf,HOJE)>=LIM_OMIE).length;
+  let h=tiles([tile("Atrasadas",`${atr.length}`,"previsão já passou e nada chegou",atr.length?"alerta":""),tile("Chegam hoje",`${hj.length}`,fmtD(HOJE)),tile("Próximos dias",`${fut.length}`,"até "+(fut.length?fmtD(fut[fut.length-1].prev):"—")),tile("Falta entrada no Omie",`${FALTA.length}`,`${fora} há ${LIM_OMIE} dias ou mais`,fora?"alerta":"")]);
+  h+=okmsg(S12.msg);
+  h+=`<div class="stack" style="margin-top:14px">`;
+  if(!ab.length)h+=bloco("ok","Nenhuma entrega em aberto","Todas as entregas previstas para a Base já foram conferidas.");
+  if(atr.length)h+=grupo("Atrasadas",atr,"atr");
+  const dias=[...new Set(ab.filter(p=>p.prev>=HOJE).map(p=>p.prev.getTime()))];
+  dias.forEach(t=>{const x=new Date(t),dd=diasEntre(HOJE,x);h+=grupo(`${dd===0?"Hoje · ":dd===1?"Amanhã · ":""}${fmtD(x)}`,ab.filter(p=>p.prev.getTime()===t));});
+  h+=`<div class="card stack" style="padding:16px">${s12Falta()}</div></div>`;
+  return h;
+}
+function s12Linha(pc,ix){
+  const it=pc.itens[ix],c=S12.conf[ix],p=PID[it.id],dif=c.q-it.q;
+  const notas=[];
+  if(dif<0)notas.push(`<span class="badge b-avi">faltou ${num(-dif)} ${p.un}</span>`);
+  if(dif>0)notas.push(`<span class="badge b-avi">veio ${num(dif)} a mais</span>`);
+  if(c.sit==="errado"||c.sit==="avaria")notas.push(`<span class="badge b-des">${SIT[c.sit].toLowerCase()}</span>`);
+  const pede=(c.sit==="errado"||c.sit==="avaria");
+  return `<tr class="lin${divItem(it,c)?" div":""}">
+   <td class="fix wide" style="white-space:normal;min-width:190px"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="small">${p.cod}</div><div class="notas">${notas.join("")}</div></td>
+   <td class="r n" data-l="Pedido">${num(it.q)} ${p.un}</td>
+   <td class="r" data-l="Chegou"><span class="qty"><button data-a="c12-q" data-v="${ix}" data-d="-1" aria-label="Menos">−</button><input class="inp" type="number" min="0" inputmode="numeric" data-c12q="${ix}" value="${c.q}" aria-label="Quantidade que chegou de ${esc(p.d)}"><button data-a="c12-q" data-v="${ix}" data-d="1" aria-label="Mais">+</button></span></td>
+   <td data-l="O que houve"><select class="inp" data-c12s="${ix}" aria-label="O que houve com ${esc(p.d)}">${Object.entries(SIT).map(([k,v])=>`<option value="${k}" ${c.sit===k?"selected":""}>${v}</option>`).join("")}</select></td>
+   <td class="wide" data-l="Observação${pede?" (obrigatória)":""}" style="white-space:normal"><input class="inp" style="width:100%;min-width:170px" data-c12o="${ix}" value="${esc(c.obs)}" placeholder="${pede?"Diga o que veio errado ou avariado":"Opcional"}" aria-label="Observação">${S12.erro&&pede&&!c.obs.trim()?`<div class="erro-t">Escreva o que aconteceu com este item.</div>`:""}</td>
+   <td class="wide" data-l="Foto (opcional)">${c.foto?`<span class="foto"><img class="thumb" src="${c.foto.url}" alt="Foto anexada"><span>${esc(c.foto.nome)}</span><button class="btn btn-ghost btn-xs" data-a="c12-fx" data-v="${ix}">tirar</button></span>`:`<label class="btn btn-outline btn-xs"><input type="file" accept="image/*" data-c12f="${ix}" hidden>Anexar foto</label>`}</td></tr>`;
+}
+function s12Res(pc){
+  const D=pc.itens.map((it,ix)=>({it,c:S12.conf[ix]})).filter(x=>divItem(x.it,x.c));
+  if(!D.length)return `<div class="okmsg res"><b>Resultado: tudo certo.</b> ${plural(pc.itens.length,"O item chegou","Os "+pc.itens.length+" itens chegaram")} na quantidade pedida e sem problema.</div>`;
+  return `<div class="corte res"><b>Resultado: divergência em ${D.length} de ${pc.itens.length} ${plural(pc.itens.length,"item","itens")}.</b><ul>${D.map(({it,c})=>`<li>${divTxt(it,c)}</li>`).join("")}</ul></div>`;
+}
+function divTxt(it,c){
+  const p=PID[it.id],t=[];
+  if(c.q<it.q)t.push(`chegaram ${num(c.q)} de ${num(it.q)} ${p.un}`);
+  if(c.q>it.q)t.push(`chegaram ${num(c.q)}, ${num(c.q-it.q)} a mais que o pedido`);
+  if(c.sit==="errado")t.push("item errado");
+  if(c.sit==="avaria")t.push("avariado");
+  return `<b>${esc(p.d)}</b>: ${t.join(", ")}${c.obs.trim()?` (“${esc(c.obs.trim())}”)`:""}`;
+}
+function s12Conf(){
+  const pc=PC.find(p=>p.n===S12.pc);const d=diasEntre(pc.prev,HOJE);
+  return `<div class="row" style="margin-bottom:12px"><button class="btn btn-ghost btn-sm" data-a="s12-volta">← Agenda de entregas</button></div>
+  <div class="stack"><div class="det-h"><h2 class="mono">Pedido ${pc.n}</h2>${d>0?`<span class="badge b-des">Atrasada · ${d} ${plural(d,"dia","dias")}</span>`:d===0?'<span class="badge b-avi">Chega hoje</span>':""}<span class="badge b-avi">Conferindo</span></div>
+  <div class="info card" style="padding:14px">
+   <div><div class="k">Fornecedor</div><div class="v">${esc(pc.forn)}</div></div>
+   <div><div class="k">Previsão</div><div class="v">${fmtD(pc.prev)}</div></div>
+   <div><div class="k">Entra no estoque</div><div class="v">${locNome(pc.dest)} <span class="small">(pelo centro de custo)</span></div></div>
+   <div><div class="k">Comprador</div><div class="v">${pc.comp}</div></div>
+  </div>
+  <p class="small">Confira cada item contra o que chegou na doca. Se chegou menos, o item vira “faltou” sozinho. Item errado ou avariado pede uma observação; a foto ajuda o comprador a cobrar o fornecedor.</p>
+  <div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Item</th><th class="r">Pedido</th><th class="r">Chegou</th><th>O que houve</th><th>Observação</th><th>Foto</th></tr></thead><tbody id="c12-corpo">${pc.itens.map((_,ix)=>s12Linha(pc,ix)).join("")}</tbody></table></div>
+  <div id="c12-res">${s12Res(pc)}</div>
+  ${S12.erro?`<div class="faixa al-des"><div class="al"><span class="mk">!</span><span class="tx">Falta a observação de item errado ou avariado. O comprador precisa dela para cobrar o fornecedor.</span></div></div>`:""}
+  <div class="acoes"><button class="btn btn-outline" data-a="s12-volta">Voltar sem concluir</button><div class="sp"></div><button class="btn btn-lg" data-a="s12-concluir">Concluir conferência</button></div>
+  <p class="small">Voltar sem concluir guarda o que você já preencheu neste aparelho; nada vai para o Compras.</p></div>`;
+}
+function s12ConcluirDlg(){
+  const pc=PC.find(p=>p.n===S12.pc);
+  const falta=pc.itens.some((it,ix)=>{const c=S12.conf[ix];return (c.sit==="errado"||c.sit==="avaria")&&!c.obs.trim();});
+  if(falta){S12.erro=true;s12Render();return;}
+  S12.erro=false;
+  const D=pc.itens.map((it,ix)=>({it,c:S12.conf[ix]})).filter(x=>divItem(x.it,x.c));
+  abrir(`${dlgCab(`Concluir a conferência do pedido ${pc.n}?`,`${esc(pc.forn)} · ${pc.itens.length} ${plural(pc.itens.length,"item","itens")}`)}
+  ${D.length?`<div class="corte"><b>Com divergência:</b><ul style="margin:6px 0 0;padding-left:18px">${D.map(({it,c})=>`<li>${divTxt(it,c)}</li>`).join("")}</ul></div>`:`<div class="okmsg"><b>Sem divergência.</b> Tudo chegou como pedido.</div>`}
+  <div class="conseq"><b>O que acontece quando você concluir</b><ul>
+   ${D.length?`<li>No Compras, o pedido ${pc.n} passa para <b>Divergência</b>, e ${pc.comp} (comprador) recebe um e-mail com a lista acima${S12.conf.some(c=>c.foto)?" e as fotos":""}.</li>`:`<li>No Compras, o pedido ${pc.n} aparece como conferido sem divergência e segue para a nota fiscal.</li>`}
+   <li>A entrada no Omie <b>não</b> é feita aqui: fica com compras/fiscal. Até ela acontecer, o pedido aparece em “Conferido pelo almox, falta entrada no Omie”, com o que de fato chegou.</li>
+   <li>O saldo do estoque ${locNome(pc.dest)} só muda quando essa entrada for lançada no Omie.</li>
+   <li>Depois de concluir, a conferência não pode ser editada aqui. Se errou, fale com o comprador.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar e revisar</button><button class="btn" data-a="s12-ok">Concluir conferência</button></div>`);
+}
+function s12Corpo(){
+  const st=S12.estado;
+  if(st==="semperm")return bloco("perm","Esta tela é do almoxarifado","Seu usuário (fernanda.rocha@manfac.com.br) aprova pedidos de material, mas não tem papel de almoxarife, gestor ou administrador. Quem confere entrega de fornecedor é o almox. Para pedir acesso, fale com um administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 class="pg-tit">Entregas de fornecedor</h2><div class="sp"></div>${st==="dados"?`<span class="atual"><span class="dot"></span>Previsões lidas do Compras às ${relogio()}</span>`:""}</div>`;
+  if(st==="carregando")return cab+skel(5,4);
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar as entregas","O servidor não respondeu, então não mostramos a agenda para você não receber nada sem o pedido na tela. Se chegar mercadoria agora, guarde a nota e confira quando a tela voltar. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="s12-tentar">Tentar de novo</button>`);
+  if(st==="vazio")return cab+bloco("vazio","Nenhuma entrega prevista para a Base","Não há pedido do Compras com entrega na Base em aberto. Quando o comprador informar a previsão de entrega de um pedido, ele aparece aqui, no dia certo.")+`<div class="card stack" style="padding:16px;margin-top:14px"><div class="row"><h3 class="h3">Conferido pelo almox, falta entrada no Omie</h3></div>${bloco("ok","Nenhum pedido esperando entrada no Omie","Tudo o que o almox conferiu já entrou no estoque do Omie.")}</div>`;
+  return cab+(S12.vis==="conf"?s12Conf():s12Agenda());
+}
+function s12Render(){
+  $("#sec-12").innerHTML=`<div class="sec-h"><div class="label-mono">Almoxarife · computador ou tablet, dentro do hub</div><h1>Seção 12 — Entregas de fornecedor e conferência</h1><p>A agenda do almox com o que o Compras comprou para entregar na Base, a conferência item a item contra o pedido e a lista do que já foi conferido mas ainda não entrou no Omie.</p></div>
+  ${seletorEstado("12",S12.estado)}<div style="height:14px"></div>
+  ${shell("Recebimento","Paulo Mendes","Almoxarife",s12Corpo())}
+  <p class="muted" style="font-size:13px;margin-top:12px">Experimente: confira o pedido 3109 (atrasado), baixe os óculos para 24 e marque a bota como avariada sem observação; depois conclua e veja o pedido descer para a lista do Omie.</p>`;
+}
+function s12AtualizaConf(){const pc=PC.find(p=>p.n===S12.pc);$("#c12-corpo").innerHTML=pc.itens.map((_,ix)=>s12Linha(pc,ix)).join("");$("#c12-res").innerHTML=s12Res(pc);}
+function s12Qtd(ix,v){
+  const pc=PC.find(p=>p.n===S12.pc),it=pc.itens[ix],c=S12.conf[ix];
+  c.q=Math.max(0,Math.floor(v)||0);
+  if(c.q<it.q&&c.sit==="ok")c.sit="falta";
+  if(c.q>=it.q&&c.sit==="falta")c.sit="ok";
+  s12AtualizaConf();
+}
+
+/* =====================================================================
+   SEÇÃO 13 — MÍNIMOS E SUGESTÃO DE REPOSIÇÃO
+   ===================================================================== */
+const kk=(id,l)=>id+"|"+l;
+const MIN={};
+P.forEach(p=>Object.entries(p.min).forEach(([l,m])=>{MIN[kk(p.id,l)]={min:m,alvo:null};}));
+MIN[kk("cabo25","DPSP")].alvo=250;
+const alvoDe=m=>m.alvo??m.min*2;
+const CC={DPSP:"CC 2.01 · Manutenção DPSP",PROFARMA:"CC 2.02 · Manutenção Profarma",BASE:"CC 3.01 · Obras e Spot"};
+const CTN={DPSP:"DPSP",PROFARMA:"Profarma",BASE:"Base (Obras/Spot)"};
+function gerarSug(ct,hora,por){
+  const itens=[],cob=[];
+  P.forEach(p=>{const m=MIN[kk(p.id,ct)];if(!m)return;const s=sal(p,ct);if(s>=m.min)return;
+    const ec=(p.ecL&&p.ecL[ct])||0,sug=alvoDe(m)-s-ec;
+    (sug>0?itens:cob).push({id:p.id,s,min:m.min,alvo:alvoDe(m),ec,sug:Math.max(0,sug),fin:Math.max(0,sug),tirado:false});});
+  return {itens,cob,hora,por,enviado:null};
+}
+const S13={estado:"dados",aba:"min",est:"DPSP",pend:{},erros:[],msg:null,ct:"DPSP",sug:{},minMudou:false};
+["DPSP","PROFARMA","BASE"].forEach(c=>{S13.sug[c]=gerarSug(c,"06:00","cálculo diário");});
+const prevEc=p=>{const pc=PC.find(x=>x.st==="aberto"&&x.itens.some(i=>i.id===p.id));return pc?fmtC(pc.prev):"";};
+function pv(id,campo){
+  const k=kk(id,S13.est),pd=S13.pend[k];
+  if(pd&&pd[campo]!==undefined)return pd[campo];
+  const m=MIN[k];if(!m)return "";
+  return campo==="min"?String(m.min):m.alvo==null?"":String(m.alvo);
+}
+function sitMin(s,minTxt){
+  if(minTxt===""||!/^\d+$/.test(minTxt))return '<span class="badge b-out">sem mínimo</span>';
+  const m=Number(minTxt);
+  if(s<m)return '<span class="badge b-des">abaixo do mínimo</span>';
+  if(s<=m*1.2)return '<span class="badge b-avi">perto do mínimo</span>';
+  return '<span class="badge b-ok">ok</span>';
+}
+function s13LinhaMin(p){
+  const s=sal(p,S13.est),mv=pv(p.id,"min"),av=pv(p.id,"alvo");
+  const ph=/^\d+$/.test(mv)?String(Number(mv)*2):"—";
+  return `<tr class="lin"><td class="fix wide" style="white-space:normal"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="small">${p.cod} · ${p.f}</div></td>
+   <td class="r n" data-l="Saldo agora">${num(s)} <span class="muted">${p.un}</span></td>
+   <td class="r" data-l="Mínimo"><input class="inp num-in" inputmode="numeric" data-mn="${p.id}" value="${esc(mv)}" placeholder="—" aria-label="Mínimo de ${esc(p.d)}"></td>
+   <td class="r" data-l="Estoque alvo"><input class="inp num-in" inputmode="numeric" data-al="${p.id}" value="${esc(av)}" placeholder="${ph}" aria-label="Estoque alvo de ${esc(p.d)}"><div class="min-t" id="al-${p.id}">${av!==""?"definido à mão":mv!==""?"padrão: 2 × mínimo":""}</div></td>
+   <td data-l="Situação" id="st-${p.id}">${sitMin(s,mv)}</td></tr>`;
+}
+function s13PendBar(){
+  const n=Object.keys(S13.pend).length;
+  if(!n)return "";
+  return `<div class="pendbar"><span><b>${n} ${plural(n,"mudança não salva","mudanças não salvas")}</b> · nada vale até você salvar</span><div class="sp"></div><button class="btn btn-ghost btn-sm" data-a="s13-desc">Descartar</button><button class="btn btn-sm" data-a="s13-salvar">Salvar mínimos</button></div>`;
+}
+function s13Min(){
+  const st=S13.estado;
+  const topo=`<div class="row" style="margin-bottom:12px"><span class="pill-seg" role="group" aria-label="Estoque">${LOCS.map(l=>`<button data-a="s13-est" data-v="${l}" aria-pressed="${S13.est===l}">${locNome(l)}</button>`).join("")}</span><div class="sp"></div><button class="btn btn-outline btn-sm" data-a="s13-imp">Importar planilha</button></div>`;
+  if(st==="vazio")return topo+bloco("vazio",`Nenhum mínimo cadastrado no ${locNome(S13.est)}`,"Sem mínimo, o sistema não sabe quando avisar que está acabando nem monta a sugestão de reposição. Digite o mínimo de cada produto na tabela ou importe a planilha que vocês já usam.",`<button class="btn btn-sm" data-a="s13-imp">Importar planilha</button>`);
+  const n=P.filter(p=>MIN[kk(p.id,S13.est)]).length;
+  return topo+`<div class="stack">${okmsg(S13.msg)}
+  ${S13.erros.length?`<div class="faixa al-des"><div class="al"><span class="mk">!</span><span class="tx"><b>Não salvamos nada.</b> Corrija:<ul class="lista-erros">${S13.erros.map(e=>`<li>${e}</li>`).join("")}</ul></span></div></div>`:""}
+  <p class="small">${n} de ${P.length} produtos com mínimo no ${locNome(S13.est)}. Estoque alvo é até onde a reposição enche; em branco, vale 2 × o mínimo. Mínimo em branco = o produto não entra na reposição deste estoque.</p>
+  <div id="s13-pend">${s13PendBar()}</div>
+  <div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Produto</th><th class="r">Saldo agora</th><th class="r">Mínimo</th><th class="r">Estoque alvo</th><th>Situação</th></tr></thead><tbody>${P.map(s13LinhaMin).join("")}</tbody></table></div></div>`;
+}
+function s13Tot(R){const I=R.itens.filter(i=>!i.tirado&&i.fin>0);return {n:I.length,v:I.reduce((a,i)=>a+i.fin*PID[i.id].cmc,0)};}
+function s13Sug(){
+  const ct=S13.ct,R=S13.sug[ct],trav=!!R.enviado;
+  const topo=`<div class="row" style="margin-bottom:12px"><span class="pill-seg" role="group" aria-label="Contrato">${["DPSP","PROFARMA","BASE"].map(c=>`<button data-a="s13-ct" data-v="${c}" aria-pressed="${ct===c}">${CTN[c]}${S13.sug[c].enviado?" ✓":""}</button>`).join("")}</span></div>`;
+  const cab=`<div class="card" style="padding:14px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center"><div style="flex:1;min-width:200px"><div class="label-mono">Rascunho de reposição</div><div class="h3">${CTN[ct]} · ${CC[ct]}</div><div class="small">Gerado hoje às ${R.hora} pelo ${R.por}. Conta: estoque alvo − saldo − o que já está em compra.</div></div>
+   ${trav?'<span class="badge b-ok">Enviado ao Compras</span>':`<button class="btn btn-outline btn-sm" data-a="s13-gerar">Gerar de novo agora</button>`}</div>`;
+  const aviso=S13.minMudou&&!trav?`<div class="faixa al-avi"><div class="al"><span class="mk">◆</span><span class="tx">Os mínimos mudaram depois que este rascunho foi gerado. Clique em “Gerar de novo agora” para usar os números novos.</span></div></div>`:"";
+  if(S13.estado==="vazio")return topo+bloco("ok",`Nada a repor no ${CTN[ct]} hoje`,"Nenhum produto deste estoque está abaixo do mínimo. O cálculo roda todo dia às 06:00; se algo baixar, o rascunho aparece aqui e o almox recebe um e-mail.");
+  const ativos=R.itens.map((i,ix)=>({i,ix})).filter(x=>!x.i.tirado),tir=R.itens.map((i,ix)=>({i,ix})).filter(x=>x.i.tirado);
+  const T=s13Tot(R);
+  const tabela=ativos.length?`<div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Produto</th><th class="r">Saldo</th><th class="r">Mínimo</th><th class="r">Alvo</th><th class="r">Em compra</th><th class="r">Sugerido</th><th class="r">Quantidade final</th><th class="r">Valor</th>${trav?"":"<th></th>"}</tr></thead><tbody>
+   ${ativos.map(({i,ix})=>{const p=PID[i.id];return `<tr class="lin${i.fin===0?" apagado":""}"><td class="fix wide" style="white-space:normal"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="small">${p.cod}</div></td>
+    <td class="r n" data-l="Saldo"><span class="neg">${num(i.s)}</span> ${p.un}</td><td class="r n" data-l="Mínimo">${num(i.min)}</td><td class="r n" data-l="Alvo">${num(i.alvo)}</td>
+    <td class="r n" data-l="Em compra">${i.ec?`${num(i.ec)} <span class="small">chega ${prevEc(p)}</span>`:'<span class="zero">—</span>'}</td>
+    <td class="r n" data-l="Sugerido">${num(i.sug)}</td>
+    <td class="r" data-l="Quantidade final">${trav?`<b class="n">${num(i.fin)}</b>`:`<input class="inp num-in" inputmode="numeric" data-fin="${ix}" value="${i.fin}" aria-label="Quantidade final de ${esc(p.d)}">`}</td>
+    <td class="r n" data-l="Valor estimado" id="sv-${ix}">${brl(i.fin*p.cmc)}</td>
+    ${trav?"":`<td data-l=""><button class="btn btn-ghost btn-xs" data-a="s13-tira" data-v="${ix}">Tirar item</button></td>`}</tr>`;}).join("")}
+   </tbody></table></div>`:!R.itens.length?bloco("ok",`Nada a repor no ${CTN[ct]} hoje`,R.cob.length?"Os itens abaixo do mínimo já têm compra a caminho que cobre o estoque alvo (lista abaixo).":"Nenhum produto deste estoque está abaixo do mínimo."):bloco("vazio","Nenhum item no rascunho","Você tirou todos os itens. Devolva algum abaixo ou gere o rascunho de novo.");  const tirTxt=tir.length?`<div class="small">Tirados deste envio: ${tir.map(({i,ix})=>`${esc(PID[i.id].d)}${trav?"":` <button class="btn btn-ghost btn-xs" data-a="s13-volta" data-v="${ix}">devolver</button>`}`).join(" · ")}</div>`:"";
+  const cob=R.cob.length?`<details class="tv" open><summary>Abaixo do mínimo, mas o que já está em compra cobre (${R.cob.length})</summary><table>${R.cob.map(i=>{const p=PID[i.id];return `<tr><td>${esc(p.d)} · saldo ${num(i.s)}, mínimo ${num(i.min)}, alvo ${num(i.alvo)}</td><td>${num(i.ec)} ${p.un} em compra · chega ${prevEc(p)}</td></tr>`;}).join("")}</table></details>`:"";
+  if(!R.itens.length)return topo+`<div class="stack">${okmsg(S13.msgSug)}${cab}${aviso}${tabela}${cob}</div>`;
+  const rod=trav?`<div class="okmsg"><b>Enviado ao Compras hoje às ${R.enviado.hora} por ${R.enviado.por}.</b> ${R.enviado.n} ${plural(R.enviado.n,"item","itens")} · ${brl(R.enviado.v)} estimados. O comprador abre a solicitação a partir desta sugestão; nada foi pedido a fornecedor. O próximo rascunho do ${CTN[ct]} nasce amanhã às 06:00.</div>`
+   :`<div class="resumo"><div class="row"><span>Vai para o Compras: <b id="s13-tot">${T.n} ${plural(T.n,"item","itens")} · ${brl(T.v)}</b> <span class="small">(pelo custo médio do Omie)</span></span><div class="sp"></div><button class="btn btn-lg" id="s13-enviar" data-a="s13-enviar" ${T.n?"":"disabled"}>Enviar ao Compras</button></div>
+     <div class="small">Enviar não compra nada: vira uma sugestão que o comprador transforma em solicitação. Quantidade final 0 fica fora do envio.</div></div>`;
+  return topo+`<div class="stack">${okmsg(S13.msgSug)}${cab}${aviso}${tabela}${tirTxt}${cob}${rod}</div>`;
+}
+function s13Corpo(){
+  const st=S13.estado;
+  if(st==="semperm")return bloco("perm","Mínimos e reposição são do almoxarifado","Seu usuário (fernanda.rocha@manfac.com.br) não tem papel de almoxarife, gestor ou administrador neste módulo. Fale com um administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:12px"><h2 class="pg-tit">Mínimos e reposição</h2></div>
+   <div class="tabs-in" role="tablist"><button class="tab-in" role="tab" data-a="s13-aba" data-v="min" aria-selected="${S13.aba==="min"}">Mínimos e alvo</button><button class="tab-in" role="tab" data-a="s13-aba" data-v="sug" aria-selected="${S13.aba==="sug"}">Sugestão de reposição</button></div>`;
+  if(st==="carregando")return cab+skel(7,0);
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar os mínimos","O servidor não respondeu. Nada do que estava salvo foi perdido. Tente de novo; se repetir, avise o administrador do Almoxarifado.",`<button class="btn btn-sm" data-a="s13-tentar">Tentar de novo</button>`);
+  return cab+(S13.aba==="min"?s13Min():s13Sug());
+}
+function s13Render(){
+  $("#sec-13").innerHTML=`<div class="sec-h"><div class="label-mono">Almoxarife · computador, dentro do hub</div><h1>Seção 13 — Mínimos e sugestão de reposição</h1><p>O almox diz quanto é o mínimo e até onde encher cada produto em cada estoque. Todo dia o sistema monta um rascunho de reposição por contrato; o almox revisa e manda ao Compras.</p></div>
+  ${seletorEstado("13",S13.estado)}<div style="height:14px"></div>
+  ${shell("Reposição","Paulo Mendes","Almoxarife",s13Corpo())}
+  <p class="muted" style="font-size:13px;margin-top:12px">Experimente: no DPSP, suba o mínimo da luva para 15 e veja a situação mudar; salve, vá à sugestão e gere de novo. No Profarma, mude a quantidade do cabo e veja o total recalcular. Importe o exemplo com erro.</p>`;
+}
+const IMP_MIN={
+  titulo:"Importar mínimos da planilha",sub:"Atualiza mínimo e estoque alvo de muitos produtos de uma vez.",
+  colunas:"código do produto ; estoque (BASE, DPSP ou PROFARMA) ; mínimo ; estoque alvo (opcional)",
+  dica:"A primeira linha é o título das colunas. Alvo em branco vale 2 × o mínimo. Só entram produtos que existem no cadastro do Omie.",
+  exemplos:{erro:"codigo;estoque;minimo;alvo\nELE-0201;DPSP;8;\nELE-0203;PROFARMA;4;10\nILU-0118;PROFARMA;15;30\nELE-9999;DPSP;5;\nCON-0020;BASE;dez;\nEPI-0011;DPSP;10;6\nILU-0232;DPSP;4;\nHID-0310;DPSP;3;",
+    certo:"codigo;estoque;minimo;alvo\nELE-0201;DPSP;8;\nELE-0203;PROFARMA;4;10\nILU-0118;PROFARMA;15;30\nEPI-0011;DPSP;12;\nILU-0232;DPSP;4;\nHID-0310;DPSP;3;\nCON-0108;BASE;4;"},
+  validar(rows){
+    const erros=[],ok=[];
+    rows.forEach(r=>{const [cod,est,mn,al]=r.c;const p=P.find(x=>x.cod.toUpperCase()===String(cod||"").toUpperCase());const E=String(est||"").toUpperCase();
+      if(!p)return erros.push({l:r.n,m:`o código ${esc(cod||"(vazio)")} não existe no cadastro do Omie.`});
+      if(!LOCS.includes(E))return erros.push({l:r.n,m:`estoque “${esc(est||"")}” não existe. Use BASE, DPSP ou PROFARMA.`});
+      if(!/^\d+$/.test(mn||""))return erros.push({l:r.n,m:`mínimo “${esc(mn||"")}” não é um número inteiro.`});
+      if(al&&!/^\d+$/.test(al))return erros.push({l:r.n,m:`estoque alvo “${esc(al)}” não é um número inteiro.`});
+      if(al&&Number(al)<Number(mn))return erros.push({l:r.n,m:`estoque alvo (${al}) menor que o mínimo (${mn}) de ${esc(p.d)}.`});
+      ok.push({p,E,mn:Number(mn),al:al?Number(al):null});});
+    return {erros,ok,resumo:"Confira o que muda e clique em importar.",previa:`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Produto</th><th>Estoque</th><th class="r">Mínimo</th><th class="r">Alvo</th></tr></thead><tbody>${ok.map(o=>{const m=MIN[kk(o.p.id,o.E)];return `<tr><td style="white-space:normal">${esc(o.p.d)}</td><td>${locNome(o.E)}</td><td class="r n">${m?`<span class="risc">${m.min}</span> → `:""}${o.mn}</td><td class="r n">${o.al??`${o.mn*2} <span class="small">padrão</span>`}</td></tr>`;}).join("")}</tbody></table></div>`};
+  },
+  botao:n=>n?`Importar ${n} mínimos`:"Importar",
+  aplicar(ok){ok.forEach(o=>{MIN[kk(o.p.id,o.E)]={min:o.mn,alvo:o.al};});S13.minMudou=true;S13.estado="dados";S13.aba="min";S13.msg=`<b>${ok.length} mínimos importados às ${relogio()}.</b> A versão anterior fica guardada no histórico de configurações.`;s13Render();}
+};
+function s13Salvar(){
+  const E=[];
+  Object.entries(S13.pend).forEach(([k,v])=>{const [id,l]=k.split("|");const p=PID[id];const cur=MIN[k];
+    const mn=v.min!==undefined?v.min:cur?String(cur.min):"";const al=v.alvo!==undefined?v.alvo:cur&&cur.alvo!=null?String(cur.alvo):"";
+    if(mn!==""&&!/^\d+$/.test(mn))E.push(`${esc(p.d)} (${locNome(l)}): mínimo “${esc(mn)}” não é número inteiro.`);
+    else if(al!==""&&!/^\d+$/.test(al))E.push(`${esc(p.d)} (${locNome(l)}): estoque alvo “${esc(al)}” não é número inteiro.`);
+    else if(al!==""&&mn==="")E.push(`${esc(p.d)} (${locNome(l)}): tem estoque alvo mas não tem mínimo.`);
+    else if(al!==""&&Number(al)<Number(mn))E.push(`${esc(p.d)} (${locNome(l)}): estoque alvo (${al}) menor que o mínimo (${mn}).`);});
+  S13.erros=E;
+  if(!E.length){const n=Object.keys(S13.pend).length;
+    Object.entries(S13.pend).forEach(([k,v])=>{const cur=MIN[k];const mn=v.min!==undefined?v.min:cur?String(cur.min):"";const al=v.alvo!==undefined?v.alvo:cur&&cur.alvo!=null?String(cur.alvo):"";
+      if(mn==="")delete MIN[k];else MIN[k]={min:Number(mn),alvo:al===""?null:Number(al)};});
+    S13.pend={};S13.minMudou=true;S13.msg=`<b>${n} ${plural(n,"mínimo salvo","mínimos salvos")} às ${relogio()}.</b> Vale a partir de agora; a versão anterior fica guardada no histórico de configurações. A sugestão de reposição usa os números novos no próximo cálculo.`;}
+  s13Render();
+}
+
+/* =====================================================================
+   SEÇÃO 14 — INVENTÁRIO: CONTAGEM (celular)
+   ===================================================================== */
+const EXTRA=["Abraçadeira de nylon 200mm (pct 100)","Conector de emenda 3 vias","Plugue macho 2P+T 10A","Interruptor simples 10A","Canaleta 20x10mm (barra 2m)","Eletroduto corrugado 3/4\" (m)","Lâmpada LED PAR20 7W","Luminária LED de sobrepor 18W","Refletor LED 50W","Fita veda-rosca 18mm","Registro de gaveta 3/4\"","Engate flexível 40cm","Reparo de válvula de descarga","Cola para PVC 175g","Tubo PVC soldável 25mm (barra 6m)","Joelho 90° PVC 25mm","Luva PVC soldável 25mm","Tinta acrílica branca 3,6L","Massa corrida 5kg","Rolo de lã 23cm","Lixa d'água grão 220","Fita crepe 48mm","Bucha 6mm (cento)","Parafuso drywall 25mm (cento)","Broca para concreto 6mm","Disco de corte 4.1/2\"","Desengripante spray 300ml","Pilha AA (par)","Protetor auricular tipo plug","Máscara PFF2","Capacete com jugular","Fita antiderrapante 50mm","Sensor de presença de teto","Relé fotoelétrico 1000W","Contator 25A 220V","Terminal ilhós 2,5mm (pct 100)","Quadro de distribuição 12 disjuntores","Caixa 4x2 de embutir","Espelho cego 4x2","Rejunte cinza 1kg","Argamassa AC-II 20kg","Vaselina sólida 100g","Graxa branca 500g"];
+const INV=[...P.map(p=>({id:p.id,d:p.d,cod:p.cod,un:p.un})),...EXTRA.map((d,i)=>({id:"x"+i,d,cod:`DIV-${String(300+i*7).padStart(4,"0")}`,un:d.includes("(m)")?"m":d.includes("(barra")?"br":d.includes("(cento)")?"cto":d.includes("(pct")?"pct":"un"}))];
+INV.forEach((x,i)=>{x.end=`Rua ${"ABCDE"[i%5]} · Prateleira ${1+(i*7)%6}`;});
+const INVID=Object.fromEntries(INV.map(x=>[x.id,x]));
+function embaralha(arr,seed){const a=[...arr];let s=seed;for(let i=a.length-1;i>0;i--){s=(s*9301+49297)%233280;const j=Math.floor(s/233280*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const fatia=(a,n)=>{const r=[];for(let i=0;i<a.length;i+=n)r.push(a.slice(i,i+n));return r;};
+const CIC={
+ BASE:{nome:"Base",lista:embaralha(INV,7).slice(0,60).map(x=>x.id),onda:2,cont:{},inicio:dia(2)},
+ DPSP:{nome:"DPSP",lista:embaralha(INV,11).slice(0,59).map(x=>x.id),onda:0,cont:{},inicio:dia(9)},
+ PROFARMA:{nome:"Profarma",lista:embaralha(INV,5).slice(0,58).map(x=>x.id),emDia:dia(6),inicio:dia(19,10)},
+ "MANFAC 1":{nome:"MANFAC 1",equipe:"Rafael Lima",lista:embaralha(INV,17).slice(0,21).map(x=>x.id),emDia:dia(5),inicio:dia(26,10)},
+ "MANFAC 2":{nome:"MANFAC 2",equipe:"Carlos Souza",lista:embaralha(INV,3).slice(0,14).map(x=>x.id),onda:0,cont:{},inicio:dia(12)},
+ "MANFAC-25":{nome:"MANFAC-25",equipe:"Marcos Pereira",lista:embaralha(INV,13).slice(0,23).map(x=>x.id),onda:null,cont:{}},
+};
+{const d=CIC.DPSP,o=fatia(d.lista,20)[0];[3,9,1,12,6,15].forEach((i,k)=>{d.cont[o[i]]=[4,12,0,7,25,3][k];});}
+{const b=CIC.BASE,o=fatia(b.lista,20)[2];b.marca={[o[1]]:"Curva A: conta de novo no meio do ciclo",[o[4]]:"Deu diferença na onda 1: conta de novo"};}
+const ondas=c=>fatia(c.lista,20);
+const S14={estado:"dados",tela:"lista",est:null,filtro:"faltam",fim:null};
+const ondaAtual=c=>ondas(c)[c.onda]||[];
+const contados=c=>ondaAtual(c).filter(id=>c.cont[id]!==undefined).length;
+const antesDaOnda=c=>ondas(c).slice(0,c.onda).reduce((a,o)=>a+o.length,0);
+function prog(lbl,feito,tot,ok){const p=tot?Math.round(feito/tot*100):0;return `<div><div class="prog-l"><span>${lbl}</span><span><b class="n">${feito}</b> de ${tot}</span></div><div class="prog${ok?" ok":""}"><i style="width:${p}%"></i></div></div>`;}
+function s14Lista(){
+  return `<div class="faixa al-sec"><div class="al"><span class="mk">●</span><span class="tx">Cada estoque é contado em ondas de 20 itens sorteados, até cobrir tudo. Escolha onde você vai contar agora.</span></div></div>
+  ${Object.entries(CIC).map(([k,c])=>{
+    let st,pr="";
+    if(c.emDia){const prox=new Date(c.inicio);prox.setMonth(prox.getMonth()+6);st=`<span class="badge b-ok">Inventário físico em dia ✓ (${fmtC(c.emDia)})</span>`;pr=`<div class="small">Ciclo novo começa sozinho em ${fmtC(prox)}/${prox.getFullYear()}.</div>`;}
+    else if(c.onda==null){st=`<span class="badge b-out">Ciclo ainda não começou</span>`;pr=`<div class="small">${c.lista.length} itens com saldo neste estoque.</div>`;}
+    else{const O=ondas(c);st=`<span class="badge b-avi">Onda ${c.onda+1} de ${O.length}</span>`;pr=prog("Ciclo",antesDaOnda(c),c.lista.length);}
+    return `<button class="ped est-btn" data-a="c14-est" data-v="${k}"><div class="l1"><b style="font-size:15px">${c.nome}</b>${c.equipe?'<span class="badge b-out">equipe</span>':""}<span class="sp"></span>${st}</div>${pr}</button>`;}).join("")}`;
+}
+function s14Item(c,id){
+  const x=INVID[id],v=c.cont[id],m=c.marca&&c.marca[id];
+  return `<div class="cnt${v!==undefined?" feito":""}" id="ci-${id}"><div class="info"><div class="nm">${esc(x.d)}</div><div class="dp">${x.cod} · contar em <b style="color:var(--texto-suave)">${x.un}</b> · ${x.end}</div>${m?`<div style="margin-top:4px"><span class="badge b-sec">${m}</span></div>`:""}</div>
+  <div class="ctl"><input class="inp" type="number" min="0" inputmode="numeric" data-cnt="${id}" value="${v??""}" placeholder="?" aria-label="Quantidade contada de ${esc(x.d)}"><button class="nao" data-a="c14-zero" data-v="${id}">não achei nenhum</button></div></div>`;
+}
+function s14Onda(){
+  const c=CIC[S14.est],O=ondas(c),on=ondaAtual(c),n=contados(c);
+  if(c.onda==null)return `<button class="btn btn-ghost btn-sm" style="align-self:flex-start" data-a="c14-lista">← Estoques</button>
+   <h3 style="font-size:18px">${c.nome}</h3>${bloco("vazio","O ciclo deste estoque ainda não começou",`São ${c.lista.length} itens com saldo. O sistema sorteia 20 por vez; a última onda pode ter menos.`,`<button class="btn btn-sm" data-a="c14-comeca">Sortear a primeira onda</button>`)}`;
+  const vis=on.filter(id=>S14.filtro==="todos"||(S14.filtro==="faltam")===(c.cont[id]===undefined));
+  return `<button class="btn btn-ghost btn-sm" style="align-self:flex-start" data-a="c14-lista">← Estoques</button>
+  <div class="row"><h3 style="font-size:18px">${c.nome}</h3><span class="badge b-avi">Onda ${c.onda+1} de ${O.length}</span></div>
+  <div class="box" id="c14-prog">${prog(`Esta onda`,n,on.length,n===on.length)}${prog("Ciclo inteiro",antesDaOnda(c)+n,c.lista.length)}</div>
+  <div class="faixa al-sec"><div class="al"><span class="mk">●</span><span class="tx"><b>Contagem às cegas.</b> Conte o que está na prateleira e digite. O sistema não mostra o saldo para a contagem não ser puxada pelo número dele.${c.equipe?` <br><b>Estoque de equipe:</b> conte junto com ${c.equipe}, com o carro aberto.`:""}</span></div></div>
+  <span class="pill-seg" role="group" aria-label="Filtro">${[["faltam","Faltam"],["contados","Contados"],["todos","Todos"]].map(([k,r])=>`<button data-a="c14-filtro" data-v="${k}" aria-pressed="${S14.filtro===k}">${r}</button>`).join("")}</span>
+  <div id="c14-lista">${vis.length?vis.map(id=>s14Item(c,id)).join(""):`<p class="muted" style="padding:16px 0;text-align:center">${S14.filtro==="faltam"?"Tudo contado nesta onda. Pode fechar.":"Nenhum item contado ainda."}</p>`}</div>
+  <button class="btn btn-outline btn-xs" style="border-style:dashed;align-self:flex-start" data-a="c14-preenche">Preencher os que faltam (controle do mockup)</button>`;
+}
+function s14Fim(){
+  const f=S14.fim,c=CIC[S14.est];
+  if(f.emDia)return `<div class="pin-wrap" style="gap:12px"><div class="pin-logo" style="background:var(--verde-bg);color:var(--verde)">✓</div><h2 style="font-size:20px">Inventário físico em dia ✓ (${fmtC(HOJE)})</h2>
+   <p class="muted">Todos os ${c.lista.length} itens do ${c.nome} foram contados neste ciclo. As diferenças, se houver, já estão com o admin para aprovar.</p><button class="btn btn-lg btn-block" data-a="c14-lista">Voltar aos estoques</button></div>`;
+  return `<div class="pin-wrap" style="gap:12px"><div class="pin-logo" style="background:var(--verde-bg);color:var(--verde)">✓</div><h2 style="font-size:20px">Onda ${f.ondaN} fechada</h2>
+   <p class="muted">As ${f.n} contagens foram para conferência. A onda ${f.ondaN+1} já foi sorteada: ${ondaAtual(c).length} itens.</p>
+   <button class="btn btn-lg btn-block" data-a="c14-seguir">Começar a onda ${f.ondaN+1}</button><button class="btn btn-ghost btn-block" data-a="c14-lista">Deixar para depois</button></div>`;
+}
+function s14Phone(){
+  const st=S14.estado;
+  const head=`<div class="ph-head"><div style="flex:1;min-width:0"><div class="t1">Inventário</div><div class="t2">Paulo Mendes · Almoxarife</div></div><span class="avatar" aria-hidden="true">PM</span></div>`;
+  if(st==="semperm")return head+`<div class="ph-body">${bloco("perm","Você não conta inventário","Seu usuário entra no hub, mas não tem papel de almoxarife neste módulo. Quem conta é o almox; peça a liberação a um administrador do Almoxarifado.")}</div>`;
+  if(st==="carregando")return head+`<div class="ph-body">${Array.from({length:5},()=>`<div class="ped" style="cursor:default"><div class="skel" style="width:40%"></div><div class="skel" style="width:75%"></div><div class="skel" style="height:6px"></div></div>`).join("")}</div>`;
+  if(st==="erro")return head+`<div class="ph-body">${bloco("erro","Sem conexão com o almoxarifado","Não deu para carregar os estoques. O que você já digitou nesta onda continua guardado neste celular e vai junto quando a conexão voltar.",`<button class="btn btn-sm" data-a="c14-tentar">Tentar de novo</button>`)}</div>`;
+  if(st==="vazio")return head+`<div class="ph-body">${bloco("vazio","Nenhum estoque para contar","O inventário começa quando o administrador liga os estoques do Omie ao almox. Até lá, não há onda sorteada.")}</div>`;
+  const corpo=S14.tela==="lista"?s14Lista():S14.tela==="fim"?s14Fim():s14Onda();
+  let pe="";
+  if(S14.tela==="onda"&&CIC[S14.est].onda!=null){const c=CIC[S14.est],n=contados(c),t=ondaAtual(c).length;
+    pe=`<div class="ph-foot"><div class="cartbar"><div style="flex:1;font-size:13px" id="c14-falta">${n<t?`Faltam <b>${t-n}</b> de ${t}`:"<b>Tudo contado</b>"}</div><button class="btn btn-lg" id="c14-fechar" data-a="c14-fechar" ${n<t?"disabled":""}>Fechar onda</button></div></div>`;}
+  return head+`<div class="ph-body" id="ph14">${corpo}</div>${pe}`;
+}
+function s14Render(){
+  const sc=$("#ph14")?.scrollTop||0;
+  $("#sec-14").innerHTML=`<div class="sec-h"><div class="label-mono">Almoxarife · celular, logado no hub</div><h1>Seção 14 — Inventário: contagem</h1><p>O almoxarife conta com o celular na mão, andando pelo estoque. Cada onda tem 20 itens sorteados; quando todas as ondas acabam, o estoque fica “em dia”.</p></div>
+  ${seletorEstado("14",S14.estado)}<div style="height:18px"></div>
+  <div class="ph-grid"><div class="phone"><div class="ph-notch"><span>${relogio()}</span><span>●●● 4G</span></div>${s14Phone()}</div>
+  <div class="lado"><h3>Como funciona</h3><ul>
+   <li><b>Ondas de 20.</b> O sistema sorteia 20 itens entre os que têm saldo e ainda não foram contados no ciclo. A última onda pode ter menos.</li>
+   <li><b>Às cegas.</b> Quem conta nunca vê o saldo do Omie. A comparação é feita depois, com o saldo relido do Omie na hora de fechar.</li>
+   <li><b>Diferença vai para o admin</b> (Seção 15). Quem conta não fica sabendo qual item deu diferença.</li>
+   <li><b>Curva A e itens que já divergiram</b> voltam no meio do ciclo, marcados em azul.</li>
+   <li><b>Ciclo novo</b> começa sozinho 6 meses depois do início do anterior.</li>
+   <li><b>Equipes</b> são contadas do mesmo jeito, pelo almoxarife junto com o técnico.</li></ul>
+   <p class="muted" style="font-size:13px">Experimente: abra a Base (onda 3 de 3), use “preencher os que faltam” e feche a onda para ver “Inventário físico em dia ✓”. No DPSP, feche a onda 1 e veja a onda 2 ser sorteada. A MANFAC-25 ainda não começou.</p></div></div>`;
+  const b=$("#ph14");if(b)b.scrollTop=sc;
+}
+function s14Progresso(){
+  const c=CIC[S14.est],n=contados(c),t=ondaAtual(c).length;
+  const p=$("#c14-prog");if(p)p.innerHTML=prog("Esta onda",n,t,n===t)+prog("Ciclo inteiro",antesDaOnda(c)+n,c.lista.length);
+  const f=$("#c14-falta");if(f)f.innerHTML=n<t?`Faltam <b>${t-n}</b> de ${t}`:"<b>Tudo contado</b>";
+  const b=$("#c14-fechar");if(b)b.disabled=n<t;
+}
+
+/* =====================================================================
+   SEÇÃO 15 — AJUSTES DE INVENTÁRIO
+   ===================================================================== */
+const MOTIVOS=[{m:"Perda"},{m:"Quebra"},{m:"Erro de lançamento"},{m:"Devolução não registrada"},{m:"Consumo não apontado"}];
+const AJ=[
+ {id:1,loc:"BASE",pid:"fita",cont:"Onda 2 · 09/11 · Paulo Mendes",omie:80,contado:78,mot:""},
+ {id:2,loc:"BASE",pid:"bucha",cont:"Onda 2 · 09/11 · Paulo Mendes",omie:10,contado:11,mot:"Devolução não registrada"},
+ {id:3,loc:"BASE",pid:"ledtub",cont:"Onda 2 · 09/11 · Paulo Mendes",omie:40,contado:36,mot:"Quebra"},
+ {id:4,loc:"DPSP",pid:"disj20c",cont:"Onda 1 · 11/11 · Paulo Mendes",omie:3,contado:2,mot:"Erro de lançamento"},
+ {id:5,loc:"DPSP",pid:"luva",cont:"Onda 1 · 11/11 · Paulo Mendes",omie:6,contado:9,mot:""},
+ {id:6,loc:"MANFAC 2",pid:"cabo25",cont:"Onda 1 · 10/11 · Paulo Mendes com Carlos Souza",omie:30,contado:18,mot:"Consumo não apontado"},
+ {id:7,loc:"MANFAC 2",pid:"led9",cont:"Onda 1 · 10/11 · Paulo Mendes com Carlos Souza",omie:8,contado:5,mot:"Consumo não apontado"},
+ {id:8,loc:"PROFARMA",pid:"reator",cont:"Onda 3 · 05/11 · Paulo Mendes",omie:2,contado:1,mot:"Perda"},
+];
+let codAj=31;
+const S15={estado:"dados",papel:"admin",sel:new Set(),filtro:"todos",erro:"",dec:[],msg:null,novoPara:null};
+const difAj=a=>a.contado-a.omie;
+const valAj=a=>difAj(a)*PID[a.pid].cmc;
+function s15Fila(){
+  const adm=S15.papel==="admin";
+  const L=AJ.filter(a=>S15.filtro==="todos"||(S15.filtro==="EQUIPES"?EQ.includes(a.loc):a.loc===S15.filtro));
+  const filtro=`<span class="pill-seg" role="group" aria-label="Local">${[["todos","Todos"],["BASE","Base"],["DPSP","DPSP"],["PROFARMA","Profarma"],["EQUIPES","Equipes"]].map(([k,r])=>`<button data-a="s15-filtro" data-v="${k}" aria-pressed="${S15.filtro===k}">${r}</button>`).join("")}</span>`;
+  if(!AJ.length)return bloco("ok","Nenhuma diferença esperando aprovação","Todas as contagens fechadas bateram com o Omie ou já foram decididas. Quando uma onda fechar com diferença, ela aparece aqui e os admins recebem um e-mail.");
+  const S=[...S15.sel].map(id=>AJ.find(a=>a.id===id)).filter(Boolean);
+  const sobe=S.filter(a=>valAj(a)>0).reduce((x,a)=>x+valAj(a),0),desce=S.filter(a=>valAj(a)<0).reduce((x,a)=>x+valAj(a),0);
+  const todos=L.length&&L.every(a=>S15.sel.has(a.id));
+  const barra=adm?`<div class="resumo"><div class="row"><label class="chk"><input type="checkbox" id="s15-todos" ${todos?"checked":""}>Selecionar ${L.length===AJ.length?"todos":"os visíveis"}</label><span><b>${S.length}</b> ${plural(S.length,"selecionado","selecionados")}${S.length?` · Omie sobe <b class="pos">${brl(sobe)}</b> e desce <b class="neg">${brl(Math.abs(desce))}</b>`:""}</span><div class="sp"></div>
+    <button class="btn btn-destructive btn-sm" data-a="s15-recusar" ${S.length?"":"disabled"}>Recusar selecionados</button><button class="btn" data-a="s15-aprovar" ${S.length?"":"disabled"}>Aprovar selecionados</button></div>
+    ${S15.erro?`<div class="erro-t">${S15.erro}</div>`:""}</div>`:"";
+  return `<div class="row" style="margin-bottom:10px">${filtro}<div class="sp"></div><span class="small">${AJ.length} ${plural(AJ.length,"diferença","diferenças")} esperando · Omie relido na hora de cada contagem</span></div>
+  ${L.length?`<div class="tbl-wrap"><table class="tbl cv"><thead><tr>${adm?'<th class="ck"></th>':""}<th>Local</th><th class="fix">Produto</th><th class="r">Omie</th><th class="r">Contado</th><th class="r">Diferença</th><th class="r">Valor</th><th>Motivo</th></tr></thead><tbody>
+  ${L.map(a=>{const p=PID[a.pid],d=difAj(a),sel=S15.sel.has(a.id);return `<tr class="lin${sel?" sel":""}">${adm?`<td class="ck"><input type="checkbox" data-aj="${a.id}" ${sel?"checked":""} aria-label="Selecionar ${esc(p.d)} em ${locNome(a.loc)}"></td>`:""}
+   <td data-l="Local">${locNome(a.loc)}</td>
+   <td class="fix wide" style="white-space:normal;min-width:200px"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="small">${a.cont}</div></td>
+   <td class="r n" data-l="Omie">${num(a.omie)} ${p.un}</td><td class="r n" data-l="Contado">${num(a.contado)} ${p.un}</td>
+   <td class="r n" data-l="Diferença"><b class="${d<0?"neg":"pos"}">${d>0?"+":"−"}${num(Math.abs(d))} ${p.un}</b></td>
+   <td class="r n" data-l="Valor">${brlS(valAj(a))}</td>
+   <td class="wide" data-l="Motivo">${adm?`<select class="inp" data-mot="${a.id}" aria-label="Motivo" style="${!a.mot&&S15.erro?"border-color:var(--erro-borda)":""}"><option value="">Escolha o motivo</option>${MOTIVOS.map(m=>`<option ${a.mot===m.m?"selected":""}>${esc(m.m)}</option>`).join("")}<option value="__novo">＋ Novo motivo…</option></select>`:a.mot?esc(a.mot):'<span class="muted">sem motivo ainda</span>'}</td></tr>`;}).join("")}
+  </tbody></table></div>`:bloco("vazio","Nenhuma diferença neste local","Escolha outro local acima ou “Todos”.")}
+  ${barra}`;
+}
+function s15Dec(){
+  if(!S15.dec.length)return "";
+  return `<div class="card stack" style="padding:16px"><h3 class="h3">Decididos hoje</h3><div class="hist">${S15.dec.map(d=>{const p=PID[d.pid];return `<div class="h"><span class="n muted" style="font-size:12px">${d.hora}</span><span><b style="font-weight:500">${esc(p.d)}</b> · ${locNome(d.loc)} · ${d.res==="aprovado"?`Omie ${num(d.omie)} → ${num(d.contado)} ${p.un} · ${esc(d.mot)}`:"recusado: o Omie não muda, o item volta para a próxima onda"}<br><span class="muted" style="font-size:12px">${d.res==="aprovado"?"aprovado":"recusado"} por ${d.por}${d.nota?` · “${esc(d.nota)}”`:""}</span></span><span>${d.res==="recusado"?'<span class="badge b-out">Recusado</span>':d.omieSt==="ok"?`<span class="badge b-ok">Gravado no Omie · ${d.cod}</span>`:'<span class="badge b-avi">Na fila do Omie…</span>'}</span></div>`;}).join("")}</div></div>`;
+}
+function s15Corpo(){
+  const st=S15.estado,adm=S15.papel==="admin";
+  if(st==="semperm")return bloco("perm","Ajustes de inventário são só para admin e gestor","Seu usuário (paulo.mendes@manfac.com.br) é almoxarife: conta o inventário, mas não vê nem decide ajuste de saldo. Isso é de propósito, para quem conta não ser quem aprova.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:12px"><h2 class="pg-tit">Ajustes de inventário</h2><div class="sp"></div>${adm?'<span class="badge b-sec">Você aprova ajustes (admin)</span>':'<span class="badge b-out">Só leitura</span>'}</div>`;
+  if(st==="carregando")return cab+skel(6,0);
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar a fila de ajustes","O servidor não respondeu. Nenhum ajuste foi aprovado nem gravado no Omie por causa deste erro. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="s15-tentar">Tentar de novo</button>`);
+  const aviso=adm?`<p class="small" style="margin-bottom:12px">Cada linha é uma diferença entre o que foi contado e o saldo do Omie naquele momento. Aprovar altera o saldo do Omie; recusar deixa o Omie como está e manda o item ser contado de novo.</p>`
+   :`<div class="faixa al-sec" style="margin-bottom:12px"><div class="al"><span class="mk">●</span><span class="tx"><b>Você vê a fila, mas não aprova.</b> Gestor aprova pedidos de material de qualquer contrato; ajuste de saldo do Omie só um admin aprova (hoje: Jose Guilherme).</span></div></div>`;
+  if(st==="vazio")return cab+bloco("ok","Nenhuma diferença esperando aprovação","Todas as contagens fechadas bateram com o Omie ou já foram decididas. Quando uma onda fechar com diferença, ela aparece aqui e os admins recebem um e-mail.");
+  return cab+aviso+okmsg(S15.msg)+`<div class="stack">${s15Fila()}${s15Dec()}</div>`;
+}
+function s15Render(){
+  const adm=S15.papel==="admin";
+  $("#sec-15").innerHTML=`<div class="sec-h"><div class="label-mono">Admin · computador, dentro do hub</div><h1>Seção 15 — Ajustes de inventário</h1><p>As diferenças das contagens esperam aqui. Só admin aprova, porque aprovar muda o saldo do Omie. O gestor vê a mesma fila sem poder decidir.</p></div>
+  ${seletorEstado("15",S15.estado,`<span style="width:100%"></span>Ver como: <span class="seg">${[["admin","Admin (Jose Guilherme)"],["gestor","Gestor (Gabriel Vidal)"]].map(([k,r])=>`<button data-a="s15-papel" data-v="${k}" aria-pressed="${S15.papel===k}">${r}</button>`).join("")}</span>`)}<div style="height:14px"></div>
+  ${shell("Ajustes",adm?"Jose Guilherme":"Gabriel Vidal",adm?"Admin":"Gestor",s15Corpo())}
+  <p class="muted" style="font-size:13px;margin-top:12px">Experimente: selecione todos e tente aprovar (duas linhas estão sem motivo); escolha “Novo motivo…” em uma delas; aprove e veja a gravação no Omie. Troque para Gestor para ver a mesma fila só para leitura.</p>`;
+}
+function s15AprovarDlg(){
+  const S=[...S15.sel].map(id=>AJ.find(a=>a.id===id));
+  const sem=S.filter(a=>!a.mot);
+  if(sem.length){S15.erro=`Escolha o motivo de ${sem.length} ${plural(sem.length,"item","itens")} antes de aprovar: ${sem.map(a=>esc(PID[a.pid].d)).join(", ")}.`;s15Render();return;}
+  S15.erro="";
+  const tot=S.reduce((x,a)=>x+valAj(a),0);
+  abrir(`${dlgCab(`Aprovar ${S.length} ${plural(S.length,"ajuste","ajustes")} e alterar o Omie?`,`Efeito no valor do estoque: ${brlS(tot)}`)}
+  <div class="tbl-wrap"><table class="tbl cv"><thead><tr><th>Local</th><th>Produto</th><th class="r">Saldo no Omie</th><th>Motivo</th></tr></thead><tbody>${S.map(a=>{const p=PID[a.pid];return `<tr class="lin"><td data-l="Local">${locNome(a.loc)}</td><td class="wide" data-l="Produto" style="white-space:normal">${esc(p.d)}</td><td class="r n" data-l="Saldo no Omie">${num(a.omie)} → <b style="color:#fff">${num(a.contado)}</b> ${p.un}</td><td data-l="Motivo">${esc(a.mot)}</td></tr>`;}).join("")}</tbody></table></div>
+  <div class="conseq"><b>O que acontece se você aprovar</b><ul>
+   <li><b>O saldo do Omie será alterado</b> em cada linha acima, para o número contado. É gravado um ajuste por item, com o motivo e o número da contagem na observação.</li>
+   <li>O valor do estoque muda em ${brlS(tot)} pelo custo médio, e a tela de posição mostra o número novo na próxima cópia (até 10 min).</li>
+   <li><b>Não dá para desfazer pela tela.</b> Se estiver errado, o caminho é contar o item de novo e aprovar outro ajuste.</li>
+   <li>Fica registrado que Jose Guilherme aprovou, com data e hora.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s15-aprovar-ok">Aprovar e alterar o Omie (${S.length})</button></div>`);
+}
+function s15RecusarDlg(){
+  const S=[...S15.sel].map(id=>AJ.find(a=>a.id===id));
+  abrir(`${dlgCab(`Recusar ${S.length} ${plural(S.length,"ajuste","ajustes")}?`)}
+  <p style="font-size:13px">${S.map(a=>`${esc(PID[a.pid].d)} (${locNome(a.loc)})`).join(" · ")}</p>
+  <div class="campo"><label for="s15-nota">Por que recusar? <span class="muted">(opcional, o almox vê)</span></label><textarea class="inp" id="s15-nota" rows="2" placeholder="Ex.: conferir a prateleira do lado antes de contar de novo"></textarea></div>
+  <div class="conseq"><b>O que acontece se você recusar</b><ul>
+   <li>O saldo do Omie <b>não muda</b>.</li>
+   <li>${plural(S.length,"O item volta","Os itens voltam")} para ser ${plural(S.length,"contado","contados")} de novo na próxima onda do mesmo estoque. Quem contar não fica sabendo a diferença.</li>
+   <li>Esta diferença sai da fila e não pode ser reaberta; se a recontagem der diferença de novo, nasce uma linha nova.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s15-recusar-ok">Recusar (${S.length})</button></div>`);
+}
+function s15NovoDlg(erro=""){
+  abrir(`${dlgCab("Novo motivo de ajuste","O motivo novo entra na lista para todos os admins.")}
+  <div class="campo"><label for="s15-novo">Nome do motivo</label><input class="inp" id="s15-novo" maxlength="40" placeholder="Ex.: Material usado em garantia" value="">${erro?`<span class="erro-t">${erro}</span>`:""}</div>
+  <p class="small">Fica registrado que Jose Guilherme criou, em ${fmtC(HOJE)}. Motivo criado não é apagado, para os ajustes antigos continuarem com o nome certo.</p>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="s15-novo-ok">Criar motivo</button></div>`);
+  setTimeout(()=>$("#s15-novo")?.focus(),30);
+}
+
+/* =====================================================================
+   SEÇÃO 16 — FERRAMENTAS E FICHA DO COLABORADOR
+   ===================================================================== */
+const COL={
+ carlos:{n:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",cel:"(11) 98765-4321",cpf:"***.482.117-**",pin:true},
+ rafael:{n:"Rafael Lima",eq:"MANFAC 1",ct:"DPSP",cel:"(11) 99812-3307",cpf:"***.305.668-**",pin:true},
+ marcos:{n:"Marcos Pereira",eq:"MANFAC-25",ct:"PROFARMA",cel:"(11) 97455-1029",cpf:"***.771.940-**",pin:true},
+ ana:{n:"Ana Beatriz Costa",eq:"Escritório da Base",ct:"BASE",cel:"(11) 96620-4418",cpf:"***.118.352-**",pin:false},
+};
+const FER=[
+ {id:"f1",nm:"Martelete rompedor 5kg",pat:"PAT-0012",v:2890,st:"com",com:"marcos",desde:dia(3),termo:"T-0037"},
+ {id:"f2",nm:"Martelete perfurador SDS Plus",pat:"PAT-0013",v:1250,st:"almox"},
+ {id:"f3",nm:"Martelete perfurador SDS Plus",pat:"PAT-0021",v:1250,st:"conserto",cons:{forn:"Assistência Ferramentas Paulista",saiu:dia(5),prev:dia(19),obs:"Mandril travando"}},
+ {id:"f4",nm:"Escada extensível 7m alumínio",pat:"PAT-0030",v:1480,st:"com",com:"rafael",desde:dia(28,10),termo:"T-0031"},
+ {id:"f5",nm:"Escada tesoura 6 degraus",pat:"PAT-0031",v:520,st:"almox"},
+ {id:"f6",nm:"Roçadeira a gasolina 52cc",pat:"PAT-0040",v:1990,st:"com",com:"carlos",desde:dia(10),termo:"T-0040"},
+ {id:"f7",nm:"Alicate amperímetro digital",pat:"PAT-0051",v:380,st:"com",com:"carlos",desde:dia(3),termo:"T-0038"},
+ {id:"f8",nm:"Alicate amperímetro digital",pat:"PAT-0052",v:380,st:"baixada",baixa:{mot:"Quebrado sem conserto: visor partido",data:dia(28,10)}},
+ {id:"f10",nm:"Alicate amperímetro digital",pat:"PAT-0053",v:380,st:"almox"},
+ {id:"f9",nm:"Furadeira de impacto 650W",pat:"PAT-0060",v:420,st:"com",com:"rafael",desde:dia(6),termo:"T-0039"},
+ {id:"q1",nm:"Alicate universal 8\"",pat:null,v:45,tot:16,cons:0,campo:{carlos:{n:1,desde:dia(3),termo:"T-0038"},rafael:{n:1,desde:dia(6),termo:"T-0039"},marcos:{n:2,desde:dia(3),termo:"T-0037"}}},
+ {id:"q2",nm:"Jogo de chaves de fenda (6 peças)",pat:null,v:62,tot:9,cons:0,campo:{carlos:{n:1,desde:dia(3),termo:"T-0038"},rafael:{n:1,desde:dia(6),termo:"T-0039"}}},
+ {id:"q3",nm:"Trena 5m",pat:null,v:28,tot:17,cons:0,campo:{carlos:{n:1,desde:dia(3),termo:"T-0038"},marcos:{n:1,desde:dia(3),termo:"T-0037"}}},
+];
+const FID=id=>FER.find(f=>f.id===id);
+const emCampo=f=>Object.values(f.campo||{}).reduce((a,x)=>a+x.n,0);
+const noAlmoxQ=f=>f.tot-emCampo(f)-(f.cons||0);
+const TERMOS=[
+ {n:"T-0036",c:"carlos",tipo:"epi",data:dia(2),hora:"08:20",itens:[{nm:"Luva de vaqueta",q:2,un:"par",v:12.5},{nm:"Óculos de proteção incolor",q:1,un:"un",v:8.9},{nm:"Bota de segurança nº 42",q:1,un:"par",v:89},{nm:"Camisa polo Manfac tam. M",q:2,un:"un",v:45}]},
+ {n:"T-0038",c:"carlos",tipo:"entrega",data:dia(3),hora:"07:45",itens:[{nm:"Alicate amperímetro digital",pat:"PAT-0051",q:1,v:380},{nm:"Alicate universal 8\"",q:1,v:45},{nm:"Jogo de chaves de fenda (6 peças)",q:1,v:62},{nm:"Trena 5m",q:1,v:28}]},
+ {n:"T-0040",c:"carlos",tipo:"entrega",data:dia(10),hora:"08:05",itens:[{nm:"Roçadeira a gasolina 52cc",pat:"PAT-0040",q:1,v:1990}]},
+ {n:"T-0031",c:"rafael",tipo:"entrega",data:dia(28,10),hora:"09:10",itens:[{nm:"Escada extensível 7m alumínio",pat:"PAT-0030",q:1,v:1480}]},
+ {n:"T-0039",c:"rafael",tipo:"entrega",data:dia(6),hora:"07:30",itens:[{nm:"Furadeira de impacto 650W",pat:"PAT-0060",q:1,v:420},{nm:"Alicate universal 8\"",q:1,v:45},{nm:"Jogo de chaves de fenda (6 peças)",q:1,v:62}]},
+ {n:"T-0037",c:"marcos",tipo:"entrega",data:dia(3),hora:"10:15",itens:[{nm:"Martelete rompedor 5kg",pat:"PAT-0012",q:1,v:2890},{nm:"Alicate universal 8\"",q:2,v:45},{nm:"Trena 5m",q:1,v:28}]},
+];
+let proxTermo=41;
+const EPIL=[
+ {c:"carlos",pid:"luva",q:2,data:dia(2),est:"DPSP",termo:"T-0036"},{c:"carlos",pid:"oculos",q:1,data:dia(2),est:"DPSP",termo:"T-0036"},
+ {c:"carlos",pid:"bota",q:1,data:dia(2),est:"BASE",termo:"T-0036"},{c:"carlos",pid:"polo",q:2,data:dia(2),est:"BASE",termo:"T-0036"},
+ {c:"rafael",pid:"luva",q:2,data:dia(20,10),est:"DPSP",termo:"T-0029"},
+];
+const HIST=[
+ {c:"carlos",data:dia(10),txt:"Recebeu a roçadeira a gasolina 52cc (PAT-0040) · termo T-0040"},
+ {c:"carlos",data:dia(6),txt:"Devolveu o martelete perfurador SDS Plus (PAT-0013) em bom estado"},
+ {c:"carlos",data:dia(3),txt:"Recebeu alicate amperímetro (PAT-0051), alicate universal, jogo de chaves e trena · termo T-0038"},
+ {c:"carlos",data:dia(2),txt:"Recebeu EPI e uniforme: 2 pares de luva, óculos, bota nº 42, 2 camisas polo · termo T-0036"},
+ {c:"rafael",data:dia(6),txt:"Recebeu furadeira de impacto (PAT-0060), alicate universal e jogo de chaves · termo T-0039"},
+ {c:"rafael",data:dia(28,10),txt:"Recebeu escada extensível 7m (PAT-0030) · termo T-0031"},
+ {c:"marcos",data:dia(5),txt:"Devolveu o martelete perfurador (PAT-0021) danificado; foi para conserto"},
+ {c:"marcos",data:dia(3),txt:"Recebeu martelete rompedor 5kg (PAT-0012), 2 alicates universais e trena · termo T-0037"},
+];
+const TXT={
+ entrega:"Recebi da Manfac Facilities os itens listados acima, em bom estado de uso, e assumo a responsabilidade pela guarda e pela devolução deles ao almoxarifado quando forem pedidos de volta ou quando o serviço acabar. Se algum item for perdido ou danificado, aviso o almoxarifado no mesmo dia.",
+ devolucao:"Devolvi ao almoxarifado da Manfac Facilities os itens listados acima, no estado registrado pelo almoxarife. A partir desta assinatura, a guarda deles volta a ser do almoxarifado.",
+ epi:"Recebi os equipamentos de proteção e/ou peças de uniforme listados acima, em bom estado, e assumo a responsabilidade pela guarda e pelo uso correto deles no trabalho."
+};
+const TIT={entrega:"Termo de responsabilidade",devolucao:"Termo de devolução",epi:"Entrega de EPI e uniforme"};
+const S16={estado:"dados",aba:"ferr",busca:"",fil:"todos",colab:"carlos",msg:null};
+let ENT=null,DEV=null,EPI=null,TAB=null;
+const stBadge=f=>f.st==="almox"?'<span class="badge b-ok">No almox</span>':f.st==="com"?'<span class="badge b-sec">Com colaborador</span>':f.st==="conserto"?'<span class="badge b-avi">Em conserto</span>':'<span class="badge b-out">Baixada</span>';
+function s16LinhaF(f){
+  if(!f.pat){const c=emCampo(f),a=noAlmoxQ(f);
+    return `<tr class="lin"><td class="fix wide" style="white-space:normal;min-width:200px"><div style="font-weight:500;color:#fff">${esc(f.nm)}</div><div class="small">por quantidade · ${f.tot} no total</div></td>
+    <td data-l="Patrimônio"><span class="muted">sem etiqueta</span></td><td class="r n" data-l="Valor">${brl(f.v)} <span class="small">cada</span></td>
+    <td data-l="Situação"><span class="badge b-ok n">${a} no almox</span>${c?` <span class="badge b-sec n">${c} em campo</span>`:""}${f.cons?` <span class="badge b-avi n">${f.cons} em conserto</span>`:""}</td>
+    <td class="wide" data-l="Com quem" style="white-space:normal">${Object.entries(f.campo).filter(([,x])=>x.n).map(([k,x])=>`<span class="chip">${COL[k].n.split(" ")[0]} <b>${x.n}</b></span>`).join(" ")||'<span class="muted">—</span>'}</td>
+    <td data-l=""><button class="btn btn-outline btn-xs" data-a="f-ent" data-v="${f.id}" ${a?"":"disabled"}>Entregar</button></td></tr>`;}
+  const quem=f.st==="com"?`<b style="color:#fff;font-weight:500">${COL[f.com].n}</b> · ${COL[f.com].eq}<div class="small">desde ${fmtC(f.desde)} · termo ${f.termo}</div>`
+   :f.st==="conserto"?`${esc(f.cons.forn)}<div class="small">saiu ${fmtC(f.cons.saiu)} · previsão de volta ${fmtC(f.cons.prev)}</div>`
+   :f.st==="baixada"?`<span class="muted">${esc(f.baixa.mot)} · ${fmtC(f.baixa.data)}</span>`:'<span class="muted">Prateleira das ferramentas</span>';
+  const ac=f.st==="almox"?`<button class="btn btn-outline btn-xs" data-a="f-ent" data-v="${f.id}">Entregar</button>`:f.st==="com"?`<button class="btn btn-outline btn-xs" data-a="f-dev" data-v="${f.id}" data-c="${f.com}">Receber de volta</button>`:f.st==="conserto"?`<button class="btn btn-outline btn-xs" data-a="f-volta" data-v="${f.id}">Voltou do conserto</button> <button class="btn btn-ghost btn-xs" data-a="f-baixa" data-v="${f.id}">Baixar</button>`:"";
+  return `<tr class="lin${f.st==="baixada"?" apagado":""}"><td class="fix wide" style="white-space:normal;min-width:200px"><div style="font-weight:500;color:#fff">${esc(f.nm)}</div><div class="small">rastreada um a um</div></td>
+  <td data-l="Patrimônio" class="mono">${f.pat}</td><td class="r n" data-l="Valor">${brl(f.v)}</td><td data-l="Situação">${stBadge(f)}</td>
+  <td class="wide" data-l="Com quem / onde" style="white-space:normal">${quem}</td><td data-l="">${ac}</td></tr>`;
+}
+function s16Ferr(){
+  if(S16.estado==="vazio")return bloco("vazio","Nenhuma ferramenta cadastrada","Comece pela planilha que vocês já usam: o sistema lê nome, patrimônio (quando tiver), quantidade e valor de cada ferramenta.",`<button class="btn btn-sm" data-a="f-imp">Importar planilha</button>`);
+  const fil=FER.filter(f=>{if(S16.busca&&!casa(`${f.nm} ${f.pat||""}`,S16.busca))return false;
+    if(S16.fil==="todos")return true;if(!f.pat)return S16.fil==="almox"?noAlmoxQ(f)>0:S16.fil==="com"?emCampo(f)>0:S16.fil==="conserto"?f.cons>0:false;return f.st===S16.fil;});
+  const pat=FER.filter(f=>f.pat&&f.st!=="baixada");
+  const vCampo=FER.reduce((a,f)=>a+(f.pat?(f.st==="com"?f.v:0):emCampo(f)*f.v),0);
+  return tiles([tile("Ferramentas com etiqueta",`${pat.length}`,`${pat.filter(f=>f.st==="almox").length} no almox agora`),tile("Valor em campo",brl(vCampo),"com colaboradores, pelo valor de cadastro"),tile("Em conserto",`${FER.filter(f=>f.st==="conserto").length+FER.reduce((a,f)=>a+(f.pat?0:(f.cons||0)),0)}`,"com fornecedor de conserto"),tile("Baixadas",`${FER.filter(f=>f.st==="baixada").length}`,"perdidas ou quebradas, com motivo")])
+  +okmsg(S16.msg)+`<div class="filtros" style="margin-top:14px"><div class="busca"><input class="inp" id="f-busca" type="search" placeholder="Buscar ferramenta ou patrimônio (ex.: martelete, PAT-0030)" value="${esc(S16.busca)}" autocomplete="off"></div>
+   <span class="pill-seg" role="group" aria-label="Situação">${[["todos","Todas"],["almox","No almox"],["com","Com colaborador"],["conserto","Em conserto"],["baixada","Baixadas"]].map(([k,r])=>`<button data-a="f-fil" data-v="${k}" aria-pressed="${S16.fil===k}">${r}</button>`).join("")}</span>
+   <button class="btn btn-outline btn-sm" data-a="f-imp">Importar planilha</button></div>
+  <div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Ferramenta</th><th>Patrimônio</th><th class="r">Valor</th><th>Situação</th><th>Com quem / onde</th><th></th></tr></thead><tbody id="f-corpo">${fil.length?fil.map(s16LinhaF).join(""):`<tr><td colspan="6" style="white-space:normal;padding:20px">${bloco("vazio","Nenhuma ferramenta com esse filtro","Tente outra palavra ou escolha “Todas”.")}</td></tr>`}</tbody></table></div>`;
+}
+function comEle(c){
+  const L=[];
+  FER.forEach(f=>{if(f.pat&&f.st==="com"&&f.com===c)L.push({f,q:1,desde:f.desde,termo:f.termo,v:f.v});if(!f.pat&&f.campo[c]&&f.campo[c].n)L.push({f,q:f.campo[c].n,desde:f.campo[c].desde,termo:f.campo[c].termo,v:f.v*f.campo[c].n});});
+  return L;
+}
+function s16Ficha(){
+  const c=S16.colab,C=COL[c],L=comEle(c),E=EPIL.filter(e=>e.c===c),T=TERMOS.filter(t=>t.c===c).sort((a,b)=>b.data-a.data),H=HIST.filter(h=>h.c===c);
+  const tot=L.reduce((a,x)=>a+x.v,0),totE=E.reduce((a,e)=>a+e.q*PID[e.pid].cmc,0);
+  const sel=`<div class="row" style="margin-bottom:12px"><label for="f-colab" class="muted">Colaborador</label><select class="inp" id="f-colab">${Object.entries(COL).map(([k,x])=>`<option value="${k}" ${k===c?"selected":""}>${x.n} · ${x.eq}</option>`).join("")}</select></div>`;
+  const cab=`<div class="card ficha-h" style="padding:14px"><div><div class="k label-mono">Nome</div><div class="v" style="font-weight:600;color:#fff">${C.n}</div></div><div><div class="label-mono">Equipe</div><div style="color:#fff">${C.eq}</div></div><div><div class="label-mono">Contrato</div><div style="color:#fff">${locNome(C.ct)}</div></div><div><div class="label-mono">Celular</div><div class="n" style="color:#fff">${C.cel}</div></div><div><div class="label-mono">CPF</div><div class="n" style="color:#fff">${C.cpf}</div><div class="small">vem do cadastro do RH</div></div><div><div class="label-mono">Assinatura</div><div style="color:#fff">${C.pin?"PIN criado ✓":"Sem PIN ainda"}</div><div class="small">${C.pin?"assina no celular ou no tablet":"cria o PIN no tablet na primeira entrega"}</div></div></div>`;
+  if(S16.estado==="vazio")return sel+cab+bloco("vazio",`Nada com ${C.n.split(" ")[0]} agora`,"Nenhuma ferramenta, EPI ou uniforme foi entregue a esta pessoa pelo sistema. Quando o almox entregar algo, aparece aqui com o termo assinado.",`<button class="btn btn-sm" data-a="f-ent-c" data-v="${c}">Entregar ferramenta</button><button class="btn btn-outline btn-sm" data-a="f-epi" data-v="${c}">Entregar EPI ou uniforme</button>`);
+  return sel+`<div class="stack">${okmsg(S16.msg)}${cab}
+  ${tiles([tile("Com ele agora",`${L.reduce((a,x)=>a+x.q,0)} ${plural(L.reduce((a,x)=>a+x.q,0),"item","itens")}`,"ferramentas que precisam voltar"),tile("Valor total",brl(tot),"das ferramentas com ele"),tile("EPI e uniforme",brl(totE),`${E.length} ${plural(E.length,"entrega","entregas")} nos últimos 12 meses`),tile("Termos assinados",`${T.length}`,"PIN + traço, com PDF")])}
+  <div class="row"><h3 class="h3">Ferramentas com ele agora</h3><div class="sp"></div><button class="btn btn-sm" data-a="f-ent-c" data-v="${c}">Entregar ferramenta</button></div>
+  ${L.length?`<div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Ferramenta</th><th>Patrimônio</th><th class="r">Qtd</th><th>Desde</th><th class="r">Valor</th><th>Termo</th><th></th></tr></thead><tbody>${L.map(x=>`<tr class="lin"><td class="fix wide" style="white-space:normal;color:#fff">${esc(x.f.nm)}</td><td data-l="Patrimônio" class="mono">${x.f.pat||'<span class="muted" style="font-family:var(--fonte)">por quantidade</span>'}</td><td class="r n" data-l="Qtd">${x.q}</td><td data-l="Desde">${fmtC(x.desde)}</td><td class="r n" data-l="Valor">${brl(x.v)}</td><td data-l="Termo"><button class="btn btn-ghost btn-xs" data-a="f-termo" data-v="${x.termo}">${x.termo}</button></td><td data-l=""><button class="btn btn-outline btn-xs" data-a="f-dev" data-v="${x.f.id}" data-c="${c}">Receber de volta</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Nenhuma ferramenta com ${C.n.split(" ")[0]} agora.</p>`}
+  <div class="row"><h3 class="h3">EPI e uniforme entregues</h3><div class="sp"></div><button class="btn btn-outline btn-sm" data-a="f-epi" data-v="${c}">Entregar EPI ou uniforme</button></div>
+  <p class="small">EPI e uniforme saem do estoque do Omie e não voltam. Ficam aqui para o histórico de quem recebeu o quê.</p>
+  ${E.length?`<div class="tbl-wrap"><table class="tbl cv"><thead><tr><th class="fix">Item</th><th class="r">Qtd</th><th>Entregue</th><th>Saiu do estoque</th><th>Termo</th></tr></thead><tbody>${E.map(e=>{const p=PID[e.pid];return `<tr class="lin"><td class="fix wide" style="white-space:normal;color:#fff">${esc(p.d)}</td><td class="r n" data-l="Qtd">${e.q} ${p.un}</td><td data-l="Entregue">${fmtC(e.data)}</td><td data-l="Saiu do estoque">${locNome(e.est)}${e.omie==="fila"?' <span class="badge b-avi">na fila do Omie</span>':""}</td><td data-l="Termo">${TERMOS.some(t=>t.n===e.termo)?`<button class="btn btn-ghost btn-xs" data-a="f-termo" data-v="${e.termo}">${e.termo}</button>`:e.termo}</td></tr>`;}).join("")}</tbody></table></div>`:`<p class="muted">Nenhuma entrega de EPI ou uniforme ainda.</p>`}
+  <div class="duo" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))">
+   <div class="card" style="padding:14px"><h3 class="h3" style="margin-bottom:6px">Histórico</h3><div class="tl">${H.length?H.sort((a,b)=>b.data-a.data).map(h=>`<div class="h"><span>${fmtC(h.data)}</span><span>${esc(h.txt)}</span></div>`).join(""):'<p class="muted">Sem movimentação.</p>'}</div></div>
+   <div class="card" style="padding:14px"><h3 class="h3" style="margin-bottom:6px">Termos assinados</h3><div class="tl">${T.length?T.map(t=>`<div class="h"><span>${fmtC(t.data)}</span><span><button class="btn btn-ghost btn-xs" data-a="f-termo" data-v="${t.n}">${t.n}</button> ${TIT[t.tipo]} · ${t.itens.length} ${plural(t.itens.length,"item","itens")}</span></div>`).join(""):'<p class="muted">Nenhum termo.</p>'}</div></div>
+  </div></div>`;
+}
+function termoHTML(tipo,c,itens,n,data,hora){
+  const tot=itens.reduce((a,i)=>a+i.q*i.v,0);
+  return `<div class="termo"><div class="row"><h3>${TIT[tipo]} nº ${n}</h3><div class="sp"></div><span class="small">${fmtD(data)}${hora?` · ${hora}`:""}</span></div>
+  <div style="font-size:13px"><b style="color:#fff">${COL[c].n}</b> · CPF ${COL[c].cpf} · ${COL[c].eq}</div>
+  <div class="tbl-wrap"><table class="tbl" style="font-size:13px"><thead><tr><th>Item</th><th>Patrimônio</th><th class="r">Qtd</th><th class="r">Valor</th></tr></thead><tbody>${itens.map(i=>`<tr><td style="white-space:normal">${esc(i.nm)}${i.estado?` <span class="badge ${i.estado==="ok"?"b-ok":"b-avi"}">${i.estado==="ok"?"bom estado":"danificado"}</span>`:""}</td><td class="mono">${i.pat||"—"}</td><td class="r n">${i.q}${i.un?" "+i.un:""}</td><td class="r n">${brl(i.q*i.v)}</td></tr>`).join("")}</tbody></table></div>
+  <div class="tot"><span>Valor total</span><span class="n">${brl(tot)}</span></div>
+  <p class="txt">${TXT[tipo]}</p></div>`;
+}
+function entDlg(){
+  const c=ENT.c,disp=FER.filter(f=>(f.pat&&f.st==="almox")||(!f.pat&&noAlmoxQ(f)>0));
+  const itens=entItens();
+  abrir(`${dlgCab("Entregar ferramenta","Escolha quem recebe e o quê. O colaborador assina o termo no tablet do balcão.")}
+  <div class="campo"><label for="ent-c">Quem recebe</label><select class="inp" id="ent-c">${Object.entries(COL).map(([k,x])=>`<option value="${k}" ${k===c?"selected":""}>${x.n} · ${x.eq}${x.pin?"":" · ainda sem PIN"}</option>`).join("")}</select></div>
+  <div class="box"><h4>Ferramentas disponíveis no almox</h4>${disp.length?disp.map(f=>f.pat?`<label class="chk" style="white-space:normal;color:var(--texto-suave)"><input type="checkbox" data-entp="${f.id}" ${ENT.sel[f.id]?"checked":""}><span>${esc(f.nm)} <span class="mono small">${f.pat}</span> · ${brl(f.v)}</span></label>`
+    :`<div class="row" style="font-size:14px"><span style="flex:1;min-width:140px">${esc(f.nm)} <span class="small">${noAlmoxQ(f)} no almox · ${brl(f.v)} cada</span></span><span class="stepper"><button data-a="ent-q" data-v="${f.id}" data-d="-1" aria-label="Menos">−</button><span>${ENT.q[f.id]||0}</span><button data-a="ent-q" data-v="${f.id}" data-d="1" aria-label="Mais">+</button></span></div>`).join(""):'<p class="muted">Nenhuma ferramenta disponível no almox agora.</p>'}</div>
+  ${itens.length?`<div><div class="label-mono" style="margin-bottom:6px">Prévia do termo</div>${termoHTML("entrega",c,itens,`T-00${proxTermo}`,HOJE)}</div>`:""}
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="ent-ok" ${itens.length?"":"disabled"}>Mandar para o tablet assinar</button></div>`);
+}
+const entItens=()=>[...FER.filter(f=>f.pat&&ENT.sel[f.id]).map(f=>({fid:f.id,nm:f.nm,pat:f.pat,q:1,v:f.v})),...FER.filter(f=>!f.pat&&ENT.q[f.id]>0).map(f=>({fid:f.id,nm:f.nm,q:ENT.q[f.id],v:f.v}))];
+function devDlg(){
+  const f=FID(DEV.fid),C=COL[DEV.c],max=f.pat?1:f.campo[DEV.c].n;
+  abrir(`${dlgCab(`Receber de volta: ${esc(f.nm)}`,`${f.pat?`<span class="mono">${f.pat}</span> · `:""}com ${C.n} desde ${fmtC(f.pat?f.desde:f.campo[DEV.c].desde)}`)}
+  ${f.pat?"":`<div class="row"><span style="flex:1">Quantas voltaram?</span><span class="stepper"><button data-a="dev-q" data-d="-1" aria-label="Menos">−</button><span>${DEV.q}</span><button data-a="dev-q" data-d="1" aria-label="Mais">+</button></span><span class="small">de ${max} com ele</span></div>`}
+  <div class="seg-big"><button data-a="dev-est" data-v="ok" aria-pressed="${DEV.estado==="ok"}">Voltou em bom estado<small>vai para a prateleira</small></button><button data-a="dev-est" data-v="dano" aria-pressed="${DEV.estado==="dano"}">Voltou danificado<small>vai para conserto</small></button></div>
+  ${DEV.estado==="dano"?`<div class="box"><h4>Conserto</h4>
+   <div class="campo"><label for="dev-obs">O que aconteceu? <span class="erro-t">obrigatório</span></label><textarea class="inp" id="dev-obs" rows="2" placeholder="Ex.: mandril não trava a broca">${esc(DEV.obs)}</textarea>${DEV.err&&!DEV.obs.trim()?'<span class="erro-t">Descreva o defeito para o fornecedor do conserto.</span>':""}</div>
+   <div class="campo"><label for="dev-forn">Fornecedor do conserto</label><input class="inp" id="dev-forn" value="${esc(DEV.forn)}"></div>
+   <div class="campo"><label for="dev-prev">Previsão de volta</label><input class="inp" id="dev-prev" type="date" value="${DEV.prev}" style="max-width:200px"></div></div>
+   <div class="conseq"><b>O que acontece</b><ul><li>${f.pat?"A ferramenta":"A quantidade danificada"} sai da ficha de ${C.n.split(" ")[0]} e fica “em conserto” com ${esc(DEV.forn||"o fornecedor")}, sem poder ser entregue a ninguém até voltar.</li><li>O almox recebe aviso se passar da previsão de volta.</li></ul></div>`
+   :`<p class="small">A ferramenta sai da ficha de ${C.n.split(" ")[0]} e volta a ficar disponível no almox.</p>`}
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="dev-ok">Mandar para o tablet assinar</button></div>`);
+}
+function epiDlg(){
+  const C=COL[EPI.c],fic=P.filter(ehFicha),p=PID[EPI.pid],s=sal(p,EPI.est);
+  abrir(`${dlgCab(`Entregar EPI ou uniforme a ${C.n}`,"Sai do estoque do Omie e entra na ficha. Não volta ao estoque.")}
+  <div class="campo"><label for="epi-p">Item</label><select class="inp" id="epi-p">${fic.map(x=>`<option value="${x.id}" ${x.id===EPI.pid?"selected":""}>${esc(x.d)} · ${x.f}</option>`).join("")}</select></div>
+  <div class="campo"><label for="epi-e">Sai do estoque</label><select class="inp" id="epi-e">${LOCS.map(l=>`<option value="${l}" ${l===EPI.est?"selected":""}>${locNome(l)} · ${num(sal(p,l))} ${p.un} no Omie${l===C.ct?" (contrato dele)":""}</option>`).join("")}</select></div>
+  <div class="row"><span style="flex:1">Quantidade</span><span class="stepper"><button data-a="epi-q" data-d="-1" aria-label="Menos">−</button><span>${EPI.q}</span><button data-a="epi-q" data-d="1" aria-label="Mais">+</button></span><span class="small">${p.un}</span></div>
+  ${EPI.q>s?`<div class="faixa al-des"><div class="al"><span class="mk">!</span><span class="tx">Só tem ${num(s)} ${p.un} no ${locNome(EPI.est)}. Escolha outro estoque ou uma quantidade menor.</span></div></div>`:""}
+  <div class="conseq"><b>O que acontece quando ${C.n.split(" ")[0]} assinar</b><ul>
+   <li>Sai do estoque <b>${locNome(EPI.est)}</b> no Omie: ${EPI.q} ${p.un} de ${esc(p.d)}, com “${C.n} · ficha” na observação.</li>
+   <li>Entra na ficha de ${C.n.split(" ")[0]}, com o termo assinado.</li>
+   <li>EPI e uniforme não voltam ao estoque. Se a saída no Omie falhar, ela fica na fila e tenta de novo; a entrega continua registrada.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="epi-ok" ${EPI.q>0&&EPI.q<=s?"":"disabled"}>Mandar para o tablet assinar</button></div>`);
+}
+function termoVer(n){
+  const t=TERMOS.find(x=>x.n===n);if(!t)return;
+  abrir(`${dlgCab(`${TIT[t.tipo]} ${t.n}`,`Assinado em ${fmtD(t.data)} às ${t.hora} · tablet do balcão · PIN conferido`)}
+  ${termoHTML(t.tipo,t.c,t.itens,t.n,t.data,t.hora)}
+  <div class="box"><h4>Assinatura</h4>${t.img?`<img class="sig-img" src="${t.img}" alt="Traço da assinatura de ${COL[t.c].n}">`:`<p class="small">Traço guardado no sistema (assinatura feita antes desta demonstração). PIN conferido · aparelho: tablet do balcão.</p>`}<p class="small">${COL[t.c].n} · ${fmtC(t.data)} ${t.hora} · PIN conferido</p></div>
+  <div class="dlg-f"><span class="btn btn-outline" title="No sistema, abre o PDF">Baixar PDF</span><button class="btn" data-a="fechar">Fechar</button></div>`);
+}
+/* ---------- tablet ---------- */
+function s16Tablet(){
+  const top=`<div class="tb-top"><span>Tablet do balcão · almoxarifado</span><div class="sp"></div><b>${relogio()}</b></div>`;
+  if(S16.estado==="semperm"||S16.estado==="erro"||S16.estado==="carregando")return `<div class="tablet">${top}<div class="tb-body"><p class="muted">Tablet em espera.</p></div></div>`;
+  if(!TAB)return `<div class="tablet">${top}<div class="tb-body" style="align-items:center;text-align:center;padding-block:40px"><div class="pin-logo">M</div><h3 class="h3">Nenhum termo esperando assinatura</h3><p class="muted" style="max-width:46ch">Quando o almox mandar um termo de entrega, devolução ou EPI, ele aparece aqui para o colaborador ler e assinar com o PIN e o dedo.</p></div></div>`;
+  const C=COL[TAB.c];
+  if(TAB.feito)return `<div class="tablet">${top}<div class="tb-body" style="align-items:center;text-align:center;padding-block:32px"><div class="pin-logo" style="background:var(--verde-bg);color:var(--verde)">✓</div><h3 class="h3">Pronto, ${C.n.split(" ")[0]}. ${TIT[TAB.tipo]} ${TAB.n} assinado.</h3><p class="muted">O PDF já está na sua ficha. Pode devolver o tablet ao almox.</p><img class="sig-img" src="${TAB.img}" alt="Traço da assinatura"><button class="btn btn-lg" data-a="tab-libera">Liberar o tablet</button></div></div>`;
+  const cria=!C.pin;
+  return `<div class="tablet">${top}<div class="tb-body">
+  <div class="row"><span class="badge b-avi">Esperando assinatura</span><span class="small">mandado por Paulo Mendes às ${TAB.hora}</span><div class="sp"></div><button class="btn btn-ghost btn-sm" data-a="tab-cancela">Cancelar (almox)</button></div>
+  ${termoHTML(TAB.tipo,TAB.c,TAB.itens,TAB.n,HOJE)}
+  <div class="sig-grid"><div class="sig-box"><div class="sig-l"><span><b style="color:#fff">${C.n}</b>, assine aqui com o dedo</span><button class="btn btn-ghost btn-xs" data-a="tab-limpa">Limpar</button></div><canvas class="sig" id="sig" aria-label="Área para assinar com o dedo"></canvas><span class="small" id="sig-st">Ainda sem assinatura.</span></div>
+   <div class="pin-col"><div style="font-weight:500;color:#fff">${cria?"Crie seu PIN (4 a 6 números)":"Digite seu PIN"}</div>${cria?'<div class="small" style="text-align:center">É a primeira assinatura de Ana. O PIN vale para as próximas.</div>':""}
+    <div class="pin-dots" id="tab-dots">${dots()}</div><div id="tab-err" class="erro-t" style="text-align:center">${TAB.err?`PIN errado. Mais ${5-TAB.err} ${plural(5-TAB.err,"tentativa","tentativas")} e o acesso fica bloqueado por 15 minutos.`:""}</div>
+    <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-a="tab-dig" data-v="${n}">${n}</button>`).join("")}<button data-a="tab-apaga" aria-label="Apagar">⌫</button><button data-a="tab-dig" data-v="0">0</button><button data-a="tab-assina" id="tab-assina" style="font-size:14px;background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)" disabled>Assinar</button></div>
+    <p class="mk-ctrl" style="font-size:11px">Mockup: qualquer PIN de 4 dígitos assina; 0000 mostra o erro.</p></div></div></div></div>`;
+}
+const dots=()=>Array.from({length:6},(_,i)=>`<span class="${i<TAB.pin.length?"f":""}" ${i>=4&&i>=TAB.pin.length?'style="opacity:.35"':""}></span>`).join("");
+function tabUI(){
+  if(!TAB||TAB.feito)return;
+  const d=$("#tab-dots");if(d)d.innerHTML=dots();
+  const e=$("#tab-err");if(e)e.textContent=TAB.err?`PIN errado. Mais ${5-TAB.err} ${plural(5-TAB.err,"tentativa","tentativas")} e o acesso fica bloqueado por 15 minutos.`:"";
+  const b=$("#tab-assina");if(b){const ok=TAB.pin.length>=4&&TAB.tracos>0;b.disabled=!ok;b.style.opacity=ok?"1":".4";}
+  const s=$("#sig-st");if(s)s.textContent=TAB.tracos?"Assinatura feita. Pode limpar e refazer.":"Ainda sem assinatura.";
+}
+function initSig(){
+  const cv=$("#sig");if(!cv)return;
+  const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));cv.height=Math.max(1,Math.round(r.height*dpr));
+  const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);ctx.lineWidth=2.6;ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#ffffff";
+  let des=false,ult=null;
+  const pt=e=>{const b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top];};
+  cv.addEventListener("pointerdown",e=>{des=true;ult=pt(e);cv.setPointerCapture(e.pointerId);ctx.beginPath();ctx.arc(ult[0],ult[1],1.2,0,Math.PI*2);ctx.fillStyle="#ffffff";ctx.fill();e.preventDefault();});
+  cv.addEventListener("pointermove",e=>{if(!des)return;const p=pt(e);ctx.beginPath();ctx.moveTo(ult[0],ult[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();ult=p;});
+  const fim=()=>{if(des){des=false;TAB.tracos++;tabUI();}};
+  cv.addEventListener("pointerup",fim);cv.addEventListener("pointercancel",fim);
+  tabUI();
+}
+function mandarTablet(tipo,c,itens,extra){
+  TAB={tipo,c,itens,extra,n:`T-00${proxTermo}`,hora:relogio(),pin:"",err:0,tracos:0,feito:false};
+  fechar();s16Render();
+  setTimeout(()=>$("#s16-tablet")?.scrollIntoView({behavior:"smooth",block:"start"}),60);
+}
+function assinar(){
+  if(TAB.pin==="0000"){TAB.err=Math.min(4,TAB.err+1);TAB.pin="";tabUI();return;}
+  const cv=$("#sig");TAB.img=cv.toDataURL("image/png");
+  const c=TAB.c,C=COL[c],h=relogio();
+  if(!C.pin)C.pin=true;
+  if(TAB.tipo==="entrega"){
+    TAB.itens.forEach(i=>{const f=FID(i.fid);if(f.pat){f.st="com";f.com=c;f.desde=HOJE;f.termo=TAB.n;}else{const x=f.campo[c]||{n:0};f.campo[c]={n:x.n+i.q,desde:HOJE,termo:TAB.n};}});
+    HIST.push({c,data:HOJE,txt:`Recebeu ${TAB.itens.map(i=>`${i.q>1?i.q+" × ":""}${i.nm}${i.pat?` (${i.pat})`:""}`).join(", ")} · termo ${TAB.n}`});
+    S16.msg=`<b>Termo ${TAB.n} assinado por ${C.n} às ${h}.</b> ${TAB.itens.length} ${plural(TAB.itens.length,"item foi","itens foram")} para a ficha dele. O Omie não muda: ferramenta vive só aqui.`;
+  }else if(TAB.tipo==="devolucao"){
+    const i=TAB.itens[0],f=FID(i.fid),x=TAB.extra;
+    if(f.pat){if(x.estado==="ok"){f.st="almox";f.com=null;}else{f.st="conserto";f.com=null;f.cons={forn:x.forn,saiu:HOJE,prev:new Date(x.prev+"T12:00"),obs:x.obs};}}
+    else{f.campo[c].n-=i.q;if(x.estado==="dano")f.cons=(f.cons||0)+i.q;}
+    HIST.push({c,data:HOJE,txt:`Devolveu ${i.q>1?i.q+" × ":""}${f.nm}${f.pat?` (${f.pat})`:""} ${x.estado==="ok"?"em bom estado":`danificado; foi para conserto com ${x.forn}`} · termo ${TAB.n}`});
+    S16.msg=`<b>Devolução assinada por ${C.n} às ${h}.</b> ${x.estado==="ok"?"A ferramenta voltou para o almox.":`A ferramenta foi para conserto com ${esc(x.forn)}, previsão ${fmtC(new Date(x.prev+"T12:00"))}.`}`;
+  }else{
+    const i=TAB.itens[0],p=PID[TAB.extra.pid];p.s[TAB.extra.est]=sal(p,TAB.extra.est)-i.q;
+    EPIL.unshift({c,pid:p.id,q:i.q,data:HOJE,est:TAB.extra.est,termo:TAB.n,omie:"fila"});
+    HIST.push({c,data:HOJE,txt:`Recebeu ${i.q} ${p.un} de ${p.d} (sai do ${locNome(TAB.extra.est)}) · termo ${TAB.n}`});
+    S16.msg=`<b>Entrega de EPI assinada por ${C.n} às ${h}.</b> A saída do estoque ${locNome(TAB.extra.est)} está na fila do Omie.`;
+    const e=EPIL[0];setTimeout(()=>{e.omie="ok";if(S16.aba==="ficha")s16Render();},1800);
+  }
+  TERMOS.push({n:TAB.n,c,tipo:TAB.tipo,data:HOJE,hora:h,itens:TAB.itens.map(i=>({...i})),img:TAB.img});
+  proxTermo++;TAB.feito=true;s16Render();
+}
+const IMP_FER={
+  titulo:"Importar ferramentas da planilha",sub:"Cadastro inicial a partir da planilha que o almox já usa.",
+  colunas:"ferramenta ; patrimônio (em branco = por quantidade) ; quantidade ; valor unitário",
+  dica:"Com patrimônio, cada linha é uma ferramenta rastreada um a um, com quantidade 1. Sem patrimônio, entra como item por quantidade (alicate, chave, trena).",
+  exemplos:{erro:"ferramenta;patrimonio;quantidade;valor\nRoçadeira a gasolina 52cc;PAT-0041;1;1990\nMartelete rompedor 5kg;PAT-0012;1;2890\nEscada extensível 9m;PAT-0032;1;1890\nAlicate de corte 6\";;12;38\nNível de bolha 40cm;;6;\nMultímetro digital;PAT-0055;2;210",
+    certo:"ferramenta;patrimonio;quantidade;valor\nRoçadeira a gasolina 52cc;PAT-0041;1;1990\nEscada extensível 9m;PAT-0032;1;1890\nAlicate de corte 6\";;12;38\nNível de bolha 40cm;;6;55\nMultímetro digital;PAT-0055;1;210"},
+  validar(rows){
+    const erros=[],ok=[],vistos=new Set(FER.filter(f=>f.pat).map(f=>f.pat));
+    rows.forEach(r=>{const [nm,pat,q,v]=r.c;
+      if(!nm)return erros.push({l:r.n,m:"falta o nome da ferramenta."});
+      if(pat&&vistos.has(pat.toUpperCase()))return erros.push({l:r.n,m:`o patrimônio ${esc(pat)} já existe (${esc(FER.find(f=>f.pat===pat.toUpperCase())?.nm||"nesta planilha")}).`});
+      if(!/^\d+$/.test(q||"")||Number(q)<1)return erros.push({l:r.n,m:`quantidade “${esc(q||"")}” não é um número inteiro.`});
+      if(pat&&Number(q)!==1)return erros.push({l:r.n,m:`ferramenta com patrimônio tem quantidade 1 (veio ${esc(q)}). Para várias, uma linha por patrimônio.`});
+      if(!/^\d+([.,]\d{1,2})?$/.test(v||""))return erros.push({l:r.n,m:`falta o valor de ${esc(nm)}. O valor vai para o termo de responsabilidade.`});
+      if(pat)vistos.add(pat.toUpperCase());
+      ok.push({nm,pat:pat?pat.toUpperCase():null,q:Number(q),v:Number(String(v).replace(",","."))});});
+    const np=ok.filter(o=>o.pat).length;
+    return {erros,ok,resumo:`${np} com patrimônio e ${ok.length-np} por quantidade. Todas entram como “no almox”.`};
+  },
+  botao:n=>n?`Importar ${n} ferramentas`:"Importar",
+  aplicar(ok){ok.forEach((o,i)=>FER.push(o.pat?{id:"n"+Date.now()+i,nm:o.nm,pat:o.pat,v:o.v,st:"almox"}:{id:"n"+Date.now()+i,nm:o.nm,pat:null,v:o.v,tot:o.q,cons:0,campo:{}}));S16.estado="dados";S16.aba="ferr";S16.msg=`<b>${ok.length} ferramentas importadas às ${relogio()}.</b> Todas estão como “no almox”.`;s16Render();}
+};
+function s16Corpo(){
+  const st=S16.estado;
+  if(st==="semperm")return bloco("perm","Ferramentas e fichas são do almoxarifado","Seu usuário (fernanda.rocha@manfac.com.br) não tem papel de almoxarife, gestor ou administrador neste módulo. Quem entrega e recebe ferramenta é o almox.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const cab=`<div class="det-h" style="margin-bottom:12px"><h2 class="pg-tit">${S16.aba==="ferr"?"Ferramentas":"Ficha do colaborador"}</h2></div>
+   <div class="tabs-in" role="tablist"><button class="tab-in" role="tab" data-a="f-aba" data-v="ferr" aria-selected="${S16.aba==="ferr"}">Ferramentas</button><button class="tab-in" role="tab" data-a="f-aba" data-v="ficha" aria-selected="${S16.aba==="ficha"}">Ficha do colaborador</button></div>`;
+  if(st==="carregando")return cab+skel(6,4);
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar as ferramentas","O servidor não respondeu, então não mostramos nada para você não entregar uma ferramenta que já está com alguém. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="f-tentar">Tentar de novo</button>`);
+  return cab+(S16.aba==="ferr"?s16Ferr():s16Ficha());
+}
+function s16Render(){
+  const fb=document.activeElement&&document.activeElement.id==="f-busca"?$("#f-busca").selectionStart:null;
+  $("#sec-16").innerHTML=`<div class="sec-h"><div class="label-mono">Almoxarife no hub · colaborador assina no tablet do balcão</div><h1>Seção 16 — Ferramentas e ficha do colaborador</h1><p>Quem está com qual ferramenta, quanto vale o que está com cada pessoa e o termo assinado de cada entrega. Ferramenta vive só aqui; EPI e uniforme saem do estoque do Omie.</p></div>
+  ${seletorEstado("16",S16.estado)}<div style="height:14px"></div>
+  ${shell(S16.aba==="ferr"?"Ferramentas":"Colaboradores","Paulo Mendes","Almoxarife",s16Corpo())}
+  <div id="s16-tablet" style="margin-top:24px;scroll-margin-top:70px"><div class="label-mono" style="margin-bottom:8px">Tablet do balcão (o colaborador assina aqui)</div>${s16Tablet()}</div>
+  <p class="muted" style="font-size:13px;margin-top:12px">Experimente: entregue a escada tesoura a Carlos, assine no tablet com o dedo e um PIN; receba de volta o alicate amperímetro dele como danificado; na ficha, entregue um par de luvas. Entregue algo a Ana para ver a criação do PIN na hora.</p>`;
+  if(TAB&&!TAB.feito)initSig();
+  if(fb!=null){const i=$("#f-busca");i.focus();i.setSelectionRange(fb,fb);}
+}
+
+/* =====================================================================
+   SEÇÃO 17 — INDICADORES
+   ===================================================================== */
+const S17={estado:"dados",est:"todos",per:"out"};
+const PER={out:"outubro/2026",d90:"últimos 90 dias",nov:"novembro até 12/11"};
+const KE={todos:1,BASE:.42,DPSP:.31,PROFARMA:.27,EQUIPES:.22};
+const KP={out:1,d90:2.9,nov:.38};
+const ESTN={todos:"todos os estoques",BASE:"Base",DPSP:"DPSP",PROFARMA:"Profarma",EQUIPES:"equipes"};
+const sc=v=>Math.max(0,Math.round(v*KE[S17.est]*KP[S17.per]));
+const ajP=(v,d)=>Math.max(0,Math.min(100,v+({todos:0,BASE:2,DPSP:-3,PROFARMA:4,EQUIPES:-6}[S17.est])*(d||1)+({out:0,d90:-1,nov:1}[S17.per])));
+function hbar(L,fmt,opt={}){
+  const mx=Math.max(...L.map(x=>x.v),1);
+  return `<div class="hb">${L.map(x=>`<span class="lb" title="${esc(x.l)}">${esc(x.l)}</span><span class="tr" data-tip="${esc(x.l)}: ${esc(fmt(x.v))}${x.tip?" · "+esc(x.tip):""}"><i class="${x.dim?"dim":""}" style="width:${Math.max(1,x.v/mx*100)}%;background:${opt.cor||"var(--s1)"}"></i></span><span class="vl">${fmt(x.v)}</span>`).join("")}</div>${tvTab(L,fmt)}`;
+}
+function tvTab(L,fmt){return `<details class="tv"><summary>Ver em tabela</summary><table>${L.map(x=>`<tr><td>${esc(x.l)}</td><td>${fmt(x.v)}</td></tr>`).join("")}</table></details>`;}
+function st100(L){
+  const T=L.reduce((a,x)=>a+x.v,0);
+  return `<div class="st100" role="img" aria-label="${L.map(x=>`${x.l} ${pct(x.v/T*100)}`).join(", ")}">${L.map((x,i)=>`<i style="width:${x.v/T*100}%;background:var(--s${i+1})" data-tip="${esc(x.l)}: ${pct(x.v/T*100)}${x.tip?" · "+esc(x.tip):""}"></i>`).join("")}</div>
+  <div class="leg">${L.map((x,i)=>`<span><span class="sw" style="background:var(--s${i+1})"></span>${esc(x.l)} <b>${pct(x.v/T*100)}</b>${x.tip?` <span class="small">${esc(x.tip)}</span>`:""}</span>`).join("")}</div>`;
+}
+function linha(M,fmt,yMax){
+  const W=300,H=118,pl=30,pr=14,pt=14,pb=22,mx=yMax||Math.max(...M.map(m=>m.v))*1.15;
+  const x=i=>pl+i*(W-pl-pr)/(M.length-1),y=v=>pt+(H-pt-pb)*(1-v/mx);
+  const ticks=[0,mx/2,mx];
+  const pts=M.map((m,i)=>`${x(i).toFixed(1)},${y(m.v).toFixed(1)}`).join(" ");
+  const ult=M[M.length-1];
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Linha mensal: ${M.map(m=>`${m.m} ${fmt(m.v)}`).join(", ")}">
+   ${ticks.map(t=>`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border)" stroke-width="1"/><text x="${pl-6}" y="${y(t)+3}" text-anchor="end">${fmt(t)}</text>`).join("")}
+   <polyline points="${pl},${y(0)} ${pts} ${x(M.length-1)},${y(0)}" fill="var(--s1)" fill-opacity=".12" stroke="none"/>
+   <polyline points="${pts}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>
+   ${M.map((m,i)=>`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${m.m}</text><circle cx="${x(i)}" cy="${y(m.v)}" r="${i===M.length-1?4.5:3}" fill="${i===M.length-1?"var(--s1)":"var(--navy)"}" stroke="var(--s1)" stroke-width="2"/><circle cx="${x(i)}" cy="${y(m.v)}" r="13" fill="transparent" data-tip="${m.m}: ${esc(fmt(m.v))}"/>`).join("")}
+   <text class="vlab" x="${x(M.length-1)}" y="${y(ult.v)-9}" text-anchor="end">${fmt(ult.v)}</text></svg>${tvTab(M.map(m=>({l:m.m,v:m.v})),fmt)}`;
+}
+const MESES=["jun","jul","ago","set","out"];
+const card=(t,q,corpo,calc)=>`<div class="card ind"><div><h3>${t}</h3>${q?`<div class="q">${q}</div>`:""}</div>${corpo}${calc?`<div class="calc">${calc}</div>`:""}</div>`;
+const grp=(t,cards)=>`<section class="ind-grp"><h2>${t}</h2><div class="ind-grid">${cards.join("")}</div></section>`;
+function s17Blocos(){
+  const e=S17.est,eqs=e==="EQUIPES";
+  const valLoc=[{l:"Base",v:17240,k:"BASE"},{l:"DPSP",v:14080,k:"DPSP"},{l:"Profarma",v:11020,k:"PROFARMA"},{l:"Equipes (23 locais)",v:9810,k:"EQUIPES"}].map(x=>({...x,dim:e!=="todos"&&e!==x.k}));
+  const giro={todos:.82,BASE:.55,DPSP:1.12,PROFARMA:.96,EQUIPES:1.64}[e]*({out:1,d90:2.7,nov:.36}[S17.per]);
+  const giroM=MESES.map((m,i)=>({m,v:+([.61,.7,.66,.75,.82][i]*({todos:1,BASE:.67,DPSP:1.37,PROFARMA:1.17,EQUIPES:2}[e])).toFixed(2)}));
+  const cob=[{l:"Torneira de parede 1/2\"",v:0,tip:"sem saldo; 6 em compra"},{l:"Reator eletrônico 2x32W",v:6},{l:"Disjuntor DIN 20A curva C",v:9},{l:"Luva de vaqueta",v:12},{l:"Cabo flexível 2,5mm²",v:18},{l:"Lâmpada LED tubular 18W",v:24}];
+  const parado=[{l:"Camisa polo Manfac tam. M",v:675,tip:"15 un · sem saída há 196 dias"},{l:"Bota de segurança nº 42",v:356,tip:"4 par · 141 dias"},{l:"Disjuntor DIN 20A curva B",v:88,tip:"5 un · 122 dias"},{l:"Sifão sanfonado universal",v:90,tip:"8 un · 97 dias"}];
+  const fmtD1=v=>`${num(v)} ${plural(v,"dia","dias")}`;
+  const vF=FER.reduce((a,f)=>a+(f.pat?(f.st==="com"?f.v:0):emCampo(f)*f.v),0);
+  const consN=FER.filter(f=>f.st==="conserto").length,cons15=FER.filter(f=>f.st==="conserto"&&diasEntre(f.cons.saiu,HOJE)>=15).length;
+  const baix=FER.filter(f=>f.st==="baixada");
+  const semOmie=FALTA.filter(f=>diasEntre(f.conf,HOJE)>=LIM_OMIE).length;
+  return [
+  grp("Estoque",[
+    card("Valor por local",`saldo × custo médio · agora`,hbar(valLoc,brlK),"Soma de saldo × custo médio do Omie em cada local, na última cópia."),
+    card("Giro",`quantas vezes o estoque “rodou” · ${PER[S17.per]}`,`<div class="big">${giro.toLocaleString("pt-BR",{maximumFractionDigits:2})}×</div><div class="big-s">saídas de ${brlK(sc(43600))} ÷ estoque médio de ${brlK(Math.round(53200*KE[e]))}</div>${linha(giroM,v=>v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"×")}`,"Saídas no período (valor) ÷ estoque médio no período (valor). Meses de exemplo: o histórico começa no mês em que o sistema entrar no ar."),
+    card("Cobertura",`para quantos dias o saldo dá · os mais curtos`,`<div class="big">${{todos:38,BASE:61,DPSP:27,PROFARMA:33,EQUIPES:14}[e]} <small>dias, na mediana</small></div>${hbar(cob,fmtD1,{cor:"var(--s2)"})}`,"Saldo ÷ consumo médio por dia dos últimos 90 dias."),
+    card("Estoque parado",`itens sem nenhuma saída`,`<div class="duo"><div><div class="big">${sc(14)}</div><div class="big-s">há 90 dias ou mais · ${brlK(sc(3420))}</div></div><div><div class="big">${sc(6)}</div><div class="big-s">há 180 dias ou mais · ${brlK(sc(1980))}</div></div></div>${hbar(parado,brl)}`,"Itens sem saída há 90 e 180 dias (limites em configuração), com o valor que está parado."),
+    card("Curva ABC",`quem concentra o valor consumido · ${PER[S17.per]}`,st100([{l:"A",v:80,tip:`${sc(11)||1} itens`},{l:"B",v:15,tip:`${sc(19)||1} itens`},{l:"C",v:5,tip:`${sc(72)||1} itens`}])+`<p class="small">Poucos itens A fazem 80% do valor: são eles que voltam no meio do ciclo de inventário.</p>`,"Classificação por valor consumido no período: A ≈ 80% do valor, B ≈ 15%, C ≈ 5%."),
+    card("Ruptura",`itens pedidos que não tinham saldo no contrato`,`<div class="big">${sc(9)}</div><div class="duo"><div><div class="h3 n">${sc(6)}</div><div class="big-s">resolvidos com transferência entre estoques</div></div><div><div class="h3 n">${sc(3)}</div><div class="big-s">sem saldo em lugar nenhum</div></div></div>`,"Itens de pedido sem saldo disponível no estoque do contrato na hora de aprovar."),
+  ]),
+  grp("Atendimento",[
+    card("Tempo até a aprovação",`do envio do técnico ao clique do aprovador`,`<div class="big">3h05 <small>em média</small></div>${hbar([{l:"Gabriel Vidal (gestor)",v:80},{l:"Fernanda Rocha · DPSP e Obras/Spot",v:160},{l:"Luiz Andrade · Profarma",v:255}],v=>`${Math.floor(v/60)}h${String(v%60).padStart(2,"0")}`)}`,"Média por aprovador e contrato, contando só horas úteis."),
+    card("Aprovados até as 16h",`pedidos que respeitaram o corte`,`<div class="big">${pct(ajP(87))}</div><div class="big-s">o resto passou a retirada para 2 dias úteis</div>`,"Aprovados até 16h do dia útil anterior à retirada ÷ aprovados."),
+    card("Separado antes do técnico chegar",`o objetivo principal do módulo`,`<div class="big">${pct(ajP(92))}</div>${linha(MESES.map((m,i)=>({m,v:ajP([78,84,86,90,92][i])})),v=>pct(v),100)}`,"Separados antes da hora da retirada ÷ entregues. Meses de exemplo."),
+    card("Pedidos emergenciais",`fora da regra das 16h e das 10h`,`<div class="big">${pct(ajP(7,.5))}</div>${hbar([{l:"MANFAC 1",v:12},{l:"MANFAC 2",v:6},{l:"MANFAC-25",v:4},{l:"Outras 20 equipes",v:7}],v=>pct(v))}`,"Emergenciais ÷ pedidos, por equipe (e por aprovador no filtro)."),
+    card("Inteiro, parcial ou recusado",`como os pedidos saíram da aprovação`,st100([{l:"Inteiro",v:71},{l:"Parcial",v:22},{l:"Recusado",v:7}]),"Por pedido: aprovado como veio, com ajuste de quantidade, ou recusado."),
+    card("Não retirado no dia",`separado e ninguém buscou`,`<div class="big">${sc(6)}</div>${hbar([{l:"MANFAC 2",v:3},{l:"MANFAC 1",v:1},{l:"Outras equipes",v:2}],v=>num(v))}`,"Pedidos que passaram do dia de retirada sem retirada, por equipe."),
+  ]),
+  grp("Acuracidade do inventário",[
+    card("Itens contados sem diferença",`por estoque, no ciclo atual`,hbar([{l:"Profarma",v:94},{l:"Base",v:91},{l:"DPSP",v:86},{l:"Equipes",v:78}].map(x=>({...x,dim:e!=="todos"&&ESTN[e]!==x.l&&!(eqs&&x.l==="Equipes")})),v=>pct(v)),"Itens contados com o mesmo número do Omie ÷ itens contados."),
+    card("Valor ajustado por motivo",`ajustes aprovados · ${PER[S17.per]}`,hbar([{l:"Consumo não apontado",v:sc(412),tip:"saldo desceu"},{l:"Quebra",v:sc(160),tip:"saldo desceu"},{l:"Erro de lançamento",v:sc(95),tip:"saldo desceu"},{l:"Perda",v:sc(78),tip:"saldo desceu"},{l:"Devolução não registrada",v:sc(54),tip:"saldo subiu"}],brl),"Soma do valor dos ajustes aprovados pelo admin, por motivo."),
+    card("Andamento do ciclo",`contados ÷ itens do estoque`,`<div class="stack" style="gap:10px">${Object.values(CIC).filter(c=>!eqs||c.equipe).filter(c=>e==="todos"||eqs||c.nome===ESTN[e]).map(c=>{const f=c.emDia?c.lista.length:c.onda==null?0:antesDaOnda(c);return prog(`${c.nome}${c.emDia?` · em dia desde ${fmtC(c.emDia)}`:c.onda==null?" · não começou":` · fim previsto ${c.nome==="Base"?"13/11":"27/11"}`}`,f,c.lista.length,!!c.emDia);}).join("")}</div>`,"Ligado à contagem da Seção 14: feche uma onda lá e volte aqui."),
+  ]),
+  grp("Equipes",[
+    card("Consumo por equipe",`material aplicado nas OS · ${PER[S17.per]}`,hbar([{l:"MANFAC 2",v:sc(2140)/KE[e]},{l:"MANFAC 1",v:sc(1870)/KE[e]},{l:"MANFAC-25",v:sc(1320)/KE[e]},{l:"MANFAC 7",v:sc(980)/KE[e]},{l:"Outras 19 equipes",v:sc(6400)/KE[e]}].map(x=>({...x,v:Math.round(x.v)})),brlK),"Saídas automáticas do Field no estoque de cada equipe, em valor."),
+    `<div class="pend-v"><span class="badge b-avi">Depende de validação com o Field</span><h3 class="h3">Aplicação fora do contrato</h3><p style="font-size:13px">Quanto material de uma equipe foi usado em OS de cliente do outro contrato (ex.: a MANFAC 2 é DPSP e aplicou material numa loja Profarma). Para mostrar este número, precisamos confirmar com o Field como ligar cada saída do Omie à OS e ao cliente. Até lá, fica sem número.</p></div>`,
+    card("Material parado na equipe",`saldo na equipe sem saída há 60 dias ou mais`,`<div class="big">${brlK(1240)}</div><div class="big-s">em 9 itens, em 5 equipes</div>${hbar([{l:"MANFAC-25 · cabo 2,5mm²",v:47,tip:"15 m"},{l:"MANFAC 1 · silicone",v:40,tip:"2 un"},{l:"MANFAC 2 · bucha 8mm",v:16,tip:"1 cto"}],brl)}`,"Saldo no estoque da equipe sem saída há X dias (configuração)."),
+  ]),
+  grp("Ferramental",[
+    card("Valor em campo",`ferramentas com colaboradores agora`,`<div class="big">${brl(vF)}</div><div class="big-s">ligado à Seção 16</div>`,"Soma do valor de cadastro das ferramentas que estão com alguém."),
+    card("Em conserto",`com fornecedor de conserto`,`<div class="duo"><div><div class="big">${consN}</div><div class="big-s">em conserto agora</div></div><div><div class="big">${cons15}</div><div class="big-s">há 15 dias ou mais</div></div></div>`,"Ferramentas em conserto e há quanto tempo (limite em configuração)."),
+    card("Perdas",`ferramentas baixadas · ${PER[S17.per]}`,`<div class="big">${baix.length}</div><div class="big-s">${brl(baix.reduce((a,f)=>a+f.v,0))} · ${baix.map(f=>esc(f.nm)).join(", ")||"nenhuma"}</div>`,"Ferramentas baixadas como perdidas ou quebradas sem conserto."),
+  ]),
+  grp("Recebimento",[
+    card("Entrega no prazo do fornecedor",`chegou até a previsão do Compras`,`<div class="big">${pct(ajP(78))}</div>${linha(MESES.map((m,i)=>({m,v:ajP([70,74,69,76,78][i])})),v=>pct(v),100)}`,"Pedidos com entrega na Base que chegaram até a previsão ÷ pedidos recebidos. Meses de exemplo."),
+    card("Divergência no recebimento",`conferências com falta, item errado ou avaria`,`<div class="big">${pct(ajP(9,.5))}</div><div class="big-s">das conferências do período</div>`,"Conferências com divergência ÷ conferências."),
+    card("Conferido sem entrada no Omie",`há ${LIM_OMIE} dias ou mais`,`<div class="big">${semOmie}</div><div class="big-s">${semOmie?`pedido${semOmie>1?"s":""} ${FALTA.filter(f=>diasEntre(f.conf,HOJE)>=LIM_OMIE).map(f=>f.n).join(", ")}`:"nenhum"} · ligado à Seção 12</div>`,"Pedido conferido pelo almox sem a entrada de compra correspondente no Omie."),
+  ])].join("");
+}
+function s17Corpo(){
+  const st=S17.estado;
+  if(st==="semperm")return bloco("perm","Indicadores são para almox, gestor e admin","Seu usuário (fernanda.rocha@manfac.com.br) aprova pedidos, mas não vê os indicadores do almoxarifado. Peça a liberação a um administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  const fil=`<div class="filtros"><select class="inp" id="i-est" aria-label="Estoque">${Object.entries(ESTN).map(([k,v])=>`<option value="${k}" ${S17.est===k?"selected":""}>${k==="todos"?"Todos os estoques":locNome(k)==="EQUIPES"?"Equipes":v[0].toUpperCase()+v.slice(1)}</option>`).join("")}</select>
+   <span class="pill-seg" role="group" aria-label="Período">${Object.entries(PER).map(([k,v])=>`<button data-a="i-per" data-v="${k}" aria-pressed="${S17.per===k}">${v[0].toUpperCase()+v.slice(1)}</button>`).join("")}</span></div>`;
+  const cab=`<div class="det-h" style="margin-bottom:12px"><h2 class="pg-tit">Indicadores</h2><div class="sp"></div>${st==="dados"?`<span class="atual"><span class="dot"></span>Calculado hoje às 05:30</span>`:""}</div>`;
+  if(st==="carregando")return cab+fil+skel(4,4);
+  if(st==="erro")return cab+fil+bloco("erro","Não deu para carregar os indicadores","O servidor não respondeu. Os números não foram mostrados para ninguém decidir em cima de conta pela metade. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="i-tentar">Tentar de novo</button>`);
+  if(st==="vazio")return cab+fil+bloco("vazio","Ainda não há números para mostrar","Os indicadores começam a contar no dia em que o Almoxarifado entrar no ar. O primeiro cálculo sai na madrugada seguinte, e o primeiro fechamento mensal no dia 1º do mês seguinte.");
+  return cab+fil+`<p class="small" style="margin-bottom:14px">Mostrando ${ESTN[S17.est]} · ${PER[S17.per]}. Passe o mouse (ou toque) nas barras para ver o número; cada gráfico tem “ver em tabela”.</p><div class="stack" style="gap:22px">${s17Blocos()}</div>`;
+}
+function s17Render(){
+  $("#sec-17").innerHTML=`<div class="sec-h"><div class="label-mono">Gestor, admin e almoxarife · computador, dentro do hub</div><h1>Seção 17 — Indicadores</h1><p>Uma tela com os números do almoxarifado, um bloco por assunto. Cada número diz em uma linha como é calculado.</p></div>
+  ${seletorEstado("17",S17.estado)}<div style="height:14px"></div>
+  ${shell("Indicadores","Gabriel Vidal","Gestor",s17Corpo())}
+  <p class="muted" style="font-size:13px;margin-top:12px">Os números são de exemplo. Troque estoque e período para ver os blocos mudarem. Valor em campo, conserto, perdas, ciclo e “sem entrada no Omie” acompanham o que você fizer nas Seções 12, 14 e 16.</p>`;
+}
+
+/* =====================================================================
+   SEÇÃO 18 — ESCOLHAS DESTA VERSÃO
+   ===================================================================== */
+const ESC=[
+ ["Geral",[
+  "O dia simulado é quinta, 12/11/2026; o almoxarife é Paulo Mendes, o admin é Jose Guilherme e o gestor é Gabriel Vidal.",
+  "O menu do módulo ganhou Recebimento, Reposição, Inventário, Ajustes, Ferramentas, Colaboradores e Indicadores; a ordem final ainda pode mudar.",
+  "Sem permissão, nas telas do almox, aparece para a aprovadora Fernanda Rocha, que entra no módulo mas não tem papel de almoxarife.",
+ ]],
+ ["Seção 12 — Entregas",[
+  "A agenda junta tudo em uma lista por dia: atrasadas primeiro, depois hoje, amanhã e os próximos dias.",
+  "Entrega atrasada é a que tem previsão antes de hoje e ainda não foi conferida.",
+  "Quando o Compras muda a previsão, o cartão mostra a data anterior riscada.",
+  "O cartão mostra para qual estoque a compra vai, pelo mapa de centro de custo.",
+  "Dá para conferir um pedido antes da data prevista, porque fornecedor às vezes adianta.",
+  "Se a quantidade que chegou é menor que a pedida, o item vira “faltou” sozinho; se chegou mais, conta como divergência.",
+  "Item errado e avariado exigem observação; a foto é sempre opcional.",
+  "Conferência concluída não pode ser editada no almox; a correção passa pelo comprador.",
+  "A lista “falta entrada no Omie” fica vermelha a partir de 3 dias sem entrada (limite em configuração).",
+ ]],
+ ["Seção 13 — Mínimos e reposição",[
+  "Mínimo e alvo se editam direto na tabela e só valem depois de “Salvar mínimos”; salvar grava uma versão nova da configuração.",
+  "Alvo em branco vale 2 × o mínimo; alvo menor que o mínimo, ou alvo sem mínimo, é recusado.",
+  "Na importação, se qualquer linha tiver erro, nada é importado; a tela aponta cada linha errada.",
+  "O mockup só lê arquivo .csv de verdade; o sistema vai aceitar a planilha do Excel.",
+  "O BASE tem rascunho de reposição próprio, com o centro de custo de Obras e Spot.",
+  "Itens abaixo do mínimo que o que já está em compra cobre aparecem à parte, fora do envio.",
+  "Quantidade final zero deixa o item fora do envio; “tirar item” some com ele e dá para devolver.",
+  "“Gerar de novo” apaga as mudanças do rascunho e por isso pede confirmação; rascunho enviado fica travado.",
+ ]],
+ ["Seção 14 — Contagem",[
+  "Quando sobram menos de 20 itens no ciclo, a última onda é menor que 20.",
+  "Só dá para fechar a onda com todos os itens contados; “não achei nenhum” conta como zero.",
+  "Quem conta não fica sabendo se algum item deu diferença, nem depois de fechar.",
+  "Itens curva A e itens que já divergiram entram dentro da onda de 20, marcados em azul.",
+  "Cada estoque mostra quando o próximo ciclo começa sozinho (6 meses depois do início do anterior).",
+ ]],
+ ["Seção 15 — Ajustes",[
+  "Aprovar exige motivo em todos os itens selecionados.",
+  "Ajuste recusado deixa o Omie como está e manda o item ser contado de novo na próxima onda.",
+  "O motivo da recusa é opcional.",
+  "Motivo criado com “novo motivo” não é apagado, para os ajustes antigos manterem o nome.",
+  "Depois de aprovar, a tela mostra a gravação no Omie (na fila, depois gravado com o código).",
+ ]],
+ ["Seção 16 — Ferramentas e ficha",[
+  "Ferramenta por quantidade (alicate universal, jogo de chaves, trena) é entregue e devolvida por número, sem patrimônio.",
+  "A devolução também é assinada no tablet, com PIN e traço, como a entrega.",
+  "Ferramenta devolvida danificada vai sempre para conserto; baixar fica como ação separada na ferramenta em conserto.",
+  "Quem nunca assinou cria o PIN no tablet na primeira entrega, digitando uma vez só.",
+  "O valor total da ficha conta só as ferramentas que estão com a pessoa; EPI e uniforme aparecem à parte, porque não voltam.",
+  "O almox pode entregar EPI ou uniforme de qualquer estoque; o padrão é o estoque do contrato da pessoa.",
+  "A importação de ferramentas exige valor em toda linha, porque o valor vai para o termo.",
+ ]],
+ ["Seção 17 — Indicadores",[
+  "Os gráficos são só de quatro tipos: número grande, barra horizontal, linha mensal e barra dividida em 100%.",
+  "Os meses de junho a outubro são exemplo; no sistema, o histórico começa no mês em que ele entrar no ar.",
+  "Os indicadores de pedido e emergencial foram agrupados por equipe; o filtro por aprovador fica para o sistema.",
+  "Material parado na equipe usa 60 dias como exemplo de limite.",
+ ]],
+];
+function s18Render(){
+  let n=0;const L=i=>{let s="",x=i;do{s=String.fromCharCode(97+x%26)+s;x=Math.floor(x/26)-1;}while(x>=0);return s;};
+  $("#sec-18").innerHTML=`<div class="sec-h"><div class="label-mono">Para confirmar ou corrigir</div><h1>Seção 18 — Escolhas desta versão</h1><p>Onde o desenho não dizia como fazer, o mockup escolheu. Cada letra é uma escolha; responda pelo WhatsApp com “18” e a letra para mudar alguma.</p></div>
+  <div class="esc">${ESC.map(([t,itens])=>`<h3>${t}</h3>${itens.map(x=>`<div class="card"><span class="lt">${L(n++)}</span><p>${x}</p></div>`).join("")}`).join("")}</div>`;
+}
+
+/* =====================================================================
+   NAVEGAÇÃO E EVENTOS
+   ===================================================================== */
+const SECS=["12","13","14","15","16","17","18"];
+const OBJ={12:S12,13:S13,14:S14,15:S15,16:S16,17:S17};
+const REND={12:s12Render,13:s13Render,14:s14Render,15:s15Render,16:s16Render,17:s17Render,18:s18Render};
+function renderTudo(){SECS.forEach(k=>REND[k]());}
+function irSec(v){
+  SECS.forEach(k=>{$(`#sec-${k}`).hidden=k!==v;$(`#tab-${k}`).setAttribute("aria-selected",String(k===v));});
+  if(location.hash!==`#secao-${v}`)history.replaceState(null,"",`#secao-${v}`);
+  if(v==="17")s17Render();
+  if(v==="16"&&TAB&&!TAB.feito)s16Render();
+}
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-a]");if(!el)return;
+  if(el.disabled)return;
+  const a=el.dataset.a,v=el.dataset.v;
+  switch(a){
+    case "sec":irSec(v);window.scrollTo({top:0});break;
+    case "fechar":fechar();break;
+    case "sh-menu":el.closest(".shell").dataset.gaveta="sim";break;
+    case "sh-fecha":el.closest(".shell").dataset.gaveta="nao";break;
+    case "estado":{OBJ[el.dataset.s].estado=v;REND[el.dataset.s]();break;}
+    /* importação */
+    case "imp-ex":processaImp(IMP.cfg.exemplos[v],v==="erro"?"exemplo-com-erro.csv":"exemplo-certo.csv");break;
+    case "imp-ok":if(IMP.res&&!IMP.res.erros.length){fechar();IMP.cfg.aplicar(IMP.res.ok);}break;
+    /* 12 */
+    case "s12-tentar":tentar(S12,s12Render);break;
+    case "s12-abrir":{const pc=PC.find(p=>p.n===v);S12.pc=v;S12.vis="conf";S12.erro=false;S12.msg=null;if(!pc.rasc)pc.rasc=pc.itens.map(i=>({q:i.q,sit:"ok",obs:"",foto:null}));S12.conf=pc.rasc;s12Render();$("#sec-12 .shell")?.scrollIntoView({block:"start"});break;}
+    case "s12-volta":S12.vis="agenda";S12.erro=false;s12Render();break;
+    case "c12-q":{const c=S12.conf[Number(v)];s12Qtd(Number(v),c.q+Number(el.dataset.d));break;}
+    case "c12-fx":S12.conf[Number(v)].foto=null;s12AtualizaConf();break;
+    case "s12-concluir":s12ConcluirDlg();break;
+    case "s12-ok":{const pc=PC.find(p=>p.n===S12.pc);const div=pc.itens.some((it,ix)=>divItem(it,S12.conf[ix]));
+      pc.st="conferido";FALTA.unshift({n:pc.n,forn:pc.forn,conf:HOJE,por:"Paulo Mendes",res:div?"div":"ok",chegou:pc.itens.map((it,ix)=>[it.id,S12.conf[ix].q]),nota:div?pc.itens.map((it,ix)=>({it,c:S12.conf[ix]})).filter(x=>divItem(x.it,x.c)).map(x=>divTxt(x.it,x.c).replace(/<[^>]+>/g,"")).join("; "):""});
+      fechar();S12.vis="agenda";S12.msg=`<b>Pedido ${pc.n} conferido${div?" com divergência":""}.</b> ${div?`O Compras passou o pedido para Divergência e ${pc.comp} recebeu o e-mail.`:"O Compras já vê o pedido como conferido e segue para a nota fiscal."} Ele está agora em “falta entrada no Omie”.`;s12Render();break;}
+    /* 13 */
+    case "s13-tentar":tentar(S13,s13Render);break;
+    case "s13-aba":S13.aba=v;S13.msg=null;s13Render();break;
+    case "s13-est":S13.est=v;s13Render();break;
+    case "s13-imp":importDlg(IMP_MIN);break;
+    case "s13-desc":S13.pend={};S13.erros=[];s13Render();break;
+    case "s13-salvar":s13Salvar();break;
+    case "s13-ct":S13.ct=v;S13.msgSug=null;s13Render();break;
+    case "s13-tira":S13.sug[S13.ct].itens[Number(v)].tirado=true;s13Render();break;
+    case "s13-volta":S13.sug[S13.ct].itens[Number(v)].tirado=false;s13Render();break;
+    case "s13-gerar":{const R=S13.sug[S13.ct];const ed=R.itens.some(i=>i.tirado||i.fin!==i.sug);
+      if(!ed){S13.sug[S13.ct]=gerarSug(S13.ct,relogio(),"botão “gerar agora” (Paulo Mendes)");S13.minMudou=false;S13.msgSug=`<b>Rascunho gerado de novo às ${relogio()}</b> com os mínimos atuais.`;s13Render();break;}
+      abrir(`${dlgCab(`Gerar de novo o rascunho do ${CTN[S13.ct]}?`)}<div class="conseq"><b>O que acontece</b><ul><li>As mudanças que você fez neste rascunho somem: quantidades editadas e itens tirados.</li><li>O sistema refaz a conta com os mínimos, saldos e compras de agora.</li><li>Não dá para recuperar o rascunho anterior.</li></ul></div><div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Manter o rascunho</button><button class="btn btn-destructive-solid" data-a="s13-gerar-ok">Apagar mudanças e gerar de novo</button></div>`);break;}
+    case "s13-gerar-ok":S13.sug[S13.ct]=gerarSug(S13.ct,relogio(),"botão “gerar agora” (Paulo Mendes)");S13.minMudou=false;S13.msgSug=`<b>Rascunho gerado de novo às ${relogio()}.</b>`;fechar();s13Render();break;
+    case "s13-enviar":{const R=S13.sug[S13.ct],T=s13Tot(R),I=R.itens.filter(i=>!i.tirado&&i.fin>0);
+      abrir(`${dlgCab(`Enviar a reposição do ${CTN[S13.ct]} ao Compras?`,`${T.n} ${plural(T.n,"item","itens")} · ${brl(T.v)} estimados · ${CC[S13.ct]}`)}
+      <div class="tbl-wrap"><table class="tbl cv"><thead><tr><th>Produto</th><th class="r">Quantidade</th><th class="r">Valor</th></tr></thead><tbody>${I.map(i=>{const p=PID[i.id];return `<tr class="lin"><td class="wide" data-l="Produto" style="white-space:normal">${esc(p.d)}</td><td class="r n" data-l="Quantidade">${num(i.fin)} ${p.un}</td><td class="r n" data-l="Valor">${brl(i.fin*p.cmc)}</td></tr>`;}).join("")}</tbody></table></div>
+      <div class="conseq"><b>O que acontece se você enviar</b><ul><li>Vai para o Compras como <b>sugestão</b> de reposição, com o centro de custo ${CC[S13.ct]}.</li><li><b>Nada vai sozinho a fornecedor.</b> Um comprador abre a solicitação a partir da sugestão, e ela segue o fluxo normal do Compras: cotação, aprovação e pedido.</li><li>Depois de enviado, este rascunho fica travado aqui. O próximo nasce no cálculo diário de amanhã.</li>${R.itens.some(i=>i.tirado||i.fin===0)?"<li>Itens tirados ou com quantidade zero não vão.</li>":""}</ul></div>
+      <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn" data-a="s13-enviar-ok">Enviar ao Compras</button></div>`);break;}
+    case "s13-enviar-ok":{const R=S13.sug[S13.ct],T=s13Tot(R);R.enviado={hora:relogio(),por:"Paulo Mendes",n:T.n,v:T.v};S13.msgSug=null;fechar();s13Render();break;}
+    /* 14 */
+    case "c14-tentar":tentar(S14,s14Render);break;
+    case "c14-est":S14.est=v;S14.tela="onda";S14.filtro="faltam";s14Render();break;
+    case "c14-lista":S14.tela="lista";s14Render();break;
+    case "c14-filtro":S14.filtro=v;s14Render();break;
+    case "c14-comeca":CIC[S14.est].onda=0;s14Render();break;
+    case "c14-zero":{const c=CIC[S14.est];c.cont[v]=0;const i=$(`[data-cnt="${v}"]`);if(i)i.value="0";$(`#ci-${v}`)?.classList.add("feito");s14Progresso();break;}
+    case "c14-preenche":{const c=CIC[S14.est];ondaAtual(c).forEach((id,i)=>{if(c.cont[id]===undefined)c.cont[id]=(i*7)%23+1;});s14Render();break;}
+    case "c14-fechar":{const c=CIC[S14.est],O=ondas(c),ult=c.onda===O.length-1;
+      abrir(`${dlgCab(`Fechar a onda ${c.onda+1} do ${c.nome}?`,`${ondaAtual(c).length} itens contados`)}<div class="conseq"><b>O que acontece se você fechar</b><ul>
+      <li>As contagens vão para conferência: o sistema compara cada uma com o saldo do Omie relido agora.</li>
+      <li>Se algum item der diferença, vira um ajuste para um admin aprovar. Você não fica sabendo quais.</li>
+      <li>Depois de fechar, não dá para mudar estas contagens pelo app. Se lembrou de algum erro, avise o admin antes de ele aprovar.</li>
+      <li>${ult?`Era a última onda: o ${c.nome} fica com “Inventário físico em dia ✓ (${fmtC(HOJE)})”.`:`A onda ${c.onda+2} é sorteada na hora.`}</li></ul></div>
+      <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar e revisar</button><button class="btn" data-a="c14-fechar-ok">Fechar onda ${c.onda+1}</button></div>`);break;}
+    case "c14-fechar-ok":{const c=CIC[S14.est],O=ondas(c),n=ondaAtual(c).length,on=c.onda+1;c.onda++;c.cont={};c.marca=null;
+      if(c.onda>=O.length){c.emDia=HOJE;S14.fim={emDia:true};}else S14.fim={emDia:false,ondaN:on,n};
+      S14.tela="fim";fechar();s14Render();break;}
+    case "c14-seguir":S14.tela="onda";S14.filtro="faltam";s14Render();break;
+    /* 15 */
+    case "s15-tentar":tentar(S15,s15Render);break;
+    case "s15-papel":S15.papel=v;S15.erro="";s15Render();break;
+    case "s15-filtro":S15.filtro=v;s15Render();break;
+    case "s15-aprovar":s15AprovarDlg();break;
+    case "s15-recusar":s15RecusarDlg();break;
+    case "s15-aprovar-ok":{const S=[...S15.sel].map(id=>AJ.find(a=>a.id===id)),h=relogio();
+      S.forEach(a=>{const p=PID[a.pid];if(LOCS.includes(a.loc))p.s[a.loc]=a.contado;else p.e[a.loc]=a.contado;
+        const d={...a,res:"aprovado",por:"Jose Guilherme",hora:h,omieSt:"fila",cod:`HUBALX-AJU-${String(codAj++).padStart(4,"0")}`};S15.dec.unshift(d);
+        setTimeout(()=>{d.omieSt="ok";s15Render();},1400+S.indexOf(a)*500);AJ.splice(AJ.indexOf(a),1);});
+      S15.sel.clear();S15.msg=`<b>${S.length} ${plural(S.length,"ajuste aprovado","ajustes aprovados")} às ${h}.</b> As gravações no Omie estão na fila; cada uma mostra o código quando terminar.`;fechar();s15Render();break;}
+    case "s15-recusar-ok":{const nota=$("#s15-nota").value.trim(),S=[...S15.sel].map(id=>AJ.find(a=>a.id===id)),h=relogio();
+      S.forEach(a=>{S15.dec.unshift({...a,res:"recusado",por:"Jose Guilherme",hora:h,nota});AJ.splice(AJ.indexOf(a),1);});
+      S15.sel.clear();S15.msg=`<b>${S.length} ${plural(S.length,"ajuste recusado","ajustes recusados")}.</b> O Omie não mudou; ${plural(S.length,"o item volta","os itens voltam")} na próxima onda.`;fechar();s15Render();break;}
+    case "s15-novo-ok":{const t=$("#s15-novo").value.trim();
+      if(t.length<3){s15NovoDlg("Escreva o nome do motivo, com pelo menos 3 letras.");break;}
+      if(MOTIVOS.some(m=>norm(m.m)===norm(t))){s15NovoDlg(`Já existe o motivo “${esc(MOTIVOS.find(m=>norm(m.m)===norm(t)).m)}”. Escolha ele na lista.`);break;}
+      MOTIVOS.push({m:t,por:"Jose Guilherme",em:HOJE});const a=AJ.find(x=>x.id===S15.novoPara);if(a)a.mot=t;
+      S15.msg=`<b>Motivo “${esc(t)}” criado por Jose Guilherme em ${fmtC(HOJE)}.</b> Já aparece na lista para todos os admins.`;fechar();s15Render();break;}
+    /* 16 */
+    case "f-tentar":tentar(S16,s16Render);break;
+    case "f-aba":S16.aba=v;S16.msg=null;s16Render();break;
+    case "f-fil":S16.fil=v;s16Render();break;
+    case "f-imp":importDlg(IMP_FER);break;
+    case "f-ent":{ENT={c:"carlos",sel:{},q:{}};const f=FID(v);if(f.pat)ENT.sel[v]=true;else ENT.q[v]=1;entDlg();break;}
+    case "f-ent-c":ENT={c:v,sel:{},q:{}};entDlg();break;
+    case "ent-q":{const f=FID(v);ENT.q[v]=Math.max(0,Math.min(noAlmoxQ(f),(ENT.q[v]||0)+Number(el.dataset.d)));entDlg();break;}
+    case "ent-ok":{const I=entItens();if(I.length)mandarTablet("entrega",ENT.c,I,null);break;}
+    case "f-dev":{const f=FID(v);DEV={fid:v,c:el.dataset.c,q:f.pat?1:f.campo[el.dataset.c].n,estado:"ok",forn:"Assistência Ferramentas Paulista",prev:"2026-11-26",obs:"",err:false};devDlg();break;}
+    case "dev-q":{const f=FID(DEV.fid);DEV.q=Math.max(1,Math.min(f.campo[DEV.c].n,DEV.q+Number(el.dataset.d)));devDlg();break;}
+    case "dev-est":DEV.estado=v;devDlg();break;
+    case "dev-ok":{if(DEV.estado==="dano"&&!DEV.obs.trim()){DEV.err=true;devDlg();break;}const f=FID(DEV.fid);
+      mandarTablet("devolucao",DEV.c,[{fid:f.id,nm:f.nm,pat:f.pat,q:DEV.q,v:f.v,estado:DEV.estado}],{estado:DEV.estado,forn:DEV.forn||"fornecedor de conserto",prev:DEV.prev||"2026-11-26",obs:DEV.obs});break;}
+    case "f-epi":{const C=COL[v];EPI={c:v,pid:"luva",est:C.ct,q:1};epiDlg();break;}
+    case "epi-q":EPI.q=Math.max(1,EPI.q+Number(el.dataset.d));epiDlg();break;
+    case "epi-ok":{const p=PID[EPI.pid];if(EPI.q>sal(p,EPI.est))break;mandarTablet("epi",EPI.c,[{nm:p.d,q:EPI.q,un:p.un,v:p.cmc}],{pid:p.id,est:EPI.est});break;}
+    case "f-termo":termoVer(v);break;
+    case "f-volta":{const f=FID(v);f.st="almox";HIST.push({c:"marcos",data:HOJE,txt:`${f.nm} (${f.pat}) voltou do conserto com ${f.cons.forn}`});f.cons=null;S16.msg=`<b>${esc(f.nm)} (${f.pat}) voltou do conserto.</b> Está no almox, pronta para entregar.`;s16Render();break;}
+    case "f-baixa":{const f=FID(v);abrir(`${dlgCab(`Baixar ${esc(f.nm)} (${f.pat})?`,`Em conserto com ${esc(f.cons.forn)} desde ${fmtC(f.cons.saiu)}`)}
+      <div class="campo"><label for="bx-mot">Motivo da baixa <span class="erro-t">obrigatório</span></label><input class="inp" id="bx-mot" placeholder="Ex.: conserto sai mais caro que uma nova"></div>
+      <div class="conseq"><b>O que acontece se você baixar</b><ul><li>A ferramenta sai da lista de disponíveis e fica como “baixada”, com o motivo, a data e quem baixou.</li><li>O valor dela (${brl(f.v)}) entra no indicador de perdas do ferramental.</li><li>Não dá para desfazer pela tela. Se ela voltar a funcionar, precisa ser cadastrada de novo.</li></ul></div>
+      <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="f-baixa-ok" data-v="${f.id}">Baixar ferramenta</button></div>`);break;}
+    case "f-baixa-ok":{const m=$("#bx-mot").value.trim();if(m.length<3){$("#bx-mot").style.borderColor="var(--erro-borda)";$("#bx-mot").placeholder="Escreva o motivo da baixa";$("#bx-mot").focus();break;}
+      const f=FID(v);f.st="baixada";f.baixa={mot:m,data:HOJE};f.cons=null;fechar();S16.msg=`<b>${esc(f.nm)} (${f.pat}) baixada.</b> Motivo: ${esc(m)}.`;s16Render();break;}
+    case "tab-dig":if(TAB.pin.length<6){TAB.pin+=v;tabUI();}break;
+    case "tab-apaga":TAB.pin=TAB.pin.slice(0,-1);tabUI();break;
+    case "tab-limpa":TAB.tracos=0;{const cv=$("#sig");cv.getContext("2d").clearRect(0,0,cv.width,cv.height);}tabUI();break;
+    case "tab-assina":assinar();break;
+    case "tab-cancela":TAB=null;S16.msg="O termo foi cancelado no tablet. Nada mudou na ficha nem nas ferramentas.";s16Render();break;
+    case "tab-libera":TAB=null;s16Render();break;
+    /* 17 */
+    case "i-tentar":tentar(S17,s17Render);break;
+    case "i-per":S17.per=v;s17Render();break;
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.c12o!=null){S12.conf[Number(t.dataset.c12o)].obs=t.value;}
+  else if(t.dataset.mn!=null||t.dataset.al!=null){
+    const id=t.dataset.mn??t.dataset.al,campo=t.dataset.mn!=null?"min":"alvo",k=kk(id,S13.est);
+    S13.pend[k]={...(S13.pend[k]||{}),[campo]:t.value.trim()};
+    const mv=pv(id,"min"),av=pv(id,"alvo");
+    $(`#st-${id}`).innerHTML=sitMin(sal(PID[id],S13.est),mv);
+    const ai=$(`[data-al="${id}"]`);ai.placeholder=/^\d+$/.test(mv)?String(Number(mv)*2):"—";
+    $(`#al-${id}`).textContent=av!==""?"definido à mão":mv!==""?"padrão: 2 × mínimo":"";
+    $("#s13-pend").innerHTML=s13PendBar();
+  }
+  else if(t.dataset.fin!=null){const R=S13.sug[S13.ct],ix=Number(t.dataset.fin),i=R.itens[ix];i.fin=Math.max(0,Math.floor(Number(t.value))||0);
+    $(`#sv-${ix}`).textContent=brl(i.fin*PID[i.id].cmc);t.closest("tr").classList.toggle("apagado",i.fin===0);
+    const T=s13Tot(R);$("#s13-tot").textContent=`${T.n} ${plural(T.n,"item","itens")} · ${brl(T.v)}`;$("#s13-enviar").disabled=!T.n;}
+  else if(t.dataset.cnt!=null){const c=CIC[S14.est],id=t.dataset.cnt;
+    if(t.value==="")delete c.cont[id];else c.cont[id]=Math.max(0,Math.floor(Number(t.value))||0);
+    $(`#ci-${id}`)?.classList.toggle("feito",c.cont[id]!==undefined);s14Progresso();}
+  else if(t.id==="f-busca"){S16.busca=t.value;$("#f-corpo").innerHTML=(()=>{const tmp=s16Ferr();const d=document.createElement("div");d.innerHTML=tmp;return d.querySelector("#f-corpo").innerHTML;})();}
+  else if(t.id==="dev-obs"){DEV.obs=t.value;}
+  else if(t.id==="dev-forn"){DEV.forn=t.value;}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.c12q!=null)s12Qtd(Number(t.dataset.c12q),Number(t.value));
+  else if(t.dataset.c12s!=null){const ix=Number(t.dataset.c12s),pc=PC.find(p=>p.n===S12.pc),c=S12.conf[ix];c.sit=t.value;if(c.sit==="ok"&&c.q<pc.itens[ix].q)c.q=pc.itens[ix].q;s12AtualizaConf();}
+  else if(t.dataset.c12f!=null){const f=t.files&&t.files[0];if(!f)return;const ix=Number(t.dataset.c12f);const r=new FileReader();r.onload=()=>{S12.conf[ix].foto={nome:f.name,url:r.result};s12AtualizaConf();};r.readAsDataURL(f);}
+  else if(t.id==="imp-file"){const f=t.files&&t.files[0];if(!f)return;if(/\.xlsx?$/i.test(f.name)){IMP.arq=f.name;IMP.res={xlsx:true};renderImp();return;}const r=new FileReader();r.onload=()=>processaImp(String(r.result),f.name);r.readAsText(f);}
+  else if(t.dataset.aj!=null){const id=Number(t.dataset.aj);t.checked?S15.sel.add(id):S15.sel.delete(id);S15.erro="";s15Render();}
+  else if(t.id==="s15-todos"){const L=AJ.filter(a=>S15.filtro==="todos"||(S15.filtro==="EQUIPES"?EQ.includes(a.loc):a.loc===S15.filtro));L.forEach(a=>t.checked?S15.sel.add(a.id):S15.sel.delete(a.id));S15.erro="";s15Render();}
+  else if(t.dataset.mot!=null){const a=AJ.find(x=>x.id===Number(t.dataset.mot));if(t.value==="__novo"){t.value=a.mot;S15.novoPara=a.id;s15NovoDlg();}else{a.mot=t.value;if(S15.erro){S15.erro="";s15Render();}}}
+  else if(t.id==="f-colab"){S16.colab=t.value;S16.msg=null;s16Render();}
+  else if(t.id==="ent-c"){ENT.c=t.value;entDlg();}
+  else if(t.dataset.entp!=null){ENT.sel[t.dataset.entp]=t.checked;entDlg();}
+  else if(t.id==="dev-prev"){DEV.prev=t.value;}
+  else if(t.id==="epi-p"){EPI.pid=t.value;EPI.q=1;epiDlg();}
+  else if(t.id==="epi-e"){EPI.est=t.value;epiDlg();}
+  else if(t.id==="i-est"){S17.est=t.value;s17Render();}
+});
+/* dica dos gráficos: um balão só, segue o mouse; no toque, aparece no toque */
+const tip=$("#tip");
+function mostraTip(el,x,y){tip.textContent=el.dataset.tip;tip.hidden=false;const w=tip.offsetWidth;tip.style.left=Math.min(window.innerWidth-w-8,x+12)+"px";tip.style.top=(y+14)+"px";}
+document.addEventListener("pointermove",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el)mostraTip(el,e.clientX,e.clientY);else tip.hidden=true;});
+document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el&&e.pointerType!=="mouse")mostraTip(el,e.clientX,e.clientY);});
+window.addEventListener("scroll",()=>{tip.hidden=true;},{passive:true});
+window.addEventListener("hashchange",()=>{const m=location.hash.match(/^#secao-(1[2-8])$/);if(m)irSec(m[1]);});
+
+renderTudo();
+{const m=location.hash.match(/^#secao-(1[2-8])$/);irSec(m?m[1]:"12");}
+</script>
