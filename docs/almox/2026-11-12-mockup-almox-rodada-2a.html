@@ -1,0 +1,1461 @@
+<title>Almoxarifado rodada 2A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: barra do mockup (âmbar tracejado, fora do produto) fixa no topo, uma seção por vez; telas do hub dentro da moldura do hub
+   (lateral navy de 256 px a partir de 768 px, topo navy com menu abaixo disso); telas do técnico dentro de um celular, sem moldura do hub.
+   Tema único, o escuro do hub, de propósito: tokens iguais aos de app/globals.css e ao mockup aprovado do RH (2026-11-08-rh-layout-hub.html). */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--navy-hover:#10285f;--orange:#f05a28;--orange-hover:#d94e22;
+  --muted:#94a3b8;--muted-dark:#4a6080;--border:#1e3a5f;--input-bg:#0f1f3d;--error:#ef4444;
+  --texto:#ffffff;--texto-suave:#e8eef7;
+  --verde-bg:#0d542b;--verde:#7bf1a8;--ambar-bg:#7b3306;--ambar:#ffd230;
+  --vermelho-bg:#82181a;--vermelho:#ffa2a2;--azul-bg:#1c398e;--azul:#8ec5ff;
+  --erro-borda:#e7000b;--erro-fundo:#460809;--ok-borda:#008236;--ok-fundo:#052e16;
+  --div-fundo:rgba(123,51,6,.42);--div-solido:#3a2219;
+  /* Texto auxiliar: #94a3b8, a opção legível da decisão D7 do RH. */
+  --aux:var(--muted);
+  /* Só do mockup: âmbar tracejado, para nunca parecer parte do produto. */
+  --nota:#fbbf24;--nota-fundo:#2a2108;--nota-borda:#7a5c0e;--mk-fundo:#060e1c;--frame:#050b16;
+  /* Nomes que o JavaScript usa em estilos inline. */
+  --primary:var(--orange);--primary-foreground:#ffffff;--aviso:var(--ambar);--aviso-bg:var(--div-fundo);--ok:var(--verde);--destructive:var(--vermelho);
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto)}
+body{margin:0;font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--mk-fundo)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+.n,.tab{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.label-mono{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:500;color:var(--aux)}
+.sp{flex:1}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ------------------------------ fora do produto: o mockup ------------------------------ */
+.mk-in,.wrap{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mk-cab{background:var(--mk-fundo)}
+.mk-cab .wrap{padding-block:12px 4px}
+.mk-tit{font-weight:600;color:var(--nota)}
+.mk-tit small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.mk-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--mk-fundo);border-bottom:1px dashed var(--nota-borda)}
+.mk-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:8px}
+.mk-tabs{display:flex;gap:4px;min-width:0}
+.mk-tab{border:1px dashed var(--nota-borda);background:transparent;color:var(--texto-suave);border-radius:8px;min-height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
+.mk-tab:hover{border-color:var(--nota)}
+.mk-tab[aria-selected="true"]{background:var(--nota);border:1px solid var(--nota);color:#1a1405;font-weight:600}
+.mk-tab .tc{display:none}
+.mk-hora{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;border:1px dashed var(--nota-borda);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:6px;padding:4px 9px;font-size:12px;color:var(--texto-suave)}
+.seg button:hover{background:var(--nota-fundo)}
+.seg button[aria-pressed="true"]{background:var(--nota);color:#1a1405;font-weight:600}
+.mk-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--texto-suave);padding:8px 10px;border:1px dashed var(--nota-borda);border-radius:10px;background:var(--nota-fundo)}
+.mk-ctrl b{font-weight:600;color:var(--nota)}
+@media (max-width:640px){
+  .mk-in{gap:6px 8px;padding-block:6px}
+  .mk-in>.sp{display:none}
+  .mk-hora{margin-left:auto}
+  .mk-tabs{gap:3px}
+  .mk-tab{padding:0 7px;min-width:34px}
+  .mk-tab .tl,.mk-tab .tc{display:none}
+  .mk-tab[aria-selected="true"] .tc{display:inline}
+  .mk-hora .hd,.mk-hora .mk-hora-r{display:none}
+  .mk-hora .seg::before{content:"Hora";align-self:center;padding:0 1px 0 4px;font-size:10px;color:var(--muted)}
+  .mk-hora .seg button{padding:7px 5px}
+}
+
+main.pg{padding-block:20px 80px}
+.sec-h{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.sec-h h1{font-size:22px;font-weight:700;color:var(--texto)}
+.sec-h p{color:var(--muted);max-width:72ch}
+
+/* ------------------------------ componentes do hub ------------------------------ */
+/* Botões: btn-p, btn-s e btn-er do RH/Frotas */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 16px;border-radius:8px;border:1px solid transparent;background:var(--orange);color:#fff;font-size:14px;font-weight:500;white-space:nowrap;transition:background-color .15s,border-color .15s,transform .15s;text-decoration:none}
+.btn:hover{background:var(--orange-hover)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-outline{background:transparent;border-color:var(--border);color:var(--texto-suave)}
+.btn-outline:hover{background:transparent;border-color:var(--muted)}
+.btn-secondary{background:var(--border);color:#fff}
+.btn-secondary:hover{background:var(--navy-hover)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-ghost:hover{background:var(--border);color:#fff}
+.btn-destructive{background:transparent;border-color:var(--erro-borda);color:#fff}
+.btn-destructive:hover{background:var(--vermelho-bg)}
+.btn-destructive-solid{background:var(--erro-borda);color:#fff}
+.btn-destructive-solid:hover{background:#c10007}
+.btn-sm{min-height:32px;padding:0 12px;font-size:13px}
+.btn-xs{min-height:26px;padding:0 8px;font-size:12px;border-radius:6px}
+.btn-lg{min-height:44px;padding:0 18px;font-size:15px}
+.btn-block{width:100%}
+/* Etiquetas: chips do BaseTabela; a forma fica, para o tom não depender só da cor */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;line-height:1.45;white-space:nowrap;background:var(--border);color:var(--texto-suave)}
+.badge::before{font-size:9px;line-height:1}
+.b-ok{background:var(--verde-bg);color:var(--verde)}.b-ok::before{content:'✓'}
+.b-avi{background:var(--ambar-bg);color:var(--ambar)}.b-avi::before{content:'◆'}
+.b-des{background:var(--vermelho-bg);color:var(--vermelho)}.b-des::before{content:'▲'}
+.b-sec{background:var(--azul-bg);color:var(--azul)}.b-sec::before{content:'●'}
+.b-out{background:var(--border);color:var(--texto-suave)}
+/* Cartões navy */
+.card{background:var(--navy);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}
+/* Campos: veiculos/novo/_form.tsx */
+.inp{min-height:36px;border:1px solid var(--border);background:var(--input-bg);color:#fff;border-radius:8px;padding:0 12px;font-size:14px;min-width:0;outline:none}
+.inp::placeholder{color:var(--muted-dark)}
+.inp:focus{border-color:var(--orange)}
+textarea.inp{padding:10px 12px;resize:vertical;width:100%}
+select.inp{padding-right:8px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.chk input{accent-color:var(--orange);width:16px;height:16px;flex:none}
+
+/* Moldura do hub: lateral de components/sofia/Sidebar.tsx; abaixo de 768 px vira topo navy com menu, como no Frotas */
+.shell{container:sh/inline-size;position:relative;isolation:isolate;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background)}
+.sh-app{display:flex;flex-direction:column;min-height:560px}
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;max-width:85%;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+.shell[data-gaveta="sim"] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:block;color:#fff}
+.volta{color:var(--muted);font-size:12px;display:inline-flex;align-items:center}
+.lat-fecha{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px;width:44px;height:44px}
+.lat-fecha:hover{color:#fff}
+.lat-grupo{display:flex;flex-direction:column;gap:4px;margin-bottom:24px}
+.item{display:flex;align-items:center;width:100%;min-height:44px;padding:8px;border-radius:4px;font-size:14px;color:var(--muted);transition:background-color .15s,color .15s}
+.item[aria-disabled="true"]{cursor:default}
+.item[aria-disabled="true"]:hover{background:var(--border);color:#fff}
+.item[aria-current="page"]{background:var(--orange);color:#fff}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.quem{display:flex;align-items:center;gap:10px;padding:4px 8px 8px}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;color:#fff;flex:none}
+.quem-txt{min-width:0;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500;color:#fff;font-size:13px}
+.quem-txt span{color:var(--muted);overflow-wrap:anywhere}
+.topo-cel{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:10px 16px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+.shell[data-gaveta="sim"] .veu{display:block}
+.sh-main{container:area/inline-size;flex:1;min-width:0;padding:16px}
+@container sh (min-width:640px){.sh-main{padding:24px}}
+@container sh (min-width:1100px){.sh-main{padding:32px}}
+@container sh (min-width:768px){
+  .topo-cel,.veu{display:none!important}
+  .sh-app{flex-direction:row}
+  .lat{position:static;z-index:auto;transform:none;visibility:visible;max-width:none;transition:none}
+  .lat-fecha{display:none}
+  .item{min-height:0}
+}
+/* Título de página: app/(operacoes)/sofia/page.tsx */
+.pg-tit{font-size:24px;line-height:1.33;font-weight:700;color:#fff}
+
+/* Estados: vazio é convite (tracejado), erro é alarme (vermelho cheio), sem acesso é cartão navy */
+.est{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:24px;border-radius:12px;font-size:14px}
+.est h3{font-size:16px;font-weight:600;color:#fff}
+.est p{max-width:60ch;color:var(--muted)}
+.est .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:700}
+.est-vazio,.est-ok{border:1px dashed var(--border);align-items:center;text-align:center;padding:40px 16px}
+.est-vazio h3{font-weight:500;color:var(--texto-suave)}
+.est-vazio .ico{background:var(--border);color:var(--muted)}
+.est-ok .ico{background:var(--verde-bg);color:var(--verde)}
+.est-erro{border:1px solid var(--erro-borda);background:var(--erro-fundo)}
+.est-erro p{color:var(--vermelho)}
+.est-erro .ico{background:var(--erro-borda);color:#fff}
+.est-erro .btn{background:transparent;border-color:var(--erro-borda)}
+.est-erro .btn:hover{background:var(--vermelho-bg)}
+.est-perm{border:1px solid var(--border);background:var(--navy)}
+.est-perm .ico{background:var(--border);color:var(--muted)}
+.skel{background:var(--navy);border-radius:6px;height:14px;animation:sk 1.6s ease-in-out infinite}
+.card .skel,.fi .skel,.ped .skel{background:var(--border)}
+@keyframes sk{50%{opacity:.45}}
+
+/* Seção 1 */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+@container area (min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container area (min-width:860px){.tiles{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}}
+.tile{padding:16px;transition:border-color .15s}
+.tile[data-a]:hover{border-color:var(--orange)}
+.tile .v{font-size:22px;line-height:1.25;font-weight:700;color:#fff;margin-top:4px;overflow-wrap:anywhere}
+.tile .s{font-size:12px;color:var(--aux);margin-top:4px}
+.tile.alerta .v{color:var(--vermelho)}
+@container area (max-width:420px){.tile .v{font-size:19px}}
+.filtros{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px}
+.filtros .busca{flex:1 1 240px;min-width:0}
+.filtros .busca input{width:100%}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12px;color:var(--aux);margin-bottom:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+/* Tabela: BaseTabela do Frotas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{padding:10px 12px;text-align:left;font-weight:500;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border);background:var(--navy)}
+.tbl td{padding:10px 12px;white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--texto-suave)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr.lin:hover td{background:var(--navy)}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td.r{font-variant-numeric:tabular-nums}
+.tbl .col-on{box-shadow:inset 0 -2px 0 var(--orange)}
+.tbl .fix{position:sticky;left:0;z-index:1;background:var(--background)}
+.tbl th.fix{background:var(--navy);z-index:2}
+.tbl tbody tr.lin:hover td.fix{background:var(--navy)}
+.prod-btn{border:0;background:transparent;padding:0;text-align:left;display:flex;flex-direction:column;max-width:280px;color:#fff}
+.prod-btn .nm{font-weight:500;white-space:normal;line-height:1.3}
+.prod-btn:hover .nm{color:var(--orange);text-decoration:underline;text-underline-offset:3px}
+.prod-btn .cd{font-family:var(--mono);font-size:11px;color:var(--aux)}
+.tbl td.c-red{background:var(--vermelho-bg);color:var(--vermelho);font-weight:600}
+.tbl td.c-amb{background:var(--ambar-bg);color:var(--ambar);font-weight:600}
+.zero{color:var(--muted-dark)}
+.tbl .zero{color:var(--aux)}
+.eq-btn{border:1px solid var(--border);background:transparent;color:var(--texto-suave);border-radius:6px;padding:2px 8px;font-variant-numeric:tabular-nums}
+.eq-btn:hover{border-color:var(--orange)}
+.tbl .sub td{background:var(--navy);font-size:13px;white-space:normal}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-block;border-radius:4px;padding:2px 8px;font-size:12px;background:var(--border);color:var(--texto-suave)}
+.chip b{color:#fff}
+.min-t{font-size:12px;color:var(--aux)}
+.atual{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--aux)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--verde);animation:pul 2.2s ease-in-out infinite}
+@keyframes pul{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Diálogo */
+dialog.dlg{border:1px solid var(--border);padding:0;border-radius:12px;background:var(--navy);color:#fff;width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 48px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
+dialog.dlg::backdrop{background:rgba(0,0,0,.6)}
+.dlg-in{display:flex;flex-direction:column;gap:14px;padding:20px;max-height:calc(100vh - 48px);overflow:auto}
+.dlg-h{display:flex;align-items:flex-start;gap:12px}
+.dlg-h h2{font-size:18px;font-weight:600}
+.dlg .tbl .fix,.dlg .tbl td{background:var(--navy)}
+.dlg .tbl th{background:var(--background)}
+.dlg-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.conseq{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-radius:8px;background:var(--erro-fundo);border:1px solid var(--erro-borda);color:var(--texto-suave)}
+.conseq b{color:#fff}
+.conseq ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label{font-size:14px;color:var(--muted)}
+.erro-t{color:var(--vermelho);font-size:13px}
+.hist{display:flex;flex-direction:column}
+.hist .h{display:grid;grid-template-columns:92px 1fr auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.hist .h:last-child{border:0}
+.hist .q{font-weight:600;font-variant-numeric:tabular-nums}
+.q.pos{color:var(--verde)}
+
+/* Seção 2: celular do técnico. Sem moldura do hub, mesma paleta e mesmos componentes */
+.s2-grid{display:grid;grid-template-columns:400px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:900px){.s2-grid{grid-template-columns:minmax(0,1fr)}}
+.phone{width:390px;max-width:100%;height:800px;border:11px solid var(--frame);border-radius:46px;overflow:hidden;display:flex;flex-direction:column;background:var(--background);box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px var(--border);position:relative}
+.ph-notch{height:26px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600;background:var(--navy);color:#fff}
+@media (max-width:520px){.s2-grid .phone{width:100%;height:auto;min-height:680px;border:1px solid var(--border);border-radius:12px;box-shadow:none}.ph-notch{display:none}.phone .ph-body{overflow:visible}}
+.ph-head{flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--navy);color:#fff}
+.ph-head .t1{font-weight:700;font-size:16px;line-height:1.25}
+.ph-head .t2{font-size:12px;color:var(--muted)}
+.bell{position:relative;border:1px solid var(--border);background:none;color:#fff;width:44px;height:44px;border-radius:8px;display:grid;place-items:center}
+.bell .ct{position:absolute;top:-6px;right:-6px;background:var(--orange);color:#fff;border-radius:999px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
+.ph-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.ph-foot{flex:none;border-top:1px solid var(--border);background:var(--navy);position:sticky;bottom:0}
+.tabs-b{display:grid;grid-template-columns:1fr 1fr}
+.tabs-b button{border:0;background:transparent;min-height:56px;padding:8px 6px;font-size:12px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tabs-b button[aria-current="page"]{color:var(--orange);font-weight:600}
+.tabs-b .ic{font-size:17px;line-height:1}
+.cartbar{display:flex;align-items:center;gap:10px;padding:10px 16px}
+.cartbar .muted{color:var(--muted)}
+.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 20px;text-align:center}
+.pin-logo{width:56px;height:56px;border-radius:14px;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:700;font-size:22px}
+.pin-wrap h2{color:#fff}
+.pin-dots{display:flex;gap:12px;height:18px}
+.pin-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted)}
+.pin-dots span.f{background:var(--orange);border-color:var(--orange)}
+.keypad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
+.keypad button{height:60px;border-radius:12px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:22px;font-weight:500}
+.keypad button:active{background:var(--navy-hover)}
+.faixa{border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--texto-suave);border:1px solid var(--border)}
+.faixa .al{display:flex;gap:8px;align-items:flex-start}
+.faixa .al .tx{flex:1}
+.al-avi{background:var(--div-fundo);border-color:var(--ambar-bg)}
+.al-des{background:var(--erro-fundo);border-color:var(--erro-borda)}
+.al-ok{background:var(--ok-fundo);border-color:var(--ok-borda)}
+.al-sec{background:rgba(28,57,142,.35);border-color:var(--azul-bg)}
+.al .mk{font-weight:700;width:18px;text-align:center;flex:none}
+.al-avi .mk{color:var(--ambar)}.al-des .mk{color:var(--vermelho)}.al-ok .mk{color:var(--verde)}.al-sec .mk{color:var(--azul)}
+.al-x{border:0;background:transparent;color:var(--muted);font-size:12px;text-decoration:underline;padding:6px 0;min-height:32px}
+.al-x:hover{color:#fff}
+.ped{border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--navy);color:var(--texto-suave);text-align:left;width:100%;transition:border-color .15s}
+.ped:hover{border-color:var(--orange)}
+.ped .l1{display:flex;align-items:center;gap:8px}
+.ped .num{font-weight:600;font-family:var(--mono);color:#fff}
+.ped b{color:#fff;font-weight:600}
+.mini-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.mini-steps i{height:4px;border-radius:2px;background:var(--border)}
+.mini-steps i.on{background:var(--orange)}
+.mini-steps i.bad{background:var(--error)}
+.mini-steps i.done{background:var(--verde)}
+.seg-big{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg-big button{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:8px;padding:9px 6px;font-weight:500;font-size:13px;line-height:1.25;min-height:52px}
+.seg-big button small{display:block;font-weight:400;font-size:11px;color:var(--aux)}
+.seg-big button[aria-pressed="true"]{background:var(--navy);border-color:var(--orange);color:#fff;box-shadow:inset 0 0 0 1px var(--orange)}
+.ph-search{position:relative}
+.ph-search input{width:100%;min-height:44px;font-size:16px;padding-left:38px}
+.ph-search .lupa{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.mat{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.mat:last-child{border-bottom:0}
+.mat .info{flex:1;min-width:0}
+.mat .nm{font-weight:500;line-height:1.3;color:#fff}
+.mat .dp{font-size:12px;color:var(--muted)}
+.mat .dp b{color:var(--verde);font-weight:600}
+.mat.ast .dp{color:var(--ambar)}
+.mat.cinza{opacity:.55}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--navy)}
+.stepper button{width:40px;height:40px;border:0;background:transparent;color:#fff;font-size:18px}
+.stepper button:hover{background:var(--navy-hover)}
+.stepper span{min-width:34px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:#fff}
+.add-btn{min-height:40px}
+.datas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.dt{flex:none;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--background);color:#fff;text-align:center;min-width:64px;line-height:1.2}
+.dt b{display:block;font-size:15px}
+.dt small{font-size:11px;color:var(--muted)}
+.dt[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange);background:var(--navy-hover)}
+.dt[disabled]{opacity:.4;cursor:not-allowed}
+.dt .em{color:var(--vermelho);font-size:10px;font-weight:600;display:block}
+.box{border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--navy);color:var(--texto-suave)}
+.box h4{margin:0;font-size:13px;font-weight:600;color:#fff}
+.box b{color:#fff}
+.box .tbl th{background:var(--background)}
+.box .tbl td,.box .tbl .fix{background:var(--navy)}
+.vsteps{display:flex;flex-direction:column}
+.vs{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.vs:last-child{padding-bottom:0}
+.vs::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--border)}
+.vs:last-child::before{display:none}
+.vs .c{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:var(--navy);color:var(--muted);display:grid;place-items:center;font-size:11px;font-weight:700;z-index:1}
+.vs.done .c{background:var(--verde-bg);border-color:var(--verde);color:var(--verde)}
+.vs.cur .c{border-color:var(--orange);color:var(--orange)}
+.vs.bad .c{background:var(--vermelho-bg);border-color:var(--erro-borda);color:var(--vermelho)}
+.vs .t{font-weight:500;color:#fff}
+.vs .w{font-size:12px;color:var(--muted)}
+.lado{display:flex;flex-direction:column;gap:14px;max-width:62ch}
+.lado h3{font-size:15px;font-weight:600}
+.lado ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.lado li b{color:#fff;font-weight:600}
+
+/* Seção 3 */
+.s3-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@container area (min-width:840px){.s3-grid{grid-template-columns:232px minmax(0,1fr)}}
+.fila{display:flex;flex-direction:column;gap:8px}
+.fila h3{color:#fff}
+.fi{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--navy);color:var(--texto-suave);display:flex;flex-direction:column;gap:6px;text-align:left;width:100%;transition:border-color .15s}
+.fi:hover{border-color:var(--muted)}
+.fi[aria-current="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+.fi .l1{display:flex;gap:8px;align-items:center;color:#fff}
+.fi .num{font-family:var(--mono);font-weight:600}
+.fi .bs{display:flex;flex-wrap:wrap;gap:4px}
+.det{container:det/inline-size;display:flex;flex-direction:column;gap:14px;min-width:0}
+.det-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.det-h h2{font-size:20px;font-weight:600;color:#fff}
+.info.card{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 16px}
+.info .k{font-size:12px;color:var(--aux);text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.info .v{font-weight:500;color:#fff}
+.emerg{border:1px solid var(--erro-borda);background:var(--erro-fundo);color:var(--texto-suave);border-radius:8px;padding:12px 16px;font-size:13px}
+.emerg b{color:var(--vermelho)}
+.qty{display:inline-flex;align-items:center;gap:4px}
+.tbl.ap th{white-space:normal;line-height:1.2;padding:8px;min-width:60px;vertical-align:bottom}
+.tbl.ap td{padding-inline:8px}
+.qty input{width:46px;min-height:32px;padding:0 6px;-moz-appearance:textfield;text-align:right;font-variant-numeric:tabular-nums}
+.qty input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty button{width:28px;height:32px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#fff}
+.qty button:hover{border-color:var(--orange)}
+.tbl tr.div td{background:var(--div-fundo)}
+.tbl tr.div td.fix{background:var(--div-solido)}
+.tbl tr.div:hover td{background:var(--div-solido)}
+.tbl tr.zer td{opacity:.55}
+.notas{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;white-space:normal}
+.depois{font-weight:600;color:#fff}
+.resumo{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-radius:12px;background:var(--navy);border:1px solid var(--border);color:var(--texto-suave)}
+.resumo b{color:#fff}
+.corte{border-radius:8px;padding:12px 16px;background:var(--div-fundo);border:1px solid var(--ambar-bg);font-size:13px;color:var(--texto-suave)}
+.corte b{color:var(--ambar)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.incl{position:relative;flex:1 1 260px;min-width:0}
+.incl input{width:100%}
+.incl-res{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:hidden}
+.incl-res button{display:flex;width:100%;border:0;background:transparent;color:#fff;padding:8px;min-height:40px;border-radius:6px;text-align:left;gap:8px;align-items:center}
+.incl-res button:hover{background:var(--border)}
+.okmsg{border-radius:8px;padding:12px 16px;border:1px solid var(--ok-borda);background:var(--ok-fundo);color:var(--texto-suave);font-size:13px}
+.okmsg b{color:var(--verde)}
+/* Itens da aprovação em área estreita: a mesma tabela vira um cartão por material, sem rolar de lado */
+@container det (max-width:559.98px){
+  .det .tbl-wrap:has(.tbl.ap){border:0;border-radius:0;overflow:visible}
+  .tbl.ap thead{display:none}
+  .tbl.ap,.tbl.ap tbody{display:block}
+  .tbl.ap tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.ap tr.lin{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--navy)}
+  .tbl.ap tr.lin:hover td,.tbl.ap tr.lin td,.tbl.ap tr.lin td.fix{background:transparent;padding:0;border:0;white-space:normal;text-align:left;position:static}
+  .tbl.ap td.fix{grid-column:1/-1;min-width:0!important;color:#fff}
+  .tbl.ap td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--aux);margin-bottom:2px;font-weight:400}
+  .tbl.ap td.r{font-size:15px}
+  .tbl.ap tr.div{background:var(--div-solido);border-color:var(--ambar-bg)}
+  .tbl.ap tr.zer{opacity:.7}
+  .tbl.ap tr.zer td{opacity:1}
+  .qty button{width:40px;height:40px}
+  .qty input{min-height:40px;font-size:16px}
+}
+
+/* Seção 4 */
+.sup{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.sup .card{display:grid;grid-template-columns:28px 1fr;gap:10px;color:var(--texto-suave);padding:16px 20px}
+.sup .card b{color:#fff}
+.sup .lt{font-family:var(--mono);font-weight:700;color:var(--orange)}
+
+/* ------------------------------ rodada 2A: o que é novo ------------------------------ */
+/* Papel do documento impresso (folha de separação, requisição): a única superfície clara, de propósito. */
+:root{--papel:#ffffff;--tinta:#0f172a;--tinta-suave:#475569;--papel-borda:#cbd5e1}
+button.item{border:0;background:transparent;text-align:left;font:inherit;cursor:pointer}
+button.item:hover{background:var(--border);color:#fff}
+button.item[aria-current="page"]{background:var(--orange);color:#fff}
+.ini-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+@container area (min-width:640px){.ini-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+.tile-btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;color:var(--texto-suave);width:100%;font:inherit;cursor:pointer}
+.tile-btn:hover{border-color:var(--orange)}
+.tile-btn .label-mono,.tile-btn .v,.tile-btn .s{display:block}
+.tile-btn .vai{margin-top:auto;padding-top:10px;font-size:12px;color:var(--orange);font-weight:500}
+.tile-btn .vai.fora{color:var(--muted)}
+.como-cel{max-width:390px;margin:0 auto}
+.lista-a{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.lista-a .la{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--navy)}
+.lista-a .la:last-child{border-bottom:0}
+.lista-a .la .tx{flex:1 1 220px;min-width:0;color:var(--texto-suave);font-size:13px}
+.lista-a .la .tx b{color:#fff;font-weight:600}
+.h3s{font-size:15px;font-weight:600;color:#fff;margin:20px 0 8px}
+.grupo-d{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--aux);font-weight:500;margin-top:6px}
+.prog{height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--verde)}
+.fora-sep{border:1px dashed var(--ambar-bg);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--texto-suave);background:var(--div-fundo);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.fora-sep .tx{flex:1 1 240px;min-width:0}
+.fora-sep b{color:var(--ambar)}
+.cdg{font-family:var(--mono);font-size:11px;color:var(--aux)}
+/* Tabelas que viram um cartão por linha quando a área é estreita (celular, coluna de detalhe, tablet em pé) */
+@container area (max-width:620px){
+  .tbl-wrap:has(.tbl.cd){border:0;border-radius:0;overflow:visible}
+  .tbl.cd thead{display:none}
+  .tbl.cd,.tbl.cd tbody{display:block}
+  .tbl.cd tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.cd tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--navy)}
+  .tbl.cd tr td,.tbl.cd tbody tr.lin:hover td{padding:0;border:0;white-space:normal;text-align:left;background:transparent}
+  .tbl.cd td.full{grid-column:1/-1}
+  .tbl.cd td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--aux);margin-bottom:2px}
+}
+@container det (max-width:560px){
+  .tbl-wrap:has(.tbl.cd){border:0;border-radius:0;overflow:visible}
+  .tbl.cd thead{display:none}
+  .tbl.cd,.tbl.cd tbody{display:block}
+  .tbl.cd tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.cd tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--navy)}
+  .tbl.cd tr td,.tbl.cd tbody tr.lin:hover td{padding:0;border:0;white-space:normal;text-align:left;background:transparent}
+  .tbl.cd td.full{grid-column:1/-1}
+  .tbl.cd td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--aux);margin-bottom:2px}
+}
+@container tb (max-width:620px){
+  .tbl-wrap:has(.tbl.cd){border:0;border-radius:0;overflow:visible}
+  .tbl.cd thead{display:none}
+  .tbl.cd,.tbl.cd tbody{display:block}
+  .tbl.cd tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.cd tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--navy)}
+  .tbl.cd tr td,.tbl.cd tbody tr.lin:hover td{padding:0;border:0;white-space:normal;text-align:left;background:transparent}
+  .tbl.cd td.full{grid-column:1/-1}
+  .tbl.cd td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--aux);margin-bottom:2px}
+}
+/* Tablet do balcão: modo balcão, sem menu lateral */
+.tablet{container:tb/inline-size;width:100%;max-width:980px;margin:0 auto;border:14px solid var(--frame);border-radius:28px;background:var(--background);min-height:640px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px var(--border)}
+@media (max-width:640px){.tablet{border:1px solid var(--border);border-radius:12px;box-shadow:none;min-height:0}}
+.tb-top{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;background:var(--navy);border-bottom:1px solid var(--border)}
+.tb-top .t1{font-weight:700;color:#fff;font-size:15px}
+.tb-top .t2{font-size:12px;color:var(--muted)}
+.tb-top.tec{box-shadow:inset 0 3px 0 var(--orange)}
+.tb-body{flex:1;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+@container tb (max-width:520px){.tb-body{padding:14px}}
+.passos{display:flex;flex-wrap:wrap;gap:6px}
+.passos span{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+.passos span.on{border-color:var(--orange);color:#fff}
+.passos span.ok{border-color:var(--ok-borda);color:var(--verde)}
+.entrega{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:40px 16px;flex:1}
+.entrega .big{font-size:24px;font-weight:700;color:#fff;text-wrap:balance}
+.entrega p{max-width:48ch;color:var(--muted)}
+.assin-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+@container tb (min-width:700px){.assin-grid{grid-template-columns:240px minmax(0,1fr)}}
+@container det (min-width:640px){.assin-grid{grid-template-columns:240px minmax(0,1fr)}}
+.assin-pin{display:flex;flex-direction:column;align-items:center;gap:10px}
+.keypad.sm{grid-template-columns:repeat(3,64px);gap:8px}
+.keypad.sm button{height:50px;font-size:20px}
+canvas.assin{display:block;width:100%;height:200px;max-width:100%;background:var(--input-bg);border:1px dashed var(--muted);border-radius:12px;touch-action:none;cursor:crosshair}
+.grav{display:flex;flex-direction:column;gap:8px}
+.grav .g{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--texto-suave)}
+.grav .g .st{flex:none;width:18px;height:18px;display:grid;place-items:center;font-weight:700}
+.grav .g b{color:#fff;font-weight:500}
+.spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:gira .8s linear infinite;display:inline-block}
+@keyframes gira{to{transform:rotate(360deg)}}
+/* Documento (folha e requisição) */
+.doc{background:var(--papel);color:var(--tinta);border-radius:6px;padding:22px;font-size:12px;line-height:1.45;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);min-width:0}
+.doc h3{font-size:15px;color:var(--tinta)}
+.doc b{color:var(--tinta)}
+.doc .dk{color:var(--tinta-suave)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px 16px}
+.doc-wrap{overflow-x:auto;max-width:100%}
+.doc table{width:100%;border-collapse:collapse;font-size:12px}
+.doc th,.doc td{border-bottom:1px solid var(--papel-borda);padding:5px 6px;text-align:left;vertical-align:top;color:var(--tinta)}
+.doc th{color:var(--tinta-suave);font-weight:600}
+.doc td.r,.doc th.r{text-align:right;font-variant-numeric:tabular-nums}
+.doc .ass{border-top:1px solid var(--tinta);padding-top:4px;max-width:340px}
+.doc .ass img{display:block;height:84px;max-width:100%}
+.doc .cx{display:inline-block;width:12px;height:12px;border:1.5px solid var(--tinta);border-radius:2px}
+.doc .ped-f{border:1px solid var(--papel-borda);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.doc .emg{color:#b91c1c;font-weight:700}
+/* Transferência */
+.radio{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:#fff;font-weight:500}
+.radio input{accent-color:var(--orange);width:18px;height:18px;flex:none}
+.radio.off{color:var(--muted);cursor:not-allowed}
+/* Convite e cadastro */
+.link-box{display:flex;gap:8px;flex-wrap:wrap}
+.link-box input{flex:1 1 240px;font-family:var(--mono);font-size:13px}
+.zap{white-space:pre-wrap;background:var(--background);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--texto-suave);overflow-wrap:anywhere}
+.modo{display:inline-flex;border:1px solid var(--border);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.modo button{border:0;background:transparent;border-radius:6px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.modo button[aria-pressed="true"]{background:var(--border);color:#fff}
+.rh-res{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow:auto}
+.rh-res button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--border);background:var(--background);color:var(--texto-suave);border-radius:8px;padding:8px 12px;font-size:13px}
+.rh-res button b{color:#fff;font-weight:500;font-size:14px}
+.rh-res button[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+.rh-res button[disabled]{opacity:.5;cursor:not-allowed}
+.form-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.form-g .inp{width:100%}
+.acs{display:flex;flex-wrap:wrap;gap:6px}
+.sub-t{display:block;font-size:12px;color:var(--aux);margin-top:2px;white-space:normal}
+</style>
+
+<header class="mk-cab"><div class="wrap"><div class="mk-tit">Almoxarifado · mockup<small>Rodada 2A · 12/11/2026 · continua a rodada 1 (seções 1 a 4) · responda pelo WhatsApp citando o número da seção</small></div></div></header>
+<div class="mk-bar">
+  <div class="mk-in">
+    <div class="mk-tabs" role="tablist" aria-label="Seções do mockup">
+      <button class="mk-tab" role="tab" data-a="sec" data-v="5" id="tab-5" title="Início do almoxarife">5<span class="tl"> · Início</span><span class="tc"> Início</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="6" id="tab-6" title="Separação">6<span class="tl"> · Separação</span><span class="tc"> Separação</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="7" id="tab-7" title="Retirada com assinatura">7<span class="tl"> · Retirada</span><span class="tc"> Retirada</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="8" id="tab-8" title="Transferências pedidas">8<span class="tl"> · Transferências</span><span class="tc"> Transf.</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="9" id="tab-9" title="Devolução de sobra">9<span class="tl"> · Devolução</span><span class="tc"> Devolução</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="10" id="tab-10" title="Colaboradores e convite">10<span class="tl"> · Colaboradores</span><span class="tc"> Pessoas</span></button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="11" id="tab-11" title="Escolhas desta versão">11<span class="tl"> · Escolhas</span><span class="tc"> Escolhas</span></button>
+    </div>
+    <div class="sp"></div>
+    <div class="mk-hora"><span class="mk-hora-r">Hora simulada</span>
+      <span class="seg" id="seg-hora"><button data-a="hora" data-v="09:30"><span class="hd">qua 11/11 · </span>09:30</button><button data-a="hora" data-v="10:40"><span class="hd">qua 11/11 · </span>10:40</button></span>
+    </div>
+  </div>
+</div>
+
+<main class="pg wrap">
+  <section id="sec-5" hidden></section>
+  <section id="sec-6" hidden></section>
+  <section id="sec-7" hidden></section>
+  <section id="sec-8" hidden></section>
+  <section id="sec-9" hidden></section>
+  <section id="sec-10" hidden></section>
+  <section id="sec-11" hidden></section>
+</main>
+
+<dialog class="dlg" id="dlg"><div class="dlg-in" id="dlg-in"></div></dialog>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const casa=(texto,q)=>{const t=norm(texto);return norm(q).split(/\s+/).filter(Boolean).every(k=>t.includes(k));};
+const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num=v=>Number(v).toLocaleString("pt-BR");
+const DIAS=["dom","seg","ter","qua","qui","sex","sáb"];
+const dia=(dd,mm=11)=>new Date(2026,mm-1,dd);
+const fmtD=x=>`${DIAS[x.getDay()]} ${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}`;
+const fmtH=x=>`${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`;
+const util=x=>x.getDay()>0&&x.getDay()<6;
+const addUteis=(x,n)=>{const r=new Date(x);while(n>0){r.setDate(r.getDate()+1);if(util(r))n--;}return r;};
+const mesmoDia=(a,b)=>a.toDateString()===b.toDateString();
+const G={hora:"09:30",sec:"1"};
+const agora=()=>{const[h,m]=G.hora.split(":").map(Number);return new Date(2026,10,11,h,m);};
+const hoje=()=>dia(11);
+const passouCorte=()=>agora().getHours()>=16;
+const retPadrao=()=>addUteis(hoje(),passouCorte()?2:1);
+const quando=x=>{const d=Math.round((x-hoje())/864e5);return d===0?"hoje":d===1?`amanhã (${fmtD(x)})`:fmtD(x);};
+const espera=env=>{const m=Math.max(0,Math.round((agora()-env)/6e4));if(m<60)return`${m} min`;const h=Math.floor(m/60),r=m%60;return r?`${h}h${String(r).padStart(2,"0")}`:`${h}h`;};
+const esperaH=env=>(agora()-env)/36e5;
+
+/* ---------- dados do mockup (fictícios) ---------- */
+const EQ=["MANFAC 1","MANFAC 2","MANFAC-25"];
+const LOCS=["BASE","DPSP","PROFARMA"];
+const P=[
+ {id:"disj20c",cod:"ELE-0201",d:"Disjuntor DIN 20A curva C",un:"un",f:"Elétrica",cmc:18.9,s:{BASE:12,DPSP:3,PROFARMA:8},comp:{DPSP:1},e:{"MANFAC 1":2,"MANFAC-25":1},min:{BASE:5,DPSP:6,PROFARMA:6},ec:{q:20,prev:"14/11"}},
+ {id:"disj20b",cod:"ELE-0200",d:"Disjuntor DIN 20A curva B",un:"un",f:"Elétrica",cmc:17.5,s:{BASE:5},e:{},min:{}},
+ {id:"disj32c",cod:"ELE-0203",d:"Disjuntor DIN 32A curva C",un:"un",f:"Elétrica",cmc:24.5,s:{BASE:6,DPSP:4},e:{"MANFAC 1":1},min:{DPSP:4,PROFARMA:3}},
+ {id:"cabo25",cod:"ELE-0410",d:"Cabo flexível 2,5mm² (metro)",un:"m",f:"Elétrica",cmc:3.1,s:{BASE:300,DPSP:120},e:{"MANFAC 2":30,"MANFAC-25":15},min:{BASE:100,DPSP:100,PROFARMA:80},ec:{q:200,prev:"13/11"}},
+ {id:"tomada",cod:"ELE-0520",d:"Tomada 2P+T 10A com placa",un:"un",f:"Elétrica",cmc:9.8,s:{BASE:25,DPSP:8,PROFARMA:11},e:{"MANFAC 1":2,"MANFAC 2":1},min:{DPSP:5,PROFARMA:5}},
+ {id:"ledtub",cod:"ILU-0118",d:"Lâmpada LED tubular 18W T8",un:"un",f:"Iluminação",cmc:14.2,s:{BASE:40,DPSP:22,PROFARMA:9},e:{"MANFAC 1":6,"MANFAC 2":4},min:{DPSP:20,PROFARMA:15},ec:{q:30,prev:"18/11"}},
+ {id:"led9",cod:"ILU-0109",d:"Lâmpada LED bulbo 9W E27",un:"un",f:"Iluminação",cmc:6.8,s:{BASE:60,DPSP:30,PROFARMA:35},e:{"MANFAC 1":5,"MANFAC 2":8,"MANFAC-25":3},min:{DPSP:25,PROFARMA:25}},
+ {id:"reator",cod:"ILU-0232",d:"Reator eletrônico 2x32W bivolt",un:"un",f:"Iluminação",cmc:39.9,s:{PROFARMA:2},e:{"MANFAC-25":1},min:{DPSP:3,PROFARMA:3},ec:{q:10,prev:"17/11"}},
+ {id:"fita",cod:"CON-0020",d:"Fita isolante 20m preta",un:"un",f:"Consumo",cmc:7.4,s:{BASE:80,DPSP:15,PROFARMA:18},e:{"MANFAC 1":3,"MANFAC 2":5,"MANFAC-25":2},min:{DPSP:10,PROFARMA:10}},
+ {id:"bucha",cod:"CON-0108",d:"Parafuso com bucha 8mm (cento)",un:"cto",f:"Consumo",cmc:16,s:{BASE:10,DPSP:4,PROFARMA:6},e:{"MANFAC 2":1},min:{}},
+ {id:"silicone",cod:"CON-0280",d:"Silicone acético incolor 280g",un:"un",f:"Consumo",cmc:19.9,s:{},e:{"MANFAC 1":2},min:{BASE:4},ec:{q:12,prev:"16/11"}},
+ {id:"sifao",cod:"HID-0310",d:"Sifão sanfonado universal",un:"un",f:"Hidráulica",cmc:11.3,s:{DPSP:5,PROFARMA:3},e:{},min:{}},
+ {id:"torneira",cod:"HID-0412",d:"Torneira de parede 1/2\"",un:"un",f:"Hidráulica",cmc:32,s:{},e:{},min:{DPSP:2},ec:{q:6,prev:"18/11"}},
+ {id:"luva",cod:"EPI-0011",d:"Luva de vaqueta",un:"par",f:"EPI",cmc:12.5,s:{BASE:30,DPSP:6,PROFARMA:10},e:{},min:{DPSP:10,PROFARMA:8}},
+ {id:"oculos",cod:"EPI-0030",d:"Óculos de proteção incolor",un:"un",f:"EPI",cmc:8.9,s:{BASE:20,DPSP:12,PROFARMA:7},e:{},min:{DPSP:5,PROFARMA:5}},
+ {id:"bota",cod:"EPI-0142",d:"Bota de segurança nº 42",un:"par",f:"EPI",cmc:89,s:{BASE:4},e:{},min:{}},
+ {id:"polo",cod:"UNI-0002",d:"Camisa polo Manfac tam. M",un:"un",f:"Uniforme",cmc:45,s:{BASE:15},e:{},min:{}},
+];
+const PID=Object.fromEntries(P.map(p=>[p.id,p]));
+const sal=(p,l)=>p.s[l]||0;
+const eqTem=(p,e)=>p.e[e]||0;
+const somaEq=p=>EQ.reduce((a,e)=>a+eqTem(p,e),0);
+const total=p=>LOCS.reduce((a,l)=>a+sal(p,l),0)+somaEq(p);
+const disp=(p,l)=>Math.max(0,sal(p,l)-((p.comp&&p.comp[l])||0));
+const familias=[...new Set(P.map(p=>p.f))];
+const abaixo=(p,l)=>p.min[l]!=null&&sal(p,l)<p.min[l];
+const algumAbaixo=p=>LOCS.some(l=>abaixo(p,l));
+const ehFicha=p=>p.f==="EPI"||p.f==="Uniforme";
+
+const OBRAS=[
+ {os:"48213",loja:"Loja 1123 · Pinheiros",desc:"Reforma do forro do salão"},
+ {os:"48190",loja:"Loja 0874 · Santo André",desc:"Troca da iluminação do estacionamento"},
+ {os:"48251",loja:"CD Duque de Caxias",desc:"Spot: vazamento no banheiro do térreo"},
+ {os:"48262",loja:"Loja 2210 · Campinas",desc:"Adequação elétrica da farmácia popular"},
+];
+/* ---------- estados genéricos ---------- */
+const ESTADOS=[["carregando","Carregando"],["dados","Com dados"],["vazio","Vazio"],["erro","Erro ao carregar"],["semperm","Sem permissão"]];
+function seletorEstado(sec,atual){
+  return `<div class="mk-ctrl"><b>Controle do mockup</b> Estado da tela:
+  <span class="seg">${ESTADOS.map(([k,r])=>`<button data-a="estado" data-s="${sec}" data-v="${k}" aria-pressed="${k===atual}">${r}</button>`).join("")}</span></div>`;
+}
+function bloco(tipo,titulo,texto,botoes=""){
+  const ico={vazio:"∅",erro:"!",perm:"⌂",ok:"✓"}[tipo];
+  return `<div class="est est-${tipo}"><div class="ico">${ico}</div><h3>${titulo}</h3><p>${texto}</p>${botoes?`<div class="acoes">${botoes}</div>`:""}</div>`;
+}
+function tentar(estObj,render){estObj.estado="carregando";render();setTimeout(()=>{estObj.estado="dados";render();},900);}
+
+/* ---------- diálogo ---------- */
+const dlg=$("#dlg");
+function abrir(html){$("#dlg-in").innerHTML=html;if(!dlg.open)dlg.showModal();}
+function fechar(){if(dlg.open)dlg.close();}
+dlg.addEventListener("click",e=>{if(e.target===dlg)fechar();});
+
+/* =====================================================================
+   RODADA 2A — moldura, dados e utilidades novas
+   ===================================================================== */
+const ALMOX="Paulo Mendes";
+const nmL=l=>({BASE:"Base",DPSP:"DPSP",PROFARMA:"Profarma"})[l]||l;
+const pri=s=>String(s).split(" ")[0];
+const aoA=n=>n==="Fernanda Rocha"?"à aprovadora":"ao aprovador";
+const NAV=["Início","Estoque","Pedidos","Separação","Retirada","Transferências","Devoluções","Colaboradores","Recebimento","Inventário","Carga","Indicadores"];
+const NSEC={"Início":"5","Separação":"6","Retirada":"7","Transferências":"8","Devoluções":"9","Colaboradores":"10"};
+function shell(ativo,corpo,user=ALMOX,papel="Almoxarife"){
+  const ini=user.split(" ").map(x=>x[0]).slice(0,2).join("");
+  const nome=`<div><span class="lat-nome">Almoxarifado</span><span class="volta">← Voltar ao Hub</span></div>`;
+  const nav=NAV.map(n=>NSEC[n]?`<button type="button" class="item" data-a="sec" data-v="${NSEC[n]}"${n===ativo?' aria-current="page"':""}>${n}</button>`:`<span class="item" aria-disabled="true" title="Fora desta rodada do mockup">${n}</span>`).join("");
+  return `<div class="shell" data-gaveta="nao"><div class="sh-app">
+  <div class="topo-cel">${nome}<button type="button" class="ic-btn" data-a="sh-menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button></div>
+  <aside class="lat" aria-label="Menu do módulo"><div class="lat-cab">${nome}<button type="button" class="lat-fecha" data-a="sh-fecha" aria-label="Fechar menu">×</button></div>
+  <nav class="lat-grupo">${nav}</nav>
+  <div class="lat-pe"><div class="quem"><span class="avatar" aria-hidden="true">${ini}</span><div class="quem-txt"><b>${user}</b><span>${papel}</span></div></div><span class="item" aria-disabled="true">Sair</span></div></aside>
+  <main class="sh-main">${corpo}</main></div><div class="veu" data-a="sh-fecha"></div></div>`;
+}
+function skelLista(n=4){return Array.from({length:n},()=>`<div class="ped" style="cursor:default"><div class="skel" style="width:40%"></div><div class="skel" style="width:75%"></div><div class="skel" style="height:4px"></div></div>`).join("");}
+const secH=(lab,n,tit,desc)=>`<div class="sec-h"><div class="label-mono">${lab}</div><h1>Seção ${n} — ${tit}</h1><p>${desc}</p></div>`;
+const dica=t=>`<p class="muted" style="font-size:13px;margin-top:12px">${t}</p>`;
+
+/* Pedidos aprovados (continuação da rodada 1: a aprovação já aconteceu) */
+const it2=(id,ap,o={})=>Object.assign({id,ap,transf:0,sep:0,falta:0,ent:0},o);
+const PD=[
+ {n:1044,tec:"Rafael Lima",eq:"MANFAC 1",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,11,7,5),ret:dia(11),emerg:true,motivo:"Loja 1123 com o salão de vendas sem luz. Disjuntor queimado, precisa trocar hoje.",etapa:"aprovado",por:"Fernanda Rocha",itens:[it2("disj32c",2),it2("luva",2)]},
+ {n:1043,tec:"Marcos Pereira",eq:"MANFAC-25",ct:"PROFARMA",dest:"man",os:[],env:new Date(2026,10,10,11,20),ret:dia(11),emerg:false,etapa:"aprovado",por:"Tiago Nunes",itens:[it2("reator",2),it2("fita",3),it2("tomada",2)]},
+ {n:1041,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,9,14,10),ret:dia(11),emerg:false,etapa:"separado",por:"Fernanda Rocha",sepEm:"ter 10/11 17:20",itens:[it2("led9",6,{sep:6}),it2("oculos",1,{sep:1})]},
+ {n:1042,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,11,8,40),ret:dia(12),emerg:false,etapa:"aprovado",por:"Fernanda Rocha",itens:[it2("ledtub",6),it2("fita",4),it2("disj20c",4,{transf:2}),it2("cabo25",50)]},
+ {n:1045,tec:"Marcos Pereira",eq:"MANFAC-25",ct:"Obra/Spot",dest:"obra",os:["48213"],env:new Date(2026,10,10,15,20),ret:dia(12),emerg:false,etapa:"aprovado",por:"Fernanda Rocha",itens:[it2("cabo25",100),it2("tomada",10),it2("bucha",2),it2("sifao",2,{transf:2})]},
+ {n:1040,tec:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP",dest:"man",os:[],env:new Date(2026,10,10,9,30),ret:dia(13),emerg:false,etapa:"aprovado",por:"Fernanda Rocha",itens:[it2("reator",2,{transf:2}),it2("fita",2)]},
+];
+const ATIVO=["aprovado","separado"];
+const locDe=pd=>pd.dest==="obra"?"BASE":pd.ct;
+const aSep=i=>Math.max(0,i.ap-i.transf);
+function comp(id,l){let t=0;for(const pd of PD){if(!ATIVO.includes(pd.etapa)||locDe(pd)!==l)continue;for(const i of pd.itens)if(i.id===id)t+=aSep(i);}return t;}
+const livre=(id,l)=>Math.max(0,sal(PID[id],l)-comp(id,l));
+const destTxt=pd=>pd.dest==="obra"?`Obra/Spot · OS ${pd.os.join(", ")} · sai do Base`:`Manutenção · sai do ${nmL(pd.ct)} para a ${pd.eq}`;
+const ETQ={aprovado:["A separar","b-avi"],separado:["Separado · pronto para retirada","b-ok"],retirado:["Entregue","b-out"],encerrado:["Não atendido","b-des"]};
+const bdg=pd=>`<span class="badge ${ETQ[pd.etapa][1]}">${pd.etapa==="aprovado"&&pd.reab?"Chegou transferência · separar o resto":ETQ[pd.etapa][0]}</span>`;
+const emB=pd=>pd.emerg?'<span class="badge b-des">Emergencial</span>':"";
+const vaiPara=(pd,p)=>pd.dest==="obra"?`baixa do Base na OS ${pd.os[0]}`:ehFicha(p)?`ficha de ${pd.tec} (${p.f})`:`estoque da ${pd.eq}`;
+function trFila(){const L=[];for(const pd of PD){if(!ATIVO.includes(pd.etapa))continue;pd.itens.forEach(i=>{if(i.transf>0)L.push({pd,i,k:`${pd.n}-${i.id}`});});}return L.sort((a,b)=>(b.pd.emerg-a.pd.emerg)||(a.pd.ret-b.pd.ret)||(a.pd.n-b.pd.n));}
+const hojeP=()=>PD.filter(p=>mesmoDia(p.ret,hoje())&&["aprovado","separado","retirado"].includes(p.etapa));
+const passou10=()=>agora().getHours()>=10;
+
+/* Gravações no Omie (fila) */
+let tarN=1;
+const TAR=[{id:"t1",desc:"Transferência DPSP → MANFAC 1",det:"2 Tomada 2P+T 10A com placa, 1 Fita isolante 20m preta",ref:"Retirada do pedido #1037 · Rafael Lima · ter 10/11 16:50",st:"falha",erro:"O Omie não respondeu nas 5 tentativas (10/11, das 16:50 às 17:15). A entrega aconteceu e está assinada; falta só gravar no Omie."}];
+function gravar(lista,ok,depois){
+  lista.forEach(g=>g.st="grav");
+  setTimeout(()=>{
+    lista.forEach(g=>{g.st=ok?"ok":"fila";if(!ok)TAR.unshift({id:"t"+(++tarN),desc:g.desc,det:g.det,ref:g.ref||"",st:"fila",erro:"Sem resposta do Omie. Nova tentativa sozinha em 5 minutos (1 de 5)."});});
+    depois();s5Render();
+  },1700);
+}
+function gravHtml(g){return `<div class="grav">${g.map(x=>`<div class="g"><span class="st">${x.st==="grav"?'<span class="spin" aria-label="gravando"></span>':x.st==="ok"?'<span style="color:var(--verde)">✓</span>':'<span style="color:var(--ambar)">◆</span>'}</span><span><b>${esc(x.desc)}</b><br><span class="muted" style="font-size:12px">${esc(x.det)}</span></span></div>`).join("")}</div>`;}
+const gravSt=g=>g.some(x=>x.st==="grav")?"grav":g.every(x=>x.st==="ok")?"ok":"fila";
+
+/* Assinatura: PIN + traço do dedo (compartilhada pela retirada e pela devolução) */
+const SIG={s7:()=>S7,s9:()=>S9};
+function assinBloco(pref,st,nome){
+  return `<div class="assin-grid"><div class="assin-pin"><div class="label-mono">1 · PIN de ${esc(pri(nome))}</div>
+  <div class="pin-dots" aria-label="${st.pin.length} dígitos digitados">${Array.from({length:6},(_,k)=>`<span class="${k<st.pin.length?"f":""}" ${k>=4&&k>=st.pin.length?'style="opacity:.35"':""}></span>`).join("")}</div>
+  ${st.pinErr?`<p class="erro-t" style="text-align:center">PIN errado. Mais ${5-st.pinErr} ${5-st.pinErr===1?"tentativa":"tentativas"} e o acesso fica bloqueado por 15 minutos.</p>`:`<p class="muted" style="font-size:12px;text-align:center">O mesmo PIN que ${esc(pri(nome))} usa no celular.</p>`}
+  <div class="keypad sm">${[1,2,3,4,5,6,7,8,9].map(n=>`<button type="button" data-a="pin" data-s="${pref}" data-v="${n}">${n}</button>`).join("")}<button type="button" data-a="pin-del" data-s="${pref}" aria-label="Apagar">⌫</button><button type="button" data-a="pin" data-s="${pref}" data-v="0">0</button><span></span></div>
+  <p class="mk-ctrl" style="font-size:11px">Mockup: qualquer PIN de 4 dígitos vale; 0000 mostra o erro.</p></div>
+  <div style="display:flex;flex-direction:column;gap:8px;min-width:0"><div class="label-mono">2 · Assinatura com o dedo</div><canvas class="assin" id="${pref}-sig" aria-label="Quadro para assinar com o dedo"></canvas>
+  <div class="acoes"><span class="muted" style="font-size:12px" id="${pref}-sig-st">${st.tr.length?"Assinado. Se errou, toque em Limpar.":"Assine com o dedo (ou o mouse) dentro do quadro"}</span><div class="sp"></div><button type="button" class="btn btn-ghost btn-xs" data-a="sig-limpa" data-s="${pref}">Limpar</button></div></div></div>`;
+}
+function desenhaTr(ctx,tr,w,h,cor,lw){
+  ctx.clearRect(0,0,w,h);ctx.lineWidth=lw;ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=cor;
+  for(const t of tr){ctx.beginPath();t.forEach(([x,y],k)=>{k?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h);});if(t.length===1)ctx.lineTo(t[0][0]*w+.5,t[0][1]*h);ctx.stroke();}
+}
+function montaAssin(pref){
+  const cv=document.getElementById(pref+"-sig");if(!cv)return;
+  const st=SIG[pref]();const dpr=window.devicePixelRatio||1;const r=cv.getBoundingClientRect();
+  if(!r.width)return;
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);
+  const ctx=cv.getContext("2d");const cor=getComputedStyle(document.documentElement).getPropertyValue("--texto").trim()||"#fff";
+  const pinta=()=>desenhaTr(ctx,st.tr,cv.width,cv.height,cor,2.6*dpr);pinta();
+  let cur=null;
+  const pt=e=>{const b=cv.getBoundingClientRect();return[Math.min(1,Math.max(0,(e.clientX-b.left)/b.width)),Math.min(1,Math.max(0,(e.clientY-b.top)/b.height))];};
+  cv.addEventListener("pointerdown",e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch(_){ }cur=[pt(e)];st.tr.push(cur);pinta();});
+  cv.addEventListener("pointermove",e=>{if(!cur)return;cur.push(pt(e));pinta();});
+  const fim=()=>{if(!cur)return;cur=null;atualizaOk(pref);};
+  cv.addEventListener("pointerup",fim);cv.addEventListener("pointercancel",fim);cv.addEventListener("pointerleave",fim);
+}
+function atualizaOk(pref){
+  const st=SIG[pref]();const b=document.getElementById(pref+"-ok");if(b)b.disabled=!(st.pin.length>=4&&st.tr.length);
+  const s=document.getElementById(pref+"-sig-st");if(s)s.textContent=st.tr.length?"Assinado. Se errou, toque em Limpar.":"Assine com o dedo (ou o mouse) dentro do quadro";
+}
+function assinImg(tr){
+  const c=document.createElement("canvas");c.width=600;c.height=200;
+  const cor=getComputedStyle(document.documentElement).getPropertyValue("--tinta").trim()||"#0f172a";
+  desenhaTr(c.getContext("2d"),tr,600,200,cor,3);return c.toDataURL("image/png");
+}
+const faltaAss=st=>st.pin.length<4?"Falta o PIN.":!st.tr.length?"Falta a assinatura com o dedo.":"";
+
+/* =====================================================================
+   SEÇÃO 5 — INÍCIO DO ALMOXARIFE
+   ===================================================================== */
+const S5={estado:"dados",como:"pc",nota:null};
+function aviso10(){
+  const pend=hojeP().filter(p=>p.etapa!=="retirado");if(!passou10()||!pend.length)return"";
+  return `<div class="corte" style="margin-bottom:14px"><b>Já passou das 10h.</b> ${pend.length===1?"1 retirada de hoje ainda não aconteceu":`${pend.length} retiradas de hoje ainda não aconteceram`} (${pend.map(p=>"#"+p.n).join(", ")}). O técnico ainda pode retirar até o fim do dia; se não vier, o pedido vira “Não retirado”, o material volta para a prateleira e ele recebe o aviso para marcar outra data.</div>`;
+}
+function s5Corpo(){
+  const st=S5.estado;
+  const cab=`<div class="det-h" style="margin-bottom:16px"><div style="flex:1;min-width:0"><h2 class="pg-tit">Bom dia, Paulo</h2><p class="muted">${fmtD(hoje())} · o que o almoxarifado tem para hoje</p></div></div>`;
+  if(st==="semperm")return bloco("perm","O Início do almoxarifado é da equipe do almox","Seu usuário (renata.alves@manfac.com.br) entra no hub, mas não tem papel de almoxarife, gestor ou administrador neste módulo. Peça a liberação a um administrador do Almoxarifado.",`<span class="btn btn-outline btn-sm">Voltar ao hub</span>`);
+  if(st==="carregando")return cab+`<div class="ini-tiles">${"<div class='card tile'><div class='skel' style='width:60%'></div><div class='skel' style='height:22px;margin-top:10px;width:80%'></div><div class='skel' style='margin-top:10px'></div></div>".repeat(6)}</div><p class="muted" style="font-size:13px">Juntando o dia: pedidos, transferências, entregas e gravações no Omie…</p>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para montar o resumo do dia","O servidor não respondeu. Nenhum número foi mostrado para você não se guiar por conta errada. As telas de Separação e Retirada continuam no menu. Tente de novo em instantes; se repetir, avise o administrador do Almoxarifado.",`<button class="btn btn-sm" data-a="s5-tentar">Tentar de novo</button>`);
+  if(st==="vazio")return cab+bloco("ok","Nada para hoje","Nenhuma retirada marcada para hoje, nenhuma transferência ou devolução esperando você, nenhuma entrega de fornecedor prevista e nenhuma gravação parada no Omie. Quando um pedido for aprovado, ele aparece aqui e na Separação.");
+  const H=hojeP(),sepH=H.filter(p=>p.etapa!=="aprovado").length,em=H.filter(p=>p.emerg),emP=em.filter(p=>p.etapa==="aprovado").length;
+  const pr=PD.filter(p=>p.etapa==="separado").length;
+  const T=trFila().length,D=DEV.filter(d=>d.st==="conferir").length,F=TAR.filter(t=>t.st==="falha").length,FQ=TAR.filter(t=>t.st==="fila").length;
+  const C=[
+   {k:"Retiradas de hoje",v:`${sepH} de ${H.length} separadas`,s:`${em.length?`${em.length} emergencial${emP?", ainda não separado":", já separado"}`:"nenhuma emergencial"} · ${pr} ${pr===1?"pedido pronto":"pedidos prontos"} para retirada`,c:emP?"alerta":"",a:"6",vai:"Abrir a separação"},
+   {k:"Transferências pedidas",v:`${T} ${T===1?"item":"itens"}`,s:T?"com asterisco: o contrato não tem, você escolhe de onde vem":"nenhum item esperando você",a:"8",vai:"Decidir"},
+   {k:"Devoluções a conferir",v:String(D),s:D?"técnicos que avisaram que vão trazer sobra":"nenhuma devolução pedida",a:"9",vai:"Conferir"},
+   {k:"Entregas de fornecedor hoje",v:"2",s:"pedidos do Compras com entrega na Base · 1 atrasado desde ontem",a:"fora:Recebimento",vai:"Recebimento (rodada 2B)"},
+   {k:"Falhas no Omie",v:String(F),s:F?`${F===1?"gravação que parou":"gravações que pararam"} de tentar${FQ?` · ${FQ} na fila, tentando sozinha`:""}`:FQ?`${FQ} na fila, tentando sozinha`:"tudo gravado",c:F?"alerta":"",a:"falhas",vai:F?"Ver e tentar de novo":"Ver gravações"},
+   {k:"Contagem da semana",v:"8 itens",s:"faltam na onda 4 do DPSP (12 de 20 contados)",a:"fora:Inventário",vai:"Inventário (rodada 2B)"},
+  ];
+  const A=[];
+  PD.filter(p=>p.etapa==="aprovado"&&mesmoDia(p.ret,hoje())).sort((a,b)=>b.emerg-a.emerg).forEach(p=>A.push([p.emerg?"b-des":"b-avi",p.emerg?"Emergencial":"Retira hoje",`Separar o pedido <b>#${p.n}</b> · ${p.tec}, ${p.eq} · ${p.itens.filter(i=>aSep(i)>0).length} itens`,"s5-sep",p.n,"Separar"]));
+  TAR.filter(t=>t.st==="falha").forEach(t=>A.push(["b-des","Omie",`Gravação parada: <b>${esc(t.desc)}</b> · ${esc(t.ref)}`,"s5-falhas","","Ver"]));
+  trFila().filter(x=>x.pd.ret<=dia(12)).forEach(x=>{const p=PID[x.i.id];A.push(["b-avi","Transferência",`<b>${x.i.transf} ${p.un}</b> de ${esc(p.d)} para o #${x.pd.n} · retira ${quando(x.pd.ret)}`,"s5-tr",x.k,"Decidir"]);});
+  DEV.filter(d=>d.st==="conferir").forEach(d=>A.push(["b-sec","Devolução",`<b>${d.tec}</b> vai trazer sobra da ${d.eq} (${d.n})`,"s5-dev",d.n,"Conferir"]));
+  return cab+aviso10()+(S5.nota?`<div class="mk-ctrl" style="margin-bottom:12px">${S5.nota}</div>`:"")+
+  `<div class="ini-tiles">${C.map(x=>`<button type="button" class="card tile tile-btn ${x.c||""}" data-a="s5-ir" data-v="${x.a}"><span class="label-mono">${x.k}</span><span class="v n">${x.v}</span><span class="s">${x.s}</span><span class="vai ${x.a.startsWith("fora")?"fora":""}">${x.vai} →</span></button>`).join("")}</div>
+  <h3 class="h3s">Para fazer agora</h3>
+  ${A.length?`<div class="lista-a">${A.slice(0,6).map(([c,t,tx,a,v,b])=>`<div class="la"><span class="badge ${c}">${t}</span><span class="tx">${tx}</span><button class="btn btn-outline btn-xs" data-a="${a}" data-v="${v}">${b}</button></div>`).join("")}</div>`:`<p class="muted">Nada pendente agora.</p>`}
+  <h3 class="h3s">Retiradas de hoje · ${fmtD(hoje())}</h3>
+  ${H.length?`<div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Pedido</th><th>Equipe · técnico</th><th class="r">Itens</th><th>Situação</th><th></th></tr></thead><tbody>${H.sort((a,b)=>b.emerg-a.emerg||a.n-b.n).map(p=>`<tr class="lin"><td data-l="Pedido"><span class="mono" style="color:#fff;font-weight:600">#${p.n}</span> ${emB(p)}</td><td data-l="Equipe · técnico" style="white-space:normal">${p.eq} · ${p.tec}</td><td class="r n" data-l="Itens">${p.itens.filter(i=>i.ap>0).length}</td><td data-l="Situação">${bdg(p)}</td><td class="full">${p.etapa==="aprovado"?`<button class="btn btn-outline btn-xs" data-a="s5-sep" data-v="${p.n}">Separar</button>`:p.etapa==="separado"?`<button class="btn btn-outline btn-xs" data-a="s5-ret" data-v="${p.n}">Entregar</button>`:'<span class="muted" style="font-size:12px">Entregue e assinado</span>'}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted">Nenhuma retirada marcada para hoje.</p>`}`;
+}
+function s5Render(){
+  const sh=shell("Início",s5Corpo());
+  $("#sec-5").innerHTML=`${secH("Almoxarife · computador ou celular","5","Início do almoxarife","O resumo do dia ao abrir o módulo. Cada cartão leva à tela onde aquilo se resolve.")}
+  <div class="mk-ctrl" style="margin-bottom:8px"><b>Ver como</b><span class="seg"><button data-a="s5-como" data-v="pc" aria-pressed="${S5.como==="pc"}">Computador</button><button data-a="s5-como" data-v="cel" aria-pressed="${S5.como==="cel"}">Celular</button></span></div>
+  ${seletorEstado("5",S5.estado)}<div style="height:14px"></div>
+  ${S5.como==="cel"?`<div class="como-cel">${sh}</div>`:sh}
+  ${dica("Experimente: clique em “Retiradas de hoje”, separe o #1044 na Seção 6 e volte aqui para ver o número mudar; troque a hora simulada para 10:40; abra “Falhas no Omie” e tente de novo.")}`;
+}
+function falhasDlg(){
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Gravações no Omie</h2><p class="muted" style="margin-top:4px">Cada entrega, devolução e transferência vira uma gravação no Omie. Se o Omie não responde, o sistema tenta de novo sozinho a cada 5 minutos, até 5 vezes.</p></div><button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button></div>
+  ${TAR.length?`<div class="lista-a">${TAR.map(t=>`<div class="la"><span class="badge ${t.st==="falha"?"b-des":t.st==="fila"?"b-avi":t.st==="tentando"?"b-sec":"b-ok"}">${{falha:"Parou de tentar",fila:"Na fila",tentando:"Tentando…",ok:"Gravado"}[t.st]}</span><span class="tx"><b>${esc(t.desc)}</b> · ${esc(t.det)}<span class="sub-t">${esc(t.ref)}</span>${t.st!=="ok"?`<span class="sub-t">${esc(t.erro)}</span>`:""}</span>${t.st==="falha"?`<button class="btn btn-sm" data-a="s5-retry" data-v="${t.id}">Tentar de novo</button>`:""}</div>`).join("")}</div>`:`<p class="muted">Nenhuma gravação.</p>`}
+  <p class="muted" style="font-size:12px">Antes de repetir, o sistema consulta o Omie pelo código da gravação, para nunca lançar o mesmo movimento duas vezes.</p>`);
+}
+
+/* =====================================================================
+   SEÇÃO 6 — SEPARAÇÃO
+   ===================================================================== */
+const S6={estado:"dados",sel:1044,msg:null};
+function s6Ped(){
+  return PD.filter(p=>ATIVO.includes(p.etapa)&&(mesmoDia(p.ret,hoje())||mesmoDia(p.ret,dia(12)))&&p.itens.some(i=>i.ap>0))
+   .sort((a,b)=>(a.ret-b.ret)||((a.etapa==="separado")-(b.etapa==="separado"))||(b.emerg-a.emerg)||(a.n-b.n));
+}
+function pctSep(pd){const t=pd.itens.reduce((a,i)=>a+aSep(i),0);const s=pd.itens.reduce((a,i)=>a+Math.min(i.sep,aSep(i)),0);return t?Math.round(s/t*100):0;}
+function s6Fila(){
+  const L=s6Ped();
+  return `<div class="fila"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="font-size:15px">Para separar</h3><div class="sp"></div><button class="btn btn-outline btn-xs" data-a="s6-folha">Folha de separação</button></div>
+  <p class="muted" style="font-size:12px">Por data de retirada; emergenciais primeiro.</p>
+  ${[hoje(),dia(12)].map(g=>{const G2=L.filter(p=>mesmoDia(p.ret,g));
+   return `<div class="grupo-d">${mesmoDia(g,hoje())?"Hoje":"Amanhã"} · ${fmtD(g)}</div>${G2.length?G2.map(pd=>{const tp=pd.itens.filter(i=>i.transf>0).length;
+    return `<button class="fi" data-a="s6-sel" data-v="${pd.n}" aria-current="${S6.sel===pd.n}"><div class="l1"><span class="num">#${pd.n}</span><span style="font-weight:500;white-space:nowrap">${pd.eq}</span><span class="sp"></span>${emB(pd)}</div>
+    <div style="font-size:13px">${pd.tec} · ${pd.itens.filter(i=>aSep(i)>0).length} itens${pd.dest==="obra"?" · Obra/Spot":""}</div>
+    <div class="prog" aria-label="${pctSep(pd)}% separado"><i style="width:${pctSep(pd)}%"></i></div>
+    <div class="bs">${bdg(pd)}${tp?`<span class="badge b-avi">${tp} aguardando transferência</span>`:""}</div></button>`;}).join(""):`<p class="muted" style="font-size:12px">Nada para este dia.</p>`}`;}).join("")}
+  <p class="muted" style="font-size:12px">O #1040 (sex 13/11) entra nesta lista amanhã.</p></div>`;
+}
+function s6Linha(pd,i,ix,sepd){
+  const p=PID[i.id],max=aSep(i);if(!max)return"";
+  const sit=i.sep>=max?'<span class="badge b-ok">Separado</span>':i.sep>0?`<span class="badge b-avi">Faltam ${max-i.sep}</span>`:'<span class="badge b-out">A separar</span>';
+  return `<tr class="lin"><td class="full" style="white-space:normal;min-width:200px"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="cdg">${p.cod} · ${p.f}</div>
+   <div class="notas">${ehFicha(p)?`<span class="badge b-sec">${p.f} · vai para a ficha de ${pd.tec}</span>`:""}${i.transf?`<span class="badge b-avi">+${i.transf} aguardando transferência</span>`:""}${i.falta?`<span class="badge b-des">faltou ${i.falta} na prateleira</span>`:""}</div></td>
+   <td class="r n" data-l="A separar">${max} ${p.un}</td>
+   <td data-l="Separado">${sepd?`<b class="n" style="color:#fff">${i.sep} ${p.un}</b>`:`<span class="qcell"><span class="qty"><button data-a="s6-q" data-v="${ix}" data-d="-1" aria-label="Menos">−</button><input class="inp" type="number" min="0" max="${max}" step="1" inputmode="numeric" value="${i.sep}" data-sq="${ix}" aria-label="Separado de ${esc(p.d)}"><button data-a="s6-q" data-v="${ix}" data-d="1" aria-label="Mais">+</button></span>${i.sep<max?`<button class="btn btn-ghost btn-xs" data-a="s6-tudo" data-v="${ix}">Tudo</button>`:""}</span>`}</td>
+   <td data-l="Situação">${sit}</td></tr>`;
+}
+function s6Det(){
+  const pd=PD.find(p=>p.n===S6.sel);
+  const msg=S6.msg?`<div class="okmsg">${S6.msg}</div>`:"";
+  if(!pd||!ATIVO.includes(pd.etapa))return msg+bloco("vazio","Escolha um pedido","Clique em um pedido da lista para separar item a item.");
+  const sepd=pd.etapa==="separado";const tr=pd.itens.filter(i=>i.transf>0);
+  const tot=pd.itens.filter(i=>aSep(i)>0),ok=tot.filter(i=>i.sep>=aSep(i)).length,algum=tot.some(i=>i.sep>0);
+  return `${msg}<div class="det-h"><h2 class="mono">Pedido #${pd.n}</h2>${emB(pd)}${bdg(pd)}</div>
+  <div class="info card" style="padding:14px">
+   <div><div class="k">Técnico</div><div class="v">${pd.tec}</div></div>
+   <div><div class="k">Equipe</div><div class="v">${pd.eq}</div></div>
+   <div><div class="k">Destino</div><div class="v">${destTxt(pd)}</div></div>
+   <div><div class="k">Retirada</div><div class="v">${quando(pd.ret)}${pd.emerg?"":" até 10h"}</div></div>
+   <div><div class="k">Aprovado por</div><div class="v">${pd.por}</div></div></div>
+  ${pd.emerg?`<div class="emerg"><b>Emergencial.</b> Motivo do técnico: “${esc(pd.motivo)}”. Separe primeiro.</div>`:""}
+  ${pd.reab?`<div class="corte"><b>A transferência chegou.</b> O que já estava separado continua separado; falta separar o que veio de outro estoque. O pedido volta para a Retirada quando você concluir.</div>`:""}
+  <div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Item</th><th class="r">A separar</th><th>Separado</th><th>Situação</th></tr></thead><tbody>${pd.itens.map((i,ix)=>s6Linha(pd,i,ix,sepd)).join("")}</tbody></table></div>
+  ${tr.map(i=>{const p=PID[i.id];return `<div class="fora-sep"><span class="tx"><b>Fora da separação até o almox decidir:</b> ${i.transf} ${p.un} de ${esc(p.d)}. O ${nmL(locDe(pd))} não tem; vem de outro estoque se você confirmar a transferência.</span><button class="btn btn-outline btn-xs" data-a="s6-tr" data-v="${pd.n}-${i.id}">Decidir transferência</button></div>`;}).join("")}
+  ${sepd?`<div class="okmsg"><b>Separado${pd.sepEm?` em ${pd.sepEm}`:""}.</b> O técnico e ${pd.por} já receberam o OK. Esperando ${pri(pd.tec)} vir retirar.</div><div class="acoes"><div class="sp"></div><button class="btn" data-a="s5-ret" data-v="${pd.n}">Entregar agora (Seção 7)</button></div>`
+  :`<div class="resumo"><div style="font-size:13px">Separado <b>${ok} de ${tot.length}</b> itens.${algum&&ok<tot.length?" Se um item faltou na prateleira, deixe a quantidade que achou e conclua: o sistema avisa quem precisa saber.":""}${!algum?" Marque a quantidade de cada item conforme for tirando da prateleira.":""}</div></div>
+   <div class="acoes"><div class="sp"></div><button class="btn btn-lg" data-a="s6-concluir" data-v="${pd.n}" ${algum?"":"disabled"}>Concluir separação</button></div>`}`;
+}
+function s6Corpo(){
+  const st=S6.estado;
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 class="pg-tit">Separação</h2><div class="sp"></div><span class="muted" style="font-size:13px">${fmtD(hoje())} · retirada até 10h</span></div>`;
+  if(st==="semperm")return bloco("perm","A separação é do almoxarifado","Seu usuário entra no Almoxarifado como aprovadora, mas não tem papel de almoxarife. Você acompanha a separação pelo e-mail de OK e pela tela de Pedidos.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  if(st==="carregando")return cab+`<div class="s3-grid"><div class="fila">${Array.from({length:4},()=>`<div class="fi" style="cursor:default"><div class="skel" style="width:50%"></div><div class="skel"></div><div class="skel" style="height:4px"></div></div>`).join("")}</div><div class="card" style="display:flex;flex-direction:column;gap:12px">${"<div class='skel'></div>".repeat(6)}</div></div>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar a lista de separação","O servidor não respondeu. Nada do que já foi separado se perdeu. Se um técnico chegar agora, use a folha impressa e marque aqui quando voltar.",`<button class="btn btn-sm" data-a="s6-tentar">Tentar de novo</button>`);
+  if(st==="vazio"||!s6Ped().length)return cab+aviso10()+(S6.msg?`<div class="okmsg" style="margin-bottom:12px">${S6.msg}</div>`:"")+bloco("ok","Nada para separar hoje nem amanhã","Todos os pedidos aprovados para hoje e amanhã já foram separados. Quando um aprovador aprovar um pedido novo, ele aparece aqui.");
+  return cab+aviso10()+`<div class="s3-grid">${s6Fila()}<div class="det" id="s6-det">${s6Det()}</div></div>`;
+}
+function s6Render(){
+  $("#sec-6").innerHTML=`${secH("Almoxarife · computador ou tablet","6","Separação","A lista do que tirar da prateleira, por dia de retirada. Separado gera o OK para o técnico e para o aprovador.")}
+  ${seletorEstado("6",S6.estado)}<div style="height:14px"></div>
+  ${shell("Separação",s6Corpo())}
+  ${dica("Experimente: no #1044 toque em “Tudo” nos dois itens e conclua; no #1043 deixe só 1 reator (faltou um na prateleira) e conclua para ver o aviso; abra a folha de separação; no #1042 veja o disjuntor que está fora da separação.")}`;
+}
+function s6Folha(){
+  const L=s6Ped().filter(p=>p.etapa==="aprovado");
+  const ped=pd=>{const its=pd.itens.filter(i=>aSep(i)>0);const p0=pd.itens.filter(i=>i.transf>0);
+    return `<div class="ped-f"><div><b>#${pd.n} · ${pd.eq} · ${pd.tec}</b>${pd.emerg?' · <span class="emg">EMERGENCIAL</span>':""}<br><span class="dk">${destTxt(pd)} · retira ${quando(pd.ret)}</span></div>
+    <div class="doc-wrap"><table><thead><tr><th style="width:24px"></th><th>Código</th><th>Material</th><th class="r">Qtd</th><th>Observação</th></tr></thead><tbody>
+    ${its.map(i=>{const p=PID[i.id];return `<tr><td><span class="cx"></span></td><td style="white-space:nowrap">${p.cod}</td><td>${esc(p.d)}</td><td class="r">${aSep(i)} ${p.un}</td><td>${ehFicha(p)?`${p.f}: ficha de ${pd.tec}`:""}</td></tr>`;}).join("")}
+    ${p0.map(i=>{const p=PID[i.id];return `<tr><td></td><td style="white-space:nowrap">${p.cod}</td><td>${esc(p.d)}</td><td class="r">${i.transf} ${p.un}</td><td>Aguardando transferência: não separar ainda</td></tr>`;}).join("")}</tbody></table></div></div>`;};
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Folha de separação</h2><p class="muted" style="margin-top:4px">Pedidos a separar de hoje e amanhã, emergenciais primeiro.</p></div><button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button></div>
+  <p class="mk-ctrl" style="font-size:12px">Mockup: no sistema, “Imprimir” abre a janela de impressão do navegador. Aqui a folha aparece só na tela.</p>
+  <div class="doc"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px"><div><div class="dk" style="font-size:11px;letter-spacing:.05em;text-transform:uppercase">Almoxarifado Manfac</div><h3>Folha de separação</h3></div><div class="dk" style="text-align:right">Impressa em ${fmtD(hoje())}/2026 às ${G.hora}<br>por ${ALMOX}</div></div>
+  ${[hoje(),dia(12)].map(g=>{const G2=L.filter(p=>mesmoDia(p.ret,g));return G2.length?`<div><b>${mesmoDia(g,hoje())?"Hoje":"Amanhã"} · ${fmtD(g)}</b></div>${G2.map(ped).join("")}`:"";}).join("")||`<p>Nada a separar.</p>`}
+  <div class="doc-grid" style="margin-top:8px"><div>Separado por: ____________________</div><div>Conferido por: ____________________</div></div></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Fechar</button><button class="btn" data-a="fechar">Imprimir</button></div>`);
+}
+function s6ConcluirDlg(n){
+  const pd=PD.find(p=>p.n===n);const F=pd.itens.filter(i=>aSep(i)>0&&i.sep<aSep(i));
+  if(!F.length){s6Concluir(n);return;}
+  const l=nmL(locDe(pd));
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Concluir o #${n} com falta?</h2><p class="muted" style="margin-top:4px">${pd.tec} · ${pd.eq} · retirada ${quando(pd.ret)}</p></div></div>
+  <div class="resumo">${F.map(i=>{const p=PID[i.id];return `<div style="font-size:13px"><b>${esc(p.d)}</b>: separou ${i.sep} de ${aSep(i)} · faltou <b>${aSep(i)-i.sep} ${p.un}</b> na prateleira</div>`;}).join("")}</div>
+  <div class="conseq"><b>O que acontece se você concluir assim</b><ul>
+   <li>O pedido fica separado com o que você achou, e ${pri(pd.tec)} pode retirar normalmente.</li>
+   <li>O que faltou sai deste pedido. Se ainda precisar, ${pri(pd.tec)} faz um pedido novo ou o aprovador inclui num próximo.</li>
+   <li>${pd.tec} recebe aviso no app: “faltou ${F.map(i=>`${aSep(i)-i.sep} ${PID[i.id].un} de ${PID[i.id].d}`).join("; ")} no almoxarifado”.</li>
+   <li>${pd.por}, que aprovou, recebe o OK de separado por e-mail com a lista do que faltou.</li>
+   <li>O Omie diz que o ${l} tem esse material, mas a prateleira não tem: ${F.length===1?"o item entra":"os itens entram"} na próxima onda de contagem do ${l}.</li>
+   <li>Nada é gravado no Omie agora. O saldo só mexe na retirada.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar e procurar de novo</button><button class="btn btn-destructive-solid" data-a="s6-concluir-ok" data-v="${n}">Concluir com falta</button></div>`);
+}
+function s6Concluir(n){
+  const pd=PD.find(p=>p.n===n);const F=pd.itens.filter(i=>aSep(i)>0&&i.sep<aSep(i));
+  F.forEach(i=>{const f=aSep(i)-i.sep;i.falta+=f;i.ap-=f;});
+  pd.etapa="separado";pd.reab=false;pd.sepEm=`${fmtD(hoje())} ${G.hora}`;
+  S6.msg=`<b>Pedido #${n} separado.</b> OK enviado ao técnico ${pd.tec} (aviso no app) e ${aoA(pd.por)} ${pd.por} (e-mail).${F.length?" Os dois receberam também a lista do que faltou.":""}${pd.itens.some(i=>i.transf>0)?" O item aguardando transferência continua esperando a sua decisão; se você confirmar, o pedido volta aqui para separar o resto.":""} O pedido já aparece na Retirada (Seção 7).`;
+  const prox=s6Ped().find(p=>p.etapa==="aprovado");if(prox)S6.sel=prox.n;
+  fechar();s5Render();s6Render();s7Render();
+}
+
+/* =====================================================================
+   SEÇÃO 7 — RETIRADA COM ASSINATURA (tablet do balcão)
+   ===================================================================== */
+const S7={estado:"dados",tela:"lista",sel:null,conf:false,pin:"",pinErr:0,tr:[],omieOk:true,curto:false,res:null,erro:""};
+const s7Lista=()=>PD.filter(p=>p.etapa==="separado").sort((a,b)=>(a.ret-b.ret)||(b.emerg-a.emerg)||(a.n-b.n));
+function entregaItens(pd){
+  const l=locDe(pd);let primeiro=true;
+  return pd.itens.filter(i=>i.sep>0).map(i=>{const p=PID[i.id];let omie=sal(p,l);
+    if(S7.curto&&primeiro){omie=i.sep>1?Math.floor(i.sep/2):0;}primeiro=false;
+    const q=Math.min(i.sep,omie);return{i,p,q,omie,falta:i.sep-q};});
+}
+function s7Passos(k){const N=["Escolher o pedido","Conferir","Passar o tablet","Técnico assina","Feito"];return `<div class="passos">${N.map((t,j)=>`<span class="${j<k?"ok":j===k?"on":""}">${j<k?"✓ ":""}${t}</span>`).join("")}</div>`;}
+function s7TelaLista(){
+  const L=s7Lista();
+  if(!L.length)return s7Passos(0)+bloco("vazio","Nenhum pedido separado esperando retirada","Quando o almox concluir uma separação (Seção 6), o pedido aparece aqui pronto para entregar.",`<button class="btn btn-outline btn-sm" data-a="sec" data-v="6">Ir para a separação</button>`);
+  return s7Passos(0)+`<h3 style="font-size:16px;color:#fff">Quem veio retirar?</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">${L.map(pd=>`<button class="ped" data-a="s7-abrir" data-v="${pd.n}"><div class="l1"><span class="num">#${pd.n}</span>${emB(pd)}<span class="sp"></span><span class="muted" style="font-size:12px">${pd.itens.filter(i=>i.sep>0).length} itens</span></div>
+   <div style="font-size:14px"><b>${pd.tec}</b> · ${pd.eq}</div>
+   <div style="font-size:12px" class="muted">${destTxt(pd)}</div>
+   <div>${mesmoDia(pd.ret,hoje())?'<span class="badge b-ok">Retirada marcada para hoje</span>':`<span class="badge b-avi">Marcada para ${fmtD(pd.ret)}: pode entregar antes</span>`}</div></button>`).join("")}</div>`;
+}
+function s7TelaConf(){
+  const pd=PD.find(p=>p.n===S7.sel);const E=entregaItens(pd);const curto=E.filter(x=>x.falta>0);const algo=E.some(x=>x.q>0);
+  return s7Passos(1)+`<div class="det-h"><h2 class="mono" style="font-size:20px">Pedido #${pd.n}</h2>${emB(pd)}<span class="muted">${pd.tec} · ${pd.eq} · ${destTxt(pd)}</span></div>
+  <div class="faixa al-sec"><div class="al"><span class="mk">↻</span><span class="tx">Saldo relido no Omie agora (${G.hora}). O sistema não entrega mais do que o Omie tem.</span></div></div>
+  ${curto.map(x=>`<div class="faixa al-avi"><div class="al"><span class="mk">◆</span><span class="tx"><b>O Omie tem só ${x.omie} ${x.p.un} de ${esc(x.p.d)} no ${nmL(locDe(pd))}</b> (alguém movimentou depois da separação). Dá para entregar ${x.q} das ${x.i.sep} separadas. As outras ${x.falta} ficam no balcão; o item entra na próxima contagem do ${nmL(locDe(pd))}. O saldo nunca fica negativo.</span></div></div>`).join("")}
+  <div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Item</th><th class="r">Separado</th><th class="r">Entregar</th><th>Vai para</th></tr></thead><tbody>
+  ${E.map(x=>`<tr class="lin"><td class="full" style="white-space:normal"><div style="font-weight:500;color:#fff">${esc(x.p.d)}</div><div class="cdg">${x.p.cod}</div></td><td class="r n" data-l="Separado">${x.i.sep} ${x.p.un}</td><td class="r n" data-l="Entregar"><b style="color:${x.falta?"var(--ambar)":"#fff"}">${x.q} ${x.p.un}</b></td><td data-l="Vai para" style="white-space:normal">${ehFicha(x.p)&&pd.dest!=="obra"?`<span class="badge b-sec">vai para a ficha de ${pd.tec}</span>`:vaiPara(pd,x.p)}</td></tr>`).join("")}</tbody></table></div>
+  <label class="chk" style="white-space:normal"><input type="checkbox" id="s7-conf" ${S7.conf?"checked":""}><span>Conferi os itens com ${pri(pd.tec)} no balcão</span></label>
+  ${!algo?`<p class="erro-t">Nada para entregar: o Omie não tem saldo de nenhum item. Fale com o administrador antes de seguir.</p>`:""}
+  <div class="acoes"><button class="btn btn-ghost" data-a="s7-tela" data-v="lista">← Outro pedido</button><div class="sp"></div><button class="btn btn-lg" id="s7-passar" data-a="s7-tela" data-v="passar" ${S7.conf&&algo?"":"disabled"}>Passar o tablet para ${pri(pd.tec)}</button></div>`;
+}
+function s7TelaPassar(){
+  const pd=PD.find(p=>p.n===S7.sel);
+  return s7Passos(2)+`<div class="entrega"><div class="pin-logo">✋</div><div class="big">Entregue o tablet para ${pd.tec}</div><p>Ele confere a lista, digita o PIN dele e assina com o dedo. Você não precisa olhar o PIN.</p><button class="btn btn-lg" data-a="s7-tela" data-v="assina">${pri(pd.tec)} está com o tablet</button><button class="btn btn-ghost btn-sm" data-a="s7-tela" data-v="conf">Voltar para a conferência</button></div>`;
+}
+function s7TelaAssina(){
+  const pd=PD.find(p=>p.n===S7.sel);const E=entregaItens(pd).filter(x=>x.q>0);
+  return s7Passos(3)+`<h2 style="font-size:20px;color:#fff">${pri(pd.tec)}, confira o que você está levando</h2>
+  <div class="box"><div style="display:flex;flex-direction:column;gap:4px">${E.map(x=>`<div style="display:flex;gap:10px;font-size:14px"><b class="n" style="min-width:56px">${x.q} ${x.p.un}</b><span style="flex:1;min-width:0">${esc(x.p.d)}${ehFicha(x.p)&&pd.dest!=="obra"?` <span class="badge b-sec">vai para a sua ficha</span>`:""}</span></div>`).join("")}</div>
+  <div class="muted" style="font-size:12px">${pd.dest==="obra"?`Material da OS ${pd.os[0]}, sai do Base.`:`O material passa para o estoque da ${pd.eq}.`} Pedido #${pd.n}.</div></div>
+  ${assinBloco("s7",S7,pd.tec)}
+  ${S7.erro?`<p class="erro-t">${S7.erro}</p>`:""}
+  <div class="acoes"><button class="btn btn-ghost" data-a="s7-tela" data-v="passar">Devolver para o almoxarife</button><div class="sp"></div><button class="btn btn-lg" id="s7-ok" data-a="s7-ok" ${S7.pin.length>=4&&S7.tr.length?"":"disabled"}>Confirmar retirada</button></div>
+  <p class="muted" style="font-size:12px">Ao confirmar, você declara que recebeu os itens acima. O PIN e o traço ficam guardados com data, hora e aparelho.</p>`;
+}
+function docReq(r){
+  const pd=r.pd;const E=r.E.filter(x=>x.q>0);const F=r.E.filter(x=>x.falta>0);
+  return `<div class="doc"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px"><div><div class="dk" style="font-size:11px;letter-spacing:.05em;text-transform:uppercase">Almoxarifado Manfac</div><h3>Requisição de material nº ${pd.n}</h3></div><div class="dk" style="text-align:right">Entregue em ${r.em}<br>por ${ALMOX}</div></div>
+  <div class="doc-grid"><div><span class="dk">Técnico</span><br><b>${pd.tec}</b></div><div><span class="dk">Equipe</span><br><b>${pd.eq}</b></div><div><span class="dk">Contrato / destino</span><br><b>${pd.dest==="obra"?"Obra/Spot":nmL(pd.ct)}</b></div><div><span class="dk">OS</span><br><b>${pd.os.length?pd.os.join(", "):"—"}</b></div><div><span class="dk">Aprovado por</span><br><b>${pd.por}</b></div></div>
+  <div class="doc-wrap"><table><thead><tr><th>Código</th><th>Material</th><th class="r">Qtd</th><th>Vai para</th></tr></thead><tbody>${E.map(x=>`<tr><td style="white-space:nowrap">${x.p.cod}</td><td>${esc(x.p.d)}</td><td class="r">${x.q} ${x.p.un}</td><td>${vaiPara(pd,x.p)}</td></tr>`).join("")}</tbody></table></div>
+  ${F.length?`<div class="dk">Separado e não entregue (o Omie não tinha saldo): ${F.map(x=>`${x.falta} ${x.p.un} de ${esc(x.p.d)}`).join("; ")}.</div>`:""}
+  <div class="ass"><img src="${r.sig}" alt="Assinatura de ${pd.tec}"><div>${pd.tec} · assinado com PIN em ${r.em} · tablet do almoxarifado</div></div>
+  <div class="dk" style="font-size:11px">Assinatura com PIN e traço: registro interno da Manfac, com data, hora e aparelho. O PDF fica guardado no pedido.</div></div>`;
+}
+function s7TelaFim(){
+  const r=S7.res;const s=gravSt(r.g);
+  const fx=s==="grav"?`<div class="faixa al-sec"><div class="al"><span class="mk"><span class="spin"></span></span><span class="tx"><b>Retirada registrada.</b> Gravando no Omie…</span></div></div>`
+   :s==="ok"?`<div class="faixa al-ok"><div class="al"><span class="mk">✓</span><span class="tx"><b>Feito.</b> A retirada está registrada e o Omie já mostra ${r.pd.dest==="obra"?`a baixa na OS ${r.pd.os[0]}`:`o material no estoque da ${r.pd.eq}`}.${r.E.some(x=>ehFicha(x.p)&&x.q>0)?` O EPI entrou na ficha de ${r.pd.tec}.`:""}</span></div></div>`
+   :`<div class="faixa al-avi"><div class="al"><span class="mk">◆</span><span class="tx"><b>O Omie não respondeu.</b> A entrega está registrada, com a assinatura, e a gravação será repetida sozinha a cada 5 minutos (até 5 vezes). Você não precisa fazer nada agora. Se não der certo, aparece em “Falhas no Omie” no Início.</span></div></div>`;
+  return s7Passos(s==="grav"?3:5)+fx+`<div class="box"><h4>O que vai para o Omie</h4>${gravHtml(r.g)}</div>
+  <h3 style="font-size:15px;color:#fff">Documento de requisição</h3>${docReq(r)}
+  <div class="acoes"><div class="sp"></div><button class="btn btn-lg" data-a="s7-nova">Próxima retirada</button></div>`;
+}
+function s7Corpo(){
+  const st=S7.estado;
+  if(st==="semperm")return bloco("perm","Este usuário não registra retiradas","Quem entrou neste tablet é aprovador, não almoxarife. Só o almoxarifado entrega material e colhe a assinatura do técnico. Saia e entre com o usuário do almox.",`<span class="btn btn-outline btn-sm">Sair</span>`);
+  if(st==="carregando")return s7Passos(0)+`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">${skelLista(3)}</div>`;
+  if(st==="erro")return s7Passos(0)+bloco("erro","Sem conexão com o servidor","Não dá para registrar retirada sem conexão, porque a assinatura precisa ficar guardada. Confira o wi-fi do tablet e tente de novo. Se o técnico não puder esperar, use a folha de separação em papel e registre aqui quando voltar.",`<button class="btn btn-sm" data-a="s7-tentar">Tentar de novo</button>`);
+  if(st==="vazio")return s7Passos(0)+bloco("vazio","Nenhum pedido separado esperando retirada","Quando o almox concluir uma separação (Seção 6), o pedido aparece aqui pronto para entregar.");
+  return {lista:s7TelaLista,conf:s7TelaConf,passar:s7TelaPassar,assina:s7TelaAssina,fim:s7TelaFim}[S7.tela]();
+}
+function s7Render(){
+  const tec=S7.tela==="assina"&&S7.estado==="dados";const pd=PD.find(p=>p.n===S7.sel);
+  $("#sec-7").innerHTML=`${secH("Tablet do balcão do almox · técnico assina na mesma tela","7","Retirada com assinatura","O almox confere, entrega o tablet, o técnico digita o PIN e assina com o dedo. O sistema gera o documento de requisição e grava no Omie.")}
+  ${seletorEstado("7",S7.estado)}
+  <div class="mk-ctrl" style="margin-top:8px"><b>Simular o Omie</b><span class="seg"><button data-a="s7-omie" data-v="ok" aria-pressed="${S7.omieOk}">Omie responde</button><button data-a="s7-omie" data-v="nao" aria-pressed="${!S7.omieOk}">Omie não responde</button></span>
+   <label class="chk" style="color:var(--texto-suave);white-space:normal"><input type="checkbox" id="s7-curto" ${S7.curto?"checked":""}>O Omie tem só metade do que foi separado (no 1º item)</label></div>
+  <div style="height:18px"></div>
+  <div class="tablet"><div class="tb-top ${tec?"tec":""}">${tec?`<div style="flex:1;min-width:0"><div class="t1">Assinatura do técnico</div><div class="t2">${pd.tec} · ${pd.eq}</div></div><span class="badge b-avi">Tablet com o técnico</span>`:`<div style="flex:1;min-width:0"><div class="t1">Almoxarifado · Retirada no balcão</div><div class="t2">${ALMOX} · almoxarife · ${fmtD(hoje())} ${G.hora}</div></div><span class="btn btn-ghost btn-xs" title="Volta ao menu do módulo">Sair do modo balcão</span>`}</div>
+  <div class="tb-body">${s7Corpo()}</div></div>
+  ${dica("Experimente: entregue o #1041 (o óculos vai para a ficha do Carlos); assine no quadro e confirme; marque “Omie não responde” e faça outra retirada; marque “só metade” para ver a entrega parcial. Pedido separado na Seção 6 aparece aqui.")}`;
+  montaAssin("s7");
+}
+function s7Confirmar(){
+  if(S7.pin.length<4||!S7.tr.length){S7.erro=faltaAss(S7);s7Render();return;}
+  if(S7.pin==="0000"){S7.pinErr=Math.min(4,S7.pinErr+1);S7.pin="";S7.erro="";s7Render();return;}
+  const pd=PD.find(p=>p.n===S7.sel);const E=entregaItens(pd);const l=locDe(pd);
+  E.forEach(x=>{x.p.s[l]=Math.max(0,sal(x.p,l)-x.q);if(pd.dest!=="obra"&&!ehFicha(x.p))x.p.e[pd.eq]=eqTem(x.p,pd.eq)+x.q;x.i.ent=x.q;});
+  pd.etapa="retirado";
+  const ref=`Retirada do pedido #${pd.n} · ${pd.tec} · ${fmtD(hoje())} ${G.hora}`;const lst=f=>E.filter(x=>x.q>0&&f(x)).map(x=>`${x.q} ${x.p.un} ${x.p.d}`).join(", ");
+  const g=[];
+  if(pd.dest==="obra"){const t=lst(()=>true);if(t)g.push({desc:`Saída do Base · OS ${pd.os[0]} (${OBRAS.find(o=>o.os===pd.os[0])?.loja||""})`,det:t,ref});}
+  else{const t=lst(x=>!ehFicha(x.p));if(t)g.push({desc:`Transferência ${nmL(l)} → ${pd.eq}`,det:t,ref});const f=lst(x=>ehFicha(x.p));if(f)g.push({desc:`Saída do ${nmL(l)} · EPI na ficha de ${pd.tec}`,det:f,ref});}
+  S7.res={pd,E,sig:assinImg(S7.tr),em:`${fmtD(hoje())}/2026 às ${G.hora}`,g};
+  S7.tela="fim";S7.erro="";S7.pinErr=0;
+  gravar(g,S7.omieOk,()=>s7Render());
+  s7Render();s5Render();s6Render();s9Render();
+}
+
+/* =====================================================================
+   SEÇÃO 8 — TRANSFERÊNCIAS PEDIDAS
+   ===================================================================== */
+const S8={estado:"dados",sel:null,orig:{},q:{},msg:null};
+function s8Atual(){const L=trFila();return L.find(t=>t.k===S8.sel)||L[0]||null;}
+function s8Fila(){
+  const L=trFila();const at=s8Atual();
+  return `<div class="fila"><div style="display:flex;align-items:center"><h3 style="font-size:15px">Esperando você</h3><div class="sp"></div><span class="badge b-sec n">${L.length}</span></div>
+  <p class="muted" style="font-size:12px">Itens com asterisco: o técnico pediu, o contrato dele não tem. Primeiro os que retiram mais cedo.</p>
+  ${L.map(x=>{const p=PID[x.i.id];return `<button class="fi" data-a="s8-sel" data-v="${x.k}" aria-current="${at&&at.k===x.k}"><div class="l1"><span style="font-weight:500">${esc(p.d)}</span></div>
+   <div style="font-size:13px"><b class="n" style="color:#fff">${x.i.transf} ${p.un}</b> para o #${x.pd.n} · ${x.pd.eq}</div>
+   <div class="bs"><span class="badge ${x.pd.ret<=dia(12)?"b-avi":"b-out"}">retira ${quando(x.pd.ret)}</span><span class="badge b-out">vai para ${nmL(locDe(x.pd))}</span>${emB(x.pd)}</div></button>`;}).join("")}</div>`;
+}
+function s8Det(){
+  const msg=S8.msg?`<div class="okmsg">${S8.msg.html}${S8.msg.g?`<div style="margin-top:8px">${gravHtml(S8.msg.g)}</div>`:""}</div>`:"";
+  const x=s8Atual();if(!x)return msg+bloco("ok","Nenhuma transferência esperando","Quando um técnico pedir item que o contrato dele não tem, ele aparece aqui para você escolher de onde vem.");
+  const {pd,i}=x,p=PID[i.id],dst=locDe(pd);
+  const ops=LOCS.map(l=>({l,s:sal(p,l),c:comp(p.id,l),lv:livre(p.id,l),dst:l===dst}));
+  let o=S8.orig[x.k];const op=ops.find(z=>z.l===o);
+  if(!op||op.dst||op.lv<=0){o=(ops.filter(z=>!z.dst&&z.lv>0).sort((a,b)=>b.lv-a.lv)[0]||{}).l||null;S8.orig[x.k]=o;}
+  const max=o?Math.min(i.transf,livre(p.id,o)):0;
+  let q=S8.q[x.k]??max;q=Math.max(max?1:0,Math.min(q,max));S8.q[x.k]=q;const sobra=i.transf-q;
+  return `${msg}<div class="det-h"><h2>${esc(p.d)}</h2><span class="badge b-avi">${i.transf} ${p.un} pedidos</span>${emB(pd)}</div>
+  <div class="info card" style="padding:14px">
+   <div><div class="k">Pedido</div><div class="v">#${pd.n} · ${pd.tec}</div></div>
+   <div><div class="k">Equipe</div><div class="v">${pd.eq}</div></div>
+   <div><div class="k">Vai para</div><div class="v">${nmL(dst)} ${pd.dest==="obra"?"(Obra/Spot sai do Base)":`(contrato da ${pd.eq})`}</div></div>
+   <div><div class="k">Retirada</div><div class="v">${quando(pd.ret)}</div></div>
+   <div><div class="k">Aprovado por</div><div class="v">${pd.por}</div></div></div>
+  <div><h3 style="font-size:14px;margin-bottom:8px;color:#fff">De onde vem?</h3>
+  <div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Estoque</th><th class="r">Saldo no Omie</th><th class="r">Já prometido</th><th class="r">Livre</th></tr></thead><tbody>
+  ${ops.map(z=>`<tr class="lin"><td class="full">${z.dst?`<span style="color:#fff;font-weight:500">${nmL(z.l)}</span> <span class="badge b-out">destino</span>`:`<label class="radio ${z.lv>0?"":"off"}"><input type="radio" name="s8-orig" value="${z.l}" ${o===z.l?"checked":""} ${z.lv>0?"":"disabled"}>${nmL(z.l)}</label>`}</td>
+   <td class="r n" data-l="Saldo no Omie">${num(z.s)} ${p.un}</td><td class="r n" data-l="Já prometido">${z.c?`${num(z.c)} ${p.un}`:'<span class="zero">0</span>'}</td><td class="r n" data-l="Livre"><b style="color:${z.lv>0?"var(--verde)":"var(--muted)"}">${num(z.lv)} ${p.un}</b></td></tr>`).join("")}</tbody></table></div>
+  <p class="muted" style="font-size:12px;margin-top:6px">“Já prometido” é o que está aprovado e ainda não foi entregue. Equipes não aparecem: sobra de equipe volta por devolução (Seção 9). O técnico não vê esta tabela.</p></div>
+  ${o?`<div class="acoes" style="font-size:14px"><span class="muted">Quantos transferir:</span><span class="qty"><button data-a="s8-q" data-v="${x.k}" data-d="-1" aria-label="Menos">−</button><input class="inp" id="s8-qtd" type="number" min="1" max="${max}" step="1" inputmode="numeric" value="${q}" aria-label="Quantidade a transferir"><button data-a="s8-q" data-v="${x.k}" data-d="1" aria-label="Mais">+</button></span><span class="muted">de ${i.transf} ${p.un}${max<i.transf?` (o ${nmL(o)} tem só ${max} livres)`:""}</span></div>
+   <div class="resumo" style="font-size:13px">${sobra>0?`Vai transferir <b>${q} de ${i.transf}</b> do ${nmL(o)} para o ${nmL(dst)}. O que sobra (${sobra} ${p.un}) sai do pedido, e ${pri(pd.tec)} e ${pd.por} são avisados.`:`Vai transferir <b>${q} ${p.un}</b> do ${nmL(o)} para o ${nmL(dst)}. Depois disso o item entra na separação do #${pd.n}.`}</div>`
+  :`<div class="corte"><b>Nenhum estoque tem saldo livre deste item.</b> ${p.ec?`Já existe compra em andamento: ${p.ec.q} ${p.un}, chega ${p.ec.prev}. `:""}Você pode deixar esperando (fica nesta fila) ou recusar, e o técnico é avisado.</div>`}
+  <div class="acoes"><button class="btn btn-destructive" data-a="s8-recusar" data-v="${x.k}">Recusar</button><div class="sp"></div><button class="btn btn-lg" data-a="s8-ok" data-v="${x.k}" ${o?"":"disabled"}>Confirmar transferência</button></div>`;
+}
+function s8Corpo(){
+  const st=S8.estado;
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 class="pg-tit">Transferências pedidas</h2><div class="sp"></div><span class="atual"><span class="dot"></span>Saldos atualizados às ${fmtH(new Date(agora().getTime()-3*6e4))}</span></div>`;
+  if(st==="semperm")return bloco("perm","Só o almoxarifado decide transferências","Seu usuário aprova pedidos, mas quem escolhe de qual estoque o material sai é o almoxarife, porque ele vê o saldo de todos os estoques.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  if(st==="carregando")return cab+`<div class="s3-grid"><div class="fila">${Array.from({length:3},()=>`<div class="fi" style="cursor:default"><div class="skel" style="width:60%"></div><div class="skel"></div></div>`).join("")}</div><div class="card" style="display:flex;flex-direction:column;gap:12px">${"<div class='skel'></div>".repeat(5)}</div></div>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para ler os saldos","Sem os saldos de todos os estoques não dá para escolher de onde transferir, então nada foi mostrado. Os pedidos continuam esperando; tente de novo em instantes.",`<button class="btn btn-sm" data-a="s8-tentar">Tentar de novo</button>`);
+  if(st==="vazio"||!trFila().length)return cab+(S8.msg?`<div class="okmsg" style="margin-bottom:12px">${S8.msg.html}${S8.msg.g?`<div style="margin-top:8px">${gravHtml(S8.msg.g)}</div>`:""}</div>`:"")+bloco("ok","Nenhuma transferência esperando","Quando um técnico pedir um item que o contrato dele não tem (o asterisco), o pedido aparece aqui para você escolher de onde vem.");
+  return cab+`<div class="s3-grid">${s8Fila()}<div class="det" id="s8-det">${s8Det()}</div></div>`;
+}
+function s8Render(){
+  $("#sec-8").innerHTML=`${secH("Almoxarife · computador","8","Transferências pedidas","Os itens com asterisco. O almox vê o saldo livre de cada estoque, escolhe a origem e confirma (tudo ou parte) ou recusa com motivo.")}
+  ${seletorEstado("8",S8.estado)}<div style="height:14px"></div>
+  ${shell("Transferências",s8Corpo())}
+  ${dica("Experimente: no disjuntor do #1042, troque a origem para Profarma e confirme só 1; no reator do #1040 veja que nenhum estoque tem saldo livre (o Profarma já prometeu os 2 ao #1043) e recuse. Depois de confirmar, o item aparece na Seção 6.")}`;
+}
+function s8RecusaDlg(k,erro){
+  const x=trFila().find(t=>t.k===k);const {pd,i}=x,p=PID[i.id];const fica=i.ap-i.transf;
+  const outros=pd.itens.some(j=>j!==i&&j.ap>0);
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Recusar a transferência?</h2><p class="muted" style="margin-top:4px">${i.transf} ${p.un} de ${esc(p.d)} · pedido #${pd.n} de ${pd.tec} (${pd.eq})</p></div></div>
+  <div class="campo"><label for="s8-motivo">Motivo (${pri(pd.tec)} e ${pd.por} vão ler) <span class="erro-t">obrigatório</span></label><textarea class="inp" id="s8-motivo" rows="2" placeholder="Ex.: nenhum estoque tem saldo livre; a compra chega dia 17/11">${esc(S8.mot||"")}</textarea>${erro?`<span class="erro-t">${erro}</span>`:""}</div>
+  <div class="conseq"><b>O que acontece se você recusar</b><ul>
+   <li>${pd.tec} recebe aviso no app com o seu motivo.</li>
+   <li>${pd.por}, que aprovou o pedido, recebe o mesmo aviso por e-mail.</li>
+   <li>${fica>0?`O pedido #${pd.n} fica com ${fica} ${p.un} deste item (o que já tinha no ${nmL(locDe(pd))}). ${i.transf===1?"A unidade que viria":`As ${i.transf} unidades que viriam`} por transferência ${i.transf===1?"sai":"saem"} do pedido.`:`Este item sai do pedido #${pd.n}.`}</li>
+   <li>${outros?`O resto do pedido segue normal para separação e retirada ${quando(pd.ret)}.`:`O pedido fica sem nenhum item e é encerrado como “Não atendido”. Não há retirada.`}</li>
+   <li>Nenhum estoque se mexe e nada é gravado no Omie.</li>
+   <li>Conta como falta de estoque nos indicadores${p.ec?`. Já existe compra em andamento: ${p.ec.q} ${p.un}, chega ${p.ec.prev}`:""}.</li>
+   <li>Não dá para desfazer. Se ainda precisar, o técnico faz um pedido novo.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s8-recusa-ok" data-v="${k}">Recusar transferência</button></div>`);
+  setTimeout(()=>$("#s8-motivo")?.focus(),30);
+}
+function s8Confirma(k){
+  const x=trFila().find(t=>t.k===k);if(!x)return;const {pd,i}=x,p=PID[i.id],dst=locDe(pd),o=S8.orig[k],q=S8.q[k];
+  if(!o||!q)return;
+  p.s[o]=sal(p,o)-q;p.s[dst]=sal(p,dst)+q;
+  const sobra=i.transf-q;i.transf=0;i.ap-=sobra;
+  const volta=pd.etapa==="separado";if(volta){pd.etapa="aprovado";pd.reab=true;}
+  const g=[{desc:`Transferência ${nmL(o)} → ${nmL(dst)}`,det:`${q} ${p.un} ${p.d} · pedido #${pd.n}`,ref:`Pedido #${pd.n}`}];
+  S8.msg={html:`<b>Transferência confirmada:</b> ${q} ${p.un} de ${esc(p.d)}, do ${nmL(o)} para o ${nmL(dst)}. O item entrou na separação do #${pd.n}${volta?" (o pedido já estava separado e voltou para a Separação para completar)":""}.${sobra?` ${sobra===1?"A 1 unidade que não veio saiu":`As ${sobra} unidades que não vieram saíram`} do pedido; ${pri(pd.tec)} e ${pd.por} foram avisados.`:""}`,g};
+  S8.sel=null;gravar(g,true,()=>s8Render());
+  s5Render();s6Render();s7Render();s8Render();
+}
+
+/* =====================================================================
+   SEÇÃO 9 — DEVOLUÇÃO DE SOBRA
+   ===================================================================== */
+const DEV=[{n:"D-0011",tec:"Rafael Lima",eq:"MANFAC 1",ct:"DPSP",em:new Date(2026,10,10,17,40),mot:"Sobrou da OS 48190",itens:[{id:"ledtub",q:4,c:4},{id:"silicone",q:1,c:1}],st:"conferir"}];
+let devN=12;
+const S9={estado:"dados",ph:"form",q:{},mot:"Sobrou da OS",sel:"D-0011",pin:"",pinErr:0,tr:[],fase:"conf",fim:null,erro:"",phErro:""};
+const TEC9={nome:"Carlos Souza",eq:"MANFAC 2",ct:"DPSP"};
+const pend9=id=>DEV.filter(d=>d.st==="conferir"&&d.eq===TEC9.eq).reduce((a,d)=>a+d.itens.filter(x=>x.id===id).reduce((b,x)=>b+x.q,0),0);
+const pode9=p=>Math.max(0,eqTem(p,TEC9.eq)-pend9(p.id));
+function s9Phone(){
+  const st=S9.estado;
+  if(st==="semperm")return `<div class="ph-body"><div class="pin-wrap">${bloco("perm","Seu acesso está bloqueado","Este celular não está liberado, ou o seu convite venceu. Procure o almoxarifado: eles desbloqueiam ou mandam um convite novo pelo WhatsApp.")}</div></div>`;
+  const head=`<div class="ph-head"><div style="flex:1;min-width:0"><div class="t1">Olá, Carlos</div><div class="t2">${TEC9.eq} · contrato ${TEC9.ct}</div></div><button class="bell" aria-label="0 avisos">🔔</button></div>`;
+  let b;
+  if(st==="carregando")b=`<div class="skel" style="width:50%"></div>${skelLista(4)}`;
+  else if(st==="erro")b=bloco("erro","Sem conexão com o almoxarifado","Não deu para ler o estoque da sua equipe agora. Nada foi pedido. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="s9-tentar">Tentar de novo</button>`);
+  else{
+   const L=P.filter(p=>pode9(p)>0);
+   if(st==="vazio"||(!L.length&&S9.ph==="form"))b=`<h3 style="font-size:16px">Devolver sobra</h3>`+bloco("vazio","Nada para devolver","Pelo Omie, o estoque da MANFAC 2 está zerado (ou tudo já está numa devolução pedida). Se você tem material sobrando no carro, fale com o almox.");
+   else if(S9.ph==="ok"){const d=DEV.find(x=>x.n===S9.ultima);
+    b=`<div class="pin-wrap" style="gap:12px;padding:12px 4px;flex:none"><div class="pin-logo" style="background:var(--verde-bg);color:var(--verde)">✓</div><h2 style="font-size:20px">Devolução ${d.n} pedida</h2><p class="muted">Leve o material ao balcão do almoxarifado. Lá vocês conferem juntos e você assina com o PIN e o dedo.</p></div>
+    <div class="box"><h4>Minhas devoluções</h4>${DEV.filter(x=>x.eq===TEC9.eq).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:13px"><span class="mono" style="color:#fff">${x.n}</span><span style="flex:1">${x.itens.length} ${x.itens.length===1?"item":"itens"}</span><span class="badge ${x.st==="conferir"?"b-avi":"b-ok"}">${x.st==="conferir"?"Leve ao almox":"Recebida"}</span></div>`).join("")}</div>
+    <button class="btn btn-outline btn-block" data-a="s9-ph" data-v="form">Devolver mais alguma coisa</button>`;}
+   else{const n=Object.values(S9.q).filter(v=>v>0).length;
+    b=`<h3 style="font-size:16px">Devolver sobra</h3><p class="muted" style="font-size:13px">O que está no estoque da ${TEC9.eq} pelo Omie. Marque o que sobrou: volta para o estoque ${TEC9.ct}.</p>
+    <div class="box">${L.map(p=>{const q=S9.q[p.id]||0,mx=pode9(p);return `<div class="mat"><div class="info"><div class="nm">${esc(p.d)}</div><div class="dp">a equipe tem <b>${num(mx)} ${p.un}</b></div></div>${q?`<div class="stepper"><button data-a="s9-menos" data-v="${p.id}" aria-label="Menos">−</button><span>${q}</span><button data-a="s9-mais" data-v="${p.id}" aria-label="Mais" ${q>=mx?"disabled":""}>+</button></div>`:`<button class="btn btn-outline add-btn" data-a="s9-mais" data-v="${p.id}">Devolver</button>`}</div>`;}).join("")}</div>
+    <div class="campo"><label for="s9-mot">Por que está devolvendo?</label><select class="inp" id="s9-mot" style="min-height:44px">${["Sobrou da OS","Pedi a mais","Material errado","Com defeito"].map(m=>`<option ${S9.mot===m?"selected":""}>${m}</option>`).join("")}</select></div>
+    ${S9.phErro?`<p class="erro-t">${S9.phErro}</p>`:""}
+    <button class="btn btn-lg btn-block" data-a="s9-pedir">${n?`Pedir devolução de ${n} ${n===1?"item":"itens"}`:"Pedir devolução"}</button>
+    <p class="muted" style="font-size:12px;text-align:center">Depois leve o material ao balcão. O almox confere e você assina com o PIN.</p>`;}
+  }
+  return head+`<div class="ph-body" id="ph9-body">${b}</div>`;
+}
+function s9Det(){
+  const fim=S9.fim?`<div class="okmsg">${S9.fim.html}<div style="margin-top:8px">${gravHtml(S9.fim.g)}</div></div>`:"";
+  const d=DEV.find(x=>x.n===S9.sel&&x.st==="conferir");
+  if(!d)return fim||bloco("vazio","Escolha uma devolução","Clique numa devolução da lista para conferir.");
+  const tot=d.itens.reduce((a,x)=>a+x.c,0);
+  const linhas=d.itens.map((x,k)=>{const p=PID[x.id];return `<tr class="lin"><td class="full" style="white-space:normal"><div style="font-weight:500;color:#fff">${esc(p.d)}</div><div class="cdg">${p.cod}</div></td>
+   <td class="r n" data-l="${pri(d.tec)} disse">${x.q} ${p.un}</td>
+   <td data-l="Chegou">${S9.fase==="conf"?`<span class="qty"><button data-a="s9-q" data-v="${k}" data-d="-1" aria-label="Menos">−</button><input class="inp" type="number" min="0" max="${x.q}" step="1" inputmode="numeric" value="${x.c}" data-cq="${k}" aria-label="Chegou de ${esc(p.d)}"><button data-a="s9-q" data-v="${k}" data-d="1" aria-label="Mais">+</button></span>`:`<b class="n" style="color:#fff">${x.c} ${p.un}</b>`}</td>
+   <td data-l="Conferência">${x.c<x.q?`<span class="badge b-avi">${x.q-x.c} não chegou</span>`:'<span class="badge b-ok">Confere</span>'}</td></tr>`;}).join("");
+  return `${fim}<div class="det-h"><h2 class="mono">${d.n}</h2><span class="badge b-avi">A conferir</span></div>
+  <div class="info card" style="padding:14px"><div><div class="k">Técnico</div><div class="v">${d.tec}</div></div><div><div class="k">Sai de</div><div class="v">estoque da ${d.eq}</div></div><div><div class="k">Volta para</div><div class="v">estoque ${nmL(d.ct)}</div></div><div><div class="k">Pedida</div><div class="v">${fmtD(d.em)} ${fmtH(d.em)}</div></div><div><div class="k">Motivo</div><div class="v">${esc(d.mot)}</div></div></div>
+  <div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Item</th><th class="r">${pri(d.tec)} disse</th><th>Chegou</th><th>Conferência</th></tr></thead><tbody>${linhas}</tbody></table></div>
+  ${S9.fase==="conf"?`<p class="muted" style="font-size:13px">Conte o que chegou no balcão. Só dá para receber igual ou menos do que ${pri(d.tec)} disse; o que não chegou continua no estoque da ${d.eq}.</p>
+   <div class="acoes"><div class="sp"></div><button class="btn btn-lg" data-a="s9-assina" ${tot?"":"disabled"}>Passar para ${pri(d.tec)} assinar</button></div>`
+  :`<div class="box"><h4>${d.tec} confirma que devolveu o que está em “Chegou”</h4>${assinBloco("s9",S9,d.tec)}</div>${S9.erro?`<p class="erro-t">${S9.erro}</p>`:""}
+   <div class="acoes"><button class="btn btn-ghost" data-a="s9-voltar">← Voltar à conferência</button><div class="sp"></div><button class="btn btn-lg" id="s9-ok" data-a="s9-ok" ${S9.pin.length>=4&&S9.tr.length?"":"disabled"}>Confirmar devolução</button></div>`}`;
+}
+function s9Hub(){
+  const st=S9.estado;
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 class="pg-tit">Devoluções</h2></div>`;
+  if(st==="semperm")return bloco("perm","Só o almoxarifado recebe devolução","Seu usuário entra no Almoxarifado, mas não tem papel de almoxarife. Quem confere e recebe o material no balcão é a equipe do almox.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  if(st==="carregando")return cab+`<div class="s3-grid"><div class="fila">${Array.from({length:2},()=>`<div class="fi" style="cursor:default"><div class="skel" style="width:50%"></div><div class="skel"></div></div>`).join("")}</div><div class="card" style="display:flex;flex-direction:column;gap:12px">${"<div class='skel'></div>".repeat(5)}</div></div>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar as devoluções","O servidor não respondeu. Se o técnico já está no balcão, guarde o material separado e confira aqui quando voltar; nada foi recebido ainda.",`<button class="btn btn-sm" data-a="s9-tentar">Tentar de novo</button>`);
+  const L=DEV.filter(d=>d.st==="conferir");
+  if(st==="vazio"||!L.length)return cab+(S9.fim?`<div class="okmsg" style="margin-bottom:12px">${S9.fim.html}<div style="margin-top:8px">${gravHtml(S9.fim.g)}</div></div>`:"")+bloco("ok","Nenhuma devolução para conferir","Quando um técnico pedir “devolver” no celular, a devolução aparece aqui, esperando ele chegar com o material.");
+  return cab+`<div class="s3-grid"><div class="fila"><div style="display:flex;align-items:center"><h3 style="font-size:15px">Esperando chegar</h3><div class="sp"></div><span class="badge b-sec n">${L.length}</span></div>
+  ${L.map(d=>`<button class="fi" data-a="s9-sel" data-v="${d.n}" aria-current="${S9.sel===d.n}"><div class="l1"><span class="num">${d.n}</span><span style="font-weight:500">${d.eq}</span></div><div style="font-size:13px">${d.tec} · ${d.itens.length} ${d.itens.length===1?"item":"itens"}</div><div class="bs"><span class="badge b-out">pedida ${fmtD(d.em)} ${fmtH(d.em)}</span></div></button>`).join("")}</div>
+  <div class="det" id="s9-det">${s9Det()}</div></div>`;
+}
+function s9Render(){
+  const sc=$("#ph9-body")?.scrollTop||0;
+  $("#sec-9").innerHTML=`${secH("Técnico no celular → almoxarife no balcão","9","Devolução de sobra","O técnico avisa pelo celular o que vai devolver. O almox confere na chegada, o técnico assina, e o material volta para o estoque do contrato.")}
+  ${seletorEstado("9",S9.estado)}<div style="height:18px"></div>
+  <h3 class="h3s" style="margin-top:0">Parte 1 · o técnico pede pelo celular</h3>
+  <div class="s2-grid"><div class="phone"><div class="ph-notch"><span>${G.hora}</span><span>●●● 4G</span></div>${s9Phone()}</div>
+  <div class="lado"><h3>O que o técnico vê</h3><ul>
+   <li><b>Só o estoque da equipe dele</b>, pelo Omie, menos o que já está numa devolução pedida.</li>
+   <li><b>Nada se mexe no Omie quando ele pede.</b> O material só volta para o ${TEC9.ct} quando o almox confere e ele assina.</li>
+   <li>Peça uma devolução aqui e ela aparece na Parte 2, logo abaixo.</li></ul></div></div>
+  <h3 class="h3s">Parte 2 · o almox confere na chegada</h3>
+  ${shell("Devoluções",s9Hub())}
+  ${dica("Experimente: no celular devolva 3 m de cabo e 2 fitas; na Parte 2 abra a devolução, diga que chegou 1 fita só, passe para assinar, assine e confirme.")}`;
+  const b=$("#ph9-body");if(b)b.scrollTop=sc;
+  montaAssin("s9");
+}
+function s9Confirmar(){
+  if(S9.pin.length<4||!S9.tr.length){S9.erro=faltaAss(S9);s9Render();return;}
+  if(S9.pin==="0000"){S9.pinErr=Math.min(4,S9.pinErr+1);S9.pin="";S9.erro="";s9Render();return;}
+  const d=DEV.find(x=>x.n===S9.sel);
+  d.itens.forEach(x=>{const p=PID[x.id];p.e[d.eq]=Math.max(0,eqTem(p,d.eq)-x.c);p.s[d.ct]=sal(p,d.ct)+x.c;});
+  d.st="feita";
+  const ok=d.itens.filter(x=>x.c>0),nc=d.itens.filter(x=>x.c<x.q);
+  const g=[{desc:`Transferência ${d.eq} → ${nmL(d.ct)}`,det:ok.map(x=>`${x.c} ${PID[x.id].un} ${PID[x.id].d}`).join(", "),ref:`Devolução ${d.n}`}];
+  S9.fim={html:`<b>Devolução ${d.n} confirmada e assinada.</b> O material volta para o estoque do contrato ${nmL(d.ct)}.${nc.length?` Não chegou: ${nc.map(x=>`${x.q-x.c} ${PID[x.id].un} de ${PID[x.id].d}`).join("; ")}. Isso continua no estoque da ${d.eq}, e ${pri(d.tec)} recebe aviso no app.`:""}`,g};
+  S9.pin="";S9.tr=[];S9.pinErr=0;S9.fase="conf";S9.erro="";
+  const prox=DEV.find(x=>x.st==="conferir");S9.sel=prox?prox.n:null;
+  gravar(g,true,()=>s9Render());s9Render();s5Render();
+}
+
+/* =====================================================================
+   SEÇÃO 10 — COLABORADORES E CONVITE
+   ===================================================================== */
+const tok=()=>{const c="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";const a=new Uint32Array(22);try{crypto.getRandomValues(a);}catch(_){for(let k=0;k<22;k++)a[k]=Math.floor(Math.random()*1e9);}return Array.from(a,v=>c[v%c.length]).join("");};
+const COL=[
+ {id:1,nome:"Carlos Souza",eq:"MANFAC 2",cel:"(11) 98765-4321",ac:"ativo",info:"Entrou pelo celular em 03/11",rh:true},
+ {id:2,nome:"Rafael Lima",eq:"MANFAC 1",cel:"(11) 97654-3210",ac:"ativo",info:"Entrou pelo celular em 04/11",rh:true},
+ {id:3,nome:"Marcos Pereira",eq:"MANFAC-25",cel:"(11) 96543-2109",ac:"convite",conv:{tok:"Vq7KmP2xTd9aLwR4nBc8Hs",ate:dia(17)},info:"",rh:true},
+ {id:4,nome:"Diego Martins",eq:"MANFAC 2",cel:"(11) 95432-1098",ac:"sem",info:"",rh:true},
+ {id:5,nome:"Bruno Alves",eq:"MANFAC 1",cel:"(11) 94321-0987",ac:"bloqueado",info:"5 PINs errados seguidos às 09:21. Libera sozinho às 09:36, ou desbloqueie agora.",rh:true},
+ {id:6,nome:"Juliana Costa",eq:"Sem equipe",cel:"",ac:"ativo",info:"Só no tablet do almox (PIN criado na primeira entrega de EPI)",rh:false},
+];
+let colN=7;
+const RHC=[
+ {id:"r1",nome:"Diego Martins",cpf:"***.482.117-**",cargo:"Eletricista"},
+ {id:"r2",nome:"Lucas Andrade",cpf:"***.318.207-**",cargo:"Auxiliar de manutenção"},
+ {id:"r3",nome:"Patrícia Gomes",cpf:"***.905.664-**",cargo:"Técnica de manutenção"},
+ {id:"r4",nome:"Rogério Matos",cpf:"***.271.530-**",cargo:"Encanador"},
+ {id:"r5",nome:"Carlos Souza",cpf:"***.660.093-**",cargo:"Eletricista"},
+ {id:"r6",nome:"Rafael Lima",cpf:"***.144.758-**",cargo:"Técnico de manutenção"},
+];
+const ACB={sem:["Sem convite","b-out"],convite:["Convite enviado","b-sec"],ativo:["Ativo","b-ok"],bloqueado:["Bloqueado","b-des"]};
+const S10={estado:"dados",busca:"",fil:"todos",msg:null,cad:null};
+function s10Acoes(c){
+  const B=[];
+  if(c.ac==="sem")B.push(`<button class="btn btn-sm" data-a="s10-conv" data-v="${c.id}">Gerar convite</button>`);
+  if(c.ac==="convite")B.push(`<button class="btn btn-outline btn-sm" data-a="s10-ver" data-v="${c.id}">Ver convite</button>`);
+  if(c.ac==="bloqueado")B.push(`<button class="btn btn-outline btn-sm" data-a="s10-desb" data-v="${c.id}">Desbloquear</button>`);
+  if(c.ac!=="sem")B.push(`<button class="btn btn-ghost btn-sm" data-a="s10-reem" data-v="${c.id}">Reemitir convite</button>`);
+  if(c.ac==="ativo"||c.ac==="convite")B.push(`<button class="btn btn-destructive btn-sm" data-a="s10-bloq" data-v="${c.id}">Bloquear</button>`);
+  return `<div class="acs">${B.join("")}</div>`;
+}
+function s10Linhas(){
+  const L=COL.filter(c=>(!S10.busca||casa(`${c.nome} ${c.eq} ${c.cel}`,S10.busca))&&(S10.fil==="todos"||c.ac===S10.fil));
+  if(!L.length)return `<tr><td colspan="5" class="full" style="white-space:normal;padding:16px">${bloco("vazio","Ninguém com esse filtro","Tente outro nome ou volte para “Todas as situações”.",`<button class="btn btn-outline btn-sm" data-a="s10-limpa">Limpar filtros</button>`)}</td></tr>`;
+  return L.map(c=>`<tr class="lin"><td class="full" style="white-space:normal"><div style="font-weight:500;color:#fff">${esc(c.nome)}</div><span class="sub-t">${c.rh?"do cadastro do RH":"cadastro manual"}</span></td>
+   <td data-l="Equipe">${esc(c.eq)}</td><td data-l="Celular" class="n">${c.cel?esc(c.cel):'<span class="zero">sem celular</span>'}</td>
+   <td data-l="Acesso" style="white-space:normal"><span class="badge ${ACB[c.ac][1]}">${ACB[c.ac][0]}</span><span class="sub-t">${c.ac==="convite"?`vale até ${fmtD(c.conv.ate)} · ainda não foi aberto`:c.ac==="sem"?"ainda não pode usar o celular":esc(c.info)}</span></td>
+   <td class="full">${s10Acoes(c)}</td></tr>`).join("");
+}
+function s10Corpo(){
+  const st=S10.estado;
+  const cab=`<div class="det-h" style="margin-bottom:16px"><h2 class="pg-tit">Colaboradores</h2><div class="sp"></div>${st==="dados"||st==="vazio"?`<button class="btn" data-a="s10-cad">Cadastrar colaborador</button>`:""}</div>`;
+  if(st==="semperm")return bloco("perm","Só o almoxarifado cadastra colaboradores","Seu usuário entra no Almoxarifado como aprovadora. Cadastro, convite e bloqueio de acesso dos técnicos ficam com a equipe do almox e com o administrador.",`<span class="btn btn-outline btn-sm">Voltar ao início</span>`);
+  if(st==="carregando")return cab+`<div class="tbl-wrap" style="padding:14px;display:flex;flex-direction:column;gap:14px">${Array.from({length:6},()=>`<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px">${"<div class='skel'></div>".repeat(4)}</div>`).join("")}</div>`;
+  if(st==="erro")return cab+bloco("erro","Não deu para carregar a lista","O servidor não respondeu. Nenhum acesso foi alterado. Tente de novo em instantes.",`<button class="btn btn-sm" data-a="s10-tentar">Tentar de novo</button>`);
+  if(st==="vazio")return cab+bloco("vazio","Nenhum colaborador cadastrado ainda","Cadastre os técnicos para eles pedirem material pelo celular. Dá para puxar nome e CPF do cadastro do RH, ou cadastrar à mão quem não está lá.",`<button class="btn btn-sm" data-a="s10-cad">Cadastrar o primeiro</button>`);
+  return cab+(S10.msg?`<div class="okmsg" style="margin-bottom:12px">${S10.msg}</div>`:"")+`<div class="filtros"><div class="busca"><input class="inp" id="s10-busca" type="search" placeholder="Buscar por nome, equipe ou celular" value="${esc(S10.busca)}" autocomplete="off"></div>
+  <select class="inp" id="s10-fil" aria-label="Situação do acesso"><option value="todos">Todas as situações</option>${Object.entries(ACB).map(([k,[t]])=>`<option value="${k}" ${S10.fil===k?"selected":""}>${t}</option>`).join("")}</select></div>
+  <div class="tbl-wrap"><table class="tbl cd"><thead><tr><th>Nome</th><th>Equipe</th><th>Celular</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="s10-corpo">${s10Linhas()}</tbody></table></div>
+  <p class="muted" style="font-size:12px;margin-top:8px">O técnico não tem conta no hub: entra pelo link do convite e um PIN de 4 a 6 números. O celular fica conectado por 90 dias.</p>`;
+}
+function s10Render(){
+  $("#sec-10").innerHTML=`${secH("Almoxarife · computador","10","Colaboradores e convite","Quem pode pedir material pelo celular. O almox cadastra, gera o convite (link + WhatsApp), bloqueia e desbloqueia.")}
+  ${seletorEstado("10",S10.estado)}<div style="height:14px"></div>
+  ${shell("Colaboradores",s10Corpo())}
+  ${dica("Experimente: gere o convite do Diego e copie o link; cadastre o Lucas Andrade buscando no RH; bloqueie o Rafael; desbloqueie o Bruno; reemita o convite do Carlos e leia o que acontece.")}`;
+}
+function convDlg(id,novo){
+  const c=COL.find(x=>x.id===id);const link=`https://hub.manfac.com.br/almox/t/c/${c.conv.tok}`;
+  const txt=`Oi, ${pri(c.nome)}! Aqui é o almoxarifado da Manfac.\nEste é o seu acesso para pedir material pelo celular:\n${link}\n\nAbra o link e crie um PIN de 4 a 6 números. Guarde o PIN: é com ele que você entra no app e assina as retiradas.\nO link é só seu, funciona uma vez e vale até ${fmtD(c.conv.ate)}.`;
+  const dig=c.cel.replace(/\D/g,"");const wa=dig?`https://wa.me/55${dig}?text=${encodeURIComponent(txt)}`:null;
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>${novo?"Convite gerado para":"Convite de"} ${esc(c.nome)}</h2><p class="muted" style="margin-top:4px">Vale até ${fmtD(c.conv.ate)} · funciona uma vez · ${esc(c.eq)}</p></div><button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button></div>
+  <div class="campo"><label for="cv-link">Link pessoal</label><div class="link-box"><input class="inp" id="cv-link" readonly value="${link}"><button class="btn btn-outline" data-a="cv-copiar">Copiar link</button></div><span class="muted" id="cv-st" style="font-size:12px" aria-live="polite"></span></div>
+  <div class="campo"><label>Mensagem pronta</label><div class="zap">${esc(txt)}</div></div>
+  <div class="dlg-f">${wa?`<a class="btn" href="${wa}" target="_blank" rel="noopener">Abrir no WhatsApp</a>`:`<span class="muted" style="font-size:13px">Sem celular cadastrado: copie o link e mande por outro caminho.</span>`}</div>
+  ${wa?`<p class="muted" style="font-size:12px">“Abrir no WhatsApp” abre a conversa com ${esc(c.cel)} com a mensagem já escrita; você só toca em enviar. O sistema não manda nada sozinho.</p>`:""}`);
+}
+function cadDlg(){
+  const C=S10.cad;const R=RHC.filter(r=>!C.busca||casa(`${r.nome} ${r.cargo}`,C.busca));
+  const jaTem=nome=>COL.some(c=>c.nome===nome);
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Cadastrar colaborador</h2><p class="muted" style="margin-top:4px">Depois de salvar, gere o convite para ele usar o celular.</p></div><button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button></div>
+  <div class="modo"><button data-a="s10-modo" data-v="rh" aria-pressed="${C.modo==="rh"}">Buscar no cadastro do RH</button><button data-a="s10-modo" data-v="man" aria-pressed="${C.modo==="man"}">Cadastrar à mão</button></div>
+  ${C.modo==="rh"?`<div class="campo"><label for="rh-busca">Nome ou cargo</label><input class="inp" id="rh-busca" type="search" value="${esc(C.busca)}" placeholder="Ex.: Lucas, eletricista" autocomplete="off"></div>
+   <div class="rh-res" id="rh-res">${rhRes(R,jaTem)}</div><p class="muted" style="font-size:12px">Aparecem só pessoas ativas no RH. O almox lê nome, CPF e cargo; nada mais do cadastro do RH.</p>`
+  :`<div class="form-g"><div class="campo"><label for="cad-nome">Nome completo <span class="erro-t">obrigatório</span></label><input class="inp" id="cad-nome" value="${esc(C.nome)}" autocomplete="off"></div><div class="campo"><label for="cad-cpf">CPF (se tiver)</label><input class="inp" id="cad-cpf" value="${esc(C.cpf)}" inputmode="numeric" autocomplete="off"></div></div>
+   <p class="muted" style="font-size:12px">Para quem não está no cadastro do RH (ex.: terceirizado).</p>`}
+  <div class="form-g"><div class="campo"><label for="cad-eq">Equipe <span class="erro-t">obrigatório</span></label><select class="inp" id="cad-eq"><option value="">Escolha</option>${[...EQ,"Sem equipe"].map(e=>`<option ${C.eq===e?"selected":""}>${e}</option>`).join("")}</select></div>
+  <div class="campo"><label for="cad-cel">Celular com DDD</label><input class="inp" id="cad-cel" value="${esc(C.cel)}" inputmode="tel" placeholder="(11) 90000-0000" autocomplete="off"></div></div>
+  <p class="muted" style="font-size:12px">Sem celular, a pessoa só assina no tablet do almox (ex.: quem só recebe EPI).</p>
+  ${C.erro?`<p class="erro-t">${C.erro}</p>`:""}
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Cancelar</button><button class="btn" data-a="s10-salvar">Salvar</button></div>`);
+}
+function rhRes(R,jaTem){return R.length?R.map(r=>`<button type="button" data-a="s10-rh" data-v="${r.id}" aria-pressed="${S10.cad.esc===r.id}" ${jaTem(r.nome)?"disabled":""}><b>${esc(r.nome)}</b><span>${esc(r.cargo)} · CPF ${r.cpf}${jaTem(r.nome)?" · já cadastrado":""}</span></button>`).join(""):`<p class="muted" style="font-size:13px">Ninguém com esse nome entre os ativos do RH. Use “Cadastrar à mão”.</p>`;}
+function s10Salvar(){
+  const C=S10.cad;
+  ["cad-nome","cad-cpf","cad-cel"].forEach(id=>{const el=$("#"+id);if(el)C[{"cad-nome":"nome","cad-cpf":"cpf","cad-cel":"cel"}[id]]=el.value;});
+  const el=$("#cad-eq");if(el)C.eq=el.value;
+  let nome="";
+  if(C.modo==="rh"){const r=RHC.find(x=>x.id===C.esc);if(!r){C.erro="Escolha uma pessoa da lista do RH.";cadDlg();return;}nome=r.nome;}
+  else{nome=C.nome.trim();if(nome.length<3){C.erro="Escreva o nome completo.";cadDlg();return;}}
+  if(!C.eq){C.erro="Escolha a equipe. Ela define de qual estoque a pessoa pede.";cadDlg();return;}
+  const dg=C.cel.replace(/\D/g,"");if(dg&&(dg.length<10||dg.length>11)){C.erro="O celular precisa ter DDD + número (10 ou 11 dígitos).";cadDlg();return;}
+  const cel=dg?(dg.length===11?`(${dg.slice(0,2)}) ${dg.slice(2,7)}-${dg.slice(7)}`:`(${dg.slice(0,2)}) ${dg.slice(2,6)}-${dg.slice(6)}`):"";
+  const id=colN++;COL.push({id,nome,eq:C.eq,cel,ac:"sem",info:"",rh:C.modo==="rh"});
+  S10.msg=`<b>${esc(nome)} cadastrado.</b> ${cel?`Agora gere o convite para ${pri(nome)} usar o celular.`:"Sem celular: ele cria o PIN no tablet do almox, na primeira entrega."} ${cel?`<button class="btn btn-sm" data-a="s10-conv" data-v="${id}" style="margin-left:6px">Gerar convite</button>`:""}`;
+  S10.cad=null;fechar();s10Render();
+}
+function reemDlg(id){
+  const c=COL.find(x=>x.id===id);
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Reemitir o convite de ${esc(c.nome)}?</h2><p class="muted" style="margin-top:4px">Use quando ele esqueceu o PIN, trocou de celular ou perdeu o link.</p></div></div>
+  <div class="conseq"><b>O que acontece se você reemitir</b><ul>
+   <li>${c.ac==="convite"?"O link que já foi mandado para ele deixa de funcionar na hora.":"Qualquer link anterior dele deixa de funcionar na hora."}</li>
+   <li>${c.ac==="ativo"?`O celular dele sai da sessão agora: ${pri(c.nome)} é desconectado do app e não entra mais com o PIN antigo.`:c.ac==="bloqueado"?`O PIN antigo deixa de valer. ${pri(c.nome)} continua sem entrar até abrir o link novo.`:"Ele ainda não tinha entrado, então nenhum celular é desconectado."}</li>
+   <li>Para voltar a usar o app, ele abre o link novo e cria um PIN novo. O PIN antigo não vale nem no tablet do almox.</li>
+   ${c.ac==="bloqueado"?`<li>O bloqueio sai quando ele criar o PIN novo pelo link.</li>`:""}
+   <li>Pedidos em andamento, assinaturas antigas e o histórico dele continuam como estão.</li>
+   <li>O link novo vale 7 dias e funciona uma vez.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s10-reem-ok" data-v="${id}">Reemitir e desconectar</button></div>`);
+}
+function bloqDlg(id){
+  const c=COL.find(x=>x.id===id);const ped=PD.filter(p=>p.tec===c.nome&&ATIVO.includes(p.etapa));
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Bloquear o acesso de ${esc(c.nome)}?</h2><p class="muted" style="margin-top:4px">${esc(c.eq)} · ${c.cel?esc(c.cel):"sem celular"}</p></div></div>
+  <div class="campo"><label for="bq-mot">Motivo (fica no histórico)</label><select class="inp" id="bq-mot"><option>Celular perdido ou roubado</option><option>Pedido do supervisor</option><option>Uso indevido</option><option>Outro</option></select></div>
+  <div class="conseq"><b>O que acontece se você bloquear</b><ul>
+   <li>${c.ac==="ativo"?`${pri(c.nome)} sai do app na hora, no celular dele.`:"O convite que ainda não foi aberto deixa de funcionar."}</li>
+   <li>Ele não consegue entrar, pedir material, pedir devolução nem assinar retirada, nem no tablet do almox, até ser desbloqueado.</li>
+   <li>${ped.length?`Pedidos dele em andamento (${ped.map(p=>"#"+p.n).join(", ")}) continuam na fila, mas ninguém retira por ele enquanto estiver bloqueado.`:"Ele não tem pedido em andamento."}</li>
+   <li>O histórico, as assinaturas e a ficha dele continuam guardados.</li>
+   <li>Dá para desfazer: “Desbloquear” devolve o acesso com o mesmo PIN.</li></ul></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn btn-destructive-solid" data-a="s10-bloq-ok" data-v="${id}">Bloquear ${esc(pri(c.nome))}</button></div>`);
+}
+function desbDlg(id){
+  const c=COL.find(x=>x.id===id);
+  abrir(`<div class="dlg-h"><div style="flex:1"><h2>Desbloquear ${esc(c.nome)}?</h2><p class="muted" style="margin-top:4px">${esc(c.info)}</p></div></div>
+  <div class="resumo" style="font-size:13px"><span>Ele volta a entrar com o <b>mesmo PIN</b>, e as tentativas erradas zeram. Se ele esqueceu o PIN, use “Reemitir convite” em vez disso.</span></div>
+  <div class="dlg-f"><button class="btn btn-outline" data-a="fechar">Voltar</button><button class="btn" data-a="s10-desb-ok" data-v="${id}">Desbloquear</button></div>`);
+}
+
+/* =====================================================================
+   SEÇÃO 11 — ESCOLHAS DESTA VERSÃO
+   ===================================================================== */
+const ESC=[
+ ["Item que faltou na prateleira","O pedido segue com o que foi achado e o que faltou sai dele; técnico (app) e aprovador (e-mail) recebem a lista da falta, e o item entra na próxima onda de contagem daquele estoque. Nada vai para o Omie na separação."],
+ ["Separar com transferência pendente","O pedido pode ser separado sem o item que espera transferência; se a transferência for confirmada depois, o pedido volta para a Separação para completar e só fica pronto para retirada de novo quando você concluir."],
+ ["Transferência parcial","Confirmar menos do que foi pedido tira o resto do pedido, com o mesmo aviso da recusa ao técnico e ao aprovador."],
+ ["Recusa de transferência","O item fica só com o que o contrato já tinha; o resto do pedido segue; se o pedido ficar sem nenhum item, ele é encerrado como “Não atendido”. Recusa exige motivo e não dá para desfazer."],
+ ["Origem da transferência","Só Base, DPSP e Profarma, e só o saldo livre (saldo do Omie menos o que já está aprovado e não entregue); o estoque de destino não aparece como origem e equipes nunca."],
+ ["Omie com menos do que foi separado","Na retirada o saldo é relido; entrega-se o que o Omie tem, a diferença física fica no balcão e entra na contagem. Nunca se grava saldo negativo."],
+ ["EPI e uniforme na retirada","Saem como saída do Omie com o nome do técnico, entram na ficha dele, e a mesma assinatura da retirada vale para a ficha (não há termo separado nesta entrega)."],
+ ["Retirada antes da data marcada","Pedido já separado pode ser entregue antes do dia marcado, com o aviso “marcada para…”; depois das 10h o técnico ainda retira até o fim do dia."],
+ ["Modo balcão no tablet","A retirada no tablet abre sem o menu lateral do hub, e a tela muda de cor no topo quando está com o técnico, para ele não navegar pelo sistema."],
+ ["Omie sem resposta","A entrega fica registrada na hora; o sistema tenta gravar sozinho a cada 5 minutos, até 5 vezes, e só então aparece em “Falhas no Omie” no Início, com “tentar de novo”."],
+ ["Conferência da devolução","O almox só pode receber igual ou menos do que o técnico declarou; o que não chegou continua no estoque da equipe e o técnico é avisado."],
+ ["Devolução começa pelo celular","Nesta versão a devolução só nasce do pedido do técnico no app; o balcão não abre devolução sozinho."],
+ ["Quem cuida de convite e bloqueio","Só almoxarife e administrador cadastram, geram e reemitem convite, bloqueiam e desbloqueiam; o aprovador não."],
+ ["Reemitir convite","Invalida o link anterior, desconecta o celular e obriga a criar PIN novo; é o caminho do “esqueci o PIN”. Em quem está bloqueado, o bloqueio sai quando ele cria o PIN novo."],
+ ["Bloquear","Não cancela pedidos em andamento; só impede entrar, pedir e assinar até desbloquear. Desbloquear mantém o PIN e zera as tentativas, inclusive antes dos 15 minutos do bloqueio automático."],
+ ["Cadastro pelo RH","A busca mostra só pessoas ativas no RH, com nome, cargo e CPF mascarado; quem não está no RH entra à mão. Celular é opcional: sem ele, a pessoa só assina no tablet."],
+ ["Cartões do Início fora desta rodada","Entregas de fornecedor e contagem da semana aparecem no Início, mas as telas de Recebimento e Inventário ficam para a rodada 2B."],
+ ["Folha de separação","Uma folha só com hoje e amanhã, agrupada por pedido, emergenciais primeiro; marca EPI com o nome da ficha e lista o que espera transferência como “não separar ainda”."],
+];
+function s11Render(){
+  $("#sec-11").innerHTML=`${secH("Para o Jose e o almox responderem","11","Escolhas desta versão","Pontos em que o desenho não dizia como fazer, e o mockup escolheu. Se algum estiver errado, responda pelo WhatsApp com a letra.")}
+  <div class="sup">${ESC.map(([t,x],k)=>`<div class="card"><span class="lt">${String.fromCharCode(97+k)}</span><p><b>${t}.</b> ${x}</p></div>`).join("")}</div>`;
+}
+
+/* =====================================================================
+   NAVEGAÇÃO E EVENTOS
+   ===================================================================== */
+const R={5:s5Render,6:s6Render,7:s7Render,8:s8Render,9:s9Render,10:s10Render,11:s11Render};
+const SECS=["5","6","7","8","9","10","11"];
+function renderTudo(){SECS.forEach(k=>R[k]());}
+function irSec(v){
+  G.sec=v;SECS.forEach(k=>{$(`#sec-${k}`).hidden=k!==v;$(`#tab-${k}`).setAttribute("aria-selected",String(k===v));});
+  R[v]();
+  if(location.hash!==`#secao-${v}`)history.replaceState(null,"",`#secao-${v}`);
+}
+function marcaHora(){document.querySelectorAll("#seg-hora button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===G.hora)));}
+const pedN=v=>PD.find(p=>p.n===Number(v));
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-a]");if(!el)return;
+  const a=el.dataset.a,v=el.dataset.v;
+  switch(a){
+    case "sec":fechar();irSec(v);window.scrollTo({top:0});break;
+    case "hora":G.hora=v;marcaHora();renderTudo();break;
+    case "fechar":fechar();break;
+    case "sh-menu":el.closest(".shell").dataset.gaveta="sim";break;
+    case "sh-fecha":el.closest(".shell").dataset.gaveta="nao";break;
+    case "estado":{const s=el.dataset.s;({5:S5,6:S6,7:S7,8:S8,9:S9,10:S10})[s].estado=v;R[s]();break;}
+    /* 5 */
+    case "s5-tentar":tentar(S5,s5Render);break;
+    case "s5-como":S5.como=v;s5Render();break;
+    case "s5-ir":if(v==="falhas")falhasDlg();else if(v.startsWith("fora:")){S5.nota=`<b>Mockup</b> A tela de ${v.slice(5)} entra na rodada 2B. Aqui o cartão só mostra o número do dia.`;s5Render();}else{S5.nota=null;irSec(v);window.scrollTo({top:0});}break;
+    case "s5-falhas":falhasDlg();break;
+    case "s5-retry":{const t=TAR.find(x=>x.id===v);t.st="tentando";falhasDlg();setTimeout(()=>{t.st="ok";if(dlg.open)falhasDlg();s5Render();},1300);break;}
+    case "s5-sep":S6.sel=Number(v);S6.msg=null;irSec("6");window.scrollTo({top:0});break;
+    case "s5-ret":Object.assign(S7,{tela:"conf",sel:Number(v),conf:false,pin:"",tr:[],pinErr:0,erro:"",estado:"dados"});irSec("7");window.scrollTo({top:0});break;
+    case "s5-tr":S8.sel=v;S8.msg=null;irSec("8");window.scrollTo({top:0});break;
+    case "s5-dev":S9.sel=v;S9.fase="conf";irSec("9");window.scrollTo({top:0});break;
+    /* 6 */
+    case "s6-sel":S6.sel=Number(v);S6.msg=null;s6Render();if(window.innerWidth<980)$("#s6-det")?.scrollIntoView({behavior:"smooth",block:"start"});break;
+    case "s6-q":{const pd=pedN(S6.sel);const i=pd.itens[Number(v)];i.sep=Math.max(0,Math.min(aSep(i),i.sep+Number(el.dataset.d)));s6Render();break;}
+    case "s6-tudo":{const pd=pedN(S6.sel);const i=pd.itens[Number(v)];i.sep=aSep(i);s6Render();break;}
+    case "s6-concluir":s6ConcluirDlg(Number(v));break;
+    case "s6-concluir-ok":s6Concluir(Number(v));break;
+    case "s6-folha":s6Folha();break;
+    case "s6-tr":S8.sel=v;S8.msg=null;irSec("8");window.scrollTo({top:0});break;
+    case "s6-tentar":tentar(S6,s6Render);break;
+    /* 7 */
+    case "s7-abrir":Object.assign(S7,{tela:"conf",sel:Number(v),conf:false,pin:"",tr:[],pinErr:0,erro:""});s7Render();break;
+    case "s7-tela":S7.tela=v;S7.erro="";if(v==="lista"){S7.sel=null;S7.conf=false;}if(v==="assina"){S7.pin="";S7.tr=[];}s7Render();break;
+    case "s7-ok":s7Confirmar();break;
+    case "s7-nova":Object.assign(S7,{tela:"lista",sel:null,conf:false,pin:"",tr:[],res:null});s7Render();break;
+    case "s7-omie":S7.omieOk=v==="ok";s7Render();break;
+    case "s7-tentar":tentar(S7,s7Render);break;
+    case "pin":{const st=SIG[el.dataset.s]();if(st.pin.length<6){st.pin+=v;st.erro="";R[el.dataset.s==="s7"?"7":"9"]();}break;}
+    case "pin-del":{const st=SIG[el.dataset.s]();st.pin=st.pin.slice(0,-1);R[el.dataset.s==="s7"?"7":"9"]();break;}
+    case "sig-limpa":{const st=SIG[el.dataset.s]();st.tr=[];R[el.dataset.s==="s7"?"7":"9"]();break;}
+    /* 8 */
+    case "s8-sel":S8.sel=v;S8.msg=null;s8Render();if(window.innerWidth<980)$("#s8-det")?.scrollIntoView({behavior:"smooth",block:"start"});break;
+    case "s8-q":S8.q[v]=(S8.q[v]||0)+Number(el.dataset.d);s8Render();break;
+    case "s8-ok":s8Confirma(v);break;
+    case "s8-recusar":S8.mot="";s8RecusaDlg(v);break;
+    case "s8-recusa-ok":{const m=$("#s8-motivo").value.trim();if(m.length<5){S8.mot=m;s8RecusaDlg(v,"Escreva o motivo. O técnico e o aprovador precisam saber por que não vem.");break;}
+      const x=trFila().find(t=>t.k===v);const {pd,i}=x,p=PID[i.id];const n=i.transf;i.ap-=i.transf;i.transf=0;
+      const enc=!pd.itens.some(j=>j.ap>0);if(enc)pd.etapa="encerrado";
+      S8.msg={html:`<b>Transferência recusada.</b> ${n} ${p.un} de ${esc(p.d)} saíram do pedido #${pd.n}. ${pd.tec} (app) e ${pd.por} (e-mail) receberam o seu motivo.${enc?" O pedido ficou sem itens e foi encerrado como “Não atendido”.":""}`};
+      S8.sel=null;fechar();s5Render();s6Render();s8Render();break;}
+    case "s8-tentar":tentar(S8,s8Render);break;
+    /* 9 */
+    case "s9-mais":{const p=PID[v];S9.q[v]=Math.min(pode9(p),(S9.q[v]||0)+1);S9.phErro="";s9Render();break;}
+    case "s9-menos":S9.q[v]=Math.max(0,(S9.q[v]||0)-1);if(!S9.q[v])delete S9.q[v];s9Render();break;
+    case "s9-ph":S9.ph=v;s9Render();break;
+    case "s9-pedir":{const ids=Object.keys(S9.q).filter(k=>S9.q[k]>0);if(!ids.length){S9.phErro="Toque em “Devolver” em pelo menos um item.";s9Render();break;}
+      const n=`D-${String(devN++).padStart(4,"0")}`;DEV.push({n,tec:TEC9.nome,eq:TEC9.eq,ct:TEC9.ct,em:agora(),mot:S9.mot,itens:ids.map(id=>({id,q:S9.q[id],c:S9.q[id]})),st:"conferir"});
+      S9.q={};S9.ultima=n;S9.ph="ok";S9.sel=n;S9.fase="conf";S9.fim=null;S9.pin="";S9.tr=[];s9Render();s5Render();break;}
+    case "s9-sel":Object.assign(S9,{sel:v,fase:"conf",pin:"",tr:[],pinErr:0,erro:"",fim:null});s9Render();break;
+    case "s9-q":{const d=DEV.find(x=>x.n===S9.sel);const x=d.itens[Number(v)];x.c=Math.max(0,Math.min(x.q,x.c+Number(el.dataset.d)));s9Render();break;}
+    case "s9-assina":S9.fase="assina";S9.pin="";S9.tr=[];S9.erro="";s9Render();break;
+    case "s9-voltar":S9.fase="conf";s9Render();break;
+    case "s9-ok":s9Confirmar();break;
+    case "s9-tentar":tentar(S9,s9Render);break;
+    /* 10 */
+    case "s10-cad":S10.cad={modo:"rh",busca:"",esc:null,nome:"",cpf:"",eq:"",cel:"",erro:""};cadDlg();break;
+    case "s10-modo":S10.cad.modo=v;S10.cad.erro="";cadDlg();break;
+    case "s10-rh":{S10.cad.esc=v;S10.cad.erro="";const r=RHC.find(x=>x.id===v);document.querySelectorAll("#rh-res button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===v)));if(r&&!S10.cad.nome)S10.cad.nome=r.nome;break;}
+    case "s10-salvar":s10Salvar();break;
+    case "s10-conv":{const c=COL.find(x=>x.id===Number(v));c.conv={tok:tok(),ate:addUteis(hoje(),5)};c.ac="convite";S10.msg=null;s10Render();convDlg(c.id,true);break;}
+    case "s10-ver":convDlg(Number(v),false);break;
+    case "s10-reem":reemDlg(Number(v));break;
+    case "s10-reem-ok":{const c=COL.find(x=>x.id===Number(v));c.conv={tok:tok(),ate:addUteis(hoje(),5)};c.ac="convite";c.info="";S10.msg=`<b>Convite novo de ${esc(c.nome)}.</b> O link anterior parou de funcionar${c.cel?" e o celular dele foi desconectado":""}.`;s10Render();convDlg(c.id,true);break;}
+    case "s10-bloq":bloqDlg(Number(v));break;
+    case "s10-bloq-ok":{const c=COL.find(x=>x.id===Number(v));const m=$("#bq-mot").value;c.ac="bloqueado";c.info=`Bloqueado por ${ALMOX} em ${fmtD(hoje())} ${G.hora} · ${m}`;S10.msg=`<b>${esc(c.nome)} bloqueado.</b> Ele saiu do app e não entra até ser desbloqueado.`;fechar();s10Render();break;}
+    case "s10-desb":desbDlg(Number(v));break;
+    case "s10-desb-ok":{const c=COL.find(x=>x.id===Number(v));c.ac="ativo";c.info=`Desbloqueado por ${ALMOX} em ${fmtD(hoje())} ${G.hora}`;S10.msg=`<b>${esc(c.nome)} desbloqueado.</b> Ele já pode entrar com o mesmo PIN.`;fechar();s10Render();break;}
+    case "s10-limpa":S10.busca="";S10.fil="todos";s10Render();break;
+    case "s10-tentar":tentar(S10,s10Render);break;
+    case "cv-copiar":{const inp=$("#cv-link"),st=$("#cv-st");const falha=()=>{inp.focus();inp.select();st.textContent="Não deu para copiar sozinho. O link está selecionado: use Ctrl+C (no celular, segure e copie).";};
+      try{navigator.clipboard.writeText(inp.value).then(()=>{st.textContent="Link copiado.";},falha);}catch(_){falha();}break;}
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.id==="s10-busca"){S10.busca=t.value;$("#s10-corpo").innerHTML=s10Linhas();}
+  else if(t.id==="rh-busca"){S10.cad.busca=t.value;const jaTem=nome=>COL.some(c=>c.nome===nome);$("#rh-res").innerHTML=rhRes(RHC.filter(r=>!t.value||casa(`${r.nome} ${r.cargo}`,t.value)),jaTem);}
+  else if(t.id==="cad-nome")S10.cad.nome=t.value;
+  else if(t.id==="cad-cpf")S10.cad.cpf=t.value;
+  else if(t.id==="cad-cel")S10.cad.cel=t.value;
+  else if(t.id==="s8-motivo")S8.mot=t.value;
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.sq!=null){const pd=pedN(S6.sel);const i=pd.itens[Number(t.dataset.sq)];i.sep=Math.max(0,Math.min(aSep(i),Math.floor(Number(t.value)||0)));s6Render();}
+  else if(t.id==="s7-curto"){S7.curto=t.checked;s7Render();}
+  else if(t.id==="s7-conf"){S7.conf=t.checked;const b=$("#s7-passar");if(b){const pd=pedN(S7.sel);b.disabled=!(S7.conf&&entregaItens(pd).some(x=>x.q>0));}}
+  else if(t.name==="s8-orig"){const x=s8Atual();S8.orig[x.k]=t.value;delete S8.q[x.k];s8Render();}
+  else if(t.id==="s8-qtd"){const x=s8Atual();S8.q[x.k]=Math.floor(Number(t.value)||1);s8Render();}
+  else if(t.id==="s9-mot")S9.mot=t.value;
+  else if(t.dataset.cq!=null){const d=DEV.find(x=>x.n===S9.sel);const x=d.itens[Number(t.dataset.cq)];x.c=Math.max(0,Math.min(x.q,Math.floor(Number(t.value)||0)));s9Render();}
+  else if(t.id==="s10-fil"){S10.fil=t.value;$("#s10-corpo").innerHTML=s10Linhas();}
+  else if(t.id==="cad-eq")S10.cad.eq=t.value;
+});
+window.addEventListener("hashchange",()=>{const m=location.hash.match(/^#secao-(5|6|7|8|9|10|11)$/);if(m)irSec(m[1]);});
+let rzT;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(G.sec==="7")s7Render();if(G.sec==="9")s9Render();},200);});
+
+marcaHora();
+{const m=location.hash.match(/^#secao-(5|6|7|8|9|10|11)$/);irSec(m?m[1]:"5");}
+</script>
