@@ -1,0 +1,834 @@
+<title>Almoxarifado rodada 2C</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Rodada 2C: Papéis, Configurações e Estrutura COMO ESTÃO NO CÓDIGO (branch fase-1, c8157b9).
+   Tokens e componentes copiados da 2B; a moldura segue components/app/app-shell.tsx (topo de 56 px com nome e papel
+   no computador, Papéis e Sair no pé da lateral, barra inferior Início + Menu no celular), que difere da moldura das rodadas 1/2A/2B. */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--navy-hover:#10285f;--orange:#f05a28;--orange-hover:#d94e22;
+  --muted:#94a3b8;--muted-dark:#4a6080;--border:#1e3a5f;--input-bg:#0f1f3d;--error:#ef4444;
+  --texto:#ffffff;--texto-suave:#e8eef7;
+  --verde-bg:#0d542b;--verde:#7bf1a8;--ambar-bg:#7b3306;--ambar:#ffd230;
+  --vermelho-bg:#82181a;--vermelho:#ffa2a2;--azul-bg:#1c398e;--azul:#8ec5ff;
+  --erro-borda:#e7000b;--erro-fundo:#460809;--ok-borda:#008236;--ok-fundo:#052e16;
+  --aux:var(--muted);
+  --nota:#fbbf24;--nota-fundo:#2a2108;--nota-borda:#7a5c0e;--mk-fundo:#060e1c;--frame:#050b16;
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto)}
+body{margin:0;font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.label-mono{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:500;color:var(--aux)}
+.sp{flex:1}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ------------------------------ fora do produto: o mockup ------------------------------ */
+.wrap,.mk-in{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mk-cab{background:var(--mk-fundo)}
+.mk-cab .wrap{padding-block:12px 4px}
+.mk-tit{font-weight:600;color:var(--nota)}
+.mk-tit small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.mk-bar{position:sticky;top:0;z-index:20;background:var(--mk-fundo);border-bottom:1px dashed var(--nota-borda)}
+.mk-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:8px}
+.mk-tabs{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.mk-tab{border:1px dashed var(--nota-borda);background:transparent;color:var(--texto-suave);border-radius:8px;min-height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
+.mk-tab:hover{border-color:var(--nota)}
+.mk-tab[aria-selected="true"]{background:var(--nota);border:1px solid var(--nota);color:#1a1405;font-weight:600}
+.mk-data{font-size:12px;color:var(--muted)}
+@media (max-width:640px){.mk-data{display:none}.mk-tab{padding:0 9px}}
+.seg{display:inline-flex;border:1px dashed var(--nota-borda);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:6px;padding:4px 9px;font-size:12px;color:var(--texto-suave)}
+.seg button:hover{background:var(--nota-fundo)}
+.seg button[aria-pressed="true"]{background:var(--nota);color:#1a1405;font-weight:600}
+.mk-ctrl{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--texto-suave);padding:10px 12px;border:1px dashed var(--nota-borda);border-radius:10px;background:var(--nota-fundo);margin-bottom:16px}
+.mk-ctrl .ln{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.mk-ctrl b{font-weight:600;color:var(--nota)}
+.mk-ctrl .dica{color:var(--muted)}
+.mk-nota{border:1px dashed var(--nota-borda);background:var(--nota-fundo);color:var(--texto-suave);border-radius:10px;padding:12px 14px;font-size:13px}
+.mk-nota b{color:var(--nota)}
+details.mk-msg{margin-top:16px;border:1px dashed var(--nota-borda);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--texto-suave);background:transparent}
+details.mk-msg summary{cursor:pointer;color:var(--nota);font-weight:600;min-height:28px;display:flex;align-items:center}
+details.mk-msg ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+details.mk-msg code{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+main.pg{padding-block:20px 80px}
+.sec-h{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.sec-h h1{font-size:22px;font-weight:700;color:var(--texto)}
+.sec-h p{color:var(--muted);max-width:76ch}
+
+/* ------------------------------ componentes do hub (copiados da 2B) ------------------------------ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 16px;border-radius:8px;border:1px solid transparent;background:var(--orange);color:#fff;font-size:14px;font-weight:500;white-space:nowrap;transition:background-color .15s,border-color .15s,transform .15s;text-decoration:none}
+.btn:hover{background:var(--orange-hover)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-outline{background:transparent;border-color:var(--border);color:var(--texto-suave)}
+.btn-outline:hover{background:transparent;border-color:var(--muted)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn-ghost:hover{background:var(--border);color:#fff}
+.btn-sm{min-height:32px;padding:0 12px;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:500;line-height:1.45;white-space:nowrap;background:var(--orange);color:#fff;vertical-align:1px}
+.badge.b-outline{background:transparent;border:1px solid var(--border);color:var(--texto-suave)}
+.card{background:var(--navy);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.c-h{display:flex;flex-direction:column;gap:4px}
+.c-t{font-size:16px;font-weight:600;color:#fff;line-height:1.3}
+.c-d{font-size:14px;color:var(--muted)}
+.c-err{font-size:14px;color:var(--vermelho)}
+.c-mut{font-size:14px;color:var(--muted)}
+.inp{min-height:36px;width:100%;border:1px solid var(--border);background:var(--input-bg);color:#fff;border-radius:8px;padding:0 12px;font-size:14px;min-width:0;outline:none}
+.inp::placeholder{color:var(--muted-dark)}
+.inp:focus{border-color:var(--orange)}
+.inp[disabled]{opacity:.5;cursor:not-allowed}
+.inp.inv{border-color:var(--erro-borda)}
+textarea.inp{padding:10px 12px;resize:vertical;line-height:1.5}
+select.inp{padding-right:8px}
+.campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.campo>label,.lbl{font-size:14px;font-weight:500;color:var(--texto-suave)}
+.campo>label .dc{color:var(--muted);font-weight:400}
+.campo.erro>label{color:var(--vermelho)}
+.f-msg{font-size:13px;color:var(--vermelho)}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--texto-suave);cursor:pointer;white-space:nowrap;min-height:44px}
+.chk input{width:16px;height:16px;flex:none}
+fieldset.dias{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+fieldset.dias legend{font-size:14px;font-weight:500;color:var(--texto-suave);padding:0;margin-bottom:4px}
+fieldset.dias .row{display:flex;flex-wrap:wrap;gap:0 12px}
+.stack{display:flex;flex-direction:column;gap:24px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+
+/* Tabela do shadcn: rola de lado, sem virar cartão no celular */
+.tbl-sc{overflow-x:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{padding:8px 8px;text-align:left;font-weight:500;color:#fff;white-space:nowrap;border-bottom:1px solid var(--border);height:40px}
+.tbl td{padding:8px 8px;white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--texto-suave)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:rgba(30,58,95,.45)}
+.tbl td.r{text-align:right}
+.tbl td.wn{white-space:normal;min-width:260px}
+.uuid{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* Moldura: components/app/app-shell.tsx + menu-lateral.tsx + barra-inferior.tsx */
+.shell{container:sh/inline-size;position:relative;isolation:isolate;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background);display:flex;min-height:620px}
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;max-width:85%;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+.shell[data-gaveta="sim"] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:flex;align-items:center;gap:8px;color:#fff}
+.volta{color:var(--muted);font-size:12px;display:inline-flex;align-items:center;min-height:44px}
+.lat-fecha{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px;width:44px;height:44px}
+.lat-fecha:hover{color:#fff}
+.lat-nav{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;align-items:center;width:100%;min-height:44px;padding:8px;border-radius:4px;font-size:14px;color:var(--muted);border:0;background:transparent;text-align:left;transition:background-color .15s,color .15s}
+.item:hover{background:var(--border);color:#fff}
+.item[aria-current="page"]{background:var(--orange);color:#fff}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.sh-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.topo-cel{position:sticky;top:0;z-index:20;flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:12px 16px}
+.topo-cel .lat-nome{font-size:18px}
+.topo-desk{display:none;position:sticky;top:0;z-index:20;height:56px;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:var(--background);padding:0 24px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+.topo-desk .ic-btn{width:36px;height:36px}
+.quem{display:flex;align-items:center;gap:12px}
+.quem-txt{display:none;text-align:right;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500;color:#fff}
+.quem-txt span{color:var(--muted)}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;color:#fff;flex:none}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+.shell[data-gaveta="sim"] .veu{display:block}
+.sh-main{container:area/inline-size;flex:1;min-width:0;padding:16px 16px 96px}
+.barra-inf{position:sticky;bottom:0;z-index:30;display:flex;border-top:1px solid var(--border);background:var(--navy)}
+.barra-inf button{flex:1;min-height:56px;border:0;background:transparent;color:var(--muted);font-size:11.2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.barra-inf button[aria-current="page"]{color:var(--orange);font-weight:600}
+@container sh (min-width:640px){.sh-main{padding:32px 32px 96px}}
+@container sh (min-width:768px){
+  .topo-cel,.veu,.barra-inf{display:none!important}
+  .topo-desk{display:flex}
+  .lat{position:static;z-index:auto;transform:none;visibility:visible;max-width:none;transition:none}
+  .shell[data-lat="nao"] .lat{display:none}
+  .lat-fecha{width:28px;height:28px}
+  .item{min-height:0}
+  .volta{min-height:0}
+  .sh-main{padding-bottom:32px}
+}
+@container sh (min-width:1024px){.quem-txt{display:block}}
+/* Cabeçalho da página: components/app/cabecalho-pagina.tsx */
+.cab{margin-bottom:24px;display:flex;flex-direction:column;gap:8px}
+.cab-volta{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:14px;min-height:44px;border:0;background:none;padding:0;align-self:flex-start}
+.cab-volta:hover{color:#fff}
+.cab-l{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.cab h2{font-size:24px;line-height:32px;font-weight:700;color:#fff;overflow-wrap:anywhere}
+.cab p{font-size:14px;color:var(--aux);margin-top:4px}
+@container sh (min-width:768px){.cab-volta{min-height:0}}
+
+/* Grades dos formulários (as classes sm: do Tailwind valem a partir de 640 px de largura da tela) */
+.g{display:grid;gap:16px}
+@container sh (min-width:640px){
+  .g-pap{grid-template-columns:1fr 11rem auto;align-items:end}
+  .g-cfg{grid-template-columns:1fr 1fr}
+  .g-cfg .span2{grid-column:1/-1}
+  .g-est{grid-template-columns:1fr 1fr 2fr 12rem auto;align-items:end}
+  .g-con{grid-template-columns:1fr 1fr 1fr auto auto;align-items:end}
+  .g-equ{grid-template-columns:1fr 1fr 1fr 1fr auto;align-items:end}
+  .sel-80{max-width:20rem}
+}
+.loc-f{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-end;gap:8px}
+.loc-f .campo{width:11rem}
+.acoes-l{display:flex;justify-content:flex-end;gap:4px}
+
+/* Celular (moldura do aparelho, igual à 2B) */
+.phone{width:390px;max-width:100%;height:800px;border:11px solid var(--frame);border-radius:46px;overflow:hidden;display:flex;flex-direction:column;background:var(--background);box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px var(--border);margin:0 auto}
+.ph-notch{height:26px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600;background:var(--navy);color:#fff}
+.ph-scroll{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.ph-scroll .shell{border:0;border-radius:0;min-height:100%;overflow:visible}
+@media (max-width:520px){.phone{width:100%;height:auto;border:1px solid var(--border);border-radius:12px;box-shadow:none}.ph-notch{display:none}.ph-scroll{overflow:visible}}
+
+/* Sonner: aviso no canto de baixo à direita */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:300;display:flex;flex-direction:column;gap:8px;width:min(356px,calc(100vw - 32px))}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;border-radius:8px;background:#0b1a33;border:1px solid var(--border);color:#fff;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tin .2s ease-out}
+.toast .ti{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px}
+.toast.ok .ti{background:var(--verde);color:#052e16}
+.toast.er .ti{background:var(--error);color:#fff}
+.toast.in{border-style:dashed;border-color:var(--nota-borda)}.toast.in .ti{background:var(--nota);color:#1a1405}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+/* Caixa de confirmação do próprio navegador (window.confirm) */
+dialog.nat{border:1px solid #3c4043;border-radius:12px;padding:0;background:#292a2d;color:#e8eaed;width:min(450px,calc(100vw - 32px));box-shadow:0 12px 40px rgba(0,0,0,.6);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+dialog.nat::backdrop{background:rgba(0,0,0,.35)}
+.nat-in{padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px}
+.nat-o{font-size:14px;font-weight:500}
+.nat-m{font-size:13px;line-height:1.5;color:#e8eaed}
+.nat-b{display:flex;justify-content:flex-end;gap:8px}
+.nat-b button{border-radius:999px;padding:7px 18px;font-size:13px;font-weight:500;border:1px solid #5f6368;background:transparent;color:#8ab4f8}
+.nat-b button.p{background:#8ab4f8;border-color:#8ab4f8;color:#202124}
+.nat-tag{font-size:11px;color:var(--nota);padding:6px 24px;border-top:1px dashed var(--nota-borda);background:var(--nota-fundo)}
+</style>
+
+<header class="mk-cab"><div class="wrap"><div class="mk-tit">Almoxarifado · mockup<small>Rodada 2C · 12/11/2026 · telas já construídas no código, mostradas como estão · responda pelo WhatsApp citando o número da seção</small></div></div></header>
+<div class="mk-bar">
+  <div class="mk-in">
+    <div class="mk-tabs" role="tablist" aria-label="Seções do mockup">
+      <button class="mk-tab" role="tab" data-a="sec" data-v="19" id="tab-19">19 · Papéis</button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="20" id="tab-20">20 · Configurações</button>
+      <button class="mk-tab" role="tab" data-a="sec" data-v="21" id="tab-21">21 · Estoques, contratos e equipes</button>
+    </div>
+    <div class="sp"></div>
+    <span class="mk-data">Dia simulado: qui 12/11/2026 · dados fictícios</span>
+  </div>
+</div>
+
+<main class="pg wrap">
+  <section id="sec-19" hidden></section>
+  <section id="sec-20" hidden></section>
+  <section id="sec-21" hidden></section>
+</main>
+
+<div id="toasts" aria-live="polite"></div>
+<dialog class="nat" id="nat"><div class="nat-in"><div class="nat-o">hub.manfac.com.br diz</div><div class="nat-m" id="nat-m"></div><div class="nat-b"><button type="button" data-a="nat-ok" class="p">OK</button><button type="button" data-a="nat-nao">Cancelar</button></div></div><div class="nat-tag">Mockup: no sistema esta é a caixa padrão do navegador (o visual muda de um navegador para outro).</div></dialog>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const T0=Date.now();
+const relogio=()=>{const m=9*60+40+Math.floor((Date.now()-T0)/6e4);return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;};
+const agora=()=>`12/11/2026 ${relogio()}`;
+let SEQ=0;
+const uid=()=>{SEQ++;const h=(n,l)=>((n*2654435761)>>>0).toString(16).padStart(8,"0").slice(0,l);return `${h(SEQ,8)}-${h(SEQ+7,4)}-4${h(SEQ+3,3)}-a${h(SEQ+11,3)}-${h(SEQ+5,8)}${h(SEQ+9,4)}`;};
+const espera=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- avisos (sonner) e confirmação do navegador ---------- */
+function toast(tipo,msg){
+  const t=document.createElement("div");t.className=`toast ${tipo}`;t.setAttribute("role","status");
+  t.innerHTML=`<span class="ti" aria-hidden="true">${tipo==="ok"?"✓":tipo==="in"?"i":"!"}</span><span>${esc(msg)}</span>`;
+  $("#toasts").appendChild(t);setTimeout(()=>t.remove(),4200);
+}
+let natResolve=null;
+function confirmar(msg){$("#nat-m").textContent=msg;$("#nat").showModal();return new Promise(r=>{natResolve=r;});}
+$("#nat").addEventListener("close",()=>{if(natResolve){natResolve(false);natResolve=null;}});
+
+/* ---------- quem está vendo ---------- */
+const PESSOA={
+  admin:{nome:"Renata Alves",email:"renata.alves@manfac.com.br",papel:"Admin",ini:"RA"},
+  outro:{nome:"Paulo Mendes",email:"paulo.mendes@manfac.com.br",papel:"Almoxarife",ini:"PM"},
+};
+/* Contas que existem no hub nesta simulação (almox_conta_existe). */
+const HUB=["ana.ribeiro@manfac.com.br","bruno.teixeira@manfac.com.br","carla.souza@manfac.com.br","fernanda.costa@manfac.com.br","lucas.prado@manfac.com.br","marcos.lima@manfac.com.br","paulo.mendes@manfac.com.br","renata.alves@manfac.com.br","tiago.nunes@manfac.com.br"];
+
+/* ---------- dados da estrutura (compartilhados pelas três seções) ---------- */
+const ID={};
+const LOCAIS_OMIE=[
+  {codigo:4865230001,sigla:"BASE",descricao:"Almoxarifado Base"},
+  {codigo:4865230030,sigla:null,descricao:"Depósito Guarulhos"},
+  {codigo:4865230002,sigla:"DPSP",descricao:"Estoque contrato DPSP"},
+  {codigo:4865230003,sigla:"PROFARMA",descricao:"Estoque contrato Profarma"},
+  {codigo:4865230011,sigla:"MANFAC 1",descricao:"MANFAC 1 Centro"},
+  {codigo:4865230012,sigla:"MANFAC 2",descricao:"MANFAC 2 Zona Leste"},
+  {codigo:4865230025,sigla:"MANFAC-25",descricao:"MANFAC-25 Campinas"},
+  {codigo:4865230007,sigla:"MANFAC 7",descricao:"MANFAC 7 Osasco"},
+  {codigo:4865230009,sigla:"MANFAC 9",descricao:"MANFAC 9 Zona Sul"},
+  {codigo:4865230004,sigla:"PROFARMA RJ",descricao:"Profarma Rio de Janeiro"},
+].sort((a,b)=>a.descricao.localeCompare(b.descricao,"pt-BR"));
+const D={estoques:[],contratos:[],equipes:[],locais:[],papeis:[]};
+let papeisCheios=()=>{};
+function dadosCheios(){
+  const E=(codigo,descricao,tipo,omie,ativo=true)=>{const id=uid();ID[codigo]=id;return {id,codigo,descricao,tipo,omie,ativo,em:"t0"};};
+  D.estoques=[
+    E("BASE","Almoxarifado Base","base",4865230001),
+    E("CONSERTO","Ferramentas em conserto","conserto",null),
+    E("DPSP","Estoque contrato DPSP","contrato",4865230002),
+    E("PROFARMA","Estoque contrato Profarma","contrato",4865230003),
+    E("MANFAC 1","MANFAC 1 Centro","equipe",4865230011),
+    E("MANFAC 2","MANFAC 2 Zona Leste","equipe",4865230012),
+    E("MANFAC 7","MANFAC 7 Osasco","equipe",4865230007,false),
+    E("MANFAC-25","MANFAC-25 Campinas","equipe",4865230025),
+  ];
+  const C=(nome,est,cc,spot,ativo=true)=>{const id=uid();ID["c:"+nome]=id;return {id,nome,estoque:ID[est],cc,spot,ativo,em:"t0"};};
+  D.contratos=[
+    C("Condomínio Vila Real","BASE","CC-410",false,false),
+    C("DPSP Capital","DPSP","CC-123",false),
+    C("Obras e Spot","BASE","CC-300",true),
+    C("Profarma Interior","PROFARMA","CC-210",false),
+  ];
+  const Q=(nome,est,con,field,ativa=true)=>({id:uid(),nome,estoque:ID[est],contrato:ID["c:"+con],field,ativa,em:"t0",usada:true});
+  D.equipes=[
+    Q("MANFAC 1","MANFAC 1","DPSP Capital","dep-1042"),
+    Q("MANFAC 2","MANFAC 2","Profarma Interior",null),
+    Q("MANFAC 7","MANFAC 7","Condomínio Vila Real","dep-0977",false),
+    Q("MANFAC-25","MANFAC-25","DPSP Capital","dep-1187"),
+  ];
+  D.locais=LOCAIS_OMIE.slice();
+  const P=(email,papel,con,por,em,rev)=>({id:uid(),email,papel,contrato:con?ID["c:"+con]:null,ativo:!rev,por,em,revPor:rev?rev[0]:null,revEm:rev?rev[1]:null});
+  papeisCheios=()=>{D.papeis=[
+    P("ana.ribeiro@manfac.com.br","aprovador","DPSP Capital","renata.alves@manfac.com.br","10/11/2026 15:20"),
+    P("ana.ribeiro@manfac.com.br","aprovador","Profarma Interior","renata.alves@manfac.com.br","10/11/2026 15:22"),
+    P("carla.souza@manfac.com.br","gestor",null,"renata.alves@manfac.com.br","10/11/2026 15:25"),
+    P("lucas.prado@manfac.com.br","almoxarife",null,"renata.alves@manfac.com.br","10/11/2026 15:30",["renata.alves@manfac.com.br","11/11/2026 09:12"]),
+    P("lucas.prado@manfac.com.br","gestor",null,"renata.alves@manfac.com.br","11/11/2026 09:13"),
+    P("marcos.lima@manfac.com.br","almoxarife",null,"renata.alves@manfac.com.br","10/11/2026 15:31"),
+    P("paulo.mendes@manfac.com.br","almoxarife",null,"renata.alves@manfac.com.br","10/11/2026 15:31"),
+    P("renata.alves@manfac.com.br","admin",null,"tiago.nunes@manfac.com.br","10/11/2026 14:02"),
+    P("tiago.nunes@manfac.com.br","aprovador","Condomínio Vila Real","renata.alves@manfac.com.br","10/11/2026 15:40"),
+  ];ordenar();};
+  papeisCheios();
+}
+function dadosVazios(){D.estoques=[];D.contratos=[];D.equipes=[];D.locais=LOCAIS_OMIE.slice();}
+/* Ordem das consultas: estoques por tipo e código; contratos e equipes por nome; papéis por e-mail. */
+function ordenar(){
+  D.estoques.sort((a,b)=>a.tipo.localeCompare(b.tipo)||a.codigo.localeCompare(b.codigo));
+  D.contratos.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  D.equipes.sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const k=s=>s?s.replace(/(\d\d)\/(\d\d)\/(\d{4}) (.*)/,"$3$2$1 $4"):"";
+  D.papeis.sort((a,b)=>a.email.localeCompare(b.email)||k(b.em).localeCompare(k(a.em)));
+}
+dadosCheios();
+
+const ROT_PAPEL={aprovador:"Aprovador",almoxarife:"Almoxarife",gestor:"Gestor",admin:"Admin"};
+const PAPEIS=["aprovador","almoxarife","gestor","admin"];
+const ROT_TIPO={base:"Base",contrato:"Contrato",equipe:"Equipe",conserto:"Conserto (virtual)"};
+const TIPOS=["base","contrato","equipe","conserto"];
+
+/* ---------- estado do mockup por seção ---------- */
+const V={
+  19:{quem:"admin",estado:"dados",larg:"pc"},
+  20:{quem:"admin",estado:"dados",larg:"pc",mudou:false},
+  21:{quem:"admin",estado:"dados",larg:"pc"},
+};
+const PEND={};
+const F={
+  p19:{email:"",papel:"almoxarife",contrato:"",erros:{}},
+  est:{omie:"",codigo:"",descricao:"",tipo:"contrato"},
+  con:{nome:"",estoque:"",cc:"",spot:false},
+  equ:{nome:"",estoque:"",contrato:"",field:""},
+  loc:{},
+  cfg:{},
+};
+
+/* ---------- moldura do módulo ---------- */
+const IC_MENU=`<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>`;
+const IC_CASA=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>`;
+function shell(sec,ativo,corpo){
+  const v=V[sec],p=PESSOA[v.quem],admin=v.quem==="admin";
+  const itens=[["Início","/"],["Estoque","/estoque"],["Configurações","/configuracoes"]];
+  const nome=`<div><span class="lat-nome">Almoxarifado</span><span class="volta">← Voltar ao Hub</span></div>`;
+  const nav=itens.map(([r])=>`<button type="button" class="item" ${r===ativo?'aria-current="page"':""} ${r==="Configurações"?'data-a="sec" data-v="20"':'data-a="fora"'}>${r}</button>`).join("");
+  const pe=`${admin?`<button type="button" class="item" ${ativo==="Papéis"?'aria-current="page"':""} data-a="sec" data-v="19">Papéis</button>`:""}<button type="button" class="item" data-a="fora">Sair</button>`;
+  const s=`<div class="shell" data-gaveta="nao" data-lat="sim">
+    <aside class="lat" aria-label="Menu do módulo"><div class="lat-cab">${nome}<button type="button" class="lat-fecha" data-a="sh-fecha" aria-label="Fechar o menu">×</button></div>
+      <nav class="lat-nav" aria-label="Telas">${nav}</nav><div class="lat-pe">${pe}</div></aside>
+    <div class="sh-col">
+      <header class="topo-cel">${nome}<button type="button" class="ic-btn" data-a="sh-menu" aria-label="Abrir o menu">${IC_MENU}</button></header>
+      <header class="topo-desk"><button type="button" class="ic-btn" data-a="sh-lat" aria-label="Fechar a lateral">${IC_MENU}</button><div class="sp"></div>
+        <div class="quem"><div class="quem-txt"><b>${p.nome}</b><span>${p.papel}</span></div><span class="avatar" role="img" aria-label="${p.nome}, ${p.papel}">${p.ini}</span></div></header>
+      <main class="sh-main">${corpo}</main>
+      <nav class="barra-inf" aria-label="Atalhos"><button type="button" ${ativo==="Início"?'aria-current="page"':""} data-a="fora">${IC_CASA}<span>Início</span></button><button type="button" data-a="sh-menu">${IC_MENU}<span>Menu</span></button></nav>
+    </div>
+    <div class="veu" data-a="sh-fecha"></div></div>`;
+  return v.larg==="cel"?`<div class="phone"><div class="ph-notch"><span>${relogio()}</span><span>●●● 4G</span></div><div class="ph-scroll">${s}</div></div>`:s;
+}
+function cabecalho(titulo,descricao,acoes="",voltar=null){
+  return `<div class="cab">${voltar?`<button type="button" class="cab-volta" data-a="sec" data-v="${voltar[0]}">← ${voltar[1]}</button>`:""}
+  <div class="cab-l"><div style="min-width:0"><h2>${titulo}</h2>${descricao?`<p>${descricao}</p>`:""}</div>${acoes?`<div class="row">${acoes}</div>`:""}</div></div>`;
+}
+const card=(titulo,corpo,desc="",extra="")=>`<div class="card"><div class="c-h"><div class="c-t">${titulo}</div>${desc?`<div class="c-d">${desc}</div>`:""}${extra}</div>${corpo}</div>`;
+function seg(sec,campo,opcoes){
+  return `<span class="seg">${opcoes.map(([k,r])=>`<button type="button" data-a="mk" data-s="${sec}" data-c="${campo}" data-v="${k}" aria-pressed="${V[sec][campo]===k}">${r}</button>`).join("")}</span>`;
+}
+const LARG=[["pc","Computador"],["cel","Celular"]];
+const QUEM=[["admin","Admin (Renata)"],["outro","Almoxarife, sem ser admin (Paulo)"]];
+const sel=(id,bind,itens,valor,vazio,dis=false,inv=false)=>`<select class="inp${inv?" inv":""}" id="${id}" data-b="${bind}" ${dis?"disabled":""}><option value="" ${valor?"":"selected"} disabled hidden>${vazio}</option>${itens.map(i=>`<option value="${esc(i.value)}" ${i.value===valor?"selected":""}>${esc(i.label)}</option>`).join("")}</select>`;
+
+/* =====================================================================
+   SEÇÃO 19 — PAPÉIS  (app/(modulo)/papeis/*, lib/papeis/*)
+   ===================================================================== */
+function s19Render(){
+  const v=V[19],admin=v.quem==="admin";
+  const ctrl=`<div class="mk-ctrl">
+    <div class="ln"><b>Controle do mockup</b> Quem está vendo: ${seg(19,"quem",QUEM)}</div>
+    <div class="ln">Estado: ${seg(19,"estado",[["dados","Com papéis"],["vazio","Ninguém tem papel"],["semcontrato","Sem contrato ativo"],["erro","Erro ao ler os papéis"],["errocont","Erro ao ler os contratos"]])}</div>
+    <div class="ln">Tela: ${seg(19,"larg",LARG)} <span class="dica">E-mails que existem no hub nesta simulação: ${HUB.map(e=>e.split("@")[0]).join(", ")} (todos @manfac.com.br).</span></div></div>`;
+  let corpo;
+  if(!admin){
+    corpo=`<div class="mk-nota"><b>Mockup:</b> quem tem acesso ao Almoxarifado mas não é admin nunca vê a tela de Papéis. O link “Papéis” não aparece no pé do menu e, se a pessoa digitar o endereço, o sistema a leva direto para o Início (a tela de Início é a seção 5, da rodada 2A). Não há mensagem explicando.</div>`;
+    $("#sec-19").innerHTML=intro19()+ctrl+shell(19,"Início",corpo)+msgs19();
+    return;
+  }
+  const erroCont=v.estado==="errocont",erroPap=v.estado==="erro";
+  const contratos=erroCont?[]:D.contratos;
+  const ativosC=v.estado==="semcontrato"?[]:contratos.filter(c=>c.ativo);
+  const linhas=erroPap?[]:D.papeis;
+  const ativos=linhas.filter(l=>l.ativo),hist=linhas.filter(l=>!l.ativo);
+  const nomeC=id=>id?(contratos.find(c=>c.id===id)?.nome??`<span class="uuid">${id}</span>`):"—";
+  const f=F.p19,er=f.erros,pend=PEND.p19;
+  const form=`<form data-form="p19" class="stack" style="gap:16px" novalidate>
+    <div class="g g-pap">
+      <div class="campo ${er.email?"erro":""}"><label for="p-email">E-mail da pessoa no hub</label><input class="inp${er.email?" inv":""}" id="p-email" type="email" placeholder="pessoa@manfac.com.br" autocomplete="off" data-b="p19.email" value="${esc(f.email)}">${er.email?`<p class="f-msg">${er.email}</p>`:""}</div>
+      <div class="campo"><label for="p-papel">Papel</label>${sel("p-papel","p19.papel",PAPEIS.map(p=>({value:p,label:ROT_PAPEL[p]})),f.papel,"Escolha o papel")}</div>
+      <button type="submit" class="btn" ${pend?"disabled":""}>${pend?"Salvando...":"Conceder"}</button>
+    </div>
+    ${f.papel==="aprovador"?`<div class="campo ${er.contrato?"erro":""}"><label for="p-con">Contrato que a pessoa aprova</label>
+      ${ativosC.length===0?`<p class="c-mut">Ainda não há contrato ativo cadastrado. Cadastre em Configurações → Estoques, contratos e equipes; depois volte aqui para conceder aprovador.</p>`
+      :`<div class="sel-80">${sel("p-con","p19.contrato",ativosC.map(c=>({value:c.id,label:c.nome})),f.contrato,"Escolha o contrato",false,!!er.contrato)}</div>`}
+      ${er.contrato?`<p class="f-msg">${er.contrato}</p>`:""}</div>`:""}
+  </form>`;
+  const tAtivos=ativos.length===0?`<p class="c-mut">Ninguém tem papel ainda.</p>`:`<div class="tbl-sc"><table class="tbl"><thead><tr><th>E-mail</th><th>Papel</th><th>Contrato</th><th>Concedido por</th><th>Quando</th><th></th></tr></thead><tbody>
+    ${ativos.map(l=>`<tr><td>${l.email}</td><td>${ROT_PAPEL[l.papel]}</td><td>${nomeC(l.contrato)}</td><td>${l.por}</td><td>${l.em}</td><td class="r"><button type="button" class="btn btn-ghost btn-sm" data-a="p-rev" data-v="${l.id}" ${PEND["rev"+l.id]?"disabled":""}>${PEND["rev"+l.id]?"Revogando...":"Revogar"}</button></td></tr>`).join("")}</tbody></table></div>`;
+  const tHist=hist.length?card("Histórico de revogações",`<div class="tbl-sc"><table class="tbl"><thead><tr><th>E-mail</th><th>Papel</th><th>Contrato</th><th>Revogado por</th><th>Quando</th></tr></thead><tbody>
+    ${hist.map(l=>`<tr><td>${l.email}</td><td>${ROT_PAPEL[l.papel]}</td><td>${nomeC(l.contrato)}</td><td>${l.revPor}</td><td>${l.revEm}</td></tr>`).join("")}</tbody></table></div>`):"";
+  corpo=cabecalho("Papéis","Aprovador aprova os pedidos de um contrato. Almoxarife separa, entrega e cuida do estoque. Gestor aprova qualquer pedido. Admin muda configurações e papéis. Sem papel, a pessoa não entra no Almoxarifado.")
+    +`<div class="stack">${card("Conceder papel",(erroCont?`<p class="c-err" style="margin-bottom:-2px">Não deu para carregar os contratos agora; recarregue antes de conceder aprovador.</p>`:"")+form)}
+    ${erroPap?`<p class="c-err">Não deu para carregar os papéis agora. Recarregue a página.</p>`:""}
+    ${card("Papéis ativos",tAtivos)}${tHist}</div>`;
+  $("#sec-19").innerHTML=intro19()+ctrl+shell(19,"Papéis",corpo)+msgs19();
+}
+const intro19=()=>`<div class="sec-h"><div class="label-mono">Admin do Almoxarifado · computador, dentro do hub</div><h1>Seção 19 — Papéis</h1><p>Aqui o admin diz quem pode fazer o quê no Almoxarifado: quem aprova os pedidos de cada contrato, quem cuida do estoque, quem aprova qualquer pedido e quem administra. Quem não tem papel nenhum não entra no módulo. Só o admin abre esta tela; o link fica no pé do menu, acima de “Sair”.</p></div>`;
+const msgs19=()=>`<details class="mk-msg"><summary>Mockup: todas as mensagens que esta tela pode mostrar (texto exato do código)</summary><ul>
+  <li>Sucesso (aviso no canto): “Papel concedido.” · “Papel revogado.”</li>
+  <li>Embaixo do campo: “Informe um e-mail válido.” · “Aprovador precisa de um contrato.” · “Contrato inválido.” · “Escolha o papel.”</li>
+  <li>Aviso de erro no canto: “Ninguém com esse e-mail no hub. Confira a digitação.” · “Essa pessoa já tem esse papel (nesse contrato).” · “Aprovador precisa de um contrato; os outros papéis não levam contrato.” · “Só quem administra o almox mexe em papéis.” · “Esse papel já estava revogado.” · “Papel inválido.” · “Não deu para salvar agora. Tente de novo em instantes.”</li>
+  <li>Confirmação do navegador ao revogar: “Revogar o papel &lt;Papel&gt; de &lt;e-mail&gt;? Fica no histórico e, para voltar, é preciso conceder de novo.”</li>
+  <li>Na página: “Não deu para carregar os contratos agora; recarregue antes de conceder aprovador.” · “Não deu para carregar os papéis agora. Recarregue a página.” · “Ninguém tem papel ainda.” · “Ainda não há contrato ativo cadastrado. Cadastre em Configurações → Estoques, contratos e equipes; depois volte aqui para conceder aprovador.”</li>
+</ul></details>`;
+async function s19Conceder(){
+  const f=F.p19;f.erros={};
+  const email=f.email.trim().toLowerCase();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))f.erros.email="Informe um e-mail válido.";
+  const contrato=f.papel==="aprovador"&&f.contrato?f.contrato:null;
+  if(!f.erros.email&&f.papel==="aprovador"&&!contrato)f.erros.contrato="Aprovador precisa de um contrato.";
+  if(Object.keys(f.erros).length){s19Render();return;}
+  PEND.p19=true;s19Render();await espera(700);PEND.p19=false;
+  if(!HUB.includes(email)){toast("er","Ninguém com esse e-mail no hub. Confira a digitação.");s19Render();return;}
+  if(D.papeis.some(l=>l.ativo&&l.email===email&&l.papel===f.papel&&l.contrato===contrato)){toast("er","Essa pessoa já tem esse papel (nesse contrato).");s19Render();return;}
+  D.papeis.push({id:uid(),email,papel:f.papel,contrato,ativo:true,por:PESSOA.admin.email,em:agora(),revPor:null,revEm:null});
+  ordenar();
+  toast("ok","Papel concedido.");
+  F.p19={email:"",papel:f.papel,contrato:"",erros:{}};
+  s19Render();
+}
+async function s19Revogar(id){
+  const l=D.papeis.find(x=>x.id===id);
+  const ok=await confirmar(`Revogar o papel ${ROT_PAPEL[l.papel]} de ${l.email}? Fica no histórico e, para voltar, é preciso conceder de novo.`);
+  if(!ok)return;
+  PEND["rev"+id]=true;s19Render();await espera(600);PEND["rev"+id]=false;
+  l.ativo=false;l.revPor=PESSOA.admin.email;l.revEm=agora();
+  toast("ok","Papel revogado.");s19Render();
+}
+
+/* =====================================================================
+   SEÇÃO 20 — CONFIGURAÇÕES  (app/(modulo)/configuracoes/*, lib/configuracoes/*)
+   ===================================================================== */
+const DIAS_SEMANA=[[1,"Seg"],[2,"Ter"],[3,"Qua"],[4,"Qui"],[5,"Sex"],[6,"Sáb"],[7,"Dom"]];
+const PADROES={
+  janela_retirada:{dias:[1,2,3,4,5],ate:"10:00",corte_aprovacao:"16:00",antecedencia_antes_corte:1,antecedencia_depois_corte:2},
+  feriados:[],
+  lembrete_aprovador:{pendente_horas_uteis:2,aviso_antes_corte:"15:00"},
+  divergencia_equipe:{fator:1},
+  alvo_padrao_fator:2,
+  estoque_parado_dias:[90,180],
+  material_parado_equipe_dias:30,
+  conserto_atrasado_dias:30,
+  sem_entrada_omie_dias:3,
+  onda_tamanho:20,
+  ciclo_meses:6,
+  curva_a_percentual:10,
+  cc_para_estoque:{},
+  termo_texto:"Declaro que recebi os itens listados neste termo, em bom estado, e me responsabilizo pela guarda, pelo bom uso e pela devolução deles ao almoxarifado quando forem pedidos de volta. Na devolução, os itens serão conferidos pelo almoxarifado.",
+  pin_falhas_bloqueio:5,
+  pin_bloqueio_minutos:15,
+  sessao_dias:90,
+  convite_dias:7,
+};
+const CH=Object.keys(PADROES);
+const DEF={
+  janela_retirada:{t:"Janela de retirada",d:"Dias e horário em que o técnico retira material, e o corte de aprovação que decide se a retirada fica para o próximo dia útil ou para o seguinte.",c:[
+    {n:"dias",r:"Dias de retirada",t:"dias_semana"},{n:"ate",r:"Retirada até",t:"hora"},{n:"corte_aprovacao",r:"Corte da aprovação",t:"hora"},
+    {n:"antecedencia_antes_corte",r:"Aprovado antes do corte: retira em",t:"inteiro",s:"dia(s) útil(eis)",lim:[0,30]},
+    {n:"antecedencia_depois_corte",r:"Aprovado depois do corte: retira em",t:"inteiro",s:"dia(s) útil(eis)",lim:[0,30]}]},
+  feriados:{t:"Feriados",d:"Dias sem retirada. Uma data por linha, no formato DD/MM/AAAA.",c:[{n:null,r:"Datas",t:"datas"}]},
+  lembrete_aprovador:{t:"Lembrete ao aprovador",d:"Quando avisar o aprovador de pedido parado.",c:[
+    {n:"pendente_horas_uteis",r:"Pedido pendente há",t:"inteiro",s:"hora(s) útil(eis)",lim:[1,48]},{n:"aviso_antes_corte",r:"Aviso antes do corte às",t:"hora"}]},
+  divergencia_equipe:{t:"Alerta de material já com a equipe",d:"Avisa o aprovador quando a equipe já tem pelo menos este múltiplo do que está pedindo (1 = já tem tudo).",c:[{n:"fator",r:"Fator",t:"numero"}]},
+  alvo_padrao_fator:{t:"Estoque alvo padrão",d:"Estoque alvo de um item = mínimo × este fator, quando ninguém definiu outro.",c:[{n:null,r:"Fator",t:"numero"}]},
+  estoque_parado_dias:{t:"Estoque parado",d:"Faixas de dias sem movimento para o indicador de estoque parado.",c:[{n:null,r:"Faixas (dias)",t:"inteiros",s:"ex.: 90, 180",lim:[1,3650]}]},
+  material_parado_equipe_dias:{t:"Material parado com a equipe",d:"Dias com material na equipe sem uso até virar alerta.",c:[{n:null,r:"Dias",t:"inteiro",s:"dias",lim:[1,3650]}]},
+  conserto_atrasado_dias:{t:"Conserto atrasado",d:"Dias em conserto até virar alerta.",c:[{n:null,r:"Dias",t:"inteiro",s:"dias",lim:[1,3650]}]},
+  sem_entrada_omie_dias:{t:"Recebimento sem entrada no Omie",d:"Dias depois da conferência sem a entrada aparecer no Omie até virar alerta.",c:[{n:null,r:"Dias",t:"inteiro",s:"dias",lim:[1,365]}]},
+  onda_tamanho:{t:"Tamanho da onda de inventário",d:"Quantos itens entram em cada onda de contagem.",c:[{n:null,r:"Itens por onda",t:"inteiro",s:"itens",lim:[1,500]}]},
+  ciclo_meses:{t:"Ciclo do inventário",d:"Em quantos meses todos os itens são contados.",c:[{n:null,r:"Meses",t:"inteiro",s:"meses",lim:[1,60]}]},
+  curva_a_percentual:{t:"Curva A",d:"Percentual dos itens de maior valor que são contados com mais frequência.",c:[{n:null,r:"Percentual",t:"inteiro",s:"%",lim:[1,100]}]},
+  cc_para_estoque:{t:"Centro de custo → estoque",d:"De qual estoque sai o material de cada centro de custo. Uma linha por centro de custo, com o código do estoque cadastrado em Estrutura (ex.: CC-123 = DPSP).",c:[{n:null,r:"Centro de custo = estoque",t:"mapa"}]},
+  termo_texto:{t:"Texto do termo de responsabilidade",d:"Vai no termo assinado na entrega de ferramenta, EPI e uniforme. Texto padrão provisório: o Jose e o RH revisam o texto jurídico.",c:[{n:null,r:"Texto",t:"texto_longo"}]},
+  pin_falhas_bloqueio:{t:"PIN errado seguido",d:"Quantos PINs errados seguidos bloqueiam o técnico.",c:[{n:null,r:"Tentativas",t:"inteiro",s:"tentativas",lim:[1,20]}]},
+  pin_bloqueio_minutos:{t:"Tempo de bloqueio do PIN",d:"Quanto tempo o técnico fica bloqueado depois de errar o PIN.",c:[{n:null,r:"Minutos",t:"inteiro",s:"minutos",lim:[1,1440]}]},
+  sessao_dias:{t:"Sessão do celular do técnico",d:"Quantos dias o celular do técnico fica conectado sem pedir o PIN de novo.",c:[{n:null,r:"Dias",t:"inteiro",s:"dias",lim:[1,365]}]},
+  convite_dias:{t:"Validade do convite",d:"Quantos dias o link de convite do técnico vale.",c:[{n:null,r:"Dias",t:"inteiro",s:"dias",lim:[1,30]}]},
+};
+const clone=o=>JSON.parse(JSON.stringify(o));
+let VAL=clone(PADROES),HIST=[],INVALIDA=[];
+const nomeNaTela=c=>c.n??"valor";
+const dataTela=iso=>{const [a,m,d]=iso.split("-");return `${d}/${m}/${a}`;};
+const campoDe=(valor,n)=>n===null?valor:(valor&&typeof valor==="object"?valor[n]:undefined);
+function paraTexto(c,v){
+  switch(c.t){
+    case "dias_semana":return Array.isArray(v)?v.join(","):"";
+    case "inteiros":return Array.isArray(v)?v.join(", "):"";
+    case "datas":return Array.isArray(v)?v.map(dataTela).join("\n"):"";
+    case "numero":return typeof v==="number"?String(v).replace(".",","):"";
+    case "mapa":return v&&typeof v==="object"?Object.entries(v).map(([cc,e])=>`${cc} = ${e}`).join("\n"):"";
+    default:return v==null?"":String(v);
+  }
+}
+function exibirCampo(c,v){
+  switch(c.t){
+    case "dias_semana":return Array.isArray(v)?v.map(n=>DIAS_SEMANA.find(d=>d[0]===n)?.[1]??String(n)).join(", "):"—";
+    case "datas":return Array.isArray(v)&&v.length?v.map(dataTela).join(", "):"(nenhum)";
+    case "inteiros":return Array.isArray(v)?v.join(", "):"—";
+    case "texto_longo":return typeof v==="string"?`${v.slice(0,40)}${v.length>40?"…":""}`:"—";
+    case "mapa":return paraTexto(c,v).replace(/\n/g,"; ")||"(vazio)";
+    default:{const t=paraTexto(c,v);return c.s?`${t} ${c.s}`:t||"(vazio)";}
+  }
+}
+/* O mapa guarda o id do estoque; a tela mostra o código (id que não acha fica cru). */
+function estoquesCfg(){return V[20].estado==="erroest"?[]:D.estoques;}
+const mapaParaTela=(mapa,est)=>Object.entries(mapa).map(([cc,id])=>`${cc} = ${est.find(e=>e.id===id)?.codigo??id}`).join("\n");
+function camposDoValor(ch,valor){
+  if(ch==="cc_para_estoque")return {valor:mapaParaTela(valor,estoquesCfg())};
+  const o={};DEF[ch].c.forEach(c=>{o[nomeNaTela(c)]=paraTexto(c,campoDe(valor,c.n));});return o;
+}
+function iniciarCampos(){const base=V[20].estado==="erro"?PADROES:VAL;CH.forEach(ch=>{F.cfg[ch]=camposDoValor(ch,base[ch]);});}
+function deTexto(c,bruto){
+  const texto=(bruto??"").trim(),itens=texto.split(/[\s,;]+/).filter(Boolean);
+  switch(c.t){
+    case "inteiro":return /^\d+$/.test(texto)?{ok:true,v:Number(texto)}:{ok:false,e:`${c.r}: digite um número inteiro`};
+    case "numero":return /^\d+(?:[.,]\d+)?$/.test(texto)?{ok:true,v:Number(texto.replace(",","."))}:{ok:false,e:`${c.r}: digite um número (ex.: 1,5)`};
+    case "inteiros":return itens.every(i=>/^\d+$/.test(i))?{ok:true,v:itens.map(Number)}:{ok:false,e:`${c.r}: use números inteiros separados por vírgula`};
+    case "dias_semana":return {ok:true,v:texto.split(",").filter(Boolean).map(Number)};
+    case "datas":{const ds=[];for(const it of itens){const br=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(it);if(!br)return {ok:false,e:`${c.r}: "${it}" não está no formato DD/MM/AAAA`};ds.push(`${br[3]}-${br[2]}-${br[1]}`);}return {ok:true,v:ds.sort()};}
+    case "mapa":{const m={};for(const l of texto.split("\n").map(x=>x.trim()).filter(Boolean)){const [cc,e,...resto]=l.split("=").map(p=>p.trim());if(!cc||!e||resto.length)return {ok:false,e:`${c.r}: use uma linha por centro de custo, "cc = estoque"`};m[cc]=e;}return {ok:true,v:m};}
+    case "texto_longo":return {ok:true,v:(bruto??"").trim()};
+    default:return {ok:true,v:texto};
+  }
+}
+const HORA=/^([01]\d|2[0-3]):[0-5]\d$/;
+const dataExiste=s=>{const [a,m,d]=s.split("-").map(Number);const x=new Date(Date.UTC(a,m-1,d));return x.getUTCFullYear()===a&&x.getUTCMonth()===m-1&&x.getUTCDate()===d;};
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/* Validação do esquema (ESQUEMAS): devolve a mensagem sem rótulo, ou null. */
+function validarCampo(c,v){
+  if(c.t==="inteiro"){const [mi,ma]=c.lim;if(v<mi)return `precisa ser pelo menos ${mi}`;if(v>ma)return `pode ser no máximo ${ma}`;}
+  if(c.t==="hora"&&!HORA.test(v))return "use o formato HH:MM, por exemplo 16:00";
+  if(c.t==="numero"){if(!(v>0))return "precisa ser maior que zero";if(v>100)return "pode ser no máximo 100";}
+  if(c.t==="dias_semana"&&v.length<1)return "escolha pelo menos um dia";
+  return null;
+}
+function valorDosCampos(ch,campos){
+  const def=DEF[ch];
+  if(def.c.length===1&&def.c[0].n===null){
+    const c=def.c[0],cv=deTexto(c,campos.valor);if(!cv.ok)return cv;const v=cv.v;let e=null;
+    if(c.t==="datas"){if(v.some(x=>!dataExiste(x)))e="tem uma data que não existe";else if(v.length>200)e="no máximo 200 datas";else if(new Set(v).size!==v.length)e="tem data repetida";}
+    else if(c.t==="inteiros"){const [mi,ma]=c.lim;const fora=v.find(n=>n<mi||n>ma);if(fora!==undefined)e=fora<mi?`precisa ser pelo menos ${mi}`:`pode ser no máximo ${ma}`;else if(v.length<1)e="informe pelo menos um prazo";else if(v.length>5)e="no máximo 5 prazos";else if(!v.every((n,i)=>i===0||n>v[i-1]))e="os prazos precisam ir do menor para o maior, sem repetir";}
+    else if(c.t==="mapa"){for(const [cc,id] of Object.entries(v)){if(cc.length>30){return {ok:false,e:"Centro de custo = estoque: Invalid key in record"};}if(!UUID.test(id)){e="estoque inválido";break;}}}
+    else if(c.t==="texto_longo"){if(v.length<20)e="o texto do termo está curto demais";else if(v.length>20000)e="o texto do termo está longo demais";}
+    else e=validarCampo(c,v);
+    return e?{ok:false,e:`${c.r}: ${e}`}:{ok:true,v};
+  }
+  const o={};
+  for(const c of def.c){const cv=deTexto(c,campos[nomeNaTela(c)]);if(!cv.ok)return cv;o[c.n]=cv.v;}
+  for(const c of def.c){const e=validarCampo(c,o[c.n]);if(e)return {ok:false,e:`${c.r}: ${e}`};}
+  if(ch==="janela_retirada"&&o.antecedencia_depois_corte<o.antecedencia_antes_corte)
+    return {ok:false,e:"Aprovado depois do corte: retira em: A antecedência para pedidos depois do corte não pode ser menor que a de antes do corte."};
+  return {ok:true,v:o};
+}
+function mapaDaTela(texto,est){
+  const por=new Map(est.map(e=>[e.codigo.trim().toUpperCase(),e.id]));const ls=[];
+  for(const l of texto.split("\n").map(x=>x.trim()).filter(Boolean)){
+    const [cc,cod,...resto]=l.split("=").map(p=>p.trim());
+    if(!cc||!cod||resto.length){ls.push(l);continue;}
+    const id=por.get(cod.toUpperCase());if(!id)return {ok:false,e:`Não há estoque com o código "${cod}".`};
+    ls.push(`${cc} = ${id}`);
+  }
+  return {ok:true,t:ls.join("\n")};
+}
+function mudancas(ch,antes,depois){
+  return DEF[ch].c.flatMap(c=>{const a=exibirCampo(c,campoDe(antes,c.n)),d=exibirCampo(c,campoDe(depois,c.n));return a===d?[]:[{r:c.r,a,d}];});
+}
+function cfgCheio(){
+  VAL=clone(PADROES);HIST=[];INVALIDA=[];
+  const salva=(ch,novo,por,quando)=>{HIST.unshift({ch,por,quando,m:mudancas(ch,VAL[ch],novo)});VAL[ch]=novo;};
+  salva("janela_retirada",{...PADROES.janela_retirada,corte_aprovacao:"15:30"},"renata.alves@manfac.com.br","11/11/2026 14:05");
+  salva("feriados",["2026-11-20","2026-12-25","2027-01-01"],"renata.alves@manfac.com.br","11/11/2026 16:40");
+  salva("cc_para_estoque",{"CC-123":ID.DPSP,"CC-210":ID.PROFARMA,"CC-300":ID.BASE},"renata.alves@manfac.com.br","12/11/2026 08:12");
+  salva("onda_tamanho",25,"tiago.nunes@manfac.com.br","12/11/2026 08:30");
+}
+function s20Render(){
+  const v=V[20],admin=v.quem==="admin",erro=v.estado==="erro",erroEst=v.estado==="erroest";
+  const ctrl=`<div class="mk-ctrl">
+    <div class="ln"><b>Controle do mockup</b> Quem está vendo: ${seg(20,"quem",QUEM)}</div>
+    <div class="ln">Estado: ${seg(20,"estado",[["dados","Com mudanças salvas"],["padrao","Tudo no padrão"],["invalida","Um valor salvo inválido"],["erro","Erro ao ler as configurações"],["erroest","Erro ao ler os estoques"]])}</div>
+    <div class="ln">Tela: ${seg(20,"larg",LARG)} <span class="seg"><button type="button" data-a="c-mudou" aria-pressed="${v.mudou}">Simular: outra pessoa salvou depois que esta tela abriu</button></span></div></div>`;
+  const hist=erro?[]:HIST;
+  const cards=CH.map(ch=>{
+    const def=DEF[ch],inval=INVALIDA.includes(ch);
+    const pode=admin&&!erro&&!(ch==="cc_para_estoque"&&erroEst);
+    const campos=F.cfg[ch],dis=!pode;
+    const corpo=`<form data-form="cfg" data-ch="${ch}" class="stack" style="gap:16px" novalidate><div class="g g-cfg">${def.c.map(c=>{
+      const nome=nomeNaTela(c),id=`${ch}-${nome}`,val=campos[nome]??"";
+      if(c.t==="dias_semana"){const m=new Set(val.split(",").filter(Boolean).map(Number));
+        return `<fieldset class="dias span2"><legend>${c.r}</legend><div class="row">${DIAS_SEMANA.map(([n,r])=>`<label class="chk"><input type="checkbox" data-dia="${ch}|${nome}|${n}" ${m.has(n)?"checked":""} ${dis?"disabled":""}>${r}</label>`).join("")}</div></fieldset>`;}
+      const dica={hora:"HH:MM",numero:"ex.: 1,5"}[c.t]??c.s;
+      const multi=["texto_longo","datas","mapa"].includes(c.t);
+      return `<div class="campo ${multi?"span2":""}"><label for="${id}">${c.r}${dica?`<span class="dc"> (${esc(dica)})</span>`:""}</label>${multi
+        ?`<textarea class="inp" id="${id}" rows="${c.t==="texto_longo"?6:4}" data-b="cfg.${ch}.${nome}" ${dis?"disabled":""}>${esc(val)}</textarea>`
+        :`<input class="inp" id="${id}" data-b="cfg.${ch}.${nome}" value="${esc(val)}" ${c.t==="inteiro"?'inputmode="numeric"':""} ${dis?"disabled":""}>`}</div>`;
+    }).join("")}</div>${pode?`<div><button type="submit" class="btn btn-sm" ${PEND["cfg"+ch]?"disabled":""}>${PEND["cfg"+ch]?"Salvando...":"Salvar"}</button></div>`:""}</form>`;
+    return card(def.t,corpo,def.d,inval?`<p class="c-err">O valor salvo desta configuração está inválido; o sistema está usando o padrão. Salve de novo.</p>`:"");
+  }).join("");
+  const tHist=hist.length===0?`<p class="c-mut">Nada mudou ainda: tudo está no padrão do desenho.</p>`:`<div class="tbl-sc"><table class="tbl"><thead><tr><th>Quando</th><th>Quem</th><th>O quê</th><th>Mudança</th></tr></thead><tbody>
+    ${hist.map(h=>`<tr><td>${h.quando}</td><td>${h.por}</td><td>${DEF[h.ch].t}</td><td class="wn">${h.m.length===0?"Salvo sem mudança de valor":esc(h.m.map(x=>`${x.r}: ${x.a} → ${x.d}`).join("; "))}</td></tr>`).join("")}</tbody></table></div>`;
+  const corpo=cabecalho("Configurações",admin?"Toda mudança fica registrada e vale a partir de agora; o que já estava em andamento segue a regra de antes.":"Só quem administra o almox muda estes valores. Toda mudança fica registrada no histórico abaixo.",
+      `<button type="button" class="btn btn-outline" data-a="sec" data-v="21">Estoques, contratos e equipes</button>`)
+    +`<div class="stack">${erro?`<p class="c-err">Não deu para ler as configurações agora; mostrando os valores padrão. Não salve nada antes de recarregar.</p>`:""}${cards}${card("Histórico de mudanças",tHist)}</div>`;
+  $("#sec-20").innerHTML=`<div class="sec-h"><div class="label-mono">Todos com acesso veem · só o admin muda · computador, dentro do hub</div><h1>Seção 20 — Configurações</h1><p>As regras que o sistema usa no dia a dia: dias e horário de retirada, feriados, quando avisar o aprovador, prazos dos alertas, inventário, PIN e celular do técnico e o texto do termo. Qualquer pessoa com acesso ao Almoxarifado abre e lê; só o admin salva. Cada mudança vale a partir do momento em que é salva e entra no histórico no fim da página.</p></div>`
+    +ctrl+shell(20,"Configurações",corpo)+msgs20();
+}
+const msgs20=()=>`<details class="mk-msg"><summary>Mockup: todas as mensagens que esta tela pode mostrar (texto exato do código)</summary><ul>
+  <li>Sucesso (aviso no canto): “Salvo. Vale a partir de agora.”</li>
+  <li>Aviso de erro no canto: “Nada mudou.” · “A configuração mudou desde que você abriu a tela. Recarregue e confira antes de salvar.” · “Só quem administra o almox muda as configurações.” · “Configuração desconhecida.” · “Não deu para salvar agora. Tente de novo em instantes.” · <code>Não há estoque com o código "X".</code></li>
+  <li>Erros de campo (também no aviso do canto, sempre começando pelo rótulo): “…: digite um número inteiro” · “…: digite um número (ex.: 1,5)” · “…: use números inteiros separados por vírgula” · <code>Datas: "X" não está no formato DD/MM/AAAA</code> · <code>Centro de custo = estoque: use uma linha por centro de custo, "cc = estoque"</code> · “…: precisa ser pelo menos N” · “…: pode ser no máximo N” · “…: use o formato HH:MM, por exemplo 16:00” · “…: precisa ser maior que zero” · “Dias de retirada: escolha pelo menos um dia” · “Datas: tem uma data que não existe” · “Datas: tem data repetida” · “Datas: no máximo 200 datas” · “Faixas (dias): informe pelo menos um prazo” · “Faixas (dias): no máximo 5 prazos” · “Faixas (dias): os prazos precisam ir do menor para o maior, sem repetir” · “Texto: o texto do termo está curto demais” · “Aprovado depois do corte: retira em: A antecedência para pedidos depois do corte não pode ser menor que a de antes do corte.”</li>
+  <li>Na página: “Não deu para ler as configurações agora; mostrando os valores padrão. Não salve nada antes de recarregar.” · “O valor salvo desta configuração está inválido; o sistema está usando o padrão. Salve de novo.” · “Nada mudou ainda: tudo está no padrão do desenho.” · no histórico, “Salvo sem mudança de valor”.</li>
+</ul></details>`;
+async function s20Salvar(ch){
+  const v=V[20];
+  let campos={...F.cfg[ch]};
+  if(ch==="cc_para_estoque"){const t=mapaDaTela(campos.valor??"",D.estoques);if(!t.ok){toast("er",t.e);return;}campos.valor=t.t;}
+  const r=valorDosCampos(ch,campos);
+  if(!r.ok){toast("er",r.e);return;}
+  PEND["cfg"+ch]=true;s20Render();await espera(600);PEND["cfg"+ch]=false;
+  if(v.mudou){v.mudou=false;toast("er","A configuração mudou desde que você abriu a tela. Recarregue e confira antes de salvar.");s20Render();return;}
+  const inval=INVALIDA.includes(ch);
+  if(!inval&&JSON.stringify(VAL[ch])===JSON.stringify(r.v)){toast("er","Nada mudou.");s20Render();return;}
+  HIST.unshift({ch,por:PESSOA.admin.email,quando:agora(),m:mudancas(ch,inval?PADROES[ch]:VAL[ch],r.v)});
+  VAL[ch]=r.v;INVALIDA=INVALIDA.filter(x=>x!==ch);
+  toast("ok","Salvo. Vale a partir de agora.");s20Render();
+}
+
+/* =====================================================================
+   SEÇÃO 21 — ESTOQUES, CONTRATOS E EQUIPES  (app/(modulo)/configuracoes/estrutura/*, lib/estrutura/*)
+   ===================================================================== */
+const tipoSugerido=(sigla,desc)=>{const n=`${sigla??""} ${desc}`.toUpperCase();if(/\bMANFAC\b/.test(n))return "equipe";if(/^\s*BASE\b/.test((sigla??"").toUpperCase())&&!/DPSP|PROFARMA/.test(n))return "base";return "contrato";};
+const nomeEstoque=id=>{const e=D.estoques.find(x=>x.id===id);return e?`${e.codigo} — ${e.descricao}`:"—";};
+const nomeContrato=id=>D.contratos.find(c=>c.id===id)?.nome??"—";
+const opcoesEstoque=filtro=>D.estoques.filter(e=>e.ativo&&filtro(e.tipo)).map(e=>({value:e.id,label:`${e.codigo} — ${e.descricao}`}));
+const desat=a=>a?"":` <span class="badge b-outline">Desativado</span>`;
+function campoTxt(id,rot,bind,val,dica){return `<div class="campo"><label for="${id}">${rot}${dica?`<span class="dc"> (${dica})</span>`:""}</label><input class="inp" id="${id}" autocomplete="off" data-b="${bind}" value="${esc(val)}"></div>`;}
+function escolha(id,rot,bind,itens,val,vazio){return `<div class="campo"><label for="${id}">${rot}</label>${sel(id,bind,itens,val,vazio)}</div>`;}
+const btnCad=(k,sm="")=>`<button type="submit" class="btn ${sm}" ${PEND[k]?"disabled":""}>${PEND[k]?"Salvando...":"Cadastrar"}</button>`;
+function acoes(cad,id,ativo){
+  const k=`ac${id}`;
+  return `<div class="acoes-l"><button type="button" class="btn btn-ghost btn-sm" data-a="e-alt" data-c="${cad}" data-v="${id}" ${PEND[k]?"disabled":""}>${ativo?"Desativar":"Reativar"}</button><button type="button" class="btn btn-ghost btn-sm" data-a="e-apa" data-c="${cad}" data-v="${id}" ${PEND[k]?"disabled":""}>Apagar</button></div>`;
+}
+function s21Render(){
+  const v=V[21],admin=v.quem==="admin",erro=v.estado==="erro",semCopia=v.estado==="semcopia";
+  const ctrl=`<div class="mk-ctrl">
+    <div class="ln"><b>Controle do mockup</b> Quem está vendo: ${seg(21,"quem",QUEM)}</div>
+    <div class="ln">Estado: ${seg(21,"estado",[["dados","Com cadastros"],["vazio","Nada cadastrado ainda"],["semcopia","Locais do Omie ainda não copiados"],["erro","Erro ao carregar"]])}</div>
+    <div class="ln">Tela: ${seg(21,"larg",LARG)} <span class="dica">Na simulação, “Apagar” é recusado para o que já tem uso (estoque com contrato ou equipe, contrato com equipe ou papel, e as equipes que já têm pedidos).</span></div></div>`;
+  const E=erro?[]:D.estoques,C=erro?[]:D.contratos,Q=erro?[]:D.equipes;
+  const editar=admin&&!erro;
+  const locais=semCopia?null:(erro?[]:D.locais);
+  const ja=new Set(E.map(e=>e.omie));
+  const novos=(locais??[]).filter(l=>!ja.has(l.codigo));
+  const fe=F.est,fc=F.con,fq=F.equ;
+  const cardLocais=(editar&&novos.length)?card("Locais do Omie ainda não cadastrados",`<div class="tbl-sc"><table class="tbl"><thead><tr><th>Local no Omie</th><th>Código</th><th>Descrição</th><th></th></tr></thead><tbody>
+    ${novos.map(l=>{const t=F.loc[l.codigo]??tipoSugerido(l.sigla,l.descricao);const k="loc"+l.codigo;
+      return `<tr><td>${l.codigo}</td><td>${l.sigla??"—"}</td><td>${esc(l.descricao)}</td><td><form data-form="loc" data-v="${l.codigo}" class="loc-f">${escolha("local-"+l.codigo,"Tipo","loc."+l.codigo,TIPOS.filter(x=>x!=="conserto").map(x=>({value:x,label:ROT_TIPO[x]})),t,"Tipo")}${btnCad(k,"btn-sm")}</form></td></tr>`;}).join("")}</tbody></table></div>`,
+    `Lidos do Omie às 12/11/2026 06:00. Confira o tipo sugerido e cadastre: BASE é a base, DPSP e Profarma são estoques de contrato, MANFAC N são as equipes.`):"";
+  const formEst=editar?`<form data-form="est" class="g g-est" novalidate>${campoTxt("estoque-local","Local no Omie","est.omie",fe.omie,"código")}${campoTxt("estoque-codigo","Código","est.codigo",fe.codigo)}${campoTxt("estoque-descricao","Descrição","est.descricao",fe.descricao)}${escolha("estoque-tipo","Tipo","est.tipo",TIPOS.map(x=>({value:x,label:ROT_TIPO[x]})),fe.tipo,"Escolha o tipo")}${btnCad("est")}</form>`:"";
+  const tEst=E.length===0?`<p class="c-mut">Nenhum estoque cadastrado ainda.</p>`:`<div class="tbl-sc"><table class="tbl"><thead><tr><th>Código</th><th>Descrição</th><th>Tipo</th><th>Local no Omie</th><th></th></tr></thead><tbody>
+    ${E.map(e=>`<tr><td>${esc(e.codigo)}${desat(e.ativo)}</td><td>${esc(e.descricao)}</td><td>${ROT_TIPO[e.tipo]}</td><td>${e.omie??"—"}</td><td>${editar?acoes("estoque",e.id,e.ativo):""}</td></tr>`).join("")}</tbody></table></div>`;
+  const formCon=editar?`<form data-form="con" class="g g-con" novalidate>${campoTxt("contrato-nome","Nome","con.nome",fc.nome)}${escolha("contrato-estoque","Material sai do estoque","con.estoque",opcoesEstoque(t=>t!=="equipe"),fc.estoque,"Escolha o estoque")}${campoTxt("contrato-cc","Centro de custo","con.cc",fc.cc,"opcional")}<label class="chk"><input type="checkbox" data-b="con.spot" ${fc.spot?"checked":""}> É Obras/Spot</label>${btnCad("con")}</form>`:"";
+  const tCon=C.length===0?`<p class="c-mut">Nenhum contrato cadastrado ainda.</p>`:`<div class="tbl-sc"><table class="tbl"><thead><tr><th>Nome</th><th>Estoque</th><th>Centro de custo</th><th></th></tr></thead><tbody>
+    ${C.map(c=>`<tr><td>${esc(c.nome)} ${c.spot?`<span class="badge">Obras/Spot</span>`:""}${desat(c.ativo)}</td><td>${esc(nomeEstoque(c.estoque))}</td><td>${esc(c.cc??"—")}</td><td>${editar?acoes("contrato",c.id,c.ativo):""}</td></tr>`).join("")}</tbody></table></div>`;
+  const formEqu=editar?`<form data-form="equ" class="g g-equ" novalidate>${campoTxt("equipe-nome","Nome","equ.nome",fq.nome)}${escolha("equipe-estoque","Estoque da equipe","equ.estoque",opcoesEstoque(t=>t==="equipe"),fq.estoque,"Escolha o estoque")}${escolha("equipe-contrato","Contrato","equ.contrato",D.contratos.filter(c=>c.ativo&&!c.spot).map(c=>({value:c.id,label:c.nome})),fq.contrato,"Escolha o contrato")}${campoTxt("equipe-field","Depósito no Field","equ.field",fq.field,"opcional")}${btnCad("equ")}</form>`:"";
+  const tEqu=Q.length===0?`<p class="c-mut">Nenhuma equipe cadastrada ainda.</p>`:`<div class="tbl-sc"><table class="tbl"><thead><tr><th>Nome</th><th>Estoque</th><th>Contrato</th><th>Depósito no Field</th><th></th></tr></thead><tbody>
+    ${Q.map(q=>`<tr><td>${esc(q.nome)}${desat(q.ativa)}</td><td>${esc(nomeEstoque(q.estoque))}</td><td>${esc(nomeContrato(q.contrato))}</td><td>${esc(q.field??"—")}</td><td>${editar?acoes("equipe",q.id,q.ativa):""}</td></tr>`).join("")}</tbody></table></div>`;
+  const corpo=cabecalho("Estoques, contratos e equipes","Os locais do Omie que o almox usa, de qual estoque sai o material de cada contrato e o contrato de cada equipe. O que já foi usado não se apaga: desative.","",["20","Configurações"])
+    +`<div class="stack">${erro?`<p class="c-err">Não deu para carregar a estrutura agora. Recarregue a página.</p>`:""}
+    ${!erro&&locais===null?`<p class="c-mut" role="status">Os locais do Omie ainda não foram copiados. O cadastro abaixo funciona; a lista de locais para cadastrar aparece depois da primeira cópia.</p>`:""}
+    ${cardLocais}
+    ${card("Estoques",formEst+tEst,"Base, estoque de contrato (DPSP, Profarma), estoque de equipe (MANFAC N) e o conserto (virtual, sem local no Omie).")}
+    ${card("Contratos",formCon+tCon,"De qual estoque sai o material do contrato. Só um contrato pode ser Obras/Spot (sai do BASE).")}
+    ${card("Equipes",formEqu+tEqu,"Cada equipe tem o seu estoque no Omie e um contrato só.")}</div>`;
+  $("#sec-21").innerHTML=`<div class="sec-h"><div class="label-mono">Todos com acesso veem · só o admin cadastra · computador, dentro do hub</div><h1>Seção 21 — Estoques, contratos e equipes</h1><p>O cadastro de base do Almoxarifado: quais locais do Omie ele usa (a Base, o estoque de cada contrato, o estoque de cada equipe e o conserto), de qual estoque sai o material de cada contrato e a qual contrato cada equipe pertence. Não está no menu: abre pelo botão “Estoques, contratos e equipes” no alto de Configurações. O que já foi usado não se apaga, só se desativa.</p></div>`
+    +ctrl+shell(21,"Configurações",corpo)+msgs21();
+}
+const msgs21=()=>`<details class="mk-msg"><summary>Mockup: todas as mensagens que esta tela pode mostrar (texto exato do código)</summary><ul>
+  <li>Sucesso (aviso no canto): “Estoque cadastrado.” · “Contrato cadastrado.” · “Equipe cadastrada.” · “Desativado.” · “Reativado.” · “Apagado.”</li>
+  <li>Aviso de erro no canto (formulários): “O código do local no Omie é só número.” · “Informe o código.” · “Informe a descrição.” · “Informe o nome.” · “o código está longo demais.” (e os equivalentes de descrição e nome, com inicial minúscula) · “Escolha o tipo.” · “Só o conserto fica sem local do Omie; os outros tipos precisam do código do local.” · “Escolha de qual estoque sai o material.” · “Escolha o estoque da equipe.” · “Toda equipe precisa de um contrato.”</li>
+  <li>Aviso de erro no canto (banco): “Já existe um cadastro com esse código, nome ou local do Omie (ou já há um contrato Obras/Spot).” · “Esse cadastro já é usado (por contrato, equipe ou papel). Desative em vez de apagar.” · “O estoque ou contrato escolhido não existe mais neste ambiente. Recarregue a tela.” · “Confira os dados: algum campo está fora do permitido.” · “Esse cadastro mudou desde que você abriu a tela. Recarregue.” · “Só quem administra o almox muda a estrutura.” · “Cadastro inválido.” · “Não deu para salvar agora. Tente de novo em instantes.”</li>
+  <li>Confirmação do navegador ao apagar: “Apagar o estoque X? Só dá se nada usar esse cadastro.” (ou “o contrato X”, “a equipe X”). Desativar e reativar não pedem confirmação.</li>
+  <li>Na página: “Não deu para carregar a estrutura agora. Recarregue a página.” · “Os locais do Omie ainda não foram copiados. O cadastro abaixo funciona; a lista de locais para cadastrar aparece depois da primeira cópia.” · “Nenhum estoque cadastrado ainda.” · “Nenhum contrato cadastrado ainda.” · “Nenhuma equipe cadastrada ainda.”</li>
+</ul></details>`;
+const DUP="Já existe um cadastro com esse código, nome ou local do Omie (ou já há um contrato Obras/Spot).";
+const txt=(v,rot,max)=>{const t=v.trim();if(!t)return {e:`Informe ${rot}.`};if(t.length>max)return {e:`${rot} está longo demais.`};return {v:t};};
+async function s21Enviar(k,validar,gravar,sucesso,limpar){
+  const r=validar();if(r.e){toast("er",r.e);return;}
+  PEND[k]=true;s21Render();await espera(600);PEND[k]=false;
+  const g=gravar(r.v);
+  if(g){toast("er",g);s21Render();return;}
+  ordenar();toast("ok",sucesso);if(limpar)limpar();s21Render();if(V[19])s19Render();s20Render();
+}
+function criarEstoque(inp){
+  return ()=>{
+    const omie=inp.omie.trim();if(!(omie===""||/^\d{1,18}$/.test(omie)))return {e:"O código do local no Omie é só número."};
+    const c=txt(inp.codigo,"o código",40);if(c.e)return c;const d=txt(inp.descricao,"a descrição",120);if(d.e)return d;
+    if(!TIPOS.includes(inp.tipo))return {e:"Escolha o tipo."};
+    const o=omie===""?null:Number(omie);
+    if((inp.tipo==="conserto")!==(o===null))return {e:"Só o conserto fica sem local do Omie; os outros tipos precisam do código do local."};
+    return {v:{omie:o,codigo:c.v,descricao:d.v,tipo:inp.tipo}};
+  };
+}
+function gravarEstoque(v){
+  if(D.estoques.some(e=>e.codigo===v.codigo||(v.omie!==null&&e.omie===v.omie)))return DUP;
+  const id=uid();ID[v.codigo]=id;D.estoques.push({id,...v,ativo:true,em:"t"+Date.now()});return null;
+}
+function usado(cad,id){
+  if(cad==="estoque")return D.contratos.some(c=>c.estoque===id)||D.equipes.some(q=>q.estoque===id);
+  if(cad==="contrato")return D.equipes.some(q=>q.contrato===id)||D.papeis.some(p=>p.contrato===id);
+  return !!D.equipes.find(q=>q.id===id)?.usada;
+}
+const LISTA={estoque:"estoques",contrato:"contratos",equipe:"equipes"};
+
+/* =====================================================================
+   NAVEGAÇÃO E EVENTOS
+   ===================================================================== */
+const SECS=["19","20","21"];
+const REND={19:s19Render,20:s20Render,21:s21Render};
+function irSec(v){
+  SECS.forEach(k=>{$(`#sec-${k}`).hidden=k!==v;$(`#tab-${k}`).setAttribute("aria-selected",String(k===v));});
+  if(location.hash!==`#secao-${v}`)history.replaceState(null,"",`#secao-${v}`);
+  window.scrollTo({top:0});
+}
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-a]");if(!el||el.disabled)return;
+  const a=el.dataset.a,v=el.dataset.v;
+  switch(a){
+    case "sec":irSec(v);break;
+    case "fora":toast("in","Mockup: essa tela fica fora desta rodada.");break;
+    case "sh-menu":{const s=el.closest(".shell");s.dataset.gaveta="sim";el.closest(".ph-scroll")?.scrollTo({top:0});break;}
+    case "sh-fecha":{const s=el.closest(".shell");if(s.dataset.gaveta==="sim")s.dataset.gaveta="nao";else s.dataset.lat="nao";break;}
+    case "sh-lat":{const s=el.closest(".shell");const ab=s.dataset.lat!=="nao";s.dataset.lat=ab?"nao":"sim";el.setAttribute("aria-label",ab?"Abrir a lateral":"Fechar a lateral");break;}
+    case "nat-ok":{const r=natResolve;natResolve=null;$("#nat").close();r&&r(true);break;}
+    case "nat-nao":{$("#nat").close();break;}
+    case "mk":{
+      const s=el.dataset.s,c=el.dataset.c;V[s][c]=v;
+      if(s==="19"&&c==="estado"){F.p19.erros={};F.p19.contrato="";if(v==="vazio")D.papeis=[];else papeisCheios();}
+      if(s==="20"&&c==="estado"){if(v==="padrao"){VAL=clone(PADROES);HIST=[];INVALIDA=[];}else{cfgCheio();if(v==="invalida"){INVALIDA=["janela_retirada"];VAL.janela_retirada=clone(PADROES.janela_retirada);}}iniciarCampos();}
+      if(s==="21"&&c==="estado"){F.loc={};if(v==="vazio")dadosVazios();else dadosCheios();cfgCheio();iniciarCampos();s19Render();s20Render();}
+      REND[s]();break;
+    }
+    case "c-mudou":V[20].mudou=!V[20].mudou;s20Render();break;
+    case "p-rev":s19Revogar(v);break;
+    case "e-alt":{
+      const cad=el.dataset.c,lista=D[LISTA[cad]],x=lista.find(i=>i.id===v),k="ac"+v;
+      PEND[k]=true;s21Render();await espera(500);PEND[k]=false;
+      const campo=cad==="equipe"?"ativa":"ativo";x[campo]=!x[campo];
+      toast("ok",x[campo]?"Reativado.":"Desativado.");s21Render();s19Render();break;
+    }
+    case "e-apa":{
+      const cad=el.dataset.c,lista=D[LISTA[cad]],x=lista.find(i=>i.id===v),k="ac"+v;
+      const nome=cad==="estoque"?`o estoque ${x.codigo}`:cad==="contrato"?`o contrato ${x.nome}`:`a equipe ${x.nome}`;
+      if(!await confirmar(`Apagar ${nome}? Só dá se nada usar esse cadastro.`))break;
+      PEND[k]=true;s21Render();await espera(500);PEND[k]=false;
+      if(usado(cad,v)){toast("er","Esse cadastro já é usado (por contrato, equipe ou papel). Desative em vez de apagar.");s21Render();break;}
+      D[LISTA[cad]]=lista.filter(i=>i.id!==v);toast("ok","Apagado.");s21Render();s19Render();s20Render();break;
+    }
+  }
+});
+document.addEventListener("submit",e=>{
+  const f=e.target;if(!f.dataset.form)return;e.preventDefault();
+  switch(f.dataset.form){
+    case "p19":s19Conceder();break;
+    case "cfg":s20Salvar(f.dataset.ch);break;
+    case "est":s21Enviar("est",criarEstoque(F.est),gravarEstoque,"Estoque cadastrado.",()=>{F.est={omie:"",codigo:"",descricao:"",tipo:"contrato"};});break;
+    case "loc":{const l=D.locais.find(x=>String(x.codigo)===f.dataset.v);const t=F.loc[l.codigo]??tipoSugerido(l.sigla,l.descricao);
+      s21Enviar("loc"+l.codigo,criarEstoque({omie:String(l.codigo),codigo:l.sigla||String(l.codigo),descricao:l.descricao,tipo:t}),gravarEstoque,"Estoque cadastrado.");break;}
+    case "con":s21Enviar("con",()=>{const fc=F.con;const n=txt(fc.nome,"o nome",80);if(n.e)return n;if(!fc.estoque)return {e:"Escolha de qual estoque sai o material."};if(fc.cc.trim().length>30)return {e:"Too big: expected string to have <=30 characters"};return {v:{nome:n.v,estoque:fc.estoque,cc:fc.cc.trim()||null,spot:fc.spot}};},
+      v=>{if(D.contratos.some(c=>c.nome===v.nome)||(v.spot&&D.contratos.some(c=>c.spot)))return DUP;D.contratos.push({id:uid(),...v,ativo:true,em:"t"+Date.now()});return null;},
+      "Contrato cadastrado.",()=>{F.con={nome:"",estoque:"",cc:"",spot:false};});break;
+    case "equ":s21Enviar("equ",()=>{const fq=F.equ;const n=txt(fq.nome,"o nome",80);if(n.e)return n;if(!fq.estoque)return {e:"Escolha o estoque da equipe."};if(!fq.contrato)return {e:"Toda equipe precisa de um contrato."};if(fq.field.trim().length>80)return {e:"Too big: expected string to have <=80 characters"};return {v:{nome:n.v,estoque:fq.estoque,contrato:fq.contrato,field:fq.field.trim()||null}};},
+      v=>{if(D.equipes.some(q=>q.nome===v.nome||q.estoque===v.estoque))return DUP;D.equipes.push({id:uid(),...v,ativa:true,em:"t"+Date.now(),usada:false});return null;},
+      "Equipe cadastrada.",()=>{F.equ={nome:"",estoque:"",contrato:"",field:""};});break;
+  }
+});
+function setar(caminho,valor){
+  const p=caminho.split(".");
+  if(p[0]==="cfg"){F.cfg[p[1]][p[2]]=valor;return;}
+  if(p[0]==="loc"){F.loc[Number(p[1])]=valor;return;}
+  F[p[0]][p[1]]=valor;
+}
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.b&&t.type!=="checkbox"&&t.tagName!=="SELECT")setar(t.dataset.b,t.value);});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.dia){const [ch,nome,n]=t.dataset.dia.split("|");const at=new Set((F.cfg[ch][nome]??"").split(",").filter(Boolean).map(Number));at.has(+n)?at.delete(+n):at.add(+n);F.cfg[ch][nome]=[...at].sort((a,b)=>a-b).join(",");return;}
+  if(!t.dataset.b)return;
+  if(t.type==="checkbox"){setar(t.dataset.b,t.checked);return;}
+  if(t.tagName==="SELECT"){
+    setar(t.dataset.b,t.value);
+    if(t.dataset.b==="p19.papel"){if(t.value!=="aprovador")F.p19.contrato="";s19Render();}
+  }
+});
+window.addEventListener("hashchange",()=>{const m=location.hash.match(/^#secao-(19|20|21)$/);if(m)irSec(m[1]);});
+
+cfgCheio();iniciarCampos();
+SECS.forEach(k=>REND[k]());
+{const m=location.hash.match(/^#secao-(19|20|21)$/);irSec(m?m[1]:"19");}
+</script>
