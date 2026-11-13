@@ -1,0 +1,207 @@
+<title>Almox: passo a passo do João</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: uma coluna de passos numerados (a ordem importa), cada um com checkbox, o que fazer e valores com botão de copiar. Cores do hub Manfac. */
+:root {
+  --bg: #f4f6fa; --card: #ffffff; --fg: #0d2050; --muted: #52627a; --line: #d5dce8;
+  --accent: #f05a28; --accent-soft: #fde7de; --code-bg: #eef2f8; --ok: #15803d; --ok-soft: #dcfce7; --later: #64748b;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0a1628; --card: #0d2050; --fg: #e8eef8; --muted: #94a3b8; --line: #1e3a5f;
+  --accent: #f05a28; --accent-soft: #3a1f1a; --code-bg: #0a1628; --ok: #4ade80; --ok-soft: #12321f; --later: #94a3b8; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0a1628; --card: #0d2050; --fg: #e8eef8; --muted: #94a3b8; --line: #1e3a5f;
+  --accent: #f05a28; --accent-soft: #3a1f1a; --code-bg: #0a1628; --ok: #4ade80; --ok-soft: #12321f; --later: #94a3b8; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+header h1 { font-family: var(--f-display); font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 62ch; }
+.progress { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+.rule { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 4px; font-size: 14px; }
+.step { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 4px 14px; }
+.step.done { border-color: var(--ok); }
+.step.later { opacity: .8; border-style: dashed; }
+.num { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent); color: var(--accent); font-family: var(--f-display); font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.step.done .num { background: var(--ok); border-color: var(--ok); color: var(--card); }
+.step.later .num { border-color: var(--later); color: var(--later); }
+.body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.head h2 { font-family: var(--f-display); font-size: 19px; margin: 0; }
+.tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.why { color: var(--muted); margin: 0; font-size: 14px; }
+ol.do { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+code { font-family: var(--f-mono); font-size: 13px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+.vals { border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.vals table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.vals td, .vals th { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.vals tr:last-child td { border-bottom: 0; }
+.vals th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.vals td:first-child { font-family: var(--f-mono); white-space: nowrap; }
+.secret { color: var(--accent); font-weight: 600; font-size: 12px; }
+.copy { font: 500 12px var(--f-body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; cursor: pointer; margin-left: 6px; }
+.copy:hover, .copy:focus-visible { border-color: var(--accent); outline: none; }
+pre { margin: 0; font-family: var(--f-mono); font-size: 13px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; }
+.next { font-size: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.next b { color: var(--ok); }
+label.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+label.check input { width: 18px; height: 18px; accent-color: var(--ok); }
+.sep { font-family: var(--f-display); font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 12px 0 -6px; }
+@media (max-width: 480px) { .step { grid-template-columns: 1fr; } .num { margin-bottom: 4px; } }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Almoxarifado: o que falta você fazer</h1>
+    <p>Siga os passos na ordem, porque cada um usa o que o anterior deixou pronto. Os bancos de dados já estão preparados (SQL 001, 002, 003, 005 e 023 aplicados em 12/11). Ao terminar cada passo, marque a caixa e me avise no chat.</p>
+  </header>
+
+  <div class="progress"><span id="prog-txt">0 de 5 feitos</span><div class="bar"><i id="prog-bar"></i></div></div>
+
+  <div class="rule"><b>Nenhuma chave passa pelo chat.</b> Você copia de um lugar e cola no outro. Para mim, basta dizer "feito".</div>
+
+  <!-- 1 -->
+  <section class="step" data-id="omie">
+    <div class="num">1</div>
+    <div class="body">
+      <div class="head"><h2>Chave do Omie no seu computador</h2><span class="tag">5 min</span></div>
+      <p class="why">Serve para eu ler o Omie daqui, sem gravar nada: confirmar os nomes dos campos do estoque e ver se o Field dá baixa sozinho no Omie. É a mesma chave do Compras.</p>
+      <ol class="do">
+        <li>Abra o EasyPanel em <code>painel.manfac.com.br</code>, projeto <b>manfac</b>, app <b>compras</b>, aba <b>Environment</b>.</li>
+        <li>Abra o <b>Bloco de Notas</b> e escreva as duas linhas abaixo, colando depois do <code>=</code> o valor que está no Compras:
+          <pre>OMIE_APP_KEY=
+OMIE_APP_SECRET=</pre></li>
+        <li>Clique em <b>Arquivo → Salvar como</b>. Em "Tipo", escolha <b>Todos os arquivos</b>. No nome, cole o caminho abaixo:
+          <pre id="p-env">C:\Users\joao-\almox\.env.local</pre>
+          <button class="copy" data-copy="p-env" type="button">Copiar caminho</button></li>
+      </ol>
+      <p class="next">Depois disso, <b>eu faço:</b> a leitura do Omie e a conferência da baixa automática do Field.</p>
+      <label class="check"><input type="checkbox" id="ck-omie"> Feito</label>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="step" data-id="segredo">
+    <div class="num">2</div>
+    <div class="body">
+      <div class="head"><h2>Criar o segredo do agendador</h2><span class="tag">1 min</span></div>
+      <p class="why">É uma senha que só o almox e o banco conhecem. Com ela, o banco consegue mandar o almox copiar o estoque do Omie de 10 em 10 minutos. Ela vai no EasyPanel (passo 4) e depois no cofre do Supabase (passo 6).</p>
+      <ol class="do">
+        <li>Abra o <b>PowerShell</b> e cole o comando:
+          <pre id="p-cron">node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</pre>
+          <button class="copy" data-copy="p-cron" type="button">Copiar comando</button></li>
+        <li>Ele mostra 64 letras e números. Guarde num lugar seu, como o gerenciador de senhas. Não mande para mim.</li>
+      </ol>
+      <label class="check"><input type="checkbox" id="ck-segredo"> Feito</label>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" data-id="app">
+    <div class="num">3</div>
+    <div class="body">
+      <div class="head"><h2>Criar o app do almox no EasyPanel</h2><span class="tag">5 min</span></div>
+      <p class="why">O almox fica num app só dele, como o Compras e o RH. Assim, publicar o almox não mexe em nenhum outro sistema.</p>
+      <ol class="do">
+        <li>No projeto <b>manfac</b>, clique em <b>+ Serviço → App</b>. Nome: <code>almox</code>.</li>
+        <li>Aba <b>Fonte</b>: escolha <b>Github</b>. Nunca escolha "Upload (.zip)": com ele, nenhuma atualização chega depois.</li>
+      </ol>
+      <div class="vals"><table>
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Proprietário</td><td><code>manfac-facilities</code></td></tr>
+        <tr><td>Repositório</td><td><code>almox</code></td></tr>
+        <tr><td>Branch</td><td><code>fase-1</code> <span class="why">(é onde está o código hoje)</span></td></tr>
+        <tr><td>Construção</td><td><b>Dockerfile</b>, arquivo <code>Dockerfile</code></td></tr>
+      </table></div>
+      <p class="why">Ainda <b>não</b> clique em Deploy.</p>
+      <label class="check"><input type="checkbox" id="ck-app"> Feito</label>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="step" data-id="env">
+    <div class="num">4</div>
+    <div class="body">
+      <div class="head"><h2>Preencher o Environment do almox</h2><span class="tag">10 min</span></div>
+      <p class="why">São 8 variáveis. Três você copia daqui. As que estão marcadas como <span class="secret">segredo</span> você copia do Environment do <b>compras</b>, sem trazer para o chat. Deixe de fora as variáveis de e-mail (SMTP): o envio de e-mail do almox está desligado por enquanto.</p>
+      <div class="vals"><table>
+        <tr><th>Variável</th><th>Valor</th></tr>
+        <tr><td>ALX_AMBIENTE</td><td><code id="v1">producao</code><button class="copy" data-copy="v1" type="button">Copiar</button></td></tr>
+        <tr><td>NEXT_PUBLIC_APP_URL</td><td><code id="v2">https://hub.manfac.com.br/almox</code><button class="copy" data-copy="v2" type="button">Copiar</button></td></tr>
+        <tr><td>NEXT_PUBLIC_SUPABASE_URL</td><td><code id="v3">https://iyytcavcgukfjnjjrerx.supabase.co</code><button class="copy" data-copy="v3" type="button">Copiar</button></td></tr>
+        <tr><td>NEXT_PUBLIC_SUPABASE_ANON_KEY</td><td>a mesma do compras <span class="why">(chave pública)</span></td></tr>
+        <tr><td>SUPABASE_SERVICE_ROLE_KEY</td><td>a mesma do compras <span class="secret">segredo</span></td></tr>
+        <tr><td>OMIE_APP_KEY</td><td>a mesma do compras <span class="secret">segredo</span></td></tr>
+        <tr><td>OMIE_APP_SECRET</td><td>a mesma do compras <span class="secret">segredo</span></td></tr>
+        <tr><td>ALX_CRON_SECRET</td><td>o que você gerou no passo 2 <span class="secret">segredo</span></td></tr>
+      </table></div>
+      <p class="why">Escreva o nome de cada variável exatamente como está na tabela. Um erro de digitação faz o app subir sem a variável.</p>
+      <label class="check"><input type="checkbox" id="ck-env"> Feito</label>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="step" data-id="dominio">
+    <div class="num">5</div>
+    <div class="body">
+      <div class="head"><h2>Domínio e primeiro Deploy</h2><span class="tag">5 min + build</span></div>
+      <p class="why">Isso faz o almox abrir em <code>hub.manfac.com.br/almox</code>, no mesmo endereço dos outros sistemas. Esta configuração é a que funcionou no Compras.</p>
+      <div class="vals"><table>
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Host</td><td><code>hub.manfac.com.br</code></td></tr>
+        <tr><td>Caminho</td><td><code>/almox</code></td></tr>
+        <tr><td>HTTPS</td><td><b>ligado</b></td></tr>
+        <tr><td>Protocolo de destino</td><td><b>HTTP</b> <span class="why">(com HTTPS o EasyPanel devolve erro 500)</span></td></tr>
+        <tr><td>Porta de destino</td><td><code>80</code></td></tr>
+        <tr><td>Caminho de destino</td><td><code>/almox</code> <span class="why">(não remover o prefixo)</span></td></tr>
+      </table></div>
+      <ol class="do">
+        <li>Salve o domínio e clique em <b>Deploy</b>.</li>
+        <li>No log, confira se aparecem <code>Commit: ...</code> e <code>Download Github Archive Started</code>. Se aparecer, o código veio do Github.</li>
+      </ol>
+      <p class="next">Depois disso, <b>eu faço:</b> confiro se o almox subiu de verdade, olhando a data dos arquivos publicados e não o painel. Depois faço a primeira cópia à mão: locais e produtos do Omie, estoques na tela Estrutura e saldos.</p>
+      <label class="check"><input type="checkbox" id="ck-dominio"> Feito</label>
+    </div>
+  </section>
+
+  <p class="sep">Depois, com o Jose</p>
+
+  <section class="step later" data-id="cofre">
+    <div class="num">6</div>
+    <div class="body">
+      <div class="head"><h2>Segredos no cofre do Supabase</h2><span class="tag">só depois do passo 5 conferido</span></div>
+      <p class="why">O Jose Guilherme cria os 4 segredos no cofre do Supabase, digitando no navegador dele: o segredo do passo 2 e os três endereços das tarefas do almox. Quando ele terminar, eu aplico o SQL 004 e a cópia passa a rodar sozinha de 10 em 10 minutos. Quando chegar a hora, eu te mando a mensagem pronta para ele.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const ids = ["omie", "segredo", "app", "env", "dominio"];
+function load() { try { return JSON.parse(localStorage.getItem("almox-passos") || "{}"); } catch (e) { return {}; } }
+function save(s) { try { localStorage.setItem("almox-passos", JSON.stringify(s)); } catch (e) {} }
+const state = load();
+function render() {
+  let n = 0;
+  ids.forEach(id => {
+    const on = !!state[id];
+    document.getElementById("ck-" + id).checked = on;
+    document.querySelector('.step[data-id="' + id + '"]').classList.toggle("done", on);
+    if (on) n++;
+  });
+  document.getElementById("prog-txt").textContent = n + " de " + ids.length + " feitos";
+  document.getElementById("prog-bar").style.width = (n / ids.length * 100) + "%";
+}
+ids.forEach(id => document.getElementById("ck-" + id).addEventListener("change", e => { state[id] = e.target.checked; save(state); render(); }));
+document.querySelectorAll(".copy").forEach(b => b.addEventListener("click", () => {
+  const el = document.getElementById(b.dataset.copy), txt = el.textContent, old = b.textContent;
+  const done = () => { b.textContent = "Copiado"; setTimeout(() => b.textContent = old, 1400); };
+  navigator.clipboard.writeText(txt).then(done, () => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+}));
+render();
+</script>
