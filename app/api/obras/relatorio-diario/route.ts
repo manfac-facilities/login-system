@@ -22,6 +22,7 @@ import {
   formatarLidoEm,
   htmlDoEmail,
   montarDestinatarios,
+  lerSemEnvio,
   remetenteDe,
   textoAlternativo,
   textoDoEmail,
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
       return erro(500, { error: 'leitura', detalhe: d }, `leitura: ${d}`)
     }
     entrada = painelLido
-    destinatarios = montarDestinatarios(acesso.data, admins.data)
+    destinatarios = montarDestinatarios(acesso.data, admins.data, lerSemEnvio(process.env.OBRAS_RELATORIO_SEM_ENVIO))
   } catch (e) {
     return erro(500, { error: 'leitura', detalhe: mensagem(e) }, `leitura: ${mensagem(e)}`)
   }

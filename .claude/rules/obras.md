@@ -106,7 +106,7 @@ bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5, B7 fechadas; bordas novas em
 com `OBRAS_CRON_SECRET`. Lê o painel (`app/obras/painel/_leitura.ts` + `montarPainel`) com service role,
 gera PNG 2x com `next/og` (`_imagem.tsx`, **sem `overflow: hidden`** — o render passa de 5 min) e envia
 pela Locaweb (`SMTP_*`, mesmas do Compras; `email-ssl.com.br:465`) um e-mail por destinatário: slug
-`obras` com `has_access = true` + administradores. Falha de leitura/imagem → ninguém recebe; falha de
+`obras` com `has_access = true` + administradores, menos quem está em `OBRAS_RELATORIO_SEM_ENVIO` (desde 14/11/2026). Falha de leitura/imagem → ninguém recebe; falha de
 envio → 1 nova tentativa após 60 s. Registro = `net._http_response` (some em ~6 h). Corpo
 `{"previa":true}` devolve o PNG; `{"somentePara":"<e-mail da lista>"}` manda a uma pessoa só.
 Docs: `docs/relatorio-email/`.

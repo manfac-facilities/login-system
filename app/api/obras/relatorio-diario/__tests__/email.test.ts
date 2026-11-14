@@ -7,6 +7,7 @@ import {
   formatarLidoEm,
   htmlDoEmail,
   montarDestinatarios,
+  lerSemEnvio,
   remetenteDe,
   textoAlternativo,
   textoDoEmail,
@@ -35,6 +36,16 @@ describe('montarDestinatarios', () => {
       [{ user_email: 'BETO@manfac.com.br' }]
     )
     expect(r).toEqual(['ana@manfac.com.br', 'beto@manfac.com.br'])
+  })
+
+  it('tira quem está em OBRAS_RELATORIO_SEM_ENVIO, mesmo sendo admin', () => {
+    const r = montarDestinatarios(
+      [{ user_email: 'ana@manfac.com.br', has_access: true }],
+      [{ user_email: 'chefe@x.com' }, { user_email: 'beto@manfac.com.br' }],
+      lerSemEnvio(' Chefe@X.com , ,')
+    )
+    expect(r).toEqual(['ana@manfac.com.br', 'beto@manfac.com.br'])
+    expect(lerSemEnvio(undefined)).toEqual([])
   })
 
   it('só considera has_access === true estrito', () => {
