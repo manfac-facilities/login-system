@@ -54,6 +54,19 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('RH')).not.toBeInTheDocument()
   })
 
+  it('Almoxarifado: card só para admin do hub, mesmo com todos os slugs liberados', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(true)
+    comAcessoA()
+    render(await DashboardPage())
+    expect(screen.getByText('Almoxarifado').closest('a')).toHaveAttribute('href', '/almox')
+
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    comAcessoA('sofia', 'dashboard-manutencao', 'crm', 'obras', 'orcamento')
+    rpc.mockResolvedValue({ data: true, error: null })
+    const { container } = render(await DashboardPage())
+    expect(container.querySelector('a[href="/almox"]')).toBeNull()
+  })
+
   it('shows all three cards for an administrator', async () => {
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
     comAcessoA()

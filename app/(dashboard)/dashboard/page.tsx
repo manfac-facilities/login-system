@@ -161,6 +161,25 @@ export default async function DashboardPage() {
             </div>
           </a>
           )}
+          {/* Almoxarifado: app Next separada (basePath /almox), <a> normal e fora do matcher.
+              Por enquanto só admin do hub vê o card (decisão de 14/11/2026: o sistema ainda
+              não abriu para os usuários). O próprio módulo confere os papéis (alx_papeis). */}
+          {admin && (
+          <a
+            href="/almox"
+            className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"
+          >
+            <span className="text-3xl">📦</span>
+            <div>
+              <p className="text-white font-semibold group-hover:text-[#f05a28] transition-colors">
+                Almoxarifado
+              </p>
+              <p className="text-[#4a6080] text-sm mt-1">
+                Estoque, pedidos de material e inventário, ligado ao Omie
+              </p>
+            </div>
+          </a>
+          )}
           {podeFrotas && (
           <Link
             href="/sofia"

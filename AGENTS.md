@@ -98,6 +98,7 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Gestão de Fornecedores | `/fornecedores` | **Gestão de Fornecedores** | **em construção desde 08/10/2026** — app separada (`manfac-facilities/fornecedores`), padrão Compras. Decisão do João: o deploy dela **não pode** atualizar nenhum outro sistema. Fonte: `docs/cliente/2026-10-0{7,8}-*fornecedores*` |
 | Orçamento | `/orcamento` | **Orçamento** | `orcamento` — app separada (`manfac-facilities/orcamento`, tabelas `orc_*`), fora do matcher; o card e o próprio módulo exigem a liberação (desde 27/10/2026); papéis no próprio módulo (`/orcamento/papeis`) |
 | RH | `/rh` | **RH** | **sem slug, de propósito** — app separada (`manfac-facilities/rh`, tabelas `rh_*`), em implantação desde 17/10/2026; começa pelo cadastro de colaboradores e rateio; papéis em `/rh/papeis`. **Card e módulo só para quem tem papel `rh`/`diretoria` ou é admin** (`rh_pode_ver()`, desde 05/11/2026) |
+| Almoxarifado | `/almox` | **Almoxarifado** | **sem slug, de propósito** — app separada (`manfac-facilities/almox`, branch `fase-1`, tabelas `alx_*`, app `almox` no EasyPanel), no ar desde 14/11/2026; papéis no próprio módulo (`alx_papeis`). **Card só para admin do hub** até o lançamento aos usuários |
 
 **Financeiro sem slug é decisão, não esquecimento:** qualquer pessoa logada pode pedir um
 pagamento, e o porteiro do módulo só exige sessão. Por isso o card fica fora de `hasSystemAccess`
