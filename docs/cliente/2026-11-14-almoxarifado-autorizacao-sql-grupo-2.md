@@ -9,3 +9,17 @@ Mensagens do João no chat, literal:
 "2) pode rodar os sql" se refere ao item 2 da etapa 2: os SQL **006 → 007 → 009 → 010 → 011 → 012
 → 017 → 018 → 022** do repositório `manfac-facilities/almox`, branch `fase-1`, commit `fbf2662`,
 no banco `iyytcavcgukfjnjjrerx`.
+
+## Aplicação (14/11/2026)
+
+Antes, só leitura: os 9 arquivos rodam numa transação cada, só criam ou alteram objetos `alx_*`,
+não gravam em `storage`, `cron`, `vault`, `auth` nem nas tabelas de acesso do hub. Aplicados em
+ordem, nenhum erro.
+
+Conferido depois, só leitura: 30 tabelas `alx_*`, todas com RLS; as 11 sem policy (acessos,
+assinaturas, cargas, colaboradores, consertos, convites, ferramentas, fila_rodadas, mov_numeros,
+pedido_numeros, sessoes) não têm nenhum privilégio para `authenticated` (só o servidor acessa).
+`anon` sem acesso a tabela nem a função; ninguém trunca; `service_role` sem TRIGGER/REFERENCES;
+105 funções, todas security definer com `search_path` fixo; nenhum job agendado; Cockpit
+sincronizando com sucesso depois da aplicação. O João (admin do hub) entra no almox pela regra
+`almox_is_admin`.
