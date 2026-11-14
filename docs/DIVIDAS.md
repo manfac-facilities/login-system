@@ -678,3 +678,7 @@ Só o que não é dinheiro nem acesso; o resto foi tratado na hora ou fica como 
 - **Linha sem CPF pede "explique por escrito", mas a tela só oferece confirmar** (`rh`, `components/pagamentos/tela-folha.tsx`): texto confuso, sem efeito no valor.
 - **CNPJ alfanumérico é recusado** (`rh`, `lib/pagamentos`): falso bloqueio de PJ novo; nenhum pagamento sai errado.
 - **Motivo da liberação de duplicidade fora da linha do tempo** (`financeiro`, `lib/integracoes/rh-pagamentos.ts`): fica só no evento; quem valida vê a etiqueta `possivel_duplicidade`.
+
+## 14/11/2026 — Token do GitHub no EasyPanel vence em 1 ano
+
+O João vai trocar o token do EasyPanel (Configurações → Github) por um token fine-grained `easypanel-manfac`, dono `manfac-facilities`, todos os repositórios, Contents só leitura, validade de 1 ano. Motivo: o token antigo não enxergava o repositório `almox`, criado em 11/11 ("repository not found"). **Quando vencer, o Deploy de todos os apps para de baixar código.** Renovar antes de ~11/2027.
