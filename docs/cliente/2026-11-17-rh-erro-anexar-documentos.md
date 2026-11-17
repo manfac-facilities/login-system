@@ -11,3 +11,9 @@ O print do erro ("esse erro ai") não veio junto no chat.
 O João mandou em seguida, literal:
 
 > codigo do erro 3916280396
+
+## Decisões do João depois da correção (mesmo dia), literais
+
+> aumenta o limite para isso nao acontecer mais e me avisa que dou deploy
+
+> outra coisa,sempre que tiver um erro o sistema tem que apontar o erro, nao dizer que feu erro e naoexplicar
