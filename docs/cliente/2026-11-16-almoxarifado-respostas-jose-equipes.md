@@ -12,3 +12,15 @@ Respostas às perguntas 2, 3 e 4 da mensagem de 14/11
 
 A pergunta 1 (teste das 2 transferências de 1 unidade, Omie → Field e Field → Omie) **não foi
 respondida** nesta leva.
+
+## Mockups — validação (mesma leva, 16/11/2026)
+
+Logo depois, sobre os mockups enviados em 14/11 (Rodada 2A
+https://claude.ai/artifact/4CGE8T9HiPSLgeeVdUZxEn e Rodada 2B
+https://claude.ai/artifact/AQK6v2ge9NE9huPVBvzoXa), três mensagens literais, na ordem:
+
+> Telas validadas
+
+> Ficaram boas
+
+> Provavelmente na pratica ali vao surgir algumas duvidas ou melhorias e ai ajustamos
