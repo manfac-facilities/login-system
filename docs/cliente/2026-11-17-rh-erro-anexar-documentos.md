@@ -17,3 +17,11 @@ O João mandou em seguida, literal:
 > aumenta o limite para isso nao acontecer mais e me avisa que dou deploy
 
 > outra coisa,sempre que tiver um erro o sistema tem que apontar o erro, nao dizer que feu erro e naoexplicar
+
+## Autorização para aplicar a 018 (mesmo dia), literal
+
+> aplica a 018 e me avisa pro deploy
+
+Cobre: migration `018_rh_arquivos_50mb.sql` do RH (regra `rh_arquivos_tamanho_valido` para 50 MB) e o
+limite da pasta `rh-arquivos` para 50 MB (`docs/rh-arquivos-pasta.md` do RH), no projeto
+`iyytcavcgukfjnjjrerx`.
