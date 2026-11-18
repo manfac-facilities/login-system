@@ -106,7 +106,7 @@ bloco (`versaoDoBloco`). Dívidas A1, A13, A16, B5, B7 fechadas; bordas novas em
 com `OBRAS_CRON_SECRET`. Lê o painel (`app/obras/painel/_leitura.ts` + `montarPainel`) com service role,
 gera PNG 2x com `next/og` (`_imagem.tsx`, **sem `overflow: hidden`** — o render passa de 5 min) e envia
 pela Locaweb (`SMTP_*`, mesmas do Compras; `email-ssl.com.br:465`) um e-mail por destinatário: slug
-`obras` com `has_access = true` + administradores. Falha de leitura/imagem → ninguém recebe; falha de
+`obras` com `has_access = true` + administradores, menos quem está em `OBRAS_RELATORIO_SEM_ENVIO` (desde 14/11/2026). Falha de leitura/imagem → ninguém recebe; falha de
 envio → 1 nova tentativa após 60 s. Registro = `net._http_response` (some em ~6 h). Corpo
 `{"previa":true}` devolve o PNG; `{"somentePara":"<e-mail da lista>"}` manda a uma pessoa só.
 Docs: `docs/relatorio-email/`.
@@ -329,3 +329,19 @@ pergunta "precisa de material?" antes de o prazo de pedir passar; "precisa" vira
   **`npm run types` no Compras** (regenera `types/supabase.ts`). Sem o SQL o hub mostra a lista sem "pedir até" e sem
   andamento; sem o app do Compras o link funciona como hoje.
 - **Estado:** construído e revisado; SQL **NÃO APLICADO** e nada no ar (ver `.claude/rules/sql.md`).
+
+### Visão do CEO (no ar desde 04/11/2026)
+
+- **Spec:** `docs/superpowers/specs/2026-11-04-obras-visao-ceo-design.md`.
+- **Onde fica:** página `app/obras/obras/visao-ceo/` (`_permissao.ts`, `_tela.tsx`); regras puras em `_lib/carteira.ts`; leitura
+  em `_lib/carteira-leitura.ts` (`lerCarteira`); leitura do Financeiro em `_lib/financeiro-ler.ts`. Link "Visão do CEO" na
+  lista `app/obras/obras/page.tsx`, só para admin.
+- **Quem vê:** só admin do hub (`podeVerVisaoCeo` = `isAdmin`, falha fechada) até os papéis do SGO. Valores por obra passam
+  por `obras_pode_ver_valores`, dentro de `lerFinanceiroDaObra`.
+- **O dinheiro reusa `lerFinanceiroDaObra`:** é o mesmo número da aba Financeiro. **Não recalcule por outro caminho.**
+- **Regras que mordem:** "parada" = 3+ dias úteis decorridos sem aumento de % (não `dadosAte`); a obra só sai da carteira com
+  execução 100% + valor informado em todas as OS + a faturar 0; obra sem valor ou com OS sem valor ("valor incompleto") fica
+  fora das somas de faturamento (`semValor`); faturado e % faturado são os da aba (`percentuais.faturado`, só OS com valor),
+  andamento por etapa é o do painel (`ResumoEtapa.percentual` + `previstoDaEtapa`), desvio é `atraso.total`; leitura que
+  falha vira "indisponível"/"Não foi possível ler", **nunca zero**.
+- **Sem SQL novo.** Dívidas em `docs/DIVIDAS.md` (04/11).

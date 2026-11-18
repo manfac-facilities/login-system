@@ -23,7 +23,11 @@ const normaliza = (e: string | null | undefined) => (typeof e === 'string' ? e.t
  * Quem recebe: acesso ao slug `obras` (só `has_access === true` estrito) mais
  * administradores. Minúsculas, sem vazios, sem repetição, em ordem estável.
  */
-export function montarDestinatarios(acesso: LinhaAcesso[], admins: LinhaEmail[]): string[] {
+export function montarDestinatarios(
+  acesso: LinhaAcesso[],
+  admins: LinhaEmail[],
+  semEnvio: string[] = []
+): string[] {
   const todos = new Set<string>()
   for (const l of acesso) {
     if (l.has_access !== true) continue
@@ -34,7 +38,14 @@ export function montarDestinatarios(acesso: LinhaAcesso[], admins: LinhaEmail[])
     const e = normaliza(l.user_email)
     if (e) todos.add(e)
   }
+  // Quem pediu para não receber (env OBRAS_RELATORIO_SEM_ENVIO), mesmo sendo admin.
+  for (const s of semEnvio) todos.delete(normaliza(s))
   return [...todos].sort()
+}
+
+/** `OBRAS_RELATORIO_SEM_ENVIO`: e-mails separados por vírgula. Quem lê o env é a rota. */
+export function lerSemEnvio(valor: string | undefined): string[] {
+  return (valor ?? '').split(',').map(normaliza).filter(Boolean)
 }
 
 /** `SMTP_REMETENTE` como vem; se for só o endereço, acrescenta o nome "Manfac". Quem lê o env é a rota. */

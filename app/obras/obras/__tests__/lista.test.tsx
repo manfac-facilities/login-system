@@ -14,7 +14,8 @@ jest.mock('@/lib/supabase/server', () => ({
   })),
 }))
 jest.mock('@/lib/auth/systemAccess', () => ({ hasSystemAccess: jest.fn(async () => true) }))
-jest.mock('@/lib/auth/roles', () => ({ isAdmin: jest.fn(async () => true) }))
+const isAdminMock = jest.fn(async () => true)
+jest.mock('@/lib/auth/roles', () => ({ isAdmin: () => isAdminMock() }))
 jest.mock('../_lib/leitura', () => ({ lerObraGrande: (...a: unknown[]) => lerObraGrandeMock(...a) }))
 jest.mock('../_lib/ultimo-diario', () => ({
   ultimosDiariosEnviados: jest.fn(async () => ({ ultimo: new Map(), error: null })),
@@ -53,5 +54,16 @@ describe('lista de obras', () => {
     expect(screen.getByText('10/12/2026')).toBeInTheDocument()
     expect(screen.getByText('01/12/2026')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '40% concluído' })).toBeInTheDocument()
+  })
+
+  it('link "Visão do CEO" só para admin', async () => {
+    lerObraGrandeMock.mockResolvedValue({ ok: true, dados: { calc: null } })
+    isAdminMock.mockResolvedValueOnce(true)
+    const { unmount } = render(await ListaObrasPage())
+    expect(screen.getByRole('link', { name: 'Visão do CEO' })).toHaveAttribute('href', '/obras/obras/visao-ceo')
+    unmount()
+    isAdminMock.mockResolvedValueOnce(false)
+    render(await ListaObrasPage())
+    expect(screen.queryByRole('link', { name: 'Visão do CEO' })).toBeNull()
   })
 })

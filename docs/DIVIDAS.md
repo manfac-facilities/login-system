@@ -682,3 +682,18 @@ Só o que não é dinheiro nem acesso; o resto foi tratado na hora ou fica como 
 ## 14/11/2026 — Token do GitHub no EasyPanel vence em 1 ano
 
 O João vai trocar o token do EasyPanel (Configurações → Github) por um token fine-grained `easypanel-manfac`, dono `manfac-facilities`, todos os repositórios, Contents só leitura, validade de 1 ano. Motivo: o token antigo não enxergava o repositório `almox`, criado em 11/11 ("repository not found"). **Quando vencer, o Deploy de todos os apps para de baixar código.** Renovar antes de ~11/2027.
+
+## 04/11/2026 — Visão do CEO (`feat/obras-visao-ceo`), deixado de propósito
+
+- **A lista `/obras/obras` mostra canceladas e aditivos como cartões; a Visão do CEO não** (`obras/obras/_lib/carteira-leitura.ts`).
+  Os totais das duas telas podem divergir no número de obras.
+- **Erro em `obras_rdo`/`obras_rdo_avanco` vira "sem diários" na obra aberta** (`_lib/carteira-leitura.ts`): a obra aparece
+  sem o dado de diário em vez de "indisponível". Impacto só no bloco "Últimos diários": "parada" vem do histórico de
+  status (`hist`, `ultimoAvanco`), não dos diários.
+- **`lerObraGrande` com erro mostra a obra como "Sem cronograma"** (grupo 3) e os impedimentos somem das travas
+  (`_lib/carteira-leitura.ts`); ideal seria um estado "cronograma indisponível".
+- **Leitura sem limite de concorrência** (`_lib/carteira-leitura.ts`): ~15–20 consultas por obra, todas em paralelo. Ok com
+  ~4 obras em modalidade OBRA; rever se a carteira crescer.
+- **Detalhes de tela em `visao-ceo/_tela.tsx`:** cores fixas fora dos tokens; clicar numa exceção não rola até a obra.
+  (`aria-controls` e o singular de "Não cumprida" foram corrigidos na revisão final.)
+- **O orçado por obra não existe:** o bloco só mostra o aviso (depende do orçamento/PEF por obra, projeto à parte).

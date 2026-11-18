@@ -97,11 +97,19 @@ proxy no mesmo domínio: no painel usam `<a>` normal em vez de `<Link>`, e **nã
 | Compras | `/compras` | **Compras** | **sem slug, de propósito** — app separada (`manfac-facilities/compras`, tabelas `cmp_*`), no ar desde 07/10/2026; mesmo conceito do Financeiro: qualquer pessoa logada solicita, papéis ficam no próprio módulo |
 | Gestão de Fornecedores | `/fornecedores` | **Gestão de Fornecedores** | **em construção desde 08/10/2026** — app separada (`manfac-facilities/fornecedores`), padrão Compras. Decisão do João: o deploy dela **não pode** atualizar nenhum outro sistema. Fonte: `docs/cliente/2026-10-0{7,8}-*fornecedores*` |
 | Orçamento | `/orcamento` | **Orçamento** | `orcamento` — app separada (`manfac-facilities/orcamento`, tabelas `orc_*`), fora do matcher; o card e o próprio módulo exigem a liberação (desde 27/10/2026); papéis no próprio módulo (`/orcamento/papeis`) |
-| RH | `/rh` | **RH** | **sem slug, de propósito** — app separada (`manfac-facilities/rh`, tabelas `rh_*`), em implantação desde 17/10/2026; começa pelo cadastro de colaboradores e rateio; papéis em `/rh/papeis` |
+| RH | `/rh` | **RH** | **sem slug, de propósito** — app separada (`manfac-facilities/rh`, tabelas `rh_*`), em implantação desde 17/10/2026; começa pelo cadastro de colaboradores e rateio; papéis em `/rh/papeis`. **Card e módulo só para quem tem papel `rh`/`diretoria` ou é admin** (`rh_pode_ver()`, desde 05/11/2026) |
+| Almoxarifado | `/almox` | **Almoxarifado** | **sem slug, de propósito** — app separada (`manfac-facilities/almox`, branch `fase-1`, tabelas `alx_*`, app `almox` no EasyPanel), no ar desde 14/11/2026; papéis no próprio módulo (`alx_papeis`). **Card só para admin do hub** até o lançamento aos usuários |
 
 **Financeiro sem slug é decisão, não esquecimento:** qualquer pessoa logada pode pedir um
 pagamento, e o porteiro do módulo só exige sessão. Por isso o card fica fora de `hasSystemAccess`
 e o sistema não entra em `lib/sistemas.ts`. Usa o mesmo banco, com tabelas `fin_*`.
+
+**Regra para sistema novo (decisão do João, 05/11/2026): nenhum sistema novo sobe para o hub
+aberto a todos.** Card no painel e entrada no módulo sempre dependem de liberação feita por um
+admin (slug em `/admin/acessos` ou papel concedido no próprio módulo). Falha de consulta = sem
+acesso. Financeiro, Compras e Gestão de Fornecedores, abertos a qualquer pessoa logada, são
+exceções antigas e decididas uma a uma; não servem de modelo. Motivo: o RH subiu com o card
+aberto a todo o hub e precisou ser fechado às pressas.
 
 ### Apelidos que já causaram confusão
 
@@ -120,7 +128,7 @@ e o sistema não entra em `lib/sistemas.ts`. Usa o mesmo banco, com tabelas `fin
 - Repositório: **`manfac-facilities/login-system`**. O hub roda no **EasyPanel**, app
   `manfac-login-system` no projeto `manfac`. Produção: `https://hub.manfac.com.br`.
 - **Push é livre desta máquina** desde 10/09/2026 — o Claude pusha sozinho. O que ainda barra é o
-  auto mode, com `[Sensitive-Source Provenance]` e `[Production Deploy]`: **é trava de permissão
+  auto mode, com `[Sensitive-Source Provenance]`, `[Production Deploy]` e `[Out-of-Place Publication]` (este último barrou o push do master em 10/11/2026 mesmo com o ok do Jose no chat; saída: ele roda `! git push`): **é trava de permissão
   pedindo autorização do João, não falha de credencial.** Não saia investigando token.
 - **Não há webhook de auto-deploy.** Push não sobe nada; alguém precisa clicar em Deploy.
 - **Nunca confie no painel para saber se subiu** — confira o `Last-Modified` dos chunks.

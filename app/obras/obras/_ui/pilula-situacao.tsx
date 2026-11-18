@@ -79,6 +79,11 @@ export default function PilulaSituacao({
   return <Pilula e={ESTILO_SITUACAO[situacaoExibida(situacao, status, travada)]} />
 }
 
+/** Pílula de uma situação já resolvida (ex.: etapa da carteira). */
+export function PilulaExibida({ situacao }: { situacao: SituacaoExibida }) {
+  return <Pilula e={ESTILO_SITUACAO[situacao]} />
+}
+
 const ESTILO_SINAL: Record<Sinal | 'sem', Estilo> = {
   verde: { ...ESTILO_SITUACAO.concluida, rotulo: 'No prazo' },
   amarelo: { ...ESTILO_SITUACAO.inicio_atrasado, rotulo: 'Atenção', icone: <IconeAlerta tamanho={I} /> },

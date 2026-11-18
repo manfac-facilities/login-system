@@ -326,6 +326,10 @@ export default function TelaCronograma({ dados }: { dados: DadosCronograma }) {
                 onFoco={setFoco}
                 rolagemRef={arvoreRef}
                 onRolar={aoRolarArvore}
+                larguraNome={Math.min(
+                  60,
+                  Math.max(24, ...dados.atividades.map((a) => a.descricao.length + 6), ...dados.etapas.map((e) => e.nome.length + 8)),
+                )}
               />
             </div>
             <div

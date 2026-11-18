@@ -349,6 +349,14 @@ export function resumirEtapas(atividades: AtividadeCalculada[], feriados: Feriad
   })
 }
 
+/** % previsto hoje de uma etapa, ponderado como `resumirEtapas` (peso; duração se a etapa soma peso 0). */
+export function previstoDaEtapa(as: AtividadeCalculada[]): number {
+  const soma = as.reduce((s, a) => s + a.peso, 0)
+  const peso = (a: AtividadeCalculada) => (soma > 0 ? a.peso : Math.max(a.duracao, 1))
+  const total = as.reduce((s, a) => s + peso(a), 0)
+  return total > 0 ? as.reduce((s, a) => s + peso(a) * a.percentualPrevisto, 0) / total : 0
+}
+
 export type ComparacaoBase = {
   numero: number
   inicioBase: string | null
