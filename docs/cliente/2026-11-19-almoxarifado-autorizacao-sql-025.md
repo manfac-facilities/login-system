@@ -15,3 +15,9 @@ Pré-requisitos do próprio arquivo: gravação ligada no ar (feito, `67315b9`) 
 
 A segunda mensagem responde à pergunta pendente: não há pausa; cópia automática e gravação no Omie
 seguem ligadas.
+
+## Aplicação (19/11, ~23:08 UTC)
+
+- Cofre conferido antes (só nomes): os dois segredos existem; a URL bate com a esperada. Rota sem segredo responde 401.
+- 025 aplicado no `iyytcavcgukfjnjjrerx`: job `almox-producao-omie` (id 49), `4-59/5 * * * *`, ativo.
+- 1ª rodada 23:14:00 UTC: `succeeded`, app respondeu **202**. Fila `alx_tarefas_omie` vazia (nenhum movimento ainda).
