@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almox — Início</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Mockup da tela Início do Almoxarifado (19/11/2026).
+   Moldura: a do mockup aprovado docs/almox/2026-11-11-mockup-almox.html (lateral navy de 256 px a partir de 768 px, topo navy com menu abaixo).
+   Miolo: a linguagem do Painel gerencial do Gestão de Obras (app/obras/painel/_painel.tsx e _ui.tsx): barra de filtro no topo,
+   seções com título + subtítulo, cartões #0b1b36, KPIs navy, variação em pílula, rótulo azul "Sempre hoje", gráficos SVG feitos à mão.
+   Tema único, o escuro do hub, de propósito. */
+:root{
+  color-scheme:dark;
+  --background:#0a1628;--navy:#0d2050;--navy-hover:#10285f;--orange:#f05a28;--orange-hover:#d94e22;--orange-txt:#ff7849;
+  --muted:#94a3b8;--muted-2:#64748b;--muted-dark:#4a6080;--border:#1e3a5f;--border-2:#294b78;--input-bg:#071225;
+  --card:#0b1b36;--mini:rgba(13,32,80,.45);--fundo-lista:#081527;
+  --texto:#ffffff;--texto-suave:#e8eef7;
+  --verde:#35c98a;--vermelho:#ff4d6d;--ambar:#f4b73f;--azul:#5aa9f0;
+  --verde-bg:rgba(53,201,138,.1);--vermelho-bg:rgba(255,77,109,.1);--neutro-bg:rgba(148,163,184,.1);--azul-bg:rgba(90,169,240,.08);
+  --serie-cmp:#7d93b5;
+  /* Só do mockup: âmbar tracejado, para nunca parecer parte do produto. */
+  --nota:#fbbf24;--nota-fundo:#2a2108;--nota-borda:#7a5c0e;--mk-fundo:#060e1c;
+  --fonte:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{background-color:var(--background);color:var(--texto)}
+body{margin:0;font:400 14px/1.5 var(--fonte);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.sp{flex:1}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ------------------------------ fora do produto: barra do mockup ------------------------------ */
+.wrap{max-width:1400px;margin:0 auto;padding-left:16px;padding-right:16px}
+.mk-cab{background:var(--mk-fundo)}
+.mk-cab .wrap{padding-block:12px 4px}
+.mk-tit{font-weight:600;color:var(--nota)}
+.mk-tit small{display:block;font-weight:400;color:var(--muted);font-size:12px;max-width:110ch}
+.mk-bar{position:sticky;top:0;z-index:60;background:var(--mk-fundo);border-bottom:1px dashed var(--nota-borda)}
+.mk-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding-block:8px}
+.mk-grp{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.mkseg{display:inline-flex;border:1px dashed var(--nota-borda);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.mkseg button{border:0;background:transparent;border-radius:6px;padding:4px 9px;font-size:12px;color:var(--texto-suave)}
+.mkseg button:hover{background:var(--nota-fundo)}
+.mkseg button[aria-pressed="true"]{background:var(--nota);color:#1a1405;font-weight:600}
+/* Etiqueta "quem vê": anotação do mockup, não é do produto */
+.qv{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;border:1px dashed var(--nota-borda);color:var(--nota);background:var(--nota-fundo);border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:600}
+.qv.todos{border-color:#3d6b4f;color:#9be3bd;background:#0c2418}
+.ex{display:inline-flex;align-items:center;white-space:nowrap;border:1px dashed var(--nota-borda);color:var(--nota);border-radius:4px;padding:0 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:2px}
+.nota{border:1px dashed var(--nota-borda);background:var(--nota-fundo);color:var(--texto-suave);border-radius:10px;padding:10px 12px;font-size:12.5px}
+.nota b{color:var(--nota)}
+
+main.pg{padding-block:16px 80px}
+
+/* ------------------------------ moldura do hub (igual ao mockup de 11/11) ------------------------------ */
+.shell{container:sh/inline-size;position:relative;isolation:isolate;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--background)}
+.sh-app{display:flex;flex-direction:column;min-height:560px}
+.lat{position:absolute;inset:0 auto 0 0;z-index:50;width:256px;max-width:85%;flex:none;background:var(--navy);border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease-in-out,visibility .2s}
+.shell[data-gaveta="sim"] .lat{transform:none;visibility:visible}
+.lat-cab{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding:0 8px}
+.lat-nome{font-size:18px;font-weight:700;line-height:1.25;display:block;color:#fff}
+.volta{color:var(--muted);font-size:12px;display:inline-flex;align-items:center}
+.lat-fecha{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;display:grid;place-items:center;border-radius:8px;width:44px;height:44px}
+.lat-fecha:hover{color:#fff}
+.lat-grupo{display:flex;flex-direction:column;gap:4px;margin-bottom:24px}
+.item{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px;border-radius:4px;font-size:14px;color:var(--muted);transition:background-color .15s,color .15s}
+.item[aria-disabled="true"]{cursor:default}
+.item[aria-disabled="true"]:hover{background:var(--border);color:#fff}
+.item[aria-current="page"]{background:var(--orange);color:#fff}
+.item .cont{margin-left:auto;font-size:11px;font-weight:600;border-radius:999px;padding:0 7px;background:var(--border);color:var(--texto-suave)}
+.lat-pe{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.quem{display:flex;align-items:center;gap:10px;padding:4px 8px 8px}
+.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--border);font-size:12px;font-weight:500;color:#fff;flex:none}
+.quem-txt{min-width:0;font-size:12px;line-height:1.35}
+.quem-txt b{display:block;font-weight:500;color:#fff;font-size:13px}
+.quem-txt span{color:var(--muted);overflow-wrap:anywhere}
+.topo-cel{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--navy);border-bottom:1px solid var(--border);padding:10px 16px}
+.ic-btn{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--muted);flex:none}
+.ic-btn:hover{color:#fff;border-color:var(--muted)}
+.veu{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:40;display:none}
+.shell[data-gaveta="sim"] .veu{display:block}
+.sh-main{container:area/inline-size;flex:1;min-width:0;padding:16px}
+@container sh (min-width:640px){.sh-main{padding:24px}}
+@container sh (min-width:1100px){.sh-main{padding:28px 32px}}
+@container sh (min-width:768px){
+  .topo-cel,.veu{display:none!important}
+  .sh-app{flex-direction:row}
+  .lat{position:static;z-index:auto;transform:none;visibility:visible;max-width:none;transition:none}
+  .lat-fecha{display:none}
+  .item{min-height:0}
+}
+
+/* ------------------------------ miolo: linguagem do Painel gerencial do Obras ------------------------------ */
+.eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--orange-txt)}
+.pg-tit{margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-.01em;color:var(--texto-suave)}
+@container area (min-width:640px){.pg-tit{font-size:34px}}
+.pg-sub{margin-top:8px;max-width:72ch;font-size:14px;color:var(--muted)}
+
+/* Barra de filtro */
+.filtro{position:relative;z-index:30;margin-top:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;border:1px solid var(--border);background:rgba(8,20,38,.94);border-radius:12px;padding:12px;box-shadow:0 18px 48px rgba(0,0,0,.22)}
+@container area (min-width:640px){.filtro{position:sticky;top:52px}}
+.fc{display:flex;flex-direction:column;min-width:0;width:100%}
+@container area (min-width:640px){.fc{width:auto}}
+.fc>span,.fc>label>span{display:block;margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2)}
+.seg{display:flex;max-width:100%;gap:2px;overflow-x:auto;border:1px solid var(--border);background:var(--input-bg);border-radius:8px;padding:3px;scrollbar-width:none}
+.seg button{white-space:nowrap;border:0;background:transparent;border-radius:6px;padding:6px 12px;font-size:12.5px;color:var(--muted)}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{background:var(--orange);color:#fff;font-weight:700}
+.seg.peq button{padding:4px 10px;font-size:11.5px}
+.sel,.dt{width:100%;min-width:150px;border:1px solid var(--border);background:var(--input-bg);color:var(--texto-suave);border-radius:6px;padding:8px 10px;font-size:14px;color-scheme:dark}
+.dt{min-width:0}
+.datas{display:flex;gap:8px;align-items:center}
+.datas .dt{flex:1}
+.resumo-f{flex-basis:100%;font-size:12px;color:var(--muted)}
+.resumo-f b{display:block;font-size:13px;color:var(--texto-suave)}
+@container area (min-width:1100px){.resumo-f{flex-basis:auto;margin-left:auto;text-align:right}}
+.aviso-f{color:var(--ambar)}
+
+/* Seções */
+.sec{margin-top:32px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 12px;margin-bottom:12px}
+.sec-h>div{min-width:0}
+.sec-h h2{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--texto-suave)}
+.sec-h p{margin-top:2px;font-size:12.5px;color:var(--muted)}
+.sec-x{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pos{white-space:nowrap;border:1px solid var(--border-2);background:var(--azul-bg);color:var(--azul);border-radius:999px;padding:2px 10px;font-size:10.5px;font-weight:800}
+
+.card{min-width:0;overflow:hidden;border:1px solid var(--border);background:var(--card);border-radius:12px}
+.card-h{border-bottom:1px solid var(--border);padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:flex-start;justify-content:space-between}
+.card-h>div{min-width:0}
+.card-h h3{font-size:15px;font-weight:600;color:var(--texto-suave)}
+.card-h p{margin-top:2px;font-size:11.5px;color:var(--muted-2)}
+.card-b{padding:14px 16px}
+.g2{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@container area (min-width:900px){.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g2.larga{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@container area (min-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container area (min-width:980px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.kpi{min-width:0;border:1px solid var(--border);background:var(--navy);border-radius:12px;padding:16px;position:relative}
+.kpi .t{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kpi .v{margin:8px 0 2px;font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--texto-suave)}
+@container area (min-width:640px){.kpi .v{font-size:24px}}
+.kpi .v small{font-size:13px;color:var(--muted);font-family:var(--fonte);font-weight:500}
+.kpi .s{font-size:11.5px;color:var(--muted)}
+.kpi .det{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted)}
+.kpi .det b{font-family:var(--mono);font-weight:600;color:var(--texto-suave)}
+.kpi .qv{margin-top:10px}
+.kpi.lnk{cursor:pointer}
+.kpi.lnk:hover{border-color:var(--orange)}
+.delta{margin-top:8px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;border-radius:999px;padding:2px 8px;font-family:var(--mono);font-size:11.5px;font-weight:700}
+.delta small{font-family:var(--fonte);font-size:10.5px;font-weight:500;color:var(--muted-2)}
+.d-bom{background:var(--verde-bg);color:var(--verde)}
+.d-ruim{background:var(--vermelho-bg);color:var(--vermelho)}
+.d-neu{background:var(--neutro-bg);color:var(--muted)}
+
+.mini{min-width:0;border:1px solid var(--border);background:var(--mini);border-radius:8px;padding:10px 12px}
+.mini .t{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.mini .v{margin-top:6px;font-family:var(--mono);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.mini .s{font-size:11.5px;color:var(--muted)}
+.minis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+
+/* Barras horizontais (como Paradas por motivo / Participação do Obras) */
+.hb{display:grid;gap:4px}
+.hb-l{display:grid;grid-template-columns:minmax(0,1fr) 84px;grid-template-areas:"n v" "b b";align-items:center;gap:4px 10px;width:100%;border:1px solid transparent;background:none;border-radius:8px;padding:6px 8px;text-align:left;font-size:12.5px;color:var(--texto-suave);position:relative}
+@container area (min-width:560px){.hb-l{grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) 92px 70px;grid-template-areas:"n b v d"}}
+.hb-l:hover,.hb-l.on{border-color:var(--border-2);background:rgba(13,32,80,.5)}
+.hb-l .n{grid-area:n;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-l .n small{color:var(--muted-2);font-size:11px}
+.hb-l .b{grid-area:b;height:9px;overflow:hidden;border-radius:999px;background:var(--input-bg)}
+.hb-l .b i{display:block;height:100%;border-radius:999px;background:var(--azul);transition:width .3s}
+.hb-l .val{grid-area:v;text-align:right;font-family:var(--mono);font-size:12px}
+.hb-l .dl{grid-area:d;text-align:right;font-family:var(--mono);font-size:11px;display:none}
+@container area (min-width:560px){.hb-l .dl{display:block}}
+.hb-tot{margin-top:6px;border-top:1px solid var(--border);padding:8px 8px 0;display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.hb-tot b{font-family:var(--mono);color:var(--texto-suave)}
+
+/* Tabela (TH/TD do Obras) */
+.tw{max-width:100%;overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+.t th{white-space:nowrap;background:var(--navy);padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.t td{border-top:1px solid var(--border);padding:8px 10px;vertical-align:middle;color:var(--texto-suave)}
+.t .r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.t .rk{font-family:var(--mono);font-weight:800;color:var(--muted);width:34px}
+.t tr:first-child .rk{color:var(--orange-txt)}
+.t .nm{min-width:180px}
+.t .bar{width:110px}
+.t tbody tr:hover td{background:rgba(13,32,80,.55)}
+.minibar{height:7px;min-width:70px;overflow:hidden;border-radius:999px;background:var(--input-bg)}
+.minibar i{display:block;height:100%;border-radius:999px;background:var(--orange)}
+@container area (max-width:560px){.t .bar,.t .esc{display:none}}
+
+/* Gráfico de linha */
+.graf{position:relative;padding:8px 8px 4px}
+.graf svg{display:block;width:100%;overflow:visible;touch-action:pan-y}
+.graf .eixo{fill:var(--muted-2);font-size:10.5px;font-family:var(--fonte)}
+.graf .grade{stroke:var(--border);stroke-width:1}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;padding:0 16px 12px;font-size:11.5px;color:var(--muted)}
+.leg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:6px}
+.leg i.tr{background:none;border-top:2px dashed var(--serie-cmp);height:0}
+.tip{position:absolute;pointer-events:none;z-index:5;min-width:150px;border:1px solid var(--border-2);background:#081426;border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transition:opacity .1s}
+.tip b{display:block;color:var(--texto-suave);margin-bottom:2px}
+.tip .l{display:flex;justify-content:space-between;gap:12px;color:var(--muted)}
+.tip .l span:last-child{font-family:var(--mono);color:var(--texto-suave)}
+
+/* Funil de pedidos */
+.funil{display:grid;gap:8px}
+.fe{display:grid;grid-template-columns:minmax(0,1fr) 54px;grid-template-areas:"n q" "b b";gap:4px 10px;align-items:center;font-size:12.5px}
+@container area (min-width:560px){.fe{grid-template-columns:170px minmax(0,1fr) 54px;grid-template-areas:"n b q"}}
+.fe .n{grid-area:n;color:var(--texto-suave)}
+.fe .n small{display:block;color:var(--muted-2);font-size:11px}
+.fe .b{grid-area:b;height:22px;border-radius:6px;background:var(--input-bg);overflow:hidden}
+.fe .b i{display:block;height:100%;border-radius:6px;transition:width .3s}
+.fe .q{grid-area:q;text-align:right;font-family:var(--mono);font-size:16px;font-weight:700}
+.fora{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px}
+.fora b{font-family:var(--mono);color:var(--texto-suave)}
+.parado{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;border:1px solid var(--border);background:var(--mini);border-radius:8px;padding:9px 11px;font-size:12.5px}
+.parado+.parado{margin-top:6px}
+.parado .np{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.parado .dd{grid-row:span 2;align-self:center;text-align:right;font-family:var(--mono);font-weight:700;color:var(--vermelho);white-space:nowrap}
+.parado .dd small{display:block;font-family:var(--fonte);font-weight:500;font-size:10.5px;color:var(--muted-2)}
+.parado .et{font-size:11.5px;color:var(--muted)}
+.tag{display:inline-block;white-space:nowrap;border:1px solid;border-radius:999px;padding:0 6px;font-size:10.5px;font-weight:700}
+.lnk-t{color:var(--orange-txt);font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border-2);border-radius:6px;padding:4px 10px;display:inline-block;background:none}
+.lnk-t:hover{border-color:var(--orange)}
+
+/* Estados */
+.vazio{border:1px dashed var(--border);border-radius:10px;padding:22px 16px;text-align:center;font-size:12.5px;color:var(--muted)}
+.vazio b{display:block;color:var(--texto-suave);font-size:14px;font-weight:500;margin-bottom:4px}
+.saude{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+@container area (min-width:640px){.saude{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container area (min-width:1000px){.saude{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.ok{color:var(--verde)}.ruim{color:var(--vermelho)}.atn{color:var(--ambar)}
+.conta{margin-top:12px;border:1px dashed var(--border-2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted)}
+.conta b{color:var(--texto-suave)}
+</style>
+</head>
+<body>
+<header class="mk-cab"><div class="wrap">
+  <div class="mk-tit">Mockup · Almoxarifado · tela Início (19/11/2026)
+    <small>Números de verdade do banco de produção (só leitura): saídas de material para as equipes copiadas do Omie de 17/08 a 13/11/2026, saldos de 17/11 e situação da integração. O piloto ainda não começou, então pedidos, tempo de retirada e mínimos aparecem como <b style="color:var(--nota)">exemplo</b>. Tudo em âmbar tracejado é anotação do mockup, não vai para a tela. Dica: em Mês escolha <b style="color:var(--nota)">Outubro</b> para ver um mês cheio.</small>
+  </div>
+</div></header>
+<div class="mk-bar"><div class="wrap mk-in">
+  <div class="mk-grp">Ver como
+    <div class="mkseg" data-mk="papel"><button type="button" data-v="admin" aria-pressed="true">Admin / gestor / almoxarife</button><button type="button" data-v="aprovador" aria-pressed="false">Aprovador</button></div>
+  </div>
+  <div class="mk-grp">Pedidos, retirada e mínimos
+    <div class="mkseg" data-mk="piloto"><button type="button" data-v="ex" aria-pressed="true">Exemplo</button><button type="button" data-v="vazio" aria-pressed="false">Como está hoje (vazio)</button></div>
+  </div>
+</div></div>
+
+<main class="pg"><div class="wrap">
+<div class="shell" data-gaveta="nao" id="shell"><div class="sh-app">
+  <div class="topo-cel"><div><span class="lat-nome">Almoxarifado</span><span class="volta">← Voltar ao Hub</span></div><button type="button" class="ic-btn" data-a="menu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button></div>
+  <aside class="lat" aria-label="Menu do módulo">
+    <div class="lat-cab"><div><span class="lat-nome">Almoxarifado</span><span class="volta">← Voltar ao Hub</span></div><button type="button" class="lat-fecha" data-a="fecha" aria-label="Fechar menu">×</button></div>
+    <nav class="lat-grupo" id="nav"></nav>
+    <div class="lat-pe">
+      <div class="quem"><span class="avatar" id="av" aria-hidden="true">PM</span><div class="quem-txt"><b id="un">Paulo Mendes</b><span id="up">Almoxarife</span></div></div>
+      <span class="item" aria-disabled="true">Papéis</span>
+      <span class="item" aria-disabled="true">Sair</span>
+    </div>
+  </aside>
+  <div class="veu" data-a="fecha"></div>
+  <div class="sh-main" id="area">
+    <div class="eyebrow">Almoxarifado · uso interno</div>
+    <h1 class="pg-tit">Início</h1>
+    <p class="pg-sub" id="pgsub"></p>
+
+    <div class="filtro" id="filtro">
+      <div class="fc"><span>Período</span>
+        <div class="seg" data-f="modo"><button type="button" data-v="mes">Mês</button><button type="button" data-v="int">De… até…</button></div>
+      </div>
+      <label class="fc" id="f-mes"><span>Mês</span>
+        <select class="sel" data-f="mes">
+          <option value="2026-11">Novembro 2026 (em curso)</option>
+          <option value="2026-10">Outubro 2026</option>
+          <option value="2026-09">Setembro 2026</option>
+          <option value="2026-08">Agosto 2026 (desde 17/08)</option>
+        </select>
+      </label>
+      <div class="fc" id="f-int" hidden><span>De / até</span>
+        <div class="datas"><input type="date" class="dt" data-f="de" min="2026-08-17" max="2026-11-19" aria-label="De"><span class="muted">a</span><input type="date" class="dt" data-f="ate" min="2026-08-17" max="2026-11-19" aria-label="Até"></div>
+      </div>
+      <div class="fc" id="f-ct"><span>Contrato</span>
+        <div class="seg" data-f="ct"><button type="button" data-v="">Todos</button><button type="button" data-v="DPSP">DPSP</button><button type="button" data-v="Profarma">Profarma</button><button type="button" data-v="Obras/Spot">Obras/Spot</button></div>
+      </div>
+      <label class="fc"><span>Comparar com</span>
+        <select class="sel" data-f="cmp"><option value="prev">Período anterior</option><option value="yoy">Mesmo período do ano anterior</option></select>
+      </label>
+      <div class="resumo-f" id="resumo-f"></div>
+    </div>
+
+    <div id="conteudo"></div>
+  </div>
+</div></div>
+</div></main>
+
+<script>
+const D={"t0":"2026-08-17","eq":[["MANFAC 13","Profarma"],["MANFAC-25","DPSP"],["MANFAC 22","Profarma"],["MANFAC 1","DPSP"],["MANFAC 3","DPSP"],["MANFAC 5","DPSP"],["MANFAC 9","DPSP"],["MANFAC 15","Profarma"],["MANFAC 2","DPSP"],["MANFAC 24","Profarma"],["MANFAC 12","Profarma"],["MANFAC 17","Profarma"],["MANFAC 18","Profarma"],["MANFAC 11","Profarma"],["MANFAC 20","Obras/Spot"]],"pr":[["SILICONE ACETICO BRANCO","UN"],["GESSO ESTRUTURAL","KILO"],["DESENGRIPANTE SPRAY 300ML","UN"],["ADESIVO INSTANTANEO 50G","UN"],["TINTA ACRÍLICA FOSCO BRANCO NEVE 20L","L"],["REFIL COMPATIVEL","UN"],["LAMPADA LED TUBULAR 18W 6500K G13 BIVOLT","UN"],["CONT CWM25 220V 7.5CV220 15CV380","UN"],["SIFAO UNIVERSAL SANFONADO BRANCO","UN"],["FITA DE DEMARCACAO DE SOLO VERMELHA 50MM X 15M","UN"],["FILTRO REFIL SOFT","UN"],["TIMER DIGITAL BIVOLT","UN"],["FITA DUPLA FACE 12MM","UN"],["LAMPADA LED TUBULAR 9W 6500K G13 BIVOLT","UN"],["LAMPADA LED PAR30 11W 2700K E27 BIVOLT","UN"],["FITA VEDA ROSCA 18MM X 50M","UN"],["TINTA ACRILICA RENDE E COBRE MUITO PAPEL DE PRESENTE 16L","L"],["SENSOR DE TETO DE SOBREPOR","UN"],["TINTA DEMARCAÇÃO P/ PISO AZUL 3,6L","LA"],["TINTA P/ PISO VERMELHO 3,6L","LA"],["TINTA P/ PISO AMARELO 3,6L","LA"],["ANEL DE VEDACAO P/ VASO SANITARIO","UN"],["REFIL FILTRO IBBL (E3/FR600)","UN"],["CAIXA DE DESCARGA EXTERNA 9L BRANCA","UN"],["CADEADO DE CHÃO","UN"],["GRAXA USO GERAL 500G","UN"],["SILICONE ACETICO INCOLOR","UN"],["TRAVA LATERAL","UN"],["INATIVAR HJ - VASELINA LÍQUIDA 500ML","UNID"],["TINTA P/ PISO BRANCO 3,6L","LA"],["DISJUNTOR DIN MONOPOLAR 10A CURVA C","UN"],["GRELHA INOX QUAD ABRE E FECHA 15X15","UN"],["REFLETOR / PROJETOR LED 100W 6500K BIVOLT","UN"],["ASSENTO SANITARIO PVC BRANCO","UN"],["FITA ANTIDERRAPANTE PRETA 50MM","UN"],["KIT REPARO DE CAIXA ACOPLADA","UN"],["TORNEIRA DE BANCADA BAIXA","UN"],["INATIVAR HJ - LUM LED EMB RED SLIM 18W 6,5K ECONOMAX","UN"],["LAMPADA LED BULBO 9W 6500K E27 BIVOLT","UN"],["FECHADURA P/ PORTA DE MADEIRA","UN"],["TORNEIRA DE BANCADA C/ FILTRO PLASTICA BRANCA","UN"],["TORNEIRA PLASTICA COM FILTRO DE PAREDE","UN"],["CORREDIÇA TELESCÓPICA 45MM","UN"],["CORREDIÇA TELESCÓPICA 35MM","UN"],["LUMINARIA LED EMBUTIR REDONDA 24W 6500K","UN"],["INATIVAR HJ - LUM LED SOB RED SLIM 18W 6,5K","UN"],["INATIVAR HJ - LUM LED SOB RED SLIM 24W 6,5K","UN"],["FITA ISOLANTE PRETA 18MM X 20M","UN"],["ENGATE FLEXIVEL PVC 1/2&quot; 40CM","UN"],["FONTE CHAVEADA COLMEIA 12V 30A 360W","UN"],["TINTA ACRILICA FOSCA GELO 18L","L"],["PISO BRANCO PISCINA 20X20","UN"],["MASSA CORRIDA PVA","KILO"],["SOQUETE TOMADINHA","UN"],["INATIVAR HJ - DISJUNTOR BIPOLAR 25A - WEG","UN"],["DISJUNTOR BIPOLAR 16A","UN"],["FITA CREPE 24MM X 50M","UN"],["CONTROLE REMOTO P/ PORTA DE ENROLAR 433MHZ","UN"],["INATIVAR HJ - PARAFUSO PARA DRYWALL GN25","UN"],["FITA LED 6000K 5 METROS","UN"],["BOBINA DE MOLA DE 4,5","UN"],["VASELINA LIQUIDA 500ML","UN"],["FITA DE DEMARCACAO DE SOLO AMARELA 50MM X 15M","UN"],["REVESTIMENTO HABITAT CIMENTO AC 45X45","UN"],["CORREDIÇA  TELESCÓPICA 25 MM","UN"],["INATIVAR HJ - REFLETOR 100W","UN"],["CINZA CHUMBO DECORA MATTE (FOSCO)  16L","L"],["CORREDIÇA TELESCÓPICA 30MM","UN"],["LUMINÁRIA CALHA 62CM T8 18W TUBULAR LED","UN"],["LUMINARIA LED EMBUTIR REDONDA 18W 6500K","UN"],["LUMINARIA LED SOBREPOR REDONDA 24W 6500K","UN"],["LUMINARIA LED SOBREPOR REDONDA 18W 6500K","UN"],["PLACA DE DRYWALL ST 12,5MM 1,20 X 1,80M","UN"],["FORRO GESSO LISO - GYPCLEAN 1250 X 625MM","PC"],["BRANCO BRILHANTE A BASE D'ÁGUA 3,6L","LA"],["FONTE CHAVEADA COLMEIA 12V 50A 600W","UN"],["CABO FLEXIVEL 2,5MM 750V PRETO (METRO)","M"],["BÓIA MECÂNICA","UN"],["MODULO LED 12V","UN"],["CAIXA DE PASSAGEM 4X2 DRYWALL","UN"],["BUCHA  BAILARINA P/ DRYWALL C/ PARAFUSO","UN"],["FITA ALUMINIZADA VEDA TUDO 30CM X 10M","R"],["GRELHA INOX QUADRADA 10X10 ABRE E FECHA","UN"],["INATIVAR HJ - TINTA RENDE COBRE MUITO PAPEL PRESENTE 16L","L"],["TINTA ACRILICA FOSCA + DESEMPENHO BRANCO 20L","UN"],["INATIVAR HJ - LAMPADA LED TUB 9W 6,5K","UN"],["REVESTIMENTO CARGO PLUS WHITE 45X45","UN"],["LAMP LED TUB 18W 3,0K GLASS BIV G13","UN"],["CHAVE BOIA ELETRICA 25A","UN"],["INATIVAR HJ - ADESIVO INSTANTANEO 100G","UN"],["DISJUNTOR DIN BIPOLAR 25A CURVA C","UN"],["PARAFUSO DRYWALL GN25 PONTA AGULHA","PC."],["INTERRUPTOR DE EMBUTIR","UN"],["EIXO  PARA BOBINA DE MOLA 4,5","UN"],["TOMADA DE SOBREPOR 10A","UN"],["TOMADA DE EMBUTIR 10A","UN"],["INTERRUPTOR DE SOBREPOR","UN"],["PORCELANATO MUNARI 90X90 (PADRÃO PACHECO)","UN"],["PASTILHA AZUL AQUA  10X10","UN"],["TOMADA DE EMBUTIR 10A VERMELHO","UN"],["PASTILHA AZUL CÉU   10X10","UN"],["PASTILHA BRANCO GELO  10X10","UN"],["MARTELETE 220V","UN"],["SILICONE ACETICO CINZA","UN"],["SILICONE ACETICO PRETO","UN"],["LUMINARIA LED SOB RED 24W 3000K","UN"],["LÂMPADA LED PAR30 6.000K","UN"],["TINTA BRANCO RENDE MUITO 20L","L"],["BANDEJA PLASTICA 23CM P/ PINTURA","PC"],["FONTE BLINDADA 12V/ 50 A","UN"],["TOMADA DE SOBREPOR 20A","UN"],["FONTE CHAV BIV P/FITA LED 12V 2A","UN"],["TINTA BRANCO ACRILICO FOSCO","L"]],"r":[[1,0,0,2,18.22],[1,0,1,3,2.88],[1,0,2,1,4.7],[1,0,3,1,19.11],[1,0,4,5,51.45],[1,1,5,1,57.75],[1,2,6,40,268.4],[1,2,7,1,173.9],[1,1,8,1,2.75],[1,1,9,2,38.14],[1,2,10,1,22.23],[1,2,11,2,133.62],[1,3,12,1,5.07],[1,3,0,1,9.11],[1,3,1,3,2.88],[1,3,13,10,55.2],[1,2,14,5,80.9],[2,4,0,1,9.11],[2,4,8,1,2.75],[2,4,15,1,3.03],[2,5,16,5,122.55],[2,5,17,1,28.92],[2,6,18,1,84.15],[2,6,19,1,92.84],[2,6,20,0,0.0],[2,6,21,1,11.6],[2,6,22,3,114.72],[2,6,23,2,54.26],[2,6,10,2,59.74],[2,6,24,2,139.8],[2,7,25,1,21.9],[2,7,1,2,2.0],[2,7,12,1,3.33],[2,7,14,10,161.8],[2,7,10,2,44.46],[2,7,26,1,8.98],[2,7,27,1,89.9],[2,8,2,1,4.7],[2,6,27,1,89.9],[2,6,28,1,23.25],[2,6,29,0,0.0],[2,6,16,10,245.1],[2,6,30,1,0.0],[2,4,1,1,0.96],[2,4,21,1,4.45],[2,9,31,2,37.8],[2,9,25,1,21.9],[2,4,0,1,9.11],[4,1,32,6,126.3],[4,6,33,2,34.22],[4,6,16,10,245.1],[4,3,33,2,34.22],[4,3,29,1,47.74],[4,3,34,1,29.16],[4,3,10,2,44.76],[4,3,22,1,18.96],[4,3,24,1,69.9],[4,3,35,1,48.64],[4,3,36,2,34.54],[4,3,32,10,210.5],[4,2,6,40,272.0],[4,2,32,10,203.7],[4,2,37,10,102.5],[4,2,38,10,18.1],[4,2,14,6,97.08],[4,2,27,1,89.9],[4,2,24,1,69.9],[4,2,10,1,22.23],[4,2,4,5,51.45],[4,2,39,2,80.52],[4,1,1,2,8.08],[4,9,40,1,40.22],[4,9,41,1,37.59],[4,9,38,10,18.1],[4,9,42,1,26.81],[4,9,43,2,9.08],[4,9,44,5,78.15],[4,9,37,5,51.25],[4,9,45,5,64.7],[4,9,46,5,89.25],[4,9,24,2,139.8],[4,9,27,2,179.8],[4,7,32,5,101.85],[4,7,27,2,179.8],[4,7,24,2,139.8],[4,7,45,10,129.4],[4,7,37,10,102.5],[4,7,6,20,136.0],[4,7,34,2,58.32],[4,7,41,1,37.59],[4,7,39,1,55.0],[4,1,39,2,110.0],[4,1,3,1,17.57],[4,1,0,1,9.11],[4,1,34,2,58.32],[4,1,10,1,22.38],[4,1,6,10,67.8],[4,1,47,1,3.64],[4,10,4,5,51.45],[4,5,33,1,17.11],[4,5,39,2,110.0],[4,5,32,8,168.4],[4,5,36,1,17.27],[4,5,41,1,36.71],[4,5,6,10,67.8],[4,5,4,5,51.45],[4,5,10,1,22.38],[4,5,25,1,20.8],[4,10,39,1,40.26],[4,10,48,2,6.08],[4,10,33,2,20.94],[4,10,46,10,178.5],[4,10,37,6,61.5],[4,10,45,4,51.76],[4,10,6,20,136.0],[4,10,27,2,179.8],[7,0,3,1,17.57],[7,4,33,1,17.11],[7,4,24,1,69.9],[7,4,21,1,4.45],[7,4,6,10,67.8],[7,11,4,10,102.9],[7,11,22,5,94.8],[7,11,29,1,47.74],[7,11,18,1,92.31],[7,11,19,1,92.84],[7,11,1,2,8.08],[7,2,14,10,161.8],[7,2,3,1,17.57],[7,2,35,1,48.64],[7,2,44,5,78.15],[7,2,46,5,89.25],[7,2,6,20,136.0],[7,4,49,1,54.0],[7,4,27,1,89.9],[7,0,4,5,51.45],[7,0,50,5,71.1],[7,11,27,3,269.7],[7,0,0,1,9.11],[7,4,39,2,110.0],[7,0,47,1,3.64],[7,0,49,1,65.89],[7,11,8,2,5.5],[7,11,33,2,34.22],[7,4,22,1,38.24],[7,5,51,2,16.0],[7,4,13,8,43.12],[7,4,33,1,17.81],[7,12,45,10,129.4],[7,4,4,5,51.45],[7,11,52,3,3.6],[7,11,20,1,59.78],[7,11,28,2,46.5],[7,11,47,1,3.64],[7,11,24,2,139.8],[7,12,37,10,102.5],[7,2,49,5,329.45],[7,0,16,7,171.57],[7,11,24,2,139.8],[7,12,48,1,3.04],[7,12,8,1,2.04],[7,12,14,5,80.9],[8,8,50,5,71.1],[8,8,32,10,210.5],[8,8,36,1,17.27],[8,8,6,30,203.4],[8,8,34,3,87.48],[8,8,9,2,39.34],[8,8,53,10,9.3],[8,8,10,2,44.76],[8,8,22,2,37.92],[8,8,15,1,3.03],[8,8,24,1,69.9],[8,8,27,2,179.8],[8,8,13,20,67.8],[8,8,4,5,70.6],[8,5,36,1,38.84],[8,2,38,10,18.1],[8,11,39,2,110.0],[8,6,24,1,69.9],[8,5,33,1,18.26],[8,5,39,1,39.15],[8,5,40,1,36.67],[8,5,40,1,36.67],[9,6,52,2,2.4],[9,8,32,10,210.5],[9,0,6,20,135.6],[9,0,22,1,18.96],[9,7,38,10,18.1],[9,0,27,2,179.8],[9,0,24,1,69.9],[9,0,4,5,51.45],[9,0,32,10,210.5],[9,0,1,5,20.2],[9,6,10,2,59.74],[9,6,27,2,179.8],[9,6,54,1,38.0],[9,6,55,2,60.0],[9,5,4,10,102.9],[9,6,24,2,139.8],[9,6,6,10,67.8],[9,6,32,4,84.2],[9,6,34,2,58.32],[9,6,56,2,8.82],[9,6,32,4,84.2],[9,7,37,10,102.5],[9,7,45,4,51.76],[9,7,35,2,97.28],[9,7,1,5,9.05],[9,7,26,1,8.98],[9,7,10,2,44.46],[9,7,52,2,2.4],[9,7,56,2,7.6],[9,6,12,1,5.07],[9,6,2,1,4.83],[9,6,36,1,17.27],[9,12,4,10,102.9],[9,12,49,1,65.89],[9,12,2,1,4.77],[9,12,34,3,87.48],[9,12,28,1,23.25],[9,12,6,10,67.9],[9,3,34,1,29.16],[9,3,56,2,8.82],[9,3,32,10,210.5],[9,3,49,1,58.95],[9,11,16,16,392.16],[10,4,1,1,4.04],[10,10,4,5,51.45],[10,10,6,27,183.33],[10,4,6,10,67.8],[10,4,35,1,48.64],[10,4,4,10,102.9],[10,2,57,10,260.0],[10,10,58,1,23.64],[10,10,43,2,9.08],[10,3,33,1,17.98],[10,6,59,1,65.9],[10,3,6,3,20.01],[10,10,42,1,26.81],[10,10,52,2,2.4],[10,1,35,2,97.28],[10,4,2,1,4.83],[10,4,53,10,9.3],[10,4,52,2,2.4],[11,0,27,1,89.93],[11,7,33,2,20.94],[11,10,34,2,58.32],[11,10,10,1,22.23],[11,10,38,10,18.1],[11,10,14,5,80.9],[11,9,38,10,18.1],[11,4,27,2,179.86],[11,9,60,1,77.8],[11,10,61,1,20.89],[11,9,49,1,65.89],[11,0,24,1,69.9],[11,9,25,1,21.9],[11,10,56,2,7.6],[11,9,15,1,2.62],[11,2,4,5,51.45],[11,2,26,1,8.98],[11,2,6,20,135.8],[11,10,9,1,16.24],[11,10,62,1,18.31],[11,4,24,2,139.8],[11,9,6,20,135.8],[15,0,4,5,55.0],[15,9,63,4,32.32],[15,0,2,1,4.83],[15,9,1,2,3.62],[15,9,4,5,51.3],[15,8,3,1,17.57],[15,0,56,1,4.41],[15,8,34,2,58.32],[15,8,40,1,36.67],[15,8,41,1,36.71],[15,8,25,2,41.6],[15,0,13,10,55.2],[15,0,25,1,20.8],[15,8,53,10,9.1],[15,1,14,2,32.36],[15,0,49,2,131.78],[15,0,43,1,3.85],[15,8,3,1,17.57],[15,0,64,1,9.2],[16,10,32,2,40.74],[16,0,47,2,7.28],[17,5,49,2,117.9],[17,5,61,1,20.89],[17,5,0,1,9.11],[17,5,1,3,12.12],[17,4,6,10,67.8],[17,4,32,2,35.32],[17,1,4,5,51.45],[17,1,25,1,20.8],[17,6,3,1,17.57],[17,3,48,1,3.5],[17,4,1,1,4.04],[17,4,23,1,24.64],[17,10,38,10,18.1],[17,10,4,5,51.45],[17,4,52,2,2.4],[17,3,6,3,20.01],[17,3,65,4,90.44],[18,8,35,2,97.28],[18,8,8,1,2.82],[18,8,17,2,60.14],[18,7,52,7,8.4],[18,7,1,3,5.43],[18,7,27,1,89.9],[18,7,66,5,221.6],[18,9,38,5,9.2],[18,7,4,5,51.45],[18,0,32,9,219.42],[18,9,34,2,57.86],[18,9,26,1,8.98],[18,6,67,1,3.43],[18,2,24,2,139.8],[18,2,27,2,179.8],[18,6,42,1,21.51],[18,8,8,2,5.5],[18,0,68,11,65.34],[20,2,24,2,139.8],[20,2,27,1,89.9],[22,1,25,1,21.9],[22,1,14,10,162.9],[22,1,2,1,5.35],[22,1,35,1,75.24],[22,1,6,20,140.0],[22,1,44,5,81.0],[22,1,69,5,58.4],[22,1,70,5,98.15],[22,1,71,5,71.15],[22,9,32,10,231.6],[22,9,70,5,98.15],[22,9,71,5,71.15],[22,9,69,5,58.4],[22,9,44,5,81.0],[22,9,72,1,36.99],[22,9,6,20,140.0],[22,10,56,1,3.54],[22,10,61,1,20.89],[22,10,0,1,9.11],[22,10,24,1,69.9],[22,10,27,1,89.9],[22,10,4,5,51.45],[22,10,6,20,135.2],[22,5,43,1,4.78],[22,5,49,2,117.9],[22,5,32,10,231.6],[22,5,42,1,21.51],[22,0,26,1,8.98],[22,0,2,1,5.05],[22,0,4,5,51.45],[22,0,6,24,162.72],[22,0,50,5,71.1],[22,4,16,5,122.55],[22,4,33,2,38.04],[22,4,47,1,2.55],[22,4,24,2,139.8],[22,4,23,1,26.04],[22,11,6,10,70.0],[22,11,14,5,81.45],[22,11,69,5,58.4],[22,2,4,5,51.45],[22,2,33,2,38.02],[22,2,47,1,2.8],[22,2,70,6,117.78],[22,2,14,6,97.74],[22,2,0,2,18.22],[22,3,39,2,110.0],[22,3,27,1,89.9],[22,3,24,1,69.9],[22,1,4,5,51.45],[22,1,0,1,9.11],[22,1,61,1,20.89],[23,11,38,5,11.8],[23,5,73,3,70.89],[23,6,39,1,55.0],[23,6,39,1,55.0],[23,6,4,10,102.9],[23,6,50,5,71.1],[23,6,6,10,70.1],[23,1,66,5,225.3],[23,1,3,1,17.57],[23,1,32,5,115.8],[23,1,33,2,38.02],[23,2,69,20,233.6],[24,9,47,1,2.8],[24,9,6,10,70.0],[24,9,69,5,58.4],[24,3,74,1,154.99],[24,3,34,1,29.16],[24,3,39,1,55.0],[24,3,6,10,70.1],[24,3,33,2,38.04],[24,3,32,7,162.12],[24,3,16,10,245.1],[24,1,8,1,2.75],[24,5,35,1,75.24],[24,5,27,2,179.82],[24,5,39,2,110.0],[24,5,16,5,122.55],[24,5,4,10,102.9],[24,5,41,1,40.39],[24,5,75,1,54.77],[24,5,34,2,57.58],[24,10,13,5,26.95],[24,10,36,1,38.84],[24,10,4,10,102.9],[24,10,27,2,179.8],[24,10,69,15,175.2],[24,10,6,20,140.0],[24,10,14,5,81.45],[24,10,56,2,7.08],[24,10,10,1,22.23],[24,10,62,1,18.31],[24,10,33,2,38.02],[24,9,4,5,51.45],[24,1,4,20,229.0],[24,9,32,11,254.76],[24,1,6,20,140.0],[24,1,69,5,58.4],[24,1,44,5,81.0],[24,1,27,1,89.9],[24,1,24,1,69.9],[24,1,47,1,2.8],[24,1,10,1,22.23],[24,5,76,10,20.7],[24,5,33,2,38.04],[25,4,4,5,51.45],[25,13,66,5,225.3],[25,13,6,50,350.0],[25,13,33,2,38.02],[25,13,70,10,196.3],[25,7,61,1,20.89],[25,7,35,1,75.24],[25,7,15,1,2.62],[25,7,56,2,7.08],[25,7,1,4,7.24],[25,7,27,1,89.89],[25,7,6,30,210.0],[25,4,21,1,4.45],[25,7,4,5,51.45],[25,4,33,1,19.02],[25,4,47,1,2.55],[25,13,77,1,16.64],[25,4,32,11,254.76],[25,4,51,4,0.0],[25,13,27,2,179.82],[25,13,24,2,139.78],[25,13,4,5,51.45],[28,0,2,1,5.05],[28,0,25,1,21.62],[28,0,53,10,10.0],[28,0,3,1,21.05],[28,0,2,2,10.1],[28,0,56,1,3.48],[28,12,62,1,18.31],[28,12,4,10,102.9],[28,7,66,5,225.3],[28,7,13,7,37.73],[28,7,71,4,44.0],[28,12,66,5,225.3],[28,12,6,10,70.0],[28,12,9,1,16.24],[28,12,71,5,71.15],[28,12,3,1,17.57],[28,12,70,2,39.26],[28,12,15,1,2.62],[28,2,17,1,26.62],[28,2,25,1,21.9],[28,2,38,10,23.6],[28,2,14,4,65.16],[28,2,6,20,140.0],[28,12,44,5,81.0],[28,12,42,1,26.81],[28,12,10,2,44.46],[28,12,43,1,4.54],[28,12,36,1,31.85],[28,12,2,1,5.35],[28,12,41,1,34.72],[28,9,6,10,70.0],[28,9,32,6,138.96],[28,9,35,1,75.24],[28,9,9,1,16.24],[28,9,62,1,18.31],[28,12,0,2,18.22],[28,12,32,5,115.8],[28,12,53,10,8.8],[28,12,61,1,20.89],[28,12,21,1,6.13],[28,12,8,1,2.04],[28,12,56,1,3.54],[28,12,47,1,2.8],[28,12,23,1,27.51],[28,12,33,1,19.01],[28,12,38,10,23.6],[28,12,39,1,55.0],[28,12,40,1,40.22],[28,12,13,10,65.9],[28,3,6,7,46.69],[28,3,13,10,55.3],[28,3,78,10,125.9],[28,3,23,1,24.64],[28,0,4,10,102.9],[28,0,0,1,9.11],[28,0,33,1,19.02],[28,0,50,5,71.1],[28,0,32,20,463.2],[28,0,23,1,26.04],[28,0,39,2,110.0],[28,0,47,1,2.55],[28,0,6,20,140.2],[29,5,6,10,70.1],[29,5,41,1,33.91],[29,5,35,1,75.24],[29,5,47,1,2.55],[29,5,56,1,3.48],[29,5,32,8,185.28],[29,5,39,2,110.0],[29,5,4,10,102.9],[29,12,0,1,9.11],[29,12,14,10,162.9],[29,10,79,3,0.0],[29,3,49,2,111.3],[29,10,14,5,81.45],[29,10,43,4,18.16],[29,5,61,1,20.89],[29,5,3,1,21.05],[29,9,6,10,70.0],[29,9,10,1,22.23],[29,10,39,1,55.0],[29,10,27,1,89.91],[29,10,9,1,16.24],[29,5,49,1,58.95],[30,8,39,1,55.0],[30,8,9,2,40.38],[30,8,2,1,5.05],[30,3,8,1,2.75],[30,3,9,1,20.19],[30,8,47,2,5.1],[30,3,6,10,70.1],[30,8,42,1,21.51],[30,8,43,1,4.78],[30,8,3,1,21.05],[30,2,6,30,210.0],[30,2,32,10,231.6],[30,2,47,1,2.8],[30,8,61,1,20.89],[30,12,35,1,75.24],[30,12,70,6,117.78],[30,3,4,5,51.45],[30,8,27,1,89.9],[30,3,32,5,115.8],[30,12,71,5,71.15],[30,12,27,1,89.91],[30,12,6,20,140.0],[30,12,1,3,5.43],[30,2,4,10,102.9],[30,6,16,10,245.1],[30,10,25,1,21.9],[30,10,49,2,131.78],[30,2,49,2,131.78],[30,2,10,1,22.23],[30,8,4,10,102.9],[30,8,50,10,142.2],[30,8,16,2,49.02],[30,8,24,3,209.73],[30,8,36,1,42.85],[30,8,27,1,89.91],[30,8,34,1,29.16],[31,7,71,5,71.15],[31,6,32,4,92.64],[31,6,47,1,2.55],[31,7,38,10,23.6],[31,7,1,5,9.05],[31,7,35,1,75.24],[31,7,6,20,140.0],[31,9,32,8,185.28],[31,9,10,1,22.23],[31,9,1,1,1.81],[31,12,14,4,65.16],[31,12,17,1,26.62],[31,7,4,5,51.45],[31,7,14,10,162.9],[31,7,47,1,2.8],[31,3,49,1,58.95],[31,3,49,2,117.9],[31,4,32,4,104.6],[31,4,35,1,75.24],[31,4,36,1,31.85],[32,2,39,3,118.56],[35,10,6,10,70.0],[35,10,56,2,6.96],[35,10,10,2,44.42],[35,2,76,20,48.8],[35,10,61,1,20.89],[35,1,44,5,81.0],[35,1,71,5,71.15],[35,1,6,20,140.2],[35,10,25,1,21.9],[35,2,14,10,162.9],[35,2,38,10,23.6],[35,2,71,10,142.3],[35,2,6,20,140.0],[35,2,2,1,5.35],[35,10,80,25,13.0],[35,5,60,2,155.6],[36,8,13,10,55.2],[36,0,6,10,70.1],[36,0,25,1,21.62],[36,0,3,2,42.1],[36,8,12,1,4.96],[36,8,15,1,3.03],[36,8,76,20,48.8],[36,6,47,1,2.8],[36,0,2,2,10.1],[36,5,0,1,9.11],[36,8,2,1,5.05],[36,5,12,1,4.96],[36,0,13,10,55.2],[36,0,35,1,75.24],[36,8,25,2,43.24],[36,8,6,30,210.3],[36,0,81,1,49.39],[36,6,50,4,56.88],[36,6,61,1,20.89],[36,12,71,10,142.3],[36,8,47,1,2.55],[36,12,48,1,3.04],[36,12,14,5,81.45],[36,12,6,20,140.2],[36,12,38,15,35.4],[36,12,47,1,2.8],[37,3,13,10,55.2],[37,3,6,20,140.2],[37,5,32,2,52.3],[37,2,6,30,210.3],[37,2,0,1,9.53],[37,2,10,1,22.21],[37,2,71,10,142.3],[37,3,9,2,40.38],[37,3,61,1,20.89],[37,0,0,2,18.22],[37,3,53,20,20.0],[38,8,31,1,20.01],[38,8,82,1,9.51],[38,1,6,10,70.1],[38,12,14,5,81.45],[38,12,43,1,4.54],[38,8,6,10,70.1],[38,12,32,22,509.52],[38,12,6,30,210.3],[38,1,14,10,162.9],[38,1,10,2,44.42],[38,1,25,1,21.9],[38,10,12,1,3.33],[38,10,38,4,9.44],[38,10,56,2,7.08],[38,10,9,1,16.24],[38,10,10,1,22.21],[38,8,9,1,20.19],[38,12,10,3,66.63],[39,10,62,1,18.31],[39,8,24,2,133.5],[39,5,83,10,250.5],[39,5,84,5,0.0],[39,5,56,1,4.15],[39,5,35,1,75.24],[39,5,32,6,145.26],[39,5,0,1,9.0],[39,5,36,1,41.32],[39,5,39,1,39.99],[39,5,47,1,3.99],[39,5,76,10,24.4],[39,5,21,1,4.45],[39,4,83,15,375.75],[39,4,84,10,0.0],[39,4,13,10,55.2],[39,4,0,1,9.0],[39,4,35,1,75.24],[39,4,2,1,4.86],[39,4,74,1,154.99],[39,11,32,8,193.68],[39,11,6,10,77.8],[39,11,61,1,20.89],[39,11,2,1,4.86],[39,11,47,2,7.98],[39,11,39,2,79.98],[39,11,52,1,6.82],[39,2,4,10,102.9],[39,0,83,5,125.25],[39,0,84,5,0.0],[39,10,25,1,21.9],[39,10,4,10,102.9],[39,9,27,1,84.9],[42,10,6,20,140.2],[42,10,34,1,28.21],[42,0,50,5,71.1],[42,0,8,1,2.7],[42,0,0,1,9.0],[42,0,2,1,4.86],[42,0,3,1,21.05],[42,11,56,2,8.3],[42,11,34,2,56.42],[42,11,8,4,10.8],[42,11,33,2,38.04],[42,10,4,5,51.45],[42,3,32,10,242.1],[42,3,33,1,19.02],[42,2,39,1,39.9],[42,2,40,1,40.22],[42,2,10,1,23.38],[42,2,85,10,51.7],[42,2,6,23,161.23],[42,0,33,1,19.02],[42,0,32,8,193.68],[42,7,66,5,225.3],[42,7,4,5,51.45],[42,0,9,1,21.13],[42,0,34,1,28.21],[42,0,84,5,0.0],[42,4,1,1,4.04],[42,0,13,10,55.2],[42,0,83,2,50.1],[42,3,0,1,9.0],[42,3,24,1,66.75],[42,3,84,5,0.0],[42,3,50,5,71.1],[42,3,3,1,21.05],[42,10,10,1,23.38],[42,10,66,5,225.3],[42,10,25,1,21.9],[42,10,27,1,84.9],[42,10,24,1,44.95],[43,7,71,5,74.25],[43,7,85,10,51.7],[43,7,35,1,75.24],[43,7,69,7,85.47],[43,8,25,1,20.8],[43,8,13,10,55.2],[43,8,12,2,9.92],[43,8,34,2,56.42],[43,8,33,2,38.04],[43,8,6,10,77.8],[43,8,27,1,84.9],[43,8,24,1,66.75],[43,10,52,3,6.69],[43,10,33,2,38.02],[43,10,69,20,244.2],[43,10,24,1,57.39],[43,10,34,3,84.63],[43,10,27,1,84.9],[43,6,72,1,36.99],[43,9,10,2,46.76],[43,9,47,1,4.27],[43,9,33,2,38.02],[43,9,34,2,56.42],[43,9,69,10,122.1],[43,12,10,4,93.52],[43,4,43,1,17.35],[43,4,35,1,75.24],[43,4,52,3,6.69],[43,4,1,1,4.04],[43,4,47,1,3.99],[43,12,35,1,75.24],[43,12,69,15,183.15],[43,12,27,1,84.9],[43,12,33,2,38.02],[43,12,34,2,56.42],[43,12,47,1,4.27],[43,12,24,1,44.88],[43,7,47,1,4.27],[44,13,69,30,366.3],[44,13,71,30,446.1],[44,13,44,20,346.6],[44,13,76,100,235.0],[44,13,2,2,10.42],[44,8,84,5,0.0],[44,8,39,1,39.99],[44,0,39,1,39.99],[44,8,50,5,71.1],[44,8,56,1,4.15],[44,13,33,5,95.1],[44,10,34,2,56.24],[44,13,6,30,241.8],[45,1,52,1,2.23],[45,1,4,10,102.9],[45,1,69,10,122.1],[45,12,75,1,89.0],[45,12,49,2,126.0],[45,12,20,1,59.78],[45,1,71,10,148.7],[45,3,16,5,122.35],[45,3,49,3,192.03],[45,3,52,1,2.23],[45,3,47,1,3.99],[45,1,44,10,173.3],[45,12,69,10,122.1],[45,8,27,2,169.8],[45,10,39,2,79.8],[45,8,24,3,196.41],[45,1,25,1,21.9],[45,1,8,2,4.08],[45,1,10,2,46.76],[45,1,39,2,79.8],[45,0,49,2,128.02],[45,0,50,5,71.1],[45,11,86,6,31.98],[45,11,76,10,24.4],[45,11,56,2,8.3],[45,11,49,1,64.01],[45,11,0,1,9.0],[45,11,53,10,10.0],[45,11,13,10,55.2],[45,11,50,5,71.1],[45,11,4,10,103.2],[45,11,3,1,21.05],[45,11,43,1,17.35],[45,11,2,1,4.86],[45,11,61,2,41.78],[45,11,8,2,5.52],[45,11,19,1,105.5],[45,11,87,1,84.15],[45,11,20,1,101.9],[45,11,49,1,42.19],[45,1,47,1,4.27],[46,1,6,20,161.2],[46,2,41,1,33.89],[46,10,71,15,223.05],[46,10,61,1,20.89],[46,2,69,10,122.1],[46,2,6,20,161.2],[46,2,13,10,65.4],[46,9,60,2,155.6],[46,12,35,1,58.14],[46,10,38,10,24.6],[46,10,47,1,4.57],[46,10,49,2,126.0],[46,1,48,2,6.02],[46,9,24,2,122.86],[46,2,32,10,322.9],[46,2,38,10,24.6],[46,2,49,2,126.0],[46,2,34,2,56.4],[46,2,33,2,38.04],[46,9,27,2,169.8],[49,10,56,1,4.03],[49,5,4,10,103.2],[49,12,32,5,161.45],[49,12,17,1,21.29],[49,12,15,1,2.67],[49,9,38,10,24.6],[49,9,66,5,225.3],[49,9,49,1,63.0],[49,9,47,1,4.57],[49,9,10,2,46.76],[49,9,69,10,122.1],[49,9,4,10,105.0],[49,12,81,1,47.1],[49,10,35,1,75.24],[49,8,0,1,8.99],[49,8,8,2,5.36],[49,8,32,10,310.5],[49,12,4,10,105.0],[49,6,33,2,38.04],[49,6,34,1,28.21],[49,6,4,10,103.2],[49,12,47,1,4.57],[49,12,69,15,183.15],[49,10,34,4,112.8],[49,5,73,2,54.36],[50,6,53,10,10.0],[50,13,69,5,61.05],[50,3,65,33,746.13],[50,3,32,10,310.5],[50,3,39,1,39.99],[50,5,56,1,4.37],[50,3,16,5,122.35],[50,3,33,2,38.04],[50,4,36,2,85.0],[50,13,6,10,80.6],[50,4,8,1,2.68],[50,3,9,2,43.54],[50,6,8,2,5.36],[50,3,34,1,28.21],[50,4,33,1,19.02],[50,3,6,20,159.6],[50,3,36,1,42.5],[50,4,16,5,122.35],[50,6,88,1,21.41],[50,6,56,2,8.74],[50,6,12,1,5.24],[50,8,24,1,65.47],[50,8,47,2,9.0],[51,7,20,1,59.78],[51,2,35,1,75.24],[51,10,6,20,161.2],[51,10,33,2,38.04],[51,10,39,2,79.8],[51,10,69,2,24.42],[51,10,0,1,9.53],[51,7,10,2,46.76],[51,7,24,2,130.94],[51,7,69,8,97.68],[51,7,38,4,9.84],[51,1,71,5,74.35],[51,1,38,6,14.76],[51,1,6,10,80.6],[51,2,12,1,3.33],[51,2,14,4,68.8],[51,9,6,20,161.2],[51,4,73,3,81.54],[51,4,32,6,186.3],[51,4,33,1,19.02],[51,4,6,10,79.8],[51,9,34,1,28.2],[51,9,8,2,4.58],[51,9,24,1,65.47],[51,9,27,1,84.9],[51,7,3,1,20.3],[51,7,35,2,150.48],[51,2,47,1,4.57],[52,2,0,1,9.53],[52,3,73,7,190.26],[52,3,32,5,161.45],[52,4,89,1,33.19],[52,4,39,2,79.98],[52,4,48,2,5.7],[52,4,36,2,85.0],[52,5,32,5,155.25],[52,2,25,1,20.98],[52,2,53,15,13.2],[52,2,10,1,23.38],[52,5,0,1,8.99],[52,10,61,2,42.72],[52,5,48,2,5.7],[52,5,24,2,130.94],[52,5,73,2,54.36],[52,2,43,2,25.9],[52,5,27,2,169.8],[52,5,8,2,5.36],[52,6,49,4,252.8],[52,12,2,1,5.27],[52,12,43,3,38.85],[52,12,44,10,173.3],[52,12,66,5,225.3],[52,2,38,10,24.6],[52,5,52,3,6.69],[52,5,36,1,42.5],[52,2,11,1,68.64],[53,7,41,1,33.89],[53,0,8,2,4.98],[53,0,2,1,5.11],[53,0,49,2,126.4],[53,0,50,5,71.1],[53,0,0,2,17.98],[53,7,0,2,19.06],[53,7,6,10,79.8],[53,7,71,10,148.7],[53,0,23,1,26.88],[53,0,35,2,150.08],[53,0,6,10,79.8],[53,0,47,2,9.0],[53,0,3,1,23.04],[53,0,4,5,51.6],[53,0,24,2,130.94],[53,0,32,10,310.5],[53,0,17,1,21.3],[53,0,40,1,78.83],[53,0,2,1,5.11],[53,10,32,10,322.9],[53,10,6,20,159.6],[53,10,33,2,38.04],[53,7,44,7,121.31],[53,7,1,1,1.81],[53,7,1,6,10.86],[53,7,48,3,9.03],[53,7,35,2,150.48],[57,10,32,4,126.68],[57,8,32,3,68.28],[57,14,13,10,46.5],[57,13,32,50,1136.5],[57,1,13,10,65.4],[57,1,6,20,159.6],[57,1,47,1,4.57],[57,1,44,5,86.65],[57,1,23,2,54.98],[57,1,56,1,4.03],[57,9,32,15,339.9],[57,9,70,5,89.25],[57,9,71,9,116.46],[57,9,69,4,41.84],[57,9,34,2,59.98],[57,4,16,9,225.45],[57,4,65,12,268.32],[57,2,13,9,46.53],[57,2,69,3,31.47],[57,2,70,5,89.25],[57,2,65,24,534.0],[57,14,32,68,1518.44],[57,3,65,11,248.71],[57,7,13,4,20.68],[57,7,37,23,239.43],[57,7,45,11,142.34],[57,12,34,3,89.97],[57,12,71,8,103.52],[57,12,8,1,2.75],[57,12,61,1,23.25],[57,6,83,5,125.25],[57,6,65,1,22.57],[57,6,90,1,38.0],[57,6,73,2,54.36],[57,6,32,6,186.3],[57,10,39,1,39.9],[57,5,4,10,103.0],[57,5,35,2,150.08],[57,5,49,2,126.12],[57,5,48,1,2.85],[57,5,60,2,155.6],[57,5,8,1,2.49],[57,5,16,10,250.5],[57,5,65,11,250.36],[57,10,35,1,75.24],[57,10,49,1,63.0],[57,0,16,3,75.15],[57,10,67,2,33.08],[57,10,56,1,4.03],[57,10,91,1,23.64],[57,10,65,8,149.44],[57,10,45,1,12.94],[57,10,37,3,30.75],[58,2,49,2,126.0],[58,4,39,2,79.98],[58,4,6,10,80.3],[59,2,33,2,38.04],[59,2,38,20,49.2],[59,2,69,10,122.1],[59,3,78,100,1259.0],[59,3,50,5,71.1],[59,3,32,10,353.3],[59,3,2,1,5.21],[59,3,31,2,40.02],[59,3,33,1,19.02],[59,2,17,2,42.6],[59,3,39,2,79.98],[59,2,23,1,27.48],[59,2,70,10,171.4],[60,12,49,3,189.0],[60,12,32,10,353.3],[60,12,14,10,182.4],[60,12,61,2,44.12],[60,12,6,10,80.6],[60,12,69,12,146.52],[60,12,70,12,205.68],[60,12,4,10,103.0],[60,12,47,2,9.78],[60,12,92,1,4.79],[60,12,34,2,56.42],[60,12,6,20,161.0],[60,6,13,10,53.9],[60,6,16,10,245.0],[60,6,4,10,103.0],[60,6,50,10,142.2],[60,6,47,1,4.82],[60,6,27,2,169.8],[60,6,24,2,130.74],[60,6,24,1,60.89],[60,9,0,1,8.78],[60,7,4,10,103.0],[60,7,61,1,22.06],[60,7,40,1,40.22],[60,7,33,3,57.06],[60,7,32,10,353.3],[60,7,0,2,17.56],[60,7,71,10,148.7],[60,7,69,7,85.47],[60,7,14,10,182.4],[60,2,71,20,297.4],[60,2,49,2,126.0],[60,12,6,20,161.0],[60,7,25,1,20.88],[60,7,2,1,5.31],[60,7,27,2,169.8],[60,7,38,10,24.6],[60,7,1,5,11.95],[60,7,6,20,161.2],[60,2,6,30,241.5],[60,7,24,2,129.8],[60,6,32,10,353.3],[60,6,6,10,80.3],[60,3,82,2,19.02],[60,10,9,1,16.24],[60,2,93,1,0.0],[60,10,4,10,103.0],[60,10,66,5,212.75],[60,10,56,2,8.32],[60,10,70,3,51.42],[60,10,64,2,6.42],[60,1,24,1,64.9],[60,1,94,1,5.32],[60,1,95,1,4.7],[60,5,16,5,122.5],[60,1,96,1,5.32],[60,1,92,1,4.79],[60,4,97,2,31.14],[60,4,33,2,38.04],[60,4,34,2,56.42],[60,4,4,3,30.9],[60,1,6,10,80.6],[60,1,41,1,33.34],[60,10,38,10,24.6],[60,9,33,1,19.02],[60,10,34,2,56.42],[60,1,70,6,102.84],[60,0,17,1,21.3],[60,3,16,5,122.5],[60,3,4,10,103.0],[60,9,4,10,103.0],[60,9,39,1,39.97],[60,3,27,1,84.9],[60,11,16,16,392.0],[60,11,32,9,317.97],[60,11,29,1,88.25],[60,11,0,2,17.56],[60,11,15,1,3.03],[60,11,33,1,19.02],[60,11,38,2,4.92],[60,11,32,3,105.99],[60,9,70,6,102.84],[60,9,6,10,80.5],[60,9,8,2,5.6],[60,9,25,2,41.76],[60,0,12,1,5.76],[60,9,34,2,56.42],[60,0,36,1,43.29],[60,0,16,5,122.5],[60,0,3,2,42.5],[60,1,66,5,212.75],[60,0,35,2,141.84],[60,0,53,7,7.0],[60,0,32,10,353.3],[60,0,0,2,17.56],[60,0,8,2,3.56],[60,0,6,20,160.6],[60,0,1,2,4.78],[60,0,41,1,32.89],[60,0,47,2,9.64],[60,0,50,5,71.1],[60,0,4,5,51.5],[60,10,34,2,56.42],[60,10,69,10,122.1],[60,10,25,1,21.09],[60,9,47,1,4.89],[64,6,73,4,108.72],[64,6,41,1,32.89],[64,6,40,1,89.37],[64,6,61,1,21.01],[64,6,6,10,80.3],[64,10,34,2,56.42],[64,10,6,10,80.3],[64,10,38,8,19.68],[64,10,69,20,254.8],[64,10,70,3,45.51],[64,11,74,1,154.99],[64,11,6,20,160.6],[65,9,69,6,76.44],[65,9,11,1,68.64],[65,9,69,15,191.1],[65,1,44,10,173.3],[65,1,69,6,76.44],[65,1,71,10,148.7],[65,5,9,1,22.52],[65,7,36,1,39.38],[65,7,32,5,176.65],[65,7,39,2,79.94],[65,7,47,1,4.89],[65,7,71,10,148.7],[65,7,6,10,80.3],[65,7,48,2,6.0],[65,12,49,3,189.06],[65,12,17,1,21.3],[65,2,49,2,126.04],[65,2,56,1,4.16],[65,6,33,1,19.02],[66,1,98,10,0.0],[66,0,27,2,169.8],[66,0,24,2,130.74],[66,0,2,2,10.42],[66,0,50,5,71.1],[66,0,6,10,80.3],[66,0,53,10,8.8],[66,0,56,2,8.8],[66,0,13,10,53.9],[66,0,49,2,126.12],[66,0,16,5,122.5],[66,0,74,1,154.99],[66,4,49,2,126.12],[66,4,8,2,3.56],[66,4,39,2,79.98],[66,4,34,2,56.42],[66,5,99,2,8.06],[66,1,24,1,65.37],[66,1,100,10,0.0],[66,1,101,7,46.62],[67,2,68,23,136.62],[67,6,102,1,729.0],[67,12,25,1,20.88],[67,12,49,2,126.04],[67,12,103,2,21.38],[67,12,104,1,6.88],[67,10,105,5,0.0],[67,0,68,3,17.82],[67,0,83,2,50.1],[67,7,106,7,0.0],[67,7,68,1,5.94],[67,4,107,9,127.08],[67,12,88,1,20.0],[67,0,106,8,0.0],[67,2,107,4,56.48],[70,2,38,10,31.6],[71,1,43,3,29.67],[71,13,69,9,135.72],[71,1,95,2,9.12],[71,1,52,5,11.55],[71,1,90,1,0.0],[71,1,92,1,4.79],[71,1,69,5,75.4],[71,4,11,1,60.4],[71,4,2,1,5.25],[71,4,32,6,187.38],[71,4,47,2,9.64],[71,4,1,1,2.39],[71,4,50,5,71.1],[71,2,47,1,5.0],[71,2,64,1,3.78],[71,2,43,1,9.89],[71,2,14,10,182.4],[71,2,76,20,46.4],[71,2,69,15,226.2],[71,6,69,6,90.48],[71,6,39,1,39.99],[71,6,49,2,126.12],[71,6,32,6,187.38],[71,6,81,1,36.72],[71,7,4,5,51.5],[71,7,44,10,180.3],[71,7,32,10,312.3],[71,7,8,3,7.95],[71,7,0,1,8.78],[71,7,63,10,80.8],[71,7,1,5,11.95],[71,7,33,1,19.01],[71,7,71,8,118.96],[71,7,66,5,212.75],[71,7,108,1,4.95],[71,7,0,1,4.49],[71,5,61,1,21.01],[71,5,0,1,4.49],[71,5,9,1,22.52],[71,5,109,1,266.0],[71,5,13,10,53.9],[71,5,6,10,78.4],[71,5,33,2,38.04],[71,12,33,1,19.01],[71,12,62,1,18.23],[71,12,34,1,28.21],[71,12,69,10,150.8],[71,12,38,10,31.6],[71,12,88,1,20.0],[71,10,35,2,138.9],[71,10,9,1,16.24],[71,10,4,5,51.5],[71,10,62,1,18.23],[71,10,38,10,31.6],[71,10,6,10,77.9],[71,10,33,2,38.02],[71,10,64,1,3.78],[72,4,32,4,124.92],[72,0,47,1,4.82],[72,0,33,1,19.02],[72,0,6,10,78.4],[72,0,49,1,63.06],[72,0,1,3,7.17],[72,0,4,5,69.3],[72,0,32,10,312.3],[72,4,44,4,72.12],[72,4,4,5,69.3],[73,2,14,10,182.4],[73,8,8,2,3.7],[73,8,6,30,235.2],[73,8,24,2,137.68],[73,8,15,2,6.06],[73,8,47,2,9.64],[73,8,23,2,54.1],[73,8,36,2,86.58],[73,0,85,4,20.68],[73,5,4,10,138.6],[73,5,74,1,154.99],[73,5,32,15,468.45],[73,5,60,4,311.2],[73,10,4,10,103.0],[73,10,62,1,18.23],[73,10,47,1,5.0],[73,10,9,1,16.24],[73,10,34,2,56.42],[73,6,6,30,234.9],[73,6,13,22,119.68],[73,6,53,39,34.32],[73,6,47,1,4.82],[73,2,69,2,30.16],[73,2,25,1,20.88],[73,2,43,2,19.78],[73,11,6,30,234.9],[73,11,32,10,312.3],[73,11,47,1,4.82],[73,11,61,1,21.01],[73,1,21,2,12.26],[73,1,76,20,46.4],[73,1,43,2,19.78],[73,1,31,1,18.9],[73,1,10,3,70.14],[73,1,34,2,56.42],[73,1,25,1,20.88],[73,1,61,1,22.06],[73,11,39,2,88.78],[73,11,49,2,126.12],[73,11,73,8,217.44],[74,7,56,2,8.32],[74,3,74,1,154.99],[74,7,10,2,46.76],[74,3,24,2,137.68],[74,3,47,2,9.64],[74,3,9,1,22.52],[74,3,16,5,157.45],[74,3,4,5,69.3],[74,3,56,3,13.2],[74,3,50,5,71.1],[74,3,32,3,93.69],[74,7,71,5,74.35],[74,3,35,1,70.92],[74,7,35,2,138.9],[74,3,42,2,28.14],[74,7,32,3,93.69],[74,7,14,10,182.4],[74,7,41,1,43.37],[74,7,47,1,5.0],[78,4,25,1,21.09],[78,12,76,20,46.4],[78,6,4,10,138.6],[78,6,16,10,314.9],[78,12,15,1,2.78],[78,12,10,1,23.38],[78,12,41,1,43.37],[78,5,0,1,4.49],[78,9,24,2,137.68],[78,12,25,1,20.88],[78,10,66,5,212.75],[78,10,43,1,9.89],[78,10,62,1,18.23],[78,10,9,1,19.38],[78,10,47,1,5.0],[78,5,27,1,84.95],[78,5,24,2,137.68],[78,12,8,2,5.3],[78,12,47,2,10.0],[78,4,61,1,21.01],[78,5,34,2,56.42],[78,5,23,1,27.05],[78,5,39,2,88.78],[78,9,27,1,84.95],[78,9,60,2,155.6],[79,8,25,2,42.18],[79,7,88,2,40.0],[79,7,66,5,212.75],[79,7,13,25,136.25],[79,9,9,1,19.38],[79,9,62,1,18.23],[80,3,6,20,155.8],[80,9,35,2,138.9],[80,10,56,3,12.48],[80,10,64,1,3.78],[80,10,67,1,3.9],[80,5,50,5,71.1],[80,5,75,1,83.6],[80,7,52,2,4.62],[80,7,27,2,169.9],[80,7,39,2,95.82],[80,7,47,1,5.0],[80,7,8,2,5.3],[80,6,61,1,21.01],[80,6,35,1,70.92],[80,6,17,1,21.29],[80,12,70,10,151.7],[80,3,52,2,5.0],[80,8,39,2,88.78],[80,0,110,1,5.13],[80,0,76,15,36.6],[80,0,2,1,5.25],[80,0,47,1,4.87],[80,0,47,1,4.82],[80,0,35,1,70.92],[80,0,0,2,8.98],[80,8,2,1,5.25],[80,8,8,2,3.7],[80,8,111,1,24.26],[80,8,34,2,56.42],[80,8,47,1,4.87],[80,8,16,4,125.96],[80,9,25,1,20.88],[81,6,27,3,260.79],[81,10,70,5,75.85],[81,6,24,3,209.7],[81,10,112,5,70.6],[81,0,24,3,209.7],[84,6,16,10,245.0],[84,10,80,19,9.88],[84,0,27,2,173.86],[84,10,33,3,57.03],[84,10,3,1,19.7],[84,6,50,10,142.2],[84,6,29,1,88.25],[84,6,4,10,117.0],[84,6,23,1,27.05],[84,6,61,1,21.01],[85,0,103,2,21.38],[85,5,16,1,24.5],[85,5,4,10,108.8],[85,8,50,10,142.2],[85,8,4,10,108.8],[85,8,75,1,89.0],[85,5,9,1,22.52],[85,0,2,2,10.5],[85,0,39,1,47.84],[85,0,53,6,5.28],[85,0,17,1,21.29],[85,0,16,5,122.5],[85,0,50,5,71.1],[85,0,4,5,56.45],[85,2,75,1,83.6],[85,2,75,1,89.0],[85,2,13,10,54.5],[86,1,14,10,182.4],[86,1,4,2,20.94],[86,1,66,5,212.75],[86,6,6,20,155.8],[86,12,24,2,139.8],[86,12,27,2,177.32],[86,12,4,3,31.41],[87,7,24,1,69.9],[87,7,13,10,54.5],[87,3,95,2,8.68],[87,3,92,2,9.46],[87,7,27,2,176.16],[87,7,66,5,207.7],[87,7,24,1,69.9]],"loc":[["DPSP","Base Almox - DPSP","contrato","DPSP",62,16400],["BASE","Almoxarifado Base","base","Obras/Spot",100,16269],["MANFAC 11","MANFAC 11","equipe","Profarma",52,14082],["PROFARMA","Base Almox Profarma","contrato","Profarma",57,11360],["MANFAC 24","MANFAC 24","equipe","Profarma",52,9711],["MANFAC 9","MANFAC 9","equipe","DPSP",46,9295],["MANFAC 18","MANFAC 18","equipe","Profarma",55,8810],["MANFAC-25","MANFAC-25","equipe","DPSP",52,7496],["MANFAC 2","MANFAC 2","equipe","DPSP",42,6603],["MANFAC 5","MANFAC 5","equipe","DPSP",36,6257],["MANFAC 1","MANFAC 1","equipe","DPSP",47,6174],["MANFAC 15","MANFAC 15","equipe","Profarma",34,5309],["MANFAC 20","MANFAC 20","equipe","Obras/Spot",22,4411],["MANFAC 3","MANFAC 3","equipe","DPSP",36,4006],["MANFAC 12","MANFAC 12","equipe","Profarma",34,3997],["MANFAC 22","MANFAC 22","equipe","Profarma",34,3651],["MANFAC 17","MANFAC 17","equipe","Profarma",36,3099],["MANFAC 13","MANFAC 13","equipe","Profarma",34,2535],["MANFAC 7","MANFAC 7","equipe","Obras/Spot",14,1732],["MANFAC 6","MANFAC 6","equipe","Obras/Spot",12,1702],["MANFAC 19","MANFAC 19","equipe","Obras/Spot",7,1552]]};
+/* D.r = [dia desde 17/08/2026, equipe, produto, quantidade, valor em R$ (qtde × custo unitário do Omie)] — entradas de material nos estoques das equipes */
+
+// ---------------- números e datas ----------------
+const nf0=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+const nf1=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const R=v=>'R$ '+nf0.format(Math.round(v));
+const K=v=>v>=1e6?nf1.format(v/1e6)+' mi':v>=1000?nf1.format(v/1000)+' mil':nf0.format(Math.round(v));
+const N0=v=>nf0.format(v);
+const DIA=864e5, T0=Date.UTC(2026,7,17), HOJE=Date.UTC(2026,10,19), ULT_MOV=Date.UTC(2026,10,13);
+const idx=iso=>Math.round((Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))-T0)/DIA);
+const iso=i=>new Date(T0+i*DIA).toISOString().slice(0,10);
+const fd=i=>{const s=iso(i);return s.slice(8,10)+'/'+s.slice(5,7)};
+const fdA=i=>{const s=iso(i);return s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4)};
+const DS=['dom','seg','ter','qua','qui','sex','sáb'];
+const dsem=i=>DS[new Date(T0+i*DIA).getUTCDay()];
+const MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const IHOJE=idx('2026-11-19'), IULT=idx('2026-11-13');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap=s=>s.charAt(0)+s.slice(1).toLowerCase();
+const LOCN={DPSP:'Almox DPSP',PROFARMA:'Almox Profarma',BASE:'Almoxarifado Base'};
+
+// ---------------- estado ----------------
+const S={modo:'mes',mes:'2026-11',de:'2026-10-01',ate:'2026-10-31',ct:'',cmp:'prev',papel:'admin',piloto:'ex',ord:'v',parado:3,eqSel:null};
+
+function periodo(){
+  let a,b,rot,parcial=false;
+  if(S.modo==='mes'){
+    const [y,m]=S.mes.split('-').map(Number);
+    a=Math.round((Date.UTC(y,m-1,1)-T0)/DIA);
+    b=Math.round((Date.UTC(y,m,0)-T0)/DIA);
+    if(b>IHOJE){b=IHOJE;parcial=true}
+    rot=cap(MES[m-1])+' '+y;
+  }else{
+    a=idx(S.de);b=idx(S.ate);if(b<a)[a,b]=[b,a];
+    if(b>IHOJE)b=IHOJE;
+    rot=fd(a)+' a '+fd(b);
+  }
+  return {a,b,rot,parcial,n:b-a+1};
+}
+function comparacao(P){
+  let a,b;
+  if(S.cmp==='yoy'){
+    const sh=i=>{const d=new Date(T0+i*DIA);return Math.round((Date.UTC(d.getUTCFullYear()-1,d.getUTCMonth(),d.getUTCDate())-T0)/DIA)};
+    a=sh(P.a);b=sh(P.b);
+  }else if(S.modo==='mes'){
+    const d=new Date(T0+P.a*DIA),y=d.getUTCFullYear(),m=d.getUTCMonth();
+    a=Math.round((Date.UTC(y,m-1,1)-T0)/DIA);
+    const fimAnt=Math.round((Date.UTC(y,m,0)-T0)/DIA);
+    b=Math.min(a+P.n-1,fimAnt);
+  }else{b=P.a-1;a=P.a-P.n}
+  const semBase=b<0, parcial=!semBase&&a<0;
+  return {a,b,semBase,parcial,n:b-a+1};
+}
+function agg(a,b,ct){
+  const o={v:0,q:0,lin:0,dia:new Array(Math.max(0,b-a+1)).fill(0),eq:{},ct:{},pr:{}};
+  for(const r of D.r){
+    if(r[0]<a||r[0]>b)continue;
+    const e=D.eq[r[1]];
+    o.ct[e[1]]=(o.ct[e[1]]||0)+r[4];
+    if(ct&&e[1]!==ct)continue;
+    o.v+=r[4];o.q+=r[3];o.lin++;
+    o.dia[r[0]-a]+=r[4];
+    o.eq[r[1]]=(o.eq[r[1]]||0)+r[4];
+    const p=o.pr[r[2]]||(o.pr[r[2]]={v:0,q:0});p.v+=r[4];p.q+=r[3];
+  }
+  return o;
+}
+
+// ---------------- peças ----------------
+function delta(at,ant,maiorMelhor,rot,cmp){
+  if(cmp&&cmp.semBase||!ant)return `<span class="delta d-neu">— <small>${cmp&&cmp.semBase?'sem base: a cópia do Omie começa em 17/08/2026':rot+': sem base'}</small></span>`;
+  const p=(at-ant)/ant*100, plano=Math.abs(p)<.5, bom=(p>=0)===maiorMelhor;
+  const cls=plano?'d-neu':bom?'d-bom':'d-ruim';
+  return `<span class="delta ${cls}">${plano?'=':p>=0?'▲':'▼'} ${nf1.format(Math.abs(p))}% <small>${rot}${cmp&&cmp.parcial?' (base parcial)':''}</small></span>`;
+}
+const qv=t=>t==='todos'?`<span class="qv todos" title="Anotação do mockup">quem vê: todos, inclusive aprovador</span>`:`<span class="qv" title="Anotação do mockup">quem vê: admin, gestor, almoxarife (tem R$)</span>`;
+const pos=t=>`<span class="pos">${t}</span>`;
+function sec(id,tit,sub,extra,corpo){return `<section class="sec" id="${id}"><div class="sec-h"><div><h2>${tit}</h2><p>${sub}</p></div><div class="sec-x">${extra||''}</div></div>${corpo}</section>`}
+function card(tit,sub,corpo,extra){return `<article class="card"><div class="card-h"><div><h3>${tit}</h3>${sub?`<p>${sub}</p>`:''}</div>${extra||''}</div>${corpo}</article>`}
+const CORCT={'DPSP':'#5aa9f0','Profarma':'#35c98a','Obras/Spot':'#f4b73f'};
+
+// ---------------- dados de exemplo (piloto ainda não começou) ----------------
+const EX={
+  'DPSP':{ag:2,ap:3,se:1,re:24,rc:1,cn:0,tm:1.6,tma:1.9},
+  'Profarma':{ag:3,ap:2,se:2,re:31,rc:0,cn:1,tm:1.2,tma:1.1},
+  'Obras/Spot':{ag:1,ap:0,se:0,re:4,rc:0,cn:0,tm:2.1,tma:2.4}
+};
+const PARADOS=[
+  {n:'0012',eq:'MANFAC 9',ct:'DPSP',et:'Aguardando aprovação',cor:'#f4b73f',dias:4,quem:'aprovador do DPSP'},
+  {n:'0017',eq:'MANFAC 11',ct:'Profarma',et:'Separado, não retirado',cor:'#5aa9f0',dias:6,quem:'equipe MANFAC 11'},
+  {n:'0015',eq:'MANFAC 18',ct:'Profarma',et:'Aprovado, falta separar',cor:'#a78bfa',dias:3,quem:'almoxarifado'},
+  {n:'0021',eq:'MANFAC 7',ct:'Obras/Spot',et:'Aguardando aprovação',cor:'#f4b73f',dias:2,quem:'aprovador de Obras/Spot'}
+];
+/* Mínimos: saldo e local são reais (17/11); o mínimo é inventado, porque nenhum mínimo foi cadastrado ainda. */
+const MINIMOS=[
+  {it:'LAMPADA LED TUBULAR 18W 6500K G13 BIVOLT',loc:'PROFARMA',ct:'Profarma',un:'UN',saldo:0,min:100},
+  {it:'LAMPADA LED TUBULAR 18W 6500K G13 BIVOLT',loc:'DPSP',ct:'DPSP',un:'UN',saldo:64,min:120},
+  {it:'REFLETOR / PROJETOR LED 100W 6500K BIVOLT',loc:'DPSP',ct:'DPSP',un:'UN',saldo:30,min:60},
+  {it:'TINTA ACRÍLICA FOSCO BRANCO NEVE 20L',loc:'PROFARMA',ct:'Profarma',un:'L',saldo:10,min:40},
+  {it:'LUMINARIA LED EMBUTIR REDONDA 18W 6500K',loc:'BASE',ct:'Obras/Spot',un:'UN',saldo:0,min:20}
+];
+function pedidos(P){
+  const cts=S.ct?[S.ct]:S.papel==='aprovador'?['DPSP','Obras/Spot']:Object.keys(EX), f=P.n/30;
+  const o={ag:0,ap:0,se:0,re:0,rc:0,cn:0,tm:0,tma:0,w:0};
+  for(const c of cts){const e=EX[c];o.ag+=e.ag;o.ap+=e.ap;o.se+=e.se;o.re+=Math.round(e.re*f);o.rc+=e.rc;o.cn+=e.cn;o.tm+=e.tm*e.re;o.tma+=e.tma*e.re;o.w+=e.re}
+  o.tm/=o.w;o.tma/=o.w;return o;
+}
+
+// ---------------- render ----------------
+function render(){
+  const P=periodo(), C=comparacao(P), at=agg(P.a,P.b,S.ct), an=C.semBase?null:agg(Math.max(C.a,0),C.b,S.ct);
+  const aprov=S.papel==='aprovador', vazio=S.piloto==='vazio';
+  const rotCmp=C.semBase?'sem base':`vs ${fd(C.a)}–${fd(C.b)}${S.cmp==='yoy'?'/2025':''}`;
+  const ctNome=S.ct||'Todos os contratos';
+
+  // menu e usuário
+  document.getElementById('nav').innerHTML=['Início','Separação','Estoque','Colaboradores','Falhas no Omie','Configurações'].filter(n=>!aprov||['Início','Separação'].includes(n)).map(n=>n==='Início'?`<span class="item" aria-current="page">${n}</span>`:`<span class="item" aria-disabled="true" title="Fora deste mockup">${n}${n==='Falhas no Omie'&&!aprov?'<span class="cont">0</span>':''}</span>`).join('');
+  document.getElementById('av').textContent=aprov?'FR':'PM';
+  document.getElementById('un').textContent=aprov?'Fernanda Rocha':'Paulo Mendes';
+  document.getElementById('up').textContent=aprov?'Aprovadora · DPSP e Obras/Spot':'Almoxarife';
+  document.getElementById('pgsub').textContent=aprov
+    ?'Os pedidos das suas equipes: o que espera a sua aprovação e o que está parado. Tudo obedece ao período escolhido abaixo, menos o que diz “Sempre hoje”.'
+    :'Resumo da operação: quanto material saiu, para quem, quais itens, como andam os pedidos, o que tem em estoque e se a ligação com o Omie está em dia. Tudo obedece ao período e ao contrato escolhidos abaixo, menos o que diz “Sempre hoje”.';
+
+  // filtro
+  document.querySelectorAll('[data-f="modo"] button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.modo));
+  document.querySelectorAll('[data-f="ct"] button').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.v===S.ct);b.hidden=aprov&&b.dataset.v==='Profarma'});
+  document.getElementById('f-mes').hidden=S.modo!=='mes';
+  document.getElementById('f-int').hidden=S.modo!=='int';
+  document.querySelector('[data-f="mes"]').value=S.mes;
+  document.querySelector('[data-f="de"]').value=S.de;
+  document.querySelector('[data-f="ate"]').value=S.ate;
+  document.querySelector('[data-f="cmp"]').value=S.cmp;
+  const passaUlt=P.b>IULT&&!aprov;
+  document.getElementById('resumo-f').innerHTML=`<b>${aprov&&!S.ct?'DPSP e Obras/Spot':ctNome} · ${P.rot}</b>${fd(P.a)} a ${fd(P.b)}${P.parcial?' (mês em curso)':''} · comparando ${C.semBase?'com: sem base anterior':rotCmp.replace('vs ','com ')}${passaUlt?`<br><span class="aviso-f">Saídas copiadas do Omie só até ${fd(IULT)}: veja “Ligação com o Omie”.</span>`:''}`;
+
+  let h='';
+  if(aprov){
+    h+=`<div class="nota" style="margin-top:20px"><b>Visão do aprovador.</b> Ele não vê custo (regra de segurança do projeto): somem os valores em R$, o consumo, os itens, o estoque e a ligação com o Omie. Fica só o que é pedido, das equipes que ele aprova. O contrato Profarma sumiu do filtro porque esta aprovadora não aprova Profarma.</div>`;
+  }
+  h+=kpis(P,C,at,an,rotCmp,aprov,vazio);
+  if(!aprov){
+    h+=consumo(P,C,at,an,rotCmp);
+    h+=evolucao(P,C,at,an);
+    h+=topItens(P,at,an);
+  }
+  h+=pedidosSec(P,C,rotCmp,vazio,aprov);
+  if(!aprov){h+=estoque(vazio);h+=saude();}
+  document.getElementById('conteudo').innerHTML=h;
+  if(!aprov)desenhaLinha(P,C,at,an);
+}
+
+function kpis(P,C,at,an,rotCmp,aprov,vazio){
+  const est=D.loc.filter(l=>!S.ct||l[3]===S.ct), ve=est.reduce((s,l)=>s+l[5],0);
+  const pd=pedidos(P);
+  const abertos=pd.ag+pd.ap+pd.se;
+  let k='';
+  if(!aprov){
+    k+=`<div class="kpi lnk" data-ir="estoque"><div class="t">Valor em estoque ${pos('Sempre hoje')}</div><div class="v">${R(ve)}</div><div class="s">saldo × custo médio em ${est.length} locais · posição de 17/11, 12:11</div>
+      <div class="det"><span>Almoxarifados <b>${K(est.filter(l=>l[2]!=='equipe').reduce((s,l)=>s+l[5],0))}</b></span><span>Com as equipes <b>${K(est.filter(l=>l[2]==='equipe').reduce((s,l)=>s+l[5],0))}</b></span></div>${qv()}</div>`;
+    k+=`<div class="kpi lnk" data-ir="consumo"><div class="t">Saídas para as equipes</div><div class="v">${R(at.v)}</div><div class="s">${N0(at.lin)} entregas de item · ${N0(Math.round(at.q))} unidades · ${fd(P.a)} a ${fd(P.b)}</div>${delta(at.v,an&&an.v,false,rotCmp,C)}<br>${qv()}</div>`;
+  }
+  const ex=vazio?'':' <span class="ex">exemplo</span>';
+  k+=`<div class="kpi lnk" data-ir="pedidos"><div class="t">Pedidos no período${ex}</div>${vazio?`<div class="v">0</div><div class="s">nenhum pedido feito ainda</div>`:`<div class="v">${abertos+pd.re+pd.rc+pd.cn}</div><div class="s">feitos de ${fd(P.a)} a ${fd(P.b)}</div>
+    <div class="det"><span>Em aberto <b>${abertos}</b></span><span>Aprovados <b>${pd.ap+pd.se+pd.re}</b></span><span>Retirados <b>${pd.re}</b></span><span>Recusados <b>${pd.rc}</b></span></div>`}${qv('todos')}</div>`;
+  k+=`<div class="kpi"><div class="t">Do pedido à retirada${ex}</div>${vazio?`<div class="v">—</div><div class="s">aparece quando o primeiro pedido for retirado</div>`:`<div class="v">${nf1.format(pd.tm)} <small>dias</small></div><div class="s">média entre fazer o pedido e a equipe retirar</div>${delta(pd.tm,pd.tma,false,rotCmp,C)}`}<br>${qv('todos')}</div>`;
+  if(!aprov){
+    k+=`<div class="kpi lnk" data-ir="saude"><div class="t">Falhas no Omie ${pos('Agora')}</div><div class="v ok">0</div><div class="s">nenhuma gravação com falha · nenhuma na fila</div><div class="det"><span>Gravação no Omie: <b>desligada</b> até o piloto</span></div>${qv()}</div>`;
+    const ab=vazio?null:MINIMOS.filter(m=>(!S.ct||m.ct===S.ct)&&m.saldo<m.min).length;
+    k+=`<div class="kpi lnk" data-ir="estoque"><div class="t">Abaixo do mínimo ${pos('Sempre hoje')}${vazio?'':' <span class="ex">exemplo</span>'}</div>${vazio?`<div class="v">—</div><div class="s">nenhum mínimo cadastrado ainda</div>`:`<div class="v ${ab?'atn':'ok'}">${ab} <small>itens</small></div><div class="s">saldo menor que o mínimo combinado</div>`}${qv()}</div>`;
+  }
+  return sec('resumo','Resumo da operação','Os números principais. Clique num quadro para descer até o detalhe.','',`<div class="kpis">${k}</div>`);
+}
+
+function consumo(P,C,at,an,rotCmp){
+  // por contrato: sempre os três, o escolhido em destaque
+  const cts=['DPSP','Profarma','Obras/Spot'], mx=Math.max(1,...cts.map(c=>at.ct[c]||0)), tot=cts.reduce((s,c)=>s+(at.ct[c]||0),0);
+  let a=`<div class="card-b"><div class="hb">`+cts.map(c=>{const v=at.ct[c]||0,va=an?an.ct[c]||0:0;return `<button type="button" class="hb-l ${S.ct===c?'on':''}" data-ct="${c}" title="${c}: ${R(v)} (${tot?nf1.format(v/tot*100):0}% do total)">
+    <span class="n">${c} <small>${tot?nf1.format(v/tot*100):0}%</small></span><span class="b"><i style="width:${v/mx*100}%;background:${CORCT[c]}"></i></span><span class="val">${R(v)}</span><span class="dl">${dpct(v,va,C)}</span></button>`}).join('')+`</div>
+    <div class="hb-tot"><span>Total dos três contratos</span><b>${R(tot)}</b></div></div>`;
+  // por equipe
+  const eqs=Object.entries(at.eq).map(([i,v])=>({i:+i,v,va:an?an.eq[i]||0:0})).sort((x,y)=>y.v-x.v), mxe=Math.max(1,...eqs.map(e=>e.v));
+  const todasEq=D.eq.map((e,i)=>i).filter(i=>!S.ct||D.eq[i][1]===S.ct), semSaida=todasEq.filter(i=>!at.eq[i]);
+  let b=`<div class="card-b">${eqs.length?`<div class="hb">`+eqs.map((e,k)=>`<div class="hb-l" title="${D.eq[e.i][0]} (${D.eq[e.i][1]}): ${R(e.v)}"><span class="n">${k+1}º ${D.eq[e.i][0]} <small>${S.ct?'':D.eq[e.i][1]}</small></span><span class="b"><i style="width:${e.v/mxe*100}%;background:${k===0?'#f05a28':CORCT[D.eq[e.i][1]]}"></i></span><span class="val">${R(e.v)}</span><span class="dl">${dpct(e.v,e.va,C)}</span></div>`).join('')+`</div>`:`<div class="vazio"><b>Nenhuma saída no período</b>Nenhuma equipe recebeu material ${S.ct?'deste contrato ':''}entre ${fd(P.a)} e ${fd(P.b)}.</div>`}
+    ${semSaida.length&&eqs.length?`<p class="hb-tot" style="display:block">Sem saída no período: ${semSaida.map(i=>D.eq[i][0]).join(', ')}.</p>`:''}</div>`;
+  return sec('consumo','Para onde foi o material','Valor do material que saiu do almoxarifado para cada contrato e cada equipe no período. A coluna da direita compara com o período de comparação.',qv(),
+    `<div class="g2">${card('Por contrato','Clique num contrato para filtrar a tela inteira',a)}${card('Por equipe',S.ct?`Equipes do ${S.ct}, da que mais recebeu para a que menos recebeu`:'Todas as equipes, da que mais recebeu para a que menos recebeu',b)}</div>`);
+}
+function dpct(v,va,C){
+  if(C.semBase)return '<span class="muted">—</span>';
+  if(!va)return v?'<span class="muted">novo</span>':'<span class="muted">—</span>';
+  const p=(v-va)/va*100;
+  return `<span style="color:${Math.abs(p)<.5?'var(--muted)':p>0?'var(--ambar)':'var(--muted)'}">${p>=0?'+':'−'}${nf0.format(Math.abs(p))}%</span>`;
+}
+
+function evolucao(P,C,at,an){
+  const corpo=`<div class="graf" id="graf"><svg id="svg" height="250" role="img" aria-label="Saídas por dia no período"></svg><div class="tip" id="tip"></div></div>
+   <div class="leg"><span><i style="background:var(--orange)"></i>${P.rot} (${R(at.v)})</span>${C.semBase?'<span>Comparação: sem base (a cópia do Omie começa em 17/08/2026)</span>':`<span><i class="tr"></i>Comparação: ${fd(C.a)} a ${fd(C.b)}${S.cmp==='yoy'?'/2025':''} (${R(an.v)})${C.parcial?' · base parcial, antes de 17/08 não há cópia':''}</span>`}<span>Passe o mouse (ou o dedo) no gráfico para ver o dia</span></div>`;
+  return sec('evolucao','Saídas dia a dia','Quanto saiu por dia, em R$. A linha tracejada é o período de comparação, alinhado dia a dia. Fim de semana costuma ficar zerado.',qv(),card(`Saídas por dia · ${S.ct||'todos os contratos'}`,`${fd(P.a)} a ${fd(P.b)}`,corpo));
+}
+function desenhaLinha(P,C,at,an){
+  const svg=document.getElementById('svg'),wrap=document.getElementById('graf'),tip=document.getElementById('tip');
+  if(!svg)return;
+  const W=Math.max(280,wrap.clientWidth-16),H=250,ml=48,mr=10,mt=12,mb=26,iw=W-ml-mr,ih=H-mt-mb;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('width',W);
+  const sa=at.dia, sb=an?an.dia.slice():null;
+  if(sb&&C.a<0){const pad=-C.a;for(let i=0;i<pad;i++)sb.unshift(null)}
+  const n=sa.length, mx=Math.max(100,...sa,...(sb||[]).filter(v=>v!=null));
+  const passo=[100,250,500,1000,2000,2500,5000,10000].find(s=>mx/s<=5)||10000, top=Math.ceil(mx/passo)*passo;
+  const x=i=>ml+(n<=1?iw/2:i*iw/(n-1)), y=v=>mt+ih-v/top*ih;
+  let g='';
+  for(let v=0;v<=top;v+=passo)g+=`<line class="grade" x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}"/><text class="eixo" x="${ml-6}" y="${y(v)+3.5}" text-anchor="end">${v?K(v):'0'}</text>`;
+  const cada=Math.max(1,Math.ceil(n/(iw/46)));
+  for(let i=0;i<n;i+=cada)g+=`<text class="eixo" x="${x(i)}" y="${H-8}" text-anchor="middle">${fd(P.a+i)}</text>`;
+  // área atual
+  const pts=sa.map((v,i)=>`${x(i)},${y(v)}`);
+  g+=`<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f05a28" stop-opacity=".35"/><stop offset="1" stop-color="#f05a28" stop-opacity="0"/></linearGradient></defs>`;
+  if(n>1)g+=`<path d="M${x(0)},${y(0)} L${pts.join(' L')} L${x(n-1)},${y(0)} Z" fill="url(#ga)"/>`;
+  // comparação
+  if(sb){let d='',on=false;for(let i=0;i<Math.min(n,sb.length);i++){if(sb[i]==null){on=false;continue}d+=(on?' L':' M')+x(i)+','+y(sb[i]);on=true}g+=`<path d="${d}" fill="none" stroke="var(--serie-cmp)" stroke-width="1.6" stroke-dasharray="4 4"/>`}
+  g+=`<path d="M${pts.join(' L')}" fill="none" stroke="#f05a28" stroke-width="2.2" stroke-linejoin="round"/>`;
+  // dias sem cópia ainda
+  if(P.b>IULT){const i0=Math.max(0,IULT-P.a+1);g+=`<rect x="${x(i0)-(n>1?iw/(n-1)/2:0)}" y="${mt}" width="${W-mr-x(i0)+(n>1?iw/(n-1)/2:0)}" height="${ih}" fill="rgba(244,183,63,.07)" stroke="rgba(244,183,63,.35)" stroke-dasharray="3 3"/><text class="eixo" x="${(x(i0)+W-mr)/2}" y="${mt+14}" text-anchor="middle" style="fill:var(--ambar)">ainda sem cópia do Omie</text>`}
+  g+=`<line id="cur" x1="0" x2="0" y1="${mt}" y2="${mt+ih}" stroke="#94a3b8" stroke-width="1" opacity="0"/><circle id="pa" r="4" fill="#f05a28" opacity="0"/><circle id="pb" r="3.5" fill="var(--serie-cmp)" opacity="0"/>`;
+  g+=`<rect x="${ml}" y="${mt}" width="${iw}" height="${ih}" fill="transparent" id="hit"/>`;
+  svg.innerHTML=g;
+  const mov=ev=>{
+    const r=svg.getBoundingClientRect(),cx=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+    const i=Math.max(0,Math.min(n-1,Math.round((cx*W/r.width-ml)/(n<=1?1:iw/(n-1)))));
+    const cur=svg.querySelector('#cur');cur.setAttribute('x1',x(i));cur.setAttribute('x2',x(i));cur.setAttribute('opacity',.6);
+    const pa=svg.querySelector('#pa');pa.setAttribute('cx',x(i));pa.setAttribute('cy',y(sa[i]));pa.setAttribute('opacity',1);
+    const pb=svg.querySelector('#pb');
+    if(sb&&sb[i]!=null){pb.setAttribute('cx',x(i));pb.setAttribute('cy',y(sb[i]));pb.setAttribute('opacity',1)}else pb.setAttribute('opacity',0);
+    const semCopia=P.a+i>IULT;
+    tip.innerHTML=`<b>${dsem(P.a+i)}, ${fd(P.a+i)}</b><div class="l"><span>Saídas</span><span>${semCopia?'sem cópia':R(sa[i])}</span></div>${sb?`<div class="l"><span>Comparação ${sb[i]!=null?'('+fd(C.a+i)+')':''}</span><span>${sb[i]!=null?R(sb[i]):'sem base'}</span></div>`:''}`;
+    tip.style.opacity=1;
+    const px=x(i)*r.width/W+8;tip.style.left=Math.min(px+10,r.width-tip.offsetWidth)+'px';tip.style.top='14px';
+    if(px+10+tip.offsetWidth>r.width)tip.style.left=Math.max(0,px-tip.offsetWidth-10)+'px';
+  };
+  const sai=()=>{tip.style.opacity=0;['#cur','#pa','#pb'].forEach(s=>svg.querySelector(s).setAttribute('opacity',0))};
+  const hit=svg.querySelector('#hit');
+  hit.addEventListener('mousemove',mov);hit.addEventListener('mouseleave',sai);hit.addEventListener('touchstart',mov,{passive:true});hit.addEventListener('touchmove',mov,{passive:true});
+}
+
+function topItens(P,at,an){
+  const l=Object.entries(at.pr).map(([i,o])=>({i:+i,...o,va:an&&an.pr[i]?an.pr[i].v:0})).sort((x,y)=>S.ord==='v'?y.v-x.v:y.q-x.q).slice(0,10);
+  const mx=Math.max(1,...l.map(o=>S.ord==='v'?o.v:o.q));
+  const ext=`<div class="seg peq" data-f="ord"><button type="button" data-v="v" aria-pressed="${S.ord==='v'}">Por valor (R$)</button><button type="button" data-v="q" aria-pressed="${S.ord==='q'}">Por quantidade</button></div>`;
+  const corpo=l.length?`<div class="tw"><table class="t"><thead><tr><th>#</th><th>Item</th><th class="r">Quantidade</th><th class="r">Valor</th><th class="r esc">% do período</th><th class="bar"></th></tr></thead><tbody>${l.map((o,k)=>`<tr title="${esc(D.pr[o.i][0])}"><td class="rk">${k+1}º</td><td class="nm">${esc(D.pr[o.i][0])}</td><td class="r">${N0(o.q)} <span class="muted">${D.pr[o.i][1]}</span></td><td class="r">${R(o.v)}</td><td class="r esc">${nf1.format(o.v/at.v*100)}%</td><td class="bar"><div class="minibar"><i style="width:${(S.ord==='v'?o.v:o.q)/mx*100}%"></i></div></td></tr>`).join('')}</tbody></table></div>
+    <div class="card-b" style="padding-top:8px"><p class="muted" style="font-size:11.5px">Os 10 itens somam ${R(l.reduce((s,o)=>s+o.v,0))}, ${nf0.format(l.reduce((s,o)=>s+o.v,0)/at.v*100)}% de tudo que saiu no período. <a class="lnk-t" href="#" onclick="return false">Ver todos os itens em Estoque →</a></p></div>`
+    :`<div class="card-b"><div class="vazio"><b>Nenhum item saiu no período</b>Troque o período ou o contrato no filtro lá em cima.</div></div>`;
+  return sec('itens','Itens mais usados','Os 10 itens que mais saíram para as equipes no período.',`${ext}${qv()}`,card('Top 10 itens',`${S.ct||'Todos os contratos'} · ${fd(P.a)} a ${fd(P.b)}`,corpo));
+}
+
+function pedidosSec(P,C,rotCmp,vazio,aprov){
+  const pd=pedidos(P);
+  const et=[
+    {n:'Aguardando aprovação',s:'o aprovador ainda não olhou',q:pd.ag,c:'#f4b73f'},
+    {n:'Aprovado',s:'falta o almoxarifado separar',q:pd.ap,c:'#a78bfa'},
+    {n:'Separado',s:'pronto, falta a equipe retirar',q:pd.se,c:'#5aa9f0'},
+    {n:'Retirado',s:'a equipe levou o material',q:pd.re,c:'#35c98a'}];
+  const mx=Math.max(1,...et.map(e=>e.q));
+  const ex=vazio?'':' <span class="ex">exemplo</span>';
+  const funil=vazio?`<div class="card-b"><div class="vazio"><b>Nenhum pedido ainda</b>O piloto não começou. Quando a primeira equipe fizer um pedido, ele aparece aqui, etapa por etapa.</div></div>`
+    :`<div class="card-b"><div class="funil">${et.map(e=>`<div class="fe"><span class="n">${e.n}<small>${e.s}</small></span><span class="b"><i style="width:${Math.max(e.q?4:0,e.q/mx*100)}%;background:${e.c}"></i></span><span class="q">${e.q}</span></div>`).join('')}</div>
+      <div class="fora"><span>Recusados <b>${pd.rc}</b></span><span>Cancelados <b>${pd.cn}</b></span><span>Ainda em aberto <b>${pd.ag+pd.ap+pd.se}</b></span></div></div>`;
+  const cts=aprov?['DPSP','Obras/Spot']:null;
+  const par=vazio?[]:PARADOS.filter(p=>(!S.ct||p.ct===S.ct)&&(!cts||cts.includes(p.ct))&&p.dias>=S.parado).sort((a,b)=>b.dias-a.dias);
+  const extP=`<label class="muted" style="font-size:11.5px;display:flex;align-items:center;gap:6px">há mais de <select class="sel" style="min-width:0;width:auto;padding:3px 6px;font-size:12px" data-f="parado">${[1,2,3,5,7].map(d=>`<option value="${d}" ${d==S.parado?'selected':''}>${d} ${d>1?'dias':'dia'}</option>`).join('')}</select></label>`;
+  const lista=`<div class="card-b">${par.length?par.map(p=>`<div class="parado"><span><span class="np">Pedido nº ${p.n}</span> · <b>${p.eq}</b> <span class="muted" style="font-size:11.5px">${p.ct}</span></span><span class="dd">${p.dias} dias<small>parado</small></span><span class="et"><span class="tag" style="color:${p.cor};border-color:${p.cor}73;background:${p.cor}14">${p.et}</span> · espera: ${p.quem}</span></div>`).join('')+`<p style="margin-top:10px"><a class="lnk-t" href="#" onclick="return false">Abrir em Separação →</a></p>`
+    :`<div class="vazio"><b>${vazio?'Nada parado':'Nenhum pedido parado'}</b>${vazio?'Sem pedidos, nada fica parado.':`Nenhum pedido está na mesma etapa há mais de ${S.parado} ${S.parado>1?'dias':'dia'}.`}</div>`}</div>`;
+  return sec('pedidos','Pedidos',aprov?'Os pedidos das equipes que você aprova, etapa por etapa, e os que estão parados.':'Os pedidos feitos no período, pela etapa em que estão agora, e os que estão parados na mesma etapa há dias.',qv('todos'),
+    `<div class="g2 larga">${card('Pedidos por etapa'+ex,`Feitos de ${fd(P.a)} a ${fd(P.b)}, pela etapa de hoje`,funil)}${card('Parados'+ex,'Na mesma etapa há mais tempo que o combinado · sempre hoje',lista,extP)}</div>`);
+}
+
+function estoque(vazio){
+  const l=D.loc.filter(x=>!S.ct||x[3]===S.ct).sort((a,b)=>b[5]-a[5]), mx=Math.max(1,...l.map(x=>x[5])), tot=l.reduce((s,x)=>s+x[5],0);
+  const nomeLoc=x=>x[2]==='equipe'?x[0]:(LOCN[x[0]]||x[0]);
+  const a=`<div class="card-b"><div class="hb">${l.map(x=>`<div class="hb-l" title="${esc(x[1])}: ${R(x[5])} em ${x[4]} itens"><span class="n">${nomeLoc(x)} <small>${x[2]==='equipe'?'equipe':x[2]==='base'?'base · Obras/Spot':'contrato'}</small></span><span class="b"><i style="width:${x[5]/mx*100}%;background:${x[2]==='equipe'?'#5aa9f0':'#f05a28'}"></i></span><span class="val">${R(x[5])}</span><span class="dl muted">${x[4]} itens</span></div>`).join('')}</div>
+    <div class="hb-tot"><span>${l.length} locais · <i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f05a28"></i> almoxarifado <i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#5aa9f0;margin-left:6px"></i> com a equipe</span><b>${R(tot)}</b></div></div>`;
+  const ms=MINIMOS.filter(m=>(!S.ct||m.ct===S.ct)&&m.saldo<m.min).sort((a,b)=>a.saldo/a.min-b.saldo/b.min);
+  const b=vazio?`<div class="card-b"><div class="vazio"><b>Nenhum mínimo cadastrado ainda</b>Diga em Estoque quanto de cada item não pode faltar em cada almoxarifado. Quando o saldo ficar abaixo, o item aparece aqui.</div><p style="margin-top:10px"><a class="lnk-t" href="#" onclick="return false">Cadastrar mínimos em Estoque →</a></p></div>`
+    :`<div class="card-b">${ms.length?`<div class="tw"><table class="t"><thead><tr><th>Item</th><th>Local</th><th class="r">Saldo</th><th class="r">Mínimo</th></tr></thead><tbody>${ms.map(m=>`<tr><td class="nm" style="min-width:150px">${esc(m.it)}</td><td>${LOCN[m.loc]}</td><td class="r ${m.saldo?'atn':'ruim'}">${m.saldo} ${m.un}</td><td class="r muted">${m.min}</td></tr>`).join('')}</tbody></table></div>`:`<div class="vazio"><b>Tudo acima do mínimo</b>Nenhum item deste contrato está abaixo do mínimo.</div>`}
+      <p class="muted" style="margin-top:10px;font-size:11.5px">Saldo e local são reais (17/11); o mínimo é de exemplo. <a class="lnk-t" href="#" onclick="return false">Ver todos em Estoque →</a></p></div>`;
+  return sec('estoque','Estoque','Quanto vale o material parado em cada lugar e o que está acabando.',pos('Sempre hoje · segue só o filtro de contrato')+qv(),
+    `<div class="g2">${card('Valor por local','Saldo × custo médio do Omie, do maior para o menor',a)}${card('Abaixo do mínimo'+(vazio?'':' <span class="ex">exemplo</span>'),'Itens com saldo menor que o mínimo combinado',b)}</div>`);
+}
+
+function saude(){
+  const atraso=Math.round((HOJE-Date.UTC(2026,10,14))/DIA);
+  const m=(t,v,cor,s,d)=>`<div class="mini"><div class="t">${t}</div><div class="v" style="color:${cor}">${v}</div><div class="s">${s}</div>${d?`<div class="s" style="margin-top:4px;color:var(--muted-2)">${d}</div>`:''}</div>`;
+  const corpo=`<div class="card-b"><div class="saude">
+    ${m('Saldos','17/11 12:11','var(--verde)','última cópia ok · 892 saldos, 21 locais','')}
+    ${m('Saídas e entradas','14/11 20:15','var(--ambar)',`atrasada ${atraso} dias · dados até ${fd(IULT)}`,'5.333 movimentações copiadas')}
+    ${m('Gravações na fila','0','var(--texto-suave)','esperando para gravar no Omie','a gravação está desligada até o piloto')}
+    ${m('Gravações com falha','0','var(--verde)','nada para resolver em Falhas no Omie','')}
+  </div>
+  <div class="conta"><b>O que isto mostra.</b> O hub copia do Omie os saldos e as movimentações, e grava no Omie as saídas feitas aqui. Se a cópia atrasa, os números desta tela ficam velhos; se uma gravação falha, o Omie fica diferente do hub até alguém resolver em <b>Falhas no Omie</b>. O amarelo aparece quando a última cópia tem mais de 1 dia.</div></div>`;
+  return sec('saude','Ligação com o Omie','Se as cópias do Omie estão em dia e se alguma gravação ficou para trás.',pos('Sempre hoje')+qv(),card('Situação da integração','Não segue o filtro de período nem de contrato',corpo));
+}
+
+// ---------------- eventos ----------------
+document.addEventListener('click',e=>{
+  const mk=e.target.closest('[data-mk] button');
+  if(mk){const g=mk.parentElement.dataset.mk;S[g]=mk.dataset.v;mk.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===mk));if(g==='papel'&&S.papel==='aprovador'&&S.ct==='Profarma')S.ct='';render();return}
+  const f=e.target.closest('[data-f] button');
+  if(f){S[f.parentElement.dataset.f]=f.dataset.v;render();return}
+  const ct=e.target.closest('[data-ct]');
+  if(ct){S.ct=S.ct===ct.dataset.ct?'':ct.dataset.ct;render();return}
+  const ir=e.target.closest('[data-ir]');
+  if(ir){document.getElementById(ir.dataset.ir)?.scrollIntoView({behavior:'smooth',block:'start'});return}
+  const a=e.target.closest('[data-a]');
+  if(a){document.getElementById('shell').dataset.gaveta=a.dataset.a==='menu'?'sim':'nao'}
+});
+document.addEventListener('change',e=>{
+  const f=e.target.closest('[data-f]');
+  if(f&&f.tagName!=='DIV'){const k=f.dataset.f;S[k]=k==='parado'?+f.value:f.value;render()}
+});
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(S.papel!=='aprovador'){const P=periodo(),C=comparacao(P);desenhaLinha(P,C,agg(P.a,P.b,S.ct),C.semBase?null:agg(Math.max(C.a,0),C.b,S.ct))}},120)});
+render();
+</script>
+</body>
+</html>
