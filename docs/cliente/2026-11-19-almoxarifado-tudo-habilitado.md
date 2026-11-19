@@ -11,3 +11,12 @@ Mensagens anteriores na mesma manhã (literais):
 > cliquei em eploy no almoxarifado
 
 > quero o tour pela plataforma no primeiro acesso
+
+## Dúvida do cliente sobre o aprovador (19/11, relatada pelo João, literal)
+
+> Sobre essa parte de aprovar os pedidos isso tá por código não tá pra tipo selecionar o aprovador ali na tela não porque se for por código também é uma merda né.
+
+> Porque aí toda vez que quiser trocar o aprovador vai ter que ficar fazendo por código entendeu.
+> O cliente falou jsso
+
+Resposta: a troca é pela tela Papéis do almox (`/almox/papeis`), sem código; conferido em 19/11.
