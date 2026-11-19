@@ -18,4 +18,8 @@ estiverem no ar (`2026-11-18-almoxarifado-autorizacao-cadastro-manfac-23.md`).
 
 ## Execução
 
-(preenchida conforme for feito)
+- **Item 1 aplicado** em 18/11/2026 (madrugada), banco `iyytcavcgukfjnjjrerx`: SQL
+  `024_alx_bucket_arquivos.sql` da branch `retirada` do almox (commit `befe57b`). Conferência:
+  1 linha em `storage.buckets` (`almox-arquivos`, `public = false`, 10 MB, png/jpeg/webp/pdf) e
+  **0 policies** da pasta em `storage` — só o servidor do almox, com a chave de serviço, lê e grava.
+- Item 2 ainda não executado: `GRAVACAO_OMIE_VALIDADA` segue `false` até o piloto começar.
