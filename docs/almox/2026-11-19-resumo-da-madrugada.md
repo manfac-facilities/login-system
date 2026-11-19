@@ -70,9 +70,12 @@ trava o acesso dele** (15 min → 1 h → 24 h); o almoxarife resolve em Colabor
 
 ## 5. Antes de ligar a gravação — um ponto não medido
 
-A listagem de lançamentos do Omie pode ter janela de datas padrão (não medido). Se tiver, uma
-gravação reenviada dias depois pode duplicar. Mede-se com uma leitura num lançamento antigo; vou
-fazer isso antes de ligar a gravação.
+**Medido de madrugada (só leitura, `docs/almox/2026-11-19-omie-janela-listagem.md`):** a
+listagem sem data devolve todos os 6.988 lançamentos da empresa, de 06/03/2026 (o mais antigo que
+existe) a 18/11/2026. Não há janela curta: se existir alguma, ela é de pelo menos 8,5 meses, e a
+fila só repete um código por horas ou dias. **Risco de duplicação por data: descartado na
+prática.** Fica como melhoria opcional mandar `data_movimento_de: "01/01/2020"` na consulta
+(medido que funciona junto do código); não fiz, por ser mudança não necessária.
 
 ## 6. Mensagem de status ao cliente (WhatsApp), atualizada
 
