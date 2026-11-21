@@ -22,3 +22,13 @@ Pedido do João, literal: "lembre-se do tour ao final da entrega, do pop up sina
 
 Ponto 6 — reabrir os tours de Exames, Pagamentos e Movimentações como versão nova? Resposta literal:
 "6) nao reabra". → Só o pop-up `novidades` (versão 1); textos do tour mudam sem subir a versão.
+
+## Aprovação do mockup (21/11/2026)
+
+Mockup https://claude.ai/artifact/XQzcf9VRNADd5eBGysvV2d (versão 2). Resposta literal do João:
+"ficou bom o mockup, o tour e o pop up".
+
+Os pontos 1 a 5 não foram respondidos um a um. Seguem as recomendações, declaradas como suposições na spec
+(regra "não depender do cliente"): ASO e seguro fora do PJ; duas premiações no mês permitidas; lista em CSV;
+vínculo exame↔fatura na migration 019 (aplicação continua pedindo "aplica 019" do João); escolhas de desenho
+do agente mantidas.
