@@ -21,10 +21,15 @@ export default async function DashboardPage() {
   // repetindo a do nível por dentro). Erro de consulta = nenhum acesso.
   // RH: papéis ficam no próprio módulo (rh_papeis). `rh_pode_ver()` é a mesma
   // regra que o módulo usa (papel rh/diretoria ou admin do hub). Erro = sem card.
-  const [admin, slugs, podeRh] = await Promise.all([
+  // Almoxarifado: idem com `almox_has_access('producao')` (papel ativo em alx_papeis ou admin).
+  const [admin, slugs, podeRh, podeAlmox] = await Promise.all([
     isAdmin(supabase, user.email ?? ''),
     systemSlugsComAcesso(supabase, user.email ?? ''),
     Promise.resolve(supabase.rpc('rh_pode_ver')).then(
+      ({ data, error }) => !error && data === true,
+      () => false
+    ),
+    Promise.resolve(supabase.rpc('almox_has_access', { p_ambiente: 'producao' })).then(
       ({ data, error }) => !error && data === true,
       () => false
     ),
@@ -39,7 +44,7 @@ export default async function DashboardPage() {
         slugs.has('orcamento'),
       ]
   const semNada =
-    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !podeOrcamento && !podeRh && !admin
+    !podeFrotas && !podeManutencao && !podeCrm && !podeObras && !podeOrcamento && !podeRh && !podeAlmox && !admin
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -162,9 +167,9 @@ export default async function DashboardPage() {
           </a>
           )}
           {/* Almoxarifado: app Next separada (basePath /almox), <a> normal e fora do matcher.
-              Por enquanto só admin do hub vê o card (decisão de 14/11/2026: o sistema ainda
-              não abriu para os usuários). O próprio módulo confere os papéis (alx_papeis). */}
-          {admin && (
+              Card para admin do hub ou para quem tem papel ativo no almox (liberado pelo João em
+              21/11/2026; antes, desde 14/11, só admin). O próprio módulo confere os papéis. */}
+          {(admin || podeAlmox) && (
           <a
             href="/almox"
             className="flex items-start gap-4 p-6 rounded-xl border border-[#1e3a5f] bg-[#0d2050] hover:border-[#f05a28] transition-colors group"

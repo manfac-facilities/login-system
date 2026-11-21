@@ -54,17 +54,32 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('RH')).not.toBeInTheDocument()
   })
 
-  it('Almoxarifado: card só para admin do hub, mesmo com todos os slugs liberados', async () => {
+  it('Almoxarifado: card para admin do hub ou para quem tem papel no almox', async () => {
     ;(isAdmin as jest.Mock).mockResolvedValue(true)
     comAcessoA()
     render(await DashboardPage())
     expect(screen.getByText('Almoxarifado').closest('a')).toHaveAttribute('href', '/almox')
 
     ;(isAdmin as jest.Mock).mockResolvedValue(false)
-    comAcessoA('sofia', 'dashboard-manutencao', 'crm', 'obras', 'orcamento')
-    rpc.mockResolvedValue({ data: true, error: null })
+    rpc.mockImplementation(async (nome: string) => ({ data: nome === 'almox_has_access', error: null }))
     const { container } = render(await DashboardPage())
-    expect(container.querySelector('a[href="/almox"]')).toBeNull()
+    expect(rpc).toHaveBeenCalledWith('almox_has_access', { p_ambiente: 'producao' })
+    expect(container.querySelector('a[href="/almox"]')).not.toBeNull()
+  })
+
+  it('Almoxarifado: sem papel no almox, ou erro na consulta, o card não aparece (falha FECHADO)', async () => {
+    ;(isAdmin as jest.Mock).mockResolvedValue(false)
+    comAcessoA('sofia', 'dashboard-manutencao', 'crm', 'obras', 'orcamento')
+    rpc.mockImplementation(async (nome: string) => ({ data: nome === 'rh_pode_ver', error: null }))
+    expect(render(await DashboardPage()).container.querySelector('a[href="/almox"]')).toBeNull()
+
+    rpc.mockImplementation(async (nome: string) =>
+      nome === 'almox_has_access' ? { data: true, error: { message: 'x' } } : { data: false, error: null })
+    expect(render(await DashboardPage()).container.querySelector('a[href="/almox"]')).toBeNull()
+
+    rpc.mockImplementation(async (nome: string) =>
+      nome === 'almox_has_access' ? Promise.reject(new Error('rede')) : { data: false, error: null })
+    expect(render(await DashboardPage()).container.querySelector('a[href="/almox"]')).toBeNull()
   })
 
   it('shows all three cards for an administrator', async () => {
