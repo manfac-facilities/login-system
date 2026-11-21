@@ -15,3 +15,10 @@ Verificado antes das decisões (20/11):
   com chunks de 17/11/2026 20:48:26 GMT, depois do commit `54406b4`.
 - Item 3 (Benefícios): abre normal em 20/11, logado. Causa do erro de 12/11 não confirmada por log.
 - Item 4 (patrimônio): depende da planilha, que não temos.
+
+## Tour e pop-up "O que mudou" (21/11/2026)
+
+Pedido do João, literal: "lembre-se do tour ao final da entrega, do pop up sinalizando o que mudou".
+
+Ponto 6 — reabrir os tours de Exames, Pagamentos e Movimentações como versão nova? Resposta literal:
+"6) nao reabra". → Só o pop-up `novidades` (versão 1); textos do tour mudam sem subir a versão.
